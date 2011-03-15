@@ -18,7 +18,7 @@ using namespace llvm;
 
 PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &FS)
   : PTXShaderModel(PTX_SM_1_0),
-    PTXVersion(PTX_VERSION_1_4),
+    PTXVersion(PTX_VERSION_2_0),
     SupportsDouble(false),
     Use64BitAddresses(false) {
   std::string TARGET = "generic";
@@ -37,9 +37,9 @@ std::string PTXSubtarget::getTargetString() const {
 std::string PTXSubtarget::getPTXVersionString() const {
   switch(PTXVersion) {
     default: llvm_unreachable("Unknown PTX version");
-    case PTX_VERSION_1_4: return "1.4";
     case PTX_VERSION_2_0: return "2.0";
     case PTX_VERSION_2_1: return "2.1";
+    case PTX_VERSION_2_2: return "2.2";
   }
 }
 

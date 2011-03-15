@@ -19,16 +19,25 @@
 namespace llvm {
   class PTXSubtarget : public TargetSubtarget {
     private:
+
+      /**
+       * Enumeration of Shader Models supported by the back-end.
+       */
       enum PTXShaderModelEnum {
-        PTX_SM_1_0,
-        PTX_SM_1_3,
-        PTX_SM_2_0
+        PTX_SM_1_0, /*< Shader Model 1.0 */
+        PTX_SM_1_3, /*< Shader Model 1.3 */
+        PTX_SM_2_0  /*< Shader Model 2.0 */
       };
 
+      /**
+       * Enumeration of PTX versions supported by the back-end.
+       *
+       * Currently, PTX 2.0 is the minimum supported version.
+       */
       enum PTXVersionEnum {
-        PTX_VERSION_1_4,
-        PTX_VERSION_2_0,
-        PTX_VERSION_2_1
+        PTX_VERSION_2_0,  /*< PTX Version 2.0 */
+        PTX_VERSION_2_1,  /*< PTX Version 2.1 */
+        PTX_VERSION_2_2   /*< PTX Version 2.2 */
       };
 
       /// Shader Model supported on the target GPU.
@@ -58,9 +67,9 @@ namespace llvm {
 
       bool supportsSM20() const { return PTXShaderModel >= PTX_SM_2_0; }
 
-      bool supportsPTX20() const { return PTXVersion >= PTX_VERSION_2_0; }
-
       bool supportsPTX21() const { return PTXVersion >= PTX_VERSION_2_1; }
+
+      bool supportsPTX22() const { return PTXVersion >= PTX_VERSION_2_2; }
 
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);

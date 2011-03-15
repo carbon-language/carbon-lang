@@ -32,10 +32,11 @@ def SupportsSM20       : Predicate<"getSubtarget().supportsSM20()">;
 def DoesNotSupportSM20 : Predicate<"!getSubtarget().supportsSM20()">;
 
 // PTX Version Support
-def SupportsPTX20       : Predicate<"getSubtarget().supportsPTX20()">;
-def DoesNotSupportPTX20 : Predicate<"!getSubtarget().supportsPTX20()">;
 def SupportsPTX21       : Predicate<"getSubtarget().supportsPTX21()">;
 def DoesNotSupportPTX21 : Predicate<"!getSubtarget().supportsPTX21()">;
+def SupportsPTX22       : Predicate<"getSubtarget().supportsPTX22()">;
+def DoesNotSupportPTX22 : Predicate<"!getSubtarget().supportsPTX22()">;
+
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
@@ -253,6 +254,33 @@ multiclass INT3<string opcstr, SDNode opnode> {
                      [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
 }
 
+multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
+  def rr16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, RRegu16:$b),
+                     !strconcat(opcstr, ".b16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
+  def ri16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, i16imm:$b),
+                     !strconcat(opcstr, ".b16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
+  def rr32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, RRegu32:$b),
+                     !strconcat(opcstr, ".b32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
+  def ri32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, i32imm:$b),
+                     !strconcat(opcstr, ".b32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
+  def rr64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, RRegu64:$b),
+                     !strconcat(opcstr, ".b64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
+  def ri64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, i64imm:$b),
+                     !strconcat(opcstr, ".b64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
+}
+
 // no %type directive, non-communtable
 multiclass INT3ntnc<string opcstr, SDNode opnode> {
   def rr : InstPTX<(outs RRegu32:$d),
@@ -359,6 +387,7 @@ multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
 
 defm ADD : INT3<"add", add>;
 defm SUB : INT3<"sub", sub>;
+defm MUL : INT3<"mul.lo", mul>; // FIXME: Allow 32x32 -> 64 multiplies
 
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
 
@@ -461,6 +490,10 @@ defm SETPGEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETUGE, "ge">;
 defm SHL : INT3ntnc<"shl.b32", PTXshl>;
 defm SRL : INT3ntnc<"shr.u32", PTXsrl>;
 defm SRA : INT3ntnc<"shr.s32", PTXsra>;
+
+defm AND : PTX_LOGIC<"and", and>;
+defm OR  : PTX_LOGIC<"or",  or>;
+defm XOR : PTX_LOGIC<"xor", xor>;
 
 ///===- Data Movement and Conversion Instructions -------------------------===//
 

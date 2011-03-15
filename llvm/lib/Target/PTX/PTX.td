@@ -29,16 +29,17 @@ def Feature64Bit : SubtargetFeature<"64bit", "Use64BitAddresses", "true",
 
 //===- PTX Version --------------------------------------------------------===//
 
-def FeaturePTX14 : SubtargetFeature<"ptx14", "PTXVersion", "PTX_VERSION_1_4",
-                                    "Use PTX Language Version 1.4">;
-
 def FeaturePTX20 : SubtargetFeature<"ptx20", "PTXVersion", "PTX_VERSION_2_0",
                                     "Use PTX Language Version 2.0",
-                                    [FeaturePTX14]>;
+                                    []>;
 
 def FeaturePTX21 : SubtargetFeature<"ptx21", "PTXVersion", "PTX_VERSION_2_1",
                                     "Use PTX Language Version 2.1",
                                     [FeaturePTX20]>;
+
+def FeaturePTX22 : SubtargetFeature<"ptx22", "PTXVersion", "PTX_VERSION_2_2",
+                                    "Use PTX Language Version 2.2",
+                                    [FeaturePTX21]>;
 
 //===- PTX Shader Model ---------------------------------------------------===//
 
