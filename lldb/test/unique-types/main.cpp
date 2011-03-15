@@ -5,12 +5,12 @@
 
 int main (int argc, char const *argv[], char const *envp[])
 {
-    std::vector<int> ints;
+    std::vector<long> longs;
     std::vector<short> shorts;  
     for (int i=0; i<12; i++)
     {
-        ints.push_back(i);
-        shorts.push_back((short)i);
+        longs.push_back(i);
+        shorts.push_back(i);
     }
     return 0;
 }
