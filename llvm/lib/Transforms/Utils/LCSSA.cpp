@@ -207,6 +207,8 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
 
   DomTreeNode *DomNode = DT->getNode(DomBB);
 
+  SmallVector<PHINode*, 16> AddedPHIs;
+
   SSAUpdater SSAUpdate;
   SSAUpdate.Initialize(Inst->getType(), Inst->getName());
   
@@ -236,6 +238,8 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
           &PN->getOperandUse(
             PN->getOperandNumForIncomingValue(PN->getNumIncomingValues()-1)));
     }
+
+    AddedPHIs.push_back(PN);
     
     // Remember that this phi makes the value alive in this block.
     SSAUpdate.AddAvailableValue(ExitBB, PN);
@@ -261,6 +265,12 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     
     // Otherwise, do full PHI insertion.
     SSAUpdate.RewriteUse(*UsesToRewrite[i]);
+  }
+
+  // Remove PHI nodes that did not have any uses rewritten.
+  for (unsigned i = 0, e = AddedPHIs.size(); i != e; ++i) {
+    if (!AddedPHIs[i]->hasNUsesOrMore(1))
+      AddedPHIs[i]->eraseFromParent();
   }
   
   return true;
