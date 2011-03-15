@@ -449,23 +449,19 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
   if (Proto == 0)
     return;
 
-  ExceptionSpecificationType EST = Proto->getExceptionSpecType();
-  if (isNoexceptExceptionSpec(EST)) {
-    if (Proto->getNoexceptSpec(getContext()) == FunctionProtoType::NR_Nothrow) {
-      // noexcept functions are simple terminate scopes.
-      EHStack.pushTerminate();
-    }
-  } else if (EST == EST_Dynamic || EST == EST_DynamicNone) {
-    unsigned NumExceptions = Proto->getNumExceptions();
-    EHFilterScope *Filter = EHStack.pushFilter(NumExceptions);
+  // FIXME: What about noexcept?
+  if (!Proto->hasDynamicExceptionSpec())
+    return;
 
-    for (unsigned I = 0; I != NumExceptions; ++I) {
-      QualType Ty = Proto->getExceptionType(I);
-      QualType ExceptType = Ty.getNonReferenceType().getUnqualifiedType();
-      llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(ExceptType,
-                                                        /*ForEH=*/true);
-      Filter->setFilter(I, EHType);
-    }
+  unsigned NumExceptions = Proto->getNumExceptions();
+  EHFilterScope *Filter = EHStack.pushFilter(NumExceptions);
+
+  for (unsigned I = 0; I != NumExceptions; ++I) {
+    QualType Ty = Proto->getExceptionType(I);
+    QualType ExceptType = Ty.getNonReferenceType().getUnqualifiedType();
+    llvm::Value *EHType = CGM.GetAddrOfRTTIDescriptor(ExceptType,
+                                                      /*ForEH=*/true);
+    Filter->setFilter(I, EHType);
   }
 }
 
@@ -480,14 +476,10 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
   if (Proto == 0)
     return;
 
-  ExceptionSpecificationType EST = Proto->getExceptionSpecType();
-  if (isNoexceptExceptionSpec(EST)) {
-    if (Proto->getNoexceptSpec(getContext()) == FunctionProtoType::NR_Nothrow) {
-      EHStack.popTerminate();
-    }
-  } else if (EST == EST_Dynamic || EST == EST_DynamicNone) {
-    EHStack.popFilter();
-  }
+  if (!Proto->hasDynamicExceptionSpec())
+    return;
+
+  EHStack.popFilter();
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
