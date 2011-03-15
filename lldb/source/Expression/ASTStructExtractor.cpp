@@ -75,9 +75,9 @@ ASTStructExtractor::ExtractFromFunctionDecl(FunctionDecl *F)
     if (!struct_layout)
         return;
     
-    m_function.m_struct_size = struct_layout->getSize() / 8; // Clang returns sizes in bits.    
+    m_function.m_struct_size = struct_layout->getSize().getQuantity(); // TODO Store m_struct_size as CharUnits   
     m_function.m_return_offset = struct_layout->getFieldOffset(struct_layout->getFieldCount() - 1) / 8;
-    m_function.m_return_size = (struct_layout->getDataSize() / 8) - m_function.m_return_offset;
+    m_function.m_return_size = struct_layout->getDataSize().getQuantity() - m_function.m_return_offset;
     
     for (unsigned field_index = 0, num_fields = struct_layout->getFieldCount();
          field_index < num_fields;

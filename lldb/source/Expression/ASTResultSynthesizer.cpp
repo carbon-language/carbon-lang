@@ -320,6 +320,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         result_decl = VarDecl::Create(Ctx,
                                       DC,
                                       SourceLocation(),
+                                      SourceLocation(),
                                       &result_ptr_id,
                                       ptr_qual_type,
                                       NULL,
@@ -331,7 +332,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                 
         ExprResult address_of_expr = m_sema->CreateBuiltinUnaryOp(SourceLocation(), UO_AddrOf, last_expr);
         
-        m_sema->AddInitializerToDecl(result_decl, address_of_expr.take());
+        m_sema->AddInitializerToDecl(result_decl, address_of_expr.take(), true, true);
     }
     else
     {
@@ -339,7 +340,8 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         
         result_decl = VarDecl::Create(Ctx, 
                                       DC, 
-                                      SourceLocation(), 
+                                      SourceLocation(),
+                                      SourceLocation(),
                                       &result_id, 
                                       expr_qual_type, 
                                       NULL, 
@@ -349,7 +351,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         if (!result_decl)
             return false;
         
-        m_sema->AddInitializerToDecl(result_decl, last_expr);
+        m_sema->AddInitializerToDecl(result_decl, last_expr, true, true);
     }
     
     DC->addDecl(result_decl);

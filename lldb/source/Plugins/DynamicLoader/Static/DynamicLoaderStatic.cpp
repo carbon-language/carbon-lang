@@ -29,8 +29,7 @@ DynamicLoaderStatic::CreateInstance (Process* process, bool force)
     {
         const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
         const llvm::Triple::OSType os_type = triple_ref.getOS();
-        if ((os_type == llvm::Triple::UnknownOS) ||
-            (os_type == llvm::Triple::NoOS))
+        if ((os_type == llvm::Triple::UnknownOS))
             create = true;
     }
     

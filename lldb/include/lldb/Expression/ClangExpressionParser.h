@@ -178,6 +178,7 @@ private:
     
     ClangExpression                            &m_expr;                 ///< The expression to be parsed
     
+    std::auto_ptr<llvm::LLVMContext>            m_llvm_context;         ///< The LLVM context to generate IR into
     std::auto_ptr<clang::FileManager>           m_file_manager;         ///< The Clang file manager object used by the compiler
     std::auto_ptr<clang::CompilerInstance>      m_compiler;             ///< The Clang compiler used to parse expressions into IR
     std::auto_ptr<clang::Builtin::Context>      m_builtin_context;      ///< Context for Clang built-ins

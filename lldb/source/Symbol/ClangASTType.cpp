@@ -202,6 +202,22 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
             return GetEncoding(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
         break;
 
+    case clang::Type::DependentSizedArray:
+    case clang::Type::DependentSizedExtVector:
+    case clang::Type::UnresolvedUsing:
+    case clang::Type::Paren:
+    case clang::Type::Elaborated:
+    case clang::Type::Attributed:
+    case clang::Type::TemplateTypeParm:
+    case clang::Type::SubstTemplateTypeParm:
+    case clang::Type::SubstTemplateTypeParmPack:
+    case clang::Type::Auto:
+    case clang::Type::InjectedClassName:
+    case clang::Type::DependentName:
+    case clang::Type::DependentTemplateSpecialization:
+    case clang::Type::PackExpansion:
+    case clang::Type::ObjCObject:
+            
     case clang::Type::TypeOfExpr:
     case clang::Type::TypeOf:
     case clang::Type::Decltype:
@@ -243,7 +259,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Builtin:
         switch (cast<clang::BuiltinType>(qual_type)->getKind())
         {
-        default: assert(0 && "Unknown builtin type!");
+        //default: assert(0 && "Unknown builtin type!");
         case clang::BuiltinType::Void:
             break;
 
@@ -272,7 +288,6 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         case clang::BuiltinType::NullPtr:       
         case clang::BuiltinType::Overload:
         case clang::BuiltinType::Dependent:
-        case clang::BuiltinType::UndeducedAuto:
         case clang::BuiltinType::ObjCId:
         case clang::BuiltinType::ObjCClass:
         case clang::BuiltinType::ObjCSel:       return lldb::eFormatHex;
@@ -297,6 +312,22 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Typedef:
             return ClangASTType::GetFormat(cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
+    case clang::Type::DependentSizedArray:
+    case clang::Type::DependentSizedExtVector:
+    case clang::Type::UnresolvedUsing:
+    case clang::Type::Paren:
+    case clang::Type::Elaborated:
+    case clang::Type::Attributed:
+    case clang::Type::TemplateTypeParm:
+    case clang::Type::SubstTemplateTypeParm:
+    case clang::Type::SubstTemplateTypeParmPack:
+    case clang::Type::Auto:
+    case clang::Type::InjectedClassName:
+    case clang::Type::DependentName:
+    case clang::Type::DependentTemplateSpecialization:
+    case clang::Type::PackExpansion:
+    case clang::Type::ObjCObject:
+            
     case clang::Type::TypeOfExpr:
     case clang::Type::TypeOf:
     case clang::Type::Decltype:
@@ -1068,6 +1099,10 @@ ClangASTType::GetValueAsScalar
         uint32_t offset = data_byte_offset;
         switch (encoding)
         {
+        case lldb::eEncodingInvalid:
+            break;
+        case lldb::eEncodingVector:
+            break;
         case lldb::eEncodingUint:
             if (byte_size <= sizeof(unsigned long long))
             {
@@ -1210,6 +1245,10 @@ ClangASTType::SetValueFromScalar
         uint32_t byte_size = (bit_width + 7 ) / 8;
         switch (encoding)
         {
+        case lldb::eEncodingInvalid:
+            break;
+        case lldb::eEncodingVector:
+            break;
         case lldb::eEncodingUint:
             switch (byte_size)
             {

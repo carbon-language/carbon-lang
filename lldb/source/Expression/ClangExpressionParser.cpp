@@ -47,13 +47,13 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Rewrite/FrontendActions.h"
 #include "clang/Sema/SemaConsumer.h"
-#include "clang/StaticAnalyzer/FrontendActions.h"
+#include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/Module.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -112,7 +112,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
             
         case ASTDump:                return new ASTDumpAction();
         case ASTPrint:               return new ASTPrintAction();
-        case ASTPrintXML:            return new ASTPrintXMLAction();
+        case ASTDumpXML:             return new ASTDumpXMLAction();
         case ASTView:                return new ASTViewAction();
         case BoostCon:               return new BoostConAction();
         case DumpRawTokens:          return new DumpRawTokensAction();
@@ -127,7 +127,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         case FixIt:                  return new FixItAction();
         case GeneratePCH:            return new GeneratePCHAction();
         case GeneratePTH:            return new GeneratePTHAction();
-        case InheritanceView:        return new InheritanceViewAction();
         case InitOnly:               return new InitOnlyAction();
         case ParseSyntaxOnly:        return new SyntaxOnlyAction();
             
@@ -196,7 +195,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         
     // 1. Create a new compiler instance.
     m_compiler.reset(new CompilerInstance());    
-    m_compiler->setLLVMContext(new LLVMContext());
     
     // 2. Set options.
     
@@ -305,10 +303,11 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     std::string module_name("$__lldb_module");
 
+    m_llvm_context.reset(new LLVMContext());
     m_code_generator.reset(CreateLLVMCodeGen(m_compiler->getDiagnostics(),
                                              module_name,
                                              m_compiler->getCodeGenOpts(),
-                                             m_compiler->getLLVMContext()));
+                                             *m_llvm_context));
 }
 
 ClangExpressionParser::~ClangExpressionParser()

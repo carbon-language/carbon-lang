@@ -120,6 +120,7 @@ namespace clang
 
 namespace llvm
 {
+    class LLVMContext;
     class ExecutionEngine;
 }
 

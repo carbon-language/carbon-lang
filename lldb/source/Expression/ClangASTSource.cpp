@@ -159,6 +159,7 @@ NameSearchContext::AddVarDecl(void *type)
     clang::NamedDecl *Decl = VarDecl::Create(m_ast_source.m_ast_context, 
                                              const_cast<DeclContext*>(m_decl_context), 
                                              SourceLocation(), 
+                                             SourceLocation(),
                                              ii, 
                                              QualType::getFromOpaquePtr(type), 
                                              0, 
@@ -174,6 +175,7 @@ NameSearchContext::AddFunDecl (void *type)
 {
     clang::FunctionDecl *func_decl = FunctionDecl::Create (m_ast_source.m_ast_context,
                                                            const_cast<DeclContext*>(m_decl_context),
+                                                           SourceLocation(),
                                                            SourceLocation(),
                                                            m_decl_name.getAsIdentifierInfo(),
                                                            QualType::getFromOpaquePtr(type),
@@ -203,6 +205,7 @@ NameSearchContext::AddFunDecl (void *type)
             
             param_var_decls[ArgIndex] = ParmVarDecl::Create (m_ast_source.m_ast_context,
                                                              const_cast<DeclContext*>(m_decl_context),
+                                                             SourceLocation(),
                                                              SourceLocation(),
                                                              NULL,
                                                              arg_qual_type,

@@ -195,9 +195,13 @@ ParseLangArgs
         switch (IK) {
             case IK_None:
             case IK_AST:
+            case IK_LLVM_IR:
                 assert (!"Invalid input kind!");
             case IK_OpenCL:
                 LangStd = LangStandard::lang_opencl;
+                break;
+            case IK_CUDA:
+                LangStd = LangStandard::lang_cuda;
                 break;
             case IK_Asm:
             case IK_C:
@@ -1050,6 +1054,7 @@ ClangASTContext::CreateRecordType (const char *name, int kind, DeclContext *decl
                                                 (TagDecl::TagKind)kind,
                                                 decl_ctx,
                                                 SourceLocation(),
+                                                SourceLocation(),
                                                 name && name[0] ? &ast->Idents.get(name) : NULL);
 
     return ast->getTagDeclType(decl).getAsOpaquePtr();
@@ -1388,6 +1393,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXDestructorDecl::Create (*ast,
                                                      cxx_record_decl,
+                                                     SourceLocation(),
                                                      DeclarationNameInfo (ast->DeclarationNames.getCXXDestructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
                                                      method_qual_type,
                                                      NULL,
@@ -1398,6 +1404,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         cxx_method_decl = CXXConstructorDecl::Create (*ast,
                                                       cxx_record_decl,
+                                                      SourceLocation(),
                                                       DeclarationNameInfo (ast->DeclarationNames.getCXXConstructorName (ast->getCanonicalType (record_qual_type)), SourceLocation()),
                                                       method_qual_type,
                                                       NULL, // TypeSourceInfo *
@@ -1415,23 +1422,27 @@ ClangASTContext::AddMethodToCXXRecordType
             {
                 cxx_method_decl = CXXMethodDecl::Create (*ast,
                                                          cxx_record_decl,
+                                                         SourceLocation(),
                                                          DeclarationNameInfo (ast->DeclarationNames.getCXXOperatorName (op_kind), SourceLocation()),
                                                          method_qual_type,
                                                          NULL, // TypeSourceInfo *
                                                          is_static,
                                                          SC_None,
-                                                         is_inline);
+                                                         is_inline,
+                                                         SourceLocation());
             }
             else if (num_params == 0)
             {
                 // Conversion operators don't take params...
                 cxx_method_decl = CXXConversionDecl::Create (*ast,
                                                              cxx_record_decl,
+                                                             SourceLocation(),
                                                              DeclarationNameInfo (ast->DeclarationNames.getCXXConversionFunctionName (ast->getCanonicalType (function_Type->getResultType())), SourceLocation()),
                                                              method_qual_type,
                                                              NULL, // TypeSourceInfo *
                                                              is_inline,
-                                                             is_explicit);
+                                                             is_explicit,
+                                                             SourceLocation());
             }
         }
         
@@ -1439,12 +1450,14 @@ ClangASTContext::AddMethodToCXXRecordType
         {
             cxx_method_decl = CXXMethodDecl::Create (*ast,
                                                      cxx_record_decl,
+                                                     SourceLocation(),
                                                      DeclarationNameInfo (decl_name, SourceLocation()),
                                                      method_qual_type,
                                                      NULL, // TypeSourceInfo *
                                                      is_static,
                                                      SC_None,
-                                                     is_inline);
+                                                     is_inline,
+                                                     SourceLocation());
         }
     }
 
@@ -1463,6 +1476,7 @@ ClangASTContext::AddMethodToCXXRecordType
     {
         params[param_index] = ParmVarDecl::Create (*ast,
                                                    cxx_method_decl,
+                                                   SourceLocation(),
                                                    SourceLocation(),
                                                    NULL, // anonymous
                                                    method_function_prototype->getArgType(param_index), 
@@ -1526,6 +1540,7 @@ ClangASTContext::AddFieldToRecordType
             }
             FieldDecl *field = FieldDecl::Create (*ast,
                                                   record_decl,
+                                                  SourceLocation(),
                                                   SourceLocation(),
                                                   name ? &identifier_table->get(name) : NULL, // Identifier
                                                   QualType::getFromOpaquePtr(field_type), // Field type
@@ -1790,6 +1805,7 @@ ClangASTContext::AddObjCClassIVar
                 ObjCIvarDecl *field = ObjCIvarDecl::Create (*ast,
                                                             class_interface_decl,
                                                             SourceLocation(),
+                                                            SourceLocation(),
                                                             &identifier_table->get(name), // Identifier
                                                             QualType::getFromOpaquePtr(ivar_opaque_type), // Field type
                                                             NULL, // TypeSourceInfo *
@@ -1956,6 +1972,7 @@ ClangASTContext::AddMethodToObjCObjectType
         {
             params.push_back (ParmVarDecl::Create (*ast,
                                                    objc_method_decl,
+                                                   SourceLocation(),
                                                    SourceLocation(),
                                                    NULL, // anonymous
                                                    method_function_prototype->getArgType(param_index), 
@@ -2328,7 +2345,6 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::LongDouble:
         case clang::BuiltinType::Dependent:
         case clang::BuiltinType::Overload:
-        case clang::BuiltinType::UndeducedAuto:
         case clang::BuiltinType::ObjCId:
         case clang::BuiltinType::ObjCClass:
         case clang::BuiltinType::ObjCSel:
@@ -3515,7 +3531,9 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::IncompleteArray:          break;
     case clang::Type::VariableArray:            break;
     case clang::Type::ConstantArray:            break;
+    case clang::Type::DependentSizedArray:      break;
     case clang::Type::ExtVector:                break;
+    case clang::Type::DependentSizedExtVector:  break;
     case clang::Type::Vector:                   break;
     case clang::Type::Builtin:                  break;
     case clang::Type::BlockPointer:             break;
@@ -3536,6 +3554,18 @@ ClangASTContext::GetDeclContextForType (clang_type_t clang_type)
     case clang::Type::Decltype:                 break;
     //case clang::Type::QualifiedName:          break;
     case clang::Type::TemplateSpecialization:   break;
+    case clang::Type::DependentTemplateSpecialization:  break;
+    case clang::Type::TemplateTypeParm:         break;
+    case clang::Type::SubstTemplateTypeParm:    break;
+    case clang::Type::SubstTemplateTypeParmPack:break;
+    case clang::Type::PackExpansion:            break;
+    case clang::Type::UnresolvedUsing:          break;
+    case clang::Type::Paren:                    break;
+    case clang::Type::Elaborated:               break;
+    case clang::Type::Attributed:               break;
+    case clang::Type::Auto:                     break;
+    case clang::Type::InjectedClassName:        break;
+    case clang::Type::DependentName:            break;
     }
     // No DeclContext in this type...
     return NULL;
@@ -3553,7 +3583,7 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, const Declarat
         ASTContext *ast = getASTContext();
         if (decl_ctx == NULL)
             decl_ctx = ast->getTranslationUnitDecl();
-        return NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), &ast->Idents.get(name));
+        return NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &ast->Idents.get(name));
     }
     return NULL;
 }
@@ -3574,6 +3604,7 @@ ClangASTContext::CreateFunctionDeclaration (const char *name, clang_type_t funct
             return FunctionDecl::Create(*ast,
                                         ast->getTranslationUnitDecl(),
                                         SourceLocation(),
+                                        SourceLocation(),
                                         DeclarationName (&ast->Idents.get(name)),
                                         QualType::getFromOpaquePtr(function_clang_type),
                                         NULL,
@@ -3585,6 +3616,7 @@ ClangASTContext::CreateFunctionDeclaration (const char *name, clang_type_t funct
         {
             return FunctionDecl::Create(*ast,
                                         ast->getTranslationUnitDecl(),
+                                        SourceLocation(),
                                         SourceLocation(),
                                         DeclarationName (),
                                         QualType::getFromOpaquePtr(function_clang_type),
@@ -3613,9 +3645,9 @@ ClangASTContext::CreateFunctionType (ASTContext *ast,
     // TODO: Detect calling convention in DWARF?
     FunctionProtoType::ExtProtoInfo proto_info;
     proto_info.Variadic = is_variadic;
-    proto_info.HasExceptionSpec = false;
-    proto_info.HasAnyExceptionSpec = false;
+    proto_info.ExceptionSpecType = EST_None;
     proto_info.TypeQuals = type_quals;
+    proto_info.RefQualifier = RQ_None;
     proto_info.NumExceptions = 0;
     proto_info.Exceptions = NULL;
     
@@ -3632,6 +3664,7 @@ ClangASTContext::CreateParameterDeclaration (const char *name, clang_type_t para
     assert (ast != NULL);
     return ParmVarDecl::Create(*ast,
                                 ast->getTranslationUnitDecl(),
+                                SourceLocation(),
                                 SourceLocation(),
                                 name && name[0] ? &ast->Idents.get(name) : NULL,
                                 QualType::getFromOpaquePtr(param_type),
@@ -3779,8 +3812,8 @@ ClangASTContext::CreateEnumerationType
     EnumDecl *enum_decl = EnumDecl::Create (*ast,
                                             decl_ctx,
                                             SourceLocation(),
-                                            name && name[0] ? &ast->Idents.get(name) : NULL,
                                             SourceLocation(),
+                                            name && name[0] ? &ast->Idents.get(name) : NULL,
                                             NULL, 
                                             false,  // IsScoped
                                             false,  // IsScopedUsingClassTag
@@ -4186,6 +4219,8 @@ ClangASTContext::IsFunctionPointerType (clang_type_t clang_type)
         const clang::Type::TypeClass type_class = qual_type->getTypeClass();
         switch (type_class)
         {
+        default:
+            break;
         case clang::Type::Typedef:
             return ClangASTContext::IsFunctionPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
 
@@ -4225,6 +4260,8 @@ ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type,
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    default:
+        break;
     case clang::Type::ConstantArray:
         if (member_type)
             *member_type = cast<ConstantArrayType>(qual_type)->getElementType().getAsOpaquePtr();
@@ -4270,6 +4307,7 @@ ClangASTContext::CreateTypedefType (const char *name, clang_type_t clang_type, D
             decl_ctx = ast->getTranslationUnitDecl();
         TypedefDecl *decl = TypedefDecl::Create (*ast,
                                                  decl_ctx,
+                                                 SourceLocation(),
                                                  SourceLocation(),
                                                  name ? &identifier_table->get(name) : NULL, // Identifier
                                                  ast->CreateTypeSourceInfo(qual_type));
