@@ -854,8 +854,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VTRN:          return "ARMISD::VTRN";
   case ARMISD::VTBL1:         return "ARMISD::VTBL1";
   case ARMISD::VTBL2:         return "ARMISD::VTBL2";
-  case ARMISD::VTBL3:         return "ARMISD::VTBL3";
-  case ARMISD::VTBL4:         return "ARMISD::VTBL4";
   case ARMISD::VMULLs:        return "ARMISD::VMULLs";
   case ARMISD::VMULLu:        return "ARMISD::VMULLu";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
@@ -4076,10 +4074,10 @@ static SDValue LowerVECTOR_SHUFFLEv8i8(SDValue Op,
     return DAG.getNode(ARMISD::VTBL1, DL, MVT::v8i8, V1,
                        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
                                    &VTBLMask[0], 8));
-  else
-    return DAG.getNode(ARMISD::VTBL2, DL, MVT::v8i8, V1, V2, 
-                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
-                                   &VTBLMask[0], 8));
+
+  return DAG.getNode(ARMISD::VTBL2, DL, MVT::v8i8, V1, V2, 
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i8,
+                                 &VTBLMask[0], 8));
 }
 
 static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
