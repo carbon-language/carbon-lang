@@ -608,6 +608,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     CheckUnreachable(S, AC);
   
   if (Diags.getDiagnosticLevel(diag::warn_uninit_var, D->getLocStart())
+      != Diagnostic::Ignored ||
+      Diags.getDiagnosticLevel(diag::warn_maybe_uninit_var, D->getLocStart())
       != Diagnostic::Ignored) {
     ASTContext &ctx = D->getASTContext();
     llvm::OwningPtr<CFG> tmpCFG;

@@ -198,6 +198,9 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
     return 0;
 
   const CFGStmt *cstmt = block->front().getAs<CFGStmt>();
+  if (!cstmt)
+    return 0;
+
   BinaryOperator *b = llvm::dyn_cast_or_null<BinaryOperator>(cstmt->getStmt());
   
   if (!b || !b->isLogicalOp())

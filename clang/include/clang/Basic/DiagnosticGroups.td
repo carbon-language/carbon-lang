@@ -136,7 +136,7 @@ def Switch         : DiagGroup<"switch", [SwitchEnum]>;
 def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
-
+def Uninitialized  : DiagGroup<"uninitialized">;
 def UninitializedMaybe : DiagGroup<"uninitialized-maybe">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def UnknownAttributes : DiagGroup<"unknown-attributes">;
