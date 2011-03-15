@@ -209,3 +209,26 @@ namespace test8 {
     return pmf();
   }
 }
+
+namespace test9 {
+  struct A {
+    void foo();
+  };
+  struct B : A {
+    void foo();
+  };
+
+  typedef void (A::*fooptr)();
+
+  struct S {
+    fooptr p;
+  };
+
+  // CHECK:    define void @_ZN5test94testEv(
+  // CHECK:      alloca i32
+  // CHECK-NEXT: ret void
+  void test() {
+    int x;
+    static S array[] = { (fooptr) &B::foo };
+  }
+}

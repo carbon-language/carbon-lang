@@ -483,18 +483,17 @@ public:
   }
     
   llvm::Constant *VisitCastExpr(CastExpr* E) {
+    Expr *subExpr = E->getSubExpr();
+    llvm::Constant *C = CGM.EmitConstantExpr(subExpr, subExpr->getType(), CGF);
+    if (!C) return 0;
+
+    const llvm::Type *destType = ConvertType(E->getType());
+
     switch (E->getCastKind()) {
     case CK_ToUnion: {
       // GCC cast to union extension
       assert(E->getType()->isUnionType() &&
              "Destination type is not union type!");
-      const llvm::Type *Ty = ConvertType(E->getType());
-      Expr *SubExpr = E->getSubExpr();
-
-      llvm::Constant *C =
-        CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
-      if (!C)
-        return 0;
 
       // Build a struct with the union sub-element as the first member,
       // and padded to the appropriate size
@@ -503,7 +502,7 @@ public:
       Elts.push_back(C);
       Types.push_back(C->getType());
       unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
-      unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
+      unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(destType);
 
       assert(CurSize <= TotalSize && "Union size mismatch!");
       if (unsigned NumPadBytes = TotalSize - CurSize) {
@@ -523,39 +522,101 @@ public:
       const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
       return CGM.getCXXABI().EmitNullMemberPointer(MPT);
     }
-      
-    case CK_BaseToDerivedMemberPointer: {
-      Expr *SubExpr = E->getSubExpr();
-      llvm::Constant *C = 
-        CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
-      if (!C) return 0;
 
+    case CK_DerivedToBaseMemberPointer:
+    case CK_BaseToDerivedMemberPointer:
       return CGM.getCXXABI().EmitMemberPointerConversion(C, E);
-    }
 
-    case CK_BitCast: 
-      // This must be a member function pointer cast.
-      return Visit(E->getSubExpr());
+    case CK_LValueToRValue:
+    case CK_NoOp:
+      return C;
 
-    default: {
-      // FIXME: This should be handled by the CK_NoOp cast kind.
-      // Explicit and implicit no-op casts
-      QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
-      if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy))
-        return Visit(E->getSubExpr());
+    case CK_AnyPointerToObjCPointerCast:
+    case CK_AnyPointerToBlockPointerCast:
+    case CK_LValueBitCast:
+    case CK_BitCast:
+      if (C->getType() == destType) return C;
+      return llvm::ConstantExpr::getBitCast(C, destType);
 
-      // Handle integer->integer casts for address-of-label differences.
-      if (Ty->isIntegerType() && SubTy->isIntegerType() &&
-          CGF) {
-        llvm::Value *Src = Visit(E->getSubExpr());
-        if (Src == 0) return 0;
-        
-        // Use EmitScalarConversion to perform the conversion.
-        return cast<llvm::Constant>(CGF->EmitScalarConversion(Src, SubTy, Ty));
-      }
-      
+    case CK_Dependent: llvm_unreachable("saw dependent cast!");
+
+    // These will never be supported.
+    case CK_ObjCObjectLValueCast:
+    case CK_GetObjCProperty:
+    case CK_ToVoid:
+    case CK_Dynamic:
       return 0;
+
+    // These might need to be supported for constexpr.
+    case CK_UserDefinedConversion:
+    case CK_ConstructorConversion:
+      return 0;
+
+    // These should eventually be supported.
+    case CK_ArrayToPointerDecay:
+    case CK_FunctionToPointerDecay:
+    case CK_BaseToDerived:
+    case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+    case CK_MemberPointerToBoolean:
+    case CK_VectorSplat:
+    case CK_FloatingRealToComplex:
+    case CK_FloatingComplexToReal:
+    case CK_FloatingComplexToBoolean:
+    case CK_FloatingComplexCast:
+    case CK_FloatingComplexToIntegralComplex:
+    case CK_IntegralRealToComplex:
+    case CK_IntegralComplexToReal:
+    case CK_IntegralComplexToBoolean:
+    case CK_IntegralComplexCast:
+    case CK_IntegralComplexToFloatingComplex:
+      return 0;
+
+    case CK_PointerToIntegral:
+      if (!E->getType()->isBooleanType())
+        return llvm::ConstantExpr::getPtrToInt(C, destType);
+      // fallthrough
+
+    case CK_PointerToBoolean:
+      return llvm::ConstantExpr::getICmp(llvm::CmpInst::ICMP_EQ, C,
+        llvm::ConstantPointerNull::get(cast<llvm::PointerType>(C->getType())));
+
+    case CK_NullToPointer:
+      return llvm::ConstantPointerNull::get(cast<llvm::PointerType>(destType));
+
+    case CK_IntegralCast: {
+      bool isSigned = subExpr->getType()->isSignedIntegerType();
+      return llvm::ConstantExpr::getIntegerCast(C, destType, isSigned);
     }
+
+    case CK_IntegralToPointer: {
+      bool isSigned = subExpr->getType()->isSignedIntegerType();
+      C = llvm::ConstantExpr::getIntegerCast(C, CGM.IntPtrTy, isSigned);
+      return llvm::ConstantExpr::getIntToPtr(C, destType);
+    }
+
+    case CK_IntegralToBoolean:
+      return llvm::ConstantExpr::getICmp(llvm::CmpInst::ICMP_EQ, C,
+                             llvm::Constant::getNullValue(C->getType()));
+
+    case CK_IntegralToFloating:
+      if (subExpr->getType()->isSignedIntegerType())
+        return llvm::ConstantExpr::getSIToFP(C, destType);
+      else
+        return llvm::ConstantExpr::getUIToFP(C, destType);
+
+    case CK_FloatingToIntegral:
+      if (E->getType()->isSignedIntegerType())
+        return llvm::ConstantExpr::getFPToSI(C, destType);
+      else
+        return llvm::ConstantExpr::getFPToUI(C, destType);
+
+    case CK_FloatingToBoolean:
+      return llvm::ConstantExpr::getFCmp(llvm::CmpInst::FCMP_UNE, C,
+                             llvm::Constant::getNullValue(C->getType()));
+
+    case CK_FloatingCast:
+      return llvm::ConstantExpr::getFPCast(C, destType);
     }
   }
 
