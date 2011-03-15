@@ -19,11 +19,11 @@ bb:                                               ; preds = %bb.nph, %bb1
   %i.01 = phi i32 [ %16, %bb1 ], [ 0, %bb.nph ]   ; <i32> [#uses=5]
 
 ; CHECK: %1 = sext i32 %i.01 to i64
-; CHECK: -->  {0,+,2}<%bb>
+; CHECK: -->  {0,+,2}<nuw><nsw><%bb>
   %1 = sext i32 %i.01 to i64                      ; <i64> [#uses=1]
 
 ; CHECK: %2 = getelementptr inbounds double* %d, i64 %1
-; CHECK: -->  {%d,+,16}<%bb>
+; CHECK: -->  {%d,+,16}<nsw><%bb>
   %2 = getelementptr inbounds double* %d, i64 %1  ; <double*> [#uses=1]
 
   %3 = load double* %2, align 8                   ; <double> [#uses=1]
@@ -33,11 +33,11 @@ bb:                                               ; preds = %bb.nph, %bb1
   %7 = or i32 %i.01, 1                            ; <i32> [#uses=1]
 
 ; CHECK: %8 = sext i32 %7 to i64
-; CHECK: -->  {1,+,2}<%bb>
+; CHECK: -->  {1,+,2}<nuw><nsw><%bb>
   %8 = sext i32 %7 to i64                         ; <i64> [#uses=1]
 
 ; CHECK: %9 = getelementptr inbounds double* %q, i64 %8
-; CHECK: {(8 + %q),+,16}<%bb>
+; CHECK: {(8 + %q),+,16}<nsw><%bb>
   %9 = getelementptr inbounds double* %q, i64 %8  ; <double*> [#uses=1]
 
 ; Artificially repeat the above three instructions, this time using
@@ -45,11 +45,11 @@ bb:                                               ; preds = %bb.nph, %bb1
   %t7 = add nsw i32 %i.01, 1                            ; <i32> [#uses=1]
 
 ; CHECK: %t8 = sext i32 %t7 to i64
-; CHECK: -->  {1,+,2}<%bb>
+; CHECK: -->  {1,+,2}<nuw><nsw><%bb>
   %t8 = sext i32 %t7 to i64                         ; <i64> [#uses=1]
 
 ; CHECK: %t9 = getelementptr inbounds double* %q, i64 %t8
-; CHECK: {(8 + %q),+,16}<%bb>
+; CHECK: {(8 + %q),+,16}<nsw><%bb>
   %t9 = getelementptr inbounds double* %q, i64 %t8  ; <double*> [#uses=1]
 
   %10 = load double* %9, align 8                  ; <double> [#uses=1]

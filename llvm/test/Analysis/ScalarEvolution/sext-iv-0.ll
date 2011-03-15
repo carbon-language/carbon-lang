@@ -1,5 +1,4 @@
-; RUN: opt < %s -scalar-evolution -analyze \
-; RUN:  | grep { -->  \{-128,+,1\}<%bb1>		Exits: 127} | count 5
+; RUN: opt < %s -scalar-evolution -analyze | FileCheck %s
 
 ; Convert (sext {-128,+,1}) to {sext(-128),+,sext(1)}, since the
 ; trip count is within range where this is safe.
@@ -13,9 +12,17 @@ bb1.thread:
 
 bb1:		; preds = %bb1, %bb1.thread
 	%i.0.reg2mem.0 = phi i64 [ -128, %bb1.thread ], [ %8, %bb1 ]		; <i64> [#uses=3]
+; CHECK: %i.0.reg2mem.0
+; CHECK-NEXT: -->  {-128,+,1}<%bb1>		Exits: 127
 	%0 = trunc i64 %i.0.reg2mem.0 to i8		; <i8> [#uses=1]
+; CHECK: %0
+; CHECK-NEXT: -->  {-128,+,1}<%bb1>		Exits: 127
 	%1 = trunc i64 %i.0.reg2mem.0 to i9		; <i8> [#uses=1]
+; CHECK: %1
+; CHECK-NEXT: -->  {-128,+,1}<%bb1>		Exits: 127
 	%2 = sext i9 %1 to i64		; <i64> [#uses=1]
+; CHECK: %2
+; CHECK-NEXT: -->  {-128,+,1}<nsw><%bb1>	Exits: 127
 	%3 = getelementptr double* %x, i64 %2		; <double*> [#uses=1]
 	%4 = load double* %3, align 8		; <double> [#uses=1]
 	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]

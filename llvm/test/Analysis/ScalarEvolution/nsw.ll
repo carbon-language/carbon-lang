@@ -35,7 +35,7 @@ bb:		; preds = %bb1, %bb.nph
 bb1:		; preds = %bb
 	%phitmp = sext i32 %tmp8 to i64		; <i64> [#uses=1]
 ; CHECK: %phitmp
-; CHECK-NEXT: -->  {1,+,1}<%bb>
+; CHECK-NEXT: -->  {1,+,1}<nuw><nsw><%bb>
 	%tmp9 = getelementptr double* %p, i64 %phitmp		; <double*> [#uses=1]
 ; CHECK: %tmp9
 ; CHECK-NEXT:  -->  {(8 + %p),+,8}<%bb>
@@ -62,11 +62,11 @@ for.body.lr.ph.i.i:                               ; preds = %entry
 for.body.i.i:                                     ; preds = %for.body.i.i, %for.body.lr.ph.i.i
   %__first.addr.02.i.i = phi i32* [ %begin, %for.body.lr.ph.i.i ], [ %ptrincdec.i.i, %for.body.i.i ]
 ; CHECK: %__first.addr.02.i.i
-; CHECK-NEXT: -->  {%begin,+,4}<nsw><%for.body.i.i>	
+; CHECK-NEXT: -->  {%begin,+,4}<nw><%for.body.i.i>
   store i32 0, i32* %__first.addr.02.i.i, align 4
   %ptrincdec.i.i = getelementptr inbounds i32* %__first.addr.02.i.i, i64 1
 ; CHECK: %ptrincdec.i.i
-; CHECK-NEXT: -->  {(4 + %begin),+,4}<nsw><%for.body.i.i>
+; CHECK-NEXT: -->  {(4 + %begin),+,4}<nw><%for.body.i.i>
   %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
   br i1 %cmp.i.i, label %for.cond.for.end_crit_edge.i.i, label %for.body.i.i
 
@@ -88,7 +88,7 @@ for.body.i.i:                                     ; preds = %entry, %for.body.i.
 ; CHECK: %indvar.i.i
 ; CHECK: {0,+,1}<nuw><nsw><%for.body.i.i>
   %tmp = add nsw i64 %indvar.i.i, 1
-; CHECK: %tmp = 
+; CHECK: %tmp =
 ; CHECK: {1,+,1}<nuw><nsw><%for.body.i.i>
   %ptrincdec.i.i = getelementptr inbounds i32* %begin, i64 %tmp
 ; CHECK: %ptrincdec.i.i =
@@ -99,8 +99,8 @@ for.body.i.i:                                     ; preds = %entry, %for.body.i.
   store i32 0, i32* %__first.addr.08.i.i, align 4
   %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
   br i1 %cmp.i.i, label %_ZSt4fillIPiiEvT_S1_RKT0_.exit, label %for.body.i.i
-; CHECK: Loop %for.body.i.i: Unpredictable backedge-taken count. 
-; CHECK: Loop %for.body.i.i: Unpredictable max backedge-taken count.
+; CHECK: Loop %for.body.i.i: backedge-taken count is ((-4 + (-1 * %begin) + %end) /u 4)
+; CHECK: Loop %for.body.i.i: max backedge-taken count is ((-4 + (-1 * %begin) + %end) /u 4)
 _ZSt4fillIPiiEvT_S1_RKT0_.exit:                   ; preds = %for.body.i.i, %entry
   ret void
 }
