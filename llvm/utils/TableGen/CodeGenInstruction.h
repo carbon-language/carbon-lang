@@ -215,6 +215,7 @@ namespace llvm {
     bool isIndirectBranch;
     bool isCompare;
     bool isMoveImm;
+    bool isBitcast;
     bool isBarrier;
     bool isCall;
     bool canFoldAsLoad;

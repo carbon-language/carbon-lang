@@ -288,6 +288,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R) : TheDef(R), Operands(R) {
   isIndirectBranch = R->getValueAsBit("isIndirectBranch");
   isCompare    = R->getValueAsBit("isCompare");
   isMoveImm    = R->getValueAsBit("isMoveImm");
+  isBitcast    = R->getValueAsBit("isBitcast");
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
   canFoldAsLoad = R->getValueAsBit("canFoldAsLoad");

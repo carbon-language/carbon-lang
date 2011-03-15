@@ -105,6 +105,7 @@ namespace TID {
     IndirectBranch,
     Compare,
     MoveImm,
+    Bitcast,
     DelaySlot,
     FoldableAsLoad,
     MayLoad,
@@ -357,6 +358,12 @@ public:
   /// (including conditional moves) instruction. 
   bool isMoveImmediate() const {
     return Flags & (1 << TID::MoveImm);
+  }
+
+  /// isBitcast - Return true if this instruction is a bitcast instruction.
+  ///
+  bool isBitcast() const {
+    return Flags & (1 << TID::Bitcast);
   }
   
   /// isNotDuplicable - Return true if this instruction cannot be safely

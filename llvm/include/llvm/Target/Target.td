@@ -200,6 +200,7 @@ class Instruction {
   bit isIndirectBranch = 0; // Is this instruction an indirect branch?
   bit isCompare    = 0;     // Is this instruction a comparison instruction?
   bit isMoveImm    = 0;     // Is this instruction a move immediate instruction?
+  bit isBitcast    = 0;     // Is this instruction a bitcast instruction?
   bit isBarrier    = 0;     // Can control flow fall through this instruction?
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit canFoldAsLoad = 0;    // Can this be folded as a simple memory operand?

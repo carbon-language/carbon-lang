@@ -2288,13 +2288,14 @@ class InstAnalyzer {
   const CodeGenDAGPatterns &CDP;
   bool &mayStore;
   bool &mayLoad;
+  bool &IsBitcast;
   bool &HasSideEffects;
   bool &IsVariadic;
 public:
   InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &maystore, bool &mayload, bool &hse, bool &isv)
-    : CDP(cdp), mayStore(maystore), mayLoad(mayload), HasSideEffects(hse),
-      IsVariadic(isv) {
+               bool &maystore, bool &mayload, bool &isbc, bool &hse, bool &isv)
+    : CDP(cdp), mayStore(maystore), mayLoad(mayload), IsBitcast(isbc),
+      HasSideEffects(hse), IsVariadic(isv) {
   }
 
   /// Analyze - Analyze the specified instruction, returning true if the
@@ -2313,6 +2314,29 @@ public:
   }
 
 private:
+  bool IsNodeBitcast(const TreePatternNode *N) const {
+    if (HasSideEffects || mayLoad || mayStore || IsVariadic)
+      return false;
+
+    if (N->getNumChildren() != 2)
+      return false;
+
+    const TreePatternNode *N0 = N->getChild(0);
+    if (!N0->isLeaf() || !dynamic_cast<DefInit*>(N0->getLeafValue()))
+      return false;
+
+    const TreePatternNode *N1 = N->getChild(1);
+    if (N1->isLeaf())
+      return false;
+    if (N1->getNumChildren() != 1 || !N1->getChild(0)->isLeaf())
+      return false;
+
+    const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N1->getOperator());
+    if (OpInfo.getNumResults() != 1 || OpInfo.getNumOperands() != 1)
+      return false;
+    return OpInfo.getEnumName() == "ISD::BITCAST";
+  }
+
   void AnalyzeNode(const TreePatternNode *N) {
     if (N->isLeaf()) {
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
@@ -2333,8 +2357,10 @@ private:
       AnalyzeNode(N->getChild(i));
 
     // Ignore set nodes, which are not SDNodes.
-    if (N->getOperator()->getName() == "set")
+    if (N->getOperator()->getName() == "set") {
+      IsBitcast = IsNodeBitcast(N);
       return;
+    }
 
     // Get information about the SDNode for the operator.
     const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
@@ -2363,12 +2389,13 @@ private:
 
 static void InferFromPattern(const CodeGenInstruction &Inst,
                              bool &MayStore, bool &MayLoad,
+                             bool &IsBitcast,
                              bool &HasSideEffects, bool &IsVariadic,
                              const CodeGenDAGPatterns &CDP) {
-  MayStore = MayLoad = HasSideEffects = IsVariadic = false;
+  MayStore = MayLoad = IsBitcast = HasSideEffects = IsVariadic = false;
 
   bool HadPattern =
-    InstAnalyzer(CDP, MayStore, MayLoad, HasSideEffects, IsVariadic)
+    InstAnalyzer(CDP, MayStore, MayLoad, IsBitcast, HasSideEffects, IsVariadic)
     .Analyze(Inst.TheDef);
 
   // InstAnalyzer only correctly analyzes mayStore/mayLoad so far.
@@ -2714,11 +2741,12 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
     CodeGenInstruction &InstInfo =
       const_cast<CodeGenInstruction &>(*Instructions[i]);
     // Determine properties of the instruction from its pattern.
-    bool MayStore, MayLoad, HasSideEffects, IsVariadic;
-    InferFromPattern(InstInfo, MayStore, MayLoad, HasSideEffects, IsVariadic,
-                     *this);
+    bool MayStore, MayLoad, IsBitcast, HasSideEffects, IsVariadic;
+    InferFromPattern(InstInfo, MayStore, MayLoad, IsBitcast,
+                     HasSideEffects, IsVariadic, *this);
     InstInfo.mayStore = MayStore;
     InstInfo.mayLoad = MayLoad;
+    InstInfo.isBitcast = IsBitcast;
     InstInfo.hasSideEffects = HasSideEffects;
     InstInfo.Operands.isVariadic = IsVariadic;
   }
