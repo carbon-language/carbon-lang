@@ -269,7 +269,7 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
 
   // Remove PHI nodes that did not have any uses rewritten.
   for (unsigned i = 0, e = AddedPHIs.size(); i != e; ++i) {
-    if (!AddedPHIs[i]->hasNUsesOrMore(1))
+    if (AddedPHIs[i]->use_empty())
       AddedPHIs[i]->eraseFromParent();
   }
   
