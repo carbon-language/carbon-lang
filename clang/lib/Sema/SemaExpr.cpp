@@ -3905,8 +3905,9 @@ Sema::LookupMemberExpr(LookupResult &R, Expr *&BaseExpr,
                                                          MemberLoc, BaseExpr));
         }
       }
-
-      if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
+      // Use of id.member can only be for a property reference. Do not
+      // use the 'id' redefinition in this case.
+      if (IsArrow && ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
         return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,
                                 ObjCImpDecl, HasTemplateArgs);
 
