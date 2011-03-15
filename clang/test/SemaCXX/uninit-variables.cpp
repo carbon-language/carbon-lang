@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wuninitialized-experimental -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only %s -verify
 
 int test1_aux(int &x);
 int test1() {
