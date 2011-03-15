@@ -274,10 +274,6 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   // Create a new value.
   VNInfo *VNI = LI->getNextValue(Idx, 0, LIS.getVNInfoAllocator());
 
-  // Preserve the PHIDef bit.
-  if (ParentVNI->isPHIDef() && Idx == ParentVNI->def)
-    VNI->setIsPHIDef(true);
-
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator, bool> InsP =
     Values.insert(std::make_pair(std::make_pair(RegIdx, ParentVNI->id), VNI));
@@ -845,7 +841,10 @@ void SplitEditor::finish() {
     if (ParentVNI->isUnused())
       continue;
     unsigned RegIdx = RegAssign.lookup(ParentVNI->def);
-    defValue(RegIdx, ParentVNI, ParentVNI->def);
+    VNInfo *VNI = defValue(RegIdx, ParentVNI, ParentVNI->def);
+    VNI->setIsPHIDef(ParentVNI->isPHIDef());
+    VNI->setCopy(ParentVNI->getCopy());
+
     // Mark rematted values as complex everywhere to force liveness computation.
     // The new live ranges may be truncated.
     if (Edit->didRematerialize(ParentVNI))
