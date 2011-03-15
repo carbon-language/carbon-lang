@@ -540,7 +540,6 @@ ModuleList::FindSharedModules
 )
 {
     ModuleList &shared_module_list = GetSharedModuleList ();
-    Mutex::Locker locker(shared_module_list.m_modules_mutex);
     return shared_module_list.FindModules (&in_file_spec, &arch, uuid_ptr, object_name_ptr, matching_module_list);
 }
 
@@ -554,10 +553,12 @@ ModuleList::GetSharedModule
     off_t object_offset,
     ModuleSP &module_sp,
     ModuleSP *old_module_sp_ptr,
-    bool *did_create_ptr
+    bool *did_create_ptr,
+    bool always_create
 )
 {
     ModuleList &shared_module_list = GetSharedModuleList ();
+    Mutex::Locker locker(shared_module_list.m_modules_mutex);
     char path[PATH_MAX];
     char uuid_cstr[64];
 
@@ -579,31 +580,43 @@ ModuleList::GetSharedModule
         // Make sure no one else can try and get or create a module while this
         // function is actively working on it by doing an extra lock on the
         // global mutex list.
-        ModuleList matching_module_list;
-        Mutex::Locker locker(shared_module_list.m_modules_mutex);
-        if (shared_module_list.FindModules (&in_file_spec, &arch, uuid_ptr, object_name_ptr, matching_module_list) > 0)
+        if (always_create == false)
         {
-            module_sp = matching_module_list.GetModuleAtIndex(0);
-
-            // If we didn't have a UUID in mind when looking for the object file,
-            // then we should make sure the modification time hasn't changed!
-            if (uuid_ptr == NULL)
+            ModuleList matching_module_list;
+            const size_t num_matching_modules = shared_module_list.FindModules (&in_file_spec, &arch, NULL, object_name_ptr, matching_module_list);
+            if (num_matching_modules > 0)
             {
-                TimeValue file_spec_mod_time(in_file_spec.GetModificationTime());
-                if (file_spec_mod_time.IsValid())
+                for (uint32_t module_idx = 0; module_idx < num_matching_modules; ++module_idx)
                 {
-                    if (file_spec_mod_time != module_sp->GetModificationTime())
+                    module_sp = matching_module_list.GetModuleAtIndex(module_idx);
+                    if (uuid_ptr && uuid_ptr->IsValid())
                     {
-                        if (old_module_sp_ptr)
-                            *old_module_sp_ptr = module_sp;
-                        shared_module_list.Remove (module_sp);
-                        module_sp.reset();
+                        // We found the module we were looking for.
+                        if (module_sp->GetUUID() == *uuid_ptr)
+                            return error;
                     }
+                    else
+                    {
+                        // If we didn't have a UUID in mind when looking for the object file,
+                        // then we should make sure the modification time hasn't changed!
+                        TimeValue file_spec_mod_time(in_file_spec.GetModificationTime());
+                        if (file_spec_mod_time.IsValid())
+                        {
+                            if (file_spec_mod_time == module_sp->GetModificationTime())
+                                return error;
+                        }
+                    }
+                    if (old_module_sp_ptr && !old_module_sp_ptr->get())
+                        *old_module_sp_ptr = module_sp;
+                    shared_module_list.Remove (module_sp);
+                    module_sp.reset();
                 }
             }
         }
 
-        if (module_sp.get() == NULL)
+        if (module_sp)
+            return error;
+        else
         {
             module_sp.reset (new Module (in_file_spec, arch, object_name_ptr, object_offset));
             if (module_sp)
@@ -666,7 +679,6 @@ ModuleList::GetSharedModule
         // Make sure no one else can try and get or create a module while this
         // function is actively working on it by doing an extra lock on the
         // global mutex list.
-        Mutex::Locker locker(shared_module_list.m_modules_mutex);
         ModuleList matching_module_list;
         if (shared_module_list.FindModules (&file_spec, &arch, uuid_ptr, object_name_ptr, matching_module_list) > 0)
         {
@@ -729,4 +741,11 @@ ModuleList::GetSharedModule
 
     return error;
 }
+
+bool
+ModuleList::RemoveSharedModule (lldb::ModuleSP &module_sp)
+{
+    return GetSharedModuleList ().Remove (module_sp);
+}
+
 

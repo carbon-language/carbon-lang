@@ -373,7 +373,11 @@ public:
                      off_t object_offset,
                      lldb::ModuleSP &module_sp,
                      lldb::ModuleSP *old_module_sp_ptr,
-                     bool *did_create_ptr);
+                     bool *did_create_ptr,
+                     bool always_create = false);
+
+    static bool
+    RemoveSharedModule (lldb::ModuleSP &module_sp);
 
     static size_t
     FindSharedModules (const FileSpec& in_file_spec,

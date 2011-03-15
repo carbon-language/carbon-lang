@@ -165,18 +165,11 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
         if (oso_symbol)
         {
             FileSpec oso_file_spec(oso_symbol->GetMangled().GetName().AsCString(), true);
-#define SYMBOL_FILE_DWARF_DEBUG_MODULES 1
-#if defined (SYMBOL_FILE_DWARF_DEBUG_MODULES)
-            // Normally we don't want the .o files we open added to the shared
-            // module list. This is because we will add our own section 
-            // remappning to each .o file, and if the executable changes, yet 
-            // the .o file does not change, we can't have the old remapped 
-            // sections in the .o file since they can be out of date. But when
-            // debugging issues in the debug map + DWARF in .o files, it is nice
-            // to be able to use the "image XXX" commands to look at the symbol
-            // tables and sections in the .o files, so the SYMBOL_FILE_DWARF_DEBUG_MODULES
-            // can be used when debugging issues, but it shouldn't be left in
-            // for normal debugging.
+            // Don't allow cached .o files since we dress up each .o file with
+            // new sections. We want them to be in the module list so we can 
+            // always find a shared pointer to the module (in Module::GetSP()),
+            // but just don't share them.
+            const bool always_create = true;
             ModuleList::GetSharedModule (oso_file_spec,
                                          m_obj_file->GetModule()->GetArchitecture(),
                                          NULL,  // lldb_private::UUID pointer
@@ -184,10 +177,8 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
                                          0,     // object offset
                                          comp_unit_info->oso_module_sp,
                                          NULL,
-                                         NULL);
-#else
-            comp_unit_info->oso_module_sp.reset(new Module (oso_file_spec, m_obj_file->GetModule()->GetArchitecture()));
-#endif
+                                         NULL,
+                                         always_create);
         }
     }
     return comp_unit_info->oso_module_sp.get();
