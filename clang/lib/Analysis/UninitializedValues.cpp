@@ -32,14 +32,14 @@ static bool isTrackedVar(const VarDecl *vd, const DeclContext *dc) {
 }
 
 //------------------------------------------------------------------------====//
-// DeclToBit: a mapping from Decls we track to bitvector indices.
+// DeclToIndex: a mapping from Decls we track to value indices.
 //====------------------------------------------------------------------------//
 
 namespace {
-class DeclToBit {
+class DeclToIndex {
   llvm::DenseMap<const VarDecl *, unsigned> map;
 public:
-  DeclToBit() {}
+  DeclToIndex() {}
   
   /// Compute the actual mapping from declarations to bits.
   void computeMap(const DeclContext &dc);
@@ -48,11 +48,11 @@ public:
   unsigned size() const { return map.size(); }
   
   /// Returns the bit vector index for a given declaration.
-  llvm::Optional<unsigned> getBitVectorIndex(const VarDecl *d);
+  llvm::Optional<unsigned> getValueIndex(const VarDecl *d);
 };
 }
 
-void DeclToBit::computeMap(const DeclContext &dc) {
+void DeclToIndex::computeMap(const DeclContext &dc) {
   unsigned count = 0;
   DeclContext::specific_decl_iterator<VarDecl> I(dc.decls_begin()),
                                                E(dc.decls_end());
@@ -63,7 +63,7 @@ void DeclToBit::computeMap(const DeclContext &dc) {
   }
 }
 
-llvm::Optional<unsigned> DeclToBit::getBitVectorIndex(const VarDecl *d) {
+llvm::Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) {
   llvm::DenseMap<const VarDecl *, unsigned>::iterator I = map.find(d);
   if (I == map.end())
     return llvm::Optional<unsigned>();
@@ -74,38 +74,39 @@ llvm::Optional<unsigned> DeclToBit::getBitVectorIndex(const VarDecl *d) {
 // CFGBlockValues: dataflow values for CFG blocks.
 //====------------------------------------------------------------------------//
 
-typedef std::pair<llvm::BitVector *, llvm::BitVector *> BVPair;
+typedef llvm::BitVector ValueVector;
+typedef std::pair<ValueVector *, ValueVector *> BVPair;
 
 namespace {
 class CFGBlockValues {
   const CFG &cfg;
   BVPair *vals;
-  llvm::BitVector scratch;
-  DeclToBit declToBit;
+  ValueVector scratch;
+  DeclToIndex DeclToIndex;
   
-  llvm::BitVector &lazyCreate(llvm::BitVector *&bv);
+  ValueVector &lazyCreate(ValueVector *&bv);
 public:
   CFGBlockValues(const CFG &cfg);
   ~CFGBlockValues();
   
   void computeSetOfDeclarations(const DeclContext &dc);  
-  llvm::BitVector &getBitVector(const CFGBlock *block,
+  ValueVector &getValueVector(const CFGBlock *block,
                                 const CFGBlock *dstBlock);
 
-  BVPair &getBitVectors(const CFGBlock *block, bool shouldLazyCreate);
+  BVPair &getValueVectors(const CFGBlock *block, bool shouldLazyCreate);
 
-  void mergeIntoScratch(llvm::BitVector const &source, bool isFirst);
-  bool updateBitVectorWithScratch(const CFGBlock *block);
-  bool updateBitVectors(const CFGBlock *block, const BVPair &newVals);
+  void mergeIntoScratch(ValueVector const &source, bool isFirst);
+  bool updateValueVectorWithScratch(const CFGBlock *block);
+  bool updateValueVectors(const CFGBlock *block, const BVPair &newVals);
   
   bool hasNoDeclarations() const {
-    return declToBit.size() == 0;
+    return DeclToIndex.size() == 0;
   }
   
   void resetScratch();
-  llvm::BitVector &getScratch() { return scratch; }
+  ValueVector &getScratch() { return scratch; }
   
-  llvm::BitVector::reference operator[](const VarDecl *vd);
+  ValueVector::reference operator[](const VarDecl *vd);
 };  
 }
 
@@ -113,7 +114,7 @@ CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {
   unsigned n = cfg.getNumBlockIDs();
   if (!n)
     return;
-  vals = new std::pair<llvm::BitVector*, llvm::BitVector*>[n];
+  vals = new std::pair<ValueVector*, ValueVector*>[n];
   memset(vals, 0, sizeof(*vals) * n);
 }
 
@@ -129,13 +130,13 @@ CFGBlockValues::~CFGBlockValues() {
 }
 
 void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
-  declToBit.computeMap(dc);
-  scratch.resize(declToBit.size());
+  DeclToIndex.computeMap(dc);
+  scratch.resize(DeclToIndex.size());
 }
 
-llvm::BitVector &CFGBlockValues::lazyCreate(llvm::BitVector *&bv) {
+ValueVector &CFGBlockValues::lazyCreate(ValueVector *&bv) {
   if (!bv)
-    bv = new llvm::BitVector(declToBit.size());
+    bv = new ValueVector(DeclToIndex.size());
   return *bv;
 }
 
@@ -160,8 +161,8 @@ static BinaryOperator *getLogicalOperatorInChain(const CFGBlock *block) {
   return 0;
 }
 
-llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
-                                              const CFGBlock *dstBlock) {
+ValueVector &CFGBlockValues::getValueVector(const CFGBlock *block,
+                                            const CFGBlock *dstBlock) {
   unsigned idx = block->getBlockID();
   if (dstBlock && getLogicalOperatorInChain(block)) {
     if (*block->succ_begin() == dstBlock)
@@ -174,8 +175,8 @@ llvm::BitVector &CFGBlockValues::getBitVector(const CFGBlock *block,
   return lazyCreate(vals[idx].first);
 }
 
-BVPair &CFGBlockValues::getBitVectors(const clang::CFGBlock *block,
-                                      bool shouldLazyCreate) {
+BVPair &CFGBlockValues::getValueVectors(const clang::CFGBlock *block,
+                                        bool shouldLazyCreate) {
   unsigned idx = block->getBlockID();
   lazyCreate(vals[idx].first);
   if (shouldLazyCreate)
@@ -183,7 +184,7 @@ BVPair &CFGBlockValues::getBitVectors(const clang::CFGBlock *block,
   return vals[idx];
 }
 
-void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
+void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
                                       bool isFirst) {
   if (isFirst)
     scratch = source;
@@ -191,7 +192,7 @@ void CFGBlockValues::mergeIntoScratch(llvm::BitVector const &source,
     scratch |= source;  
 }
 #if 0
-static void printVector(const CFGBlock *block, llvm::BitVector &bv,
+static void printVector(const CFGBlock *block, ValueVector &bv,
                         unsigned num) {
   
   llvm::errs() << block->getBlockID() << " :";
@@ -202,8 +203,8 @@ static void printVector(const CFGBlock *block, llvm::BitVector &bv,
 }
 #endif
 
-bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
-  llvm::BitVector &dst = getBitVector(block, 0);
+bool CFGBlockValues::updateValueVectorWithScratch(const CFGBlock *block) {
+  ValueVector &dst = getValueVector(block, 0);
   bool changed = (dst != scratch);
   if (changed)
     dst = scratch;
@@ -213,9 +214,9 @@ bool CFGBlockValues::updateBitVectorWithScratch(const CFGBlock *block) {
   return changed;
 }
 
-bool CFGBlockValues::updateBitVectors(const CFGBlock *block,
+bool CFGBlockValues::updateValueVectors(const CFGBlock *block,
                                       const BVPair &newVals) {
-  BVPair &vals = getBitVectors(block, true);
+  BVPair &vals = getValueVectors(block, true);
   bool changed = *newVals.first != *vals.first ||
                  *newVals.second != *vals.second;
   *vals.first = *newVals.first;
@@ -231,8 +232,8 @@ void CFGBlockValues::resetScratch() {
   scratch.reset();
 }
 
-llvm::BitVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
-  const llvm::Optional<unsigned> &idx = declToBit.getBitVectorIndex(vd);
+ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
+  const llvm::Optional<unsigned> &idx = DeclToIndex.getValueIndex(vd);
   assert(idx.hasValue());
   return scratch[idx.getValue()];
 }
@@ -244,7 +245,7 @@ llvm::BitVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
 namespace {
 class DataflowWorklist {
   llvm::SmallVector<const CFGBlock *, 20> worklist;
-  llvm::BitVector enqueuedBlocks;
+  ValueVector enqueuedBlocks;
 public:
   DataflowWorklist(const CFG &cfg) : enqueuedBlocks(cfg.getNumBlockIDs()) {}
   
@@ -437,7 +438,7 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
       Visit(bo->getRHS());
       Visit(bo->getLHS());
 
-      llvm::BitVector::reference bit = vals[vd];
+      ValueVector::reference bit = vals[vd];
       if (bit == Uninitialized) {
         if (bo->getOpcode() != BO_Assign)
           reportUninit(res.getDeclRefExpr(), vd);
@@ -466,7 +467,7 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
                                                   res.getDeclRefExpr());
         Visit(uo->getSubExpr());
 
-        llvm::BitVector::reference bit = vals[vd];
+        ValueVector::reference bit = vals[vd];
         if (bit == Uninitialized) {
           reportUninit(res.getDeclRefExpr(), vd);
           bit = Initialized;
@@ -537,9 +538,9 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   
   if (const BinaryOperator *b = getLogicalOperatorInChain(block)) {
     CFGBlock::const_pred_iterator itr = block->pred_begin();
-    BVPair vA = vals.getBitVectors(*itr, false);
+    BVPair vA = vals.getValueVectors(*itr, false);
     ++itr;
-    BVPair vB = vals.getBitVectors(*itr, false);
+    BVPair vB = vals.getValueVectors(*itr, false);
 
     BVPair valsAB;
     
@@ -558,7 +559,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
       valsAB.first = &vals.getScratch();
       valsAB.second = vA.second ? vA.second : vA.first;
     }
-    return vals.updateBitVectors(block, valsAB);
+    return vals.updateValueVectors(block, valsAB);
   }
 
   // Default behavior: merge in values of predecessor blocks.
@@ -566,7 +567,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   bool isFirst = true;
   for (CFGBlock::const_pred_iterator I = block->pred_begin(),
        E = block->pred_end(); I != E; ++I) {
-    vals.mergeIntoScratch(vals.getBitVector(*I, block), isFirst);
+    vals.mergeIntoScratch(vals.getValueVector(*I, block), isFirst);
     isFirst = false;
   }
   // Apply the transfer function.
@@ -577,7 +578,7 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
       tf.BlockStmt_Visit(cs->getStmt());
     }
   }
-  return vals.updateBitVectorWithScratch(block);
+  return vals.updateValueVectorWithScratch(block);
 }
 
 void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
@@ -589,7 +590,7 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   if (vals.hasNoDeclarations())
     return;
   DataflowWorklist worklist(cfg);
-  llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
+  ValueVector previouslyVisited(cfg.getNumBlockIDs());
   
   worklist.enqueueSuccessors(&cfg.getEntry());
 
