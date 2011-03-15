@@ -116,10 +116,6 @@ public:
       unsigned x = (vv.vec[idx << 1] ? 1 : 0) | (vv.vec[(idx << 1) | 1] ? 2 :0);
       return (Value) x;      
     }
-    
-    bool operator==(Value v) {
-      return v = operator Value();
-    }
   };
     
   reference operator[](unsigned idx) { return reference(*this, idx); }
@@ -132,7 +128,7 @@ class CFGBlockValues {
   const CFG &cfg;
   BVPair *vals;
   ValueVector scratch;
-  DeclToIndex DeclToIndex;
+  DeclToIndex declToIndex;
   
   ValueVector &lazyCreate(ValueVector *&bv);
 public:
@@ -150,7 +146,7 @@ public:
   bool updateValueVectors(const CFGBlock *block, const BVPair &newVals);
   
   bool hasNoDeclarations() const {
-    return DeclToIndex.size() == 0;
+    return declToIndex.size() == 0;
   }
   
   void resetScratch();
@@ -180,13 +176,13 @@ CFGBlockValues::~CFGBlockValues() {
 }
 
 void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
-  DeclToIndex.computeMap(dc);
-  scratch.resize(DeclToIndex.size());
+  declToIndex.computeMap(dc);
+  scratch.resize(declToIndex.size());
 }
 
 ValueVector &CFGBlockValues::lazyCreate(ValueVector *&bv) {
   if (!bv)
-    bv = new ValueVector(DeclToIndex.size());
+    bv = new ValueVector(declToIndex.size());
   return *bv;
 }
 
@@ -286,7 +282,7 @@ void CFGBlockValues::resetScratch() {
 }
 
 ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
-  const llvm::Optional<unsigned> &idx = DeclToIndex.getValueIndex(vd);
+  const llvm::Optional<unsigned> &idx = declToIndex.getValueIndex(vd);
   assert(idx.hasValue());
   return scratch[idx.getValue()];
 }
