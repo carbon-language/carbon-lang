@@ -377,18 +377,20 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 // -Wuninitialized
 //===----------------------------------------------------------------------===//
 
+typedef std::pair<const Expr*, bool> UninitUse;
+
 namespace {
 struct SLocSort {
-  bool operator()(const Expr *a, const Expr *b) {
-    SourceLocation aLoc = a->getLocStart();
-    SourceLocation bLoc = b->getLocStart();
+  bool operator()(const UninitUse &a, const UninitUse &b) {
+    SourceLocation aLoc = a.first->getLocStart();
+    SourceLocation bLoc = b.first->getLocStart();
     return aLoc.getRawEncoding() < bLoc.getRawEncoding();
   }
 };
 
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
-  typedef llvm::SmallVector<const Expr *, 2> UsesVec;
+  typedef llvm::SmallVector<UninitUse, 2> UsesVec;
   typedef llvm::DenseMap<const VarDecl *, UsesVec*> UsesMap;
   UsesMap *uses;
   
@@ -398,7 +400,8 @@ public:
     flushDiagnostics();
   }
   
-  void handleUseOfUninitVariable(const Expr *ex, const VarDecl *vd) {
+  void handleUseOfUninitVariable(const Expr *ex, const VarDecl *vd,
+                                 bool isAlwaysUninit) {
     if (!uses)
       uses = new UsesMap();
     
@@ -406,7 +409,7 @@ public:
     if (!vec)
       vec = new UsesVec();
     
-    vec->push_back(ex);
+    vec->push_back(std::make_pair(ex, isAlwaysUninit));
   }
   
   void flushDiagnostics() {
@@ -426,13 +429,18 @@ public:
       
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
       {
-        if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(*vi)) {
-          S.Diag(dr->getLocStart(), diag::warn_uninit_var)
+        const bool isAlwaysUninit = vi->second;
+        if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(vi->first)) {
+          S.Diag(dr->getLocStart(),
+                 isAlwaysUninit ? diag::warn_uninit_var
+                                : diag::warn_maybe_uninit_var)
             << vd->getDeclName() << dr->getSourceRange();          
         }
         else {
-          const BlockExpr *be = cast<BlockExpr>(*vi);
-          S.Diag(be->getLocStart(), diag::warn_uninit_var_captured_by_block)
+          const BlockExpr *be = cast<BlockExpr>(vi->first);
+          S.Diag(be->getLocStart(),
+                 isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
+                                : diag::warn_maybe_uninit_var_captured_by_block)
             << vd->getDeclName();
         }
         

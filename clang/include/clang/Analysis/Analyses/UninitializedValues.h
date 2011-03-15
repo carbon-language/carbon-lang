@@ -29,7 +29,8 @@ public:
   virtual ~UninitVariablesHandler();
   
   virtual void handleUseOfUninitVariable(const Expr *ex,
-                                         const VarDecl *vd) {}
+                                         const VarDecl *vd,
+                                         bool isAlwaysUninit) {}
 };
   
 void runUninitializedVariablesAnalysis(const DeclContext &dc, const CFG &cfg,

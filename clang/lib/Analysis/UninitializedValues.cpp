@@ -74,14 +74,26 @@ llvm::Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) {
 // CFGBlockValues: dataflow values for CFG blocks.
 //====------------------------------------------------------------------------//
 
-enum Value { Initialized = 0, Uninitialized = 1 };
+// These values are defined in such a way that a merge can be done using
+// a bitwise OR.
+enum Value { Unknown = 0x0,         /* 00 */
+             Initialized = 0x1,     /* 01 */
+             Uninitialized = 0x2,   /* 10 */
+             MayUninitialized = 0x3 /* 11 */ };
+
+static bool isUninitialized(const Value v) {
+  return v >= Uninitialized;
+}
+static bool isAlwaysUninit(const Value v) {
+  return v == Uninitialized;
+}
 
 class ValueVector {
   llvm::BitVector vec;
 public:
   ValueVector() {}
-  ValueVector(unsigned size) : vec(size) {}
-  void resize(unsigned n) { vec.resize(n); }
+  ValueVector(unsigned size) : vec(size << 1) {}
+  void resize(unsigned n) { vec.resize(n << 1); }
   void merge(const ValueVector &rhs) { vec |= rhs.vec; }
   bool operator!=(const ValueVector &rhs) const { return vec != rhs.vec; }
   void reset() { vec.reset(); }
@@ -96,11 +108,17 @@ public:
     ~reference() {}
     
     reference &operator=(Value v) {
-      vv.vec[idx] = (v == Initialized ? false : true);
+      vv.vec[idx << 1] = (((unsigned) v) & 0x1) ? true : false;
+      vv.vec[(idx << 1) | 1] = (((unsigned) v) & 0x2) ? true : false;
       return *this;
     }
+    operator Value() {
+      unsigned x = (vv.vec[idx << 1] ? 1 : 0) | (vv.vec[(idx << 1) | 1] ? 2 :0);
+      return (Value) x;      
+    }
+    
     bool operator==(Value v) {
-      return vv.vec[idx] == (v == Initialized ? false : true);      
+      return v = operator Value();
     }
   };
     
@@ -346,7 +364,8 @@ public:
       currentVoidCast(0), flagBlockUses(flagBlockUses) {}
   
   const CFG &getCFG() { return cfg; }
-  void reportUninit(const DeclRefExpr *ex, const VarDecl *vd);
+  void reportUninit(const DeclRefExpr *ex, const VarDecl *vd,
+                    bool isAlwaysUninit);
 
   void VisitBlockExpr(BlockExpr *be);
   void VisitDeclStmt(DeclStmt *ds);
@@ -366,8 +385,8 @@ public:
 }
 
 void TransferFunctions::reportUninit(const DeclRefExpr *ex,
-                                     const VarDecl *vd) {
-  if (handler) handler->handleUseOfUninitVariable(ex, vd);
+                                     const VarDecl *vd, bool isAlwaysUnit) {
+  if (handler) handler->handleUseOfUninitVariable(ex, vd, isAlwaysUnit);
 }
 
 FindVarResult TransferFunctions::findBlockVarDecl(Expr* ex) {
@@ -416,8 +435,9 @@ void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
     if (vd->getAttr<BlocksAttr>() || !vd->hasLocalStorage() || 
         !isTrackedVar(vd))
       continue;
-    if (vals[vd] == Uninitialized)
-      handler->handleUseOfUninitVariable(be, vd);
+    Value v = vals[vd];
+    if (isUninitialized(v))
+      handler->handleUseOfUninitVariable(be, vd, isAlwaysUninit(v));
   }
 }
 
@@ -468,9 +488,9 @@ void TransferFunctions::VisitBinaryOperator(clang::BinaryOperator *bo) {
       Visit(bo->getLHS());
 
       ValueVector::reference val = vals[vd];
-      if (val == Uninitialized) {
+      if (isUninitialized(val)) {
         if (bo->getOpcode() != BO_Assign)
-          reportUninit(res.getDeclRefExpr(), vd);
+          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
         val = Initialized;
       }
       return;
@@ -496,10 +516,11 @@ void TransferFunctions::VisitUnaryOperator(clang::UnaryOperator *uo) {
                                                   res.getDeclRefExpr());
         Visit(uo->getSubExpr());
 
-        ValueVector::reference bit = vals[vd];
-        if (bit == Uninitialized) {
-          reportUninit(res.getDeclRefExpr(), vd);
-          bit = Initialized;
+        ValueVector::reference val = vals[vd];
+        if (isUninitialized(val)) {
+          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
+          // Don't cascade warnings.
+          val = Initialized;
         }
         return;
       }
@@ -526,10 +547,13 @@ void TransferFunctions::VisitCastExpr(clang::CastExpr *ce) {
       SaveAndRestore<const DeclRefExpr*> lastDR(currentDR, 
                                                 res.getDeclRefExpr());
       Visit(ce->getSubExpr());
-      if (currentVoidCast != ce && vals[vd] == Uninitialized) {
-        reportUninit(res.getDeclRefExpr(), vd);
-        // Don't cascade warnings.
-        vals[vd] = Initialized;
+      if (currentVoidCast != ce) {
+        Value val = vals[vd];
+        if (isUninitialized(val)) {
+          reportUninit(res.getDeclRefExpr(), vd, isAlwaysUninit(val));
+          // Don't cascade warnings.
+          vals[vd] = Initialized;
+        }
       }
       return;
     }

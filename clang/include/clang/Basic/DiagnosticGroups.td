@@ -136,7 +136,8 @@ def Switch         : DiagGroup<"switch", [SwitchEnum]>;
 def Trigraphs      : DiagGroup<"trigraphs">;
 
 def : DiagGroup<"type-limits">;
-def Uninitialized  : DiagGroup<"uninitialized">;
+
+def UninitializedMaybe : DiagGroup<"uninitialized-maybe">;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def UnknownAttributes : DiagGroup<"unknown-attributes">;
 def UnnamedTypeTemplateArgs : DiagGroup<"unnamed-type-template-args">;
@@ -198,6 +199,10 @@ def Unused : DiagGroup<"unused",
                         // UnusedMemberFunction, (clean-up llvm before enabling)
                         UnusedValue, UnusedVariable]>,
                         DiagCategory<"Unused Entity Issue">;
+
+def Uninitialized : DiagGroup<"uninitialized",
+                              [UninitializedMaybe]>,
+                              DiagCategory<"Uninitialized Value Issues">;
 
 // Format settings.
 def FormatSecurity : DiagGroup<"format-security">;
