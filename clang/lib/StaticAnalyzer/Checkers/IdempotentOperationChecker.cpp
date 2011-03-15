@@ -336,10 +336,9 @@ void IdempotentOperationChecker::checkPostStmt(const BinaryOperator *B,
     = cast<StmtPoint>(C.getPredecessor()->getLocation()).getStmt();
   
   // Ignore implicit calls to setters.
-  if (isa<ObjCPropertyRefExpr>(predStmt))
+  if (!isa<BinaryOperator>(predStmt))
     return;
-  
-  assert(isa<BinaryOperator>(predStmt));
+
   Data.explodedNodes.Add(C.getPredecessor());
 }
 
