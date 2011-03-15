@@ -759,9 +759,13 @@ protected:
                            dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp))) {
       if (SizeCI->isAllOnesValue())
         return true;
-      if (isString)
-        return SizeCI->getZExtValue() >=
-               GetStringLength(CI->getArgOperand(SizeArgOp));
+      if (isString) {
+        uint64_t Len = GetStringLength(CI->getArgOperand(SizeArgOp));
+        // If the length is 0 we don't know how long it is and so we can't
+        // remove the check.
+        if (Len == 0) return false;
+        return SizeCI->getZExtValue() >= Len;
+      }
       if (ConstantInt *Arg = dyn_cast<ConstantInt>(
                                                   CI->getArgOperand(SizeArgOp)))
         return SizeCI->getZExtValue() >= Arg->getZExtValue();
