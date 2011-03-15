@@ -212,11 +212,9 @@ SDValue PTXTargetLowering::
   else if (Outs[0].VT == MVT::f32) {
     reg = PTX::F0;
   }
-  else if (Outs[0].VT == MVT::f64) {
-    reg = PTX::FD0;
-  }
   else {
-    assert(false && "Can return only basic types");
+    assert(Outs[0].VT == MVT::f64 && "Can return only basic types");
+    reg = PTX::FD0;
   }
 
   MachineFunction &MF = DAG.getMachineFunction();
