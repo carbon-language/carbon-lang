@@ -1079,18 +1079,21 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (OpIdx + 1 >= NumOps)
     return false;
 
-  assert((OpInfo[OpIdx].RegClass == ARM::GPRRegClassID) &&
-         (OpInfo[OpIdx+1].RegClass < 0) &&
-         "Expect 1 reg operand followed by 1 imm operand");
-
   ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
   if (getIBit(insn) == 0) {
-    MI.addOperand(MCOperand::CreateReg(0));
+    // For pre- and post-indexed case, add a reg0 operand (Addressing Mode #2).
+    // Otherwise, skip the reg operand since for addrmode_imm12, Rn has already
+    // been populated.
+    if (isPrePost) {
+      MI.addOperand(MCOperand::CreateReg(0));
+      OpIdx += 1;
+    }
 
     // Disassemble the 12-bit immediate offset.
     unsigned Imm12 = slice(insn, 11, 0);
     unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, Imm12, ARM_AM::no_shift);
     MI.addOperand(MCOperand::CreateImm(Offset));
+    OpIdx += 1;
   } else {
     // Disassemble the offset reg (Rm), shift type, and immediate shift length.
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
@@ -1104,8 +1107,8 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     getImmShiftSE(ShOp, ShImm);
     MI.addOperand(MCOperand::CreateImm(
                     ARM_AM::getAM2Opc(AddrOpcode, ShImm, ShOp)));
+    OpIdx += 2;
   }
-  OpIdx += 2;
 
   return true;
 }
