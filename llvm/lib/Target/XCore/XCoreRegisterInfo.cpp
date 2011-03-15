@@ -104,6 +104,11 @@ XCoreRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
   return TFI->hasFP(MF);
 }
 
+bool
+XCoreRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF) const {
+  return false;
+}
+
 // This function eliminates ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void XCoreRegisterInfo::

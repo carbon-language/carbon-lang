@@ -48,6 +48,8 @@ public:
   
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
+  bool useFPForScavengingIndex(const MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
