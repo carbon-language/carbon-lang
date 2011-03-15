@@ -1530,15 +1530,9 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   // Then make sure the immediate offset fits.
   int OffImm = getMemoryOpOffset(Op0);
   if (isT2) {
-    if (OffImm < 0) {
-      if (OffImm < -255)
-        // Can't fall back to t2LDRi8 / t2STRi8.
-        return false;
-    } else {
-      int Limit = (1 << 8) * Scale;
-      if (OffImm >= Limit || (OffImm & (Scale-1)))
-        return false;
-    }
+    int Limit = (1 << 8) * Scale;
+    if (OffImm >= Limit || (OffImm <= -Limit) || (OffImm & (Scale-1)))
+      return false;
     Offset = OffImm;
   } else {
     ARM_AM::AddrOpc AddSub = ARM_AM::add;
