@@ -260,3 +260,71 @@ int test38(int r, int x, int y)
   return ((r < 0) || ((r == 0) && (x < y)));
 }
 
+int test39(int x) {
+  int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
+  int z = x + y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+  return z;
+}
+
+
+int test40(int x) {
+  int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
+  return x ? 1 : y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+}
+
+int test41(int x) {
+  int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
+  if (x) y = 1; // no-warning
+  return y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+}
+
+void test42() {
+  int a;
+  a = 30; // no-warning
+}
+
+void test43_aux(int x);
+void test43(int i) {
+  int x; // expected-note {{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
+  for (i = 0 ; i < 10; i++)
+    test43_aux(x++); // expected-warning {{variable 'x' is possibly uninitialized when used here}}
+}
+
+void test44(int i) {
+  int x = i;
+  int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
+  for (i = 0; i < 10; i++ ) {
+    test43_aux(x++); // no-warning
+    x += y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+  }
+}
+
+int test45(int j) {
+  int x = 1, y = x + 1;
+  if (y) // no-warning
+    return x;
+  return y;
+}
+
+void test46()
+{
+  int i; // expected-note {{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
+  int j = i ? : 1; // expected-warning {{variable 'i' is possibly uninitialized when used here}}
+}
+
+void *test47(int *i)
+{
+  return i ? : 0; // no-warning
+}
+
+void *test49(int *i)
+{
+  int a;
+  return &a ? : i; // no-warning
+}
+
+void test50()
+{
+  char c[1 ? : 2]; // no-warning
+}
+

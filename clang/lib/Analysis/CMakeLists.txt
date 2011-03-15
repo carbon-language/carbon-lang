@@ -12,7 +12,6 @@ add_clang_library(clangAnalysis
   PseudoConstantAnalysis.cpp
   ReachableCode.cpp
   ScanfFormatString.cpp
-  UninitializedValues.cpp
   UninitializedValuesV2.cpp
   )
 
