@@ -17,10 +17,10 @@ ifeq (,$(SDKROOT))
     LD_OTHER_FLAGS =
 else
 	INSTALL_TARGET = install-iOS
-	CFLAGS.Release.armv6 := $(CFLAGS) -isysroot $(SDKROOT)
-	CFLAGS.Release.armv7 := $(CFLAGS) -isysroot $(SDKROOT)
-	CFLAGS.Static.armv6  := $(CFLAGS) -isysroot $(SDKROOT)
-	CFLAGS.Static.armv7  := $(CFLAGS) -isysroot $(SDKROOT)
+	CFLAGS.Release.armv6 := $(CFLAGS) -Wall -Os -fomit-frame-pointer -g -isysroot $(SDKROOT)
+	CFLAGS.Release.armv7 := $(CFLAGS) -Wall -Os -fomit-frame-pointer -g -isysroot $(SDKROOT)
+	CFLAGS.Static.armv6  := $(CFLAGS) -Wall -Os -fomit-frame-pointer -g -isysroot $(SDKROOT)
+	CFLAGS.Static.armv7  := $(CFLAGS) -Wall -Os -fomit-frame-pointer -g -isysroot $(SDKROOT)
     LD_OTHER_FLAGS = -Wl,-alias_list,$(SRCROOT)/lib/arm/softfloat-alias.list -isysroot $(SDKROOT)
 endif
 
