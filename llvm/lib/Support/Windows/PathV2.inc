@@ -449,7 +449,14 @@ error_code status(const Twine &path, file_status &result) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
-  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
+  StringRef path8 = path.toStringRef(path_storage);
+  // FIXME: We should detect as many "special file name" as possible.
+  if (path8.compare_lower("nul") == 0) {
+    result = file_status(file_type::character_file);
+    return success;
+  }
+
+  if (error_code ec = UTF8ToUTF16(path8,
                                   path_utf16))
     return ec;
 
