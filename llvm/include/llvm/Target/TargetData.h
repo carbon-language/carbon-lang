@@ -160,7 +160,18 @@ public:
   bool isIllegalInteger(unsigned Width) const {
     return !isLegalInteger(Width);
   }
-  
+
+  /// fitsInLegalInteger - This function returns true if the specified type fits
+  /// in a native integer type supported by the CPU.  For example, if the CPU
+  /// only supports i32 as a native integer type, then i27 fits in a legal
+  // integer type but i45 does not.
+  bool fitsInLegalInteger(unsigned Width) const {
+    for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
+      if (Width <= LegalIntWidths[i])
+        return true;
+    return false;
+  }
+
   /// Target pointer alignment
   unsigned getPointerABIAlignment() const { return PointerABIAlign; }
   /// Return target's alignment for stack-based pointers
