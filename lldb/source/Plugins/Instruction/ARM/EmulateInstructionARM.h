@@ -524,6 +524,10 @@ protected:
     bool
     EmulateSTRBThumb (ARMEncoding encoding);
     
+    // A8.6.207 STRH (register)
+    bool
+    EmulateSTRHRegister (ARMEncoding encoding);
+    
     // A8.6.1 ADC (immediate)
     bool
     EmulateADCImm (ARMEncoding encoding);

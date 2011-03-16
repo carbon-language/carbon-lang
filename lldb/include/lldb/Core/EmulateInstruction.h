@@ -95,63 +95,34 @@ public:
 
         // Exclusively used when saving a register to the stack as part of the 
         // prologue
-        // arg0 = register kind
-        // arg1 = register number
-        // arg2 = signed offset from current SP value where register is being 
-        //        stored
         eContextPushRegisterOnStack,
 
         // Exclusively used when restoring a register off the stack as part of 
         // the epilogue
-        // arg0 = register kind
-        // arg1 = register number
-        // arg2 = signed offset from current SP value where register is being 
-        //        restored
         eContextPopRegisterOffStack,
 
         // Add or subtract a value from the stack
-        // arg0 = register kind for SP
-        // arg1 = register number for SP
-        // arg2 = signed offset being applied to the SP value
         eContextAdjustStackPointer,
         
         // Add or subtract a value from a base address register (other than SP)
-        // arg0 = register kind for base register
-        // arg1 = register number of base register
-        // arg2 = signed offset being applied to base register
         eContextAdjustBaseRegister,
 
         // Used in WriteRegister callbacks to indicate where the 
-        // arg0 = source register kind
-        // arg1 = source register number
-        // arg2 = source signed offset
         eContextRegisterPlusOffset,
 
         // Used in WriteMemory callback to indicate where the data came from
-        // arg0 = register kind
-        // arg1 = register number (register being stored)
-        // arg2 = address of store
         eContextRegisterStore,
         
         eContextRegisterLoad,
         
         // Used when performing a PC-relative branch where the
-        // arg0 = don't care
-        // arg1 = imm32 (signed offset)
-        // arg2 = target instruction set or don't care
         eContextRelativeBranchImmediate,
 
         // Used when performing an absolute branch where the
-        // arg0 = target register kind
-        // arg1 = target register number
-        // arg2 = target instruction set or don't care
         eContextAbsoluteBranchRegister,
 
         // Used when performing a supervisor call to an operating system to
         // provide a service:
-        // arg0 = current instruction set or don't care
-        // arg1 = immediate data or don't care
-        // arg2 = don't care
         eContextSupervisorCall,
 
         // Used when performing a MemU operation to read the PC-relative offset
@@ -159,19 +130,15 @@ public:
         eContextTableBranchReadMemory,
         
         // Used when random bits are written into a register
-        // arg0 = target register kind
-        // arg1 = target register number
-        // arg2 = don't care
         eContextWriteRegisterRandomBits,
         
         // Used when random bits are written to memory
-        // arg0 = target memory address
-        // arg1 = don't care
-        // arg2 = don't care
         eContextWriteMemoryRandomBits,
         
         eContextMultiplication,
+
         eContextAddition,
+
         eContextReturnFromException
     };
     
@@ -179,6 +146,7 @@ public:
         eInfoTypeRegisterPlusOffset,
         eInfoTypeRegisterPlusIndirectOffset,
         eInfoTypeRegisterToRegisterPlusOffset,
+        eInfoTypeRegisterToRegisterPlusIndirectOffset,
         eInfoTypeRegisterRegisterOperands,
         eInfoTypeOffset,
         eInfoTypeRegister,
@@ -229,6 +197,13 @@ public:
                 Register base_reg;  // base register for address calculation
                 int64_t offset;     // offset for address calculation
             } RegisterToRegisterPlusOffset;
+            
+            struct RegisterToRegisterPlusIndirectOffset
+            {
+                Register base_reg;   // base register for address calculation
+                Register offset_reg; // offset register for address calculation
+                Register data_reg;   // source/target register for data
+            } RegisterToRegisterPlusIndirectOffset;
             
             struct RegisterRegisterOperands
             {
@@ -289,6 +264,17 @@ public:
             info.RegisterToRegisterPlusOffset.data_reg = data_reg;
             info.RegisterToRegisterPlusOffset.base_reg = base_reg;
             info.RegisterToRegisterPlusOffset.offset   = offset;
+        }
+        
+        void
+        SetRegisterToRegisterPlusIndirectOffset (Register base_reg,
+                                                 Register offset_reg,
+                                                 Register data_reg)
+        {
+            info_type = eInfoTypeRegisterToRegisterPlusIndirectOffset;
+            info.RegisterToRegisterPlusIndirectOffset.base_reg   = base_reg;
+            info.RegisterToRegisterPlusIndirectOffset.offset_reg = offset_reg;
+            info.RegisterToRegisterPlusIndirectOffset.data_reg   = data_reg;
         }
         
         void
