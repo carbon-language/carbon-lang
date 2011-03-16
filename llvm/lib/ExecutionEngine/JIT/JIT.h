@@ -42,7 +42,7 @@ public:
   FunctionPassManager &getPM(const MutexGuard &L) {
     return PM;
   }
-  
+
   Module *getModule() const { return M; }
   std::vector<AssertingVH<Function> > &getPendingFunctions(const MutexGuard &L){
     return PendingFunctions;
@@ -86,7 +86,7 @@ public:
   static void Register() {
     JITCtor = createJIT;
   }
-  
+
   /// getJITInfo - Return the target JIT information structure.
   ///
   TargetJITInfo &getJITInfo() const { return TJI; }
@@ -106,7 +106,7 @@ public:
   }
 
   virtual void addModule(Module *M);
-  
+
   /// removeModule - Remove a Module from the list of modules.  Returns true if
   /// M is found.
   virtual bool removeModule(Module *M);
@@ -146,7 +146,7 @@ public:
   /// getPointerToBasicBlock - This returns the address of the specified basic
   /// block, assuming function is compiled.
   void *getPointerToBasicBlock(BasicBlock *BB);
-  
+
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
   /// Emitter.
@@ -172,7 +172,7 @@ public:
   void freeMachineCodeForFunction(Function *F);
 
   /// addPendingFunction - while jitting non-lazily, a called but non-codegen'd
-  /// function was encountered.  Add it to a pending list to be processed after 
+  /// function was encountered.  Add it to a pending list to be processed after
   /// the current function.
   ///
   void addPendingFunction(Function *F);
