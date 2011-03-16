@@ -1221,10 +1221,8 @@ Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
-  llvm::Value *V = CGF.GetAddrOfBlockDecl(E);
-  if (E->getType().isObjCGCWeak())
-    return CGF.CGM.getObjCRuntime().EmitObjCWeakRead(CGF, V);
-  return CGF.EmitLoadOfScalar(V, false, 0, E->getType());
+  LValue LV = CGF.EmitBlockDeclRefLValue(E);
+  return CGF.EmitLoadOfLValue(LV, E->getType()).getScalarVal();
 }
 
 //===----------------------------------------------------------------------===//

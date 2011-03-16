@@ -87,3 +87,16 @@ void test2(Test2 *x) {
   __weak __block Test2 *weakX = x;
   test2_helper(^{ [weakX destroy]; });
 }
+
+// rdar://problem/9124263
+// In the test above, check that the use in the invocation function
+// doesn't require a read barrier.
+// CHECK:    define internal void @__test2_block_invoke_
+// CHECK:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
+// CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[WEAK_T]]*
+// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]* [[T2]], i32 0, i32 1
+// CHECK-NEXT: [[T4:%.*]] = load [[WEAK_T]]** [[T3]]
+// CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]* [[T4]], i32 0, i32 6
+// CHECK-NEXT: [[T0:%.*]] = load [[TEST2]]** [[WEAKX]], align 4
