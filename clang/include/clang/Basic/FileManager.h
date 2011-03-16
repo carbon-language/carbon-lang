@@ -176,10 +176,11 @@ public:
   ///
   const DirectoryEntry *getDirectory(llvm::StringRef DirName);
 
-  /// getFile - Lookup, cache, and verify the specified file (real or
+  /// \brief Lookup, cache, and verify the specified file (real or
   /// virtual).  This returns NULL if the file doesn't exist.
   ///
-  const FileEntry *getFile(llvm::StringRef Filename);
+  /// \param openFile if true and the file exists, it will be opened.
+  const FileEntry *getFile(llvm::StringRef Filename, bool openFile = false);
 
   /// \brief Retrieve a file entry for a "virtual" file that acts as
   /// if there were a file with the given name on disk. The file

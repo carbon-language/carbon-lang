@@ -126,7 +126,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     TmpDir.append(Filename.begin(), Filename.end());
     if (RawPath != NULL)
       *RawPath = TmpDir;
-    return HS.getFileMgr().getFile(TmpDir.str());
+    return HS.getFileMgr().getFile(TmpDir.str(), /*openFile=*/true);
   }
 
   if (isFramework())
@@ -192,7 +192,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 
   FrameworkName += "Headers/";
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
-  if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str())) {
+  if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
+                                            /*openFile=*/true)) {
     if (RawPath != NULL)
       *RawPath = FrameworkName;
     return FE;
@@ -204,7 +205,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
                        Private+strlen(Private));
   if (RawPath != NULL)
     *RawPath = FrameworkName;
-  return FileMgr.getFile(FrameworkName.str());
+  return FileMgr.getFile(FrameworkName.str(), /*openFile=*/true);
 }
 
 
@@ -235,7 +236,7 @@ const FileEntry *HeaderSearch::LookupFile(
     if (RawPath != NULL)
       llvm::Twine(Filename).toVector(*RawPath);
     // Otherwise, just return the file.
-    return FileMgr.getFile(Filename);
+    return FileMgr.getFile(Filename, /*openFile=*/true);
   }
 
   // Step #0, unless disabled, check to see if the file is in the #includer's
@@ -250,7 +251,7 @@ const FileEntry *HeaderSearch::LookupFile(
     TmpDir += CurFileEnt->getDir()->getName();
     TmpDir.push_back('/');
     TmpDir.append(Filename.begin(), Filename.end());
-    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str())) {
+    if (const FileEntry *FE = FileMgr.getFile(TmpDir.str(),/*openFile=*/true)) {
       // Leave CurDir unset.
       // This file is a system header or C++ unfriendly if the old file is.
       //
@@ -376,13 +377,13 @@ LookupSubframeworkHeader(llvm::StringRef Filename,
   llvm::SmallString<1024> HeadersFilename(FrameworkName);
   HeadersFilename += "Headers/";
   HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
-  if (!(FE = FileMgr.getFile(HeadersFilename.str()))) {
+  if (!(FE = FileMgr.getFile(HeadersFilename.str(), /*openFile=*/true))) {
 
     // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
     HeadersFilename = FrameworkName;
     HeadersFilename += "PrivateHeaders/";
     HeadersFilename.append(Filename.begin()+SlashPos+1, Filename.end());
-    if (!(FE = FileMgr.getFile(HeadersFilename.str())))
+    if (!(FE = FileMgr.getFile(HeadersFilename.str(), /*openFile=*/true)))
       return 0;
   }
   if (RawPath != NULL)

@@ -313,7 +313,7 @@ const DirectoryEntry *FileManager::getDirectory(llvm::StringRef DirName) {
 /// getFile - Lookup, cache, and verify the specified file (real or
 /// virtual).  This returns NULL if the file doesn't exist.
 ///
-const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
+const FileEntry *FileManager::getFile(llvm::StringRef Filename, bool openFile) {
   ++NumFileLookups;
 
   // See if there is already an entry in the map.
@@ -352,6 +352,11 @@ const FileEntry *FileManager::getFile(llvm::StringRef Filename) {
   if (getStatValue(InterndFileName, StatBuf, &FileDescriptor)) {
     // There's no real file at the given path.
     return 0;
+  }
+
+  if (FileDescriptor != -1 && !openFile) {
+    close(FileDescriptor);
+    FileDescriptor = -1;
   }
 
   // It exists.  See if we have already opened a file with the same inode.
