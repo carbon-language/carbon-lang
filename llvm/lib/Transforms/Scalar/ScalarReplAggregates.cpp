@@ -240,11 +240,8 @@ class ConvertToScalarInfo {
 
 public:
   explicit ConvertToScalarInfo(unsigned Size, const TargetData &td)
-    : AllocaSize(Size), TD(td) {
-    IsNotTrivial = false;
-    VectorTy = 0;
-    HadAVector = false;
-  }
+    : AllocaSize(Size), TD(td), IsNotTrivial(false), VectorTy(0),
+      HadAVector(false) { }
 
   AllocaInst *TryConvert(AllocaInst *AI);
 
