@@ -584,10 +584,15 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
 
   // Verify that all arguments have Objective-C types.
   llvm::Optional<ExplodedNode*> errorNode;
+  const GRState *state = C.getState();
   
   for (unsigned I = variadicArgsBegin; I != variadicArgsEnd; ++I) {
     QualType ArgTy = msg.getArgType(I);
     if (ArgTy->isObjCObjectPointerType())
+      continue;
+
+    // Ignore pointer constants.
+    if (isa<loc::ConcreteInt>(msg.getArgSVal(I, state)))
       continue;
 
     // Generate only one error node to use for all bug reports.

@@ -69,6 +69,7 @@ void f(id a, id<P> b, C* c, C<P> *d) {
 
   [[[NSArray alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
+  [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", (void*) 0, nil] autorelease]; // no-warning
   [[[NSSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 }
 
