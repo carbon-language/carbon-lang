@@ -4574,9 +4574,6 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
 
           return MaybeBindToTemporary(TheCall);
         }
-        return ExprError(Diag(Fn->getLocStart(),
-                              diag::err_typecheck_call_not_function)
-                              << Fn->getType() << Fn->getSourceRange());
       }
     }
   }

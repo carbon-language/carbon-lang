@@ -34,3 +34,18 @@ void test0() {
   Test0 mytest;
   mytest.test();
 }
+
+namespace rdar9065289 {
+  typedef void (*FuncPtr)();
+  struct X0 { };
+
+  struct X1
+  {
+    X0* x0;
+    FuncPtr X0::*fptr;
+  };
+
+  void f(X1 p) {
+    (p.x0->*(p.fptr))();
+  }
+}
