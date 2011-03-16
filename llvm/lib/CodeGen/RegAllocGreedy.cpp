@@ -162,6 +162,7 @@ public:
 private:
   void LRE_WillEraseInstruction(MachineInstr*);
   bool LRE_CanEraseVirtReg(unsigned);
+  void LRE_WillShrinkVirtReg(unsigned);
 
   bool checkUncachedInterference(LiveInterval&, unsigned);
   LiveInterval *getSingleInterference(LiveInterval&, unsigned);
@@ -258,6 +259,17 @@ bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
   // Unassigned virtreg is probably in the priority queue.
   // RegAllocBase will erase it after dequeueing.
   return false;
+}
+
+void RAGreedy::LRE_WillShrinkVirtReg(unsigned VirtReg) {
+  unsigned PhysReg = VRM->getPhys(VirtReg);
+  if (!PhysReg)
+    return;
+
+  // Register is assigned, put it back on the queue for reassignment.
+  LiveInterval &LI = LIS->getInterval(VirtReg);
+  unassign(LI, PhysReg);
+  enqueue(&LI);
 }
 
 void RAGreedy::releaseMemory() {

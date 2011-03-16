@@ -39,6 +39,9 @@ public:
     /// its deletion from LiveIntervals.
     virtual bool LRE_CanEraseVirtReg(unsigned) { return true; }
 
+    /// Called before shrinking the live range of a virtual register.
+    virtual void LRE_WillShrinkVirtReg(unsigned) {}
+
     virtual ~Delegate() {}
   };
 

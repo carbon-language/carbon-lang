@@ -201,8 +201,11 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       break;
 
     // Shrink just one live interval. Then delete new dead defs.
-    LIS.shrinkToUses(ToShrink.back(), &Dead);
+    LiveInterval *LI = ToShrink.back();
     ToShrink.pop_back();
+    if (delegate_)
+      delegate_->LRE_WillShrinkVirtReg(LI->reg);
+    LIS.shrinkToUses(LI, &Dead);
   }
 }
 
