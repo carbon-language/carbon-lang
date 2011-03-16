@@ -168,36 +168,26 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
   IDI->AddDecl(D);
 }
 
-void IdentifierResolver::InsertDecl(iterator Pos, NamedDecl *D) {
-  if (Pos == iterator()) {
-    // Simple case: insert at the beginning of the list (which is the
+void IdentifierResolver::InsertDeclAfter(iterator Pos, NamedDecl *D) {
+  DeclarationName Name = D->getDeclName();
+  void *Ptr = Name.getFETokenInfo<void>();
+  
+  if (Pos == iterator() || isDeclPtr(Ptr)) {
+    // Simple case: insert at the end of the list (which is the
     // end of the stored vector).
     AddDecl(D);
     return;
   }
-  
-  DeclarationName Name = D->getDeclName();
-  void *Ptr = Name.getFETokenInfo<void>();
-  
-  if (isDeclPtr(Ptr)) {
-    // There's only one element, and we want to insert before it in the list.
-    // Just create the storage for these identifiers and insert them in the
-    // opposite order we normally would.
-    assert(isDeclPtr(Ptr) && "Not a single declaration!");
-    Name.setFETokenInfo(NULL);
-    IdDeclInfo *IDI = &(*IdDeclInfos)[Name];
-    NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
-    IDI->AddDecl(D);
-    IDI->AddDecl(PrevD);
-    return;
-  }
 
+  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
+    II->setIsFromAST(false);
+  
   // General case: insert the declaration at the appropriate point in the 
   // list, which already has at least two elements.
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-  if (Pos.isIterator())
-    IDI->InsertDecl(Pos.getIterator(), D);
-  else
+  if (Pos.isIterator()) {
+    IDI->InsertDecl(Pos.getIterator() + 1, D);
+  } else
     IDI->InsertDecl(IDI->decls_begin(), D);
 }
 

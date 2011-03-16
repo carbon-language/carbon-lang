@@ -171,9 +171,9 @@ public:
   /// (and, therefore, replaced).
   bool ReplaceDecl(NamedDecl *Old, NamedDecl *New);
 
-  /// \brief Insert the given declaration prior to the given iterator
-  /// position
-  void InsertDecl(iterator Pos, NamedDecl *D);
+  /// \brief Insert the given declaration after the given iterator
+  /// position.
+  void InsertDeclAfter(iterator Pos, NamedDecl *D);
 
   /// \brief Link the declaration into the chain of declarations for
   /// the given identifier.
