@@ -1448,6 +1448,15 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
   return HasRet;
 }
 
+MVT
+X86TargetLowering::getTypeForExtendedInteger(EVT VT,
+                                             ISD::NodeType ExtendKind) const {
+  // TODO: Is this also valid on 32-bit?
+  if (Subtarget->is64Bit() && VT == MVT::i1 && ExtendKind == ISD::ZERO_EXTEND)
+    return MVT::i8;
+  return MVT::i32;
+}
+
 /// LowerCallResult - Lower the result values of a call into the
 /// appropriate copies out of appropriate physical registers.
 ///

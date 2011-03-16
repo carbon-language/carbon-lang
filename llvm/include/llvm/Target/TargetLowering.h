@@ -1287,6 +1287,17 @@ public:
     return false;
   }
 
+  /// getTypeForExtendedInteger - Return the type that should be used to zero or
+  /// sign extend a zeroext/signext integer argument or return value.
+  /// FIXME: Most C calling convention requires the return type to be promoted,
+  /// but this is not true all the time, e.g. i1 on x86-64. It is also not
+  /// necessary for non-C calling conventions. The frontend should handle this
+  /// and include all of the necessary information.
+  virtual MVT
+  getTypeForExtendedInteger(EVT VT, ISD::NodeType ExtendKind) const {
+    return MVT::i32;
+  }
+
   /// LowerOperationWrapper - This callback is invoked by the type legalizer
   /// to legalize nodes with an illegal operand type but legal result types.
   /// It replaces the LowerOperation callback in the type Legalizer.

@@ -1128,12 +1128,9 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
         else if (F->paramHasAttr(0, Attribute::ZExt))
           ExtendKind = ISD::ZERO_EXTEND;
 
-        // FIXME: C calling convention requires the return type to be promoted
-        // to at least 32-bit. But this is not necessary for non-C calling
-        // conventions. The frontend should mark functions whose return values
-        // require promoting with signext or zeroext attributes.
         if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-          EVT MinVT = TLI.getRegisterType(*DAG.getContext(), MVT::i32);
+          MVT ReturnMVT = TLI.getTypeForExtendedInteger(VT, ExtendKind);
+          EVT MinVT = TLI.getRegisterType(*DAG.getContext(), ReturnMVT);
           if (VT.bitsLT(MinVT))
             VT = MinVT;
         }
