@@ -178,25 +178,20 @@ sub Analyze {
 
     # Create arguments for doing static analysis.
     if (defined $ResultFile) {
-      push @Args,'-o';
-      push @Args, $ResultFile;
+      push @Args, '-o', $ResultFile;
     }
     elsif (defined $HtmlDir) {
-      push @Args,'-o';
-      push @Args, $HtmlDir;
+      push @Args, '-o', $HtmlDir;
     }
-    push @Args,"-Xclang";
-    push @Args,"-analyzer-display-progress";
+    push @Args, "-Xclang", "-analyzer-display-progress";
 
     foreach my $arg (@$AnalyzeArgs) {
-      push @Args, "-Xclang";
-      push @Args, $arg;
+      push @Args, "-Xclang", $arg;
     }
-    
+
     # Display Ubiviz graph?
     if (defined $ENV{'CCC_UBI'}) {   
-      push @Args, "-Xclang";
-      push @Args,"-analyzer-viz-egraph-ubigraph";
+      push @Args, "-Xclang", "-analyzer-viz-egraph-ubigraph";
     }
 
     my $AnalysisArgs = GetCCArgs("--analyze", \@Args);
@@ -613,8 +608,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
     my @AnalyzeArgs;    
     
     if ($FileLang ne 'unknown') {
-      push @CmdArgs,'-x';
-      push @CmdArgs,$FileLang;
+      push @CmdArgs, '-x', $FileLang;
     }
 
     if (defined $StoreModel) {
@@ -646,8 +640,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
     if (scalar @Archs) {
       foreach my $arch (@Archs) {
         my @NewArgs;
-        push @NewArgs, '-arch';
-        push @NewArgs, $arch;
+        push @NewArgs, '-arch', $arch;
         push @NewArgs, @CmdArgs;
         Analyze($Clang, \@NewArgs, \@AnalyzeArgs, $FileLang, $Output,
                 $Verbose, $HtmlDir, $file);
