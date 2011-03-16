@@ -98,7 +98,7 @@ static void AnalyzerOptsToArgs(const AnalyzerOptions &Opts,
     Res.push_back("-trim-egraph");
   if (Opts.VisualizeEGDot)
     Res.push_back("-analyzer-viz-egraph-graphviz");
-  if (Opts.VisualizeEGDot)
+  if (Opts.VisualizeEGUbi)
     Res.push_back("-analyzer-viz-egraph-ubigraph");
 
   for (unsigned i = 0, e = Opts.CheckersControlList.size(); i != e; ++i) {
