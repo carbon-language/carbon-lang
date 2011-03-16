@@ -174,13 +174,21 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         if (!TargetRegisterInfo::isVirtualRegister(Reg))
           continue;
         LiveInterval &LI = LIS.getInterval(Reg);
-        // Remove defined value.
-        if (MOI->isDef())
-          if (VNInfo *VNI = LI.getVNInfoAt(Idx))
-            LI.removeValNo(VNI);
+
         // Shrink read registers.
         if (MI->readsVirtualRegister(Reg))
           ToShrink.insert(&LI);
+
+        // Remove defined value.
+        if (MOI->isDef()) {
+          if (VNInfo *VNI = LI.getVNInfoAt(Idx)) {
+            LI.removeValNo(VNI);
+            if (LI.empty()) {
+              ToShrink.remove(&LI);
+              eraseVirtReg(Reg, LIS);
+            }
+          }
+        }
       }
 
       if (delegate_)
