@@ -328,9 +328,8 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
 
         }
       }
-      
-      const llvm::Type *ResultPtrTy = CGF.ConvertType(ResultTy)->getPointerTo();
-      return CGF.Builder.CreateBitCast(Object, ResultPtrTy, "temp");
+
+      return Object;
     }
   }
 
