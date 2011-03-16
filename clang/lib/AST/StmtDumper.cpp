@@ -284,6 +284,12 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     OS << ";\"";
   } else if (LabelDecl *LD = dyn_cast<LabelDecl>(D)) {
     OS << "label " << LD->getNameAsString();
+  } else if (StaticAssertDecl *SAD = dyn_cast<StaticAssertDecl>(D)) {
+    OS << "\"static_assert(\n";
+    DumpSubTree(SAD->getAssertExpr());
+    OS << ",\n";
+    DumpSubTree(SAD->getMessage());
+    OS << ");\"";
   } else {
     assert(0 && "Unexpected decl");
   }

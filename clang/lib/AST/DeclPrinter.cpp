@@ -54,6 +54,7 @@ namespace {
     void VisitLabelDecl(LabelDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
+    void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
@@ -587,6 +588,14 @@ void DeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {
 void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
   Out << "__asm (";
   D->getAsmString()->printPretty(Out, Context, 0, Policy, Indentation);
+  Out << ")";
+}
+
+void DeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
+  Out << "static_assert(";
+  D->getAssertExpr()->printPretty(Out, Context, 0, Policy, Indentation);
+  Out << ", ";
+  D->getMessage()->printPretty(Out, Context, 0, Policy, Indentation);
   Out << ")";
 }
 
