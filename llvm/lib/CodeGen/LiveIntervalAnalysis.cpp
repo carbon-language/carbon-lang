@@ -854,7 +854,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li,
       assert(MI && "No instruction defining live value");
       MI->addRegisterDead(li->reg, tri_);
       if (dead && MI->allDefsAreDead()) {
-        DEBUG(dbgs() << "All defs dead: " << *MI);
+        DEBUG(dbgs() << "All defs dead: " << VNI->def << '\t' << *MI);
         dead->push_back(MI);
       }
     }
@@ -862,7 +862,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li,
 
   // Move the trimmed ranges back.
   li->ranges.swap(NewLI.ranges);
-  DEBUG(dbgs() << "Shrink: " << *li << '\n');
+  DEBUG(dbgs() << "Shrunk: " << *li << '\n');
 }
 
 

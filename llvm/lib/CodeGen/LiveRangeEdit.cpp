@@ -148,17 +148,21 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     while (!Dead.empty()) {
       MachineInstr *MI = Dead.pop_back_val();
       assert(MI->allDefsAreDead() && "Def isn't really dead");
+      SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
 
       // Never delete inline asm.
-      if (MI->isInlineAsm())
+      if (MI->isInlineAsm()) {
+        DEBUG(dbgs() << "Won't delete: " << Idx << '\t' << *MI);
         continue;
+      }
 
       // Use the same criteria as DeadMachineInstructionElim.
       bool SawStore = false;
-      if (!MI->isSafeToMove(&TII, 0, SawStore))
+      if (!MI->isSafeToMove(&TII, 0, SawStore)) {
+        DEBUG(dbgs() << "Can't delete: " << Idx << '\t' << *MI);
         continue;
+      }
 
-      SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
       DEBUG(dbgs() << "Deleting dead def " << Idx << '\t' << *MI);
 
       // Check for live intervals that may shrink
