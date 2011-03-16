@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+
 // PR9463
 double *end;
 void f() {
@@ -44,3 +45,25 @@ void rdar9135994()
 X:  
     goto X;
 }
+
+namespace PR9495 {
+  struct NonPOD { NonPOD(); ~NonPOD(); };  
+  
+  void f(bool b) {
+    NonPOD np;
+    if (b) {
+      goto undeclared; // expected-error{{use of undeclared label 'undeclared'}}
+    }
+  }
+
+  void g() {
+    (void)^(bool b){
+      NonPOD np;
+      if (b) {
+        goto undeclared; // expected-error{{use of undeclared label 'undeclared'}}
+      }
+    };
+  }
+}
+
+

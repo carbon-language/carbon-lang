@@ -1724,9 +1724,12 @@ Decl *Parser::ParseObjCMethodDefinition() {
   // specified Declarator for the method.
   Actions.ActOnStartOfObjCMethodDef(getCurScope(), MDecl);
 
-  if (PP.isCodeCompletionEnabled())
-    if (trySkippingFunctionBodyForCodeCompletion())
+  if (PP.isCodeCompletionEnabled()) {
+    if (trySkippingFunctionBodyForCodeCompletion()) {
+      BodyScope.Exit();
       return Actions.ActOnFinishFunctionBody(MDecl, 0);
+    }
+  }
 
   StmtResult FnBody(ParseCompoundStatementBody());
 
@@ -1735,12 +1738,11 @@ Decl *Parser::ParseObjCMethodDefinition() {
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
                                        MultiStmtArg(Actions), false);
 
-  // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
-
   // Leave the function body scope.
   BodyScope.Exit();
-
+  
+  // TODO: Pass argument information.
+  Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
   return MDecl;
 }
 
