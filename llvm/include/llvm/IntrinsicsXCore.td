@@ -56,5 +56,11 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
 
   // Intrinsics for events.
   def int_xcore_waitevent : Intrinsic<[llvm_ptr_ty],[], [IntrReadMem]>;
+
+  // If any of the resources owned by the thread are ready this returns the
+  // vector of one of the ready resources. If no resources owned by the thread
+  // are ready then the operand passed to the intrinsic is returned.
+  def int_xcore_checkevent : Intrinsic<[llvm_ptr_ty],[llvm_ptr_ty]>;
+
   def int_xcore_clre : Intrinsic<[],[],[]>;
 }

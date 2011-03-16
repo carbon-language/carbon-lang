@@ -692,6 +692,13 @@ defm SETSR : FU6_LU6_int<"setsr", int_xcore_setsr>;
 
 defm CLRSR : FU6_LU6_int<"clrsr", int_xcore_clrsr>;
 
+// setsr may cause a branch if it is used to enable events. clrsr may
+// branch if it is executed while events are enabled.
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in {
+defm SETSR_branch : FU6_LU6_np<"setsr">;
+defm CLRSR_branch : FU6_LU6_np<"clrsr">;
+}
+
 // U10
 // TODO ldwcpl, blacp
 
