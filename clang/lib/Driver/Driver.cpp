@@ -725,14 +725,19 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
             Diag(clang::diag::err_drv_unknown_stdin_type);
           Ty = types::TY_C;
         } else {
-          // Otherwise lookup by extension, and fallback to ObjectType if not
-          // found. We use a host hook here because Darwin at least has its own
+          // Otherwise lookup by extension.
+          // Fallback is C if invoked as C preprocessor or Object otherwise.
+          // We use a host hook here because Darwin at least has its own
           // idea of what .s is.
           if (const char *Ext = strrchr(Value, '.'))
             Ty = TC.LookupTypeForExtension(Ext + 1);
 
-          if (Ty == types::TY_INVALID)
-            Ty = types::TY_Object;
+          if (Ty == types::TY_INVALID) {
+            if (CCCIsCPP)
+              Ty = types::TY_C;
+            else
+              Ty = types::TY_Object;
+          }
 
           // If the driver is invoked as C++ compiler (like clang++ or c++) it
           // should autodetect some input files as C++ for g++ compatibility.
