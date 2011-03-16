@@ -296,6 +296,9 @@ void RegAllocBase::allocatePhysRegs() {
       continue;
     }
 
+    // Invalidate all interference queries, live ranges could have changed.
+    ++UserTag;
+
     // selectOrSplit requests the allocator to return an available physical
     // register if possible and populate a list of new live intervals that
     // result from splitting.
