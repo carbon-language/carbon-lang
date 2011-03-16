@@ -188,6 +188,10 @@ class CursorVisitor : public DeclVisitor<CursorVisitor, bool>,
   // be suppressed.
   unsigned MaxPCHLevel;
 
+  /// \brief Whether we should visit the preprocessing record entries last, 
+  /// after visiting other declarations.
+  bool VisitPreprocessorLast;
+  
   /// \brief When valid, a source range to which the cursor should restrict
   /// its search.
   SourceRange RegionOfInterest;
@@ -235,11 +239,12 @@ public:
   CursorVisitor(CXTranslationUnit TU, CXCursorVisitor Visitor,
                 CXClientData ClientData,
                 unsigned MaxPCHLevel,
+                bool VisitPreprocessorLast,
                 SourceRange RegionOfInterest = SourceRange())
     : TU(TU), AU(static_cast<ASTUnit*>(TU->TUData)),
       Visitor(Visitor), ClientData(ClientData),
-      MaxPCHLevel(MaxPCHLevel), RegionOfInterest(RegionOfInterest), 
-      DI_current(0)
+      MaxPCHLevel(MaxPCHLevel), VisitPreprocessorLast(VisitPreprocessorLast),
+      RegionOfInterest(RegionOfInterest), DI_current(0)
   {
     Parent.kind = CXCursor_NoDeclFound;
     Parent.data[0] = 0;
@@ -501,46 +506,54 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   if (clang_isTranslationUnit(Cursor.kind)) {
     CXTranslationUnit tu = getCursorTU(Cursor);
     ASTUnit *CXXUnit = static_cast<ASTUnit*>(tu->TUData);
-    if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls() &&
-        RegionOfInterest.isInvalid()) {
-      for (ASTUnit::top_level_iterator TL = CXXUnit->top_level_begin(),
-                                    TLEnd = CXXUnit->top_level_end();
-           TL != TLEnd; ++TL) {
-        if (Visit(MakeCXCursor(*TL, tu), true))
+    
+    int VisitOrder[2] = { VisitPreprocessorLast, !VisitPreprocessorLast };
+    for (unsigned I = 0; I != 2; ++I) {
+      if (VisitOrder[I]) {
+        if (!CXXUnit->isMainFileAST() && CXXUnit->getOnlyLocalDecls() &&
+            RegionOfInterest.isInvalid()) {
+          for (ASTUnit::top_level_iterator TL = CXXUnit->top_level_begin(),
+                                        TLEnd = CXXUnit->top_level_end();
+               TL != TLEnd; ++TL) {
+            if (Visit(MakeCXCursor(*TL, tu), true))
+              return true;
+          }
+        } else if (VisitDeclContext(
+                                CXXUnit->getASTContext().getTranslationUnitDecl()))
           return true;
+        continue;
       }
-    } else if (VisitDeclContext(
-                            CXXUnit->getASTContext().getTranslationUnitDecl()))
-      return true;
 
-    // Walk the preprocessing record.
-    if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
-      // FIXME: Once we have the ability to deserialize a preprocessing record,
-      // do so.
-      PreprocessingRecord::iterator E, EEnd;
-      for (llvm::tie(E, EEnd) = getPreprocessedEntities(); E != EEnd; ++E) {
-        if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
-          if (Visit(MakeMacroInstantiationCursor(MI, tu)))
-            return true;
+      // Walk the preprocessing record.
+      if (CXXUnit->getPreprocessor().getPreprocessingRecord()) {
+        // FIXME: Once we have the ability to deserialize a preprocessing record,
+        // do so.
+        PreprocessingRecord::iterator E, EEnd;
+        for (llvm::tie(E, EEnd) = getPreprocessedEntities(); E != EEnd; ++E) {
+          if (MacroInstantiation *MI = dyn_cast<MacroInstantiation>(*E)) {
+            if (Visit(MakeMacroInstantiationCursor(MI, tu)))
+              return true;
+            
+            continue;
+          }
           
-          continue;
-        }
-        
-        if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
-          if (Visit(MakeMacroDefinitionCursor(MD, tu)))
-            return true;
+          if (MacroDefinition *MD = dyn_cast<MacroDefinition>(*E)) {
+            if (Visit(MakeMacroDefinitionCursor(MD, tu)))
+              return true;
+            
+            continue;
+          }
           
-          continue;
-        }
-        
-        if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
-          if (Visit(MakeInclusionDirectiveCursor(ID, tu)))
-            return true;
-          
-          continue;
+          if (InclusionDirective *ID = dyn_cast<InclusionDirective>(*E)) {
+            if (Visit(MakeInclusionDirectiveCursor(ID, tu)))
+              return true;
+            
+            continue;
+          }
         }
       }
     }
+    
     return false;
   }
 
@@ -2860,7 +2873,8 @@ unsigned clang_visitChildren(CXCursor parent,
                              CXCursorVisitor visitor,
                              CXClientData client_data) {
   CursorVisitor CursorVis(getCursorTU(parent), visitor, client_data, 
-                          getCursorASTUnit(parent)->getMaxPCHLevel());
+                          getCursorASTUnit(parent)->getMaxPCHLevel(),
+                          false);
   return CursorVis.VisitChildren(parent);
 }
 
@@ -3316,7 +3330,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     // the region of interest, rather than starting from the translation unit.
     CXCursor Parent = clang_getTranslationUnitCursor(TU);
     CursorVisitor CursorVis(TU, GetCursorVisitor, &Result,
-                            Decl::MaxPCHLevel, SourceLocation(SLoc));
+                            Decl::MaxPCHLevel, true, SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
   
@@ -4283,7 +4297,7 @@ public:
       NumTokens(numTokens), TokIdx(0), PreprocessingTokIdx(0),
       AnnotateVis(tu,
                   AnnotateTokensVisitor, this,
-                  Decl::MaxPCHLevel, RegionOfInterest),
+                  Decl::MaxPCHLevel, true, RegionOfInterest),
       SrcMgr(static_cast<ASTUnit*>(tu->TUData)->getSourceManager()),
       HasContextSensitiveKeywords(false) { }
 

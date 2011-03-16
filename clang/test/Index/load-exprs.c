@@ -32,7 +32,7 @@ void test_members(int aval, int bval) {
 }
 
 // RUN: c-index-test -test-load-source all %s -fblocks | FileCheck %s
-
+// CHECK: macro definition=__clang__
 // CHECK: load-exprs.c:1:13: TypedefDecl=T:1:13 (Definition) Extent=[1:1 - 1:14]
 // CHECK: load-exprs.c:2:8: StructDecl=X:2:8 (Definition) Extent=[2:1 - 2:23]
 // CHECK: load-exprs.c:2:16: FieldDecl=a:2:16 (Definition) Extent=[2:12 - 2:17]
