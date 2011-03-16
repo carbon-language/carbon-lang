@@ -3489,6 +3489,12 @@ public:
       else
         return getLBracketLoc();
     }
+    SourceLocation getEndLocation() const {
+      return Kind == FieldDesignator ? getFieldLoc() : getRBracketLoc();
+    }
+    SourceRange getSourceRange() const {
+      return SourceRange(getStartLocation(), getEndLocation());
+    }
   };
 
   static DesignatedInitExpr *Create(ASTContext &C, Designator *Designators,
@@ -3570,6 +3576,8 @@ public:
   /// of designators in [First, Last).
   void ExpandDesignator(ASTContext &C, unsigned Idx, const Designator *First,
                         const Designator *Last);
+
+  SourceRange getDesignatorsSourceRange() const;
 
   SourceRange getSourceRange() const;
 

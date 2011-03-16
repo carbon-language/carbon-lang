@@ -2740,6 +2740,14 @@ void DesignatedInitExpr::setDesignators(ASTContext &C,
     Designators[I] = Desigs[I];
 }
 
+SourceRange DesignatedInitExpr::getDesignatorsSourceRange() const {
+  DesignatedInitExpr *DIE = const_cast<DesignatedInitExpr*>(this);
+  if (size() == 1)
+    return DIE->getDesignator(0)->getSourceRange();
+  return SourceRange(DIE->getDesignator(0)->getStartLocation(),
+                     DIE->getDesignator(size()-1)->getEndLocation());
+}
+
 SourceRange DesignatedInitExpr::getSourceRange() const {
   SourceLocation StartLoc;
   Designator &First =
