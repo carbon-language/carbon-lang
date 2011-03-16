@@ -219,7 +219,7 @@ namespace {
 /// optimization, which scans the uses of an alloca and determines if it can
 /// rewrite it in terms of a single new alloca that can be mem2reg'd.
 class ConvertToScalarInfo {
-  /// AllocaSize - The size of the alloca being considered.
+  /// AllocaSize - The size of the alloca being considered in bytes.
   unsigned AllocaSize;
   const TargetData &TD;
 
