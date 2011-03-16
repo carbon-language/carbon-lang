@@ -238,9 +238,9 @@ class ConvertToScalarInfo {
   /// also declared as a vector, we do want to promote to a vector.
   bool HadAVector;
 
-  /// HadAVector - True if there is at least one access to the alloca that is
-  /// not a MemTransferInst.  We don't want to turn structs into large integers
-  /// unless there is some potential for optimization.
+  /// HadNonMemTransferAccess - True if there is at least one access to the 
+  /// alloca that is not a MemTransferInst.  We don't want to turn structs into
+  /// large integers unless there is some potential for optimization.
   bool HadNonMemTransferAccess;
 
 public:
