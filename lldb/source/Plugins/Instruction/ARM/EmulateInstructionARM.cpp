@@ -280,12 +280,14 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextPushRegisterOnStack;
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
         for (i=0; i<15; ++i)
         {
             if (BitIsSet (registers, i))
             {
                 dwarf_reg.num = dwarf_r0 + i;
-                context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
+                context.SetRegisterToRegisterPlusOffset (dwarf_reg, sp_reg, addr - sp);
                 uint32_t reg_value = ReadCoreReg(i, &success);
                 if (!success)
                     return false;
@@ -651,10 +653,10 @@ EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
         
         // The context specifies that Rm is to be moved into Rd.
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        context.type = EmulateInstruction::eContextRegisterLoad;
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
-        context.SetRegisterPlusOffset (dwarf_reg, 0);
+        context.SetRegister (dwarf_reg);
 
         if (!WriteCoreRegOptionalFlags(context, result, Rd, setflags))
             return false;
@@ -1299,13 +1301,13 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
             break;
             }
         case eEncodingA1:
-            lr = pc + 4; // return address
+            lr = pc - 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2);
             target = Align(pc, 4) + imm32;
             context.SetModeAndImmediateSigned (eModeARM, 8 + imm32);
             break;
         case eEncodingA2:
-            lr = pc + 4; // return address
+            lr = pc - 4; // return address
             imm32 = llvm::SignExtend32<26>(Bits32(opcode, 23, 0) << 2 | Bits32(opcode, 24, 24) << 1);
             target = pc + imm32;
             context.SetModeAndImmediateSigned (eModeThumb, 8 + imm32);
@@ -1691,8 +1693,10 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
         EmulateInstruction::Context context;
         if (Rd == 13)
         {
+            uint64_t imm64 = imm32;  // Need to expand it to 64 bits before attempting to negate it, or the wrong
+                                     // value gets passed down to context.SetImmediateSigned.
             context.type = EmulateInstruction::eContextAdjustStackPointer;
-            context.SetImmediateSigned (-imm32); // the stack pointer offset
+            context.SetImmediateSigned (-imm64); // the stack pointer offset
         }
         else
         {
