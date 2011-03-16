@@ -329,6 +329,11 @@ private:
 
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
   SourceLocation TSWLoc, TSCLoc, TSSLoc, TSTLoc, AltiVecLoc;
+  /// TSTNameLoc - If TypeSpecType is any of class, enum, struct, union,
+  /// typename, then this is the location of the named type (if present);
+  /// otherwise, it is the same as TSTLoc. Hence, the pair TSTLoc and
+  /// TSTNameLoc provides source range info for tag types.
+  SourceLocation TSTNameLoc;
   SourceRange TypeofParensRange;
   SourceLocation TQ_constLoc, TQ_restrictLoc, TQ_volatileLoc;
   SourceLocation FS_inlineLoc, FS_virtualLoc, FS_explicitLoc;
@@ -431,6 +436,11 @@ public:
   SourceLocation getTypeSpecTypeLoc() const { return TSTLoc; }
   SourceLocation getAltiVecLoc() const { return AltiVecLoc; }
 
+  SourceLocation getTypeSpecTypeNameLoc() const {
+    assert(isDeclRep((TST) TypeSpecType) || TypeSpecType == TST_typename);
+    return TSTNameLoc;
+  }
+
   SourceRange getTypeofParensRange() const { return TypeofParensRange; }
   void setTypeofParensRange(SourceRange range) { TypeofParensRange = range; }
 
@@ -522,6 +532,13 @@ public:
                        unsigned &DiagID, ParsedType Rep);
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
                        unsigned &DiagID, Decl *Rep, bool Owned);
+  bool SetTypeSpecType(TST T, SourceLocation TagKwLoc,
+                       SourceLocation TagNameLoc, const char *&PrevSpec,
+                       unsigned &DiagID, ParsedType Rep);
+  bool SetTypeSpecType(TST T, SourceLocation TagKwLoc,
+                       SourceLocation TagNameLoc, const char *&PrevSpec,
+                       unsigned &DiagID, Decl *Rep, bool Owned);
+
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
                        unsigned &DiagID, Expr *Rep);
   bool SetTypeAltiVecVector(bool isAltiVecVector, SourceLocation Loc,

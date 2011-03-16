@@ -728,7 +728,7 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
     }
 
     // If the type is deprecated or unavailable, diagnose it.
-    S.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc());
+    S.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeNameLoc());
     
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 && "No qualifiers on tag names!");
@@ -736,12 +736,11 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
     // TypeQuals handled by caller.
     Result = Context.getTypeDeclType(D);
 
-    // In C++, make an ElaboratedType.
-    if (S.getLangOptions().CPlusPlus) {
-      ElaboratedTypeKeyword Keyword
-        = ElaboratedType::getKeywordForTypeSpec(DS.getTypeSpecType());
-      Result = S.getElaboratedType(Keyword, DS.getTypeSpecScope(), Result);
-    }
+    // In both C and C++, make an ElaboratedType.
+    ElaboratedTypeKeyword Keyword
+      = ElaboratedType::getKeywordForTypeSpec(DS.getTypeSpecType());
+    Result = S.getElaboratedType(Keyword, DS.getTypeSpecScope(), Result);
+
     if (D->isInvalidDecl())
       declarator.setInvalidType(true);
     break;
@@ -2300,7 +2299,7 @@ namespace {
       // If we got no declarator info from previous Sema routines,
       // just fill with the typespec loc.
       if (!TInfo) {
-        TL.initialize(Context, DS.getTypeSpecTypeLoc());
+        TL.initialize(Context, DS.getTypeSpecTypeNameLoc());
         return;
       }
 
@@ -2377,7 +2376,7 @@ namespace {
                        : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
       TL.setQualifierLoc(SS.getWithLocInContext(Context));
-      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+      TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
     }
     void VisitDependentTemplateSpecializationTypeLoc(
                                  DependentTemplateSpecializationTypeLoc TL) {
@@ -2398,7 +2397,10 @@ namespace {
                        : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
       TL.setQualifierLoc(SS.getWithLocInContext(Context));
-      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+      TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
+    }
+    void VisitTagTypeLoc(TagTypeLoc TL) {
+      TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
     }
 
     void VisitTypeLoc(TypeLoc TL) {

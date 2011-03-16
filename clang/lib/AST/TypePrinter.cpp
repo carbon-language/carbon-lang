@@ -557,9 +557,13 @@ void TypePrinter::printTag(TagDecl *D, std::string &InnerString) {
   std::string Buffer;
   bool HasKindDecoration = false;
 
+  // bool SuppressTagKeyword
+  //   = Policy.LangOpts.CPlusPlus || Policy.SuppressTagKeyword;
+
   // We don't print tags unless this is an elaborated type.
   // In C, we just assume every RecordType is an elaborated type.
-  if (!Policy.LangOpts.CPlusPlus && !D->getTypedefForAnonDecl()) {
+  if (!(Policy.LangOpts.CPlusPlus || Policy.SuppressTagKeyword ||
+        D->getTypedefForAnonDecl())) {
     HasKindDecoration = true;
     Buffer += D->getKindName();
     Buffer += ' ';
@@ -701,6 +705,7 @@ void TypePrinter::printElaborated(const ElaboratedType *T, std::string &S) {
   
   std::string TypeStr;
   PrintingPolicy InnerPolicy(Policy);
+  InnerPolicy.SuppressTagKeyword = true;
   InnerPolicy.SuppressScope = true;
   TypePrinter(InnerPolicy).print(T->getNamedType(), TypeStr);
   

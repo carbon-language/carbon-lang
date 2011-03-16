@@ -149,13 +149,13 @@ struct X9 : X8 {
 
 // Base specifiers
 // CHECK: Identifier: "outer_alias" [16:19 - 16:30] NamespaceRef=outer_alias:10:11
-// CHECK: Punctuation: "::" [16:30 - 16:32] C++ base class specifier=outer_alias::inner::vector<struct X>:4:12 [access=public isVirtual=false]
+// CHECK: Punctuation: "::" [16:30 - 16:32] C++ base class specifier=outer_alias::inner::vector<X>:4:12 [access=public isVirtual=false]
 // CHECK: Identifier: "inner" [16:32 - 16:37] NamespaceRef=inner:2:13
-// CHECK: Punctuation: "::" [16:37 - 16:39] C++ base class specifier=outer_alias::inner::vector<struct X>:4:12 [access=public isVirtual=false]
+// CHECK: Punctuation: "::" [16:37 - 16:39] C++ base class specifier=outer_alias::inner::vector<X>:4:12 [access=public isVirtual=false]
 // CHECK: Identifier: "vector" [16:39 - 16:45] TemplateRef=vector:4:12
-// CHECK: Punctuation: "<" [16:45 - 16:46] C++ base class specifier=outer_alias::inner::vector<struct X>:4:12 [access=public isVirtual=false]
+// CHECK: Punctuation: "<" [16:45 - 16:46] C++ base class specifier=outer_alias::inner::vector<X>:4:12 [access=public isVirtual=false]
 // CHECK: Identifier: "X" [16:46 - 16:47] TypeRef=struct X:12:8
-// CHECK: Punctuation: ">" [16:47 - 16:48] C++ base class specifier=outer_alias::inner::vector<struct X>:4:12 [access=public isVirtual=false]
+// CHECK: Punctuation: ">" [16:47 - 16:48] C++ base class specifier=outer_alias::inner::vector<X>:4:12 [access=public isVirtual=false]
 
 
 // CHECK: Keyword: "using" [17:3 - 17:8] UsingDeclaration=iterator[5:18]

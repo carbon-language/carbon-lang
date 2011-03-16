@@ -421,6 +421,14 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
                                ParsedType Rep) {
+  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep);
+}
+
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
+                               SourceLocation TagNameLoc,
+                               const char *&PrevSpec,
+                               unsigned &DiagID,
+                               ParsedType Rep) {
   assert(isTypeRep(T) && "T does not store a type");
   assert(Rep && "no type provided!");
   if (TypeSpecType != TST_unspecified) {
@@ -430,7 +438,8 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   }
   TypeSpecType = T;
   TypeRep = Rep;
-  TSTLoc = Loc;
+  TSTLoc = TagKwLoc;
+  TSTNameLoc = TagNameLoc;
   TypeSpecOwned = false;
   return false;
 }
@@ -449,11 +458,20 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   TypeSpecType = T;
   ExprRep = Rep;
   TSTLoc = Loc;
+  TSTNameLoc = Loc;
   TypeSpecOwned = false;
   return false;
 }
 
 bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
+                               const char *&PrevSpec,
+                               unsigned &DiagID,
+                               Decl *Rep, bool Owned) {
+  return SetTypeSpecType(T, Loc, Loc, PrevSpec, DiagID, Rep, Owned);
+}
+
+bool DeclSpec::SetTypeSpecType(TST T, SourceLocation TagKwLoc,
+                               SourceLocation TagNameLoc,
                                const char *&PrevSpec,
                                unsigned &DiagID,
                                Decl *Rep, bool Owned) {
@@ -467,7 +485,8 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
   }
   TypeSpecType = T;
   DeclRep = Rep;
-  TSTLoc = Loc;
+  TSTLoc = TagKwLoc;
+  TSTNameLoc = TagNameLoc;
   TypeSpecOwned = Owned;
   return false;
 }
@@ -482,13 +501,13 @@ bool DeclSpec::SetTypeSpecType(TST T, SourceLocation Loc,
     DiagID = diag::err_invalid_decl_spec_combination;
     return true;
   }
+  TSTLoc = Loc;
+  TSTNameLoc = Loc;
   if (TypeAltiVecVector && (T == TST_bool) && !TypeAltiVecBool) {
     TypeAltiVecBool = true;
-    TSTLoc = Loc;
     return false;
   }
   TypeSpecType = T;
-  TSTLoc = Loc;
   TypeSpecOwned = false;
   if (TypeAltiVecVector && !TypeAltiVecBool && (TypeSpecType == TST_double)) {
     PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
@@ -520,6 +539,7 @@ bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
   }
   TypeAltiVecPixel = isAltiVecPixel;
   TSTLoc = Loc;
+  TSTNameLoc = Loc;
   return false;
 }
 
@@ -527,6 +547,7 @@ bool DeclSpec::SetTypeSpecError() {
   TypeSpecType = TST_error;
   TypeSpecOwned = false;
   TSTLoc = SourceLocation();
+  TSTNameLoc = SourceLocation();
   return false;
 }
 

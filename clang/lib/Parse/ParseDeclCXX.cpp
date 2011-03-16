@@ -1017,19 +1017,17 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
   }
 
-  // FIXME: The DeclSpec should keep the locations of both the keyword and the
-  // name (if there is one).
-  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
-
   const char *PrevSpec = 0;
   unsigned DiagID;
   bool Result;
   if (!TypeResult.isInvalid()) {
-    Result = DS.SetTypeSpecType(DeclSpec::TST_typename, TSTLoc,
+    Result = DS.SetTypeSpecType(DeclSpec::TST_typename, StartLoc,
+                                NameLoc.isValid() ? NameLoc : StartLoc,
                                 PrevSpec, DiagID, TypeResult.get());
   } else if (!TagOrTempResult.isInvalid()) {
-    Result = DS.SetTypeSpecType(TagType, TSTLoc, PrevSpec, DiagID,
-                                TagOrTempResult.get(), Owned);
+    Result = DS.SetTypeSpecType(TagType, StartLoc,
+                                NameLoc.isValid() ? NameLoc : StartLoc,
+                                PrevSpec, DiagID, TagOrTempResult.get(), Owned);
   } else {
     DS.SetTypeSpecError();
     return;

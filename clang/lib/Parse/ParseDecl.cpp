@@ -2123,7 +2123,6 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       
   bool Owned = false;
   bool IsDependent = false;
-  SourceLocation TSTLoc = NameLoc.isValid()? NameLoc : StartLoc;
   const char *PrevSpec = 0;
   unsigned DiagID;
   Decl *TagDecl = Actions.ActOnTag(getCurScope(), DeclSpec::TST_enum, TUK,
@@ -2150,8 +2149,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       return;
     }
     
-    if (DS.SetTypeSpecType(DeclSpec::TST_typename, TSTLoc, PrevSpec, DiagID,
-                           Type.get()))
+    if (DS.SetTypeSpecType(DeclSpec::TST_typename, StartLoc,
+                           NameLoc.isValid() ? NameLoc : StartLoc,
+                           PrevSpec, DiagID, Type.get()))
       Diag(StartLoc, DiagID) << PrevSpec;
     
     return;
@@ -2172,10 +2172,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
 
-  // FIXME: The DeclSpec should keep the locations of both the keyword
-  // and the name (if there is one).
-  if (DS.SetTypeSpecType(DeclSpec::TST_enum, TSTLoc, PrevSpec, DiagID,
-                         TagDecl, Owned))
+  if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc,
+                         NameLoc.isValid() ? NameLoc : StartLoc,
+                         PrevSpec, DiagID, TagDecl, Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 

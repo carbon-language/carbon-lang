@@ -38,7 +38,7 @@ struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
-      SuppressTag(false), SuppressScope(false),
+      SuppressTagKeyword(false), SuppressTag(false), SuppressScope(false),
       Dump(false), ConstantArraySizeAsWritten(false),
       AnonymousTagLocations(true) { }
 
@@ -63,6 +63,16 @@ struct PrintingPolicy {
   /// \c true when we print "y", so that we suppress printing the
   /// "const int" type specifier and instead only print the "*y".
   bool SuppressSpecifiers : 1;
+
+  /// \brief Whether type printing should skip printing the tag keyword.
+  ///
+  /// This is used when printing the inner type of elaborated types,
+  /// (as the tag keyword is part of the elaborated type):
+  ///
+  /// \code
+  /// struct Geometry::Point;
+  /// \endcode
+  bool SuppressTagKeyword : 1;
 
   /// \brief Whether type printing should skip printing the actual tag type.
   ///

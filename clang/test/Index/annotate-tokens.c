@@ -53,7 +53,7 @@ enum Color g(int i, ...) {
 // CHECK: Punctuation: ")" [5:17 - 5:18] UnexposedExpr=
 // CHECK: Punctuation: ";" [5:18 - 5:19] UnexposedStmt=
 // CHECK: Comment: "/* A comment */" [6:3 - 6:18] UnexposedStmt=
-// CHECK: Keyword: "struct" [7:3 - 7:9] UnexposedStmt=
+// CHECK: Keyword: "struct" [7:3 - 7:9] VarDecl=x:7:12 (Definition)
 // CHECK: Identifier: "X" [7:10 - 7:11] TypeRef=struct X:2:8
 // CHECK: Identifier: "x" [7:12 - 7:13] VarDecl=x:7:12 (Definition)
 // CHECK: Punctuation: "=" [7:14 - 7:15] VarDecl=x:7:12 (Definition)
@@ -91,7 +91,7 @@ enum Color g(int i, ...) {
 // CHECK: Identifier: "Int" [16:38 - 16:41] TypeRef=Int:12:13
 // CHECK: Punctuation: "," [16:41 - 16:42] UnexposedExpr=
 // CHECK: Identifier: "Int" [16:43 - 16:46] TypeRef=Int:12:13
-// CHECK: Keyword: "struct" [18:3 - 18:9] UnexposedStmt=
+// CHECK: Keyword: "struct" [18:3 - 18:9] VarDecl=x:18:12 (Definition)
 // CHECK: Identifier: "X" [18:10 - 18:11] TypeRef=struct X:2:8
 // CHECK: Identifier: "x" [18:12 - 18:13] VarDecl=x:18:12 (Definition)
 // CHECK: Keyword: "do" [19:3 - 19:5] UnexposedStmt=
@@ -107,7 +107,7 @@ enum Color g(int i, ...) {
 // CHECK: Punctuation: "." [21:13 - 21:14] MemberRefExpr=a:2:16
 // CHECK: Identifier: "a" [21:14 - 21:15] MemberRefExpr=a:2:16
 
-// CHECK: Keyword: "enum" [23:3 - 23:7] UnexposedStmt=
+// CHECK: Keyword: "enum" [23:3 - 23:7] VarDecl=c:23:14 (Definition)
 // CHECK: Identifier: "Color" [23:8 - 23:13] TypeRef=enum Color:11:6
 // CHECK: Identifier: "c" [23:14 - 23:15] VarDecl=c:23:14 (Definition)
 // CHECK: Punctuation: ";" [23:15 - 23:16] UnexposedStmt=
