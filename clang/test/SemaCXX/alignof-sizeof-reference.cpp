@@ -8,8 +8,8 @@ void test() {
   static_assert(sizeof(r) == 1, "bad size");
 }
 
-void f(); 
-void f(int); 
+void f();  // expected-note{{candidate function}}
+void f(int);  // expected-note{{candidate function}}
 void g() { 
-  sizeof(&f); // expected-error{{cannot resolve overloaded function from context}}
+  sizeof(&f); // expected-error{{cannot resolve overloaded function 'f' from context}}
 }

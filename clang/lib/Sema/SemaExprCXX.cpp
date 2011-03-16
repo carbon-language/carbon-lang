@@ -3944,14 +3944,17 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FullExpr) {
   //  fooT<int>;
   
   if (FullExpr->getType() == Context.OverloadTy) {
-    if (!ResolveSingleFunctionTemplateSpecialization(FullExpr, 
-                                                     /* Complain */ false)) {
-      OverloadExpr* OvlExpr = OverloadExpr::find(FullExpr).Expression; 
-      Diag(FullExpr->getLocStart(), diag::err_addr_ovl_ambiguous)
-        << OvlExpr->getName();
-      NoteAllOverloadCandidates(OvlExpr);
+    ExprResult Fixed
+      = ResolveAndFixSingleFunctionTemplateSpecialization(FullExpr,
+                                        /*DoFunctionPointerConversion=*/false,
+                                                          /*Complain=*/true,
+                                                    FullExpr->getSourceRange(),
+                                                          QualType(),
+                                                 diag::err_addr_ovl_ambiguous);
+    if (Fixed.isInvalid())
       return ExprError();
-    }  
+    
+    FullExpr = Fixed.get();
   }
 
 

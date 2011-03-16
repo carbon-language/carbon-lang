@@ -29,8 +29,8 @@ struct is_same<T, T> {
 int typeof0[is_same<__typeof__(f<int>), void (int)>::value? 1 : -1];
 int typeof1[is_same<__typeof__(&f<int>), void (*)(int)>::value? 1 : -1];
 
-template <typename T> void g(T);
-template <typename T> void g(T, T);
+template <typename T> void g(T); // expected-note{{candidate function}}
+template <typename T> void g(T, T); // expected-note{{candidate function}}
 
 int typeof2[is_same<__typeof__(g<float>), void (int)>::value? 1 : -1]; // \
-     // expected-error{{cannot resolve overloaded function from context}}
+     // expected-error{{cannot resolve overloaded function 'g' from context}}

@@ -1499,7 +1499,7 @@ def err_ovl_no_viable_subscript :
 def err_ovl_no_oper :
     Error<"type %0 does not provide a %select{subscript|call}1 operator">;
 def err_ovl_unresolvable :
-    Error<"cannot resolve overloaded function from context">;
+    Error<"cannot resolve overloaded function %0 from context">;
   
 
 def err_ovl_no_viable_object_call : Error<

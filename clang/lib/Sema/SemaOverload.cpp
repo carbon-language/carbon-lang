@@ -7518,13 +7518,17 @@ ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
             DefaultFunctionArrayLvalueConversion(SingleFunctionExpression);
         }      
     }
-    if (!SingleFunctionExpression && Complain) {
-      OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
-      Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
-        << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
-        << oe->getQualifierLoc().getSourceRange();
-      NoteAllOverloadCandidates(SrcExpr);
+    if (!SingleFunctionExpression) {
+      if (Complain) {
+        OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
+        Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
+          << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
+          << oe->getQualifierLoc().getSourceRange();
+        NoteAllOverloadCandidates(SrcExpr);
+      }      
+      return ExprError();
     }
+
     return SingleFunctionExpression;
 }
 

@@ -1,11 +1,15 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s
-//#include <typeinfo>
-void one() { }
-void two() { } // expected-note 3{{candidate}}
-void two(int) { } // expected-note 3{{candidate}}
 
-template<class T> void twoT() { } // expected-note 4{{candidate}}
-template<class T> void twoT(int) { } // expected-note 4{{candidate}}
+namespace std {
+  class type_info {};
+}
+
+void one() { }
+void two() { } // expected-note 2{{candidate}}
+void two(int) { } // expected-note 2{{candidate}}
+
+template<class T> void twoT() { } // expected-note 3{{candidate}}
+template<class T> void twoT(int) { } // expected-note 3{{candidate}}
 
 template<class T> void oneT() { }
 template<class T, class U> void oneT(U) { }
@@ -28,15 +32,15 @@ int main()
    two;         // expected-error {{address of overloaded}}
    oneT<int>;  // expected-warning {{expression result unused}}
    twoT<int>;  // expected-error {{address of overloaded}}
-  typeid(oneT<int>); //expected-error {{you need to include <typeinfo>}}
+   typeid(oneT<int>); // expected-warning{{expression result unused}}
   sizeof(oneT<int>); // expected-warning {{expression result unused}}
-  sizeof(twoT<int>); //expected-error {{cannot resolve overloaded function from context}}
+  sizeof(twoT<int>); //expected-error {{cannot resolve overloaded function 'twoT' from context}}
   decltype(oneT<int>)* fun = 0;
   
   *one;    // expected-warning {{expression result unused}}
   *oneT<int>;   // expected-warning {{expression result unused}}
-  *two;  //expected-error {{cannot resolve overloaded function from context}}
-  *twoT<int>; //expected-error {{cannot resolve overloaded function from context}}
+  *two;  //expected-error {{cannot resolve overloaded function 'two' from context}}
+  *twoT<int>; //expected-error {{cannot resolve overloaded function 'twoT' from context}}
   !oneT<int>;  // expected-warning {{expression result unused}}
   +oneT<int>;  // expected-warning {{expression result unused}}
   -oneT<int>;  //expected-error {{invalid argument type}}
@@ -50,7 +54,7 @@ int main()
   (twoT<int>) == oneT<int>; //expected-error {{invalid operands to binary expression}}
   bool b = oneT<int>;
   void (*p)() = oneT<int>;
-  test<oneT<int>> ti;
+  test<oneT<int> > ti;
   void (*u)(int) = oneT<int>;
 
   b = (void (*)()) twoT<int>;
@@ -65,4 +69,12 @@ int main()
   twoT<int> < twoT<int>; //expected-error {{invalid operands to binary expression}}
   oneT<int> == 0;   // expected-warning {{expression result unused}}
 
+}
+
+struct rdar9108698 {
+  template<typename> void f();
+};
+
+void test_rdar9108698(rdar9108698 x) {
+  x.f<int>; // expected-error{{a bound member function may only be called}}
 }
