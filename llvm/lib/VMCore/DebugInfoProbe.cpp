@@ -80,8 +80,6 @@ static void collect(Function &F, std::set<unsigned> &Lines) {
 void DebugInfoProbeImpl::initialize(StringRef PName, Function &F) {
   if (!EnableDebugInfoProbe) return;
   PassName = PName;
-  NumDbgLineLost = 0;
-  NumDbgValueLost = 0;
 
   LineNos.clear();
   DbgVariables.clear();
@@ -121,6 +119,8 @@ void DebugInfoProbeImpl::report() {
                  << PassName << "\n";
     delete OutStream;
   }
+  NumDbgLineLost = 0;
+  NumDbgValueLost = 0;
 }
 
 /// finalize - Collect information after running an optimization pass. This
@@ -135,7 +135,7 @@ void DebugInfoProbeImpl::finalize(Function &F) {
          E = LineNos.end(); I != E; ++I) {
     unsigned LineNo = *I;
     if (LineNos2.count(LineNo) == 0) {
-      DEBUG(dbgs() << "Losing dbg info intrinsic at line " << LineNo << " ");
+      DEBUG(dbgs() << "DebugInfoProbe: Losing dbg info intrinsic at line " << LineNo << "\n");
       ++NumDbgLineLost;
     }
   }
@@ -161,7 +161,7 @@ void DebugInfoProbeImpl::finalize(Function &F) {
   for (std::set<MDNode *>::iterator I = DbgVariables.begin(), 
          E = DbgVariables.end(); I != E; ++I) {
     if (DbgVariables2.count(*I) == 0) {
-      DEBUG(dbgs() << "Losing dbg info for variable: ");
+      DEBUG(dbgs() << "DebugInfoProbe: Losing dbg info for variable: ");
       DEBUG((*I)->print(dbgs()));
       ++NumDbgValueLost;
     }
