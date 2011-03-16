@@ -18,6 +18,7 @@
 
 namespace llvm {
   class StringRef;
+  template <typename T> class SmallVectorImpl;
 }
 namespace clang {
 class HeaderMap;
@@ -121,11 +122,17 @@ public:
 
   /// LookupFile - Lookup the specified file in this search path, returning it
   /// if it exists or returning null if not.
-  const FileEntry *LookupFile(llvm::StringRef Filename, HeaderSearch &HS) const;
+  /// If RawPath is not NULL and the file is found, RawPath will be set to the
+  /// raw path at which the file was found in the file system. For example,
+  /// for a search path ".." and a filename "../file.h" this would be
+  /// "../../file.h".
+  const FileEntry *LookupFile(llvm::StringRef Filename, HeaderSearch &HS,
+                              llvm::SmallVectorImpl<char> *RawPath) const;
 
 private:
-  const FileEntry *DoFrameworkLookup(llvm::StringRef Filename,
-                                     HeaderSearch &HS) const;
+  const FileEntry *DoFrameworkLookup(
+      llvm::StringRef Filename, HeaderSearch &HS,
+      llvm::SmallVectorImpl<char> *RawPath) const;
 
 };
 

@@ -341,7 +341,8 @@ namespace clang {
                                     llvm::StringRef FileName,
                                     bool IsAngled,
                                     const FileEntry *File,
-                                    SourceLocation EndLoc);
+                                    SourceLocation EndLoc,
+                                    const llvm::SmallVectorImpl<char> &RawPath);
   };
 } // end namespace clang
 

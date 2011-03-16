@@ -75,12 +75,17 @@ public:
   ///
   /// \param EndLoc The location of the last token within the inclusion
   /// directive.
+  ///
+  /// \param RawPath Contains the raw path at which the file was found in the
+  /// file system. For example, for a search path ".." and a filename
+  /// "../file.h" this would be "../../file.h".
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
                                   llvm::StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc) {
+                                  SourceLocation EndLoc,
+                                  const llvm::SmallVectorImpl<char> &RawPath) {
   }
 
   /// EndOfMainFile - This callback is invoked when the end of the main file is
@@ -188,11 +193,12 @@ public:
                                   llvm::StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
-                                  SourceLocation EndLoc) {
-    First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File, 
-                              EndLoc);
-    Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File, 
-                               EndLoc);
+                                  SourceLocation EndLoc,
+                                  const llvm::SmallVectorImpl<char> &RawPath) {
+    First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
+                              EndLoc, RawPath);
+    Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
+                               EndLoc, RawPath);
   }
 
   virtual void EndOfMainFile() {

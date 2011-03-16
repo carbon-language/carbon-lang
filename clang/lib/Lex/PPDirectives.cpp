@@ -469,10 +469,12 @@ void Preprocessor::PTHSkipExcludedConditionalBlock() {
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").
-const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
-                                          bool isAngled,
-                                          const DirectoryLookup *FromDir,
-                                          const DirectoryLookup *&CurDir) {
+const FileEntry *Preprocessor::LookupFile(
+    llvm::StringRef Filename,
+    bool isAngled,
+    const DirectoryLookup *FromDir,
+    const DirectoryLookup *&CurDir,
+    llvm::SmallVectorImpl<char> *RawPath) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -494,8 +496,8 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
 
   // Do a standard file entry lookup.
   CurDir = CurDirLookup;
-  const FileEntry *FE =
-    HeaderInfo.LookupFile(Filename, isAngled, FromDir, CurDir, CurFileEnt);
+  const FileEntry *FE = HeaderInfo.LookupFile(
+      Filename, isAngled, FromDir, CurDir, CurFileEnt, RawPath);
   if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
@@ -503,7 +505,8 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
   // headers on the #include stack and pass them to HeaderInfo.
   if (IsFileLexer()) {
     if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
-      if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+      if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
+                                                    RawPath)))
         return FE;
   }
 
@@ -512,7 +515,8 @@ const FileEntry *Preprocessor::LookupFile(llvm::StringRef Filename,
     if (IsFileLexer(ISEntry)) {
       if ((CurFileEnt =
            SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID())))
-        if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt)))
+        if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
+                                                      RawPath)))
           return FE;
     }
   }
@@ -1167,7 +1171,11 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = LookupFile(Filename, isAngled, LookupFrom, CurDir);
+  llvm::SmallString<1024> RawPath;
+  // We get the raw path only if we have 'Callbacks' to which we later pass
+  // the path.
+  const FileEntry *File = LookupFile(
+      Filename, isAngled, LookupFrom, CurDir, Callbacks ? &RawPath : NULL);
   if (File == 0) {
     Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
@@ -1175,9 +1183,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // Notify the callback object that we've seen an inclusion directive.
   if (Callbacks)
-    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File, 
-                                  End);
-  
+    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
+                                  End, RawPath);
+
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.

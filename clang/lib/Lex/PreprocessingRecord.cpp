@@ -146,12 +146,14 @@ void PreprocessingRecord::MacroUndefined(const Token &Id,
     MacroDefinitions.erase(Pos);
 }
 
-void PreprocessingRecord::InclusionDirective(SourceLocation HashLoc,
-                                             const clang::Token &IncludeTok, 
-                                             llvm::StringRef FileName, 
-                                             bool IsAngled, 
-                                             const FileEntry *File,
-                                           clang::SourceLocation EndLoc) {
+void PreprocessingRecord::InclusionDirective(
+    SourceLocation HashLoc,
+    const clang::Token &IncludeTok,
+    llvm::StringRef FileName,
+    bool IsAngled,
+    const FileEntry *File,
+    clang::SourceLocation EndLoc,
+    const llvm::SmallVectorImpl<char> &RawPath) {
   InclusionDirective::InclusionKind Kind = InclusionDirective::Include;
   
   switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {

@@ -662,7 +662,8 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  const FileEntry *File = PP.LookupFile(Filename, isAngled, LookupFrom, CurDir);
+  const FileEntry *File =
+      PP.LookupFile(Filename, isAngled, LookupFrom, CurDir, NULL);
 
   // Get the result value.  Result = true means the file exists.
   bool Result = File != 0;
