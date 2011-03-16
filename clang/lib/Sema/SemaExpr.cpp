@@ -6312,10 +6312,6 @@ QualType Sema::InvalidOperands(SourceLocation Loc, Expr *&lex, Expr *&rex) {
   Diag(Loc, diag::err_typecheck_invalid_operands)
     << lex->getType() << rex->getType()
     << lex->getSourceRange() << rex->getSourceRange();
-    if (lex->getType() == Context.OverloadTy)
-      NoteAllOverloadCandidates(lex);
-    if (rex->getType() == Context.OverloadTy)
-      NoteAllOverloadCandidates(rex);
   return QualType();
 }
 

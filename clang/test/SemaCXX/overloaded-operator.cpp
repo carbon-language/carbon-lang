@@ -384,3 +384,19 @@ void test_lookup_through_using() {
   N::X2 x;
   x << 17;
 }
+
+namespace rdar9136502 {
+  struct X {
+    int i();
+    int i(int);
+  };
+
+  struct Y {
+    Y &operator<<(int); // expected-note{{candidate function not viable: no overload of 'i' matching 'int' for 1st argument}}
+  };
+
+  void f(X x, Y y) {
+    // FIXME: This diagnostic is non-awesome.
+    y << x.i; // expected-error{{invalid operands to binary expression ('rdar9136502::Y' and '<overloaded function type>')}}
+  }
+}
