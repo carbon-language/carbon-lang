@@ -3,7 +3,7 @@
 ; RUN:   not grep alloca
 ; RUN: opt < %s -scalarrepl -S | grep {ret i8}
 
-target datalayout = "e-p:32:32"
+target datalayout = "e-p:32:32-n8:16:32"
 target triple = "i686-apple-darwin8.7.2"
 	%struct.Val = type { i32*, i32 }
 
