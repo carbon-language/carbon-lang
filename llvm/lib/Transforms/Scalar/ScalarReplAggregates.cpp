@@ -238,10 +238,15 @@ class ConvertToScalarInfo {
   /// also declared as a vector, we do want to promote to a vector.
   bool HadAVector;
 
+  /// HadAVector - True if there is at least one access to the alloca that is
+  /// not a MemTransferInst.  We don't want to turn structs into large integers
+  /// unless there is some potential for optimization.
+  bool HadNonMemTransferAccess;
+
 public:
   explicit ConvertToScalarInfo(unsigned Size, const TargetData &td)
     : AllocaSize(Size), TD(td), IsNotTrivial(false), VectorTy(0),
-      HadAVector(false) { }
+      HadAVector(false), HadNonMemTransferAccess(false) { }
 
   AllocaInst *TryConvert(AllocaInst *AI);
 
@@ -280,9 +285,14 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
           << *VectorTy << '\n');
     NewTy = VectorTy;  // Use the vector type.
   } else {
+    unsigned BitWidth = AllocaSize * 8;
+    if (!HadAVector && !HadNonMemTransferAccess &&
+        !TD.fitsInLegalInteger(BitWidth))
+      return 0;
+
     DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
     // Create and insert the integer alloca.
-    NewTy = IntegerType::get(AI->getContext(), AllocaSize*8);
+    NewTy = IntegerType::get(AI->getContext(), BitWidth);
   }
   AllocaInst *NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
   ConvertUsesToScalar(AI, NewAI, 0);
@@ -431,6 +441,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // Don't touch MMX operations.
       if (LI->getType()->isX86_MMXTy())
         return false;
+      HadNonMemTransferAccess = true;
       MergeInType(LI->getType(), Offset);
       continue;
     }
@@ -441,6 +452,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       // Don't touch MMX operations.
       if (SI->getOperand(0)->getType()->isX86_MMXTy())
         return false;
+      HadNonMemTransferAccess = true;
       MergeInType(SI->getOperand(0)->getType(), Offset);
       continue;
     }
@@ -465,6 +477,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (!CanConvertToScalar(GEP, Offset+GEPOffset))
         return false;
       IsNotTrivial = true;  // Can't be mem2reg'd.
+      HadNonMemTransferAccess = true;
       continue;
     }
 
@@ -476,6 +489,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
           !isa<ConstantInt>(MSI->getLength()))
         return false;
       IsNotTrivial = true;  // Can't be mem2reg'd.
+      HadNonMemTransferAccess = true;
       continue;
     }
 
