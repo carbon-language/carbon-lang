@@ -160,3 +160,16 @@ void test_nested_switch()
   }
 }
 
+// Test that if all the values of an enum covered, that the 'default' branch
+// is unreachable.
+enum Values { A, B, C, D };
+void test_all_enums_covered(enum Values v) {
+  int x[2];
+  switch (v) {
+  case A: return;
+  case B: return;
+  case C: return;
+  case D: return;
+  }
+  x[2] = 0; // no-warning
+}
