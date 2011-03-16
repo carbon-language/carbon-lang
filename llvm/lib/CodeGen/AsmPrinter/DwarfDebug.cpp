@@ -3272,9 +3272,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
     case dwarf::DW_AT_location: {
       if (UseDotDebugLocEntry.count(Die) != 0) {
         DIELabel *L = cast<DIELabel>(Values[i]);
-        // Emitting reference to label directly, so the assembler can
-        // emit the relocations and the offset automatically.
-        Asm->EmitReference(L->getValue(), dwarf::DW_EH_PE_udata4);
+        Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
       } else
         Values[i]->EmitValue(Asm, Form);
       break;
@@ -3625,7 +3623,6 @@ void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
 
-  // Group debug entries.
   for (SmallVector<DotDebugLocEntry, 4>::iterator
          I = DotDebugLocEntries.begin(), E = DotDebugLocEntries.end();
        I != E; ++I) {
@@ -3634,7 +3631,7 @@ void DwarfDebug::emitDebugLoc() {
       Entry.Merge(I+1);
   }
 
-  // Start the dwarf location section.
+  // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
     Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getTargetData().getPointerSize();
