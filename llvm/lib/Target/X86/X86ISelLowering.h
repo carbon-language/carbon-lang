@@ -844,7 +844,7 @@ namespace llvm {
     virtual bool isUsedByReturnOnly(SDNode *N) const;
 
     virtual MVT
-    getTypeForExtendedInteger(EVT VT, ISD::NodeType ExtendKind) const;
+    getTypeForExtArgOrReturn(EVT VT, ISD::NodeType ExtendKind) const;
 
     virtual bool
       CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,

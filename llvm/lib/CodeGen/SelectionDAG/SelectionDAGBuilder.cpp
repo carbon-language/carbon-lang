@@ -1129,7 +1129,7 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
           ExtendKind = ISD::ZERO_EXTEND;
 
         if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-          MVT ReturnMVT = TLI.getTypeForExtendedInteger(VT, ExtendKind);
+          MVT ReturnMVT = TLI.getTypeForExtArgOrReturn(VT, ExtendKind);
           EVT MinVT = TLI.getRegisterType(*DAG.getContext(), ReturnMVT);
           if (VT.bitsLT(MinVT))
             VT = MinVT;

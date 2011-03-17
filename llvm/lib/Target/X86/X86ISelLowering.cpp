@@ -1449,8 +1449,8 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
 }
 
 MVT
-X86TargetLowering::getTypeForExtendedInteger(EVT VT,
-                                             ISD::NodeType ExtendKind) const {
+X86TargetLowering::getTypeForExtArgOrReturn(EVT VT,
+                                            ISD::NodeType ExtendKind) const {
   // TODO: Is this also valid on 32-bit?
   if (Subtarget->is64Bit() && VT == MVT::i1 && ExtendKind == ISD::ZERO_EXTEND)
     return MVT::i8;
