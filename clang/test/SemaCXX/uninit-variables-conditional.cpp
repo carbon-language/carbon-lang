@@ -16,8 +16,8 @@ int init(double *);
 // -Wuninitialized.
 double test() {
   double x; // expected-note {{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  if (bar() || baz() || Foo() || init(&x)) {
-    return x; // expected-warning {{variable 'x' is possibly uninitialized when used here}}
-  }
-  return 1.0;
+  if (bar() || baz() || Foo() || init(&x))
+    return 1.0;
+
+  return x; // expected-warning {{variable 'x' is possibly uninitialized when used here}}
 }
