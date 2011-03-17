@@ -618,6 +618,12 @@ namespace llvm {
     const SCEV *getUMinFromMismatchedTypes(const SCEV *LHS,
                                            const SCEV *RHS);
 
+    /// getPointerBase - Transitively follow the chain of pointer-type operands
+    /// until reaching a SCEV that does not have a single pointer operand. This
+    /// returns a SCEVUnknown pointer for well-formed pointer-type expressions,
+    /// but corner cases do exist.
+    const SCEV *getPointerBase(const SCEV *V);
+
     /// getSCEVAtScope - Return a SCEV expression for the specified value
     /// at the specified scope in the program.  The L value specifies a loop
     /// nest to evaluate the expression at, where null is the top-level or a

@@ -2718,6 +2718,36 @@ const SCEV *ScalarEvolution::getUMinFromMismatchedTypes(const SCEV *LHS,
   return getUMinExpr(PromotedLHS, PromotedRHS);
 }
 
+/// getPointerBase - Transitively follow the chain of pointer-type operands
+/// until reaching a SCEV that does not have a single pointer operand. This
+/// returns a SCEVUnknown pointer for well-formed pointer-type expressions,
+/// but corner cases do exist.
+const SCEV *ScalarEvolution::getPointerBase(const SCEV *V) {
+  // A pointer operand may evaluate to a nonpointer expression, such as null.
+  if (!V->getType()->isPointerTy())
+    return V;
+
+  if (const SCEVCastExpr *Cast = dyn_cast<SCEVCastExpr>(V)) {
+    return getPointerBase(Cast->getOperand());
+  }
+  else if (const SCEVNAryExpr *NAry = dyn_cast<SCEVNAryExpr>(V)) {
+    const SCEV *PtrOp = 0;
+    for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
+         I != E; ++I) {
+      if ((*I)->getType()->isPointerTy()) {
+        // Cannot find the base of an expression with multiple pointer operands.
+        if (PtrOp)
+          return V;
+        PtrOp = *I;
+      }
+    }
+    if (!PtrOp)
+      return V;
+    return getPointerBase(PtrOp);
+  }
+  return V;
+}
+
 /// PushDefUseChildren - Push users of the given Instruction
 /// onto the given Worklist.
 static void
