@@ -28,6 +28,7 @@ def which(program):
     return None
 
 def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
+    from cStringIO import StringIO 
     import pexpect
 
     gdb_prompt = "\r\n\(gdb\) "
@@ -42,8 +43,8 @@ def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
     # Get the output from gdb.
     gdb_output = gdb.before
 
-    # Open disasm-input.txt for writing the hex strings for llvm-mc to work on.
-    mc_input = open('disasm-input.txt', 'w')
+    # Use StringIO to record the memory dump as well as the gdb assembler code.
+    mc_input = StringIO()
 
     # These keep track of the states of our simple gdb_output parser.
     prev_line = None
@@ -74,14 +75,15 @@ def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
             if prev_addr and curr_addr:
                 addr_diff = int(curr_addr, 16) - int(prev_addr, 16)
 
-        if prev_addr:
+        if prev_addr and addr_diff > 0:
             # Feed the examining memory command to gdb.
             gdb.sendline('x /%db %s' % (addr_diff, prev_addr))
             gdb.expect(gdb_prompt)
             x_output = gdb.before
-            memory_dump = x_output.split(os.linesep)[-1].split(':')[-1]
+            memory_dump = x_output.split(os.linesep)[-1].split(':')[-1].strip()
             #print "\nbytes:", memory_dump
-            mc_input.write(memory_dump + '\n')
+            disasm_str = prev_line.split(':')[1]
+            print >> mc_input, '%s # %s' % (memory_dump, disasm_str)
 
         # We're done with the processing.  Assign the current line to be prev_line.
         prev_line = line
@@ -91,8 +93,9 @@ def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
     gdb.expect(pexpect.EOF)
     gdb.close()
 
-    # Close the mc_input now that we are done writing it.
-    mc_input.close()
+    # Write the memory dump into a file.
+    with open('disasm-input.txt', 'w') as f:
+        f.write(mc_input.getvalue())
 
     mc_cmd = '%s -disassemble %s disasm-input.txt' % (mc, mc_options)
     print "\nExecuting command:", mc_cmd
