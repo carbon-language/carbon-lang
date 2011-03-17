@@ -1934,7 +1934,7 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
 /// EmitObjCIvarInitializations - Emit information for ivar initialization
 /// for an implementation.
 void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
-  if (!Features.NeXTRuntime || D->getNumIvarInitializers() == 0)
+  if (D->getNumIvarInitializers() == 0)
     return;
   DeclContext* DC = const_cast<DeclContext*>(dyn_cast<DeclContext>(D));
   assert(DC && "EmitObjCIvarInitializations - null DeclContext");
