@@ -611,24 +611,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       != Diagnostic::Ignored ||
       Diags.getDiagnosticLevel(diag::warn_maybe_uninit_var, D->getLocStart())
       != Diagnostic::Ignored) {
-    ASTContext &ctx = D->getASTContext();
-    llvm::OwningPtr<CFG> tmpCFG;
-    bool useAlternateCFG = false;
-    if (ctx.getLangOptions().CPlusPlus) {
-      // Temporary workaround: implicit dtors in the CFG can confuse
-      // the path-sensitivity in the uninitialized values analysis.
-      // For now create (if necessary) a separate CFG without implicit dtors.
-      // FIXME: We should not need to do this, as it results in multiple
-      // CFGs getting constructed.
-      CFG::BuildOptions B;
-      B.AddEHEdges = false;
-      B.AddImplicitDtors = false;
-      B.AddInitializers = true;
-      tmpCFG.reset(CFG::buildCFG(D, AC.getBody(), &ctx, B));
-      useAlternateCFG = true;
-    }
-    CFG *cfg = useAlternateCFG ? tmpCFG.get() : AC.getCFG();
-    if (cfg) {
+    if (CFG *cfg = AC.getCFG()) {
       UninitValsDiagReporter reporter(S);
       runUninitializedVariablesAnalysis(*cast<DeclContext>(D), *cfg, AC,
                                         reporter);
