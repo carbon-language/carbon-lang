@@ -337,6 +337,9 @@ public: // Part of public interface to class.
 
   SVal RetrieveFieldOrElementCommon(Store store, const TypedRegion *R,
                                     QualType Ty, const MemRegion *superR);
+  
+  SVal RetrieveLazyBinding(const MemRegion *lazyBindingRegion,
+                           Store lazyBindingStore);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy:
@@ -977,11 +980,6 @@ SVal RegionStoreManager::Retrieve(Store store, Loc L, QualType T) {
 
 std::pair<Store, const MemRegion *>
 RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
-  if (Optional<SVal> OV = getDirectBinding(B, R))
-    if (const nonloc::LazyCompoundVal *V =
-        dyn_cast<nonloc::LazyCompoundVal>(OV.getPointer()))
-      return std::make_pair(V->getStore(), V->getRegion());
-
   if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
     const std::pair<Store, const MemRegion *> &X =
       GetLazyBinding(B, ER->getSuperRegion());
@@ -1009,6 +1007,12 @@ RegionStoreManager::GetLazyBinding(RegionBindings B, const MemRegion *R) {
       return std::make_pair(X.first,
                      MRMgr.getCXXBaseObjectRegionWithSuper(baseReg, X.second));
   }
+  else if (Optional<SVal> OV = getDefaultBinding(B, R)) {
+    if (const nonloc::LazyCompoundVal *V =
+        dyn_cast<nonloc::LazyCompoundVal>(OV.getPointer()))
+      return std::make_pair(V->getStore(), V->getRegion());
+  }
+
   // The NULL MemRegion indicates an non-existent lazy binding. A NULL Store is
   // possible for a valid lazy binding.
   return std::make_pair((Store) 0, (const MemRegion *) 0);
@@ -1098,14 +1102,19 @@ RegionStoreManager::RetrieveDerivedDefaultValue(RegionBindings B,
                                                 QualType Ty) {
 
   if (const Optional<SVal> &D = getDefaultBinding(B, superR)) {
-    if (SymbolRef parentSym = D->getAsSymbol())
+    const SVal &val = D.getValue();
+    if (SymbolRef parentSym = val.getAsSymbol())
       return svalBuilder.getDerivedRegionValueSymbolVal(parentSym, R);
 
-    if (D->isZeroConstant())
+    if (val.isZeroConstant())
       return svalBuilder.makeZeroVal(Ty);
 
-    if (D->isUnknownOrUndef())
-      return *D;
+    if (val.isUnknownOrUndef())
+      return val;
+
+    // Lazy bindings are handled later.
+    if (isa<nonloc::LazyCompoundVal>(val))
+      return Optional<SVal>();
 
     assert(0 && "Unknown default value");
   }
@@ -1113,6 +1122,15 @@ RegionStoreManager::RetrieveDerivedDefaultValue(RegionBindings B,
   return Optional<SVal>();
 }
 
+SVal RegionStoreManager::RetrieveLazyBinding(const MemRegion *lazyBindingRegion,
+                                             Store lazyBindingStore) {
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(lazyBindingRegion))
+    return RetrieveElement(lazyBindingStore, ER);
+  
+  return RetrieveField(lazyBindingStore,
+                       cast<FieldRegion>(lazyBindingRegion));
+}
+                                        
 SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
                                                       const TypedRegion *R,
                                                       QualType Ty,
@@ -1142,12 +1160,8 @@ SVal RegionStoreManager::RetrieveFieldOrElementCommon(Store store,
   const MemRegion *lazyBindingRegion = NULL;
   llvm::tie(lazyBindingStore, lazyBindingRegion) = GetLazyBinding(B, R);
 
-  if (lazyBindingRegion) {
-    if (const ElementRegion *ER = dyn_cast<ElementRegion>(lazyBindingRegion))
-      return RetrieveElement(lazyBindingStore, ER);
-    return RetrieveField(lazyBindingStore,
-                         cast<FieldRegion>(lazyBindingRegion));
-  }
+  if (lazyBindingRegion)
+    return RetrieveLazyBinding(lazyBindingRegion, lazyBindingStore);
 
   if (R->hasStackNonParametersStorage()) {
     if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
@@ -1530,7 +1544,7 @@ StoreRef RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 
   // Now copy the bindings.  This amounts to just binding 'V' to 'R'.  This
   // results in a zero-copy algorithm.
-  return StoreRef(addBinding(B, R, BindingKey::Direct,
+  return StoreRef(addBinding(B, R, BindingKey::Default,
                              V).getRootWithoutRetain(), *this);
 }
 

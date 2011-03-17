@@ -1253,4 +1253,24 @@ void Rdar_9103310_E(Rdar_9103310_A * x, struct Rdar_9103310_C * b) { // expected
   }
 }
 
+// Test handling binding lazy compound values to a region and then have
+// specific elements have other bindings.
+int PR9455() {
+  char arr[4] = "000";
+  arr[0] = '1';
+  if (arr[1] == '0')
+    return 1;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+  return 1;
+}
+int PR9455_2() {
+  char arr[4] = "000";
+  arr[0] = '1';
+  if (arr[1] == '0') {
+    int *p = 0;
+    *p = 0xDEADBEEF; // expected-warning {{null}}
+  }
+  return 1;
+}
 
