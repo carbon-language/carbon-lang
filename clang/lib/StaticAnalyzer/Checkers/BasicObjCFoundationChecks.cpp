@@ -596,6 +596,10 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     if (isa<loc::ConcreteInt>(msg.getArgSVal(I, state)))
       continue;
     
+    // Ignore pointer types annotated with 'NSObject' attribute.
+    if (C.getASTContext().isObjCNSObjectType(ArgTy))
+      continue;
+    
     // Ignore CF references, which can be toll-free bridged.
     if (cocoa::isCFObjectRef(ArgTy))
       continue;
