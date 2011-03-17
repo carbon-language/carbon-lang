@@ -1372,7 +1372,7 @@ public:
 
   /// Calculate the magic number for unsigned division by a constant.
   struct mu;
-  mu magicu() const;
+  mu magicu(unsigned LeadingZeros = 0) const;
 
   /// @}
   /// @name Building-block Operations for APInt and APFloat

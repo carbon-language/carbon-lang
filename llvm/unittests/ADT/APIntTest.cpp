@@ -348,6 +348,8 @@ TEST(APIntTest, magicu) {
   EXPECT_EQ(APInt(32, 5).magicu().s, 2U);
   EXPECT_EQ(APInt(32, 7).magicu().m, APInt(32, "24924925", 16));
   EXPECT_EQ(APInt(32, 7).magicu().s, 3U);
+  EXPECT_EQ(APInt(64, 25).magicu(1).m, APInt(64, "A3D70A3D70A3D70B", 16));
+  EXPECT_EQ(APInt(64, 25).magicu(1).s, 4U);
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
