@@ -594,10 +594,10 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Kernel code has more strict alignment requirements.
   if (KernelOrKext) {
-    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-mllvm");
     CmdArgs.push_back("-arm-long-calls");
 
-    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-mllvm");
     CmdArgs.push_back("-arm-strict-align");
   }
 }

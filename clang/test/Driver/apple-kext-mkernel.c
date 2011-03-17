@@ -11,8 +11,8 @@
 // RUN:   -arch armv7 -mkernel -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ARM < %t %s
 
-// CHECK-ARM: "-target-feature" "-arm-long-calls"
-// CHECK-ARM: "-target-feature" "-arm-strict-align"
+// CHECK-ARM: "-mllvm" "-arm-long-calls"
+// CHECK-ARM: "-mllvm" "-arm-strict-align"
 // CHECK-ARM: "-fno-builtin"
 // CHECK-ARM: "-fno-rtti"
 // CHECK-ARM: "-fno-common"
