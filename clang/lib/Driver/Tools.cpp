@@ -843,25 +843,16 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
   if (ExceptionsEnabled && DidHaveExplicitExceptionFlag)
     ShouldUseExceptionTables = true;
 
-  if (types::isObjC(InputType)) {
-    bool ObjCExceptionsEnabled = ExceptionsEnabled;
+  // Obj-C exceptions are enabled by default, regardless of -fexceptions. This
+  // is not necessarily sensible, but follows GCC.
+  if (types::isObjC(InputType) &&
+      Args.hasFlag(options::OPT_fobjc_exceptions, 
+                   options::OPT_fno_objc_exceptions,
+                   true)) {
+    CmdArgs.push_back("-fobjc-exceptions");
 
-    if (Arg *A = Args.getLastArg(options::OPT_fobjc_exceptions, 
-                                 options::OPT_fno_objc_exceptions,
-                                 options::OPT_fexceptions,
-                                 options::OPT_fno_exceptions)) {
-      if (A->getOption().matches(options::OPT_fobjc_exceptions))
-        ObjCExceptionsEnabled = true;
-      else if (A->getOption().matches(options::OPT_fno_objc_exceptions))
-        ObjCExceptionsEnabled = false;
-    }
-
-    if (ObjCExceptionsEnabled) {
-      CmdArgs.push_back("-fobjc-exceptions");
-
-      ShouldUseExceptionTables |= 
-        shouldUseExceptionTablesForObjCExceptions(Args, Triple);
-    }
+    ShouldUseExceptionTables |= 
+      shouldUseExceptionTablesForObjCExceptions(Args, Triple);
   }
 
   if (types::isCXX(InputType)) {
