@@ -114,18 +114,11 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
   return makeLTOModule(buffer.get(), errMsg);
 }
 
-/// makeBuffer - Create a MemoryBuffer from a memory range.  MemoryBuffer
-/// requires the byte past end of the buffer to be a zero.  We might get lucky
-/// and already be that way, otherwise make a copy.  Also if next byte is on a
-/// different page, don't assume it is readable.
+/// makeBuffer - Create a MemoryBuffer from a memory range.
 MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
   const char *startPtr = (char*)mem;
   const char *endPtr = startPtr+length;
-  if (((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0 ||
-      *endPtr != 0)
-    return MemoryBuffer::getMemBufferCopy(StringRef(startPtr, length));
-
-  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length));
+  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
 
 

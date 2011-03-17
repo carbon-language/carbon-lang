@@ -81,7 +81,8 @@ public:
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
   /// that InputData must be null terminated.
   static MemoryBuffer *getMemBuffer(StringRef InputData,
-                                    StringRef BufferName = "");
+                                    StringRef BufferName = "",
+                                    bool RequiresNullTerminator = true);
 
   /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
   /// copying the contents and taking ownership of it.  InputData does not
