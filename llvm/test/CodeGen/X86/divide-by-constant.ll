@@ -60,3 +60,14 @@ entry:
 ; CHECK: shrl	$31, %ecx
 ; CHECK: sarl	$18, %eax
 }
+
+define i32 @test7(i32 %x) nounwind {
+  %div = udiv i32 %x, 28
+  ret i32 %div
+; CHECK: test7:
+; CHECK: shrl $2
+; CHECK: movl $613566757
+; CHECK: mull
+; CHECK-NOT: shrl
+; CHECK: ret
+}
