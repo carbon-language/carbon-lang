@@ -664,35 +664,127 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         if (!success)
             return ret_plan_sp;
             
-        // Pull the class out of the Object and see if we've already cached this method call,
-        // If so we can push a run-to-address plan directly.  Otherwise we have to figure out where
-        // the implementation lives.
-
-        Value isa_value(*(argument_values.GetValueAtIndex(obj_index)));
-
-        // This is a little cheesy, but since object->isa is the first field,
-        // making the object value a load address value and resolving it will get
-        // the pointer sized data pointed to by that value...
         ExecutionContext exe_ctx;
         thread.CalculateExecutionContext (exe_ctx);
 
-        isa_value.SetValueType(Value::eValueTypeLoadAddress);
-        isa_value.ResolveValue(&exe_ctx, clang_ast_context->getASTContext());
-        lldb::addr_t isa_addr = isa_value.GetScalar().ULongLong();
-        lldb::addr_t sel_addr = argument_values.GetValueAtIndex(sel_index)->GetScalar().ULongLong();
-
-        if (log)
-        {
-            log->Printf("Resolving method call for class - 0x%llx and selector - 0x%llx",
-                        isa_addr, sel_addr);
-        }
-        ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
-        assert(objc_runtime != NULL);
+        // isa_addr will store the class pointer that the method is being dispatched to - so either the class
+        // directly or the super class if this is one of the objc_msgSendSuper flavors.  That's mostly used to
+        // look up the class/selector pair in our cache.
         
-        lldb::addr_t impl_addr = objc_runtime->LookupInMethodCache (isa_addr, sel_addr);
-                                                
-        if (impl_addr == LLDB_INVALID_ADDRESS)
-        {            
+        lldb::addr_t isa_addr = LLDB_INVALID_ADDRESS;
+        lldb::addr_t sel_addr = argument_values.GetValueAtIndex(sel_index)->GetScalar().ULongLong();
+         
+        // Figure out the class this is being dispatched to and see if we've already cached this method call,
+        // If so we can push a run-to-address plan directly.  Otherwise we have to figure out where
+        // the implementation lives.
+
+        if (this_dispatch.is_super)
+        {
+            if (this_dispatch.is_super2)
+            {
+               // In the objc_msgSendSuper2 case, we don't get the object directly, we get a structure containing
+               // the object and the class to which the super message is being sent.  So we need to dig the super
+               // out of the class and use that.
+               
+                Value super_value(*(argument_values.GetValueAtIndex(obj_index)));
+                super_value.GetScalar() += process->GetAddressByteSize();
+                super_value.ResolveValue (&exe_ctx, clang_ast_context->getASTContext());
+                
+                if (super_value.GetScalar().IsValid())
+                {
+                
+                    // isa_value now holds the class pointer.  The second word of the class pointer is the super-class pointer:
+                    super_value.GetScalar() += process->GetAddressByteSize();
+                    super_value.ResolveValue (&exe_ctx, clang_ast_context->getASTContext());
+                    if (super_value.GetScalar().IsValid())
+                        isa_addr = super_value.GetScalar().ULongLong();
+                    else
+                    {
+                       if (log)
+                        log->Printf("Failed to extract the super class value from the class in objc_super.");
+                    }
+                }
+                else
+                {
+                   if (log)
+                    log->Printf("Failed to extract the class value from objc_super.");
+                }
+            }
+            else
+            {
+               // In the objc_msgSendSuper case, we don't get the object directly, we get a two element structure containing
+               // the object and the super class to which the super message is being sent.  So the class we want is
+               // the second element of this structure.
+               
+                Value super_value(*(argument_values.GetValueAtIndex(obj_index)));
+                super_value.GetScalar() += process->GetAddressByteSize();
+                super_value.ResolveValue (&exe_ctx, clang_ast_context->getASTContext());
+                
+                if (super_value.GetScalar().IsValid())
+                {
+                    isa_addr = super_value.GetScalar().ULongLong();
+                }
+                else
+                {
+                   if (log)
+                    log->Printf("Failed to extract the class value from objc_super.");
+                }
+            }
+        }
+        else
+        {
+            // In the direct dispatch case, the object->isa is the class pointer we want.
+            
+            // This is a little cheesy, but since object->isa is the first field,
+            // making the object value a load address value and resolving it will get
+            // the pointer sized data pointed to by that value...
+            
+            // Note, it isn't a fatal error not to be able to get the address from the object, since this might
+            // be a "tagged pointer" which isn't a real object, but rather some word length encoded dingus.
+            
+            Value isa_value(*(argument_values.GetValueAtIndex(obj_index)));
+
+            isa_value.SetValueType(Value::eValueTypeLoadAddress);
+            isa_value.ResolveValue(&exe_ctx, clang_ast_context->getASTContext());
+            if (isa_value.GetScalar().IsValid())
+            {
+                isa_addr = isa_value.GetScalar().ULongLong();
+            }
+            else
+            {
+               if (log)
+                log->Printf("Failed to extract the isa value from object.");
+            }
+
+        } 
+        
+        // Okay, we've got the address of the class for which we're resolving this, let's see if it's in our cache:
+        lldb::addr_t impl_addr = LLDB_INVALID_ADDRESS;
+        
+        if (isa_addr != LLDB_INVALID_ADDRESS)
+        {
+            if (log)
+            {
+                log->Printf("Resolving call for class - 0x%llx and selector - 0x%llx",
+                            isa_addr, sel_addr);
+            }
+            ObjCLanguageRuntime *objc_runtime = m_process_sp->GetObjCLanguageRuntime ();
+            assert(objc_runtime != NULL);
+            
+            impl_addr = objc_runtime->LookupInMethodCache (isa_addr, sel_addr);
+        }                                      
+                                                                                                                          
+        if (impl_addr != LLDB_INVALID_ADDRESS)
+        {
+            // Yup, it was in the cache, so we can run to that address directly.
+            
+            if (log)
+                log->Printf ("Found implementation address in cache: 0x%llx", impl_addr);
+                 
+            ret_plan_sp.reset (new ThreadPlanRunToAddress (thread, impl_addr, stop_others));
+        }
+        else
+        {
             // We haven't seen this class/selector pair yet.  Look it up.
             StreamString errors;
             Address impl_code_address;
@@ -865,13 +957,6 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 ret_plan_sp->GetDescription(&s, eDescriptionLevelFull);
                 log->Printf("Using ObjC step plan: %s.\n", s.GetData());
             }
-        }
-        else
-        {
-            if (log)
-                log->Printf ("Found implementation address in cache: 0x%llx", impl_addr);
-                 
-            ret_plan_sp.reset (new ThreadPlanRunToAddress (thread, impl_addr, stop_others));
         }
     }
     
