@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
@@ -593,6 +594,10 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
 
     // Ignore pointer constants.
     if (isa<loc::ConcreteInt>(msg.getArgSVal(I, state)))
+      continue;
+    
+    // Ignore CF references, which can be toll-free bridged.
+    if (cocoa::isCFObjectRef(ArgTy))
       continue;
 
     // Generate only one error node to use for all bug reports.
