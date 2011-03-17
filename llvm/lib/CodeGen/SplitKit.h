@@ -265,13 +265,6 @@ class SplitEditor {
   /// rewriteAssigned - Rewrite all uses of Edit.getReg() to assigned registers.
   void rewriteAssigned(bool ExtendRanges);
 
-  /// rewriteComponents - Rewrite all uses of Intv[0] according to the eq
-  /// classes in ConEQ.
-  /// This must be done when Intvs[0] is styill live at all uses, before calling
-  /// ConEq.Distribute().
-  void rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
-                         const ConnectedVNInfoEqClasses &ConEq);
-
   /// deleteRematVictims - Delete defs that are dead after rematerializing.
   void deleteRematVictims();
 

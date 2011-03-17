@@ -771,28 +771,6 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
   }
 }
 
-/// rewriteSplit - Rewrite uses of Intvs[0] according to the ConEQ mapping.
-void SplitEditor::rewriteComponents(const SmallVectorImpl<LiveInterval*> &Intvs,
-                                    const ConnectedVNInfoEqClasses &ConEq) {
-  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Intvs[0]->reg),
-       RE = MRI.reg_end(); RI != RE;) {
-    MachineOperand &MO = RI.getOperand();
-    MachineInstr *MI = MO.getParent();
-    ++RI;
-    if (MO.isUse() && MO.isUndef())
-      continue;
-    // DBG_VALUE instructions should have been eliminated earlier.
-    SlotIndex Idx = LIS.getInstructionIndex(MI);
-    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
-    DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'
-                 << Idx << ':');
-    const VNInfo *VNI = Intvs[0]->getVNInfoAt(Idx);
-    assert(VNI && "Interval not live at use.");
-    MO.setReg(Intvs[ConEq.getEqClass(VNI)]->reg);
-    DEBUG(dbgs() << VNI->id << '\t' << *MI);
-  }
-}
-
 void SplitEditor::deleteRematVictims() {
   SmallVector<MachineInstr*, 8> Dead;
   for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
@@ -889,8 +867,7 @@ void SplitEditor::finish() {
     dups.push_back(li);
     for (unsigned i = 1; i != NumComp; ++i)
       dups.push_back(&Edit->create(MRI, LIS, VRM));
-    rewriteComponents(dups, ConEQ);
-    ConEQ.Distribute(&dups[0]);
+    ConEQ.Distribute(&dups[0], MRI);
   }
 
   // Calculate spill weight and allocation hints for new intervals.

@@ -719,8 +719,8 @@ void LiveRange::print(raw_ostream &os) const {
 
 unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   // Create initial equivalence classes.
-  eqClass_.clear();
-  eqClass_.grow(LI->getNumValNums());
+  EqClass.clear();
+  EqClass.grow(LI->getNumValNums());
 
   const VNInfo *used = 0, *unused = 0;
 
@@ -731,48 +731,65 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
     // Group all unused values into one class.
     if (VNI->isUnused()) {
       if (unused)
-        eqClass_.join(unused->id, VNI->id);
+        EqClass.join(unused->id, VNI->id);
       unused = VNI;
       continue;
     }
     used = VNI;
     if (VNI->isPHIDef()) {
-      const MachineBasicBlock *MBB = lis_.getMBBFromIndex(VNI->def);
+      const MachineBasicBlock *MBB = LIS.getMBBFromIndex(VNI->def);
       assert(MBB && "Phi-def has no defining MBB");
       // Connect to values live out of predecessors.
       for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
            PE = MBB->pred_end(); PI != PE; ++PI)
         if (const VNInfo *PVNI =
-              LI->getVNInfoAt(lis_.getMBBEndIdx(*PI).getPrevSlot()))
-          eqClass_.join(VNI->id, PVNI->id);
+              LI->getVNInfoAt(LIS.getMBBEndIdx(*PI).getPrevSlot()))
+          EqClass.join(VNI->id, PVNI->id);
     } else {
       // Normal value defined by an instruction. Check for two-addr redef.
       // FIXME: This could be coincidental. Should we really check for a tied
       // operand constraint?
       // Note that VNI->def may be a use slot for an early clobber def.
       if (const VNInfo *UVNI = LI->getVNInfoAt(VNI->def.getPrevSlot()))
-        eqClass_.join(VNI->id, UVNI->id);
+        EqClass.join(VNI->id, UVNI->id);
     }
   }
 
   // Lump all the unused values in with the last used value.
   if (used && unused)
-    eqClass_.join(used->id, unused->id);
+    EqClass.join(used->id, unused->id);
 
-  eqClass_.compress();
-  return eqClass_.getNumClasses();
+  EqClass.compress();
+  return EqClass.getNumClasses();
 }
 
-void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[]) {
+void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
+                                          MachineRegisterInfo &MRI) {
   assert(LIV[0] && "LIV[0] must be set");
   LiveInterval &LI = *LIV[0];
 
-  // First move runs to new intervals.
+  // Rewrite instructions.
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(LI.reg),
+       RE = MRI.reg_end(); RI != RE;) {
+    MachineOperand &MO = RI.getOperand();
+    MachineInstr *MI = MO.getParent();
+    ++RI;
+    if (MO.isUse() && MO.isUndef())
+      continue;
+    // DBG_VALUE instructions should have been eliminated earlier.
+    SlotIndex Idx = LIS.getInstructionIndex(MI);
+    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
+    const VNInfo *VNI = LI.getVNInfoAt(Idx);
+    assert(VNI && "Interval not live at use.");
+    MO.setReg(LIV[getEqClass(VNI)]->reg);
+  }
+
+  // Move runs to new intervals.
   LiveInterval::iterator J = LI.begin(), E = LI.end();
-  while (J != E && eqClass_[J->valno->id] == 0)
+  while (J != E && EqClass[J->valno->id] == 0)
     ++J;
   for (LiveInterval::iterator I = J; I != E; ++I) {
-    if (unsigned eq = eqClass_[I->valno->id]) {
+    if (unsigned eq = EqClass[I->valno->id]) {
       assert((LIV[eq]->empty() || LIV[eq]->expiredAt(I->start)) &&
              "New intervals should be empty");
       LIV[eq]->ranges.push_back(*I);
@@ -783,11 +800,11 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[]) {
 
   // Transfer VNInfos to their new owners and renumber them.
   unsigned j = 0, e = LI.getNumValNums();
-  while (j != e && eqClass_[j] == 0)
+  while (j != e && EqClass[j] == 0)
     ++j;
   for (unsigned i = j; i != e; ++i) {
     VNInfo *VNI = LI.getValNumInfo(i);
-    if (unsigned eq = eqClass_[i]) {
+    if (unsigned eq = EqClass[i]) {
       VNI->id = LIV[eq]->getNumValNums();
       LIV[eq]->valnos.push_back(VNI);
     } else {

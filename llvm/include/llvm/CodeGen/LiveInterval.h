@@ -548,8 +548,8 @@ namespace llvm {
   /// }
 
   class ConnectedVNInfoEqClasses {
-    LiveIntervals &lis_;
-    IntEqClasses eqClass_;
+    LiveIntervals &LIS;
+    IntEqClasses EqClass;
 
     // Note that values a and b are connected.
     void Connect(unsigned a, unsigned b);
@@ -557,7 +557,7 @@ namespace llvm {
     unsigned Renumber();
 
   public:
-    explicit ConnectedVNInfoEqClasses(LiveIntervals &lis) : lis_(lis) {}
+    explicit ConnectedVNInfoEqClasses(LiveIntervals &lis) : LIS(lis) {}
 
     /// Classify - Classify the values in LI into connected components.
     /// Return the number of connected components.
@@ -565,12 +565,13 @@ namespace llvm {
 
     /// getEqClass - Classify creates equivalence classes numbered 0..N. Return
     /// the equivalence class assigned the VNI.
-    unsigned getEqClass(const VNInfo *VNI) const { return eqClass_[VNI->id]; }
+    unsigned getEqClass(const VNInfo *VNI) const { return EqClass[VNI->id]; }
 
     /// Distribute - Distribute values in LIV[0] into a separate LiveInterval
     /// for each connected component. LIV must have a LiveInterval for each
     /// connected component. The LiveIntervals in Liv[1..] must be empty.
-    void Distribute(LiveInterval *LIV[]);
+    /// Instructions using LIV[0] are rewritten.
+    void Distribute(LiveInterval *LIV[], MachineRegisterInfo &MRI);
 
   };
 
