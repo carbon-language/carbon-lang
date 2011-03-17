@@ -1293,9 +1293,10 @@ public:
   /// but this is not true all the time, e.g. i1 on x86-64. It is also not
   /// necessary for non-C calling conventions. The frontend should handle this
   /// and include all of the necessary information.
-  virtual MVT
-  getTypeForExtArgOrReturn(EVT VT, ISD::NodeType ExtendKind) const {
-    return MVT::i32;
+  virtual EVT getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
+                                       ISD::NodeType ExtendKind) const {
+    EVT MinVT = getRegisterType(Context, MVT::i32);
+    return VT.bitsLT(MinVT) ? MinVT : VT;
   }
 
   /// LowerOperationWrapper - This callback is invoked by the type legalizer

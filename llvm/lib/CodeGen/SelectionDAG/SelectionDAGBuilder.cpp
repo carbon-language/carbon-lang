@@ -1128,12 +1128,8 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
         else if (F->paramHasAttr(0, Attribute::ZExt))
           ExtendKind = ISD::ZERO_EXTEND;
 
-        if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-          MVT ReturnMVT = TLI.getTypeForExtArgOrReturn(VT, ExtendKind);
-          EVT MinVT = TLI.getRegisterType(*DAG.getContext(), ReturnMVT);
-          if (VT.bitsLT(MinVT))
-            VT = MinVT;
-        }
+        if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger())
+          VT = TLI.getTypeForExtArgOrReturn(*DAG.getContext(), VT, ExtendKind);
 
         unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
         EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
