@@ -38,8 +38,10 @@ static bool isMallocCall(const CallInst *CI) {
   if (Callee == 0 || !Callee->isDeclaration())
     return false;
   if (Callee->getName() != "malloc" &&
-      Callee->getName() != "_Znwj" && Callee->getName() != "_Znwm" &&
-      Callee->getName() != "_Znaj" && Callee->getName() != "_Znam")
+      Callee->getName() != "_Znwj" && // operator new(unsigned int)
+      Callee->getName() != "_Znwm" && // operator new(unsigned long)
+      Callee->getName() != "_Znaj" && // operator new[](unsigned int)
+      Callee->getName() != "_Znam")   // operator new[](unsigned long)
     return false;
 
   // Check malloc prototype.
@@ -197,8 +199,8 @@ const CallInst *llvm::isFreeCall(const Value *I) {
     return 0;
 
   if (Callee->getName() != "free" &&
-      Callee->getName() != "_Zdlj" && Callee->getName() != "_Zdlm" &&
-      Callee->getName() != "_Zdaj" && Callee->getName() != "_Zdam")
+      Callee->getName() != "_ZdlPv" && // operator delete(void*)
+      Callee->getName() != "_ZdaPv")   // operator delete[](void*)
     return 0;
 
   // Check free prototype.
