@@ -1905,7 +1905,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                     !IsOpt))
     CmdArgs.push_back("-relax-all");
 
-  // FIXME: Add -force_cpusubtype_ALL support, once we have it.
+  // Ignore explicit -force_cpusubtype_ALL option.
+  (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
   // FIXME: Add -g support, once we have it.
 
