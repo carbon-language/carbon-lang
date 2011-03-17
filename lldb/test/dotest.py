@@ -576,7 +576,10 @@ def setupSysPath():
         print "The 'lldb' executable cannot be located.  Some of the tests may not be run as a result."
     else:
         os.environ["LLDB_EXEC"] = lldbExec
-        print "The 'lldb' executable path is", lldbExec
+        #print "The 'lldb' executable path is", lldbExec
+        os.system('%s -v' % lldbExec)
+    
+    os.system('svn info %s' % base)
 
     global ignore
 
