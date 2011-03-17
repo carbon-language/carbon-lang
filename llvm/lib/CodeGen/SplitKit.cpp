@@ -538,11 +538,11 @@ void SplitEditor::openIntv() {
 
   // Create the complement as index 0.
   if (Edit->empty())
-    Edit->create(MRI, LIS, VRM);
+    Edit->create(LIS, VRM);
 
   // Create the open interval.
   OpenIdx = Edit->size();
-  Edit->create(MRI, LIS, VRM);
+  Edit->create(LIS, VRM);
 }
 
 SlotIndex SplitEditor::enterIntvBefore(SlotIndex Idx) {
@@ -802,7 +802,7 @@ void SplitEditor::deleteRematVictims() {
   if (Dead.empty())
     return;
 
-  Edit->eliminateDeadDefs(Dead, LIS, TII);
+  Edit->eliminateDeadDefs(Dead, LIS, VRM, TII);
 }
 
 void SplitEditor::finish() {
@@ -866,7 +866,7 @@ void SplitEditor::finish() {
     SmallVector<LiveInterval*, 8> dups;
     dups.push_back(li);
     for (unsigned i = 1; i != NumComp; ++i)
-      dups.push_back(&Edit->create(MRI, LIS, VRM));
+      dups.push_back(&Edit->create(LIS, VRM));
     ConEQ.Distribute(&dups[0], MRI);
   }
 

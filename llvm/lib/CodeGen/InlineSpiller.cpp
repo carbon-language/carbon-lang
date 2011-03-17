@@ -460,7 +460,7 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
   }
 
   // Alocate a new register for the remat.
-  LiveInterval &NewLI = Edit->create(MRI, LIS, VRM);
+  LiveInterval &NewLI = Edit->create(LIS, VRM);
   NewLI.markNotSpillable();
 
   // Rematting for a copy: Set allocation hint to be the destination register.
@@ -685,7 +685,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    LiveInterval &NewLI = Edit->create(MRI, LIS, VRM);
+    LiveInterval &NewLI = Edit->create(LIS, VRM);
     NewLI.markNotSpillable();
 
     if (Reads)

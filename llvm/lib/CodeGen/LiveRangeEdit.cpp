@@ -22,16 +22,16 @@
 
 using namespace llvm;
 
-LiveInterval &LiveRangeEdit::create(MachineRegisterInfo &mri,
-                                    LiveIntervals &lis,
-                                    VirtRegMap &vrm) {
-  const TargetRegisterClass *RC = mri.getRegClass(getReg());
-  unsigned VReg = mri.createVirtualRegister(RC);
-  vrm.grow();
-  vrm.setIsSplitFromReg(VReg, vrm.getOriginal(getReg()));
-  LiveInterval &li = lis.getOrCreateInterval(VReg);
-  newRegs_.push_back(&li);
-  return li;
+LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg,
+                                        LiveIntervals &LIS,
+                                        VirtRegMap &VRM) {
+  MachineRegisterInfo &MRI = VRM.getRegInfo();
+  unsigned VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
+  VRM.grow();
+  VRM.setIsSplitFromReg(VReg, VRM.getOriginal(OldReg));
+  LiveInterval &LI = LIS.getOrCreateInterval(VReg);
+  newRegs_.push_back(&LI);
+  return LI;
 }
 
 void LiveRangeEdit::scanRemattable(LiveIntervals &lis,
@@ -137,7 +137,7 @@ void LiveRangeEdit::eraseVirtReg(unsigned Reg, LiveIntervals &LIS) {
 }
 
 void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
-                                      LiveIntervals &LIS,
+                                      LiveIntervals &LIS, VirtRegMap &VRM,
                                       const TargetInstrInfo &TII) {
   SetVector<LiveInterval*,
             SmallVector<LiveInterval*, 8>,
@@ -205,7 +205,20 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     ToShrink.pop_back();
     if (delegate_)
       delegate_->LRE_WillShrinkVirtReg(LI->reg);
-    LIS.shrinkToUses(LI, &Dead);
+    if (!LIS.shrinkToUses(LI, &Dead))
+      continue;
+
+    // LI may have been separated, create new intervals.
+    LI->RenumberValues(LIS);
+    ConnectedVNInfoEqClasses ConEQ(LIS);
+    unsigned NumComp = ConEQ.Classify(LI);
+    if (NumComp <= 1)
+      continue;
+    DEBUG(dbgs() << NumComp << " components: " << *LI << '\n');
+    SmallVector<LiveInterval*, 8> Dups(1, LI);
+    for (unsigned i = 1; i != NumComp; ++i)
+      Dups.push_back(&createFrom(LI->reg, LIS, VRM));
+    ConEQ.Distribute(&Dups[0], VRM.getRegInfo());
   }
 }
 

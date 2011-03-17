@@ -746,7 +746,7 @@ LiveInterval* LiveIntervals::dupInterval(LiveInterval *li) {
 /// shrinkToUses - After removing some uses of a register, shrink its live
 /// range to just the remaining uses. This method does not compute reaching
 /// defs for new uses, and it doesn't remove dead defs.
-void LiveIntervals::shrinkToUses(LiveInterval *li,
+bool LiveIntervals::shrinkToUses(LiveInterval *li,
                                  SmallVectorImpl<MachineInstr*> *dead) {
   DEBUG(dbgs() << "Shrink: " << *li << '\n');
   assert(TargetRegisterInfo::isVirtualRegister(li->reg)
@@ -835,6 +835,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li,
   }
 
   // Handle dead values.
+  bool CanSeparate = false;
   for (LiveInterval::vni_iterator I = li->vni_begin(), E = li->vni_end();
        I != E; ++I) {
     VNInfo *VNI = *I;
@@ -848,6 +849,8 @@ void LiveIntervals::shrinkToUses(LiveInterval *li,
       // This is a dead PHI. Remove it.
       VNI->setIsUnused(true);
       NewLI.removeRange(*LII);
+      DEBUG(dbgs() << "Dead PHI at " << VNI->def << " may separate interval\n");
+      CanSeparate = true;
     } else {
       // This is a dead def. Make sure the instruction knows.
       MachineInstr *MI = getInstructionFromIndex(VNI->def);
@@ -863,6 +866,7 @@ void LiveIntervals::shrinkToUses(LiveInterval *li,
   // Move the trimmed ranges back.
   li->ranges.swap(NewLI.ranges);
   DEBUG(dbgs() << "Shrunk: " << *li << '\n');
+  return CanSeparate;
 }
 
 
