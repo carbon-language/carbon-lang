@@ -95,9 +95,22 @@ lto_module_t lto_module_create(const char* path)
 // loads an object file from disk
 // returns NULL on error (check lto_get_error_message() for details)
 //
-lto_module_t lto_module_create_from_fd(int fd, const char *path, off_t size)
+lto_module_t lto_module_create_from_fd(int fd, const char *path, size_t size)
 {
      return LTOModule::makeLTOModule(fd, path, size, sLastErrorString);
+}
+
+//
+// loads an object file from disk
+// returns NULL on error (check lto_get_error_message() for details)
+//
+lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
+                                                 size_t file_size,
+                                                 size_t map_size,
+                                                 off_t offset)
+{
+     return LTOModule::makeLTOModule(fd, path, file_size, map_size,
+                                     offset, sLastErrorString);
 }
 
 //

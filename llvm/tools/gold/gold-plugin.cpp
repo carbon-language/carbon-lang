@@ -235,46 +235,13 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   if (file->offset) {
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
-    if (lseek(file->fd, file->offset, SEEK_SET) == -1) {
-      (*message)(LDPL_ERROR,
-                 "Failed to seek to archive member of %s at offset %d: %s\n",
-                 file->name,
-                 file->offset, sys::StrError(errno).c_str());
-      return LDPS_ERR;
-    }
-    void *buf = malloc(file->filesize);
-    if (!buf) {
-      (*message)(LDPL_ERROR,
-                 "Failed to allocate buffer for archive member of size: %d\n",
-                 file->filesize);
-      return LDPS_ERR;
-    }
-    if (read(file->fd, buf, file->filesize) != file->filesize) {
-      (*message)(LDPL_ERROR,
-                 "Failed to read archive member of %s at offset %d: %s\n",
-                 file->name,
-                 file->offset,
-                 sys::StrError(errno).c_str());
-      free(buf);
-      return LDPS_ERR;
-    }
-    if (!lto_module_is_object_file_in_memory(buf, file->filesize)) {
-      free(buf);
-      return LDPS_OK;
-    }
-    M = lto_module_create_from_memory(buf, file->filesize);
-    if (!M) {
-      (*message)(LDPL_ERROR, "Failed to create LLVM module: %s",
-                 lto_get_error_message());
-      return LDPS_ERR;
-    }
-    free(buf);
+    M = lto_module_create_from_fd_at_offset(file->fd, file->name, -1,
+                                            file->filesize, file->offset);
   } else {
-    lseek(file->fd, 0, SEEK_SET);
     M = lto_module_create_from_fd(file->fd, file->name, file->filesize);
-    if (!M)
-      return LDPS_OK;
   }
+  if (!M)
+    return LDPS_OK;
 
   *claimed = 1;
   Modules.resize(Modules.size() + 1);

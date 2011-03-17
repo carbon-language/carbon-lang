@@ -95,10 +95,19 @@ LTOModule *LTOModule::makeLTOModule(const char *path,
 }
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
-                                    off_t size,
+                                    size_t size,
+                                    std::string &errMsg) {
+  return makeLTOModule(fd, path, size, size, 0, errMsg);
+}
+
+LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
+                                    size_t file_size,
+                                    size_t map_size,
+                                    off_t offset,
                                     std::string &errMsg) {
   OwningPtr<MemoryBuffer> buffer;
-  if (error_code ec = MemoryBuffer::getOpenFile(fd, path, buffer, size)) {
+  if (error_code ec = MemoryBuffer::getOpenFile(fd, path, buffer, file_size,
+                                                map_size, offset, false)) {
     errMsg = ec.message();
     return NULL;
   }
