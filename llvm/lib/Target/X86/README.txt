@@ -1947,3 +1947,39 @@ which is "perfect".
 
 //===---------------------------------------------------------------------===//
 
+For the branch in the following code:
+int a();
+int b(int x, int y) {
+  if (x & (1<<(y&7)))
+    return a();
+  return y;
+}
+
+We currently generate:
+	movb	%sil, %al
+	andb	$7, %al
+	movzbl	%al, %eax
+	btl	%eax, %edi
+	jae	.LBB0_2
+
+movl+andl would be shorter than the movb+andb+movzbl sequence.
+
+//===---------------------------------------------------------------------===//
+
+For the following:
+struct u1 {
+    float x, y;
+};
+float foo(struct u1 u) {
+    return u.x + u.y;
+}
+
+We currently generate:
+	movdqa	%xmm0, %xmm1
+	pshufd	$1, %xmm0, %xmm0        # xmm0 = xmm0[1,0,0,0]
+	addss	%xmm1, %xmm0
+	ret
+
+We could save an instruction here by commuting the addss.
+
+//===---------------------------------------------------------------------===//
