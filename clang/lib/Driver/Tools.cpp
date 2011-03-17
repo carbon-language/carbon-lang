@@ -583,6 +583,13 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     } else
       D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
+
+  // Setting -msoft-float effectively disables NEON because of the GCC
+  // implementation, although the same isn't true of VFP or VFP3.
+  if (FloatABI == "soft") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+  }
 }
 
 void Clang::AddMIPSTargetArgs(const ArgList &Args,

@@ -31,6 +31,8 @@
 // ARMV7_SOFTFLOAT: "-cc1"
 // ARMV7_SOFTFLOAT: "-msoft-float"
 // ARMV7_SOFTFLOAT: "-mfloat-abi" "soft"
+// ARMV7_SOFTFLOAT: "-target-feature"
+// ARMV7_SOFTFLOAT: "-neon"
 // ARMV7_SOFTFLOAT: "-x" "c"
 
 // RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### -S %s 2> %t.log \
