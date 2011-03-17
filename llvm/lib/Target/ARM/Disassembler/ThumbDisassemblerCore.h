@@ -598,7 +598,7 @@ static bool DisassembleThumb2Ldpci(MCInst &MI, unsigned Opcode,
 
 // A6.2.4 Load/store single data item
 //
-// Load/Store Register (reg|imm):      tRd tRn imm5 tRm
+// Load/Store Register (reg|imm):      tRd tRn imm5|tRm
 // Load Register Signed Byte|Halfword: tRd tRn tRm
 static bool DisassembleThumb1LdSt(unsigned opA, MCInst &MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -624,28 +624,25 @@ static bool DisassembleThumb1LdSt(unsigned opA, MCInst &MI, unsigned Opcode,
                                                      getT1tRn(insn))));
   OpIdx = 2;
 
-  // We have either { imm5, tRm } or { tRm } remaining.
-  // Process the imm5 first.  Note that STR/LDR (register) should skip the imm5
-  // offset operand for t_addrmode_s[1|2|4].
+  // We have either { imm5 } or { tRm } remaining.
+  // Note that STR/LDR (register) should skip the imm5 offset operand for
+  // t_addrmode_s[1|2|4].
 
   assert(OpIdx < NumOps && "More operands expected");
 
   if (OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate() &&
       !OpInfo[OpIdx].isOptionalDef()) {
-
-    MI.addOperand(MCOperand::CreateImm(Imm5 ? getT1Imm5(insn) : 0));
+    assert(Imm5 && "Immediate operand expected for this opcode");
+    MI.addOperand(MCOperand::CreateImm(getT1Imm5(insn)));
+    ++OpIdx;
+  } else {
+    // The next reg operand is tRm, the offset.
+    assert(OpIdx < NumOps && OpInfo[OpIdx].RegClass == ARM::tGPRRegClassID
+           && "Thumb reg operand expected");
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::tGPRRegClassID,
+                                                       getT1tRm(insn))));
     ++OpIdx;
   }
-
-  // The next reg operand is tRm, the offset.
-  assert(OpIdx < NumOps && OpInfo[OpIdx].RegClass == ARM::tGPRRegClassID
-         && "Thumb reg operand expected");
-  MI.addOperand(MCOperand::CreateReg(
-                  Imm5 ? 0
-                       : getRegisterEnum(B, ARM::tGPRRegClassID,
-                                         getT1tRm(insn))));
-  ++OpIdx;
-
   return true;
 }
 
