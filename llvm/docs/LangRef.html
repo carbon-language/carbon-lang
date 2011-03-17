@@ -1023,8 +1023,9 @@ declare signext i8 @returns_signed_char()
 
   <dt><tt><b>signext</b></tt></dt>
   <dd>This indicates to the code generator that the parameter or return value
-      should be sign-extended to a 32-bit value by the caller (for a parameter)
-      or the callee (for a return value).</dd>
+      should be sign-extended to the extent required by the target's ABI (which
+      is usually 32-bits) by the caller (for a parameter) or the callee (for a
+      return value).</dd>
 
   <dt><tt><b>inreg</b></tt></dt>
   <dd>This indicates that this parameter or return value should be treated in a
