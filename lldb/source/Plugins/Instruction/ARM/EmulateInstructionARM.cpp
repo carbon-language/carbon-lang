@@ -1773,7 +1773,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
             const uint32_t pc = ReadCoreReg(PC_REG, &success);
             if (!success)
                 return false;
-            if (!MemUWrite (context, addr, pc + 8, addr_byte_size))
+            if (!MemUWrite (context, addr, pc, addr_byte_size))
                 return false;
         }
         
@@ -3914,11 +3914,11 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
             Register pc_reg;
             pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
             context.SetRegisterPlusOffset (pc_reg, 8);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg (PC_REG, &success);
             if (!success)
                 return false;
                   
-            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc, addr_byte_size))
                 return false;
         }
                   
@@ -4042,11 +4042,11 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
             Register pc_reg;
             pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
             context.SetRegisterPlusOffset (pc_reg, 8);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg (PC_REG, &success);
             if (!success)
                 return false;
                   
-            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc, addr_byte_size))
                 return false;
         }
                   
@@ -4196,11 +4196,11 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
             Register pc_reg;
             pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
             context.SetRegisterPlusOffset (pc_reg, 8);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg (PC_REG, &success);
             if (!success)
                 return false;
                   
-            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc, addr_byte_size))
                 return false;
         }
                   
@@ -4325,11 +4325,11 @@ EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
             Register pc_reg;
             pc_reg.SetRegister (eRegisterKindDWARF, dwarf_pc);
             context.SetRegisterPlusOffset (pc_reg, 8);
-            const uint32_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            const uint32_t pc = ReadCoreReg (PC_REG, &success);
             if (!success)
             return false;
                   
-            if (!MemAWrite (context, address + offset, pc + 8, addr_byte_size))
+            if (!MemAWrite (context, address + offset, pc, addr_byte_size))
                 return false;
         }
                   
@@ -4657,7 +4657,7 @@ EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
         // if t == 15 then // Only possible for encoding A1
         if (t == 15)
             // data = PCStoreValue(); 
-            data = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+            data = ReadCoreReg (PC_REG, &success);
         else
             // data = R[t]; 
             data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + t, 0, &success);
@@ -5646,13 +5646,13 @@ EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
                
         addr_t address;
         addr_t offset_addr;
-        addr_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t base_address = ReadCoreReg (n, &success);
         if (!success)
             return false;
                   
         // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
         if (add)
-                  offset_addr = base_address + imm32;
+            offset_addr = base_address + imm32;
         else
             offset_addr = base_address - imm32;
                   
@@ -6126,7 +6126,7 @@ EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
         }
                   
         // base = Align(PC,4); 
-        uint32_t pc_val = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        uint32_t pc_val = ReadCoreReg (PC_REG, &success);
         if (!success)
             return false;
                   
@@ -6530,7 +6530,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (ARMEncoding encoding)
         }
                   
         // base = Align(PC,4); 
-        uint64_t pc_value = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        uint64_t pc_value = ReadCoreReg (PC_REG, &success);
         if (!success)
             return false;
                   
@@ -6963,8 +6963,7 @@ EmulateInstructionARM::EmulateLDRSBLiteral (ARMEncoding encoding)
         }
                   
         // base = Align(PC,4); 
-        uint64_t pc_value = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, LLDB_INVALID_ADDRESS, 
-                                                  &success);
+        uint64_t pc_value = ReadCoreReg (PC_REG, &success);
         if (!success)
             return false;
         uint64_t base = AlignPC (pc_value);
@@ -7382,7 +7381,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (ARMEncoding encoding)
         }
             
         // base = Align(PC,4); 
-        uint64_t pc_value = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        uint64_t pc_value = ReadCoreReg (PC_REG, &success);
         if (!success)
             return false;
                   
@@ -9328,7 +9327,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-        { 0x0fff0000, 0x052d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
+        { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
         // vector push consecutive extension register(s)
         { 0x0fbf0f00, 0x0d2d0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
