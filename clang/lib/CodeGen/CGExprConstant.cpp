@@ -618,6 +618,7 @@ public:
     case CK_FloatingCast:
       return llvm::ConstantExpr::getFPCast(C, destType);
     }
+    llvm_unreachable("Invalid CastKind");
   }
 
   llvm::Constant *VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
