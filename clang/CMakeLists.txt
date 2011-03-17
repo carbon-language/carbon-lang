@@ -40,9 +40,6 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
 
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   include_directories("${PATH_TO_LLVM_BUILD}/include" "${LLVM_MAIN_INCLUDE_DIR}")
-  if( NOT PATH_TO_LLVM_BUILD STREQUAL LLVM_MAIN_SRC_DIR )
-    include_directories("${LLVM_MAIN_INCLUDE_DIR}")
-  endif()
   link_directories("${PATH_TO_LLVM_BUILD}/lib")
 
   set(LLVM_TABLEGEN_EXE "${PATH_TO_LLVM_BUILD}/bin/tblgen")
@@ -211,9 +208,9 @@ macro(add_clang_executable name)
   set_target_properties(${name} PROPERTIES FOLDER "Clang executables")
 endmacro(add_clang_executable)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+include_directories(BEFORE
   ${CMAKE_CURRENT_BINARY_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 
 install(DIRECTORY include/
