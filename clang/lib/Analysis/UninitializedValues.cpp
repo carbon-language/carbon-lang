@@ -26,9 +26,12 @@
 using namespace clang;
 
 static bool isTrackedVar(const VarDecl *vd, const DeclContext *dc) {
-  return vd->isLocalVarDecl() && !vd->hasGlobalStorage() && 
-         vd->getType()->isScalarType() &&
-         vd->getDeclContext() == dc;
+  if (vd->isLocalVarDecl() && !vd->hasGlobalStorage() &&
+      vd->getDeclContext() == dc) {
+    QualType ty = vd->getType();
+    return ty->isScalarType() || ty->isVectorType();
+  }
+  return false;
 }
 
 //------------------------------------------------------------------------====//
