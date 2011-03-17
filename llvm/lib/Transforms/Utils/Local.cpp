@@ -783,3 +783,29 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   return true;
 }
 
+/// LowerDbgDeclare - Lowers llvm.dbg.declare intrinsics into appropriate set
+/// of llvm.dbg.value intrinsics.
+bool llvm::LowerDbgDeclare(Function &F) {
+  DIBuilder DIB(*F.getParent());
+  SmallVector<DbgDeclareInst *, 4> Dbgs;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+    for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ++BI) {
+      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+        Dbgs.push_back(DDI);
+    }
+  if (Dbgs.empty())
+    return false;
+
+  for (SmallVector<DbgDeclareInst *, 4>::iterator I = Dbgs.begin(),
+         E = Dbgs.end(); I != E; ++I) {
+    DbgDeclareInst *DDI = *I;
+    if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress())) {
+      for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+           UI != E; ++UI)
+        if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
+          ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
+    }
+    DDI->eraseFromParent();
+  }
+  return true;
+}

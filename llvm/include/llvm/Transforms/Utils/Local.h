@@ -19,6 +19,7 @@ namespace llvm {
 
 class User;
 class BasicBlock;
+class Function;
 class BranchInst;
 class Instruction;
 class DbgDeclareInst;
@@ -168,6 +169,10 @@ static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
 /// that has an associated llvm.dbg.decl intrinsic.
 bool ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                      StoreInst *SI, DIBuilder &Builder);
+
+/// LowerDbgDeclare - Lowers llvm.dbg.declare intrinsics into appropriate set
+/// of llvm.dbg.value intrinsics.
+bool LowerDbgDeclare(Function &F);
 
 } // End llvm namespace
 

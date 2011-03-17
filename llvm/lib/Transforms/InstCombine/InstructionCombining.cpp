@@ -1648,6 +1648,10 @@ bool InstCombiner::runOnFunction(Function &F) {
   
   bool EverMadeChange = false;
 
+  // Lower dbg.declare intrinsics otherwise their value may be clobbered
+  // by instcombiner.
+  EverMadeChange = LowerDbgDeclare(F);
+
   // Iterate while there is work to do.
   unsigned Iteration = 0;
   while (DoOneIteration(F, Iteration++))
