@@ -632,7 +632,7 @@ static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
       if (!isSafe(*I, L, SE)) return false;
     return true;
   }
-  
+
   // A cast is safe if its operand is.
   if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(S))
     return isSafe(C->getOperand(), L, SE);
@@ -859,7 +859,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   BinaryOperator *Incr =
     dyn_cast<BinaryOperator>(PN->getIncomingValue(BackEdge));
   if (Incr == 0 || Incr->getOpcode() != Instruction::FAdd) return;
-  
+
   // If this is not an add of the PHI with a constantfp, or if the constant fp
   // is not an integer, bail out.
   ConstantFP *IncValueVal = dyn_cast<ConstantFP>(Incr->getOperand(1));
@@ -884,7 +884,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   if (Compare == 0 || !Compare->hasOneUse() ||
       !isa<BranchInst>(Compare->use_back()))
     return;
-  
+
   BranchInst *TheBr = cast<BranchInst>(Compare->use_back());
 
   // We need to verify that the branch actually controls the iteration count
@@ -896,8 +896,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
       (L->contains(TheBr->getSuccessor(0)) &&
        L->contains(TheBr->getSuccessor(1))))
     return;
-  
-  
+
+
   // If it isn't a comparison with an integer-as-fp (the exit value), we can't
   // transform it.
   ConstantFP *ExitValueVal = dyn_cast<ConstantFP>(Compare->getOperand(1));
@@ -905,7 +905,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   if (ExitValueVal == 0 ||
       !ConvertToSInt(ExitValueVal->getValueAPF(), ExitValue))
     return;
-  
+
   // Find new predicate for integer comparison.
   CmpInst::Predicate NewPred = CmpInst::BAD_ICMP_PREDICATE;
   switch (Compare->getPredicate()) {
@@ -923,13 +923,13 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   case CmpInst::FCMP_OLE:
   case CmpInst::FCMP_ULE: NewPred = CmpInst::ICMP_SLE; break;
   }
-  
+
   // We convert the floating point induction variable to a signed i32 value if
   // we can.  This is only safe if the comparison will not overflow in a way
   // that won't be trapped by the integer equivalent operations.  Check for this
   // now.
   // TODO: We could use i64 if it is native and the range requires it.
-  
+
   // The start/stride/exit values must all fit in signed i32.
   if (!isInt<32>(InitValue) || !isInt<32>(IncValue) || !isInt<32>(ExitValue))
     return;
@@ -945,55 +945,55 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
     if (InitValue >= ExitValue ||
         NewPred == CmpInst::ICMP_SGT || NewPred == CmpInst::ICMP_SGE)
       return;
-    
+
     uint32_t Range = uint32_t(ExitValue-InitValue);
     if (NewPred == CmpInst::ICMP_SLE) {
       // Normalize SLE -> SLT, check for infinite loop.
       if (++Range == 0) return;  // Range overflows.
     }
-    
+
     unsigned Leftover = Range % uint32_t(IncValue);
-    
+
     // If this is an equality comparison, we require that the strided value
     // exactly land on the exit value, otherwise the IV condition will wrap
     // around and do things the fp IV wouldn't.
     if ((NewPred == CmpInst::ICMP_EQ || NewPred == CmpInst::ICMP_NE) &&
         Leftover != 0)
       return;
-    
+
     // If the stride would wrap around the i32 before exiting, we can't
     // transform the IV.
     if (Leftover != 0 && int32_t(ExitValue+IncValue) < ExitValue)
       return;
-    
+
   } else {
     // If we have a negative stride, we require the init to be greater than the
     // exit value and an equality or greater than comparison.
     if (InitValue >= ExitValue ||
         NewPred == CmpInst::ICMP_SLT || NewPred == CmpInst::ICMP_SLE)
       return;
-    
+
     uint32_t Range = uint32_t(InitValue-ExitValue);
     if (NewPred == CmpInst::ICMP_SGE) {
       // Normalize SGE -> SGT, check for infinite loop.
       if (++Range == 0) return;  // Range overflows.
     }
-    
+
     unsigned Leftover = Range % uint32_t(-IncValue);
-    
+
     // If this is an equality comparison, we require that the strided value
     // exactly land on the exit value, otherwise the IV condition will wrap
     // around and do things the fp IV wouldn't.
     if ((NewPred == CmpInst::ICMP_EQ || NewPred == CmpInst::ICMP_NE) &&
         Leftover != 0)
       return;
-    
+
     // If the stride would wrap around the i32 before exiting, we can't
     // transform the IV.
     if (Leftover != 0 && int32_t(ExitValue+IncValue) > ExitValue)
       return;
   }
-  
+
   const IntegerType *Int32Ty = Type::getInt32Ty(PN->getContext());
 
   // Insert new integer induction variable.
