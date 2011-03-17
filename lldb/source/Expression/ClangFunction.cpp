@@ -50,13 +50,12 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 ClangFunction::ClangFunction 
 (
-    ExecutionContextScope *exe_scope,
+    ExecutionContextScope &exe_scope,
     ClangASTContext *ast_context, 
     void *return_qualtype, 
     const Address& functionAddress, 
     const ValueList &arg_value_list
 ) :
-    m_arch (),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
     m_function_return_qual_type(return_qualtype),
@@ -68,22 +67,20 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    if (exe_scope)
-    {
-        Target *target = exe_scope->CalculateTarget();
-        if (target)
-            m_arch = target->GetArchitecture();
-    }
+    Process *process = exe_scope.CalculateProcess();
+    // Can't make a ClangFunction without a process.
+    assert (process != NULL);
+        
+    m_jit_process_sp = process->GetSP();
 }
 
 ClangFunction::ClangFunction
 (
-    ExecutionContextScope *exe_scope,
+    ExecutionContextScope &exe_scope,
     Function &function, 
     ClangASTContext *ast_context, 
     const ValueList &arg_value_list
 ) :
-    m_arch (),
     m_function_ptr (&function),
     m_function_addr (),
     m_function_return_qual_type (),
@@ -95,12 +92,11 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    if (exe_scope)
-    {
-        Target *target = exe_scope->CalculateTarget();
-        if (target)
-            m_arch = target->GetArchitecture();
-    }
+    Process *process = exe_scope.CalculateProcess();
+    // Can't make a ClangFunction without a process.
+    assert (process != NULL);
+        
+    m_jit_process_sp = process->GetSP();
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
     m_function_return_qual_type = m_function_ptr->GetReturnClangType();
@@ -225,8 +221,8 @@ ClangFunction::CompileFunction (Stream &errors)
         log->Printf ("Expression: \n\n%s\n\n", m_wrapper_function_text.c_str());
         
     // Okay, now compile this expression
-    
-    m_parser.reset(new ClangExpressionParser(NULL, *this));
+        
+    m_parser.reset(new ClangExpressionParser(m_jit_process_sp.get(), *this));
     
     num_errors = m_parser->Parse (errors);
     
@@ -244,6 +240,9 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     Process *process = exe_ctx.process;
 
     if (!process)
+        return false;
+        
+    if (process != m_jit_process_sp.get())
         return false;
     
     if (!m_compiled)
@@ -293,6 +292,9 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
 
     if (process == NULL)
         return return_value;
+
+    if (process != m_jit_process_sp.get())
+        return false;
                 
     if (args_addr_ref == LLDB_INVALID_ADDRESS)
     {
@@ -419,6 +421,12 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     std::vector<uint8_t> data_buffer;
     data_buffer.resize(m_return_size);
     Process *process = exe_ctx.process;
+    
+    if (process == NULL)
+        return false;
+    if (process != m_jit_process_sp.get())
+        return false;
+                
     Error error;
     size_t bytes_read = process->ReadMemory(args_addr + m_return_offset, &data_buffer.front(), m_return_size, error);
 

@@ -111,7 +111,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
     ret.SetContext(Value::eContextTypeClangType, return_qualtype);
     
     // Now we're ready to call the function:
-    ClangFunction func (exe_ctx.GetBestExecutionContextScope(),
+    ClangFunction func (*exe_ctx.GetBestExecutionContextScope(),
                         ast_context, 
                         return_qualtype, 
                         *function_address, 

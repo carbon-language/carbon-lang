@@ -71,8 +71,8 @@ public:
 	/// Constructor
     ///
     /// @param[in] exe_scope
-    ///     An execution context scope that gets us a target and/or 
-    ///     process (possibly neither.).
+    ///     An execution context scope that gets us at least a target and 
+    ///     process.
     ///
     /// @param[in] function_ptr
     ///     The default function to be called.  Can be overridden using
@@ -85,7 +85,7 @@ public:
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
 	//------------------------------------------------------------------  
-	ClangFunction (ExecutionContextScope *exe_scope,
+	ClangFunction (ExecutionContextScope &exe_scope,
                    Function &function_ptr, 
                    ClangASTContext *ast_context, 
                    const ValueList &arg_value_list);
@@ -94,8 +94,8 @@ public:
 	/// Constructor
     ///
     /// @param[in] exe_scope
-    ///     An execution context scope that gets us a target and/or 
-    ///     process (possibly neither.).
+    ///     An execution context scope that gets us at least a target and 
+    ///     process.
     ///
     /// @param[in] ast_context
     ///     The AST context to evaluate argument types in.
@@ -111,7 +111,7 @@ public:
     ///     The default values to use when calling this function.  Can
     ///     be overridden using WriteFunctionArguments().
 	//------------------------------------------------------------------
-	ClangFunction (ExecutionContextScope *exe_scope,
+	ClangFunction (ExecutionContextScope &exe_scope,
                    ClangASTContext *ast_context, 
                    void *return_qualtype, 
                    const Address& function_address, 
@@ -614,7 +614,6 @@ private:
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.
     void                           *m_function_return_qual_type;    ///< The opaque clang qual type for the function return type.
     ClangASTContext                *m_clang_ast_context;            ///< This is the clang_ast_context that we're getting types from the and value, and the function return the function pointer is NULL.
-    ArchSpec                        m_arch;                         ///< The target triple to compile the wrapper function for.
 
     std::string                     m_wrapper_function_name;        ///< The name of the wrapper function.
     std::string                     m_wrapper_function_text;        ///< The contents of the wrapper function.
