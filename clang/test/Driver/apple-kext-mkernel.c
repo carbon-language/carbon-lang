@@ -1,6 +1,18 @@
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -mkernel -### -fsyntax-only %s 2> %t
-// RUN grep "-disable-red-zone" %t
-// RUN grep "-fapple-kext" %t
-// RUN grep "-fno-builtin" %t
-// RUN grep "-fno-rtti" %t
-// RUN grep "-fno-common" %t
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 \
+// RUN:   -mkernel -### -fsyntax-only %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-X86 < %t %s
+
+// CHECK-X86: "-disable-red-zone"
+// CHECK-X86: "-fno-builtin"
+// CHECK-X86: "-fno-rtti"
+// CHECK-X86: "-fno-common"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 \
+// RUN:   -arch armv7 -mkernel -### -fsyntax-only %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ARM < %t %s
+
+// CHECK-ARM: "-target-feature" "-arm-long-calls"
+// CHECK-ARM: "-target-feature" "-arm-strict-align"
+// CHECK-ARM: "-fno-builtin"
+// CHECK-ARM: "-fno-rtti"
+// CHECK-ARM: "-fno-common"

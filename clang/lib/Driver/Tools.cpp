@@ -420,7 +420,8 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
 }
 
 void Clang::AddARMTargetArgs(const ArgList &Args,
-                             ArgStringList &CmdArgs) const {
+                             ArgStringList &CmdArgs,
+                             bool KernelOrKext) const {
   const Driver &D = getToolChain().getDriver();
   llvm::Triple Triple = getToolChain().getTriple();
 
@@ -587,8 +588,17 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
   // Setting -msoft-float effectively disables NEON because of the GCC
   // implementation, although the same isn't true of VFP or VFP3.
   if (FloatABI == "soft") {
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back("-neon");
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-neon");
+  }
+
+  // Kernel code has more strict alignment requirements.
+  if (KernelOrKext) {
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-arm-long-calls");
+
+    CmdArgs.push_back("-target-feature");
+    CmdArgs.push_back("-arm-strict-align");
   }
 }
 
@@ -1173,7 +1183,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    AddARMTargetArgs(Args, CmdArgs);
+    AddARMTargetArgs(Args, CmdArgs, KernelOrKext);
     break;
 
   case llvm::Triple::mips:
