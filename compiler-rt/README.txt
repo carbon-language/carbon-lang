@@ -77,8 +77,12 @@ ti_int __modti3    (ti_int a, ti_int b);               // a % b   signed
 su_int __umodsi3   (su_int a, su_int b);               // a % b   unsigned
 du_int __umoddi3   (du_int a, du_int b);               // a % b   unsigned
 tu_int __umodti3   (tu_int a, tu_int b);               // a % b   unsigned
-du_int __udivmoddi4(du_int a, du_int b, du_int* rem);  // a / b, *rem = a % b
-tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);  // a / b, *rem = a % b
+du_int __udivmoddi4(du_int a, du_int b, du_int* rem);  // a / b, *rem = a % b  unsigned
+tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);  // a / b, *rem = a % b  unsigned
+su_int __udivmodsi4(su_int a, su_int b, su_int* rem);  // a / b, *rem = a % b  unsigned
+si_int __divmodsi4(si_int a, si_int b, si_int* rem);   // a / b, *rem = a % b  signed
+
+
 
 //  Integral arithmetic with trapping overflow
 

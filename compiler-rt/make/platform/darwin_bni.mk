@@ -61,10 +61,10 @@ FUNCTIONS.armv5 := $(FUNCTIONS) \
                 muldf3 mulsf3 \
                 negdf2 negsf2 \
                 truncdfsf2  \
-                modsi3 umodsi3 udivsi3 divsi3 \
+                modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4 \
                 switch8 switchu8 switch16 switch32 \
                 sync_synchronize 
-			
+
 FUNCTIONS.armv6 := $(FUNCTIONS) \
 				comparedf2 comparesf2 \
                 adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
@@ -76,10 +76,11 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 muldf3vfp mulsf3vfp \
                 nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
-                modsi3 umodsi3 udivsi3 divsi3 \
+                modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4 \
                 switch8 switchu8 switch16 switch32 \
                 restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
                 sync_synchronize 
+
 FUNCTIONS.armv7 := $(FUNCTIONS) \
 				comparedf2 comparesf2 \
                 adddf3vfp addsf3vfp bswapdi2 bswapsi2 divdf3vfp \
@@ -91,5 +92,5 @@ FUNCTIONS.armv7 := $(FUNCTIONS) \
                 muldf3vfp mulsf3vfp \
                 nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
-                modsi3 umodsi3 udivsi3 divsi3 
+                modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4
 
