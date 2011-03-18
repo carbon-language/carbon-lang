@@ -2091,7 +2091,7 @@ LexNextToken:
     // If the next token is obviously a // or /* */ comment, skip it efficiently
     // too (without going through the big switch stmt).
     if (CurPtr[0] == '/' && CurPtr[1] == '/' && !inKeepCommentMode() &&
-        Features.BCPLComment) {
+        Features.BCPLComment && !Features.TraditionalCPP) {
       if (SkipBCPLComment(Result, CurPtr+2))
         return; // There is a token to return.
       goto SkipIgnoredUnits;
@@ -2280,8 +2280,10 @@ LexNextToken:
       // this as "foo / bar" and langauges with BCPL comments would lex it as
       // "foo".  Check to see if the character after the second slash is a '*'.
       // If so, we will lex that as a "/" instead of the start of a comment.
-      if (Features.BCPLComment ||
-          getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*') {
+      // However, we never do this in -traditional-cpp mode.
+      if ((Features.BCPLComment ||
+           getCharAndSize(CurPtr+SizeTmp, SizeTmp2) != '*') &&
+          !Features.TraditionalCPP) {
         if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
           return; // There is a token to return.
 

@@ -56,6 +56,7 @@ public:
   unsigned ObjCExceptions    : 1;  // Support Objective-C exceptions.
   unsigned CXXExceptions     : 1;  // Support C++ exceptions.
   unsigned SjLjExceptions    : 1;  // Use setjmp-longjump exception handling.
+  unsigned TraditionalCPP    : 1; /// Enable some traditional CPP emulation.
   unsigned RTTI              : 1;  // Support RTTI information.
 
   unsigned MSBitfields       : 1; // MS-compatible structure layout
@@ -169,7 +170,7 @@ public:
     C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = ObjCExceptions = CXXExceptions = SjLjExceptions = 0;
-    Freestanding = NoBuiltin = 0;
+    TraditionalCPP = Freestanding = NoBuiltin = 0;
     MSBitfields = 0;
     NeXTRuntime = 1;
     RTTI = 1;
