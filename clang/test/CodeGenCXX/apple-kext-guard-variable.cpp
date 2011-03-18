@@ -1,4 +1,4 @@
-// RUN: %clang -mtriple=x86_64-apple-darwin10 -S -mkernel -Xclang -verify %s
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -S -mkernel -Xclang -verify %s
 
 // rdar://problem/9143356
 
