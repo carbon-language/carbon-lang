@@ -2976,9 +2976,17 @@ def REVSH : AMiscA1I<0b01101111, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "revsh", "\t$Rd, $Rm",
                [(set GPR:$Rd,
                   (sext_inreg
-                    (or (srl (and GPR:$Rm, 0xFF00), (i32 8)),
+                    (or (srl GPR:$Rm, (i32 8)),
                         (shl GPR:$Rm, (i32 8))), i16))]>,
                Requires<[IsARM, HasV6]>;
+
+def : ARMV6Pat<(sext_inreg (or (srl (and GPR:$Rm, 0xFF00), (i32 8)),
+                               (shl GPR:$Rm, (i32 8))), i16),
+               (REVSH GPR:$Rm)>;
+
+// Need the AddedComplexity or else MOVs + REV would be chosen.
+let AddedComplexity = 5 in
+def : ARMV6Pat<(sra (bswap GPR:$Rm), (i32 16)), (REVSH GPR:$Rm)>;
 
 def lsl_shift_imm : SDNodeXForm<imm, [{
   unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::lsl, N->getZExtValue());

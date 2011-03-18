@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm -mattr=+v6 | FileCheck %s
 
-define i32 @test1(i32 %X) {
+define i32 @test1(i32 %X) nounwind {
 ; CHECK: test1
 ; CHECK: rev16 r0, r0
         %tmp1 = lshr i32 %X, 8
@@ -16,7 +16,7 @@ define i32 @test1(i32 %X) {
         ret i32 %tmp14
 }
 
-define i32 @test2(i32 %X) {
+define i32 @test2(i32 %X) nounwind {
 ; CHECK: test2
 ; CHECK: revsh r0, r0
         %tmp1 = lshr i32 %X, 8
@@ -27,4 +27,30 @@ define i32 @test2(i32 %X) {
         %tmp5 = or i16 %tmp2, %tmp4
         %tmp5.upgrd.2 = sext i16 %tmp5 to i32
         ret i32 %tmp5.upgrd.2
+}
+
+; rdar://9147637
+define i32 @test3(i16 zeroext %a) nounwind {
+entry:
+; CHECK: test3:
+; CHECK: revsh r0, r0
+  %0 = tail call i16 @llvm.bswap.i16(i16 %a)
+  %1 = sext i16 %0 to i32
+  ret i32 %1
+}
+
+declare i16 @llvm.bswap.i16(i16) nounwind readnone
+
+define i32 @test4(i16 zeroext %a) nounwind {
+entry:
+; CHECK: test4:
+; CHECK: revsh r0, r0
+  %conv = zext i16 %a to i32
+  %shr9 = lshr i16 %a, 8
+  %conv2 = zext i16 %shr9 to i32
+  %shl = shl nuw nsw i32 %conv, 8
+  %or = or i32 %conv2, %shl
+  %sext = shl i32 %or, 16
+  %conv8 = ashr exact i32 %sext, 16
+  ret i32 %conv8
 }

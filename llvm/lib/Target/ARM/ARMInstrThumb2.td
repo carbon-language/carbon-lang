@@ -2579,8 +2579,14 @@ def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
                        "revsh", ".w\t$Rd, $Rm",
                  [(set rGPR:$Rd,
                     (sext_inreg
-                      (or (srl (and rGPR:$Rm, 0xFF00), (i32 8)),
+                      (or (srl rGPR:$Rm, (i32 8)),
                           (shl rGPR:$Rm, (i32 8))), i16))]>;
+
+def : T2Pat<(sext_inreg (or (srl (and rGPR:$Rm, 0xFF00), (i32 8)),
+                            (shl rGPR:$Rm, (i32 8))), i16),
+            (t2REVSH rGPR:$Rm)>;
+
+def : T2Pat<(sra (bswap rGPR:$Rm), (i32 16)), (t2REVSH rGPR:$Rm)>;
 
 def t2PKHBT : T2ThreeReg<
             (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),
