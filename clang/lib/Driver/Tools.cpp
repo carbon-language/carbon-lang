@@ -1773,9 +1773,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 #endif
 
+  // Only allow -traditional or -traditional-cpp outside in preprocessing modes.
   if (Arg *A = Args.getLastArg(options::OPT_traditional,
-                               options::OPT_traditional_cpp))
-    D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+                               options::OPT_traditional_cpp)) {
+    if (isa<PreprocessJobAction>(JA))
+      CmdArgs.push_back("-traditional-cpp");
+    else 
+      D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
 
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
