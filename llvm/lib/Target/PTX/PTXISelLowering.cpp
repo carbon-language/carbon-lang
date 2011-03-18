@@ -42,14 +42,21 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
 
+  // Expand BR_CC into BRCOND
+  setOperationAction(ISD::BR_CC, MVT::Other, Expand);
+
   // Compute derived properties from the register classes
   computeRegisterProperties();
 }
 
 SDValue PTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
-    default:                 llvm_unreachable("Unimplemented operand");
-    case ISD::GlobalAddress: return LowerGlobalAddress(Op, DAG);
+    default:
+      llvm_unreachable("Unimplemented operand");
+    case ISD::GlobalAddress:
+      return LowerGlobalAddress(Op, DAG);
+    case ISD::BRCOND:
+      return LowerGlobalAddress(Op, DAG);
   }
 }
 

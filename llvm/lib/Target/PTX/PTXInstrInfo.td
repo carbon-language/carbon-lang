@@ -37,7 +37,6 @@ def DoesNotSupportPTX21 : Predicate<"!getSubtarget().supportsPTX21()">;
 def SupportsPTX22       : Predicate<"getSubtarget().supportsPTX22()">;
 def DoesNotSupportPTX22 : Predicate<"!getSubtarget().supportsPTX22()">;
 
-
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
@@ -135,7 +134,6 @@ def ADDRri64 : ComplexPattern<i64, 2, "SelectADDRri", [], []>;
 def ADDRii32 : ComplexPattern<i32, 2, "SelectADDRii", [], []>;
 def ADDRii64 : ComplexPattern<i64, 2, "SelectADDRii", [], []>;
 
-
 // Address operands
 def MEMri32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
@@ -160,6 +158,9 @@ def MEMpi : Operand<i32> {
   let MIOperandInfo = (ops i32imm);
 }
 
+// Branch & call targets have OtherVT type.
+def brtarget   : Operand<OtherVT>;
+def calltarget : Operand<i32>;
 
 //===----------------------------------------------------------------------===//
 // PTX Specific Node Definitions
@@ -281,7 +282,6 @@ multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
                      [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
 }
 
-// no %type directive, non-communtable
 multiclass INT3ntnc<string opcstr, SDNode opnode> {
   def rr : InstPTX<(outs RRegu32:$d),
                    (ins RRegu32:$a, RRegu32:$b),
@@ -565,6 +565,18 @@ def CVT_u32_pred
             [(set RRegu32:$d, (zext Preds:$a))]>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
+
+let isBranch = 1, isTerminator = 1 in {
+  def BRAd
+    : InstPTX<(outs), (ins brtarget:$d), "bra\t$d", [(br bb:$d)]>;
+
+  // FIXME: should be able to write a pattern for brcond, but can't use
+  //        a two-value operand where a dag node expects two operands. :(
+  // NOTE: ARM & PowerPC backend also report the same problem
+  def BRAdp
+    : InstPTX<(outs), (ins brtarget:$d), "bra\t$d",
+              [/*(brcond bb:$d, Preds:$p, i32imm:$c)*/]>;
+}
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def EXIT : InstPTX<(outs), (ins), "exit", [(PTXexit)]>;

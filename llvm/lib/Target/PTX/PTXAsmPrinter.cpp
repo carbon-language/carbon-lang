@@ -91,17 +91,6 @@ static const char *getRegisterTypeName(unsigned RegNo) {
   return NULL;
 }
 
-static const char *getInstructionTypeName(const MachineInstr *MI) {
-  for (int i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (MO.getType() == MachineOperand::MO_Register)
-      return getRegisterTypeName(MO.getReg());
-  }
-
-  llvm_unreachable("No reg operand found in instruction!");
-  return NULL;
-}
-
 static const char *getStateSpaceName(unsigned addressSpace) {
   switch (addressSpace) {
   default: llvm_unreachable("Unknown state space");
@@ -221,11 +210,6 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   OS << ';';
   OS.flush();
 
-  // Replace "%type" if found
-  size_t pos;
-  if ((pos = str.find("%type")) != std::string::npos)
-    str.replace(pos, /*strlen("%type")==*/5, getInstructionTypeName(MI));
-
   StringRef strref = StringRef(str);
   OutStreamer.EmitRawText(strref);
 }
@@ -243,6 +227,9 @@ void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       break;
     case MachineOperand::MO_Immediate:
       OS << (int) MO.getImm();
+      break;
+    case MachineOperand::MO_MachineBasicBlock:
+      OS << *MO.getMBB()->getSymbol();
       break;
     case MachineOperand::MO_Register:
       OS << getRegisterName(MO.getReg());
