@@ -88,8 +88,10 @@ public:
     return 0;
   }
 
-  /// SelectTool - Choose a tool to use to handle the action \arg JA.
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const = 0;
+  /// SelectTool - Choose a tool to use to handle the action \arg JA with the
+  /// given \arg Inputs.
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const = 0;
 
   // Helper methods
 

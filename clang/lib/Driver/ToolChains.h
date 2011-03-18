@@ -33,7 +33,8 @@ public:
   Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple);
   ~Generic_GCC();
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 
   virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
@@ -160,7 +161,8 @@ public:
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 
   virtual bool IsBlocksDefault() const {
     // Always allow blocks on Darwin; users interested in versioning are
@@ -273,42 +275,48 @@ class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
 public:
   AuroraUX(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_ELF {
 public:
   OpenBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY FreeBSD : public Generic_ELF {
 public:
   FreeBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY NetBSD : public Generic_ELF {
 public:
   NetBSD(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Minix : public Generic_GCC {
 public:
   Minix(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY DragonFly : public Generic_ELF {
 public:
   DragonFly(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY Linux : public Generic_ELF {
@@ -317,7 +325,8 @@ public:
 
   virtual bool HasNativeLLVMSupport() const;
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 
   std::string Linker;
   std::vector<std::string> ExtraOpts;
@@ -331,7 +340,8 @@ public:
   TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple);
   ~TCEToolChain();
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
   bool IsMathErrnoDefault() const;
   bool IsUnwindTablesDefault() const;
   const char* GetDefaultRelocationModel() const;
@@ -348,7 +358,8 @@ class LLVM_LIBRARY_VISIBILITY Windows : public ToolChain {
 public:
   Windows(const HostInfo &Host, const llvm::Triple& Triple);
 
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
 
   virtual bool IsIntegratedAssemblerDefault() const;
   virtual bool IsUnwindTablesDefault() const;
