@@ -1891,7 +1891,7 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
   }
-} 
+}
 
 let neverHasSideEffects = 1 in {
 
@@ -2629,8 +2629,8 @@ def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 let Constraints = "@earlyclobber $Rd" in
 def MLAv5: ARMPseudoInst<(outs GPR:$Rd),
                          (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
-                         Size4Bytes, IIC_iMAC32, 
-                         [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>, 
+                         Size4Bytes, IIC_iMAC32,
+                         [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
                         Requires<[IsARM, NoV6]> {
   bits<4> Ra;
   let Inst{15-12} = Ra;
@@ -2663,7 +2663,7 @@ let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
 def SMULLv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
                             Size4Bytes, IIC_iMUL64, []>,
                            Requires<[IsARM, NoV6]>;
 
@@ -2687,15 +2687,15 @@ def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
 // Multiply + accumulate
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
 def SMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
                             Size4Bytes, IIC_iMAC64, []>,
                            Requires<[IsARM, NoV6]>;
 def UMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
                             Size4Bytes, IIC_iMAC64, []>,
                            Requires<[IsARM, NoV6]>;
 def UMAALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s), 
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
                             Size4Bytes, IIC_iMAC64, []>,
                            Requires<[IsARM, NoV6]>;
 
@@ -3638,7 +3638,7 @@ def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-// This is a pseudo inst so that we can get the encoding right, 
+// This is a pseudo inst so that we can get the encoding right,
 // complete with fixup for the aeabi_read_tp function.
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
