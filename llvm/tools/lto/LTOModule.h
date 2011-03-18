@@ -82,8 +82,6 @@ private:
                                                     bool isFunction);
     void                    addPotentialUndefinedSymbol(llvm::GlobalValue* decl, 
                                                         llvm::Mangler &mangler);
-    void                    findExternalRefs(llvm::Value* value, 
-                                                llvm::Mangler& mangler);
     void                    addDefinedFunctionSymbol(llvm::Function* f, 
                                                         llvm::Mangler &mangler);
     void                    addDefinedDataSymbol(llvm::GlobalValue* v, 
