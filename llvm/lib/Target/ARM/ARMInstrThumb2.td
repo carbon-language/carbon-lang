@@ -95,6 +95,12 @@ def t2addrmode_imm12 : Operand<i32>,
   let ParserMatchClass = MemMode5AsmOperand;
 }
 
+// t2ldrlabel  := imm12
+def t2ldrlabel : Operand<i32> {
+  let EncoderMethod = "getAddrModeImm12OpValue";
+}
+
+
 // ADR instruction labels.
 def t2adrlabel : Operand<i32> {
   let EncoderMethod = "getT2AdrLabelOpValue";
@@ -877,7 +883,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
   }
 
   // FIXME: Is the pci variant actually needed?
-  def pci : T2Ipc <(outs GPR:$Rt), (ins i32imm:$addr), iii,
+  def pci : T2Ipc <(outs GPR:$Rt), (ins t2ldrlabel:$addr), iii,
                    opc, ".w\t$Rt, $addr",
                    [(set GPR:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
     let isReMaterializable = 1;
