@@ -356,17 +356,9 @@ Pass I<arg> to the static analyzer.
 
 Pass I<arg> to the assembler.
 
-=item B<-Xclang> I<arg>
-
-Pass I<arg> to the clang compiler frontend.
-
 =item B<-Xlinker> I<arg>
 
 Pass I<arg> to the linker.
-
-=item B<-mllvm> I<arg>
-
-Pass I<arg> to the LLVM backend.
 
 =item B<-Xpreprocessor> I<arg>
 
