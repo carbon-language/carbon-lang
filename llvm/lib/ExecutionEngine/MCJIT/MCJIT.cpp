@@ -109,6 +109,6 @@ GenericValue MCJIT::runFunction(Function *F,
   void *FPtr = getPointerToFunction(F);
   if (!FPtr)
     report_fatal_error("Unable to locate function: '" + F->getName() + "'");
-  ((void(*)(void))FPtr)();
+  ((void(*)(void))(intptr_t)FPtr)();
   return GenericValue();
 }
