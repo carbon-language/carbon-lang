@@ -1079,7 +1079,9 @@ static const Tool &SelectToolForJob(Compilation &C, const ToolChain *TC,
   bool HasStatic = (C.getArgs().hasArg(options::OPT_mkernel) ||
                     C.getArgs().hasArg(options::OPT_static) ||
                     C.getArgs().hasArg(options::OPT_fapple_kext));
-  bool IsIADefault = (TC->IsIntegratedAssemblerDefault() && !HasStatic);
+  bool IsDarwin = TC->getTriple().getOS() == llvm::Triple::Darwin;
+  bool IsIADefault = TC->IsIntegratedAssemblerDefault() &&
+    !(HasStatic && IsDarwin);
   if (C.getArgs().hasFlag(options::OPT_integrated_as,
                          options::OPT_no_integrated_as,
                          IsIADefault) &&
