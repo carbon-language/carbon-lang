@@ -962,11 +962,7 @@ static bool DisassembleThumb1Br(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   unsigned Imm11 = getT1Imm11(insn);
 
-  // When executing a Thumb instruction, PC reads as the address of the current
-  // instruction plus 4.  The assembler subtracts 4 from the difference between
-  // the branch instruction and the target address, disassembler has to add 4 to
-  // to compensate.
-  MI.addOperand(MCOperand::CreateImm(SignExtend32<12>(Imm11 << 1) + 4));
+  MI.addOperand(MCOperand::CreateImm(SignExtend32<12>(Imm11 << 1)));
 
   NumOpsAdded = 1;
 
@@ -1747,11 +1743,7 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
     Offset = decodeImm32_BLX(insn);
     break;
   }
-  // When executing a Thumb instruction, PC reads as the address of the current
-  // instruction plus 4.  The assembler subtracts 4 from the difference between
-  // the branch instruction and the target address, disassembler has to add 4 to
-  // to compensate.
-  MI.addOperand(MCOperand::CreateImm(Offset + 4));
+  MI.addOperand(MCOperand::CreateImm(Offset));
 
   // This is an increment as some predicate operands may have been added first.
   NumOpsAdded += 1;
