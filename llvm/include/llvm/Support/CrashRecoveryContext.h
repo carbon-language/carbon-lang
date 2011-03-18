@@ -132,7 +132,7 @@ public:
 template <typename T>
 struct CrashRecoveryContextTrait {
   static inline CrashRecoveryContextCleanup *createCleanup(T *resource) {
-    return new CrashRecoveryContextDestructorCleanup<T>(resource);
+    return new CrashRecoveryContextDeleteCleanup<T>(resource);
   }
 };
 
