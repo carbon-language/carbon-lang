@@ -39,8 +39,7 @@ entry:
 ; 32: t3:
 ; 32: cmpl $1
 ; 32: sbbl
-; 32: subl
-; 32: sbbl
+; 32: cmpl
 ; 32: xorl
 
 ; 64: t3:
