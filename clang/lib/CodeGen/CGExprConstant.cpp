@@ -297,36 +297,36 @@ void ConstStructBuilder::AppendTailPadding(CharUnits RecordSize) {
 
 void ConstStructBuilder::ConvertStructToPacked() {
   std::vector<llvm::Constant *> PackedElements;
-  uint64_t ElementOffsetInBytes = 0;
+  CharUnits ElementOffsetInChars = CharUnits::Zero();
 
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     llvm::Constant *C = Elements[i];
 
     unsigned ElementAlign =
       CGM.getTargetData().getABITypeAlignment(C->getType());
-    uint64_t AlignedElementOffsetInBytes =
-      llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
+    CharUnits AlignedElementOffsetInChars =
+      ElementOffsetInChars.RoundUpToAlignment(
+          CharUnits::fromQuantity(ElementAlign));
 
-    if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
+    if (AlignedElementOffsetInChars > ElementOffsetInChars) {
       // We need some padding.
-      uint64_t NumBytes =
-        AlignedElementOffsetInBytes - ElementOffsetInBytes;
+      CharUnits NumChars =
+        AlignedElementOffsetInChars - ElementOffsetInChars;
 
       const llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
-      if (NumBytes > 1)
-        Ty = llvm::ArrayType::get(Ty, NumBytes);
+      if (NumChars > CharUnits::One())
+        Ty = llvm::ArrayType::get(Ty, NumChars.getQuantity());
 
       llvm::Constant *Padding = llvm::UndefValue::get(Ty);
       PackedElements.push_back(Padding);
-      ElementOffsetInBytes += getSizeInBytes(Padding);
+      ElementOffsetInChars += CharUnits::fromQuantity(getSizeInBytes(Padding));
     }
 
     PackedElements.push_back(C);
-    ElementOffsetInBytes += getSizeInBytes(C);
+    ElementOffsetInChars += CharUnits::fromQuantity(getSizeInBytes(C));
   }
 
-  assert(CharUnits::fromQuantity(ElementOffsetInBytes) == 
-           NextFieldOffsetInChars &&
+  assert(ElementOffsetInChars == NextFieldOffsetInChars &&
          "Packing the struct changed its size!");
 
   Elements = PackedElements;
