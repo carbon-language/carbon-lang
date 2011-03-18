@@ -1741,25 +1741,49 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
             return false;
         uint32_t Rt; // the source register
         uint32_t imm12;
+        uint32_t Rn;  // This function assumes Rn is the SP, but we should verify that.
+                  
+        bool index;
+        bool add;
+        bool wback;
         switch (encoding) {
         case eEncodingA1:
             Rt = Bits32(opcode, 15, 12);
             imm12 = Bits32(opcode, 11, 0);
+            Rn = Bits32 (opcode, 19, 16);
+                  
+            if (Rn != 13) // 13 is the SP reg on ARM.  Verify that Rn == SP.
+                return false;
+                  
+            index = BitIsSet (opcode, 24);
+            add = BitIsSet (opcode, 23);
+            wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
+                  
+            if (wback && ((Rn == 15) || (Rn == Rt)))
+                return false;
             break;
         default:
             return false;
         }
-        addr_t sp_offset = imm12;
-        addr_t addr = sp - sp_offset;
+        addr_t offset_addr;
+        if (add)
+            offset_addr = sp + imm12;
+        else
+            offset_addr = sp - imm12;
+                  
+        addr_t addr;
+        if (index)
+            addr = offset_addr;
+        else
+            addr = sp;
         
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextPushRegisterOnStack;
-        Register dwarf_reg;
-        dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        context.SetRegisterPlusOffset (sp_reg, addr - sp);
         if (Rt != 15)
         {
-            dwarf_reg.num = dwarf_r0 + Rt;
-            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             uint32_t reg_value = ReadCoreReg(Rt, &success);
             if (!success)
                 return false;
@@ -1768,8 +1792,6 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
         }
         else
         {
-            dwarf_reg.num = dwarf_pc;
-            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
             const uint32_t pc = ReadCoreReg(PC_REG, &success);
             if (!success)
                 return false;
@@ -1777,11 +1799,14 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
                 return false;
         }
         
-        context.type = EmulateInstruction::eContextAdjustStackPointer;
-        context.SetImmediateSigned (-sp_offset);
-    
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp - sp_offset))
-            return false;
+
+        if (wback)
+        {
+            context.type = EmulateInstruction::eContextAdjustStackPointer;
+            context.SetImmediateSigned (addr - sp);
+            if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, offset_addr))
+                return false;
+        }
     }
     return true;
 }
@@ -9327,7 +9352,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-        { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
+        { 0x0e5f0000, 0x040d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
         // vector push consecutive extension register(s)
         { 0x0fbf0f00, 0x0d2d0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
