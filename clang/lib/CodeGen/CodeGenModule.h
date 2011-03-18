@@ -527,6 +527,9 @@ public:
   llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
                                    const AnnotateAttr *AA, unsigned LineNo);
 
+  /// Error - Emit a general error that something can't be done.
+  void Error(SourceLocation loc, llvm::StringRef error);
+
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
   /// \param OmitOnError - If true, then this error should only be emitted if no

@@ -1138,6 +1138,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getTriple().getOS() != llvm::Triple::Darwin)
     CmdArgs.push_back("-mconstructor-aliases");
 
+  // Darwin's kernel doesn't support guard variables; just die if we
+  // try to use them.
+  if (KernelOrKext &&
+      getToolChain().getTriple().getOS() == llvm::Triple::Darwin)
+    CmdArgs.push_back("-fforbid-guard-variables");
+
   if (Args.hasArg(options::OPT_mms_bitfields)) {
     CmdArgs.push_back("-mms-bitfields");
   }

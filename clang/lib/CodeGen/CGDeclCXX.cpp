@@ -149,6 +149,14 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
 
 void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
                                          llvm::GlobalVariable *DeclPtr) {
+  // If we've been asked to forbid guard variables, emit an error now.
+  // This diagnostic is hard-coded for Darwin's use case;  we can find
+  // better phrasing if someone else needs it.
+  if (CGM.getCodeGenOpts().ForbidGuardVariables)
+    CGM.Error(D.getLocation(),
+              "this initialization requires a guard variable, which "
+              "the kernel does not support");
+
   CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr);
 }
 

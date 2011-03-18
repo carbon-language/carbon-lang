@@ -154,6 +154,11 @@ bool CodeGenModule::isTargetDarwin() const {
   return getContext().Target.getTriple().getOS() == llvm::Triple::Darwin;
 }
 
+void CodeGenModule::Error(SourceLocation loc, llvm::StringRef error) {
+  unsigned diagID = getDiags().getCustomDiagID(Diagnostic::Error, error);
+  getDiags().Report(Context.getFullLoc(loc), diagID);
+}
+
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
 void CodeGenModule::ErrorUnsupported(const Stmt *S, const char *Type,
