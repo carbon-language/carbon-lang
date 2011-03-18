@@ -222,6 +222,8 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
 DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple)
   : Darwin(Host, Triple)
 {
+  std::string UsrPrefix = "llvm-gcc-4.2/";
+
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -232,18 +234,18 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple)
     getProgramPaths().push_back(getDriver().Dir);
 
   // For fallback, we need to know how to find the GCC cc1 executables, so we
-  // also add the GCC libexec paths. This is legiy code that can be removed once
-  // fallback is no longer useful.
+  // also add the GCC libexec paths. This is legacy code that can be removed
+  // once fallback is no longer useful.
   std::string ToolChainDir = "i686-apple-darwin";
   ToolChainDir += llvm::utostr(DarwinVersion[0]);
   ToolChainDir += "/4.2.1";
 
   std::string Path = getDriver().Dir;
-  Path += "/../libexec/gcc/";
+  Path += "/../" + UsrPrefix + "libexec/gcc/";
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
-  Path = "/usr/libexec/gcc/";
+  Path = "/usr/" + UsrPrefix + "libexec/gcc/";
   Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 }
