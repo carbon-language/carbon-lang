@@ -9,7 +9,7 @@
 ; be able to reconstruct the full getelementptr, despite it having a few
 ; obstacles set in its way.
 
-target datalayout = "e-p:64:64:64"
+target datalayout = "e-p:64:64:64-n:32:64"
 
 define void @foo(i64 %n, i64 %m, i64 %o, i64 %q, double* nocapture %p) nounwind {
 entry:

@@ -1,7 +1,8 @@
 ; Check that the index of 'P[outer]' is pulled out of the loop.
-; RUN: opt < %s -loop-reduce -S -default-data-layout="e-p:32:32:32" | \
+; RUN: opt < %s -loop-reduce -S | \
 ; RUN:   not grep {getelementptr.*%outer.*%INDVAR}
 
+target datalayout = "e-p:32:32:32-n:32"
 declare i1 @pred()
 
 define void @test([10000 x i32]* %P, i32 %outer) {

@@ -28,6 +28,7 @@ class IVUsers;
 class ScalarEvolution;
 class SCEV;
 class IVUsers;
+class TargetData;
 
 /// IVStrideUse - Keep track of one use of a strided induction variable.
 /// The Expr member keeps track of the expression, User is the actual user
@@ -122,6 +123,7 @@ class IVUsers : public LoopPass {
   LoopInfo *LI;
   DominatorTree *DT;
   ScalarEvolution *SE;
+  TargetData *TD;
   SmallPtrSet<Instruction*,16> Processed;
 
   /// IVUses - A list of all tracked IV uses of induction variable expressions

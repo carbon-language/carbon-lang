@@ -21,6 +21,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
@@ -83,7 +84,10 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
     return false;   // Void and FP expressions cannot be reduced.
 
   // LSR is not APInt clean, do not touch integers bigger than 64-bits.
-  if (SE->getTypeSizeInBits(I->getType()) > 64)
+  // Also avoid creating IVs of non-native types. For example, we don't want a
+  // 64-bit IV in 32-bit code just because the loop has one 64-bit cast.
+  uint64_t Width = SE->getTypeSizeInBits(I->getType());
+  if (Width > 64 || (TD && !TD->isLegalInteger(Width)))
     return false;
 
   if (!Processed.insert(I))
@@ -167,6 +171,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
+  TD = getAnalysisIfAvailable<TargetData>();
 
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for

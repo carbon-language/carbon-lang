@@ -2,7 +2,7 @@
 ; RUN: not grep and %t
 ; RUN: not grep zext %t
 
-target datalayout = "-p:64:64:64"
+target datalayout = "-p:64:64:64-n:32:64"
 
 define void @foo(double* %d, i64 %n) nounwind {
 entry:
