@@ -13,19 +13,20 @@ LEVEL := ..
 OPTIONAL_PARALLEL_DIRS := clang
 
 # Build LLDB if present. Note LLDB must be built last as it depends on the
-# wider LLVM infrastructure (including Clang). 
+# wider LLVM infrastructure (including Clang).
 OPTIONAL_DIRS := lldb
 
 # NOTE: The tools are organized into five groups of four consisting of one
 # large and three small executables. This is done to minimize memory load
 # in parallel builds.  Please retain this ordering.
-DIRS := llvm-config 
+DIRS := llvm-config
 PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
                  lli llvm-extract llvm-mc \
                  bugpoint llvm-bcanalyzer llvm-stub \
-                 llvmc llvm-diff macho-dump llvm-objdump
+                 llvmc llvm-diff macho-dump llvm-objdump \
+	         llvm-rtdyld
 
 # Let users override the set of tools to build from the command line.
 ifdef ONLY_TOOLS
