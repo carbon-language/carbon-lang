@@ -211,7 +211,20 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
 
-  // We don't want debug info removed by anything this general.
+  // We don't want debug info removed by anything this general, unless
+  // debug info is empty.
+  if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
+    if (DDI->getAddress()) 
+      return false;
+    else
+      return true;
+  } else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
+    if (DVI->getValue())
+      return false;
+    else
+      return true;
+  }
+
   if (isa<DbgInfoIntrinsic>(I)) return false;
 
   if (!I->mayHaveSideEffects()) return true;
