@@ -109,6 +109,7 @@ def : DiagGroup<"stack-protector">;
 def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
+def HeaderHygiene : DiagGroup<"header-hygiene">;
 
 // Preprocessor warnings.
 def : DiagGroup<"builtin-macro-redefined">;

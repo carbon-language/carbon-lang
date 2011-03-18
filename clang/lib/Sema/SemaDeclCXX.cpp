@@ -3922,6 +3922,12 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
     UDir = UsingDirectiveDecl::Create(Context, CurContext, UsingLoc, NamespcLoc,
                                       SS.getWithLocInContext(Context),
                                       IdentLoc, Named, CommonAncestor);
+
+    if (CurContext->getDeclKind() == Decl::TranslationUnit &&
+        !SourceMgr.isFromMainFile(IdentLoc)) {
+      Diag(IdentLoc, diag::warn_using_directive_in_header);
+    }
+
     PushUsingDirective(S, UDir);
   } else {
     Diag(IdentLoc, diag::err_expected_namespace_name) << SS.getRange();

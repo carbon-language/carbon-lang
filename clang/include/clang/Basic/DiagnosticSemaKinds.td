@@ -2928,6 +2928,9 @@ def warn_overloaded_virtual : Warning<
   InGroup<OverloadedVirtual>, DefaultIgnore;
 def note_hidden_overloaded_virtual_declared_here : Note<
   "hidden overloaded virtual function %q0 declared here">;
+def warn_using_directive_in_header : Warning<
+  "using namespace directive in global context in header">,
+  InGroup<HeaderHygiene>, DefaultIgnore;
 
 def err_conditional_void_nonvoid : Error<
   "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "
