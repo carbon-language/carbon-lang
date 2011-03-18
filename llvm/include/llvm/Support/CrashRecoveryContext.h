@@ -116,7 +116,19 @@ public:
     resource->~T();
   }
 };
-  
+
+template <typename T>
+class CrashRecoveryContextDeleteCleanup
+  : public CrashRecoveryContextCleanup
+{
+  T *resource;
+public:
+  CrashRecoveryContextDeleteCleanup(T *resource) : resource(resource) {}
+  virtual void recoverResources() {
+    delete resource;
+  }
+};
+
 template <typename T>
 struct CrashRecoveryContextTrait {
   static inline CrashRecoveryContextCleanup *createCleanup(T *resource) {
