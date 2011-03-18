@@ -51,6 +51,157 @@ static int Error(const Twine &Msg) {
 }
 
 /* *** */
+static bool
+loadSegment32(const MachOObject *Obj,
+              sys::MemoryBlock &Data,
+              const MachOObject::LoadCommandInfo *SegmentLCI,
+              const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC,
+              StringMap<void*> &SymbolTable) {
+  InMemoryStruct<macho::SegmentLoadCommand> Segment32LC;
+  Obj->ReadSegmentLoadCommand(*SegmentLCI, Segment32LC);
+  if (!Segment32LC)
+    return Error("unable to load segment load command");
+
+  // Map the segment into memory.
+  std::string ErrorStr;
+  Data = sys::Memory::AllocateRWX(Segment32LC->VMSize, 0, &ErrorStr);
+  if (!Data.base())
+    return Error("unable to allocate memory block: '" + ErrorStr + "'");
+  memcpy(Data.base(), Obj->getData(Segment32LC->FileOffset,
+                                   Segment32LC->FileSize).data(),
+         Segment32LC->FileSize);
+  memset((char*)Data.base() + Segment32LC->FileSize, 0,
+         Segment32LC->VMSize - Segment32LC->FileSize);
+
+  // Bind the section indices to address.
+  void **SectionBases = new void*[Segment32LC->NumSections];
+  for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
+    InMemoryStruct<macho::Section> Sect;
+    Obj->ReadSection(*SegmentLCI, i, Sect);
+    if (!Sect)
+      return Error("unable to load section: '" + Twine(i) + "'");
+
+    // FIXME: We don't support relocations yet.
+    if (Sect->NumRelocationTableEntries != 0)
+      return Error("not yet implemented: relocations!");
+
+    // FIXME: Improve check.
+    if (Sect->Flags != 0x80000400)
+      return Error("unsupported section type!");
+
+    SectionBases[i] = (char*) Data.base() + Sect->Address;
+  }
+
+  // Bind all the symbols to address.
+  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
+    InMemoryStruct<macho::SymbolTableEntry> STE;
+    Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
+    if (!STE)
+      return Error("unable to read symbol: '" + Twine(i) + "'");
+    if (STE->SectionIndex == 0)
+      return Error("unexpected undefined symbol!");
+
+    unsigned Index = STE->SectionIndex - 1;
+    if (Index >= Segment32LC->NumSections)
+      return Error("invalid section index for symbol: '" + Twine() + "'");
+
+    // Get the symbol name.
+    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+
+    // Get the section base address.
+    void *SectionBase = SectionBases[Index];
+
+    // Get the symbol address.
+    void *Address = (char*) SectionBase + STE->Value;
+
+    // FIXME: Check the symbol type and flags.
+    if (STE->Type != 0xF)
+      return Error("unexpected symbol type!");
+    if (STE->Flags != 0x0)
+      return Error("unexpected symbol type!");
+
+    SymbolTable[Name] = Address;
+  }
+
+  delete SectionBases;
+  return false;
+}
+
+static bool
+loadSegment64(const MachOObject *Obj,
+              sys::MemoryBlock &Data,
+              const MachOObject::LoadCommandInfo *SegmentLCI,
+              const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC,
+              StringMap<void*> &SymbolTable) {
+  InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
+  Obj->ReadSegment64LoadCommand(*SegmentLCI, Segment64LC);
+  if (!Segment64LC)
+    return Error("unable to load segment load command");
+
+  // Map the segment into memory.
+  std::string ErrorStr;
+  Data = sys::Memory::AllocateRWX(Segment64LC->VMSize, 0, &ErrorStr);
+  if (!Data.base())
+    return Error("unable to allocate memory block: '" + ErrorStr + "'");
+  memcpy(Data.base(), Obj->getData(Segment64LC->FileOffset,
+                                   Segment64LC->FileSize).data(),
+         Segment64LC->FileSize);
+  memset((char*)Data.base() + Segment64LC->FileSize, 0,
+         Segment64LC->VMSize - Segment64LC->FileSize);
+
+  // Bind the section indices to address.
+  void **SectionBases = new void*[Segment64LC->NumSections];
+  for (unsigned i = 0; i != Segment64LC->NumSections; ++i) {
+    InMemoryStruct<macho::Section64> Sect;
+    Obj->ReadSection64(*SegmentLCI, i, Sect);
+    if (!Sect)
+      return Error("unable to load section: '" + Twine(i) + "'");
+
+    // FIXME: We don't support relocations yet.
+    if (Sect->NumRelocationTableEntries != 0)
+      return Error("not yet implemented: relocations!");
+
+    // FIXME: Improve check.
+    if (Sect->Flags != 0x80000400)
+      return Error("unsupported section type!");
+
+    SectionBases[i] = (char*) Data.base() + Sect->Address;
+  }
+
+  // Bind all the symbols to address.
+  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
+    InMemoryStruct<macho::Symbol64TableEntry> STE;
+    Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
+    if (!STE)
+      return Error("unable to read symbol: '" + Twine(i) + "'");
+    if (STE->SectionIndex == 0)
+      return Error("unexpected undefined symbol!");
+
+    unsigned Index = STE->SectionIndex - 1;
+    if (Index >= Segment64LC->NumSections)
+      return Error("invalid section index for symbol: '" + Twine() + "'");
+
+    // Get the symbol name.
+    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+
+    // Get the section base address.
+    void *SectionBase = SectionBases[Index];
+
+    // Get the symbol address.
+    void *Address = (char*) SectionBase + STE->Value;
+
+    // FIXME: Check the symbol type and flags.
+    if (STE->Type != 0xF)
+      return Error("unexpected symbol type!");
+    if (STE->Flags != 0x0)
+      return Error("unexpected symbol type!");
+
+    SymbolTable[Name] = Address;
+  }
+
+  delete SectionBases;
+  return false;
+}
 
 static int executeInput() {
   // Load the input memory buffer.
@@ -122,73 +273,14 @@ static int executeInput() {
   }
 
   // Load the segment load command.
-  if (SegmentLCI->Command.Type != macho::LCT_Segment64)
-    return Error("Segment32 not yet implemented!");
-  InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
-  Obj->ReadSegment64LoadCommand(*SegmentLCI, Segment64LC);
-  if (!Segment64LC)
-    return Error("unable to load segment load command");
-
-  // Map the segment into memory.
-  sys::MemoryBlock Data = sys::Memory::AllocateRWX(Segment64LC->VMSize,
-                                                   0, &ErrorStr);
-  if (!Data.base())
-    return Error("unable to allocate memory block: '" + ErrorStr + "'");
-  memcpy(Data.base(), Obj->getData(Segment64LC->FileOffset,
-                                   Segment64LC->FileSize).data(),
-         Segment64LC->FileSize);
-  memset((char*)Data.base() + Segment64LC->FileSize, 0,
-         Segment64LC->VMSize - Segment64LC->FileSize);
-
-  // Bind the section indices to address.
-  void **SectionBases = new void*[Segment64LC->NumSections];
-  for (unsigned i = 0; i != Segment64LC->NumSections; ++i) {
-    InMemoryStruct<macho::Section64> Sect;
-    Obj->ReadSection64(*SegmentLCI, i, Sect);
-    if (!Sect)
-      return Error("unable to load section: '" + Twine(i) + "'");
-
-    // FIXME: We don't support relocations yet.
-    if (Sect->NumRelocationTableEntries != 0)
-      return Error("not yet implemented: relocations!");
-
-    // FIXME: Improve check.
-    if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
-
-    SectionBases[i] = (char*) Data.base() + Sect->Address;
-  }
-
-  // Bind all the symbols to address.
+  sys::MemoryBlock Data;
   StringMap<void*> SymbolTable;
-  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-    InMemoryStruct<macho::Symbol64TableEntry> STE;
-    Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
-    if (!STE)
-      return Error("unable to read symbol: '" + Twine(i) + "'");
-    if (STE->SectionIndex == 0)
-      return Error("unexpected undefined symbol!");
-
-    unsigned Index = STE->SectionIndex - 1;
-    if (Index >= Segment64LC->NumSections)
-      return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-
-    // Get the section base address.
-    void *SectionBase = SectionBases[Index];
-
-    // Get the symbol address.
-    void *Address = (char*) SectionBase + STE->Value;
-
-    // FIXME: Check the symbol type and flags.
-    if (STE->Type != 0xF)
-      return Error("unexpected symbol type!");
-    if (STE->Flags != 0x0)
-      return Error("unexpected symbol type!");
-
-    SymbolTable[Name] = Address;
+  if (SegmentLCI->Command.Type == macho::LCT_Segment) {
+    if (loadSegment32(Obj.get(), Data, SegmentLCI, SymtabLC, SymbolTable))
+      return true;
+  } else {
+    if (loadSegment64(Obj.get(), Data, SegmentLCI, SymtabLC, SymbolTable))
+      return true;
   }
 
   // Get the address of "_main".
