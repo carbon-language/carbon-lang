@@ -38,6 +38,7 @@ class PassManager;
 class Pass;
 class TargetELFWriterInfo;
 class formatted_raw_ostream;
+class raw_ostream;
 
 // Relocation model types.
 namespace Reloc {
@@ -267,6 +268,7 @@ public:
   ///
   virtual bool addPassesToEmitMC(PassManagerBase &,
                                  MCContext *&,
+                                 raw_ostream &OS,
                                  CodeGenOpt::Level,
                                  bool = true) {
     return true;
@@ -324,6 +326,7 @@ public:
   ///
   virtual bool addPassesToEmitMC(PassManagerBase &PM,
                                  MCContext *&Ctx,
+                                 raw_ostream &OS,
                                  CodeGenOpt::Level OptLevel,
                                  bool DisableVerify = true);
 

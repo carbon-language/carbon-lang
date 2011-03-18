@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCJIT.h"
+#include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace llvm;
 
@@ -51,17 +53,34 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, *TM, *TJ, JMM, OptLevel, GVsWithCode);
+    return new MCJIT(M, TM, *TJ, JMM, OptLevel, GVsWithCode);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";
   return 0;
 }
 
-MCJIT::MCJIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
+MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
              JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(M) {
+  : ExecutionEngine(m), TM(tm), M(m), OS(Buffer) {
+
+  PM.add(new TargetData(*TM->getTargetData()));
+
+  // Turn the machine code intermediate representation into bytes in memory
+  // that may be executed.
+  if (TM->addPassesToEmitMC(PM, Ctx, OS, CodeGenOpt::Default, false)) {
+    report_fatal_error("Target does not support MC emission!");
+  }
+
+  // Initialize passes.
+  ExecutionEngine::addModule(M);
+  // FIXME: When we support multiple modules, we'll want to move the code
+  // gen and finalization out of the constructor here and do it more
+  // on-demand as part of getPointerToFunction().
+  PM.run(*M);
+  // Flush the output buffer so the SmallVector gets its data.
+  OS.flush();
 }
 
 MCJIT::~MCJIT() {
@@ -73,7 +92,6 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 void *MCJIT::getPointerToFunction(Function *F) {
-  report_fatal_error("not yet implemented");
   return 0;
 }
 
@@ -87,6 +105,10 @@ void MCJIT::freeMachineCodeForFunction(Function *F) {
 
 GenericValue MCJIT::runFunction(Function *F,
                                 const std::vector<GenericValue> &ArgValues) {
-  report_fatal_error("not yet implemented");
+  assert(ArgValues.size() == 0 && "JIT arg passing not supported yet");
+  void *FPtr = getPointerToFunction(F);
+  if (!FPtr)
+    report_fatal_error("Unable to locate function: '" + F->getName() + "'");
+  ((void(*)(void))FPtr)();
   return GenericValue();
 }

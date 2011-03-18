@@ -133,6 +133,7 @@ int main(int argc, char **argv, char * const *envp) {
   // If we have a native target, initialize it to ensure it is linked in and
   // usable by the JIT.
   InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
 
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");

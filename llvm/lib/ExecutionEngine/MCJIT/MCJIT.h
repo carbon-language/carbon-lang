@@ -10,14 +10,33 @@
 #ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_H
 #define LLVM_LIB_EXECUTIONENGINE_MCJIT_H
 
+#include "llvm/PassManager.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
+// FIXME: This makes all kinds of horrible assumptions for the time being,
+// like only having one module, not needing to worry about multi-threading,
+// blah blah. Purely in get-it-up-and-limping mode for now.
+
 class MCJIT : public ExecutionEngine {
-  MCJIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
+  MCJIT(Module *M, TargetMachine *tm, TargetJITInfo &tji,
         JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
         bool AllocateGVsWithCode);
+
+  TargetMachine *TM;
+  MCContext *Ctx;
+
+  // FIXME: These may need moved to a separate 'jitstate' member like the
+  // non-MC JIT does for multithreading and such. Just keep them here for now.
+  PassManager PM;
+  Module *M;
+  // FIXME: This really doesn't belong here.
+  SmallVector<char, 4096> Buffer; // Working buffer into which we JIT.
+  raw_svector_ostream OS;
+
 public:
   ~MCJIT();
 
