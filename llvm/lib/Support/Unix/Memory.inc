@@ -124,7 +124,7 @@ bool llvm::sys::Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
     (vm_size_t)M.Size, 0, VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
   return KERN_SUCCESS == kr;
 #else
-  return false;
+  return true;
 #endif
 }
 
