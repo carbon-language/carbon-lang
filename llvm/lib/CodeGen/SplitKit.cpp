@@ -348,6 +348,7 @@ void SplitEditor::extendRange(unsigned RegIdx, SlotIndex Idx) {
   // Using LiveOutCache as a visited set, perform a BFS for all reaching defs.
   for (unsigned i = 0; i != LiveIn.size(); ++i) {
     MachineBasicBlock *MBB = LiveIn[i]->getBlock();
+    assert(!MBB->pred_empty() && "Value live-in to entry block?");
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
            PE = MBB->pred_end(); PI != PE; ++PI) {
        MachineBasicBlock *Pred = *PI;
@@ -757,7 +758,8 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     }
 
     SlotIndex Idx = LIS.getInstructionIndex(MI);
-    Idx = MO.isUse() ? Idx.getUseIndex() : Idx.getDefIndex();
+    if (MO.isDef())
+      Idx = MO.isEarlyClobber() ? Idx.getUseIndex() : Idx.getDefIndex();
 
     // Rewrite to the mapped register at Idx.
     unsigned RegIdx = RegAssign.lookup(Idx);
@@ -765,9 +767,23 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
     DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'
                  << Idx << ':' << RegIdx << '\t' << *MI);
 
-    // Extend liveness to Idx.
-    if (ExtendRanges)
-      extendRange(RegIdx, Idx);
+    // Extend liveness to Idx if the instruction reads reg.
+    if (!ExtendRanges)
+      continue;
+
+    // Skip instructions that don't read Reg.
+    if (MO.isDef()) {
+      if (!MO.getSubReg() && !MO.isEarlyClobber())
+        continue;
+      // We may wan't to extend a live range for a partial redef, or for a use
+      // tied to an early clobber.
+      Idx = Idx.getPrevSlot();
+      if (!Edit->getParent().liveAt(Idx))
+        continue;
+    } else
+      Idx = Idx.getUseIndex();
+
+    extendRange(RegIdx, Idx);
   }
 }
 
