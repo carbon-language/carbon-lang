@@ -172,9 +172,18 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
   Action::ActionClass Key;
-  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
-    Key = Action::AnalyzeJobClass;
-  else
+
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple())) {
+    // Fallback to llvm-gcc for i386 kext compiles, we don't support that ABI.
+    if (Inputs.size() == 1 &&
+        types::isCXX(Inputs[0]->getType()) &&
+        getTriple().getOS() == llvm::Triple::Darwin &&
+        getTriple().getArch() == llvm::Triple::x86 &&
+        C.getArgs().getLastArg(options::OPT_fapple_kext))
+      Key = JA.getKind();
+    else
+      Key = Action::AnalyzeJobClass;
+  } else
     Key = JA.getKind();
 
   // FIXME: This doesn't belong here, but ideally we will support static soon
