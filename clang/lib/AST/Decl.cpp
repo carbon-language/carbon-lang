@@ -961,14 +961,36 @@ void DeclaratorDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
     if (hasExtInfo()) {
-      // Save type source info pointer.
-      TypeSourceInfo *savedTInfo = getExtInfo()->TInfo;
-      // Deallocate the extended decl info.
-      getASTContext().Deallocate(getExtInfo());
-      // Restore savedTInfo into (non-extended) decl info.
-      DeclInfo = savedTInfo;
+      if (getExtInfo()->NumTemplParamLists == 0) {
+        // Save type source info pointer.
+        TypeSourceInfo *savedTInfo = getExtInfo()->TInfo;
+        // Deallocate the extended decl info.
+        getASTContext().Deallocate(getExtInfo());
+        // Restore savedTInfo into (non-extended) decl info.
+        DeclInfo = savedTInfo;
+      }
+      else
+        getExtInfo()->QualifierLoc = QualifierLoc;
     }
   }
+}
+
+void
+DeclaratorDecl::setTemplateParameterListsInfo(ASTContext &Context,
+                                              unsigned NumTPLists,
+                                              TemplateParameterList **TPLists) {
+  assert(NumTPLists > 0);
+  // Make sure the extended decl info is allocated.
+  if (!hasExtInfo()) {
+    // Save (non-extended) type source info pointer.
+    TypeSourceInfo *savedTInfo = DeclInfo.get<TypeSourceInfo*>();
+    // Allocate external info struct.
+    DeclInfo = new (getASTContext()) ExtInfo;
+    // Restore savedTInfo into (extended) decl info.
+    getExtInfo()->TInfo = savedTInfo;
+  }
+  // Set the template parameter lists info.
+  getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
 }
 
 SourceLocation DeclaratorDecl::getOuterLocStart() const {
@@ -1030,8 +1052,6 @@ QualifierInfo::setTemplateParameterListsInfo(ASTContext &Context,
                                              TemplateParameterList **TPLists) {
   assert((NumTPLists == 0 || TPLists != 0) &&
          "Empty array of template parameters with positive size!");
-  assert((NumTPLists == 0 || QualifierLoc) &&
-         "Nonempty array of template parameters with no qualifier!");
 
   // Free previous template parameters (if any).
   if (NumTemplParamLists > 0) {
@@ -2100,10 +2120,26 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   else {
     // Here Qualifier == 0, i.e., we are removing the qualifier (if any).
     if (hasExtInfo()) {
-      getASTContext().Deallocate(getExtInfo());
-      TypedefDeclOrQualifier = (TypedefDecl*) 0;
+      if (getExtInfo()->NumTemplParamLists == 0) {
+        getASTContext().Deallocate(getExtInfo());
+        TypedefDeclOrQualifier = (TypedefDecl*) 0;
+      }
+      else
+        getExtInfo()->QualifierLoc = QualifierLoc;
     }
   }
+}
+
+void TagDecl::setTemplateParameterListsInfo(ASTContext &Context,
+                                            unsigned NumTPLists,
+                                            TemplateParameterList **TPLists) {
+  assert(NumTPLists > 0);
+  // Make sure the extended decl info is allocated.
+  if (!hasExtInfo())
+    // Allocate external info struct.
+    TypedefDeclOrQualifier = new (getASTContext()) ExtInfo;
+  // Set the template parameter lists info.
+  getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
 }
 
 //===----------------------------------------------------------------------===//

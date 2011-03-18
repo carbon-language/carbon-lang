@@ -3094,7 +3094,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // Match up the template parameter lists with the scope specifier, then
     // determine whether we have a template or a template specialization.
     isExplicitSpecialization = false;
-    unsigned NumMatchedTemplateParamLists = TemplateParamLists.size();
     bool Invalid = false;
     if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
@@ -3105,9 +3104,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                                   /*never a friend*/ false,
                                                   isExplicitSpecialization,
                                                   Invalid)) {
-      // All but one template parameter lists have been matching.
-      --NumMatchedTemplateParamLists;
-
       if (TemplateParams->size() > 0) {
         // There is no such thing as a variable template.
         Diag(D.getIdentifierLoc(), diag::err_template_variable)
@@ -3123,7 +3119,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << II
           << SourceRange(TemplateParams->getTemplateLoc(),
                          TemplateParams->getRAngleLoc());
-      
         isExplicitSpecialization = true;
       }
     }
@@ -3143,9 +3138,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     SetNestedNameSpecifier(NewVD, D);
 
-    if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
+    if (TemplateParamLists.size() > 0 && D.getCXXScopeSpec().isSet()) {
       NewVD->setTemplateParameterListsInfo(Context,
-                                           NumMatchedTemplateParamLists,
+                                           TemplateParamLists.size(),
                                            TemplateParamLists.release());
     }
   }
@@ -3636,8 +3631,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   FunctionTemplateDecl *FunctionTemplate = 0;
   bool isExplicitSpecialization = false;
   bool isFunctionTemplateSpecialization = false;
-  unsigned NumMatchedTemplateParamLists = 0;
-  
+
   if (!getLangOptions().CPlusPlus) {
     // Determine whether the function was written with a
     // prototype. This true when:
@@ -3783,7 +3777,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     SetNestedNameSpecifier(NewFD, D);
     isExplicitSpecialization = false;
     isFunctionTemplateSpecialization = false;
-    NumMatchedTemplateParamLists = TemplateParamLists.size();
     if (D.isInvalidType())
       NewFD->setInvalidDecl();
     
@@ -3804,61 +3797,71 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                   isFriend,
                                   isExplicitSpecialization,
                                   Invalid)) {
-          // All but one template parameter lists have been matching.
-          --NumMatchedTemplateParamLists;
+      if (TemplateParams->size() > 0) {
+        // This is a function template
 
-          if (TemplateParams->size() > 0) {
-            // This is a function template
+        // Check that we can declare a template here.
+        if (CheckTemplateDeclScope(S, TemplateParams))
+          return 0;
 
-            // Check that we can declare a template here.
-            if (CheckTemplateDeclScope(S, TemplateParams))
-              return 0;
-
-            // A destructor cannot be a template.
-            if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
-              Diag(NewFD->getLocation(), diag::err_destructor_template);
-              return 0;
-            }
-            
-            
-            FunctionTemplate = FunctionTemplateDecl::Create(Context, DC,
-                                                      NewFD->getLocation(),
-                                                      Name, TemplateParams,
-                                                      NewFD);
-            FunctionTemplate->setLexicalDeclContext(CurContext);
-            NewFD->setDescribedFunctionTemplate(FunctionTemplate);
-          } else {
-            // This is a function template specialization.
-            isFunctionTemplateSpecialization = true;
-
-            // C++0x [temp.expl.spec]p20 forbids "template<> friend void foo(int);".
-            if (isFriend && isFunctionTemplateSpecialization) {
-              // We want to remove the "template<>", found here.
-              SourceRange RemoveRange = TemplateParams->getSourceRange();
-
-              // If we remove the template<> and the name is not a
-              // template-id, we're actually silently creating a problem:
-              // the friend declaration will refer to an untemplated decl,
-              // and clearly the user wants a template specialization.  So
-              // we need to insert '<>' after the name.
-              SourceLocation InsertLoc;
-              if (D.getName().getKind() != UnqualifiedId::IK_TemplateId) {
-                InsertLoc = D.getName().getSourceRange().getEnd();
-                InsertLoc = PP.getLocForEndOfToken(InsertLoc);
-              }
-
-              Diag(D.getIdentifierLoc(), diag::err_template_spec_decl_friend)
-              << Name << RemoveRange
-              << FixItHint::CreateRemoval(RemoveRange)
-              << FixItHint::CreateInsertion(InsertLoc, "<>");
-            }
-          }
+        // A destructor cannot be a template.
+        if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
+          Diag(NewFD->getLocation(), diag::err_destructor_template);
+          return 0;
         }
 
-    if (NumMatchedTemplateParamLists > 0 && D.getCXXScopeSpec().isSet()) {
-      NewFD->setTemplateParameterListsInfo(Context,
-                                           NumMatchedTemplateParamLists,
-                                           TemplateParamLists.release());
+        FunctionTemplate = FunctionTemplateDecl::Create(Context, DC,
+                                                        NewFD->getLocation(),
+                                                        Name, TemplateParams,
+                                                        NewFD);
+        FunctionTemplate->setLexicalDeclContext(CurContext);
+        NewFD->setDescribedFunctionTemplate(FunctionTemplate);
+
+        // For source fidelity, store the other template param lists.
+        if (TemplateParamLists.size() > 1) {
+          NewFD->setTemplateParameterListsInfo(Context,
+                                               TemplateParamLists.size() - 1,
+                                               TemplateParamLists.release());
+        }
+      } else {
+        // This is a function template specialization.
+        isFunctionTemplateSpecialization = true;
+        // For source fidelity, store all the template param lists.
+        NewFD->setTemplateParameterListsInfo(Context,
+                                             TemplateParamLists.size(),
+                                             TemplateParamLists.release());
+
+        // C++0x [temp.expl.spec]p20 forbids "template<> friend void foo(int);".
+        if (isFriend) {
+          // We want to remove the "template<>", found here.
+          SourceRange RemoveRange = TemplateParams->getSourceRange();
+
+          // If we remove the template<> and the name is not a
+          // template-id, we're actually silently creating a problem:
+          // the friend declaration will refer to an untemplated decl,
+          // and clearly the user wants a template specialization.  So
+          // we need to insert '<>' after the name.
+          SourceLocation InsertLoc;
+          if (D.getName().getKind() != UnqualifiedId::IK_TemplateId) {
+            InsertLoc = D.getName().getSourceRange().getEnd();
+            InsertLoc = PP.getLocForEndOfToken(InsertLoc);
+          }
+
+          Diag(D.getIdentifierLoc(), diag::err_template_spec_decl_friend)
+            << Name << RemoveRange
+            << FixItHint::CreateRemoval(RemoveRange)
+            << FixItHint::CreateInsertion(InsertLoc, "<>");
+        }
+      }
+    }
+    else {
+      // All template param lists were matched against the scope specifier:
+      // this is NOT (an explicit specialization of) a template.
+      if (TemplateParamLists.size() > 0)
+        // For source fidelity, store all the template param lists.
+        NewFD->setTemplateParameterListsInfo(Context,
+                                             TemplateParamLists.size(),
+                                             TemplateParamLists.release());
     }
 
     if (Invalid) {
@@ -4180,7 +4183,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         // are situations where these conditions don't apply and we
         // can actually do this check immediately.
         if (isFriend &&
-            (NumMatchedTemplateParamLists ||
+            (TemplateParamLists.size() ||
              D.getCXXScopeSpec().getScopeRep()->isDependent() ||
              CurContext->isDependentContext())) {
               // ignore these
@@ -6035,27 +6038,24 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
   // FIXME: Check explicit specializations more carefully.
   bool isExplicitSpecialization = false;
-  unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
   bool Invalid = false;
 
   // We only need to do this matching if we have template parameters
   // or a scope specifier, which also conveniently avoids this work
   // for non-C++ cases.
-  if (NumMatchedTemplateParamLists ||
+  if (TemplateParameterLists.size() > 0 ||
       (SS.isNotEmpty() && TUK != TUK_Reference)) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                                                 TemplateParameterLists.get(),
-                                               TemplateParameterLists.size(),
+                                                TemplateParameterLists.size(),
                                                     TUK == TUK_Friend,
                                                     isExplicitSpecialization,
                                                     Invalid)) {
-      // All but one template parameter lists have been matching.
-      --NumMatchedTemplateParamLists;
-
       if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
+
         if (Invalid)
           return 0;
 
@@ -6063,7 +6063,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         DeclResult Result = CheckClassTemplate(S, TagSpec, TUK, KWLoc,
                                                SS, Name, NameLoc, Attr,
                                                TemplateParams, AS,
-                                               NumMatchedTemplateParamLists,
+                                           TemplateParameterLists.size() - 1,
                  (TemplateParameterList**) TemplateParameterLists.release());
         return Result.get();
       } else {
@@ -6584,9 +6584,9 @@ CreateNewDecl:
   if (SS.isNotEmpty()) {
     if (SS.isSet()) {
       New->setQualifierInfo(SS.getWithLocInContext(Context));
-      if (NumMatchedTemplateParamLists > 0) {
+      if (TemplateParameterLists.size() > 0) {
         New->setTemplateParameterListsInfo(Context,
-                                           NumMatchedTemplateParamLists,
+                                           TemplateParameterLists.size(),
                     (TemplateParameterList**) TemplateParameterLists.release());
       }
     }

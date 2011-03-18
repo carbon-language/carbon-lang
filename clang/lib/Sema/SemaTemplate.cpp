@@ -1456,9 +1456,9 @@ DependsOnTemplateParameters(const TemplateSpecializationType *TemplateId,
 ///
 /// \returns the template parameter list, if any, that corresponds to the
 /// name that is preceded by the scope specifier @p SS. This template
-/// parameter list may be have template parameters (if we're declaring a
+/// parameter list may have template parameters (if we're declaring a
 /// template) or may have no template parameters (if we're declaring a
-/// template specialization), or may be NULL (if we were's declaring isn't
+/// template specialization), or may be NULL (if what we're declaring isn't
 /// itself a template).
 TemplateParameterList *
 Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
@@ -4390,6 +4390,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                MultiTemplateParamsArg TemplateParameterLists) {
   assert(TUK != TUK_Reference && "References are not specializations");
 
+  // NOTE: KWLoc is the location of the tag keyword. This will instead
+  // store the location of the outermost template keyword in the declaration.
+  SourceLocation TemplateKWLoc = TemplateParameterLists.size() > 0
+    ? TemplateParameterLists.get()[0]->getTemplateLoc() : SourceLocation();
+
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
   ClassTemplateDecl *ClassTemplate
@@ -4419,10 +4424,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                               Invalid);
   if (Invalid)
     return true;
-
-  unsigned NumMatchedTemplateParamLists = TemplateParameterLists.size();
-  if (TemplateParams)
-    --NumMatchedTemplateParamLists;
 
   if (TemplateParams && TemplateParams->size() > 0) {
     isPartialSpecialization = true;
@@ -4565,10 +4566,15 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // Since the only prior class template specialization with these
     // arguments was referenced but not declared, or we're only
     // referencing this specialization as a friend, reuse that
-    // declaration node as our own, updating its source location to
-    // reflect our new declaration.
+    // declaration node as our own, updating its source location and
+    // the list of outer template parameters to reflect our new declaration.
     Specialization = PrevDecl;
     Specialization->setLocation(TemplateNameLoc);
+    if (TemplateParameterLists.size() > 0) {
+      Specialization->setTemplateParameterListsInfo(Context,
+                                              TemplateParameterLists.size(),
+                    (TemplateParameterList**) TemplateParameterLists.release());
+    }
     PrevDecl = 0;
     CanonType = Context.getTypeDeclType(Specialization);
   } else if (isPartialSpecialization) {
@@ -4594,7 +4600,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 Attr,
                                 TemplateParams,
                                 AS_none,
-                                NumMatchedTemplateParamLists,
+                                TemplateParameterLists.size() - 1,
                   (TemplateParameterList**) TemplateParameterLists.release());
     }
 
@@ -4616,9 +4622,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                        PrevPartial,
                                                        SequenceNumber);
     SetNestedNameSpecifier(Partial, SS);
-    if (NumMatchedTemplateParamLists > 0 && SS.isSet()) {
+    if (TemplateParameterLists.size() > 1 && SS.isSet()) {
       Partial->setTemplateParameterListsInfo(Context,
-                                             NumMatchedTemplateParamLists,
+                                             TemplateParameterLists.size() - 1,
                     (TemplateParameterList**) TemplateParameterLists.release());
     }
 
@@ -4675,9 +4681,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 Converted.size(),
                                                 PrevDecl);
     SetNestedNameSpecifier(Specialization, SS);
-    if (NumMatchedTemplateParamLists > 0 && SS.isSet()) {
+    if (TemplateParameterLists.size() > 0) {
       Specialization->setTemplateParameterListsInfo(Context,
-                                                  NumMatchedTemplateParamLists,
+                                              TemplateParameterLists.size(),
                     (TemplateParameterList**) TemplateParameterLists.release());
     }
 
@@ -4747,8 +4753,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                                 TemplateArgs, CanonType);
   if (TUK != TUK_Friend) {
     Specialization->setTypeAsWritten(WrittenTy);
-    if (TemplateParams)
-      Specialization->setTemplateKeywordLoc(TemplateParams->getTemplateLoc());
+    Specialization->setTemplateKeywordLoc(TemplateKWLoc);
   }
   TemplateArgsIn.release();
 

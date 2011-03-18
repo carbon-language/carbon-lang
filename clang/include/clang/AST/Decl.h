@@ -507,16 +507,24 @@ public:
 /// name qualifier, to be used for the case of out-of-line declarations.
 struct QualifierInfo {
   NestedNameSpecifierLoc QualifierLoc;
-  /// NumTemplParamLists - The number of template parameter lists
-  /// that were matched against the template-ids occurring into the NNS.
+
+  /// NumTemplParamLists - The number of "outer" template parameter lists.
+  /// The count includes all of the template parameter lists that were matched
+  /// against the template-ids occurring into the NNS and possibly (in the
+  /// case of an explicit specialization) a final "template <>".
   unsigned NumTemplParamLists;
+
   /// TemplParamLists - A new-allocated array of size NumTemplParamLists,
-  /// containing pointers to the matched template parameter lists.
+  /// containing pointers to the "outer" template parameter lists.
+  /// It includes all of the template parameter lists that were matched
+  /// against the template-ids occurring into the NNS and possibly (in the
+  /// case of an explicit specialization) a final "template <>".
   TemplateParameterList** TemplParamLists;
 
   /// Default constructor.
   QualifierInfo() : QualifierLoc(), NumTemplParamLists(0), TemplParamLists(0) {}
-  /// setTemplateParameterListsInfo - Sets info about matched template
+
+  /// setTemplateParameterListsInfo - Sets info about "outer" template
   /// parameter lists.
   void setTemplateParameterListsInfo(ASTContext &Context,
                                      unsigned NumTPLists,
@@ -603,9 +611,7 @@ public:
     return getExtInfo()->TemplParamLists[index];
   }
   void setTemplateParameterListsInfo(ASTContext &Context, unsigned NumTPLists,
-                                     TemplateParameterList **TPLists) {
-    getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
-  }
+                                     TemplateParameterList **TPLists);
 
   SourceLocation getTypeSpecStartLoc() const;
 
@@ -2238,9 +2244,7 @@ public:
     return getExtInfo()->TemplParamLists[i];
   }
   void setTemplateParameterListsInfo(ASTContext &Context, unsigned NumTPLists,
-                                     TemplateParameterList **TPLists) {
-    getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
-  }
+                                     TemplateParameterList **TPLists);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
