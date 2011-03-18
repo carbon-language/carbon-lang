@@ -974,6 +974,141 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 // CHECK: encoding: [0xe0,A]
 	loopnz 0
 
+// CHECK: outsb # encoding: [0x6e]
+// CHECK: outsb
+// CHECK: outsb
+	outsb
+	outsb	%ds:(%rsi), %dx
+	outsb	(%rsi), %dx
+
+// CHECK: outsw # encoding: [0x66,0x6f]
+// CHECK: outsw
+// CHECK: outsw
+	outsw
+	outsw	%ds:(%rsi), %dx
+	outsw	(%rsi), %dx
+
+// CHECK: outsl # encoding: [0x6f]
+// CHECK: outsl
+	outsl
+	outsl	%ds:(%rsi), %dx
+	outsl	(%rsi), %dx
+
+// CHECK: insb # encoding: [0x6c]
+// CHECK: insb
+	insb
+	insb	%dx, %es:(%rdi)
+
+// CHECK: insw # encoding: [0x66,0x6d]
+// CHECK: insw
+	insw
+	insw	%dx, %es:(%rdi)
+
+// CHECK: insl # encoding: [0x6d]
+// CHECK: insl
+	insl
+	insl	%dx, %es:(%rdi)
+
+// CHECK: movsb # encoding: [0xa4]
+// CHECK: movsb
+// CHECK: movsb
+	movsb
+	movsb	%ds:(%rsi), %es:(%rdi)
+	movsb	(%rsi), %es:(%rdi)
+
+// CHECK: movsw # encoding: [0x66,0xa5]
+// CHECK: movsw
+// CHECK: movsw
+	movsw
+	movsw	%ds:(%rsi), %es:(%rdi)
+	movsw	(%rsi), %es:(%rdi)
+
+// CHECK: movsl # encoding: [0xa5]
+// CHECK: movsl
+// CHECK: movsl
+	movsl
+	movsl	%ds:(%rsi), %es:(%rdi)
+	movsl	(%rsi), %es:(%rdi)
+
+// CHECK: movsq # encoding: [0x48,0xa5]
+// CHECK: movsq
+// CHECK: movsq
+	movsq
+	movsq	%ds:(%rsi), %es:(%rdi)
+	movsq	(%rsi), %es:(%rdi)
+
+// CHECK: lodsb # encoding: [0xac]
+// CHECK: lodsb
+// CHECK: lodsb
+// CHECK: lodsb
+// CHECK: lodsb
+	lodsb
+	lodsb	%ds:(%rsi), %al
+	lodsb	(%rsi), %al
+	lods	%ds:(%rsi), %al
+	lods	(%rsi), %al
+
+// CHECK: lodsw # encoding: [0x66,0xad]
+// CHECK: lodsw
+// CHECK: lodsw
+// CHECK: lodsw
+// CHECK: lodsw
+	lodsw
+	lodsw	%ds:(%rsi), %ax
+	lodsw	(%rsi), %ax
+	lods	%ds:(%rsi), %ax
+	lods	(%rsi), %ax
+
+// CHECK: lodsl # encoding: [0xad]
+// CHECK: lodsl
+// CHECK: lodsl
+// CHECK: lodsl
+// CHECK: lodsl
+	lodsl
+	lodsl	%ds:(%rsi), %eax
+	lodsl	(%rsi), %eax
+	lods	%ds:(%rsi), %eax
+	lods	(%rsi), %eax
+
+// CHECK: lodsq # encoding: [0x48,0xad]
+// CHECK: lodsq
+// CHECK: lodsq
+// CHECK: lodsq
+// CHECK: lodsq
+	lodsq
+	lodsq	%ds:(%rsi), %rax
+	lodsq	(%rsi), %rax
+	lods	%ds:(%rsi), %rax
+	lods	(%rsi), %rax
+
+// CHECK: stosb # encoding: [0xaa]
+// CHECK: stosb
+// CHECK: stosb
+	stosb
+	stosb	%al, %es:(%rdi)
+	stos	%al, %es:(%rdi)
+
+// CHECK: stosw # encoding: [0x66,0xab]
+// CHECK: stosw
+// CHECK: stosw
+	stosw
+	stosw	%ax, %es:(%rdi)
+	stos	%ax, %es:(%rdi)
+
+// CHECK: stosl # encoding: [0xab]
+// CHECK: stosl
+// CHECK: stosl
+	stosl
+	stosl	%eax, %es:(%rdi)
+	stos	%eax, %es:(%rdi)
+
+// CHECK: stosq # encoding: [0x48,0xab]
+// CHECK: stosq
+// CHECK: stosq
+	stosq
+	stosq	%rax, %es:(%rdi)
+	stos	%rax, %es:(%rdi)
+
 // CHECK: strw
 // CHECK: encoding: [0x66,0x0f,0x00,0xc8]
 	str %ax
