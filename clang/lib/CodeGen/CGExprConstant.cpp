@@ -39,7 +39,7 @@ class ConstStructBuilder {
 
   bool Packed;
   CharUnits NextFieldOffsetInChars;
-  unsigned LLVMStructAlignment;
+  CharUnits LLVMStructAlignment;
   std::vector<llvm::Constant *> Elements;
 public:
   static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
@@ -49,7 +49,7 @@ private:
   ConstStructBuilder(CodeGenModule &CGM, CodeGenFunction *CGF)
     : CGM(CGM), CGF(CGF), Packed(false), 
     NextFieldOffsetInChars(CharUnits::Zero()),
-    LLVMStructAlignment(1) { }
+    LLVMStructAlignment(CharUnits::One()) { }
 
   bool AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                    llvm::Constant *InitExpr);
@@ -65,9 +65,10 @@ private:
                               
   bool Build(InitListExpr *ILE);
 
-  unsigned getAlignment(const llvm::Constant *C) const {
-    if (Packed)  return 1;
-    return CGM.getTargetData().getABITypeAlignment(C->getType());
+  CharUnits getAlignment(const llvm::Constant *C) const {
+    if (Packed)  return CharUnits::One();
+    return CharUnits::fromQuantity(
+        CGM.getTargetData().getABITypeAlignment(C->getType()));
   }
 
   CharUnits getSizeInChars(const llvm::Constant *C) const {
@@ -87,12 +88,11 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
   assert(NextFieldOffsetInChars <= FieldOffsetInChars
          && "Field offset mismatch!");
 
-  unsigned FieldAlignment = getAlignment(InitCst);
+  CharUnits FieldAlignment = getAlignment(InitCst);
 
   // Round up the field offset to the alignment of the field type.
   CharUnits AlignedNextFieldOffsetInChars =
-    NextFieldOffsetInChars.RoundUpToAlignment(
-        CharUnits::fromQuantity(FieldAlignment));
+    NextFieldOffsetInChars.RoundUpToAlignment(FieldAlignment);
 
   if (AlignedNextFieldOffsetInChars > FieldOffsetInChars) {
     assert(!Packed && "Alignment is wrong even with a packed struct!");
@@ -120,7 +120,8 @@ AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                            getSizeInChars(InitCst);
   
   if (Packed)
-    assert(LLVMStructAlignment == 1 && "Packed struct not byte-aligned!");
+    assert(LLVMStructAlignment == CharUnits::One() && 
+           "Packed struct not byte-aligned!");
   else
     LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
 
@@ -284,7 +285,8 @@ void ConstStructBuilder::AppendPadding(CharUnits PadSize) {
 
   llvm::Constant *C = llvm::UndefValue::get(Ty);
   Elements.push_back(C);
-  assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
+  assert(getAlignment(C) == CharUnits::One() && 
+         "Padding must have 1 byte alignment!");
 
   NextFieldOffsetInChars += getSizeInChars(C);
 }
@@ -303,11 +305,10 @@ void ConstStructBuilder::ConvertStructToPacked() {
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     llvm::Constant *C = Elements[i];
 
-    unsigned ElementAlign =
-      CGM.getTargetData().getABITypeAlignment(C->getType());
+    CharUnits ElementAlign = CharUnits::fromQuantity(
+      CGM.getTargetData().getABITypeAlignment(C->getType()));
     CharUnits AlignedElementOffsetInChars =
-      ElementOffsetInChars.RoundUpToAlignment(
-          CharUnits::fromQuantity(ElementAlign));
+      ElementOffsetInChars.RoundUpToAlignment(ElementAlign);
 
     if (AlignedElementOffsetInChars > ElementOffsetInChars) {
       // We need some padding.
@@ -331,7 +332,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
          "Packing the struct changed its size!");
 
   Elements = PackedElements;
-  LLVMStructAlignment = 1;
+  LLVMStructAlignment = CharUnits::One();
   Packed = true;
 }
                             
@@ -388,8 +389,7 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   }
 
   CharUnits LLVMSizeInChars = 
-    NextFieldOffsetInChars.RoundUpToAlignment(
-      CharUnits::fromQuantity(LLVMStructAlignment));
+    NextFieldOffsetInChars.RoundUpToAlignment(LLVMStructAlignment);
 
   // Check if we need to convert the struct to a packed struct.
   if (NextFieldOffsetInChars <= LayoutSizeInChars && 
@@ -422,7 +422,7 @@ llvm::Constant *ConstStructBuilder::
                             Builder.Elements, Builder.Packed);
   
   assert(Builder.NextFieldOffsetInChars.RoundUpToAlignment(
-           CharUnits::fromQuantity(Builder.getAlignment(Result))) ==
+           Builder.getAlignment(Result)) ==
          Builder.getSizeInChars(Result) && "Size mismatch!");
   
   return Result;
