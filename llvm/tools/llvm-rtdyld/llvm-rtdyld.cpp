@@ -52,7 +52,7 @@ static int Error(const Twine &Msg) {
 
 /* *** */
 
-static int ExecuteInput() {
+static int executeInput() {
   // Load the input memory buffer.
   OwningPtr<MemoryBuffer> InputBuffer;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFile, InputBuffer))
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
   switch (Action) {
   default:
   case AC_Execute:
-    return ExecuteInput();
+    return executeInput();
   }
 
   return 0;
