@@ -446,12 +446,13 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SETCC           , MVT::i8   , Custom);
   setOperationAction(ISD::SETCC           , MVT::i16  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::i64  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f64  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f80  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::SELECT        , MVT::i64  , Custom);
-    setOperationAction(ISD::SETCC         , MVT::i64  , Custom);
+    setOperationAction(ISD::SETCC         , MVT::i128 , Custom);
   }
   setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
 
@@ -2839,7 +2840,7 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
       } else if (SetCCOpcode == ISD::SETLT && RHSC->isNullValue()) {
         // X < 0   -> X == 0, jump on sign.
         return X86::COND_S;
-      } else if (SetCCOpcode == ISD::SETLT && RHSC->getZExtValue() == 1) {
+      } else if (SetCCOpcode == ISD::SETLT && RHSC->isOne()) {
         // X < 1   -> X <= 0
         RHS = DAG.getConstant(0, RHS.getValueType());
         return X86::COND_LE;
@@ -7422,7 +7423,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   // Lower (X & (1 << N)) == 0 to BT(X, N).
   // Lower ((X >>u N) & 1) != 0 to BT(X, N).
   // Lower ((X >>s N) & 1) != 0 to BT(X, N).
-  if (Op0.getOpcode() == ISD::AND && Op0.hasOneUse() &&
+  if (isTypeLegal(Op0.getValueType()) &&
+      Op0.getOpcode() == ISD::AND && Op0.hasOneUse() &&
       Op1.getOpcode() == ISD::Constant &&
       cast<ConstantSDNode>(Op1)->isNullValue() &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
@@ -7434,7 +7436,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   // Look for X == 0, X == 1, X != 0, or X != 1.  We can simplify some forms of
   // these.
   if (Op1.getOpcode() == ISD::Constant &&
-      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
+      (cast<ConstantSDNode>(Op1)->isOne() ||
        cast<ConstantSDNode>(Op1)->isNullValue()) &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
 
@@ -7456,6 +7458,73 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
   if (X86CC == X86::COND_INVALID)
     return SDValue();
+
+  if ((!Subtarget->is64Bit() && Op0.getValueType() == MVT::i64) ||
+      (Subtarget->is64Bit() && Op0.getValueType() == MVT::i128)) {
+    switch (X86CC) {
+    case X86::COND_E:
+    case X86::COND_NE:
+    case X86::COND_S:
+    case X86::COND_NS:
+      // Just use the generic lowering, which works well on x86.
+      return SDValue();
+    case X86::COND_B:
+    case X86::COND_AE:
+    case X86::COND_L:
+    case X86::COND_GE:
+      // Use SBB-based lowering.
+      break;
+    case X86::COND_A:
+      // Use SBB-based lowering; commute so ZF isn't used.
+      X86CC = X86::COND_B;
+      std::swap(Op0, Op1);
+      break;
+    case X86::COND_BE:
+      // Use SBB-based lowering; commute so ZF isn't used.
+      X86CC = X86::COND_AE;
+      std::swap(Op0, Op1);
+      break;
+    case X86::COND_G:
+      // Use SBB-based lowering; commute so ZF isn't used.
+      X86CC = X86::COND_L;
+      std::swap(Op0, Op1);
+      break;
+    case X86::COND_LE:
+      // Use SBB-based lowering; commute so ZF isn't used.
+      X86CC = X86::COND_GE;
+      std::swap(Op0, Op1);
+      break;
+    default:
+      assert(0 && "Unexpected X86CC.");
+      return SDValue();
+    }
+    MVT HalfType = getPointerTy();
+    // FIXME: Refactor this code out to implement ISD::SADDO and friends.
+    SDValue Op0Low = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfType,
+                                 Op0, DAG.getIntPtrConstant(0));
+    SDValue Op1Low = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfType,
+                                 Op1, DAG.getIntPtrConstant(0));
+    SDValue Op0High = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfType,
+                                  Op0, DAG.getIntPtrConstant(1));
+    SDValue Op1High = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfType,
+                                  Op1, DAG.getIntPtrConstant(1));
+    // Redirect some cases which will simplify to the generic expansion;
+    // X86ISD::SUB and X86ISD::SBB are not optimized well at the moment.
+    // FIXME: We really need to add DAGCombines for SUB/SBB/etc.
+    if (Op1Low.getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(Op1Low)->isNullValue())
+      return SDValue();
+    if (Op0Low.getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(Op0Low)->isAllOnesValue())
+      return SDValue();
+    SDValue res1, res2;
+    SDVTList VTList = DAG.getVTList(HalfType, MVT::i32);
+    res1 = DAG.getNode(X86ISD::SUB, dl, VTList, Op0Low, Op1Low).getValue(1);
+    res2 = DAG.getNode(X86ISD::SBB, dl, VTList, Op0High, Op1High,
+                       res1).getValue(1);
+    return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                       DAG.getConstant(X86CC, MVT::i8), res2);
+  }
 
   SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
   return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
