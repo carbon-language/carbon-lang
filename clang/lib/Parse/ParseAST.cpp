@@ -21,6 +21,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Parser.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdio>
 
@@ -38,14 +39,17 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      ASTContext &Ctx, bool PrintStats,
                      bool CompleteTranslationUnit,
                      CodeCompleteConsumer *CompletionConsumer) {
-  Sema S(PP, Ctx, *Consumer, CompleteTranslationUnit, CompletionConsumer);
+
+  llvm::OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer,
+                                   CompleteTranslationUnit,
+                                   CompletionConsumer));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar
     SemaCleanupInCrash(llvm::CrashRecoveryContextCleanup::
-                        create<Sema>(&S));
+                        create<Sema>(S.get()));
   
-  ParseAST(S, PrintStats);
+  ParseAST(*S.get(), PrintStats);
 }
 
 void clang::ParseAST(Sema &S, bool PrintStats) {
