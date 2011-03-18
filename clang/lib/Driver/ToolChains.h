@@ -246,29 +246,6 @@ public:
   /// }
 };
 
-/// DarwinGCC - The Darwin toolchain used by GCC.
-class LLVM_LIBRARY_VISIBILITY DarwinGCC : public Darwin {
-  /// GCC version to use.
-  unsigned GCCVersion[3];
-
-  /// The directory suffix for this tool chain.
-  std::string ToolChainDir;
-
-public:
-  DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple);
-
-  /// @name Darwin ToolChain Implementation
-  /// {
-
-  virtual void AddLinkSearchPathArgs(const ArgList &Args,
-                                    ArgStringList &CmdArgs) const;
-
-  virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
-                                     ArgStringList &CmdArgs) const;
-
-  /// }
-};
-
 /// Darwin_Generic_GCC - Generic Darwin tool chain using gcc.
 class LLVM_LIBRARY_VISIBILITY Darwin_Generic_GCC : public Generic_GCC {
 public:
