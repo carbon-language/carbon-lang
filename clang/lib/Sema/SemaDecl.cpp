@@ -3669,14 +3669,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              AbstractReturnType))
       D.setInvalidType();
 
-
-    if (isFriend) {
-      // C++ [class.friend]p5
-      //   A function can be defined in a friend declaration of a
-      //   class . . . . Such a function is implicitly inline.
-      isInline |= IsFunctionDefinition;
-    }
-
     if (Name.getNameKind() == DeclarationName::CXXConstructorName) {
       // This is a C++ constructor declaration.
       assert(DC->isRecord() &&
@@ -3774,6 +3766,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                    NameInfo, R, TInfo, SC, SCAsWritten, isInline,
                                    true/*HasPrototype*/);
     }
+
+    if (isFriend && !isInline && IsFunctionDefinition) {
+      // C++ [class.friend]p5
+      //   A function can be defined in a friend declaration of a
+      //   class . . . . Such a function is implicitly inline.
+      NewFD->setImplicitlyInline();
+    }
+
     SetNestedNameSpecifier(NewFD, D);
     isExplicitSpecialization = false;
     isFunctionTemplateSpecialization = false;
