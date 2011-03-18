@@ -1,4 +1,4 @@
-/*===-- modsi3.S - 32-bit signed integer modulus --------------------------===//
+/*===-- divsi3.S - 32-bit signed integer divide ---------------------------===//
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -7,7 +7,7 @@
  *
  *===----------------------------------------------------------------------===//
  *
- * This file implements the __modsi3 (32-bit signed integer modulus) function
+ * This file implements the __divsi3 (32-bit signed integer divide) function
  * for the ARM architecture as a wrapper around the unsigned routine.
  *
  *===----------------------------------------------------------------------===*/
@@ -22,18 +22,18 @@
 
 .syntax unified
 .align 3
-DEFINE_COMPILERRT_FUNCTION(__modsi3)
+DEFINE_COMPILERRT_FUNCTION(__divsi3)
     ESTABLISH_FRAME
-    //  Set aside the sign of the dividend.
-    mov     r4,     r0
-    //  Take absolute value of a and b via abs(x) = (x^(x >> 31)) - (x >> 31).
+//  Set aside the sign of the quotient.
+    eor     r4,     r0, r1
+//  Take absolute value of a and b via abs(x) = (x^(x >> 31)) - (x >> 31).
     eor     r2,     r0, r0, asr #31
     eor     r3,     r1, r1, asr #31
     sub     r0,     r2, r0, asr #31
     sub     r1,     r3, r1, asr #31
-    //  abs(a) % abs(b)
-    bl      ___umodsi3
-    //  Apply sign of dividend to result and return.
+//  abs(a) / abs(b)
+    bl      ___udivsi3
+//  Apply sign of quotient to result and return.
     eor     r0,     r0, r4, asr #31
     sub     r0,     r0, r4, asr #31
     CLEAR_FRAME_AND_RETURN
