@@ -761,7 +761,15 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
       continue;
     SlotIndex Idx = getInstructionIndex(UseMI).getUseIndex();
     VNInfo *VNI = li->getVNInfoAt(Idx);
-    assert(VNI && "Live interval not live into reading instruction");
+    if (!VNI) {
+      // This shouldn't happen: readsVirtualRegister returns true, but there is
+      // no live value. It is likely caused by a target getting <undef> flags
+      // wrong.
+      DEBUG(dbgs() << Idx << '\t' << *UseMI
+                   << "Warning: Instr claims to read non-existent value in "
+                    << *li << '\n');
+      continue;
+    }
     if (VNI->def == Idx) {
       // Special case: An early-clobber tied operand reads and writes the
       // register one slot early.
