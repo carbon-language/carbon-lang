@@ -347,7 +347,9 @@ expose new optimization opportunities:</p>
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
-TBAA.
+  <li>TBAA.</li>
+  <li>LTO has been improved to use MC for parsing inline asm and now
+  can build large programs like Firefox 4 on both OS X and Linux.</li>
 </ul>
 
 <!--
@@ -372,7 +374,14 @@ and a number of other related areas that CPU instruction-set level tools work
 in.</p>
 
 <ul>
-ELF/COFF support?
+  <li>MC is now used by default for ELF systems on x86 and
+  x86-64.</li>
+  <li>MC supports and CodeGen uses the <tt>.loc</tt> directives for
+  producing line number debug info. This produces more compact line
+  tables.</li>
+  <li>MC supports the <tt>.cfi_*</tt> directives for producing DWARF
+  frame information, but it is still not used by CodeGen by default.</li>
+  <li>COFF support?</li>
 </ul>
 
 <p>For more information, please see the <a
