@@ -124,6 +124,8 @@ public:
   unsigned DefaultFPContract : 1; // Default setting for FP_CONTRACT
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
+  unsigned FakeAddressSpaceMap : 1; // Use a fake address space map, for
+                                    // testing languages such as OpenCL.
 
   unsigned MRTD : 1;            // -mrtd calling convention
 

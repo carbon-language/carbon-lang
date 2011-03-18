@@ -179,7 +179,8 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
     new llvm::GlobalVariable(CGM.getModule(), LTy,
                              Ty.isConstant(getContext()), Linkage,
                              CGM.EmitNullConstant(D.getType()), Name, 0,
-                             D.isThreadSpecified(), Ty.getAddressSpace());
+                             D.isThreadSpecified(),
+                             CGM.getContext().getTargetAddressSpace(Ty));
   GV->setAlignment(getContext().getDeclAlign(&D).getQuantity());
   if (Linkage != llvm::GlobalValue::InternalLinkage)
     GV->setVisibility(CurFn->getVisibility());
@@ -222,7 +223,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
                                   OldGV->getLinkage(), Init, "",
                                   /*InsertBefore*/ OldGV,
                                   D.isThreadSpecified(),
-                                  D.getType().getAddressSpace());
+                           CGM.getContext().getTargetAddressSpace(D.getType()));
     GV->setVisibility(OldGV->getVisibility());
     
     // Steal the name of the old global
@@ -289,7 +290,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // FIXME: It is really dangerous to store this in the map; if anyone
   // RAUW's the GV uses of this constant will be invalid.
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
-  const llvm::Type *LPtrTy = LTy->getPointerTo(D.getType().getAddressSpace());
+  const llvm::Type *LPtrTy =
+    LTy->getPointerTo(CGM.getContext().getTargetAddressSpace(D.getType()));
   DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
@@ -724,7 +726,8 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
 
     // Get the element type.
     const llvm::Type *LElemTy = ConvertTypeForMem(Ty);
-    const llvm::Type *LElemPtrTy = LElemTy->getPointerTo(Ty.getAddressSpace());
+    const llvm::Type *LElemPtrTy =
+      LElemTy->getPointerTo(CGM.getContext().getTargetAddressSpace(Ty));
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 

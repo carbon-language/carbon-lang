@@ -2724,6 +2724,7 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_IBOutletCollection:
       HandleIBOutletCollection(D, Attr, S); break;
   case AttributeList::AT_address_space:
+  case AttributeList::AT_opencl_image_access:
   case AttributeList::AT_objc_gc:
   case AttributeList::AT_vector_size:
   case AttributeList::AT_neon_vector_type:

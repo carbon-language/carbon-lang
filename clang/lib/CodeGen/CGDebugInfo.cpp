@@ -462,8 +462,8 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   // Bit size, align and offset of the type.
   // Size is always the size of a pointer. We can't use getTypeSize here
   // because that does not return the correct value for references.
-  uint64_t Size = 
-    CGM.getContext().Target.getPointerWidth(PointeeTy.getAddressSpace());
+  unsigned AS = CGM.getContext().getTargetAddressSpace(PointeeTy);
+  uint64_t Size = CGM.getContext().Target.getPointerWidth(AS);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
   return 

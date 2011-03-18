@@ -13,6 +13,7 @@
 
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Template.h"
+#include "clang/Basic/OpenCL.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
@@ -2965,6 +2966,41 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
   return true;
 }
 
+/// Handle OpenCL image access qualifiers: read_only, write_only, read_write
+static void HandleOpenCLImageAccessAttribute(QualType& CurType,
+                                             const AttributeList &Attr,
+                                             Sema &S) {
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    Attr.setInvalid();
+    return;
+  }
+  Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt arg(32);
+  if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
+      !sizeExpr->isIntegerConstantExpr(arg, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << "opencl_image_access" << sizeExpr->getSourceRange();
+    Attr.setInvalid();
+    return;
+  }
+  unsigned iarg = static_cast<unsigned>(arg.getZExtValue());
+  switch (iarg) {
+  case CLIA_read_only:
+  case CLIA_write_only:
+  case CLIA_read_write:
+    // Implemented in a separate patch
+    break;
+  default:
+    // Implemented in a separate patch
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
+      << sizeExpr->getSourceRange();
+    Attr.setInvalid();
+    break;
+  }
+}
+
 /// HandleVectorSizeAttribute - this attribute is only applicable to integral
 /// and float scalars, although arrays, pointers, and function return values are
 /// allowed in conjunction with this construct. Aggregates with this attribute
@@ -3117,6 +3153,10 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),
                                VectorType::NeonPolyVector,
                                "neon_polyvector_type");
+      break;
+
+    case AttributeList::AT_opencl_image_access:
+      HandleOpenCLImageAccessAttribute(type, attr, state.getSema());
       break;
 
     FUNCTION_TYPE_ATTRS_CASELIST:

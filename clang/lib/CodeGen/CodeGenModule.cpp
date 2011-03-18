@@ -1060,7 +1060,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
     Ty = getTypes().ConvertTypeForMem(ASTTy);
 
   const llvm::PointerType *PTy =
-    llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+    llvm::PointerType::get(Ty, getContext().getTargetAddressSpace(ASTTy));
 
   llvm::StringRef MangledName = getMangledName(D);
   return GetOrCreateLLVMGlobal(MangledName, PTy, D);
@@ -1239,7 +1239,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   // from the type of the global (this happens with unions).
   if (GV == 0 ||
       GV->getType()->getElementType() != InitType ||
-      GV->getType()->getAddressSpace() != ASTTy.getAddressSpace()) {
+      GV->getType()->getAddressSpace() !=
+        getContext().getTargetAddressSpace(ASTTy)) {
 
     // Move the old entry aside so that we'll create a new one.
     Entry->setName(llvm::StringRef());

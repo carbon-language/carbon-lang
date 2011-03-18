@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
+#include "clang/Basic/AddressSpaces.h"
 #include <cassert>
 #include <vector>
 #include <string>
@@ -78,6 +79,7 @@ protected:
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
   unsigned char RegParmMax, SSERegParmMax;
   TargetCXXABI CXXABI;
+  const LangAS::Map *AddrSpaceMap;
 
   unsigned HasAlignMac68kSupport : 1;
   unsigned RealTypeUsesObjCFPRet : 3;
@@ -530,6 +532,11 @@ public:
   virtual const char *getStaticInitSectionSpecifier() const {
     return 0;
   }
+
+  const LangAS::Map &getAddressSpaceMap() const {
+    return *AddrSpaceMap;
+  }
+
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
     return PointerWidth;

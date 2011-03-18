@@ -94,6 +94,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("unavailable", AT_unavailable)
     .Case("overloadable", AT_overloadable)
     .Case("address_space", AT_address_space)
+    .Case("opencl_image_access", AT_opencl_image_access)
     .Case("always_inline", AT_always_inline)
     .Case("returns_twice", IgnoredAttribute)
     .Case("vec_type_hint", IgnoredAttribute)

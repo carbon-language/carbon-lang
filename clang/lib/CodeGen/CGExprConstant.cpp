@@ -800,7 +800,7 @@ public:
                                      E->getType().isConstant(CGM.getContext()),
                                      llvm::GlobalValue::InternalLinkage,
                                      C, ".compoundliteral", 0, false,
-                                     E->getType().getAddressSpace());
+                          CGM.getContext().getTargetAddressSpace(E->getType()));
       return C;
     }
     case Expr::DeclRefExprClass: {

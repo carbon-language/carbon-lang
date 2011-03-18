@@ -270,14 +270,16 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     QualType ETy = RTy.getPointeeType();
     llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
-    return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
+    unsigned AS = Context.getTargetAddressSpace(ETy);
+    return llvm::PointerType::get(PointeeType, AS);
   }
   case Type::Pointer: {
     const PointerType &PTy = cast<PointerType>(Ty);
     QualType ETy = PTy.getPointeeType();
     llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
-    return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
+    unsigned AS = Context.getTargetAddressSpace(ETy);
+    return llvm::PointerType::get(PointeeType, AS);
   }
 
   case Type::VariableArray: {
@@ -402,7 +404,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const QualType FTy = cast<BlockPointerType>(Ty).getPointeeType();
     llvm::OpaqueType *PointeeType = llvm::OpaqueType::get(getLLVMContext());
     PointersToResolve.push_back(std::make_pair(FTy, PointeeType));
-    return llvm::PointerType::get(PointeeType, FTy.getAddressSpace());
+    unsigned AS = Context.getTargetAddressSpace(FTy);
+    return llvm::PointerType::get(PointeeType, AS);
   }
 
   case Type::MemberPointer: {

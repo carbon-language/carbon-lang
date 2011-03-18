@@ -627,7 +627,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic,
     assert(!RetAI.getIndirectAlign() && "Align unused on indirect return.");
     ResultType = llvm::Type::getVoidTy(getLLVMContext());
     const llvm::Type *STy = ConvertType(RetTy, IsRecursive);
-    ArgTys.push_back(llvm::PointerType::get(STy, RetTy.getAddressSpace()));
+    unsigned AS = Context.getTargetAddressSpace(RetTy);
+    ArgTys.push_back(llvm::PointerType::get(STy, AS));
     break;
   }
 

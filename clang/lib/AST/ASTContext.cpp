@@ -190,6 +190,22 @@ CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
   return 0;
 }
 
+static const LangAS::Map &getAddressSpaceMap(const TargetInfo &T,
+                                             const LangOptions &LOpts) {
+  if (LOpts.FakeAddressSpaceMap) {
+    // The fake address space map must have a distinct entry for each
+    // language-specific address space.
+    static const unsigned FakeAddrSpaceMap[] = {
+      1, // opencl_global
+      2, // opencl_local
+      3  // opencl_constant
+    };
+    return FakeAddrSpaceMap;
+  } else {
+    return T.getAddressSpaceMap();
+  }
+}
+
 ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        const TargetInfo &t,
                        IdentifierTable &idents, SelectorTable &sels,
@@ -204,7 +220,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
   cudaConfigureCallDecl(0),
   NullTypeSourceInfo(QualType()),
-  SourceMgr(SM), LangOpts(LOpts), ABI(createCXXABI(t)), Target(t),
+  SourceMgr(SM), LangOpts(LOpts), ABI(createCXXABI(t)),
+  AddrSpaceMap(getAddressSpaceMap(t, LOpts)), Target(t),
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins),
   DeclarationNames(*this),
@@ -806,7 +823,8 @@ ASTContext::getTypeInfo(const Type *T) const {
     Align = Target.getPointerAlign(0);
     break;
   case Type::BlockPointer: {
-    unsigned AS = cast<BlockPointerType>(T)->getPointeeType().getAddressSpace();
+    unsigned AS = getTargetAddressSpace(
+        cast<BlockPointerType>(T)->getPointeeType());
     Width = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
@@ -815,13 +833,14 @@ ASTContext::getTypeInfo(const Type *T) const {
   case Type::RValueReference: {
     // alignof and sizeof should never enter this code path here, so we go
     // the pointer route.
-    unsigned AS = cast<ReferenceType>(T)->getPointeeType().getAddressSpace();
+    unsigned AS = getTargetAddressSpace(
+        cast<ReferenceType>(T)->getPointeeType());
     Width = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
   }
   case Type::Pointer: {
-    unsigned AS = cast<PointerType>(T)->getPointeeType().getAddressSpace();
+    unsigned AS = getTargetAddressSpace(cast<PointerType>(T)->getPointeeType());
     Width = Target.getPointerWidth(AS);
     Align = Target.getPointerAlign(AS);
     break;
@@ -1468,7 +1487,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   // the target.
   llvm::APInt ArySize(ArySizeIn);
   ArySize =
-    ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
+    ArySize.zextOrTrunc(Target.getPointerWidth(getTargetAddressSpace(EltTy)));
 
   llvm::FoldingSetNodeID ID;
   ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, IndexTypeQuals);

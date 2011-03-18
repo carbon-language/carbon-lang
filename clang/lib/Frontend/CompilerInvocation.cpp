@@ -672,6 +672,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fconstant-string-class");
     Res.push_back(Opts.ObjCConstantStringClass);
   }
+  if (Opts.FakeAddressSpaceMap)
+    Res.push_back("-ffake-address-space-map");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -1483,6 +1485,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FastRelaxedMath = Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.OptimizeSize = 0;
   Opts.MRTD = Args.hasArg(OPT_mrtd);
+  Opts.FakeAddressSpaceMap = Args.hasArg(OPT_ffake_address_space_map);
 
   // FIXME: Eliminate this dependency.
   unsigned Opt = getOptimizationLevel(Args, IK, Diags);

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
@@ -18,6 +19,8 @@
 #include <cctype>
 #include <cstdlib>
 using namespace clang;
+
+static const LangAS::Map DefaultAddrSpaceMap = { 0 };
 
 // TargetInfo Constructor.
 TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
@@ -64,6 +67,9 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
 
   // Default to using the Itanium ABI.
   CXXABI = CXXABI_Itanium;
+
+  // Default to an empty address space map.
+  AddrSpaceMap = &DefaultAddrSpaceMap;
 }
 
 // Out of line virtual dtor for TargetInfo.

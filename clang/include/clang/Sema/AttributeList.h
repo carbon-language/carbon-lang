@@ -18,6 +18,7 @@
 #include "llvm/Support/Allocator.h"
 #include "clang/Sema/Ownership.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/AST/Expr.h"
 #include <cassert>
 
 namespace clang {
@@ -76,6 +77,13 @@ public:
                                 declspec, cxx0x);
         return Mem;
       }
+
+    AttributeList* CreateIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
+                                          SourceLocation TokLoc, int Arg) {
+      Expr* IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t)Arg),
+                                          C.IntTy, TokLoc);
+      return Create( Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1, 0);
+    }
   };
   
   enum Kind {             // Please keep this list alphabetized.
@@ -135,6 +143,7 @@ public:
     AT_ns_consumed,             // Clang-specific.
     AT_ns_consumes_self,        // Clang-specific.
     AT_objc_gc,
+    AT_opencl_image_access,     // OpenCL-specific.
     AT_opencl_kernel_function,  // OpenCL-specific.
     AT_overloadable,       // Clang-specific.
     AT_ownership_holds,    // Clang-specific.

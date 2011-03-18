@@ -513,6 +513,8 @@ def fno_bitfield_type_align : Flag<"-fno-bitfield-type-align">,
   HelpText<"Ignore bit-field types when aligning structures">;
 def traditional_cpp : Flag<"-traditional-cpp">,
   HelpText<"Enable some traditional CPP emulation">;
+def ffake_address_space_map : Flag<"-ffake-address-space-map">,
+  HelpText<"Use a fake address space map; OpenCL testing purposes only">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options

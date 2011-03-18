@@ -726,7 +726,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
     // Cast to the access type.
     const llvm::Type *PTy = llvm::Type::getIntNPtrTy(getLLVMContext(),
                                                      AI.AccessWidth,
-                                                    ExprType.getAddressSpace());
+                              CGM.getContext().getTargetAddressSpace(ExprType));
     Ptr = Builder.CreateBitCast(Ptr, PTy);
 
     // Perform the load.

@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/OperatorKinds.h"
@@ -310,6 +311,9 @@ class ASTContext {
   /// \brief The current C++ ABI.
   llvm::OwningPtr<CXXABI> ABI;
   CXXABI *createCXXABI(const TargetInfo &T);
+
+  /// \brief The logical -> physical address space map.
+  const LangAS::Map &AddrSpaceMap;
 
   friend class ASTDeclReader;
 
@@ -1294,6 +1298,21 @@ public:
   /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize,
                                              QualType typeDomain) const;
+
+  unsigned getTargetAddressSpace(QualType T) const {
+    return getTargetAddressSpace(T.getQualifiers());
+  }
+
+  unsigned getTargetAddressSpace(Qualifiers Q) const {
+    return getTargetAddressSpace(Q.getAddressSpace());
+  }
+
+  unsigned getTargetAddressSpace(unsigned AS) const {
+    if (AS < LangAS::Offset || AS >= LangAS::Offset + LangAS::Count)
+      return AS;
+    else
+      return AddrSpaceMap[AS - LangAS::Offset];
+  }
 
 private:
   // Helper for integer ordering

@@ -1546,6 +1546,7 @@ private:
   void ParseMicrosoftTypeAttributes(ParsedAttributes &attrs);
   void ParseBorlandTypeAttributes(ParsedAttributes &attrs);
   void ParseOpenCLAttributes(ParsedAttributes &attrs);
+  void ParseOpenCLQualifiers(DeclSpec &DS);
 
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
