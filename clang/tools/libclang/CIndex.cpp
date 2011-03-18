@@ -2309,6 +2309,13 @@ void clang_disposeIndex(CXIndex CIdx) {
     delete static_cast<CIndexer *>(CIdx);
 }
 
+void clang_toggleCrashRecovery(unsigned isEnabled) {
+  if (isEnabled)
+    llvm::CrashRecoveryContext::Enable();
+  else
+    llvm::CrashRecoveryContext::Disable();
+}
+  
 CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
                                               const char *ast_filename) {
   if (!CIdx)

@@ -126,6 +126,7 @@ clang_parseTranslationUnit
 clang_reparseTranslationUnit
 clang_saveTranslationUnit
 clang_sortCodeCompletionResults
+clang_toggleCrashRecovery
 clang_tokenize
 clang_visitChildren
 clang_visitChildrenWithBlock

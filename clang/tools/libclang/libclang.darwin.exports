@@ -108,8 +108,8 @@ _clang_getTranslationUnitSpelling
 _clang_getTypeDeclaration
 _clang_getTypeKindSpelling
 _clang_hashCursor
-_clang_isCursorDefinition
 _clang_isConstQualifiedType
+_clang_isCursorDefinition
 _clang_isDeclaration
 _clang_isExpression
 _clang_isInvalid
@@ -126,6 +126,7 @@ _clang_parseTranslationUnit
 _clang_reparseTranslationUnit
 _clang_saveTranslationUnit
 _clang_sortCodeCompletionResults
+_clang_toggleCrashRecovery
 _clang_tokenize
 _clang_visitChildren
 _clang_visitChildrenWithBlock

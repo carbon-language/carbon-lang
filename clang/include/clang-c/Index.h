@@ -2871,6 +2871,15 @@ CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
  */
 CINDEX_LINKAGE CXString clang_getClangVersion();
 
+  
+/**
+ * \brief Enable/disable crash recovery.
+ *
+ * \param Flag to indicate if crash recovery is enabled.  A non-zero value
+ *        enables crash recovery, while 0 disables it.
+ */
+CINDEX_LINKAGE void clang_toggleCrashRecovery(unsigned isEnabled);
+  
  /**
   * \brief Visitor invoked for each file in a translation unit
   *        (used with clang_getInclusions()).
