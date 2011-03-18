@@ -48,7 +48,7 @@ MemoryBuffer::~MemoryBuffer() { }
 /// memory, memory that we know is already null terminated.
 void MemoryBuffer::init(const char *BufStart, const char *BufEnd,
                         bool RequiresNullTerminator) {
-  assert((BufEnd[0] == 0 || !RequiresNullTerminator) &&
+  assert((!RequiresNullTerminator || BufEnd[0] == 0) &&
          "Buffer is not null terminated!");
   BufferStart = BufStart;
   BufferEnd = BufEnd;
