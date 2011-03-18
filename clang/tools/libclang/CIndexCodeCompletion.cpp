@@ -201,7 +201,7 @@ clang_getCompletionAvailability(CXCompletionString completion_string) {
 /// \brief The CXCodeCompleteResults structure we allocate internally;
 /// the client only sees the initial CXCodeCompleteResults structure.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
-  AllocatedCXCodeCompleteResults();
+  AllocatedCXCodeCompleteResults(const FileSystemOptions& FileSystemOpts);
   ~AllocatedCXCodeCompleteResults();
   
   /// \brief Diagnostics produced while performing code completion.
@@ -243,10 +243,12 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 /// Used for debugging purposes only.
 static llvm::sys::cas_flag CodeCompletionResultObjects;
   
-AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults() 
+AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
+                                      const FileSystemOptions& FileSystemOpts)
   : CXCodeCompleteResults(),
     Diag(new Diagnostic(
                    llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
+    FileSystemOpts(FileSystemOpts),
     FileMgr(FileSystemOpts),
     SourceMgr(*Diag, FileMgr) { 
   if (getenv("LIBCLANG_OBJTRACKING")) {
@@ -380,7 +382,8 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   }
 
   // Parse the resulting source file to find code-completion results.
-  AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults;
+  AllocatedCXCodeCompleteResults *Results = 
+        new AllocatedCXCodeCompleteResults(AST->getFileSystemOpts());
   Results->Results = 0;
   Results->NumResults = 0;
   
