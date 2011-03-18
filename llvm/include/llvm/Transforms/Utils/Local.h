@@ -24,6 +24,7 @@ class BranchInst;
 class Instruction;
 class DbgDeclareInst;
 class StoreInst;
+class LoadInst;
 class Value;
 class Pass;
 class PHINode;
@@ -169,6 +170,11 @@ static inline unsigned getKnownAlignment(Value *V, const TargetData *TD = 0) {
 /// that has an associated llvm.dbg.decl intrinsic.
 bool ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
                                      StoreInst *SI, DIBuilder &Builder);
+
+/// Inserts a llvm.dbg.value instrinsic before the stores to an alloca'd value
+/// that has an associated llvm.dbg.decl intrinsic.
+bool ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
+                                     LoadInst *LI, DIBuilder &Builder);
 
 /// LowerDbgDeclare - Lowers llvm.dbg.declare intrinsics into appropriate set
 /// of llvm.dbg.value intrinsics.
