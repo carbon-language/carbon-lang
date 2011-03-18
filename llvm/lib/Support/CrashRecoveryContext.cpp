@@ -57,7 +57,18 @@ public:
 static sys::Mutex gCrashRecoveryContexMutex;
 static bool gCrashRecoveryEnabled = false;
 
+CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() {}
+
 CrashRecoveryContext::~CrashRecoveryContext() {
+  // Reclaim registered resources.
+  CrashRecoveryContextCleanup *i = head;
+  while (i) {
+    CrashRecoveryContextCleanup *tmp = i;
+    i = tmp->next;
+    tmp->recoverResources();
+    delete tmp;
+  }
+  
   CrashRecoveryContextImpl *CRCI = (CrashRecoveryContextImpl *) Impl;
   delete CRCI;
 }
@@ -68,6 +79,33 @@ CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {
     return 0;
 
   return CRCI->CRC;
+}
+
+void CrashRecoveryContext::registerCleanup(CrashRecoveryContextCleanup *cleanup)
+{
+  if (!cleanup)
+    return;
+  if (head)
+    head->prev = cleanup;
+  cleanup->next = head;
+  head = cleanup;
+}
+
+void
+CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
+  if (!cleanup)
+    return;
+  if (cleanup == head) {
+    head = cleanup->next;
+    if (head)
+      head->prev = 0;
+  }
+  else {
+    cleanup->prev->next = cleanup->next;
+    if (cleanup->next)
+      cleanup->next->prev = cleanup->prev;
+  }
+  delete cleanup;
 }
 
 #ifdef LLVM_ON_WIN32

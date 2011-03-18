@@ -15,6 +15,8 @@
 namespace llvm {
 class StringRef;
 
+class CrashRecoveryContextCleanup;
+  
 /// \brief Crash recovery helper object.
 ///
 /// This class implements support for running operations in a safe context so
@@ -42,10 +44,14 @@ class StringRef;
 /// Crash recovery contexts may not be nested.
 class CrashRecoveryContext {
   void *Impl;
+  CrashRecoveryContextCleanup *head;
 
 public:
-  CrashRecoveryContext() : Impl(0) {}
+  CrashRecoveryContext() : Impl(0), head(0) {}
   ~CrashRecoveryContext();
+  
+  void registerCleanup(CrashRecoveryContextCleanup *cleanup);
+  void unregisterCleanup(CrashRecoveryContextCleanup *cleanup);
 
   /// \brief Enable crash recovery.
   static void Enable();
@@ -87,6 +93,64 @@ public:
   const std::string &getBacktrace() const;
 };
 
+class CrashRecoveryContextCleanup {
+public:
+  virtual ~CrashRecoveryContextCleanup();
+  virtual void recoverResources() = 0;
+  
+  template <typename T> static CrashRecoveryContextCleanup *create(T *);
+  
+private:
+  friend class CrashRecoveryContext;
+  CrashRecoveryContextCleanup *prev, *next;
+};
+
+template <typename T>
+class CrashRecoveryContextDestructorCleanup 
+  : public CrashRecoveryContextCleanup
+{
+  T *resource;
+public:
+  CrashRecoveryContextDestructorCleanup(T *resource) : resource(resource) {}
+  virtual void recoverResources() {
+    resource->~T();
+  }
+};
+  
+template <typename T>
+struct CrashRecoveryContextTrait {
+  static inline CrashRecoveryContextCleanup *createCleanup(T *resource) {
+    return new CrashRecoveryContextDestructorCleanup<T>(resource);
+  }
+};
+
+template<typename T>
+inline CrashRecoveryContextCleanup* CrashRecoveryContextCleanup::create(T *x) {
+  return CrashRecoveryContext::GetCurrent() ?
+          CrashRecoveryContextTrait<T>::createCleanup(x) : 
+          0;
+}
+
+class CrashRecoveryContextCleanupRegistrar {
+  CrashRecoveryContext *context;
+  CrashRecoveryContextCleanup *cleanup;
+public:
+  CrashRecoveryContextCleanupRegistrar(CrashRecoveryContextCleanup *cleanup)
+    : context(CrashRecoveryContext::GetCurrent()),
+      cleanup(cleanup) 
+  {
+    if (context && cleanup)
+      context->registerCleanup(cleanup);
+  }
+  ~CrashRecoveryContextCleanupRegistrar() {
+    if (cleanup) {
+      if (context)
+        context->unregisterCleanup(cleanup);
+      else
+        delete cleanup;
+    }
+  }
+};
 }
 
 #endif
