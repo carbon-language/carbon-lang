@@ -225,8 +225,6 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
       return true;
   }
 
-  if (isa<DbgInfoIntrinsic>(I)) return false;
-
   if (!I->mayHaveSideEffects()) return true;
 
   // Special case intrinsics that "may have side effects" but can be deleted
