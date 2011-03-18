@@ -195,6 +195,11 @@ public:
   llvm::MemoryBuffer *getBufferForFile(llvm::StringRef Filename,
                                        std::string *ErrorStr = 0);
 
+  // getNoncachedStatValue - Will get the 'stat' information for the given path.
+  // If the path is relative, it will be resolved against the WorkingDir of the
+  // FileManager's FileSystemOptions.
+  bool getNoncachedStatValue(llvm::StringRef Path, struct stat &StatBuf);
+
   /// \brief If path is not absolute and FileSystemOptions set the working
   /// directory, the path is modified to be relative to the given
   /// working directory.

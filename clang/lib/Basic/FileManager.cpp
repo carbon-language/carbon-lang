@@ -541,6 +541,14 @@ bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
                                   StatCache.get());
 }
 
+bool FileManager::getNoncachedStatValue(llvm::StringRef Path, 
+                                        struct stat &StatBuf) {
+  llvm::SmallString<128> FilePath(Path);
+  FixupRelativePath(FilePath);
+
+  return ::stat(FilePath.c_str(), &StatBuf) != 0;
+}
+
 void FileManager::GetUniqueIDMapping(
                    llvm::SmallVectorImpl<const FileEntry *> &UIDToFiles) const {
   UIDToFiles.clear();
