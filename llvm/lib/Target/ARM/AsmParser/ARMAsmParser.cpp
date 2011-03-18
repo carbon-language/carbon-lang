@@ -29,15 +29,6 @@
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
 
-/// Shift types used for register controlled shifts in ARM memory addressing.
-enum ShiftType {
-  Lsl,
-  Lsr,
-  Asr,
-  Ror,
-  Rrx
-};
-
 namespace {
 
 class ARMOperand;
@@ -55,6 +46,7 @@ class ARMAsmParser : public TargetAsmParser {
   int TryParseRegister();
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
   bool TryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool TryParseShiftRegister(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &);
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &, StringRef Mnemonic);
@@ -65,13 +57,14 @@ class ARMAsmParser : public TargetAsmParser {
 
   bool ParseMemoryOffsetReg(bool &Negative,
                             bool &OffsetRegShifted,
-                            enum ShiftType &ShiftType,
+                            enum ARM_AM::ShiftOpc &ShiftType,
                             const MCExpr *&ShiftAmount,
                             const MCExpr *&Offset,
                             bool &OffsetIsReg,
                             int &OffsetRegNum,
                             SMLoc &E);
-  bool ParseShift(enum ShiftType &St, const MCExpr *&ShiftAmount, SMLoc &E);
+  bool ParseShift(enum ARM_AM::ShiftOpc &St,
+                  const MCExpr *&ShiftAmount, SMLoc &E);
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveThumb(SMLoc L);
   bool ParseDirectiveThumbFunc(SMLoc L);
@@ -136,6 +129,7 @@ class ARMOperand : public MCParsedAsmOperand {
     RegisterList,
     DPRRegisterList,
     SPRRegisterList,
+    Shifter,
     Token
   } Kind;
 
@@ -184,7 +178,7 @@ class ARMOperand : public MCParsedAsmOperand {
         const MCExpr *Value; ///< Offset value, when !OffsetIsReg.
       } Offset;
       const MCExpr *ShiftAmount;     // used when OffsetRegShifted is true
-      enum ShiftType ShiftType;      // used when OffsetRegShifted is true
+      enum ARM_AM::ShiftOpc ShiftType; // used when OffsetRegShifted is true
       unsigned OffsetRegShifted : 1; // only used when OffsetIsReg is true
       unsigned Preindexed       : 1;
       unsigned Postindexed      : 1;
@@ -192,6 +186,11 @@ class ARMOperand : public MCParsedAsmOperand {
       unsigned Negative         : 1; // only used when OffsetIsReg is true
       unsigned Writeback        : 1;
     } Mem;
+
+    struct {
+      ARM_AM::ShiftOpc ShiftTy;
+      unsigned RegNum;
+    } Shift;
   };
 
   ARMOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -234,6 +233,10 @@ public:
       break;
     case ProcIFlags:
       IFlags = o.IFlags;
+      break;
+    case Shifter:
+      Shift = o.Shift;
+      break;
     }
   }
 
@@ -310,7 +313,7 @@ public:
     assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
     return Mem.ShiftAmount;
   }
-  enum ShiftType getMemShiftType() const {
+  enum ARM_AM::ShiftOpc getMemShiftType() const {
     assert(Mem.OffsetIsReg && Mem.OffsetRegShifted && "Invalid access!");
     return Mem.ShiftType;
   }
@@ -334,6 +337,7 @@ public:
   bool isToken() const { return Kind == Token; }
   bool isMemBarrierOpt() const { return Kind == MemBarrierOpt; }
   bool isMemory() const { return Kind == Memory; }
+  bool isShifter() const { return Kind == Shifter; }
   bool isMemMode5() const {
     if (!isMemory() || getMemOffsetIsReg() || getMemWriteback() ||
         getMemNegative())
@@ -400,6 +404,12 @@ public:
   void addRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
+  }
+
+  void addShifterOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(
+      ARM_AM::getSORegOpc(Shift.ShiftTy, 0)));
   }
 
   void addRegListOperands(MCInst &Inst, unsigned N) const {
@@ -525,6 +535,15 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateShifter(ARM_AM::ShiftOpc ShTy,
+                                   SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(Shifter);
+    Op->Shift.ShiftTy = ShTy;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *
   CreateRegList(const SmallVectorImpl<std::pair<unsigned, SMLoc> > &Regs,
                 SMLoc StartLoc, SMLoc EndLoc) {
@@ -555,7 +574,8 @@ public:
 
   static ARMOperand *CreateMem(unsigned BaseRegNum, bool OffsetIsReg,
                                const MCExpr *Offset, int OffsetRegNum,
-                               bool OffsetRegShifted, enum ShiftType ShiftType,
+                               bool OffsetRegShifted,
+                               enum ARM_AM::ShiftOpc ShiftType,
                                const MCExpr *ShiftAmount, bool Preindexed,
                                bool Postindexed, bool Negative, bool Writeback,
                                SMLoc S, SMLoc E) {
@@ -676,6 +696,9 @@ void ARMOperand::dump(raw_ostream &OS) const {
   case Register:
     OS << "<register " << getReg() << ">";
     break;
+  case Shifter:
+    OS << "<shifter " << getShiftOpcStr(Shift.ShiftTy) << ">";
+    break;
   case RegisterList:
   case DPRRegisterList:
   case SPRRegisterList: {
@@ -737,6 +760,42 @@ int ARMAsmParser::TryParseRegister() {
   Parser.Lex(); // Eat identifier token.
   return RegNum;
 }
+
+/// Try to parse a register name.  The token must be an Identifier when called,
+/// and if it is a register name the token is eaten and the register number is
+/// returned.  Otherwise return -1.
+///
+bool ARMAsmParser::TryParseShiftRegister(
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  SMLoc S = Parser.getTok().getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  assert(Tok.is(AsmToken::Identifier) && "Token is not an Identifier");
+
+  std::string upperCase = Tok.getString().str();
+  std::string lowerCase = LowercaseString(upperCase);
+  ARM_AM::ShiftOpc ShiftTy = StringSwitch<ARM_AM::ShiftOpc>(lowerCase)
+      .Case("lsl", ARM_AM::lsl)
+      .Case("lsr", ARM_AM::lsr)
+      .Case("asr", ARM_AM::asr)
+      .Case("ror", ARM_AM::ror)
+      .Case("rrx", ARM_AM::rrx)
+      .Default(ARM_AM::no_shift);
+
+  if (ShiftTy == ARM_AM::no_shift)
+    return true;
+
+  Parser.Lex(); // Eat shift-type operand;
+  int RegNum = TryParseRegister();
+  if (RegNum == -1)
+    return Error(Parser.getTok().getLoc(), "register expected");
+
+  Operands.push_back(ARMOperand::CreateReg(RegNum,S, Parser.getTok().getLoc()));
+  Operands.push_back(ARMOperand::CreateShifter(ShiftTy,
+                                               S, Parser.getTok().getLoc()));
+
+  return false;
+}
+
 
 /// Try to parse a register name.  The token must be an Identifier when called.
 /// If it's a register, an AsmOperand is created. Another AsmOperand is created
@@ -1083,7 +1142,7 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   ARMOperand *WBOp = 0;
   int OffsetRegNum = -1;
   bool OffsetRegShifted = false;
-  enum ShiftType ShiftType = Lsl;
+  enum ARM_AM::ShiftOpc ShiftType = ARM_AM::lsl;
   const MCExpr *ShiftAmount = 0;
   const MCExpr *Offset = 0;
 
@@ -1165,7 +1224,7 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 /// we return false on success or an error otherwise.
 bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
                                         bool &OffsetRegShifted,
-                                        enum ShiftType &ShiftType,
+                                        enum ARM_AM::ShiftOpc &ShiftType,
                                         const MCExpr *&ShiftAmount,
                                         const MCExpr *&Offset,
                                         bool &OffsetIsReg,
@@ -1226,28 +1285,28 @@ bool ARMAsmParser::ParseMemoryOffsetReg(bool &Negative,
 ///   ( lsl | lsr | asr | ror ) , # shift_amount
 ///   rrx
 /// and returns true if it parses a shift otherwise it returns false.
-bool ARMAsmParser::ParseShift(ShiftType &St, const MCExpr *&ShiftAmount,
-                              SMLoc &E) {
+bool ARMAsmParser::ParseShift(ARM_AM::ShiftOpc &St,
+                              const MCExpr *&ShiftAmount, SMLoc &E) {
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return true;
   StringRef ShiftName = Tok.getString();
   if (ShiftName == "lsl" || ShiftName == "LSL")
-    St = Lsl;
+    St = ARM_AM::lsl;
   else if (ShiftName == "lsr" || ShiftName == "LSR")
-    St = Lsr;
+    St = ARM_AM::lsr;
   else if (ShiftName == "asr" || ShiftName == "ASR")
-    St = Asr;
+    St = ARM_AM::asr;
   else if (ShiftName == "ror" || ShiftName == "ROR")
-    St = Ror;
+    St = ARM_AM::ror;
   else if (ShiftName == "rrx" || ShiftName == "RRX")
-    St = Rrx;
+    St = ARM_AM::rrx;
   else
     return true;
   Parser.Lex(); // Eat shift type token.
 
   // Rrx stands alone.
-  if (St == Rrx)
+  if (St == ARM_AM::rrx)
     return false;
 
   // Otherwise, there must be a '#' and a shift amount.
@@ -1286,6 +1345,9 @@ bool ARMAsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   case AsmToken::Identifier:
     if (!TryParseRegisterWithWriteBack(Operands))
       return false;
+    if (!TryParseShiftRegister(Operands))
+      return false;
+
 
     // Fall though for the Identifier case that is not a register or a
     // special name.

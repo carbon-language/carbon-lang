@@ -282,3 +282,5 @@
 @ CHECK: msr  cpsr_fsxc, r0 @ encoding: [0x00,0xf0,0x2f,0xe1]
         msr  cpsr_fsxc, r0
 
+@ CHECK: add	r1, r2, r3, lsl r4      @ encoding: [0x13,0x14,0x82,0xe0]
+  add r1, r2, r3, lsl r4

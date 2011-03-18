@@ -381,11 +381,17 @@ def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
   let EncoderMethod = "getRotImmOpValue";
 }
 
+def ShifterAsmOperand : AsmOperandClass {
+  let Name = "Shifter";
+  let SuperClasses = [];
+}
+
 // shift_imm: An integer that encodes a shift amount and the type of shift
 // (currently either asr or lsl) using the same encoding used for the
 // immediates in so_reg operands.
 def shift_imm : Operand<i32> {
   let PrintMethod = "printShiftImmOperand";
+  let ParserMatchClass = ShifterAsmOperand;
 }
 
 // shifter_operand operands: so_reg and so_imm.
@@ -394,14 +400,14 @@ def so_reg : Operand<i32>,    // reg reg imm
                             [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
-  let MIOperandInfo = (ops GPR, GPR, i32imm);
+  let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
 def shift_so_reg : Operand<i32>,    // reg reg imm
                    ComplexPattern<i32, 3, "SelectShiftShifterOperandReg",
                                   [shl,srl,sra,rotr]> {
   let EncoderMethod = "getSORegOpValue";
   let PrintMethod = "printSORegOperand";
-  let MIOperandInfo = (ops GPR, GPR, i32imm);
+  let MIOperandInfo = (ops GPR, GPR, shift_imm);
 }
 
 // so_imm - Match a 32-bit shifter_operand immediate operand, which is an
