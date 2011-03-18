@@ -41,9 +41,11 @@ using namespace lldb_private;
 bool
 AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
 {
-
-    // ObjC objects can only be pointers:
-    if (!object.IsPointerType())
+    bool is_signed;
+    // ObjC objects can only be pointers, but we extend this to integer types because an expression might just
+    // result in an address, and we should try that to see if the address is an ObjC object.
+    
+    if (!(object.IsPointerType() || object.IsIntegerType(is_signed)))
         return NULL;
     
     // Make the argument list: we pass one arg, the address of our pointer, to the print function.

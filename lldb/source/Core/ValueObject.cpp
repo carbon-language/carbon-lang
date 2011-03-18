@@ -588,13 +588,16 @@ ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
     
     if (runtime == NULL)
     {
-        // Aw, hell, if the things a pointer, let's try ObjC anyway...
+        // Aw, hell, if the things a pointer, or even just an integer, let's try ObjC anyway...
         clang_type_t opaque_qual_type = GetClangType();
         if (opaque_qual_type != NULL)
         {
-            clang::QualType qual_type (clang::QualType::getFromOpaquePtr(opaque_qual_type).getNonReferenceType());
-            if (qual_type->isAnyPointerType())
+            bool is_signed;
+            if (ClangASTContext::IsIntegerType (opaque_qual_type, is_signed) 
+                || ClangASTContext::IsPointerType (opaque_qual_type))
+            {
                 runtime = process->GetLanguageRuntime(lldb::eLanguageTypeObjC);
+            }
         }
     }
     
@@ -892,7 +895,11 @@ ValueObject::IsPointerType ()
     return ClangASTContext::IsPointerType (GetClangType());
 }
 
-
+bool
+ValueObject::IsIntegerType (bool &is_signed)
+{
+    return ClangASTContext::IsIntegerType (GetClangType(), is_signed);
+}
 
 bool
 ValueObject::IsPointerOrReferenceType ()

@@ -93,6 +93,9 @@ public:
         return false;
     }
     
+    bool
+    IsIntegerType (bool &is_signed);
+    
     virtual bool
     GetBaseClassPath (Stream &s);
 
