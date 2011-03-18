@@ -117,7 +117,6 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
 /// makeBuffer - Create a MemoryBuffer from a memory range.
 MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length) {
   const char *startPtr = (char*)mem;
-  const char *endPtr = startPtr+length;
   return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), "", false);
 }
 
