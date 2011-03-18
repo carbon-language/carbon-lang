@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
           "http://www.w3.org/TR/html4/strict.dtd">
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
@@ -14,7 +14,7 @@
   <!--*********************************************************************-->
   <h1>Hacking on Clang</h1>
   <!--*********************************************************************-->
-  
+
   <p>This document provides some hints for how to get started hacking
   on Clang for developers who are new to the Clang and/or LLVM
   codebases.</p>
@@ -24,18 +24,18 @@
       <li><a href="#debugging">Debugging</a></li>
       <li><a href="#testing">Testing</a></li>
       <ul>
-	    <li><a href="#testingNonWindows">Testing on Unix-like Systems</a></li>
-	    <li><a href="#testingWindows">Testing using Visual Studio on Windows</a></li>
-	    <li><a href="#testingCommands">Testing on the Command Line</a></li>
-	  </ul>
+        <li><a href="#testingNonWindows">Testing on Unix-like Systems</a></li>
+        <li><a href="#testingWindows">Testing using Visual Studio on Windows</a></li>
+        <li><a href="#testingCommands">Testing on the Command Line</a></li>
+      </ul>
       <li><a href="#patches">Creating Patch Files</a></li>
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
-    
+
   <!--=====================================================================-->
   <h2 id="docs">Coding Standards</h2>
   <!--=====================================================================-->
-  
+
   <p>Clang follows the
   LLVM <a href="http://llvm.org/docs/CodingStandards.html">Coding
   Standards</a>. When submitting patches, please take care to follow these standards
@@ -56,14 +56,14 @@
   <!--=====================================================================-->
   <h2 id="docs">Developer Documentation</h2>
   <!--=====================================================================-->
-  
+
   <p>Both Clang and LLVM use doxygen to provide API documentation. Their
   respective web pages (generated nightly) are here:</p>
     <ul>
       <li><a href="http://clang.llvm.org/doxygen">Clang</a></li>
       <li><a href="http://llvm.org/doxygen">LLVM</a></li>
     </ul>
-      
+
   <p>For work on the LLVM IR generation, the LLVM assembly language
   <a href="http://llvm.org/docs/LangRef.html">reference manual</a> is
   also useful.</p>
@@ -71,7 +71,7 @@
   <!--=====================================================================-->
   <h2 id="debugging">Debugging</h2>
   <!--=====================================================================-->
-  
+
   <p>Inspecting data structures in a debugger:</p>
     <ul>
       <li>Many LLVM and Clang data structures provide
@@ -84,18 +84,18 @@
       qualifiers, and the <tt>getTypePtr()</tt> method to get the
       wrapped <tt>Type*</tt> which you can then dump.</li>
     </ul>
-  
+
   <!--=====================================================================-->
   <h2 id="testing">Testing</h2>
   <!--=====================================================================-->
-  
+
   <p><i>[Note: The test running mechanism is currently under revision, so the
   following might change shortly.]</i></p>
-  
+
   <!--=====================================================================-->
   <h3 id="testingNonWindows">Testing on Unix-like Systems</h3>
   <!--=====================================================================-->
-  
+
   <p>Clang includes a basic regression suite in the tree which can be
   run with <tt>make test</tt> from the top-level clang directory, or
   just <tt>make</tt> in the <em>test</em> sub-directory.
@@ -113,15 +113,15 @@
   the test runner that an error is expected at the current line.
   Any output files produced by the test will be placed under
   a created Output directory.</p>
-  
+
   <p>During the run of <tt>make test</tt>, the terminal output will
   display a line similar to the following:</p>
-  
+
   <ul><tt>--- Running clang tests for i686-pc-linux-gnu ---</tt></ul>
-  
+
   <p>followed by a line continually overwritten with the current test
   file being compiled, and an overall completion percentage.</p>
-  
+
   <p>After the <tt>make test</tt> run completes, the absence of any
   <tt>Failing Tests (count):</tt> message indicates that no tests
   failed unexpectedly.  If any tests did fail, the
@@ -148,38 +148,38 @@
   override LLVMGCC, as in: <tt>make LLVMGCC="clang -std=gnu89"
   TEST=nightly report</tt> (make sure <tt>clang</tt> is in your PATH or use the
   full path).</p>
-  
+
   <!--=====================================================================-->
   <h3 id="testingWindows">Testing using Visual Studio on Windows</h3>
   <!--=====================================================================-->
 
   <p>The Clang test suite can be run from either Visual Studio or
   the command line.</p>
-  
+
   <p>Note that the test runner is based on
   Python, which must be installed.  Find Python at:
-  <a href="http://www.python.org/download">http://www.python.org/download</a>.
+  <a href="http://www.python.org/download/">http://www.python.org/download/</a>.
   Download the latest stable version (2.6.2 at the time of this writing).</p>
-  
+
   <p>The GnuWin32 tools are also necessary for running the tests.
   (Note that the grep from MSYS or Cygwin doesn't work with the tests
   because of embedded double-quotes in the search strings.  The GNU
   grep does work in this case.)
-  Get them from <a href="http://getgnuwin32.sourceforge.net">
-  http://getgnuwin32.sourceforge.net</a>.</p>
-  
+  Get them from <a href="http://getgnuwin32.sourceforge.net/">
+  http://getgnuwin32.sourceforge.net/</a>.</p>
+
   <p>The cmake build tool is set up to create Visual Studio project files
   for running the tests, "clang-test" being the root.  Therefore, to
   run the test from Visual Studio, right-click the clang-test project
   and select "Build".</p>
-  
+
   <!--=====================================================================-->
   <h3 id="testingCommands">Testing on the Command Line</h3>
   <!--=====================================================================-->
 
   <p>To run all the tests from the command line, execute a command like
   the following:</p>
-  
+
   <tt>
   python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
  (path to llvm)/llvm/tools/clang/test
@@ -190,14 +190,14 @@
   <tt>--param=build_config=(build config)</tt>.</p>
 
   <p>To run a single test:</p>
-  
+
   <tt>
   python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
  (path to llvm)/llvm/tools/clang/test/(dir)/(test)
   </tt>
 
   <p>For example:</p>
-  
+
   <tt>
   python C:/Tools/llvm/utils/lit/lit.py -sv --no-progress-bar
   C:/Tools/llvm/tools/clang/test/Sema/wchar.c
@@ -215,7 +215,7 @@ Testing Time: 81.52s
   Expected Passes    : 2503
   Expected Failures  : 28
   Unsupported Tests  : 3
-</pre></tt>  
+</pre></tt>
 
   <p>The statistic, "Unexpected Failures" (not shown if all tests pass), is the important one.</p>
 
@@ -230,18 +230,18 @@ Testing Time: 81.52s
   you are doing, such as if you are new to Clang development, you can use
   the cfe-dev mailing list also.
   </p>
-  
+
   <p>To create these patch files, change directory
   to the llvm/tools/clang root and run:</p>
-  
+
   <ul><tt>svn diff (relative path) >(patch file name)</tt></ul>
 
   <p>For example, for getting the diffs of all of clang:</p>
-  
+
   <ul><tt>svn diff . >~/mypatchfile.patch</tt></ul>
 
   <p>For example, for getting the diffs of a single file:</p>
-  
+
   <ul><tt>svn diff lib/Parse/ParseDeclCXX.cpp >~/ParseDeclCXX.patch</tt></ul>
 
   <p>Note that the paths embedded in the patch depend on where you run it,
@@ -256,7 +256,7 @@ Testing Time: 81.52s
     Representation (IR). Historically, this was referred to as
     "codegen", and the Clang code for this lives
     in <tt>lib/CodeGen</tt>.</p>
-  
+
   <p>The output is most easily inspected using the <tt>-emit-llvm</tt>
     option to clang (possibly in conjunction with <tt>-o -</tt>). You
     can also use <tt>-emit-llvm-bc</tt> to write an LLVM bitcode file
