@@ -62,11 +62,7 @@ td {
   <li><a href="#x86-specific">X86/X86-64 Language Extensions</a></li>
   </ul>
 </li>
-<li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a>
-  <ul>
-    <li><a href="#analyzerattributes">Analyzer Attributes</a></li>
-  </ul>
-</li>
+<li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a></li>
 </ul>
 
 <!-- ======================================================================= -->
@@ -760,11 +756,7 @@ are used by the <a
 href="http://clang.llvm.org/StaticAnalysis.html">path-sensitive static analyzer
 engine</a> that is part of Clang's Analysis library.</p>
 
-<!-- ======================================================================= -->
-<h3 id="analyzerattributes">Analyzer Attributes</h3>
-<!-- ======================================================================= -->
-
-<h4 id="attr_analyzer_noreturn"><tt>analyzer_noreturn</tt></h4>
+<h3 id="attr_analyzer_noreturn">The <tt>analyzer_noreturn</tt> attribute</h3>
 
 <p>Clang's static analysis engine understands the standard <tt>noreturn</tt>
 attribute. This attribute, which is typically affixed to a function prototype,
@@ -792,16 +784,47 @@ placed at the end of function prototypes:</p>
   void foo() <b>__attribute__((analyzer_noreturn))</b>;
 </pre>
 
-<p>Query for this feature with __has_feature(attribute_analyzer_noreturn).</p>
+<p>Query for this feature with
+<tt>__has_attribute(analyzer_noreturn)</tt>.</p>
 
-<h4 id="attr_retain_release">Objective-C retaining behavior attributes</h4>
+<h3 id="attr_method_family">The <tt>objc_method_family</tt> attribute</h3>
+
+<p>Many methods in Objective-C have conventional meanings determined
+by their selectors.  For the purposes of static analysis, it is
+sometimes useful to be able to mark a method as having a particular
+conventional meaning despite not having the right selector, or as not
+having the conventional meaning that its selector would suggest.
+For these use cases, we provide an attribute to specifically describe
+the <q>method family</q> that a method belongs to.</p>
+
+<p><b>Usage</b>: <tt>__attribute__((objc_method_family(X)))</tt>,
+where <tt>X</tt> is one of <tt>none</tt>, <tt>alloc</tt>, <tt>copy</tt>,
+<tt>init</tt>, <tt>mutableCopy</tt>, or <tt>new</tt>.  This attribute
+can only be placed at the end of a method declaration:</p>
+
+<pre>
+  - (NSString*) initMyStringValue <b>__attribute__((objc_method_family(none)))</b>;
+</pre>
+
+<p>Users who do not wish to change the conventional meaning of a
+method, and who merely want to document its non-standard retain and
+release semantics, should use the
+<a href="#attr_retain_release">retaining behavior attributes</a>
+described below.</p>
+
+<p>Query for this feature with
+<tt>__has_attribute(objc_method_family)</tt>.</p>
+
+<h3 id="attr_retain_release">Objective-C retaining behavior attributes</h3>
 
 <p>In Objective-C, functions and methods are generally assumed to take
 and return objects with +0 retain counts, with some exceptions for
 special methods like <tt>+alloc</tt> and <tt>init</tt>.  However,
 there are exceptions, and so Clang provides attributes to allow these
 exceptions to be documented, which helps the analyzer find leaks (and
-ignore non-leaks).</p>
+ignore non-leaks).  Some exceptions may be better described using
+the <a href="#attr_method_family"><tt>objc_method_family</tt></a>
+attribute instead.</p>
 
 <p><b>Usage</b>: The <tt>ns_returns_retained</tt>, <tt>ns_returns_not_retained</tt>,
 <tt>ns_returns_autoreleased</tt>, <tt>cf_returns_retained</tt>,
@@ -839,6 +862,9 @@ balance in some way.</p>
   - (void) bar <b>__attribute__((ns_consumes_self))</b>;
   - (void) baz: (id) <b>__attribute__((ns_consumed))</b> x;
 </pre>
+
+<p>Query for these features with <tt>__has_attribute(ns_consumed)</tt>,
+<tt>__has_attribute(ns_returns_retained)</tt>, etc.</p>
 
 </div>
 </body>
