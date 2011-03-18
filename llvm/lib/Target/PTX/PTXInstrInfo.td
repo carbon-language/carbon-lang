@@ -175,6 +175,8 @@ def PTXexit
   : SDNode<"PTXISD::EXIT", SDTNone, [SDNPHasChain]>;
 def PTXret
   : SDNode<"PTXISD::RET",  SDTNone, [SDNPHasChain]>;
+def PTXcopyaddress
+  : SDNode<"PTXISD::COPY_ADDRESS", SDTypeProfile<1, 1, []>, []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
@@ -441,7 +443,8 @@ def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
 // In the short term, mad is supported on all PTX versions and we use a
 // default rounding mode no matter what shader model or PTX version.
 // TODO: Allow the rounding mode to be selectable through llc.
-defm FMAD : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>;
+defm FMADSM13 : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>, Requires<[SupportsSM13]>;
+defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>, Requires<[DoesNotSupportSM13]>;
 
 ///===- Floating-Point Intrinsic Instructions -----------------------------===//
 
@@ -531,6 +534,12 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVF64ri
     : InstPTX<(outs RRegf64:$d), (ins f64imm:$a), "mov.f64\t$d, $a",
               [(set RRegf64:$d, fpimm:$a)]>;
+}
+
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+  def MOVaddr
+    : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
+              [(set RRegu32:$d, (PTXcopyaddress tglobaladdr:$a))]>;
 }
 
 // Loads

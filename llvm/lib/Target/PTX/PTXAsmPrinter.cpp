@@ -313,13 +313,23 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     const ArrayType* arrayTy = dyn_cast<const ArrayType>(elementTy);
     elementTy = arrayTy->getElementType();
 
+    unsigned numElements = arrayTy->getNumElements();
+
+    while (elementTy->isArrayTy()) {
+
+      arrayTy = dyn_cast<const ArrayType>(elementTy);
+      elementTy = arrayTy->getElementType();
+
+      numElements *= arrayTy->getNumElements();
+    }
+
     // FIXME: isPrimitiveType() == false for i16?
     assert(elementTy->isSingleValueType() &&
            "Non-primitive types are not handled");
 
     // Compute the size of the array, in bytes.
     uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
-                         * arrayTy->getNumElements();
+                       * numElements;
 
     decl += ".b8 ";
     decl += gvsym->getName();

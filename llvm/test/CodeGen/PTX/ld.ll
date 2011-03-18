@@ -198,7 +198,8 @@ entry:
 
 define ptx_device i16 @t4_global_u16() {
 entry:
-;CHECK: ld.global.u16 rh0, [array_i16];
+;CHECK: mov.u32 r0, array_i16;
+;CHECK-NEXT: ld.global.u16 rh0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16]* @array_i16, i32 0, i32 0
   %x = load i16* %i
@@ -207,7 +208,8 @@ entry:
 
 define ptx_device i32 @t4_global_u32() {
 entry:
-;CHECK: ld.global.u32 r0, [array_i32];
+;CHECK: mov.u32 r0, array_i32;
+;CHECK-NEXT: ld.global.u32 r0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32]* @array_i32, i32 0, i32 0
   %x = load i32* %i
@@ -216,7 +218,8 @@ entry:
 
 define ptx_device i64 @t4_global_u64() {
 entry:
-;CHECK: ld.global.u64 rd0, [array_i64];
+;CHECK: mov.u32 r0, array_i64;
+;CHECK-NEXT: ld.global.u64 rd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64]* @array_i64, i32 0, i32 0
   %x = load i64* %i
@@ -225,7 +228,8 @@ entry:
 
 define ptx_device float @t4_global_f32() {
 entry:
-;CHECK: ld.global.f32 f0, [array_float];
+;CHECK: mov.u32 r0, array_float;
+;CHECK-NEXT: ld.global.f32 f0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float]* @array_float, i32 0, i32 0
   %x = load float* %i
@@ -234,7 +238,8 @@ entry:
 
 define ptx_device double @t4_global_f64() {
 entry:
-;CHECK: ld.global.f64 fd0, [array_double];
+;CHECK: mov.u32 r0, array_double;
+;CHECK-NEXT: ld.global.f64 fd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double]* @array_double, i32 0, i32 0
   %x = load double* %i
@@ -243,7 +248,8 @@ entry:
 
 define ptx_device i16 @t4_const_u16() {
 entry:
-;CHECK: ld.const.u16 rh0, [array_constant_i16];
+;CHECK: mov.u32 r0, array_constant_i16;
+;CHECK-NEXT: ld.const.u16 rh0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16] addrspace(1)* @array_constant_i16, i32 0, i32 0
   %x = load i16 addrspace(1)* %i
@@ -252,7 +258,8 @@ entry:
 
 define ptx_device i32 @t4_const_u32() {
 entry:
-;CHECK: ld.const.u32 r0, [array_constant_i32];
+;CHECK: mov.u32 r0, array_constant_i32;
+;CHECK-NEXT: ld.const.u32 r0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32] addrspace(1)* @array_constant_i32, i32 0, i32 0
   %x = load i32 addrspace(1)* %i
@@ -261,7 +268,8 @@ entry:
 
 define ptx_device i64 @t4_const_u64() {
 entry:
-;CHECK: ld.const.u64 rd0, [array_constant_i64];
+;CHECK: mov.u32 r0, array_constant_i64;
+;CHECK-NEXT: ld.const.u64 rd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64] addrspace(1)* @array_constant_i64, i32 0, i32 0
   %x = load i64 addrspace(1)* %i
@@ -270,7 +278,8 @@ entry:
 
 define ptx_device float @t4_const_f32() {
 entry:
-;CHECK: ld.const.f32 f0, [array_constant_float];
+;CHECK: mov.u32 r0, array_constant_float;
+;CHECK-NEXT: ld.const.f32 f0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float] addrspace(1)* @array_constant_float, i32 0, i32 0
   %x = load float addrspace(1)* %i
@@ -279,7 +288,8 @@ entry:
 
 define ptx_device double @t4_const_f64() {
 entry:
-;CHECK: ld.const.f64 fd0, [array_constant_double];
+;CHECK: mov.u32 r0, array_constant_double;
+;CHECK-NEXT: ld.const.f64 fd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double] addrspace(1)* @array_constant_double, i32 0, i32 0
   %x = load double addrspace(1)* %i
@@ -288,7 +298,8 @@ entry:
 
 define ptx_device i16 @t4_local_u16() {
 entry:
-;CHECK: ld.local.u16 rh0, [array_local_i16];
+;CHECK: mov.u32 r0, array_local_i16;
+;CHECK-NEXT: ld.local.u16 rh0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16] addrspace(2)* @array_local_i16, i32 0, i32 0
   %x = load i16 addrspace(2)* %i
@@ -297,7 +308,8 @@ entry:
 
 define ptx_device i32 @t4_local_u32() {
 entry:
-;CHECK: ld.local.u32 r0, [array_local_i32];
+;CHECK: mov.u32 r0, array_local_i32;
+;CHECK-NEXT: ld.local.u32 r0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32] addrspace(2)* @array_local_i32, i32 0, i32 0
   %x = load i32 addrspace(2)* %i
@@ -306,7 +318,8 @@ entry:
 
 define ptx_device i64 @t4_local_u64() {
 entry:
-;CHECK: ld.local.u64 rd0, [array_local_i64];
+;CHECK: mov.u32 r0, array_local_i64;
+;CHECK-NEXT: ld.local.u64 rd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64] addrspace(2)* @array_local_i64, i32 0, i32 0
   %x = load i64 addrspace(2)* %i
@@ -315,7 +328,8 @@ entry:
 
 define ptx_device float @t4_local_f32() {
 entry:
-;CHECK: ld.local.f32 f0, [array_local_float];
+;CHECK: mov.u32 r0, array_local_float;
+;CHECK-NEXT: ld.local.f32 f0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float] addrspace(2)* @array_local_float, i32 0, i32 0
   %x = load float addrspace(2)* %i
@@ -324,7 +338,8 @@ entry:
 
 define ptx_device double @t4_local_f64() {
 entry:
-;CHECK: ld.local.f64 fd0, [array_local_double];
+;CHECK: mov.u32 r0, array_local_double;
+;CHECK-NEXT: ld.local.f64 fd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double] addrspace(2)* @array_local_double, i32 0, i32 0
   %x = load double addrspace(2)* %i
@@ -333,7 +348,8 @@ entry:
 
 define ptx_device i16 @t4_shared_u16() {
 entry:
-;CHECK: ld.shared.u16 rh0, [array_shared_i16];
+;CHECK: mov.u32 r0, array_shared_i16;
+;CHECK-NEXT: ld.shared.u16 rh0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16] addrspace(4)* @array_shared_i16, i32 0, i32 0
   %x = load i16 addrspace(4)* %i
@@ -342,7 +358,8 @@ entry:
 
 define ptx_device i32 @t4_shared_u32() {
 entry:
-;CHECK: ld.shared.u32 r0, [array_shared_i32];
+;CHECK: mov.u32 r0, array_shared_i32;
+;CHECK-NEXT: ld.shared.u32 r0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32] addrspace(4)* @array_shared_i32, i32 0, i32 0
   %x = load i32 addrspace(4)* %i
@@ -351,7 +368,8 @@ entry:
 
 define ptx_device i64 @t4_shared_u64() {
 entry:
-;CHECK: ld.shared.u64 rd0, [array_shared_i64];
+;CHECK: mov.u32 r0, array_shared_i64;
+;CHECK-NEXT: ld.shared.u64 rd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64] addrspace(4)* @array_shared_i64, i32 0, i32 0
   %x = load i64 addrspace(4)* %i
@@ -360,7 +378,8 @@ entry:
 
 define ptx_device float @t4_shared_f32() {
 entry:
-;CHECK: ld.shared.f32 f0, [array_shared_float];
+;CHECK: mov.u32 r0, array_shared_float;
+;CHECK-NEXT: ld.shared.f32 f0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float] addrspace(4)* @array_shared_float, i32 0, i32 0
   %x = load float addrspace(4)* %i
@@ -369,7 +388,8 @@ entry:
 
 define ptx_device double @t4_shared_f64() {
 entry:
-;CHECK: ld.shared.f64 fd0, [array_shared_double];
+;CHECK: mov.u32 r0, array_shared_double;
+;CHECK-NEXT: ld.shared.f64 fd0, [r0];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double] addrspace(4)* @array_shared_double, i32 0, i32 0
   %x = load double addrspace(4)* %i
@@ -378,7 +398,8 @@ entry:
 
 define ptx_device i16 @t5_u16() {
 entry:
-;CHECK: ld.global.u16 rh0, [array_i16+2];
+;CHECK: mov.u32 r0, array_i16;
+;CHECK-NEXT: ld.global.u16 rh0, [r0+2];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16]* @array_i16, i32 0, i32 1
   %x = load i16* %i
@@ -387,7 +408,8 @@ entry:
 
 define ptx_device i32 @t5_u32() {
 entry:
-;CHECK: ld.global.u32 r0, [array_i32+4];
+;CHECK: mov.u32 r0, array_i32;
+;CHECK-NEXT: ld.global.u32 r0, [r0+4];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32]* @array_i32, i32 0, i32 1
   %x = load i32* %i
@@ -396,7 +418,8 @@ entry:
 
 define ptx_device i64 @t5_u64() {
 entry:
-;CHECK: ld.global.u64 rd0, [array_i64+8];
+;CHECK: mov.u32 r0, array_i64;
+;CHECK-NEXT: ld.global.u64 rd0, [r0+8];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64]* @array_i64, i32 0, i32 1
   %x = load i64* %i
@@ -405,7 +428,8 @@ entry:
 
 define ptx_device float @t5_f32() {
 entry:
-;CHECK: ld.global.f32 f0, [array_float+4];
+;CHECK: mov.u32 r0, array_float;
+;CHECK-NEXT: ld.global.f32 f0, [r0+4];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float]* @array_float, i32 0, i32 1
   %x = load float* %i
@@ -414,7 +438,8 @@ entry:
 
 define ptx_device double @t5_f64() {
 entry:
-;CHECK: ld.global.f64 fd0, [array_double+8];
+;CHECK: mov.u32 r0, array_double;
+;CHECK-NEXT: ld.global.f64 fd0, [r0+8];
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double]* @array_double, i32 0, i32 1
   %x = load double* %i

@@ -203,7 +203,8 @@ entry:
 
 define ptx_device void @t4_global_u16(i16 %x) {
 entry:
-;CHECK: st.global.u16 [array_i16], rh1;
+;CHECK: mov.u32 r0, array_i16;
+;CHECK-NEXT: st.global.u16 [r0], rh1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16]* @array_i16, i16 0, i16 0
   store i16 %x, i16* %i
@@ -212,7 +213,8 @@ entry:
 
 define ptx_device void @t4_global_u32(i32 %x) {
 entry:
-;CHECK: st.global.u32 [array_i32], r1;
+;CHECK: mov.u32 r0, array_i32;
+;CHECK-NEXT: st.global.u32 [r0], r1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32]* @array_i32, i32 0, i32 0
   store i32 %x, i32* %i
@@ -221,7 +223,8 @@ entry:
 
 define ptx_device void @t4_global_u64(i64 %x) {
 entry:
-;CHECK: st.global.u64 [array_i64], rd1;
+;CHECK: mov.u32 r0, array_i64;
+;CHECK-NEXT: st.global.u64 [r0], rd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64]* @array_i64, i32 0, i32 0
   store i64 %x, i64* %i
@@ -230,7 +233,8 @@ entry:
 
 define ptx_device void @t4_global_f32(float %x) {
 entry:
-;CHECK: st.global.f32 [array_float], f1;
+;CHECK: mov.u32 r0, array_float;
+;CHECK-NEXT: st.global.f32 [r0], f1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float]* @array_float, i32 0, i32 0
   store float %x, float* %i
@@ -239,7 +243,8 @@ entry:
 
 define ptx_device void @t4_global_f64(double %x) {
 entry:
-;CHECK: st.global.f64 [array_double], fd1;
+;CHECK: mov.u32 r0, array_double;
+;CHECK-NEXT: st.global.f64 [r0], fd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double]* @array_double, i32 0, i32 0
   store double %x, double* %i
@@ -248,7 +253,8 @@ entry:
 
 define ptx_device void @t4_local_u16(i16 %x) {
 entry:
-;CHECK: st.local.u16 [array_local_i16], rh1;
+;CHECK: mov.u32 r0, array_local_i16;
+;CHECK-NEXT: st.local.u16 [r0], rh1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16] addrspace(2)* @array_local_i16, i32 0, i32 0
   store i16 %x, i16 addrspace(2)* %i
@@ -257,7 +263,8 @@ entry:
 
 define ptx_device void @t4_local_u32(i32 %x) {
 entry:
-;CHECK: st.local.u32 [array_local_i32], r1;
+;CHECK: mov.u32 r0, array_local_i32;
+;CHECK-NEXT: st.local.u32 [r0], r1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32] addrspace(2)* @array_local_i32, i32 0, i32 0
   store i32 %x, i32 addrspace(2)* %i
@@ -266,7 +273,8 @@ entry:
 
 define ptx_device void @t4_local_u64(i64 %x) {
 entry:
-;CHECK: st.local.u64 [array_local_i64], rd1;
+;CHECK: mov.u32 r0, array_local_i64;
+;CHECK-NEXT: st.local.u64 [r0], rd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64] addrspace(2)* @array_local_i64, i32 0, i32 0
   store i64 %x, i64 addrspace(2)* %i
@@ -275,7 +283,8 @@ entry:
 
 define ptx_device void @t4_local_f32(float %x) {
 entry:
-;CHECK: st.local.f32 [array_local_float], f1;
+;CHECK: mov.u32 r0, array_local_float;
+;CHECK-NEXT: st.local.f32 [r0], f1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float] addrspace(2)* @array_local_float, i32 0, i32 0
   store float %x, float addrspace(2)* %i
@@ -284,7 +293,8 @@ entry:
 
 define ptx_device void @t4_local_f64(double %x) {
 entry:
-;CHECK: st.local.f64 [array_local_double], fd1;
+;CHECK: mov.u32 r0, array_local_double;
+;CHECK-NEXT: st.local.f64 [r0], fd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double] addrspace(2)* @array_local_double, i32 0, i32 0
   store double %x, double addrspace(2)* %i
@@ -293,7 +303,8 @@ entry:
 
 define ptx_device void @t4_shared_u16(i16 %x) {
 entry:
-;CHECK: st.shared.u16 [array_shared_i16], rh1;
+;CHECK: mov.u32 r0, array_shared_i16;
+;CHECK-NEXT: st.shared.u16 [r0], rh1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16] addrspace(4)* @array_shared_i16, i32 0, i32 0
   store i16 %x, i16 addrspace(4)* %i
@@ -302,7 +313,8 @@ entry:
 
 define ptx_device void @t4_shared_u32(i32 %x) {
 entry:
-;CHECK: st.shared.u32 [array_shared_i32], r1;
+;CHECK: mov.u32 r0, array_shared_i32;
+;CHECK-NEXT: st.shared.u32 [r0], r1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32] addrspace(4)* @array_shared_i32, i32 0, i32 0
   store i32 %x, i32 addrspace(4)* %i
@@ -311,7 +323,8 @@ entry:
 
 define ptx_device void @t4_shared_u64(i64 %x) {
 entry:
-;CHECK: st.shared.u64 [array_shared_i64], rd1;
+;CHECK: mov.u32 r0, array_shared_i64;
+;CHECK-NEXT: st.shared.u64 [r0], rd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64] addrspace(4)* @array_shared_i64, i32 0, i32 0
   store i64 %x, i64 addrspace(4)* %i
@@ -320,7 +333,8 @@ entry:
 
 define ptx_device void @t4_shared_f32(float %x) {
 entry:
-;CHECK: st.shared.f32 [array_shared_float], f1;
+;CHECK: mov.u32 r0, array_shared_float;
+;CHECK-NEXT: st.shared.f32 [r0], f1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float] addrspace(4)* @array_shared_float, i32 0, i32 0
   store float %x, float addrspace(4)* %i
@@ -329,7 +343,8 @@ entry:
 
 define ptx_device void @t4_shared_f64(double %x) {
 entry:
-;CHECK: st.shared.f64 [array_shared_double], fd1;
+;CHECK: mov.u32 r0, array_shared_double;
+;CHECK-NEXT: st.shared.f64 [r0], fd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double] addrspace(4)* @array_shared_double, i32 0, i32 0
   store double %x, double addrspace(4)* %i
@@ -338,7 +353,8 @@ entry:
 
 define ptx_device void @t5_u16(i16 %x) {
 entry:
-;CHECK: st.global.u16 [array_i16+2], rh1;
+;CHECK: mov.u32 r0, array_i16;
+;CHECK-NEXT: st.global.u16 [r0+2], rh1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i16]* @array_i16, i32 0, i32 1
   store i16 %x, i16* %i
@@ -347,7 +363,8 @@ entry:
 
 define ptx_device void @t5_u32(i32 %x) {
 entry:
-;CHECK: st.global.u32 [array_i32+4], r1;
+;CHECK: mov.u32 r0, array_i32;
+;CHECK-NEXT: st.global.u32 [r0+4], r1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i32]* @array_i32, i32 0, i32 1
   store i32 %x, i32* %i
@@ -356,7 +373,8 @@ entry:
 
 define ptx_device void @t5_u64(i64 %x) {
 entry:
-;CHECK: st.global.u64 [array_i64+8], rd1;
+;CHECK: mov.u32 r0, array_i64;
+;CHECK-NEXT: st.global.u64 [r0+8], rd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x i64]* @array_i64, i32 0, i32 1
   store i64 %x, i64* %i
@@ -365,7 +383,8 @@ entry:
 
 define ptx_device void @t5_f32(float %x) {
 entry:
-;CHECK: st.global.f32 [array_float+4], f1;
+;CHECK: mov.u32 r0, array_float;
+;CHECK-NEXT: st.global.f32 [r0+4], f1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x float]* @array_float, i32 0, i32 1
   store float %x, float* %i
@@ -374,7 +393,8 @@ entry:
 
 define ptx_device void @t5_f64(double %x) {
 entry:
-;CHECK: st.global.f64 [array_double+8], fd1;
+;CHECK: mov.u32 r0, array_double;
+;CHECK-NEXT: st.global.f64 [r0+8], fd1;
 ;CHECK-NEXT: ret;
   %i = getelementptr [10 x double]* @array_double, i32 0, i32 1
   store double %x, double* %i

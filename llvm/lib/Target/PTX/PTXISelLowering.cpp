@@ -64,6 +64,8 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     default:
       llvm_unreachable("Unknown opcode");
+    case PTXISD::COPY_ADDRESS:
+      return "PTXISD::COPY_ADDRESS";
     case PTXISD::READ_PARAM:
       return "PTXISD::READ_PARAM";
     case PTXISD::EXIT:
@@ -82,7 +84,14 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
   EVT PtrVT = getPointerTy();
   DebugLoc dl = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  return DAG.getTargetGlobalAddress(GV, dl, PtrVT);
+
+  SDValue targetGlobal = DAG.getTargetGlobalAddress(GV, dl, PtrVT);
+  SDValue movInstr = DAG.getNode(PTXISD::COPY_ADDRESS,
+                                 dl,
+                                 MVT::i32,
+                                 targetGlobal);
+
+  return movInstr;
 }
 
 //===----------------------------------------------------------------------===//
