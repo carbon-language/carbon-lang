@@ -1185,7 +1185,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
            !AnyFileChanged && R != REnd;
            ++R) {
         struct stat StatBuf;
-        if (stat(R->second.c_str(), &StatBuf)) {
+        if (FileMgr->getNoncachedStatValue(R->second, StatBuf)) {
           // If we can't stat the file we're remapping to, assume that something
           // horrible happened.
           AnyFileChanged = true;
@@ -1223,7 +1223,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         
         // The file was not remapped; check whether it has changed on disk.
         struct stat StatBuf;
-        if (stat(F->first(), &StatBuf)) {
+        if (FileMgr->getNoncachedStatValue(F->first(), StatBuf)) {
           // If we can't stat the file, assume that something horrible happened.
           AnyFileChanged = true;
         } else if (StatBuf.st_size != F->second.first || 
