@@ -44,6 +44,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdlib>
 #include <cstdio>
 #include <sys/stat.h>
@@ -500,6 +501,12 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
+                    create<ASTUnit>(AST.get()));
+
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
 
   AST->OnlyLocalDecls = OnlyLocalDecls;
@@ -1579,6 +1586,11 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation.reset(CI);
   
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
+                   create<ASTUnit>(AST.get()));
+
   return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
 }
 
@@ -1704,6 +1716,12 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation.reset(CI.take());
+  
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
+                    create<ASTUnit>(AST.get()));
+
   return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
 }
 
