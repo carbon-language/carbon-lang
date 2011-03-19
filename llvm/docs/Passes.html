@@ -754,28 +754,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="strip-dead-debug-info">-strip-dead-debug-info: Strip debug info for unused symbols</a>
-</div>
-<div class="doc_text">
-  <p>
-  performs code stripping. this transformation can delete:
-  </p>
-  
-  <ol>
-    <li>names for virtual registers</li>
-    <li>symbols for internal globals and functions</li>
-    <li>debug information</li>
-  </ol>
-  
-  <p>
-  note that this transformation makes code much less readable, so it should
-  only be used in situations where the <tt>strip</tt> utility would be used,
-  such as reducing code size or making it harder to reverse engineer code.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="targetdata">-targetdata: Target Data Layout</a>
 </div>
 <div class="doc_text">
@@ -1295,6 +1273,7 @@ if (X &lt; 3) {</pre>
         variable.</li>
   </ul>
 </div>
+
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
   <a name="loop-deletion">-loop-deletion: Delete dead loops</a>
@@ -1357,6 +1336,47 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
+  <a name="loop-simplify">-loop-simplify: Canonicalize natural loops</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass performs several transformations to transform natural loops into a
+  simpler form, which makes subsequent analyses and transformations simpler and
+  more effective.
+  </p>
+  
+  <p>
+  Loop pre-header insertion guarantees that there is a single, non-critical
+  entry edge from outside of the loop to the loop header.  This simplifies a
+  number of analyses and transformations, such as LICM.
+  </p>
+  
+  <p>
+  Loop exit-block insertion guarantees that all exit blocks from the loop
+  (blocks which are outside of the loop that have predecessors inside of the
+  loop) only have predecessors from inside of the loop (and are thus dominated
+  by the loop header).  This simplifies transformations such as store-sinking
+  that are built into LICM.
+  </p>
+  
+  <p>
+  This pass also guarantees that loops will have exactly one backedge.
+  </p>
+  
+  <p>
+  Note that the simplifycfg pass will clean up blocks which are split out but
+  end up being unnecessary, so usage of this pass should not pessimize
+  generated code.
+  </p>
+  
+  <p>
+  This pass obviously modifies the CFG, but updates loop information and
+  dominator information.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
   <a name="loop-unroll">-loop-unroll: Unroll loops</a>
 </div>
 <div class="doc_text">
@@ -1394,47 +1414,6 @@ if (X &lt; 3) {</pre>
   <p>
   This pass expects LICM to be run before it to hoist invariant conditions out
   of the loop, to make the unswitching opportunity obvious.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="loop-simplify">-loop-simplify: Canonicalize natural loops</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass performs several transformations to transform natural loops into a
-  simpler form, which makes subsequent analyses and transformations simpler and
-  more effective.
-  </p>
-  
-  <p>
-  Loop pre-header insertion guarantees that there is a single, non-critical
-  entry edge from outside of the loop to the loop header.  This simplifies a
-  number of analyses and transformations, such as LICM.
-  </p>
-  
-  <p>
-  Loop exit-block insertion guarantees that all exit blocks from the loop
-  (blocks which are outside of the loop that have predecessors inside of the
-  loop) only have predecessors from inside of the loop (and are thus dominated
-  by the loop header).  This simplifies transformations such as store-sinking
-  that are built into LICM.
-  </p>
-  
-  <p>
-  This pass also guarantees that loops will have exactly one backedge.
-  </p>
-  
-  <p>
-  Note that the simplifycfg pass will clean up blocks which are split out but
-  end up being unnecessary, so usage of this pass should not pessimize
-  generated code.
-  </p>
-  
-  <p>
-  This pass obviously modifies the CFG, but updates loop information and
-  dominator information.
   </p>
 </div>
 
@@ -1707,16 +1686,6 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="sink">-sink: Code Sinking</a>
-</div>
-<div class="doc_text">
-  <p>This pass moves instructions into successor blocks, when possible, so that
- they aren't executed on paths where their results aren't needed.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="simplify-libcalls">-simplify-libcalls: Simplify well-known library calls</a>
 </div>
 <div class="doc_text">
@@ -1749,7 +1718,62 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
+  <a name="sink">-sink: Code sinking</a>
+</div>
+<div class="doc_text">
+  <p>This pass moves instructions into successor blocks, when possible, so that
+ they aren't executed on paths where their results aren't needed.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="sretpromotion">-sretpromotion: Promote sret arguments to multiple ret values</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass finds functions that return a struct (using a pointer to the struct
+  as the first argument of the function, marked with the '<tt>sret</tt>' attribute) and
+  replaces them with a new function that simply returns each of the elements of
+  that struct (using multiple return values).
+  </p>
+
+  <p>
+  This pass works under a number of conditions:
+  </p>
+
+  <ul>
+  <li>The returned struct must not contain other structs</li>
+  <li>The returned struct must only be used to load values from</li>
+  <li>The placeholder struct passed in is the result of an <tt>alloca</tt></li>
+  </ul>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
   <a name="strip">-strip: Strip all symbols from a module</a>
+</div>
+<div class="doc_text">
+  <p>
+  performs code stripping. this transformation can delete:
+  </p>
+  
+  <ol>
+    <li>names for virtual registers</li>
+    <li>symbols for internal globals and functions</li>
+    <li>debug information</li>
+  </ol>
+  
+  <p>
+  note that this transformation makes code much less readable, so it should
+  only be used in situations where the <tt>strip</tt> utility would be used,
+  such as reducing code size or making it harder to reverse engineer code.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="strip-dead-debug-info">-strip-dead-debug-info: Strip debug info for unused symbols</a>
 </div>
 <div class="doc_text">
   <p>
@@ -1816,29 +1840,6 @@ if (X &lt; 3) {</pre>
   only be used in situations where the 'strip' utility would be used, such as
   reducing code size or making it harder to reverse engineer code.
   </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="sretpromotion">-sretpromotion: Promote sret arguments</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass finds functions that return a struct (using a pointer to the struct
-  as the first argument of the function, marked with the '<tt>sret</tt>' attribute) and
-  replaces them with a new function that simply returns each of the elements of
-  that struct (using multiple return values).
-  </p>
-
-  <p>
-  This pass works under a number of conditions:
-  </p>
-
-  <ul>
-  <li>The returned struct must not contain other structs</li>
-  <li>The returned struct must only be used to load values from</li>
-  <li>The placeholder struct passed in is the result of an <tt>alloca</tt></li>
-  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -2026,9 +2027,7 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="view-dom-only">-view-dom-only: View dominance tree of function (with no function
-  bodies)
-  </a>
+  <a name="view-dom-only">-view-dom-only: View dominance tree of function (with no function bodies)</a>
 </div>
 <div class="doc_text">
   <p>
@@ -2049,9 +2048,7 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="view-postdom-only">-view-postdom-only: View postdominance tree of function (with no
-  function bodies)
-  </a>
+  <a name="view-postdom-only">-view-postdom-only: View postdominance tree of function (with no function bodies)</a>
 </div>
 <div class="doc_text">
   <p>
