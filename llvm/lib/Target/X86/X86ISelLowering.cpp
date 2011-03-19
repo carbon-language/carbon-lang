@@ -927,6 +927,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // Can turn SHL into an integer multiply.
     setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
     setOperationAction(ISD::SHL,                MVT::v16i8, Custom);
+    setOperationAction(ISD::SRL,                MVT::v4i32, Legal);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are

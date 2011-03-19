@@ -58,6 +58,9 @@ class VectorLegalizer {
   SDValue UnrollVSETCC(SDValue Op);
   // Implements expansion for FNEG; falls back to UnrollVectorOp if FSUB
   // isn't legal.
+  // Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
+  // SINT_TO_FLOAT and SHR on vectors isn't legal.
+  SDValue ExpandUINT_TO_FLOAT(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
   // Implements vector promotion; this is essentially just bitcasting the
   // operands to a different type and bitcasting the result back to the
@@ -207,7 +210,9 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     // FALL THROUGH
   }
   case TargetLowering::Expand:
-    if (Node->getOpcode() == ISD::FNEG)
+    if (Node->getOpcode() == ISD::UINT_TO_FP)
+      Result = ExpandUINT_TO_FLOAT(Op);
+    else if (Node->getOpcode() == ISD::FNEG)
       Result = ExpandFNEG(Op);
     else if (Node->getOpcode() == ISD::VSETCC)
       Result = UnrollVSETCC(Op);
@@ -250,6 +255,48 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
 
   return DAG.getNode(ISD::BITCAST, dl, VT, Op);
 }
+
+SDValue VectorLegalizer::ExpandUINT_TO_FLOAT(SDValue Op) {
+
+
+  EVT VT = Op.getOperand(0).getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+
+  // Make sure that the SINT_TO_FP and SRL instructions are available.
+  if (!TLI.isOperationLegalOrCustom(ISD::SINT_TO_FP, VT) ||
+      !TLI.isOperationLegalOrCustom(ISD::SRL, VT))
+      return DAG.UnrollVectorOp(Op.getNode());
+
+ EVT SVT = VT.getScalarType();
+  assert((SVT.getSizeInBits() == 64 || SVT.getSizeInBits() == 32) &&
+      "Elements in vector-UINT_TO_FP must be 32 or 64 bits wide");
+
+  unsigned BW = SVT.getSizeInBits();
+  SDValue HalfWord = DAG.getConstant(BW/2, VT);
+
+  // Constants to clear the upper part of the word.
+  // Notice that we can also use SHL+SHR, but using a constant is slightly
+  // faster on x86.
+  uint64_t HWMask = (SVT.getSizeInBits()==64)?0x00000000FFFFFFFF:0x0000FFFF;
+  SDValue HalfWordMask = DAG.getConstant(HWMask, VT);
+
+  // Two to the power of half-word-size.
+  SDValue TWOHW = DAG.getConstantFP((1<<(BW/2)), Op.getValueType());
+
+  // Clear upper part of LO, lower HI
+  SDValue HI = DAG.getNode(ISD::SRL, DL, VT, Op.getOperand(0), HalfWord);
+  SDValue LO = DAG.getNode(ISD::AND, DL, VT, Op.getOperand(0), HalfWordMask);
+
+  // Convert hi and lo to floats
+  // Convert the hi part back to the upper values
+  SDValue fHI = DAG.getNode(ISD::SINT_TO_FP, DL, Op.getValueType(), HI);
+          fHI = DAG.getNode(ISD::FMUL, DL, Op.getValueType(), fHI, TWOHW);
+  SDValue fLO = DAG.getNode(ISD::SINT_TO_FP, DL, Op.getValueType(), LO);
+
+  // Add the two halves
+  return DAG.getNode(ISD::FADD, DL, Op.getValueType(), fHI, fLO);
+}
+
 
 SDValue VectorLegalizer::ExpandFNEG(SDValue Op) {
   if (TLI.isOperationLegalOrCustom(ISD::FSUB, Op.getValueType())) {
