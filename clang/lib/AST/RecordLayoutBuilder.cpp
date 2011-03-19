@@ -19,7 +19,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/MathExtras.h"
-#include <map>
+#include "llvm/Support/CrashRecoveryContext.h"
 
 using namespace clang;
 
@@ -1708,6 +1708,11 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     case CXXABI_Microsoft:
       Builder.reset(new MSRecordLayoutBuilder(*this, &EmptySubobjects));
     }
+    // Recover resources if we crash before exiting this method.
+    llvm::CrashRecoveryContextCleanupRegistrar
+      RecordBuilderCleanup(llvm::CrashRecoveryContextCleanup::
+                        create<RecordLayoutBuilder>(Builder.get()));
+    
     Builder->Layout(RD);
 
     // FIXME: This is not always correct. See the part about bitfields at
