@@ -74,6 +74,9 @@ CrashRecoveryContext::~CrashRecoveryContext() {
 }
 
 CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {
+  if (!gCrashRecoveryEnabled)
+    return 0;
+
   const CrashRecoveryContextImpl *CRCI = CurrentContext.get();
   if (!CRCI)
     return 0;
