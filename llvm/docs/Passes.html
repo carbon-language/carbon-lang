@@ -245,18 +245,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="codegenprepare">-codegenprepare: Optimize for code generation</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass munges the code in the input function to better prepare it for
-  SelectionDAG-based code generation.  This works around limitations in it's
-  basic-block-at-a-time approach.  It should eventually be removed.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="count-aa">-count-aa: Count Alias Analysis Query Responses</a>
 </div>
 <div class="doc_text">
@@ -344,7 +332,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="dot-dom">-dot-dom: Print dominator tree of function to 'dot' file</a>
+  <a name="dot-dom">-dot-dom: Print dominance tree of function to 'dot' file</a>
 </div>
 <div class="doc_text">
   <p>
@@ -356,8 +344,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="dot-dom-only">-dot-dom-only: Print dominator tree of function to 'dot' file (with no
-  function bodies)</a>
+  <a name="dot-dom-only">-dot-dom-only: Print dominance tree of function to 'dot' file (with no function bodies)</a>
 </div>
 <div class="doc_text">
   <p>
@@ -370,7 +357,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="dot-postdom">-dot-postdom: Print post dominator tree of function to 'dot' file</a>
+  <a name="dot-postdom">-dot-postdom: Print postdominance tree of function to 'dot' file</a>
 </div>
 <div class="doc_text">
   <p>
@@ -382,8 +369,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="dot-postdom-only">-dot-postdom-only: Print post dominator tree of function to 'dot' file
-  (with no function bodies)</a>
+  <a name="dot-postdom-only">-dot-postdom-only: Print postdominance tree of function to 'dot' file (with no function bodies)</a>
 </div>
 <div class="doc_text">
   <p>
@@ -414,29 +400,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <div class="doc_text">
   <p>
   This pass collects the count of all instructions and reports them
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="interprocedural-aa-eval">-interprocedural-aa-eval: Exhaustive Interprocedural Alias Analysis Precision Evaluator</a>
-</div>
-<div class="doc_text">
-  <p>This pass implements a simple N^2 alias analysis accuracy evaluator.
-  Basically, for each function in the program, it simply queries to see how the
-  alias analysis implementation answers alias queries between each pair of
-  pointers in the function.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="interprocedural-basic-aa">-interprocedural-basic-aa: Interprocedural Basic Alias Analysis</a>
-</div>
-<div class="doc_text">
-  <p>This pass defines the default implementation of the Alias Analysis interface
-  that simply implements a few identities (two different globals cannot alias,
-  etc), but otherwise does no analysis.
   </p>
 </div>
 
@@ -580,15 +543,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <p>
   The default "no profile" implementation of the abstract
   <code>ProfileInfo</code> interface.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="pointertracking">-pointertracking: Track pointer bounds.</a>
-</div>
-<div class="doc_text">
-  <p>Tracking of pointer bounds.
   </p>
 </div>
 
@@ -752,7 +706,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <p>Pass that checks profiling information for plausibility.</p>
 </div>
 <div class="doc_subsection">
-  <a name="regions">-regions: Detect single entry single exit regions in a function</a>
+  <a name="regions">-regions: Detect single entry single exit regions</a>
 </div>
 <div class="doc_text">
   <p>
@@ -784,7 +738,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="scev-aa">-scev-aa: </a>
+  <a name="scev-aa">-scev-aa: ScalarEvolution-based Alias Analysis</a>
 </div>
 <div class="doc_text">
   <p>Simple alias analysis implemented in terms of ScalarEvolution queries.
@@ -913,7 +867,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="codegenprepare">-codegenprepare: Prepare a function for code generation</a>
+  <a name="codegenprepare">-codegenprepare: Optimize for code generation</a>
 </div>
 <div class="doc_text">
   This pass munges the code in the input function to better prepare it for
@@ -1486,23 +1440,7 @@ if (X &lt; 3) {</pre>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="lowerallocs">-lowerallocs: Lower allocations from instructions to calls</a>
-</div>
-<div class="doc_text">
-  <p>
-  Turn <tt>malloc</tt> and <tt>free</tt> instructions into <tt>@malloc</tt> and
-  <tt>@free</tt> calls.
-  </p>
-
-  <p>
-  This is a target-dependent tranformation because it depends on the size of
-  data types and alignment constraints.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="loweratomic">-loweratomic: Lower atomic intrinsics</a>
+  <a name="loweratomic">-loweratomic: Lower atomic intrinsics to non-atomic form</a>
 </div>
 <div class="doc_text">
   <p>
