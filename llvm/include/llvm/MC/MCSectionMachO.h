@@ -157,10 +157,12 @@ public:
   /// flavored .s file.  If successful, this fills in the specified Out
   /// parameters and returns an empty string.  When an invalid section
   /// specifier is present, this returns a string indicating the problem.
+  /// If no TAA was parsed, TAA is not altered, and TAAWasSet becomes false.
   static std::string ParseSectionSpecifier(StringRef Spec,       // In.
                                            StringRef &Segment,   // Out.
                                            StringRef &Section,   // Out.
                                            unsigned  &TAA,       // Out.
+                                           bool      &TAAParsed, // Out.
                                            unsigned  &StubSize); // Out.
 
   virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
