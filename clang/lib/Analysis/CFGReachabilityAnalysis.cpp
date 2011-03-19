@@ -19,10 +19,10 @@
 
 using namespace clang;
 
-CFGReachabilityAnalysis::CFGReachabilityAnalysis(const CFG &cfg)
+CFGReverseBlockReachabilityAnalysis::CFGReverseBlockReachabilityAnalysis(const CFG &cfg)
   : analyzed(cfg.getNumBlockIDs(), false) {}
 
-bool CFGReachabilityAnalysis::isReachable(const CFGBlock *Src,
+bool CFGReverseBlockReachabilityAnalysis::isReachable(const CFGBlock *Src,
                                           const CFGBlock *Dst) {
 
   const unsigned DstBlockID = Dst->getBlockID();
@@ -39,7 +39,7 @@ bool CFGReachabilityAnalysis::isReachable(const CFGBlock *Src,
 
 // Maps reachability to a common node by walking the predecessors of the
 // destination node.
-void CFGReachabilityAnalysis::mapReachability(const CFGBlock *Dst) {
+void CFGReverseBlockReachabilityAnalysis::mapReachability(const CFGBlock *Dst) {
   llvm::SmallVector<const CFGBlock *, 11> worklist;
   llvm::BitVector visited(analyzed.size());
   

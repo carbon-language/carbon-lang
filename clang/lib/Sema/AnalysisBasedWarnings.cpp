@@ -576,7 +576,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
         if (const Stmt *stmt = i->stmt) {
           const CFGBlock *block = AC.getBlockForRegisteredExpression(stmt);
           assert(block);
-          if (CFGReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis()) {
+          if (CFGReverseBlockReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis()) {
             // Can this block be reached from the entrance?
             if (cra->isReachable(&AC.getCFG()->getEntry(), block))
               S.Diag(D.Loc, D.PD);

@@ -28,7 +28,7 @@ namespace clang {
 
 class Decl;
 class Stmt;
-class CFGReachabilityAnalysis;
+class CFGReverseBlockReachabilityAnalysis;
 class CFGStmtMap;
 class LiveVariables;
 class ParentMap;
@@ -60,7 +60,7 @@ class AnalysisContext {
   llvm::OwningPtr<LiveVariables> relaxedLiveness;
   llvm::OwningPtr<ParentMap> PM;
   llvm::OwningPtr<PseudoConstantAnalysis> PCA;
-  llvm::OwningPtr<CFGReachabilityAnalysis> CFA;
+  llvm::OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
 
   llvm::BumpPtrAllocator A;
 
@@ -100,7 +100,7 @@ public:
   
   CFGStmtMap *getCFGStmtMap();
 
-  CFGReachabilityAnalysis *getCFGReachablityAnalysis();
+  CFGReverseBlockReachabilityAnalysis *getCFGReachablityAnalysis();
   
   /// Return a version of the CFG without any edges pruned.
   CFG *getUnoptimizedCFG();

@@ -132,12 +132,12 @@ CFGStmtMap *AnalysisContext::getCFGStmtMap() {
   return 0;
 }
 
-CFGReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis() {
+CFGReverseBlockReachabilityAnalysis *AnalysisContext::getCFGReachablityAnalysis() {
   if (CFA)
     return CFA.get();
   
   if (CFG *c = getCFG()) {
-    CFA.reset(new CFGReachabilityAnalysis(*c));
+    CFA.reset(new CFGReverseBlockReachabilityAnalysis(*c));
     return CFA.get();
   }
   

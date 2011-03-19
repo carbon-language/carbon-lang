@@ -29,13 +29,13 @@ class CFGBlock;
 // tend to have a common destination, so we lazily do a predecessor search
 // from the destination node and cache the results to prevent work
 // duplication.
-class CFGReachabilityAnalysis {
+class CFGReverseBlockReachabilityAnalysis {
   typedef llvm::BitVector ReachableSet;
   typedef llvm::DenseMap<unsigned, ReachableSet> ReachableMap;
   ReachableSet analyzed;
   ReachableMap reachable;
 public:
-  CFGReachabilityAnalysis(const CFG &cfg);
+  CFGReverseBlockReachabilityAnalysis(const CFG &cfg);
 
   /// Returns true if the block 'Dst' can be reached from block 'Src'.
   bool isReachable(const CFGBlock *Src, const CFGBlock *Dst);
