@@ -435,11 +435,10 @@ bool DarwinAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
 
   StringRef Segment, Section;
   unsigned StubSize;
-  unsigned TAA;
-  bool TAAParsed;
+  unsigned TAA = 0;
   std::string ErrorStr =
     MCSectionMachO::ParseSectionSpecifier(SectionSpec, Segment, Section,
-                                          TAA, TAAParsed, StubSize);
+                                          TAA, StubSize);
 
   if (!ErrorStr.empty())
     return Error(Loc, ErrorStr.c_str());
