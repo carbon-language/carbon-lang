@@ -180,7 +180,9 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
                                                   StringRef &Segment,    // Out.
                                                   StringRef &Section,    // Out.
                                                   unsigned  &TAA,        // Out.
+                                                  bool      &TAAParsed,  // Out.
                                                   unsigned  &StubSize) { // Out.
+  TAAParsed = false;
   // Find the first comma.
   std::pair<StringRef, StringRef> Comma = Spec.split(',');
 
@@ -211,6 +213,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
            "between 1 and 16 characters";
 
   // If there is no comma after the section, we're done.
+  TAA = 0;
   StubSize = 0;
   if (Comma.second.empty())
     return "";
@@ -235,6 +238,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
 
   // Remember the TypeID.
   TAA = TypeID;
+  TAAParsed = true;
 
   // If we have no comma after the section type, there are no attributes.
   if (Comma.second.empty()) {
