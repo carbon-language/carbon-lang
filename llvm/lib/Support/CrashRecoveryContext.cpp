@@ -65,6 +65,7 @@ CrashRecoveryContext::~CrashRecoveryContext() {
   while (i) {
     CrashRecoveryContextCleanup *tmp = i;
     i = tmp->next;
+    tmp->cleanupFired = true;
     tmp->recoverResources();
     delete tmp;
   }

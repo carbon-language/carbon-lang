@@ -95,10 +95,16 @@ public:
 
 class CrashRecoveryContextCleanup {
 public:
+  bool cleanupFired;
+  enum ProvidedCleanups { DeleteCleanup, DestructorCleanup };
+  
+  CrashRecoveryContextCleanup() : cleanupFired(false) {}
   virtual ~CrashRecoveryContextCleanup();
   virtual void recoverResources() = 0;
   
-  template <typename T> static CrashRecoveryContextCleanup *create(T *);
+  template <typename T> static CrashRecoveryContextCleanup *create(T *,
+                          ProvidedCleanups cleanupKind =
+                            CrashRecoveryContextCleanup::DeleteCleanup);
   
 private:
   friend class CrashRecoveryContext;
@@ -131,15 +137,25 @@ public:
 
 template <typename T>
 struct CrashRecoveryContextTrait {
-  static inline CrashRecoveryContextCleanup *createCleanup(T *resource) {
-    return new CrashRecoveryContextDeleteCleanup<T>(resource);
+  static inline CrashRecoveryContextCleanup *
+  createCleanup(T *resource,
+                CrashRecoveryContextCleanup::ProvidedCleanups cleanup) {
+    switch (cleanup) {
+      case CrashRecoveryContextCleanup::DeleteCleanup:
+        return new CrashRecoveryContextDeleteCleanup<T>(resource);
+      case CrashRecoveryContextCleanup::DestructorCleanup:
+        return new CrashRecoveryContextDestructorCleanup<T>(resource);
+    }
+    return 0;
   }
 };
 
 template<typename T>
-inline CrashRecoveryContextCleanup* CrashRecoveryContextCleanup::create(T *x) {
+inline CrashRecoveryContextCleanup*
+CrashRecoveryContextCleanup::create(T *x,
+          CrashRecoveryContextCleanup::ProvidedCleanups cleanupKind) {
   return CrashRecoveryContext::GetCurrent() ?
-          CrashRecoveryContextTrait<T>::createCleanup(x) : 
+          CrashRecoveryContextTrait<T>::createCleanup(x, cleanupKind) : 
           0;
 }
 
@@ -155,7 +171,7 @@ public:
       context->registerCleanup(cleanup);
   }
   ~CrashRecoveryContextCleanupRegistrar() {
-    if (cleanup) {
+    if (cleanup && !cleanup->cleanupFired) {
       if (context)
         context->unregisterCleanup(cleanup);
       else
