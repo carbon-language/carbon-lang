@@ -253,7 +253,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   // These should all be defined in the preprocessor according to the
   // current language configuration.
-  if (!LangOpts.Microsoft)
+  if (!LangOpts.Microsoft && !LangOpts.TraditionalCPP)
     Builder.defineMacro("__STDC__");
   if (LangOpts.AsmPreprocessor)
     Builder.defineMacro("__ASSEMBLER__");
