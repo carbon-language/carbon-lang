@@ -132,6 +132,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
                                         uint64_t FieldOffset,
                                         llvm::ConstantInt *CI) {
   const ASTContext &Context = CGM.getContext();
+  const uint64_t CharWidth = Context.getCharWidth();
   uint64_t NextFieldOffsetInBits = Context.toBits(NextFieldOffsetInChars);
   if (FieldOffset > NextFieldOffsetInBits) {
     // We need to add padding.
@@ -189,12 +190,12 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
       }
     }
 
-    Tmp = Tmp.zext(8);
+    Tmp = Tmp.zext(CharWidth);
     if (CGM.getTargetData().isBigEndian()) {
       if (FitsCompletelyInPreviousByte)
         Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
     } else {
-      Tmp = Tmp.shl(8 - BitsInPreviousByte);
+      Tmp = Tmp.shl(CharWidth - BitsInPreviousByte);
     }
 
     // 'or' in the bits that go into the previous byte.
@@ -213,7 +214,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
         assert(isa<llvm::ArrayType>(LastElt->getType()) &&
                "Expected array padding of undefs");
         const llvm::ArrayType *AT = cast<llvm::ArrayType>(LastElt->getType());
-        assert(AT->getElementType()->isIntegerTy(8) &&
+        assert(AT->getElementType()->isIntegerTy(CharWidth) &&
                AT->getNumElements() != 0 &&
                "Expected non-empty array padding of undefs");
         
@@ -225,7 +226,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
         AppendPadding(CharUnits::fromQuantity(AT->getNumElements()-1));
         AppendPadding(CharUnits::One());
         assert(isa<llvm::UndefValue>(Elements.back()) &&
-               Elements.back()->getType()->isIntegerTy(8) &&
+               Elements.back()->getType()->isIntegerTy(CharWidth) &&
                "Padding addition didn't work right");
       }
     }
@@ -236,37 +237,38 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
       return;
   }
 
-  while (FieldValue.getBitWidth() > 8) {
+  while (FieldValue.getBitWidth() > CharWidth) {
     llvm::APInt Tmp;
 
     if (CGM.getTargetData().isBigEndian()) {
       // We want the high bits.
-      Tmp = FieldValue.lshr(FieldValue.getBitWidth() - 8).trunc(8);
+      Tmp = 
+        FieldValue.lshr(FieldValue.getBitWidth() - CharWidth).trunc(CharWidth);
     } else {
       // We want the low bits.
-      Tmp = FieldValue.trunc(8);
+      Tmp = FieldValue.trunc(CharWidth);
 
-      FieldValue = FieldValue.lshr(8);
+      FieldValue = FieldValue.lshr(CharWidth);
     }
 
     Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
     NextFieldOffsetInChars += CharUnits::One();
 
-    FieldValue = FieldValue.trunc(FieldValue.getBitWidth() - 8);
+    FieldValue = FieldValue.trunc(FieldValue.getBitWidth() - CharWidth);
   }
 
   assert(FieldValue.getBitWidth() > 0 &&
          "Should have at least one bit left!");
-  assert(FieldValue.getBitWidth() <= 8 &&
+  assert(FieldValue.getBitWidth() <= CharWidth &&
          "Should not have more than a byte left!");
 
-  if (FieldValue.getBitWidth() < 8) {
+  if (FieldValue.getBitWidth() < CharWidth) {
     if (CGM.getTargetData().isBigEndian()) {
       unsigned BitWidth = FieldValue.getBitWidth();
 
-      FieldValue = FieldValue.zext(8) << (8 - BitWidth);
+      FieldValue = FieldValue.zext(CharWidth) << (CharWidth - BitWidth);
     } else
-      FieldValue = FieldValue.zext(8);
+      FieldValue = FieldValue.zext(CharWidth);
   }
 
   // Append the last element.
