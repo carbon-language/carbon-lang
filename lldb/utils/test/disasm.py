@@ -80,9 +80,12 @@ def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
             gdb.sendline('x /%db %s' % (addr_diff, prev_addr))
             gdb.expect(gdb_prompt)
             x_output = gdb.before
-            memory_dump = x_output.split(os.linesep)[-1].split(':')[-1].strip()
+            # Get the last output line from the gdb examine memory command,
+            # split the string into a 3-tuple with separator '>:' to handle
+            # objc method names.
+            memory_dump = x_output.split(os.linesep)[-1].partition('>:')[2].strip()
             #print "\nbytes:", memory_dump
-            disasm_str = prev_line.split(':')[1]
+            disasm_str = prev_line.partition('>:')[2]
             print >> mc_input, '%s # %s' % (memory_dump, disasm_str)
 
         # We're done with the processing.  Assign the current line to be prev_line.
