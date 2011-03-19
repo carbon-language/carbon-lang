@@ -47,17 +47,16 @@ using namespace llvm;
 using namespace llvm::PatternMatch;
 
 STATISTIC(NumBlocksElim, "Number of blocks eliminated");
-STATISTIC(NumPHIsElim,   "Number of trivial PHIs eliminated");
-STATISTIC(NumGEPsElim,   "Number of GEPs converted to casts");
+STATISTIC(NumPHIsElim, "Number of trivial PHIs eliminated");
+STATISTIC(NumGEPsElim, "Number of GEPs converted to casts");
 STATISTIC(NumCmpUses, "Number of uses of Cmp expressions replaced with uses of "
                       "sunken Cmps");
 STATISTIC(NumCastUses, "Number of uses of Cast expressions replaced with uses "
                        "of sunken Casts");
 STATISTIC(NumMemoryInsts, "Number of memory instructions whose address "
                           "computations were sunk");
-STATISTIC(NumExtsMoved,  "Number of [s|z]ext instructions combined with loads");
-STATISTIC(NumExtUses,    "Number of uses of [s|z]ext instructions optimized");
-STATISTIC(NumRetsDup,    "Number of return instructions duplicated");
+STATISTIC(NumExtsMoved, "Number of [s|z]ext instructions combined with loads");
+STATISTIC(NumExtUses, "Number of uses of [s|z]ext instructions optimized");
 
 static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
@@ -105,7 +104,6 @@ namespace {
     bool OptimizeCallInst(CallInst *CI);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
-    bool DupRetToEnableTailCallOpts(ReturnInst *RI);
   };
 }
 
@@ -549,96 +547,6 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   return Simplifier.fold(CI, TD);
 }
 
-/// DupRetToEnableTailCallOpts - Look for opportunities to duplicate return
-/// instructions to the predecessor to enable tail call optimizations. The
-/// case it is currently looking for is:
-/// bb0:
-///   %tmp0 = tail call i32 @f0()
-///   br label %return
-/// bb1:
-///   %tmp1 = tail call i32 @f1()
-///   br label %return
-/// bb2:
-///   %tmp2 = tail call i32 @f2()
-///   br label %return
-/// return:
-///   %retval = phi i32 [ %tmp0, %bb0 ], [ %tmp1, %bb1 ], [ %tmp2, %bb2 ]
-///   ret i32 %retval
-///
-/// =>
-///
-/// bb0:
-///   %tmp0 = tail call i32 @f0()
-///   ret i32 %tmp0
-/// bb1:
-///   %tmp1 = tail call i32 @f1()
-///   ret i32 %tmp1
-/// bb2:
-///   %tmp2 = tail call i32 @f2()
-///   ret i32 %tmp2
-///
-bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
-  Value *V = RI->getReturnValue();
-  if (!V)
-    return false;
-
-  if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    BasicBlock *BB = RI->getParent();
-    if (PN->getParent() != BB)
-      return false;
-
-    // It's not safe to eliminate the sign / zero extension of the return value.
-    // See llvm::isInTailCallPosition().
-    const Function *F = BB->getParent();
-    unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
-    if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
-      return false;
-
-    // Make sure there are no instructions between PHI and return.
-    BasicBlock::iterator BI = PN;
-    do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
-    if (&*BI != RI)
-      return false;
-
-    /// Only dup the ReturnInst if the CallInst is likely to be emitted as a
-    /// tail call.
-    SmallVector<CallInst*, 4> TailCalls;
-    for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
-      CallInst *CI = dyn_cast<CallInst>(PN->getIncomingValue(I));
-      if (CI && TLI->mayBeEmittedAsTailCall(CI))
-        TailCalls.push_back(CI);
-    }
-
-    bool Changed = false;
-    for (unsigned i = 0, e = TailCalls.size(); i != e; ++i) {
-      CallInst *CI = TailCalls[i];
-      CallSite CS(CI);
-
-      // Conservatively require the attributes of the call to match those of
-      // the return. Ignore noalias because it doesn't affect the call sequence.
-      unsigned CalleeRetAttr = CS.getAttributes().getRetAttributes();
-      if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
-        continue;
-
-      // Make sure the call instruction is followed by an unconditional branch
-      // to the return block.
-      BasicBlock *CallBB = CI->getParent();
-      BranchInst *BI = dyn_cast<BranchInst>(CallBB->getTerminator());
-      if (!BI || !BI->isUnconditional() || BI->getSuccessor(0) != BB)
-        continue;
-
-      // Duplicate the return into CallBB.
-      (void)FoldReturnIntoUncondBranch(RI, BB, CallBB);
-      Changed = true;
-      ++NumRetsDup;
-    }
-
-    return Changed;
-  }
-
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 // Memory Optimization
 //===----------------------------------------------------------------------===//
@@ -1061,9 +969,6 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
   
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return OptimizeCallInst(CI);
-
-  if (ReturnInst *RI = dyn_cast<ReturnInst>(I))
-    return DupRetToEnableTailCallOpts(RI);
 
   return false;
 }
