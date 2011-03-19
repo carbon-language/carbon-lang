@@ -495,58 +495,17 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 void LiveInterval::MergeValueInAsValue(
                                     const LiveInterval &RHS,
                                     const VNInfo *RHSValNo, VNInfo *LHSValNo) {
-  SmallVector<VNInfo*, 4> ReplacedValNos;
-  iterator IP = begin();
+  // TODO: Make this more efficient.
+  iterator InsertPos = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
-    assert(I->valno == RHS.getValNumInfo(I->valno->id) && "Bad VNInfo");
     if (I->valno != RHSValNo)
       continue;
-    SlotIndex Start = I->start, End = I->end;
-    IP = std::upper_bound(IP, end(), Start);
-    // If the start of this range overlaps with an existing liverange, trim it.
-    if (IP != begin() && IP[-1].end > Start) {
-      if (IP[-1].valno != LHSValNo) {
-        ReplacedValNos.push_back(IP[-1].valno);
-        IP[-1].valno = LHSValNo; // Update val#.
-      }
-      Start = IP[-1].end;
-      // Trimmed away the whole range?
-      if (Start >= End) continue;
-    }
-    // If the end of this range overlaps with an existing liverange, trim it.
-    if (IP != end() && End > IP->start) {
-      if (IP->valno != LHSValNo) {
-        ReplacedValNos.push_back(IP->valno);
-        IP->valno = LHSValNo;  // Update val#.
-      }
-      End = IP->start;
-      // If this trimmed away the whole range, ignore it.
-      if (Start == End) continue;
-    }
-
     // Map the valno in the other live range to the current live range.
-    IP = addRangeFrom(LiveRange(Start, End, LHSValNo), IP);
-  }
-
-
-  SmallSet<VNInfo*, 4> Seen;
-  for (unsigned i = 0, e = ReplacedValNos.size(); i != e; ++i) {
-    VNInfo *V1 = ReplacedValNos[i];
-    if (Seen.insert(V1)) {
-      bool isDead = true;
-      for (const_iterator I = begin(), E = end(); I != E; ++I)
-        if (I->valno == V1) {
-          isDead = false;
-          break;
-        }
-      if (isDead) {
-        // Now that V1 is dead, remove it.
-        markValNoForDeletion(V1);
-      }
-    }
+    LiveRange Tmp = *I;
+    Tmp.valno = LHSValNo;
+    InsertPos = addRangeFrom(Tmp, InsertPos);
   }
 }
-
 
 
 /// MergeValueNumberInto - This method is called when two value nubmers
