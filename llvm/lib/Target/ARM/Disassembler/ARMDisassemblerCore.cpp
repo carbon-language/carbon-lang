@@ -1163,8 +1163,9 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRd(insn))));
   ++OpIdx;
 
-  // Fill in LDRD and STRD's second operand.
-  if (DualReg) {
+  // Fill in LDRD and STRD's second operand, but only if it's offset mode OR we
+  // have a pre-or-post-indexed store operation.
+  if (DualReg && (!isPrePost || isStore)) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRd(insn) + 1)));
     ++OpIdx;
@@ -1186,7 +1187,7 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
          "Reg operand expected");
   assert((!isPrePost || (TID.getOperandConstraint(OpIdx, TOI::TIED_TO) != -1))
-         && "Index mode or tied_to operand expected");
+         && "Offset mode or tied_to operand expected");
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      decodeRn(insn))));
   ++OpIdx;
