@@ -143,6 +143,23 @@ public:
     GetAddressByteSize ()  const = 0;
 
     //------------------------------------------------------------------
+    /// Get the address type given a file address in an object file.
+    ///
+    /// Many binary file formats know what kinds
+    /// This is primarily for ARM binaries, though it can be applied to
+    /// any executable file format that supports different opcode types
+    /// within the same binary. ARM binaries support having both ARM and
+    /// Thumb within the same executable container. We need to be able
+    /// to get
+    /// @return
+    ///     The size of an address in bytes for the currently selected
+    ///     architecture (and object for archives). Returns zero if no
+    ///     architecture or object has been selected.
+    //------------------------------------------------------------------
+    virtual lldb::AddressClass
+    GetAddressClass (lldb::addr_t file_addr);
+
+    //------------------------------------------------------------------
     /// Extract the dependent modules from an object file.
     ///
     /// If an object file has information about which other images it

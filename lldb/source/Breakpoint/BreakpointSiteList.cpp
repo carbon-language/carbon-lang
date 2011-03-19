@@ -168,7 +168,7 @@ void
 BreakpointSiteList::Dump (Stream *s) const
 {
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-    s->Indent();
+    //s->Indent();
     s->Printf("BreakpointSiteList with %u BreakpointSites:\n", (uint32_t)m_bp_site_list.size());
     s->IndentMore();
     collection::const_iterator pos;

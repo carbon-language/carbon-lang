@@ -96,6 +96,11 @@ public:
     static lldb::ByteOrder
     GetByteOrder ();
 
+    static bool
+    GetOSVersion (uint32_t &major, 
+                  uint32_t &minor, 
+                  uint32_t &update);
+
     //------------------------------------------------------------------
     /// Gets the host architecture.
     ///

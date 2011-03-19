@@ -183,7 +183,7 @@ using namespace lldb_private;
 const char *
 ProcessMacOSX::GetPluginNameStatic()
 {
-    return "process.macosx";
+    return "macosx-user";
 }
 
 const char *
@@ -455,52 +455,6 @@ ProcessMacOSX::DoResume ()
     return error;
 }
 
-size_t
-ProcessMacOSX::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
-{
-    const uint8_t *trap_opcode = NULL;
-    uint32_t trap_opcode_size = 0;
-
-    static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
-    //static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
-    static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
-    static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
-
-    llvm::Triple::ArchType machine = m_arch_spec.GetMachine();
-    switch (machine)
-    {
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-        trap_opcode = g_i386_breakpoint_opcode;
-        trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
-        break;
-    
-    case llvm::Triple::arm:
-        // TODO: fill this in for ARM. We need to dig up the symbol for
-        // the address in the breakpoint locaiton and figure out if it is
-        // an ARM or Thumb breakpoint.
-        trap_opcode = g_arm_breakpoint_opcode;
-        trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
-        break;
-    
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-        trap_opcode = g_ppc_breakpoint_opcode;
-        trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
-        break;
-
-    default:
-        assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
-        break;
-    }
-
-    if (trap_opcode && trap_opcode_size)
-    {
-        if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
-            return trap_opcode_size;
-    }
-    return 0;
-}
 uint32_t
 ProcessMacOSX::UpdateThreadListIfNeeded ()
 {

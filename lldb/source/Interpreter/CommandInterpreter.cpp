@@ -25,6 +25,7 @@
 #include "../Commands/CommandObjectImage.h"
 #include "../Commands/CommandObjectLog.h"
 #include "../Commands/CommandObjectMemory.h"
+#include "../Commands/CommandObjectPlatform.h"
 #include "../Commands/CommandObjectProcess.h"
 #include "../Commands/CommandObjectQuit.h"
 #include "lldb/Interpreter/CommandObjectRegexCommand.h"
@@ -166,6 +167,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
     m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
     m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
+    m_command_dict["platform"]  = CommandObjectSP (new CommandObjectPlatform (*this));
     m_command_dict["process"]   = CommandObjectSP (new CommandObjectMultiwordProcess (*this));
     m_command_dict["quit"]      = CommandObjectSP (new CommandObjectQuit (*this));
     m_command_dict["register"]  = CommandObjectSP (new CommandObjectRegister (*this));

@@ -808,3 +808,16 @@ Address::ResolveLinkedAddress ()
         }
     }
 }
+
+lldb::AddressClass
+Address::GetAddressClass () const
+{
+    Module *module = GetModule();
+    if (module)
+    {
+        ObjectFile *obj_file = module->GetObjectFile();
+        if (obj_file)
+            return obj_file->GetAddressClass (GetFileAddress());
+    }
+    return eAddressClassUnknown;
+}

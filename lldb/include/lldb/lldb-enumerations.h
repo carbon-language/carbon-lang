@@ -77,6 +77,21 @@ typedef enum AddressType
     eAddressTypeHost  ///< Address is an address in the process that is running this code
 } AddressType;
 
+    //----------------------------------------------------------------------
+    // Address Types
+    //----------------------------------------------------------------------
+typedef enum AddressClass
+{
+    eAddressClassInvalid,
+    eAddressClassUnknown,
+    eAddressClassCode,
+    eAddressClassCodeAlternateISA,
+    eAddressClassData,
+    eAddressClassDataConst,
+    eAddressClassDebug,
+    eAddressClassRuntime
+} AddressClass;
+
 //----------------------------------------------------------------------
 // Byte ordering definitions
 //----------------------------------------------------------------------

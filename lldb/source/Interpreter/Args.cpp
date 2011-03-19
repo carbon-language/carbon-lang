@@ -754,6 +754,47 @@ Args::StringToBoolean (const char *s, bool fail_value, bool *success_ptr)
     return fail_value;
 }
 
+const char *
+Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update)
+{
+    major = UINT32_MAX;
+    minor = UINT32_MAX;
+    update = UINT32_MAX;
+
+    if (s && s[0])
+    {
+        char *pos = NULL;
+        uint32_t uval32;
+        uval32 = ::strtoul (s, &pos, 0);
+        if (pos == s)
+            return s;
+        major = uval32;
+        if (*pos == '\0')
+        {
+            return pos;   // Decoded major and got end of string
+        }
+        else if (*pos == '.')
+        {
+            const char *minor_cstr = pos + 1;
+            uval32 = ::strtoul (minor_cstr, &pos, 0);
+            if (pos == minor_cstr)
+                return pos; // Didn't get any digits for the minor version...
+            minor = uval32;
+            if (*pos == '.')
+            {
+                const char *update_cstr = pos + 1;
+                uval32 = ::strtoul (update_cstr, &pos, 0);
+                if (pos == update_cstr)
+                    return pos;
+                update = uval32;
+            }
+            return pos;
+        }
+    }
+    return 0;
+}
+
+
 int32_t
 Args::StringToOptionEnum (const char *s, lldb::OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr)
 {    

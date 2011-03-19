@@ -80,6 +80,10 @@
 		266A42D6128E3FFB0090CF7C /* ClangNamespaceDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */; };
 		266A42D8128E40040090CF7C /* ClangNamespaceDecl.h in Headers */ = {isa = PBXBuildFile; fileRef = 266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */; };
 		266F5CBC12FC846200DFCE33 /* Config.h in Headers */ = {isa = PBXBuildFile; fileRef = 266F5CBB12FC846200DFCE33 /* Config.h */; };
+		2675F7001332BE690067997B /* PlatformRemoteiOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2675F6FE1332BE690067997B /* PlatformRemoteiOS.cpp */; };
+		2675F7011332BE690067997B /* PlatformRemoteiOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 2675F6FF1332BE690067997B /* PlatformRemoteiOS.h */; };
+		26879CE61333F5750012C1F8 /* CommandObjectPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = 26879CE51333F5750012C1F8 /* CommandObjectPlatform.h */; };
+		26879CE81333F58B0012C1F8 /* CommandObjectPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26879CE71333F58B0012C1F8 /* CommandObjectPlatform.cpp */; };
 		268A683F1321B53B000E3FB8 /* DynamicLoaderStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */; };
 		268A68401321B53B000E3FB8 /* DynamicLoaderStatic.h in Headers */ = {isa = PBXBuildFile; fileRef = 268A683E1321B53B000E3FB8 /* DynamicLoaderStatic.h */; };
 		268DA872130095D000C9483A /* Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 268DA871130095D000C9483A /* Terminal.h */; };
@@ -611,12 +615,16 @@
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
 		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; };
 		2672D8471189055500FF4019 /* CommandObjectFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectFrame.h; path = source/Commands/CommandObjectFrame.h; sourceTree = "<group>"; };
+		2675F6FE1332BE690067997B /* PlatformRemoteiOS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformRemoteiOS.cpp; sourceTree = "<group>"; };
+		2675F6FF1332BE690067997B /* PlatformRemoteiOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformRemoteiOS.h; sourceTree = "<group>"; };
 		2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorGDBRemote.cpp; path = source/Utility/StringExtractorGDBRemote.cpp; sourceTree = "<group>"; };
 		2676A094119C93C8008A98EF /* StringExtractorGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractorGDBRemote.h; path = source/Utility/StringExtractorGDBRemote.h; sourceTree = "<group>"; };
 		2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PseudoTerminal.cpp; path = source/Utility/PseudoTerminal.cpp; sourceTree = "<group>"; };
 		2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PseudoTerminal.h; path = include/lldb/Utility/PseudoTerminal.h; sourceTree = "<group>"; };
 		2682F284115EF3A700CCFF99 /* SBError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBError.cpp; path = source/API/SBError.cpp; sourceTree = "<group>"; };
 		2682F286115EF3BD00CCFF99 /* SBError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBError.h; path = include/lldb/API/SBError.h; sourceTree = "<group>"; };
+		26879CE51333F5750012C1F8 /* CommandObjectPlatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectPlatform.h; path = source/Commands/CommandObjectPlatform.h; sourceTree = "<group>"; };
+		26879CE71333F58B0012C1F8 /* CommandObjectPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectPlatform.cpp; path = source/Commands/CommandObjectPlatform.cpp; sourceTree = "<group>"; };
 		2689B0A4113EE3CD00A4AEDB /* Symbols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Symbols.h; path = include/lldb/Host/Symbols.h; sourceTree = "<group>"; };
 		2689B0B5113EE47E00A4AEDB /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Symbols.cpp; path = source/Host/macosx/Symbols.cpp; sourceTree = "<group>"; };
 		268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderStatic.cpp; sourceTree = "<group>"; };
@@ -1935,6 +1943,8 @@
 				264AD83711095BA600E0B039 /* CommandObjectLog.cpp */,
 				26BC7D1D10F1B76300F91463 /* CommandObjectMemory.h */,
 				26BC7E3610F1B84700F91463 /* CommandObjectMemory.cpp */,
+				26879CE51333F5750012C1F8 /* CommandObjectPlatform.h */,
+				26879CE71333F58B0012C1F8 /* CommandObjectPlatform.cpp */,
 				26BC7D1F10F1B76300F91463 /* CommandObjectProcess.h */,
 				26BC7E3810F1B84700F91463 /* CommandObjectProcess.cpp */,
 				26BC7D2010F1B76300F91463 /* CommandObjectQuit.h */,
@@ -2169,6 +2179,8 @@
 			children = (
 				26C5577B132575AD008FD8FE /* PlatformMacOSX.cpp */,
 				26C5577C132575AD008FD8FE /* PlatformMacOSX.h */,
+				2675F6FE1332BE690067997B /* PlatformRemoteiOS.cpp */,
+				2675F6FF1332BE690067997B /* PlatformRemoteiOS.h */,
 			);
 			path = MacOSX;
 			sourceTree = "<group>";
@@ -2415,6 +2427,8 @@
 				264A43BC1320B3B4005B4096 /* Platform.h in Headers */,
 				268A68401321B53B000E3FB8 /* DynamicLoaderStatic.h in Headers */,
 				26C557811325781D008FD8FE /* PlatformMacOSX.h in Headers */,
+				2675F7011332BE690067997B /* PlatformRemoteiOS.h in Headers */,
+				26879CE61333F5750012C1F8 /* CommandObjectPlatform.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2924,6 +2938,8 @@
 				264A43BE1320BCEB005B4096 /* Platform.cpp in Sources */,
 				268A683F1321B53B000E3FB8 /* DynamicLoaderStatic.cpp in Sources */,
 				26C557801325781A008FD8FE /* PlatformMacOSX.cpp in Sources */,
+				2675F7001332BE690067997B /* PlatformRemoteiOS.cpp in Sources */,
+				26879CE81333F58B0012C1F8 /* CommandObjectPlatform.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3104,7 +3120,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -3161,7 +3177,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",
@@ -3284,7 +3300,7 @@
 					"$(LLVM_BUILD_DIR)",
 				);
 				LLVM_BUILD_DIR = "$(DERIVED_FILE_DIR)/llvm.build";
-				LLVM_CONFIGURATION = Release;
+				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = (
 					"-DFOR_DYLD=0",
 					"-DSUPPORT_REMOTE_UNWINDING",

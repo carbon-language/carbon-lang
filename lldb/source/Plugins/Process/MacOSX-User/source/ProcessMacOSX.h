@@ -192,12 +192,6 @@ public:
     //----------------------------------------------------------------------
     // Process Breakpoints
     //----------------------------------------------------------------------
-    virtual size_t
-    GetSoftwareBreakpointTrapOpcode (lldb_private::BreakpointSite *bp_site);
-
-    //----------------------------------------------------------------------
-    // Process Breakpoints
-    //----------------------------------------------------------------------
     virtual lldb_private::Error
     EnableBreakpoint (lldb_private::BreakpointSite *bp_site);
 

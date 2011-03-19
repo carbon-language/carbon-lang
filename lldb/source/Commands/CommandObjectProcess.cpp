@@ -523,7 +523,7 @@ public:
                 const char *partial_name = NULL;
                 partial_name = input.GetArgumentAtIndex(opt_arg_pos);
 
-                PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+                PlatformSP platform_sp (interpeter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
                 if (platform_sp)
                 {
                     ProcessInfoList process_infos;
@@ -703,7 +703,7 @@ public:
                     if (attach_pid == LLDB_INVALID_PROCESS_ID && wait_name != NULL)
                     {
                         ProcessInfoList process_infos;
-                        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+                        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
                         if (platform_sp)
                         {
                             platform_sp->FindProcessesByName (wait_name, eNameMatchEquals, process_infos);

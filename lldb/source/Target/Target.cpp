@@ -39,8 +39,9 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Target constructor
 //----------------------------------------------------------------------
-Target::Target(Debugger &debugger) :
+Target::Target(Debugger &debugger, const lldb::PlatformSP &platform_sp) :
     Broadcaster("lldb.target"),
+    m_platform_sp (platform_sp),
     TargetInstanceSettings (*GetSettingsController()),
     m_debugger (debugger),
     m_mutex (Mutex::eMutexTypeRecursive), 
@@ -418,33 +419,21 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         
         FileSpecList dependent_files;
         ObjectFile *executable_objfile = executable_sp->GetObjectFile();
-        assert (executable_objfile);
-        // TODO: remote assertion above after verifying that it doesn't fire off
-        // after the platform changes. The platform is what should be selecting
-        // the right slice of an executable file, and it also should be the one
-        // to resolve any executables in their bundles.
-//        if (executable_objfile == NULL)
-//        {
-//
-//            FileSpec bundle_executable(executable_sp->GetFileSpec());
-//            if (Host::ResolveExecutableInBundle (bundle_executable))
-//            {
-//                ModuleSP bundle_exe_module_sp(GetSharedModule(bundle_executable,
-//                                                              exe_arch));
-//                SetExecutableModule (bundle_exe_module_sp, get_dependent_files);
-//                if (bundle_exe_module_sp->GetObjectFile() != NULL)
-//                    executable_sp = bundle_exe_module_sp;
-//                return;
-//            }
-//        }
 
         if (executable_objfile)
         {
             executable_objfile->GetDependentModules(dependent_files);
             for (uint32_t i=0; i<dependent_files.GetSize(); i++)
             {
-                ModuleSP image_module_sp(GetSharedModule(dependent_files.GetFileSpecPointerAtIndex(i),
-                                                         exe_arch));
+                FileSpec dependent_file_spec (dependent_files.GetFileSpecPointerAtIndex(i));
+                FileSpec platform_dependent_file_spec;
+                if (m_platform_sp)
+                    m_platform_sp->GetFile (dependent_file_spec, platform_dependent_file_spec);
+                else
+                    platform_dependent_file_spec = dependent_file_spec;
+
+                ModuleSP image_module_sp(GetSharedModule (platform_dependent_file_spec,
+                                                          exe_arch));
                 if (image_module_sp.get())
                 {
                     //image_module_sp->Dump(&s);// REMOVE THIS, DEBUG ONLY

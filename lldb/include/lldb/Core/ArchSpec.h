@@ -43,6 +43,9 @@ public:
         eCore_arm_armv5t,
         eCore_arm_armv6,
         eCore_arm_armv7,
+        eCore_arm_armv7f,
+        eCore_arm_armv7k,
+        eCore_arm_armv7s,
         eCore_arm_xscale,        
         
         eCore_ppc_generic,

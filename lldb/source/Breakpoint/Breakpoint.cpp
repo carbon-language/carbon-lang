@@ -412,7 +412,7 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
         // Verbose mode does a debug dump of the breakpoint
         Dump (s);
         s->EOL ();
-        s->Indent();
+            //s->Indent();
         GetOptions()->GetDescription(s, level);
         break;
 

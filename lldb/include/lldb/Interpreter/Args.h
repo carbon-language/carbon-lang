@@ -357,6 +357,9 @@ public:
     static Error
     StringToFormat (const char *s, lldb::Format &format);
 
+    static const char *
+    StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update);
+
     // This one isn't really relevant to Arguments per se, but we're using the Args as a
     // general strings container, so...
     void

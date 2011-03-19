@@ -101,7 +101,6 @@ public:
         m_execution_os_type = execution_os_type;
     }
     
-
 protected:
 
     void
@@ -175,7 +174,7 @@ private:
     ///
     /// @see TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
     //------------------------------------------------------------------
-    Target(Debugger &debugger);
+    Target(Debugger &debugger, const lldb::PlatformSP &platform_sp);
 
 public:
     ~Target();
@@ -641,6 +640,12 @@ public:
         return (*pos).second;
     }
     
+    lldb::PlatformSP
+    GetPlatform ()
+    {
+        return m_platform_sp;
+    }
+
     //------------------------------------------------------------------
     // Target::SettingsController
     //------------------------------------------------------------------
@@ -694,6 +699,7 @@ protected:
     // Member variables.
     //------------------------------------------------------------------
     Debugger &      m_debugger;
+    lldb::PlatformSP m_platform_sp;     ///< The platform for this target.
     Mutex           m_mutex;            ///< An API mutex that is used by the lldb::SB* classes make the SB interface thread safe
     ArchSpec        m_arch_spec;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).

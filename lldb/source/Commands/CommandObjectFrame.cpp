@@ -319,7 +319,8 @@ public:
             case 'L':   show_location= true;  break;
             case 'c':   show_decl    = true;  break;
             case 'D':   debug        = true;  break;
-            case 'f':   flat_output  = true;  break;
+            case 'f':   error = Args::StringToFormat(option_arg, format); break;
+            case 'F':   flat_output  = true;  break;
             case 'd':
                 max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
                 if (!success)
@@ -367,6 +368,7 @@ public:
             flat_output   = false;
             max_depth     = UINT32_MAX;
             ptr_depth     = 0;
+            format        = eFormatDefault;
             globals.clear();
         }
 
@@ -393,6 +395,7 @@ public:
              flat_output:1;
         uint32_t max_depth; // The depth to print when dumping concrete (not pointers) aggreate values
         uint32_t ptr_depth; // The default depth that is dumped when we find pointers
+        lldb::Format format; // The format to use when dumping variables or children of variables
         std::vector<ConstString> globals;
         // Instance variables to hold the values for command options.
     };
@@ -491,6 +494,9 @@ public:
 
                                     if (valobj_sp)
                                     {
+                                        if (m_options.format != eFormatDefault)
+                                            valobj_sp->SetFormat (m_options.format);
+
                                         if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
                                         {
                                             var_sp->GetDeclaration ().DumpStopContext (&s, false);
@@ -550,6 +556,9 @@ public:
                                             valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
                                             if (valobj_sp)
                                             {
+                                                if (m_options.format != eFormatDefault)
+                                                    valobj_sp->SetFormat (m_options.format);
+                                                
                                                 if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
                                                 {
                                                     var_sp->GetDeclaration ().DumpStopContext (&s, false);
@@ -593,6 +602,9 @@ public:
                             valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, expr_path_options, error);
                             if (valobj_sp)
                             {
+                                if (m_options.format != eFormatDefault)
+                                    valobj_sp->SetFormat (m_options.format);
+                                
                                 if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
                                 {
                                     var_sp->GetDeclaration ().DumpStopContext (&s, false);
@@ -672,6 +684,9 @@ public:
                                 valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
                                 if (valobj_sp)
                                 {
+                                    if (m_options.format != eFormatDefault)
+                                        valobj_sp->SetFormat (m_options.format);
+                                    
                                     // When dumping all variables, don't print any variables
                                     // that are not in scope to avoid extra unneeded output
                                     if (valobj_sp->IsInScope (exe_ctx.frame))
@@ -726,7 +741,8 @@ CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name, print as an Objective-C object."},
 { LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
 { LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
-{ LLDB_OPT_SET_1, false, "flat",       'f', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},
+{ LLDB_OPT_SET_1, false, "flat",       'F', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},
+{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the variable output should use."},
 { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 #pragma mark CommandObjectMultiwordFrame

@@ -830,3 +830,48 @@ Host::GetEnvironment (StringList &env)
     return i;
         
 }
+
+
+bool
+Host::GetOSVersion 
+(
+    uint32_t &major, 
+    uint32_t &minor, 
+    uint32_t &update
+)
+{
+    
+    SInt32 version;
+    
+    OSErr err = ::Gestalt (gestaltSystemVersion, &version);
+    if (err != noErr) 
+        return false;
+
+    if (version < 0x1040)
+    {
+        major = ((version & 0xF000) >> 12) * 10 + ((version & 0x0F00) >> 8);
+        minor = (version & 0x00F0) >> 4;
+        update = (version & 0x000F);
+    }
+    else
+    {
+        if (::Gestalt (gestaltSystemVersionMajor, &version) != noErr)
+            return false;
+        major = version;
+
+        if (::Gestalt (gestaltSystemVersionMinor, &version) == noErr)
+            minor = version;
+        else
+            minor = 0;
+
+        if (::Gestalt (gestaltSystemVersionBugFix, &version) == noErr)
+            update = version;
+        else
+            update = 0;
+    }
+    
+    return true;
+
+}
+
+

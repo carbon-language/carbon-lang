@@ -12,6 +12,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
@@ -60,6 +61,8 @@ TargetList::CreateTarget
                         file.GetFilename().AsCString(),
                         arch.GetArchitectureName());
     Error error;
+
+    PlatformSP platform_sp (debugger.GetPlatformList().GetSelectedPlatform ());
     
     if (file)
     {
@@ -67,7 +70,6 @@ TargetList::CreateTarget
         FileSpec resolved_file(file);
         ArchSpec platform_arch;
         
-        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
         if (platform_sp)
             error = platform_sp->ResolveExecutable (file, arch, exe_module_sp);
 
@@ -92,7 +94,7 @@ TargetList::CreateTarget
                 }
                 return error;
             }
-            target_sp.reset(new Target(debugger));
+            target_sp.reset(new Target(debugger, platform_sp));
             target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
         }
     }
@@ -100,7 +102,7 @@ TargetList::CreateTarget
     {
         // No file was specified, just create an empty target with any arch
         // if a valid arch was specified
-        target_sp.reset(new Target(debugger));
+        target_sp.reset(new Target(debugger, platform_sp));
         if (arch.IsValid())
             target_sp->SetArchitecture(arch);
     }

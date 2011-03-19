@@ -31,8 +31,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-static
-int DataExtractorByteReader(uint8_t *byte, uint64_t address, void *arg)
+static int 
+DataExtractorByteReader(uint8_t *byte, uint64_t address, void *arg)
 {
     DataExtractor &extractor = *((DataExtractor *)arg);
 
@@ -66,7 +66,7 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
     uint64_t instructionPointer = ((RegisterReaderArg*)arg)->instructionPointer;
     EDDisassemblerRef disassembler = ((RegisterReaderArg*)arg)->disassembler;
 
-    if(EDRegisterIsProgramCounter(disassembler, regID)) {
+    if (EDRegisterIsProgramCounter(disassembler, regID)) {
         *value = instructionPointer;
         return 0;
     }
@@ -371,13 +371,26 @@ DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
 
 DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
     Disassembler (arch),
-    m_disassembler (NULL)
+    m_disassembler (NULL),
+    m_disassembler_thumb (NULL) // For ARM only
 {
     const std::string &arch_triple = arch.GetTriple().str();
     if (!arch_triple.empty())
     {
         if (EDGetDisassembler(&m_disassembler, arch_triple.c_str(), SyntaxForArchSpec (arch)))
             m_disassembler = NULL;
+        llvm::Triple::ArchType llvm_arch = arch.GetTriple().getArch();
+        if (llvm_arch == llvm::Triple::arm)
+        {
+            if (EDGetDisassembler(&m_disassembler_thumb, "thumb-apple-darwin", kEDAssemblySyntaxARMUAL))
+                m_disassembler_thumb = NULL;
+        }
+        else if (llvm_arch == llvm::Triple::thumb)
+        {
+            m_disassembler_thumb = m_disassembler;
+            if (EDGetDisassembler(&m_disassembler, "arm-apple-darwin-unknown", kEDAssemblySyntaxARMUAL))
+                m_disassembler = NULL;
+        }
     }
 }
 
@@ -405,7 +418,18 @@ DisassemblerLLVM::DecodeInstructions
     {
         Address inst_addr (base_addr);
         inst_addr.Slide(data_offset);
-        InstructionSP inst_sp (new InstructionLLVM(m_disassembler, inst_addr));
+
+        bool use_thumb = false;
+        // If we have a thumb disassembler, then we have an ARM architecture
+        // so we need to check what the instruction address class is to make
+        // sure we shouldn't be disassembling as thumb...
+        if (m_disassembler_thumb)
+        {
+            if (inst_addr.GetAddressClass () == eAddressClassCodeAlternateISA)
+                use_thumb = true;
+        }
+        InstructionSP inst_sp (new InstructionLLVM (use_thumb ? m_disassembler_thumb : m_disassembler, 
+                                                    inst_addr));
 
         size_t inst_byte_size = inst_sp->Extract (data, data_offset);
 

@@ -1,4 +1,4 @@
-//===-- PlatformMacOSX.h ----------------------------------------*- C++ -*-===//
+//===-- PlatformRemoteiOS.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_PlatformMacOSX_h_
-#define liblldb_PlatformMacOSX_h_
+#ifndef liblldb_PlatformRemoteiOS_h_
+#define liblldb_PlatformRemoteiOS_h_
 
 // C Includes
 // C++ Includes
@@ -18,9 +18,12 @@
 
 namespace lldb_private {
 
-    class PlatformMacOSX : public Platform
+    class PlatformRemoteiOS : public Platform
     {
     public:
+
+        static Platform* 
+        CreateInstance ();
 
         static void
         Initialize ();
@@ -28,24 +31,34 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformMacOSX ();
+        PlatformRemoteiOS ();
 
         virtual
-        ~PlatformMacOSX();
+        ~PlatformRemoteiOS();
 
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
         //------------------------------------------------------------
+        
+        static const char *
+        GetPluginNameStatic ();
+
+        static const char *
+        GetShortPluginNameStatic();
+
+        static const char *
+        GetDescriptionStatic();
+
         virtual const char *
         GetPluginName()
         {
-            return "PlatformMacOSX";
+            return GetPluginNameStatic();
         }
         
         virtual const char *
         GetShortPluginName()
         {
-            return "local-macosx";
+            return GetShortPluginNameStatic();
         }
         
         virtual uint32_t
@@ -53,7 +66,6 @@ namespace lldb_private {
         {
             return 1;
         }
-        
 
         //------------------------------------------------------------
         // lldb_private::Platform functions
@@ -66,7 +78,7 @@ namespace lldb_private {
         virtual const char *
         GetDescription ()
         {
-            return "The native host platform on MacOSX.";
+            return GetDescriptionStatic();
         }
 
         virtual void
@@ -90,8 +102,20 @@ namespace lldb_private {
         GetSoftwareBreakpointTrapOpcode (Target &target, 
                                          BreakpointSite *bp_site);
 
+    protected:
+        std::string m_device_support_directory;
+        std::string m_device_support_directory_for_os_version;
+        std::string m_build_update;
+        //std::vector<FileSpec> m_device_support_os_dirs;
+        
+        const char *
+        GetDeviceSupportDirectory();
+
+        const char *
+        GetDeviceSupportDirectoryForOSVersion();
+
     private:
-        DISALLOW_COPY_AND_ASSIGN (PlatformMacOSX);
+        DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);
 
     };
 } // namespace lldb_private

@@ -225,6 +225,7 @@ Debugger::Debugger () :
     m_output_file (),
     m_error_file (),
     m_target_list (),
+    m_platform_list (),
     m_listener ("lldb.Debugger"),
     m_source_manager (),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
@@ -234,6 +235,10 @@ Debugger::Debugger () :
 {
     m_input_comm.SetCloseOnEOF(false);
     m_command_interpreter_ap->Initialize ();
+    // Always add our default platform to the platform list
+    PlatformSP default_platform_sp (Platform::GetDefaultPlatform());
+    assert (default_platform_sp.get());
+    m_platform_list.Append (default_platform_sp, true);
 }
 
 Debugger::~Debugger ()
@@ -262,11 +267,6 @@ Debugger::SetAsyncExecution (bool async_execution)
     m_command_interpreter_ap->SetSynchronous (!async_execution);
 }
 
-void
-Debugger::DisconnectInput()
-{
-    m_input_comm.Clear ();
-}
     
 void
 Debugger::SetInputFileHandle (FILE *fh, bool tranfer_ownership)
@@ -311,26 +311,6 @@ Debugger::SetErrorFileHandle (FILE *fh, bool tranfer_ownership)
         err_file.SetStream (stderr, false);
 }
 
-CommandInterpreter &
-Debugger::GetCommandInterpreter ()
-{
-    assert (m_command_interpreter_ap.get());
-    return *m_command_interpreter_ap;
-}
-
-Listener &
-Debugger::GetListener ()
-{
-    return m_listener;
-}
-
-
-TargetSP
-Debugger::GetSelectedTarget ()
-{
-    return m_target_list.GetSelectedTarget ();
-}
-
 ExecutionContext
 Debugger::GetSelectedExecutionContext ()
 {
@@ -358,19 +338,6 @@ Debugger::GetSelectedExecutionContext ()
     }
     return exe_ctx;
 
-}
-
-SourceManager &
-Debugger::GetSourceManager ()
-{
-    return m_source_manager;
-}
-
-
-TargetList&
-Debugger::GetTargetList ()
-{
-    return m_target_list;
 }
 
 InputReaderSP 

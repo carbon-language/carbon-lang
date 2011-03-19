@@ -65,7 +65,6 @@ class   DWARFExpression;
 class   DataBuffer;
 class   DataExtractor;
 class   Debugger;
-class   Debugger;
 class   Declaration;
 class   Disassembler;
 class   DynamicLoader;

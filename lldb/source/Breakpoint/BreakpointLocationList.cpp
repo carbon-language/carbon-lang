@@ -133,7 +133,7 @@ void
 BreakpointLocationList::Dump (Stream *s) const
 {
     s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-    s->Indent();
+    //s->Indent();
     Mutex::Locker locker (m_mutex);
     s->Printf("BreakpointLocationList with %zu BreakpointLocations:\n", m_locations.size());
     s->IndentMore();

@@ -1726,8 +1726,8 @@ public:
     //----------------------------------------------------------------------
     // Process Breakpoints
     //----------------------------------------------------------------------
-    virtual size_t
-    GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site) = 0;
+    size_t
+    GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site);
 
     virtual Error
     EnableBreakpoint (BreakpointSite *bp_site) = 0;

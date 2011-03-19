@@ -24,6 +24,7 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/TargetList.h"
 
 namespace lldb_private {
@@ -320,16 +321,29 @@ public:
     }
 
     CommandInterpreter &
-    GetCommandInterpreter ();
+    GetCommandInterpreter ()
+    {
+        assert (m_command_interpreter_ap.get());
+        return *m_command_interpreter_ap;
+    }
 
     Listener &
-    GetListener ();
+    GetListener ()
+    {
+        return m_listener;
+    }
 
     SourceManager &
-    GetSourceManager ();
+    GetSourceManager ()
+    {
+        return m_source_manager;
+    }
 
     lldb::TargetSP
-    GetSelectedTarget ();
+    GetSelectedTarget ()
+    {
+        return m_target_list.GetSelectedTarget ();
+    }
 
     ExecutionContext
     GetSelectedExecutionContext();
@@ -344,8 +358,17 @@ public:
     /// @return
     ///     A global shared target list.
     //------------------------------------------------------------------
-    TargetList&
-    GetTargetList ();
+    TargetList &
+    GetTargetList ()
+    {
+        return m_target_list;
+    }
+
+    PlatformList &
+    GetPlatformList ()
+    {
+        return m_platform_list;
+    }
 
     void
     DispatchInputInterrupt ();
@@ -410,13 +433,17 @@ protected:
     CheckIfTopInputReaderIsDone ();
     
     void
-    DisconnectInput();
+    DisconnectInput()
+    {
+        m_input_comm.Clear ();
+    }
 
     Communication m_input_comm;
     StreamFile m_input_file;
     StreamFile m_output_file;
     StreamFile m_error_file;
     TargetList m_target_list;
+    PlatformList m_platform_list;
     Listener m_listener;
     SourceManager m_source_manager;
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;

@@ -100,6 +100,7 @@ protected:
     }
 
     EDDisassemblerRef m_disassembler;
+    EDDisassemblerRef m_disassembler_thumb;
 };
 
 #endif  // liblldb_DisassemblerLLVM_h_

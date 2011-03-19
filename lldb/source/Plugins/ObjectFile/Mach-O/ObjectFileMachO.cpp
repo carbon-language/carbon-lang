@@ -29,6 +29,7 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
 
+#define MACHO_NLIST_ARM_SYMBOL_IS_THUMB 0x0008
 
 void
 ObjectFileMachO::Initialize()
@@ -201,6 +202,108 @@ ObjectFileMachO::GetAddressByteSize () const
     return m_data.GetAddressByteSize ();
 }
 
+lldb::AddressClass
+ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
+{
+    Symtab *symtab = GetSymtab();
+    if (symtab)
+    {
+        Symbol *symbol = symtab->FindSymbolContainingFileAddress(file_addr);
+        if (symbol)
+        {
+            const AddressRange *range_ptr = symbol->GetAddressRangePtr();
+            if (range_ptr)
+            {
+                const Section *section = range_ptr->GetBaseAddress().GetSection();
+                if (section)
+                {
+                    const lldb::SectionType section_type = section->GetType();
+                    switch (section_type)
+                    {
+                    case eSectionTypeInvalid:               return eAddressClassUnknown;
+                    case eSectionTypeCode:
+                        if (m_header.cputype == llvm::MachO::CPUTypeARM)
+                        {
+                            // For ARM we have a bit in the n_desc field of the symbol
+                            // that tells us ARM/Thumb which is bit 0x0008.
+                            if (symbol->GetFlags() & MACHO_NLIST_ARM_SYMBOL_IS_THUMB)
+                                return eAddressClassCodeAlternateISA;
+                        }
+                        return eAddressClassCode;
+
+                    case eSectionTypeContainer:             return eAddressClassUnknown;
+                    case eSectionTypeData:                  return eAddressClassData;
+                    case eSectionTypeDataCString:           return eAddressClassDataConst;
+                    case eSectionTypeDataCStringPointers:   return eAddressClassData;
+                    case eSectionTypeDataSymbolAddress:     return eAddressClassData;
+                    case eSectionTypeData4:                 return eAddressClassData;
+                    case eSectionTypeData8:                 return eAddressClassData;
+                    case eSectionTypeData16:                return eAddressClassData;
+                    case eSectionTypeDataPointers:          return eAddressClassData;
+                    case eSectionTypeZeroFill:              return eAddressClassData;
+                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassDataConst;
+                    case eSectionTypeDataObjCCFStrings:     return eAddressClassDataConst;
+                    case eSectionTypeDebug:                 return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugAbbrev:      return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugAranges:     return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugFrame:       return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugInfo:        return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugLine:        return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugLoc:         return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugMacInfo:     return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugPubNames:    return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugPubTypes:    return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugRanges:      return eAddressClassDebug;
+                    case eSectionTypeDWARFDebugStr:         return eAddressClassDebug;
+                    case eSectionTypeEHFrame:               return eAddressClassRuntime;
+                    case eSectionTypeOther:                 return eAddressClassUnknown;
+                    }
+                }
+            }
+            
+            const lldb::SymbolType symbol_type = symbol->GetType();
+            switch (symbol_type)
+            {
+            case eSymbolTypeAny:            return eAddressClassUnknown;
+            case eSymbolTypeAbsolute:       return eAddressClassUnknown;
+            case eSymbolTypeExtern:         return eAddressClassUnknown;
+                    
+            case eSymbolTypeCode:
+            case eSymbolTypeTrampoline:
+                if (m_header.cputype == llvm::MachO::CPUTypeARM)
+                {
+                    // For ARM we have a bit in the n_desc field of the symbol
+                    // that tells us ARM/Thumb which is bit 0x0008.
+                    if (symbol->GetFlags() & MACHO_NLIST_ARM_SYMBOL_IS_THUMB)
+                        return eAddressClassCodeAlternateISA;
+                }
+                return eAddressClassCode;
+
+            case eSymbolTypeData:           return eAddressClassData;
+            case eSymbolTypeRuntime:        return eAddressClassRuntime;
+            case eSymbolTypeException:      return eAddressClassRuntime;
+            case eSymbolTypeSourceFile:     return eAddressClassDebug;
+            case eSymbolTypeHeaderFile:     return eAddressClassDebug;
+            case eSymbolTypeObjectFile:     return eAddressClassDebug;
+            case eSymbolTypeCommonBlock:    return eAddressClassDebug;
+            case eSymbolTypeBlock:          return eAddressClassDebug;
+            case eSymbolTypeLocal:          return eAddressClassData;
+            case eSymbolTypeParam:          return eAddressClassData;
+            case eSymbolTypeVariable:       return eAddressClassData;
+            case eSymbolTypeVariableType:   return eAddressClassDebug;
+            case eSymbolTypeLineEntry:      return eAddressClassDebug;
+            case eSymbolTypeLineHeader:     return eAddressClassDebug;
+            case eSymbolTypeScopeBegin:     return eAddressClassDebug;
+            case eSymbolTypeScopeEnd:       return eAddressClassDebug;
+            case eSymbolTypeAdditional:     return eAddressClassUnknown;
+            case eSymbolTypeCompiler:       return eAddressClassDebug;
+            case eSymbolTypeInstrumentation:return eAddressClassDebug;
+            case eSymbolTypeUndefined:      return eAddressClassUnknown;
+            }
+        }
+    }
+    return eAddressClassUnknown;
+}
 
 Symtab *
 ObjectFileMachO::GetSymtab()

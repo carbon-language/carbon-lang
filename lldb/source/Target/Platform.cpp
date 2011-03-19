@@ -16,6 +16,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -28,13 +29,6 @@ GetDefaultPlatformSP ()
 {
     static PlatformSP g_default_platform_sp;
     return g_default_platform_sp;
-}
-
-static PlatformSP&
-GetSelectedPlatformSP ()
-{
-    static PlatformSP g_selected_platform_sp;
-    return g_selected_platform_sp;
 }
 
 static Mutex &
@@ -74,24 +68,6 @@ Platform::SetDefaultPlatform (const lldb::PlatformSP &platform_sp)
     GetDefaultPlatformSP () = platform_sp;
 }
 
-PlatformSP
-Platform::GetSelectedPlatform ()
-{
-    PlatformSP platform_sp (GetSelectedPlatformSP ());
-    if (!platform_sp)
-        platform_sp = GetDefaultPlatform (); 
-    return platform_sp;
-}
-
-void
-Platform::SetSelectedPlatform (const lldb::PlatformSP &platform_sp)
-{
-    // The native platform should use its static void Platform::Initialize()
-    // function to register itself as the native platform.
-    GetSelectedPlatformSP () = platform_sp;
-}
-
-
 Error
 Platform::GetFile (const FileSpec &platform_file, FileSpec &local_file)
 {
@@ -102,26 +78,20 @@ Platform::GetFile (const FileSpec &platform_file, FileSpec &local_file)
 
 
 PlatformSP
-Platform::ConnectRemote (const char *platform_name, const char *remote_connect_url, Error &error)
+Platform::Create (const char *platform_name, Error &error)
 {
     PlatformCreateInstance create_callback = NULL;
     lldb::PlatformSP platform_sp;
-    if (platform_name)
+    if (platform_name && platform_name[0])
     {
         create_callback = PluginManager::GetPlatformCreateCallbackForPluginName (platform_name);
         if (create_callback)
-        {
             platform_sp.reset(create_callback());
-            if (platform_sp)
-                error = platform_sp->ConnectRemote (remote_connect_url);
-            else
-                error.SetErrorStringWithFormat ("unable to create a platform instance of \"%s\"", platform_name);
-        }
         else
-            error.SetErrorStringWithFormat ("invalid platform name \"%s\"", platform_name);
+            error.SetErrorStringWithFormat ("unable to find a plug-in for the platform named \"%s\"", platform_name);
     }
     else
-        error.SetErrorString ("Empty platform name");
+        error.SetErrorString ("invalid platform name");
     return platform_sp;
 }
 
@@ -147,8 +117,15 @@ Platform::GetConnectedRemotePlatformAtIndex (uint32_t idx)
 //------------------------------------------------------------------
 /// Default Constructor
 //------------------------------------------------------------------
-Platform::Platform () :
-    m_remote_url ()
+Platform::Platform (bool is_host) :
+    m_is_host (is_host),
+    m_is_connected (is_host), // If this is the default host platform, then we are always connected
+    m_os_version_set_while_connected (false),
+    m_system_arch_set_while_connected (false),
+    m_remote_url (),
+    m_major_os_version (UINT32_MAX),
+    m_minor_os_version (UINT32_MAX),
+    m_update_os_version (UINT32_MAX)
 {
 }
 
@@ -161,6 +138,98 @@ Platform::Platform () :
 Platform::~Platform()
 {
 }
+
+
+bool
+Platform::GetOSVersion (uint32_t &major, 
+                        uint32_t &minor, 
+                        uint32_t &update)
+{
+    bool success = m_major_os_version != UINT32_MAX;
+    if (IsHost())
+    {
+        if (!success)
+        {
+            // We have a local host platform
+            success = Host::GetOSVersion (m_major_os_version, 
+                                          m_minor_os_version, 
+                                          m_update_os_version);
+            m_os_version_set_while_connected = success;
+        }
+    }
+    else 
+    {
+        // We have a remote platform. We can only fetch the remote
+        // OS version if we are connected, and we don't want to do it
+        // more than once.
+        
+        const bool is_connected = IsConnected();
+
+        bool fetch_os_version = false;
+        if (success)
+        {
+            // We have valid OS version info, check to make sure it wasn't
+            // manually set prior to connecting. If it was manually set prior
+            // to connecting, then lets fetch the actual OS version info
+            // if we are now connected.
+            if (is_connected && !m_os_version_set_while_connected)
+                fetch_os_version = true;
+        }
+        else
+        {
+            // We don't have valid OS version info, fetch it if we are connected
+            fetch_os_version = is_connected;
+        }
+
+        if (fetch_os_version)
+        {
+            success = FetchRemoteOSVersion ();
+            m_os_version_set_while_connected = success;
+        }
+    }
+
+    if (success)
+    {
+        major = m_major_os_version;
+        minor = m_minor_os_version;
+        update = m_update_os_version;
+    }
+    return success;
+}
+   
+bool
+Platform::SetOSVersion (uint32_t major, 
+                        uint32_t minor, 
+                        uint32_t update)
+{
+    if (IsHost())
+    {
+        // We don't need anyone setting the OS version for the host platform, 
+        // we should be able to figure it out by calling Host::GetOSVersion(...).
+        return false; 
+    }
+    else
+    {
+        // We have a remote platform, allow setting the target OS version if
+        // we aren't connected, since if we are connected, we should be able to
+        // request the remote OS version from the connected platform.
+        if (IsConnected())
+            return false;
+        else
+        {
+            // We aren't connected and we might want to set the OS version
+            // ahead of time before we connect so we can peruse files and
+            // use a local SDK or PDK cache of support files to disassemble
+            // or do other things.
+            m_major_os_version = major;
+            m_minor_os_version = minor;
+            m_update_os_version = update;
+            return true;
+        }
+    }
+    return false;
+}
+
 
 Error
 Platform::ResolveExecutable (const FileSpec &exe_file,
@@ -212,6 +281,53 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
     }
     return error;
 }
+
+
+const ArchSpec &
+Platform::GetSystemArchitecture()
+{
+    if (IsHost())
+    {
+        if (!m_system_arch.IsValid())
+        {
+            // We have a local host platform
+            m_system_arch = Host::GetArchitecture();
+            m_system_arch_set_while_connected = m_system_arch.IsValid();
+        }
+    }
+    else 
+    {
+        // We have a remote platform. We can only fetch the remote
+        // system architecture if we are connected, and we don't want to do it
+        // more than once.
+        
+        const bool is_connected = IsConnected();
+
+        bool fetch = false;
+        if (m_system_arch.IsValid())
+        {
+            // We have valid OS version info, check to make sure it wasn't
+            // manually set prior to connecting. If it was manually set prior
+            // to connecting, then lets fetch the actual OS version info
+            // if we are now connected.
+            if (is_connected && !m_system_arch_set_while_connected)
+                fetch = true;
+        }
+        else
+        {
+            // We don't have valid OS version info, fetch it if we are connected
+            fetch = is_connected;
+        }
+
+        if (fetch)
+        {
+            m_system_arch = FetchRemoteSystemArchitecture ();
+            m_system_arch_set_while_connected = m_system_arch.IsValid();
+        }
+    }
+    return m_system_arch;
+}
+
 
 Error
 Platform::ConnectRemote (const char *remote_url)

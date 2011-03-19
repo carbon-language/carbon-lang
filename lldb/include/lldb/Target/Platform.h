@@ -58,44 +58,19 @@ namespace lldb_private {
         static void
         SetDefaultPlatform (const lldb::PlatformSP &platform_sp);
 
-        //------------------------------------------------------------------
-        /// Select the active platform.
-        ///
-        /// In order to debug remotely, other platform's can be remotely
-        /// connected to and set as the selected platform for any subsequent
-        /// debugging. This allows connection to remote targets and allows
-        /// the ability to discover process info, launch and attach to remote
-        /// processes.
-        //------------------------------------------------------------------
         static lldb::PlatformSP
-        GetSelectedPlatform ();
-
-        static void
-        SetSelectedPlatform (const lldb::PlatformSP &platform_sp);
-
-        //------------------------------------------------------------------
-        /// Connect to a remote platform
-        ///
-        /// When connecting to a remote platform, the name of that platform
-        /// (the short plug-in name) is required, along with a URL that the
-        /// platform plug-in can use to remotely attach.
-        //------------------------------------------------------------------
-        static lldb::PlatformSP
-        ConnectRemote (const char *platform_name, 
-                       const char *remote_connect_url, 
-                       Error &error);
+        Create (const char *platform_name, Error &error);
 
         static uint32_t
         GetNumConnectedRemotePlatforms ();
         
         static lldb::PlatformSP
         GetConnectedRemotePlatformAtIndex (uint32_t idx);
-        
 
         //------------------------------------------------------------------
         /// Default Constructor
         //------------------------------------------------------------------
-        Platform ();
+        Platform (bool is_host_platform);
 
         //------------------------------------------------------------------
         /// Destructor.
@@ -130,6 +105,44 @@ namespace lldb_private {
                            const ArchSpec &arch,
                            lldb::ModuleSP &module_sp);
 
+        bool
+        GetOSVersion (uint32_t &major, 
+                      uint32_t &minor, 
+                      uint32_t &update);
+           
+        bool
+        SetOSVersion (uint32_t major, 
+                      uint32_t minor, 
+                      uint32_t update);
+
+        virtual const char *
+        GetDescription () = 0;
+
+        //------------------------------------------------------------------
+        /// Report the current status for this platform. 
+        ///
+        /// The returned string usually involves returning the OS version
+        /// (if available), and any SDK directory that might be being used
+        /// for local file caching, and if connected a quick blurb about
+        /// what this platform is connected to.
+        //------------------------------------------------------------------        
+        virtual void
+        GetStatus (Stream &strm) = 0;
+
+        //------------------------------------------------------------------
+        // Subclasses must be able to fetch the current OS version
+        //
+        // Remote classes must be connected for this to succeed. Local 
+        // subclasses don't need to override this function as it will just
+        // call the Host::GetOSVersion().
+        //------------------------------------------------------------------
+protected:
+        virtual bool
+        FetchRemoteOSVersion ()
+        {
+            return false;
+        }
+        
         //------------------------------------------------------------------
         /// Locate a file for a platform.
         ///
@@ -149,6 +162,7 @@ namespace lldb_private {
         /// @return
         ///     An error object.
         //------------------------------------------------------------------
+public:
         virtual Error
         GetFile (const FileSpec &platform_file, FileSpec &local_file);
 
@@ -175,6 +189,10 @@ namespace lldb_private {
         //------------------------------------------------------------------
         virtual bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) = 0;
+
+        virtual size_t
+        GetSoftwareBreakpointTrapOpcode (Target &target,
+                                         BreakpointSite *bp_site) = 0;
 
         //------------------------------------------------------------------
         /// Launch a new process.
@@ -291,10 +309,57 @@ namespace lldb_private {
             return m_remote_url;
         }
 
+        bool
+        IsHost () const
+        {
+            return m_is_host;    // Is this the default host platform?
+        }
+
+        bool
+        IsRemote () const
+        {
+            return !m_is_host;
+        }
+        
+        bool
+        IsConnected () const
+        {
+            return m_is_connected;
+        }
+        
+        const ArchSpec &
+        GetSystemArchitecture();
+
+        void
+        SetSystemArchitecture (const ArchSpec &arch)
+        {
+            m_system_arch = arch;
+            if (IsHost())
+                m_os_version_set_while_connected = m_system_arch.IsValid();
+        }
+
+        // Remote Platform subclasses need to override this function
+        virtual ArchSpec
+        FetchRemoteSystemArchitecture ()
+        {
+            return ArchSpec(); // Return an invalid architecture
+        }
+
     protected:
-        
+        bool m_is_host;
+        bool m_is_connected;
+        // Set to true when we are able to actually set the OS version while 
+        // being connected. For remote platforms, we might set the version ahead
+        // of time before we actually connect and this version might change when
+        // we actually connect to a remote platform. For the host platform this
+        // will be set to the once we call Host::GetOSVersion().
+        bool m_os_version_set_while_connected;
+        bool m_system_arch_set_while_connected;
         std::string m_remote_url;
-        
+        uint32_t m_major_os_version;
+        uint32_t m_minor_os_version;
+        uint32_t m_update_os_version;
+        ArchSpec m_system_arch; // The architecture of the kernel or the remote platform
     private:
         DISALLOW_COPY_AND_ASSIGN (Platform);
     };
@@ -314,10 +379,12 @@ namespace lldb_private {
         }
         
         void
-        Append (const lldb::PlatformSP &platform_sp)
+        Append (const lldb::PlatformSP &platform_sp, bool set_selected)
         {
             Mutex::Locker locker (m_mutex);
             m_platforms.push_back (platform_sp);
+            if (set_selected)
+                m_selected_platform_sp = m_platforms.back();
         }
 
         size_t
@@ -339,10 +406,50 @@ namespace lldb_private {
             return platform_sp;
         }
 
+        //------------------------------------------------------------------
+        /// Select the active platform.
+        ///
+        /// In order to debug remotely, other platform's can be remotely
+        /// connected to and set as the selected platform for any subsequent
+        /// debugging. This allows connection to remote targets and allows
+        /// the ability to discover process info, launch and attach to remote
+        /// processes.
+        //------------------------------------------------------------------
+        lldb::PlatformSP
+        GetSelectedPlatform ()
+        {
+            Mutex::Locker locker (m_mutex);
+            if (!m_selected_platform_sp && !m_platforms.empty())
+                m_selected_platform_sp = m_platforms.front();
+            
+            return m_selected_platform_sp;
+        }
+
+        void
+        SetSelectedPlatform (const lldb::PlatformSP &platform_sp)
+        {
+            if (platform_sp)
+            {
+                Mutex::Locker locker (m_mutex);
+                const size_t num_platforms = m_platforms.size();
+                for (size_t idx=0; idx<num_platforms; ++idx)
+                {
+                    if (m_platforms[idx].get() == platform_sp.get())
+                    {
+                        m_selected_platform_sp = m_platforms[idx];
+                        return;
+                    }
+                }
+                m_platforms.push_back (platform_sp);
+                m_selected_platform_sp = m_platforms.back();
+            }
+        }
+
     protected:
         typedef std::vector<lldb::PlatformSP> collection;
         mutable Mutex m_mutex;
         collection m_platforms;
+        lldb::PlatformSP m_selected_platform_sp;
 
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformList);

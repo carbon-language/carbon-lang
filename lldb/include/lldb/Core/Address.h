@@ -246,6 +246,9 @@ public:
           DumpStyle fallback_style = DumpStyleInvalid,
           uint32_t addr_byte_size = UINT32_MAX) const;
 
+    lldb::AddressClass
+    GetAddressClass () const;
+    
     //------------------------------------------------------------------
     /// Get the file address.
     ///

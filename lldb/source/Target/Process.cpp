@@ -1037,6 +1037,16 @@ Process::RemoveBreakpointOpcodesFromBuffer (addr_t bp_addr, size_t size, uint8_t
 }
 
 
+
+size_t
+Process::GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site)
+{
+    PlatformSP platform_sp (m_target.GetPlatform());
+    if (platform_sp)
+        return platform_sp->GetSoftwareBreakpointTrapOpcode (m_target, bp_site);
+    return 0;
+}
+
 Error
 Process::EnableSoftwareBreakpoint (BreakpointSite *bp_site)
 {
@@ -1661,7 +1671,7 @@ Process::Attach (lldb::pid_t attach_pid)
     // of the current Target, and if not adjust it.
     
     ProcessInfo process_info;
-    PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+    PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
     if (platform_sp)
     {
         if (platform_sp->GetProcessInfo (attach_pid, process_info))
@@ -1714,7 +1724,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     if (!wait_for_launch)
     {
         ProcessInfoList process_infos;
-        PlatformSP platform_sp (Platform::GetSelectedPlatform ());
+        PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
         if (platform_sp)
         {
             platform_sp->FindProcessesByName (process_name, eNameMatchEquals, process_infos);
