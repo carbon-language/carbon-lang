@@ -70,9 +70,23 @@ namespace clang {
         Quantity += Other.Quantity;
         return *this;
       }
+      CharUnits& operator++ () {
+        ++Quantity;
+        return *this;
+      }
+      CharUnits operator++ (int) {
+        return CharUnits(Quantity++);
+      }
       CharUnits& operator-= (const CharUnits &Other) {
         Quantity -= Other.Quantity;
         return *this;
+      }
+      CharUnits& operator-- () {
+        --Quantity;
+        return *this;
+      }
+      CharUnits operator-- (int) {
+        return CharUnits(Quantity--);
       }
        
       // Comparison operators.
