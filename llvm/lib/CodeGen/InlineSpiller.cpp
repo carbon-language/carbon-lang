@@ -435,6 +435,8 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   LiveInterval &OrigLI = LIS.getInterval(Original);
   VNInfo *OrigVNI = OrigLI.getVNInfoAt(Idx);
   StackInt.MergeValueInAsValue(OrigLI, OrigVNI, StackInt.getValNumInfo(0));
+  DEBUG(dbgs() << "\tmerged orig valno " << OrigVNI->id << ": "
+               << StackInt << '\n');
 
   // Already spilled everywhere.
   if (SVI.AllDefsAreReloads)
@@ -480,6 +482,7 @@ void InlineSpiller::eliminateRedundantSpills(unsigned Reg, VNInfo *VNI) {
     // Add all of VNI's live range to StackInt.
     LiveInterval &LI = LIS.getInterval(Reg);
     StackInt.MergeValueInAsValue(LI, VNI, StackInt.getValNumInfo(0));
+    DEBUG(dbgs() << "Merged to stack int: " << StackInt << '\n');
 
     // Find all spills and copies of VNI.
     for (MachineRegisterInfo::use_nodbg_iterator UI = MRI.use_nodbg_begin(Reg);
@@ -874,6 +877,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
     stacklvr.MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
                                   stacklvr.getValNumInfo(0));
+  DEBUG(dbgs() << "Merged spilled regs: " << stacklvr << '\n');
 
   // Spill around uses of all RegsToSpill.
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)

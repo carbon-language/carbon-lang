@@ -1265,6 +1265,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
   if (Stage == RS_Original) {
+    DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(&VirtReg);
     return 0;
   }
