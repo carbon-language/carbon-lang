@@ -211,7 +211,6 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
   const ReturnInst *Ret = dyn_cast<ReturnInst>(Term);
-  const Function *F = ExitBB->getParent();
 
   // The block must end in a return statement or unreachable.
   //
@@ -250,6 +249,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
 
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
+  const Function *F = ExitBB->getParent();
   unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
   if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
     return false;
