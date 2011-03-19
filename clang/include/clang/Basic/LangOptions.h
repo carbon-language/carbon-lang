@@ -221,6 +221,7 @@ public:
     FastRelaxedMath = 0;
     DefaultFPContract = 0;
     NoBitFieldTypeAlign = 0;
+    FakeAddressSpaceMap = 0;
     MRTD = 0;
   }
 
