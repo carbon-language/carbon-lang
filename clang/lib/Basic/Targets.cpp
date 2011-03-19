@@ -159,8 +159,9 @@ public:
     // Let MCSectionMachO validate this.
     llvm::StringRef Segment, Section;
     unsigned TAA, StubSize;
+    bool HasTAA;
     return llvm::MCSectionMachO::ParseSectionSpecifier(SR, Segment, Section,
-                                                       TAA, StubSize);
+                                                       TAA, HasTAA, StubSize);
   }
 
   virtual const char *getStaticInitSectionSpecifier() const {
