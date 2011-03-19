@@ -55,9 +55,9 @@ configure_file(
   @ONLY
 )
 
-set(LIBDEPS ${CMAKE_CURRENT_BINARY_DIR}/LibDeps.txt)
-set(LIBDEPS_TMP ${CMAKE_CURRENT_BINARY_DIR}/LibDeps.txt.tmp)
-set(FINAL_LIBDEPS ${CMAKE_CURRENT_BINARY_DIR}/FinalLibDeps.txt)
+set(LIBDEPS LibDeps.txt)
+set(LIBDEPS_TMP LibDeps.txt.tmp)
+set(FINAL_LIBDEPS FinalLibDeps.txt)
 set(LLVM_CONFIG ${LLVM_TOOLS_BINARY_DIR}/llvm-config)
 set(LLVM_CONFIG_IN ${CMAKE_CURRENT_BINARY_DIR}/llvm-config.in)
 
@@ -107,17 +107,18 @@ remove_option_from_llvm_config("-Wall")
 remove_option_from_llvm_config("-W")
 
 add_custom_command(OUTPUT ${LLVM_CONFIG}
-  COMMAND echo 's!@LLVM_CPPFLAGS@!${CPP_FLGS}!' > temp.sed
-  COMMAND echo 's!@LLVM_CFLAGS@!${C_FLGS}!' >> temp.sed
-  COMMAND echo 's!@LLVM_CXXFLAGS@!${CXX_FLGS}!' >> temp.sed
+  COMMAND echo s!@LLVM_CPPFLAGS@!${CPP_FLGS}! > temp.sed
+  COMMAND echo s!@LLVM_CFLAGS@!${C_FLGS}! >> temp.sed
+  COMMAND echo s!@LLVM_CXXFLAGS@!${CXX_FLGS}! >> temp.sed
   # TODO: Use general flags for linking! not just for shared libs:
-  COMMAND echo 's!@LLVM_LDFLAGS@!${CMAKE_SHARED_LINKER_FLAGS}!' >> temp.sed
-  COMMAND echo 's!@LIBS@!${LLVM_SYSTEM_LIBS}!' >> temp.sed
-  COMMAND echo 's!@LLVM_BUILDMODE@!${CMAKE_BUILD_TYPE}!' >> temp.sed
+  COMMAND echo s!@LLVM_LDFLAGS@!${CMAKE_SHARED_LINKER_FLAGS}! >> temp.sed
+  COMMAND echo s!@LIBS@!${LLVM_SYSTEM_LIBS}! >> temp.sed
+  COMMAND echo s!@LLVM_BUILDMODE@!${CMAKE_BUILD_TYPE}! >> temp.sed
   COMMAND sed -f temp.sed < ${LLVM_CONFIG_IN} > ${LLVM_CONFIG}
   COMMAND ${CMAKE_COMMAND} -E remove -f temp.sed
   COMMAND cat ${FINAL_LIBDEPS} >> ${LLVM_CONFIG}
   COMMAND chmod +x ${LLVM_CONFIG}
+  VERBATIM
   DEPENDS ${FINAL_LIBDEPS} ${LLVM_CONFIG_IN}
   COMMENT "Building llvm-config script."
   )
