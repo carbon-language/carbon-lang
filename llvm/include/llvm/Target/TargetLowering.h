@@ -1287,6 +1287,14 @@ public:
     return false;
   }
 
+  /// mayBeEmittedAsTailCall - Return true if the target may be able emit the
+  /// call instruction as a tail call. This is used by optimization passes to
+  /// determine if it's profitable to duplicate return instructions to enable
+  /// tailcall optimization.
+  virtual bool mayBeEmittedAsTailCall(CallInst *CI) const {
+    return false;
+  }
+
   /// getTypeForExtArgOrReturn - Return the type that should be used to zero or
   /// sign extend a zeroext/signext integer argument or return value.
   /// FIXME: Most C calling convention requires the return type to be promoted,
