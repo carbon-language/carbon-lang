@@ -349,7 +349,7 @@ KEYWORD(__forceinline               , KEYALL)
 // OpenCL-specific keywords
 KEYWORD(__kernel                    , KEYOPENCL)
 ALIAS("kernel", __kernel            , KEYOPENCL)
-KEYWORD(vec_step                    , KEYOPENCL)
+KEYWORD(vec_step                    , KEYOPENCL|KEYALTIVEC)
 KEYWORD(__private                   , KEYOPENCL)
 KEYWORD(__global                    , KEYOPENCL)
 KEYWORD(__local                     , KEYOPENCL)

@@ -2,6 +2,36 @@
 
 typedef int V4i __attribute__((vector_size(16)));
 
+void test_vec_step(vector short arg1) {
+  vector bool char vbc;
+  vector signed char vsc;
+  vector unsigned char vuc;
+  vector bool short vbs;
+  vector short vs;
+  vector unsigned short vus;
+  vector pixel vp;
+  vector bool int vbi;
+  vector int vi;
+  vector unsigned int vui;
+  vector float vf;
+
+  vector int *pvi;
+
+  int res1[vec_step(arg1) == 8 ? 1 : -1];
+  int res2[vec_step(vbc) == 16 ? 1 : -1];
+  int res3[vec_step(vsc) == 16 ? 1 : -1];
+  int res4[vec_step(vuc) == 16 ? 1 : -1];
+  int res5[vec_step(vbs) == 8 ? 1 : -1];
+  int res6[vec_step(vs) == 8 ? 1 : -1];
+  int res7[vec_step(vus) == 8 ? 1 : -1];
+  int res8[vec_step(vp) == 8 ? 1 : -1];
+  int res9[vec_step(vbi) == 4 ? 1 : -1];
+  int res10[vec_step(vi) == 4 ? 1 : -1];
+  int res11[vec_step(vui) == 4 ? 1 : -1];
+  int res12[vec_step(vf) == 4 ? 1 : -1];
+  int res13[vec_step(*pvi) == 4 ? 1 : -1];
+}
+
 void f(V4i a)
 {
 }
