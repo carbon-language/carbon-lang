@@ -252,7 +252,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
     }
 
     Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
-    NextFieldOffsetInChars += CharUnits::One();
+    ++NextFieldOffsetInChars;
 
     FieldValue = FieldValue.trunc(FieldValue.getBitWidth() - CharWidth);
   }
@@ -274,7 +274,7 @@ void ConstStructBuilder::AppendBitField(const FieldDecl *Field,
   // Append the last element.
   Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(),
                                             FieldValue));
-  NextFieldOffsetInChars += CharUnits::One();
+  ++NextFieldOffsetInChars;
 }
 
 void ConstStructBuilder::AppendPadding(CharUnits PadSize) {
