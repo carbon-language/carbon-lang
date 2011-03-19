@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -O0 -o - | FileCheck %s
+// R UN: %llvmgcc %s -S -O0 -o - | FileCheck %s
 // Radar 9156771
 typedef struct RGBColor {
   unsigned short red;
