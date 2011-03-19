@@ -27,6 +27,7 @@ endif( IS_BIG_ENDIAN )
 set(SHLIBEXT ${LTDL_SHLIB_EXT})
 #EXEEXT already set.
 set(OS "${CMAKE_SYSTEM}")
+set(target "${TARGET_TRIPLE}")
 set(ARCH "${LLVM_NATIVE_ARCH}")
 
 get_system_libs(LLVM_SYSTEM_LIBS_LIST)
