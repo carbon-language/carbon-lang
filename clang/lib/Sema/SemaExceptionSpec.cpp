@@ -100,7 +100,11 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool IsOperatorNew = OO == OO_New || OO == OO_Array_New;
   bool MissingExceptionSpecification = false;
   bool MissingEmptyExceptionSpecification = false;
-  if (!CheckEquivalentExceptionSpec(PDiag(diag::err_mismatched_exception_spec),
+  unsigned DiagID = diag::err_mismatched_exception_spec;
+  if (getLangOptions().Microsoft)
+    DiagID = diag::war_mismatched_exception_spec; 
+  
+  if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
                                     PDiag(diag::note_previous_declaration),
                                     Old->getType()->getAs<FunctionProtoType>(),
                                     Old->getLocation(),
@@ -247,7 +251,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     return false;    
   }
 
-  Diag(New->getLocation(), diag::err_mismatched_exception_spec);
+  Diag(New->getLocation(), DiagID);
   Diag(Old->getLocation(), diag::note_previous_declaration);
   return true;
 }
@@ -259,8 +263,11 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
 bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *Old, SourceLocation OldLoc,
     const FunctionProtoType *New, SourceLocation NewLoc) {
+  unsigned DiagID = diag::err_mismatched_exception_spec;
+  if (getLangOptions().Microsoft)
+    DiagID = diag::war_mismatched_exception_spec; 
   return CheckEquivalentExceptionSpec(
-                                    PDiag(diag::err_mismatched_exception_spec),
+                                      PDiag(DiagID),
                                       PDiag(diag::note_previous_declaration),
                                       Old, OldLoc, New, NewLoc);
 }
@@ -337,14 +344,6 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
     if (NoteID.getDiagID() != 0)
       Diag(OldLoc, NoteID);
     return true;
-  }
-
-  if (getLangOptions().Microsoft) {
-    // Treat throw(whatever) as throw(...) to be compatible with MS headers.
-    if (OldEST == EST_Dynamic)
-      OldEST = EST_MSAny;
-    if (NewEST == EST_Dynamic)
-      NewEST = EST_MSAny;
   }
 
   // The MS extension throw(...) is compatible with itself.

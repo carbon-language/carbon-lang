@@ -4,21 +4,13 @@
 // ::type_info is predeclared with forward class declartion
 void f(const type_info &a);
 
-// The following three are all equivalent when ms-extensions are on
-void foo() throw(int);
-void foo() throw(int, long);
-void foo() throw(...); 
+
+// Microsoft doesn't validate exception specification.
 void foo(); // expected-note {{previous declaration}}
+void foo() throw(); // expected-warning {{exception specification in declaration does not match previous declaration}}
 
-// Only nothrow specification is treated specially.
-void foo() throw(); // expected-error {{exception specification in declaration does not match previous declaration}}
-
-// throw(...)
-void r3();
-void r3() throw(...);
-
-void r6() throw(...);
-void r6() throw(int); // okay
+void r6() throw(...); // expected-note {{previous declaration}}
+void r6() throw(int); // expected-warning {{exception specification in declaration does not match previous declaration}}
 
 struct Base {
   virtual void f2();
