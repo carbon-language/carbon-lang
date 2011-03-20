@@ -33,7 +33,7 @@ namespace llvmc {
   typedef llvm::StringSet<> InputLanguagesSet;
 
   /// Tool - Represents a single tool.
-  class Tool : public llvm::RefCountedBaseVPTR<Tool> {
+  class Tool : public llvm::RefCountedBaseVPTR {
   public:
 
     virtual ~Tool() {}

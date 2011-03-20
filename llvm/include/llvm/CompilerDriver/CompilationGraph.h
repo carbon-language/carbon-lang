@@ -40,7 +40,7 @@ namespace llvmc {
   };
 
   /// Edge - Represents an edge of the compilation graph.
-  class Edge : public llvm::RefCountedBaseVPTR<Edge> {
+  class Edge : public llvm::RefCountedBaseVPTR {
   public:
     Edge(const std::string& T) : ToolName_(T) {}
     virtual ~Edge() {}

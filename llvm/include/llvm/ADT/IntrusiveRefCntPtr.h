@@ -64,7 +64,6 @@ namespace llvm {
 ///  inherit from RefCountedBaseVPTR can't be allocated on stack -
 ///  attempting to do this will produce a compile error.
 //===----------------------------------------------------------------------===//
-  template <class Derived>
   class RefCountedBaseVPTR {
     unsigned ref_cnt;
 
@@ -78,7 +77,8 @@ namespace llvm {
       if (--ref_cnt == 0) delete this;
     }
 
-    friend class IntrusiveRefCntPtr<Derived>;
+    template <typename T>
+    friend class IntrusiveRefCntPtr;
   };
 
 //===----------------------------------------------------------------------===//
