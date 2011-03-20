@@ -2723,7 +2723,8 @@ static Function *FindCXAAtExit(Module &M) {
 /// Note that we assume that other optimization passes have already simplified
 /// the code so we only look for a function with a single basic block, where
 /// the only allowed instructions are 'ret' or 'call' to empty C++ dtor.
-static bool cxxDtorIsEmpty(const Function& Fn) {
+static bool cxxDtorIsEmpty(const Function &Fn,
+                           SmallPtrSet<const Function *, 8> &CalledFunctions) {
   // FIXME: We could eliminate C++ destructors if they're readonly/readnone and
   // unwind, but that doesn't seem worth doing.
   if (Fn.isDeclaration())
@@ -2742,10 +2743,10 @@ static bool cxxDtorIsEmpty(const Function& Fn) {
         return false;
 
       // Don't treat recursive functions as empty.
-      if (CalledFn == &Fn)
+      if (!CalledFunctions.insert(CalledFn))
         return false;
 
-      if (!cxxDtorIsEmpty(*CalledFn))
+      if (!cxxDtorIsEmpty(*CalledFn, CalledFunctions))
         return false;
     } else if (isa<ReturnInst>(*I))
       return true;
@@ -2784,7 +2785,8 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
     if (!DtorFn)
       continue;
 
-    if (!cxxDtorIsEmpty(*DtorFn))
+    SmallPtrSet<const Function *, 8> CalledFunctions;
+    if (!cxxDtorIsEmpty(*DtorFn, CalledFunctions))
       continue;
 
     // Just remove the call.
