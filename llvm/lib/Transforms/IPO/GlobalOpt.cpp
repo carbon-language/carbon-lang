@@ -2706,9 +2706,10 @@ static Function *FindCXAAtExit(Module &M) {
   
   const FunctionType *FTy = Fn->getFunctionType();
   
-  // Checking that the function has the right number of parameters and that they
-  // all have pointer types should be enough.
-  if (FTy->getNumParams() != 3 ||
+  // Checking that the function has the right return type, the right number of 
+  // parameters and that they all have pointer types should be enough.
+  if (!FTy->getReturnType()->isIntegerTy() ||
+      FTy->getNumParams() != 3 ||
       !FTy->getParamType(0)->isPointerTy() ||
       !FTy->getParamType(1)->isPointerTy() ||
       !FTy->getParamType(2)->isPointerTy())
@@ -2723,8 +2724,10 @@ static Function *FindCXAAtExit(Module &M) {
 /// the code so we only look for a function with a single basic block, where
 /// the only allowed instructions are 'ret' or 'call' to empty C++ dtor.
 static bool cxxDtorIsEmpty(const Function& Fn) {
-  if (Fn.empty())
-    return true;
+  // FIXME: We could eliminate C++ destructors if they're readonly/readnone and
+  // unwind, but that doesn't seem worth doing.
+  if (Fn.isDeclaration())
+    return false;
 
   if (++Fn.begin() != Fn.end())
     return false;
@@ -2736,6 +2739,10 @@ static bool cxxDtorIsEmpty(const Function& Fn) {
       const Function *CalledFn = CI->getCalledFunction();
 
       if (!CalledFn)
+        return false;
+
+      // Don't treat recursive functions as empty.
+      if (CalledFn == &Fn)
         return false;
 
       if (!cxxDtorIsEmpty(*CalledFn))
@@ -2769,7 +2776,7 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
   for (Function::use_iterator I = CXAAtExitFn->use_begin(), 
        E = CXAAtExitFn->use_end(); I != E;) {
     CallSite CS(*I++);
-    if (!CS.getInstruction())
+    if (!CS)
       continue;
 
     Function *DtorFn = 
@@ -2781,7 +2788,9 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
       continue;
 
     // Just remove the call.
-    CS.getInstruction()->eraseFromParent();
+    CS->replaceAllUsesWith(Constant::getNullValue(CS.getType()));
+    CS->eraseFromParent();
+
     ++NumCXXDtorsRemoved;
 
     Changed |= true;
