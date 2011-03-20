@@ -711,6 +711,8 @@ public:
             case eFormatVectorOfFloat32:
             case eFormatVectorOfFloat64:
             case eFormatVectorOfUInt128:
+            case eFormatOSType:
+            case eFormatComplexInteger:
                 result.AppendError("unsupported format for writing memory");
                 result.SetStatus(eReturnStatusFailed);
                 return false;

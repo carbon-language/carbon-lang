@@ -91,6 +91,10 @@ public:
         query_shlib_notify_info_addr,   // 'qShlibInfoAddr'
         query_step_packet_supported,    // 'qStepPacketSupported'
         query_host_info,                // 'qHostInfo'
+        platform_proc_info_for_pid,     // 'qProcessInfo:<PID>' -- get process info for process by ID
+        platform_proc_info_first_all,   // 'qfProcessInfoAll' -- list all processes
+        platform_proc_info_first_name,  // 'qfProcessInfoName:<HEXNAME>' -- list all processes that match "name"
+        platform_proc_info_subsequent,  // 'qsProcessInfo' -- get subsequent matches for 'qfProcessInfo*' queries
         pass_signals_to_inferior,       // 'QPassSignals'
         start_noack_mode,               // 'QStartNoAckMode'
         prefix_reg_packets_with_tid,    // 'QPrefixRegisterPacketsWithThreadID
@@ -161,6 +165,10 @@ public:
     rnb_err_t HandlePacket_qThreadExtraInfo (const char *p);
     rnb_err_t HandlePacket_qThreadStopInfo (const char *p);
     rnb_err_t HandlePacket_qHostInfo (const char *p);
+    rnb_err_t HandlePacket_qProcessInfo (const char *p);
+    rnb_err_t HandlePacket_qfProcessInfoAll (const char *p);
+    rnb_err_t HandlePacket_qfProcessInfoName (const char *p);
+    rnb_err_t HandlePacket_qsProcessInfo (const char *p);
     rnb_err_t HandlePacket_QStartNoAckMode (const char *p);
     rnb_err_t HandlePacket_QThreadSuffixSupported (const char *p);
     rnb_err_t HandlePacket_QSetLogging (const char *p);
@@ -227,6 +235,18 @@ protected:
         HandlePacketCallback async;     // Function to call when inferior is running
         std::string abbrev;
         std::string printable_name;
+        
+        bool
+        IsPlatformPacket () const
+        {
+            switch (type)
+            {
+            case set_logging_mode:
+            case query_host_info:
+                return true;
+            }
+            return false;
+        }
         Packet() :
             type(invalid_packet),
             normal (NULL),

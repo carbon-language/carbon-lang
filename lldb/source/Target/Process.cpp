@@ -1586,7 +1586,7 @@ Process::Launch
 
                         DidLaunch ();
 
-                        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, false));
+                        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
                         if (m_dyld_ap.get())
                             m_dyld_ap->DidLaunch();
 
@@ -1796,7 +1796,7 @@ Process::CompleteAttach ()
 
     // We have complete the attach, now it is time to find the dynamic loader
     // plug-in
-    m_dyld_ap.reset (DynamicLoader::FindPlugin(this, false));
+    m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
     if (m_dyld_ap.get())
         m_dyld_ap->DidAttach();
 

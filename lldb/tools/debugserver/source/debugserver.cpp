@@ -42,6 +42,7 @@ typedef enum
     eRNBRunLoopModeInferiorAttaching,
     eRNBRunLoopModeInferiorLaunching,
     eRNBRunLoopModeInferiorExecuting,
+    eRNBRunLoopModePlatformMode,
     eRNBRunLoopModeExit
 } RNBRunLoopMode;
 
@@ -565,6 +566,40 @@ RNBRunLoopInferiorExecuting (RNBRemote *remote)
 }
 
 
+RNBRunLoopMode
+RNBRunLoopPlatform (RNBRemote *remote)
+{
+    RNBRunLoopMode mode = eRNBRunLoopModePlatformMode;
+    RNBContext& ctx = remote->Context();
+
+    while (mode == eRNBRunLoopModePlatformMode)
+    {
+        std::string set_events_str;
+        const uint32_t event_mask = RNBContext::event_read_packet_available | 
+                                    RNBContext::event_read_thread_exiting;
+                
+        DNBLogThreadedIf (LOG_RNB_EVENTS, "%s ctx.Events().WaitForSetEvents(0x%08x) ...",__FUNCTION__, event_mask);
+        nub_event_t set_events = ctx.Events().WaitForSetEvents(event_mask);
+        DNBLogThreadedIf (LOG_RNB_EVENTS, "%s ctx.Events().WaitForSetEvents(0x%08x) => 0x%08x (%s)",__FUNCTION__, event_mask, set_events, ctx.EventsAsString(set_events, set_events_str));
+        
+        if (set_events)
+        {
+            if (set_events & RNBContext::event_read_packet_available)
+            {
+                if (remote->HandleReceivedPacket() == rnb_not_connected)
+                    mode = eRNBRunLoopModeExit;
+            }
+            
+            if (set_events & RNBContext::event_read_thread_exiting)
+            {
+                mode = eRNBRunLoopModeExit;
+            }
+            ctx.Events().ResetEvents(set_events);
+        }
+    }    
+    return eRNBRunLoopModeExit;
+}
+
 //----------------------------------------------------------------------
 // Convenience function to set up the remote listening port
 // Returns 1 for success 0 for failure.
@@ -670,6 +705,7 @@ static struct option g_long_options[] =
     { "setsid",             no_argument,        NULL,               'S' },  // call setsid() to make debugserver run in its own session
     { "disable-aslr",       no_argument,        NULL,               'D' },  // Use _POSIX_SPAWN_DISABLE_ASLR to avoid shared library randomization
     { "working-dir",        required_argument,  NULL,               'W' },  // The working directory that the inferior process should have (only if debugserver launches the process)
+    { "platform",           required_argument,  NULL,               'p' },  // Put this executable into a remote platform mode
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -924,6 +960,10 @@ main (int argc, char *argv[])
             case 'D':
                 g_disable_aslr = 1;
                 break;
+            
+            case 'p':
+                start_mode = eRNBRunLoopModePlatformMode;
+                break;
         }
     }
     
@@ -1027,7 +1067,8 @@ main (int argc, char *argv[])
     }
 
     //  If we know we're waiting to attach, we don't need any of this other info.
-    if (start_mode != eRNBRunLoopModeInferiorAttaching)
+    if (start_mode != eRNBRunLoopModeInferiorAttaching &&
+        start_mode != eRNBRunLoopModePlatformMode)
     {
         if (argc == 0 || g_lockdown_opt)
         {
@@ -1125,16 +1166,17 @@ main (int argc, char *argv[])
                 }
                 else
 #endif
-                    if (listen_port != INT32_MAX)
-                    {
-                        if (!StartListening (remote, listen_port))
-                            mode = eRNBRunLoopModeExit;
-                    }
-                    else if (str[0] == '/')
-                    {
-                        if (remote->Comm().OpenFile (str))
-                            mode = eRNBRunLoopModeExit;
-                    }
+                if (listen_port != INT32_MAX)
+                {
+                    if (!StartListening (remote, listen_port))
+                        mode = eRNBRunLoopModeExit;
+                }
+                else if (str[0] == '/')
+                {
+                    if (remote->Comm().OpenFile (str))
+                        mode = eRNBRunLoopModeExit;
+                }
+
                 if (mode != eRNBRunLoopModeExit)
                 {
                     RNBLogSTDOUT ("Got a connection, waiting for process information for launching or attaching.\n");
@@ -1284,6 +1326,22 @@ main (int argc, char *argv[])
 
             case eRNBRunLoopModeInferiorExecuting:
                 mode = RNBRunLoopInferiorExecuting(remote);
+                break;
+
+            case eRNBRunLoopModePlatformMode:
+                if (listen_port != INT32_MAX)
+                {
+                    if (!StartListening (remote, listen_port))
+                        mode = eRNBRunLoopModeExit;
+                }
+                else if (str[0] == '/')
+                {
+                    if (remote->Comm().OpenFile (str))
+                        mode = eRNBRunLoopModeExit;
+                }
+                
+                if (mode != eRNBRunLoopModeExit)
+                    mode = RNBRunLoopPlatform (remote);
                 break;
 
             default:

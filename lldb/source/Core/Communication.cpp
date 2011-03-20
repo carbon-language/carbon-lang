@@ -419,6 +419,7 @@ Communication::ConnectionStatusAsCString (lldb::ConnectionStatus status)
     case eConnectionStatusTimedOut:       return "timed out";
     case eConnectionStatusNoConnection:   return "no connection";
     case eConnectionStatusLostConnection: return "lost connection";
+    case eConnectionStatusEndOfFile:      return "end of file";
     }
 
     static char unknown_state_string[64];

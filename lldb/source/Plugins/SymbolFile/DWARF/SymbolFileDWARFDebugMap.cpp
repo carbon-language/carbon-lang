@@ -295,6 +295,9 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
 
                         switch (exe_symbol->GetType())
                         {
+                        default:
+                            break;
+
                         case eSymbolTypeCode:
                             {
                                 // For each N_FUN, or function that we run into in the debug map

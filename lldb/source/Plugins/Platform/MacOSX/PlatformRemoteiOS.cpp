@@ -307,8 +307,7 @@ PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
                                 "%s/%i.%i", 
                                 m_device_support_directory_for_os_version.c_str(), 
                                 major, 
-                                minor, 
-                                update);
+                                minor);
                     
                     file_spec.SetFile(resolved_path, resolve_path);
                     if (file_spec.Exists() && file_spec.GetPath(resolved_path, sizeof(resolved_path)))

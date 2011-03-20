@@ -2291,6 +2291,10 @@ DWARFExpression::Evaluate
                             
                             switch (source_value_type)
                             {
+                            case Value::eValueTypeScalar:
+                            case Value::eValueTypeFileAddress:
+                                break;
+
                             case Value::eValueTypeLoadAddress:
                                 switch (target_value_type)
                                 {

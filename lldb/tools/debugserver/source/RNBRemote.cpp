@@ -3351,4 +3351,102 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
         strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
     return SendPacket (strm.str());
 }
+//
+//struct ProcessInfo
+//{
+//    nub_process_t pid;
+//    std::string name;
+//    std::string user;
+//    std::string group;
+//    uint32_t cpu;   // mach-o cpu type
+//    uint32_t sub;   // mach-o cpu subtype
+//    
+//    void
+//    Clear()
+//    {
+//        pid = 0;
+//        name.clear();
+//        user.clear();
+//        group.clear();
+//        cpu = 0;
+//        sub = 0;
+//    }
+//};
+//
+//static bool
+//GetMacOSXProcessName (ProcessInfo &proc_info,
+//                      const char *name_match) // can be NULL
+//{
+//    char process_name[MAXCOMLEN * 2 + 1];
+//    int name_len = ::proc_name(proc_info.pid, process_name, MAXCOMLEN * 2);
+//    if (name_len == 0)
+//        return false;
+//    
+//    if (name_match == NULL || strcmp (name_match, process_name) == 0)
+//    {
+//        proc_info.name.assign (process_name, name_len);
+//        return true;
+//    }
+//    proc_info.name.clear();
+//    return false;
+//}
+//
+//
+//static bool
+//GetMacOSXProcessCPUType (ProcessInfo &proc_info)
+//{
+//        // Make a new mib to stay thread safe
+//    int mib[CTL_MAXNAME]={0,};
+//    size_t mib_len = CTL_MAXNAME;
+//    if (::sysctlnametomib("sysctl.proc_cputype", mib, &mib_len)) 
+//        return false;
+//    
+//    mib[mib_len] = proc_info.pid;
+//    mib_len++;
+//    
+//    cpu_type_t cpu = 0;
+//    cpu_type_t sub = 0;
+//    size_t cpu_len = sizeof(cpu);
+//    if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
+//    {
+//        switch (cpu)
+//        {
+//            case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
+//            case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
+//            default: break;
+//        }
+//        proc_info.cpu = cpu;
+//        proc_info.sub = sub;
+//        return true;
+//    }
+//    proc_info.cpu = 0;
+//    proc_info.sub = 0;
+//    return false;
+//}
+
+rnb_err_t
+RNBRemote::HandlePacket_qProcessInfo (const char *p)
+{
+    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qfProcessInfoAll (const char *p)
+{
+    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
+}
+
+rnb_err_t 
+RNBRemote::HandlePacket_qfProcessInfoName (const char *p)
+{
+    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
+}
+
+rnb_err_t 
+RNBRemote::HandlePacket_qsProcessInfo (const char *p)
+{
+    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
+}
+
+
 

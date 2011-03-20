@@ -10214,7 +10214,7 @@ EmulateInstructionARM::ReadCoreReg(uint32_t num, bool *success)
         reg_num  = LLDB_REGNUM_GENERIC_PC;
         break;
     default:
-        if (0 <= num && num < SP_REG)
+        if (num < SP_REG)
         {
             reg_kind = eRegisterKindDWARF;
             reg_num  = dwarf_r0 + num;
@@ -10223,7 +10223,7 @@ EmulateInstructionARM::ReadCoreReg(uint32_t num, bool *success)
         {
             assert(0 && "Invalid register number");
             *success = false;
-            return ~0u;
+            return UINT32_MAX;
         }
         break;
     }

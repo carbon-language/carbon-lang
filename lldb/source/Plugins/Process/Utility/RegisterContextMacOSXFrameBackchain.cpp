@@ -111,6 +111,10 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
     
     switch (reg_info->encoding)
     {
+    case eEncodingInvalid:
+    case eEncodingVector:
+        break;
+
     case eEncodingUint:
         switch (reg_info->byte_size)
         {

@@ -232,7 +232,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
             
             switch (state)
             {
-            
+            case eStateInvalid:
             case eStateSuspended:
             case eStateCrashed:
             case eStateStopped:

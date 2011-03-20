@@ -124,6 +124,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
         s->Printf(", type_uid = 0x%8.8x", m_encoding_uid);
         switch (m_encoding_uid_type)
         {
+        case eEncodingInvalid: break;
         case eEncodingIsUID: s->PutCString(" (unresolved type)"); break;
         case eEncodingIsConstUID: s->PutCString(" (unresolved const type)"); break;
         case eEncodingIsRestrictUID: s->PutCString(" (unresolved restrict type)"); break;
@@ -171,6 +172,7 @@ Type::Dump (Stream *s, bool show_context)
         *s << ", type_data = " << (uint64_t)m_encoding_uid;
         switch (m_encoding_uid_type)
         {
+        case eEncodingInvalid: break;
         case eEncodingIsUID: s->PutCString(" (unresolved type)"); break;
         case eEncodingIsConstUID: s->PutCString(" (unresolved const type)"); break;
         case eEncodingIsRestrictUID: s->PutCString(" (unresolved restrict type)"); break;
@@ -269,6 +271,9 @@ Type::GetByteSize()
     {
         switch (m_encoding_uid_type)
         {
+        case eEncodingInvalid:
+        case eEncodingIsSyntheticUID:
+            break;
         case eEncodingIsUID:
         case eEncodingIsConstUID:
         case eEncodingIsRestrictUID:
