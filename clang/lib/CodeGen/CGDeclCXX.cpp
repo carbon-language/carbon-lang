@@ -138,6 +138,8 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
 
   llvm::Constant *AtExitFn = CGM.CreateRuntimeFunction(AtExitFnTy,
                                                        "__cxa_atexit");
+  if (llvm::Function *Fn = dyn_cast<llvm::Function>(AtExitFn))
+    Fn->setDoesNotThrow();
 
   llvm::Constant *Handle = CGM.CreateRuntimeVariable(Int8PtrTy,
                                                      "__dso_handle");
