@@ -789,30 +789,23 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
 
 void SplitEditor::deleteRematVictims() {
   SmallVector<MachineInstr*, 8> Dead;
-  for (LiveInterval::const_vni_iterator I = Edit->getParent().vni_begin(),
-         E = Edit->getParent().vni_end(); I != E; ++I) {
-    const VNInfo *VNI = *I;
-    // Was VNI rematted anywhere?
-    if (VNI->isUnused() || VNI->isPHIDef() || !Edit->didRematerialize(VNI))
-      continue;
-    unsigned RegIdx = RegAssign.lookup(VNI->def);
-    LiveInterval *LI = Edit->get(RegIdx);
-    LiveInterval::const_iterator LII = LI->FindLiveRangeContaining(VNI->def);
-    assert(LII != LI->end() && "Missing live range for rematted def");
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I){
+    LiveInterval *LI = *I;
+    for (LiveInterval::const_iterator LII = LI->begin(), LIE = LI->end();
+           LII != LIE; ++LII) {
+      // Dead defs end at the store slot.
+      if (LII->end != LII->valno->def.getNextSlot())
+        continue;
+      MachineInstr *MI = LIS.getInstructionFromIndex(LII->valno->def);
+      assert(MI && "Missing instruction for dead def");
+      MI->addRegisterDead(LI->reg, &TRI);
 
-    // Is this a dead def?
-    if (LII->end != VNI->def.getNextSlot())
-      continue;
+      if (!MI->allDefsAreDead())
+        continue;
 
-    MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
-    assert(MI && "Missing instruction for dead def");
-    MI->addRegisterDead(LI->reg, &TRI);
-
-    if (!MI->allDefsAreDead())
-      continue;
-
-    DEBUG(dbgs() << "All defs dead: " << *MI);
-    Dead.push_back(MI);
+      DEBUG(dbgs() << "All defs dead: " << *MI);
+      Dead.push_back(MI);
+    }
   }
 
   if (Dead.empty())
