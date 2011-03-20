@@ -466,6 +466,7 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
 /// eliminateRedundantSpills - SLI:VNI is known to be on the stack. Remove any
 /// redundant spills of this value in SLI.reg and sibling copies.
 void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
+  assert(VNI && "Missing value");
   SmallVector<std::pair<LiveInterval*, VNInfo*>, 8> WorkList;
   WorkList.push_back(std::make_pair(&SLI, VNI));
   LiveInterval &StackInt = LSS.getInterval(StackSlot);
@@ -793,15 +794,22 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Check for a sibling copy.
     unsigned SibReg = isFullCopyOf(MI, Reg);
-    if (!isSibling(SibReg))
-      SibReg = 0;
-
-    // Hoist the spill of a sib-reg copy.
-    if (SibReg && Writes && !Reads && hoistSpill(OldLI, MI)) {
-      // This COPY is now dead, the value is already in the stack slot.
-      MI->getOperand(0).setIsDead();
-      DeadDefs.push_back(MI);
-      continue;
+    if (SibReg && isSibling(SibReg)) {
+      if (Writes) {
+        // Hoist the spill of a sib-reg copy.
+        if (hoistSpill(OldLI, MI)) {
+          // This COPY is now dead, the value is already in the stack slot.
+          MI->getOperand(0).setIsDead();
+          DeadDefs.push_back(MI);
+          continue;
+        }
+      } else {
+        // This is a reload for a sib-reg copy. Drop spills downstream.
+        SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
+        LiveInterval &SibLI = LIS.getInterval(SibReg);
+        eliminateRedundantSpills(SibLI, SibLI.getVNInfoAt(Idx));
+        // The COPY will fold to a reload below.
+      }
     }
 
     // Attempt to fold memory ops.
