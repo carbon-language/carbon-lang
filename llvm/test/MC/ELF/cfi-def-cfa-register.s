@@ -20,13 +20,13 @@ f:
 // CHECK-NEXT:  ('_section_data', '14000000 00000000 017a5200 01781001 1b0c0708 90010000 14000000 1c000000 00000000 02000000 00410d06 00000000')
 // CHECK-NEXT: ),
 
-// CHECK:      (('sh_name', 0x00000036) # '.rela.eh_frame'
+// CHECK:      (('sh_name', 0x0000001c) # '.rela.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000158)
+// CHECK-NEXT:  ('sh_offset', 0x00000398)
 // CHECK-NEXT:  ('sh_size', 0x00000018)
-// CHECK-NEXT:  ('sh_link', 0x00000006)
+// CHECK-NEXT:  ('sh_link', 0x00000007)
 // CHECK-NEXT:  ('sh_info', 0x00000004)
 // CHECK-NEXT:  ('sh_addralign', 0x00000008)
 // CHECK-NEXT:  ('sh_entsize', 0x00000018)

@@ -4,37 +4,37 @@
 // of the file.
 
 // CHECK:       # Section 0x00000001
-// CHECK-NEXT:  (('sh_name', 0x00000026) # '.group'
+// CHECK-NEXT:  (('sh_name', 0x00000030) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)
 // CHECK-NEXT:   ('sh_offset', 0x00000040)
 // CHECK-NEXT:   ('sh_size', 0x0000000c)
-// CHECK-NEXT:   ('sh_link', 0x0000000c)
+// CHECK-NEXT:   ('sh_link', 0x0000000d)
 // CHECK-NEXT:   ('sh_info', 0x00000001)
 // CHECK-NEXT:   ('sh_addralign', 0x00000004)
 // CHECK-NEXT:   ('sh_entsize', 0x00000004)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Section 0x00000002
-// CHECK-NEXT:  (('sh_name', 0x00000026) # '.group'
+// CHECK-NEXT:  (('sh_name', 0x00000030) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)
 // CHECK-NEXT:   ('sh_offset', 0x0000004c)
 // CHECK-NEXT:   ('sh_size', 0x00000008)
-// CHECK-NEXT:   ('sh_link', 0x0000000c)
+// CHECK-NEXT:   ('sh_link', 0x0000000d)
 // CHECK-NEXT:   ('sh_info', 0x00000002)
 // CHECK-NEXT:   ('sh_addralign', 0x00000004)
 // CHECK-NEXT:   ('sh_entsize', 0x00000004)
 // CHECK-NEXT:  ),
 // CHECK-NEXT:  # Section 0x00000003
-// CHECK-NEXT:  (('sh_name', 0x00000026) # '.group'
+// CHECK-NEXT:  (('sh_name', 0x00000030) # '.group'
 // CHECK-NEXT:   ('sh_type', 0x00000011)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)
 // CHECK-NEXT:   ('sh_offset', 0x00000054)
 // CHECK-NEXT:   ('sh_size', 0x00000008)
-// CHECK-NEXT:   ('sh_link', 0x0000000c)
+// CHECK-NEXT:   ('sh_link', 0x0000000d)
 // CHECK-NEXT:   ('sh_info', 0x0000000d)
 // CHECK-NEXT:   ('sh_addralign', 0x00000004)
 // CHECK-NEXT:   ('sh_entsize', 0x00000004)

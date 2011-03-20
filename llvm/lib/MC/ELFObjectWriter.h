@@ -50,8 +50,10 @@ class ELFObjectWriter : public MCObjectWriter {
                                        const MCSectionData &SD);
     static uint64_t GetSectionAddressSize(const MCAsmLayout &Layout,
                                           const MCSectionData &SD);
-    static void WriteDataSectionData(ELFObjectWriter *W,
-                                     const MCSectionData &SD);
+
+    void WriteDataSectionData(MCAssembler &Asm,
+                              const MCAsmLayout &Layout,
+                              const MCSectionELF &Section);
 
     /*static bool isFixupKindX86RIPRel(unsigned Kind) {
       return Kind == X86::reloc_riprel_4byte ||
@@ -267,6 +269,10 @@ class ELFObjectWriter : public MCObjectWriter {
     typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
     // Map from a signature symbol to the group section
     typedef DenseMap<const MCSymbol*, const MCSectionELF*> RevGroupMapTy;
+    // Map from a section to the section with the relocations
+    typedef DenseMap<const MCSectionELF*, const MCSectionELF*> RelMapTy;
+    // Map from a section to its offset
+    typedef DenseMap<const MCSectionELF*, uint64_t> SectionOffsetMapTy;
 
     /// ComputeSymbolTable - Compute the symbol table data
     ///
@@ -275,32 +281,41 @@ class ELFObjectWriter : public MCObjectWriter {
     /// string table.
     virtual void ComputeSymbolTable(MCAssembler &Asm,
                             const SectionIndexMapTy &SectionIndexMap,
-                            RevGroupMapTy RevGroupMap);
+                                    RevGroupMapTy RevGroupMap,
+                                    unsigned NumRegularSections);
 
     virtual void ComputeIndexMap(MCAssembler &Asm,
-                         SectionIndexMapTy &SectionIndexMap);
+                                 SectionIndexMapTy &SectionIndexMap,
+                                 const RelMapTy &RelMap);
 
-    virtual void WriteRelocation(MCAssembler &Asm, MCAsmLayout &Layout,
-                         const MCSectionData &SD);
+    void CreateRelocationSections(MCAssembler &Asm, MCAsmLayout &Layout,
+                                  RelMapTy &RelMap);
 
-    virtual void WriteRelocations(MCAssembler &Asm, MCAsmLayout &Layout) {
-      for (MCAssembler::const_iterator it = Asm.begin(),
-             ie = Asm.end(); it != ie; ++it) {
-        WriteRelocation(Asm, Layout, *it);
-      }
-    }
+    void WriteRelocations(MCAssembler &Asm, MCAsmLayout &Layout,
+                          const RelMapTy &RelMap);
 
     virtual void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                                const SectionIndexMapTy &SectionIndexMap);
+                                        SectionIndexMapTy &SectionIndexMap,
+                                        const RelMapTy &RelMap);
 
     // Create the sections that show up in the symbol table. Currently
     // those are the .note.GNU-stack section and the group sections.
     virtual void CreateIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
                                        GroupMapTy &GroupMap,
-                                       RevGroupMapTy &RevGroupMap);
+                                       RevGroupMapTy &RevGroupMap,
+                                       SectionIndexMapTy &SectionIndexMap,
+                                       const RelMapTy &RelMap);
 
     virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
                                           const MCAsmLayout &Layout);
+
+    void WriteSectionHeader(MCAssembler &Asm, const GroupMapTy &GroupMap,
+                            const MCAsmLayout &Layout,
+                            const SectionIndexMapTy &SectionIndexMap,
+                            const SectionOffsetMapTy &SectionOffsetMap);
+
+    void ComputeSectionOrder(MCAssembler &Asm,
+                             std::vector<const MCSectionELF*> &Sections);
 
     virtual void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,

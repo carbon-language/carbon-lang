@@ -88,11 +88,10 @@ entry:
 
 declare void @exit(i32) noreturn nounwind
 
-
-;; OBJ:      Symbol 0x0000000c
-;; OBJ-NEXT:    'vtable'
-
 ;; OBJ:           Relocation 0x00000001
 ;; OBJ-NEXT:     'r_offset', 
 ;; OBJ-NEXT:     'r_sym', 0x0000000c
 ;; OBJ-NEXT:     'r_type', 0x0000002b
+
+;; OBJ:      Symbol 0x0000000c
+;; OBJ-NEXT:    'vtable'

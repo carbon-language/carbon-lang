@@ -39,23 +39,6 @@ main:                                   # @main
 
 // CHECK:   # '.text'
 
-// CHECK: ('st_bind', 0x00000000)
-// CHECK: ('st_type', 0x00000003)
-
-// CHECK: ('st_bind', 0x00000000)
-// CHECK: ('st_type', 0x00000003)
-
-// CHECK: ('st_bind', 0x00000000)
-// CHECK: ('st_type', 0x00000003)
-
-// CHECK:   # 'main'
-// CHECK-NEXT: ('st_bind', 0x00000001)
-// CHECK-NEXT: ('st_type', 0x00000002)
-
-// CHECK:   # 'puts'
-// CHECK-NEXT: ('st_bind', 0x00000001)
-// CHECK-NEXT: ('st_type', 0x00000000)
-
 // CHECK:   # '.rela.text'
 
 // CHECK:   ('_relocations', [
@@ -80,3 +63,20 @@ main:                                   # @main
 // CHECK:      ('r_addend', 0xfffffffc)
 // CHECK:     ),
 // CHECK:   ])
+
+// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_type', 0x00000003)
+
+// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_type', 0x00000003)
+
+// CHECK: ('st_bind', 0x00000000)
+// CHECK: ('st_type', 0x00000003)
+
+// CHECK:   # 'main'
+// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x00000002)
+
+// CHECK:   # 'puts'
+// CHECK-NEXT: ('st_bind', 0x00000001)
+// CHECK-NEXT: ('st_type', 0x00000000)

@@ -6,9 +6,6 @@
         movl	foo@GOT, %eax
         movl	foo@GOTPCREL(%rip), %eax
 
-// CHECK:     (('st_name', 0x00000005) # '_GLOBAL_OFFSET_TABLE_'
-// CHECK-NEXT: ('st_bind', 0x00000001)
-
 // CHECK:      ('_relocations', [
 // CHECK-NEXT:   # Relocation 0x00000000
 // CHECK-NEXT:    (('r_offset',
@@ -23,3 +20,6 @@
 // CHECK-NEXT:     ('r_addend',
 // CHECK-NEXT:    ),
 // CHECK-NEXT:   ])
+
+// CHECK:     (('st_name', 0x00000005) # '_GLOBAL_OFFSET_TABLE_'
+// CHECK-NEXT: ('st_bind', 0x00000001)

@@ -3,33 +3,6 @@
 // Test that we produce the correct relocation types and that the relocations
 // correctly point to the section or the symbol.
 
-// Section 3 is bss
-// CHECK:      # Section 0x00000003
-// CHECK-NEXT: (('sh_name', 0x0000000d) # '.bss'
-
-// CHECK:      # Symbol 0x00000001
-// CHECK-NEXT: (('st_name', 0x00000005) # '.Lfoo'
-
-// Symbol 4 is zed
-// CHECK:      # Symbol 0x00000004
-// CHECK-NEXT: (('st_name', 0x00000035) # 'zed'
-// CHECK-NEXT:  ('st_value', 0x00000000)
-// CHECK-NEXT:  ('st_size', 0x00000000)
-// CHECK-NEXT:  ('st_bind', 0x00000000)
-// CHECK-NEXT:  ('st_type', 0x00000006)
-// CHECK-NEXT:  ('st_other', 0x00000000)
-// CHECK-NEXT:  ('st_shndx', 0x00000004)
-
-// Symbol 7 is section 3
-// CHECK:      # Symbol 0x00000007
-// CHECK-NEXT: (('st_name', 0x00000000) # ''
-// CHECK-NEXT:  ('st_value', 0x00000000)
-// CHECK-NEXT:  ('st_size', 0x00000000)
-// CHECK-NEXT:  ('st_bind', 0x00000000)
-// CHECK-NEXT:  ('st_type', 0x00000003)
-// CHECK-NEXT:  ('st_other', 0x00000000)
-// CHECK-NEXT:  ('st_shndx', 0x00000003)
-
 // CHECK:      # Relocation 0x00000000
 // CHECK-NEXT: (('r_offset', 0x00000002)
 // CHECK-NEXT:  ('r_sym', 0x00000001)
@@ -180,6 +153,34 @@
 // CHECK-NEXT:  ('r_sym',
 // CHECK-NEXT:  ('r_type', 0x00000001)
 // CHECK-NEXT: ),
+
+// Section 4 is bss
+// CHECK:      # Section 0x00000004
+// CHECK-NEXT: (('sh_name', 0x0000000d) # '.bss'
+
+// CHECK:      # Symbol 0x00000001
+// CHECK-NEXT: (('st_name', 0x00000005) # '.Lfoo'
+
+// Symbol 4 is zed
+// CHECK:      # Symbol 0x00000004
+// CHECK-NEXT: (('st_name', 0x00000035) # 'zed'
+// CHECK-NEXT:  ('st_value', 0x00000000)
+// CHECK-NEXT:  ('st_size', 0x00000000)
+// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_type', 0x00000006)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x00000005)
+
+// Symbol 7 is section 4
+// CHECK:      # Symbol 0x00000007
+// CHECK-NEXT: (('st_name', 0x00000000) # ''
+// CHECK-NEXT:  ('st_value', 0x00000000)
+// CHECK-NEXT:  ('st_size', 0x00000000)
+// CHECK-NEXT:  ('st_bind', 0x00000000)
+// CHECK-NEXT:  ('st_type', 0x00000003)
+// CHECK-NEXT:  ('st_other', 0x00000000)
+// CHECK-NEXT:  ('st_shndx', 0x00000004)
+
 
         .text
 bar:

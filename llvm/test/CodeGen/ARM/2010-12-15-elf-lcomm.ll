@@ -15,7 +15,7 @@
 
 
 
-; OBJ:          Section 0x00000003
+; OBJ:          Section 0x00000004
 ; OBJ-NEXT:     '.bss'
 
 ; OBJ:          'array00'
@@ -24,7 +24,7 @@
 ; OBJ-NEXT:     'st_bind', 0x00000000
 ; OBJ-NEXT:     'st_type', 0x00000001
 ; OBJ-NEXT:     'st_other', 0x00000000
-; OBJ-NEXT:     'st_shndx', 0x00000003
+; OBJ-NEXT:     'st_shndx', 0x00000004
 
 define i32 @main(i32 %argc) nounwind {
   %1 = load i32* @sum, align 4

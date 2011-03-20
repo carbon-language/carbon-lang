@@ -28,6 +28,13 @@ defined3:
 // CHECK-NEXT:  ('sh_addralign', 0x00000004)
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 
+// The relocation uses symbol 2
+// CHECK:      # Relocation 0x00000000
+// CHECK-NEXT: (('r_offset', 0x00000000)
+// CHECK-NEXT:  ('r_sym', 0x00000002)
+// CHECK-NEXT:  ('r_type', 0x0000000a)
+// CHECK-NEXT:  ('r_addend', 0x00000000)
+
 // Symbol 2 is section 1
 // CHECK:      # Symbol 0x00000002
 // CHECK-NEXT: (('st_name', 0x00000000) # ''
@@ -37,10 +44,3 @@ defined3:
 // CHECK-NEXT:  ('st_shndx', 0x00000001)
 // CHECK-NEXT:  ('st_value', 0x0000000000000000)
 // CHECK-NEXT:  ('st_size', 0x0000000000000000)
-
-// The relocation uses symbol 2
-// CHECK:      # Relocation 0x00000000
-// CHECK-NEXT: (('r_offset', 0x00000000)
-// CHECK-NEXT:  ('r_sym', 0x00000002)
-// CHECK-NEXT:  ('r_type', 0x0000000a)
-// CHECK-NEXT:  ('r_addend', 0x00000000)

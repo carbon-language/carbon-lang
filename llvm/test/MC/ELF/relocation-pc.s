@@ -5,14 +5,14 @@
 	loope	0                 # R_X86_64_PC8
 	jmp	-256              # R_X86_64_PC32
 
-// CHECK:      # Section 0x00000007
-// CHECK-NEXT: (('sh_name', 0x0000002c) # '.rela.text'
+// CHECK:      # Section 0x00000002
+// CHECK-NEXT: (('sh_name', 0x00000012) # '.rela.text'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x000000e8)
+// CHECK-NEXT:  ('sh_offset', 0x000002e8)
 // CHECK-NEXT:  ('sh_size', 0x00000030)
-// CHECK-NEXT:  ('sh_link', 0x00000005)
+// CHECK-NEXT:  ('sh_link', 0x00000006)
 // CHECK-NEXT:  ('sh_info', 0x00000001)
 // CHECK-NEXT:  ('sh_addralign', 0x00000008)
 // CHECK-NEXT:  ('sh_entsize', 0x00000018)

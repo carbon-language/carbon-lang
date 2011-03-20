@@ -22,30 +22,6 @@ zed:
         .section	bar,"ax",@progbits
 foo:
 
-// Section 4 is "sec1"
-// CHECK: # Section 0x00000004
-// CHECK-NEXT:  (('sh_name', 0x00000012) # '.sec1'
-
-// Symbol number 1 is .Lfoo
-// CHECK:      # Symbol 0x00000001
-// CHECK-NEXT: (('st_name', 0x00000001) # '.Lfoo'
-
-// Symbol number 2 is foo
-// CHECK:      # Symbol 0x00000002
-// CHECK-NEXT: (('st_name', 0x00000007) # 'foo'
-
-// Symbol number 6 is section 4
-// CHECK:        # Symbol 0x00000006
-// CHECK-NEXT:    (('st_name', 0x00000000) # ''
-// CHECK-NEXT:     ('st_bind', 0x00000000)
-// CHECK-NEXT:     ('st_type', 0x00000003)
-// CHECK-NEXT:     ('st_other', 0x00000000)
-// CHECK-NEXT:     ('st_shndx', 0x00000004)
-
-// Symbol number 8 is zed
-// CHECK:        # Symbol 0x00000008
-// CHECK-NEXT:    (('st_name', 0x0000000b) # 'zed'
-
 // Relocation 0 refers to symbol 1
 // CHECK:       ('_relocations', [
 // CHECK-NEXT:   # Relocation 0
@@ -95,3 +71,27 @@ foo:
 // CHECK-NEXT:    ('r_addend', 0x00000000)
 // CHECK-NEXT:   ),
 // CHECK-NEXT:  ])
+
+// Section 5 is "sec1"
+// CHECK: # Section 0x00000005
+// CHECK-NEXT:  (('sh_name', 0x00000012) # '.sec1'
+
+// Symbol number 1 is .Lfoo
+// CHECK:      # Symbol 0x00000001
+// CHECK-NEXT: (('st_name', 0x00000001) # '.Lfoo'
+
+// Symbol number 2 is foo
+// CHECK:      # Symbol 0x00000002
+// CHECK-NEXT: (('st_name', 0x00000007) # 'foo'
+
+// Symbol number 6 is section 5
+// CHECK:        # Symbol 0x00000006
+// CHECK-NEXT:    (('st_name', 0x00000000) # ''
+// CHECK-NEXT:     ('st_bind', 0x00000000)
+// CHECK-NEXT:     ('st_type', 0x00000003)
+// CHECK-NEXT:     ('st_other', 0x00000000)
+// CHECK-NEXT:     ('st_shndx', 0x00000005)
+
+// Symbol number 8 is zed
+// CHECK:        # Symbol 0x00000008
+// CHECK-NEXT:    (('st_name', 0x0000000b) # 'zed'
