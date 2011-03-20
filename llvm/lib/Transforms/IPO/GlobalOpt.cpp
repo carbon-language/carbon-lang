@@ -54,6 +54,7 @@ STATISTIC(NumCtorsEvaluated, "Number of static ctors evaluated");
 STATISTIC(NumNestRemoved   , "Number of nest attributes removed");
 STATISTIC(NumAliasesResolved, "Number of global aliases resolved");
 STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
+STATISTIC(NumCXXDtorsRemoved, "Number of global C++ destructors removed");
 
 namespace {
   struct GlobalStatus;
@@ -77,6 +78,7 @@ namespace {
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI,
                                const SmallPtrSet<const PHINode*, 16> &PHIUsers,
                                const GlobalStatus &GS);
+    bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
   };
 }
 
@@ -2696,11 +2698,105 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
   return Changed;
 }
 
+static Function *FindCXAAtExit(Module &M) {
+  Function *Fn = M.getFunction("__cxa_atexit");
+  
+  if (!Fn)
+    return 0;
+  
+  const FunctionType *FTy = Fn->getFunctionType();
+  
+  // Checking that the function has the right number of parameters and that they
+  // all have pointer types should be enough.
+  if (FTy->getNumParams() != 3 ||
+      !FTy->getParamType(0)->isPointerTy() ||
+      !FTy->getParamType(1)->isPointerTy() ||
+      !FTy->getParamType(2)->isPointerTy())
+    return 0;
+
+  return Fn;
+}
+
+/// cxxDtorIsEmpty - Returns whether the given function is an empty C++
+/// destructor and can therefore be eliminated.
+/// Note that we assume that other optimization passes have already simplified
+/// the code so we only look for a function with a single basic block, where
+/// the only allowed instructions are 'ret' or 'call' to empty C++ dtor.
+static bool cxxDtorIsEmpty(const Function& Fn) {
+  if (Fn.empty())
+    return true;
+
+  if (++Fn.begin() != Fn.end())
+    return false;
+
+  const BasicBlock &EntryBlock = Fn.getEntryBlock();
+  for (BasicBlock::const_iterator I = EntryBlock.begin(), E = EntryBlock.end();
+       I != E; ++I) {
+    if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+      const Function *CalledFn = CI->getCalledFunction();
+
+      if (!CalledFn)
+        return false;
+
+      if (!cxxDtorIsEmpty(*CalledFn))
+        return false;
+    } else if (isa<ReturnInst>(*I))
+      return true;
+    else
+      return false;
+  }
+
+  return false;
+}
+
+bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
+  /// Itanium C++ ABI p3.3.5:
+  ///
+  ///   After constructing a global (or local static) object, that will require
+  ///   destruction on exit, a termination function is registered as follows:
+  ///
+  ///   extern "C" int __cxa_atexit ( void (*f)(void *), void *p, void *d );
+  ///
+  ///   This registration, e.g. __cxa_atexit(f,p,d), is intended to cause the
+  ///   call f(p) when DSO d is unloaded, before all such termination calls
+  ///   registered before this one. It returns zero if registration is
+  ///    successful, nonzero on failure.
+
+  // This pass will look for calls to __cxa_atexit where the function is trivial
+  // and remove them.
+  bool Changed = false;
+
+  for (Function::use_iterator I = CXAAtExitFn->use_begin(), 
+       E = CXAAtExitFn->use_end(); I != E;) {
+    CallSite CS(*I++);
+    if (!CS.getInstruction())
+      continue;
+
+    Function *DtorFn = 
+      dyn_cast<Function>(CS.getArgument(0)->stripPointerCasts());
+    if (!DtorFn)
+      continue;
+
+    if (!cxxDtorIsEmpty(*DtorFn))
+      continue;
+
+    // Just remove the call.
+    CS.getInstruction()->eraseFromParent();
+    ++NumCXXDtorsRemoved;
+
+    Changed |= true;
+  }
+
+  return Changed;
+}
+
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
   // Try to find the llvm.globalctors list.
   GlobalVariable *GlobalCtors = FindGlobalCtors(M);
+
+  Function *CXAAtExitFn = FindCXAAtExit(M);
 
   bool LocalChange = true;
   while (LocalChange) {
@@ -2718,6 +2814,11 @@ bool GlobalOpt::runOnModule(Module &M) {
 
     // Resolve aliases, when possible.
     LocalChange |= OptimizeGlobalAliases(M);
+
+    // Try to remove trivial global destructors.
+    if (CXAAtExitFn)
+      LocalChange |= OptimizeEmptyGlobalCXXDtors(CXAAtExitFn);
+
     Changed |= LocalChange;
   }
 
