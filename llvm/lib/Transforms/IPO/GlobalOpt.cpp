@@ -2780,6 +2780,12 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
     if (!CS)
       continue;
 
+    // We're only interested in calls. Theoretically, we could handle invoke
+    // instructions as well, but neither llvm-gcc nor clang generate invokes
+    // to __cxa_atexit.
+    if (!CS.isCall())
+      continue;
+
     Function *DtorFn = 
       dyn_cast<Function>(CS.getArgument(0)->stripPointerCasts());
     if (!DtorFn)
