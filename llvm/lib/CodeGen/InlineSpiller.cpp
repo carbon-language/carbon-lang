@@ -124,7 +124,7 @@ private:
   void analyzeSiblingValues();
 
   bool hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI);
-  void eliminateRedundantSpills(unsigned Reg, VNInfo *VNI);
+  void eliminateRedundantSpills(LiveInterval &LI, VNInfo *VNI);
 
   bool reMaterializeFor(MachineBasicBlock::iterator MI);
   void reMaterializeAll();
@@ -444,7 +444,7 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
 
   // We are going to spill SVI.SpillVNI immediately after its def, so clear out
   // any later spills of the same value.
-  eliminateRedundantSpills(SVI.SpillReg, SVI.SpillVNI);
+  eliminateRedundantSpills(LIS.getInterval(SVI.SpillReg), SVI.SpillVNI);
 
   MachineBasicBlock *MBB = LIS.getMBBFromIndex(SVI.SpillVNI->def);
   MachineBasicBlock::iterator MII;
@@ -463,15 +463,17 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   return true;
 }
 
-/// eliminateRedundantSpills - Reg:VNI is known to be on the stack. Remove any
-/// redundant spills of this value in Reg and sibling copies.
-void InlineSpiller::eliminateRedundantSpills(unsigned Reg, VNInfo *VNI) {
-  SmallVector<std::pair<unsigned, VNInfo*>, 8> WorkList;
-  WorkList.push_back(std::make_pair(Reg, VNI));
+/// eliminateRedundantSpills - SLI:VNI is known to be on the stack. Remove any
+/// redundant spills of this value in SLI.reg and sibling copies.
+void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
+  SmallVector<std::pair<LiveInterval*, VNInfo*>, 8> WorkList;
+  WorkList.push_back(std::make_pair(&SLI, VNI));
   LiveInterval &StackInt = LSS.getInterval(StackSlot);
 
   do {
-    tie(Reg, VNI) = WorkList.pop_back_val();
+    LiveInterval *LI;
+    tie(LI, VNI) = WorkList.pop_back_val();
+    unsigned Reg = LI->reg;
     DEBUG(dbgs() << "Checking redundant spills for " << PrintReg(Reg) << ':'
                  << VNI->id << '@' << VNI->def << '\n');
 
@@ -480,8 +482,7 @@ void InlineSpiller::eliminateRedundantSpills(unsigned Reg, VNInfo *VNI) {
       continue;
 
     // Add all of VNI's live range to StackInt.
-    LiveInterval &LI = LIS.getInterval(Reg);
-    StackInt.MergeValueInAsValue(LI, VNI, StackInt.getValNumInfo(0));
+    StackInt.MergeValueInAsValue(*LI, VNI, StackInt.getValNumInfo(0));
     DEBUG(dbgs() << "Merged to stack int: " << StackInt << '\n');
 
     // Find all spills and copies of VNI.
@@ -490,7 +491,7 @@ void InlineSpiller::eliminateRedundantSpills(unsigned Reg, VNInfo *VNI) {
       if (!MI->isCopy() && !MI->getDesc().mayStore())
         continue;
       SlotIndex Idx = LIS.getInstructionIndex(MI);
-      if (LI.getVNInfoAt(Idx) != VNI)
+      if (LI->getVNInfoAt(Idx) != VNI)
         continue;
 
       // Follow sibling copies down the dominator tree.
@@ -500,7 +501,7 @@ void InlineSpiller::eliminateRedundantSpills(unsigned Reg, VNInfo *VNI) {
            VNInfo *DstVNI = DstLI.getVNInfoAt(Idx.getDefIndex());
            assert(DstVNI && "Missing defined value");
            assert(DstVNI->def == Idx.getDefIndex() && "Wrong copy def slot");
-           WorkList.push_back(std::make_pair(DstReg, DstVNI));
+           WorkList.push_back(std::make_pair(&DstLI, DstVNI));
         }
         continue;
       }
@@ -841,7 +842,6 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   Edit = &edit;
   assert(!TargetRegisterInfo::isStackSlot(edit.getReg())
          && "Trying to spill a stack slot.");
-
   // Share a stack slot among all descendants of Original.
   Original = VRM.getOriginal(edit.getReg());
   StackSlot = VRM.getStackSlot(Original);
