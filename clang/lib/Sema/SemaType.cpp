@@ -2116,8 +2116,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Diagnose any ignored type attributes.
   if (!T.isNull()) state.diagnoseIgnoredTypeAttrs(T);
 
-  // If there's a constexpr specifier, treat it as a top-level const.
-  if (D.getDeclSpec().isConstexprSpecified()) {
+  // C++0x [dcl.constexpr]p9:
+  //  A constexpr specifier used in an object declaration declares the object
+  //  as const. 
+  if (D.getDeclSpec().isConstexprSpecified() && T->isObjectType()) {
     T.addConst();
   }
 
