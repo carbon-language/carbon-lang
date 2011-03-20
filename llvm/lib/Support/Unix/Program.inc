@@ -132,7 +132,7 @@ static bool RedirectIO(const Path *Path, int FD, std::string* ErrMsg) {
 
 #ifdef HAVE_POSIX_SPAWN
 static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
-                          posix_spawn_file_actions_t &FileActions) {
+                          posix_spawn_file_actions_t *FileActions) {
   if (Path == 0) // Noop
     return false;
   const char *File;
@@ -142,7 +142,7 @@ static bool RedirectIO_PS(const Path *Path, int FD, std::string *ErrMsg,
   else
     File = Path->c_str();
 
-  if (int Err = posix_spawn_file_actions_addopen(&FileActions, FD,
+  if (int Err = posix_spawn_file_actions_addopen(FileActions, FD,
                             File, FD == 0 ? O_RDONLY : O_WRONLY|O_CREAT, 0666))
     return MakeErrMsg(ErrMsg, "Cannot dup2", Err);
   return false;
@@ -185,10 +185,13 @@ Program::Execute(const Path &path, const char **args, const char **envp,
   // posix_spawn.  It is more efficient than fork/exec.
 #ifdef HAVE_POSIX_SPAWN
   if (memoryLimit == 0) {
-    posix_spawn_file_actions_t FileActions;
-    posix_spawn_file_actions_init(&FileActions);
+    posix_spawn_file_actions_t FileActionsStore;
+    posix_spawn_file_actions_t *FileActions = 0;
 
     if (redirects) {
+      FileActions = &FileActionsStore;
+      posix_spawn_file_actions_init(FileActions);
+
       // Redirect stdin/stdout.
       if (RedirectIO_PS(redirects[0], 0, ErrMsg, FileActions) ||
           RedirectIO_PS(redirects[1], 1, ErrMsg, FileActions))
@@ -200,7 +203,7 @@ Program::Execute(const Path &path, const char **args, const char **envp,
       } else {
         // If stdout and stderr should go to the same place, redirect stderr
         // to the FD already open for stdout.
-        if (int Err = posix_spawn_file_actions_adddup2(&FileActions, 1, 2))
+        if (int Err = posix_spawn_file_actions_adddup2(FileActions, 1, 2))
           return !MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout", Err);
       }
     }
@@ -216,10 +219,11 @@ Program::Execute(const Path &path, const char **args, const char **envp,
     // Explicitly initialized to prevent what appears to be a valgrind false
     // positive.
     pid_t PID = 0;
-    int Err = posix_spawn(&PID, path.c_str(), &FileActions, /*attrp*/0,
+    int Err = posix_spawn(&PID, path.c_str(), FileActions, /*attrp*/0,
                           const_cast<char **>(args), const_cast<char **>(envp));
 
-    posix_spawn_file_actions_destroy(&FileActions);
+    if (FileActions)
+      posix_spawn_file_actions_destroy(FileActions);
 
     if (Err)
      return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
