@@ -185,15 +185,6 @@ include(AddLLVM)
 include(TableGen)
 
 if( MINGW )
-  get_system_libs(LLVM_SYSTEM_LIBS_LIST)
-  foreach(l ${LLVM_SYSTEM_LIBS_LIST})
-    set(LLVM_SYSTEM_LIBS "${LLVM_SYSTEM_LIBS} -l${l}")
-  endforeach()
-  set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES}${LLVM_SYSTEM_LIBS}")
-  set(CMAKE_C_STANDARD_LIBRARIES "${CMAKE_C_STANDARD_LIBRARIES}${LLVM_SYSTEM_LIBS}")
-endif()
-
-if( MINGW )
   # People report that -O3 is unreliable on MinGW. The traditional
   # build also uses -O2 for that reason:
   llvm_replace_compiler_option(CMAKE_CXX_FLAGS_RELEASE "-O3" "-O2")
