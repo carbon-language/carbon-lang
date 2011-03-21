@@ -3293,6 +3293,7 @@
 				COPY_PHASE_STRIP = NO;
 				EXECUTABLE_EXTENSION = a;
 				GCC_ENABLE_OBJC_GC = supported;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					__STDC_LIMIT_MACROS,
@@ -3322,6 +3323,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_EXTENSION = a;
 				GCC_ENABLE_OBJC_GC = supported;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					__STDC_LIMIT_MACROS,
@@ -3351,6 +3353,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				EXECUTABLE_EXTENSION = a;
 				GCC_ENABLE_OBJC_GC = supported;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
 					__STDC_LIMIT_MACROS,
@@ -3605,6 +3608,7 @@
 				2689FFD713353D7A00698AC0 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
 		};
 		26F5C26E10F3D9C5009D5894 /* Build configuration list for PBXNativeTarget "lldb-tool" */ = {
 			isa = XCConfigurationList;
