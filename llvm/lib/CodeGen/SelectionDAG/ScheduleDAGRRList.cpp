@@ -544,7 +544,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
 
   // FIXME: Do not modify node height. It may interfere with
   // backtracking. Instead add a "ready cycle" to SUnit. Before scheduling the
-  // node it's ready cycle can aid heuristics, and after scheduling it can
+  // node its ready cycle can aid heuristics, and after scheduling it can
   // indicate the scheduled cycle.
   SU->setHeightToAtLeast(CurCycle);
 
