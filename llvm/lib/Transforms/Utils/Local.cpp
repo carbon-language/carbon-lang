@@ -216,13 +216,12 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
     if (DDI->getAddress()) 
       return false;
-    else
-      return true;
-  } else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
+    return true;
+  } 
+  if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
     if (DVI->getValue())
       return false;
-    else
-      return true;
+    return true;
   }
 
   if (!I->mayHaveSideEffects()) return true;
