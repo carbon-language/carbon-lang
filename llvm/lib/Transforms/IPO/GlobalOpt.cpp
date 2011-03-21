@@ -2737,17 +2737,14 @@ static bool cxxDtorIsEmpty(const Function &Fn,
   for (BasicBlock::const_iterator I = EntryBlock.begin(), E = EntryBlock.end();
        I != E; ++I) {
     if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+      // Ignore debug intrinsics.
+      if (isa<DbgInfoIntrinsic>(CI))
+        continue;
+
       const Function *CalledFn = CI->getCalledFunction();
 
       if (!CalledFn)
         return false;
-
-      if (unsigned IntrinsicID = CalledFn->getIntrinsicID()) {
-        // Ignore debug intrinsics.
-        if (IntrinsicID == llvm::Intrinsic::dbg_declare ||
-            IntrinsicID == llvm::Intrinsic::dbg_value)
-          continue;
-      }
 
       // Don't treat recursive functions as empty.
       if (!CalledFunctions.insert(CalledFn))
@@ -2783,18 +2780,15 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
 
   for (Function::use_iterator I = CXAAtExitFn->use_begin(), 
        E = CXAAtExitFn->use_end(); I != E;) {
-    CallSite CS(*I++);
-    if (!CS)
-      continue;
-
     // We're only interested in calls. Theoretically, we could handle invoke
     // instructions as well, but neither llvm-gcc nor clang generate invokes
     // to __cxa_atexit.
-    if (!CS.isCall())
+    CallInst *CI = dyn_cast<CallInst>(*I++);
+    if (!CI)
       continue;
 
     Function *DtorFn = 
-      dyn_cast<Function>(CS.getArgument(0)->stripPointerCasts());
+      dyn_cast<Function>(CI->getArgOperand(0)->stripPointerCasts());
     if (!DtorFn)
       continue;
 
@@ -2803,8 +2797,8 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
       continue;
 
     // Just remove the call.
-    CS->replaceAllUsesWith(Constant::getNullValue(CS.getType()));
-    CS->eraseFromParent();
+    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    CI->eraseFromParent();
 
     ++NumCXXDtorsRemoved;
 
