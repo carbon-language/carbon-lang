@@ -1,4 +1,4 @@
-//===-- lib/addsf3.c - Single-precision addition and subtraction --*- C -*-===//
+//===-- lib/addsf3.c - Single-precision addition ------------------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements single-precision soft-float addition and subtraction
-// with the IEEE-754 default rounding (to nearest, ties to even).
+// This file implements single-precision soft-float addition with the IEEE-754
+// default rounding (to nearest, ties to even).
 //
 //===----------------------------------------------------------------------===//
 
@@ -147,18 +147,3 @@ fp_t __addsf3(fp_t a, fp_t b) {
     if (roundGuardSticky == 0x4) result += result & 1;
     return fromRep(result);
 }
-
-// Subtraction; flip the sign bit of b and add.
-fp_t __subsf3(fp_t a, fp_t b) {
-    return __addsf3(a, fromRep(toRep(b) ^ signBit));
-}
-
-
-
-
-
-
-
-
-
-
