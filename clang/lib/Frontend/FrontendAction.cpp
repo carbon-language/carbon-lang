@@ -258,10 +258,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // matching EndSourceFile().
   failure:
   if (isCurrentFileAST()) {
-    CI.takeASTContext();
-    CI.takePreprocessor();
-    CI.takeSourceManager();
-    CI.takeFileManager();
+    CI.setASTContext(0);
+    CI.setPreprocessor(0);
+    CI.setSourceManager(0);
+    CI.setFileManager(0);
   }
 
   CI.getDiagnosticClient().EndSourceFile();
@@ -313,7 +313,7 @@ void FrontendAction::EndSourceFile() {
     CI.takeASTConsumer();
     if (!isCurrentFileAST()) {
       CI.takeSema();
-      CI.takeASTContext();
+      CI.resetAndLeakASTContext();
     }
   } else {
     if (!isCurrentFileAST()) {
@@ -342,10 +342,10 @@ void FrontendAction::EndSourceFile() {
 
   if (isCurrentFileAST()) {
     CI.takeSema();
-    CI.takeASTContext();
-    CI.takePreprocessor();
-    CI.takeSourceManager();
-    CI.takeFileManager();
+    CI.resetAndLeakASTContext();
+    CI.resetAndLeakPreprocessor();
+    CI.resetAndLeakSourceManager();
+    CI.resetAndLeakFileManager();
   }
 
   setCompilerInstance(0);

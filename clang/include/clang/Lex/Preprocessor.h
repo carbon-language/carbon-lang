@@ -25,6 +25,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -53,7 +54,7 @@ class PreprocessingRecord;
 /// single source file, and don't know anything about preprocessor-level issues
 /// like the #include stack, token expansion, etc.
 ///
-class Preprocessor {
+class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   Diagnostic        *Diags;
   LangOptions        Features;
   const TargetInfo  &Target;

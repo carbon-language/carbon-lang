@@ -71,12 +71,12 @@ public:
   
 private:
   llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
-  llvm::OwningPtr<FileManager>      FileMgr;
-  llvm::OwningPtr<SourceManager>    SourceMgr;
+  llvm::IntrusiveRefCntPtr<FileManager>      FileMgr;
+  llvm::IntrusiveRefCntPtr<SourceManager>    SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
-  llvm::OwningPtr<TargetInfo>       Target;
-  llvm::OwningPtr<Preprocessor>     PP;
-  llvm::OwningPtr<ASTContext>       Ctx;
+  llvm::IntrusiveRefCntPtr<TargetInfo>       Target;
+  llvm::IntrusiveRefCntPtr<Preprocessor>     PP;
+  llvm::IntrusiveRefCntPtr<ASTContext>       Ctx;
 
   FileSystemOptions FileSystemOpts;
 
@@ -90,7 +90,7 @@ private:
   
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
-  llvm::OwningPtr<CompilerInvocation> Invocation;
+  llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation;
   
   /// \brief The set of target features.
   ///
@@ -396,11 +396,11 @@ public:
   const SourceManager &getSourceManager() const { return *SourceMgr; }
         SourceManager &getSourceManager()       { return *SourceMgr; }
 
-  const Preprocessor &getPreprocessor() const { return *PP.get(); }
-        Preprocessor &getPreprocessor()       { return *PP.get(); }
+  const Preprocessor &getPreprocessor() const { return *PP; }
+        Preprocessor &getPreprocessor()       { return *PP; }
 
-  const ASTContext &getASTContext() const { return *Ctx.get(); }
-        ASTContext &getASTContext()       { return *Ctx.get(); }
+  const ASTContext &getASTContext() const { return *Ctx; }
+        ASTContext &getASTContext()       { return *Ctx; }
 
   bool hasSema() const { return TheSema; }
   Sema &getSema() const { 

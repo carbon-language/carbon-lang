@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_BASIC_TARGETINFO_H
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
-// FIXME: Daniel isn't smart enough to use a prototype for this.
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
@@ -57,7 +57,7 @@ enum TargetCXXABI {
 
 /// TargetInfo - This class exposes information about the current target.
 ///
-class TargetInfo {
+class TargetInfo : public llvm::RefCountedBase<TargetInfo> {
   llvm::Triple Triple;
 protected:
   // Target values set by the ctor of the actual target implementation.  Default

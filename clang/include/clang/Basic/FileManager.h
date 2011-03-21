@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FILEMANAGER_H
 
 #include "clang/Basic/FileSystemOptions.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -105,7 +106,7 @@ public:
 /// properties, such as uniquing files based on "inode", so that a file with two
 /// names (e.g. symlinked) will be treated as a single file.
 ///
-class FileManager {
+class FileManager : public llvm::RefCountedBase<FileManager> {
   FileSystemOptions FileSystemOpts;
 
   class UniqueDirContainer;

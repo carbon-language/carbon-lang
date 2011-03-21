@@ -59,25 +59,25 @@ class TargetInfo;
 /// and a long form that takes explicit instances of any required objects.
 class CompilerInstance {
   /// The options used in this compiler instance.
-  llvm::OwningPtr<CompilerInvocation> Invocation;
+  llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation;
 
   /// The diagnostics engine instance.
   llvm::IntrusiveRefCntPtr<Diagnostic> Diagnostics;
 
   /// The target being compiled for.
-  llvm::OwningPtr<TargetInfo> Target;
+  llvm::IntrusiveRefCntPtr<TargetInfo> Target;
 
   /// The file manager.
-  llvm::OwningPtr<FileManager> FileMgr;
+  llvm::IntrusiveRefCntPtr<FileManager> FileMgr;
 
   /// The source manager.
-  llvm::OwningPtr<SourceManager> SourceMgr;
+  llvm::IntrusiveRefCntPtr<SourceManager> SourceMgr;
 
   /// The preprocessor.
-  llvm::OwningPtr<Preprocessor> PP;
+  llvm::IntrusiveRefCntPtr<Preprocessor> PP;
 
   /// The AST context.
-  llvm::OwningPtr<ASTContext> Context;
+  llvm::IntrusiveRefCntPtr<ASTContext> Context;
 
   /// The AST consumer.
   llvm::OwningPtr<ASTConsumer> Consumer;
@@ -161,10 +161,7 @@ public:
     return *Invocation;
   }
 
-  CompilerInvocation *takeInvocation() { return Invocation.take(); }
-
-  /// setInvocation - Replace the current invocation; the compiler instance
-  /// takes ownership of \arg Value.
+  /// setInvocation - Replace the current invocation.
   void setInvocation(CompilerInvocation *Value);
 
   /// }
@@ -251,13 +248,13 @@ public:
 
   bool hasDiagnostics() const { return Diagnostics != 0; }
 
+  /// Get the current diagnostics engine.
   Diagnostic &getDiagnostics() const {
     assert(Diagnostics && "Compiler instance has no diagnostics!");
     return *Diagnostics;
   }
 
-  /// setDiagnostics - Replace the current diagnostics engine; the compiler
-  /// instance takes ownership of \arg Value.
+  /// setDiagnostics - Replace the current diagnostics engine.
   void setDiagnostics(Diagnostic *Value);
 
   DiagnosticClient &getDiagnosticClient() const {
@@ -277,12 +274,7 @@ public:
     return *Target;
   }
 
-  /// takeTarget - Remove the current diagnostics engine and give ownership
-  /// to the caller.
-  TargetInfo *takeTarget() { return Target.take(); }
-
-  /// setTarget - Replace the current diagnostics engine; the compiler
-  /// instance takes ownership of \arg Value.
+  /// Replace the current diagnostics engine.
   void setTarget(TargetInfo *Value);
 
   /// }
@@ -291,17 +283,17 @@ public:
 
   bool hasFileManager() const { return FileMgr != 0; }
 
+  /// Return the current file manager to the caller.
   FileManager &getFileManager() const {
     assert(FileMgr && "Compiler instance has no file manager!");
     return *FileMgr;
   }
+  
+  void resetAndLeakFileManager() {
+    FileMgr.resetWithoutRelease();
+  }
 
-  /// takeFileManager - Remove the current file manager and give ownership to
-  /// the caller.
-  FileManager *takeFileManager() { return FileMgr.take(); }
-
-  /// setFileManager - Replace the current file manager; the compiler instance
-  /// takes ownership of \arg Value.
+  /// setFileManager - Replace the current file manager.
   void setFileManager(FileManager *Value);
 
   /// }
@@ -310,17 +302,17 @@ public:
 
   bool hasSourceManager() const { return SourceMgr != 0; }
 
+  /// Return the current source manager.
   SourceManager &getSourceManager() const {
     assert(SourceMgr && "Compiler instance has no source manager!");
     return *SourceMgr;
   }
+  
+  void resetAndLeakSourceManager() {
+    SourceMgr.resetWithoutRelease();
+  }
 
-  /// takeSourceManager - Remove the current source manager and give ownership
-  /// to the caller.
-  SourceManager *takeSourceManager() { return SourceMgr.take(); }
-
-  /// setSourceManager - Replace the current source manager; the compiler
-  /// instance takes ownership of \arg Value.
+  /// setSourceManager - Replace the current source manager.
   void setSourceManager(SourceManager *Value);
 
   /// }
@@ -329,17 +321,17 @@ public:
 
   bool hasPreprocessor() const { return PP != 0; }
 
+  /// Return the current preprocessor.
   Preprocessor &getPreprocessor() const {
     assert(PP && "Compiler instance has no preprocessor!");
     return *PP;
   }
 
-  /// takePreprocessor - Remove the current preprocessor and give ownership to
-  /// the caller.
-  Preprocessor *takePreprocessor() { return PP.take(); }
+  void resetAndLeakPreprocessor() {
+    PP.resetWithoutRelease();
+  }
 
-  /// setPreprocessor - Replace the current preprocessor; the compiler instance
-  /// takes ownership of \arg Value.
+  /// Replace the current preprocessor.
   void setPreprocessor(Preprocessor *Value);
 
   /// }
@@ -352,13 +344,12 @@ public:
     assert(Context && "Compiler instance has no AST context!");
     return *Context;
   }
+  
+  void resetAndLeakASTContext() {
+    Context.resetWithoutRelease();
+  }
 
-  /// takeASTContext - Remove the current AST context and give ownership to the
-  /// caller.
-  ASTContext *takeASTContext() { return Context.take(); }
-
-  /// setASTContext - Replace the current AST context; the compiler instance
-  /// takes ownership of \arg Value.
+  /// setASTContext - Replace the current AST context.
   void setASTContext(ASTContext *Value);
 
   /// \brief Replace the current Sema; the compiler instance takes ownership

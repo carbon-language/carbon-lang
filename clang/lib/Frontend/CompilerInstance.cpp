@@ -47,7 +47,7 @@ CompilerInstance::~CompilerInstance() {
 }
 
 void CompilerInstance::setInvocation(CompilerInvocation *Value) {
-  Invocation.reset(Value);
+  Invocation = Value;
 }
 
 void CompilerInstance::setDiagnostics(Diagnostic *Value) {
@@ -55,24 +55,20 @@ void CompilerInstance::setDiagnostics(Diagnostic *Value) {
 }
 
 void CompilerInstance::setTarget(TargetInfo *Value) {
-  Target.reset(Value);
+  Target = Value;
 }
 
 void CompilerInstance::setFileManager(FileManager *Value) {
-  FileMgr.reset(Value);
+  FileMgr = Value;
 }
 
-void CompilerInstance::setSourceManager(SourceManager *Value) {
-  SourceMgr.reset(Value);
+void CompilerInstance::setSourceManager(SourceManager *Value) { 
+  SourceMgr = Value;
 }
 
-void CompilerInstance::setPreprocessor(Preprocessor *Value) {
-  PP.reset(Value);
-}
+void CompilerInstance::setPreprocessor(Preprocessor *Value) { PP = Value; }
 
-void CompilerInstance::setASTContext(ASTContext *Value) {
-  Context.reset(Value);
-}
+void CompilerInstance::setASTContext(ASTContext *Value) { Context = Value; }
 
 void CompilerInstance::setSema(Sema *S) {
   TheSema.reset(S);
@@ -145,23 +141,23 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 // File Manager
 
 void CompilerInstance::createFileManager() {
-  FileMgr.reset(new FileManager(getFileSystemOpts()));
+  FileMgr = new FileManager(getFileSystemOpts());
 }
 
 // Source Manager
 
 void CompilerInstance::createSourceManager(FileManager &FileMgr) {
-  SourceMgr.reset(new SourceManager(getDiagnostics(), FileMgr));
+  SourceMgr = new SourceManager(getDiagnostics(), FileMgr);
 }
 
 // Preprocessor
 
 void CompilerInstance::createPreprocessor() {
-  PP.reset(createPreprocessor(getDiagnostics(), getLangOpts(),
-                              getPreprocessorOpts(), getHeaderSearchOpts(),
-                              getDependencyOutputOpts(), getTarget(),
-                              getFrontendOpts(), getSourceManager(),
-                              getFileManager()));
+  PP = createPreprocessor(getDiagnostics(), getLangOpts(),
+                          getPreprocessorOpts(), getHeaderSearchOpts(),
+                          getDependencyOutputOpts(), getTarget(),
+                          getFrontendOpts(), getSourceManager(),
+                          getFileManager());
 }
 
 Preprocessor *
@@ -219,10 +215,10 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
 
 void CompilerInstance::createASTContext() {
   Preprocessor &PP = getPreprocessor();
-  Context.reset(new ASTContext(getLangOpts(), PP.getSourceManager(),
-                               getTarget(), PP.getIdentifierTable(),
-                               PP.getSelectorTable(), PP.getBuiltinInfo(),
-                               /*size_reserve=*/ 0));
+  Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
+                           getTarget(), PP.getIdentifierTable(),
+                           PP.getSelectorTable(), PP.getBuiltinInfo(),
+                           /*size_reserve=*/ 0);
 }
 
 // ExternalASTSource

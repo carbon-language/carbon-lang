@@ -19,6 +19,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>
 #include <cassert>
@@ -378,7 +379,7 @@ public:
 /// user's view.  In the case of a macro expansion, for example, the spelling
 /// location indicates where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
-class SourceManager {
+class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// \brief Diagnostic object.
   Diagnostic &Diag;
 
