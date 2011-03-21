@@ -2516,8 +2516,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2668020B115FD0EE008E1FE4 /* Build configuration list for PBXNativeTarget "LLDB" */;
 			buildPhases = (
-				26D5B06111B07468009A862E /* Build llvm and clang */,
-				26D5B06311B074CF009A862E /* Build swig wrapper classes */,
 				26680202115FD0ED008E1FE4 /* Headers */,
 				26680203115FD0ED008E1FE4 /* Resources */,
 				26680204115FD0ED008E1FE4 /* Sources */,
@@ -2541,6 +2539,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2689FFD813353D7A00698AC0 /* Build configuration list for PBXNativeTarget "lldb-core" */;
 			buildPhases = (
+				261EECA21337D399001D193C /* Build llvm and clang */,
+				261EECA41337D4BB001D193C /* Build swig wrapper classes */,
 				2689FFC613353D7A00698AC0 /* Sources */,
 				2689FFC713353D7A00698AC0 /* Frameworks */,
 				2689FFC813353D7A00698AC0 /* Headers */,
@@ -2639,7 +2639,7 @@
 			shellPath = /bin/sh;
 			shellScript = "cd \"${TARGET_BUILD_DIR}/${PUBLIC_HEADERS_FOLDER_PATH}\"\nfor file in *.h\ndo\n\t/usr/bin/sed -i '' 's/\\(#include\\)[ ]*\"lldb\\/\\(API\\/\\)\\{0,1\\}\\(.*\\)\"/\\1 <LLDB\\/\\3>/1' \"$file\"\n\t/usr/bin/sed -i '' 's|<LLDB/Utility|<LLDB|' \"$file\"\n\t/usr/bin/sed -i '' \"s|//#define LLDB_VERSION|#define LLDB_VERSION ${CURRENT_PROJECT_VERSION} |\" \"$file\"\ndone\n";
 		};
-		26D5B06111B07468009A862E /* Build llvm and clang */ = {
+		261EECA21337D399001D193C /* Build llvm and clang */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -2657,7 +2657,7 @@
 			shellPath = /bin/sh;
 			shellScript = "perl $SRCROOT/scripts/build-llvm.pl";
 		};
-		26D5B06311B074CF009A862E /* Build swig wrapper classes */ = {
+		261EECA41337D4BB001D193C /* Build swig wrapper classes */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -3300,6 +3300,8 @@
 					LLDB_CONFIGURATION_DEBUG,
 				);
 				LD_DYLIB_INSTALL_NAME = "$(DYLIB_INSTALL_NAME_BASE:standardizepath)/lldb-core.a";
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
+				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3330,6 +3332,7 @@
 					LLDB_CONFIGURATION_RELEASE,
 				);
 				LD_DYLIB_INSTALL_NAME = "$(DYLIB_INSTALL_NAME_BASE:standardizepath)/lldb-core.a";
+				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3360,6 +3363,7 @@
 					LLDB_CONFIGURATION_BUILD_AND_INTEGRATION,
 				);
 				LD_DYLIB_INSTALL_NAME = "$(DYLIB_INSTALL_NAME_BASE:standardizepath)/lldb-core.a";
+				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
