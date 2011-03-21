@@ -51,12 +51,12 @@ void test0(A* a, B* b, id val) {
 }
 
 void test1(A* a) {
-  B* b = a; // expected-warning{{incompatible pointer types initializing 'A *' with an expression of type 'B *'}}
+  B* b = a; // expected-warning{{incompatible pointer types initializing 'B *' with an expression of type 'A *'}}
   B *c; c = a; // expected-warning{{incompatible pointer types assigning to 'A *' from 'B *'}}
 }
 
 void test2(A** ap) {
-  B** bp = ap; // expected-warning{{incompatible pointer types initializing 'A **' with an expression of type 'B **'}}
+  B** bp = ap; // expected-warning{{incompatible pointer types initializing 'B **' with an expression of type 'A **'}}
   bp = ap; // expected-warning{{incompatible pointer types assigning to 'A **' from 'B **'}}
 }
 
