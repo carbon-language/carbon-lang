@@ -2726,7 +2726,7 @@ static Function *FindCXAAtExit(Module &M) {
 static bool cxxDtorIsEmpty(const Function &Fn,
                            SmallPtrSet<const Function *, 8> &CalledFunctions) {
   // FIXME: We could eliminate C++ destructors if they're readonly/readnone and
-  // unwind, but that doesn't seem worth doing.
+  // nounwind, but that doesn't seem worth doing.
   if (Fn.isDeclaration())
     return false;
 
@@ -2768,7 +2768,7 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
   ///   This registration, e.g. __cxa_atexit(f,p,d), is intended to cause the
   ///   call f(p) when DSO d is unloaded, before all such termination calls
   ///   registered before this one. It returns zero if registration is
-  ///    successful, nonzero on failure.
+  ///   successful, nonzero on failure.
 
   // This pass will look for calls to __cxa_atexit where the function is trivial
   // and remove them.
