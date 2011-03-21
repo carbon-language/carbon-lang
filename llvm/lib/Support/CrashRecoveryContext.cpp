@@ -57,11 +57,15 @@ public:
 static sys::Mutex gCrashRecoveryContexMutex;
 static bool gCrashRecoveryEnabled = false;
 
+static sys::ThreadLocal<const CrashRecoveryContextCleanup> 
+       tlIsRecoveringFromCrash;
+
 CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() {}
 
 CrashRecoveryContext::~CrashRecoveryContext() {
   // Reclaim registered resources.
   CrashRecoveryContextCleanup *i = head;
+  tlIsRecoveringFromCrash.set(head);
   while (i) {
     CrashRecoveryContextCleanup *tmp = i;
     i = tmp->next;
@@ -69,9 +73,14 @@ CrashRecoveryContext::~CrashRecoveryContext() {
     tmp->recoverResources();
     delete tmp;
   }
+  tlIsRecoveringFromCrash.erase();
   
   CrashRecoveryContextImpl *CRCI = (CrashRecoveryContextImpl *) Impl;
   delete CRCI;
+}
+
+bool CrashRecoveryContext::isRecoveringFromCrash() {
+  return tlIsRecoveringFromCrash.get() != 0;
 }
 
 CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {

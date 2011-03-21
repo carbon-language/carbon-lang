@@ -63,6 +63,10 @@ public:
   /// thread which is in a protected context.
   static CrashRecoveryContext *GetCurrent();
 
+  /// \brief Return true if the current thread is recovering from a
+  /// crash.
+  static bool isRecoveringFromCrash();
+
   /// \brief Execute the provide callback function (with the given arguments) in
   /// a protected context.
   ///
