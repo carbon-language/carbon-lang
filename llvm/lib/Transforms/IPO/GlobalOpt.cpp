@@ -2742,6 +2742,13 @@ static bool cxxDtorIsEmpty(const Function &Fn,
       if (!CalledFn)
         return false;
 
+      if (unsigned IntrinsicID = CalledFn->getIntrinsicID()) {
+        // Ignore debug intrinsics.
+        if (IntrinsicID == llvm::Intrinsic::dbg_declare ||
+            IntrinsicID == llvm::Intrinsic::dbg_value)
+          continue;
+      }
+
       // Don't treat recursive functions as empty.
       if (!CalledFunctions.insert(CalledFn))
         return false;
