@@ -85,7 +85,8 @@ void AttachDependencyFileGen(Preprocessor &PP,
 /// \param OutputPath - If non-empty, a path to write the header include
 /// information to, instead of writing to stderr.
 void AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders = false,
-                            llvm::StringRef OutputPath = "");
+                            llvm::StringRef OutputPath = "",
+                            bool ShowDepth = true);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.

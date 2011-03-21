@@ -205,7 +205,8 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
     llvm::StringRef OutputPath = DepOpts.HeaderIncludeOutputFile;
     if (OutputPath == "-")
       OutputPath = "";
-    AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/true, OutputPath);
+    AttachHeaderIncludeGen(*PP, /*ShowAllHeaders=*/true, OutputPath,
+                           /*ShowDepth=*/false);
   }
 
   return PP;
