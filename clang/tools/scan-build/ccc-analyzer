@@ -183,7 +183,9 @@ sub Analyze {
     elsif (defined $HtmlDir) {
       push @Args, '-o', $HtmlDir;
     }
-    push @Args, "-Xclang", "-analyzer-display-progress";
+    if ($Verbose) {
+      push @Args, "-Xclang", "-analyzer-display-progress";
+    }
 
     foreach my $arg (@$AnalyzeArgs) {
       push @Args, "-Xclang", $arg;
