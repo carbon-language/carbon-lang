@@ -18,6 +18,6 @@ TOOL_NO_EXPORTS = 1
 # early so we can set up LINK_COMPONENTS before including Makefile.rules
 include $(LEVEL)/Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) support MC object
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) support MC object RuntimeDyld
 
 include $(LLVM_SRC_ROOT)/Makefile.rules

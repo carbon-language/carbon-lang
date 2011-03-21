@@ -1,4 +1,4 @@
-##===- lib/ExecutionEngine/Makefile ------------------------*- Makefile -*-===##
+##===- lib/ExecutionEngine/MCJIT/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,8 +6,8 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
-LIBRARYNAME = LLVMExecutionEngine
-PARALLEL_DIRS = Interpreter JIT MCJIT RuntimeDyld
+
+LEVEL = ../../..
+LIBRARYNAME = LLVMRuntimeDyld
 
 include $(LEVEL)/Makefile.common

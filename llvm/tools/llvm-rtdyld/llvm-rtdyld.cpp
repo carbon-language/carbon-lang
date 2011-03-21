@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -51,157 +52,6 @@ static int Error(const Twine &Msg) {
 }
 
 /* *** */
-static bool
-loadSegment32(const MachOObject *Obj,
-              sys::MemoryBlock &Data,
-              const MachOObject::LoadCommandInfo *SegmentLCI,
-              const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC,
-              StringMap<void*> &SymbolTable) {
-  InMemoryStruct<macho::SegmentLoadCommand> Segment32LC;
-  Obj->ReadSegmentLoadCommand(*SegmentLCI, Segment32LC);
-  if (!Segment32LC)
-    return Error("unable to load segment load command");
-
-  // Map the segment into memory.
-  std::string ErrorStr;
-  Data = sys::Memory::AllocateRWX(Segment32LC->VMSize, 0, &ErrorStr);
-  if (!Data.base())
-    return Error("unable to allocate memory block: '" + ErrorStr + "'");
-  memcpy(Data.base(), Obj->getData(Segment32LC->FileOffset,
-                                   Segment32LC->FileSize).data(),
-         Segment32LC->FileSize);
-  memset((char*)Data.base() + Segment32LC->FileSize, 0,
-         Segment32LC->VMSize - Segment32LC->FileSize);
-
-  // Bind the section indices to address.
-  void **SectionBases = new void*[Segment32LC->NumSections];
-  for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
-    InMemoryStruct<macho::Section> Sect;
-    Obj->ReadSection(*SegmentLCI, i, Sect);
-    if (!Sect)
-      return Error("unable to load section: '" + Twine(i) + "'");
-
-    // FIXME: We don't support relocations yet.
-    if (Sect->NumRelocationTableEntries != 0)
-      return Error("not yet implemented: relocations!");
-
-    // FIXME: Improve check.
-    if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
-
-    SectionBases[i] = (char*) Data.base() + Sect->Address;
-  }
-
-  // Bind all the symbols to address.
-  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-    InMemoryStruct<macho::SymbolTableEntry> STE;
-    Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
-    if (!STE)
-      return Error("unable to read symbol: '" + Twine(i) + "'");
-    if (STE->SectionIndex == 0)
-      return Error("unexpected undefined symbol!");
-
-    unsigned Index = STE->SectionIndex - 1;
-    if (Index >= Segment32LC->NumSections)
-      return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-
-    // Get the section base address.
-    void *SectionBase = SectionBases[Index];
-
-    // Get the symbol address.
-    void *Address = (char*) SectionBase + STE->Value;
-
-    // FIXME: Check the symbol type and flags.
-    if (STE->Type != 0xF)
-      return Error("unexpected symbol type!");
-    if (STE->Flags != 0x0)
-      return Error("unexpected symbol type!");
-
-    SymbolTable[Name] = Address;
-  }
-
-  delete SectionBases;
-  return false;
-}
-
-static bool
-loadSegment64(const MachOObject *Obj,
-              sys::MemoryBlock &Data,
-              const MachOObject::LoadCommandInfo *SegmentLCI,
-              const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC,
-              StringMap<void*> &SymbolTable) {
-  InMemoryStruct<macho::Segment64LoadCommand> Segment64LC;
-  Obj->ReadSegment64LoadCommand(*SegmentLCI, Segment64LC);
-  if (!Segment64LC)
-    return Error("unable to load segment load command");
-
-  // Map the segment into memory.
-  std::string ErrorStr;
-  Data = sys::Memory::AllocateRWX(Segment64LC->VMSize, 0, &ErrorStr);
-  if (!Data.base())
-    return Error("unable to allocate memory block: '" + ErrorStr + "'");
-  memcpy(Data.base(), Obj->getData(Segment64LC->FileOffset,
-                                   Segment64LC->FileSize).data(),
-         Segment64LC->FileSize);
-  memset((char*)Data.base() + Segment64LC->FileSize, 0,
-         Segment64LC->VMSize - Segment64LC->FileSize);
-
-  // Bind the section indices to address.
-  void **SectionBases = new void*[Segment64LC->NumSections];
-  for (unsigned i = 0; i != Segment64LC->NumSections; ++i) {
-    InMemoryStruct<macho::Section64> Sect;
-    Obj->ReadSection64(*SegmentLCI, i, Sect);
-    if (!Sect)
-      return Error("unable to load section: '" + Twine(i) + "'");
-
-    // FIXME: We don't support relocations yet.
-    if (Sect->NumRelocationTableEntries != 0)
-      return Error("not yet implemented: relocations!");
-
-    // FIXME: Improve check.
-    if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
-
-    SectionBases[i] = (char*) Data.base() + Sect->Address;
-  }
-
-  // Bind all the symbols to address.
-  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-    InMemoryStruct<macho::Symbol64TableEntry> STE;
-    Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
-    if (!STE)
-      return Error("unable to read symbol: '" + Twine(i) + "'");
-    if (STE->SectionIndex == 0)
-      return Error("unexpected undefined symbol!");
-
-    unsigned Index = STE->SectionIndex - 1;
-    if (Index >= Segment64LC->NumSections)
-      return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-
-    // Get the section base address.
-    void *SectionBase = SectionBases[Index];
-
-    // Get the symbol address.
-    void *Address = (char*) SectionBase + STE->Value;
-
-    // FIXME: Check the symbol type and flags.
-    if (STE->Type != 0xF)
-      return Error("unexpected symbol type!");
-    if (STE->Flags != 0x0)
-      return Error("unexpected symbol type!");
-
-    SymbolTable[Name] = Address;
-  }
-
-  delete SectionBases;
-  return false;
-}
 
 static int executeInput() {
   // Load the input memory buffer.
@@ -209,94 +59,28 @@ static int executeInput() {
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFile, InputBuffer))
     return Error("unable to read input: '" + ec.message() + "'");
 
-  // Load the Mach-O wrapper object.
-  std::string ErrorStr;
-  OwningPtr<MachOObject> Obj(
-    MachOObject::LoadFromBuffer(InputBuffer.take(), &ErrorStr));
-  if (!Obj)
-    return Error("unable to load object: '" + ErrorStr + "'");
+  // Instantiate a dynamic linker.
+  RuntimeDyld Dyld;
 
-  // Validate that the load commands match what we expect.
-  const MachOObject::LoadCommandInfo *SegmentLCI = 0, *SymtabLCI = 0,
-    *DysymtabLCI = 0;
-  for (unsigned i = 0; i != Obj->getHeader().NumLoadCommands; ++i) {
-    const MachOObject::LoadCommandInfo &LCI = Obj->getLoadCommandInfo(i);
-    switch (LCI.Command.Type) {
-    case macho::LCT_Segment:
-    case macho::LCT_Segment64:
-      if (SegmentLCI)
-        return Error("unexpected input object (multiple segments)");
-      SegmentLCI = &LCI;
-      break;
-    case macho::LCT_Symtab:
-      if (SymtabLCI)
-        return Error("unexpected input object (multiple symbol tables)");
-      SymtabLCI = &LCI;
-      break;
-    case macho::LCT_Dysymtab:
-      if (DysymtabLCI)
-        return Error("unexpected input object (multiple symbol tables)");
-      DysymtabLCI = &LCI;
-      break;
-    default:
-      return Error("unexpected input object (unexpected load command");
-    }
-  }
-
-  if (!SymtabLCI)
-    return Error("no symbol table found in object");
-  if (!SegmentLCI)
-    return Error("no symbol table found in object");
-
-  // Read and register the symbol table data.
-  InMemoryStruct<macho::SymtabLoadCommand> SymtabLC;
-  Obj->ReadSymtabLoadCommand(*SymtabLCI, SymtabLC);
-  if (!SymtabLC)
-    return Error("unable to load symbol table load command");
-  Obj->RegisterStringTable(*SymtabLC);
-
-  // Read the dynamic link-edit information, if present (not present in static
-  // objects).
-  if (DysymtabLCI) {
-    InMemoryStruct<macho::DysymtabLoadCommand> DysymtabLC;
-    Obj->ReadDysymtabLoadCommand(*DysymtabLCI, DysymtabLC);
-    if (!DysymtabLC)
-      return Error("unable to load dynamic link-exit load command");
-
-    // FIXME: We don't support anything interesting yet.
-    if (DysymtabLC->LocalSymbolsIndex != 0)
-      return Error("NOT YET IMPLEMENTED: local symbol entries");
-    if (DysymtabLC->ExternalSymbolsIndex != 0)
-      return Error("NOT YET IMPLEMENTED: non-external symbol entries");
-    if (DysymtabLC->UndefinedSymbolsIndex != SymtabLC->NumSymbolTableEntries)
-      return Error("NOT YET IMPLEMENTED: undefined symbol entries");
-  }
-
-  // Load the segment load command.
-  sys::MemoryBlock Data;
-  StringMap<void*> SymbolTable;
-  if (SegmentLCI->Command.Type == macho::LCT_Segment) {
-    if (loadSegment32(Obj.get(), Data, SegmentLCI, SymtabLC, SymbolTable))
-      return true;
-  } else {
-    if (loadSegment64(Obj.get(), Data, SegmentLCI, SymtabLC, SymbolTable))
-      return true;
-  }
+  // Load the object file into it.
+  if (Dyld.loadObject(InputBuffer.take()))
+    return true;
 
   // Get the address of "_main".
-  StringMap<void*>::iterator it = SymbolTable.find("_main");
-  if (it == SymbolTable.end())
+  void *MainAddress = Dyld.getSymbolAddress("_main");
+  if (MainAddress == 0)
     return Error("no definition for '_main'");
 
   // Invalidate the instruction cache.
+  sys::MemoryBlock Data = Dyld.getMemoryBlock();
   sys::Memory::InvalidateInstructionCache(Data.base(), Data.size());
 
   // Make sure the memory is executable.
+  std::string ErrorStr;
   if (!sys::Memory::setExecutable(Data, &ErrorStr))
     return Error("unable to mark function executable: '" + ErrorStr + "'");
 
   // Dispatch to _main().
-  void *MainAddress = it->second;
   errs() << "loaded '_main' at: " << MainAddress << "\n";
 
   int (*Main)(int, const char**) =
