@@ -392,34 +392,6 @@ PHI Slicing could be extended to do this.
 
 //===---------------------------------------------------------------------===//
 
-LSR should know what GPR types a target has from TargetData.  This code:
-
-volatile short X, Y; // globals
-
-void foo(int N) {
-  int i;
-  for (i = 0; i < N; i++) { X = i; Y = i*4; }
-}
-
-produces two near identical IV's (after promotion) on PPC/ARM:
-
-LBB1_2:
-	ldr r3, LCPI1_0
-	ldr r3, [r3]
-	strh r2, [r3]
-	ldr r3, LCPI1_1
-	ldr r3, [r3]
-	strh r1, [r3]
-	add r1, r1, #4
-	add r2, r2, #1   <- [0,+,1]
-	sub r0, r0, #1   <- [0,-,1]
-	cmp r0, #0
-	bne LBB1_2
-
-LSR should reuse the "+" IV for the exit test.
-
-//===---------------------------------------------------------------------===//
-
 Tail call elim should be more aggressive, checking to see if the call is
 followed by an uncond branch to an exit block.
 
