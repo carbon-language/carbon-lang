@@ -542,12 +542,116 @@ void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
   << "}\n\n#endif\n";
 }
 
-void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
-  CodeGenTarget Target(Records);
-  Record *AsmWriter = Target.getAsmWriter();
+namespace {
 
-  O << "\n#ifdef PRINT_ALIAS_INSTR\n";
-  O << "#undef PRINT_ALIAS_INSTR\n\n";
+/// SubtargetFeatureInfo - Helper class for storing information on a subtarget
+/// feature which participates in instruction matching.
+struct SubtargetFeatureInfo {
+  /// \brief The predicate record for this feature.
+  const Record *TheDef;
+
+  /// \brief An unique index assigned to represent this feature.
+  unsigned Index;
+
+  SubtargetFeatureInfo(const Record *D, unsigned Idx) : TheDef(D), Index(Idx) {}
+
+  /// \brief The name of the enumerated constant identifying this feature.
+  std::string getEnumName() const {
+    return "Feature_" + TheDef->getName();
+  }
+};
+
+struct AsmWriterInfo {
+  /// Map of Predicate records to their subtarget information.
+  std::map<const Record*, SubtargetFeatureInfo*> SubtargetFeatures;
+
+  /// getSubtargetFeature - Lookup or create the subtarget feature info for the
+  /// given operand.
+  SubtargetFeatureInfo *getSubtargetFeature(const Record *Def) const {
+    assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
+    std::map<const Record*, SubtargetFeatureInfo*>::const_iterator I =
+      SubtargetFeatures.find(Def);
+    return I == SubtargetFeatures.end() ? 0 : I->second;
+  }
+
+  void addReqFeatures(const std::vector<Record*> &Features) {
+    for (std::vector<Record*>::const_iterator
+           I = Features.begin(), E = Features.end(); I != E; ++I) {
+      const Record *Pred = *I;
+
+      // Ignore predicates that are not intended for the assembler.
+      if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
+        continue;
+
+      if (Pred->getName().empty())
+        throw TGError(Pred->getLoc(), "Predicate has no name!");
+
+      // Don't add the predicate again.
+      if (getSubtargetFeature(Pred))
+        continue;
+
+      unsigned FeatureNo = SubtargetFeatures.size();
+      SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
+      assert(FeatureNo < 32 && "Too many subtarget features!");
+    }
+  }
+
+  const SubtargetFeatureInfo *getFeatureInfo(const Record *R) {
+    return SubtargetFeatures[R];
+  }
+};
+
+} // end anonymous namespace
+
+/// EmitSubtargetFeatureFlagEnumeration - Emit the subtarget feature flag
+/// definitions.
+static void EmitSubtargetFeatureFlagEnumeration(AsmWriterInfo &Info,
+                                                raw_ostream &O) {
+  O << "namespace {\n\n";
+  O << "// Flags for subtarget features that participate in "
+    << "alias instruction matching.\n";
+  O << "enum SubtargetFeatureFlag {\n";
+
+  for (std::map<const Record*, SubtargetFeatureInfo*>::const_iterator
+         I = Info.SubtargetFeatures.begin(),
+         E = Info.SubtargetFeatures.end(); I != E; ++I) {
+    SubtargetFeatureInfo &SFI = *I->second;
+    O << "  " << SFI.getEnumName() << " = (1 << " << SFI.Index << "),\n";
+  }
+
+  O << "  Feature_None = 0\n";
+  O << "};\n\n";
+  O << "} // end anonymous namespace\n";
+}
+
+/// EmitComputeAvailableFeatures - Emit the function to compute the list of
+/// available features given a subtarget.
+static void EmitComputeAvailableFeatures(AsmWriterInfo &Info,
+                                         Record *AsmWriter,
+                                         CodeGenTarget &Target,
+                                         raw_ostream &O) {
+  std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
+
+  O << "unsigned " << Target.getName() << ClassName << "::\n"
+    << "ComputeAvailableFeatures(const " << Target.getName()
+    << "Subtarget *Subtarget) const {\n";
+  O << "  unsigned Features = 0;\n";
+
+  for (std::map<const Record*, SubtargetFeatureInfo*>::const_iterator
+         I = Info.SubtargetFeatures.begin(),
+         E = Info.SubtargetFeatures.end(); I != E; ++I) {
+    SubtargetFeatureInfo &SFI = *I->second;
+    O << "  if (" << SFI.TheDef->getValueAsString("CondString")
+      << ")\n";
+    O << "    Features |= " << SFI.getEnumName() << ";\n";
+  }
+
+  O << "  return Features;\n";
+  O << "}\n\n";
+}
+
+void AsmWriterEmitter::EmitRegIsInRegClass(raw_ostream &O) {
+  CodeGenTarget Target(Records);
 
   // Enumerate the register classes.
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
@@ -606,6 +710,16 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "  }\n\n";
   O << "  return false;\n";
   O << "}\n\n";
+}
+
+void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
+  CodeGenTarget Target(Records);
+  Record *AsmWriter = Target.getAsmWriter();
+
+  O << "\n#ifdef PRINT_ALIAS_INSTR\n";
+  O << "#undef PRINT_ALIAS_INSTR\n\n";
+
+  EmitRegIsInRegClass(O);
 
   // Emit the method that prints the alias instruction.
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
