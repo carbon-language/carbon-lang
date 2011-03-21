@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -S -O0 -o - | FileCheck %s
-// REQUIRES: disabled
+// XTARGET: x86_64-apple-darwin
 // Radar 9156771
 typedef struct RGBColor {
   unsigned short red;
