@@ -80,6 +80,9 @@ public:
   /// sysroot, if present
   std::string SysRoot;
 
+  /// If the standard library is used
+  bool UseStdLib;
+
   /// Default host triple.
   std::string DefaultHostTriple;
 

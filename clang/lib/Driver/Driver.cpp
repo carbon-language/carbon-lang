@@ -58,8 +58,8 @@ Driver::Driver(llvm::StringRef _ClangExecutable,
                bool IsProduction, bool CXXIsProduction,
                Diagnostic &_Diags)
   : Opts(createDriverOptTable()), Diags(_Diags),
-    ClangExecutable(_ClangExecutable), DefaultHostTriple(_DefaultHostTriple),
-    DefaultImageName(_DefaultImageName),
+    ClangExecutable(_ClangExecutable), UseStdLib(true),
+    DefaultHostTriple(_DefaultHostTriple), DefaultImageName(_DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0), CCCIsCXX(false),
@@ -289,6 +289,8 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   }
   if (const Arg *A = Args->getLastArg(options::OPT__sysroot_EQ))
     SysRoot = A->getValue(*Args);
+  if (Args->hasArg(options::OPT_nostdlib))
+    UseStdLib = false;
 
   Host = GetHostInfo(DefaultHostTriple.c_str());
 
