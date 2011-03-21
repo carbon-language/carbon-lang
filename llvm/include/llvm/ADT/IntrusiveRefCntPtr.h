@@ -155,6 +155,10 @@ namespace llvm {
       other.Obj = Obj;
       Obj = tmp;
     }
+    
+    void resetWithoutRelease() {
+      Obj = 0;
+    }
 
   private:
     void retain() { if (Obj) Obj->Retain(); }
