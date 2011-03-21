@@ -29,7 +29,7 @@ def which(program):
 def llvm_mc_loop(mc, mc_options):
     contents = []
     fname = 'mc-input.txt'
-    sys.stdout.write("Enter your input to llvm-mc.  A line starting with 'END' terminates the cuurent batch of input.\n")
+    sys.stdout.write("Enter your input to llvm-mc.  A line starting with 'END' terminates the current batch of input.\n")
     sys.stdout.write("Enter 'quit' or Ctrl-D to quit the program.\n")
     while True:
         sys.stdout.write("> ")
