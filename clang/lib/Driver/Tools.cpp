@@ -3259,6 +3259,9 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
+
   if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
   } else {
@@ -3437,6 +3440,9 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
 
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
+
   if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
   } else {
@@ -3594,10 +3600,8 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // handled somewhere else.
   Args.ClaimAllArgs(options::OPT_w);
 
-  if (Arg *A = Args.getLastArg(options::OPT__sysroot_EQ)) {
-    CmdArgs.push_back("--sysroot");
-    CmdArgs.push_back(A->getValue(Args));
-  }
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
 
   if (Args.hasArg(options::OPT_pie))
     CmdArgs.push_back("-pie");
@@ -3877,6 +3881,9 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                    const char *LinkingOutput) const {
   const Driver &D = getToolChain().getDriver();
   ArgStringList CmdArgs;
+
+  if (!D.SysRoot.empty())
+    CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
 
   if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
