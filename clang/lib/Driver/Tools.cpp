@@ -374,6 +374,8 @@ static const char *getARMTargetCPU(const ArgList &Args,
     return "iwmmxt";
   if (MArch == "xscale")
     return "xscale";
+  if (MArch == "armv6m" || MArch == "armv6-m")
+    return "cortex-m0";
 
   // If all else failed, return the most base CPU LLVM supports.
   return "arm7tdmi";

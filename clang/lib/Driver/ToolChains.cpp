@@ -101,7 +101,8 @@ static const char *GetArmArchForMCpu(llvm::StringRef Value) {
     return "xscale";
 
   if (Value == "arm1136j-s" || Value == "arm1136jf-s" ||
-      Value == "arm1176jz-s" || Value == "arm1176jzf-s")
+      Value == "arm1176jz-s" || Value == "arm1176jzf-s" ||
+      Value == "cortex-m0" )
     return "armv6";
 
   if (Value == "cortex-a8" || Value == "cortex-r4" || Value == "cortex-m3")
