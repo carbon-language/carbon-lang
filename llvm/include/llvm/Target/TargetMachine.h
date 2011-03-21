@@ -268,7 +268,7 @@ public:
   ///
   virtual bool addPassesToEmitMC(PassManagerBase &,
                                  MCContext *&,
-                                 raw_ostream &OS,
+                                 raw_ostream &,
                                  CodeGenOpt::Level,
                                  bool = true) {
     return true;
