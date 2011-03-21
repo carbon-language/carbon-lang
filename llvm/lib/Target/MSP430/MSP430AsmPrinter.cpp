@@ -164,10 +164,11 @@ void MSP430AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 }
 
 static MCInstPrinter *createMSP430MCInstPrinter(const Target &T,
+                                                TargetMachine &TM,
                                                 unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new MSP430InstPrinter(MAI);
+    return new MSP430InstPrinter(TM, MAI);
   return 0;
 }
 

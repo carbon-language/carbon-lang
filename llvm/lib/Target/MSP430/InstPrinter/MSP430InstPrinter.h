@@ -18,11 +18,12 @@
 
 namespace llvm {
   class MCOperand;
+  class TargetMachine;
 
   class MSP430InstPrinter : public MCInstPrinter {
   public:
-    MSP430InstPrinter(const MCAsmInfo &MAI) : MCInstPrinter(MAI) {
-    }
+    MSP430InstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
+      : MCInstPrinter(MAI) {}
 
     virtual void printInst(const MCInst *MI, raw_ostream &O);
 

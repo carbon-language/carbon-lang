@@ -18,11 +18,13 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
-  class MCOperand;
+
+class MCOperand;
+class TargetMachine;
   
 class X86IntelInstPrinter : public MCInstPrinter {
 public:
-  X86IntelInstPrinter(const MCAsmInfo &MAI)
+  X86IntelInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
     : MCInstPrinter(MAI) {}
   
   virtual void printInst(const MCInst *MI, raw_ostream &OS);

@@ -17,12 +17,14 @@
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {
-  class MCOperand;
+
+class MCOperand;
+class TargetMachine;
   
 class X86ATTInstPrinter : public MCInstPrinter {
 public:
-  X86ATTInstPrinter(const MCAsmInfo &MAI) : MCInstPrinter(MAI) {}
-
+  X86ATTInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
+    : MCInstPrinter(MAI) {}
   
   virtual void printInst(const MCInst *MI, raw_ostream &OS);
   virtual StringRef getOpcodeName(unsigned Opcode) const;

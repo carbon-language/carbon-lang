@@ -17,13 +17,16 @@
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {
-  class MCOperand;
+
+class MCOperand;
+class TargetMachine;
 
 class PPCInstPrinter : public MCInstPrinter {
   // 0 -> AIX, 1 -> Darwin.
   unsigned SyntaxVariant;
 public:
-  PPCInstPrinter(const MCAsmInfo &MAI, unsigned syntaxVariant)
+  PPCInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI,
+                 unsigned syntaxVariant)
     : MCInstPrinter(MAI), SyntaxVariant(syntaxVariant) {}
   
   bool isDarwinSyntax() const {

@@ -38,6 +38,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 #include <algorithm>
@@ -182,9 +183,21 @@ static void DisassembleInput(const StringRef &Filename) {
       return;
     }
 
+    // FIXME: We shouldn't need to do this (and link in codegen).
+    //        When we split this out, we should do it in a way that makes
+    //        it straightforward to switch subtargets on the fly (.e.g,
+    //        the .cpu and .code16 directives).
+    std::string FeaturesStr;
+    OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
+                                                               FeaturesStr));
+    if (!TM) {
+      errs() << "error: could not create target for triple " << TripleName << "\n";
+      return;
+    }
+
     int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
     OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                                  AsmPrinterVariant, *AsmInfo));
+                                  *TM, AsmPrinterVariant, *AsmInfo));
     if (!IP) {
       errs() << "error: no instruction printer for target " << TripleName << '\n';
       return;

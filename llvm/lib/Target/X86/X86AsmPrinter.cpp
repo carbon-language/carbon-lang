@@ -709,12 +709,13 @@ void X86AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
+                                             TargetMachine &TM,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new X86ATTInstPrinter(MAI);
+    return new X86ATTInstPrinter(TM, MAI);
   if (SyntaxVariant == 1)
-    return new X86IntelInstPrinter(MAI);
+    return new X86IntelInstPrinter(TM, MAI);
   return 0;
 }
 
