@@ -9,521 +9,398 @@ byte contents.
 
 See the following for a sample session using this command:
 
-da0603a-dhcp191:9131529 johnny$ /Volumes/data/lldb/svn/trunk/utils/test/disasm.py -m /Volumes/data/lldb/llvm/Debug+Asserts/bin/llvm-mc -e MessageComposer.app/MessageComposer -f main --options='-triple=arm-apple-darwin -debug-only=arm-disassembler'
-executable: MessageComposer.app/MessageComposer
-function: main
+[16:26:57] johnny:/Volumes/data/Radar/9131529 $ /Volumes/data/lldb/svn/trunk/utils/test/disasm.py -C 'set shlib-path-substitutions /usr /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr /System /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System /Library /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/Library' -O '-arch armv7' -m /Volumes/data/lldb/llvm/Debug+Asserts/bin/llvm-mc -e /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr/lib/libSystem.B.dylib -f printf --options='-triple=thumb-apple-darwin -debug-only=arm-disassembler'
+gdb commands: ['set shlib-path-substitutions /usr /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr /System /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System /Library /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/Library']
+gdb options: -arch armv7
+executable: /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr/lib/libSystem.B.dylib
+function: printf
 llvm-mc: /Volumes/data/lldb/llvm/Debug+Asserts/bin/llvm-mc
-llvm-mc options: -triple=arm-apple-darwin -debug-only=arm-disassembler
+llvm-mc options: -triple=thumb-apple-darwin -debug-only=arm-disassembler
 GNU gdb 6.3.50-20050815 (Apple version gdb-1518) (Sat Feb 12 02:56:02 UTC 2011)
 Copyright 2004 Free Software Foundation, Inc.
 GDB is free software, covered by the GNU General Public License, and you are
 welcome to change it and/or distribute copies of it under certain conditions.
 Type "show copying" to see the conditions.
 There is absolutely no warranty for GDB.  Type "show warranty" for details.
-This GDB was configured as "--host=x86_64-apple-darwin --target=arm-apple-darwin"...
-warning: Unable to read symbols from "dyld" (prefix __dyld_) (not yet mapped into memory).
-
-warning: Unable to read symbols from "Foundation" (not yet mapped into memory).
-
-warning: Unable to read symbols for /System/Library/Frameworks/UIKit.framework/UIKit (file not found).
-
-warning: Unable to read symbols from "UIKit" (not yet mapped into memory).
-
-warning: Unable to read symbols for /System/Library/Frameworks/CoreGraphics.framework/CoreGraphics (file not found).
-
-warning: Unable to read symbols from "CoreGraphics" (not yet mapped into memory).
-
-warning: Unable to read symbols from "MessageUI" (not yet mapped into memory).
-
-warning: Unable to read symbols from "libSystem.B.dylib" (not yet mapped into memory).
-
-warning: Unable to read symbols from "libobjc.A.dylib" (not yet mapped into memory).
-
-warning: Unable to read symbols from "CoreFoundation" (not yet mapped into memory).
-
-warning: Could not find object file "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/build/MessageComposer.build/Debug-iphoneos/MessageComposer.build/Objects-normal/armv6/main.o" - no debug information available for "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/main.m".
-
-
-warning: Could not find object file "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/build/MessageComposer.build/Debug-iphoneos/MessageComposer.build/Objects-normal/armv6/MessageComposerAppDelegate.o" - no debug information available for "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/Classes/MessageComposerAppDelegate.m".
-
-
-warning: Could not find object file "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/build/MessageComposer.build/Debug-iphoneos/MessageComposer.build/Objects-normal/armv6/MessageComposerViewController.o" - no debug information available for "/Volumes/Data/HD2/Data/work/tests/iphone-tests/MessageComposer/Classes/MessageComposerViewController.m".
-
-
-(gdb) disassemble main
-Dump of assembler code for function main:
-0x00002180 <main+0>:	push	{r7, lr}
-0x00002184 <main+4>:	add	r7, sp, #0	; 0x0
-0x00002188 <main+8>:	sub	sp, sp, #16	; 0x10
-0x0000218c <main+12>:	str	r0, [sp, #4]
-0x00002190 <main+16>:	str	r1, [sp]
-0x00002194 <main+20>:	ldr	r3, [pc, #144]	; 0x222c <main+172>
-0x00002198 <main+24>:	add	r3, pc, r3
-0x0000219c <main+28>:	ldr	r3, [r3]
-0x000021a0 <main+32>:	mov	r2, r3
-0x000021a4 <main+36>:	ldr	r3, [pc, #132]	; 0x2230 <main+176>
-0x000021a8 <main+40>:	add	r3, pc, r3
-0x000021ac <main+44>:	ldr	r3, [r3]
-0x000021b0 <main+48>:	mov	r0, r2
-0x000021b4 <main+52>:	mov	r1, r3
-0x000021b8 <main+56>:	bl	0x3ff4 <dyld_stub_objc_msgSend>
-0x000021bc <main+60>:	mov	r3, r0
-0x000021c0 <main+64>:	mov	r2, r3
-0x000021c4 <main+68>:	ldr	r3, [pc, #104]	; 0x2234 <main+180>
-0x000021c8 <main+72>:	add	r3, pc, r3
-0x000021cc <main+76>:	ldr	r3, [r3]
-0x000021d0 <main+80>:	mov	r0, r2
-0x000021d4 <main+84>:	mov	r1, r3
-0x000021d8 <main+88>:	bl	0x3ff4 <dyld_stub_objc_msgSend>
-0x000021dc <main+92>:	mov	r3, r0
-0x000021e0 <main+96>:	str	r3, [sp, #8]
-0x000021e4 <main+100>:	ldr	r0, [sp, #4]
-0x000021e8 <main+104>:	ldr	r1, [sp]
-0x000021ec <main+108>:	mov	r2, #0	; 0x0
-0x000021f0 <main+112>:	mov	r3, #0	; 0x0
-0x000021f4 <main+116>:	bl	0x3fec <dyld_stub_UIApplicationMain>
-0x000021f8 <main+120>:	mov	r3, r0
-0x000021fc <main+124>:	str	r3, [sp, #12]
-0x00002200 <main+128>:	ldr	r2, [sp, #8]
-0x00002204 <main+132>:	ldr	r3, [pc, #44]	; 0x2238 <main+184>
-0x00002208 <main+136>:	add	r3, pc, r3
-0x0000220c <main+140>:	ldr	r3, [r3]
-0x00002210 <main+144>:	mov	r0, r2
-0x00002214 <main+148>:	mov	r1, r3
-0x00002218 <main+152>:	bl	0x3ff4 <dyld_stub_objc_msgSend>
-0x0000221c <main+156>:	ldr	r3, [sp, #12]
-0x00002220 <main+160>:	mov	r0, r3
-0x00002224 <main+164>:	sub	sp, r7, #0	; 0x0
-0x00002228 <main+168>:	pop	{r7, pc}
-0x0000222c <main+172>:	strdeq	r2, [r0], -r8
-0x00002230 <main+176>:	andeq	r2, r0, r12, ror r4
-0x00002234 <main+180>:	andeq	r2, r0, r8, asr r4
-0x00002238 <main+184>:	andeq	r2, r0, r4, lsl r4
+This GDB was configured as "--host=x86_64-apple-darwin --target=arm-apple-darwin".
+<Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/Library
+<eloper/SDKs/iPhoneOS4.3.sdk/usr/lib/libSystem.B.dylib
+Reading symbols for shared libraries ................ done
+Reading symbols from /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/usr/lib/libSystem.B.dylib...done.
+(gdb) disassemble printf
+Dump of assembler code for function printf:
+0x0704cdd0 <printf+0>:	push	{r0, r1, r2, r3}
+0x0704cdd2 <printf+2>:	push	{r4, r5, r7, lr}
+0x0704cdd4 <printf+4>:	add	r7, sp, #8
+0x0704cdd6 <printf+6>:	sub	sp, #4
+0x0704cdd8 <printf+8>:	add	r3, sp, #20
+0x0704cdda <printf+10>:	ldr.w	r5, [r3], #4
+0x0704cdde <printf+14>:	str	r3, [sp, #0]
+0x0704cde0 <printf+16>:	ldr	r3, [pc, #52]	(0x704ce18 <printf+72>)
+0x0704cde2 <printf+18>:	add	r3, pc
+0x0704cde4 <printf+20>:	ldr	r0, [r3, #0]
+0x0704cde6 <printf+22>:	ldr	r4, [r0, #0]
+0x0704cde8 <printf+24>:	ldr	r0, [pc, #48]	(0x704ce1c <printf+76>)
+0x0704cdea <printf+26>:	add	r0, pc
+0x0704cdec <printf+28>:	ldr	r0, [r0, #0]
+0x0704cdee <printf+30>:	ldr	r0, [r0, #0]
+0x0704cdf0 <printf+32>:	blx	0x707ba30 <pthread_getspecific>
+0x0704cdf4 <printf+36>:	cbnz	r0, 0x704cdfe <printf+46>
+0x0704cdf6 <printf+38>:	ldr	r1, [pc, #40]	(0x704ce20 <printf+80>)
+0x0704cdf8 <printf+40>:	add	r1, pc
+0x0704cdfa <printf+42>:	ldr	r1, [r1, #0]
+0x0704cdfc <printf+44>:	b.n	0x704ce00 <printf+48>
+0x0704cdfe <printf+46>:	mov	r1, r0
+0x0704ce00 <printf+48>:	mov	r0, r4
+0x0704ce02 <printf+50>:	mov	r2, r5
+0x0704ce04 <printf+52>:	ldr	r3, [sp, #0]
+0x0704ce06 <printf+54>:	bl	0x704ad44 <vfprintf_l>
+0x0704ce0a <printf+58>:	sub.w	sp, r7, #8	; 0x8
+0x0704ce0e <printf+62>:	ldmia.w	sp!, {r4, r5, r7, lr}
+0x0704ce12 <printf+66>:	add	sp, #16
+0x0704ce14 <printf+68>:	bx	lr
+0x0704ce16 <printf+70>:	nop
+0x0704ce18 <printf+72>:	movs	r3, #142
+0x0704ce1a <printf+74>:	lsls	r5, r0, #0
+0x0704ce1c <printf+76>:	adds	r1, #122
+0x0704ce1e <printf+78>:	lsls	r5, r0, #0
+0x0704ce20 <printf+80>:	adds	r1, #104
+0x0704ce22 <printf+82>:	lsls	r5, r0, #0
 End of assembler dump.
-(gdb) x /4b 0x00002180
-0x2180 <main>:	0x80	0x40	0x2d	0xe9
-(gdb) x /4b 0x00002184
-0x2184 <main+4>:	0x00	0x70	0x8d	0xe2
-(gdb) x /4b 0x00002188
-0x2188 <main+8>:	0x10	0xd0	0x4d	0xe2
-(gdb) x /4b 0x0000218c
-0x218c <main+12>:	0x04	0x00	0x8d	0xe5
-(gdb) x /4b 0x00002190
-0x2190 <main+16>:	0x00	0x10	0x8d	0xe5
-(gdb) x /4b 0x00002194
-0x2194 <main+20>:	0x90	0x30	0x9f	0xe5
-(gdb) x /4b 0x00002198
-0x2198 <main+24>:	0x03	0x30	0x8f	0xe0
-(gdb) x /4b 0x0000219c
-0x219c <main+28>:	0x00	0x30	0x93	0xe5
-(gdb) x /4b 0x000021a0
-0x21a0 <main+32>:	0x03	0x20	0xa0	0xe1
-(gdb) x /4b 0x000021a4
-0x21a4 <main+36>:	0x84	0x30	0x9f	0xe5
-(gdb) x /4b 0x000021a8
-0x21a8 <main+40>:	0x03	0x30	0x8f	0xe0
-(gdb) x /4b 0x000021ac
-0x21ac <main+44>:	0x00	0x30	0x93	0xe5
-(gdb) x /4b 0x000021b0
-0x21b0 <main+48>:	0x02	0x00	0xa0	0xe1
-(gdb) x /4b 0x000021b4
-0x21b4 <main+52>:	0x03	0x10	0xa0	0xe1
-(gdb) x /4b 0x000021b8
-0x21b8 <main+56>:	0x8d	0x07	0x00	0xeb
-(gdb) x /4b 0x000021bc
-0x21bc <main+60>:	0x00	0x30	0xa0	0xe1
-(gdb) x /4b 0x000021c0
-0x21c0 <main+64>:	0x03	0x20	0xa0	0xe1
-(gdb) x /4b 0x000021c4
-0x21c4 <main+68>:	0x68	0x30	0x9f	0xe5
-(gdb) x /4b 0x000021c8
-0x21c8 <main+72>:	0x03	0x30	0x8f	0xe0
-(gdb) x /4b 0x000021cc
-0x21cc <main+76>:	0x00	0x30	0x93	0xe5
-(gdb) x /4b 0x000021d0
-0x21d0 <main+80>:	0x02	0x00	0xa0	0xe1
-(gdb) x /4b 0x000021d4
-0x21d4 <main+84>:	0x03	0x10	0xa0	0xe1
-(gdb) x /4b 0x000021d8
-0x21d8 <main+88>:	0x85	0x07	0x00	0xeb
-(gdb) x /4b 0x000021dc
-0x21dc <main+92>:	0x00	0x30	0xa0	0xe1
-(gdb) x /4b 0x000021e0
-0x21e0 <main+96>:	0x08	0x30	0x8d	0xe5
-(gdb) x /4b 0x000021e4
-0x21e4 <main+100>:	0x04	0x00	0x9d	0xe5
-(gdb) x /4b 0x000021e8
-0x21e8 <main+104>:	0x00	0x10	0x9d	0xe5
-(gdb) x /4b 0x000021ec
-0x21ec <main+108>:	0x00	0x20	0xa0	0xe3
-(gdb) x /4b 0x000021f0
-0x21f0 <main+112>:	0x00	0x30	0xa0	0xe3
-(gdb) x /4b 0x000021f4
-0x21f4 <main+116>:	0x7c	0x07	0x00	0xeb
-(gdb) x /4b 0x000021f8
-0x21f8 <main+120>:	0x00	0x30	0xa0	0xe1
-(gdb) x /4b 0x000021fc
-0x21fc <main+124>:	0x0c	0x30	0x8d	0xe5
-(gdb) x /4b 0x00002200
-0x2200 <main+128>:	0x08	0x20	0x9d	0xe5
-(gdb) x /4b 0x00002204
-0x2204 <main+132>:	0x2c	0x30	0x9f	0xe5
-(gdb) x /4b 0x00002208
-0x2208 <main+136>:	0x03	0x30	0x8f	0xe0
-(gdb) x /4b 0x0000220c
-0x220c <main+140>:	0x00	0x30	0x93	0xe5
-(gdb) x /4b 0x00002210
-0x2210 <main+144>:	0x02	0x00	0xa0	0xe1
-(gdb) x /4b 0x00002214
-0x2214 <main+148>:	0x03	0x10	0xa0	0xe1
-(gdb) x /4b 0x00002218
-0x2218 <main+152>:	0x75	0x07	0x00	0xeb
-(gdb) x /4b 0x0000221c
-0x221c <main+156>:	0x0c	0x30	0x9d	0xe5
-(gdb) x /4b 0x00002220
-0x2220 <main+160>:	0x03	0x00	0xa0	0xe1
-(gdb) x /4b 0x00002224
-0x2224 <main+164>:	0x00	0xd0	0x47	0xe2
-(gdb) x /4b 0x00002228
-0x2228 <main+168>:	0x80	0x80	0xbd	0xe8
-(gdb) x /4b 0x0000222c
-0x222c <main+172>:	0xf8	0x24	0x00	0x00
-(gdb) x /4b 0x00002230
-0x2230 <main+176>:	0x7c	0x24	0x00	0x00
-(gdb) x /4b 0x00002234
-0x2234 <main+180>:	0x58	0x24	0x00	0x00
-(gdb) x /4b 0x00002238
-0x2238 <main+184>:	0x14	0x24	0x00	0x00
+(gdb) x /2b 0x0704cdd0
+0x704cdd0 <printf>:	0x0f	0xb4
+(gdb) x /2b 0x0704cdd2
+0x704cdd2 <printf+2>:	0xb0	0xb5
+(gdb) x /2b 0x0704cdd4
+0x704cdd4 <printf+4>:	0x02	0xaf
+(gdb) x /2b 0x0704cdd6
+0x704cdd6 <printf+6>:	0x81	0xb0
+(gdb) x /2b 0x0704cdd8
+0x704cdd8 <printf+8>:	0x05	0xab
+(gdb) x /4b 0x0704cdda
+0x704cdda <printf+10>:	0x53	0xf8	0x04	0x5b
+(gdb) x /2b 0x0704cdde
+0x704cdde <printf+14>:	0x00	0x93
+(gdb) x /2b 0x0704cde0
+0x704cde0 <printf+16>:	0x0d	0x4b
+(gdb) x /2b 0x0704cde2
+0x704cde2 <printf+18>:	0x7b	0x44
+(gdb) x /2b 0x0704cde4
+0x704cde4 <printf+20>:	0x18	0x68
+(gdb) x /2b 0x0704cde6
+0x704cde6 <printf+22>:	0x04	0x68
+(gdb) x /2b 0x0704cde8
+0x704cde8 <printf+24>:	0x0c	0x48
+(gdb) x /2b 0x0704cdea
+0x704cdea <printf+26>:	0x78	0x44
+(gdb) x /2b 0x0704cdec
+0x704cdec <printf+28>:	0x00	0x68
+(gdb) x /2b 0x0704cdee
+0x704cdee <printf+30>:	0x00	0x68
+(gdb) x /4b 0x0704cdf0
+0x704cdf0 <printf+32>:	0x2e	0xf0	0x1e	0xee
+(gdb) x /2b 0x0704cdf4
+0x704cdf4 <printf+36>:	0x18	0xb9
+(gdb) x /2b 0x0704cdf6
+0x704cdf6 <printf+38>:	0x0a	0x49
+(gdb) x /2b 0x0704cdf8
+0x704cdf8 <printf+40>:	0x79	0x44
+(gdb) x /2b 0x0704cdfa
+0x704cdfa <printf+42>:	0x09	0x68
+(gdb) x /2b 0x0704cdfc
+0x704cdfc <printf+44>:	0x00	0xe0
+(gdb) x /2b 0x0704cdfe
+0x704cdfe <printf+46>:	0x01	0x46
+(gdb) x /2b 0x0704ce00
+0x704ce00 <printf+48>:	0x20	0x46
+(gdb) x /2b 0x0704ce02
+0x704ce02 <printf+50>:	0x2a	0x46
+(gdb) x /2b 0x0704ce04
+0x704ce04 <printf+52>:	0x00	0x9b
+(gdb) x /4b 0x0704ce06
+0x704ce06 <printf+54>:	0xfd	0xf7	0x9d	0xff
+(gdb) x /4b 0x0704ce0a
+0x704ce0a <printf+58>:	0xa7	0xf1	0x08	0x0d
+(gdb) x /4b 0x0704ce0e
+0x704ce0e <printf+62>:	0xbd	0xe8	0xb0	0x40
+(gdb) x /2b 0x0704ce12
+0x704ce12 <printf+66>:	0x04	0xb0
+(gdb) x /2b 0x0704ce14
+0x704ce14 <printf+68>:	0x70	0x47
+(gdb) x /2b 0x0704ce16
+0x704ce16 <printf+70>:	0x00	0xbf
+(gdb) x /2b 0x0704ce18
+0x704ce18 <printf+72>:	0x8e	0x23
+(gdb) x /2b 0x0704ce1a
+0x704ce1a <printf+74>:	0x05	0x00
+(gdb) x /2b 0x0704ce1c
+0x704ce1c <printf+76>:	0x7a	0x31
+(gdb) x /2b 0x0704ce1e
+0x704ce1e <printf+78>:	0x05	0x00
+(gdb) x /2b 0x0704ce20
+0x704ce20 <printf+80>:	0x68	0x31
+(gdb) x /2b 0x0704ce22
+0x704ce22 <printf+82>:	0x05	0x00
 (gdb) quit
 
-Executing command: /Volumes/data/lldb/llvm/Debug+Asserts/bin/llvm-mc -disassemble -triple=arm-apple-darwin -debug-only=arm-disassembler disasm-input.txt
-Opcode=345 Name=STMDB_UPD Format=ARM_FORMAT_LDSTMULFRM(10)
+Executing command: /Volumes/data/lldb/llvm/Debug+Asserts/bin/llvm-mc -disassemble -triple=thumb-apple-darwin -debug-only=arm-disassembler disasm-input.txt
+Opcode=2305 Name=tPUSH Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 0: 1| 0: 0: 1: 0| 1: 1: 0: 1| 0: 1: 0: 0| 0: 0: 0: 0| 1: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 0: 1: 0: 0| 0: 0: 0: 0| 1: 1: 1: 1|
 -------------------------------------------------------------------------------------------------
 
-	push	{r7, lr}
-Opcode=23 Name=ADDri Format=ARM_FORMAT_DPFRM(4)
+	push	{r0, r1, r2, r3}
+Opcode=2305 Name=tPUSH Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 1: 0| 1: 0: 0: 0| 1: 1: 0: 1| 0: 1: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 0: 1: 0: 1| 1: 0: 1: 1| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	add	r7, sp, #0
-Opcode=374 Name=SUBri Format=ARM_FORMAT_DPFRM(4)
+	push	{r4, r5, r7, lr}
+Opcode=2228 Name=tADDrSPi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 1: 0| 0: 1: 0: 0| 1: 1: 0: 1| 1: 1: 0: 1| 0: 0: 0: 0| 0: 0: 0: 1| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 0| 1: 1: 1: 1| 0: 0: 0: 0| 0: 0: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	sub	sp, sp, #16
-Opcode=369 Name=STRi12 Format=ARM_FORMAT_STFRM(7)
+	add	r7, sp, #8
+Opcode=2328 Name=tSUBspi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 0| 1: 1: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 0: 0: 0: 0| 1: 0: 0: 0| 0: 0: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	str	r0, [sp, #4]
-Opcode=369 Name=STRi12 Format=ARM_FORMAT_STFRM(7)
+	sub	sp, #4
+Opcode=2228 Name=tADDrSPi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 0| 1: 1: 0: 1| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	str	r1, [sp]
-Opcode=165 Name=LDRcp Format=ARM_FORMAT_LDFRM(6)
+	add	r3, sp, #20
+Opcode=1963 Name=t2LDR_POST Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 1: 0: 0: 1| 0: 0: 0: 0|
+| 1: 1: 1: 1| 1: 0: 0: 0| 0: 1: 0: 1| 0: 0: 1: 1| 0: 1: 0: 1| 1: 0: 1: 1| 0: 0: 0: 0| 0: 1: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [pc, #144]
-Opcode=24 Name=ADDrr Format=ARM_FORMAT_DPFRM(4)
+	ldr	r5, [r3], #4
+Opcode=2324 Name=tSTRspi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 0| 1: 0: 0: 0| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	add	r3, pc, r3
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	str	r3, [sp]
+Opcode=2275 Name=tLDRpci Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 0: 0: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 1: 0: 1: 1| 0: 0: 0: 0| 1: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [r3]
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	ldr.n	r3, #52
+Opcode=2223 Name=tADDhirr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 0: 0| 0: 1: 1: 1| 1: 0: 1: 1|
 -------------------------------------------------------------------------------------------------
 
-	mov	r2, r3
-Opcode=165 Name=LDRcp Format=ARM_FORMAT_LDFRM(6)
+	add	r3, pc
+Opcode=2274 Name=tLDRi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 1: 0: 0: 0| 0: 1: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0| 0: 0: 0: 1| 1: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [pc, #132]
-Opcode=24 Name=ADDrr Format=ARM_FORMAT_DPFRM(4)
+	ldr	r0, [r3]
+Opcode=2274 Name=tLDRi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 0| 1: 0: 0: 0| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	add	r3, pc, r3
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	ldr	r4, [r0]
+Opcode=2275 Name=tLDRpci Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 0: 0: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 1: 0: 0: 0| 0: 0: 0: 0| 1: 1: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [r3]
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	ldr.n	r0, #48
+Opcode=2223 Name=tADDhirr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 0: 0| 0: 1: 1: 1| 1: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r0, r2
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	add	r0, pc
+Opcode=2274 Name=tLDRi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r1, r3
-Opcode=66 Name=BL Format=ARM_FORMAT_BRFRM(2)
+	ldr	r0, [r0]
+Opcode=2274 Name=tLDRi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 1| 1: 0: 0: 0| 1: 1: 0: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	bl	#7732
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	ldr	r0, [r0]
+Opcode=2243 Name=tBLXi_r9 Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 1: 1: 1: 1| 0: 0: 0: 0| 0: 0: 1: 0| 1: 1: 1: 0| 1: 1: 1: 0| 1: 1: 1: 0| 0: 0: 0: 1| 1: 1: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r3, r0
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	blx	#191548
+Opcode=2255 Name=tCBNZ Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 1: 0: 0: 1| 0: 0: 0: 1| 1: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r2, r3
-Opcode=165 Name=LDRcp Format=ARM_FORMAT_LDFRM(6)
+	cbnz	r0, #6
+Opcode=2275 Name=tLDRpci Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 1: 0: 0: 1| 0: 0: 0: 0| 1: 0: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [pc, #104]
-Opcode=24 Name=ADDrr Format=ARM_FORMAT_DPFRM(4)
+	ldr.n	r1, #40
+Opcode=2223 Name=tADDhirr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 0| 1: 0: 0: 0| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 0: 0| 0: 1: 1: 1| 1: 0: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	add	r3, pc, r3
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	add	r1, pc
+Opcode=2274 Name=tLDRi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 0: 0: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 0| 1: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [r3]
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	ldr	r1, [r1]
+Opcode=2238 Name=tB Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 1: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r0, r2
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	b	#0
+Opcode=2294 Name=tMOVr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 1: 0| 0: 0: 0: 0| 0: 0: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	mov	r1, r3
-Opcode=66 Name=BL Format=ARM_FORMAT_BRFRM(2)
+	mov	r1, r0
+Opcode=2294 Name=tMOVr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 1| 1: 0: 0: 0| 0: 1: 0: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 1: 0| 0: 0: 1: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	bl	#7700
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	mov	r0, r4
+Opcode=2294 Name=tMOVr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 1: 0| 0: 0: 1: 0| 1: 0: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r3, r0
-Opcode=369 Name=STRi12 Format=ARM_FORMAT_STFRM(7)
+	mov	r2, r5
+Opcode=2278 Name=tLDRspi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 0| 1: 1: 0: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 1| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	str	r3, [sp, #8]
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	ldr	r3, [sp]
+Opcode=2246 Name=tBLr9 Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0|
+| 1: 1: 1: 1| 0: 1: 1: 1| 1: 1: 1: 1| 1: 1: 0: 1| 1: 1: 1: 1| 1: 1: 1: 1| 1: 0: 0: 1| 1: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r0, [sp, #4]
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	bl	#-8390
+Opcode=2153 Name=t2SUBri Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 0: 1| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 1: 1: 1: 1| 0: 0: 0: 1| 1: 0: 1: 0| 0: 1: 1: 1| 0: 0: 0: 0| 1: 1: 0: 1| 0: 0: 0: 0| 1: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r1, [sp]
-Opcode=189 Name=MOVi Format=ARM_FORMAT_DPFRM(4)
+	sub.w	sp, r7, #8
+Opcode=1926 Name=t2LDMIA_UPD Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 1: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 1: 1: 1: 0| 1: 0: 0: 0| 1: 0: 1: 1| 1: 1: 0: 1| 0: 1: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r2, #0
-Opcode=189 Name=MOVi Format=ARM_FORMAT_DPFRM(4)
+	pop.w	{r4, r5, r7, lr}
+Opcode=2230 Name=tADDspi Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 1: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r3, #0
-Opcode=66 Name=BL Format=ARM_FORMAT_BRFRM(2)
+	add	sp, #16
+Opcode=2250 Name=tBX_RET Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 1| 0: 1: 1: 1| 1: 1: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 0| 0: 1: 1: 1| 0: 1: 1: 1| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	bl	#7664
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	bx	lr
+Opcode=2300 Name=tNOP Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 1: 1| 1: 1: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	mov	r3, r0
-Opcode=369 Name=STRi12 Format=ARM_FORMAT_STFRM(7)
+	nop
+Opcode=2293 Name=tMOVi8 Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 0| 1: 1: 0: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 1: 1: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 0: 1: 1| 1: 0: 0: 0| 1: 1: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	str	r3, [sp, #12]
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	movs	r3, #142
+Opcode=2290 Name=tMOVSr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 0: 1| 0: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r2, [sp, #8]
-Opcode=165 Name=LDRcp Format=ARM_FORMAT_LDFRM(6)
+	movs	r5, r0
+Opcode=2225 Name=tADDi8 Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 1: 0| 1: 1: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 1| 0: 1: 1: 1| 1: 0: 1: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [pc, #44]
-Opcode=24 Name=ADDrr Format=ARM_FORMAT_DPFRM(4)
+	adds	r1, #122
+Opcode=2290 Name=tMOVSr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 0| 1: 0: 0: 0| 1: 1: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	add	r3, pc, r3
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
+	movs	r5, r0
+Opcode=2225 Name=tADDi8 Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 0: 0: 1: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1| 0: 0: 0: 1| 0: 1: 1: 0| 1: 0: 0: 0|
 -------------------------------------------------------------------------------------------------
 
-	ldr	r3, [r3]
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
+	adds	r1, #104
+Opcode=2290 Name=tMOVSr Format=ARM_FORMAT_THUMBFRM(25)
  31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
 -------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0|
+| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 0: 1|
 -------------------------------------------------------------------------------------------------
 
-	mov	r0, r2
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
--------------------------------------------------------------------------------------------------
-
-	mov	r1, r3
-Opcode=66 Name=BL Format=ARM_FORMAT_BRFRM(2)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 1: 1: 1| 0: 1: 1: 1| 0: 1: 0: 1|
--------------------------------------------------------------------------------------------------
-
-	bl	#7636
-Opcode=166 Name=LDRi12 Format=ARM_FORMAT_LDFRM(6)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 1: 0: 1| 1: 0: 0: 1| 1: 1: 0: 1| 0: 0: 1: 1| 0: 0: 0: 0| 0: 0: 0: 0| 1: 1: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	ldr	r3, [sp, #12]
-Opcode=193 Name=MOVr Format=ARM_FORMAT_DPFRM(4)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 0: 1| 1: 0: 1: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 1|
--------------------------------------------------------------------------------------------------
-
-	mov	r0, r3
-Opcode=374 Name=SUBri Format=ARM_FORMAT_DPFRM(4)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 0: 0: 1: 0| 0: 1: 0: 0| 0: 1: 1: 1| 1: 1: 0: 1| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	sub	sp, r7, #0
-Opcode=135 Name=LDMIA_UPD Format=ARM_FORMAT_LDSTMULFRM(10)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 1: 1: 1: 0| 1: 0: 0: 0| 1: 0: 1: 1| 1: 1: 0: 1| 1: 0: 0: 0| 0: 0: 0: 0| 1: 0: 0: 0| 0: 0: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	pop	{r7, pc}
-Opcode=356 Name=STRD_POST Format=ARM_FORMAT_STMISCFRM(9)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 1: 0: 0| 1: 1: 1: 1| 1: 0: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	strdeq	r2, r3, [r0], -r8
-Opcode=31 Name=ANDrs Format=ARM_FORMAT_DPSOREGFRM(5)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 1: 0: 0| 0: 1: 1: 1| 1: 1: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	andeq	r2, r0, r12, ror r4
-Opcode=31 Name=ANDrs Format=ARM_FORMAT_DPSOREGFRM(5)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 1: 0: 0| 0: 1: 0: 1| 1: 0: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	andeq	r2, r0, r8, asr r4
-Opcode=31 Name=ANDrs Format=ARM_FORMAT_DPSOREGFRM(5)
- 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0 
--------------------------------------------------------------------------------------------------
-| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 0: 0| 0: 0: 1: 0| 0: 1: 0: 0| 0: 0: 0: 1| 0: 1: 0: 0|
--------------------------------------------------------------------------------------------------
-
-	andeq	r2, r0, r4, lsl r4
-da0603a-dhcp191:9131529 johnny$ 
+	movs	r5, r0
+[16:28:00] johnny:/Volumes/data/Radar/9131529 $ 

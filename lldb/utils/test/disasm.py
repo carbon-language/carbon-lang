@@ -27,16 +27,26 @@ def which(program):
                 return exe_file
     return None
 
-def do_llvm_mc_disassembly(exe, func, mc, mc_options = None):
+def do_llvm_mc_disassembly(gdb_commands, gdb_options, exe, func, mc, mc_options):
     from cStringIO import StringIO 
     import pexpect
 
     gdb_prompt = "\r\n\(gdb\) "
-    gdb = pexpect.spawn('gdb %s' % exe)
+    gdb = pexpect.spawn(('gdb %s' % gdb_options) if gdb_options else 'gdb')
     # Turn on logging for what gdb sends back.
     gdb.logfile_read = sys.stdout
-
     gdb.expect(gdb_prompt)
+
+    # See if there any extra command(s) to execute before we issue the file command.
+    for cmd in gdb_commands:
+        gdb.sendline(cmd)
+        gdb.expect(gdb_prompt)
+
+    # Now issue the file command.
+    gdb.sendline('file %s' % exe)
+    gdb.expect(gdb_prompt)
+
+    # Send the disassemble command.
     gdb.sendline('disassemble %s' % func)
     gdb.expect(gdb_prompt)
 
@@ -123,6 +133,14 @@ and display the disassembly result.
 
 Usage: %prog [options]
 """)
+    parser.add_option('-C', '--gdb-command',
+                      type='string', action='append', metavar='COMMAND',
+                      default=[], dest='gdb_commands',
+                      help='Command(s) gdb executes after starting up (can be empty)')
+    parser.add_option('-O', '--gdb-options',
+                      type='string', action='store',
+                      dest='gdb_options',
+                      help="""The options passed to 'gdb' command if specified.""")
     parser.add_option('-e', '--executable',
                       type='string', action='store',
                       dest='executable',
@@ -140,9 +158,12 @@ Usage: %prog [options]
     parser.add_option('-o', '--options',
                       type='string', action='store',
                       dest='llvm_mc_options',
-                      help="""The extra options passed to 'llvm-mc -disassemble' command if specified.""")
+                      help="""The options passed to 'llvm-mc -disassemble' command if specified.""")
 
     opts, args = parser.parse_args()
+
+    gdb_commands = opts.gdb_commands
+    gdb_options = opts.gdb_options
 
     if not opts.executable:
         parser.print_help()
@@ -164,12 +185,14 @@ Usage: %prog [options]
     llvm_mc_options = opts.llvm_mc_options
 
     # We have parsed the options.
+    print "gdb commands:", gdb_commands
+    print "gdb options:", gdb_options
     print "executable:", executable
     print "function:", function
     print "llvm-mc:", llvm_mc
     print "llvm-mc options:", llvm_mc_options
 
-    do_llvm_mc_disassembly(executable, function, llvm_mc, llvm_mc_options)
+    do_llvm_mc_disassembly(gdb_commands, gdb_options, executable, function, llvm_mc, llvm_mc_options)
 
 if __name__ == '__main__':
     main()
