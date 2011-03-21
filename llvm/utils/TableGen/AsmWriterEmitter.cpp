@@ -625,26 +625,28 @@ public:
   unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
 
-  void print(raw_ostream &O, bool IncIndent) {
-    unsigned Indent = 8 + (IncIndent ? 7 : 0);
+  void print(raw_ostream &O) {
+    unsigned Indent = 8;
+
+    if (!Conds.empty())
+      O << "if (";
 
     for (std::vector<std::string>::iterator
            I = Conds.begin(), E = Conds.end(); I != E; ++I) {
       if (I != Conds.begin()) {
         O << " &&\n";
         O.indent(Indent);
-      } else {
-        O << "if (";
       }
+
       O << *I;
     }
 
-    if (Conds.begin() != Conds.end())
-      O << " &&\n";
-    else
-      O << "if (";
-
     if (!ReqFeatures.empty()) {
+      if (Conds.begin() != Conds.end())
+        O << " &&\n";
+      else
+        O << "if (";
+
       std::string Req;
       raw_string_ostream ReqO(Req);
 
@@ -659,16 +661,23 @@ public:
         << ReqO.str() << ')';
     }
 
-    O << ") {\n";
-    O.indent(6) << "// " << Result << "\n";
-    O.indent(6) << "AsmString = \"" << AsmString << "\";\n";
+    if (!Conds.empty() || !ReqFeatures.empty()) {
+      O << ") {\n";
+      Indent = 6;
+    } else {
+      Indent = 4;
+    }
+
+    O.indent(Indent) << "// " << Result << "\n";
+    O.indent(Indent) << "AsmString = \"" << AsmString << "\";\n";
 
     for (std::map<StringRef, unsigned>::iterator
            I = OpMap.begin(), E = OpMap.end(); I != E; ++I)
-      O.indent(6) << "OpMap[\"" << I->first << "\"] = "
-                  << I->second << ";\n";
+      O.indent(Indent) << "OpMap[\"" << I->first << "\"] = "
+                       << I->second << ";\n";
 
-    O.indent(4) << '}';
+    if (!Conds.empty() || !ReqFeatures.empty())
+      O.indent(4) << '}';
   }
 
   bool operator==(const IAPrinter &RHS) {
@@ -824,10 +833,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   bool isMC = AsmWriter->getValueAsBit("isMCAsmWriter");
   const char *MachineInstrClassName = isMC ? "MCInst" : "MachineInstr";
 
-  O << "bool " << Target.getName() << ClassName
-    << "::printAliasInstr(const " << MachineInstrClassName
-    << " *MI, raw_ostream &OS) {\n";
-
   std::vector<Record*> AllInstAliases =
     Records.getAllDerivedDefinitions("InstAlias");
 
@@ -841,6 +846,103 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     const DefInit *Op = dynamic_cast<const DefInit*>(DI->getOperator());
     AliasMap[getQualifiedName(Op->getDef())].push_back(Alias);
   }
+
+#if 0
+  // A map of which conditions need to be met for each instruction operand
+  // before it can be matched to the mnemonic.
+  std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
+  AsmWriterInfo AWI;
+
+  for (std::map<std::string, std::vector<CodeGenInstAlias*> >::iterator
+         I = AliasMap.begin(), E = AliasMap.end(); I != E; ++I) {
+    std::vector<CodeGenInstAlias*> &Aliases = I->second;
+
+    for (std::vector<CodeGenInstAlias*>::iterator
+           II = Aliases.begin(), IE = Aliases.end(); II != IE; ++II) {
+      const CodeGenInstAlias *CGA = *II;
+      IAPrinter *IAP = new IAPrinter(AWI, CGA->Result->getAsString(),
+                                     CGA->AsmString);
+
+      IAP->addReqFeatures(CGA->TheDef->getValueAsListOfDefs("Predicates"));
+
+      unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
+
+      std::string Cond;
+      Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(LastOpNo);
+      IAP->addCond(Cond);
+
+      std::map<StringRef, unsigned> OpMap;
+      bool CantHandle = false;
+
+      for (unsigned i = 0, e = LastOpNo; i != e; ++i) {
+        const CodeGenInstAlias::ResultOperand &RO = CGA->ResultOperands[i];
+
+        switch (RO.Kind) {
+        default: assert(0 && "unexpected InstAlias operand kind");
+        case CodeGenInstAlias::ResultOperand::K_Record: {
+          const Record *Rec = RO.getRecord();
+          StringRef ROName = RO.getName();
+
+          if (Rec->isSubClassOf("RegisterClass")) {
+            Cond = std::string("MI->getOperand(")+llvm::utostr(i)+").isReg()";
+            IAP->addCond(Cond);
+
+            if (!IAP->isOpMapped(ROName)) {
+              IAP->addOperand(ROName, i);
+              Cond = std::string("regIsInRegisterClass(RC_") +
+                CGA->ResultOperands[i].getRecord()->getName() +
+                ", MI->getOperand(" + llvm::utostr(i) + ").getReg())";
+              IAP->addCond(Cond);
+            } else {
+              Cond = std::string("MI->getOperand(") +
+                llvm::utostr(i) + ").getReg() == MI->getOperand(" +
+                llvm::utostr(IAP->getOpIndex(ROName)) + ").getReg()";
+              IAP->addCond(Cond);
+            }
+          } else {
+            assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
+            // FIXME: We need to handle these situations.
+            delete IAP;
+            IAP = 0;
+            CantHandle = true;
+            break;
+          }
+
+          break;
+        }
+        case CodeGenInstAlias::ResultOperand::K_Imm:
+          Cond = std::string("MI->getOperand(") +
+            llvm::utostr(i) + ").getImm() == " +
+            llvm::utostr(CGA->ResultOperands[i].getImm());
+          IAP->addCond(Cond);
+          break;
+        case CodeGenInstAlias::ResultOperand::K_Reg:
+          Cond = std::string("MI->getOperand(") +
+            llvm::utostr(i) + ").getReg() == " + Target.getName() +
+            "::" + CGA->ResultOperands[i].getRegister()->getName();
+          IAP->addCond(Cond);
+          break;
+        }
+
+        if (!IAP) break;
+      }
+
+      if (CantHandle) continue;
+      IAPrinterMap[I->first].push_back(IAP);
+
+      O.indent(4) << "// " << I->first << '\n';
+      O.indent(4);
+      IAP->print(O);
+    }
+  }
+
+  EmitSubtargetFeatureFlagEnumeration(AWI, O);
+  EmitComputeAvailableFeatures(AWI, AsmWriter, Target, O);
+#endif
+
+  O << "bool " << Target.getName() << ClassName
+    << "::printAliasInstr(const " << MachineInstrClassName
+    << " *MI, raw_ostream &OS) {\n";
 
   if (AliasMap.empty() || !isMC) {
     // FIXME: Support MachineInstr InstAliases?
