@@ -95,11 +95,11 @@ public:
     OperandList[i] = Val;
   }
   const Use &getOperandUse(unsigned i) const {
-    assert(i < NumOperands && "getOperand() out of range!");
+    assert(i < NumOperands && "getOperandUse() out of range!");
     return OperandList[i];
   }
   Use &getOperandUse(unsigned i) {
-    assert(i < NumOperands && "getOperand() out of range!");
+    assert(i < NumOperands && "getOperandUse() out of range!");
     return OperandList[i];
   }
   
