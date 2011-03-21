@@ -1029,130 +1029,22 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     return false;
 }
 
-#if defined (__APPLE__)
-
-static bool
-GetMacOSXProcessName (lldb::pid_t pid, 
-                      NameMatchType name_match_type,
-                      const char *name_match, 
-                      ProcessInfo &proc_info)
-{
-    char process_name[MAXCOMLEN * 2 + 1];
-    int name_len = ::proc_name(pid, process_name, MAXCOMLEN * 2);
-    if (name_len == 0)
-        return false;
-    
-    if (NameMatches(process_name, name_match_type, name_match))
-    {
-        proc_info.SetName (process_name);
-        return true;
-    }
-    else
-    {
-        proc_info.SetName (NULL);
-        return false;
-    }
-}
-
-
-static bool
-GetMacOSXProcessCPUType (lldb::pid_t pid, ProcessInfo &proc_info)
-{
-        // Make a new mib to stay thread safe
-    int mib[CTL_MAXNAME]={0,};
-    size_t mib_len = CTL_MAXNAME;
-    if (::sysctlnametomib("sysctl.proc_cputype", mib, &mib_len)) 
-        return false;
-    
-    mib[mib_len] = pid;
-    mib_len++;
-    
-    cpu_type_t cpu, sub;
-    size_t cpu_len = sizeof(cpu);
-    if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
-    {
-        switch (cpu)
-        {
-            case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
-            case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
-            default: break;
-        }
-        proc_info.GetArchitecture ().SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
-        return true;
-    }
-    return false;
-}
-
-#endif
+#if !defined (__APPLE__) // see macosx/Host.mm
 
 uint32_t
 Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)
 {
     process_infos.Clear();
-#if defined (__APPLE__)
-    int num_pids;
-    int size_of_pids;
-    std::vector<int> pid_list;
-    
-    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (size_of_pids == -1)
-        return 0;
-        
-    num_pids = size_of_pids/sizeof(int);
-    
-    pid_list.resize (size_of_pids);
-    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, &pid_list[0], size_of_pids);
-    if (size_of_pids == -1)
-        return 0;
-        
-    lldb::pid_t our_pid = getpid();
-    
-    for (int i = 0; i < num_pids; i++)
-    {
-        struct proc_bsdinfo bsd_info;
-        int error = proc_pidinfo (pid_list[i], PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
-        if (error == 0)
-            continue;
-        
-        // Don't offer to attach to zombie processes, already traced or exiting
-        // processes, and of course, ourselves...  It looks like passing the second arg of
-        // 0 to proc_listpids will exclude zombies anyway, but that's not documented so...
-        if (((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT)) != 0)
-             || (bsd_info.pbi_status == SZOMB)
-             || (bsd_info.pbi_pid == our_pid))
-             continue;
-        
-        ProcessInfo process_info;
-        if (GetMacOSXProcessName (bsd_info.pbi_pid, name_match_type, name, process_info))
-        {
-            process_info.SetProcessID (bsd_info.pbi_pid);
-            GetMacOSXProcessCPUType (bsd_info.pbi_pid, process_info);
-            process_infos.Append (process_info);
-        }
-    }
-#endif
-    
     return process_infos.GetSize();
 }
 
 bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
-#if defined (__APPLE__)
-
-    if (GetMacOSXProcessName (pid, eNameMatchIgnore, NULL, process_info))
-    {
-        process_info.SetProcessID (pid);
-        if (GetMacOSXProcessCPUType (pid, process_info) == false)
-            process_info.GetArchitecture().Clear();
-        return true;
-    }    
-#endif
     process_info.Clear();
     return false;
 }
 
-#if !defined (__APPLE__) // see macosx/Host.mm
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {

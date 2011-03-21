@@ -11,10 +11,13 @@
 
 #include <crt_externs.h>
 #include <execinfo.h>
+#include <grp.h>
 #include <libproc.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -25,12 +28,16 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/Process.h"
 
 #include "cfcpp/CFCBundle.h"
 #include "cfcpp/CFCMutableArray.h"
 #include "cfcpp/CFCMutableDictionary.h"
 #include "cfcpp/CFCReleaser.h"
 #include "cfcpp/CFCString.h"
+
+#include "llvm/Support/Host.h"
+#include "llvm/Support/MachO.h"
 
 #include <objc/objc-auto.h>
 
@@ -872,6 +879,210 @@ Host::GetOSVersion
     
     return true;
 
+}
+
+static bool
+GetMacOSXProcessName (NameMatchType name_match_type,
+                      const char *name_match, 
+                      ProcessInfo &process_info)
+{
+    if (process_info.ProcessIDIsValid())
+    {
+        char process_name[MAXCOMLEN * 2 + 1];
+        int name_len = ::proc_name(process_info.GetProcessID(), process_name, MAXCOMLEN * 2);
+        if (name_len == 0)
+            return false;
+        
+        if (NameMatches(process_name, name_match_type, name_match))
+        {
+            process_info.SetName (process_name);
+            return true;
+        }
+    }
+    process_info.SetName (NULL);
+    return false;
+}
+
+
+static bool
+GetMacOSXProcessCPUType (ProcessInfo &process_info)
+{
+    if (process_info.ProcessIDIsValid())
+    {
+        // Make a new mib to stay thread safe
+        int mib[CTL_MAXNAME]={0,};
+        size_t mib_len = CTL_MAXNAME;
+        if (::sysctlnametomib("sysctl.proc_cputype", mib, &mib_len)) 
+            return false;
+    
+        mib[mib_len] = process_info.GetProcessID();
+        mib_len++;
+    
+        cpu_type_t cpu, sub;
+        size_t cpu_len = sizeof(cpu);
+        if (::sysctl (mib, mib_len, &cpu, &cpu_len, 0, 0) == 0)
+        {
+            switch (cpu)
+            {
+                case llvm::MachO::CPUTypeI386:      sub = llvm::MachO::CPUSubType_I386_ALL;     break;
+                case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
+                default: break;
+            }
+            process_info.GetArchitecture ().SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+            return true;
+        }
+    }
+    process_info.GetArchitecture().Clear();
+    return false;
+}
+
+// TODO: move this into the platform
+static bool
+GetGroupName (uint32_t gid, std::string &group_name)
+{
+    char group_buffer[PATH_MAX];
+    size_t group_buffer_size = sizeof(group_buffer);
+    struct group group_info;
+    struct group *group_info_ptr = &group_info;
+    // User the real user ID here, not the effective user ID
+    if (::getgrgid_r (gid,
+                      &group_info,
+                      group_buffer,
+                      group_buffer_size,
+                      &group_info_ptr) == 0)
+    {
+        if (group_info_ptr)
+        {
+            group_name.assign (group_info_ptr->gr_name);
+            return true;
+        }
+    }
+    group_name.clear();
+    return false;
+}
+
+// TODO: move this into the platform
+static bool
+GetUserName (uint32_t uid, std::string &user_name)
+{
+    struct passwd user_info;
+    struct passwd *user_info_ptr = &user_info;
+    char user_buffer[PATH_MAX];
+    size_t user_buffer_size = sizeof(user_buffer);
+    if (::getpwuid_r (uid,
+                      &user_info,
+                      user_buffer,
+                      user_buffer_size,
+                      &user_info_ptr) == 0)
+    {
+        if (user_info_ptr)
+        {
+            user_name.assign (user_info_ptr->pw_name);
+            return true;
+        }
+    }
+    user_name.clear();
+    return false;
+}
+
+
+static bool
+GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
+{
+    if (process_info.ProcessIDIsValid())
+    {
+        int mib[4];
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_PROC;
+        mib[2] = KERN_PROC_PID;
+        mib[3] = process_info.GetProcessID();
+        struct kinfo_proc proc_kinfo;
+        size_t proc_kinfo_size = sizeof(struct kinfo_proc);
+
+        if (::sysctl (mib, 4, &proc_kinfo, &proc_kinfo_size, NULL, 0) == 0)
+        {
+            if (proc_kinfo_size > 0)
+            {
+                process_info.SetParentProcessID (proc_kinfo.kp_eproc.e_ppid);
+                process_info.SetRealUserID (proc_kinfo.kp_eproc.e_pcred.p_ruid);
+                process_info.SetRealGroupID (proc_kinfo.kp_eproc.e_pcred.p_rgid);
+                process_info.SetEffectiveUserID (proc_kinfo.kp_eproc.e_ucred.cr_uid);
+                if (proc_kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
+                    process_info.SetEffectiveGroupID (proc_kinfo.kp_eproc.e_ucred.cr_groups[0]);
+                else
+                    process_info.SetEffectiveGroupID (UINT32_MAX);            
+                return true;
+            }
+        }
+    }
+    process_info.SetParentProcessID (LLDB_INVALID_PROCESS_ID);
+    process_info.SetRealUserID (UINT32_MAX);
+    process_info.SetRealGroupID (UINT32_MAX);
+    process_info.SetEffectiveUserID (UINT32_MAX);
+    process_info.SetEffectiveGroupID (UINT32_MAX);            
+    return false;
+}
+
+
+uint32_t
+Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)
+{
+    int num_pids;
+    int size_of_pids;
+    std::vector<int> pid_list;
+    
+    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (size_of_pids == -1)
+        return 0;
+        
+    num_pids = size_of_pids/sizeof(int);
+    
+    pid_list.resize (size_of_pids);
+    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, &pid_list[0], size_of_pids);
+    if (size_of_pids == -1)
+        return 0;
+        
+    lldb::pid_t our_pid = getpid();
+    
+    for (int i = 0; i < num_pids; i++)
+    {
+        struct proc_bsdinfo bsd_info;
+        int error = proc_pidinfo (pid_list[i], PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
+        if (error == 0)
+            continue;
+        
+        // Don't offer to attach to zombie processes, already traced or exiting
+        // processes, and of course, ourselves...  It looks like passing the second arg of
+        // 0 to proc_listpids will exclude zombies anyway, but that's not documented so...
+        if (((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT)) != 0)
+             || (bsd_info.pbi_status == SZOMB)
+             || (bsd_info.pbi_pid == our_pid))
+             continue;
+        
+        ProcessInfo process_info;
+        process_info.SetProcessID (bsd_info.pbi_pid);
+        if (GetMacOSXProcessName (name_match_type, name, process_info))
+        {
+            GetMacOSXProcessCPUType (process_info);
+            GetMacOSXProcessUserAndGroup (process_info);
+            process_infos.Append (process_info);
+        }
+    }    
+    return process_infos.GetSize();
+}
+
+bool
+Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+{
+    process_info.SetProcessID(pid);
+    if (GetMacOSXProcessName (eNameMatchIgnore, NULL, process_info))
+    {
+        GetMacOSXProcessCPUType (process_info);
+        GetMacOSXProcessUserAndGroup (process_info);
+        return true;
+    }    
+    process_info.Clear();
+    return false;
 }
 
 

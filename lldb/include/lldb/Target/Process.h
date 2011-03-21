@@ -228,6 +228,10 @@ class ProcessInfo
 public:
     ProcessInfo () :
         m_name (),
+        m_real_uid (UINT32_MAX),
+        m_real_gid (UINT32_MAX),
+        m_effective_uid (UINT32_MAX),
+        m_effective_gid (UINT32_MAX),
         m_arch(),
         m_pid (LLDB_INVALID_PROCESS_ID)
     {
@@ -236,7 +240,11 @@ public:
     ProcessInfo (const char *name,
                  const ArchSpec &arch,
                  lldb::pid_t pid) :
-        m_name (name),
+        m_name (),
+        m_real_uid (UINT32_MAX),
+        m_real_gid (UINT32_MAX),
+        m_effective_uid (UINT32_MAX),
+        m_effective_gid (UINT32_MAX),
         m_arch (arch),
         m_pid (pid)
     {
@@ -246,6 +254,10 @@ public:
     Clear ()
     {
         m_name.clear();
+        m_real_uid = UINT32_MAX;
+        m_real_gid = UINT32_MAX;
+        m_effective_uid = UINT32_MAX;
+        m_effective_gid = UINT32_MAX;
         m_arch.Clear();
         m_pid = LLDB_INVALID_PROCESS_ID;
     }
@@ -265,10 +277,58 @@ public:
     void
     SetName (const char *name)
     {
-        if (name)
+        if (name && name[0])
             m_name.assign (name);
         else
             m_name.clear();
+    }
+
+    uint32_t
+    GetRealUserID() const
+    {
+        return m_real_uid;
+    }
+
+    uint32_t
+    GetRealGroupID() const
+    {
+        return m_real_gid;
+    }
+
+    uint32_t
+    GetEffectiveUserID() const
+    {
+        return m_effective_uid;
+    }
+
+    uint32_t
+    GetEffectiveGroupID() const
+    {
+        return m_effective_gid;
+    }
+
+    void
+    SetRealUserID (uint32_t uid)
+    {
+        m_real_uid = uid;
+    }
+
+    void
+    SetRealGroupID (uint32_t gid)
+    {
+        m_real_gid = gid;
+    }
+
+    void
+    SetEffectiveUserID (uint32_t uid)
+    {
+        m_effective_uid = uid;
+    }
+    
+    void
+    SetEffectiveGroupID (uint32_t gid)
+    {
+        m_effective_gid = gid;
     }
 
     ArchSpec &
@@ -295,10 +355,39 @@ public:
         m_pid = pid;
     }
     
+    bool
+    ProcessIDIsValid() const
+    {
+        return m_pid != LLDB_INVALID_PROCESS_ID;
+    }
+
+    lldb::pid_t
+    GetParentProcessID () const
+    {
+        return m_parent_pid;
+    }
+    
+    void
+    SetParentProcessID (lldb::pid_t pid)
+    {
+        m_parent_pid = pid;
+    }
+    
+    bool
+    ParentProcessIDIsValid() const
+    {
+        return m_parent_pid != LLDB_INVALID_PROCESS_ID;
+    }
+
 protected:
     std::string m_name;
+    uint32_t m_real_uid;
+    uint32_t m_real_gid;    
+    uint32_t m_effective_uid;
+    uint32_t m_effective_gid;    
     ArchSpec m_arch;
-    pid_t m_pid;
+    lldb::pid_t m_pid;
+    lldb::pid_t m_parent_pid;
 };
 
 class ProcessInfoList
