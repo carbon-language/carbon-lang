@@ -221,11 +221,10 @@ FUNCTIONS.cc_kext.x86_64 := $(CCKEXT_X86_FUNCTIONS) \
 # FIXME: Currently, compiler-rt is missing implementations for a number of the
 # functions that need to go into libcc_kext.a. Filter them out for now.
 CCKEXT_MISSING_FUNCTIONS := \
-	adddf3 addsf3 cmpdf2 cmpsf2 div0 divdf3 divsf3 \
-	extendsfdf2 ffssi2 fixdfsi fixsfsi floatsidf floatsisf \
-	floatunsidf floatunsisf gtdf2 gtsf2 ltdf2 ltsf2 \
-	muldf3 mulsf3 negdf2 negsf2 subdf3 subsf3 \
-	truncdfsf2 udiv_w_sdiv unorddf2 unordsf2 bswapdi2 \
+	cmpdf2 cmpsf2 div0 \
+	ffssi2 \
+	gtdf2 gtsf2 ltdf2 ltsf2 \
+	udiv_w_sdiv unorddf2 unordsf2 bswapdi2 \
 	bswapsi2 \
 	gcc_bcmp \
 	do_global_dtors \
