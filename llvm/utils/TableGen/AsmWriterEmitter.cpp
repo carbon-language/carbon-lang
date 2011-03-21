@@ -847,7 +847,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     AliasMap[getQualifiedName(Op->getDef())].push_back(Alias);
   }
 
-#if 0
   // A map of which conditions need to be met for each instruction operand
   // before it can be matched to the mnemonic.
   std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
@@ -930,15 +929,18 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       if (CantHandle) continue;
       IAPrinterMap[I->first].push_back(IAP);
 
+#if 0
       O.indent(4) << "// " << I->first << '\n';
       O.indent(4);
       IAP->print(O);
+#endif
     }
   }
 
+  O << "#if 0\n";
   EmitSubtargetFeatureFlagEnumeration(AWI, O);
   EmitComputeAvailableFeatures(AWI, AsmWriter, Target, O);
-#endif
+  O << "#endif\n\n";
 
   O << "bool " << Target.getName() << ClassName
     << "::printAliasInstr(const " << MachineInstrClassName
