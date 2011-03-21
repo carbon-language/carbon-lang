@@ -843,6 +843,8 @@ namespace llvm {
 
     virtual bool isUsedByReturnOnly(SDNode *N) const;
 
+    virtual bool mayBeEmittedAsTailCall(CallInst *CI) const;
+
     virtual EVT
     getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
                              ISD::NodeType ExtendKind) const;
