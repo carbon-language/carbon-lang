@@ -310,6 +310,11 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
   if (AD.getFragment() == BD.getFragment()) {
     Addend += (AD.getOffset() - BD.getOffset());
 
+    // Pointers to Thumb symbols need to have their low-bit set to allow
+    // for interworking.
+    if (Asm->isThumbFunc(&SA))
+      Addend |= 1;
+
     // Clear the symbol expr pointers to indicate we have folded these
     // operands.
     A = B = 0;
