@@ -601,6 +601,103 @@ struct AsmWriterInfo {
   }
 };
 
+// IAPrinter - Holds information about an InstAlias. Two InstAliases match if
+// they both have the same conditionals. In which case, we cannot print out the
+// alias for that pattern.
+class IAPrinter {
+  AsmWriterInfo &AWI;
+  std::vector<std::string> Conds;
+  std::map<StringRef, unsigned> OpMap;
+  std::string Result;
+  std::string AsmString;
+  std::vector<Record*> ReqFeatures;
+public:
+  IAPrinter(AsmWriterInfo &Info, std::string R, std::string AS)
+    : AWI(Info), Result(R), AsmString(AS) {}
+
+  void addCond(const std::string &C) { Conds.push_back(C); }
+  void addReqFeatures(const std::vector<Record*> &Features) {
+    AWI.addReqFeatures(Features);
+    ReqFeatures = Features;
+  }
+
+  void addOperand(StringRef Op, unsigned Idx) { OpMap[Op] = Idx; }
+  unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
+  bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
+
+  void print(raw_ostream &O, bool IncIndent) {
+    unsigned Indent = 8 + (IncIndent ? 7 : 0);
+
+    for (std::vector<std::string>::iterator
+           I = Conds.begin(), E = Conds.end(); I != E; ++I) {
+      if (I != Conds.begin()) {
+        O << " &&\n";
+        O.indent(Indent);
+      } else {
+        O << "if (";
+      }
+      O << *I;
+    }
+
+    if (Conds.begin() != Conds.end())
+      O << " &&\n";
+    else
+      O << "if (";
+
+    if (!ReqFeatures.empty()) {
+      std::string Req;
+      raw_string_ostream ReqO(Req);
+
+      for (std::vector<Record*>::iterator
+             I = ReqFeatures.begin(), E = ReqFeatures.end(); I != E; ++I) {
+        if (I != ReqFeatures.begin()) ReqO << " | ";
+        ReqO << AWI.getFeatureInfo(*I)->getEnumName();
+      }
+
+      if (Conds.begin() != Conds.end()) O.indent(Indent);
+      O << "(AvailableFeatures & (" << ReqO.str() << ")) == ("
+        << ReqO.str() << ')';
+    }
+
+    O << ") {\n";
+    O.indent(6) << "// " << Result << "\n";
+    O.indent(6) << "AsmString = \"" << AsmString << "\";\n";
+
+    for (std::map<StringRef, unsigned>::iterator
+           I = OpMap.begin(), E = OpMap.end(); I != E; ++I)
+      O.indent(6) << "OpMap[\"" << I->first << "\"] = "
+                  << I->second << ";\n";
+
+    O.indent(4) << '}';
+  }
+
+  bool operator==(const IAPrinter &RHS) {
+    if (Conds.size() != RHS.Conds.size())
+      return false;
+
+    unsigned Idx = 0;
+    for (std::vector<std::string>::iterator
+           I = Conds.begin(), E = Conds.end(); I != E; ++I)
+      if (*I != RHS.Conds[Idx++])
+        return false;
+
+    return true;
+  }
+
+  bool operator()(const IAPrinter &RHS) {
+    if (Conds.size() < RHS.Conds.size())
+      return true;
+
+    unsigned Idx = 0;
+    for (std::vector<std::string>::iterator
+           I = Conds.begin(), E = Conds.end(); I != E; ++I)
+      if (*I != RHS.Conds[Idx++])
+        return *I < RHS.Conds[Idx++];
+
+    return false;
+  }
+};
+
 } // end anonymous namespace
 
 /// EmitSubtargetFeatureFlagEnumeration - Emit the subtarget feature flag
