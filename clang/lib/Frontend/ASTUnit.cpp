@@ -848,19 +848,25 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
   
   // Create the compiler instance to use for building the AST.
-  CompilerInstance Clang;
-  Clang.setInvocation(Invocation.take());
-  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    CICleanup(llvm::CrashRecoveryContextCleanup::
+                    create<CompilerInstance>(Clang.get()));
+
+  Clang->setInvocation(Invocation.take());
+  OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
     
   // Set up diagnostics, capturing any diagnostics that would
   // otherwise be dropped.
-  Clang.setDiagnostics(&getDiagnostics());
+  Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang.getTargetOpts().Features = TargetFeatures;
-  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
-                                               Clang.getTargetOpts()));
-  if (!Clang.hasTarget()) {
+  Clang->getTargetOpts().Features = TargetFeatures;
+  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
+						Clang->getTargetOpts()));
+  if (!Clang->hasTarget()) {
     delete OverrideMainBuffer;
     return true;
   }
@@ -869,18 +875,18 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
-  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+  Clang->getTarget().setForcedLangOptions(Clang->getLangOpts());
   
-  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+  assert(Clang->getFrontendOpts().Inputs.size() == 1 &&
          "Invocation must have exactly one source file!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_AST &&
          "FIXME: AST inputs not yet supported here!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
          "IR inputs not support here!");
 
   // Configure the various subsystems.
   // FIXME: Should we retain the previous file manager?
-  FileSystemOpts = Clang.getFileSystemOpts();
+  FileSystemOpts = Clang->getFileSystemOpts();
   FileMgr.reset(new FileManager(FileSystemOpts));
   SourceMgr.reset(new SourceManager(getDiagnostics(), *FileMgr));
   TheSema.reset();
@@ -902,14 +908,14 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
 
   // Create a file manager object to provide access to and cache the filesystem.
-  Clang.setFileManager(&getFileManager());
+  Clang->setFileManager(&getFileManager());
   
   // Create the source manager.
-  Clang.setSourceManager(&getSourceManager());
+  Clang->setSourceManager(&getSourceManager());
   
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
-  PreprocessorOptions &PreprocessorOpts = Clang.getPreprocessorOpts();
+  PreprocessorOptions &PreprocessorOpts = Clang->getPreprocessorOpts();
   std::string PriorImplicitPCHInclude;
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
@@ -942,21 +948,21 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   
   llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
   Act.reset(new TopLevelDeclTrackerAction(*this));
-  if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
-                            Clang.getFrontendOpts().Inputs[0].first))
+  if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
+                            Clang->getFrontendOpts().Inputs[0].first))
     goto error;
   
   Act->Execute();
   
   // Steal the created target, context, and preprocessor, and take back the
   // source and file managers.
-  TheSema.reset(Clang.takeSema());
-  Consumer.reset(Clang.takeASTConsumer());
-  Ctx.reset(Clang.takeASTContext());
-  PP.reset(Clang.takePreprocessor());
-  Clang.takeSourceManager();
-  Clang.takeFileManager();
-  Target.reset(Clang.takeTarget());
+  TheSema.reset(Clang->takeSema());
+  Consumer.reset(Clang->takeASTConsumer());
+  Ctx.reset(Clang->takeASTContext());
+  PP.reset(Clang->takePreprocessor());
+  Clang->takeSourceManager();
+  Clang->takeFileManager();
+  Target.reset(Clang->takeTarget());
   
   Act->EndSourceFile();
 
@@ -967,7 +973,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.ImplicitPCHInclude = PriorImplicitPCHInclude;
   }
 
-  Invocation.reset(Clang.takeInvocation());
+  Invocation.reset(Clang->takeInvocation());
   return false;
   
 error:
@@ -981,9 +987,9 @@ error:
   }
   
   StoredDiagnostics.clear();
-  Clang.takeSourceManager();
-  Clang.takeFileManager();
-  Invocation.reset(Clang.takeInvocation());
+  Clang->takeSourceManager();
+  Clang->takeFileManager();
+  Invocation.reset(Clang->takeInvocation());
   return true;
 }
 
@@ -1331,18 +1337,24 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   
   // Create the compiler instance to use for building the precompiled preamble.
-  CompilerInstance Clang;
-  Clang.setInvocation(&PreambleInvocation);
-  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    CICleanup(llvm::CrashRecoveryContextCleanup::
+                    create<CompilerInstance>(Clang.get()));
+
+  Clang->setInvocation(&PreambleInvocation);
+  OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
   
   // Set up diagnostics, capturing all of the diagnostics produced.
-  Clang.setDiagnostics(&getDiagnostics());
+  Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang.getTargetOpts().Features = TargetFeatures;
-  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
-                                               Clang.getTargetOpts()));
-  if (!Clang.hasTarget()) {
+  Clang->getTargetOpts().Features = TargetFeatures;
+  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
+                                               Clang->getTargetOpts()));
+  if (!Clang->hasTarget()) {
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
@@ -1355,18 +1367,18 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
-  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+  Clang->getTarget().setForcedLangOptions(Clang->getLangOpts());
   
-  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+  assert(Clang->getFrontendOpts().Inputs.size() == 1 &&
          "Invocation must have exactly one source file!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_AST &&
          "FIXME: AST inputs not yet supported here!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
          "IR inputs not support here!");
   
   // Clear out old caches and data.
   getDiagnostics().Reset();
-  ProcessWarningOptions(getDiagnostics(), Clang.getDiagnosticOpts());
+  ProcessWarningOptions(getDiagnostics(), Clang->getDiagnosticOpts());
   StoredDiagnostics.erase(
                     StoredDiagnostics.begin() + NumStoredDiagnosticsFromDriver,
                           StoredDiagnostics.end());
@@ -1376,17 +1388,17 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   PreprocessedEntitiesInPreamble.clear();
   
   // Create a file manager object to provide access to and cache the filesystem.
-  Clang.setFileManager(new FileManager(Clang.getFileSystemOpts()));
+  Clang->setFileManager(new FileManager(Clang->getFileSystemOpts()));
   
   // Create the source manager.
-  Clang.setSourceManager(new SourceManager(getDiagnostics(),
-                                           Clang.getFileManager()));
+  Clang->setSourceManager(new SourceManager(getDiagnostics(),
+                                           Clang->getFileManager()));
   
   llvm::OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
-  if (!Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
-                            Clang.getFrontendOpts().Inputs[0].first)) {
-    Clang.takeInvocation();
+  if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
+                            Clang->getFrontendOpts().Inputs[0].first)) {
+    Clang->takeInvocation();
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
     Preamble.clear();
     PreambleRebuildCounter = DefaultPreambleRebuildInterval;
@@ -1397,7 +1409,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   
   Act->Execute();
   Act->EndSourceFile();
-  Clang.takeInvocation();
+  Clang->takeInvocation();
   
   if (Diagnostics->hasErrorOccurred()) {
     // There were errors parsing the preamble, so no precompiled header was
@@ -1422,7 +1434,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Keep track of all of the files that the source manager knows about,
   // so we can verify whether they have changed or not.
   FilesInPreamble.clear();
-  SourceManager &SourceMgr = Clang.getSourceManager();
+  SourceManager &SourceMgr = Clang->getSourceManager();
   const llvm::MemoryBuffer *MainFileBuffer
     = SourceMgr.getBuffer(SourceMgr.getMainFileID());
   for (SourceManager::fileinfo_iterator F = SourceMgr.fileinfo_begin(),
@@ -2047,23 +2059,29 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   // Set the language options appropriately.
   LangOpts = CCInvocation.getLangOpts();
 
-  CompilerInstance Clang;
-  Clang.setInvocation(&CCInvocation);
-  OriginalSourceFile = Clang.getFrontendOpts().Inputs[0].second;
+  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar
+    CICleanup(llvm::CrashRecoveryContextCleanup::
+                    create<CompilerInstance>(Clang.get()));
+
+  Clang->setInvocation(&CCInvocation);
+  OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
     
   // Set up diagnostics, capturing any diagnostics produced.
-  Clang.setDiagnostics(&Diag);
+  Clang->setDiagnostics(&Diag);
   ProcessWarningOptions(Diag, CCInvocation.getDiagnosticOpts());
   CaptureDroppedDiagnostics Capture(true, 
-                                    Clang.getDiagnostics(), 
+                                    Clang->getDiagnostics(), 
                                     StoredDiagnostics);
   
   // Create the target instance.
-  Clang.getTargetOpts().Features = TargetFeatures;
-  Clang.setTarget(TargetInfo::CreateTargetInfo(Clang.getDiagnostics(),
-                                               Clang.getTargetOpts()));
-  if (!Clang.hasTarget()) {
-    Clang.takeInvocation();
+  Clang->getTargetOpts().Features = TargetFeatures;
+  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
+                                               Clang->getTargetOpts()));
+  if (!Clang->hasTarget()) {
+    Clang->takeInvocation();
     return;
   }
   
@@ -2071,19 +2089,19 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   //
   // FIXME: We shouldn't need to do this, the target should be immutable once
   // created. This complexity should be lifted elsewhere.
-  Clang.getTarget().setForcedLangOptions(Clang.getLangOpts());
+  Clang->getTarget().setForcedLangOptions(Clang->getLangOpts());
   
-  assert(Clang.getFrontendOpts().Inputs.size() == 1 &&
+  assert(Clang->getFrontendOpts().Inputs.size() == 1 &&
          "Invocation must have exactly one source file!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_AST &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_AST &&
          "FIXME: AST inputs not yet supported here!");
-  assert(Clang.getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
          "IR inputs not support here!");
 
   
   // Use the source and file managers that we were given.
-  Clang.setFileManager(&FileMgr);
-  Clang.setSourceManager(&SourceMgr);
+  Clang->setFileManager(&FileMgr);
+  Clang->setSourceManager(&SourceMgr);
 
   // Remap files.
   PreprocessorOpts.clearRemappedFiles();
@@ -2107,7 +2125,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
                                         FrontendOpts.ShowMacrosInCodeCompletion,
                                 FrontendOpts.ShowCodePatternsInCodeCompletion,
                                 FrontendOpts.ShowGlobalSymbolsInCodeCompletion);
-  Clang.setCodeCompletionConsumer(AugmentedConsumer);
+  Clang->setCodeCompletionConsumer(AugmentedConsumer);
 
   // If we have a precompiled preamble, try to use it. We only allow
   // the use of the precompiled preamble if we're if the completion
@@ -2159,16 +2177,16 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 
   llvm::OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
-  if (Act->BeginSourceFile(Clang, Clang.getFrontendOpts().Inputs[0].second,
-                           Clang.getFrontendOpts().Inputs[0].first)) {
+  if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
+                           Clang->getFrontendOpts().Inputs[0].first)) {
     Act->Execute();
     Act->EndSourceFile();
   }
 
   // Steal back our resources. 
-  Clang.takeFileManager();
-  Clang.takeSourceManager();
-  Clang.takeInvocation();
+  Clang->takeFileManager();
+  Clang->takeSourceManager();
+  Clang->takeInvocation();
 }
 
 bool ASTUnit::Save(llvm::StringRef File) {

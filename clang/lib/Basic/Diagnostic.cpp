@@ -16,6 +16,8 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/CrashRecoveryContext.h"
+
 using namespace clang;
 
 static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
@@ -683,5 +685,9 @@ PartialDiagnostic::StorageAllocator::StorageAllocator() {
 }
 
 PartialDiagnostic::StorageAllocator::~StorageAllocator() {
-  assert(NumFreeListEntries == NumCached && "A partial is on the lamb");
+  // Don't assert if we are in a CrashRecovery context, as this
+  // invariant may be invalidated during a crash.
+  assert((NumFreeListEntries == NumCached ||
+          llvm::CrashRecoveryContext::isRecoveringFromCrash()) 
+         && "A partial is on the lamb");
 }
