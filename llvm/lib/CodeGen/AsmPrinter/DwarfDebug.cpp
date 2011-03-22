@@ -3050,6 +3050,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   DbgVariableToDbgInstMap.clear();
   DeleteContainerSeconds(DbgScopeMap);
   InsnsNeedsLabelAfter.clear();
+  RegClobberInsn.clear();
   ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
