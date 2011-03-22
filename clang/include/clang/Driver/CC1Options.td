@@ -155,6 +155,8 @@ def momit_leaf_frame_pointer : Flag<"-momit-leaf-frame-pointer">,
   HelpText<"Omit frame pointer setup for leaf functions.">;
 def msoft_float : Flag<"-msoft-float">,
   HelpText<"Use software floating point">;
+def backend_option : Separate<"-backend-option">,
+  HelpText<"Additional arguments to forward to LLVM backend (during code gen)">;
 def mregparm : Separate<"-mregparm">,
   HelpText<"Limit the number of registers available for integer arguments">;
 def mrelax_all : Flag<"-mrelax-all">,

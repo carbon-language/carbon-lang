@@ -207,6 +207,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (!Opts.VerifyModule)
     Res.push_back("-disable-llvm-verifier");
+  for (unsigned i = 0, e = Opts.BackendOptions.size(); i != e; ++i) {
+    Res.push_back("-backend-option");
+    Res.push_back(Opts.BackendOptions[i]);
+  }
 }
 
 static void DependencyOutputOptsToArgs(const DependencyOutputOptions &Opts,
@@ -927,6 +931,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.NoInfsFPMath = Opts.NoNaNsFPMath = Args.hasArg(OPT_cl_finite_math_only)||
                                           Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
+  Opts.BackendOptions = Args.getAllArgValues(OPT_backend_option);
   Opts.NumRegisterParameters = Args.getLastArgIntValue(OPT_mregparm, 0, Diags);
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);

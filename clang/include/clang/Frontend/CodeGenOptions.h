@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 
 #include <string>
+#include <vector>
 
 namespace clang {
 
@@ -113,6 +114,9 @@ public:
 
   /// The name of the relocation model to use.
   std::string RelocationModel;
+
+  /// A list of command-line options to forward to the LLVM backend.
+  std::vector<std::string> BackendOptions;
 
   /// The user specified number of registers to be used for integral arguments,
   /// or 0 if unspecified.

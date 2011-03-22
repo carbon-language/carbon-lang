@@ -440,7 +440,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Disable movt generation, if requested.
 #ifdef DISABLE_ARM_DARWIN_USE_MOVT
-  CmdArgs.push_back("-mllvm");
+  CmdArgs.push_back("-backend-option");
   CmdArgs.push_back("-arm-darwin-use-movt=0");
 #endif
 
@@ -607,10 +607,10 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // Kernel code has more strict alignment requirements.
   if (KernelOrKext) {
-    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-long-calls");
 
-    CmdArgs.push_back("-mllvm");
+    CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-strict-align");
   }
 }
