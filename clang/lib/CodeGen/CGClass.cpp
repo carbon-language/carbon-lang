@@ -84,20 +84,20 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
            == ConvertType(Derived));
 
   // Compute the offset of the virtual base.
-  uint64_t Offset;
+  CharUnits Offset;
   const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
   if (BaseIsVirtual)
-    Offset = Layout.getVBaseClassOffsetInBits(Base);
+    Offset = Layout.getVBaseClassOffset(Base);
   else
-    Offset = Layout.getBaseClassOffsetInBits(Base);
+    Offset = Layout.getBaseClassOffset(Base);
 
   // Shift and cast down to the base type.
   // TODO: for complete types, this should be possible with a GEP.
   llvm::Value *V = This;
-  if (Offset) {
+  if (Offset.isPositive()) {
     const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
     V = Builder.CreateBitCast(V, Int8PtrTy);
-    V = Builder.CreateConstInBoundsGEP1_64(V, Offset / 8);
+    V = Builder.CreateConstInBoundsGEP1_64(V, Offset.getQuantity());
   }
   V = Builder.CreateBitCast(V, ConvertType(Base)->getPointerTo());
 
