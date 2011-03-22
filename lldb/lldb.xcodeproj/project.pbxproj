@@ -56,6 +56,10 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
+		26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */; };
+		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
+		26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EF01338317700EF765A /* GDBRemoteCommunicationServer.h */; };
 		2689000013353DB600698AC0 /* BreakpointResolverAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */; };
 		2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */; };
 		2689000213353DB600698AC0 /* BreakpointResolverFileLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */; };
@@ -635,6 +639,10 @@
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
 		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; };
 		2672D8471189055500FF4019 /* CommandObjectFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectFrame.h; path = source/Commands/CommandObjectFrame.h; sourceTree = "<group>"; };
+		26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationClient.cpp; sourceTree = "<group>"; };
+		26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationClient.h; sourceTree = "<group>"; };
+		26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationServer.cpp; sourceTree = "<group>"; };
+		26744EF01338317700EF765A /* GDBRemoteCommunicationServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationServer.h; sourceTree = "<group>"; };
 		2675F6FE1332BE690067997B /* PlatformRemoteiOS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformRemoteiOS.cpp; sourceTree = "<group>"; };
 		2675F6FF1332BE690067997B /* PlatformRemoteiOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformRemoteiOS.h; sourceTree = "<group>"; };
 		2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorGDBRemote.cpp; path = source/Utility/StringExtractorGDBRemote.cpp; sourceTree = "<group>"; };
@@ -2380,6 +2388,10 @@
 			children = (
 				2618EE5B1315B29C001D6D71 /* GDBRemoteCommunication.cpp */,
 				2618EE5C1315B29C001D6D71 /* GDBRemoteCommunication.h */,
+				26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */,
+				26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */,
+				26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */,
+				26744EF01338317700EF765A /* GDBRemoteCommunicationServer.h */,
 				2618EE5D1315B29C001D6D71 /* GDBRemoteRegisterContext.cpp */,
 				2618EE5E1315B29C001D6D71 /* GDBRemoteRegisterContext.h */,
 				2618EE5F1315B29C001D6D71 /* ProcessGDBRemote.cpp */,
@@ -2483,6 +2495,8 @@
 				2689000C13353DB600698AC0 /* StoppointCallbackContext.h in Headers */,
 				2689000E13353DB600698AC0 /* StoppointLocation.h in Headers */,
 				2689001013353DB600698AC0 /* WatchpointLocation.h in Headers */,
+				26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */,
+				26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3038,6 +3052,8 @@
 				2689011213353E8200698AC0 /* StringExtractorGDBRemote.cpp in Sources */,
 				2689011313353E8200698AC0 /* PseudoTerminal.cpp in Sources */,
 				26B1FCC21338115F002886E2 /* Host.mm in Sources */,
+				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
+				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

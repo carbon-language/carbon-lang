@@ -16,8 +16,8 @@
 
 
 
-StringExtractorGDBRemote::Type
-StringExtractorGDBRemote::GetType () const
+StringExtractorGDBRemote::ResponseType
+StringExtractorGDBRemote::GetResponseType () const
 {
     if (m_packet.empty())
         return eUnsupported;
@@ -49,29 +49,57 @@ StringExtractorGDBRemote::GetType () const
     return eResponse;
 }
 
-bool
-StringExtractorGDBRemote::IsOKPacket() const
+StringExtractorGDBRemote::ServerPacketType
+StringExtractorGDBRemote::GetServerPacketType () const
 {
-    return GetType () == eOK;
+    // Empty is not a supported packet...
+    if (m_packet.empty())
+        return eServerPacketType_invalid;
+
+    const char *packet_cstr = m_packet.c_str();
+    switch (m_packet[0])
+    {
+    case '-':
+        if (m_packet.size() == 1)
+            return eServerPacketType_nack;
+        break;
+
+    case '+':
+        if (m_packet.size() == 1)
+            return eServerPacketType_ack;
+        break;
+
+    case 'q':
+        if (strcmp (packet_cstr, "qHostInfo") == 0)
+            return eServerPacketType_qHostInfo;
+        break;
+    }
+    return eServerPacketType_unimplemented;
+}
+
+bool
+StringExtractorGDBRemote::IsOKResponse() const
+{
+    return GetResponseType () == eOK;
 }
 
 
 bool
-StringExtractorGDBRemote::IsUnsupportedPacket() const
+StringExtractorGDBRemote::IsUnsupportedResponse() const
 {
-    return GetType () == eUnsupported;
+    return GetResponseType () == eUnsupported;
 }
 
 bool
-StringExtractorGDBRemote::IsNormalPacket() const
+StringExtractorGDBRemote::IsNormalResponse() const
 {
-    return GetType () == eResponse;
+    return GetResponseType () == eResponse;
 }
 
 bool
-StringExtractorGDBRemote::IsErrorPacket() const
+StringExtractorGDBRemote::IsErrorResponse() const
 {
-    return GetType () == eError &&
+    return GetResponseType () == eError &&
            m_packet.size() == 3 &&
            isxdigit(m_packet[1]) &&
            isxdigit(m_packet[2]);
@@ -80,7 +108,7 @@ StringExtractorGDBRemote::IsErrorPacket() const
 uint8_t
 StringExtractorGDBRemote::GetError ()
 {
-    if (GetType() == eError)
+    if (GetResponseType() == eError)
     {
         SetFilePos(1);
         return GetHexU8(255);

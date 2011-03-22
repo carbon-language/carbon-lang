@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "GDBRemoteCommunication.h"
+#include "GDBRemoteCommunicationServer.h"
 
 //----------------------------------------------------------------------
 // option descriptors for getopt_long()
@@ -106,7 +106,7 @@ main (int argc, char *argv[])
     argv += optind;
 
 
-    GDBRemoteCommunication gdb_comm;
+    GDBRemoteCommunicationServer gdb_comm;
 
     return 0;
 }

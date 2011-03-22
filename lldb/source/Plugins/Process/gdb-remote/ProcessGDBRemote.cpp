@@ -170,18 +170,20 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
 
     char packet[128];
     m_register_info.Clear();
-    StringExtractorGDBRemote::Type packet_type = StringExtractorGDBRemote::eResponse;
     uint32_t reg_offset = 0;
     uint32_t reg_num = 0;
-    for (; packet_type == StringExtractorGDBRemote::eResponse; ++reg_num)
+    StringExtractorGDBRemote::ResponseType response_type;
+    for (response_type = StringExtractorGDBRemote::eResponse; 
+         response_type == StringExtractorGDBRemote::eResponse; 
+         ++reg_num)
     {
         const int packet_len = ::snprintf (packet, sizeof(packet), "qRegisterInfo%x", reg_num);
         assert (packet_len < sizeof(packet));
         StringExtractorGDBRemote response;
         if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {
-            packet_type = response.GetType();
-            if (packet_type == StringExtractorGDBRemote::eResponse)
+            response_type = response.GetResponseType();
+            if (response_type == StringExtractorGDBRemote::eResponse)
             {
                 std::string name;
                 std::string value;
@@ -298,7 +300,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         }
         else
         {
-            packet_type = StringExtractorGDBRemote::eError;
+            response_type = StringExtractorGDBRemote::eError;
         }
     }
 
@@ -1044,7 +1046,7 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
         Error err;
         StringExtractorGDBRemote response;
         for (m_gdb_comm.SendPacketAndWaitForResponse("qfThreadInfo", response, false);
-             response.IsNormalPacket();
+             response.IsNormalResponse();
              m_gdb_comm.SendPacketAndWaitForResponse("qsThreadInfo", response, false))
         {
             char ch = response.GetChar();
@@ -1460,7 +1462,7 @@ ProcessGDBRemote::GetImageInfoAddress()
         StringExtractorGDBRemote response;
         if (m_gdb_comm.SendPacketAndWaitForResponse("qShlibInfoAddr", ::strlen ("qShlibInfoAddr"), response, false))
         {
-            if (response.IsNormalPacket())
+            if (response.IsNormalResponse())
                 return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
         }
     }
@@ -1487,14 +1489,14 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
     {
-        if (response.IsNormalPacket())
+        if (response.IsNormalResponse())
         {
             error.Clear();
             return response.GetHexBytes(buf, size, '\xdd');
         }
-        else if (response.IsErrorPacket())
+        else if (response.IsErrorResponse())
             error.SetErrorStringWithFormat("gdb remote returned an error: %s", response.GetStringRef().c_str());
-        else if (response.IsUnsupportedPacket())
+        else if (response.IsUnsupportedResponse())
             error.SetErrorStringWithFormat("'%s' packet unsupported", packet);
         else
             error.SetErrorStringWithFormat("unexpected response to '%s': '%s'", packet, response.GetStringRef().c_str());
@@ -1515,14 +1517,14 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetData(), packet.GetSize(), response, true))
     {
-        if (response.IsOKPacket())
+        if (response.IsOKResponse())
         {
             error.Clear();
             return size;
         }
-        else if (response.IsErrorPacket())
+        else if (response.IsErrorResponse())
             error.SetErrorStringWithFormat("gdb remote returned an error: %s", response.GetStringRef().c_str());
-        else if (response.IsUnsupportedPacket())
+        else if (response.IsUnsupportedResponse())
             error.SetErrorStringWithFormat("'%s' packet unsupported", packet.GetString().c_str());
         else
             error.SetErrorStringWithFormat("unexpected response to '%s': '%s'", packet.GetString().c_str(), response.GetStringRef().c_str());
@@ -1640,13 +1642,13 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
             StringExtractorGDBRemote response;
             if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
             {
-                if (response.IsUnsupportedPacket())
+                if (response.IsUnsupportedResponse())
                 {
                     // Disable z packet support and try again
                     m_z0_supported = 0;
                     return EnableBreakpoint (bp_site);
                 }
-                else if (response.IsOKPacket())
+                else if (response.IsOKResponse())
                 {
                     bp_site->SetEnabled(true);
                     bp_site->SetType (BreakpointSite::eExternal);
@@ -1708,11 +1710,11 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
                 StringExtractorGDBRemote response;
                 if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
                 {
-                    if (response.IsUnsupportedPacket())
+                    if (response.IsUnsupportedResponse())
                     {
                         error.SetErrorString("Breakpoint site was set with Z packet, yet remote debugserver states z packets are not supported.");
                     }
-                    else if (response.IsOKPacket())
+                    else if (response.IsOKResponse())
                     {
                         if (log)
                             log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx -- SUCCESS", site_id, (uint64_t)addr);
@@ -2121,7 +2123,7 @@ ProcessGDBRemote::SetCurrentGDBRemoteThread (int tid)
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
-        if (response.IsOKPacket())
+        if (response.IsOKResponse())
         {
             m_curr_tid = tid;
             return true;
@@ -2147,7 +2149,7 @@ ProcessGDBRemote::SetCurrentGDBRemoteThreadForRun (int tid)
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
     {
-        if (response.IsOKPacket())
+        if (response.IsOKResponse())
         {
             m_curr_tid_run = tid;
             return true;

@@ -39,30 +39,42 @@ public:
     {
     }
 
-    enum Type
+    enum ServerPacketType
+    {
+        eServerPacketType_nack = 0,
+        eServerPacketType_ack,
+        eServerPacketType_invalid,
+        eServerPacketType_unimplemented,
+        eServerPacketType_qHostInfo
+    };
+    
+    ServerPacketType
+    GetServerPacketType () const;
+
+    enum ResponseType
     {
         eUnsupported = 0,
         eAck,
         eNack,
         eError,
         eOK,
-        eResponse
+        eResponse,
     };
 
-    StringExtractorGDBRemote::Type
-    GetType () const;
+    ResponseType
+    GetResponseType () const;
 
     bool
-    IsOKPacket() const;
+    IsOKResponse() const;
 
     bool
-    IsUnsupportedPacket() const;
+    IsUnsupportedResponse() const;
 
     bool
-    IsNormalPacket () const;
+    IsNormalResponse () const;
 
     bool
-    IsErrorPacket() const;
+    IsErrorResponse() const;
 
     // Returns zero if the packet isn't a EXX packet where XX are two hex
     // digits. Otherwise the error encoded in XX is returned.

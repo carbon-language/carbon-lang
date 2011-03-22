@@ -27,7 +27,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
-#include "GDBRemoteCommunication.h"
+#include "GDBRemoteCommunicationClient.h"
 #include "Utility/StringExtractor.h"
 #include "GDBRemoteRegisterContext.h"
 
@@ -212,7 +212,7 @@ public:
 
 protected:
     friend class ThreadGDBRemote;
-    friend class GDBRemoteCommunication;
+    friend class GDBRemoteCommunicationClient;
     friend class GDBRemoteRegisterContext;
 
     bool
@@ -289,7 +289,7 @@ protected:
     void
     BuildDynamicRegisterInfo (bool force);
 
-    GDBRemoteCommunication &
+    GDBRemoteCommunicationClient &
     GetGDBRemote()
     {
         return m_gdb_comm;
@@ -306,7 +306,7 @@ protected:
 
     lldb_private::Flags m_flags;            // Process specific flags (see eFlags enums)
     lldb_private::Mutex m_stdio_mutex;      // Multithreaded protection for stdio
-    GDBRemoteCommunication m_gdb_comm;
+    GDBRemoteCommunicationClient m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
     lldb::thread_t m_debugserver_thread;
     StringExtractor m_last_stop_packet;

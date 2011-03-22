@@ -208,7 +208,7 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
 bool
 GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
 {
-    GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
+    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 
     InvalidateIfNeeded(false);
 
@@ -235,7 +235,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                     assert (packet_len < (sizeof(packet) - 1));
                     if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
                     {
-                        if (response.IsNormalPacket())
+                        if (response.IsNormalResponse())
                             if (response.GetHexBytes ((void *)m_reg_data.GetDataStart(), m_reg_data.GetByteSize(), '\xcc') == m_reg_data.GetByteSize())
                                 SetAllRegisterValid (true);
                     }
@@ -290,7 +290,7 @@ GDBRemoteRegisterContext::WriteRegisterValue (uint32_t reg, const Scalar &value)
 bool
 GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
 {
-    GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
+    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 // FIXME: This check isn't right because IsRunning checks the Public state, but this
 // is work you need to do - for instance in ShouldStop & friends - before the public 
 // state has been changed.
@@ -358,7 +358,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                                                               false))
                     {
                         SetAllRegisterValid (false);
-                        if (response.IsOKPacket())
+                        if (response.IsOKResponse())
                         {
                             return true;
                         }
@@ -383,7 +383,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
                                                               response,
                                                               false))
                     {
-                        if (response.IsOKPacket())
+                        if (response.IsOKResponse())
                         {
                             return true;
                         }
@@ -399,7 +399,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
 bool
 GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
-    GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
+    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
     StringExtractorGDBRemote response;
     
     Mutex::Locker locker;
@@ -418,7 +418,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 
             if (gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
             {
-                if (response.IsErrorPacket())
+                if (response.IsErrorResponse())
                     return false;
                 
                 response.GetStringRef().insert(0, 1, 'G');
@@ -443,7 +443,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     if (!data_sp || data_sp->GetBytes() == NULL || data_sp->GetByteSize() == 0)
         return false;
 
-    GDBRemoteCommunication &gdb_comm = GetGDBProcess().GetGDBRemote();
+    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
     StringExtractorGDBRemote response;
     Mutex::Locker locker;
     if (gdb_comm.GetSequenceMutex (locker))
@@ -456,7 +456,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                                                       response, 
                                                       false))
             {
-                if (response.IsOKPacket())
+                if (response.IsOKResponse())
                     return true;
             }
         }
