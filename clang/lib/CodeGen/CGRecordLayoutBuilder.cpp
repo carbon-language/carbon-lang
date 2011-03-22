@@ -242,7 +242,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
   assert(llvm::isPowerOf2_32(TypeSizeInBits) && "Unexpected type size!");
   CGBitFieldInfo::AccessInfo Components[3];
   unsigned NumComponents = 0;
-  unsigned AccessedTargetBits = 0;       // The tumber of target bits accessed.
+  unsigned AccessedTargetBits = 0;       // The number of target bits accessed.
   unsigned AccessWidth = TypeSizeInBits; // The current access width to attempt.
 
   // Round down from the field offset to find the first access position that is
