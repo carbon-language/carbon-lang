@@ -2535,6 +2535,7 @@ def err_typecheck_sclass_fscope : Error<
   "illegal storage class on file-scoped variable">;
 def err_unsupported_global_register : Error<
   "global register variables are not supported">;
+def warn_standalone_specifier : Warning<"'%0' ignored on this declaration">;
 def err_typecheck_sclass_func : Error<"illegal storage class on function">;
 def err_static_block_func : Error<
   "function declared in block scope cannot have 'static' storage class">;

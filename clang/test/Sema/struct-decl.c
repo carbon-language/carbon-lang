@@ -46,3 +46,14 @@ struct s0 f0(void) {}
 struct x0 {
   unsigned int x1;
 };
+
+// rdar://problem/9150338
+static struct test1 { // expected-warning {{'static' ignored on this declaration}}
+  int x;
+};
+const struct test2 { // expected-warning {{'const' ignored on this declaration}}
+  int x;
+};
+inline struct test3 { // expected-warning {{'inline' ignored on this declaration}}
+  int x;
+};

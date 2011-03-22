@@ -1764,12 +1764,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed.
 Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
-                                            DeclSpec &DS) {
-  // FIXME: Error on inline/virtual/explicit
-  // FIXME: Warn on useless __thread
-  // FIXME: Warn on useless const/volatile
-  // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
-  // FIXME: Warn on useless attributes
+                                       DeclSpec &DS) {
   Decl *TagD = 0;
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
@@ -1803,6 +1798,10 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       return 0;
     return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
   }
+
+  // Track whether we warned about the fact that there aren't any
+  // declarators.
+  bool emittedWarning = false;
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     ProcessDeclAttributeList(S, Record, DS.getAttributes().getList());
@@ -1815,6 +1814,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
 
       Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
         << DS.getSourceRange();
+      emittedWarning = true;
     }
   }
 
@@ -1840,12 +1840,16 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       DS.getStorageClassSpec() != DeclSpec::SCS_typedef)
     if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Tag))
       if (Enum->enumerator_begin() == Enum->enumerator_end() &&
-          !Enum->getIdentifier() && !Enum->isInvalidDecl())
+          !Enum->getIdentifier() && !Enum->isInvalidDecl()) {
         Diag(Enum->getLocation(), diag::ext_no_declarators)
           << DS.getSourceRange();
+        emittedWarning = true;
+      }
+
+  // Skip all the checks below if we have a type error.
+  if (DS.getTypeSpecType() == DeclSpec::TST_error) return TagD;
       
-  if (!DS.isMissingDeclaratorOk() &&
-      DS.getTypeSpecType() != DeclSpec::TST_error) {
+  if (!DS.isMissingDeclaratorOk()) {
     // Warn about typedefs of enums without names, since this is an
     // extension in both Microsoft and GNU.
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef &&
@@ -1857,7 +1861,35 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
 
     Diag(DS.getSourceRange().getBegin(), diag::ext_no_declarators)
       << DS.getSourceRange();
+    emittedWarning = true;
   }
+
+  // We're going to complain about a bunch of spurious specifiers;
+  // only do this if we're declaring a tag, because otherwise we
+  // should be getting diag::ext_no_declarators.
+  if (emittedWarning || (TagD && TagD->isInvalidDecl()))
+    return TagD;
+
+  if (DeclSpec::SCS scs = DS.getStorageClassSpec())
+    Diag(DS.getStorageClassSpecLoc(), diag::warn_standalone_specifier)
+      << DeclSpec::getSpecifierName(scs);
+  if (DS.isThreadSpecified())
+    Diag(DS.getThreadSpecLoc(), diag::warn_standalone_specifier) << "__thread";
+  if (DS.getTypeQualifiers()) {
+    if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
+      Diag(DS.getConstSpecLoc(), diag::warn_standalone_specifier) << "const";
+    if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
+      Diag(DS.getConstSpecLoc(), diag::warn_standalone_specifier) << "volatile";
+    // Restrict is covered above.
+  }
+  if (DS.isInlineSpecified())
+    Diag(DS.getInlineSpecLoc(), diag::warn_standalone_specifier) << "inline";
+  if (DS.isVirtualSpecified())
+    Diag(DS.getVirtualSpecLoc(), diag::warn_standalone_specifier) << "virtual";
+  if (DS.isExplicitSpecified())
+    Diag(DS.getExplicitSpecLoc(), diag::warn_standalone_specifier) <<"explicit";
+
+  // FIXME: Warn on useless attributes
 
   return TagD;
 }
