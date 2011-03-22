@@ -2074,11 +2074,12 @@ for.end:                                          ; preds = %entry
 }
 
 This shouldn't need the ((zext (%n - 1)) + 1) game, and it should ideally fold
-the two memset's together. The issue with %n seems to stem from poor handling
-of the original loop.
+the two memset's together.
 
-To simplify this, we need SCEV to know that "n != 0" because of the dominating
-conditional.  That would turn the second memset into a simple memset of 'n'.
+The issue with the addition only occurs in 64-bit mode, and appears to be at
+least partially caused by Scalar Evolution not keeping its cache updated: it
+returns the "wrong" result immediately after indvars runs, but figures out the
+expected result if it is run from scratch on IR resulting from running indvars.
 
 //===---------------------------------------------------------------------===//
 
