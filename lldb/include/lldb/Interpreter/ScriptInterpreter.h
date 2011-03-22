@@ -20,6 +20,12 @@ class ScriptInterpreter
 {
 public:
 
+    typedef void (*SWIGInitCallback) (void);
+
+    typedef bool (*SWIGBreakpointCallbackFunction) (const char *python_function_name,
+                                                    const char *session_dictionary_name,
+                                                    const lldb::StackFrameSP& frame_sp,
+                                                    const lldb::BreakpointLocationSP &bp_loc_sp);
     typedef enum
     {
         eCharPtr,
@@ -97,10 +103,11 @@ public:
     LanguageToString (lldb::ScriptLanguage language);
     
     static void
-    Initialize ();
+    InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
+                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback);
 
     static void
-    Terminate ();
+    TerminateInterpreter ();
 
     virtual void
     ResetOutputFileHandle (FILE *new_fh) { } //By default, do nothing.

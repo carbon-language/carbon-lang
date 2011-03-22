@@ -42,6 +42,8 @@ SBDebugger::Initialize ()
     if (log)
         log->Printf ("SBDebugger::Initialize ()");
 
+    SBCommandInterpreter::InitializeSWIG ();
+
     Debugger::Initialize();
 }
 

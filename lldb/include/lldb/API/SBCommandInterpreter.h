@@ -101,7 +101,9 @@ private:
 
     SBCommandInterpreter (lldb_private::CommandInterpreter *interpreter_ptr = NULL);   // Access using SBDebugger::GetCommandInterpreter();
 
-    
+    static void
+    InitializeSWIG ();
+
     lldb_private::CommandInterpreter *m_opaque_ptr;
 };
 

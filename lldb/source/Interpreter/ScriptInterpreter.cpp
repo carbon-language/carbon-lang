@@ -91,14 +91,16 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
 }
 
 void
-ScriptInterpreter::Initialize ()
+ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
+                                          SWIGBreakpointCallbackFunction python_swig_breakpoint_callback)
 {
-//    ScriptInterpreterPython::Initialize ();
+    ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback, 
+                                                    python_swig_breakpoint_callback);
 }
 
 void
-ScriptInterpreter::Terminate ()
+ScriptInterpreter::TerminateInterpreter ()
 {
-//    ScriptInterpreterPython::Terminate ();
+    ScriptInterpreterPython::TerminateInterpreter ();
 }
 

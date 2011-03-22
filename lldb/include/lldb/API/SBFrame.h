@@ -130,6 +130,8 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    SBFrame (const lldb::StackFrameSP &lldb_object_sp);
+
 protected:
     friend class SBValue;
 
@@ -151,8 +153,6 @@ private:
     
 #endif
 
-
-    SBFrame (const lldb::StackFrameSP &lldb_object_sp);
 
     void
     SetFrame (const lldb::StackFrameSP &lldb_object_sp);

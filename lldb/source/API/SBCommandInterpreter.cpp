@@ -305,4 +305,25 @@ SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgume
 }
 
 
+extern "C" bool
+LLDBSwigPythonBreakpointCallbackFunction 
+(
+    const char *python_function_name,
+    const char *session_dictionary_name,
+    const lldb::StackFrameSP& sb_frame, 
+    const lldb::BreakpointLocationSP& sb_bp_loc
+);
 
+extern "C" void init_lldb(void);
+
+void
+SBCommandInterpreter::InitializeSWIG ()
+{
+    static bool g_initialized = false;
+    if (!g_initialized)
+    {
+        g_initialized = true;
+        ScriptInterpreter::InitializeInterpreter (init_lldb, 
+                                                  LLDBSwigPythonBreakpointCallbackFunction);
+    }
+}

@@ -17,7 +17,6 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -85,7 +84,6 @@ lldb_private::Initialize ()
         ArchDefaultUnwindPlan_x86_64::Initialize();
         ArchDefaultUnwindPlan_i386::Initialize();
         ArchVolatileRegs_x86::Initialize();
-        ScriptInterpreter::Initialize ();
 
 #if defined (__APPLE__)
         ABIMacOSX_i386::Initialize();
@@ -142,7 +140,6 @@ lldb_private::Terminate ()
     ArchDefaultUnwindPlan_i386::Terminate();
     ArchDefaultUnwindPlan_x86_64::Terminate();
     ArchVolatileRegs_x86::Terminate();
-    ScriptInterpreter::Terminate ();
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
@@ -172,13 +169,13 @@ lldb_private::Terminate ()
     Log::Terminate();
 }
 
-extern "C" const double LLDBVersionNumber;
+extern "C" const double liblldb_coreVersionNumber;
 const char *
 lldb_private::GetVersion ()
 {
     static char g_version_string[32];
     if (g_version_string[0] == '\0')
-        ::snprintf (g_version_string, sizeof(g_version_string), "LLDB-%g", LLDBVersionNumber);
+        ::snprintf (g_version_string, sizeof(g_version_string), "LLDB-%g", liblldb_coreVersionNumber);
 
     return g_version_string;
 }

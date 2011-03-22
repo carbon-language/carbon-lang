@@ -84,10 +84,11 @@ public:
     RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton);
 
     static void
-    Initialize ();
-    
+    InitializePrivate ();
+
     static void
-    Terminate ();
+    InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
+                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback);
 
 protected:
 

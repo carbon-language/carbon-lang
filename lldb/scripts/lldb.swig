@@ -205,14 +205,17 @@
 // and is used when a script command is attached to a breakpoint for execution.
 
 SWIGEXPORT bool
-LLDBSWIGPythonBreakpointCallbackFunction 
+LLDBSwigPythonBreakpointCallbackFunction 
 (
     const char *python_function_name,
     const char *session_dictionary_name,
-    lldb::SBFrame& sb_frame, 
-    lldb::SBBreakpointLocation& sb_bp_loc
+    const lldb::StackFrameSP& frame_sp, 
+    const lldb::BreakpointLocationSP& bp_loc_sp
 )
 {
+    lldb::SBFrame sb_frame (frame_sp);
+    lldb::SBBreakpointLocation sb_bp_loc(bp_loc_sp);
+
     bool stop_at_breakpoint = true;
     PyObject *Frame_PyObj = SWIG_NewPointerObj((void *) &sb_frame, SWIGTYPE_p_lldb__SBFrame, 0);
     PyObject *Bp_Loc_PyObj = SWIG_NewPointerObj ((void *) &sb_bp_loc, SWIGTYPE_p_lldb__SBBreakpointLocation, 0);
