@@ -1085,6 +1085,19 @@ Target::RunStopHooks ()
     
     bool keep_going = true;
     bool hooks_ran = false;
+    bool print_hook_header;
+    bool print_thread_header;
+    
+    if (num_exe_ctx == 1)
+        print_thread_header = false;
+    else
+        print_thread_header = true;
+        
+    if (m_stop_hooks.size() == 1)
+        print_hook_header = false;
+    else
+        print_hook_header = true;
+        
     for (pos = m_stop_hooks.begin(); keep_going && pos != end; pos++)
     {
         // result.Clear();
@@ -1102,16 +1115,17 @@ Target::RunStopHooks ()
             {
                 if (!hooks_ran)
                 {
-                    result.AppendMessage("\n** Stop Hooks **\n");
+                    result.AppendMessage("\n** Stop Hooks **");
                     hooks_ran = true;
                 }
-                if (!any_thread_matched)
+                if (print_hook_header && !any_thread_matched)
                 {
                     result.AppendMessageWithFormat("\n- Hook %d\n", cur_hook_sp->GetID());
                     any_thread_matched = true;
                 }
                 
-                result.AppendMessageWithFormat("-- Thread %d\n", exc_ctx_with_reasons[i].thread->GetIndexID());
+                if (print_thread_header)
+                    result.AppendMessageWithFormat("-- Thread %d\n", exc_ctx_with_reasons[i].thread->GetIndexID());
                 
                 bool stop_on_continue = true; 
                 bool stop_on_error = true; 
