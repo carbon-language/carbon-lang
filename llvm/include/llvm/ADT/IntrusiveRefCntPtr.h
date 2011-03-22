@@ -44,7 +44,7 @@ namespace llvm {
   class RefCountedBase {
     unsigned ref_cnt;
 
-  protected:
+  public:
     RefCountedBase() : ref_cnt(0) {}
 
     void Retain() { ++ref_cnt; }
@@ -52,8 +52,6 @@ namespace llvm {
       assert (ref_cnt > 0 && "Reference count is already zero.");
       if (--ref_cnt == 0) delete static_cast<Derived*>(this);
     }
-
-    friend class IntrusiveRefCntPtr<Derived>;
   };
 
 //===----------------------------------------------------------------------===//
