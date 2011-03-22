@@ -101,11 +101,10 @@ class CrashRecoveryContextCleanup {
 protected:
   CrashRecoveryContext *context;
   CrashRecoveryContextCleanup(CrashRecoveryContext *context)
-    : context(context) {}
+    : context(context), cleanupFired(false) {}
 public:
   bool cleanupFired;
   
-  CrashRecoveryContextCleanup() : cleanupFired(false) {}
   virtual ~CrashRecoveryContextCleanup();
   virtual void recoverResources() = 0;
 
