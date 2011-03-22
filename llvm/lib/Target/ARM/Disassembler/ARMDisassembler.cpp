@@ -378,7 +378,7 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
   Size = 4;
 
   DEBUG({
-      errs() << "Opcode=" << Opcode << " Name=" << ARMUtils::OpcodeName(Opcode)
+      errs() << "\nOpcode=" << Opcode << " Name=" <<ARMUtils::OpcodeName(Opcode)
              << " Format=" << stringForARMFormat(Format) << '(' << (int)Format
              << ")\n";
       showBitVector(errs(), insn);
