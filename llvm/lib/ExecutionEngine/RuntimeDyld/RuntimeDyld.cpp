@@ -334,8 +334,7 @@ sys::MemoryBlock RuntimeDyld::getMemoryBlock() {
   return Dyld->getMemoryBlock();
 }
 
-StringRef RuntimeDyld::getErrorString()
-{
+StringRef RuntimeDyld::getErrorString() {
   return Dyld->getErrorString();
 }
 
