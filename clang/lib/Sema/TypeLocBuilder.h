@@ -18,7 +18,6 @@
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/ASTContext.h"
-#include "llvm/Support/CrashRecoveryContext.h"
 
 namespace clang {
 
@@ -43,14 +42,9 @@ class TypeLocBuilder {
   /// The inline buffer.
   char InlineBuffer[InlineCapacity];
 
-  llvm::CrashRecoveryContextCleanupRegistrar cleanupBuffer;
-
  public:
   TypeLocBuilder()
-    : Buffer(InlineBuffer), Capacity(InlineCapacity), Index(InlineCapacity),
-      cleanupBuffer(llvm::CrashRecoveryContextCleanup::create<TypeLocBuilder>(
-            this, llvm::CrashRecoveryContextCleanup::DestructorCleanup))
-  {}
+    : Buffer(InlineBuffer), Capacity(InlineCapacity), Index(InlineCapacity) {}
 
   ~TypeLocBuilder() {
     if (Buffer != InlineBuffer)
