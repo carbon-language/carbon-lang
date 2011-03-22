@@ -11,11 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ptx-instrinfo"
+
 #include "PTX.h"
 #include "PTXInstrInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -132,7 +136,6 @@ SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
   return false;
 }
 
-
 bool PTXInstrInfo::
 DefinesPredicate(MachineInstr *MI,
                  std::vector<MachineOperand> &Pred) const {
@@ -165,6 +168,127 @@ DefinesPredicate(MachineInstr *MI,
   }
 }
 
+// branch support
+
+bool PTXInstrInfo::
+AnalyzeBranch(MachineBasicBlock &MBB,
+              MachineBasicBlock *&TBB,
+              MachineBasicBlock *&FBB,
+              SmallVectorImpl<MachineOperand> &Cond,
+              bool AllowModify) const {
+  // TODO implement cases when AllowModify is true
+
+  if (MBB.empty())
+    return true;
+
+  MachineBasicBlock::const_iterator iter = MBB.end();
+  const MachineInstr& instLast1 = *--iter;
+  const TargetInstrDesc &desc1 = instLast1.getDesc();
+  // for special case that MBB has only 1 instruction
+  const bool IsSizeOne = MBB.size() == 1;
+  // if IsSizeOne is true, *--iter and instLast2 are invalid
+  // we put a dummy value in instLast2 and desc2 since they are used
+  const MachineInstr& instLast2 = IsSizeOne ? instLast1 : *--iter;
+  const TargetInstrDesc &desc2 = IsSizeOne ? desc1 : instLast2.getDesc();
+
+  DEBUG(dbgs() << "\n");
+  DEBUG(dbgs() << "AnalyzeBranch: opcode: " << instLast1.getOpcode() << "\n");
+  DEBUG(dbgs() << "AnalyzeBranch: MBB:    " << MBB.getName().str() << "\n");
+  DEBUG(dbgs() << "AnalyzeBranch: TBB:    " << TBB << "\n");
+  DEBUG(dbgs() << "AnalyzeBranch: FBB:    " << FBB << "\n");
+
+  // this block ends with no branches
+  if (!IsAnyKindOfBranch(instLast1)) {
+    DEBUG(dbgs() << "AnalyzeBranch: ends with no branch\n");
+    return false;
+  }
+
+  // this block ends with only an unconditional branch
+  if (desc1.isUnconditionalBranch() &&
+      // when IsSizeOne is true, it "absorbs" the evaluation of instLast2
+      (IsSizeOne || !IsAnyKindOfBranch(instLast2))) {
+    DEBUG(dbgs() << "AnalyzeBranch: ends with only uncond branch\n");
+    TBB = GetBranchTarget(instLast1);
+    return false;
+  }
+
+  // this block ends with a conditional branch and
+  // it falls through to a successor block
+  if (desc1.isConditionalBranch() &&
+      IsAnySuccessorAlsoLayoutSuccessor(MBB)) {
+    DEBUG(dbgs() << "AnalyzeBranch: ends with cond branch and fall through\n");
+    TBB = GetBranchTarget(instLast1);
+    int i = instLast1.findFirstPredOperandIdx();
+    Cond.push_back(instLast1.getOperand(i));
+    Cond.push_back(instLast1.getOperand(i+1));
+    return false;
+  }
+
+  // when IsSizeOne is true, we are done
+  if (IsSizeOne)
+    return true;
+
+  // this block ends with a conditional branch
+  // followed by an unconditional branch
+  if (desc2.isConditionalBranch() &&
+      desc1.isUnconditionalBranch()) {
+    DEBUG(dbgs() << "AnalyzeBranch: ends with cond and uncond branch\n");
+    TBB = GetBranchTarget(instLast2);
+    FBB = GetBranchTarget(instLast1);
+    int i = instLast2.findFirstPredOperandIdx();
+    Cond.push_back(instLast2.getOperand(i));
+    Cond.push_back(instLast2.getOperand(i+1));
+    return false;
+  }
+
+  // branch cannot be understood
+  DEBUG(dbgs() << "AnalyzeBranch: cannot be understood\n");
+  return true;
+}
+
+unsigned PTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  unsigned count;
+  for (count = 0; IsAnyKindOfBranch(MBB.back()); ++count)
+    MBB.pop_back();
+  DEBUG(dbgs() << "RemoveBranch: MBB:   " << MBB.getName().str() << "\n");
+  DEBUG(dbgs() << "RemoveBranch: count: " << count << "\n");
+  return count;
+}
+
+unsigned PTXInstrInfo::
+InsertBranch(MachineBasicBlock &MBB,
+             MachineBasicBlock *TBB,
+             MachineBasicBlock *FBB,
+             const SmallVectorImpl<MachineOperand> &Cond,
+             DebugLoc DL) const {
+  DEBUG(dbgs() << "InsertBranch: MBB: " << MBB.getName().str() << "\n");
+  DEBUG(if (TBB) dbgs() << "InsertBranch: TBB: "
+                        << TBB->getName().str() << "\n";
+      else dbgs() << "InsertBranch: TBB: (NULL)\n");
+  DEBUG(if (FBB) dbgs() << "InsertBranch: FBB: "
+                        << FBB->getName().str() << "\n";
+      else dbgs() << "InsertBranch: FBB: (NULL)\n");
+  DEBUG(dbgs() << "InsertBranch: Cond size: " << Cond.size() << "\n");
+
+  assert(TBB && "TBB is NULL");
+
+  if (FBB) {
+    BuildMI(&MBB, DL, get(PTX::BRAdp))
+      .addMBB(TBB).addReg(Cond[0].getReg()).addImm(Cond[1].getImm());
+    BuildMI(&MBB, DL, get(PTX::BRAd))
+      .addMBB(FBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NORMAL);
+    return 2;
+  } else if (Cond.size()) {
+    BuildMI(&MBB, DL, get(PTX::BRAdp))
+      .addMBB(TBB).addReg(Cond[0].getReg()).addImm(Cond[1].getImm());
+    return 1;
+  } else {
+    BuildMI(&MBB, DL, get(PTX::BRAd))
+      .addMBB(TBB).addReg(PTX::NoRegister).addImm(PTX::PRED_NORMAL);
+    return 1;
+  }
+}
+
 // static helper routines
 
 MachineSDNode *PTXInstrInfo::
@@ -187,7 +311,28 @@ GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
 
 void PTXInstrInfo::AddDefaultPredicate(MachineInstr *MI) {
   if (MI->findFirstPredOperandIdx() == -1) {
-    MI->addOperand(MachineOperand::CreateReg(0, /*IsDef=*/false));
+    MI->addOperand(MachineOperand::CreateReg(PTX::NoRegister, /*IsDef=*/false));
     MI->addOperand(MachineOperand::CreateImm(PTX::PRED_NORMAL));
   }
+}
+
+bool PTXInstrInfo::IsAnyKindOfBranch(const MachineInstr& inst) {
+  const TargetInstrDesc &desc = inst.getDesc();
+  return desc.isTerminator() || desc.isBranch() || desc.isIndirectBranch();
+}
+
+bool PTXInstrInfo::
+IsAnySuccessorAlsoLayoutSuccessor(const MachineBasicBlock& MBB) {
+  for (MachineBasicBlock::const_succ_iterator
+      i = MBB.succ_begin(), e = MBB.succ_end(); i != e; ++i)
+    if (MBB.isLayoutSuccessor((const MachineBasicBlock*) &*i))
+      return true;
+  return false;
+}
+
+MachineBasicBlock *PTXInstrInfo::GetBranchTarget(const MachineInstr& inst) {
+  // FIXME So far all branch instructions put destination in 1st operand
+  const MachineOperand& target = inst.getOperand(0);
+  assert(target.isMBB() && "FIXME: detect branch target operand");
+  return target.getMBB();
 }

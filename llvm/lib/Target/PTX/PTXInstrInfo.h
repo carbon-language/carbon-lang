@@ -70,6 +70,20 @@ public:
   // PTX is fully-predicable
   virtual bool isPredicable(MachineInstr *MI) const { return true; }
 
+  // branch support
+
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             bool AllowModify = false) const;
+
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const SmallVectorImpl<MachineOperand> &Cond,
+                                DebugLoc DL) const;
+
   // static helper routines
 
   static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,
@@ -81,6 +95,12 @@ public:
                                           SDValue Op1, SDValue Op2);
 
   static void AddDefaultPredicate(MachineInstr *MI);
+
+  static bool IsAnyKindOfBranch(const MachineInstr& inst);
+
+  static bool IsAnySuccessorAlsoLayoutSuccessor(const MachineBasicBlock& MBB);
+
+  static MachineBasicBlock *GetBranchTarget(const MachineInstr& inst);
 }; // class PTXInstrInfo
 } // namespace llvm
 

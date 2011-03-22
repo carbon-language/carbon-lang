@@ -575,10 +575,12 @@ def CVT_u32_pred
 
 ///===- Control Flow Instructions -----------------------------------------===//
 
-let isBranch = 1, isTerminator = 1 in {
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def BRAd
     : InstPTX<(outs), (ins brtarget:$d), "bra\t$d", [(br bb:$d)]>;
+}
 
+let isBranch = 1, isTerminator = 1 in {
   // FIXME: should be able to write a pattern for brcond, but can't use
   //        a two-value operand where a dag node expects two operands. :(
   // NOTE: ARM & PowerPC backend also report the same problem
