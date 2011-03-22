@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS mcjit jit interpreter nativecodegen bitreader asmparser selectiondag)
+set(LLVM_LINK_COMPONENTS mcjit jit interpreter nativecodegen bitreader asmparser selectiondag RuntimeDyld)
 
 add_llvm_tool(lli
   lli.cpp
