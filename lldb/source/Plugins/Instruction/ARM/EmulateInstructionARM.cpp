@@ -1107,8 +1107,6 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
         else // We don't handle ARM for now.
             return false;
 
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + Rt, data))
-            return false;
     }
     return true;
 }
@@ -1147,12 +1145,28 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
         if (!success)
             return false;
         uint32_t imm32; // the immediate operand
-        switch (encoding) {
-        case eEncodingT2:
-            imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
-            break;
-        default:
-            return false;
+        uint32_t d;
+        bool setflags;
+        switch (encoding) 
+        {
+            case eEncodingT1:
+                // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm8:’00’, 32);
+                d = Bits32 (opcode, 10, 8);
+                setflags = false;
+                imm32 = (Bits32 (opcode, 7, 0) << 2);
+                  
+                break;
+                  
+            case eEncodingT2:
+                // d = 13; setflags = FALSE; imm32 = ZeroExtend(imm7:’00’, 32);
+                d = 13;
+                setflags = false;
+                imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+                  
+                break;
+                  
+            default:
+                return false;
         }
         addr_t sp_offset = imm32;
         addr_t addr = sp + sp_offset; // the adjusted stack pointer value
@@ -1161,8 +1175,16 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
         context.type = EmulateInstruction::eContextAdjustStackPointer;
         context.SetImmediateSigned (sp_offset);
     
-        if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, addr))
-            return false;
+        if (d == 15)
+        {
+            if (!ALUWritePC (context, addr))
+                return false;
+        }
+        else
+        {
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, addr))
+                return false;
+        }
     }
     return true;
 }
@@ -9567,6 +9589,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // Epilogue instructions
         //----------------------------------------------------------------------
 
+        { 0xfffff800, 0x0000a800, ARMV4T_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add<c> <Rd>, sp, #imm"},
         { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add sp, #imm"},
         { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
         { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <registers>" },
@@ -9589,13 +9612,13 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
         // To resolve ambiguity, "b<c> #imm8" should come after "svc #imm8".
         { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
-        { 0xffff8000, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm11 (outside or last in IT)"},
+        { 0xfffff800, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm11 (outside or last in IT)"},
         { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
         { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside or last in IT)"},
         // J1 == J2 == 1
-        { 0xf800f800, 0xf000f800, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        { 0xf800d000, 0xf000d000, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
         // J1 == J2 == 1
-        { 0xf800e800, 0xf000e800, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0xf800d001, 0xf000c000, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
         { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
         { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
