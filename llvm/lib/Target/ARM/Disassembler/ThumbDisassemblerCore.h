@@ -607,11 +607,6 @@ static bool DisassembleThumb1LdSt(unsigned opA, MCInst &MI, unsigned Opcode,
   const TargetOperandInfo *OpInfo = TID.OpInfo;
   unsigned &OpIdx = NumOpsAdded;
 
-  // Table A6-5 16-bit Thumb Load/store instructions
-  // opA = 0b0101 for STR/LDR (register) and friends.
-  // Otherwise, we have STR/LDR (immediate) and friends.
-  bool Imm5 = (opA != 5);
-
   assert(NumOps >= 2
          && OpInfo[0].RegClass == ARM::tGPRRegClassID
          && OpInfo[1].RegClass == ARM::tGPRRegClassID
@@ -632,7 +627,10 @@ static bool DisassembleThumb1LdSt(unsigned opA, MCInst &MI, unsigned Opcode,
 
   if (OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate() &&
       !OpInfo[OpIdx].isOptionalDef()) {
-    assert(Imm5 && "Immediate operand expected for this opcode");
+    // Table A6-5 16-bit Thumb Load/store instructions
+    // opA = 0b0101 for STR/LDR (register) and friends.
+    // Otherwise, we have STR/LDR (immediate) and friends.
+    assert(opA != 5 && "Immediate operand expected for this opcode");
     MI.addOperand(MCOperand::CreateImm(getT1Imm5(insn)));
     ++OpIdx;
   } else {
