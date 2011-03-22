@@ -20,6 +20,49 @@
 #include "MachThread.h"
 #include "MachProcess.h"
 
+#if defined (LLDB_DEBUGSERVER_RELEASE) || defined (LLDB_DEBUGSERVER_DEBUG)
+enum debugState {
+    debugStateUnknown,
+    debugStateOff,
+    debugStateOn
+};
+
+static debugState sFPUDebugState = debugStateUnknown;
+static debugState sAVXForceState = debugStateUnknown;
+
+static bool DebugFPURegs ()
+{
+    if (sFPUDebugState == debugStateUnknown)
+    {
+        if (getenv("DNB_DEBUG_FPU_REGS"))
+            sFPUDebugState = debugStateOn;
+        else
+            sFPUDebugState = debugStateOff;
+    }
+    
+    return (sFPUDebugState == debugStateOn);
+}
+
+static bool ForceAVXRegs ()
+{
+    if (sFPUDebugState == debugStateUnknown)
+    {
+        if (getenv("DNB_DEBUG_X86_FORCE_AVX_REGS"))
+            sAVXForceState = debugStateOn;
+        else
+            sAVXForceState = debugStateOff;
+    }
+    
+    return (sAVXForceState == debugStateOn);
+}
+
+#define DEBUG_FPU_REGS (DebugFPURegs())
+#define FORCE_AVX_REGS (ForceAVXRegs())
+#else
+#define DEBUG_FPU_REGS (0)
+#define FORCE_AVX_REGS (0)
+#endif
+
 enum
 {
     gpr_eax         = 0,
@@ -68,6 +111,14 @@ enum {
     fpu_xmm5,
     fpu_xmm6,
     fpu_xmm7,
+    fpu_ymm0,
+    fpu_ymm1,
+    fpu_ymm2,
+    fpu_ymm3,
+    fpu_ymm4,
+    fpu_ymm5,
+    fpu_ymm6,
+    fpu_ymm7,
     k_num_fpu_regs,
 
     // Aliases
@@ -129,7 +180,15 @@ enum
     dwarf_xmm4,
     dwarf_xmm5,
     dwarf_xmm6,
-    dwarf_xmm7
+    dwarf_xmm7,
+    dwarf_ymm0 = dwarf_xmm0,
+    dwarf_ymm1 = dwarf_xmm1,
+    dwarf_ymm2 = dwarf_xmm2,
+    dwarf_ymm3 = dwarf_xmm3,
+    dwarf_ymm4 = dwarf_xmm4,
+    dwarf_ymm5 = dwarf_xmm5,
+    dwarf_ymm6 = dwarf_xmm6,
+    dwarf_ymm7 = dwarf_xmm7,
 };
 
 enum
@@ -182,8 +241,18 @@ enum
     gdb_mm4        = 45,
     gdb_mm5        = 46,
     gdb_mm6        = 47,
-    gdb_mm7        = 48
+    gdb_mm7        = 48,
+    gdb_ymm0       = gdb_xmm0,
+    gdb_ymm1       = gdb_xmm1,
+    gdb_ymm2       = gdb_xmm2,
+    gdb_ymm3       = gdb_xmm3,
+    gdb_ymm4       = gdb_xmm4,
+    gdb_ymm5       = gdb_xmm5,
+    gdb_ymm6       = gdb_xmm6,
+    gdb_ymm7       = gdb_xmm7
 };
+
+enum DNBArchImplI386::AVXPresence DNBArchImplI386::s_has_avx = DNBArchImplI386::kAVXUnknown;
 
 uint64_t
 DNBArchImplI386::GetPC(uint64_t failValue)
@@ -245,7 +314,7 @@ DNBArchImplI386::GetGPRState(bool force)
         m_state.SetError(e_regSetGPR, Read, 0);
 #else
         mach_msg_type_number_t count = e_regSetWordSizeGPR;
-        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->ThreadID(), x86_THREAD_STATE32, (thread_state_t)&m_state.context.gpr, &count));
+        m_state.SetError(e_regSetGPR, Read, ::thread_get_state(m_thread->ThreadID(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count));
 #endif
     }
     return m_state.GetError(e_regSetGPR, Read);
@@ -259,65 +328,149 @@ DNBArchImplI386::GetFPUState(bool force)
 {
     if (force || m_state.GetError(e_regSetFPU, Read))
     {
-#if DEBUG_FPU_VALUES
-    m_state.context.fpu.__fpu_reserved[0] = -1;
-    m_state.context.fpu.__fpu_reserved[1] = -1;
-    *(uint16_t *)&(m_state.context.fpu.__fpu_fcw) = 0x1234;
-    *(uint16_t *)&(m_state.context.fpu.__fpu_fsw) = 0x5678;
-    m_state.context.fpu.__fpu_ftw = 1;
-    m_state.context.fpu.__fpu_rsrv1 = UINT8_MAX;
-    m_state.context.fpu.__fpu_fop = 2;
-    m_state.context.fpu.__fpu_ip = 3;
-    m_state.context.fpu.__fpu_cs = 4;
-    m_state.context.fpu.__fpu_rsrv2 = 5;
-    m_state.context.fpu.__fpu_dp = 6;
-    m_state.context.fpu.__fpu_ds = 7;
-    m_state.context.fpu.__fpu_rsrv3 = UINT16_MAX;
-    m_state.context.fpu.__fpu_mxcsr = 8;
-    m_state.context.fpu.__fpu_mxcsrmask = 9;
-    int i;
-    for (i=0; i<16; ++i)
-    {
-        if (i<10)
+        if (DEBUG_FPU_REGS)
         {
-            m_state.context.fpu.__fpu_stmm0.__mmst_reg[i] = 'a';
-            m_state.context.fpu.__fpu_stmm1.__mmst_reg[i] = 'b';
-            m_state.context.fpu.__fpu_stmm2.__mmst_reg[i] = 'c';
-            m_state.context.fpu.__fpu_stmm3.__mmst_reg[i] = 'd';
-            m_state.context.fpu.__fpu_stmm4.__mmst_reg[i] = 'e';
-            m_state.context.fpu.__fpu_stmm5.__mmst_reg[i] = 'f';
-            m_state.context.fpu.__fpu_stmm6.__mmst_reg[i] = 'g';
-            m_state.context.fpu.__fpu_stmm7.__mmst_reg[i] = 'h';
+            if (HasAVX() || FORCE_AVX_REGS)
+            {
+                m_state.context.fpu.avx.__fpu_reserved[0] = -1;
+                m_state.context.fpu.avx.__fpu_reserved[1] = -1;
+                *(uint16_t *)&(m_state.context.fpu.avx.__fpu_fcw) = 0x1234;
+                *(uint16_t *)&(m_state.context.fpu.avx.__fpu_fsw) = 0x5678;
+                m_state.context.fpu.avx.__fpu_ftw = 1;
+                m_state.context.fpu.avx.__fpu_rsrv1 = UINT8_MAX;
+                m_state.context.fpu.avx.__fpu_fop = 2;
+                m_state.context.fpu.avx.__fpu_ip = 3;
+                m_state.context.fpu.avx.__fpu_cs = 4;
+                m_state.context.fpu.avx.__fpu_rsrv2 = 5;
+                m_state.context.fpu.avx.__fpu_dp = 6;
+                m_state.context.fpu.avx.__fpu_ds = 7;
+                m_state.context.fpu.avx.__fpu_rsrv3 = UINT16_MAX;
+                m_state.context.fpu.avx.__fpu_mxcsr = 8;
+                m_state.context.fpu.avx.__fpu_mxcsrmask = 9;
+                int i;
+                for (i=0; i<16; ++i)
+                {
+                    if (i<10)
+                    {
+                        m_state.context.fpu.avx.__fpu_stmm0.__mmst_reg[i] = 'a';
+                        m_state.context.fpu.avx.__fpu_stmm1.__mmst_reg[i] = 'b';
+                        m_state.context.fpu.avx.__fpu_stmm2.__mmst_reg[i] = 'c';
+                        m_state.context.fpu.avx.__fpu_stmm3.__mmst_reg[i] = 'd';
+                        m_state.context.fpu.avx.__fpu_stmm4.__mmst_reg[i] = 'e';
+                        m_state.context.fpu.avx.__fpu_stmm5.__mmst_reg[i] = 'f';
+                        m_state.context.fpu.avx.__fpu_stmm6.__mmst_reg[i] = 'g';
+                        m_state.context.fpu.avx.__fpu_stmm7.__mmst_reg[i] = 'h';
+                    }
+                    else
+                    {
+                        m_state.context.fpu.avx.__fpu_stmm0.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm1.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm2.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm3.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm4.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm5.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm6.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.avx.__fpu_stmm7.__mmst_reg[i] = INT8_MIN;
+                    }
+                    
+                    m_state.context.fpu.avx.__fpu_xmm0.__xmm_reg[i] = '0';
+                    m_state.context.fpu.avx.__fpu_xmm1.__xmm_reg[i] = '1';
+                    m_state.context.fpu.avx.__fpu_xmm2.__xmm_reg[i] = '2';
+                    m_state.context.fpu.avx.__fpu_xmm3.__xmm_reg[i] = '3';
+                    m_state.context.fpu.avx.__fpu_xmm4.__xmm_reg[i] = '4';
+                    m_state.context.fpu.avx.__fpu_xmm5.__xmm_reg[i] = '5';
+                    m_state.context.fpu.avx.__fpu_xmm6.__xmm_reg[i] = '6';
+                    m_state.context.fpu.avx.__fpu_xmm7.__xmm_reg[i] = '7';
+                }
+                for (i=0; i<sizeof(m_state.context.fpu.avx.__fpu_rsrv4); ++i)
+                    m_state.context.fpu.avx.__fpu_rsrv4[i] = INT8_MIN;
+                m_state.context.fpu.avx.__fpu_reserved1 = -1;
+                for (i=0; i<sizeof(m_state.context.fpu.avx.__avx_reserved1); ++i)
+                    m_state.context.fpu.avx.__avx_reserved1[i] = INT8_MIN;
+                
+                for (i = 0; i < 16; ++i)
+                {
+                    m_state.context.fpu.avx.__fpu_ymmh0.__xmm_reg[i] = '0';
+                    m_state.context.fpu.avx.__fpu_ymmh1.__xmm_reg[i] = '1';
+                    m_state.context.fpu.avx.__fpu_ymmh2.__xmm_reg[i] = '2';
+                    m_state.context.fpu.avx.__fpu_ymmh3.__xmm_reg[i] = '3';
+                    m_state.context.fpu.avx.__fpu_ymmh4.__xmm_reg[i] = '4';
+                    m_state.context.fpu.avx.__fpu_ymmh5.__xmm_reg[i] = '5';
+                    m_state.context.fpu.avx.__fpu_ymmh6.__xmm_reg[i] = '6';
+                    m_state.context.fpu.avx.__fpu_ymmh7.__xmm_reg[i] = '7';
+                }
+            }
+            else
+            {
+                m_state.context.fpu.no_avx.__fpu_reserved[0] = -1;
+                m_state.context.fpu.no_avx.__fpu_reserved[1] = -1;
+                *(uint16_t *)&(m_state.context.fpu.no_avx.__fpu_fcw) = 0x1234;
+                *(uint16_t *)&(m_state.context.fpu.no_avx.__fpu_fsw) = 0x5678;
+                m_state.context.fpu.no_avx.__fpu_ftw = 1;
+                m_state.context.fpu.no_avx.__fpu_rsrv1 = UINT8_MAX;
+                m_state.context.fpu.no_avx.__fpu_fop = 2;
+                m_state.context.fpu.no_avx.__fpu_ip = 3;
+                m_state.context.fpu.no_avx.__fpu_cs = 4;
+                m_state.context.fpu.no_avx.__fpu_rsrv2 = 5;
+                m_state.context.fpu.no_avx.__fpu_dp = 6;
+                m_state.context.fpu.no_avx.__fpu_ds = 7;
+                m_state.context.fpu.no_avx.__fpu_rsrv3 = UINT16_MAX;
+                m_state.context.fpu.no_avx.__fpu_mxcsr = 8;
+                m_state.context.fpu.no_avx.__fpu_mxcsrmask = 9;
+                int i;
+                for (i=0; i<16; ++i)
+                {
+                    if (i<10)
+                    {
+                        m_state.context.fpu.no_avx.__fpu_stmm0.__mmst_reg[i] = 'a';
+                        m_state.context.fpu.no_avx.__fpu_stmm1.__mmst_reg[i] = 'b';
+                        m_state.context.fpu.no_avx.__fpu_stmm2.__mmst_reg[i] = 'c';
+                        m_state.context.fpu.no_avx.__fpu_stmm3.__mmst_reg[i] = 'd';
+                        m_state.context.fpu.no_avx.__fpu_stmm4.__mmst_reg[i] = 'e';
+                        m_state.context.fpu.no_avx.__fpu_stmm5.__mmst_reg[i] = 'f';
+                        m_state.context.fpu.no_avx.__fpu_stmm6.__mmst_reg[i] = 'g';
+                        m_state.context.fpu.no_avx.__fpu_stmm7.__mmst_reg[i] = 'h';
+                    }
+                    else
+                    {
+                        m_state.context.fpu.no_avx.__fpu_stmm0.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm1.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm2.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm3.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm4.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm5.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm6.__mmst_reg[i] = INT8_MIN;
+                        m_state.context.fpu.no_avx.__fpu_stmm7.__mmst_reg[i] = INT8_MIN;
+                    }
+
+                    m_state.context.fpu.no_avx.__fpu_xmm0.__xmm_reg[i] = '0';
+                    m_state.context.fpu.no_avx.__fpu_xmm1.__xmm_reg[i] = '1';
+                    m_state.context.fpu.no_avx.__fpu_xmm2.__xmm_reg[i] = '2';
+                    m_state.context.fpu.no_avx.__fpu_xmm3.__xmm_reg[i] = '3';
+                    m_state.context.fpu.no_avx.__fpu_xmm4.__xmm_reg[i] = '4';
+                    m_state.context.fpu.no_avx.__fpu_xmm5.__xmm_reg[i] = '5';
+                    m_state.context.fpu.no_avx.__fpu_xmm6.__xmm_reg[i] = '6';
+                    m_state.context.fpu.no_avx.__fpu_xmm7.__xmm_reg[i] = '7';
+                }
+                for (i=0; i<sizeof(m_state.context.fpu.avx.__fpu_rsrv4); ++i)
+                    m_state.context.fpu.no_avx.__fpu_rsrv4[i] = INT8_MIN;
+                m_state.context.fpu.no_avx.__fpu_reserved1 = -1;
+            }
+            m_state.SetError(e_regSetFPU, Read, 0);
         }
         else
         {
-            m_state.context.fpu.__fpu_stmm0.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm1.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm2.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm3.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm4.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm5.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm6.__mmst_reg[i] = INT8_MIN;
-            m_state.context.fpu.__fpu_stmm7.__mmst_reg[i] = INT8_MIN;
+            if (HasAVX() || FORCE_AVX_REGS)
+            {
+                mach_msg_type_number_t count = e_regSetWordSizeAVX;
+                m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, &count));
+            }
+            else
+            {    
+                mach_msg_type_number_t count = e_regSetWordSizeFPR;
+                m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, &count));
+            }
         }
-
-        m_state.context.fpu.__fpu_xmm0.__xmm_reg[i] = '0';
-        m_state.context.fpu.__fpu_xmm1.__xmm_reg[i] = '1';
-        m_state.context.fpu.__fpu_xmm2.__xmm_reg[i] = '2';
-        m_state.context.fpu.__fpu_xmm3.__xmm_reg[i] = '3';
-        m_state.context.fpu.__fpu_xmm4.__xmm_reg[i] = '4';
-        m_state.context.fpu.__fpu_xmm5.__xmm_reg[i] = '5';
-        m_state.context.fpu.__fpu_xmm6.__xmm_reg[i] = '6';
-        m_state.context.fpu.__fpu_xmm7.__xmm_reg[i] = '7';
-    }
-    for (i=0; i<sizeof(m_state.context.fpu.__fpu_rsrv4); ++i)
-        m_state.context.fpu.__fpu_rsrv4[i] = INT8_MIN;
-    m_state.context.fpu.__fpu_reserved1 = -1;
-    m_state.SetError(e_regSetFPU, Read, 0);
-#else
-        mach_msg_type_number_t count = e_regSetWordSizeFPR;
-        m_state.SetError(e_regSetFPU, Read, ::thread_get_state(m_thread->ThreadID(), x86_FLOAT_STATE32, (thread_state_t)&m_state.context.fpu, &count));
-#endif
     }
     return m_state.GetError(e_regSetFPU, Read);
 }
@@ -328,7 +481,7 @@ DNBArchImplI386::GetEXCState(bool force)
     if (force || m_state.GetError(e_regSetEXC, Read))
     {
         mach_msg_type_number_t count = e_regSetWordSizeEXC;
-        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->ThreadID(), x86_EXCEPTION_STATE32, (thread_state_t)&m_state.context.exc, &count));
+        m_state.SetError(e_regSetEXC, Read, ::thread_get_state(m_thread->ThreadID(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, &count));
     }
     return m_state.GetError(e_regSetEXC, Read);
 }
@@ -336,21 +489,32 @@ DNBArchImplI386::GetEXCState(bool force)
 kern_return_t
 DNBArchImplI386::SetGPRState()
 {
-    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), x86_THREAD_STATE32, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
+    m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), __i386_THREAD_STATE, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
     return m_state.GetError(e_regSetGPR, Write);
 }
 
 kern_return_t
 DNBArchImplI386::SetFPUState()
 {
-    m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), x86_FLOAT_STATE32, (thread_state_t)&m_state.context.fpu, e_regSetWordSizeFPR));
-    return m_state.GetError(e_regSetFPU, Write);
+    if (DEBUG_FPU_REGS)
+    {
+        m_state.SetError(e_regSetFPU, Write, 0);
+        return m_state.GetError(e_regSetFPU, Write);   
+    }
+    else
+    {
+        if (HasAVX() || FORCE_AVX_REGS)
+            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_AVX_STATE, (thread_state_t)&m_state.context.fpu.avx, e_regSetWordSizeAVX));
+        else
+            m_state.SetError(e_regSetFPU, Write, ::thread_set_state(m_thread->ThreadID(), __i386_FLOAT_STATE, (thread_state_t)&m_state.context.fpu.no_avx, e_regSetWordSizeFPR));
+        return m_state.GetError(e_regSetFPU, Write);
+    }
 }
 
 kern_return_t
 DNBArchImplI386::SetEXCState()
 {
-    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->ThreadID(), x86_EXCEPTION_STATE32, (thread_state_t)&m_state.context.exc, e_regSetWordSizeEXC));
+    m_state.SetError(e_regSetEXC, Write, ::thread_set_state(m_thread->ThreadID(), __i386_EXCEPTION_STATE, (thread_state_t)&m_state.context.exc, e_regSetWordSizeEXC));
     return m_state.GetError(e_regSetEXC, Write);
 }
 
@@ -467,14 +631,23 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 
 
 #define GPR_OFFSET(reg) (offsetof (DNBArchImplI386::GPR, __##reg))
-#define FPU_OFFSET(reg) (offsetof (DNBArchImplI386::FPU, __fpu_##reg) + offsetof (DNBArchImplI386::Context, fpu))
+#define FPU_OFFSET(reg) (offsetof (DNBArchImplI386::FPU, __fpu_##reg) + offsetof (DNBArchImplI386::Context, fpu.no_avx))
+#define AVX_OFFSET(reg) (offsetof (DNBArchImplI386::AVX, __fpu_##reg) + offsetof (DNBArchImplI386::Context, fpu.avx))
 #define EXC_OFFSET(reg) (offsetof (DNBArchImplI386::EXC, __##reg)     + offsetof (DNBArchImplI386::Context, exc))
 
 #define GPR_SIZE(reg)       (sizeof(((DNBArchImplI386::GPR *)NULL)->__##reg))
 #define FPU_SIZE_UINT(reg)  (sizeof(((DNBArchImplI386::FPU *)NULL)->__fpu_##reg))
 #define FPU_SIZE_MMST(reg)  (sizeof(((DNBArchImplI386::FPU *)NULL)->__fpu_##reg.__mmst_reg))
 #define FPU_SIZE_XMM(reg)   (sizeof(((DNBArchImplI386::FPU *)NULL)->__fpu_##reg.__xmm_reg))
+#define FPU_SIZE_YMM(reg)   (32)
 #define EXC_SIZE(reg)       (sizeof(((DNBArchImplI386::EXC *)NULL)->__##reg))
+
+// This does not accurately identify the location of ymm0...7 in 
+// Context.fpu.avx.  That is because there is a bunch of padding
+// in Context.fpu.avx that we don't need.  Offset macros lay out
+// the register state that Debugserver transmits to the debugger
+// -- not to interpret the thread_get_state info.
+#define AVX_OFFSET_YMM(n)   (AVX_OFFSET(xmm7) + FPU_SIZE_XMM(xmm7) + (32 * n))
 
 // These macros will auto define the register name, alt name, register size,
 // register offset, encoding, format and native register. This ensures that
@@ -505,7 +678,7 @@ DNBArchImplI386::g_gpr_registers[] =
 
 
 const DNBRegisterInfo
-DNBArchImplI386::g_fpu_registers[] =
+DNBArchImplI386::g_fpu_registers_no_avx[] =
 {
 { e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , FPU_OFFSET(fcw)       , -1, -1, -1, -1 },
 { e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , FPU_OFFSET(fsw)       , -1, -1, -1, -1 },
@@ -537,7 +710,47 @@ DNBArchImplI386::g_fpu_registers[] =
 { e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), FPU_OFFSET(xmm7), -1, dwarf_xmm7, -1, gdb_xmm7 }
 };
 
+const DNBRegisterInfo
+DNBArchImplI386::g_fpu_registers_avx[] =
+{
+{ e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , AVX_OFFSET(fcw)       , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , AVX_OFFSET(fsw)       , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_ftw      , "ftag"        , NULL, Uint, Hex, FPU_SIZE_UINT(ftw)       , AVX_OFFSET(ftw)       , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_fop      , "fop"         , NULL, Uint, Hex, FPU_SIZE_UINT(fop)       , AVX_OFFSET(fop)       , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_ip       , "fioff"       , NULL, Uint, Hex, FPU_SIZE_UINT(ip)        , AVX_OFFSET(ip)        , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_cs       , "fiseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(cs)        , AVX_OFFSET(cs)        , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_dp       , "fooff"       , NULL, Uint, Hex, FPU_SIZE_UINT(dp)        , AVX_OFFSET(dp)        , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_ds       , "foseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(ds)        , AVX_OFFSET(ds)        , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_mxcsr    , "mxcsr"       , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsr)     , AVX_OFFSET(mxcsr)     , -1, -1, -1, -1 },
+{ e_regSetFPU, fpu_mxcsrmask, "mxcsrmask"   , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsrmask) , AVX_OFFSET(mxcsrmask) , -1, -1, -1, -1 },
 
+{ e_regSetFPU, fpu_stmm0, "stmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm0), AVX_OFFSET(stmm0), -1, dwarf_stmm0, -1, gdb_stmm0 },
+{ e_regSetFPU, fpu_stmm1, "stmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm1), AVX_OFFSET(stmm1), -1, dwarf_stmm1, -1, gdb_stmm1 },
+{ e_regSetFPU, fpu_stmm2, "stmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm2), AVX_OFFSET(stmm2), -1, dwarf_stmm2, -1, gdb_stmm2 },
+{ e_regSetFPU, fpu_stmm3, "stmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm3), AVX_OFFSET(stmm3), -1, dwarf_stmm3, -1, gdb_stmm3 },
+{ e_regSetFPU, fpu_stmm4, "stmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm4), AVX_OFFSET(stmm4), -1, dwarf_stmm4, -1, gdb_stmm4 },
+{ e_regSetFPU, fpu_stmm5, "stmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm5), AVX_OFFSET(stmm5), -1, dwarf_stmm5, -1, gdb_stmm5 },
+{ e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), AVX_OFFSET(stmm6), -1, dwarf_stmm6, -1, gdb_stmm6 },
+{ e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), AVX_OFFSET(stmm7), -1, dwarf_stmm7, -1, gdb_stmm7 },
+
+{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), AVX_OFFSET(xmm0), -1, dwarf_xmm0, -1, gdb_xmm0 },
+{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), AVX_OFFSET(xmm1), -1, dwarf_xmm1, -1, gdb_xmm1 },
+{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), AVX_OFFSET(xmm2), -1, dwarf_xmm2, -1, gdb_xmm2 },
+{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), AVX_OFFSET(xmm3), -1, dwarf_xmm3, -1, gdb_xmm3 },
+{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), AVX_OFFSET(xmm4), -1, dwarf_xmm4, -1, gdb_xmm4 },
+{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), AVX_OFFSET(xmm5), -1, dwarf_xmm5, -1, gdb_xmm5 },
+{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), AVX_OFFSET(xmm6), -1, dwarf_xmm6, -1, gdb_xmm6 },
+{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), AVX_OFFSET(xmm7), -1, dwarf_xmm7, -1, gdb_xmm7 },
+
+{ e_regSetFPU, fpu_ymm0, "ymm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm0), AVX_OFFSET_YMM(0), -1, dwarf_ymm0, -1, gdb_ymm0 },
+{ e_regSetFPU, fpu_ymm1, "ymm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm1), AVX_OFFSET_YMM(1), -1, dwarf_ymm1, -1, gdb_ymm1 },
+{ e_regSetFPU, fpu_ymm2, "ymm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm2), AVX_OFFSET_YMM(2), -1, dwarf_ymm2, -1, gdb_ymm2 },
+{ e_regSetFPU, fpu_ymm3, "ymm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm3), AVX_OFFSET_YMM(3), -1, dwarf_ymm3, -1, gdb_ymm3 },
+{ e_regSetFPU, fpu_ymm4, "ymm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm4), AVX_OFFSET_YMM(4), -1, dwarf_ymm4, -1, gdb_ymm4 },
+{ e_regSetFPU, fpu_ymm5, "ymm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm5), AVX_OFFSET_YMM(5), -1, dwarf_ymm5, -1, gdb_ymm5 },
+{ e_regSetFPU, fpu_ymm6, "ymm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm6), AVX_OFFSET_YMM(6), -1, dwarf_ymm6, -1, gdb_ymm6 },
+{ e_regSetFPU, fpu_ymm7, "ymm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm7), AVX_OFFSET_YMM(7), -1, dwarf_ymm7, -1, gdb_ymm7 },
+};
 
 const DNBRegisterInfo
 DNBArchImplI386::g_exc_registers[] =
@@ -549,9 +762,11 @@ DNBArchImplI386::g_exc_registers[] =
 
 // Number of registers in each register set
 const size_t DNBArchImplI386::k_num_gpr_registers = sizeof(g_gpr_registers)/sizeof(DNBRegisterInfo);
-const size_t DNBArchImplI386::k_num_fpu_registers = sizeof(g_fpu_registers)/sizeof(DNBRegisterInfo);
+const size_t DNBArchImplI386::k_num_fpu_registers_no_avx = sizeof(g_fpu_registers_no_avx)/sizeof(DNBRegisterInfo);
+const size_t DNBArchImplI386::k_num_fpu_registers_avx = sizeof(g_fpu_registers_avx)/sizeof(DNBRegisterInfo);
 const size_t DNBArchImplI386::k_num_exc_registers = sizeof(g_exc_registers)/sizeof(DNBRegisterInfo);
-const size_t DNBArchImplI386::k_num_all_registers = k_num_gpr_registers + k_num_fpu_registers + k_num_exc_registers;
+const size_t DNBArchImplI386::k_num_all_registers_no_avx = k_num_gpr_registers + k_num_fpu_registers_no_avx + k_num_exc_registers;
+const size_t DNBArchImplI386::k_num_all_registers_avx = k_num_gpr_registers + k_num_fpu_registers_avx + k_num_exc_registers;
 
 //----------------------------------------------------------------------
 // Register set definitions. The first definitions at register set index
@@ -559,16 +774,25 @@ const size_t DNBArchImplI386::k_num_all_registers = k_num_gpr_registers + k_num_
 // register information for the all register set need not be filled in.
 //----------------------------------------------------------------------
 const DNBRegisterSetInfo
-DNBArchImplI386::g_reg_sets[] =
+DNBArchImplI386::g_reg_sets_no_avx[] =
 {
-    { "i386 Registers",             NULL,               k_num_all_registers },
-    { "General Purpose Registers",  g_gpr_registers,    k_num_gpr_registers },
-    { "Floating Point Registers",   g_fpu_registers,    k_num_fpu_registers },
-    { "Exception State Registers",  g_exc_registers,    k_num_exc_registers }
+    { "i386 Registers",             NULL,                   k_num_all_registers_no_avx },
+    { "General Purpose Registers",  g_gpr_registers,        k_num_gpr_registers        },
+    { "Floating Point Registers",   g_fpu_registers_no_avx, k_num_fpu_registers_no_avx },
+    { "Exception State Registers",  g_exc_registers,        k_num_exc_registers        }
 };
-// Total number of register sets for this architecture
-const size_t DNBArchImplI386::k_num_register_sets = sizeof(g_reg_sets)/sizeof(DNBRegisterSetInfo);
 
+const DNBRegisterSetInfo
+DNBArchImplI386::g_reg_sets_avx[] =
+{
+    { "i386 Registers",             NULL,                   k_num_all_registers_avx },
+    { "General Purpose Registers",  g_gpr_registers,        k_num_gpr_registers     },
+    { "Floating Point Registers",   g_fpu_registers_avx,    k_num_fpu_registers_avx },
+    { "Exception State Registers",  g_exc_registers,        k_num_exc_registers     }
+};
+
+// Total number of register sets for this architecture
+const size_t DNBArchImplI386::k_num_register_sets = sizeof(g_reg_sets_no_avx)/sizeof(DNBRegisterSetInfo);
 
 DNBArchProtocol *
 DNBArchImplI386::Create (MachThread *thread)
@@ -589,7 +813,10 @@ const DNBRegisterSetInfo *
 DNBArchImplI386::GetRegisterSetInfo(nub_size_t *num_reg_sets)
 {
     *num_reg_sets = k_num_register_sets;
-    return g_reg_sets;
+    if (HasAVX() || FORCE_AVX_REGS)
+        return g_reg_sets_avx;
+    else
+        return g_reg_sets_no_avx;
 }
 
 
@@ -659,36 +886,86 @@ DNBArchImplI386::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             break;
 
         case e_regSetFPU:
-            switch (reg)
+            if (HasAVX() || FORCE_AVX_REGS)
             {
-            case fpu_fcw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.__fpu_fcw));    return true;
-            case fpu_fsw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.__fpu_fsw));    return true;
-            case fpu_ftw:       value->value.uint8  = m_state.context.fpu.__fpu_ftw;                      return true;
-            case fpu_fop:       value->value.uint16 = m_state.context.fpu.__fpu_fop;                      return true;
-            case fpu_ip:        value->value.uint32 = m_state.context.fpu.__fpu_ip;                       return true;
-            case fpu_cs:        value->value.uint16 = m_state.context.fpu.__fpu_cs;                       return true;
-            case fpu_dp:        value->value.uint32 = m_state.context.fpu.__fpu_dp;                       return true;
-            case fpu_ds:        value->value.uint16 = m_state.context.fpu.__fpu_ds;                       return true;
-            case fpu_mxcsr:     value->value.uint32 = m_state.context.fpu.__fpu_mxcsr;                    return true;
-            case fpu_mxcsrmask: value->value.uint32 = m_state.context.fpu.__fpu_mxcsrmask;                return true;
+                switch (reg)
+                {
+                case fpu_fcw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.avx.__fpu_fcw));    return true;
+                case fpu_fsw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.avx.__fpu_fsw));    return true;
+                case fpu_ftw:       value->value.uint8  = m_state.context.fpu.avx.__fpu_ftw;                      return true;
+                case fpu_fop:       value->value.uint16 = m_state.context.fpu.avx.__fpu_fop;                      return true;
+                case fpu_ip:        value->value.uint32 = m_state.context.fpu.avx.__fpu_ip;                       return true;
+                case fpu_cs:        value->value.uint16 = m_state.context.fpu.avx.__fpu_cs;                       return true;
+                case fpu_dp:        value->value.uint32 = m_state.context.fpu.avx.__fpu_dp;                       return true;
+                case fpu_ds:        value->value.uint16 = m_state.context.fpu.avx.__fpu_ds;                       return true;
+                case fpu_mxcsr:     value->value.uint32 = m_state.context.fpu.avx.__fpu_mxcsr;                    return true;
+                case fpu_mxcsrmask: value->value.uint32 = m_state.context.fpu.avx.__fpu_mxcsrmask;                return true;
+                    
+                case fpu_stmm0:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm0.__mmst_reg, 10);    return true;
+                case fpu_stmm1:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm1.__mmst_reg, 10);    return true;
+                case fpu_stmm2:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm2.__mmst_reg, 10);    return true;
+                case fpu_stmm3:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm3.__mmst_reg, 10);    return true;
+                case fpu_stmm4:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm4.__mmst_reg, 10);    return true;
+                case fpu_stmm5:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm5.__mmst_reg, 10);    return true;
+                case fpu_stmm6:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm6.__mmst_reg, 10);    return true;
+                case fpu_stmm7:     memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_stmm7.__mmst_reg, 10);    return true;
+                    
+                case fpu_xmm0:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm0.__xmm_reg, 16);    return true;
+                case fpu_xmm1:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm1.__xmm_reg, 16);    return true;
+                case fpu_xmm2:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm2.__xmm_reg, 16);    return true;
+                case fpu_xmm3:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm3.__xmm_reg, 16);    return true;
+                case fpu_xmm4:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm4.__xmm_reg, 16);    return true;
+                case fpu_xmm5:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm5.__xmm_reg, 16);    return true;
+                case fpu_xmm6:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm6.__xmm_reg, 16);    return true;
+                case fpu_xmm7:      memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm7.__xmm_reg, 16);    return true;
+                
+#define MEMCPY_YMM(n)                                                                           \
+    memcpy(&value->value.uint8, m_state.context.fpu.avx.__fpu_xmm##n.__xmm_reg, 16);            \
+    memcpy((&value->value.uint8) + 16, m_state.context.fpu.avx.__fpu_ymmh##n.__xmm_reg, 16);
+                case fpu_ymm0:      MEMCPY_YMM(0);  return true;
+                case fpu_ymm1:      MEMCPY_YMM(1);  return true;
+                case fpu_ymm2:      MEMCPY_YMM(2);  return true;
+                case fpu_ymm3:      MEMCPY_YMM(3);  return true;
+                case fpu_ymm4:      MEMCPY_YMM(4);  return true;
+                case fpu_ymm5:      MEMCPY_YMM(5);  return true;
+                case fpu_ymm6:      MEMCPY_YMM(6);  return true;
+                case fpu_ymm7:      MEMCPY_YMM(7);  return true;
+#undef MEMCPY_YMM
+                }
+            }
+            else
+            {
+                switch (reg)
+                {
+                case fpu_fcw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.no_avx.__fpu_fcw));    return true;
+                case fpu_fsw:       value->value.uint16 = *((uint16_t *)(&m_state.context.fpu.no_avx.__fpu_fsw));    return true;
+                case fpu_ftw:       value->value.uint8  = m_state.context.fpu.no_avx.__fpu_ftw;                      return true;
+                case fpu_fop:       value->value.uint16 = m_state.context.fpu.no_avx.__fpu_fop;                      return true;
+                case fpu_ip:        value->value.uint32 = m_state.context.fpu.no_avx.__fpu_ip;                       return true;
+                case fpu_cs:        value->value.uint16 = m_state.context.fpu.no_avx.__fpu_cs;                       return true;
+                case fpu_dp:        value->value.uint32 = m_state.context.fpu.no_avx.__fpu_dp;                       return true;
+                case fpu_ds:        value->value.uint16 = m_state.context.fpu.no_avx.__fpu_ds;                       return true;
+                case fpu_mxcsr:     value->value.uint32 = m_state.context.fpu.no_avx.__fpu_mxcsr;                    return true;
+                case fpu_mxcsrmask: value->value.uint32 = m_state.context.fpu.no_avx.__fpu_mxcsrmask;                return true;
 
-            case fpu_stmm0:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm0.__mmst_reg, 10);    return true;
-            case fpu_stmm1:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm1.__mmst_reg, 10);    return true;
-            case fpu_stmm2:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm2.__mmst_reg, 10);    return true;
-            case fpu_stmm3:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm3.__mmst_reg, 10);    return true;
-            case fpu_stmm4:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm4.__mmst_reg, 10);    return true;
-            case fpu_stmm5:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm5.__mmst_reg, 10);    return true;
-            case fpu_stmm6:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm6.__mmst_reg, 10);    return true;
-            case fpu_stmm7:     memcpy(&value->value.uint8, m_state.context.fpu.__fpu_stmm7.__mmst_reg, 10);    return true;
+                case fpu_stmm0:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm0.__mmst_reg, 10);    return true;
+                case fpu_stmm1:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm1.__mmst_reg, 10);    return true;
+                case fpu_stmm2:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm2.__mmst_reg, 10);    return true;
+                case fpu_stmm3:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm3.__mmst_reg, 10);    return true;
+                case fpu_stmm4:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm4.__mmst_reg, 10);    return true;
+                case fpu_stmm5:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm5.__mmst_reg, 10);    return true;
+                case fpu_stmm6:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm6.__mmst_reg, 10);    return true;
+                case fpu_stmm7:     memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_stmm7.__mmst_reg, 10);    return true;
 
-            case fpu_xmm0:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm0.__xmm_reg, 16);    return true;
-            case fpu_xmm1:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm1.__xmm_reg, 16);    return true;
-            case fpu_xmm2:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm2.__xmm_reg, 16);    return true;
-            case fpu_xmm3:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm3.__xmm_reg, 16);    return true;
-            case fpu_xmm4:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm4.__xmm_reg, 16);    return true;
-            case fpu_xmm5:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm5.__xmm_reg, 16);    return true;
-            case fpu_xmm6:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm6.__xmm_reg, 16);    return true;
-            case fpu_xmm7:      memcpy(&value->value.uint8, m_state.context.fpu.__fpu_xmm7.__xmm_reg, 16);    return true;
+                case fpu_xmm0:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm0.__xmm_reg, 16);    return true;
+                case fpu_xmm1:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm1.__xmm_reg, 16);    return true;
+                case fpu_xmm2:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm2.__xmm_reg, 16);    return true;
+                case fpu_xmm3:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm3.__xmm_reg, 16);    return true;
+                case fpu_xmm4:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm4.__xmm_reg, 16);    return true;
+                case fpu_xmm5:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm5.__xmm_reg, 16);    return true;
+                case fpu_xmm6:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm6.__xmm_reg, 16);    return true;
+                case fpu_xmm7:      memcpy(&value->value.uint8, m_state.context.fpu.no_avx.__fpu_xmm7.__xmm_reg, 16);    return true;
+                }
             }
             break;
 
@@ -756,36 +1033,86 @@ DNBArchImplI386::SetRegisterValue(int set, int reg, const DNBRegisterValue *valu
             break;
 
         case e_regSetFPU:
-            switch (reg)
+            if (HasAVX() || FORCE_AVX_REGS)
             {
-            case fpu_fcw:           *((uint16_t *)(&m_state.context.fpu.__fpu_fcw)) = value->value.uint16;    success = true; break;
-            case fpu_fsw:           *((uint16_t *)(&m_state.context.fpu.__fpu_fsw)) = value->value.uint16;    success = true; break;
-            case fpu_ftw:           m_state.context.fpu.__fpu_ftw = value->value.uint8;                       success = true; break;
-            case fpu_fop:           m_state.context.fpu.__fpu_fop = value->value.uint16;                      success = true; break;
-            case fpu_ip:            m_state.context.fpu.__fpu_ip = value->value.uint32;                       success = true; break;
-            case fpu_cs:            m_state.context.fpu.__fpu_cs = value->value.uint16;                       success = true; break;
-            case fpu_dp:            m_state.context.fpu.__fpu_dp = value->value.uint32;                       success = true; break;
-            case fpu_ds:            m_state.context.fpu.__fpu_ds = value->value.uint16;                       success = true; break;
-            case fpu_mxcsr:         m_state.context.fpu.__fpu_mxcsr = value->value.uint32;                    success = true; break;
-            case fpu_mxcsrmask:     m_state.context.fpu.__fpu_mxcsrmask = value->value.uint32;                success = true; break;
+                switch (reg)
+                {
+                case fpu_fcw:       *((uint16_t *)(&m_state.context.fpu.avx.__fpu_fcw)) = value->value.uint16;    success = true; break;
+                case fpu_fsw:       *((uint16_t *)(&m_state.context.fpu.avx.__fpu_fsw)) = value->value.uint16;    success = true; break;
+                case fpu_ftw:       m_state.context.fpu.avx.__fpu_ftw = value->value.uint8;                       success = true; break;
+                case fpu_fop:       m_state.context.fpu.avx.__fpu_fop = value->value.uint16;                      success = true; break;
+                case fpu_ip:        m_state.context.fpu.avx.__fpu_ip = value->value.uint32;                       success = true; break;
+                case fpu_cs:        m_state.context.fpu.avx.__fpu_cs = value->value.uint16;                       success = true; break;
+                case fpu_dp:        m_state.context.fpu.avx.__fpu_dp = value->value.uint32;                       success = true; break;
+                case fpu_ds:        m_state.context.fpu.avx.__fpu_ds = value->value.uint16;                       success = true; break;
+                case fpu_mxcsr:     m_state.context.fpu.avx.__fpu_mxcsr = value->value.uint32;                    success = true; break;
+                case fpu_mxcsrmask: m_state.context.fpu.avx.__fpu_mxcsrmask = value->value.uint32;                success = true; break;
+                    
+                case fpu_stmm0:     memcpy (m_state.context.fpu.avx.__fpu_stmm0.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm1:     memcpy (m_state.context.fpu.avx.__fpu_stmm1.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm2:     memcpy (m_state.context.fpu.avx.__fpu_stmm2.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm3:     memcpy (m_state.context.fpu.avx.__fpu_stmm3.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm4:     memcpy (m_state.context.fpu.avx.__fpu_stmm4.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm5:     memcpy (m_state.context.fpu.avx.__fpu_stmm5.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm6:     memcpy (m_state.context.fpu.avx.__fpu_stmm6.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm7:     memcpy (m_state.context.fpu.avx.__fpu_stmm7.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                    
+                case fpu_xmm0:      memcpy(m_state.context.fpu.avx.__fpu_xmm0.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm1:      memcpy(m_state.context.fpu.avx.__fpu_xmm1.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm2:      memcpy(m_state.context.fpu.avx.__fpu_xmm2.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm3:      memcpy(m_state.context.fpu.avx.__fpu_xmm3.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm4:      memcpy(m_state.context.fpu.avx.__fpu_xmm4.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm5:      memcpy(m_state.context.fpu.avx.__fpu_xmm5.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm6:      memcpy(m_state.context.fpu.avx.__fpu_xmm6.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm7:      memcpy(m_state.context.fpu.avx.__fpu_xmm7.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                        
+#define MEMCPY_YMM(n)                                                                           \
+    memcpy(m_state.context.fpu.avx.__fpu_xmm##n.__xmm_reg, &value->value.uint8, 16);            \
+    memcpy(m_state.context.fpu.avx.__fpu_ymmh##n.__xmm_reg, (&value->value.uint8) + 16, 16);
+                case fpu_ymm0:      MEMCPY_YMM(0);  return true;
+                case fpu_ymm1:      MEMCPY_YMM(1);  return true;
+                case fpu_ymm2:      MEMCPY_YMM(2);  return true;
+                case fpu_ymm3:      MEMCPY_YMM(3);  return true;
+                case fpu_ymm4:      MEMCPY_YMM(4);  return true;
+                case fpu_ymm5:      MEMCPY_YMM(5);  return true;
+                case fpu_ymm6:      MEMCPY_YMM(6);  return true;
+                case fpu_ymm7:      MEMCPY_YMM(7);  return true;
+#undef MEMCPY_YMM
+                }
+            }
+            else
+            {
+                switch (reg)
+                {
+                case fpu_fcw:       *((uint16_t *)(&m_state.context.fpu.no_avx.__fpu_fcw)) = value->value.uint16;    success = true; break;
+                case fpu_fsw:       *((uint16_t *)(&m_state.context.fpu.no_avx.__fpu_fsw)) = value->value.uint16;    success = true; break;
+                case fpu_ftw:       m_state.context.fpu.no_avx.__fpu_ftw = value->value.uint8;                       success = true; break;
+                case fpu_fop:       m_state.context.fpu.no_avx.__fpu_fop = value->value.uint16;                      success = true; break;
+                case fpu_ip:        m_state.context.fpu.no_avx.__fpu_ip = value->value.uint32;                       success = true; break;
+                case fpu_cs:        m_state.context.fpu.no_avx.__fpu_cs = value->value.uint16;                       success = true; break;
+                case fpu_dp:        m_state.context.fpu.no_avx.__fpu_dp = value->value.uint32;                       success = true; break;
+                case fpu_ds:        m_state.context.fpu.no_avx.__fpu_ds = value->value.uint16;                       success = true; break;
+                case fpu_mxcsr:     m_state.context.fpu.no_avx.__fpu_mxcsr = value->value.uint32;                    success = true; break;
+                case fpu_mxcsrmask: m_state.context.fpu.no_avx.__fpu_mxcsrmask = value->value.uint32;                success = true; break;
 
-            case fpu_stmm0:     memcpy (m_state.context.fpu.__fpu_stmm0.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm1:     memcpy (m_state.context.fpu.__fpu_stmm1.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm2:     memcpy (m_state.context.fpu.__fpu_stmm2.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm3:     memcpy (m_state.context.fpu.__fpu_stmm3.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm4:     memcpy (m_state.context.fpu.__fpu_stmm4.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm5:     memcpy (m_state.context.fpu.__fpu_stmm5.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm6:     memcpy (m_state.context.fpu.__fpu_stmm6.__mmst_reg, &value->value.uint8, 10);    success = true; break;
-            case fpu_stmm7:     memcpy (m_state.context.fpu.__fpu_stmm7.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm0:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm0.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm1:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm1.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm2:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm2.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm3:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm3.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm4:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm4.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm5:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm5.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm6:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm6.__mmst_reg, &value->value.uint8, 10);    success = true; break;
+                case fpu_stmm7:     memcpy (m_state.context.fpu.no_avx.__fpu_stmm7.__mmst_reg, &value->value.uint8, 10);    success = true; break;
 
-            case fpu_xmm0:     memcpy(m_state.context.fpu.__fpu_xmm0.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm1:     memcpy(m_state.context.fpu.__fpu_xmm1.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm2:     memcpy(m_state.context.fpu.__fpu_xmm2.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm3:     memcpy(m_state.context.fpu.__fpu_xmm3.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm4:     memcpy(m_state.context.fpu.__fpu_xmm4.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm5:     memcpy(m_state.context.fpu.__fpu_xmm5.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm6:     memcpy(m_state.context.fpu.__fpu_xmm6.__xmm_reg, &value->value.uint8, 16);    success = true; break;
-            case fpu_xmm7:     memcpy(m_state.context.fpu.__fpu_xmm7.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm0:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm0.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm1:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm1.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm2:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm2.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm3:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm3.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm4:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm4.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm5:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm5.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm6:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm6.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                case fpu_xmm7:      memcpy(m_state.context.fpu.no_avx.__fpu_xmm7.__xmm_reg, &value->value.uint8, 16);    success = true; break;
+                }
             }
             break;
 
@@ -885,7 +1212,5 @@ DNBArchImplI386::RegisterSetStateIsValid (int set) const
 {
     return m_state.RegsAreValid(set);
 }
-
-
 
 #endif    // #if defined (__i386__)

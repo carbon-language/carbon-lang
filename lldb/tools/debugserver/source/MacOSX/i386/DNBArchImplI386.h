@@ -17,9 +17,7 @@
 #if defined (__i386__) || defined (__x86_64__)
 
 #include "DNBArch.h"
-#include <mach/mach_types.h>
-#include <mach/thread_status.h>
-
+#include "MachRegisterStatesI386.h"
 
 class MachThread;
 
@@ -55,18 +53,23 @@ public:
 protected:
     kern_return_t           EnableHardwareSingleStep (bool enable);
 
-    typedef i386_thread_state_t GPR;
-    typedef i386_float_state_t FPU;
-    typedef i386_exception_state_t EXC;
+    typedef __i386_thread_state_t GPR;
+    typedef __i386_float_state_t FPU;
+    typedef __i386_exception_state_t EXC;
+    typedef __i386_avx_state_t AVX;
 
     static const DNBRegisterInfo g_gpr_registers[];
-    static const DNBRegisterInfo g_fpu_registers[];
+    static const DNBRegisterInfo g_fpu_registers_no_avx[];
+    static const DNBRegisterInfo g_fpu_registers_avx[];
     static const DNBRegisterInfo g_exc_registers[];
-    static const DNBRegisterSetInfo g_reg_sets[];
+    static const DNBRegisterSetInfo g_reg_sets_no_avx[];
+    static const DNBRegisterSetInfo g_reg_sets_avx[];
     static const size_t k_num_gpr_registers;
-    static const size_t k_num_fpu_registers;
+    static const size_t k_num_fpu_registers_no_avx;
+    static const size_t k_num_fpu_registers_avx;
     static const size_t k_num_exc_registers;
-    static const size_t k_num_all_registers;
+    static const size_t k_num_all_registers_no_avx;
+    static const size_t k_num_all_registers_avx;
     static const size_t k_num_register_sets;
 
     typedef enum RegisterSetTag
@@ -80,9 +83,10 @@ protected:
 
     typedef enum RegisterSetWordSizeTag
     {
-        e_regSetWordSizeGPR = i386_THREAD_STATE_COUNT,
-        e_regSetWordSizeFPR = i386_FLOAT_STATE_COUNT,
-        e_regSetWordSizeEXC = i386_EXCEPTION_STATE_COUNT
+        e_regSetWordSizeGPR = sizeof(GPR) / sizeof(int),
+        e_regSetWordSizeFPR = sizeof(FPU) / sizeof(int),
+        e_regSetWordSizeEXC = sizeof(EXC) / sizeof(int),
+        e_regSetWordSizeAVX = sizeof(AVX) / sizeof(int)
     } RegisterSetWordSize;
 
     enum
@@ -94,9 +98,12 @@ protected:
 
     struct Context
     {
-        i386_thread_state_t     gpr;
-        i386_float_state_t      fpu;
-        i386_exception_state_t  exc;
+        __i386_thread_state_t       gpr;
+        union {
+            __i386_float_state_t    no_avx;
+            __i386_avx_state_t      avx;
+        } fpu;
+        __i386_exception_state_t    exc;
     };
 
     struct State
@@ -105,7 +112,7 @@ protected:
         kern_return_t gpr_errs[2];    // Read/Write errors
         kern_return_t fpu_errs[2];    // Read/Write errors
         kern_return_t exc_errs[2];    // Read/Write errors
-
+        
         State()
         {
             uint32_t i;
@@ -190,9 +197,24 @@ protected:
 
     static const DNBRegisterSetInfo *
     GetRegisterSetInfo(nub_size_t *num_reg_sets);
+    
+    static bool
+    HasAVX()
+    {
+        if (s_has_avx == kAVXUnknown)
+            s_has_avx = kAVXNotPresent;
+        
+        return (s_has_avx == kAVXPresent);
+    }
 
     MachThread *m_thread;
-    State        m_state;
+    State       m_state;
+            
+    static enum AVXPresence {
+        kAVXPresent,
+        kAVXNotPresent,
+        kAVXUnknown
+    } s_has_avx;
 };
 
 #endif    // #if defined (__i386__) || defined (__x86_64__)

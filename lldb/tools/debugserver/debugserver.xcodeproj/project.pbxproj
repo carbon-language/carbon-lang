@@ -125,6 +125,8 @@
 		26CF99A21142EB7400011AAB /* DNBArchImplX86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBArchImplX86_64.cpp; sourceTree = "<group>"; };
 		26CF99A31142EB7400011AAB /* DNBArchImplX86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBArchImplX86_64.h; sourceTree = "<group>"; };
 		26E6B9DA0D1329010037ECDD /* RNBDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNBDefs.h; sourceTree = "<group>"; };
+		49F530111331519C008956F6 /* MachRegisterStatesI386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachRegisterStatesI386.h; sourceTree = "<group>"; };
+		49F5301213316D7F008956F6 /* MachRegisterStatesX86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachRegisterStatesX86_64.h; sourceTree = "<group>"; };
 		AF67ABFF0D34604D0022D128 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PseudoTerminal.cpp; sourceTree = "<group>"; };
 		AF67AC000D34604D0022D128 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminal.h; sourceTree = "<group>"; };
 		EF88788B0D9C7558001831DA /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
@@ -302,6 +304,7 @@
 			children = (
 				26C637EA0C71334A0024798E /* DNBArchImplI386.cpp */,
 				26C637EB0C71334A0024798E /* DNBArchImplI386.h */,
+				49F530111331519C008956F6 /* MachRegisterStatesI386.h */,
 			);
 			path = i386;
 			sourceTree = "<group>";
@@ -320,6 +323,7 @@
 			children = (
 				26CF99A21142EB7400011AAB /* DNBArchImplX86_64.cpp */,
 				26CF99A31142EB7400011AAB /* DNBArchImplX86_64.h */,
+				49F5301213316D7F008956F6 /* MachRegisterStatesX86_64.h */,
 			);
 			path = x86_64;
 			sourceTree = "<group>";
@@ -523,7 +527,7 @@
 					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
-				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
+				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_BUILDANDINTEGRATION;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
@@ -565,7 +569,7 @@
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
+				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_DEBUG;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -605,7 +609,7 @@
 					"$(SDKROOT)$(DEVELOPER_LIBRARY_DIR)/PrivateFrameworks",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=macosx*][arch=*]" = "$(SDKROOT)/System/Library/PrivateFrameworks";
-				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER;
+				GCC_PREPROCESSOR_DEFINITIONS = LLDB_DEBUGSERVER_RELEASE;
 				HEADER_SEARCH_PATHS = /System/Library/Frameworks/System.framework/PrivateHeaders;
 				INSTALL_PATH = /Developer/usr/bin;
 				LLDB_DEBUGSERVER = 1;
