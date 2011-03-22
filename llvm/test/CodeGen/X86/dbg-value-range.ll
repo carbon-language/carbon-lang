@@ -41,17 +41,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !18 = metadata !{i32 7, i32 2, metadata !12, null}
 !19 = metadata !{i32 8, i32 2, metadata !12, null}
 
-; Check that variable bar:b value range is appropriately trucated in debug info.
-; The variable is in %rdi which is clobbered by 'movl %ebx, %edi'
-; Here Ltmp7 is the end of the location range.
+; check that variable bar:b value range is appropriately trucated in debug info. Here Ltmp5 is end of
+; location range.
 
 ;CHECK:Ltmp6
-;CHECK-NEXT: movl
-;CHECK-NEXT: Ltmp7
+;CHECK-NEXT: DEBUG_VALUE: bar:b <- undef
 
 ;CHECK:Ldebug_loc0:
 ;CHECK-NEXT:	.quad	Ltmp
-;CHECK-NEXT:	.quad	Ltmp7
+;CHECK-NEXT:	.quad	Ltmp6
 ;CHECK-NEXT:	.short	1
 ;CHECK-NEXT:	.byte	85
 ;CHECK-NEXT:	.quad	0

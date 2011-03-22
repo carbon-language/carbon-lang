@@ -200,6 +200,8 @@ class DwarfDebug {
 
   typedef SmallVector<DbgScope *, 2> ScopeVector;
 
+  SmallPtrSet<const MachineInstr *, 8> InsnsEndScopeSet;
+
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
   typedef std::pair<const MCSymbol *, DIE *> InlineInfoLabels;
@@ -221,16 +223,6 @@ class DwarfDebug {
   /// insnNeedsLabel - Collection of instructions that need a label to mark
   /// a debuggging information entity.
   SmallPtrSet<const MachineInstr *, 8> InsnNeedsLabel;
-
-  /// InsnsNeedsLabelAfter - Collection of instructions that need a label after
-  /// the instruction because they end a scope of clobber a register.
-  SmallPtrSet<const MachineInstr *, 8> InsnsNeedsLabelAfter;
-
-  /// RegClobberInsn - For each DBG_VALUE instruction referring to a register
-  /// that is clobbered before the variable gets a new DBG_VALUE, map the
-  /// instruction that clobbered the register. This instruction will also be in
-  /// InsnsNeedsLabelAfter.
-  DenseMap<const MachineInstr *, const MachineInstr *> RegClobberInsn;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
 

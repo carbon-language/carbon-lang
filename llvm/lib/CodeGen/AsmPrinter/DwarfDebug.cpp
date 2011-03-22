@@ -2424,7 +2424,8 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
            ME = DbgValues.end(); MI != ME; ++MI) {
       const MDNode *Var =
         (*MI)->getOperand((*MI)->getNumOperands()-1).getMetadata();
-      if (Var == DV && !PrevMI->isIdenticalTo(*MI))
+      if (Var == DV && 
+          !PrevMI->isIdenticalTo(*MI))
         MultipleValues.push_back(*MI);
       PrevMI = *MI;
     }
@@ -2447,7 +2448,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       DbgVariableToDbgInstMap[AbsVar] = MInsn;
       VarToAbstractVarMap[RegVar] = AbsVar;
     }
-    if (MultipleValues.size() <= 1 && !RegClobberInsn.count(MInsn)) {
+    if (MultipleValues.size() <= 1) {
       DbgVariableToDbgInstMap[RegVar] = MInsn;
       continue;
     }
@@ -2457,11 +2458,16 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       RegVar->setDotDebugLocOffset(0);
     else
       RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
-
+    const MachineInstr *Begin = NULL;
+    const MachineInstr *End = NULL;
     for (SmallVector<const MachineInstr *, 4>::iterator
            MVI = MultipleValues.begin(), MVE = MultipleValues.end();
          MVI != MVE; ++MVI) {
-      const MachineInstr *Begin = *MVI;
+      if (!Begin) {
+        Begin = *MVI;
+        continue;
+      }
+      End = *MVI;
       MachineLocation MLoc;
       if (Begin->getNumOperands() == 3) {
         if (Begin->getOperand(0).isReg() && Begin->getOperand(1).isImm())
@@ -2469,25 +2475,25 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       } else
         MLoc = Asm->getDebugValueLocation(Begin);
 
-      if (!MLoc.getReg())
-        continue;
-
-      // Compute the range for a register location.
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
-      const MCSymbol *SLabel = 0;
+      const MCSymbol *SLabel = getLabelBeforeInsn(End);
+      if (MLoc.getReg())
+        DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
 
-      if (const MachineInstr *ClobberMI = RegClobberInsn.lookup(Begin))
-        // The register range starting at Begin may be clobbered.
-        SLabel = getLabelAfterInsn(ClobberMI);
-      else if (MVI + 1 == MVE)
-        // If Begin is the last instruction then its value is valid
+      Begin = End;
+      if (MVI + 1 == MVE) {
+        // If End is the last instruction then its value is valid
         // until the end of the funtion.
-        SLabel = FunctionEndSym;
-      else
-        // The value is valid until the next DBG_VALUE.
-        SLabel = getLabelBeforeInsn(MVI[1]);
-
-      DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
+        MachineLocation EMLoc;
+        if (End->getNumOperands() == 3) {
+          if (End->getOperand(0).isReg() && Begin->getOperand(1).isImm())
+          EMLoc.set(Begin->getOperand(0).getReg(), Begin->getOperand(1).getImm());
+        } else
+          EMLoc = Asm->getDebugValueLocation(End);
+        if (EMLoc.getReg()) 
+          DotDebugLocEntries.
+            push_back(DotDebugLocEntry(SLabel, FunctionEndSym, EMLoc));
+      }
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
   }
@@ -2562,7 +2568,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
 
 /// endInstruction - Process end of an instruction.
 void DwarfDebug::endInstruction(const MachineInstr *MI) {
-  if (InsnsNeedsLabelAfter.count(MI) != 0) {
+  if (InsnsEndScopeSet.count(MI) != 0) {
     // Emit a label if this instruction ends a scope.
     MCSymbol *Label = MMI->getContext().CreateTempSymbol();
     Asm->OutStreamer.EmitLabel(Label);
@@ -2827,7 +2833,7 @@ void DwarfDebug::identifyScopeMarkers() {
            RE = Ranges.end(); RI != RE; ++RI) {
       assert(RI->first && "DbgRange does not have first instruction!");
       assert(RI->second && "DbgRange does not have second instruction!");
-      InsnsNeedsLabelAfter.insert(RI->second);
+      InsnsEndScopeSet.insert(RI->second);
     }
   }
 }
@@ -2908,14 +2914,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   /// ProcessedArgs - Collection of arguments already processed.
   SmallPtrSet<const MDNode *, 8> ProcessedArgs;
 
-  /// LastDbgValue - Refer back to the last DBG_VALUE instruction to mention MD.
-  DenseMap<const MDNode*, const MachineInstr*> LastDbgValue;
-
-  const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
-
-  /// LiveUserVar - Map physreg numbers to the MDNode they contain.
-  std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
-
   DebugLoc PrevLoc;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I)
@@ -2925,15 +2923,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
       DebugLoc DL = MI->getDebugLoc();
       if (MI->isDebugValue()) {
         assert (MI->getNumOperands() > 1 && "Invalid machine instruction!");
-
-        // Keep track of variables in registers.
-        const MDNode *Var =
-          MI->getOperand(MI->getNumOperands() - 1).getMetadata();
-        LastDbgValue[Var] = MI;
-        if (isDbgValueInDefinedReg(MI))
-          LiveUserVar[MI->getOperand(0).getReg()] = Var;
-
-        DIVariable DV(Var);
+        DIVariable DV(MI->getOperand(MI->getNumOperands() - 1).getMetadata());
         if (!DV.Verify()) continue;
         // If DBG_VALUE is for a local variable then it needs a label.
         if (DV.getTag() != dwarf::DW_TAG_arg_variable)
@@ -2954,32 +2944,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         } else if (DL != PrevLoc)
           // Otherwise, instruction needs a location only if it is new location.
           InsnNeedsLabel.insert(MI);
-
-        // Check if the instruction clobbers any registers with debug vars.
-        for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
-               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-          if (!MOI->isReg() || !MOI->isDef() || !MOI->getReg())
-            continue;
-          for (const unsigned *AI = TRI->getOverlaps(MOI->getReg());
-               unsigned Reg = *AI; ++AI) {
-            const MDNode *Var = LiveUserVar[Reg];
-            if (!Var)
-              continue;
-            // Reg is now clobbered.
-            LiveUserVar[Reg] = 0;
-
-            // Was MD last defined by a DBG_VALUE referring to Reg?
-            const MachineInstr *Last = LastDbgValue.lookup(Var);
-            if (!Last || Last->getParent() != MI->getParent())
-              continue;
-            if (!isDbgValueInDefinedReg(Last) ||
-                Last->getOperand(0).getReg() != Reg)
-              continue;
-            // MD is clobbered. Make sure the next instruction gets a label.
-            InsnsNeedsLabelAfter.insert(MI);
-            RegClobberInsn[Last] = MI;
-          }
-        }
       }
 
       if (!DL.isUnknown() || UnknownLocations)
@@ -3049,8 +3013,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   VarToAbstractVarMap.clear();
   DbgVariableToDbgInstMap.clear();
   DeleteContainerSeconds(DbgScopeMap);
-  InsnsNeedsLabelAfter.clear();
-  RegClobberInsn.clear();
+  InsnsEndScopeSet.clear();
   ConcreteScopes.clear();
   DeleteContainerSeconds(AbstractScopes);
   AbstractScopesList.clear();
