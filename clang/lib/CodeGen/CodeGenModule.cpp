@@ -1937,37 +1937,48 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
   }
 }
 
+static bool needsDestructMethod(ObjCImplementationDecl *impl) {
+  ObjCInterfaceDecl *iface
+    = const_cast<ObjCInterfaceDecl*>(impl->getClassInterface());
+  for (ObjCIvarDecl *ivar = iface->all_declared_ivar_begin();
+       ivar; ivar = ivar->getNextIvar())
+    if (ivar->getType().isDestructedType())
+      return true;
+
+  return false;
+}
+
 /// EmitObjCIvarInitializations - Emit information for ivar initialization
 /// for an implementation.
 void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
+  // We might need a .cxx_destruct even if we don't have any ivar initializers.
+  if (needsDestructMethod(D)) {
+    IdentifierInfo *II = &getContext().Idents.get(".cxx_destruct");
+    Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
+    ObjCMethodDecl *DTORMethod =
+      ObjCMethodDecl::Create(getContext(), D->getLocation(), D->getLocation(),
+                             cxxSelector, getContext().VoidTy, 0, D, true,
+                             false, true, false, ObjCMethodDecl::Required);
+    D->addInstanceMethod(DTORMethod);
+    CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, DTORMethod, false);
+  }
+
+  // If the implementation doesn't have any ivar initializers, we don't need
+  // a .cxx_construct.
   if (D->getNumIvarInitializers() == 0)
     return;
-  DeclContext* DC = const_cast<DeclContext*>(dyn_cast<DeclContext>(D));
-  assert(DC && "EmitObjCIvarInitializations - null DeclContext");
-  IdentifierInfo *II = &getContext().Idents.get(".cxx_destruct");
-  Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
-  ObjCMethodDecl *DTORMethod = ObjCMethodDecl::Create(getContext(), 
-                                                  D->getLocation(),
-                                                  D->getLocation(), cxxSelector,
-                                                  getContext().VoidTy, 0, 
-                                                  DC, true, false, true, false,
-                                                  ObjCMethodDecl::Required);
-  D->addInstanceMethod(DTORMethod);
-  CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, DTORMethod, false);
   
-  II = &getContext().Idents.get(".cxx_construct");
-  cxxSelector = getContext().Selectors.getSelector(0, &II);
+  IdentifierInfo *II = &getContext().Idents.get(".cxx_construct");
+  Selector cxxSelector = getContext().Selectors.getSelector(0, &II);
   // The constructor returns 'self'.
   ObjCMethodDecl *CTORMethod = ObjCMethodDecl::Create(getContext(), 
                                                 D->getLocation(),
                                                 D->getLocation(), cxxSelector,
                                                 getContext().getObjCIdType(), 0, 
-                                                DC, true, false, true, false,
+                                                D, true, false, true, false,
                                                 ObjCMethodDecl::Required);
   D->addInstanceMethod(CTORMethod);
   CodeGenFunction(*this).GenerateObjCCtorDtorMethod(D, CTORMethod, true);
-  
-
 }
 
 /// EmitNamespace - Emit all declarations in a namespace.

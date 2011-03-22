@@ -458,20 +458,104 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   FinishFunction();
 }
 
+// FIXME: these are stolen from CGClass.cpp, which is lame.
+namespace {
+  struct CallArrayIvarDtor : EHScopeStack::Cleanup {
+    const ObjCIvarDecl *ivar;
+    llvm::Value *self;
+    CallArrayIvarDtor(const ObjCIvarDecl *ivar, llvm::Value *self)
+      : ivar(ivar), self(self) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      LValue lvalue =
+        CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), self, ivar, 0);
+
+      QualType type = ivar->getType();
+      const ConstantArrayType *arrayType
+        = CGF.getContext().getAsConstantArrayType(type);
+      QualType baseType = CGF.getContext().getBaseElementType(arrayType);
+      const CXXRecordDecl *classDecl = baseType->getAsCXXRecordDecl();
+
+      llvm::Value *base
+        = CGF.Builder.CreateBitCast(lvalue.getAddress(),
+                                    CGF.ConvertType(baseType)->getPointerTo());
+      CGF.EmitCXXAggrDestructorCall(classDecl->getDestructor(),
+                                    arrayType, base);
+    }
+  };
+
+  struct CallIvarDtor : EHScopeStack::Cleanup {
+    const ObjCIvarDecl *ivar;
+    llvm::Value *self;
+    CallIvarDtor(const ObjCIvarDecl *ivar, llvm::Value *self)
+      : ivar(ivar), self(self) {}
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      LValue lvalue =
+        CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), self, ivar, 0);
+
+      QualType type = ivar->getType();
+      const CXXRecordDecl *classDecl = type->getAsCXXRecordDecl();
+
+      CGF.EmitCXXDestructorCall(classDecl->getDestructor(),
+                                Dtor_Complete, /*ForVirtualBase=*/false,
+                                lvalue.getAddress());
+    }
+  };
+}
+
+static void emitCXXDestructMethod(CodeGenFunction &CGF,
+                                  ObjCImplementationDecl *impl) {
+  CodeGenFunction::RunCleanupsScope scope(CGF);
+
+  llvm::Value *self = CGF.LoadObjCSelf();
+
+  ObjCInterfaceDecl *iface
+    = const_cast<ObjCInterfaceDecl*>(impl->getClassInterface());
+  for (ObjCIvarDecl *ivar = iface->all_declared_ivar_begin();
+       ivar; ivar = ivar->getNextIvar()) {
+    QualType type = ivar->getType();
+
+    // Drill down to the base element type.
+    QualType baseType = type;
+    const ConstantArrayType *arrayType = 
+      CGF.getContext().getAsConstantArrayType(baseType);
+    if (arrayType) baseType = CGF.getContext().getBaseElementType(arrayType);
+
+    // Check whether the ivar is a destructible type.
+    QualType::DestructionKind destructKind = baseType.isDestructedType();
+    assert(destructKind == type.isDestructedType());
+
+    switch (destructKind) {
+    case QualType::DK_none:
+      continue;
+
+    case QualType::DK_cxx_destructor:
+      if (arrayType)
+        CGF.EHStack.pushCleanup<CallArrayIvarDtor>(NormalAndEHCleanup,
+                                                   ivar, self);
+      else
+        CGF.EHStack.pushCleanup<CallIvarDtor>(NormalAndEHCleanup,
+                                              ivar, self);
+      break;
+    }
+  }
+
+  assert(scope.requiresCleanups() && "nothing to do in .cxx_destruct?");
+}
+
 void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                                  ObjCMethodDecl *MD,
                                                  bool ctor) {
-  llvm::SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
   MD->createImplicitParams(CGM.getContext(), IMP->getClassInterface());
   StartObjCMethod(MD, IMP->getClassInterface());
-  for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
-       E = IMP->init_end(); B != E; ++B) {
-    CXXCtorInitializer *Member = (*B);
-    IvarInitializers.push_back(Member);
-  }
+
+  // Emit .cxx_construct.
   if (ctor) {
-    for (unsigned I = 0, E = IvarInitializers.size(); I != E; ++I) {
-      CXXCtorInitializer *IvarInit = IvarInitializers[I];
+    llvm::SmallVector<CXXCtorInitializer *, 8> IvarInitializers;
+    for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
+           E = IMP->init_end(); B != E; ++B) {
+      CXXCtorInitializer *IvarInit = (*B);
       FieldDecl *Field = IvarInit->getAnyMember();
       ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
@@ -484,37 +568,10 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     llvm::Value *SelfAsId =
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
     EmitReturnOfRValue(RValue::get(SelfAsId), IdTy);
+
+  // Emit .cxx_destruct.
   } else {
-    // dtor
-    for (size_t i = IvarInitializers.size(); i > 0; --i) {
-      FieldDecl *Field = IvarInitializers[i - 1]->getAnyMember();
-      QualType FieldType = Field->getType();
-      const ConstantArrayType *Array = 
-        getContext().getAsConstantArrayType(FieldType);
-      if (Array)
-        FieldType = getContext().getBaseElementType(FieldType);
-      
-      ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
-      LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
-                                    LoadObjCSelf(), Ivar, 0);
-      const RecordType *RT = FieldType->getAs<RecordType>();
-      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      CXXDestructorDecl *Dtor = FieldClassDecl->getDestructor();
-      if (!Dtor->isTrivial()) {
-        if (Array) {
-          const llvm::Type *BasePtr = ConvertType(FieldType);
-          BasePtr = llvm::PointerType::getUnqual(BasePtr);
-          llvm::Value *BaseAddrPtr =
-            Builder.CreateBitCast(LV.getAddress(), BasePtr);
-          EmitCXXAggrDestructorCall(Dtor,
-                                    Array, BaseAddrPtr);
-        } else {
-          EmitCXXDestructorCall(Dtor,
-                                Dtor_Complete, /*ForVirtualBase=*/false,
-                                LV.getAddress());
-        }
-      }
-    }
+    emitCXXDestructMethod(*this, IMP);
   }
   FinishFunction();
 }

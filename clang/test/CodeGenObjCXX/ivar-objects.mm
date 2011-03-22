@@ -1,6 +1,10 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 // CHECK: -[A .cxx_construct]
 // CHECK: -[A .cxx_destruct]
+// CHECK: -[B .cxx_construct]
+// CHECK-NOT: -[B .cxx_destruct]
+// CHECK-NOT: -[C .cxx_construct]
+// CHECK: -[C .cxx_destruct]
 
 @interface NSObject 
 - alloc;
@@ -83,4 +87,18 @@ public:
 
 @implementation I
 	@synthesize position;
+@end
+
+// This class should have a .cxx_construct but no .cxx_destruct.
+namespace test3 { struct S { S(); }; }
+@implementation B {
+  test3::S s;
+}
+@end
+
+// This class should have a .cxx_destruct but no .cxx_construct.
+namespace test4 { struct S { ~S(); }; }
+@implementation C {
+  test4::S s;
+}
 @end

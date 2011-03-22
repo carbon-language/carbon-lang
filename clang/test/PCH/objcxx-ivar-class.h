@@ -1,6 +1,7 @@
 struct S {
     S();
     S(const S&);
+    ~S();
     S& operator= (const S&);
 };
 
