@@ -1035,7 +1035,8 @@ static void
 FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
                              std::vector<llvm::Constant *> &Elements,
                              uint64_t StartOffset) {
-  assert(StartOffset % 8 == 0 && "StartOffset not byte aligned!");
+  assert(StartOffset % CGM.getContext().getCharWidth() == 0 && 
+         "StartOffset not byte aligned!");
 
   if (CGM.getTypes().isZeroInitializable(T))
     return;
@@ -1094,8 +1095,8 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
     assert(!T->getAs<MemberPointerType>()->getPointeeType()->isFunctionType() &&
            "Should only see pointers to data members here!");
   
-    uint64_t StartIndex = StartOffset / 8;
-    uint64_t EndIndex = StartIndex + CGM.getContext().getTypeSize(T) / 8;
+    CharUnits StartIndex = CGM.getContext().toCharUnitsFromBits(StartOffset);
+    CharUnits EndIndex = StartIndex + CGM.getContext().getTypeSizeInChars(T);
 
     // FIXME: hardcodes Itanium member pointer representation!
     llvm::Constant *NegativeOne =
@@ -1103,8 +1104,8 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
                              -1ULL, /*isSigned*/true);
 
     // Fill in the null data member pointer.
-    for (uint64_t I = StartIndex; I != EndIndex; ++I)
-      Elements[I] = NegativeOne;
+    for (CharUnits I = StartIndex; I != EndIndex; ++I)
+      Elements[I.getQuantity()] = NegativeOne;
   }
 }
 
