@@ -2746,11 +2746,13 @@ static bool cxxDtorIsEmpty(const Function &Fn,
       if (!CalledFn)
         return false;
 
+      SmallPtrSet<const Function *, 8> NewCalledFunctions(CalledFunctions);
+
       // Don't treat recursive functions as empty.
-      if (!CalledFunctions.insert(CalledFn))
+      if (!NewCalledFunctions.insert(CalledFn))
         return false;
 
-      if (!cxxDtorIsEmpty(*CalledFn, CalledFunctions))
+      if (!cxxDtorIsEmpty(*CalledFn, NewCalledFunctions))
         return false;
     } else if (isa<ReturnInst>(*I))
       return true;
