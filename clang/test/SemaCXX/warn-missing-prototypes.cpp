@@ -24,3 +24,9 @@ template<typename> void h() { }
 
 // Don't warn when instantiating function templates.
 template void h<int>();
+
+// PR9519: don't warn about friend functions.
+class I {
+  friend void I_friend() {}
+};
+

@@ -5513,7 +5513,7 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
     return false;
 
   // Don't warn about inline functions.
-  if (FD->isInlineSpecified())
+  if (FD->isInlined())
     return false;
 
   // Don't warn about function templates.
