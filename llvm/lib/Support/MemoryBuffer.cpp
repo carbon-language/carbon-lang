@@ -196,15 +196,18 @@ public:
 
 error_code MemoryBuffer::getFile(StringRef Filename,
                                  OwningPtr<MemoryBuffer> &result,
-                                 int64_t FileSize) {
+                                 int64_t FileSize,
+                                 bool RequiresNullTerminator) {
   // Ensure the path is null terminated.
   SmallString<256> PathBuf(Filename.begin(), Filename.end());
-  return MemoryBuffer::getFile(PathBuf.c_str(), result, FileSize);
+  return MemoryBuffer::getFile(PathBuf.c_str(), result, FileSize,
+                               RequiresNullTerminator);
 }
 
 error_code MemoryBuffer::getFile(const char *Filename,
                                  OwningPtr<MemoryBuffer> &result,
-                                 int64_t FileSize) {
+                                 int64_t FileSize,
+                                 bool RequiresNullTerminator) {
   int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
@@ -213,7 +216,8 @@ error_code MemoryBuffer::getFile(const char *Filename,
   if (FD == -1) {
     return error_code(errno, posix_category());
   }
-  error_code ret = getOpenFile(FD, Filename, result, FileSize);
+  error_code ret = getOpenFile(FD, Filename, result, FileSize, FileSize,
+                               0, RequiresNullTerminator);
   close(FD);
   return ret;
 }

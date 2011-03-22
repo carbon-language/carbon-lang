@@ -64,10 +64,12 @@ public:
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
   static error_code getFile(StringRef Filename, OwningPtr<MemoryBuffer> &result,
-                            int64_t FileSize = -1);
+                            int64_t FileSize = -1,
+                            bool RequiresNullTerminator = true);
   static error_code getFile(const char *Filename,
                             OwningPtr<MemoryBuffer> &result,
-                            int64_t FileSize = -1);
+                            int64_t FileSize = -1,
+                            bool RequiresNullTerminator = true);
 
   /// getOpenFile - Given an already-open file descriptor, read the file and
   /// return a MemoryBuffer.
