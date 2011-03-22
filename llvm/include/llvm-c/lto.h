@@ -272,6 +272,13 @@ lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
 extern const void*
 lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 
+/**
+ * Generates code for all added modules into one native object file.
+ * The name of the file is written to name. Returns true on error.
+ */
+extern bool
+lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
+
 
 /**
  * Sets options to help debug codegen bugs.

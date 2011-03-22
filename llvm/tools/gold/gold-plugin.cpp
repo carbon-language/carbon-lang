@@ -398,38 +398,10 @@ static ld_plugin_status all_symbols_read_hook(void) {
       exit(0);
   }
   size_t bufsize = 0;
-  const char *buffer = static_cast<const char *>(lto_codegen_compile(code_gen,
-                                                                     &bufsize));
-
-  std::string ErrMsg;
-
   const char *objPath;
-  sys::Path uniqueObjPath("/tmp/llvmgold.o");
-  if (!options::obj_path.empty()) {
-    objPath = options::obj_path.c_str();
-  } else {
-    if (uniqueObjPath.createTemporaryFileOnDisk(true, &ErrMsg)) {
-      (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
-      return LDPS_ERR;
-    }
-    objPath = uniqueObjPath.c_str();
+  if (lto_codegen_compile_to_file(code_gen, &objPath)) {
+    (*message)(LDPL_ERROR, "Could not produce a combined object file\n");
   }
-  tool_output_file objFile(objPath, ErrMsg,
-                             raw_fd_ostream::F_Binary);
-    if (!ErrMsg.empty()) {
-      (*message)(LDPL_ERROR, "%s", ErrMsg.c_str());
-      return LDPS_ERR;
-    }
-
-  objFile.os().write(buffer, bufsize);
-  objFile.os().close();
-  if (objFile.os().has_error()) {
-    (*message)(LDPL_ERROR, "Error writing output file '%s'",
-               objPath);
-    objFile.os().clear_error();
-    return LDPS_ERR;
-  }
-  objFile.keep();
 
   lto_codegen_dispose(code_gen);
   for (std::list<claimed_file>::iterator I = Modules.begin(),

@@ -41,6 +41,7 @@ struct LTOCodeGenerator {
     void                addMustPreserveSymbol(const char* sym);
     bool                writeMergedModules(const char* path, 
                                                            std::string& errMsg);
+    bool                compile_to_file(const char** name, std::string& errMsg);
     const void*         compile(size_t* length, std::string& errMsg);
     void                setCodeGenDebugOptions(const char *opts); 
 private:
@@ -66,6 +67,7 @@ private:
     llvm::MemoryBuffer*         _nativeObjectFile;
     std::vector<const char*>    _codegenOptions;
     std::string                 _mCpu;
+    std::string                 _nativeObjectPath;
 };
 
 #endif // LTO_CODE_GENERATOR_H

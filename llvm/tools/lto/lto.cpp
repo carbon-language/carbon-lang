@@ -293,6 +293,12 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length)
   return cg->compile(length, sLastErrorString);
 }
 
+extern bool
+lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name)
+{
+  return cg->compile_to_file(name, sLastErrorString);
+}
+
 
 //
 // Used to pass extra options to the code generator
