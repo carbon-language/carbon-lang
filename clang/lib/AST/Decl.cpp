@@ -639,10 +639,12 @@ void NamedDecl::ClearLinkageCache() {
 
   // Clear cached linkage for function template decls, too.
   if (FunctionTemplateDecl *temp =
-        dyn_cast<FunctionTemplateDecl>(const_cast<NamedDecl*>(this)))
+        dyn_cast<FunctionTemplateDecl>(const_cast<NamedDecl*>(this))) {
+    temp->getTemplatedDecl()->ClearLinkageCache();
     for (FunctionTemplateDecl::spec_iterator
            i = temp->spec_begin(), e = temp->spec_end(); i != e; ++i)
       i->ClearLinkageCache();
+  }
     
 }
 

@@ -2,7 +2,7 @@
 
 // CHECK: @_ZZ1hvE1i = internal global i32 0, align 4
 
-// CHECK: @_ZZN5test16getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
+// CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
 // CHECK: @_ZZ2h2vE1i = linkonce_odr global i32 0
 // CHECK: @_ZGVZ2h2vE1i = linkonce_odr global i64 0
 
@@ -50,7 +50,7 @@ namespace test0 {
 }
 
 namespace test1 {
-  // CHECK: define internal i32 @_ZN5test16getvarEi(
+  // CHECK: define internal i32 @_ZN5test1L6getvarEi(
   static inline int getvar(int index) {
     static const int var[] = { 1, 0, 2, 4 };
     return var[index];
