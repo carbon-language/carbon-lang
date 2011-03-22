@@ -22,12 +22,12 @@
 using namespace clang;
 using namespace CodeGen;
 
-static uint64_t 
+static CharUnits 
 ComputeNonVirtualBaseClassOffset(ASTContext &Context, 
                                  const CXXRecordDecl *DerivedClass,
                                  CastExpr::path_const_iterator Start,
                                  CastExpr::path_const_iterator End) {
-  uint64_t Offset = 0;
+  CharUnits Offset = CharUnits::Zero();
   
   const CXXRecordDecl *RD = DerivedClass;
   
@@ -42,13 +42,12 @@ ComputeNonVirtualBaseClassOffset(ASTContext &Context,
       cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     
     // Add the offset.
-    Offset += Layout.getBaseClassOffsetInBits(BaseDecl);
+    Offset += Layout.getBaseClassOffset(BaseDecl);
     
     RD = BaseDecl;
   }
   
-  // FIXME: We should not use / 8 here.
-  return Offset / 8;
+  return Offset;
 }
 
 llvm::Constant *
@@ -57,16 +56,16 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
                                    CastExpr::path_const_iterator PathEnd) {
   assert(PathBegin != PathEnd && "Base path should not be empty!");
 
-  uint64_t Offset = 
+  CharUnits Offset = 
     ComputeNonVirtualBaseClassOffset(getContext(), ClassDecl,
                                      PathBegin, PathEnd);
-  if (!Offset)
+  if (Offset.isZero())
     return 0;
   
   const llvm::Type *PtrDiffTy = 
   Types.ConvertType(getContext().getPointerDiffType());
   
-  return llvm::ConstantInt::get(PtrDiffTy, Offset);
+  return llvm::ConstantInt::get(PtrDiffTy, Offset.getQuantity());
 }
 
 /// Gets the address of a direct base class within a complete object.
@@ -150,7 +149,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     ++Start;
   }
   
-  uint64_t NonVirtualOffset = 
+  CharUnits NonVirtualOffset = 
     ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : Derived,
                                      Start, PathEnd);
 
@@ -158,7 +157,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
   const llvm::Type *BasePtrTy = 
     ConvertType((PathEnd[-1])->getType())->getPointerTo();
   
-  if (!NonVirtualOffset && !VBase) {
+  if (NonVirtualOffset.isZero() && !VBase) {
     // Just cast back.
     return Builder.CreateBitCast(Value, BasePtrTy);
   }    
@@ -187,14 +186,15 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(Derived);
 
-      uint64_t VBaseOffset = Layout.getVBaseClassOffsetInBits(VBase);
-      NonVirtualOffset += VBaseOffset / 8;
+      CharUnits VBaseOffset = Layout.getVBaseClassOffset(VBase);
+      NonVirtualOffset += VBaseOffset;
     } else
       VirtualOffset = GetVirtualBaseClassOffset(Value, Derived, VBase);
   }
 
   // Apply the offsets.
-  Value = ApplyNonVirtualAndVirtualOffset(*this, Value, NonVirtualOffset, 
+  Value = ApplyNonVirtualAndVirtualOffset(*this, Value, 
+                                          NonVirtualOffset.getQuantity(),
                                           VirtualOffset);
   
   // Cast back.
