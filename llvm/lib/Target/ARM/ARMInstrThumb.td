@@ -1322,10 +1322,8 @@ def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
 // Move between coprocessor and ARM core register -- for disassembly only
 //
 
-class tMovRCopro<string opc, bit direction>
-  : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
-                       GPR:$Rt, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
-          !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
+class tMovRCopro<string opc, bit direction, dag oops, dag iops>
+  : T1Cop<oops, iops, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
           [/* For disassembly only; pattern left blank */]> {
   let Inst{27-24} = 0b1110;
   let Inst{20} = direction;
@@ -1346,8 +1344,12 @@ class tMovRCopro<string opc, bit direction>
   let Inst{19-16} = CRn;
 }
 
-def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */>;
-def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */>;
+def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
+           (outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
+                        c_imm:$CRm, i32imm:$opc2)>;
+def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
+           (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
+                                c_imm:$CRm, i32imm:$opc2)>;
 
 class tMovRRCopro<string opc, bit direction>
   : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
