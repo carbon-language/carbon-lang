@@ -739,7 +739,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
                             DataExtractor::TypeUInt8);
     }
     
-    disassembler->DecodeInstructions (Address (NULL, func_remote_addr), extractor, 0, UINT32_MAX);
+    disassembler->DecodeInstructions (Address (NULL, func_remote_addr), extractor, 0, UINT32_MAX, false);
     
     InstructionList &instruction_list = disassembler->GetInstructionList();
     

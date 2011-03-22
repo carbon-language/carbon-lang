@@ -404,7 +404,8 @@ DisassemblerLLVM::DecodeInstructions
     const Address &base_addr,
     const DataExtractor& data,
     uint32_t data_offset,
-    uint32_t num_instructions
+    uint32_t num_instructions,
+    bool append
 )
 {
     if (m_disassembler == NULL)
@@ -412,7 +413,8 @@ DisassemblerLLVM::DecodeInstructions
 
     size_t total_inst_byte_size = 0;
 
-    m_instruction_list.Clear();
+    if (!append)
+        m_instruction_list.Clear();
 
     while (data.ValidOffset(data_offset) && num_instructions)
     {

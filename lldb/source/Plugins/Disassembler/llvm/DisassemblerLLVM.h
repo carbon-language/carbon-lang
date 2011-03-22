@@ -78,7 +78,8 @@ public:
     DecodeInstructions (const lldb_private::Address &base_addr,
                         const lldb_private::DataExtractor& data,
                         uint32_t data_offset,
-                        uint32_t num_instructions);
+                        uint32_t num_instructions,
+                        bool append);
     
     //------------------------------------------------------------------
     // PluginInterface protocol

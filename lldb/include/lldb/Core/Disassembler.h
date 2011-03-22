@@ -111,6 +111,18 @@ public:
                  const ArchSpec &arch,
                  const ExecutionContext &exe_ctx,
                  const AddressRange &range,
+                 uint32_t num_instructions,
+                 uint32_t num_mixed_context_lines,
+                 bool show_bytes,
+                 bool raw,
+                 Stream &strm);
+
+    static bool
+    Disassemble (Debugger &debugger,
+                 const ArchSpec &arch,
+                 const ExecutionContext &exe_ctx,
+                 const Address &start,
+                 uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
                  bool raw,
@@ -121,6 +133,7 @@ public:
                  const ArchSpec &arch,
                  const ExecutionContext &exe_ctx,
                  SymbolContextList &sc_list,
+                 uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
                  bool raw,
@@ -132,6 +145,7 @@ public:
                  const ExecutionContext &exe_ctx,
                  const ConstString &name,
                  Module *module,
+                 uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
                  bool raw,
@@ -141,6 +155,7 @@ public:
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
                  const ExecutionContext &exe_ctx,
+                 uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
                  bool show_bytes,
                  bool raw,
@@ -154,16 +169,36 @@ public:
 
     typedef const char * (*SummaryCallback)(const Instruction& inst, ExecutionContext *exe_context, void *user_data);
 
+    static bool 
+    PrintInstructions (Disassembler *disasm_ptr,
+                       DataExtractor &data,
+                       Debugger &debugger,
+                       const ArchSpec &arch,
+                       const ExecutionContext &exe_ctx,
+                       const  Address &start_addr,
+                       uint32_t num_instructions,
+                       uint32_t num_mixed_context_lines,
+                       bool show_bytes,
+                       bool raw,
+                       Stream &strm);
+    
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
                        const AddressRange &range,
+                       DataExtractor& data);
+
+    size_t
+    ParseInstructions (const ExecutionContext *exe_ctx,
+                       const Address &range,
+                       uint32_t num_instructions,
                        DataExtractor& data);
 
     virtual size_t
     DecodeInstructions (const Address &base_addr,
                         const DataExtractor& data,
                         uint32_t data_offset,
-                        uint32_t num_instructions) = 0;
+                        uint32_t num_instructions,
+                        bool append) = 0;
     
     InstructionList &
     GetInstructionList ();

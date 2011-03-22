@@ -1231,11 +1231,11 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				26F5C22410F3D950009D5894 /* Tools */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
+				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 			);
 			name = lldb;
 			sourceTree = "<group>";

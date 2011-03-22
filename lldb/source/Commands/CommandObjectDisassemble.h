@@ -47,10 +47,12 @@ public:
         bool show_mixed; // Show mixed source/assembly
         bool show_bytes;
         uint32_t num_lines_context;
+        uint32_t num_instructions;
         bool raw;
         std::string m_func_name;
         lldb::addr_t m_start_addr;
         lldb::addr_t m_end_addr;
+        bool m_at_pc;
         static lldb::OptionDefinition g_option_table[];
     };
 

@@ -260,6 +260,7 @@ StackFrame::Disassemble ()
                                    target.GetArchitecture(),
                                    exe_ctx,
                                    0,
+                                   0,
                                    false,
                                    false,
                                    m_disassembly);

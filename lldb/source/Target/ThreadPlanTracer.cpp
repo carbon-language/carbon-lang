@@ -204,9 +204,9 @@ ThreadPlanAssemblyTracer::Log ()
                                     m_process.GetAddressByteSize());
             
             if (addr_valid)
-                m_disassembler->DecodeInstructions (pc_addr, extractor, 0, 1);
+                m_disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false);
             else
-                m_disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1);
+                m_disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1, false);
             
             InstructionList &instruction_list = m_disassembler->GetInstructionList();
             
