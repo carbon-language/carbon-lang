@@ -84,7 +84,7 @@ TargetMachine *JIT::selectTarget(Module *Mod,
   }
 
   // Allocate a target...
-  TargetMachine *Target = 
+  TargetMachine *Target =
     TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
   return Target;

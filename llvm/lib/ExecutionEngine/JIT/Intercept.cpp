@@ -52,8 +52,8 @@ static void runAtExitHandlers() {
 #include <sys/stat.h>
 #endif
 #include <fcntl.h>
-/* stat functions are redirecting to __xstat with a version number.  On x86-64 
- * linking with libc_nonshared.a and -Wl,--export-dynamic doesn't make 'stat' 
+/* stat functions are redirecting to __xstat with a version number.  On x86-64
+ * linking with libc_nonshared.a and -Wl,--export-dynamic doesn't make 'stat'
  * available as an exported symbol, so we have to add it explicitly.
  */
 namespace {
@@ -119,18 +119,18 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
     const char *NameStr = Name.c_str();
     // If this is an asm specifier, skip the sentinal.
     if (NameStr[0] == 1) ++NameStr;
-    
+
     // If it's an external function, look it up in the process image...
     void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
     if (Ptr) return Ptr;
-    
+
     // If it wasn't found and if it starts with an underscore ('_') character,
     // and has an asm specifier, try again without the underscore.
     if (Name[0] == 1 && NameStr[0] == '_') {
       Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
       if (Ptr) return Ptr;
     }
-    
+
     // Darwin/PPC adds $LDBLStub suffixes to various symbols like printf.  These
     // are references to hidden visibility symbols that dlsym cannot resolve.
     // If we have one of these, strip off $LDBLStub and try again.
@@ -147,7 +147,7 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
     }
 #endif
   }
-  
+
   /// If a LazyFunctionCreator is installed, use it to get/create the function.
   if (LazyFunctionCreator)
     if (void *RP = LazyFunctionCreator(Name))

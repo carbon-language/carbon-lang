@@ -108,8 +108,8 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
   if (op_write_native_code(Agent, F.getName().data(),
                            reinterpret_cast<uint64_t>(FnStart),
                            FnStart, FnSize) == -1) {
-    DEBUG(dbgs() << "Failed to tell OProfile about native function " 
-          << F.getName() << " at [" 
+    DEBUG(dbgs() << "Failed to tell OProfile about native function "
+          << F.getName() << " at ["
           << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n");
     return;
   }
@@ -153,9 +153,9 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
 
     if (op_write_debug_line_info(Agent, FnStart,
                                  LineInfo.size(), &*LineInfo.begin()) == -1) {
-      DEBUG(dbgs() 
+      DEBUG(dbgs()
             << "Failed to tell OProfile about line numbers for native function "
-            << F.getName() << " at [" 
+            << F.getName() << " at ["
             << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n");
     }
   }
