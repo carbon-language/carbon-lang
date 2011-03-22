@@ -373,7 +373,7 @@ namespace test1 {
   template void f(X<int>);
 }
 
-// CHECK: define internal void @_Z27functionWithInternalLinkagev()
+// CHECK: define internal void @_ZL27functionWithInternalLinkagev()
 static void functionWithInternalLinkage() {  }
 void g() { functionWithInternalLinkage(); }
 
@@ -646,4 +646,18 @@ namespace test23 {
   typedef vpc vpca5[5];
   void f(vpca5 volatile (&)[10]) {}
   // CHECK: define void @_ZN6test231fERA10_A5_VKPv(
+}
+
+namespace test24 {
+  void test0() {
+    extern int foo();
+    // CHECK: call i32 @_ZN6test243fooEv()
+    foo();
+  }
+
+  static char foo() {}
+  void test1() {
+    // CHECK: call signext i8 @_ZN6test24L3fooEv()
+    foo();
+  }
 }

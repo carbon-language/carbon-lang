@@ -695,10 +695,12 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   case DeclarationName::Identifier: {
     if (const IdentifierInfo *II = Name.getAsIdentifierInfo()) {
       // We must avoid conflicts between internally- and externally-
-      // linked variable declaration names in the same TU.
-      // This naming convention is the same as that followed by GCC, though it
-      // shouldn't actually matter.
-      if (ND && isa<VarDecl>(ND) && ND->getLinkage() == InternalLinkage &&
+      // linked variable and function declaration names in the same TU:
+      //   void test() { extern void foo(); }
+      //   static void foo();
+      // This naming convention is the same as that followed by GCC,
+      // though it shouldn't actually matter.
+      if (ND && ND->getLinkage() == InternalLinkage &&
           ND->getDeclContext()->isFileContext())
         Out << 'L';
 
