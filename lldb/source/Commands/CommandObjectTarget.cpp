@@ -557,9 +557,9 @@ public:
                 break;
                 case 't' :
                 {
-                    m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+                    m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                     if (m_thread_id == LLDB_INVALID_THREAD_ID)
-                       error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+                       error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
                     m_thread_specified = true;
                 }
                 break;
@@ -573,9 +573,9 @@ public:
                     break;
                 case 'x':
                 {
-                    m_thread_index = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+                    m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_thread_id == UINT32_MAX)
-                       error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+                       error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
                     m_thread_specified = true;
                 }
                 break;

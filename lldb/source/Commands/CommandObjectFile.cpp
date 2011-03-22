@@ -62,7 +62,7 @@ CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *o
                 if (option_arch.IsValid())
                     m_arch = option_arch;
                 else
-                    error.SetErrorStringWithFormat ("Invalid arch string '%s'.\n", optarg);
+                    error.SetErrorStringWithFormat ("Invalid arch string '%s'.\n", option_arg);
             }
             break;
 

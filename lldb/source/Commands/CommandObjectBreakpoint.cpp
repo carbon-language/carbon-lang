@@ -142,12 +142,12 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
     switch (short_option)
     {
         case 'a':
-            m_load_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 0);
+            m_load_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 0);
             if (m_load_addr == LLDB_INVALID_ADDRESS)
-                m_load_addr = Args::StringToUInt64(optarg, LLDB_INVALID_ADDRESS, 16);
+                m_load_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
 
             if (m_load_addr == LLDB_INVALID_ADDRESS)
-                error.SetErrorStringWithFormat ("Invalid address string '%s'.\n", optarg);
+                error.SetErrorStringWithFormat ("Invalid address string '%s'.\n", option_arg);
             break;
 
         case 'c':
@@ -198,16 +198,16 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             }
         case 'i':
         {
-            m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
+               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
         }
         break;
         case 't' :
         {
-            m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+            m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
             if (m_thread_id == LLDB_INVALID_THREAD_ID)
-               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+               error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
         }
         break;
         case 'T':
@@ -218,9 +218,9 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             break;
         case 'x':
         {
-            m_thread_index = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_thread_id == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+               error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
             
         }
         break;
@@ -1421,23 +1421,23 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             break;
         case 'i':
         {
-            m_ignore_count = Args::StringToUInt32(optarg, UINT32_MAX, 0);
+            m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
             if (m_ignore_count == UINT32_MAX)
-               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", optarg);
+               error.SetErrorStringWithFormat ("Invalid ignore count '%s'.\n", option_arg);
         }
         break;
         case 't' :
         {
-            if (optarg[0] == '\0')
+            if (option_arg[0] == '\0')
             {
                 m_thread_id = LLDB_INVALID_THREAD_ID;
                 m_thread_id_passed = true;
             }
             else
             {
-                m_thread_id = Args::StringToUInt64(optarg, LLDB_INVALID_THREAD_ID, 0);
+                m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                 if (m_thread_id == LLDB_INVALID_THREAD_ID)
-                   error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", optarg);
+                   error.SetErrorStringWithFormat ("Invalid thread id string '%s'.\n", option_arg);
                 else
                     m_thread_id_passed = true;
             }
@@ -1459,16 +1459,16 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
             break;
         case 'x':
         {
-            if (optarg[0] == '\n')
+            if (option_arg[0] == '\n')
             {
                 m_thread_index = UINT32_MAX;
                 m_thread_index_passed = true;
             }
             else
             {
-                m_thread_index = Args::StringToUInt32 (optarg, UINT32_MAX, 0);
+                m_thread_index = Args::StringToUInt32 (option_arg, UINT32_MAX, 0);
                 if (m_thread_id == UINT32_MAX)
-                   error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", optarg);
+                   error.SetErrorStringWithFormat ("Invalid thread index string '%s'.\n", option_arg);
                 else
                     m_thread_index_passed = true;
             }
