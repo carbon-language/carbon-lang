@@ -51,6 +51,8 @@ class RuntimeDyldImpl {
                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
 
 public:
+  RuntimeDyldImpl() : HasError(false) {}
+
   bool loadObject(MemoryBuffer *InputBuffer);
 
   void *getSymbolAddress(StringRef Name) {
