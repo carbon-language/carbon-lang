@@ -11,8 +11,11 @@
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/DynamicLibrary.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Target/TargetData.h"
 
 using namespace llvm;
@@ -81,6 +84,12 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
   PM.run(*M);
   // Flush the output buffer so the SmallVector gets its data.
   OS.flush();
+
+  // Load the object into the dynamic linker.
+  // FIXME: It would be nice to avoid making yet another copy.
+  MemoryBuffer *MB = MemoryBuffer::getMemBufferCopy(StringRef(Buffer.data(),
+                                                              Buffer.size()));
+  Dyld.loadObject(MB);
 }
 
 MCJIT::~MCJIT() {
@@ -92,7 +101,8 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 void *MCJIT::getPointerToFunction(Function *F) {
-  return 0;
+  Twine Name = TM->getMCAsmInfo()->getGlobalPrefix() + F->getName();
+  return Dyld.getSymbolAddress(Name.str());
 }
 
 void *MCJIT::recompileAndRelinkFunction(Function *F) {

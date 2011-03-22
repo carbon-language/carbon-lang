@@ -12,6 +12,7 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -36,6 +37,8 @@ class MCJIT : public ExecutionEngine {
   // FIXME: This really doesn't belong here.
   SmallVector<char, 4096> Buffer; // Working buffer into which we JIT.
   raw_svector_ostream OS;
+
+  RuntimeDyld Dyld;
 
 public:
   ~MCJIT();

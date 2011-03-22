@@ -145,6 +145,10 @@ loadSegment32(const MachOObject *Obj,
     SymbolTable[Name] = Address;
   }
 
+  // We've loaded the section; now mark the functions in it as executable.
+  // FIXME: We really should use the JITMemoryManager for this.
+  sys::Memory::setRangeExecutable(Data.base(), Data.size());
+
   delete SectionBases;
   return false;
 }
@@ -220,11 +224,13 @@ loadSegment64(const MachOObject *Obj,
     SymbolTable[Name] = Address;
   }
 
+  // We've loaded the section; now mark the functions in it as executable.
+  // FIXME: We really should use the JITMemoryManager for this.
+  sys::Memory::setRangeExecutable(Data.base(), Data.size());
+
   delete SectionBases;
   return false;
 }
-
-
 
 bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
   // If the linker is in an error state, don't do anything.
