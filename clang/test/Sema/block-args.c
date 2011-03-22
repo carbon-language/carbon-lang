@@ -40,3 +40,8 @@ void test4() {
   int (^f)() = ^((x)) { }; // expected-error {{expected ')'}} expected-warning {{type specifier missing}} expected-note {{to match this}}
 }
 
+// rdar://problem/9170609
+void test5_helper(void (^)(int, int[*]));
+void test5(void) {
+  test5_helper(^(int n, int array[n]) {});
+}

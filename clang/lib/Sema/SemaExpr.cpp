@@ -782,11 +782,20 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
   // diagnose this.
   if (!S.CurContext->isFunctionOrMethod()) return CR_NoCapture;
 
-  // This particular madness can happen in ill-formed default
-  // arguments; claim it's okay and let downstream code handle it.
-  if (isa<ParmVarDecl>(var) &&
-      S.CurContext == var->getDeclContext()->getParent())
-    return CR_NoCapture;
+  // Certain madnesses can happen with parameter declarations, which
+  // we want to ignore.
+  if (isa<ParmVarDecl>(var)) {
+    // - If the parameter still belongs to the translation unit, then
+    //   we're actually just using one parameter in the declaration of
+    //   the next.  This is useful in e.g. VLAs.
+    if (isa<TranslationUnitDecl>(var->getDeclContext()))
+      return CR_NoCapture;
+
+    // - This particular madness can happen in ill-formed default
+    //   arguments; claim it's okay and let downstream code handle it.
+    if (S.CurContext == var->getDeclContext()->getParent())
+      return CR_NoCapture;
+  }
 
   DeclarationName functionName;
   if (FunctionDecl *fn = dyn_cast<FunctionDecl>(var->getDeclContext()))
