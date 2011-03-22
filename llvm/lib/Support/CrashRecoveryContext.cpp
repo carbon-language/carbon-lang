@@ -70,7 +70,7 @@ CrashRecoveryContext::~CrashRecoveryContext() {
     CrashRecoveryContextCleanup *tmp = i;
     i = tmp->next;
     tmp->cleanupFired = true;
-    tmp->recoverResources();
+    //tmp->recoverResources();
     delete tmp;
   }
   tlIsRecoveringFromCrash.erase();
