@@ -1709,9 +1709,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       Builder.reset(new MSRecordLayoutBuilder(*this, &EmptySubobjects));
     }
     // Recover resources if we crash before exiting this method.
-    llvm::CrashRecoveryContextCleanupRegistrar
-      RecordBuilderCleanup(llvm::CrashRecoveryContextCleanup::
-                        create<RecordLayoutBuilder>(Builder.get()));
+    llvm::CrashRecoveryContextCleanupRegistrar<RecordLayoutBuilder>
+      RecordBuilderCleanup(Builder.get());
     
     Builder->Layout(RD);
 
