@@ -2456,12 +2456,14 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   
   unsigned NumErrors = Diags->getClient()->getNumErrors();
   llvm::OwningPtr<ASTUnit> Unit(
-    ASTUnit::LoadFromCommandLine(Args->data(), Args->data() + Args->size(),
+    ASTUnit::LoadFromCommandLine(Args->size() ? &(*Args)[0] : 0 
+                                 /* vector::data() not portable */,
+                                 Args->size() ? (&(*Args)[0] + Args->size()) :0,
                                  Diags,
                                  CXXIdx->getClangResourcesPath(),
                                  CXXIdx->getOnlyLocalDecls(),
                                  /*CaptureDiagnostics=*/true,
-                                 RemappedFiles->data(),
+                                 RemappedFiles->size() ? &(*RemappedFiles)[0]:0,
                                  RemappedFiles->size(),
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
@@ -2600,7 +2602,8 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
                                             Buffer));
   }
   
-  if (!CXXUnit->Reparse(RemappedFiles->data(), RemappedFiles->size()))
+  if (!CXXUnit->Reparse(RemappedFiles->size() ? &(*RemappedFiles)[0] : 0,
+                        RemappedFiles->size()))
     RTUI->result = 0;
 }
 
