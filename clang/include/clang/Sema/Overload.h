@@ -647,8 +647,6 @@ namespace clang {
 
     /// \brief Clear out all of the candidates.
     void clear();
-    
-    ~OverloadCandidateSet() { clear(); }
 
     /// Find the best viable function on this overload set, if it exists.
     OverloadingResult BestViableFunction(Sema &S, SourceLocation Loc,
