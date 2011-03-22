@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCJIT.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
@@ -101,6 +102,13 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 void *MCJIT::getPointerToFunction(Function *F) {
+  if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
+    bool AbortOnFailure = !F->hasExternalWeakLinkage();
+    void *Addr = getPointerToNamedFunction(F->getName(), AbortOnFailure);
+    addGlobalMapping(F, Addr);
+    return Addr;
+  }
+
   Twine Name = TM->getMCAsmInfo()->getGlobalPrefix() + F->getName();
   return Dyld.getSymbolAddress(Name.str());
 }
@@ -115,10 +123,102 @@ void MCJIT::freeMachineCodeForFunction(Function *F) {
 
 GenericValue MCJIT::runFunction(Function *F,
                                 const std::vector<GenericValue> &ArgValues) {
-  assert(ArgValues.size() == 0 && "JIT arg passing not supported yet");
+  assert(F && "Function *F was null at entry to run()");
+
   void *FPtr = getPointerToFunction(F);
-  if (!FPtr)
-    report_fatal_error("Unable to locate function: '" + F->getName() + "'");
-  ((void(*)(void))(intptr_t)FPtr)();
+  assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
+  const FunctionType *FTy = F->getFunctionType();
+  const Type *RetTy = FTy->getReturnType();
+
+  assert((FTy->getNumParams() == ArgValues.size() ||
+          (FTy->isVarArg() && FTy->getNumParams() <= ArgValues.size())) &&
+         "Wrong number of arguments passed into function!");
+  assert(FTy->getNumParams() == ArgValues.size() &&
+         "This doesn't support passing arguments through varargs (yet)!");
+
+  // Handle some common cases first.  These cases correspond to common `main'
+  // prototypes.
+  if (RetTy->isIntegerTy(32) || RetTy->isVoidTy()) {
+    switch (ArgValues.size()) {
+    case 3:
+      if (FTy->getParamType(0)->isIntegerTy(32) &&
+          FTy->getParamType(1)->isPointerTy() &&
+          FTy->getParamType(2)->isPointerTy()) {
+        int (*PF)(int, char **, const char **) =
+          (int(*)(int, char **, const char **))(intptr_t)FPtr;
+
+        // Call the function.
+        GenericValue rv;
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue(),
+                                 (char **)GVTOP(ArgValues[1]),
+                                 (const char **)GVTOP(ArgValues[2])));
+        return rv;
+      }
+      break;
+    case 2:
+      if (FTy->getParamType(0)->isIntegerTy(32) &&
+          FTy->getParamType(1)->isPointerTy()) {
+        int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
+
+        // Call the function.
+        GenericValue rv;
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue(),
+                                 (char **)GVTOP(ArgValues[1])));
+        return rv;
+      }
+      break;
+    case 1:
+      if (FTy->getNumParams() == 1 &&
+          FTy->getParamType(0)->isIntegerTy(32)) {
+        GenericValue rv;
+        int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
+        rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));
+        return rv;
+      }
+      break;
+    }
+  }
+
+  // Handle cases where no arguments are passed first.
+  if (ArgValues.empty()) {
+    GenericValue rv;
+    switch (RetTy->getTypeID()) {
+    default: llvm_unreachable("Unknown return type for function call!");
+    case Type::IntegerTyID: {
+      unsigned BitWidth = cast<IntegerType>(RetTy)->getBitWidth();
+      if (BitWidth == 1)
+        rv.IntVal = APInt(BitWidth, ((bool(*)())(intptr_t)FPtr)());
+      else if (BitWidth <= 8)
+        rv.IntVal = APInt(BitWidth, ((char(*)())(intptr_t)FPtr)());
+      else if (BitWidth <= 16)
+        rv.IntVal = APInt(BitWidth, ((short(*)())(intptr_t)FPtr)());
+      else if (BitWidth <= 32)
+        rv.IntVal = APInt(BitWidth, ((int(*)())(intptr_t)FPtr)());
+      else if (BitWidth <= 64)
+        rv.IntVal = APInt(BitWidth, ((int64_t(*)())(intptr_t)FPtr)());
+      else
+        llvm_unreachable("Integer types > 64 bits not supported");
+      return rv;
+    }
+    case Type::VoidTyID:
+      rv.IntVal = APInt(32, ((int(*)())(intptr_t)FPtr)());
+      return rv;
+    case Type::FloatTyID:
+      rv.FloatVal = ((float(*)())(intptr_t)FPtr)();
+      return rv;
+    case Type::DoubleTyID:
+      rv.DoubleVal = ((double(*)())(intptr_t)FPtr)();
+      return rv;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      llvm_unreachable("long double not supported yet");
+      return rv;
+    case Type::PointerTyID:
+      return PTOGV(((void*(*)())(intptr_t)FPtr)());
+    }
+  }
+
+  assert("Full-featured argument passing not supported yet!");
   return GenericValue();
 }
