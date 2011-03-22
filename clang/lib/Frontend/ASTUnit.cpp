@@ -503,9 +503,11 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
-                    create<ASTUnit>(AST.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
+    ASTUnitCleanup(AST.get());
+  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
+    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+    DiagCleanup(Diags.getPtr());
 
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
 
@@ -850,9 +852,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    CICleanup(llvm::CrashRecoveryContextCleanup::
-                    create<CompilerInstance>(Clang.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
+    CICleanup(Clang.get());
 
   Clang->setInvocation(&*Invocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
@@ -945,8 +946,13 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
   
-  llvm::OwningPtr<TopLevelDeclTrackerAction> Act;
-  Act.reset(new TopLevelDeclTrackerAction(*this));
+  llvm::OwningPtr<TopLevelDeclTrackerAction> Act(
+    new TopLevelDeclTrackerAction(*this));
+    
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<TopLevelDeclTrackerAction>
+    ActCleanup(Act.get());
+
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,
                             Clang->getFrontendOpts().Inputs[0].first))
     goto error;
@@ -1334,9 +1340,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    CICleanup(llvm::CrashRecoveryContextCleanup::
-                    create<CompilerInstance>(Clang.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
+    CICleanup(Clang.get());
 
   Clang->setInvocation(&PreambleInvocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
@@ -1570,6 +1575,10 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   SimpleTimer ParsingTimer(WantTiming);
   ParsingTimer.setOutput("Parsing " + getMainFileName());
   
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<llvm::MemoryBuffer>
+    MemBufferCleanup(OverrideMainBuffer);
+  
   return Parse(OverrideMainBuffer);
 }
 
@@ -1592,9 +1601,11 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->Invocation = CI;
   
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
-                   create<ASTUnit>(AST.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
+    ASTUnitCleanup(AST.get());
+  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
+    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+    DiagCleanup(Diags.getPtr());
 
   return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
 }
@@ -1621,13 +1632,19 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                                 ArgBegin);
   }
   
-  llvm::SmallVector<const char *, 16> Args;
-  Args.push_back("<clang>"); // FIXME: Remove dummy argument.
-  Args.insert(Args.end(), ArgBegin, ArgEnd);
+  llvm::OwningPtr<std::vector<const char *> >
+    Args(new std::vector<const char*>);
+  
+  // Recover resources if we crash before exiting this function.
+  llvm::CrashRecoveryContextCleanupRegistrar<
+    std::vector<const char *> > CleanupArgs(Args.get());
+
+  Args->push_back("<clang>"); // FIXME: Remove dummy argument.
+  Args->insert(Args->end(), ArgBegin, ArgEnd);
 
   // FIXME: Find a cleaner way to force the driver into restricted modes. We
   // also want to force it to use clang.
-  Args.push_back("-fsyntax-only");
+  Args->push_back("-fsyntax-only");
 
   llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
   
@@ -1645,7 +1662,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     TheDriver.setCheckInputsExist(false);
 
     llvm::OwningPtr<driver::Compilation> C(
-      TheDriver.BuildCompilation(Args.size(), Args.data()));
+      TheDriver.BuildCompilation(Args->size(), Args->data()));
 
     // Just print the cc1 options if -### was present.
     if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
@@ -1724,9 +1741,14 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->Invocation = CI;
   
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    ASTUnitCleanup(llvm::CrashRecoveryContextCleanup::
-                    create<ASTUnit>(AST.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
+    ASTUnitCleanup(AST.get());
+  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInvocation,
+    llvm::CrashRecoveryContextReleaseRefCleanup<CompilerInvocation> >
+    CICleanup(CI.getPtr());
+  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
+    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+    DiagCleanup(Diags.getPtr());
 
   return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0 : AST.take();
 }
@@ -2056,9 +2078,8 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar
-    CICleanup(llvm::CrashRecoveryContextCleanup::
-                    create<CompilerInstance>(Clang.get()));
+  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
+    CICleanup(Clang.get());
 
   Clang->setInvocation(&*CCInvocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;

@@ -2390,21 +2390,37 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   
   // Configure the diagnostics.
   DiagnosticOptions DiagOpts;
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags;
-  Diags = CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
-                                              command_line_args);
+  llvm::IntrusiveRefCntPtr<Diagnostic>
+    Diags(CompilerInstance::createDiagnostics(DiagOpts, num_command_line_args, 
+                                                command_line_args));
 
-  llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
+  // Recover resources if we crash before exiting this function.
+  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
+    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+    DiagCleanup(Diags.getPtr());
+
+  llvm::OwningPtr<std::vector<ASTUnit::RemappedFile> >
+    RemappedFiles(new std::vector<ASTUnit::RemappedFile>());
+
+  // Recover resources if we crash before exiting this function.
+  llvm::CrashRecoveryContextCleanupRegistrar<
+    std::vector<ASTUnit::RemappedFile> > RemappedCleanup(RemappedFiles.get());
+
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
     const llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
-    RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
-                                           Buffer));
+    RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
+                                            Buffer));
   }
 
-  llvm::SmallVector<const char *, 16> Args;
-  
+  llvm::OwningPtr<std::vector<const char *> > 
+    Args(new std::vector<const char*>());
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<std::vector<const char*> >
+    ArgsCleanup(Args.get());
+
   // Since the Clang C library is primarily used by batch tools dealing with
   // (often very broken) source code, where spell-checking can have a
   // significant negative impact on performance (particularly when 
@@ -2419,10 +2435,10 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     }
   }
   if (!FoundSpellCheckingArgument)
-    Args.push_back("-fno-spell-checking");
+    Args->push_back("-fno-spell-checking");
   
-  Args.insert(Args.end(), command_line_args,
-              command_line_args + num_command_line_args);
+  Args->insert(Args->end(), command_line_args,
+               command_line_args + num_command_line_args);
 
   // The 'source_filename' argument is optional.  If the caller does not
   // specify it then it is assumed that the source file is specified
@@ -2430,23 +2446,23 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   // Put the source file after command_line_args otherwise if '-x' flag is
   // present it will be unused.
   if (source_filename)
-    Args.push_back(source_filename);
+    Args->push_back(source_filename);
 
   // Do we need the detailed preprocessing record?
   if (options & CXTranslationUnit_DetailedPreprocessingRecord) {
-    Args.push_back("-Xclang");
-    Args.push_back("-detailed-preprocessing-record");
+    Args->push_back("-Xclang");
+    Args->push_back("-detailed-preprocessing-record");
   }
   
   unsigned NumErrors = Diags->getClient()->getNumErrors();
   llvm::OwningPtr<ASTUnit> Unit(
-    ASTUnit::LoadFromCommandLine(Args.data(), Args.data() + Args.size(),
+    ASTUnit::LoadFromCommandLine(Args->data(), Args->data() + Args->size(),
                                  Diags,
                                  CXXIdx->getClangResourcesPath(),
                                  CXXIdx->getOnlyLocalDecls(),
                                  /*CaptureDiagnostics=*/true,
-                                 RemappedFiles.data(),
-                                 RemappedFiles.size(),
+                                 RemappedFiles->data(),
+                                 RemappedFiles->size(),
                                  /*RemappedFilesKeepOriginalName=*/true,
                                  PrecompilePreamble,
                                  CompleteTranslationUnit,
@@ -2569,16 +2585,22 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   
-  llvm::SmallVector<ASTUnit::RemappedFile, 4> RemappedFiles;
+  llvm::OwningPtr<std::vector<ASTUnit::RemappedFile> >
+    RemappedFiles(new std::vector<ASTUnit::RemappedFile>());
+  
+  // Recover resources if we crash before exiting this function.
+  llvm::CrashRecoveryContextCleanupRegistrar<
+    std::vector<ASTUnit::RemappedFile> > RemappedCleanup(RemappedFiles.get());
+  
   for (unsigned I = 0; I != num_unsaved_files; ++I) {
     llvm::StringRef Data(unsaved_files[I].Contents, unsaved_files[I].Length);
     const llvm::MemoryBuffer *Buffer
       = llvm::MemoryBuffer::getMemBufferCopy(Data, unsaved_files[I].Filename);
-    RemappedFiles.push_back(std::make_pair(unsaved_files[I].Filename,
-                                           Buffer));
+    RemappedFiles->push_back(std::make_pair(unsaved_files[I].Filename,
+                                            Buffer));
   }
   
-  if (!CXXUnit->Reparse(RemappedFiles.data(), RemappedFiles.size()))
+  if (!CXXUnit->Reparse(RemappedFiles->data(), RemappedFiles->size()))
     RTUI->result = 0;
 }
 
