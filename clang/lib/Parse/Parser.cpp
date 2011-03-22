@@ -22,7 +22,7 @@
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Sema &actions)
-  : CrashInfo(*this), PP(pp), Actions(actions), Diags(PP.getDiagnostics()),
+  : PP(pp), Actions(actions), Diags(PP.getDiagnostics()),
     GreaterThanIsOperator(true), ColonIsSacred(false), 
     InMessageExpression(false), TemplateParameterDepth(0) {
   Tok.setKind(tok::eof);

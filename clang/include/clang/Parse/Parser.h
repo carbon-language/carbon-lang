@@ -76,7 +76,6 @@ class Parser : public CodeCompletionHandler {
   friend class ColonProtectionRAIIObject;
   friend class InMessageExpressionRAIIObject;
   friend class ParenBraceBracketBalancer;
-  PrettyStackTraceParserEntry CrashInfo;
 
   Preprocessor &PP;
 
