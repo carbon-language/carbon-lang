@@ -1700,13 +1700,13 @@ defm LDRD :  AI3_ldridx<0b1101, 0, "ldrd", IIC_iLoad_d_ru>;
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
 let mayLoad = 1, neverHasSideEffects = 1 in {
 def LDRT : AI2ldstidx<1, 0, 0, (outs GPR:$dst, GPR:$base_wb),
-                   (ins GPR:$base, am2offset:$offset), IndexModeNone,
+                   (ins GPR:$base, am2offset:$offset), IndexModePost,
                    LdFrm, IIC_iLoad_ru,
                    "ldrt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
-                  (ins GPR:$base, am2offset:$offset), IndexModeNone,
+                  (ins GPR:$base, am2offset:$offset), IndexModePost,
                   LdFrm, IIC_iLoad_bh_ru,
                   "ldrbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
