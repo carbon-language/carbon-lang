@@ -101,10 +101,6 @@ class UserValue {
   void insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx, unsigned LocNo,
                         LiveIntervals &LIS, const TargetInstrInfo &TII);
 
-  /// insertDebugKill - Insert an undef DBG_VALUE into MBB at Idx.
-  void insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,
-                       LiveIntervals &LIS, const TargetInstrInfo &TII);
-
 public:
   /// UserValue - Create a new UserValue.
   UserValue(const MDNode *var, unsigned o, DebugLoc L, 
@@ -752,13 +748,6 @@ void UserValue::insertDebugValue(MachineBasicBlock *MBB, SlotIndex Idx,
     .addOperand(Loc).addImm(offset).addMetadata(variable);
 }
 
-void UserValue::insertDebugKill(MachineBasicBlock *MBB, SlotIndex Idx,
-                               LiveIntervals &LIS, const TargetInstrInfo &TII) {
-  MachineBasicBlock::iterator I = findInsertLocation(MBB, Idx, LIS);
-  BuildMI(*MBB, I, findDebugLoc(), TII.get(TargetOpcode::DBG_VALUE)).addReg(0)
-    .addImm(offset).addMetadata(variable);
-}
-
 void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
                                 const TargetInstrInfo &TII) {
   MachineFunction::iterator MFEnd = VRM->getMachineFunction().end();
@@ -790,12 +779,6 @@ void UserValue::emitDebugValues(VirtRegMap *VRM, LiveIntervals &LIS,
       break;
 
     ++I;
-    if (Stop == MBBEnd)
-      continue;
-    // The current interval ends before MBB.
-    // Insert a kill if there is a gap.
-    if (!I.valid() || I.start() > Stop)
-      insertDebugKill(MBB, Stop, LIS, TII);
   }
 }
 
