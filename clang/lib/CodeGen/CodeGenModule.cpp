@@ -72,14 +72,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     BlockObjectAssignDecl(0), BlockObjectDisposeDecl(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
     BlockDescriptorType(0), GenericBlockLiteralType(0) {
-  if (!Features.ObjC1)
-    Runtime = 0;
-  else if (!Features.NeXTRuntime)
-    Runtime = CreateGNUObjCRuntime(*this);
-  else if (Features.ObjCNonFragileABI)
-    Runtime = CreateMacNonFragileABIObjCRuntime(*this);
-  else
-    Runtime = CreateMacObjCRuntime(*this);
+  if (Features.ObjC1)
+     createObjCRuntime();
 
   // Enable TBAA unless it's suppressed.
   if (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)
@@ -115,8 +109,6 @@ CodeGenModule::~CodeGenModule() {
 void CodeGenModule::createObjCRuntime() {
   if (!Features.NeXTRuntime)
     Runtime = CreateGNUObjCRuntime(*this);
-  else if (Features.ObjCNonFragileABI)
-    Runtime = CreateMacNonFragileABIObjCRuntime(*this);
   else
     Runtime = CreateMacObjCRuntime(*this);
 }

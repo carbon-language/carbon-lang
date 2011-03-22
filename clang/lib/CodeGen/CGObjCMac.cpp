@@ -6293,10 +6293,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
 
 CodeGen::CGObjCRuntime *
 CodeGen::CreateMacObjCRuntime(CodeGen::CodeGenModule &CGM) {
+  if (CGM.getLangOptions().ObjCNonFragileABI)
+    return new CGObjCNonFragileABIMac(CGM);
   return new CGObjCMac(CGM);
-}
-
-CodeGen::CGObjCRuntime *
-CodeGen::CreateMacNonFragileABIObjCRuntime(CodeGen::CodeGenModule &CGM) {
-  return new CGObjCNonFragileABIMac(CGM);
 }
