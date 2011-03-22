@@ -38,6 +38,7 @@ public:
   // FIXME: Should be parameterized to get the memory block associated with
   // a particular loaded object.
   sys::MemoryBlock getMemoryBlock();
+  StringRef getErrorString();
 };
 
 } // end namespace llvm

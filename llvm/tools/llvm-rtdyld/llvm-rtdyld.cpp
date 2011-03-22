@@ -63,8 +63,9 @@ static int executeInput() {
   RuntimeDyld Dyld;
 
   // Load the object file into it.
-  if (Dyld.loadObject(InputBuffer.take()))
-    return true;
+  if (Dyld.loadObject(InputBuffer.take())) {
+    return Error(Dyld.getErrorString());
+  }
 
   // Get the address of "_main".
   void *MainAddress = Dyld.getSymbolAddress("_main");
