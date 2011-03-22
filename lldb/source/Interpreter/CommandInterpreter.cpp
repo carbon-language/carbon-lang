@@ -114,6 +114,9 @@ CommandInterpreter::Initialize ()
     HandleCommand ("command alias p        frame variable", false, result);
     HandleCommand ("command alias print    frame variable", false, result);
     HandleCommand ("command alias po       expression -o --", false, result);
+    HandleCommand ("command alias up       regexp-up", false, result);
+    HandleCommand ("command alias down     regexp-down", false, result);
+    
 }
 
 const char *
@@ -195,6 +198,36 @@ CommandInterpreter::LoadCommandDictionary ()
         {
             CommandObjectSP break_regex_cmd_sp(break_regex_cmd_ap.release());
             m_command_dict[break_regex_cmd_sp->GetCommandName ()] = break_regex_cmd_sp;
+        }
+    }
+
+    std::auto_ptr<CommandObjectRegexCommand>
+    down_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                      "regexp-down",
+                                                      "Go down \"n\" frames in the stack (1 frame by default).",
+                                                      "down [n]", 2));
+    if (down_regex_cmd_ap.get())
+    {
+        if (down_regex_cmd_ap->AddRegexCommand("^$", "frame select -r -1") &&
+            down_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "frame select -r -%1"))
+        {
+            CommandObjectSP down_regex_cmd_sp(down_regex_cmd_ap.release());
+            m_command_dict[down_regex_cmd_sp->GetCommandName ()] = down_regex_cmd_sp;
+        }
+    }
+    
+    std::auto_ptr<CommandObjectRegexCommand>
+    up_regex_cmd_ap(new CommandObjectRegexCommand (*this,
+                                                      "regexp-up",
+                                                      "Go up \"n\" frames in the stack (1 frame by default).",
+                                                      "up [n]", 2));
+    if (up_regex_cmd_ap.get())
+    {
+        if (up_regex_cmd_ap->AddRegexCommand("^$", "frame select -r 1") &&
+            up_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "frame select -r %1"))
+        {
+            CommandObjectSP up_regex_cmd_sp(up_regex_cmd_ap.release());
+            m_command_dict[up_regex_cmd_sp->GetCommandName ()] = up_regex_cmd_sp;
         }
     }
 }
