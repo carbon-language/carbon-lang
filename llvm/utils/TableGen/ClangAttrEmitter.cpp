@@ -46,6 +46,7 @@ std::string ReadPCHRecord(StringRef type) {
               ">(GetDecl(Record[Idx++]))")
     .Case("QualType", "GetType(Record[Idx++])")
     .Case("Expr *", "ReadSubExpr()")
+    .Case("IdentifierInfo *", "GetIdentifierInfo(Record, Idx)")
     .Default("Record[Idx++]");
 }
 
@@ -56,6 +57,8 @@ std::string WritePCHRecord(StringRef type, StringRef name) {
                         ", Record);\n")
     .Case("QualType", "AddTypeRef(" + std::string(name) + ", Record);\n")
     .Case("Expr *", "AddStmt(" + std::string(name) + ");\n")
+    .Case("IdentifierInfo *", 
+          "AddIdentifierRef(" + std::string(name) + ", Record);\n")
     .Default("Record.push_back(" + std::string(name) + ");\n");
 }
 
@@ -415,6 +418,47 @@ namespace {
       OS << "Record.push_back(SA->get" << getUpperName() << "());\n";
     }
   };
+
+  class VersionArgument : public Argument {
+  public:
+    VersionArgument(Record &Arg, StringRef Attr)
+      : Argument(Arg, Attr)
+    {}
+
+    void writeAccessors(raw_ostream &OS) const {
+      OS << "  VersionTuple get" << getUpperName() << "() const {\n";
+      OS << "    return " << getLowerName() << ";\n";
+      OS << "  }\n";
+      OS << "  void set" << getUpperName() 
+         << "(ASTContext &C, VersionTuple V) {\n";
+      OS << "    " << getLowerName() << " = V;\n";
+      OS << "  }";
+    }
+    void writeCloneArgs(raw_ostream &OS) const {
+      OS << "get" << getUpperName() << "()";
+    }
+    void writeCtorBody(raw_ostream &OS) const {
+    }
+    void writeCtorInitializers(raw_ostream &OS) const {
+      OS << getLowerName() << "(" << getUpperName() << ")";
+    }
+    void writeCtorParameters(raw_ostream &OS) const {
+      OS << "VersionTuple " << getUpperName();
+    }
+    void writeDeclarations(raw_ostream &OS) const {
+      OS << "VersionTuple " << getLowerName() << ";\n";
+    }
+    void writePCHReadDecls(raw_ostream &OS) const {
+      OS << "    VersionTuple " << getLowerName()
+         << "= ReadVersionTuple(Record, Idx);\n";
+    }
+    void writePCHReadArgs(raw_ostream &OS) const {
+      OS << getLowerName();
+    }
+    void writePCHWrite(raw_ostream &OS) const {
+      OS << "    AddVersionTuple(SA->get" << getUpperName() << "(), Record);\n";
+    }
+  };
 }
 
 static Argument *createArgument(Record &Arg, StringRef Attr,
@@ -441,6 +485,8 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
+  else if (ArgName == "VersionArgument")
+    Ptr = new VersionArgument(Arg, Attr);
 
   if (!Ptr) {
     std::vector<Record*> Bases = Search->getSuperClasses();
