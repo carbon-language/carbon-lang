@@ -1,4 +1,4 @@
-##===- source/Host/Makefile --------------------------------*- Makefile -*-===##
+##===- source/Host/linux/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,18 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LLDB_LEVEL := ../..
-
-include $(LLDB_LEVEL)/../../Makefile.config
-
-DIRS := common
-
-ifeq ($(HOST_OS),Darwin)
-DIRS += macosx
-endif
-
-ifeq ($(HOST_OS),Linux)
-DIRS += linux
-endif
+LLDB_LEVEL := ../../..
+LIBRARYNAME := lldbHostLinux
+BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile

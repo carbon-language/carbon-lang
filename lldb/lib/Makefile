@@ -72,7 +72,8 @@ endif
 ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbPluginProcessLinux.a \
               lldbPluginDynamicLoaderLinux.a \
-              lldbPluginPlatformLinux.a
+              lldbPluginPlatformLinux.a \
+              lldbHostLinux.a
 endif
 
 include $(LEVEL)/Makefile.common
