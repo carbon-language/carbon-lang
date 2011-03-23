@@ -2277,6 +2277,15 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       break;
     }
       
+  case ICK_TransparentUnionConversion: {
+    Sema::AssignConvertType ConvTy =
+      CheckTransparentUnionArgumentConstraints(ToType, From);
+    assert ((ConvTy == Sema::Compatible) &&
+            "Improper transparent union conversion");
+    (void)ConvTy;
+    break;
+  }
+
   case ICK_Lvalue_To_Rvalue:
   case ICK_Array_To_Pointer:
   case ICK_Function_To_Pointer:

@@ -48,6 +48,12 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
                                  bool InOverloadResolution,
                                  StandardConversionSequence &SCS,
                                  bool CStyle);
+  
+static bool IsTransparentUnionStandardConversion(Sema &S, Expr* From, 
+                                                 QualType &ToType,
+                                                 bool InOverloadResolution,
+                                                 StandardConversionSequence &SCS,
+                                                 bool CStyle);
 static OverloadingResult
 IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
                         UserDefinedConversionSequence& User,
@@ -128,7 +134,9 @@ ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind) {
     ICR_Conversion,
     ICR_Conversion,
     ICR_Conversion,
-    ICR_Complex_Real_Conversion
+    ICR_Complex_Real_Conversion,
+    ICR_Conversion,
+    ICR_Conversion
   };
   return Rank[(int)Kind];
 }
@@ -157,7 +165,9 @@ const char* GetImplicitConversionName(ImplicitConversionKind Kind) {
     "Derived-to-base conversion",
     "Vector conversion",
     "Vector splat",
-    "Complex-real conversion"
+    "Complex-real conversion",
+    "Block Pointer conversion",
+    "Transparent Union Conversion"
   };
   return Name[Kind];
 }
@@ -1203,6 +1213,11 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
   } else if (IsNoReturnConversion(S.Context, FromType, ToType, FromType)) {
     // Treat a conversion that strips "noreturn" as an identity conversion.
     SCS.Second = ICK_NoReturn_Adjustment;
+  } else if (IsTransparentUnionStandardConversion(S, From, ToType,
+                                             InOverloadResolution,
+                                             SCS, CStyle)) {
+    SCS.Second = ICK_TransparentUnionConversion;
+    FromType = ToType;
   } else {
     // No second conversion required.
     SCS.Second = ICK_Identity;
@@ -1243,6 +1258,30 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     return false;
 
   return true;
+}
+  
+static bool
+IsTransparentUnionStandardConversion(Sema &S, Expr* From, 
+                                     QualType &ToType,
+                                     bool InOverloadResolution,
+                                     StandardConversionSequence &SCS,
+                                     bool CStyle) {
+    
+  const RecordType *UT = ToType->getAsUnionType();
+  if (!UT || !UT->getDecl()->hasAttr<TransparentUnionAttr>())
+    return false;
+  // The field to initialize within the transparent union.
+  RecordDecl *UD = UT->getDecl();
+  // It's compatible if the expression matches any of the fields.
+  for (RecordDecl::field_iterator it = UD->field_begin(),
+       itend = UD->field_end();
+       it != itend; ++it) {
+    if (IsStandardConversion(S, From, it->getType(), InOverloadResolution, SCS, CStyle)) {
+      ToType = it->getType();
+      return true;
+    }
+  }
+  return false;
 }
 
 /// IsIntegralPromotion - Determines whether the conversion from the
