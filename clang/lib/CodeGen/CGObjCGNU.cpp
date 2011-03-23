@@ -521,9 +521,12 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
     Types.push_back(TypedSelector(TypeEncoding, SelValue));
   }
 
-  if (lval)
-    return SelValue;
-  return Builder.CreateLoad(SelValue);
+  if (lval) {
+    llvm::Value *tmp = Builder.CreateAlloca(SelValue->getType());
+    Builder.CreateStore(SelValue, tmp);
+    return tmp;
+  }
+  return SelValue;
 }
 
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
@@ -1906,16 +1909,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), i), Zeros[0]};
     // FIXME: We're generating redundant loads and stores here!
-    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-      true, llvm::GlobalValue::InternalLinkage,
-      llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-      ".objc_sel_ptr");
+    llvm::Constant *SelPtr = llvm::ConstantExpr::getGetElementPtr(SelectorList,
+        Idxs, 2);
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
-    if (isSelOpaque) {
-      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
+    SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
         llvm::PointerType::getUnqual(SelectorTy));
-    }
     SelectorAliases[i]->replaceAllUsesWith(SelPtr);
     SelectorAliases[i]->eraseFromParent();
   }
