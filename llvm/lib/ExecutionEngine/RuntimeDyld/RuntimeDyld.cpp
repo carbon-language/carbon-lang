@@ -11,15 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "dyld"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::object;
 
@@ -42,6 +48,10 @@ class RuntimeDyldImpl {
     HasError = true;
     return true;
   }
+
+  bool resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
+                         SmallVectorImpl<void *> &SectionBases,
+                         SmallVectorImpl<StringRef> &SymbolNames);
 
   bool loadSegment32(const MachOObject *Obj,
                      const MachOObject::LoadCommandInfo *SegmentLCI,
@@ -73,7 +83,85 @@ public:
   StringRef getErrorString() { return ErrorStr; }
 };
 
+// FIXME: Relocations for targets other than x86_64.
+bool RuntimeDyldImpl::
+resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
+                  SmallVectorImpl<void *> &SectionBases,
+                  SmallVectorImpl<StringRef> &SymbolNames) {
+  // struct relocation_info {
+  //   int32_t r_address;
+  //   uint32_t r_symbolnum:24,
+  //            r_pcrel:1,
+  //            r_length:2,
+  //            r_extern:1,
+  //            r_type:4;
+  // };
+  uint32_t SymbolNum = RE.Word1 & 0xffffff; // 24-bit value
+  bool isPCRel = (RE.Word1 >> 24) & 1;
+  unsigned Log2Size = (RE.Word1 >> 25) & 3;
+  bool isExtern = (RE.Word1 >> 27) & 1;
+  unsigned Type = (RE.Word1 >> 28) & 0xf;
+  if (RE.Word0 & macho::RF_Scattered)
+    return Error("NOT YET IMPLEMENTED: scattered relocations.");
 
+  // The address requiring a relocation.
+  intptr_t Address = (intptr_t)SectionBases[BaseSection] + RE.Word0;
+
+  // Figure out the target address of the relocation. If isExtern is true,
+  // this relocation references the symbol table, otherwise it references
+  // a section in the same object, numbered from 1 through NumSections
+  // (SectionBases is [0, NumSections-1]).
+  intptr_t Value;
+  if (isExtern) {
+    StringRef Name = SymbolNames[SymbolNum];
+    if (SymbolTable.lookup(Name)) {
+      // The symbol is in our symbol table, so we can resolve it directly.
+      Value = (intptr_t)SymbolTable[Name];
+    } else {
+      return Error("NOT YET IMPLEMENTED: relocations to pre-compiled code.");
+    }
+    DEBUG(dbgs() << "Resolve relocation(" << Type << ") from '" << Name
+                 << "' to " << format("0x%x", Address) << ".\n");
+  } else {
+    // For non-external relocations, the SymbolNum is actual a section number
+    // as described above.
+    Value = (intptr_t)SectionBases[SymbolNum - 1];
+  }
+
+  // If the relocation is PC-relative, the value to be encoded is the
+  // pointer difference.
+  if (isPCRel)
+    // FIXME: It seems this value needs to be adjusted by 4 for an effective PC
+    // address. Is that expected? Only for branches, perhaps?
+    Value -= Address + 4;
+
+  switch(Type) {
+  default:
+    llvm_unreachable("Invalid relocation type!");
+  case macho::RIT_X86_64_Unsigned:
+  case macho::RIT_X86_64_Branch: {
+    // Mask in the target value a byte at a time (we don't have an alignment
+    // guarantee for the target address, so this is safest).
+    unsigned Len = 1 << Log2Size;
+    uint8_t *p = (uint8_t*)Address;
+    for (unsigned i = 0; i < Len; ++i) {
+      *p++ = (uint8_t)Value;
+      Value >>= 8;
+    }
+    return false;
+  }
+  case macho::RIT_X86_64_Signed:
+  case macho::RIT_X86_64_GOTLoad:
+  case macho::RIT_X86_64_GOT:
+  case macho::RIT_X86_64_Subtractor:
+  case macho::RIT_X86_64_Signed1:
+  case macho::RIT_X86_64_Signed2:
+  case macho::RIT_X86_64_Signed4:
+  case macho::RIT_X86_64_TLV:
+    return Error("Relocation type not implemented yet!");
+  }
+  return false;
+}
 
 bool RuntimeDyldImpl::
 loadSegment32(const MachOObject *Obj,
@@ -96,7 +184,7 @@ loadSegment32(const MachOObject *Obj,
          Segment32LC->VMSize - Segment32LC->FileSize);
 
   // Bind the section indices to address.
-  void **SectionBases = new void*[Segment32LC->NumSections];
+  SmallVector<void *, 16> SectionBases;
   for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
     InMemoryStruct<macho::Section> Sect;
     Obj->ReadSection(*SegmentLCI, i, Sect);
@@ -111,7 +199,7 @@ loadSegment32(const MachOObject *Obj,
     if (Sect->Flags != 0x80000400)
       return Error("unsupported section type!");
 
-    SectionBases[i] = (char*) Data.base() + Sect->Address;
+    SectionBases.push_back((char*) Data.base() + Sect->Address);
   }
 
   // Bind all the symbols to address.
@@ -142,6 +230,8 @@ loadSegment32(const MachOObject *Obj,
     if (STE->Flags != 0x0)
       return Error("unexpected symbol type!");
 
+    DEBUG(dbgs() << "Symbol: '" << Name << "' @ " << Address << "\n");
+
     SymbolTable[Name] = Address;
   }
 
@@ -149,7 +239,6 @@ loadSegment32(const MachOObject *Obj,
   // FIXME: We really should use the JITMemoryManager for this.
   sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
-  delete SectionBases;
   return false;
 }
 
@@ -174,40 +263,53 @@ loadSegment64(const MachOObject *Obj,
   memset((char*)Data.base() + Segment64LC->FileSize, 0,
          Segment64LC->VMSize - Segment64LC->FileSize);
 
-  // Bind the section indices to address.
-  void **SectionBases = new void*[Segment64LC->NumSections];
+  // Bind the section indices to addresses and record the relocations we
+  // need to resolve.
+  typedef std::pair<uint32_t, macho::RelocationEntry> RelocationMap;
+  SmallVector<RelocationMap, 64> Relocations;
+
+  SmallVector<void *, 16> SectionBases;
   for (unsigned i = 0; i != Segment64LC->NumSections; ++i) {
     InMemoryStruct<macho::Section64> Sect;
     Obj->ReadSection64(*SegmentLCI, i, Sect);
     if (!Sect)
       return Error("unable to load section: '" + Twine(i) + "'");
 
-    // FIXME: We don't support relocations yet.
-    if (Sect->NumRelocationTableEntries != 0)
-      return Error("not yet implemented: relocations!");
+    // Resolve any relocations the section has.
+    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
+      InMemoryStruct<macho::RelocationEntry> RE;
+      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
+      Relocations.push_back(RelocationMap(j, *RE));
+    }
 
     // FIXME: Improve check.
     if (Sect->Flags != 0x80000400)
       return Error("unsupported section type!");
 
-    SectionBases[i] = (char*) Data.base() + Sect->Address;
+    SectionBases.push_back((char*) Data.base() + Sect->Address);
   }
 
-  // Bind all the symbols to address.
+  // Bind all the symbols to address. Keep a record of the names for use
+  // by relocation resolution.
+  SmallVector<StringRef, 64> SymbolNames;
   for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
     InMemoryStruct<macho::Symbol64TableEntry> STE;
     Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
     if (!STE)
       return Error("unable to read symbol: '" + Twine(i) + "'");
+    // Get the symbol name.
+    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+    SymbolNames.push_back(Name);
+
+    // Just skip undefined symbols. They'll be loaded from whatever
+    // module they come from (or system dylib) when we resolve relocations
+    // involving them.
     if (STE->SectionIndex == 0)
-      return Error("unexpected undefined symbol!");
+      continue;
 
     unsigned Index = STE->SectionIndex - 1;
     if (Index >= Segment64LC->NumSections)
       return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
 
     // Get the section base address.
     void *SectionBase = SectionBases[Index];
@@ -221,14 +323,21 @@ loadSegment64(const MachOObject *Obj,
     if (STE->Flags != 0x0)
       return Error("unexpected symbol type!");
 
+    DEBUG(dbgs() << "Symbol: '" << Name << "' @ " << Address << "\n");
     SymbolTable[Name] = Address;
+  }
+
+  // Now resolve any relocations.
+  for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
+    if (resolveRelocation(Relocations[i].first, Relocations[i].second,
+                          SectionBases, SymbolNames))
+      return true;
   }
 
   // We've loaded the section; now mark the functions in it as executable.
   // FIXME: We really should use the JITMemoryManager for this.
   sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
-  delete SectionBases;
   return false;
 }
 
@@ -291,12 +400,12 @@ bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
       return Error("unable to load dynamic link-exit load command");
 
     // FIXME: We don't support anything interesting yet.
-    if (DysymtabLC->LocalSymbolsIndex != 0)
-      return Error("NOT YET IMPLEMENTED: local symbol entries");
-    if (DysymtabLC->ExternalSymbolsIndex != 0)
-      return Error("NOT YET IMPLEMENTED: non-external symbol entries");
-    if (DysymtabLC->UndefinedSymbolsIndex != SymtabLC->NumSymbolTableEntries)
-      return Error("NOT YET IMPLEMENTED: undefined symbol entries");
+//    if (DysymtabLC->LocalSymbolsIndex != 0)
+//      return Error("NOT YET IMPLEMENTED: local symbol entries");
+//    if (DysymtabLC->ExternalSymbolsIndex != 0)
+//      return Error("NOT YET IMPLEMENTED: non-external symbol entries");
+//    if (DysymtabLC->UndefinedSymbolsIndex != SymtabLC->NumSymbolTableEntries)
+//      return Error("NOT YET IMPLEMENTED: undefined symbol entries");
   }
 
   // Load the segment load command.
