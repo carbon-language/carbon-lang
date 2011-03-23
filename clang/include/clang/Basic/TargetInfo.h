@@ -16,17 +16,18 @@
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 #include "clang/Basic/AddressSpaces.h"
+#include "clang/Basic/VersionTuple.h"
 #include <cassert>
 #include <vector>
 #include <string>
 
 namespace llvm {
 struct fltSemantics;
-class StringRef;
 }
 
 namespace clang {
@@ -80,6 +81,9 @@ protected:
   unsigned char RegParmMax, SSERegParmMax;
   TargetCXXABI CXXABI;
   const LangAS::Map *AddrSpaceMap;
+
+  mutable llvm::StringRef PlatformName;
+  mutable VersionTuple PlatformMinVersion;
 
   unsigned HasAlignMac68kSupport : 1;
   unsigned RealTypeUsesObjCFPRet : 3;
@@ -536,6 +540,14 @@ public:
   const LangAS::Map &getAddressSpaceMap() const {
     return *AddrSpaceMap;
   }
+
+  /// \brief Retrieve the name of the platform as it is used in the
+  /// availability attribute.
+  llvm::StringRef getPlatformName() const { return PlatformName; }
+
+  /// \brief Retrieve the minimum desired version of the platform, to
+  /// which the program should be compiled.
+  VersionTuple getPlatformMinVersion() const { return PlatformMinVersion; }
 
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {

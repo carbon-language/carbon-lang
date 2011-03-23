@@ -37,6 +37,7 @@
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2620,6 +2621,19 @@ void ASTWriter::WriteAttributes(const AttrVec &Attrs, RecordDataImpl &Record) {
 void ASTWriter::AddString(llvm::StringRef Str, RecordDataImpl &Record) {
   Record.push_back(Str.size());
   Record.insert(Record.end(), Str.begin(), Str.end());
+}
+
+void ASTWriter::AddVersionTuple(const VersionTuple &Version,
+                                RecordDataImpl &Record) {
+  Record.push_back(Version.getMajor());
+  if (llvm::Optional<unsigned> Minor = Version.getMinor())
+    Record.push_back(*Minor + 1);
+  else
+    Record.push_back(0);
+  if (llvm::Optional<unsigned> Subminor = Version.getSubminor())
+    Record.push_back(*Subminor + 1);
+  else
+    Record.push_back(0);
 }
 
 /// \brief Note that the identifier II occurs at the given offset

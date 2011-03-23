@@ -55,6 +55,9 @@ class TypeArgument<string name> : Argument<name>;
 class UnsignedArgument<string name> : Argument<name>;
 class VariadicUnsignedArgument<string name> : Argument<name>;
 
+// A version of the form major.minor[.subminor].
+class VersionArgument<string name> : Argument<name>;
+
 // This one's a doozy, so it gets its own special type
 // It can be an unsigned integer, or a type. Either can
 // be dependent.
@@ -132,6 +135,19 @@ def Annotate : InheritableAttr {
 def AsmLabel : InheritableAttr {
   let Spellings = [];
   let Args = [StringArgument<"Label">];
+}
+
+def Availability : InheritableAttr {
+  let Spellings = ["availability"];
+  let Args = [IdentifierArgument<"platform">, VersionArgument<"introduced">,
+              VersionArgument<"deprecated">, VersionArgument<"obsoleted">];
+  let AdditionalMembers =
+[{static llvm::StringRef getPrettyPlatformName(llvm::StringRef Platform) {
+    return llvm::StringSwitch<llvm::StringRef>(Platform)
+             .Case("ios", "iOS")
+             .Case("macosx", "Mac OS X")
+             .Default(llvm::StringRef());
+} }];
 }
 
 def Blocks : InheritableAttr {

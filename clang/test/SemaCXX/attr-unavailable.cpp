@@ -25,6 +25,6 @@ namespace radar9046492 {
 
 void foo() FOO; // expected-note {{candidate function has been explicitly made unavailable}}
 void bar() {
-  foo(); // expected-error {{call to unavailable function 'foo' not available - replaced}}
+  foo(); // expected-error {{call to unavailable function 'foo': not available - replaced}}
 }
 }

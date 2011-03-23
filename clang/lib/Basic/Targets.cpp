@@ -76,7 +76,9 @@ public:
 
 
 static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
-                             const llvm::Triple &Triple) {
+                             const llvm::Triple &Triple,
+                             llvm::StringRef &PlatformName,
+                             VersionTuple &PlatformMinVersion) {
   Builder.defineMacro("__APPLE_CC__", "5621");
   Builder.defineMacro("__APPLE__");
   Builder.defineMacro("__MACH__");
@@ -120,6 +122,9 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[4] = '0' + (Rev % 10);
     Str[5] = '\0';
     Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
+
+    PlatformName = "ios";
+    PlatformMinVersion = VersionTuple(Maj, Min, Rev);
   } else {
     // For historical reasons that make little sense, the version passed here is
     // the "darwin" version, which drops the 10 and offsets by 4.
@@ -136,6 +141,9 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[3] = '0' + Rev;
     Str[4] = '\0';
     Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
+
+    PlatformName = "macosx";
+    PlatformMinVersion = VersionTuple(Maj, Min, Rev);
   }
 }
 
@@ -145,7 +153,8 @@ class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
-    getDarwinDefines(Builder, Opts, Triple);
+    getDarwinDefines(Builder, Opts, Triple, this->PlatformName, 
+                     this->PlatformMinVersion);
   }
 
 public:
@@ -2005,7 +2014,7 @@ class DarwinARMTargetInfo :
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
-    getDarwinDefines(Builder, Opts, Triple);
+    getDarwinDefines(Builder, Opts, Triple, PlatformName, PlatformMinVersion);
   }
 
 public:

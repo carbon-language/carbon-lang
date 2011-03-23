@@ -119,6 +119,7 @@ def err_function_declared_typedef : Error<
   "function definition declared 'typedef'">;
 def err_iboutletcollection_builtintype : Error<
   "type argument of iboutletcollection attribute cannot be a builtin type">;
+
 def err_expected_fn_body : Error<
   "expected function body after function declarator">;
 def err_expected_method_body : Error<"expected method body">;
@@ -130,6 +131,7 @@ def err_expected_statement : Error<"expected statement">;
 def err_expected_lparen_after : Error<"expected '(' after '%0'">;
 def err_expected_lparen_after_id : Error<"expected '(' after %0">;
 def err_expected_less_after : Error<"expected '<' after '%0'">;
+def err_expected_equal_after : Error<"expected '=' after %0">;
 def err_expected_comma : Error<"expected ','">;
 def err_expected_lbrace_in_compound_literal : Error<
   "expected '{' in compound literal">;
@@ -430,6 +432,21 @@ def err_paren_sizeof_parameter_pack : Error<
   "missing parentheses around the size of parameter pack %0">;
 def err_sizeof_parameter_pack : Error<
   "expected parenthesized parameter pack name in 'sizeof...' expression">;
+
+// Availability attribute
+def err_expected_version : Error<
+  "expected a version of the form 'major[.minor[.subminor]]'">;
+def err_zero_version : Error<
+  "version number must have non-zero major, minor, or sub-minor version">;
+def err_availability_expected_platform : Error<
+  "expected a platform name, e.g., 'macosx'">;
+def err_availability_expected_change : Error<
+  "expected 'introduced', 'deprecated', or 'obsoleted'">;
+def err_availability_unknown_change : Error<
+  "%0 is not an availability stage; use 'introduced', 'deprecated', or "
+  "'obsoleted'">;
+def err_availability_redundant : Error<
+  "redundant %0 availability change; only the last specified change will "        "be used">;
 
 // Language specific pragmas
 // - Generic warnings

@@ -40,7 +40,7 @@ Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}}
 
 __attribute ((unavailable)) __attribute ((deprecated)) @protocol XProto; // expected-note{{marked unavailable}}
 
-id <XProto> idX = 0; // expected-error {{'XProto' is unavailable}} expected-warning {{'XProto' is deprecated}}
+id <XProto> idX = 0; // expected-error {{'XProto' is unavailable}}
 
 int main ()
 {

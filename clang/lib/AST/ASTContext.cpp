@@ -451,7 +451,6 @@ void ASTContext::eraseDeclAttrs(const Decl *D) {
   }
 }
 
-
 MemberSpecializationInfo *
 ASTContext::getInstantiatedFromStaticDataMember(const VarDecl *Var) {
   assert(Var->isStaticDataMember() && "Not a static data member");

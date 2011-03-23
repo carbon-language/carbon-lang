@@ -33,7 +33,8 @@ namespace clang {
   class PragmaUnusedHandler;
   class ColonProtectionRAIIObject;
   class InMessageExpressionRAIIObject;
-  
+  class VersionTuple;
+
 /// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
 /// an entry is printed for it.
 class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
@@ -110,6 +111,15 @@ class Parser : public CodeCompletionHandler {
   /// AltiVec enabled.
   IdentifierInfo *Ident_vector;
   IdentifierInfo *Ident_pixel;
+
+  /// \brief Identifier for "introduced".
+  IdentifierInfo *Ident_introduced;
+
+  /// \brief Identifier for "deprecated".
+  IdentifierInfo *Ident_deprecated;
+
+  /// \brief Identifier for "obsoleted".
+  IdentifierInfo *Ident_obsoleted;
 
   /// C++0x contextual keywords. 
   mutable IdentifierInfo *Ident_final;
@@ -1546,6 +1556,12 @@ private:
   void ParseBorlandTypeAttributes(ParsedAttributes &attrs);
   void ParseOpenCLAttributes(ParsedAttributes &attrs);
   void ParseOpenCLQualifiers(DeclSpec &DS);
+
+  VersionTuple ParseVersionTuple(SourceRange &Range);
+  void ParseAvailabilityAttribute(IdentifierInfo &Availability,
+                                  SourceLocation AvailabilityLoc,
+                                  ParsedAttributes &attrs,
+                                  SourceLocation *endLoc);
 
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);

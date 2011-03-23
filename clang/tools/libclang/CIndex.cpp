@@ -4897,14 +4897,22 @@ extern "C" {
 enum CXAvailabilityKind clang_getCursorAvailability(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind))
     if (Decl *D = cxcursor::getCursorDecl(cursor)) {
-      if (D->hasAttr<UnavailableAttr>() ||
-          (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isDeleted()))
+      if (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isDeleted())
         return CXAvailability_Available;
       
-      if (D->hasAttr<DeprecatedAttr>())
+      switch (D->getAvailability()) {
+      case AR_Available:
+      case AR_NotYetIntroduced:
+        return CXAvailability_Available;
+
+      case AR_Deprecated:
         return CXAvailability_Deprecated;
+
+      case AR_Unavailable:
+        return CXAvailability_NotAvailable;
+      }
     }
-  
+
   return CXAvailability_Available;
 }
 

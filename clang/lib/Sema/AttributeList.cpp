@@ -36,6 +36,24 @@ AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
   }
 }
 
+AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
+                             IdentifierInfo *AttrName, SourceLocation AttrLoc,
+                             IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
+                             IdentifierInfo *ParmName, SourceLocation ParmLoc,
+                             const AvailabilityChange &Introduced,
+                             const AvailabilityChange &Deprecated,
+                             const AvailabilityChange &Obsoleted,
+                             bool declspec, bool cxx0x)
+  : AttrName(AttrName), AttrLoc(AttrLoc), ScopeName(ScopeName), 
+    ScopeLoc(ScopeLoc), ParmName(ParmName), ParmLoc(ParmLoc), 
+    Args(0), NumArgs(0), Next(0),
+    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), 
+    AvailabilityIntroduced(Introduced),
+    AvailabilityDeprecated(Deprecated),
+    AvailabilityObsoleted(Obsoleted),
+    Invalid(false) {
+}
+
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   llvm::StringRef AttrName = Name->getName();
 
@@ -83,6 +101,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("may_alias", AT_may_alias)
     .Case("base_check", AT_base_check)
     .Case("deprecated", AT_deprecated)
+    .Case("availability", AT_availability)
     .Case("visibility", AT_visibility)
     .Case("destructor", AT_destructor)
     .Case("format_arg", AT_format_arg)

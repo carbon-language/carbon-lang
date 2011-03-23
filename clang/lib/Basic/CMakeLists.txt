@@ -14,6 +14,7 @@ add_clang_library(clangBasic
   Targets.cpp
   TokenKinds.cpp
   Version.cpp
+  VersionTuple.cpp
   )
 
 # Determine Subversion revision.

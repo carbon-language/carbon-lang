@@ -1901,6 +1901,7 @@ public:
 
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc, 
                          bool UnknownObjCClass=false);
+  std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
                                         SourceLocation Loc);

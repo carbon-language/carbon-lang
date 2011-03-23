@@ -175,7 +175,7 @@ static bool EvalPointerValueAsBool(LValue& Value, bool& Result) {
   const ValueDecl* Decl = DeclRef->getDecl();
   if (Decl->hasAttr<WeakAttr>() ||
       Decl->hasAttr<WeakRefAttr>() ||
-      Decl->hasAttr<WeakImportAttr>())
+      Decl->isWeakImported())
     return false;
 
   return true;

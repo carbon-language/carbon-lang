@@ -1148,6 +1148,14 @@ def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "attribute was previously declared "
   "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;
 
+// Availability attribute
+def warn_availability_unknown_platform : Warning<
+  "unknown platform %0 in availability macro">;
+def warn_availability_version_ordering : Warning<
+  "feature cannot be %select{introduced|deprecated|obsoleted}0 in %1 version "
+  "%2 before it was %select{introduced|deprecated|obsoleted}3 in version %4; "
+  "attribute ignored">;
+
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;
@@ -1339,11 +1347,11 @@ def err_ovl_no_viable_member_function_in_call : Error<
 def err_ovl_ambiguous_call : Error<
   "call to %0 is ambiguous">;
 def err_ovl_deleted_call : Error<
-  "call to %select{unavailable|deleted}0 function %1 %2">;
+  "call to %select{unavailable|deleted}0 function %1%2">;
 def err_ovl_ambiguous_member_call : Error<
   "call to member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
-  "call to %select{unavailable|deleted}0 member function %1 %2">;
+  "call to %select{unavailable|deleted}0 member function %1%2">;
 def note_ovl_too_many_candidates : Note<
     "remaining %0 candidate%s0 omitted; "
     "pass -fshow-overloads=all to show them">;
@@ -1495,7 +1503,7 @@ def err_ovl_ambiguous_oper_binary : Error<
   "use of overloaded operator '%0' is ambiguous (with operand types %1 and %2)">;
 def err_ovl_no_viable_oper : Error<"no viable overloaded '%0'">;
 def err_ovl_deleted_oper : Error<
-  "overload resolution selected %select{unavailable|deleted}0 operator '%1' %2">;
+  "overload resolution selected %select{unavailable|deleted}0 operator '%1'%2">;
 def err_ovl_no_viable_subscript :
     Error<"no viable overloaded operator[] for type %0">;
 def err_ovl_no_oper :
@@ -1509,7 +1517,7 @@ def err_ovl_no_viable_object_call : Error<
 def err_ovl_ambiguous_object_call : Error<
   "call to object of type %0 is ambiguous">;
 def err_ovl_deleted_object_call : Error<
-  "call to %select{unavailable|deleted}0 function call operator in type %1 %2">;
+  "call to %select{unavailable|deleted}0 function call operator in type %1%2">;
 def note_ovl_surrogate_cand : Note<"conversion candidate of type %0">;
 def err_member_call_without_object : Error<
   "call to non-static member function without an object argument">;
@@ -3831,5 +3839,6 @@ def err_sizeof_pack_no_pack_name_suggest : Error<
 def note_parameter_pack_here : Note<"parameter pack %0 declared here">;
 
 } // end of sema category
+
 } // end of sema component.
 

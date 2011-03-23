@@ -28,7 +28,7 @@ static void DiagnoseObjCImplementedDeprecations(Sema &S,
                                                 NamedDecl *ND,
                                                 SourceLocation ImplLoc,
                                                 int select) {
-  if (ND && ND->getAttr<DeprecatedAttr>()) {
+  if (ND && ND->isDeprecated()) {
     S.Diag(ImplLoc, diag::warn_deprecated_def) << select;
     if (select == 0)
       S.Diag(ND->getLocation(), diag::note_method_declared_at);
@@ -1369,15 +1369,14 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
       PrevObjCMethod->setDefined(impl);
       // If a method is deprecated, push it in the global pool.
       // This is used for better diagnostics.
-      if (Method->getAttr<DeprecatedAttr>()) {
-        if (!PrevObjCMethod->getAttr<DeprecatedAttr>())
+      if (Method->isDeprecated()) {
+        if (!PrevObjCMethod->isDeprecated())
           List->Method = Method;
       }
       // If new method is unavailable, push it into global pool
       // unless previous one is deprecated.
-      if (Method->getAttr<UnavailableAttr>()) {
-        if (!PrevObjCMethod->getAttr<UnavailableAttr>() &&
-            !PrevObjCMethod->getAttr<DeprecatedAttr>())
+      if (Method->isUnavailable()) {
+        if (PrevObjCMethod->getAvailability() < AR_Deprecated)
           List->Method = Method;
       }
       return;

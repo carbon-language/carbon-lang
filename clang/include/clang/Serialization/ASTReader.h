@@ -69,6 +69,7 @@ class ASTStmtReader;
 class ASTIdentifierLookupTrait;
 class TypeLocReader;
 struct HeaderFileInfo;
+class VersionTuple;
 
 struct PCHPredefinesBlock {
   /// \brief The file ID for this predefines buffer in a PCH file.
@@ -1207,6 +1208,9 @@ public:
 
   // \brief Read a string
   std::string ReadString(const RecordData &Record, unsigned &Idx);
+
+  /// \brief Read a version tuple.
+  VersionTuple ReadVersionTuple(const RecordData &Record, unsigned &Idx);
 
   CXXTemporary *ReadCXXTemporary(const RecordData &Record, unsigned &Idx);
       

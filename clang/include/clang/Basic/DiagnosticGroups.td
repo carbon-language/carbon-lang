@@ -24,6 +24,7 @@ def : DiagGroup<"aggregate-return">;
 def AmbigMemberTemplate : DiagGroup<"ambiguous-member-template">;
 def : DiagGroup<"attributes">;
 def : DiagGroup<"bad-function-cast">;
+def Availability : DiagGroup<"availability">;
 def BoolConversions : DiagGroup<"bool-conversions">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;

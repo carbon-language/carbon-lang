@@ -62,6 +62,15 @@ public:
 
 namespace clang {
 
+  /// \brief Captures the result of checking the availability of a
+  /// declaration.
+  enum AvailabilityResult {
+    AR_Available = 0,
+    AR_NotYetIntroduced,
+    AR_Deprecated,
+    AR_Unavailable
+  };
+
 /// Decl - This represents one declaration (or definition), e.g. a variable,
 /// typedef, function, struct, etc.
 ///
@@ -398,6 +407,52 @@ public:
   bool isUsed(bool CheckUsedAttr = true) const;
 
   void setUsed(bool U = true) { Used = U; }
+
+  /// \brief Determine the availability of the given declaration.
+  ///
+  /// This routine will determine the most restrictive availability of
+  /// the given declaration (e.g., preferring 'unavailable' to
+  /// 'deprecated').
+  ///
+  /// \param Message If non-NULL and the result is not \c
+  /// AR_Available, will be set to a (possibly empty) message
+  /// describing why the declaration has not been introduced, is
+  /// deprecated, or is unavailable.
+  AvailabilityResult getAvailability(std::string *Message = 0) const;
+
+  /// \brief Determine whether this declaration is marked 'deprecated'.
+  ///
+  /// \param Message If non-NULL and the declaration is deprecated,
+  /// this will be set to the message describing why the declaration
+  /// was deprecated (which may be empty).
+  bool isDeprecated(std::string *Message = 0) const {
+    return getAvailability(Message) == AR_Deprecated;
+  }
+
+  /// \brief Determine whether this declaration is marked 'unavailable'.
+  ///
+  /// \param Message If non-NULL and the declaration is unavailable,
+  /// this will be set to the message describing why the declaration
+  /// was made unavailable (which may be empty).
+  bool isUnavailable(std::string *Message = 0) const {
+    return getAvailability(Message) == AR_Unavailable;
+  }
+
+  /// \brief Determine whether this is a weak-imported symbol.
+  ///
+  /// Weak-imported symbols are typically marked with the
+  /// 'weak_import' attr ibute, but may also be marked with an
+  /// 'availability' attribute where we're targing a platform prior to
+  /// the introduction of this feature.
+  bool isWeakImported() const;
+
+  /// \brief Determines whether this symbol can be weak-imported,
+  /// e.g., whether it would be well-formed to add the weak_import
+  /// attribute.
+  ///
+  /// \param IsDefinition Set to \c true to indicate that this
+  /// declaration cannot be weak-imported because it has a definition.
+  bool canBeWeakImported(bool &IsDefinition) const;
 
   /// \brief Retrieve the level of precompiled header from which this
   /// declaration was generated.

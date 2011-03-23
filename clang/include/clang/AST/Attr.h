@@ -17,9 +17,11 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/VersionTuple.h"
 #include <cassert>
 #include <cstring>
 #include <algorithm>

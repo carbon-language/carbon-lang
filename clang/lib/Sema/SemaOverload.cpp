@@ -6282,8 +6282,7 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
 
   // Best is the best viable function.
   if (Best->Function &&
-      (Best->Function->isDeleted() ||
-       Best->Function->getAttr<UnavailableAttr>()))
+      (Best->Function->isDeleted() || Best->Function->isUnavailable()))
     return OR_Deleted;
 
   return OR_Success;
@@ -6735,7 +6734,7 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
   FunctionDecl *Fn = Cand->Function;
 
   // Note deleted candidates, but only if they're viable.
-  if (Cand->Viable && (Fn->isDeleted() || Fn->hasAttr<UnavailableAttr>())) {
+  if (Cand->Viable && (Fn->isDeleted() || Fn->isUnavailable())) {
     std::string FnDesc;
     OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
 
@@ -7744,8 +7743,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
       Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_deleted_call)
         << Best->Function->isDeleted()
         << ULE->getName()
-        << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+        << getDeletedOrUnavailableSuffix(Best->Function)
         << Fn->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     }
@@ -7928,8 +7926,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       Diag(OpLoc, diag::err_ovl_deleted_oper)
         << Best->Function->isDeleted()
         << UnaryOperator::getOpcodeStr(Opc)
-        << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+        << getDeletedOrUnavailableSuffix(Best->Function)
         << Input->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
       return ExprError();
@@ -8199,8 +8196,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       Diag(OpLoc, diag::err_ovl_deleted_oper)
         << Best->Function->isDeleted()
         << BinaryOperator::getOpcodeStr(Opc)
-        << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+        << getDeletedOrUnavailableSuffix(Best->Function)
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, 2);
       return ExprError();
@@ -8349,8 +8345,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     case OR_Deleted:
       Diag(LLoc, diag::err_ovl_deleted_oper)
         << Best->Function->isDeleted() << "[]"
-        << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+        << getDeletedOrUnavailableSuffix(Best->Function)
         << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, 2,
                                   "[]", LLoc);
@@ -8468,8 +8463,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
       Diag(UnresExpr->getMemberLoc(), diag::err_ovl_deleted_member_call)
         << Best->Function->isDeleted()
         << DeclName 
-        << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+        << getDeletedOrUnavailableSuffix(Best->Function)
         << MemExprE->getSourceRange();
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
       // FIXME: Leaking incoming expressions!
@@ -8643,8 +8637,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
          diag::err_ovl_deleted_object_call)
       << Best->Function->isDeleted()
       << Object->getType() 
-      << Best->Function->getMessageUnavailableAttr(
-           !Best->Function->isDeleted())
+      << getDeletedOrUnavailableSuffix(Best->Function)
       << Object->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     break;
@@ -8852,8 +8845,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
     Diag(OpLoc,  diag::err_ovl_deleted_oper)
       << Best->Function->isDeleted()
       << "->" 
-      << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+      << getDeletedOrUnavailableSuffix(Best->Function)
       << Base->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_AllCandidates, &Base, 1);
     return ExprError();

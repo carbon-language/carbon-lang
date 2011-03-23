@@ -68,7 +68,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
         Diag(Suppressed[I].first, Suppressed[I].second);
       
       // Clear out the list of suppressed diagnostics, so that we don't emit
-      // them again for this specialization. However, we don't remove this
+      // them again for this specialization. However, we don't obsolete this
       // entry from the table, because we want to avoid ever emitting these
       // diagnostics again.
       Suppressed.clear();
@@ -82,25 +82,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     return true;
   }
 
-  // See if the decl is deprecated.
-  if (const DeprecatedAttr *DA = D->getAttr<DeprecatedAttr>())
-    EmitDeprecationWarning(D, DA->getMessage(), Loc, UnknownObjCClass);
-
-  // See if the decl is unavailable
-  if (const UnavailableAttr *UA = D->getAttr<UnavailableAttr>()) {
-    if (UA->getMessage().empty()) {
-      if (!UnknownObjCClass)
-        Diag(Loc, diag::err_unavailable) << D->getDeclName();
-      else
-        Diag(Loc, diag::warn_unavailable_fwdclass_message) 
-             << D->getDeclName();
-    }
-    else 
-      Diag(Loc, diag::err_unavailable_message) 
-        << D->getDeclName() << UA->getMessage();
-    Diag(D->getLocation(), diag::note_unavailable_here) << 0;
-  }
-
   // See if this is a deleted function.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isDeleted()) {
@@ -110,11 +91,54 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     }
   }
 
+  // See if this declaration is unavailable or deprecated.
+  std::string Message;
+  switch (D->getAvailability(&Message)) {
+  case AR_Available:
+  case AR_NotYetIntroduced:
+    break;
+
+  case AR_Deprecated:
+    EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
+    break;
+
+  case AR_Unavailable:
+    if (Message.empty()) {
+      if (!UnknownObjCClass)
+        Diag(Loc, diag::err_unavailable) << D->getDeclName();
+      else
+        Diag(Loc, diag::warn_unavailable_fwdclass_message) 
+             << D->getDeclName();
+    }
+    else 
+      Diag(Loc, diag::err_unavailable_message) 
+        << D->getDeclName() << Message;
+    Diag(D->getLocation(), diag::note_unavailable_here) << 0;    
+    break;
+  }
+
   // Warn if this is used but marked unused.
   if (D->hasAttr<UnusedAttr>())
     Diag(Loc, diag::warn_used_but_marked_unused) << D->getDeclName();
 
   return false;
+}
+
+/// \brief Retrieve the message suffix that should be added to a
+/// diagnostic complaining about the given function being deleted or
+/// unavailable.
+std::string Sema::getDeletedOrUnavailableSuffix(const FunctionDecl *FD) {
+  // FIXME: C++0x implicitly-deleted special member functions could be
+  // detected here so that we could improve diagnostics to say, e.g.,
+  // "base class 'A' had a deleted copy constructor".
+  if (FD->isDeleted())
+    return std::string();
+
+  std::string Message;
+  if (FD->getAvailability(&Message))
+    return ": " + Message;
+
+  return std::string();
 }
 
 /// DiagnoseSentinelCalls - This routine checks on method dispatch calls

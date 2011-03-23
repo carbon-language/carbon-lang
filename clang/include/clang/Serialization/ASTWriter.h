@@ -56,6 +56,7 @@ class Sema;
 class SourceManager;
 class SwitchCase;
 class TargetInfo;
+class VersionTuple;
 
 /// \brief Writes an AST file containing the contents of a translation unit.
 ///
@@ -513,6 +514,9 @@ public:
 
   /// \brief Add a string to the given record.
   void AddString(llvm::StringRef Str, RecordDataImpl &Record);
+
+  /// \brief Add a version tuple to the given record
+  void AddVersionTuple(const VersionTuple &Version, RecordDataImpl &Record);
 
   /// \brief Mark a declaration context as needing an update.
   void AddUpdatedDeclContext(const DeclContext *DC) {

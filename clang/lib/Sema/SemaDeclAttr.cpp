@@ -1074,6 +1074,57 @@ static void HandleUnavailableAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(::new (S.Context) UnavailableAttr(Attr.getLoc(), S.Context, Str));
 }
 
+static void HandleAvailabilityAttr(Decl *d, const AttributeList &Attr, 
+                                   Sema &S) {
+  IdentifierInfo *Platform = Attr.getParameterName();
+  SourceLocation PlatformLoc = Attr.getParameterLoc();
+
+  llvm::StringRef PlatformName
+    = AvailabilityAttr::getPrettyPlatformName(Platform->getName());
+  if (PlatformName.empty()) {
+    S.Diag(PlatformLoc, diag::warn_availability_unknown_platform)
+      << Platform;
+
+    PlatformName = Platform->getName();
+  }
+
+  AvailabilityChange Introduced = Attr.getAvailabilityIntroduced();
+  AvailabilityChange Deprecated = Attr.getAvailabilityDeprecated();
+  AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
+
+  // Ensure that Introduced < Deprecated < Obsoleted (although not all
+  // of these steps are needed).
+  if (Introduced.isValid() && Deprecated.isValid() &&
+      !(Introduced.Version < Deprecated.Version)) {
+    S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
+      << 1 << PlatformName << Deprecated.Version.getAsString()
+      << 0 << Introduced.Version.getAsString();
+    return;
+  }
+
+  if (Introduced.isValid() && Obsoleted.isValid() &&
+      !(Introduced.Version < Obsoleted.Version)) {
+    S.Diag(Introduced.KeywordLoc, diag::warn_availability_version_ordering)
+      << 2 << PlatformName << Obsoleted.Version.getAsString()
+      << 0 << Introduced.Version.getAsString();
+    return;
+  }
+
+  if (Deprecated.isValid() && Obsoleted.isValid() &&
+      !(Deprecated.Version < Obsoleted.Version)) {
+    S.Diag(Deprecated.KeywordLoc, diag::warn_availability_version_ordering)
+      << 2 << PlatformName << Obsoleted.Version.getAsString()
+      << 1 << Deprecated.Version.getAsString();
+    return;
+  }
+
+  d->addAttr(::new (S.Context) AvailabilityAttr(Attr.getLoc(), S.Context, 
+                                                Platform,
+                                                Introduced.Version,
+                                                Deprecated.Version,
+                                                Obsoleted.Version));
+}
+
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -1380,27 +1431,18 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // weak_import only applies to variable & function declarations.
   bool isDef = false;
-  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    isDef = (!VD->hasExternalStorage() || VD->getInit());
-  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    isDef = FD->hasBody();
-  } else if (isa<ObjCPropertyDecl>(D) || isa<ObjCMethodDecl>(D)) {
-    // We ignore weak import on properties and methods
-    return;
-  } else if (!(S.LangOpts.ObjCNonFragileABI && isa<ObjCInterfaceDecl>(D))) {
-    // Don't issue the warning for darwin as target; yet, ignore the attribute.
-    if (S.Context.Target.getTriple().getOS() != llvm::Triple::Darwin ||
-        !isa<ObjCInterfaceDecl>(D)) 
+  if (!D->canBeWeakImported(isDef)) {
+    if (isDef)
+      S.Diag(Attr.getLoc(),
+             diag::warn_attribute_weak_import_invalid_on_definition)
+        << "weak_import" << 2 /*variable and function*/;
+    else if (S.Context.Target.getTriple().getOS() != llvm::Triple::Darwin ||
+             (!isa<ObjCInterfaceDecl>(D) &&
+              !isa<ObjCPropertyDecl>(D) &&
+              !isa<ObjCMethodDecl>(D)))
       S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
         << Attr.getName() << ExpectedVariableOrFunction;
-      return;
-  }
 
-  // Merge should handle any subsequent violations.
-  if (isDef) {
-    S.Diag(Attr.getLoc(),
-           diag::warn_attribute_weak_import_invalid_on_definition)
-      << "weak_import" << 2 /*variable and function*/;
     return;
   }
 
@@ -2745,6 +2787,7 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_analyzer_noreturn:
     HandleAnalyzerNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_annotate:    HandleAnnotateAttr    (D, Attr, S); break;
+  case AttributeList::AT_availability:HandleAvailabilityAttr(D, Attr, S); break;
   case AttributeList::AT_carries_dependency:
                                       HandleDependencyAttr  (D, Attr, S); break;
   case AttributeList::AT_common:      HandleCommonAttr      (D, Attr, S); break;
@@ -3058,7 +3101,7 @@ void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
 
 static bool isDeclDeprecated(Decl *D) {
   do {
-    if (D->hasAttr<DeprecatedAttr>())
+    if (D->isDeprecated())
       return true;
   } while ((D = cast_or_null<Decl>(D->getDeclContext())));
   return false;

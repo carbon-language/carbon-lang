@@ -1388,15 +1388,15 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs);
     return true;
 
-  case OR_Deleted:
+  case OR_Deleted: {
     Diag(StartLoc, diag::err_ovl_deleted_call)
       << Best->Function->isDeleted()
       << Name 
-      << Best->Function->getMessageUnavailableAttr(
-             !Best->Function->isDeleted())
+      << getDeletedOrUnavailableSuffix(Best->Function)
       << Range;
     Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     return true;
+  }
   }
   assert(false && "Unreachable, bad result from BestViableFunction");
   return true;

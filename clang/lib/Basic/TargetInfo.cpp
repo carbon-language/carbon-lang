@@ -70,6 +70,10 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
 
   // Default to an empty address space map.
   AddrSpaceMap = &DefaultAddrSpaceMap;
+
+  // Default to an unknown platform name.
+  PlatformName = "unknown";
+  PlatformMinVersion = VersionTuple();
 }
 
 // Out of line virtual dtor for TargetInfo.

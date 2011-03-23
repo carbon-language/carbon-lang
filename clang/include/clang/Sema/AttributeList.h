@@ -18,12 +18,30 @@
 #include "llvm/Support/Allocator.h"
 #include "clang/Sema/Ownership.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/VersionTuple.h"
 #include "clang/AST/Expr.h"
 #include <cassert>
 
 namespace clang {
   class IdentifierInfo;
   class Expr;
+
+/// \brief Represents information about a change in availability for
+/// an entity, which is part of the encoding of the 'availability'
+/// attribute.
+struct AvailabilityChange {
+  /// \brief The location of the keyword indicating the kind of change.
+  SourceLocation KeywordLoc;
+
+  /// \brief The version number at which the change occurred.
+  VersionTuple Version;
+
+  /// \brief The source range covering the version number.
+  SourceRange VersionRange;
+
+  /// \brief Determine whether this availability change is valid.
+  bool isValid() const { return !Version.empty(); }
+};
 
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
@@ -48,6 +66,11 @@ private:
   AttributeList *Next;
   bool DeclspecAttribute, CXX0XAttribute;
 
+  // For the 'availability' attribute.
+  AvailabilityChange AvailabilityIntroduced;
+  AvailabilityChange AvailabilityDeprecated;
+  AvailabilityChange AvailabilityObsoleted;
+
   /// True if already diagnosed as invalid.
   mutable bool Invalid;
 
@@ -60,6 +83,15 @@ private:
                 IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
                 IdentifierInfo *ParmName, SourceLocation ParmLoc,
                 Expr **args, unsigned numargs,
+                bool declspec, bool cxx0x);
+
+  AttributeList(llvm::BumpPtrAllocator &Alloc,
+                IdentifierInfo *AttrName, SourceLocation AttrLoc,
+                IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
+                IdentifierInfo *ParmName, SourceLocation ParmLoc,
+                const AvailabilityChange &Introduced,
+                const AvailabilityChange &Deprecated,
+                const AvailabilityChange &Obsoleted,
                 bool declspec, bool cxx0x);
 public:
   class Factory {
@@ -75,6 +107,20 @@ public:
         new (Mem) AttributeList(Alloc, AttrName, AttrLoc, ScopeName, ScopeLoc,
                                 ParmName, ParmLoc, args, numargs,
                                 declspec, cxx0x);
+        return Mem;
+      }
+
+    AttributeList *Create(IdentifierInfo *AttrName, SourceLocation AttrLoc,
+      IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
+      IdentifierInfo *ParmName, SourceLocation ParmLoc,
+      const AvailabilityChange &Introduced,
+      const AvailabilityChange &Deprecated,
+      const AvailabilityChange &Obsoleted,
+      bool declspec = false, bool cxx0x = false) {
+        AttributeList *Mem = Alloc.Allocate<AttributeList>();
+        new (Mem) AttributeList(Alloc, AttrName, AttrLoc, ScopeName, ScopeLoc,
+                                ParmName, ParmLoc, Introduced, Deprecated,
+                                Obsoleted, declspec, cxx0x);
         return Mem;
       }
 
@@ -96,6 +142,7 @@ public:
     AT_always_inline,
     AT_analyzer_noreturn,
     AT_annotate,
+    AT_availability,      // Clang-specific
     AT_base_check,
     AT_blocks,
     AT_carries_dependency,
@@ -243,6 +290,21 @@ public:
 
   arg_iterator arg_end() const {
     return arg_iterator(Args, NumArgs);
+  }
+
+  const AvailabilityChange &getAvailabilityIntroduced() const {
+    assert(getKind() == AT_availability && "Not an availability attribute");
+    return AvailabilityIntroduced;
+  }
+
+  const AvailabilityChange &getAvailabilityDeprecated() const {
+    assert(getKind() == AT_availability && "Not an availability attribute");
+    return AvailabilityDeprecated;
+  }
+
+  const AvailabilityChange &getAvailabilityObsoleted() const {
+    assert(getKind() == AT_availability && "Not an availability attribute");
+    return AvailabilityObsoleted;
   }
 };
 

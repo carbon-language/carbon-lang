@@ -1138,10 +1138,14 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
 static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,
                              ObjCPropertyDecl *Property) {
   // Should we just clone all attributes over?
-  if (DeprecatedAttr *A = Property->getAttr<DeprecatedAttr>())
-    PropertyMethod->addAttr(A->clone(S.Context));
-  if (UnavailableAttr *A = Property->getAttr<UnavailableAttr>())
-    PropertyMethod->addAttr(A->clone(S.Context));
+  for (Decl::attr_iterator A = Property->attr_begin(), 
+                        AEnd = Property->attr_end(); 
+       A != AEnd; ++A) {
+    if (isa<DeprecatedAttr>(*A) || 
+        isa<UnavailableAttr>(*A) || 
+        isa<AvailabilityAttr>(*A))
+      PropertyMethod->addAttr((*A)->clone(S.Context));
+  }
 }
 
 /// ProcessPropertyDecl - Make sure that any user-defined setter/getter methods

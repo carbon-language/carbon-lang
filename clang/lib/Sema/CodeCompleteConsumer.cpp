@@ -375,12 +375,21 @@ void CodeCompletionResult::computeCursorKindAndAvailability() {
   switch (Kind) {
   case RK_Declaration:
     // Set the availability based on attributes.
-    Availability = CXAvailability_Available;      
-    if (Declaration->getAttr<UnavailableAttr>())
-      Availability = CXAvailability_NotAvailable;
-    else if (Declaration->getAttr<DeprecatedAttr>())
-      Availability = CXAvailability_Deprecated;
+    switch (Declaration->getAvailability()) {
+    case AR_Available:
+    case AR_NotYetIntroduced:
+      Availability = CXAvailability_Available;      
+      break;
       
+    case AR_Deprecated:
+      Availability = CXAvailability_Deprecated;
+      break;
+      
+    case AR_Unavailable:
+      Availability = CXAvailability_NotAvailable;
+      break;
+    }
+
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Declaration))
       if (Function->isDeleted())
         Availability = CXAvailability_NotAvailable;

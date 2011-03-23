@@ -112,8 +112,11 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
 
+      // Availability attributes have their own grammar.
+      if (AttrName->isStr("availability"))
+        ParseAvailabilityAttribute(*AttrName, AttrNameLoc, attrs, endLoc);
       // check if we have a "parameterized" attribute
-      if (Tok.is(tok::l_paren)) {
+      else if (Tok.is(tok::l_paren)) {
         ConsumeParen(); // ignore the left paren loc for now
 
         if (Tok.is(tok::identifier)) {
@@ -360,6 +363,241 @@ void Parser::ParseOpenCLQualifiers(DeclSpec &DS) {
       break;
     default: break;
   }
+}
+
+/// \brief Parse a version number.
+///
+/// version:
+///   simple-integer
+///   simple-integer ',' simple-integer
+///   simple-integer ',' simple-integer ',' simple-integer
+VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
+  Range = Tok.getLocation();
+
+  if (!Tok.is(tok::numeric_constant)) {
+    Diag(Tok, diag::err_expected_version);
+    SkipUntil(tok::comma, tok::r_paren, true, true, true);
+    return VersionTuple();
+  }
+
+  // Parse the major (and possibly minor and subminor) versions, which
+  // are stored in the numeric constant. We utilize a quirk of the
+  // lexer, which is that it handles something like 1.2.3 as a single
+  // numeric constant, rather than two separate tokens.
+  llvm::SmallString<512> Buffer;
+  Buffer.resize(Tok.getLength()+1);
+  const char *ThisTokBegin = &Buffer[0];
+
+  // Get the spelling of the token, which eliminates trigraphs, etc.
+  bool Invalid = false;
+  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin, &Invalid);
+  if (Invalid)
+    return VersionTuple();
+
+  // Parse the major version.
+  unsigned AfterMajor = 0;
+  unsigned Major = 0;
+  while (AfterMajor < ActualLength && isdigit(ThisTokBegin[AfterMajor])) {
+    Major = Major * 10 + ThisTokBegin[AfterMajor] - '0';
+    ++AfterMajor;
+  }
+
+  if (AfterMajor == 0) {
+    Diag(Tok, diag::err_expected_version);
+    SkipUntil(tok::comma, tok::r_paren, true, true, true);
+    return VersionTuple();
+  }
+
+  if (AfterMajor == ActualLength) {
+    ConsumeToken();
+
+    // We only had a single version component.
+    if (Major == 0) {
+      Diag(Tok, diag::err_zero_version);
+      return VersionTuple();
+    }
+
+    return VersionTuple(Major);
+  }
+
+  if (ThisTokBegin[AfterMajor] != '.' || (AfterMajor + 1 == ActualLength)) {
+    Diag(Tok, diag::err_expected_version);
+    SkipUntil(tok::comma, tok::r_paren, true, true, true);
+    return VersionTuple();
+  }
+
+  // Parse the minor version.
+  unsigned AfterMinor = AfterMajor + 1;
+  unsigned Minor = 0;
+  while (AfterMinor < ActualLength && isdigit(ThisTokBegin[AfterMinor])) {
+    Minor = Minor * 10 + ThisTokBegin[AfterMinor] - '0';
+    ++AfterMinor;
+  }
+
+  if (AfterMinor == ActualLength) {
+    ConsumeToken();
+    
+    // We had major.minor.
+    if (Major == 0 && Minor == 0) {
+      Diag(Tok, diag::err_zero_version);
+      return VersionTuple();
+    }
+
+    return VersionTuple(Major, Minor);      
+  }
+
+  // If what follows is not a '.', we have a problem.
+  if (ThisTokBegin[AfterMinor] != '.') {
+    Diag(Tok, diag::err_expected_version);
+    SkipUntil(tok::comma, tok::r_paren, true, true, true);
+    return VersionTuple();    
+  }
+
+  // Parse the subminor version.
+  unsigned AfterSubminor = AfterMinor + 1;
+  unsigned Subminor = 0;
+  while (AfterSubminor < ActualLength && isdigit(ThisTokBegin[AfterSubminor])) {
+    Subminor = Subminor * 10 + ThisTokBegin[AfterSubminor] - '0';
+    ++AfterSubminor;
+  }
+
+  if (AfterSubminor != ActualLength) {
+    Diag(Tok, diag::err_expected_version);
+    SkipUntil(tok::comma, tok::r_paren, true, true, true);
+    return VersionTuple();
+  }
+  ConsumeToken();
+  return VersionTuple(Major, Minor, Subminor);
+}
+
+/// \brief Parse the contents of the "availability" attribute.
+///
+/// availability-attribute:
+///   'availability' '(' platform ',' version-arg-list ')'
+///
+/// platform:
+///   identifier
+///
+/// version-arg-list:
+///   version-arg
+///   version-arg ',' version-arg-list
+///
+/// version-arg:
+///   'introduced' '=' version
+///   'deprecated' '=' version
+///   'removed' = version
+void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
+                                        SourceLocation AvailabilityLoc,
+                                        ParsedAttributes &attrs,
+                                        SourceLocation *endLoc) {
+  SourceLocation PlatformLoc;
+  IdentifierInfo *Platform = 0;
+
+  enum { Introduced, Deprecated, Obsoleted, Unknown };
+  AvailabilityChange Changes[Unknown];
+
+  // Opening '('.
+  SourceLocation LParenLoc;
+  if (!Tok.is(tok::l_paren)) {
+    Diag(Tok, diag::err_expected_lparen);
+    return;
+  }
+  LParenLoc = ConsumeParen();
+
+  // Parse the platform name,
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok, diag::err_availability_expected_platform);
+    SkipUntil(tok::r_paren);
+    return;
+  }
+  Platform = Tok.getIdentifierInfo();
+  PlatformLoc = ConsumeToken();
+
+  // Parse the ',' following the platform name.
+  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::r_paren))
+    return;
+
+  // If we haven't grabbed the pointers for the identifiers
+  // "introduced", "deprecated", and "obsoleted", do so now.
+  if (!Ident_introduced) {
+    Ident_introduced = PP.getIdentifierInfo("introduced");
+    Ident_deprecated = PP.getIdentifierInfo("deprecated");
+    Ident_obsoleted = PP.getIdentifierInfo("obsoleted");
+  }
+
+  // Parse the set of introductions/deprecations/removals.
+  do {
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_availability_expected_change);
+      SkipUntil(tok::r_paren);
+      return;
+    }
+    IdentifierInfo *Keyword = Tok.getIdentifierInfo();
+    SourceLocation KeywordLoc = ConsumeToken();
+
+    if (Tok.isNot(tok::equal)) {
+      Diag(Tok, diag::err_expected_equal_after)
+        << Keyword;
+      SkipUntil(tok::r_paren);
+      return;
+    }
+    ConsumeToken();
+    
+    SourceRange VersionRange;
+    VersionTuple Version = ParseVersionTuple(VersionRange);
+    
+    if (Version.empty()) {
+      SkipUntil(tok::r_paren);
+      return;
+    }
+
+    unsigned Index;
+    if (Keyword == Ident_introduced)
+      Index = Introduced;
+    else if (Keyword == Ident_deprecated)
+      Index = Deprecated;
+    else if (Keyword == Ident_obsoleted)
+      Index = Obsoleted;
+    else 
+      Index = Unknown;
+
+    if (Index < Unknown) {
+      if (!Changes[Index].KeywordLoc.isInvalid()) {
+        Diag(KeywordLoc, diag::err_availability_redundant)
+          << Keyword 
+          << SourceRange(Changes[Index].KeywordLoc,
+                         Changes[Index].VersionRange.getEnd());
+      }
+
+      Changes[Index].KeywordLoc = KeywordLoc;
+      Changes[Index].Version = Version;
+      Changes[Index].VersionRange = VersionRange;
+    } else {
+      Diag(KeywordLoc, diag::err_availability_unknown_change)
+        << Keyword << VersionRange;
+    }
+
+    if (Tok.isNot(tok::comma))
+      break;
+
+    ConsumeToken();
+  } while (true);
+
+  // Closing ')'.
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  if (RParenLoc.isInvalid())
+    return;
+
+  if (endLoc)
+    *endLoc = RParenLoc;
+
+  // Record this attribute
+  attrs.add(AttrFactory.Create(&Availability, AvailabilityLoc,
+                               0, SourceLocation(),
+                               Platform, PlatformLoc,
+                               Changes[Introduced],
+                               Changes[Deprecated],
+                               Changes[Obsoleted], false, false));
 }
 
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {

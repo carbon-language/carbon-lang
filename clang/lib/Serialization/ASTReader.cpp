@@ -37,6 +37,7 @@
 #include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -4868,6 +4869,18 @@ std::string ASTReader::ReadString(const RecordData &Record, unsigned &Idx) {
   std::string Result(Record.data() + Idx, Record.data() + Idx + Len);
   Idx += Len;
   return Result;
+}
+
+VersionTuple ASTReader::ReadVersionTuple(const RecordData &Record, 
+                                         unsigned &Idx) {
+  unsigned Major = Record[Idx++];
+  unsigned Minor = Record[Idx++];
+  unsigned Subminor = Record[Idx++];
+  if (Minor == 0)
+    return VersionTuple(Major);
+  if (Subminor == 0)
+    return VersionTuple(Major, Minor - 1);
+  return VersionTuple(Major, Minor - 1, Subminor - 1);
 }
 
 CXXTemporary *ASTReader::ReadCXXTemporary(const RecordData &Record,

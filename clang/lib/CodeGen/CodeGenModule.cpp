@@ -509,7 +509,7 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   if (FD->hasAttr<DLLImportAttr>()) {
     F->setLinkage(llvm::Function::DLLImportLinkage);
   } else if (FD->hasAttr<WeakAttr>() ||
-             FD->hasAttr<WeakImportAttr>()) {
+             FD->isWeakImported()) {
     // "extern_weak" is overloaded in LLVM; we probably should have
     // separate linkage types for this.
     F->setLinkage(llvm::Function::ExternalWeakLinkage);
@@ -986,7 +986,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
     } else {
       if (D->hasAttr<DLLImportAttr>())
         GV->setLinkage(llvm::GlobalValue::DLLImportLinkage);
-      else if (D->hasAttr<WeakAttr>() || D->hasAttr<WeakImportAttr>())
+      else if (D->hasAttr<WeakAttr>() || D->isWeakImported())
         GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 
       // Set visibility on a declaration only if it's explicit.
@@ -1530,7 +1530,7 @@ void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
     }
   } else if (D->hasAttr<WeakAttr>() ||
              D->hasAttr<WeakRefAttr>() ||
-             D->hasAttr<WeakImportAttr>()) {
+             D->isWeakImported()) {
     GA->setLinkage(llvm::Function::WeakAnyLinkage);
   }
 
