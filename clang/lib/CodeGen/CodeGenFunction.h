@@ -1161,14 +1161,14 @@ public:
   ///
   void InitializeVTablePointer(BaseSubobject Base,
                                const CXXRecordDecl *NearestVBase,
-                               uint64_t OffsetFromNearestVBase,
+                               CharUnits OffsetFromNearestVBase,
                                llvm::Constant *VTable,
                                const CXXRecordDecl *VTableClass);
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBasesSetTy;
   void InitializeVTablePointers(BaseSubobject Base,
                                 const CXXRecordDecl *NearestVBase,
-                                uint64_t OffsetFromNearestVBase,
+                                CharUnits OffsetFromNearestVBase,
                                 bool BaseIsNonVirtualPrimaryBase,
                                 llvm::Constant *VTable,
                                 const CXXRecordDecl *VTableClass,
