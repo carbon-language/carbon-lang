@@ -31,6 +31,9 @@ using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldImpl {
+  unsigned CPUType;
+  unsigned CPUSubtype;
+
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here.
   StringMap<void*> SymbolTable;
@@ -52,6 +55,10 @@ class RuntimeDyldImpl {
   bool resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
                          SmallVectorImpl<void *> &SectionBases,
                          SmallVectorImpl<StringRef> &SymbolNames);
+  bool resolveX86_64Relocation(intptr_t Address, intptr_t Value, bool isPCRel,
+                               unsigned Type, unsigned Size);
+  bool resolveARMRelocation(intptr_t Address, intptr_t Value, bool isPCRel,
+                            unsigned Type, unsigned Size);
 
   bool loadSegment32(const MachOObject *Obj,
                      const MachOObject::LoadCommandInfo *SegmentLCI,
@@ -128,6 +135,20 @@ resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
     Value = (intptr_t)SectionBases[SymbolNum - 1];
   }
 
+  unsigned Size = 1 << Log2Size;
+  switch (CPUType) {
+  default: assert(0 && "Unsupported CPU type!");
+  case mach::CTM_x86_64:
+    return resolveX86_64Relocation(Address, Value, isPCRel, Type, Size);
+  case mach::CTM_ARM:
+    return resolveARMRelocation(Address, Value, isPCRel, Type, Size);
+  }
+  llvm_unreachable("");
+}
+
+bool RuntimeDyldImpl::resolveX86_64Relocation(intptr_t Address, intptr_t Value,
+                                              bool isPCRel, unsigned Type,
+                                              unsigned Size) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel)
@@ -142,9 +163,8 @@ resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
   case macho::RIT_X86_64_Branch: {
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
-    unsigned Len = 1 << Log2Size;
     uint8_t *p = (uint8_t*)Address;
-    for (unsigned i = 0; i < Len; ++i) {
+    for (unsigned i = 0; i < Size; ++i) {
       *p++ = (uint8_t)Value;
       Value >>= 8;
     }
@@ -158,6 +178,46 @@ resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
   case macho::RIT_X86_64_Signed2:
   case macho::RIT_X86_64_Signed4:
   case macho::RIT_X86_64_TLV:
+    return Error("Relocation type not implemented yet!");
+  }
+  return false;
+}
+
+bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
+                                           bool isPCRel, unsigned Type,
+                                           unsigned Size) {
+  // If the relocation is PC-relative, the value to be encoded is the
+  // pointer difference.
+  if (isPCRel) {
+    Value -= Address;
+    // ARM PCRel relocations have an effective-PC offset of two instructions
+    // (four bytes in Thumb mode, 8 bytes in ARM mode).
+    // FIXME: For now, assume ARM mode.
+    Value -= 8;
+  }
+
+  switch(Type) {
+  default:
+  case macho::RIT_Vanilla: {
+    llvm_unreachable("Invalid relocation type!");
+    // Mask in the target value a byte at a time (we don't have an alignment
+    // guarantee for the target address, so this is safest).
+    uint8_t *p = (uint8_t*)Address;
+    for (unsigned i = 0; i < Size; ++i) {
+      *p++ = (uint8_t)Value;
+      Value >>= 8;
+    }
+    return false;
+  }
+  case macho::RIT_Pair:
+  case macho::RIT_Difference:
+  case macho::RIT_ARM_LocalDifference:
+  case macho::RIT_ARM_PreboundLazyPointer:
+  case macho::RIT_ARM_Branch24Bit:
+  case macho::RIT_ARM_ThumbBranch22Bit:
+  case macho::RIT_ARM_ThumbBranch32Bit:
+  case macho::RIT_ARM_Half:
+  case macho::RIT_ARM_HalfDifference:
     return Error("Relocation type not implemented yet!");
   }
   return false;
@@ -352,10 +412,18 @@ bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
   if (!Obj)
     return Error("unable to load object: '" + ErrorStr + "'");
 
+  // Get the CPU type information from the header.
+  const macho::Header &Header = Obj->getHeader();
+
+  // FIXME: Error checking that the loaded object is compatible with
+  //        the system we're running on.
+  CPUType = Header.CPUType;
+  CPUSubtype = Header.CPUSubtype;
+
   // Validate that the load commands match what we expect.
   const MachOObject::LoadCommandInfo *SegmentLCI = 0, *SymtabLCI = 0,
     *DysymtabLCI = 0;
-  for (unsigned i = 0; i != Obj->getHeader().NumLoadCommands; ++i) {
+  for (unsigned i = 0; i != Header.NumLoadCommands; ++i) {
     const MachOObject::LoadCommandInfo &LCI = Obj->getLoadCommandInfo(i);
     switch (LCI.Command.Type) {
     case macho::LCT_Segment:
