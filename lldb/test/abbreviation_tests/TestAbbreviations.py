@@ -74,7 +74,7 @@ class AbbreviationsTestCase(TestBase):
         self.expect("fil " + exe,
                     patterns = [ "Current executable set to .*a.out.*" ])
 
-        self.expect("regex product",
+        self.expect("regexp-b product",
                     substrs = [ "breakpoint set --name 'product'",
                                 "Breakpoint created: 1: name = 'product', locations = 1" ])
 
@@ -119,7 +119,7 @@ class AbbreviationsTestCase(TestBase):
                                  "at main.cpp\:25", 
                                  "stop reason = breakpoint 2.1" ])
 
-        self.expect("d -f",
+        self.expect("dis -f",
                     startstr = "a.out`sum(int, int):",
                     substrs = [' push',
                                ' mov',
