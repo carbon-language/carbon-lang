@@ -36,16 +36,25 @@ namespace lldb_private {
         //------------------------------------------------------------
         // lldb_private::PluginInterface functions
         //------------------------------------------------------------
+        static Platform *
+        CreateInstance ();
+
+        static const char *
+        GetPluginNameStatic();
+
+        static const char *
+        GetPluginDescriptionStatic();
+
         virtual const char *
         GetPluginName()
         {
-            return "PlatformLinux";
+            return GetPluginNameStatic();
         }
         
         virtual const char *
         GetShortPluginName()
         {
-            return "platform.linux";
+            return "PlatformLinux";
         }
         
         virtual uint32_t
@@ -53,7 +62,6 @@ namespace lldb_private {
         {
             return 1;
         }
-        
 
         //------------------------------------------------------------
         // lldb_private::Platform functions
@@ -62,6 +70,15 @@ namespace lldb_private {
         ResolveExecutable (const FileSpec &exe_file,
                            const ArchSpec &arch,
                            lldb::ModuleSP &module_sp);
+
+        virtual const char *
+        GetDescription ()
+        {
+            return GetPluginDescriptionStatic();
+        }
+
+        virtual void
+        GetStatus (Stream &strm);
 
         virtual Error
         GetFile (const FileSpec &platform_file, FileSpec &local_file);
@@ -77,12 +94,15 @@ namespace lldb_private {
         virtual bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
 
+        virtual size_t
+        GetSoftwareBreakpointTrapOpcode (Target &target, 
+                                         BreakpointSite *bp_site);
+
     protected:
         
         
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);
-
     };
 } // namespace lldb_private
 

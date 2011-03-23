@@ -10,27 +10,57 @@
 #include "PlatformLinux.h"
 
 // C Includes
+#include <stdio.h>
+#include <sys/utsname.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 
 using namespace lldb;
 using namespace lldb_private;
-    
+
+Platform *
+PlatformLinux::CreateInstance ()
+{
+    return new PlatformLinux();
+}
+
+const char *
+PlatformLinux::GetPluginNameStatic()
+{
+    return "plugin.platform.linux";
+}
+
+const char *
+PlatformLinux::GetPluginDescriptionStatic()
+{
+    return "Default platform plugin for Linux";
+}
+
 void
 PlatformLinux::Initialize ()
 {
-#if defined (__linux__)
-    PlatformSP default_platform_sp (new PlatformLinux());
-    Platform::SetDefaultPlatform (default_platform_sp);
-#endif
+    static bool g_initialized = false;
+
+    if (!g_initialized)
+    {
+        PlatformSP default_platform_sp (CreateInstance());
+        Platform::SetDefaultPlatform (default_platform_sp);
+        PluginManager::RegisterPlugin(GetPluginNameStatic(),
+                                      GetPluginDescriptionStatic(),
+                                      CreateInstance);
+        g_initialized = true;
+    }
 }
 
 void
@@ -146,7 +176,7 @@ PlatformLinux::GetFile (const FileSpec &platform_file, FileSpec &local_file)
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformLinux::PlatformLinux () :
-    Platform()
+    Platform(true)
 {
 }
 
@@ -183,4 +213,44 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
         return arch.IsValid();
     }
     return false;
+}
+
+void
+PlatformLinux::GetStatus (Stream &strm)
+{
+    struct utsname un;
+
+    if (uname(&un)) {
+        strm << "Linux";
+        return;
+    }
+
+    strm << un.sysname << ' ' << un.release << ' ' << un.version << '\n';
+}
+
+size_t
+PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target, 
+                                                BreakpointSite *bp_site)
+{
+    static const uint8_t g_i386_opcode[] = { 0xCC };
+
+    ArchSpec arch = target.GetArchitecture();
+    const uint8_t *opcode = NULL;
+    size_t opcode_size = 0;
+
+    switch (arch.GetCore())
+    {
+    default:
+        assert(false && "CPU type not supported!");
+        break;
+
+    case ArchSpec::eCore_x86_32_i386:
+    case ArchSpec::eCore_x86_64_x86_64:
+        opcode = g_i386_opcode;
+        opcode_size = sizeof(g_i386_opcode);
+        break;
+    }
+
+    bp_site->SetTrapOpcode(opcode, opcode_size);
+    return opcode_size;
 }
