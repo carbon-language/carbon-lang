@@ -207,13 +207,28 @@ bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
       *p++ = (uint8_t)Value;
       Value >>= 8;
     }
-    return false;
+    break;
   }
   case macho::RIT_Pair:
   case macho::RIT_Difference:
   case macho::RIT_ARM_LocalDifference:
   case macho::RIT_ARM_PreboundLazyPointer:
-  case macho::RIT_ARM_Branch24Bit:
+  case macho::RIT_ARM_Branch24Bit: {
+    // Mask the value into the target address. We know instructions are
+    // 32-bit aligned, so we can do it all at once.
+    uint32_t *p = (uint32_t*)Address;
+    // The low two bits of the value are not encoded.
+    Value >>= 2;
+    // Mask the value to 24 bits.
+    Value &= 0xffffff;
+    // FIXME: If the destination is a Thumb function (and the instruction
+    // is a non-predicated BL instruction), we need to change it to a BLX
+    // instruction instead.
+
+    // Insert the value into the instruction.
+    *p = (*p & ~0xffffff) | Value;
+    break;
+  }
   case macho::RIT_ARM_ThumbBranch22Bit:
   case macho::RIT_ARM_ThumbBranch32Bit:
   case macho::RIT_ARM_Half:
@@ -243,7 +258,11 @@ loadSegment32(const MachOObject *Obj,
   memset((char*)Data.base() + Segment32LC->FileSize, 0,
          Segment32LC->VMSize - Segment32LC->FileSize);
 
-  // Bind the section indices to address.
+  // Bind the section indices to addresses and record the relocations we
+  // need to resolve.
+  typedef std::pair<uint32_t, macho::RelocationEntry> RelocationMap;
+  SmallVector<RelocationMap, 64> Relocations;
+
   SmallVector<void *, 16> SectionBases;
   for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
     InMemoryStruct<macho::Section> Sect;
@@ -251,32 +270,41 @@ loadSegment32(const MachOObject *Obj,
     if (!Sect)
       return Error("unable to load section: '" + Twine(i) + "'");
 
-    // FIXME: We don't support relocations yet.
-    if (Sect->NumRelocationTableEntries != 0)
-      return Error("not yet implemented: relocations!");
+    // Remember any relocations the section has so we can resolve them later.
+    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
+      InMemoryStruct<macho::RelocationEntry> RE;
+      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
+      Relocations.push_back(RelocationMap(j, *RE));
+    }
 
     // FIXME: Improve check.
-    if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
+//    if (Sect->Flags != 0x80000400)
+//      return Error("unsupported section type!");
 
     SectionBases.push_back((char*) Data.base() + Sect->Address);
   }
 
-  // Bind all the symbols to address.
+  // Bind all the symbols to address. Keep a record of the names for use
+  // by relocation resolution.
+  SmallVector<StringRef, 64> SymbolNames;
   for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
     InMemoryStruct<macho::SymbolTableEntry> STE;
     Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
     if (!STE)
       return Error("unable to read symbol: '" + Twine(i) + "'");
+    // Get the symbol name.
+    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+    SymbolNames.push_back(Name);
+
+    // Just skip undefined symbols. They'll be loaded from whatever
+    // module they come from (or system dylib) when we resolve relocations
+    // involving them.
     if (STE->SectionIndex == 0)
-      return Error("unexpected undefined symbol!");
+      continue;
 
     unsigned Index = STE->SectionIndex - 1;
     if (Index >= Segment32LC->NumSections)
       return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
 
     // Get the section base address.
     void *SectionBase = SectionBases[Index];
@@ -293,6 +321,13 @@ loadSegment32(const MachOObject *Obj,
     DEBUG(dbgs() << "Symbol: '" << Name << "' @ " << Address << "\n");
 
     SymbolTable[Name] = Address;
+  }
+
+  // Now resolve any relocations.
+  for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
+    if (resolveRelocation(Relocations[i].first, Relocations[i].second,
+                          SectionBases, SymbolNames))
+      return true;
   }
 
   // We've loaded the section; now mark the functions in it as executable.
@@ -335,7 +370,7 @@ loadSegment64(const MachOObject *Obj,
     if (!Sect)
       return Error("unable to load section: '" + Twine(i) + "'");
 
-    // Resolve any relocations the section has.
+    // Remember any relocations the section has so we can resolve them later.
     for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
       InMemoryStruct<macho::RelocationEntry> RE;
       Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
