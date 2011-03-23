@@ -78,7 +78,6 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
   }
 
   // Initialize passes.
-  ExecutionEngine::addModule(M);
   // FIXME: When we support multiple modules, we'll want to move the code
   // gen and finalization out of the constructor here and do it more
   // on-demand as part of getPointerToFunction().
