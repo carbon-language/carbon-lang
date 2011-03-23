@@ -278,6 +278,7 @@ class recording(StringIO.StringIO):
         self.close()
 
 # From 2.7's subprocess.check_output() convenience function.
+# Return a tuple (stdoutdata, stderrdata).
 def system(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
 
@@ -304,7 +305,7 @@ def system(*popenargs, **kwargs):
 
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
-    process = Popen(stdout=PIPE, *popenargs, **kwargs)
+    process = Popen(stdout=PIPE, stderr=PIPE, *popenargs, **kwargs)
     output, error = process.communicate()
     retcode = process.poll()
 
@@ -325,7 +326,7 @@ def system(*popenargs, **kwargs):
         if cmd is None:
             cmd = popenargs[0]
         raise CalledProcessError(retcode, cmd)
-    return output
+    return (output, error)
 
 def getsource_if_available(obj):
     """

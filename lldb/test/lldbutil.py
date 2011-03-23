@@ -3,8 +3,24 @@ This LLDB module contains miscellaneous utilities.
 """
 
 import lldb
-import sys
+import os, sys
 import StringIO
+
+def is_exe(fpath):
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+# Find the full path to a program, or return None.
+def which(program):
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
 
 # ===========================================
 # Iterator for lldb aggregate data structures

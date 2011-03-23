@@ -43,7 +43,7 @@ class CppVirtualMadness(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./a.out", sender=self)
+        go = system("./a.out", sender=self)[0]
         # This golden list contains a list of "my_expr = 'value' pairs extracted
         # from the golden output.
         gl = []
