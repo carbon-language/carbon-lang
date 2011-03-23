@@ -63,7 +63,7 @@
        return NULL;
    }
    $2 = PyInt_AsLong($input);
-   if ($2 < 0) {
+   if ($2 <= 0) {
        PyErr_SetString(PyExc_ValueError, "Positive integer expected");
        return NULL;
    }
@@ -98,7 +98,7 @@
        return NULL;
    }
    $2 = PyInt_AsLong($input);
-   if ($2 < 0) {
+   if ($2 <= 0) {
        PyErr_SetString(PyExc_ValueError, "Positive integer expected");
        return NULL;
    }
