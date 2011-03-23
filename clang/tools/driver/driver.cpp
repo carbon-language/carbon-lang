@@ -18,6 +18,7 @@
 #include "clang/Frontend/DiagnosticOptions.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -448,8 +449,7 @@ int main(int argc_, const char **argv_) {
     argv.insert(&argv[1], ExtraArgs.begin(), ExtraArgs.end());
   }
 
-  llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv.size(),
-                                                            &argv[0]));
+  llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
   if (C.get())
     Res = TheDriver.ExecuteCompilation(*C);

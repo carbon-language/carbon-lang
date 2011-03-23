@@ -36,6 +36,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Atomic.h"
@@ -1661,10 +1662,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     // Don't check that inputs exist, they have been remapped.
     TheDriver.setCheckInputsExist(false);
 
-    llvm::OwningPtr<driver::Compilation> C(
-      TheDriver.BuildCompilation(
-        Args->size(),
-        Args->size() ? &(*Args)[0] : 0 ));  // std::vector::data() not portable
+    llvm::OwningPtr<driver::Compilation> C(TheDriver.BuildCompilation(*Args));
 
     // Just print the cc1 options if -### was present.
     if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {

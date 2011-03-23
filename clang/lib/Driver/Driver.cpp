@@ -30,6 +30,7 @@
 #include "clang/Basic/Version.h"
 
 #include "llvm/Config/config.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -100,11 +101,10 @@ Driver::~Driver() {
   delete Host;
 }
 
-InputArgList *Driver::ParseArgStrings(const char **ArgBegin,
-                                      const char **ArgEnd) {
+InputArgList *Driver::ParseArgStrings(llvm::ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
   unsigned MissingArgIndex, MissingArgCount;
-  InputArgList *Args = getOpts().ParseArgs(ArgBegin, ArgEnd,
+  InputArgList *Args = getOpts().ParseArgs(ArgList.begin(), ArgList.end(),
                                            MissingArgIndex, MissingArgCount);
 
   // Check for missing argument error.
@@ -206,7 +206,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   return DAL;
 }
 
-Compilation *Driver::BuildCompilation(int argc, const char **argv) {
+Compilation *Driver::BuildCompilation(llvm::ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
   // FIXME: Handle environment options which effect driver behavior, somewhere
@@ -218,9 +218,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   // FIXME: This stuff needs to go into the Compilation, not the driver.
   bool CCCPrintOptions = false, CCCPrintActions = false;
 
-  const char **Start = argv + 1, **End = argv + argc;
-
-  InputArgList *Args = ParseArgStrings(Start, End);
+  InputArgList *Args = ParseArgStrings(ArgList.slice(1));
 
   // -no-canonical-prefixes is used very early in main.
   Args->ClaimAllArgs(options::OPT_no_canonical_prefixes);
