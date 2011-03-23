@@ -1662,7 +1662,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     TheDriver.setCheckInputsExist(false);
 
     llvm::OwningPtr<driver::Compilation> C(
-      TheDriver.BuildCompilation(Args->size(), Args->data()));
+      TheDriver.BuildCompilation(
+        Args->size(),
+        Args->size() ? &(*Args)[0] : 0 ));  // std::vector::data() not portable
 
     // Just print the cc1 options if -### was present.
     if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
