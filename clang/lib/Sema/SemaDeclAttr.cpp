@@ -3095,7 +3095,7 @@ void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
 
   // Destroy all the delayed diagnostics we're about to pop off.
   for (unsigned i = state.SavedStackSize, e = DD.StackSize; i != e; ++i)
-    DD.Stack[i].destroy();
+    DD.Stack[i].Destroy();
 
   DD.StackSize = state.SavedStackSize;
 }

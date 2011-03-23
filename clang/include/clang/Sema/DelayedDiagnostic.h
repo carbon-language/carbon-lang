@@ -119,25 +119,11 @@ public:
 
   SourceLocation Loc;
 
-  void destroy() {
-    switch (Kind) {
-    case Access: getAccessData().~AccessedEntity(); break;
-    case Deprecation: break;
-    }
-  }
+  void Destroy();
 
   static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
                                            const NamedDecl *D,
-                                           llvm::StringRef Msg) {
-    DelayedDiagnostic DD;
-    DD.Kind = Deprecation;
-    DD.Triggered = false;
-    DD.Loc = Loc;
-    DD.DeprecationData.Decl = D;
-    DD.DeprecationData.Message = Msg.data();
-    DD.DeprecationData.MessageLen = Msg.size();
-    return DD;
-  }
+                                           llvm::StringRef Msg);
 
   static DelayedDiagnostic makeAccess(SourceLocation Loc,
                                       const AccessedEntity &Entity) {
