@@ -107,13 +107,15 @@ class LazyRuntimeFunction {
  * GNUstep).
  */
 class CGObjCGNU : public CGObjCRuntime {
-private:
+protected:
   CodeGenModule &CGM;
   llvm::Module &TheModule;
+  const llvm::StructType *ObjCSuperTy;
+  const llvm::PointerType *PtrToObjCSuperTy;
   const llvm::PointerType *SelectorTy;
   const llvm::IntegerType *Int8Ty;
   const llvm::PointerType *PtrToInt8Ty;
-  const llvm::FunctionType *IMPTy;
+  const llvm::PointerType *IMPTy;
   const llvm::PointerType *IdTy;
   const llvm::PointerType *PtrToIdTy;
   CanQualType ASTIdTy;
@@ -124,13 +126,37 @@ private:
   const llvm::IntegerType *PtrDiffTy;
   const llvm::PointerType *PtrToIntTy;
   const llvm::Type *BoolTy;
+  /// Metadata kind used to tie method lookups to message sends.
+  unsigned msgSendMDKind;
+  llvm::Constant *MakeConstantString(const std::string &Str, const std::string
+
+      &Name="");
+  llvm::Constant *ExportUniqueString(const std::string &Str, const std::string
+          prefix);
+  llvm::GlobalVariable *MakeGlobal(const llvm::StructType *Ty,
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
+    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
+  llvm::GlobalVariable *MakeGlobal(const llvm::ArrayType *Ty,
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
+    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
+  llvm::GlobalVariable *MakeGlobalArray(const llvm::Type *Ty,
+    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
+    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
+  llvm::Value* EnforceType(CGBuilderTy B, llvm::Value *V, const llvm::Type *Ty){
+    if (V->getType() == Ty) return V;
+    return B.CreateBitCast(V, Ty);
+  }
+  // Some zeros used for GEPs in lots of places.
+  llvm::Constant *Zeros[2];
+  llvm::Constant *NULLPtr;
+  llvm::LLVMContext &VMContext;
+private:
   llvm::GlobalAlias *ClassPtrAlias;
   llvm::GlobalAlias *MetaClassPtrAlias;
   std::vector<llvm::Constant*> Classes;
   std::vector<llvm::Constant*> Categories;
   std::vector<llvm::Constant*> ConstantStrings;
   llvm::StringMap<llvm::Constant*> ObjCStrings;
-  llvm::Function *LoadFunction;
   llvm::StringMap<llvm::Constant*> ExistingProtocols;
   /**
    * For each variant of a selector, we store the type encoding and a
@@ -153,10 +179,6 @@ private:
   // Functions used for GC.
   LazyRuntimeFunction IvarAssignFn, StrongCastAssignFn, MemMoveFn, WeakReadFn, 
     WeakAssignFn, GlobalAssignFn;
-  // Some zeros used for GEPs in lots of places.
-  llvm::Constant *Zeros[2];
-  llvm::Constant *NULLPtr;
-  llvm::LLVMContext &VMContext;
 
   LazyRuntimeFunction ExceptionThrowFn;
   LazyRuntimeFunction SyncEnterFn;
@@ -174,8 +196,6 @@ private:
   // The version of the protocol class.  Used to differentiate between ObjC1
   // and ObjC2 protocols.
   const int ProtocolVersion;
-  /// Metadata kind used to tie method lookups to message sends.
-  unsigned msgSendMDKind;
 private:
   llvm::Constant *GenerateIvarList(
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
@@ -214,28 +234,18 @@ private:
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes);
   llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
     const std::string &TypeEncoding, bool lval);
-  llvm::Constant *MakeConstantString(const std::string &Str, const std::string
-
-      &Name="");
-  llvm::Constant *ExportUniqueString(const std::string &Str, const std::string
-          prefix);
-  llvm::GlobalVariable *MakeGlobal(const llvm::StructType *Ty,
-    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
-    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
-  llvm::GlobalVariable *MakeGlobal(const llvm::ArrayType *Ty,
-    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
-    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
-  llvm::GlobalVariable *MakeGlobalArray(const llvm::Type *Ty,
-    std::vector<llvm::Constant*> &V, llvm::StringRef Name="",
-    llvm::GlobalValue::LinkageTypes linkage=llvm::GlobalValue::InternalLinkage);
   llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
       const ObjCIvarDecl *Ivar);
   void EmitClassRef(const std::string &className);
-  llvm::Value* EnforceType(CGBuilderTy B, llvm::Value *V, const llvm::Type *Ty){
-    if (V->getType() == Ty) return V;
-    return B.CreateBitCast(V, Ty);
-  }
   void EmitObjCXXTryStmt(CodeGenFunction &CGF, const ObjCAtTryStmt &S);
+protected:
+  virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
+                                 llvm::Value *&Receiver,
+                                 llvm::Value *cmd,
+                                 llvm::MDNode *node) = 0;
+  virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
+                                      llvm::Value *ObjCSuper,
+                                      llvm::Value *cmd) = 0;
 public:
   CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
       unsigned protocolClassVersion);
@@ -330,15 +340,130 @@ public:
  * ignored by GCC libobjc.
  */
 class CGObjCGCC : public CGObjCGNU {
+  /**
+   * The GCC ABI message lookup function.  Returns an IMP pointing to the
+   * method implementation for this message.
+   */
+  LazyRuntimeFunction MsgLookupFn;
+  /**
+   * The GCC ABI superclass message lookup function.  Takes a pointer to a
+   * structure describing the receiver and the class, and a selector as
+   * arguments.  Returns the IMP for the corresponding method.
+   */
+  LazyRuntimeFunction MsgLookupSuperFn;
+protected:
+  virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
+                                 llvm::Value *&Receiver,
+                                 llvm::Value *cmd,
+                                 llvm::MDNode *node) {
+    CGBuilderTy &Builder = CGF.Builder;
+    llvm::Value *imp = Builder.CreateCall2(MsgLookupFn, 
+            EnforceType(Builder, Receiver, IdTy),
+            EnforceType(Builder, cmd, SelectorTy));
+    cast<llvm::CallInst>(imp)->setMetadata(msgSendMDKind, node);
+    return imp;
+  }
+  virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
+                                      llvm::Value *ObjCSuper,
+                                      llvm::Value *cmd) {
+      CGBuilderTy &Builder = CGF.Builder;
+      llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
+          PtrToObjCSuperTy), cmd};
+      return Builder.CreateCall(MsgLookupSuperFn, lookupArgs, lookupArgs+2);
+    }
   public:
-    CGObjCGCC(CodeGenModule &Mod) : CGObjCGNU(Mod, 8, 2) {}
+    CGObjCGCC(CodeGenModule &Mod) : CGObjCGNU(Mod, 8, 2) {
+      // IMP objc_msg_lookup(id, SEL);
+      MsgLookupFn.init(&CGM, "objc_msg_lookup", IMPTy, IdTy, SelectorTy, NULL);
+      // IMP objc_msg_lookup_super(struct objc_super*, SEL);
+      MsgLookupSuperFn.init(&CGM, "objc_msg_lookup_super", IMPTy,
+              PtrToObjCSuperTy, SelectorTy, NULL);
+    }
 };
 /**
  * Class used when targeting the new GNUstep runtime ABI.
  */
 class CGObjCGNUstep : public CGObjCGNU {
+    /**
+     * The slot lookup function.  Returns a pointer to a cacheable structure
+     * that contains (among other things) the IMP.
+     */
+    LazyRuntimeFunction SlotLookupFn;
+    /**
+     * The GNUstep ABI superclass message lookup function.  Takes a pointer to
+     * a structure describing the receiver and the class, and a selector as
+     * arguments.  Returns the slot for the corresponding method.  Superclass
+     * message lookup rarely changes, so this is a good caching opportunity.
+     */
+    LazyRuntimeFunction SlotLookupSuperFn;
+    /**
+     * Type of an slot structure pointer.  This is returned by the various
+     * lookup functions.
+     */
+    llvm::Type *SlotTy;
+  protected:
+    virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
+                                   llvm::Value *&Receiver,
+                                   llvm::Value *cmd,
+                                   llvm::MDNode *node) {
+      CGBuilderTy &Builder = CGF.Builder;
+      llvm::Function *LookupFn = SlotLookupFn;
+
+      // Store the receiver on the stack so that we can reload it later
+      llvm::Value *ReceiverPtr = CGF.CreateTempAlloca(Receiver->getType());
+      Builder.CreateStore(Receiver, ReceiverPtr);
+
+      llvm::Value *self;
+
+      if (isa<ObjCMethodDecl>(CGF.CurCodeDecl)) {
+        self = CGF.LoadObjCSelf();
+      } else {
+        self = llvm::ConstantPointerNull::get(IdTy);
+      }
+
+      // The lookup function is guaranteed not to capture the receiver pointer.
+      LookupFn->setDoesNotCapture(1);
+
+      llvm::CallInst *slot =
+          Builder.CreateCall3(LookupFn,
+              EnforceType(Builder, ReceiverPtr, PtrToIdTy),
+              EnforceType(Builder, cmd, SelectorTy),
+              EnforceType(Builder, self, IdTy));
+      slot->setOnlyReadsMemory();
+      slot->setMetadata(msgSendMDKind, node);
+
+      // Load the imp from the slot
+      llvm::Value *imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
+
+      // The lookup function may have changed the receiver, so make sure we use
+      // the new one.
+      Receiver = Builder.CreateLoad(ReceiverPtr, true);
+      return imp;
+    }
+    virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
+                                        llvm::Value *ObjCSuper,
+                                        llvm::Value *cmd) {
+      CGBuilderTy &Builder = CGF.Builder;
+      llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
+
+      llvm::CallInst *slot = Builder.CreateCall(SlotLookupSuperFn, lookupArgs,
+          lookupArgs+2);
+      slot->setOnlyReadsMemory();
+
+      return Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
+    }
   public:
-    CGObjCGNUstep(CodeGenModule &Mod) : CGObjCGNU(Mod, 9, 3) {}
+    CGObjCGNUstep(CodeGenModule &Mod) : CGObjCGNU(Mod, 9, 3) {
+      llvm::StructType *SlotStructTy = llvm::StructType::get(VMContext, PtrTy,
+          PtrTy, PtrTy, IntTy, IMPTy, NULL);
+      SlotTy = llvm::PointerType::getUnqual(SlotStructTy);
+      // Slot_t objc_msg_lookup_sender(id *receiver, SEL selector, id sender);
+      SlotLookupFn.init(&CGM, "objc_msg_lookup_sender", SlotTy, PtrToIdTy,
+          SelectorTy, IdTy, NULL);
+      // Slot_t objc_msg_lookup_super(struct objc_super*, SEL);
+      SlotLookupSuperFn.init(&CGM, "objc_slot_lookup_super", SlotTy,
+              PtrToObjCSuperTy, SelectorTy, NULL);
+    }
 };
 
 } // end anonymous namespace
@@ -374,9 +499,9 @@ static std::string SymbolNameForMethod(const llvm::StringRef &ClassName,
 
 CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
     unsigned protocolClassVersion)
-  : CGM(cgm), TheModule(CGM.getModule()), ClassPtrAlias(0),
-   MetaClassPtrAlias(0), VMContext(cgm.getLLVMContext()),
-   RuntimeVersion(runtimeABIVersion), ProtocolVersion(protocolClassVersion) {
+  : CGM(cgm), TheModule(CGM.getModule()), VMContext(cgm.getLLVMContext()),
+  ClassPtrAlias(0), MetaClassPtrAlias(0), RuntimeVersion(runtimeABIVersion),
+  ProtocolVersion(protocolClassVersion) {
     
 
   msgSendMDKind = VMContext.getMDKindID("GNUObjCMessageSend");
@@ -419,6 +544,9 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   }
   PtrToIdTy = llvm::PointerType::getUnqual(IdTy);
 
+  ObjCSuperTy = llvm::StructType::get(VMContext, IdTy, IdTy, NULL);
+  PtrToObjCSuperTy = llvm::PointerType::getUnqual(ObjCSuperTy);
+
   const llvm::Type *VoidTy = llvm::Type::getVoidTy(VMContext);
 
   // void objc_exception_throw(id);
@@ -449,7 +577,8 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   std::vector<const llvm::Type*> IMPArgs;
   IMPArgs.push_back(IdTy);
   IMPArgs.push_back(SelectorTy);
-  IMPTy = llvm::FunctionType::get(IdTy, IMPArgs, true);
+  IMPTy = llvm::PointerType::getUnqual(llvm::FunctionType::get(IdTy, IMPArgs,
+              true));
 
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
     // Get selectors needed in GC mode
@@ -514,16 +643,19 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
     }
   }
   if (0 == SelValue) {
-    SelValue = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
+    SelValue = new llvm::GlobalAlias(SelectorTy,
                                      llvm::GlobalValue::PrivateLinkage,
                                      ".objc_selector_"+Sel.getAsString(), NULL,
                                      &TheModule);
     Types.push_back(TypedSelector(TypeEncoding, SelValue));
   }
 
-  if (lval)
-    return SelValue;
-  return Builder.CreateLoad(SelValue);
+  if (lval) {
+    llvm::Value *tmp = Builder.CreateAlloca(SelValue->getType());
+    Builder.CreateStore(SelValue, tmp);
+    return tmp;
+  }
+  return SelValue;
 }
 
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
@@ -688,7 +820,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   CallArgList ActualArgs;
 
   ActualArgs.push_back(
-      std::make_pair(RValue::get(Builder.CreateBitCast(Receiver, IdTy)),
+      std::make_pair(RValue::get(EnforceType(Builder, Receiver, IdTy)),
       ASTIdTy));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
                                       CGF.getContext().getObjCSelType()));
@@ -697,8 +829,6 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
                                                        FunctionType::ExtInfo());
-  const llvm::FunctionType *impType =
-    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   llvm::Value *ReceiverClass = 0;
   if (isCategoryImpl) {
@@ -752,36 +882,13 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuper, 0));
   Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
 
+  ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
+  const llvm::FunctionType *impType =
+    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
+
   // Get the IMP
-  std::vector<const llvm::Type*> Params;
-  Params.push_back(llvm::PointerType::getUnqual(ObjCSuperTy));
-  Params.push_back(SelectorTy);
-
-  llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
-  llvm::Value *imp;
-
-  if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
-    // The lookup function returns a slot, which can be safely cached.
-    llvm::Type *SlotTy = llvm::StructType::get(VMContext, PtrTy, PtrTy, PtrTy,
-            IntTy, llvm::PointerType::getUnqual(impType), NULL);
-
-    llvm::Constant *lookupFunction =
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-            llvm::PointerType::getUnqual(SlotTy), Params, true),
-          "objc_slot_lookup_super");
-
-    llvm::CallInst *slot = Builder.CreateCall(lookupFunction, lookupArgs,
-        lookupArgs+2);
-    slot->setOnlyReadsMemory();
-
-    imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
-  } else {
-  llvm::Constant *lookupFunction =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-          llvm::PointerType::getUnqual(impType), Params, true),
-        "objc_msg_lookup_super");
-    imp = Builder.CreateCall(lookupFunction, lookupArgs, lookupArgs+2);
-  }
+  llvm::Value *imp = LookupIMPSuper(CGF, ObjCSuper, cmd);
+  imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
 
   llvm::Value *impMD[] = {
       llvm::MDString::get(VMContext, Sel.getAsString()),
@@ -828,11 +935,10 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   // paragraph and insist on sending messages to nil that have structure
   // returns.  With GCC, this generates a random return value (whatever happens
   // to be on the stack / in those registers at the time) on most platforms,
-  // and generates a SegV on SPARC.  With LLVM it corrupts the stack.  
-  bool isPointerSizedReturn = false;
-  if (ResultType->isAnyPointerType() || 
-      ResultType->isIntegralOrEnumerationType() || ResultType->isVoidType())
-    isPointerSizedReturn = true;
+  // and generates an illegal instruction trap on SPARC.  With LLVM it corrupts
+  // the stack.  
+  bool isPointerSizedReturn = (ResultType->isAnyPointerType() ||
+      ResultType->isIntegralOrEnumerationType() || ResultType->isVoidType());
 
   llvm::BasicBlock *startBB = 0;
   llvm::BasicBlock *messageBB = 0;
@@ -855,9 +961,20 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
     cmd = GetSelector(Builder, Method);
   else
     cmd = GetSelector(Builder, Sel);
-  CallArgList ActualArgs;
+  cmd = EnforceType(Builder, cmd, SelectorTy);
+  Receiver = EnforceType(Builder, Receiver, IdTy);
 
-  Receiver = Builder.CreateBitCast(Receiver, IdTy);
+  llvm::Value *impMD[] = {
+        llvm::MDString::get(VMContext, Sel.getAsString()),
+        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
+        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
+   };
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+
+  // Get the IMP to call
+  llvm::Value *imp = LookupIMP(CGF, Receiver, cmd, node);
+
+  CallArgList ActualArgs;
   ActualArgs.push_back(
     std::make_pair(RValue::get(Receiver), ASTIdTy));
   ActualArgs.push_back(std::make_pair(RValue::get(cmd),
@@ -869,72 +986,12 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
                                                        FunctionType::ExtInfo());
   const llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
-
-  llvm::Value *impMD[] = {
-        llvm::MDString::get(VMContext, Sel.getAsString()),
-        llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
-        llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
-   };
-  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+  imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
 
 
-  llvm::Value *imp;
   // For sender-aware dispatch, we pass the sender as the third argument to a
   // lookup function.  When sending messages from C code, the sender is nil.
   // objc_msg_lookup_sender(id *receiver, SEL selector, id sender);
-  if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
-
-    std::vector<const llvm::Type*> Params;
-    llvm::Value *ReceiverPtr = CGF.CreateTempAlloca(Receiver->getType());
-    Builder.CreateStore(Receiver, ReceiverPtr);
-    Params.push_back(ReceiverPtr->getType());
-    Params.push_back(SelectorTy);
-    llvm::Value *self;
-
-    if (isa<ObjCMethodDecl>(CGF.CurCodeDecl)) {
-      self = CGF.LoadObjCSelf();
-    } else {
-      self = llvm::ConstantPointerNull::get(IdTy);
-    }
-
-    Params.push_back(self->getType());
-
-    // The lookup function returns a slot, which can be safely cached.
-    llvm::Type *SlotTy = llvm::StructType::get(VMContext, PtrTy, PtrTy, PtrTy,
-            IntTy, llvm::PointerType::getUnqual(impType), NULL);
-    llvm::Constant *lookupFunction =
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-          llvm::PointerType::getUnqual(SlotTy), Params, true),
-        "objc_msg_lookup_sender");
-
-    // The lookup function is guaranteed not to capture the receiver pointer.
-    if (llvm::Function *LookupFn = dyn_cast<llvm::Function>(lookupFunction)) {
-      LookupFn->setDoesNotCapture(1);
-    }
-
-    llvm::CallInst *slot =
-        Builder.CreateCall3(lookupFunction, ReceiverPtr, cmd, self);
-    slot->setOnlyReadsMemory();
-    slot->setMetadata(msgSendMDKind, node);
-
-    imp = Builder.CreateLoad(Builder.CreateStructGEP(slot, 4));
-
-    // The lookup function may have changed the receiver, so make sure we use
-    // the new one.
-    ActualArgs[0] = std::make_pair(RValue::get(
-        Builder.CreateLoad(ReceiverPtr, true)), ASTIdTy);
-  } else {
-    std::vector<const llvm::Type*> Params;
-    Params.push_back(Receiver->getType());
-    Params.push_back(SelectorTy);
-    llvm::Constant *lookupFunction =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-        llvm::PointerType::getUnqual(impType), Params, true),
-      "objc_msg_lookup");
-
-    imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
-    cast<llvm::CallInst>(imp)->setMetadata(msgSendMDKind, node);
-  }
   llvm::Instruction *call;
   RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
       0, &call);
@@ -991,7 +1048,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const llvm::StringRef &ClassName,
   llvm::StructType *ObjCMethodTy = llvm::StructType::get(VMContext,
     PtrToInt8Ty, // Really a selector, but the runtime creates it us.
     PtrToInt8Ty, // Method types
-    llvm::PointerType::getUnqual(IMPTy), //Method pointer
+    IMPTy, //Method pointer
     NULL);
   std::vector<llvm::Constant*> Methods;
   std::vector<llvm::Constant*> Elements;
@@ -1006,7 +1063,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const llvm::StringRef &ClassName,
     Elements.push_back(C);
     Elements.push_back(MethodTypes[i]);
     Method = llvm::ConstantExpr::getBitCast(Method,
-        llvm::PointerType::getUnqual(IMPTy));
+        IMPTy);
     Elements.push_back(Method);
     Methods.push_back(llvm::ConstantStruct::get(ObjCMethodTy, Elements));
   }
@@ -1906,16 +1963,11 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), i), Zeros[0]};
     // FIXME: We're generating redundant loads and stores here!
-    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
-      true, llvm::GlobalValue::InternalLinkage,
-      llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-      ".objc_sel_ptr");
+    llvm::Constant *SelPtr = llvm::ConstantExpr::getGetElementPtr(SelectorList,
+        Idxs, 2);
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
-    if (isSelOpaque) {
-      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
-        llvm::PointerType::getUnqual(SelectorTy));
-    }
+    SelPtr = llvm::ConstantExpr::getBitCast(SelPtr, SelectorTy);
     SelectorAliases[i]->replaceAllUsesWith(SelPtr);
     SelectorAliases[i]->eraseFromParent();
   }
