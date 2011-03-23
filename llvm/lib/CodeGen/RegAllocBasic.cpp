@@ -289,6 +289,8 @@ void RegAllocBase::allocatePhysRegs() {
 
   // Continue assigning vregs one at a time to available physical registers.
   while (LiveInterval *VirtReg = dequeue()) {
+    assert(!VRM->hasPhys(VirtReg->reg) && "Register already assigned");
+
     // Unused registers can appear when the spiller coalesces snippets.
     if (MRI->reg_nodbg_empty(VirtReg->reg)) {
       DEBUG(dbgs() << "Dropping unused " << *VirtReg << '\n');
@@ -315,7 +317,12 @@ void RegAllocBase::allocatePhysRegs() {
     for (VirtRegVec::iterator I = SplitVRegs.begin(), E = SplitVRegs.end();
          I != E; ++I) {
       LiveInterval *SplitVirtReg = *I;
-      if (SplitVirtReg->empty()) continue;
+      assert(!VRM->hasPhys(SplitVirtReg->reg) && "Register already assigned");
+      if (MRI->reg_nodbg_empty(SplitVirtReg->reg)) {
+        DEBUG(dbgs() << "not queueing unused  " << *SplitVirtReg << '\n');
+        LIS->removeInterval(SplitVirtReg->reg);
+        continue;
+      }
       DEBUG(dbgs() << "queuing new interval: " << *SplitVirtReg << "\n");
       assert(TargetRegisterInfo::isVirtualRegister(SplitVirtReg->reg) &&
              "expect split value in virtual register");
