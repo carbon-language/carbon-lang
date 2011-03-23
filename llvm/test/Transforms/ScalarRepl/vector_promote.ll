@@ -171,3 +171,19 @@ define void @test11(<2 x i64> %x) {
 ; CHECK: @test11
 ; CHECK-NOT: alloca
 }
+
+define void @test12() {
+entry:
+  %a = alloca <64 x i8>, align 64
+  store <64 x i8> undef, <64 x i8>* %a, align 64
+  %p = bitcast <64 x i8>* %a to <16 x i8>*
+  %0 = load <16 x i8>* %p, align 64
+  store <16 x i8> undef, <16 x i8>* %p, align 64
+  %q = bitcast <16 x i8>* %p to <64 x i8>*
+  %1 = load <64 x i8>* %q, align 64
+  ret void
+; CHECK: @test12
+; CHECK-NOT: alloca
+; CHECK: extractelement <4 x i128>
+; CHECK: insertelement <4 x i128>
+}

@@ -654,18 +654,18 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
 /// getScaledElementType - Gets a scaled element type for a partial vector
 /// access of an alloca. The input type must be an integer or float, and
 /// the resulting type must be an integer, float or double.
-static const Type *getScaledElementType(const Type *OldTy, unsigned Scale) {
+static const Type *getScaledElementType(const Type *OldTy,
+                                        unsigned NewBitWidth) {
   assert((OldTy->isIntegerTy() || OldTy->isFloatTy()) && "Partial vector "
          "accesses must be scaled from integer or float elements.");
 
   LLVMContext &Context = OldTy->getContext();
-  unsigned Size = OldTy->getPrimitiveSizeInBits() * Scale;
 
   if (OldTy->isIntegerTy())
-    return Type::getIntNTy(Context, Size);
-  if (Size == 32)
+    return Type::getIntNTy(Context, NewBitWidth);
+  if (NewBitWidth == 32)
     return Type::getFloatTy(Context);
-  if (Size == 64)
+  if (NewBitWidth == 64)
     return Type::getDoubleTy(Context);
 
   llvm_unreachable("Invalid type for a partial vector access of an alloca!");
@@ -703,9 +703,9 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
                             "from a nonzero offset.");
 
       const Type *ToElementTy = cast<VectorType>(ToType)->getElementType();
-      unsigned Scale = AllocaSize / ToTypeSize;
-      const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
-      unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
+      const Type *CastElementTy = getScaledElementType(ToElementTy,
+                                                       ToTypeSize * 8);
+      unsigned NumCastVectorElements = AllocaSize / ToTypeSize;
 
       LLVMContext &Context = FromVal->getContext();
       const Type *CastTy = VectorType::get(CastElementTy,
@@ -841,9 +841,8 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
 
       const Type *ToElementTy =
         cast<VectorType>(SV->getType())->getElementType();
-      unsigned Scale = VecSize / ValSize;
-      const Type *CastElementTy = getScaledElementType(ToElementTy, Scale);
-      unsigned NumCastVectorElements = VTy->getNumElements() / Scale;
+      const Type *CastElementTy = getScaledElementType(ToElementTy, ValSize);
+      unsigned NumCastVectorElements = VecSize / ValSize;
 
       LLVMContext &Context = SV->getContext();
       const Type *OldCastTy = VectorType::get(CastElementTy,
