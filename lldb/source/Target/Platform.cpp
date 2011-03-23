@@ -69,7 +69,9 @@ Platform::SetDefaultPlatform (const lldb::PlatformSP &platform_sp)
 }
 
 Error
-Platform::GetFile (const FileSpec &platform_file, FileSpec &local_file)
+Platform::GetFile (const FileSpec &platform_file, 
+                   const UUID *uuid_ptr,
+                   FileSpec &local_file)
 {
     // Default to the local case
     local_file = platform_file;
@@ -123,6 +125,7 @@ Platform::Platform (bool is_host) :
     m_os_version_set_while_connected (false),
     m_system_arch_set_while_connected (false),
     m_remote_url (),
+    m_remote_instance_name (),
     m_major_os_version (UINT32_MAX),
     m_minor_os_version (UINT32_MAX),
     m_update_os_version (UINT32_MAX)
@@ -330,17 +333,23 @@ Platform::GetSystemArchitecture()
 
 
 Error
-Platform::ConnectRemote (const char *remote_url)
+Platform::ConnectRemote (Args& args)
 {
     Error error;
-    error.SetErrorStringWithFormat ("Platform::ConnectRemote() is not supported by %s", GetShortPluginName());
+    if (IsHost())
+        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetShortPluginName());
+    else
+        error.SetErrorStringWithFormat ("Platform::ConnectRemote() is not supported by %s", GetShortPluginName());
     return error;
 }
 
 Error
-Platform::DisconnectRemote (const lldb::PlatformSP &platform_sp)
+Platform::DisconnectRemote ()
 {
     Error error;
-    error.SetErrorStringWithFormat ("Platform::DisconnectRemote() is not supported by %s", GetShortPluginName());
+    if (IsHost())
+        error.SetErrorStringWithFormat ("The currently selected platform (%s) is the host platform and is always connected.", GetShortPluginName());
+    else
+        error.SetErrorStringWithFormat ("Platform::DisconnectRemote() is not supported by %s", GetShortPluginName());
     return error;
 }

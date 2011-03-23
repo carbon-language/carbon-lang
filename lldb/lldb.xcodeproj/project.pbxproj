@@ -13,6 +13,8 @@
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
+		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
+		264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -615,6 +617,8 @@
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
 		264A43BB1320B3B4005B4096 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = include/lldb/Target/Platform.h; sourceTree = "<group>"; };
 		264A43BD1320BCEB005B4096 /* Platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Platform.cpp; path = source/Target/Platform.cpp; sourceTree = "<group>"; };
+		264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlatformRemoteGDBServer.cpp; path = "gdb-server/PlatformRemoteGDBServer.cpp"; sourceTree = "<group>"; };
+		264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlatformRemoteGDBServer.h; path = "gdb-server/PlatformRemoteGDBServer.h"; sourceTree = "<group>"; };
 		264AD83711095BA600E0B039 /* CommandObjectLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectLog.cpp; path = source/Commands/CommandObjectLog.cpp; sourceTree = "<group>"; };
 		264AD83911095BBD00E0B039 /* CommandObjectLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectLog.h; path = source/Commands/CommandObjectLog.h; sourceTree = "<group>"; };
 		26579F68126A25920007C5CB /* darwin-debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "darwin-debug"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1630,6 +1634,15 @@
 			name = API;
 			sourceTree = "<group>";
 		};
+		264A97BC133918A30017F0BE /* GDB Server */ = {
+			isa = PBXGroup;
+			children = (
+				264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */,
+				264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */,
+			);
+			name = "GDB Server";
+			sourceTree = "<group>";
+		};
 		26579F55126A255E0007C5CB /* darwin-debug */ = {
 			isa = PBXGroup;
 			children = (
@@ -2224,6 +2237,7 @@
 		26C5577E132575B6008FD8FE /* Platform */ = {
 			isa = PBXGroup;
 			children = (
+				264A97BC133918A30017F0BE /* GDB Server */,
 				26C5577F132575C8008FD8FE /* MacOSX */,
 			);
 			path = Platform;
@@ -2497,6 +2511,7 @@
 				2689001013353DB600698AC0 /* WatchpointLocation.h in Headers */,
 				26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */,
 				26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */,
+				264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3054,6 +3069,7 @@
 				26B1FCC21338115F002886E2 /* Host.mm in Sources */,
 				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
+				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3569,12 +3585,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = /usr/local/bin;
@@ -3594,12 +3612,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
 				);
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
@@ -3618,11 +3638,13 @@
 		26DC6A141337FE6A00FF7998 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
 				);
 				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (

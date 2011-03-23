@@ -176,18 +176,6 @@ public:
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
     
-    const lldb_private::ConstString &
-    GetOSString ();
-    
-    const lldb_private::ConstString &
-    GetVendorString();
-    
-    lldb::ByteOrder
-    GetByteOrder ();
-
-    uint32_t
-    GetAddressByteSize ();
-
     bool
     GetVContSupported (char flavor);
 
@@ -222,12 +210,6 @@ public:
 
 protected:
 
-    bool
-    HostInfoIsValid () const
-    {
-        return m_supports_qHostInfo != lldb::eLazyBoolCalculate;
-    }
-
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunicationClient can see and modify these
     //------------------------------------------------------------------
@@ -249,14 +231,8 @@ protected:
     StringExtractorGDBRemote m_async_response;
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
     
-    lldb_private::ArchSpec m_arch;
+    lldb_private::ArchSpec m_host_arch;
     uint32_t m_cpusubtype;
-    lldb_private::ConstString m_os;
-    lldb_private::ConstString m_vendor;
-    lldb::ByteOrder m_byte_order;
-    uint32_t m_pointer_byte_size;
-
-
     
 private:
     //------------------------------------------------------------------

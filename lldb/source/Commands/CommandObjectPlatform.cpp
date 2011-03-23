@@ -281,6 +281,137 @@ public:
 };
 
 
+//----------------------------------------------------------------------
+// "platform connect <connect-url>"
+//----------------------------------------------------------------------
+class CommandObjectPlatformConnect : public CommandObject
+{
+public:
+    CommandObjectPlatformConnect (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "platform connect",
+                       "Connect a platform by name to be the currently selected platform.",
+                       "platform connect <connect-url>",
+                       0)
+    {
+    }
+
+    virtual
+    ~CommandObjectPlatformConnect ()
+    {
+    }
+
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        Stream &ostrm = result.GetOutputStream();      
+        
+        // Get rid of the "connect" from the args and leave the rest to the platform
+        args.Shift();
+        PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (selected_platform_sp)
+        {
+            Error error (selected_platform_sp->ConnectRemote (args));
+            if (error.Success())
+            {
+                ostrm.Printf ("Connected to \"%s\"\n", selected_platform_sp->GetInstanceName());
+                selected_platform_sp->GetStatus (ostrm);
+                result.SetStatus (eReturnStatusSuccessFinishResult);            
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("connection failed: %s", error.AsCString());
+                result.SetStatus (eReturnStatusFailed);            
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform us currently selected");
+            result.SetStatus (eReturnStatusFailed);            
+        }
+        return result.Succeeded();
+    }
+};
+
+//----------------------------------------------------------------------
+// "platform disconnect"
+//----------------------------------------------------------------------
+class CommandObjectPlatformDisconnect : public CommandObject
+{
+public:
+    CommandObjectPlatformDisconnect (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "platform disconnect",
+                       "Disconnect a platform by name to be the currently selected platform.",
+                       "platform disconnect",
+                       0)
+    {
+    }
+
+    virtual
+    ~CommandObjectPlatformDisconnect ()
+    {
+    }
+
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (selected_platform_sp)
+        {
+            if (args.GetArgumentCount() == 0)
+            {
+                Error error;
+                
+                if (selected_platform_sp->IsConnected())
+                {
+                    // Cache the instance name if there is one since we are 
+                    // about to disconnect and the name might go with it.
+                    const char *instance_name_cstr = selected_platform_sp->GetInstanceName();
+                    std::string instance_name;
+                    if (instance_name_cstr)
+                        instance_name.assign (instance_name_cstr);
+
+                    error = selected_platform_sp->DisconnectRemote ();
+                    if (error.Success())
+                    {
+                        Stream &ostrm = result.GetOutputStream();      
+                        if (instance_name.empty())
+                            ostrm.Printf ("Disconnected from \"%s\"\n", selected_platform_sp->GetShortPluginName());
+                        else
+                            ostrm.Printf ("Disconnected from \"%s\"\n", instance_name.c_str());
+                        result.SetStatus (eReturnStatusSuccessFinishResult);            
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("disconnect failed: %s", error.AsCString());
+                        result.SetStatus (eReturnStatusFailed);            
+                    }
+                }
+                else
+                {
+                    // Not connected...
+                    result.AppendError ("not connected.");
+                    result.SetStatus (eReturnStatusFailed);            
+                }
+            }
+            else
+            {
+                // Bad args
+                result.AppendError ("\"platform disconnect\" doesn't take any arguments");
+                result.SetStatus (eReturnStatusFailed);            
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform us currently selected");
+            result.SetStatus (eReturnStatusFailed);            
+        }
+        return result.Succeeded();
+    }
+};
+
+
 
 //----------------------------------------------------------------------
 // CommandObjectPlatform constructor
@@ -289,12 +420,14 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "platform",
                             "A set of commands to manage and create platforms.",
-                            "platform [create|list|status|select] ...")
+                            "platform [connect|create|disconnect|list|status|select] ...")
 {
     LoadSubCommand ("create", CommandObjectSP (new CommandObjectPlatformCreate  (interpreter)));
     LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList    (interpreter)));
     LoadSubCommand ("select", CommandObjectSP (new CommandObjectPlatformSelect  (interpreter)));
     LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus  (interpreter)));
+    LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect  (interpreter)));
+    LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect  (interpreter)));
 }
 
 

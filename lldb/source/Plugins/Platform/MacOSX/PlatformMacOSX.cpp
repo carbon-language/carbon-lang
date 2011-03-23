@@ -1,4 +1,4 @@
-//===-- Platform.cpp --------------------------------------------*- C++ -*-===//
+//===-- PlatformMacOSX.cpp --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -138,7 +138,9 @@ PlatformMacOSX::ResolveExecutable (const FileSpec &exe_file,
 }
 
 Error
-PlatformMacOSX::GetFile (const FileSpec &platform_file, FileSpec &local_file)
+PlatformMacOSX::GetFile (const FileSpec &platform_file, 
+                         const UUID *uuid_ptr,
+                         FileSpec &local_file)
 {
     // Default to the local case
     local_file = platform_file;
@@ -193,11 +195,7 @@ PlatformMacOSX::GetStatus (Stream &strm)
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformMacOSX::PlatformMacOSX () :
-#if defined (__APPLE__)
     Platform(true)  // This is the local host platform
-#else
-    Platform(false) // This is a remote platform
-#endif
 {
 }
 

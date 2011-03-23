@@ -45,6 +45,7 @@ public:
         eServerPacketType_ack,
         eServerPacketType_invalid,
         eServerPacketType_unimplemented,
+        eServerPacketType_interrupt, // CTRL+c packet or "\x03"
         eServerPacketType_qHostInfo
     };
     

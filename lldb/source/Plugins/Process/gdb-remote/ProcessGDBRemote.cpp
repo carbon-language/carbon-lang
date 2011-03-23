@@ -622,34 +622,52 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         BuildDynamicRegisterInfo (false);
 
-        m_target.GetArchitecture().SetByteOrder (m_gdb_comm.GetByteOrder());
 
         StreamString strm;
 
         // See if the GDB server supports the qHostInfo information
-        const char *vendor = m_gdb_comm.GetVendorString().AsCString();
-        const char *os_type = m_gdb_comm.GetOSString().AsCString();
-        ArchSpec target_arch (GetTarget().GetArchitecture());
-        ArchSpec gdb_remote_arch (m_gdb_comm.GetHostArchitecture());
 
-        // If the remote host is ARM and we have apple as the vendor, then 
-        // ARM executables and shared libraries can have mixed ARM architectures.
-        // You can have an armv6 executable, and if the host is armv7, then the
-        // system will load the best possible architecture for all shared libraries
-        // it has, so we really need to take the remote host architecture as our
-        // defacto architecture in this case.
-
-        if (gdb_remote_arch.GetMachine() == llvm::Triple::arm &&
-            gdb_remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+        const ArchSpec &gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
+        if (gdb_remote_arch.IsValid())
         {
-            GetTarget().SetArchitecture (gdb_remote_arch);
-            target_arch = gdb_remote_arch;
+            ArchSpec &target_arch = GetTarget().GetArchitecture();
+
+            if (target_arch.IsValid())
+            {
+                // If the remote host is ARM and we have apple as the vendor, then 
+                // ARM executables and shared libraries can have mixed ARM architectures.
+                // You can have an armv6 executable, and if the host is armv7, then the
+                // system will load the best possible architecture for all shared libraries
+                // it has, so we really need to take the remote host architecture as our
+                // defacto architecture in this case.
+
+                if (gdb_remote_arch.GetMachine() == llvm::Triple::arm &&
+                    gdb_remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+                {
+                    target_arch = gdb_remote_arch;
+                }
+                else
+                {
+                    // Fill in what is missing in the triple
+                    const llvm::Triple &remote_triple = gdb_remote_arch.GetTriple();
+                    llvm::Triple &target_triple = target_arch.GetTriple();
+                    if (target_triple.getVendor() == llvm::Triple::UnknownVendor)
+                        target_triple.setVendor (remote_triple.getVendor());
+
+                    if (target_triple.getOS() == llvm::Triple::UnknownOS)
+                        target_triple.setOS (remote_triple.getOS());
+
+                    if (target_triple.getEnvironment() == llvm::Triple::UnknownEnvironment)
+                        target_triple.setEnvironment (remote_triple.getEnvironment());
+                }
+            }
+            else
+            {
+                // The target doesn't have a valid architecture yet, set it from
+                // the architecture we got from the remote GDB server
+                target_arch = gdb_remote_arch;
+            }
         }
-        
-        if (vendor)
-            m_target.GetArchitecture().GetTriple().setVendorName(vendor);
-        if (os_type)
-            m_target.GetArchitecture().GetTriple().setOSName(os_type);
     }
 }
 

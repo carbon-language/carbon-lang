@@ -59,6 +59,11 @@ StringExtractorGDBRemote::GetServerPacketType () const
     const char *packet_cstr = m_packet.c_str();
     switch (m_packet[0])
     {
+    case '\x03':
+        if (m_packet.size() == 1)
+            return eServerPacketType_interrupt;
+        break;
+
     case '-':
         if (m_packet.size() == 1)
             return eServerPacketType_nack;

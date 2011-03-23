@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+// C Includes
 #include <errno.h>
 #include <getopt.h>
 #include <signal.h>
@@ -15,7 +16,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+// C++ Includes
+
+// Other libraries and framework includes
+#include "lldb/Core/Error.h"
+#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "GDBRemoteCommunicationServer.h"
+
+using namespace lldb;
+using namespace lldb_private;
 
 //----------------------------------------------------------------------
 // option descriptors for getopt_long()
@@ -30,6 +39,7 @@ static struct option g_long_options[] =
     { "verbose",            no_argument,        &g_verbose,         1   },
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
+    { "listen",             required_argument,  NULL,               'L' },
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -58,6 +68,7 @@ main (int argc, char *argv[])
     int long_option_index = 0;
     FILE* log_file = NULL;
     uint32_t log_flags = 0;
+    std::string connect_url;
     char ch;
 
     while ((ch = getopt_long(argc, argv, "l:f:", g_long_options, &long_option_index)) != -1)
@@ -98,6 +109,11 @@ main (int argc, char *argv[])
             if (optarg && optarg[0])
                 log_flags = strtoul(optarg, NULL, 0);
             break;
+        
+        case 'L':
+            connect_url.assign ("connect://");
+            connect_url.append (optarg);
+            break;
         }
     }
     
@@ -106,7 +122,48 @@ main (int argc, char *argv[])
     argv += optind;
 
 
-    GDBRemoteCommunicationServer gdb_comm;
+    GDBRemoteCommunicationServer gdb_server;
+    Error error;
+    if (!connect_url.empty())
+    {
+        std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+        if (conn_ap.get())
+        {
+            const uint32_t max_retry_count = 50;
+            uint32_t retry_count = 0;
+            while (!gdb_server.IsConnected())
+            {
+                if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+                {
+                    gdb_server.SetConnection (conn_ap.release());
+                    break;
+                }
+                retry_count++;
+
+                if (retry_count >= max_retry_count)
+                    break;
+
+                usleep (100000);
+            }
+        }
+    }
+
+
+    if (gdb_server.IsConnected())
+    {
+        if (gdb_server.StartReadThread(&error))
+        {
+            bool interrupt = false;
+            bool done = false;
+            while (!interrupt && !done)
+            {
+                gdb_server.GetPacketAndSendResponse(NULL, interrupt, done);
+            }
+        }
+        else
+        {
+        }
+    }
 
     return 0;
 }

@@ -115,6 +115,23 @@ namespace lldb_private {
                       uint32_t minor, 
                       uint32_t update);
 
+        const char *
+        GetInstanceName ()
+        {
+            if (IsHost())
+                return "localhost";
+
+            if (IsConnected())
+            {
+                if (m_remote_instance_name.empty())
+                    GetRemoteInstanceName ();
+                
+                if (!m_remote_instance_name.empty())        
+                    return m_remote_instance_name.c_str();
+            }
+            return "remote";
+        }
+
         virtual const char *
         GetDescription () = 0;
 
@@ -164,13 +181,24 @@ protected:
         //------------------------------------------------------------------
 public:
         virtual Error
-        GetFile (const FileSpec &platform_file, FileSpec &local_file);
+        GetFile (const FileSpec &platform_file, 
+                 const UUID *uuid_ptr,
+                 FileSpec &local_file);
 
         virtual Error
-        ConnectRemote (const char *remote_url);
+        ConnectRemote (Args& args);
 
         virtual Error
-        DisconnectRemote (const lldb::PlatformSP &platform_sp);
+        DisconnectRemote ();
+
+        // Remote subclasses should override this and return a valid instance
+        // name if connected.
+        virtual const char *
+        GetRemoteInstanceName ()
+        {
+            return NULL;
+        }
+
 
         //------------------------------------------------------------------
         /// Get the platform's supported architectures in the order in which
@@ -356,6 +384,7 @@ public:
         bool m_os_version_set_while_connected;
         bool m_system_arch_set_while_connected;
         std::string m_remote_url;
+        std::string m_remote_instance_name;
         uint32_t m_major_os_version;
         uint32_t m_minor_os_version;
         uint32_t m_update_os_version;

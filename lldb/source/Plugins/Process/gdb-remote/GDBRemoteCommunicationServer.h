@@ -34,7 +34,9 @@ public:
     ~GDBRemoteCommunicationServer();
 
     bool
-    GetPacketAndSendResponse (const lldb_private::TimeValue* timeout_time_ptr);
+    GetPacketAndSendResponse (const lldb_private::TimeValue* timeout_ptr,
+                              bool &interrupt, 
+                              bool &quit);
 
     virtual bool
     GetThreadSuffixSupported ()

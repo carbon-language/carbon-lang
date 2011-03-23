@@ -72,10 +72,12 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //}
 //
 bool
-GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout_time_ptr)
+GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout_ptr, 
+                                                        bool &interrupt, 
+                                                        bool &quit)
 {
     StringExtractorGDBRemote packet;
-    if (WaitForPacketNoLock (packet, timeout_time_ptr))
+    if (WaitForPacketNoLock (packet, timeout_ptr))
     {
         const StringExtractorGDBRemote::ServerPacketType packet_type = packet.GetServerPacketType ();
         switch (packet_type)
@@ -85,6 +87,13 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
             break;
 
         case StringExtractorGDBRemote::eServerPacketType_invalid:
+            quit = true;
+            break;
+
+        case StringExtractorGDBRemote::eServerPacketType_interrupt:
+            interrupt = true;
+            break;
+        
         case StringExtractorGDBRemote::eServerPacketType_unimplemented:
             return SendUnimplementedResponse () > 0;
 

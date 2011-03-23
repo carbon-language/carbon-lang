@@ -1,4 +1,4 @@
-//===-- Platform.cpp --------------------------------------------*- C++ -*-===//
+//===-- PlatformRemoteiOS.cpp -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,18 +27,28 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+static bool g_initialized = false;
     
 void
 PlatformRemoteiOS::Initialize ()
 {
-    static bool g_initialized = false;
-
     if (g_initialized == false)
     {
         g_initialized = true;
-        PluginManager::RegisterPlugin (GetShortPluginNameStatic(),
-                                       GetDescriptionStatic(),
-                                       CreateInstance);
+        PluginManager::RegisterPlugin (PlatformRemoteiOS::GetShortPluginNameStatic(),
+                                       PlatformRemoteiOS::GetDescriptionStatic(),
+                                       PlatformRemoteiOS::CreateInstance);
+    }
+}
+
+void
+PlatformRemoteiOS::Terminate ()
+{
+    if (g_initialized)
+    {
+        g_initialized = false;
+        PluginManager::UnregisterPlugin (PlatformRemoteiOS::CreateInstance);
     }
 }
 
@@ -48,10 +58,6 @@ PlatformRemoteiOS::CreateInstance ()
     return new PlatformRemoteiOS ();
 }
 
-void
-PlatformRemoteiOS::Terminate ()
-{
-}
 
 const char *
 PlatformRemoteiOS::GetPluginNameStatic ()
@@ -358,6 +364,7 @@ PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
 
 Error
 PlatformRemoteiOS::GetFile (const FileSpec &platform_file, 
+                            const UUID *uuid_ptr,
                             FileSpec &local_file)
 {
     Error error;
@@ -440,6 +447,29 @@ PlatformRemoteiOS::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
     // TODO: if connected, send a packet to get the remote process info
     process_info.Clear();
     return false;
+}
+
+const char *
+PlatformRemoteiOS::GetRemoteInstanceName ()
+{
+    if (m_remote_instance_name.empty())
+    {
+        const char *device_support_dir = GetDeviceSupportDirectory();
+        if (device_support_dir)
+        {
+            std::string latest_device_support_dir;
+            latest_device_support_dir.assign (device_support_dir);
+            latest_device_support_dir.append ("/Platforms/iPhoneOS.platform/DeviceSupport/Latest");
+            const bool resolve_path = true;
+            FileSpec file_spec (m_device_support_directory_for_os_version.c_str(), resolve_path);
+            // We are using the resolved basename of the "Latest" symlink (which
+            // is usually the latest and greatest SDK version and the update
+            // which is something like: "4.0 (8A123)"
+            if (file_spec.Exists())
+                m_remote_instance_name.assign (file_spec.GetFilename().GetCString());
+        }
+    }
+    return m_remote_instance_name.c_str();
 }
 
 bool
@@ -549,6 +579,13 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     return false;
 }
 
+bool
+PlatformRemoteiOS::FetchRemoteOSVersion ()
+{
+    return false;
+}
+
+
 size_t
 PlatformRemoteiOS::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
 {
@@ -609,4 +646,36 @@ PlatformRemoteiOS::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSi
     }
     return 0;
 
+}
+
+Error
+PlatformRemoteiOS::ConnectRemote (Args& args)
+{
+    Error error;
+    error.SetErrorStringWithFormat ("'platform connect' is not implemented yet for platform '%s'", GetShortPluginNameStatic());
+
+//    if (args.GetArgumentCount() == 1)
+//    {
+//        const char *remote_url = args.GetArgumentAtIndex(0);
+//        ConnectionStatus status = m_gdb_client.Connect(remote_url, &error);
+//        if (status == eConnectionStatusSuccess)
+//        {
+//            m_gdb_client.GetHostInfo();
+//        }
+//    }
+//    else
+//    {
+//        error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
+//    }
+
+    return error;
+}
+
+Error
+PlatformRemoteiOS::DisconnectRemote ()
+{
+    Error error;
+    error.SetErrorStringWithFormat ("'platform disconnect' is not implemented yet for platform '%s'", GetShortPluginNameStatic());
+//    m_gdb_client.Disconnect(&error);
+    return error;
 }
