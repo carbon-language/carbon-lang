@@ -66,10 +66,10 @@ public:
     /// S_SYMBOL_STUBS - Section with symbol stubs, byte size of stub in
     /// the Reserved2 field.
     S_SYMBOL_STUBS               = 0x08U,
-    /// S_SYMBOL_STUBS - Section with only function pointers for
+    /// S_MOD_INIT_FUNC_POINTERS - Section with only function pointers for
     /// initialization.
     S_MOD_INIT_FUNC_POINTERS     = 0x09U,
-    /// S_MOD_INIT_FUNC_POINTERS - Section with only function pointers for
+    /// S_MOD_TERM_FUNC_POINTERS - Section with only function pointers for
     /// termination.
     S_MOD_TERM_FUNC_POINTERS     = 0x0AU,
     /// S_COALESCED - Section contains symbols that are to be coalesced.
