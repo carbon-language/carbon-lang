@@ -377,7 +377,6 @@ bool Decl::isWeakImported() const {
   if (!canBeWeakImported(IsDefinition))
     return false;
 
-  ASTContext &Context = getASTContext();
   for (attr_iterator A = attr_begin(), AEnd = attr_end(); A != AEnd; ++A) {
     if (isa<WeakImportAttr>(*A))
       return true;
