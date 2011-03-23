@@ -57,6 +57,29 @@ static bool isKnownNonNull(const Value *V) {
   return false;
 }
 
+/// areAllUsesInOneFunction - Return true if all the uses of the given value
+/// are in the same function. Note that this returns false if any of the uses
+/// are from non-instruction values.
+static bool areAllUsesInOneFunction(const Value *V) {
+  const llvm::Function *Fn = 0;
+
+  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end(); 
+       UI != E; ++UI) {
+    if (const Instruction *I = dyn_cast<Instruction>(*UI)) {
+      if (!Fn) {
+        Fn = I->getParent()->getParent();
+        continue;
+      } 
+      
+      if (Fn != I->getParent()->getParent())
+        return false;
+    } else
+      return false;
+  }
+
+  return true;
+}
+
 /// isNonEscapingLocalObject - Return true if the pointer is to a function-local
 /// object that never escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
@@ -79,6 +102,16 @@ static bool isNonEscapingLocalObject(const Value *V) {
         return true;
       return !PointerMayBeCaptured(V, false, /*StoreCaptures=*/true);
     }
+
+  // If this is an internal global variable that's only used in this function,
+  // check if it escapes the function.
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->hasInternalLinkage() && areAllUsesInOneFunction(GV)) {
+      return !PointerMayBeCaptured(V, /*ReturnCaptures=*/true, 
+                                   /*StoreCaptures=*/true);
+    }
+  }
+
   return false;
 }
 
