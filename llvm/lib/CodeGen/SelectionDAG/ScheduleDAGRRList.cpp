@@ -1812,7 +1812,7 @@ void RegReductionPQBase::ScheduledNode(SUnit *SU) {
 
   if (!SU->getNode())
     return;
-  
+
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl())
@@ -1880,7 +1880,7 @@ void RegReductionPQBase::UnscheduledNode(SUnit *SU) {
 
   const SDNode *N = SU->getNode();
   if (!N) return;
-  
+
   if (!N->isMachineOpcode()) {
     if (N->getOpcode() != ISD::CopyToReg)
       return;
