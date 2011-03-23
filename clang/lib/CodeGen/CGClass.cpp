@@ -106,13 +106,14 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
 
 static llvm::Value *
 ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
-                                uint64_t NonVirtual, llvm::Value *Virtual) {
+                                CharUnits NonVirtual, llvm::Value *Virtual) {
   const llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
   
   llvm::Value *NonVirtualOffset = 0;
-  if (NonVirtual)
-    NonVirtualOffset = llvm::ConstantInt::get(PtrDiffTy, NonVirtual);
+  if (!NonVirtual.isZero())
+    NonVirtualOffset = llvm::ConstantInt::get(PtrDiffTy, 
+                                              NonVirtual.getQuantity());
   
   llvm::Value *BaseOffset;
   if (Virtual) {
@@ -194,7 +195,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
 
   // Apply the offsets.
   Value = ApplyNonVirtualAndVirtualOffset(*this, Value, 
-                                          NonVirtualOffset.getQuantity(),
+                                          NonVirtualOffset,
                                           VirtualOffset);
   
   // Cast back.
@@ -1367,23 +1368,25 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
 
   // Compute where to store the address point.
   llvm::Value *VirtualOffset = 0;
-  uint64_t NonVirtualOffset = 0;
+  CharUnits NonVirtualOffset = CharUnits::Zero();
   
   if (CodeGenVTables::needsVTTParameter(CurGD) && NearestVBase) {
     // We need to use the virtual base offset offset because the virtual base
     // might have a different offset in the most derived class.
     VirtualOffset = GetVirtualBaseClassOffset(LoadCXXThis(), VTableClass, 
                                               NearestVBase);
-    NonVirtualOffset = OffsetFromNearestVBase / 8;
+    NonVirtualOffset = 
+      CGM.getContext().toCharUnitsFromBits(OffsetFromNearestVBase);
   } else {
     // We can just use the base offset in the complete class.
-    NonVirtualOffset = Base.getBaseOffset() / 8;
+    NonVirtualOffset = 
+      CGM.getContext().toCharUnitsFromBits(Base.getBaseOffset());
   }
   
   // Apply the offsets.
   llvm::Value *VTableField = LoadCXXThis();
   
-  if (NonVirtualOffset || VirtualOffset)
+  if (!NonVirtualOffset.isZero() || VirtualOffset)
     VTableField = ApplyNonVirtualAndVirtualOffset(*this, VTableField, 
                                                   NonVirtualOffset,
                                                   VirtualOffset);
