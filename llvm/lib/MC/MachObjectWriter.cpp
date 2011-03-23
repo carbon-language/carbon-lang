@@ -949,14 +949,13 @@ public:
 
       // Handle Thumb branches.
     case ARM::fixup_arm_thumb_br:
-    case ARM::fixup_arm_thumb_bl:
       RelocType = unsigned(macho::RIT_ARM_ThumbBranch22Bit);
       Log2Size = llvm::Log2_32(2);
       return true;
-
+      
+    case ARM::fixup_arm_thumb_bl:
     case ARM::fixup_arm_thumb_blx:
       RelocType = unsigned(macho::RIT_ARM_ThumbBranch22Bit);
-      // Report as 'long', even though that is not quite accurate.
       Log2Size = llvm::Log2_32(4);
       return true;
 
