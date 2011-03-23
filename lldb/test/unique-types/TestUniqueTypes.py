@@ -52,15 +52,23 @@ class UniqueTypesTestCase(TestBase):
             # Skip empty line or closing brace.
             if not x or x == '}':
                 continue
+            # clang-137 does not emit instantiation parameter.
+            if self.getCompiler() in ['clang'] and x.find('Vector_base') != -1:
+                continue
             self.expect(x, "Expect type 'long'", exe=False,
                 substrs = ['long'])
 
         # Do a "frame variable -t shorts" and verify "short" is in each line of output.
+        if self.getCompiler() in ['clang']:
+            self.skipTest("rdar://problem/9173060 lldb hangs while running unique-types")
         self.runCmd("frame variable -t shorts")
         output = self.res.GetOutput()
         for x in [line.strip() for line in output.split(os.linesep)]:
             # Skip empty line or closing brace.
             if not x or x == '}':
+                continue
+            # clang-137 does not emit instantiation parameter for lines describing Vector_base.
+            if self.getCompiler() in ['clang'] and x.find('Vector_base') != -1:
                 continue
             self.expect(x, "Expect type 'short'", exe=False,
                 substrs = ['short'])
