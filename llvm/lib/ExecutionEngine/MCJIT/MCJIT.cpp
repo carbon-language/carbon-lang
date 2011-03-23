@@ -90,7 +90,8 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
   // FIXME: It would be nice to avoid making yet another copy.
   MemoryBuffer *MB = MemoryBuffer::getMemBufferCopy(StringRef(Buffer.data(),
                                                               Buffer.size()));
-  Dyld.loadObject(MB);
+  if (Dyld.loadObject(MB))
+    report_fatal_error(Dyld.getErrorString());
 }
 
 MCJIT::~MCJIT() {
