@@ -1612,11 +1612,51 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   switch (MI->getOpcode()) {
   default: break;
   case ARM::ADDri:
-  case ARM::ANDri:
-  case ARM::t2ANDri:
   case ARM::SUBri:
   case ARM::t2ADDri:
-  case ARM::t2SUBri:
+  case ARM::t2SUBri: {
+    // Scan forward for the use of CPSR, if it's a conditional code requires
+    // checking of V bit, then this is not safe to do. If we can't find the
+    // CPSR use (i.e. used in another block), then it's not safe to perform
+    // the optimization.
+    bool isSafe = false;
+    I = CmpInstr;
+    E = MI->getParent()->end();
+    while (!isSafe && ++I != E) {
+      const MachineInstr &Instr = *I;
+      for (unsigned IO = 0, EO = Instr.getNumOperands();
+           !isSafe && IO != EO; ++IO) {
+        const MachineOperand &MO = Instr.getOperand(IO);
+        if (!MO.isReg() || MO.getReg() != ARM::CPSR)
+          continue;
+        if (MO.isDef()) {
+          isSafe = true;
+          break;
+        }
+        // Condition code is after the operand before CPSR.
+        ARMCC::CondCodes CC = (ARMCC::CondCodes)Instr.getOperand(IO-1).getImm();
+        switch (CC) {
+        default:
+          isSafe = true;
+          break;
+        case ARMCC::VS:
+        case ARMCC::VC:
+        case ARMCC::GE:
+        case ARMCC::LT:
+        case ARMCC::GT:
+        case ARMCC::LE:
+          return false;
+        }
+      }
+    }
+
+    if (!isSafe)
+      return false;
+
+    // fallthrough
+  }
+  case ARM::ANDri:
+  case ARM::t2ANDri:
     // Toggle the optional operand to CPSR.
     MI->getOperand(5).setReg(ARM::CPSR);
     MI->getOperand(5).setIsDef(true);
