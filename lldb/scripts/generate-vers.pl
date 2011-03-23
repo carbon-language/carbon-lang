@@ -41,6 +41,6 @@ $lowercase_name = lc $product_name;
 
 close $pbxproj;
 
-$file_string = " const unsigned char ".$uppercase_name."VersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$current_project_version."\" \"\\n\"; const double ".$uppercase_name."VersionNumber __attribute__ ((used)) = (double)".$current_project_version.".;\n";
+$file_string = " const unsigned char liblldb_coreVersionString[] __attribute__ ((used)) = \"@(#)PROGRAM:".$uppercase_name."  PROJECT:".$lowercase_name."-".$current_project_version."\" \"\\n\"; const double liblldb_coreVersionNumber __attribute__ ((used)) = (double)".$current_project_version.".;\n";
 
 print $file_string;
