@@ -2718,7 +2718,22 @@ CXSourceRange clang_getRange(CXSourceLocation begin, CXSourceLocation end) {
                            begin.int_data, end.int_data };
   return Result;
 }
+} // end: extern "C"
 
+static void createNullLocation(CXFile *file, unsigned *line,
+                               unsigned *column, unsigned *offset) {
+  if (file)
+   *file = 0;
+  if (line)
+   *line = 0;
+  if (column)
+   *column = 0;
+  if (offset)
+   *offset = 0;
+  return;
+}
+
+extern "C" {
 void clang_getInstantiationLocation(CXSourceLocation location,
                                     CXFile *file,
                                     unsigned *line,
@@ -2727,14 +2742,7 @@ void clang_getInstantiationLocation(CXSourceLocation location,
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
   if (!location.ptr_data[0] || Loc.isInvalid()) {
-    if (file)
-      *file = 0;
-    if (line)
-      *line = 0;
-    if (column)
-      *column = 0;
-    if (offset)
-      *offset = 0;
+    createNullLocation(file, line, column, offset);
     return;
   }
 
@@ -2742,8 +2750,17 @@ void clang_getInstantiationLocation(CXSourceLocation location,
     *static_cast<const SourceManager*>(location.ptr_data[0]);
   SourceLocation InstLoc = SM.getInstantiationLoc(Loc);
 
+  // Check that the FileID is invalid on the instantiation location.
+  // This can manifest in invalid code.
+  FileID fileID = SM.getFileID(InstLoc);
+  const SrcMgr::SLocEntry &sloc = SM.getSLocEntry(fileID);
+  if (!sloc.isFile()) {
+    createNullLocation(file, line, column, offset);
+    return;
+  }
+
   if (file)
-    *file = (void *)SM.getFileEntryForID(SM.getFileID(InstLoc));
+    *file = (void *)SM.getFileEntryForSLocEntry(sloc);
   if (line)
     *line = SM.getInstantiationLineNumber(InstLoc);
   if (column)

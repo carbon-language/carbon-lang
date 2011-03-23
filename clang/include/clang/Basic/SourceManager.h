@@ -585,6 +585,12 @@ public:
     return getSLocEntry(FID).getFile().getContentCache()->OrigEntry;
   }
 
+  /// Returns the FileEntry record for the provided SLocEntry.
+  const FileEntry *getFileEntryForSLocEntry(const SrcMgr::SLocEntry &sloc) const
+  {
+    return sloc.getFile().getContentCache()->OrigEntry;
+  }
+
   /// getBufferData - Return a StringRef to the source buffer data for the
   /// specified FileID.
   ///
