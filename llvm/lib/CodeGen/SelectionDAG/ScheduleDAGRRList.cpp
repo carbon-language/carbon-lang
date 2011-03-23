@@ -935,6 +935,15 @@ void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
       AddPred(SuccSU, D);
       DelDeps.push_back(std::make_pair(SuccSU, *I));
     }
+    else {
+      // Avoid scheduling the def-side copy before other successors. Otherwise
+      // we could introduce another physreg interference on the copy and
+      // continue inserting copies indefinitely.
+      SDep D(CopyFromSU, SDep::Order, /*Latency=*/0,
+             /*Reg=*/0, /*isNormalMemory=*/false,
+             /*isMustAlias=*/false, /*isArtificial=*/true);
+      AddPred(SuccSU, D);
+    }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i)
     RemovePred(DelDeps[i].first, DelDeps[i].second);
