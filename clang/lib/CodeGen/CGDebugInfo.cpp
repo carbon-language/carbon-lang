@@ -1396,7 +1396,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-  
+
   // Check for existing entry.
   llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
@@ -2204,4 +2204,18 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
     DBuilder.createNameSpace(Context, NSDecl->getName(), FileD, LineNo);
   NameSpaceCache[NSDecl] = llvm::WeakVH(NS);
   return NS;
+}
+
+/// UpdateCompletedType - Update type cache because the type is now
+/// translated.
+void CGDebugInfo::UpdateCompletedType(const TagDecl *TD) {
+  QualType Ty = CGM.getContext().getTagDeclType(TD);
+
+  // If the type exist in type cache then remove it from the cache.
+  // There is no need to prepare debug info for the completed type
+  // right now. It will be generated on demand lazily.
+  llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
+    TypeCache.find(Ty.getAsOpaquePtr());
+  if (it != TypeCache.end()) 
+    TypeCache.erase(it);
 }

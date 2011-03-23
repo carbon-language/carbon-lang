@@ -506,10 +506,8 @@ public:
 
   ///@}
 
-  void UpdateCompletedType(const TagDecl *TD) {
-    // Make sure that this type is translated.
-    Types.UpdateCompletedType(TD);
-  }
+  // UpdateCompleteType - Make sure that this type is translated.
+  void UpdateCompletedType(const TagDecl *TD);
 
   llvm::Constant *getMemberPointerConstant(const UnaryOperator *e);
 

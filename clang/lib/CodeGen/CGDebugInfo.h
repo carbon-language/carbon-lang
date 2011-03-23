@@ -158,6 +158,10 @@ public:
   /// has introduced scope change.
   void UpdateLineDirectiveRegion(CGBuilderTy &Builder);
 
+  /// UpdateCompletedType - Update type cache because the type is now
+  /// translated.
+  void UpdateCompletedType(const TagDecl *TD);
+
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
   /// of a new block.
   void EmitRegionStart(CGBuilderTy &Builder);
