@@ -489,13 +489,19 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (TimePassesIsEnabled)
     GroupName = "Instruction Selection and Scheduling";
   std::string BlockName;
+  int BlockNumber = -1;
+#ifdef NDEBUG
   if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
       ViewDAGCombine2 || ViewDAGCombineLT || ViewISelDAGs || ViewSchedDAGs ||
       ViewSUnitDAGs)
+#endif
+  {
+    BlockNumber = FuncInfo->MBB->getNumber();
     BlockName = MF->getFunction()->getNameStr() + ":" +
                 FuncInfo->MBB->getBasicBlock()->getNameStr();
-
-  DEBUG(dbgs() << "Initial selection DAG:\n"; CurDAG->dump());
+  }
+  DEBUG(dbgs() << "Initial selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   if (ViewDAGCombine1) CurDAG->viewGraph("dag-combine1 input for " + BlockName);
 
@@ -505,7 +511,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Combine(Unrestricted, *AA, OptLevel);
   }
 
-  DEBUG(dbgs() << "Optimized lowered selection DAG:\n"; CurDAG->dump());
+  DEBUG(dbgs() << "Optimized lowered selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
@@ -518,7 +525,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     Changed = CurDAG->LegalizeTypes();
   }
 
-  DEBUG(dbgs() << "Type-legalized selection DAG:\n"; CurDAG->dump());
+  DEBUG(dbgs() << "Type-legalized selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   if (Changed) {
     if (ViewDAGCombineLT)
@@ -531,8 +539,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       CurDAG->Combine(NoIllegalTypes, *AA, OptLevel);
     }
 
-    DEBUG(dbgs() << "Optimized type-legalized selection DAG:\n";
-          CurDAG->dump());
+    DEBUG(dbgs() << "Optimized type-legalized selection DAG: BB#" << BlockNumber
+          << " '" << BlockName << "'\n"; CurDAG->dump());
   }
 
   {
@@ -556,8 +564,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
       CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
     }
 
-    DEBUG(dbgs() << "Optimized vector-legalized selection DAG:\n";
-          CurDAG->dump());
+    DEBUG(dbgs() << "Optimized vector-legalized selection DAG: BB#"
+          << BlockNumber << " '" << BlockName << "'\n"; CurDAG->dump());
   }
 
   if (ViewLegalizeDAGs) CurDAG->viewGraph("legalize input for " + BlockName);
@@ -567,7 +575,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Legalize(OptLevel);
   }
 
-  DEBUG(dbgs() << "Legalized selection DAG:\n"; CurDAG->dump());
+  DEBUG(dbgs() << "Legalized selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   if (ViewDAGCombine2) CurDAG->viewGraph("dag-combine2 input for " + BlockName);
 
@@ -577,7 +586,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     CurDAG->Combine(NoIllegalOperations, *AA, OptLevel);
   }
 
-  DEBUG(dbgs() << "Optimized legalized selection DAG:\n"; CurDAG->dump());
+  DEBUG(dbgs() << "Optimized legalized selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   if (OptLevel != CodeGenOpt::None)
     ComputeLiveOutVRegInfo();
@@ -591,7 +601,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
     DoInstructionSelection();
   }
 
-  DEBUG(dbgs() << "Selected selection DAG:\n"; CurDAG->dump());
+  DEBUG(dbgs() << "Selected selection DAG: BB#" << BlockNumber
+        << " '" << BlockName << "'\n"; CurDAG->dump());
 
   if (ViewSchedDAGs) CurDAG->viewGraph("scheduler input for " + BlockName);
 
@@ -632,7 +643,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 }
 
 void SelectionDAGISel::DoInstructionSelection() {
-  DEBUG(errs() << "===== Instruction selection begins:\n");
+  DEBUG(errs() << "===== Instruction selection begins: BB#"
+        << FuncInfo->MBB->getNumber()
+        << " '" << FuncInfo->MBB->getName() << "'\n");
 
   PreprocessISelDAG();
 
