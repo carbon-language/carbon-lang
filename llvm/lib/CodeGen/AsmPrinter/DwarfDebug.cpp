@@ -2419,14 +2419,12 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
     if (Processed.count(DV) != 0)
       continue;
 
-    const MachineInstr *PrevMI = MInsn;
     for (SmallVector<const MachineInstr *, 8>::iterator MI = I+1,
            ME = DbgValues.end(); MI != ME; ++MI) {
       const MDNode *Var =
         (*MI)->getOperand((*MI)->getNumOperands()-1).getMetadata();
-      if (Var == DV && !PrevMI->isIdenticalTo(*MI))
+      if (Var == DV)
         MultipleValues.push_back(*MI);
-      PrevMI = *MI;
     }
 
     DbgScope *Scope = NULL;
