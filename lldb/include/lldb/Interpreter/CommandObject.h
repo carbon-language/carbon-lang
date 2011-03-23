@@ -120,7 +120,7 @@ public:
     static const ArgumentTableEntry*
     GetArgumentTable ();
 
-    static const lldb::CommandArgumentType
+    static lldb::CommandArgumentType
     LookupArgumentName (const char *arg_name);
 
     static ArgumentTableEntry *

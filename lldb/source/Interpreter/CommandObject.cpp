@@ -570,7 +570,7 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
     }
 }
 
-const CommandArgumentType
+CommandArgumentType
 CommandObject::LookupArgumentName (const char *arg_name)
 {
     CommandArgumentType return_type = eArgTypeLastArg;
