@@ -59,7 +59,7 @@ public:
         eNack,
         eError,
         eOK,
-        eResponse,
+        eResponse
     };
 
     ResponseType

@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Utility/StringExtractorGDBRemote.h"
-
 // C Includes
+#include <string.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "Utility/StringExtractorGDBRemote.h"
 
 
 
