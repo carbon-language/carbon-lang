@@ -259,7 +259,7 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
   DEBUG(dbgs() << "********** REWRITE VIRTUAL REGISTERS **********\n"
                << "********** Function: "
                << MF->getFunction()->getName() << '\n');
-
+  DEBUG(dump());
   SmallVector<unsigned, 8> SuperKills;
 
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
