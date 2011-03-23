@@ -246,7 +246,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     }
 
     uint32_t out = (opc << 21);
-    out |= (Value & 0x800) << 14;
+    out |= (Value & 0x800) << 15;
     out |= (Value & 0x700) << 4;
     out |= (Value & 0x0FF);
 
