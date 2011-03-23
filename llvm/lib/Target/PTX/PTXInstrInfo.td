@@ -285,18 +285,42 @@ multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
 }
 
 multiclass INT3ntnc<string opcstr, SDNode opnode> {
-  def rr : InstPTX<(outs RRegu32:$d),
-                   (ins RRegu32:$a, RRegu32:$b),
-                   !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
-  def ri : InstPTX<(outs RRegu32:$d),
-                   (ins RRegu32:$a, i32imm:$b),
-                   !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
-  def ir : InstPTX<(outs RRegu32:$d),
-                   (ins i32imm:$a, RRegu32:$b),
-                   !strconcat(opcstr, "\t$d, $a, $b"),
-                   [(set RRegu32:$d, (opnode imm:$a, RRegu32:$b))]>;
+  def rr16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, RRegu16:$b),
+                     !strconcat(opcstr, "16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
+  def rr32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, RRegu32:$b),
+                     !strconcat(opcstr, "32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
+  def rr64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, RRegu64:$b),
+                     !strconcat(opcstr, "64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
+  def ri16 : InstPTX<(outs RRegu16:$d),
+                     (ins RRegu16:$a, i16imm:$b),
+                     !strconcat(opcstr, "16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
+  def ri32 : InstPTX<(outs RRegu32:$d),
+                     (ins RRegu32:$a, i32imm:$b),
+                     !strconcat(opcstr, "32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
+  def ri64 : InstPTX<(outs RRegu64:$d),
+                     (ins RRegu64:$a, i64imm:$b),
+                     !strconcat(opcstr, "64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
+  def ir16 : InstPTX<(outs RRegu16:$d),
+                     (ins i16imm:$a, RRegu16:$b),
+                     !strconcat(opcstr, "16\t$d, $a, $b"),
+                     [(set RRegu16:$d, (opnode imm:$a, RRegu16:$b))]>;
+  def ir32 : InstPTX<(outs RRegu32:$d),
+                     (ins i32imm:$a, RRegu32:$b),
+                     !strconcat(opcstr, "32\t$d, $a, $b"),
+                     [(set RRegu32:$d, (opnode imm:$a, RRegu32:$b))]>;
+  def ir64 : InstPTX<(outs RRegu64:$d),
+                     (ins i64imm:$a, RRegu64:$b),
+                     !strconcat(opcstr, "64\t$d, $a, $b"),
+                     [(set RRegu64:$d, (opnode imm:$a, RRegu64:$b))]>;
 }
 
 multiclass PTX_SETP<RegisterClass RC, string regclsname, Operand immcls,
@@ -487,12 +511,18 @@ defm SETPLTu32 : PTX_SETP<RRegu32, "u32", i32imm, SETULT, "lt">;
 defm SETPLEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETULE, "le">;
 defm SETPGTu32 : PTX_SETP<RRegu32, "u32", i32imm, SETUGT, "gt">;
 defm SETPGEu32 : PTX_SETP<RRegu32, "u32", i32imm, SETUGE, "ge">;
+defm SETPEQu64 : PTX_SETP<RRegu64, "u64", i64imm, SETEQ,  "eq">;
+defm SETPNEu64 : PTX_SETP<RRegu64, "u64", i64imm, SETNE,  "ne">;
+defm SETPLTu64 : PTX_SETP<RRegu64, "u64", i64imm, SETULT, "lt">;
+defm SETPLEu64 : PTX_SETP<RRegu64, "u64", i64imm, SETULE, "le">;
+defm SETPGTu64 : PTX_SETP<RRegu64, "u64", i64imm, SETUGT, "gt">;
+defm SETPGEu64 : PTX_SETP<RRegu64, "u64", i64imm, SETUGE, "ge">;
 
 ///===- Logic and Shift Instructions --------------------------------------===//
 
-defm SHL : INT3ntnc<"shl.b32", PTXshl>;
-defm SRL : INT3ntnc<"shr.u32", PTXsrl>;
-defm SRA : INT3ntnc<"shr.s32", PTXsra>;
+defm SHL : INT3ntnc<"shl.b", PTXshl>;
+defm SRL : INT3ntnc<"shr.u", PTXsrl>;
+defm SRA : INT3ntnc<"shr.s", PTXsra>;
 
 defm AND : PTX_LOGIC<"and", and>;
 defm OR  : PTX_LOGIC<"or",  or>;
@@ -537,9 +567,12 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-  def MOVaddr
+  def MOVaddr32
     : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
               [(set RRegu32:$d, (PTXcopyaddress tglobaladdr:$a))]>;
+  def MOVaddr64
+    : InstPTX<(outs RRegu64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
+              [(set RRegu64:$d, (PTXcopyaddress tglobaladdr:$a))]>;
 }
 
 // Loads
@@ -572,6 +605,10 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 def CVT_u32_pred
   : InstPTX<(outs RRegu32:$d), (ins Preds:$a), "cvt.u32.pred\t$d, $a",
             [(set RRegu32:$d, (zext Preds:$a))]>;
+
+def CVT_u64_u32
+  : InstPTX<(outs RRegu64:$d), (ins RRegu32:$a), "cvt.u64.u32\t$d, $a",
+            [(set RRegu64:$d, (zext RRegu32:$a))]>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 

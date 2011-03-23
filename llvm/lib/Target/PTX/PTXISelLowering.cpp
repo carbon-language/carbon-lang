@@ -41,6 +41,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
 
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
   // Expand BR_CC into BRCOND
   setOperationAction(ISD::BR_CC, MVT::Other, Expand);
@@ -85,10 +86,12 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
+  assert(PtrVT.isSimple() && "Pointer must be to primitive type.");
+
   SDValue targetGlobal = DAG.getTargetGlobalAddress(GV, dl, PtrVT);
   SDValue movInstr = DAG.getNode(PTXISD::COPY_ADDRESS,
                                  dl,
-                                 MVT::i32,
+                                 PtrVT.getSimpleVT(),
                                  targetGlobal);
 
   return movInstr;

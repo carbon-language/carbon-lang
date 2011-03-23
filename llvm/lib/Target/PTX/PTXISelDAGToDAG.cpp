@@ -130,8 +130,11 @@ bool PTXDAGToDAGISel::SelectADDRrr(SDValue &Addr, SDValue &R1, SDValue &R2) {
       isImm(Addr.getOperand(0)) || isImm(Addr.getOperand(1)))
     return false;
 
+  assert(Addr.getValueType().isSimple() && "Type must be simple");
+
   R1 = Addr;
-  R2 = CurDAG->getTargetConstant(0, MVT::i32);
+  R2 = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+
   return true;
 }
 
@@ -143,8 +146,12 @@ bool PTXDAGToDAGISel::SelectADDRri(SDValue &Addr, SDValue &Base,
     if (isImm(Addr))
       return false;
     // it is [reg]
+
+    assert(Addr.getValueType().isSimple() && "Type must be simple");
+
     Base = Addr;
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+
     return true;
   }
 
@@ -177,7 +184,10 @@ bool PTXDAGToDAGISel::SelectADDRii(SDValue &Addr, SDValue &Base,
 
   // is [imm]?
   if (SelectImm(Addr, Base)) {
-    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    assert(Addr.getValueType().isSimple() && "Type must be simple");
+
+    Offset = CurDAG->getTargetConstant(0, Addr.getValueType().getSimpleVT());
+
     return true;
   }
 
@@ -194,7 +204,8 @@ bool PTXDAGToDAGISel::SelectImm(const SDValue &operand, SDValue &imm) {
     return false;
 
   ConstantSDNode *CN = cast<ConstantSDNode>(node);
-  imm = CurDAG->getTargetConstant(*CN->getConstantIntValue(), MVT::i32);
+  imm = CurDAG->getTargetConstant(*CN->getConstantIntValue(),
+                                  operand.getValueType());
   return true;
 }
 
