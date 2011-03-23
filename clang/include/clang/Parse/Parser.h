@@ -1495,7 +1495,7 @@ private:
 
   TypeResult ParseTypeName(SourceRange *Range = 0,
                            Declarator::TheContext Context
-                                                 = Declarator::TypeNameContext);
+                             = Declarator::TypeNameContext);
   void ParseBlockId();
 
   void ProhibitAttributes(ParsedAttributesWithRange &attrs) {

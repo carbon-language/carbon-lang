@@ -1317,6 +1317,7 @@ public:
   enum TheContext {
     FileContext,         // File scope declaration.
     PrototypeContext,    // Within a function prototype.
+    ObjCPrototypeContext,// Within a method prototype.
     KNRTypeListContext,  // K&R type definition list for formals.
     TypeNameContext,     // Abstract declarator for types.
     MemberContext,       // Struct/Union field.
@@ -1405,6 +1406,10 @@ public:
   
   TheContext getContext() const { return Context; }
 
+  bool isPrototypeContext() const {
+    return (Context == PrototypeContext || Context == ObjCPrototypeContext);
+  }
+
   /// getSourceRange - Get the source range that spans this declarator.
   const SourceRange &getSourceRange() const { return Range; }
 
@@ -1449,26 +1454,76 @@ public:
   /// not allowed.  This is true for typenames, prototypes, and template
   /// parameter lists.
   bool mayOmitIdentifier() const {
-    return Context == TypeNameContext || Context == PrototypeContext ||
-           Context == TemplateParamContext || Context == CXXCatchContext ||
-           Context == BlockLiteralContext || Context == TemplateTypeArgContext;
+    switch (Context) {
+    case FileContext:
+    case KNRTypeListContext:
+    case MemberContext:
+    case BlockContext:
+    case ForContext:
+    case ConditionContext:
+      return false;
+
+    case TypeNameContext:
+    case PrototypeContext:
+    case ObjCPrototypeContext:
+    case TemplateParamContext:
+    case CXXCatchContext:
+    case BlockLiteralContext:
+    case TemplateTypeArgContext:
+      return true;
+    }
+    llvm_unreachable("unknown context kind!");
   }
 
   /// mayHaveIdentifier - Return true if the identifier is either optional or
   /// required.  This is true for normal declarators and prototypes, but not
   /// typenames.
   bool mayHaveIdentifier() const {
-    return Context != TypeNameContext && Context != BlockLiteralContext &&
-           Context != TemplateTypeArgContext;
+    switch (Context) {
+    case FileContext:
+    case KNRTypeListContext:
+    case MemberContext:
+    case BlockContext:
+    case ForContext:
+    case ConditionContext:
+    case PrototypeContext:
+    case TemplateParamContext:
+    case CXXCatchContext:
+      return true;
+
+    case TypeNameContext:
+    case ObjCPrototypeContext:
+    case BlockLiteralContext:
+    case TemplateTypeArgContext:
+      return false;
+    }
+    llvm_unreachable("unknown context kind!");
   }
 
   /// mayBeFollowedByCXXDirectInit - Return true if the declarator can be
   /// followed by a C++ direct initializer, e.g. "int x(1);".
   bool mayBeFollowedByCXXDirectInit() const {
-    return !hasGroupingParens() &&
-           (Context == FileContext  ||
-            Context == BlockContext ||
-            Context == ForContext);
+    if (hasGroupingParens()) return false;
+
+    switch (Context) {
+    case FileContext:
+    case BlockContext:
+    case ForContext:
+      return true;
+
+    case KNRTypeListContext:
+    case MemberContext:
+    case ConditionContext:
+    case PrototypeContext:
+    case ObjCPrototypeContext:
+    case TemplateParamContext:
+    case CXXCatchContext:
+    case TypeNameContext:
+    case BlockLiteralContext:
+    case TemplateTypeArgContext:
+      return false;
+    }
+    llvm_unreachable("unknown context kind!");
   }
 
   /// isPastIdentifier - Return true if we have parsed beyond the point where

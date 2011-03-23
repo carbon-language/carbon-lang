@@ -1550,6 +1550,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::KNRTypeListContext:
       assert(0 && "K&R type lists aren't allowed in C++");
       break;
+    case Declarator::ObjCPrototypeContext:
     case Declarator::PrototypeContext:
       Error = 0; // Function prototype
       break;
@@ -1698,8 +1699,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         ASM = ArrayType::Static;
       else
         ASM = ArrayType::Normal;
-      if (ASM == ArrayType::Star &&
-          D.getContext() != Declarator::PrototypeContext) {
+      if (ASM == ArrayType::Star && !D.isPrototypeContext()) {
         // FIXME: This check isn't quite right: it allows star in prototypes
         // for function definitions, and disallows some edge cases detailed
         // in http://gcc.gnu.org/ml/gcc-patches/2009-02/msg00133.html
@@ -2168,6 +2168,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     
     case Declarator::FileContext:
     case Declarator::KNRTypeListContext:
+    case Declarator::ObjCPrototypeContext: // FIXME: special diagnostic here?
     case Declarator::TypeNameContext:
     case Declarator::MemberContext:
     case Declarator::BlockContext:

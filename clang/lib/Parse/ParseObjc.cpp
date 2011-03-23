@@ -776,7 +776,7 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 
   ParsedType Ty;
   if (isTypeSpecifierQualifier()) {
-    TypeResult TypeSpec = ParseTypeName();
+    TypeResult TypeSpec = ParseTypeName(0, Declarator::ObjCPrototypeContext);
     if (!TypeSpec.isInvalid())
       Ty = TypeSpec.get();
   }
