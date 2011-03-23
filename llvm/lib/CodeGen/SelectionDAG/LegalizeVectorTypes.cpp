@@ -50,6 +50,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
   case ISD::CONVERT_RNDSAT:    R = ScalarizeVecRes_CONVERT_RNDSAT(N); break;
   case ISD::EXTRACT_SUBVECTOR: R = ScalarizeVecRes_EXTRACT_SUBVECTOR(N); break;
+  case ISD::FP_ROUND:          R = ScalarizeVecRes_FP_ROUND(N); break;
   case ISD::FP_ROUND_INREG:    R = ScalarizeVecRes_InregOp(N); break;
   case ISD::FPOWI:             R = ScalarizeVecRes_FPOWI(N); break;
   case ISD::INSERT_VECTOR_ELT: R = ScalarizeVecRes_INSERT_VECTOR_ELT(N); break;
@@ -149,6 +150,13 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_EXTRACT_SUBVECTOR(SDNode *N) {
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getDebugLoc(),
                      N->getValueType(0).getVectorElementType(),
                      N->getOperand(0), N->getOperand(1));
+}
+
+SDValue DAGTypeLegalizer::ScalarizeVecRes_FP_ROUND(SDNode *N) {
+  EVT NewVT = N->getValueType(0).getVectorElementType();
+  SDValue Op = GetScalarizedVector(N->getOperand(0));
+  return DAG.getNode(ISD::FP_ROUND, N->getDebugLoc(),
+                     NewVT, Op, N->getOperand(1));
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_FPOWI(SDNode *N) {
@@ -411,11 +419,9 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
   case ISD::UNDEF:        SplitRes_UNDEF(N, Lo, Hi); break;
-
   case ISD::BITCAST:           SplitVecRes_BITCAST(N, Lo, Hi); break;
   case ISD::BUILD_VECTOR:      SplitVecRes_BUILD_VECTOR(N, Lo, Hi); break;
   case ISD::CONCAT_VECTORS:    SplitVecRes_CONCAT_VECTORS(N, Lo, Hi); break;
-  case ISD::CONVERT_RNDSAT:    SplitVecRes_CONVERT_RNDSAT(N, Lo, Hi); break;
   case ISD::EXTRACT_SUBVECTOR: SplitVecRes_EXTRACT_SUBVECTOR(N, Lo, Hi); break;
   case ISD::FP_ROUND_INREG:    SplitVecRes_InregOp(N, Lo, Hi); break;
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
@@ -434,6 +440,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
     break;
 
   case ISD::ANY_EXTEND:
+  case ISD::CONVERT_RNDSAT:
   case ISD::CTLZ:
   case ISD::CTPOP:
   case ISD::CTTZ:
@@ -449,6 +456,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FNEARBYINT:
   case ISD::FNEG:
   case ISD::FP_EXTEND:
+  case ISD::FP_ROUND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::FRINT:
@@ -592,60 +600,6 @@ void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo,
 
   SmallVector<SDValue, 8> HiOps(N->op_begin()+NumSubvectors, N->op_end());
   Hi = DAG.getNode(ISD::CONCAT_VECTORS, dl, HiVT, &HiOps[0], HiOps.size());
-}
-
-void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
-                                                  SDValue &Hi) {
-  EVT LoVT, HiVT;
-  DebugLoc dl = N->getDebugLoc();
-  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-
-  SDValue DTyOpLo =  DAG.getValueType(LoVT);
-  SDValue DTyOpHi =  DAG.getValueType(HiVT);
-
-  SDValue RndOp = N->getOperand(3);
-  SDValue SatOp = N->getOperand(4);
-  ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
-
-  // Split the input.
-  SDValue VLo, VHi;
-  EVT InVT = N->getOperand(0).getValueType();
-  switch (getTypeAction(InVT)) {
-  default: llvm_unreachable("Unexpected type action!");
-  case Legal: {
-    EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
-                                 LoVT.getVectorNumElements());
-    VLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
-                      DAG.getIntPtrConstant(0));
-    VHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, N->getOperand(0),
-                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
-    break;
-  }
-  case SplitVector:
-    GetSplitVector(N->getOperand(0), VLo, VHi);
-    break;
-  case WidenVector: {
-    // If the result needs to be split and the input needs to be widened,
-    // the two types must have different lengths. Use the widened result
-    // and extract from it to do the split.
-    SDValue InOp = GetWidenedVector(N->getOperand(0));
-    EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
-                                 LoVT.getVectorNumElements());
-    VLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                      DAG.getIntPtrConstant(0));
-    VHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
-    break;
-  }
-  }
-
-  SDValue STyOpLo =  DAG.getValueType(VLo.getValueType());
-  SDValue STyOpHi =  DAG.getValueType(VHi.getValueType());
-
-  Lo = DAG.getConvertRndSat(LoVT, dl, VLo, DTyOpLo, STyOpLo, RndOp, SatOp,
-                            CvtCode);
-  Hi = DAG.getConvertRndSat(HiVT, dl, VHi, DTyOpHi, STyOpHi, RndOp, SatOp,
-                            CvtCode);
 }
 
 void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
@@ -847,8 +801,25 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   }
   }
 
-  Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);
-  Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi);
+  if (N->getOpcode() == ISD::FP_ROUND) {
+    Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo, N->getOperand(1));
+    Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi, N->getOperand(1));
+  } else if (N->getOpcode() == ISD::CONVERT_RNDSAT) {
+    SDValue DTyOpLo = DAG.getValueType(LoVT);
+    SDValue DTyOpHi = DAG.getValueType(HiVT);
+    SDValue STyOpLo = DAG.getValueType(Lo.getValueType());
+    SDValue STyOpHi = DAG.getValueType(Hi.getValueType());
+    SDValue RndOp = N->getOperand(3);
+    SDValue SatOp = N->getOperand(4);
+    ISD::CvtCode CvtCode = cast<CvtRndSatSDNode>(N)->getCvtCode();
+    Lo = DAG.getConvertRndSat(LoVT, dl, Lo, DTyOpLo, STyOpLo, RndOp, SatOp,
+                              CvtCode);
+    Hi = DAG.getConvertRndSat(HiVT, dl, Hi, DTyOpHi, STyOpHi, RndOp, SatOp,
+                              CvtCode);
+  } else {
+    Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);
+    Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi);
+  }
 }
 
 void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N,
@@ -2018,7 +1989,6 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
 
   case ISD::FP_EXTEND:
-  case ISD::FP_ROUND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
