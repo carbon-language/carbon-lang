@@ -12,6 +12,14 @@
   } while (0)
 
 
+// Test that we don't report divide-by-zero errors in unreachable code.
+// This test should be left as is, as it also tests CFG functionality.
+void radar9171946() {
+  if (0) {
+    0 / (0 ? 1 : 0); // expected-warning {{expression result unused}}
+  }
+}
+
 int test_pr8876() {
   PR8876(0); // no-warning
   PR8876_pos(0); // expected-warning{{indirection of non-volatile null pointer will be deleted, not trap}} expected-note{{consider using __builtin_trap() or qualifying pointer with 'volatile'}}

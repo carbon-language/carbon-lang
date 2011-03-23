@@ -284,6 +284,7 @@ class CFGBuilder {
   Expr::EvalResult *switchCond;
   
   CFG::BuildOptions::ForcedBlkExprs::value_type *cachedEntry;
+  const Stmt *lastLookup;
 
 public:
   explicit CFGBuilder(ASTContext *astContext,
@@ -293,7 +294,7 @@ public:
       SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL),
       TryTerminatedBlock(NULL), badCFG(false), BuildOpts(buildOpts), 
       switchExclusivelyCovered(false), switchCond(0),
-      cachedEntry(0) {}
+      cachedEntry(0), lastLookup(0) {}
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(const Decl *D, Stmt *Statement);
@@ -393,11 +394,8 @@ private:
 
   // Interface to CFGBlock - adding CFGElements.
   void appendStmt(CFGBlock *B, Stmt *S) {
-    if (cachedEntry) {
-      assert(cachedEntry->first == S);
+    if (alwaysAdd(S))
       cachedEntry->second = B;
-      cachedEntry = 0;
-    }    
 
     B->appendStmt(S, cfg->getBumpVectorContext());
   }
@@ -459,20 +457,36 @@ inline bool AddStmtChoice::alwaysAdd(CFGBuilder &builder,
                                      const Stmt *stmt) const {
   return builder.alwaysAdd(stmt) || kind == AlwaysAdd;
 }
-  
+
 bool CFGBuilder::alwaysAdd(const Stmt *stmt) {
   if (!BuildOpts.forcedBlkExprs)
     return false;
+
+  if (lastLookup == stmt) {  
+    if (cachedEntry) {
+      assert(cachedEntry->first == stmt);
+      return true;
+    }
+    return false;
+  }
   
+  lastLookup = stmt;
+
+  // Perform the lookup!
   CFG::BuildOptions::ForcedBlkExprs *fb = *BuildOpts.forcedBlkExprs;
 
-  if (!fb)
+  if (!fb) {
+    // No need to update 'cachedEntry', since it will always be null.
+    assert(cachedEntry == 0);
     return false;
+  }
 
   CFG::BuildOptions::ForcedBlkExprs::iterator itr = fb->find(stmt);
-  if (itr == fb->end())
+  if (itr == fb->end()) {
+    cachedEntry = 0;
     return false;
-  
+  }
+
   cachedEntry = &*itr;
   return true;
 }
