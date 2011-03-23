@@ -182,6 +182,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         // Remove defined value.
         if (MOI->isDef()) {
           if (VNInfo *VNI = LI.getVNInfoAt(Idx)) {
+            if (delegate_)
+              delegate_->LRE_WillShrinkVirtReg(LI.reg);
             LI.removeValNo(VNI);
             if (LI.empty()) {
               ToShrink.remove(&LI);
