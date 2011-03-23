@@ -520,10 +520,6 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
             const char *second_name = GetArgumentName (arg_entry[1].arg_type);
             switch (arg_entry[0].arg_repetition)
             {
-                default:
-                    // Silence clang warnings.
-                    // Only pair enums are reachable.
-                    break;
                 case eArgRepeatPairPlain:
                     str.Printf ("<%s> <%s>", first_name, second_name);
                     break;
@@ -542,6 +538,15 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
                 case eArgRepeatPairRangeOptional:
                     str.Printf ("[<%s_1> <%s_1> ... <%s_n> <%s_n>]", first_name, second_name, first_name, second_name);
                     break;
+                // Explicitly test for all the rest of the cases, so if new types get added we will notice the
+                // missing case statement(s).
+                case eArgRepeatPlain:
+                case eArgRepeatOptional:
+                case eArgRepeatPlus:
+                case eArgRepeatStar:
+                case eArgRepeatRange:
+                    // These should not be reached, as they should fail the IsPairType test above.
+                    break;
             }
         }
         else
@@ -555,10 +560,6 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
             }
             switch (arg_entry[0].arg_repetition)
             {
-                default:
-                    // Silence clang warnings.
-                    // Only non-pair enums are reachable.
-                    break;
                 case eArgRepeatPlain:
                     str.Printf ("<%s>", names.GetData());
                     break;
@@ -573,6 +574,18 @@ CommandObject::GetFormattedCommandArguments (Stream &str)
                     break;
                 case eArgRepeatRange:
                     str.Printf ("<%s_1> .. <%s_n>", names.GetData());
+                    break;
+                // Explicitly test for all the rest of the cases, so if new types get added we will notice the
+                // missing case statement(s).
+                case eArgRepeatPairPlain:
+                case eArgRepeatPairOptional:
+                case eArgRepeatPairPlus:
+                case eArgRepeatPairStar:
+                case eArgRepeatPairRange:
+                case eArgRepeatPairRangeOptional:
+                    // These should not be hit, as they should pass the IsPairType test above, and control should
+                    // have gone into the other branch of the if statement.
+                    break;
             }
         }
     }
