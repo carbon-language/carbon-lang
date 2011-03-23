@@ -64,15 +64,22 @@ function(explicit_map_components_to_libraries out_libs)
   string(TOUPPER "${llvm_libs}" capitalized_libs)
 
   # Expand some keywords:
+  list(FIND LLVM_TARGETS_TO_BUILD "${LLVM_NATIVE_ARCH}" have_native_backend)
   list(FIND link_components "engine" engine_required)
-  if( NOT engine_required STREQUAL "-1" )
-    # TODO: as we assume we are on X86, this is `jit'.
-    list(APPEND link_components "jit")
-    list(APPEND link_components "native")
+  if( NOT engine_required EQUAL -1 )
+    list(FIND LLVM_TARGETS_WITH_JIT "${LLVM_NATIVE_ARCH}" have_jit)
+    if( NOT have_native_backend EQUAL -1 AND NOT have_jit EQUAL -1 )
+      list(APPEND link_components "jit")
+      list(APPEND link_components "native")
+    else()
+      list(APPEND link_components "interpreter")
+    endif()
   endif()
   list(FIND link_components "native" native_required)
-  if( NOT native_required STREQUAL "-1" )
-    list(APPEND link_components "X86")
+  if( NOT native_required EQUAL -1 )
+    if( NOT have_native_backend EQUAL -1 )
+      list(APPEND link_components ${LLVM_NATIVE_ARCH})
+    endif()
   endif()
 
   # Translate symbolic component names to real libraries:

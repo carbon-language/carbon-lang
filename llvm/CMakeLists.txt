@@ -81,6 +81,9 @@ set(LLVM_ALL_TARGETS
   XCore
   )
 
+# List of targets with JIT support:
+set(LLVM_TARGETS_WITH_JIT X86 PowerPC ARM)
+
 if( MSVC )
   set(LLVM_TARGETS_TO_BUILD X86
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
