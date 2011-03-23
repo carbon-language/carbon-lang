@@ -114,6 +114,27 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
     return bytes_written;
 }
 
+// Simple helper function to ensure flags are enabled on the given file
+// descriptor.
+static bool
+EnsureFDFlags(int fd, int flags, Error &error)
+{
+    int status;
+
+    if ((status = fcntl(fd, F_GETFL)) == -1)
+    {
+        error.SetErrorToErrno();
+        return false;
+    }
+
+    if (fcntl(fd, F_SETFL, status | flags) == -1)
+    {
+        error.SetErrorToErrno();
+        return false;
+    }
+
+    return true;
+}
 
 //------------------------------------------------------------------------------
 /// @class Operation
@@ -705,6 +726,12 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // ProcessMonitor instance.  Similarly stash the inferior pid.
     monitor->m_terminal_fd = terminal.ReleaseMasterFileDescriptor();
     monitor->m_pid = pid;
+
+    // Set the terminal fd to be in non blocking mode (it simplifies the
+    // implementation of ProcessLinux::GetSTDOUT to have a non-blocking
+    // descriptor to read from).
+    if (!EnsureFDFlags(monitor->m_terminal_fd, O_NONBLOCK, args->m_error))
+        goto FINISH;
 
     // Update the process thread list with this new thread and mark it as
     // current.
