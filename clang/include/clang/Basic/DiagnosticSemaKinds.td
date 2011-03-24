@@ -204,6 +204,9 @@ def warn_global_constructor : Warning<
 def warn_global_destructor : Warning<
   "declaration requires a global destructor">,
    InGroup<GlobalConstructors>, DefaultIgnore;
+def warn_exit_time_destructor : Warning<
+  "declaration requires an exit-time destructor">,
+  InGroup<ExitTimeDestructors>, DefaultIgnore;
 
 def err_invalid_thread : Error<
   "'__thread' is only allowed on variable declarations">;

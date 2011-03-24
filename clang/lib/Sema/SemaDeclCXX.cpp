@@ -6102,9 +6102,13 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
                             << VD->getDeclName()
                             << VD->getType());
 
-    // TODO: this should be re-enabled for static locals by !CXAAtExit
-    if (!VD->isInvalidDecl() && VD->hasGlobalStorage() && !VD->isStaticLocal())
-      Diag(VD->getLocation(), diag::warn_global_destructor);
+    if (!VD->isInvalidDecl() && VD->hasGlobalStorage()) {
+      // TODO: this should be re-enabled for static locals by !CXAAtExit
+      if (!VD->isStaticLocal())
+        Diag(VD->getLocation(), diag::warn_global_destructor);
+
+      Diag(VD->getLocation(), diag::warn_exit_time_destructor);
+    }
   }
 }
 

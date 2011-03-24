@@ -55,6 +55,7 @@ def CXXHexFloats : DiagGroup<"c++-hex-floats">;
 
 def : DiagGroup<"c++0x-compat", [CXXHexFloats]>;
 def : DiagGroup<"effc++">;
+def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
