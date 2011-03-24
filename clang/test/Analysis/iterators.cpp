@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,core.experimental.Iterators -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,cplusplus.experimental.Iterators -verify %s
 // XFAIL: win32
 
 #include <vector>

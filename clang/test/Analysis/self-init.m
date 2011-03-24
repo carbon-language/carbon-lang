@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=cocoa.SelfInit %s -verify
+// RUN: %clang_cc1 -analyze -analyzer-checker=osx.cocoa.SelfInit %s -verify
 
 @class NSZone, NSCoder;
 @protocol NSObject

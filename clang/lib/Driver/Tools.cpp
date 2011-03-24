@@ -1020,28 +1020,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Treat blocks as analysis entry points.
     CmdArgs.push_back("-analyzer-opt-analyze-nested-blocks");
 
+    CmdArgs.push_back("-analyzer-eagerly-assume");
+
     // Add default argument set.
     if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
-      types::ID InputType = Inputs[0].getType();
-
-      // Checks to perform for all language types.
-
       CmdArgs.push_back("-analyzer-checker=core");
+      CmdArgs.push_back("-analyzer-checker=deadcode");
+      CmdArgs.push_back("-analyzer-checker=security");
+
       if (getToolChain().getTriple().getOS() != llvm::Triple::Win32)
         CmdArgs.push_back("-analyzer-checker=unix");
+
       if (getToolChain().getTriple().getVendor() == llvm::Triple::Apple)
-        CmdArgs.push_back("-analyzer-checker=macosx");
-
-      CmdArgs.push_back("-analyzer-checker=deadcode.DeadStores");
-      CmdArgs.push_back("-analyzer-checker=deadcode.IdempotentOperations");
-
-      // Checks to perform for Objective-C/Objective-C++.
-      if (types::isObjC(InputType)) {
-        // Enable all checkers in 'cocoa' package.
-        CmdArgs.push_back("-analyzer-checker=cocoa");
-      }
-
-      CmdArgs.push_back("-analyzer-eagerly-assume");
+        CmdArgs.push_back("-analyzer-checker=osx");
     }
 
     // Set the output format. The default is plist, for (lame) historical

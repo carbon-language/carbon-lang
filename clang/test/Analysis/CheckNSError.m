@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cocoa.NSError,macosx.CFError -analyzer-store=basic -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cocoa.NSError,macosx.CFError -analyzer-store=region -analyzer-constraints=basic -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cocoa.NSError,macosx.CFError -analyzer-store=basic -analyzer-constraints=range -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,cocoa.NSError,macosx.CFError -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=basic -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=region -analyzer-constraints=basic -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=basic -analyzer-constraints=range -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.NSError,osx.coreFoundation.CFError -analyzer-store=region -analyzer-constraints=range -verify %s
 
 
 typedef signed char BOOL;

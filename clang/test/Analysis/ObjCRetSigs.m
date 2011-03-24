@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=cocoa.MethodSigs -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core.experimental -analyzer-checker=osx.cocoa.IncompatibleMethodTypes -verify %s
 
 int printf(const char *, ...);
 
