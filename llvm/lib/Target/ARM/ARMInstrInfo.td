@@ -1805,7 +1805,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
 
 def STRT : AI2stridx<0, 0, (outs GPR:$Rn_wb),
                     (ins GPR:$Rt, GPR:$Rn,am2offset:$offset),
-                    IndexModeNone, StFrm, IIC_iStore_ru,
+                    IndexModePost, StFrm, IIC_iStore_ru,
                     "strt", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
@@ -1813,7 +1813,7 @@ def STRT : AI2stridx<0, 0, (outs GPR:$Rn_wb),
 
 def STRBT : AI2stridx<1, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
-                     IndexModeNone, StFrm, IIC_iStore_bh_ru,
+                     IndexModePost, StFrm, IIC_iStore_bh_ru,
                      "strbt", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
                      [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
