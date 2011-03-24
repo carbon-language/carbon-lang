@@ -465,7 +465,7 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
       showBitVector(errs(), insn);
     });
 
-  ARMBasicMCBuilder *Builder = CreateMCBuilder(Opcode, Format);
+  OwningPtr<ARMBasicMCBuilder> Builder(CreateMCBuilder(Opcode, Format));
   if (!Builder)
     return false;
 
@@ -473,8 +473,6 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
 
   if (!Builder->Build(MI, insn))
     return false;
-
-  delete Builder;
 
   return true;
 }
