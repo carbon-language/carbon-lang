@@ -1235,13 +1235,13 @@ static bool DisassembleStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 }
 
 // The algorithm for disassembly of LdStMulFrm is different from others because
-// it explicitly populates the two predicate operands after operand 0 (the base)
-// and operand 1 (the AM4 mode imm).  After operand 3, we need to populate the
-// reglist with each affected register encoded as an MCOperand.
+// it explicitly populates the two predicate operands after the base register.
+// After that, we need to populate the reglist with each affected register
+// encoded as an MCOperand.
 static bool DisassembleLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  assert(NumOps >= 5 && "LdStMulFrm expects NumOps >= 5");
+  assert(NumOps >= 4 && "LdStMulFrm expects NumOps >= 4");
   NumOpsAdded = 0;
 
   unsigned Base = getRegisterEnum(B, ARM::GPRRegClassID, decodeRn(insn));
