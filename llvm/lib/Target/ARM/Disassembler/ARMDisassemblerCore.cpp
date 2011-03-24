@@ -2302,6 +2302,8 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
 
 // VMOV (immediate)
 //   Qd/Dd imm
+// VORR (immediate)
+//   Qd/Dd imm src(=Qd/Dd)
 static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
@@ -2328,12 +2330,16 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
   case ARM::VMOVv8i16:
   case ARM::VMVNv4i16:
   case ARM::VMVNv8i16:
+  case ARM::VORRiv4i16:
+  case ARM::VORRiv8i16:
     esize = ESize16;
     break;
   case ARM::VMOVv2i32:
   case ARM::VMOVv4i32:
   case ARM::VMVNv2i32:
   case ARM::VMVNv4i32:
+  case ARM::VORRiv2i32:
+  case ARM::VORRiv4i32:
     esize = ESize32;
     break;
   case ARM::VMOVv1i64:
@@ -2350,6 +2356,16 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
   MI.addOperand(MCOperand::CreateImm(decodeN1VImm(insn, esize)));
 
   NumOpsAdded = 2;
+
+  // VORRiv*i* variants have an extra $src = $Vd to be filled in.
+  if (NumOps >= 3 &&
+      (OpInfo[2].RegClass == ARM::DPRRegClassID ||
+       OpInfo[2].RegClass == ARM::QPRRegClassID)) {
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[0].RegClass,
+                                                     decodeNEONRd(insn))));
+    NumOpsAdded += 1;
+  }
+
   return true;
 }
 
