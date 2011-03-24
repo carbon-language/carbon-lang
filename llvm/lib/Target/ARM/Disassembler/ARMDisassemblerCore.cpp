@@ -2946,6 +2946,8 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // of optional arguments is implemented.
   if (Opcode == ARM::CPS3p) {
     // Let's reject impossible imod values by returning false.
+    // AsmPrinter cannot handle imod=0b00, plus (imod=0b00,M=1,iflags!=0) is an
+    // invalid combination, so we just check for imod=0b00 here.
     if (slice(insn, 19, 18) == 0 || slice(insn, 19, 18) == 1)
       return false;
     MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 18))); // imod
