@@ -138,7 +138,8 @@ VTTBuilder::VTTBuilder(CodeGenModule &CGM,
   GenerateDefinition(GenerateDefinition) {
     
   // Lay out this VTT.
-  LayoutVTT(BaseSubobject(MostDerivedClass, 0), /*BaseIsVirtual=*/false);
+  LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
+            /*BaseIsVirtual=*/false);
 }
 
 llvm::Constant *
@@ -148,7 +149,7 @@ VTTBuilder::GetAddrOfVTable(BaseSubobject Base, bool BaseIsVirtual,
     return 0;
   
   if (Base.getBase() == MostDerivedClass) {
-    assert(Base.getBaseOffset() == 0 &&
+    assert(Base.getBaseOffset().isZero() &&
            "Most derived class vtable must have a zero offset!");
     // This is a regular vtable.
     return CGM.getVTables().GetAddrOfVTable(MostDerivedClass);
@@ -217,8 +218,8 @@ void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
       cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
 
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-    uint64_t BaseOffset = Base.getBaseOffset() + 
-      Layout.getBaseClassOffsetInBits(BaseDecl);
+    CharUnits BaseOffset = Base.getBaseOffset() + 
+      Layout.getBaseClassOffset(BaseDecl);
    
     // Layout the VTT for this base.
     LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/false);
@@ -256,19 +257,19 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     
     bool BaseDeclIsMorallyVirtual = BaseIsMorallyVirtual;
     bool BaseDeclIsNonVirtualPrimaryBase = false;
-    uint64_t BaseOffset;
+    CharUnits BaseOffset;
     if (I->isVirtual()) {
       // Ignore virtual bases that we've already visited.
       if (!VBases.insert(BaseDecl))
         continue;
       
-      BaseOffset = MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
+      BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       BaseDeclIsMorallyVirtual = true;
     } else {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
       
-      BaseOffset = 
-        Base.getBaseOffset() + Layout.getBaseClassOffsetInBits(BaseDecl);
+      BaseOffset = Base.getBaseOffset() + 
+        Layout.getBaseClassOffset(BaseDecl);
       
       if (!Layout.isPrimaryBaseVirtual() &&
           Layout.getPrimaryBase() == BaseDecl)
@@ -283,8 +284,8 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     if (!BaseDeclIsNonVirtualPrimaryBase &&
         (BaseDecl->getNumVBases() || BaseDeclIsMorallyVirtual)) {
       // Add the vtable pointer.
-      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTable, VTableClass, 
-                       AddressPoints);
+      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTable, 
+                       VTableClass, AddressPoints);
     }
 
     // And lay out the secondary virtual pointers for the base class.
@@ -316,8 +317,8 @@ void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
       if (!VBases.insert(BaseDecl))
         continue;
     
-      uint64_t BaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
+      CharUnits BaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       
       LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/true);
     }

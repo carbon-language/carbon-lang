@@ -345,7 +345,7 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
   MD = MD->getCanonicalDecl();
   uint64_t VTableIndex = CGM.getVTables().getMethodVTableIndex(MD);
   uint64_t AddressPoint = 
-    CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
+    CGM.getVTables().getAddressPoint(BaseSubobject(RD, CharUnits::Zero()), RD);
   VTableIndex += AddressPoint;
   llvm::Value *VFuncPtr = 
     Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
@@ -380,7 +380,7 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
     uint64_t VTableIndex = 
       CGM.getVTables().getMethodVTableIndex(GlobalDecl(DD, Type));
     uint64_t AddressPoint =
-      CGM.getVTables().getAddressPoint(BaseSubobject(RD, 0), RD);
+      CGM.getVTables().getAddressPoint(BaseSubobject(RD, CharUnits::Zero()), RD);
     VTableIndex += AddressPoint;
     llvm::Value *VFuncPtr =
       Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");

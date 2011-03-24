@@ -305,9 +305,9 @@ static llvm::Value *GetVTTParameter(CodeGenFunction &CGF, GlobalDecl GD,
   } else {
     const ASTRecordLayout &Layout = 
       CGF.getContext().getASTRecordLayout(RD);
-    uint64_t BaseOffset = ForVirtualBase ? 
-      Layout.getVBaseClassOffsetInBits(Base) : 
-      Layout.getBaseClassOffsetInBits(Base);
+    CharUnits BaseOffset = ForVirtualBase ? 
+      Layout.getVBaseClassOffset(Base) : 
+      Layout.getBaseClassOffset(Base);
 
     SubVTTIndex = 
       CGF.CGM.getVTables().getSubVTTIndex(RD, BaseSubobject(Base, BaseOffset));
@@ -1378,8 +1378,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
     NonVirtualOffset = OffsetFromNearestVBase;
   } else {
     // We can just use the base offset in the complete class.
-    NonVirtualOffset = 
-      CGM.getContext().toCharUnitsFromBits(Base.getBaseOffset());
+    NonVirtualOffset = Base.getBaseOffset();
   }
   
   // Apply the offsets.
@@ -1443,16 +1442,13 @@ CodeGenFunction::InitializeVTablePointers(BaseSubobject Base,
     } else {
       const ASTRecordLayout &Layout = getContext().getASTRecordLayout(RD);
 
-      BaseOffset = 
-        getContext().toCharUnitsFromBits(Base.getBaseOffset()) + 
-        Layout.getBaseClassOffset(BaseDecl);
+      BaseOffset = Base.getBaseOffset() + Layout.getBaseClassOffset(BaseDecl);
       BaseOffsetFromNearestVBase = 
         OffsetFromNearestVBase + Layout.getBaseClassOffset(BaseDecl);
       BaseDeclIsNonVirtualPrimaryBase = Layout.getPrimaryBase() == BaseDecl;
     }
     
-    InitializeVTablePointers(BaseSubobject(BaseDecl, 
-                                           getContext().toBits(BaseOffset)), 
+    InitializeVTablePointers(BaseSubobject(BaseDecl, BaseOffset), 
                              I->isVirtual() ? BaseDecl : NearestVBase,
                              BaseOffsetFromNearestVBase,
                              BaseDeclIsNonVirtualPrimaryBase, 
@@ -1470,7 +1466,8 @@ void CodeGenFunction::InitializeVTablePointers(const CXXRecordDecl *RD) {
 
   // Initialize the vtable pointers for this class and all of its bases.
   VisitedVirtualBasesSetTy VBases;
-  InitializeVTablePointers(BaseSubobject(RD, 0), /*NearestVBase=*/0, 
+  InitializeVTablePointers(BaseSubobject(RD, CharUnits::Zero()), 
+                           /*NearestVBase=*/0, 
                            /*OffsetFromNearestVBase=*/CharUnits::Zero(),
                            /*BaseIsNonVirtualPrimaryBase=*/false, 
                            VTable, RD, VBases);
