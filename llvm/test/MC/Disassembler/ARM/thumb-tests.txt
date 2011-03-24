@@ -139,3 +139,6 @@
 
 # CHECK:	stmdb.w	sp, {r0, r2, r3, r8, r11, lr}
 0x0d 0xe9 0x0d 0x49
+
+# CHECK:	stmia	r5!, {r0, r1, r2, r3, r4}
+0x1f 0xc5

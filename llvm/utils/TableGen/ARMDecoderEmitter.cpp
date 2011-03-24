@@ -1615,6 +1615,11 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (!thumbInstruction(Form))
       return false;
 
+    // A8.6.189 STM / STMIA / STMEA -- Encoding T1
+    // There's only STMIA_UPD for Thumb1.
+    if (Name == "tSTMIA")
+      return false;
+
     // On Darwin R9 is call-clobbered.  Ignore the non-Darwin counterparts.
     if (Name == "tBL" || Name == "tBLXi" || Name == "tBLXr")
       return false;
