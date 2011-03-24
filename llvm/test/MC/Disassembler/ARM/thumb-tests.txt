@@ -142,3 +142,9 @@
 
 # CHECK:	stmia	r5!, {r0, r1, r2, r3, r4}
 0x1f 0xc5
+
+# CHECK:	ldmia	r5, {r0, r1, r2, r3, r4, r5}
+0x3f 0xcd
+
+# CHECK:	ldmia	r5!, {r0, r1, r2, r3, r4}
+0x1f 0xcd

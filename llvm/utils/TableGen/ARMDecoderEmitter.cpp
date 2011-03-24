@@ -1382,7 +1382,7 @@ bool ARMFilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
     // 2. source registers are identical => VMOVQ; otherwise => VORRq
     // 3. LDR, LDRcp => return LDR for now.
     // FIXME: How can we distinguish between LDR and LDRcp?  Do we need to?
-    // 4. tLDM, tLDM_UPD => Rn = Inst{10-8}, reglist = Inst{7-0},
+    // 4. tLDMIA, tLDMIA_UPD => Rn = Inst{10-8}, reglist = Inst{7-0},
     //    wback = registers<Rn> = 0
     // NOTE: (tLDM, tLDM_UPD) resolution must come before Advanced SIMD
     //       addressing mode resolution!!!
@@ -1423,7 +1423,7 @@ bool ARMFilterChooser::emit(raw_ostream &o, unsigned &Indentation) {
         << "; // Returning LDR for {LDR, LDRcp}\n";
       return true;
     }
-    if (name1 == "tLDM" && name2 == "tLDM_UPD") {
+    if (name1 == "tLDMIA" && name2 == "tLDMIA_UPD") {
       // Inserting the opening curly brace for this case block.
       --Indentation; --Indentation;
       o.indent(Indentation) << "{\n";
