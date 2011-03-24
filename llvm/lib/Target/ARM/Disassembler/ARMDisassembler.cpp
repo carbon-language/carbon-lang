@@ -18,6 +18,7 @@
 #include "ARMDisassembler.h"
 #include "ARMDisassemblerCore.h"
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -384,14 +385,12 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
       showBitVector(errs(), insn);
     });
 
-  ARMBasicMCBuilder *Builder = CreateMCBuilder(Opcode, Format);
+  OwningPtr<ARMBasicMCBuilder> Builder(CreateMCBuilder(Opcode, Format));
   if (!Builder)
     return false;
 
   if (!Builder->Build(MI, insn))
     return false;
-
-  delete Builder;
 
   return true;
 }
