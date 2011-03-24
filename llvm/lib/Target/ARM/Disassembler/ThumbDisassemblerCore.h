@@ -1140,7 +1140,7 @@ static bool DisassembleThumb2LdStMul(MCInst &MI, unsigned Opcode, uint32_t insn,
           Opcode == ARM::t2STMIA || Opcode == ARM::t2STMIA_UPD ||
           Opcode == ARM::t2STMDB || Opcode == ARM::t2STMDB_UPD)
          && "Unexpected opcode");
-  assert(NumOps >= 5 && "Thumb2 LdStMul expects NumOps >= 5");
+  assert(NumOps >= 4 && "Thumb2 LdStMul expects NumOps >= 4");
 
   NumOpsAdded = 0;
 
