@@ -112,7 +112,7 @@ CommandInterpreter::Initialize ()
     HandleCommand ("command alias l        source list", false, result);
     HandleCommand ("command alias list     source list", false, result);
     HandleCommand ("command alias p        frame variable", false, result);
-    HandleCommand ("command alias print    frame variable", false, result);
+    HandleCommand ("command alias print    expression --", false, result);
     HandleCommand ("command alias po       expression -o --", false, result);
     HandleCommand ("command alias up       regexp-up", false, result);
     HandleCommand ("command alias down     regexp-down", false, result);
