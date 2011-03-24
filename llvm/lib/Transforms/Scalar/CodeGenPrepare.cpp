@@ -597,67 +597,67 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   if (!V)
     return false;
 
-  if (PHINode *PN = dyn_cast<PHINode>(V)) {
-    BasicBlock *BB = RI->getParent();
-    if (PN->getParent() != BB)
-      return false;
+  PHINode *PN = dyn_cast<PHINode>(V);
+  if (!PN)
+    return false;
 
-    // It's not safe to eliminate the sign / zero extension of the return value.
-    // See llvm::isInTailCallPosition().
-    const Function *F = BB->getParent();
-    unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
-    if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
-      return false;
+  BasicBlock *BB = RI->getParent();
+  if (PN->getParent() != BB)
+    return false;
 
-    // Make sure there are no instructions between PHI and return.
-    BasicBlock::iterator BI = PN;
-    do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
-    if (&*BI != RI)
-      return false;
+  // It's not safe to eliminate the sign / zero extension of the return value.
+  // See llvm::isInTailCallPosition().
+  const Function *F = BB->getParent();
+  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
+    return false;
 
-    /// Only dup the ReturnInst if the CallInst is likely to be emitted as a
-    /// tail call.
-    SmallVector<CallInst*, 4> TailCalls;
-    for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
-      CallInst *CI = dyn_cast<CallInst>(PN->getIncomingValue(I));
-      // Make sure the phi value is indeed produced by the tail call.
-      if (CI && CI->hasOneUse() && CI->getParent() == PN->getIncomingBlock(I) &&
-          TLI->mayBeEmittedAsTailCall(CI))
-        TailCalls.push_back(CI);
-    }
+  // Make sure there are no instructions between PHI and return.
+  BasicBlock::iterator BI = PN;
+  do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
+  if (&*BI != RI)
+    return false;
 
-    bool Changed = false;
-    for (unsigned i = 0, e = TailCalls.size(); i != e; ++i) {
-      CallInst *CI = TailCalls[i];
-      CallSite CS(CI);
-
-      // Conservatively require the attributes of the call to match those of
-      // the return. Ignore noalias because it doesn't affect the call sequence.
-      unsigned CalleeRetAttr = CS.getAttributes().getRetAttributes();
-      if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
-        continue;
-
-      // Make sure the call instruction is followed by an unconditional branch
-      // to the return block.
-      BasicBlock *CallBB = CI->getParent();
-      BranchInst *BI = dyn_cast<BranchInst>(CallBB->getTerminator());
-      if (!BI || !BI->isUnconditional() || BI->getSuccessor(0) != BB)
-        continue;
-
-      // Duplicate the return into CallBB.
-      (void)FoldReturnIntoUncondBranch(RI, BB, CallBB);
-      UpdateDT = Changed = true;
-      ++NumRetsDup;
-    }
-
-    // If we eliminated all predecessors of the block, delete the block now.
-    if (Changed && pred_begin(BB) == pred_end(BB))
-      BB->eraseFromParent();
-
-    return Changed;
+  /// Only dup the ReturnInst if the CallInst is likely to be emitted as a tail
+  /// call.
+  SmallVector<CallInst*, 4> TailCalls;
+  for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
+    CallInst *CI = dyn_cast<CallInst>(PN->getIncomingValue(I));
+    // Make sure the phi value is indeed produced by the tail call.
+    if (CI && CI->hasOneUse() && CI->getParent() == PN->getIncomingBlock(I) &&
+        TLI->mayBeEmittedAsTailCall(CI))
+      TailCalls.push_back(CI);
   }
 
-  return false;
+  bool Changed = false;
+  for (unsigned i = 0, e = TailCalls.size(); i != e; ++i) {
+    CallInst *CI = TailCalls[i];
+    CallSite CS(CI);
+
+    // Conservatively require the attributes of the call to match those of the
+    // return. Ignore noalias because it doesn't affect the call sequence.
+    unsigned CalleeRetAttr = CS.getAttributes().getRetAttributes();
+    if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
+      continue;
+
+    // Make sure the call instruction is followed by an unconditional branch to
+    // the return block.
+    BasicBlock *CallBB = CI->getParent();
+    BranchInst *BI = dyn_cast<BranchInst>(CallBB->getTerminator());
+    if (!BI || !BI->isUnconditional() || BI->getSuccessor(0) != BB)
+      continue;
+
+    // Duplicate the return into CallBB.
+    (void)FoldReturnIntoUncondBranch(RI, BB, CallBB);
+    UpdateDT = Changed = true;
+    ++NumRetsDup;
+  }
+
+  // If we eliminated all predecessors of the block, delete the block now.
+  if (Changed && pred_begin(BB) == pred_end(BB))
+    BB->eraseFromParent();
+
+  return Changed;
 }
 
 //===----------------------------------------------------------------------===//
