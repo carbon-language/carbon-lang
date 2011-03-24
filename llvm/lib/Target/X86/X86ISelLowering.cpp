@@ -550,12 +550,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
-  if (Subtarget->is64Bit())
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
-  if (Subtarget->isTargetCygMing() || Subtarget->isTargetWindows())
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
-  else
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC,
+                     (Subtarget->is64Bit() ? MVT::i64 : MVT::i32),
+                     (Subtarget->isTargetCOFF()
+                      && !Subtarget->isTargetEnvMacho()
+                      ? Custom : Expand));
 
   if (!UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
@@ -7929,6 +7928,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
   assert((Subtarget->isTargetCygMing() || Subtarget->isTargetWindows()) &&
          "This should be used only on Windows targets");
+  assert(!Subtarget->isTargetEnvMacho());
   DebugLoc dl = Op.getDebugLoc();
 
   // Get the inputs.
@@ -7939,8 +7939,9 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   SDValue Flag;
 
   EVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
+  unsigned Reg = (Subtarget->is64Bit() ? X86::RAX : X86::EAX);
 
-  Chain = DAG.getCopyToReg(Chain, dl, X86::EAX, Size, Flag);
+  Chain = DAG.getCopyToReg(Chain, dl, Reg, Size, Flag);
   Flag = Chain.getValue(1);
 
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
@@ -10412,21 +10413,48 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
+  assert(!Subtarget->isTargetEnvMacho());
+
   // The lowering is pretty easy: we're just emitting the call to _alloca.  The
   // non-trivial part is impdef of ESP.
-  // FIXME: The code should be tweaked as soon as we'll try to do codegen for
-  // mingw-w64.
 
-  const char *StackProbeSymbol =
+  if (Subtarget->isTargetWin64()) {
+    if (Subtarget->isTargetCygMing()) {
+      // ___chkstk(Mingw64):
+      // Clobbers R10, R11, RAX and EFLAGS.
+      // Updates RSP.
+      BuildMI(*BB, MI, DL, TII->get(X86::W64ALLOCA))
+        .addExternalSymbol("___chkstk")
+        .addReg(X86::RAX, RegState::Implicit)
+        .addReg(X86::RSP, RegState::Implicit)
+        .addReg(X86::RAX, RegState::Define | RegState::Implicit)
+        .addReg(X86::RSP, RegState::Define | RegState::Implicit)
+        .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+    } else {
+      // __chkstk(MSVCRT): does not update stack pointer.
+      // Clobbers R10, R11 and EFLAGS.
+      // FIXME: RAX(allocated size) might be reused and not killed.
+      BuildMI(*BB, MI, DL, TII->get(X86::W64ALLOCA))
+        .addExternalSymbol("__chkstk")
+        .addReg(X86::RAX, RegState::Implicit)
+        .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+      // RAX has the offset to subtracted from RSP.
+      BuildMI(*BB, MI, DL, TII->get(X86::SUB64rr), X86::RSP)
+        .addReg(X86::RSP)
+        .addReg(X86::RAX);
+    }
+  } else {
+    const char *StackProbeSymbol =
       Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
 
-  BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
-    .addExternalSymbol(StackProbeSymbol)
-    .addReg(X86::EAX, RegState::Implicit)
-    .addReg(X86::ESP, RegState::Implicit)
-    .addReg(X86::EAX, RegState::Define | RegState::Implicit)
-    .addReg(X86::ESP, RegState::Define | RegState::Implicit)
-    .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+    BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
+      .addExternalSymbol(StackProbeSymbol)
+      .addReg(X86::EAX, RegState::Implicit)
+      .addReg(X86::ESP, RegState::Implicit)
+      .addReg(X86::EAX, RegState::Define | RegState::Implicit)
+      .addReg(X86::ESP, RegState::Define | RegState::Implicit)
+      .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+  }
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;

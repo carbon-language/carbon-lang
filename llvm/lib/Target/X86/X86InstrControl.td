@@ -263,6 +263,16 @@ let isCall = 1, isCodeGenOnly = 1 in
                            Requires<[IsWin64]>;
   }
 
+let isCall = 1, isCodeGenOnly = 1 in
+  // __chkstk(MSVC):     clobber R10, R11 and EFLAGS.
+  // ___chkstk(Mingw64): clobber R10, R11, RAX and EFLAGS, and update RSP.
+  let Defs = [RAX, R10, R11, RSP, EFLAGS],
+      Uses = [RSP] in {
+    def W64ALLOCA : Ii32PCRel<0xE8, RawFrm,
+                      (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
+                      "call{q}\t$dst", []>,
+                    Requires<[IsWin64]>;
+  }
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
     isCodeGenOnly = 1 in

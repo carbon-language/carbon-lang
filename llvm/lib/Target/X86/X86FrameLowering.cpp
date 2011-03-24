@@ -551,60 +551,66 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // responsible for adjusting the stack pointer.  Touching the stack at 4K
   // increments is necessary to ensure that the guard pages used by the OS
   // virtual memory manager are allocated in correct sequence.
-  if (NumBytes >= 4096 &&
-      (STI.isTargetCygMing() || STI.isTargetWin32()) &&
-      !STI.isTargetEnvMacho()) {
+  if (NumBytes >= 4096 && STI.isTargetCOFF() && !STI.isTargetEnvMacho()) {
+    const char *StackProbeSymbol;
+    bool isSPUpdateNeeded = false;
+
+    if (Is64Bit) {
+      if (STI.isTargetCygMing())
+        StackProbeSymbol = "___chkstk";
+      else {
+        StackProbeSymbol = "__chkstk";
+        isSPUpdateNeeded = true;
+      }
+    } else if (STI.isTargetCygMing())
+      StackProbeSymbol = "_alloca";
+    else
+      StackProbeSymbol = "_chkstk";
+
     // Check whether EAX is livein for this function.
     bool isEAXAlive = isEAXLiveIn(MF);
 
-    const char *StackProbeSymbol =
-      STI.isTargetWindows() ? "_chkstk" : "_alloca";
-    if (Is64Bit && STI.isTargetCygMing())
-      StackProbeSymbol = "__chkstk";
-    unsigned CallOp = Is64Bit ? X86::CALL64pcrel32 : X86::CALLpcrel32;
-    if (!isEAXAlive) {
-      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-        .addImm(NumBytes);
-      BuildMI(MBB, MBBI, DL, TII.get(CallOp))
-        .addExternalSymbol(StackProbeSymbol)
-        .addReg(StackPtr,    RegState::Define | RegState::Implicit)
-        .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
-    } else {
+    if (isEAXAlive) {
+      // Sanity check that EAX is not livein for this function.
+      // It should not be, so throw an assert.
+      assert(!Is64Bit && "EAX is livein in x64 case!");
+
       // Save EAX
       BuildMI(MBB, MBBI, DL, TII.get(X86::PUSH32r))
         .addReg(X86::EAX, RegState::Kill);
-
-      // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
-      // allocated bytes for EAX.
-      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-        .addImm(NumBytes - 4);
-      BuildMI(MBB, MBBI, DL, TII.get(CallOp))
-        .addExternalSymbol(StackProbeSymbol)
-        .addReg(StackPtr,    RegState::Define | RegState::Implicit)
-        .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
-
-      // Restore EAX
-      MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
-                                              X86::EAX),
-                                      StackPtr, false, NumBytes - 4);
-      MBB.insert(MBBI, MI);
     }
-  } else if (NumBytes >= 4096 &&
-             STI.isTargetWin64() &&
-             !STI.isTargetEnvMacho()) {
-    // Sanity check that EAX is not livein for this function.  It should
-    // not be, so throw an assert.
-    assert(!isEAXLiveIn(MF) && "EAX is livein in the Win64 case!");
 
-    // Handle the 64-bit Windows ABI case where we need to call __chkstk.
-    // Function prologue is responsible for adjusting the stack pointer.
-    BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
-      .addImm(NumBytes);
-    BuildMI(MBB, MBBI, DL, TII.get(X86::WINCALL64pcrel32))
-      .addExternalSymbol("__chkstk")
-      .addReg(StackPtr, RegState::Define | RegState::Implicit);
-    emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                 TII, *RegInfo);
+    if (Is64Bit) {
+      // Handle the 64-bit Windows ABI case where we need to call __chkstk.
+      // Function prologue is responsible for adjusting the stack pointer.
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64ri), X86::RAX)
+        .addImm(NumBytes);
+    } else {
+      // Allocate NumBytes-4 bytes on stack in case of isEAXAlive.
+      // We'll also use 4 already allocated bytes for EAX.
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+        .addImm(isEAXAlive ? NumBytes - 4 : NumBytes);
+    }
+
+    BuildMI(MBB, MBBI, DL,
+            TII.get(Is64Bit ? X86::W64ALLOCA : X86::CALLpcrel32))
+      .addExternalSymbol(StackProbeSymbol)
+      .addReg(StackPtr,    RegState::Define | RegState::Implicit)
+      .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+
+    // MSVC x64's __chkstk needs to adjust %rsp.
+    // FIXME: %rax preserves the offset and should be available.
+    if (isSPUpdateNeeded)
+      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
+                   TII, *RegInfo);
+
+    if (isEAXAlive) {
+        // Restore EAX
+        MachineInstr *MI = addRegOffset(BuildMI(MF, DL, TII.get(X86::MOV32rm),
+                                                X86::EAX),
+                                        StackPtr, false, NumBytes - 4);
+        MBB.insert(MBBI, MI);
+    }
   } else if (NumBytes)
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
                  TII, *RegInfo);
