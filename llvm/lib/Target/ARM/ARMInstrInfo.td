@@ -1253,7 +1253,7 @@ let neverHasSideEffects = 1, isReMaterializable = 1 in
 // The 'adr' mnemonic encodes differently if the label is before or after
 // the instruction. The {24-21} opcode bits are set by the fixup, as we don't
 // know until then which form of the instruction will be used.
-def ADR : AI1<0, (outs GPR:$Rd), (ins adrlabel:$label),
+def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
                  MiscFrm, IIC_iALUi, "adr", "\t$Rd, #$label", []> {
   bits<4> Rd;
   bits<12> label;

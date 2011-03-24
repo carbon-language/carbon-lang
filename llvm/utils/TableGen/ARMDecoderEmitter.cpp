@@ -1584,6 +1584,10 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "MOVr_TC")
       return false;
 
+    // Delegate ADR disassembly to the more generic ADDri/SUBri instructions.
+    if (Name == "ADR")
+      return false;
+
     //
     // The following special cases are for conflict resolutions.
     //
