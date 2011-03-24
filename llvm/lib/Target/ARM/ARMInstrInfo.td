@@ -590,6 +590,21 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
+def MemMode7AsmOperand : AsmOperandClass {
+  let Name = "MemMode7";
+  let SuperClasses = [];
+}
+
+// addrmode7 := reg
+// Used by load/store exclusive instructions. Useful to enable right assembly
+// parsing and printing. Not used for any codegen matching.
+//
+def addrmode7 : Operand<i32> {
+  let PrintMethod = "printAddrMode7Operand";
+  let MIOperandInfo = (ops GPR);
+  let ParserMatchClass = MemMode7AsmOperand;
+}
+
 def nohash_imm : Operand<i32> {
   let PrintMethod = "printNoHashImmediate";
 }
@@ -3294,39 +3309,26 @@ let usesCustomInserter = 1 in {
 }
 
 let mayLoad = 1 in {
-def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
-                    "ldrexb", "\t$Rt, [$Rn]",
-                    []>;
-def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
-                    "ldrexh", "\t$Rt, [$Rn]",
-                    []>;
-def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins GPR:$Rn), NoItinerary,
-                    "ldrex", "\t$Rt, [$Rn]",
-                    []>;
-def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins GPR:$Rn),
-                    NoItinerary,
-                    "ldrexd", "\t$Rt, $Rt2, [$Rn]",
-                    []>;
+def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+                    "ldrexb", "\t$Rt, $addr", []>;
+def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+                    "ldrexh", "\t$Rt, $addr", []>;
+def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
+                    "ldrex", "\t$Rt, $addr", []>;
+def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode7:$addr),
+                    NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []>;
 }
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
-def STREXB : AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$src, GPR:$Rn),
-                    NoItinerary,
-                    "strexb", "\t$Rd, $src, [$Rn]",
-                    []>;
-def STREXH : AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, GPR:$Rn),
-                    NoItinerary,
-                    "strexh", "\t$Rd, $Rt, [$Rn]",
-                    []>;
-def STREX  : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, GPR:$Rn),
-                    NoItinerary,
-                    "strex", "\t$Rd, $Rt, [$Rn]",
-                    []>;
+def STREXB : AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+                    NoItinerary, "strexb", "\t$Rd, $Rt, $addr", []>;
+def STREXH : AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+                    NoItinerary, "strexh", "\t$Rd, $Rt, $addr", []>;
+def STREX  : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
+                    NoItinerary, "strex", "\t$Rd, $Rt, $addr", []>;
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
-                    (ins GPR:$Rt, GPR:$Rt2, GPR:$Rn),
-                    NoItinerary,
-                    "strexd", "\t$Rd, $Rt, $Rt2, [$Rn]",
-                    []>;
+                    (ins GPR:$Rt, GPR:$Rt2, addrmode7:$addr),
+                    NoItinerary, "strexd", "\t$Rd, $Rt, $Rt2, $addr", []>;
 }
 
 // Clear-Exclusive is for disassembly only.

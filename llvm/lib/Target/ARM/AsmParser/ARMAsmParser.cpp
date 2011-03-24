@@ -350,6 +350,23 @@ public:
     int64_t Value = CE->getValue();
     return ((Value & 0x3) == 0 && Value <= 1020 && Value >= -1020);
   }
+  bool isMemMode7() const {
+    if (!isMemory() ||
+        getMemPreindexed() ||
+        getMemPostindexed() ||
+        getMemOffsetIsReg() ||
+        getMemNegative() ||
+        getMemWriteback())
+      return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
+    if (!CE) return false;
+
+    if (CE->getValue())
+      return false;
+
+    return true;
+  }
   bool isMemModeRegThumb() const {
     if (!isMemory() || !getMemOffsetIsReg() || getMemWriteback())
       return false;
@@ -436,6 +453,15 @@ public:
   void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(unsigned(getMemBarrierOpt())));
+  }
+
+  void addMemMode7Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && isMemMode7() && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
+    assert((CE || CE->getValue() == 0) &&
+           "No offset operand support in mode 7");
   }
 
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {

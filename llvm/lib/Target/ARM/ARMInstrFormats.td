@@ -434,11 +434,11 @@ class AIstrex<bits<2> opcod, dag oops, dag iops, InstrItinClass itin,
       opc, asm, "", pattern> {
   bits<4> Rd;
   bits<4> Rt;
-  bits<4> Rn;
+  bits<4> addr;
   let Inst{27-23} = 0b00011;
   let Inst{22-21} = opcod;
   let Inst{20}    = 0;
-  let Inst{19-16} = Rn;
+  let Inst{19-16} = addr;
   let Inst{15-12} = Rd;
   let Inst{11-4}  = 0b11111001;
   let Inst{3-0}   = Rt;

@@ -35,6 +35,7 @@ enum OperandTypes {
   kOperandTypeARMAddrMode5,
   kOperandTypeARMAddrMode6,
   kOperandTypeARMAddrMode6Offset,
+  kOperandTypeARMAddrMode7,
   kOperandTypeARMAddrModePC,
   kOperandTypeARMRegisterList,
   kOperandTypeARMTBAddrMode,
@@ -51,7 +52,8 @@ enum OperandTypes {
   kOperandTypeThumb2AddrModeImm12,
   kOperandTypeThumb2AddrModeSoReg,
   kOperandTypeThumb2AddrModeImm8s4,
-  kOperandTypeThumb2AddrModeImm8s4Offset
+  kOperandTypeThumb2AddrModeImm8s4Offset,
+  kOperandTypeThumb2AddrModeReg
 };
 
 enum OperandFlags {

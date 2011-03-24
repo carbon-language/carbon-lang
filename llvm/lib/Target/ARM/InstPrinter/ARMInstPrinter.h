@@ -51,6 +51,7 @@ public:
   void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printAddrMode7Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
 

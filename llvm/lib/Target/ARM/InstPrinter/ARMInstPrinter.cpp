@@ -317,6 +317,12 @@ void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum,
   O << "]";
 }
 
+void ARMInstPrinter::printAddrMode7Operand(const MCInst *MI, unsigned OpNum,
+                                           raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  O << "[" << getRegisterName(MO1.getReg()) << "]";
+}
+
 void ARMInstPrinter::printAddrMode6OffsetOperand(const MCInst *MI,
                                                  unsigned OpNum,
                                                  raw_ostream &O) {
