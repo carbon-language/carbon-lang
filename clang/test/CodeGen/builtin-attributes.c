@@ -10,3 +10,8 @@ void f0() {
 void f1() {
   exit(1);
 }
+
+// CHECK: call i8* @strstr{{.*}} nounwind
+char* f2(char* a, char* b) {
+  return __builtin_strstr(a, b);
+}
