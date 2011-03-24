@@ -387,7 +387,7 @@ namespace llvm {
     /// @param Ty            Function type.
     /// @param isLocalToUnit True if this function is not externally visible..
     /// @param isDefinition  True if this is a function definition.
-    /// @param Virtuality    Attributes describing virutallness. e.g. pure 
+    /// @param Virtuality    Attributes describing virtualness. e.g. pure 
     ///                      virtual function.
     /// @param VTableIndex   Index no of this method in virtual table.
     /// @param VTableHolder  Type that holds vtable.
