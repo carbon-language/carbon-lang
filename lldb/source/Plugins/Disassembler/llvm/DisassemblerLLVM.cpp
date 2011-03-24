@@ -32,7 +32,7 @@ using namespace lldb_private;
 
 
 static int 
-DataExtractorByteReader(uint8_t *byte, uint64_t address, void *arg)
+DataExtractorByteReader (uint8_t *byte, uint64_t address, void *arg)
 {
     DataExtractor &extractor = *((DataExtractor *)arg);
 
@@ -74,7 +74,7 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
     return -1;
 }
 
-DisassemblerLLVM::InstructionLLVM::InstructionLLVM (EDDisassemblerRef disassembler, const Address &addr) :
+DisassemblerLLVM::InstructionLLVM::InstructionLLVM (const Address &addr, EDDisassemblerRef disassembler) :
     Instruction (addr),
     m_disassembler (disassembler)
 {
@@ -334,10 +334,41 @@ DisassemblerLLVM::InstructionLLVM::GetByteSize() const
 }
 
 size_t
-DisassemblerLLVM::InstructionLLVM::Extract(const DataExtractor &data, uint32_t data_offset)
+DisassemblerLLVM::InstructionLLVM::Extract (const Disassembler &disassembler, 
+                                            const lldb_private::DataExtractor &data,
+                                            uint32_t data_offset)
 {
     if (EDCreateInsts(&m_inst, 1, m_disassembler, DataExtractorByteReader, data_offset, (void*)(&data)))
-        return EDInstByteSize(m_inst);
+    {
+        const int byte_size = EDInstByteSize(m_inst);
+        uint32_t offset = data_offset;
+        // Make a copy of the opcode in m_opcode
+        switch (disassembler.GetArchitecture().GetMachine())
+        {
+        case llvm::Triple::x86:
+        case llvm::Triple::x86_64:
+            m_opcode.SetOpcodeBytes (data.PeekData (data_offset, byte_size), byte_size);
+            break;
+
+        case llvm::Triple::arm:
+            assert (byte_size == 4);
+            m_opcode.SetOpcode32 (data.GetU32 (&offset));
+            break;
+
+        case llvm::Triple::thumb:
+            assert ((byte_size == 2) || (byte_size == 4));
+            if (byte_size == 2)
+                m_opcode.SetOpcode16 (data.GetU16 (&offset));
+            else
+                m_opcode.SetOpcode32 (data.GetU32 (&offset));
+            break;
+
+        default:
+            assert (!"This shouldn't happen since we control the architecture we allow DisassemblerLLVM to be created for");
+            break;
+        }
+        return byte_size;
+    }
     else
         return 0;
 }
@@ -430,10 +461,10 @@ DisassemblerLLVM::DecodeInstructions
             if (inst_addr.GetAddressClass () == eAddressClassCodeAlternateISA)
                 use_thumb = true;
         }
-        InstructionSP inst_sp (new InstructionLLVM (use_thumb ? m_disassembler_thumb : m_disassembler, 
-                                                    inst_addr));
+        InstructionSP inst_sp (new InstructionLLVM (inst_addr, 
+                                                    use_thumb ? m_disassembler_thumb : m_disassembler));
 
-        size_t inst_byte_size = inst_sp->Extract (data, data_offset);
+        size_t inst_byte_size = inst_sp->Extract (*this, data, data_offset);
 
         if (inst_byte_size == 0)
             break;

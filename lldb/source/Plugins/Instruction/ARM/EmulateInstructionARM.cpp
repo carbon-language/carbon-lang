@@ -190,7 +190,7 @@ EmulateInstructionARM::WriteBits32Unknown (int n)
 // consecutive memory locations ending just below the address in SP, and updates
 // SP to point to the start of the stored data.
 bool 
-EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
+EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -220,11 +220,7 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -321,7 +317,7 @@ EmulateInstructionARM::EmulatePUSH (ARMEncoding encoding)
 // consecutive memory locations staring at the address in SP, and updates
 // SP to point just above the loaded data.
 bool 
-EmulateInstructionARM::EmulatePOP (ARMEncoding encoding)
+EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -343,11 +339,8 @@ EmulateInstructionARM::EmulatePOP (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -454,7 +447,7 @@ EmulateInstructionARM::EmulatePOP (ARMEncoding encoding)
 // Set r7 or ip to point to saved value residing within the stack.
 // ADD (SP plus immediate)
 bool
-EmulateInstructionARM::EmulateADDRdSPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDRdSPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -475,11 +468,8 @@ EmulateInstructionARM::EmulateADDRdSPImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
@@ -516,7 +506,7 @@ EmulateInstructionARM::EmulateADDRdSPImm (ARMEncoding encoding)
 // Set r7 or ip to the current stack pointer.
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMOVRdSP (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdSP (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -537,11 +527,8 @@ EmulateInstructionARM::EmulateMOVRdSP (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    //const uint32_t opcode = OpcodeAsUnsigned (&success);
-    //if (!success)
-    //    return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
@@ -573,15 +560,15 @@ EmulateInstructionARM::EmulateMOVRdSP (ARMEncoding encoding)
 // Move from high register (r8-r15) to low register (r0-r7).
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMOVLowHigh (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVLowHigh (const uint32_t opcode, const ARMEncoding encoding)
 {
-    return EmulateMOVRdRm (encoding);
+    return EmulateMOVRdRm (opcode, encoding);
 }
 
 // Move from register to register.
 // MOV (register)
 bool
-EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdRm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -602,11 +589,8 @@ EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rm; // the source register
         uint32_t Rd; // the destination register
@@ -670,7 +654,7 @@ EmulateInstructionARM::EmulateMOVRdRm (ARMEncoding encoding)
 // can optionally update the condition flags based on the value.
 // MOV (immediate)
 bool
-EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMOVRdImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -689,12 +673,8 @@ EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
                 // APSR.V unchanged
     }
 #endif
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd; // the destination register
         uint32_t imm32; // the immediate value to be written to Rd
@@ -737,7 +717,7 @@ EmulateInstructionARM::EmulateMOVRdImm (ARMEncoding encoding)
 // Optionally, it can update the condition flags based on the result.  In the Thumb instruction set, this option is 
 // limited to only a few forms of the instruction.
 bool
-EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMUL (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -754,13 +734,8 @@ EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
             // else APSR.C unchanged 
             // APSR.V always unchanged
 #endif
-                  
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
     
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t n;
@@ -816,7 +791,9 @@ EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
             default:
                 return false;
         }
-                  
+
+        bool success = false;
+
         // operand1 = SInt(R[n]); // operand1 = UInt(R[n]) produces the same final results
         uint64_t operand1 = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
         if (!success)
@@ -867,7 +844,7 @@ EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
 // Bitwise NOT (immediate) writes the bitwise inverse of an immediate value to the destination register.
 // It can optionally update the condition flags based on the value.
 bool
-EmulateInstructionARM::EmulateMVNImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMVNImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -886,12 +863,8 @@ EmulateInstructionARM::EmulateMVNImm (ARMEncoding encoding)
                 // APSR.V unchanged
     }
 #endif
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd; // the destination register
         uint32_t imm32; // the output after ThumbExpandImm_C or ARMExpandImm_C
@@ -931,7 +904,7 @@ EmulateInstructionARM::EmulateMVNImm (ARMEncoding encoding)
 // Bitwise NOT (register) writes the bitwise inverse of a register value to the destination register.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateMVNReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -952,12 +925,7 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rm; // the source register
         uint32_t Rd; // the destination register
@@ -993,6 +961,7 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
         default:
             return false;
         }
+        bool success = false;
         uint32_t value = ReadCoreReg(Rm, &success);
         if (!success)
             return false;
@@ -1014,7 +983,7 @@ EmulateInstructionARM::EmulateMVNReg (ARMEncoding encoding)
 // PC relative immediate load into register, possibly followed by ADD (SP plus register).
 // LDR (literal)
 bool
-EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRRtPCRelative (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1036,13 +1005,9 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
+        bool success = false;
         const uint32_t pc = ReadCoreReg(PC_REG, &success);
         if (!success)
             return false;
@@ -1114,7 +1079,7 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (ARMEncoding encoding)
 // An add operation to adjust the SP.
 // ADD (SP plus immediate)
 bool
-EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1135,11 +1100,8 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
@@ -1192,7 +1154,7 @@ EmulateInstructionARM::EmulateADDSPImm (ARMEncoding encoding)
 // An add operation to adjust the SP.
 // ADD (SP plus register)
 bool
-EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDSPRm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1214,11 +1176,8 @@ EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
@@ -1252,7 +1211,7 @@ EmulateInstructionARM::EmulateADDSPRm (ARMEncoding encoding)
 // from Thumb to ARM.
 // BLX (immediate)
 bool
-EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBLXImmediate (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1272,12 +1231,9 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
+    bool success = true;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRelativeBranchImmediate;
@@ -1351,7 +1307,7 @@ EmulateInstructionARM::EmulateBLXImmediate (ARMEncoding encoding)
 // instruction set specified by a register.
 // BLX (register)
 bool
-EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBLXRm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1370,11 +1326,8 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
@@ -1419,7 +1372,7 @@ EmulateInstructionARM::EmulateBLXRm (ARMEncoding encoding)
 
 // Branch and Exchange causes a branch to an address and instruction set specified by a register.
 bool
-EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBXRm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1430,12 +1383,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
@@ -1452,6 +1400,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
         default:
             return false;
         }
+        bool success = false;
         addr_t target = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
@@ -1471,7 +1420,7 @@ EmulateInstructionARM::EmulateBXRm (ARMEncoding encoding)
 // TODO: Emulate Jazelle architecture?
 //       We currently assume that switching to Jazelle state fails, thus treating BXJ as a BX operation.
 bool
-EmulateInstructionARM::EmulateBXJRm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBXJRm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1488,12 +1437,7 @@ EmulateInstructionARM::EmulateBXJRm (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAbsoluteBranchRegister;
@@ -1514,6 +1458,7 @@ EmulateInstructionARM::EmulateBXJRm (ARMEncoding encoding)
         default:
             return false;
         }
+        bool success = false;
         addr_t target = ReadCoreReg (Rm, &success);
         if (!success)
             return false;
@@ -1530,7 +1475,7 @@ EmulateInstructionARM::EmulateBXJRm (ARMEncoding encoding)
 // Set r7 to point to some ip offset.
 // SUB (immediate)
 bool
-EmulateInstructionARM::EmulateSUBR7IPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBR7IPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1550,13 +1495,9 @@ EmulateInstructionARM::EmulateSUBR7IPImm (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
+        bool success = false;
         const addr_t ip = ReadCoreReg (12, &success);
         if (!success)
             return false;
@@ -1586,7 +1527,7 @@ EmulateInstructionARM::EmulateSUBR7IPImm (ARMEncoding encoding)
 // Set ip to point to some stack offset.
 // SUB (SP minus immediate)
 bool
-EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBIPSPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1606,13 +1547,9 @@ EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
     }
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
+        bool success = false;
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
             return false;
@@ -1644,7 +1581,7 @@ EmulateInstructionARM::EmulateSUBIPSPImm (ARMEncoding encoding)
 //
 // If Rd == 13 => A sub operation to adjust the SP -- allocate space for local storage.
 bool
-EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBSPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1665,11 +1602,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const addr_t sp = ReadCoreReg (SP_REG, &success);
         if (!success)
@@ -1689,7 +1622,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
             setflags = BitIsSet(opcode, 20);
             imm32 = ThumbExpandImm(opcode); // imm32 = ThumbExpandImm(i:imm3:imm8)
             if (Rd == 15 && setflags)
-                return EmulateCMPImm(eEncodingT2);
+                return EmulateCMPImm(opcode, eEncodingT2);
             if (Rd == 15 && !setflags)
                 return false;
             break;
@@ -1736,7 +1669,7 @@ EmulateInstructionARM::EmulateSUBSPImm (ARMEncoding encoding)
 
 // A store operation to the stack that also updates the SP.
 bool
-EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1751,11 +1684,8 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -1836,7 +1766,7 @@ EmulateInstructionARM::EmulateSTRRtSP (ARMEncoding encoding)
 // Vector Push stores multiple extension registers to the stack.
 // It also updates SP to point to the start of the stored data.
 bool 
-EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
+EmulateInstructionARM::EmulateVPUSH (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1858,11 +1788,8 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -1932,7 +1859,7 @@ EmulateInstructionARM::EmulateVPUSH (ARMEncoding encoding)
 // Vector Pop loads multiple extension registers from the stack.
 // It also updates SP to point just above the loaded data.
 bool 
-EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
+EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -1953,11 +1880,8 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
         const addr_t sp = ReadCoreReg (SP_REG, &success);
@@ -2026,7 +1950,7 @@ EmulateInstructionARM::EmulateVPOP (ARMEncoding encoding)
 
 // SVC (previously SWI)
 bool
-EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSVC (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2038,11 +1962,8 @@ EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t pc = ReadCoreReg(PC_REG, &success);
         addr_t lr; // next instruction address
@@ -2076,7 +1997,7 @@ EmulateInstructionARM::EmulateSVC (ARMEncoding encoding)
 
 // If Then makes up to four following instructions (the IT block) conditional.
 bool
-EmulateInstructionARM::EmulateIT (ARMEncoding encoding)
+EmulateInstructionARM::EmulateIT (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2084,18 +2005,13 @@ EmulateInstructionARM::EmulateIT (ARMEncoding encoding)
     ITSTATE.IT<7:0> = firstcond:mask;
 #endif
 
-    bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
-
     m_it_session.InitIT(Bits32(opcode, 7, 0));
     return true;
 }
 
 // Branch causes a branch to a target address.
 bool
-EmulateInstructionARM::EmulateB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2107,11 +2023,8 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRelativeBranchImmediate;
@@ -2179,7 +2092,7 @@ EmulateInstructionARM::EmulateB (ARMEncoding encoding)
 // zero and conditionally branch forward a constant value.  They do not affect the condition flags.
 // CBNZ, CBZ
 bool
-EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2189,9 +2102,6 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     // Read the register value from the operand register Rn.
     uint32_t reg_val = ReadCoreReg(Bits32(opcode, 2, 0), &success);
@@ -2233,7 +2143,7 @@ EmulateInstructionARM::EmulateCB (ARMEncoding encoding)
 // The branch length is twice the value of the halfword returned from the table.
 // TBB, TBH
 bool
-EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateTB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2246,9 +2156,6 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rn;     // the base register which contains the address of the table of branch lengths
     uint32_t Rm;     // the index register which contains an integer pointing to a byte/halfword in the table
@@ -2306,7 +2213,7 @@ EmulateInstructionARM::EmulateTB (ARMEncoding encoding)
 // This instruction adds an immediate value to a register value, and writes the result to the destination register.  
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateADDImmThumb (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -2321,11 +2228,8 @@ EmulateInstructionARM::EmulateADDImmThumb (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t n;
@@ -2422,7 +2326,7 @@ EmulateInstructionARM::EmulateADDImmThumb (ARMEncoding encoding)
 // This instruction adds an immediate value to a register value, and writes the result to the destination
 // register.  It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateADDImmARM (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDImmARM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2441,11 +2345,8 @@ EmulateInstructionARM::EmulateADDImmARM (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be added to the value obtained from Rn
@@ -2482,7 +2383,7 @@ EmulateInstructionARM::EmulateADDImmARM (ARMEncoding encoding)
 // This instruction adds a register value and an optionally-shifted register value, and writes the result
 // to the destination register. It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2502,11 +2403,8 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -2574,7 +2472,7 @@ EmulateInstructionARM::EmulateADDReg (ARMEncoding encoding)
 // Compare Negative (immediate) adds a register value and an immediate value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMNImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2588,9 +2486,6 @@ EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rn; // the first operand
     uint32_t imm32; // the immediate value to be compared with
@@ -2627,7 +2522,7 @@ EmulateInstructionARM::EmulateCMNImm (ARMEncoding encoding)
 // Compare Negative (register) adds a register value and an optionally-shifted register value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMNReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2642,9 +2537,6 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rn; // the first operand
     uint32_t Rm; // the second operand
@@ -2698,7 +2590,7 @@ EmulateInstructionARM::EmulateCMNReg (ARMEncoding encoding)
 // Compare (immediate) subtracts an immediate value from a register value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMPImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2712,9 +2604,6 @@ EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rn; // the first operand
     uint32_t imm32; // the immediate value to be compared with
@@ -2755,7 +2644,7 @@ EmulateInstructionARM::EmulateCMPImm (ARMEncoding encoding)
 // Compare (register) subtracts an optionally-shifted register value from a register value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateCMPReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2770,9 +2659,6 @@ EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rn; // the first operand
     uint32_t Rm; // the second operand
@@ -2829,7 +2715,7 @@ EmulateInstructionARM::EmulateCMPReg (ARMEncoding encoding)
 // shifting in copies of its sign bit, and writes the result to the destination register.  It can
 // optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateASRImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2847,7 +2733,7 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
-    return EmulateShiftImm(encoding, SRType_ASR);
+    return EmulateShiftImm (opcode, encoding, SRType_ASR);
 }
 
 // Arithmetic Shift Right (register) shifts a register value right by a variable number of bits,
@@ -2855,7 +2741,7 @@ EmulateInstructionARM::EmulateASRImm (ARMEncoding encoding)
 // The variable number of bits is read from the bottom byte of a register. It can optionally update
 // the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateASRReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateASRReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2871,14 +2757,14 @@ EmulateInstructionARM::EmulateASRReg (ARMEncoding encoding)
             // APSR.V unchanged
 #endif
 
-    return EmulateShiftReg(encoding, SRType_ASR);
+    return EmulateShiftReg (opcode, encoding, SRType_ASR);
 }
 
 // Logical Shift Left (immediate) shifts a register value left by an immediate number of bits,
 // shifting in zeros, and writes the result to the destination register.  It can optionally
 // update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateLSLImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLSLImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2896,7 +2782,7 @@ EmulateInstructionARM::EmulateLSLImm (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
-    return EmulateShiftImm(encoding, SRType_LSL);
+    return EmulateShiftImm (opcode, encoding, SRType_LSL);
 }
 
 // Logical Shift Left (register) shifts a register value left by a variable number of bits,
@@ -2904,7 +2790,7 @@ EmulateInstructionARM::EmulateLSLImm (ARMEncoding encoding)
 // of bits is read from the bottom byte of a register. It can optionally update the condition
 // flags based on the result.
 bool
-EmulateInstructionARM::EmulateLSLReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLSLReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2920,14 +2806,14 @@ EmulateInstructionARM::EmulateLSLReg (ARMEncoding encoding)
             // APSR.V unchanged
 #endif
 
-    return EmulateShiftReg(encoding, SRType_LSL);
+    return EmulateShiftReg (opcode, encoding, SRType_LSL);
 }
 
 // Logical Shift Right (immediate) shifts a register value right by an immediate number of bits,
 // shifting in zeros, and writes the result to the destination register.  It can optionally
 // update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateLSRImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLSRImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2945,7 +2831,7 @@ EmulateInstructionARM::EmulateLSRImm (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
-    return EmulateShiftImm(encoding, SRType_LSR);
+    return EmulateShiftImm (opcode, encoding, SRType_LSR);
 }
 
 // Logical Shift Right (register) shifts a register value right by a variable number of bits,
@@ -2953,7 +2839,7 @@ EmulateInstructionARM::EmulateLSRImm (ARMEncoding encoding)
 // of bits is read from the bottom byte of a register. It can optionally update the condition
 // flags based on the result.
 bool
-EmulateInstructionARM::EmulateLSRReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLSRReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2969,14 +2855,14 @@ EmulateInstructionARM::EmulateLSRReg (ARMEncoding encoding)
             // APSR.V unchanged
 #endif
 
-    return EmulateShiftReg(encoding, SRType_LSR);
+    return EmulateShiftReg (opcode, encoding, SRType_LSR);
 }
 
 // Rotate Right (immediate) provides the value of the contents of a register rotated by a constant value.
 // The bits that are rotated off the right end are inserted into the vacated bit positions on the left.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateRORImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRORImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -2994,7 +2880,7 @@ EmulateInstructionARM::EmulateRORImm (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
-    return EmulateShiftImm(encoding, SRType_ROR);
+    return EmulateShiftImm (opcode, encoding, SRType_ROR);
 }
 
 // Rotate Right (register) provides the value of the contents of a register rotated by a variable number of bits.
@@ -3002,7 +2888,7 @@ EmulateInstructionARM::EmulateRORImm (ARMEncoding encoding)
 // The variable number of bits is read from the bottom byte of a register. It can optionally update the condition
 // flags based on the result.
 bool
-EmulateInstructionARM::EmulateRORReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRORReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3018,7 +2904,7 @@ EmulateInstructionARM::EmulateRORReg (ARMEncoding encoding)
             // APSR.V unchanged
 #endif
 
-    return EmulateShiftReg(encoding, SRType_ROR);
+    return EmulateShiftReg (opcode, encoding, SRType_ROR);
 }
 
 // Rotate Right with Extend provides the value of the contents of a register shifted right by one place,
@@ -3027,7 +2913,7 @@ EmulateInstructionARM::EmulateRORReg (ARMEncoding encoding)
 // RRX can optionally update the condition flags based on the result.
 // In that case, bit [0] is shifted into the carry flag.
 bool
-EmulateInstructionARM::EmulateRRX (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRRX (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3045,20 +2931,17 @@ EmulateInstructionARM::EmulateRRX (ARMEncoding encoding)
                 // APSR.V unchanged
 #endif
 
-    return EmulateShiftImm(encoding, SRType_RRX);
+    return EmulateShiftImm (opcode, encoding, SRType_RRX);
 }
 
 bool
-EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type)
+EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
     assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd;    // the destination register
         uint32_t Rm;    // the first operand register
@@ -3068,14 +2951,15 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
 
         // Special case handling!
         // A8.6.139 ROR (immediate) -- Encoding T1
-        if (shift_type == SRType_ROR && encoding == eEncodingT1)
+        ARMEncoding use_encoding = encoding;
+        if (shift_type == SRType_ROR && use_encoding == eEncodingT1)
         {
             // Morph the T1 encoding from the ARM Architecture Manual into T2 encoding to
             // have the same decoding of bit fields as the other Thumb2 shift operations.
-            encoding = eEncodingT2;
+            use_encoding = eEncodingT2;
         }
 
-        switch (encoding) {
+        switch (use_encoding) {
         case eEncodingT1:
             // Due to the above special case handling!
             assert(shift_type != SRType_ROR);
@@ -3132,16 +3016,13 @@ EmulateInstructionARM::EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType sh
 }
 
 bool
-EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type)
+EmulateInstructionARM::EmulateShiftReg (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
     assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd;    // the destination register
         uint32_t Rn;    // the first operand register
@@ -3204,7 +3085,7 @@ EmulateInstructionARM::EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType sh
 // address from a base register.  Optionally the address just above the highest of those locations
 // can be written back to the base register.
 bool
-EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3224,11 +3105,8 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
 #endif
             
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
             
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -3348,7 +3226,7 @@ EmulateInstructionARM::EmulateLDM (ARMEncoding encoding)
 // The consecutive memorty locations end at this address and the address just below the lowest of those locations
 // can optionally be written back tot he base registers.
 bool
-EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3368,11 +3246,8 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -3469,7 +3344,7 @@ EmulateInstructionARM::EmulateLDMDA (ARMEncoding encoding)
 // consecutive memory lcoations end just below this address, and the address of the lowest of those locations can 
 // be optionally written back to the base register.
 bool
-EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3488,11 +3363,8 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -3610,7 +3482,7 @@ EmulateInstructionARM::EmulateLDMDB (ARMEncoding encoding)
 // consecutive memory locations start just above this address, and thea ddress of the last of those locations can 
 // optinoally be written back to the base register.
 bool
-EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then
@@ -3628,11 +3500,8 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -3727,7 +3596,7 @@ EmulateInstructionARM::EmulateLDMIB (ARMEncoding encoding)
 // an immediate offset, loads a word from memory, and writes to a register.
 // LDR (immediate, Thumb)
 bool
-EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -3747,11 +3616,8 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rt; // the destination register
         uint32_t Rn; // the base register
@@ -3887,7 +3753,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
 // from a base register.  The consecutive memory locations start at this address, and teh address just above the last
 // of those locations can optionally be written back to the base register.
 bool
-EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -3908,11 +3774,8 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
 #endif
     
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -4044,7 +3907,7 @@ EmulateInstructionARM::EmulateSTM (ARMEncoding encoding)
 // from a base register.  The consecutive memory locations end at this address, and the address just below the lowest
 // of those locations can optionally be written back to the base register.
 bool
-EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4066,11 +3929,8 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -4172,7 +4032,7 @@ EmulateInstructionARM::EmulateSTMDA (ARMEncoding encoding)
 // from a base register.  The consecutive memory locations end just below this address, and the address of the first of
 // those locations can optionally be written back to the base register.
 bool
-EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4195,11 +4055,8 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
 
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -4326,7 +4183,7 @@ EmulateInstructionARM::EmulateSTMDB (ARMEncoding encoding)
 // from a base register.  The consecutive memory locations start just above this address, and the address of the last
 // of those locations can optionally be written back to the base register.
 bool
-EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4348,11 +4205,8 @@ EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
 #endif   
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         uint32_t registers = 0;
@@ -4454,7 +4308,7 @@ EmulateInstructionARM::EmulateSTMIB (ARMEncoding encoding)
 // STR (store immediate) calcualtes an address from a base register value and an immediate offset, and stores a word
 // from a register to memory.  It can use offset, post-indexed, or pre-indexed addressing.
 bool
-EmulateInstructionARM::EmulateSTRThumb (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4469,11 +4323,8 @@ EmulateInstructionARM::EmulateSTRThumb (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
                   
@@ -4617,7 +4468,7 @@ EmulateInstructionARM::EmulateSTRThumb (ARMEncoding encoding)
 // STR (Store Register) calculates an address from a base register value and an offset register value, stores a 
 // word from a register to memory.   The offset register value can optionally be shifted.
 bool
-EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4637,11 +4488,8 @@ EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
                   
@@ -4808,7 +4656,7 @@ EmulateInstructionARM::EmulateSTRRegister (ARMEncoding encoding)
 }
                
 bool
-EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTRBThumb (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4821,11 +4669,8 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
 
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -4948,7 +4793,7 @@ EmulateInstructionARM::EmulateSTRBThumb (ARMEncoding encoding)
 // STRH (register) calculates an address from a base register value and an offset register value, and stores a 
 // halfword from a register to memory.  The offset register alue can be shifted left by 0, 1, 2, or 3 bits.
 bool
-EmulateInstructionARM::EmulateSTRHRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -4964,11 +4809,8 @@ EmulateInstructionARM::EmulateSTRHRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -5129,7 +4971,7 @@ EmulateInstructionARM::EmulateSTRHRegister (ARMEncoding encoding)
 // and writes the result to the destination register.  It can optionally update the condition flags
 // based on the result.
 bool
-EmulateInstructionARM::EmulateADCImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADCImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5148,11 +4990,8 @@ EmulateInstructionARM::EmulateADCImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be added to the value obtained from Rn
@@ -5201,7 +5040,7 @@ EmulateInstructionARM::EmulateADCImm (ARMEncoding encoding)
 // register value, and writes the result to the destination register.  It can optionally update the
 // condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADCReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5221,11 +5060,8 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -5289,7 +5125,7 @@ EmulateInstructionARM::EmulateADCReg (ARMEncoding encoding)
 // This instruction adds an immediate value to the PC value to form a PC-relative address,
 // and writes the result to the destination register.
 bool
-EmulateInstructionARM::EmulateADR (ARMEncoding encoding)
+EmulateInstructionARM::EmulateADR (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5303,11 +5139,8 @@ EmulateInstructionARM::EmulateADR (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd;
         uint32_t imm32; // the immediate value to be added/subtracted to/from the PC
@@ -5356,7 +5189,7 @@ EmulateInstructionARM::EmulateADR (ARMEncoding encoding)
 // This instruction performs a bitwise AND of a register value and an immediate value, and writes the result
 // to the destination register.  It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateANDImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5375,11 +5208,8 @@ EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be ANDed to the value obtained from Rn
@@ -5394,7 +5224,7 @@ EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
             imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
             // if Rd == '1111' && S == '1' then SEE TST (immediate);
             if (Rd == 15 && setflags)
-                return EmulateTSTImm(eEncodingT1);
+                return EmulateTSTImm(opcode, eEncodingT1);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn))
                 return false;
             break;
@@ -5432,7 +5262,7 @@ EmulateInstructionARM::EmulateANDImm (ARMEncoding encoding)
 // and writes the result to the destination register.  It can optionally update the condition flags
 // based on the result.
 bool
-EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateANDReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5452,11 +5282,8 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -5480,7 +5307,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
             shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if Rd == '1111' && S == '1' then SEE TST (register);
             if (Rd == 15 && setflags)
-                return EmulateTSTReg(eEncodingT2);
+                return EmulateTSTReg(opcode, eEncodingT2);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
@@ -5525,7 +5352,7 @@ EmulateInstructionARM::EmulateANDReg (ARMEncoding encoding)
 // immediate value, and writes the result to the destination register.  It can optionally update the
 // condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateBICImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBICImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5544,11 +5371,8 @@ EmulateInstructionARM::EmulateBICImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be bitwise inverted and ANDed to the value obtained from Rn
@@ -5599,7 +5423,7 @@ EmulateInstructionARM::EmulateBICImm (ARMEncoding encoding)
 // optionally-shifted register value, and writes the result to the destination register.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateBICReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateBICReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -5619,11 +5443,8 @@ EmulateInstructionARM::EmulateBICReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -5689,7 +5510,7 @@ EmulateInstructionARM::EmulateBICReg (ARMEncoding encoding)
 // LDR (immediate, ARM) calculates an address from a base register value and an immediate offset, loads a word 
 // from memory, and writes it to a register.  It can use offset, post-indexed, or pre-indexed addressing.
 bool
-EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -5707,11 +5528,8 @@ EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                 
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
                   
@@ -5829,7 +5647,7 @@ EmulateInstructionARM::EmulateLDRImmediateARM (ARMEncoding encoding)
 // LDR (register) calculates an address from a base register value and an offset register value, loads a word 
 // from memory, and writes it to a resgister.  The offset register value can optionally be shifted.  
 bool
-EmulateInstructionARM::EmulateLDRRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -5851,11 +5669,8 @@ EmulateInstructionARM::EmulateLDRRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         const uint32_t addr_byte_size = GetAddressByteSize();
                   
@@ -6040,7 +5855,7 @@ EmulateInstructionARM::EmulateLDRRegister (ARMEncoding encoding)
 
 // LDRB (immediate, Thumb)
 bool
-EmulateInstructionARM::EmulateLDRBImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6052,11 +5867,8 @@ EmulateInstructionARM::EmulateLDRBImmediate (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -6179,7 +5991,7 @@ EmulateInstructionARM::EmulateLDRBImmediate (ARMEncoding encoding)
 // LDRB (literal) calculates an address from the PC value and an immediate offset, loads a byte from memory, 
 // zero-extends it to form a 32-bit word and writes it to a register.
 bool
-EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRBLiteral (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6190,11 +6002,8 @@ EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t imm32;
@@ -6262,7 +6071,7 @@ EmulateInstructionARM::EmulateLDRBLiteral (ARMEncoding encoding)
 // memory, zero-extends it to form a 32-bit word, and writes it to a register.  The offset register value can 
 // optionally be shifted.
 bool
-EmulateInstructionARM::EmulateLDRBRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6275,11 +6084,8 @@ EmulateInstructionARM::EmulateLDRBRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                 
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -6420,7 +6226,7 @@ EmulateInstructionARM::EmulateLDRBRegister (ARMEncoding encoding)
 // halfword from memory, zero-extends it to form a 32-bit word, and writes it to a register.  It can use offset, 
 // post-indexed, or pre-indexed addressing.
 bool
-EmulateInstructionARM::EmulateLDRHImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6437,11 +6243,8 @@ EmulateInstructionARM::EmulateLDRHImmediate (ARMEncoding encoding)
                   
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -6572,7 +6375,7 @@ EmulateInstructionARM::EmulateLDRHImmediate (ARMEncoding encoding)
 // LDRH (literal) caculates an address from the PC value and an immediate offset, loads a halfword from memory, 
 // zero-extends it to form a 32-bit word, and writes it to a register.            
 bool
-EmulateInstructionARM::EmulateLDRHLiteral (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRHLiteral (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6587,11 +6390,8 @@ EmulateInstructionARM::EmulateLDRHLiteral (ARMEncoding encoding)
 #endif
                                     
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
             
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t imm32;
@@ -6683,7 +6483,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (ARMEncoding encoding)
 // from memory, zero-extends it to form a 32-bit word, and writes it to a register.  The offset register value can 
 // be shifted left by 0, 1, 2, or 3 bits.
 bool
-EmulateInstructionARM::EmulateLDRHRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6700,11 +6500,8 @@ EmulateInstructionARM::EmulateLDRHRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
             
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -6859,7 +6656,7 @@ EmulateInstructionARM::EmulateLDRHRegister (ARMEncoding encoding)
 // memory, sign-extends it to form a 32-bit word, and writes it to a register.  It can use offset, post-indexed, 
 // or pre-indexed addressing.
 bool
-EmulateInstructionARM::EmulateLDRSBImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -6871,11 +6668,8 @@ EmulateInstructionARM::EmulateLDRSBImmediate (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -7009,7 +6803,7 @@ EmulateInstructionARM::EmulateLDRSBImmediate (ARMEncoding encoding)
 // LDRSB (literal) calculates an address from the PC value and an immediate offset, loads a byte from memory, 
 // sign-extends it to form a 32-bit word, and writes tit to a register.
 bool
-EmulateInstructionARM::EmulateLDRSBLiteral (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSBLiteral (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7020,11 +6814,8 @@ EmulateInstructionARM::EmulateLDRSBLiteral (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
             
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t imm32;
@@ -7102,7 +6893,7 @@ EmulateInstructionARM::EmulateLDRSBLiteral (ARMEncoding encoding)
 // memory, sign-extends it to form a 32-bit word, and writes it to a register.  The offset register value can be 
 // shifted left by 0, 1, 2, or 3 bits.
 bool
-EmulateInstructionARM::EmulateLDRSBRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSBRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7115,11 +6906,8 @@ EmulateInstructionARM::EmulateLDRSBRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
             
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -7261,7 +7049,7 @@ EmulateInstructionARM::EmulateLDRSBRegister (ARMEncoding encoding)
 // memory, sign-extends it to form a 32-bit word, and writes it to a register.  It can use offset, post-indexed, or 
 // pre-indexed addressing.
 bool
-EmulateInstructionARM::EmulateLDRSHImmediate (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7277,11 +7065,8 @@ EmulateInstructionARM::EmulateLDRSHImmediate (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -7424,7 +7209,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (ARMEncoding encoding)
 // LDRSH (literal) calculates an address from the PC value and an immediate offset, loads a halfword from memory, 
 // sign-extends it to from a 32-bit word, and writes it to a register.
 bool
-EmulateInstructionARM::EmulateLDRSHLiteral (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSHLiteral (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7439,11 +7224,8 @@ EmulateInstructionARM::EmulateLDRSHLiteral (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t imm32;
@@ -7531,7 +7313,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (ARMEncoding encoding)
 // from memory, sign-extends it to form a 32-bit word, and writes it to a register.  The offset register value can be 
 // shifted left by 0, 1, 2, or 3 bits.
 bool
-EmulateInstructionARM::EmulateLDRSHRegister (ARMEncoding encoding)
+EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7548,11 +7330,8 @@ EmulateInstructionARM::EmulateLDRSHRegister (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t t;
         uint32_t n;
@@ -7710,7 +7489,7 @@ EmulateInstructionARM::EmulateLDRSHRegister (ARMEncoding encoding)
 // SXTB extracts an 8-bit value from a register, sign-extends it to 32 bits, and writes the result to the destination 
 // register.  You can specifiy a rotation by 0, 8, 16, or 24 bits before extracting the 8-bit value.
 bool 
-EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSXTB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7720,11 +7499,8 @@ EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t m;
@@ -7795,7 +7571,7 @@ EmulateInstructionARM::EmulateSXTB (ARMEncoding encoding)
 // SXTH extracts a 16-bit value from a register, sign-extends it to 32 bits, and writes the result to the destination
 // register.  You can specify a rotation by 0, 8, 16, or 24 bits before extracting the 16-bit value.
 bool
-EmulateInstructionARM::EmulateSXTH (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSXTH (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7805,11 +7581,8 @@ EmulateInstructionARM::EmulateSXTH (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t m;
@@ -7880,7 +7653,7 @@ EmulateInstructionARM::EmulateSXTH (ARMEncoding encoding)
 // UXTB extracts an 8-bit value from a register, zero-extneds it to 32 bits, and writes the result to the destination
 // register.  You can specify a rotation by 0, 8, 16, or 24 bits before extracting the 8-bit value.
 bool
-EmulateInstructionARM::EmulateUXTB (ARMEncoding encoding)
+EmulateInstructionARM::EmulateUXTB (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7890,11 +7663,8 @@ EmulateInstructionARM::EmulateUXTB (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t m;
@@ -7963,7 +7733,7 @@ EmulateInstructionARM::EmulateUXTB (ARMEncoding encoding)
 // UXTH extracts a 16-bit value from a register, zero-extends it to 32 bits, and writes the result to the destination 
 // register.  You can specify a rotation by 0, 8, 16, or 24 bits before extracting the 16-bit value.
 bool 
-EmulateInstructionARM::EmulateUXTH (ARMEncoding encoding)
+EmulateInstructionARM::EmulateUXTH (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -7973,11 +7743,8 @@ EmulateInstructionARM::EmulateUXTH (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed ())
+    if (ConditionPassed(opcode))
     {
         uint32_t d;
         uint32_t m;
@@ -8045,7 +7812,7 @@ EmulateInstructionARM::EmulateUXTH (ARMEncoding encoding)
 // RFE (Return From Exception) loads the PC and the CPSR from the word at the specified address and the following 
 // word respectively.  
 bool
-EmulateInstructionARM::EmulateRFE (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then 
@@ -8061,11 +7828,8 @@ EmulateInstructionARM::EmulateRFE (ARMEncoding encoding)
 #endif
                   
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
                   
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t n;
         bool wback;
@@ -8196,7 +7960,7 @@ EmulateInstructionARM::EmulateRFE (ARMEncoding encoding)
 // and writes the result to the destination register.  It can optionally update the condition flags based on
 // the result.
 bool
-EmulateInstructionARM::EmulateEORImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateEORImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8215,11 +7979,8 @@ EmulateInstructionARM::EmulateEORImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be ORed to the value obtained from Rn
@@ -8234,7 +7995,7 @@ EmulateInstructionARM::EmulateEORImm (ARMEncoding encoding)
             imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
             // if Rd == '1111' && S == '1' then SEE TEQ (immediate);
             if (Rd == 15 && setflags)
-                return EmulateTEQImm(eEncodingT1);
+                return EmulateTEQImm (opcode, eEncodingT1);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn))
                 return false;
             break;
@@ -8273,7 +8034,7 @@ EmulateInstructionARM::EmulateEORImm (ARMEncoding encoding)
 // optionally-shifted register value, and writes the result to the destination register.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateEORReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8293,11 +8054,8 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -8321,7 +8079,7 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
             shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if Rd == '1111' && S == '1' then SEE TEQ (register);
             if (Rd == 15 && setflags)
-                return EmulateTEQReg(eEncodingT1);
+                return EmulateTEQReg (opcode, eEncodingT1);
             if (Rd == 13 || (Rd == 15 && !setflags) || BadReg(Rn) || BadReg(Rm))
                 return false;
             break;
@@ -8367,7 +8125,7 @@ EmulateInstructionARM::EmulateEORReg (ARMEncoding encoding)
 // writes the result to the destination register.  It can optionally update the condition flags based
 // on the result.
 bool
-EmulateInstructionARM::EmulateORRImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateORRImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8386,11 +8144,8 @@ EmulateInstructionARM::EmulateORRImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn;
         uint32_t imm32; // the immediate value to be ORed to the value obtained from Rn
@@ -8405,7 +8160,7 @@ EmulateInstructionARM::EmulateORRImm (ARMEncoding encoding)
             imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
             // if Rn == ‘1111’ then SEE MOV (immediate);
             if (Rn == 15)
-                return EmulateMOVRdImm(eEncodingT2);
+                return EmulateMOVRdImm (opcode, eEncodingT2);
             if (BadReg(Rd) || Rn == 13)
                 return false;
             break;
@@ -8443,7 +8198,7 @@ EmulateInstructionARM::EmulateORRImm (ARMEncoding encoding)
 // value, and writes the result to the destination register.  It can optionally update the condition flags based
 // on the result.
 bool
-EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateORRReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8463,11 +8218,8 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rd, Rn, Rm;
         ARM_ShifterType shift_t;
@@ -8491,7 +8243,7 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
             shift_n = DecodeImmShiftThumb(opcode, shift_t);
             // if Rn == '1111' then SEE MOV (register);
             if (Rn == 15)
-                return EmulateMOVRdRm(eEncodingT3);
+                return EmulateMOVRdRm (opcode, eEncodingT3);
             if (BadReg(Rd) || Rn == 13 || BadReg(Rm))
                 return false;
             break;
@@ -8535,7 +8287,7 @@ EmulateInstructionARM::EmulateORRReg (ARMEncoding encoding)
 // Reverse Subtract (immediate) subtracts a register value from an immediate value, and writes the result to
 // the destination register. It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateRSBImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRSBImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8554,9 +8306,6 @@ EmulateInstructionARM::EmulateRSBImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8610,7 +8359,7 @@ EmulateInstructionARM::EmulateRSBImm (ARMEncoding encoding)
 // Reverse Subtract (register) subtracts a register value from an optionally-shifted register value, and writes the
 // result to the destination register. It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateRSBReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRSBReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8630,9 +8379,6 @@ EmulateInstructionARM::EmulateRSBReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8691,7 +8437,7 @@ EmulateInstructionARM::EmulateRSBReg (ARMEncoding encoding)
 // an immediate value, and writes the result to the destination register. It can optionally update the condition
 // flags based on the result.
 bool
-EmulateInstructionARM::EmulateRSCImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRSCImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8710,9 +8456,6 @@ EmulateInstructionARM::EmulateRSCImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8753,7 +8496,7 @@ EmulateInstructionARM::EmulateRSCImm (ARMEncoding encoding)
 // optionally-shifted register value, and writes the result to the destination register. It can optionally update the
 // condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateRSCReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateRSCReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8773,9 +8516,6 @@ EmulateInstructionARM::EmulateRSCReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8824,7 +8564,7 @@ EmulateInstructionARM::EmulateRSCReg (ARMEncoding encoding)
 // NOT (Carry flag) from a register value, and writes the result to the destination register.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateSBCImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSBCImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8843,9 +8583,6 @@ EmulateInstructionARM::EmulateSBCImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8894,7 +8631,7 @@ EmulateInstructionARM::EmulateSBCImm (ARMEncoding encoding)
 // NOT (Carry flag) from a register value, and writes the result to the destination register.
 // It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateSBCReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSBCReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8914,9 +8651,6 @@ EmulateInstructionARM::EmulateSBCReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -8980,7 +8714,7 @@ EmulateInstructionARM::EmulateSBCReg (ARMEncoding encoding)
 // This instruction subtracts an immediate value from a register value, and writes the result
 // to the destination register.  It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBImmThumb (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -8996,9 +8730,6 @@ EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -9024,11 +8755,11 @@ EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
 
         // if Rd == '1111' && S == '1' then SEE CMP (immediate);
         if (Rd == 15 && setflags)
-            return EmulateCMPImm(eEncodingT2);
+            return EmulateCMPImm (opcode, eEncodingT2);
 
         // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
         if (Rn == 13)
-            return EmulateSUBSPImm(eEncodingT2);
+            return EmulateSUBSPImm (opcode, eEncodingT2);
 
         // if d == 13 || (d == 15 && S == '0') || n == 15 then UNPREDICTABLE;
         if (Rd == 13 || (Rd == 15 && !setflags) || Rn == 15)
@@ -9042,11 +8773,11 @@ EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
 
         // if Rn == '1111' then SEE ADR;
         if (Rn == 15)
-            return EmulateADR(eEncodingT2);
+            return EmulateADR (opcode, eEncodingT2);
 
         // if Rn == '1101' then SEE SUB (SP minus immediate);
         if (Rn == 13)
-            return EmulateSUBSPImm(eEncodingT3);
+            return EmulateSUBSPImm (opcode, eEncodingT3);
 
         if (BadReg(Rd))
             return false;
@@ -9074,7 +8805,7 @@ EmulateInstructionARM::EmulateSUBImmThumb (ARMEncoding encoding)
 // This instruction subtracts an immediate value from a register value, and writes the result
 // to the destination register.  It can optionally update the condition flags based on the result.
 bool
-EmulateInstructionARM::EmulateSUBImmARM (ARMEncoding encoding)
+EmulateInstructionARM::EmulateSUBImmARM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -9093,9 +8824,6 @@ EmulateInstructionARM::EmulateSUBImmARM (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
     uint32_t Rd; // the destination register
     uint32_t Rn; // the first operand
@@ -9110,11 +8838,11 @@ EmulateInstructionARM::EmulateSUBImmARM (ARMEncoding encoding)
 
         // if Rn == ‘1111’ && S == ‘0’ then SEE ADR;
         if (Rn == 15 && !setflags)
-            return EmulateADR(eEncodingA2);
+            return EmulateADR (opcode, eEncodingA2);
 
         // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
         if (Rn == 13)
-            return EmulateSUBSPImm(eEncodingA1);
+            return EmulateSUBSPImm (opcode, eEncodingA1);
 
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
         // TODO: Emulate SUBS PC, LR and related instructions.
@@ -9144,7 +8872,7 @@ EmulateInstructionARM::EmulateSUBImmARM (ARMEncoding encoding)
 // Test Equivalence (immediate) performs a bitwise exclusive OR operation on a register value and an
 // immediate value.  It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateTEQImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateTEQImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -9158,11 +8886,8 @@ EmulateInstructionARM::EmulateTEQImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rn;
         uint32_t imm32; // the immediate value to be ANDed to the value obtained from Rn
@@ -9171,13 +8896,13 @@ EmulateInstructionARM::EmulateTEQImm (ARMEncoding encoding)
         {
         case eEncodingT1:
             Rn = Bits32(opcode, 19, 16);
-            imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
+            imm32 = ThumbExpandImm_C (opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
             if (BadReg(Rn))
                 return false;
             break;
         case eEncodingA1:
             Rn = Bits32(opcode, 19, 16);
-            imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
+            imm32 = ARMExpandImm_C (opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
             break;
         default:
             return false;
@@ -9204,7 +8929,7 @@ EmulateInstructionARM::EmulateTEQImm (ARMEncoding encoding)
 // optionally-shifted register value.  It updates the condition flags based on the result, and discards
 // the result.
 bool
-EmulateInstructionARM::EmulateTEQReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateTEQReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -9219,11 +8944,8 @@ EmulateInstructionARM::EmulateTEQReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rn, Rm;
         ARM_ShifterType shift_t;
@@ -9273,7 +8995,7 @@ EmulateInstructionARM::EmulateTEQReg (ARMEncoding encoding)
 // Test (immediate) performs a bitwise AND operation on a register value and an immediate value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateTSTImm (ARMEncoding encoding)
+EmulateInstructionARM::EmulateTSTImm (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -9287,11 +9009,8 @@ EmulateInstructionARM::EmulateTSTImm (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rn;
         uint32_t imm32; // the immediate value to be ANDed to the value obtained from Rn
@@ -9332,7 +9051,7 @@ EmulateInstructionARM::EmulateTSTImm (ARMEncoding encoding)
 // Test (register) performs a bitwise AND operation on a register value and an optionally-shifted register value.
 // It updates the condition flags based on the result, and discards the result.
 bool
-EmulateInstructionARM::EmulateTSTReg (ARMEncoding encoding)
+EmulateInstructionARM::EmulateTSTReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     // ARM pseudo code...
@@ -9347,11 +9066,8 @@ EmulateInstructionARM::EmulateTSTReg (ARMEncoding encoding)
 #endif
 
     bool success = false;
-    const uint32_t opcode = OpcodeAsUnsigned (&success);
-    if (!success)
-        return false;
 
-    if (ConditionPassed())
+    if (ConditionPassed(opcode))
     {
         uint32_t Rn, Rm;
         ARM_ShifterType shift_t;
@@ -9937,23 +9653,20 @@ EmulateInstructionARM::ReadInstruction ()
                 
                 if (success)
                 {
-                    if ((m_opcode.data.inst16 & 0xe000) != 0xe000 || ((m_opcode.data.inst16 & 0x1800u) == 0))
+                    if ((thumb_opcode & 0xe000) != 0xe000 || ((thumb_opcode & 0x1800u) == 0))
                     {
-                        m_opcode.type = eOpcode16;
-                        m_opcode.data.inst16 = thumb_opcode;
+                        m_opcode.SetOpcode16 (thumb_opcode);
                     }
                     else
                     {
-                        m_opcode.type = eOpcode32;
-                        m_opcode.data.inst32 = (thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success);
+                        m_opcode.SetOpcode32 ((thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success));
                     }
                 }
             }
             else
             {
                 m_opcode_mode = eModeARM;
-                m_opcode.type = eOpcode32;
-                m_opcode.data.inst32 = MemARead(read_inst_context, pc, 4, 0, &success);
+                m_opcode.SetOpcode32 (MemARead(read_inst_context, pc, 4, 0, &success));
             }
         }
     }
@@ -9972,12 +9685,12 @@ EmulateInstructionARM::ArchVersion ()
 }
 
 bool
-EmulateInstructionARM::ConditionPassed ()
+EmulateInstructionARM::ConditionPassed (const uint32_t opcode)
 {
     if (m_opcode_cpsr == 0)
         return false;
 
-    const uint32_t cond = CurrentCond ();
+    const uint32_t cond = CurrentCond (opcode);
     
     if (cond == UINT32_MAX)
         return false;
@@ -10015,7 +9728,7 @@ EmulateInstructionARM::ConditionPassed ()
 }
 
 uint32_t
-EmulateInstructionARM::CurrentCond ()
+EmulateInstructionARM::CurrentCond (const uint32_t opcode)
 {
     switch (m_opcode_mode)
     {
@@ -10024,27 +9737,32 @@ EmulateInstructionARM::CurrentCond ()
         break;
 
     case eModeARM:
-        return UnsignedBits(m_opcode.data.inst32, 31, 28);
+        return UnsignedBits(opcode, 31, 28);
     
     case eModeThumb:
         // For T1 and T3 encodings of the Branch instruction, it returns the 4-bit
         // 'cond' field of the encoding.
-        if (m_opcode.type == eOpcode16 &&
-            Bits32(m_opcode.data.inst16, 15, 12) == 0x0d &&
-            Bits32(m_opcode.data.inst16, 11, 7) != 0x0f)
         {
-            return Bits32(m_opcode.data.inst16, 11, 7);
+            const uint32_t byte_size = m_opcode.GetByteSize();
+            if (byte_size == 2)
+            {
+                if (Bits32(opcode, 15, 12) == 0x0d && Bits32(opcode, 11, 7) != 0x0f)
+                    return Bits32(opcode, 11, 7);
+            }
+            else
+            {
+                assert (byte_size == 4);
+                if (Bits32(opcode, 31, 27) == 0x1e &&
+                    Bits32(opcode, 15, 14) == 0x02 &&
+                    Bits32(opcode, 12, 12) == 0x00 &&
+                    Bits32(opcode, 25, 22) <= 0x0d)
+                {
+                    return Bits32(opcode, 25, 22);
+                }
+            }
+            
+            return m_it_session.GetCond();
         }
-        else if (m_opcode.type == eOpcode32 &&
-                 Bits32(m_opcode.data.inst32, 31, 27) == 0x1e &&
-                 Bits32(m_opcode.data.inst32, 15, 14) == 0x02 &&
-                 Bits32(m_opcode.data.inst32, 12, 12) == 0x00 &&
-                 Bits32(m_opcode.data.inst32, 25, 22) <= 0x0d)
-        {
-            return Bits32(m_opcode.data.inst32, 25, 22);
-        }
-        
-        return m_it_session.GetCond();
     }
     return UINT32_MAX;  // Return invalid value
 }

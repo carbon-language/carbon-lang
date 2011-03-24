@@ -469,6 +469,14 @@ Disassembler::Disassemble
 Instruction::Instruction(const Address &addr) :
     m_addr (addr)
 {
+    ::memset (&m_opcode, 0, sizeof (m_opcode));
+}
+
+
+Instruction::Instruction(const Address &addr, const Opcode &opcode) :
+    m_addr (addr),
+    m_opcode (opcode)
+{
 }
 
 Instruction::~Instruction()

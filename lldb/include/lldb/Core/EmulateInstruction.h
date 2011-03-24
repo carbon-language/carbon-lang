@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-public.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Core/Opcode.h"
 
 //----------------------------------------------------------------------
 /// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"
@@ -432,22 +433,10 @@ public:
         return m_byte_order;
     }
 
-    uint64_t
-    OpcodeAsUnsigned (bool *success_ptr)
+    const Opcode &
+    GetOpcode () const
     {
-        if (success_ptr)
-            *success_ptr = true;
-        switch (m_opcode.type)
-        {
-        case eOpcode8:     return m_opcode.data.inst8;
-        case eOpcode16:    return m_opcode.data.inst16;
-        case eOpcode32:    return m_opcode.data.inst32;
-        case eOpcode64:    return m_opcode.data.inst64;
-        case eOpcodeBytes: break;
-        }
-        if (success_ptr)
-            *success_ptr = false;
-        return 0;
+        return m_opcode;
     }
 
 protected:

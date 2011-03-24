@@ -125,10 +125,10 @@ public:
     ArchVersion();
 
     bool
-    ConditionPassed ();
+    ConditionPassed (const uint32_t opcode);
 
     uint32_t
-    CurrentCond ();
+    CurrentCond (const uint32_t opcode);
 
     // InITBlock - Returns true if we're in Thumb mode and inside an IT Block.
     bool InITBlock();
@@ -301,7 +301,7 @@ protected:
         uint32_t variants;
         EmulateInstructionARM::ARMEncoding encoding;
         ARMInstrSize size;
-        bool (EmulateInstructionARM::*callback) (EmulateInstructionARM::ARMEncoding encoding);
+        bool (EmulateInstructionARM::*callback) (const uint32_t opcode, const EmulateInstructionARM::ARMEncoding encoding);
         const char *name;
     }  ARMOpcode;
     
@@ -314,423 +314,423 @@ protected:
 
     // A8.6.123 PUSH
     bool
-    EmulatePUSH (ARMEncoding encoding);
+    EmulatePUSH (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.122 POP
     bool
-    EmulatePOP (ARMEncoding encoding);
+    EmulatePOP (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.8 ADD (SP plus immediate)
     bool
-    EmulateADDRdSPImm (ARMEncoding encoding);
+    EmulateADDRdSPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.97 MOV (register) -- Rd == r7|ip and Rm == sp
     bool
-    EmulateMOVRdSP (ARMEncoding encoding);
+    EmulateMOVRdSP (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.97 MOV (register) -- move from r8-r15 to r0-r7
     bool
-    EmulateMOVLowHigh (ARMEncoding encoding);
+    EmulateMOVLowHigh (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.59 LDR (literal)
     bool
-    EmulateLDRRtPCRelative (ARMEncoding encoding);
+    EmulateLDRRtPCRelative (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.8 ADD (SP plus immediate)
     bool
-    EmulateADDSPImm (ARMEncoding encoding);
+    EmulateADDSPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.9 ADD (SP plus register)
     bool
-    EmulateADDSPRm (ARMEncoding encoding);
+    EmulateADDSPRm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.23 BL, BLX (immediate)
     bool
-    EmulateBLXImmediate (ARMEncoding encoding);
+    EmulateBLXImmediate (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.24 BLX (register)
     bool
-    EmulateBLXRm (ARMEncoding encoding);
+    EmulateBLXRm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.25 BX
     bool
-    EmulateBXRm (ARMEncoding encoding);
+    EmulateBXRm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.26 BXJ
     bool
-    EmulateBXJRm (ARMEncoding encoding);
+    EmulateBXJRm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.212 SUB (immediate, ARM) -- Rd == r7 and Rm == ip
     bool
-    EmulateSUBR7IPImm (ARMEncoding encoding);
+    EmulateSUBR7IPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.215 SUB (SP minus immediate) -- Rd == ip
     bool
-    EmulateSUBIPSPImm (ARMEncoding encoding);
+    EmulateSUBIPSPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.215 SUB (SP minus immediate)
     bool
-    EmulateSUBSPImm (ARMEncoding encoding);
+    EmulateSUBSPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.194 STR (immediate, ARM) -- Rn == sp
     bool
-    EmulateSTRRtSP (ARMEncoding encoding);
+    EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.355 VPUSH
     bool
-    EmulateVPUSH (ARMEncoding encoding);
+    EmulateVPUSH (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.354 VPOP
     bool
-    EmulateVPOP (ARMEncoding encoding);
+    EmulateVPOP (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.218 SVC (previously SWI)
     bool
-    EmulateSVC (ARMEncoding encoding);
+    EmulateSVC (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.50 IT
     bool
-    EmulateIT (ARMEncoding encoding);
+    EmulateIT (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.16 B
     bool
-    EmulateB (ARMEncoding encoding);
+    EmulateB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.27 CBNZ, CBZ
     bool
-    EmulateCB (ARMEncoding encoding);
+    EmulateCB (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.226 TBB, TBH
     bool
-    EmulateTB (ARMEncoding encoding);
+    EmulateTB (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.4 ADD (immediate, Thumb)
     bool
-    EmulateADDImmThumb (ARMEncoding encoding);
+    EmulateADDImmThumb (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.5 ADD (immediate, ARM)
     bool
-    EmulateADDImmARM (ARMEncoding encoding);
+    EmulateADDImmARM (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.6 ADD (register)
     bool
-    EmulateADDReg (ARMEncoding encoding);
+    EmulateADDReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.97 MOV (register)
     bool
-    EmulateMOVRdRm (ARMEncoding encoding);
+    EmulateMOVRdRm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.96 MOV (immediate)
     bool
-    EmulateMOVRdImm (ARMEncoding encoding);
+    EmulateMOVRdImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.35 CMP (immediate)
     bool
-    EmulateCMPImm (ARMEncoding encoding);
+    EmulateCMPImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.36 CMP (register)
     bool
-    EmulateCMPReg (ARMEncoding encoding);
+    EmulateCMPReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.14 ASR (immediate)
     bool
-    EmulateASRImm (ARMEncoding encoding);
+    EmulateASRImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.15 ASR (register)
     bool
-    EmulateASRReg (ARMEncoding encoding);
+    EmulateASRReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.88 LSL (immediate)
     bool
-    EmulateLSLImm (ARMEncoding encoding);
+    EmulateLSLImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.89 LSL (register)
     bool
-    EmulateLSLReg (ARMEncoding encoding);
+    EmulateLSLReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.90 LSR (immediate)
     bool
-    EmulateLSRImm (ARMEncoding encoding);
+    EmulateLSRImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.91 LSR (register)
     bool
-    EmulateLSRReg (ARMEncoding encoding);
+    EmulateLSRReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.139 ROR (immediate)
     bool
-    EmulateRORImm (ARMEncoding encoding);
+    EmulateRORImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.140 ROR (register)
     bool
-    EmulateRORReg (ARMEncoding encoding);
+    EmulateRORReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.141 RRX
     bool
-    EmulateRRX (ARMEncoding encoding);
+    EmulateRRX (const uint32_t opcode, const ARMEncoding encoding);
 
     // Helper method for ASR, LSL, LSR, ROR (immediate), and RRX
     bool
-    EmulateShiftImm (ARMEncoding encoding, ARM_ShifterType shift_type);
+    EmulateShiftImm (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type);
 
     // Helper method for ASR, LSL, LSR, and ROR (register)
     bool
-    EmulateShiftReg (ARMEncoding encoding, ARM_ShifterType shift_type);
+    EmulateShiftReg (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type);
 
     // A8.6.53 LDM/LDMIA/LDMFD
     bool
-    EmulateLDM (ARMEncoding encoding);
+    EmulateLDM (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.54 LDMDA/LDMFA
     bool
-    EmulateLDMDA (ARMEncoding encoding);
+    EmulateLDMDA (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.55 LDMDB/LDMEA
     bool 
-    EmulateLDMDB (ARMEncoding encoding);
+    EmulateLDMDB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.56 LDMIB/LDMED
     bool
-    EmulateLDMIB (ARMEncoding encoding);
+    EmulateLDMIB (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.57 LDR (immediate, Thumb) -- Encoding T1
     bool
-    EmulateLDRRtRnImm (ARMEncoding encoding);
+    EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.188 STM/STMIA/STMEA
     bool
-    EmulateSTM (ARMEncoding encoding);
+    EmulateSTM (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.189 STMDA/STMED
     bool
-    EmulateSTMDA (ARMEncoding encoding);
+    EmulateSTMDA (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.190 STMDB/STMFD
     bool
-    EmulateSTMDB (ARMEncoding encoding);
+    EmulateSTMDB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.191 STMIB/STMFA
     bool
-    EmulateSTMIB (ARMEncoding encoding);
+    EmulateSTMIB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.192 STR (immediate, Thumb)
     bool
-    EmulateSTRThumb(ARMEncoding encoding);
+    EmulateSTRThumb(const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.194 STR (register)
     bool
-    EmulateSTRRegister (ARMEncoding encoding);
+    EmulateSTRRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.195 STRB (immediate, Thumb)
     bool
-    EmulateSTRBThumb (ARMEncoding encoding);
+    EmulateSTRBThumb (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.207 STRH (register)
     bool
-    EmulateSTRHRegister (ARMEncoding encoding);
+    EmulateSTRHRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.1 ADC (immediate)
     bool
-    EmulateADCImm (ARMEncoding encoding);
+    EmulateADCImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.2 ADC (Register)
     bool
-    EmulateADCReg (ARMEncoding encoding);
+    EmulateADCReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.10 ADR
     bool
-    EmulateADR (ARMEncoding encoding);
+    EmulateADR (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.11 AND (immediate)
     bool
-    EmulateANDImm (ARMEncoding encoding);
+    EmulateANDImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.12 AND (register)
     bool
-    EmulateANDReg (ARMEncoding encoding);
+    EmulateANDReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.19 BIC (immediate)
     bool
-    EmulateBICImm (ARMEncoding encoding);
+    EmulateBICImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.20 BIC (register)
     bool
-    EmulateBICReg (ARMEncoding encoding);
+    EmulateBICReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.26 BXJ
     bool
-    EmulateBXJ (ARMEncoding encoding);
+    EmulateBXJ (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.32 CMN (immediate)
     bool
-    EmulateCMNImm (ARMEncoding encoding);
+    EmulateCMNImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.33 CMN (register)
     bool
-    EmulateCMNReg (ARMEncoding encoding);
+    EmulateCMNReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.44 EOR (immediate)
     bool
-    EmulateEORImm (ARMEncoding encoding);
+    EmulateEORImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.45 EOR (register)
     bool
-    EmulateEORReg (ARMEncoding encoding);
+    EmulateEORReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.58 LDR (immediate, ARM) - Encoding A1
     bool
-    EmulateLDRImmediateARM (ARMEncoding encoding);
+    EmulateLDRImmediateARM (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.60 LDR (register) - Encoding T1, T2, A1
     bool
-    EmulateLDRRegister (ARMEncoding encoding);
+    EmulateLDRRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.61 LDRB (immediate, Thumb) - Encoding T1, T2
     bool
-    EmulateLDRBImmediate (ARMEncoding encoding);
+    EmulateLDRBImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.63 LDRB (literal) - Encoding T1
     bool
-    EmulateLDRBLiteral (ARMEncoding encoding);
+    EmulateLDRBLiteral (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.64 LDRB (register) - Encoding T1
     bool
-    EmulateLDRBRegister (ARMEncoding encoding);
+    EmulateLDRBRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.73 LDRH (immediate, Thumb) - Encoding T1, T2
     bool
-    EmulateLDRHImmediate (ARMEncoding encoding);
+    EmulateLDRHImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.75 LDRH (literal) - Encoding T1
     bool
-    EmulateLDRHLiteral (ARMEncoding encoding);
+    EmulateLDRHLiteral (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.76 LDRH (register) - Encoding T1, T2
     bool
-    EmulateLDRHRegister (ARMEncoding encoding);
+    EmulateLDRHRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.78 LDRSB (immediate) - Encoding T1
     bool
-    EmulateLDRSBImmediate (ARMEncoding encoding);
+    EmulateLDRSBImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.79 LDRSB (literal) - Encoding T1
     bool
-    EmulateLDRSBLiteral (ARMEncoding encoding);
+    EmulateLDRSBLiteral (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.80 LDRSB (register) - Encoding T1, T2
     bool
-    EmulateLDRSBRegister (ARMEncoding encoding);
+    EmulateLDRSBRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.82 LDRSH (immediate) - Encoding T1
     bool
-    EmulateLDRSHImmediate (ARMEncoding encoding);
+    EmulateLDRSHImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.83 LDRSH (literal) - Encoding T1
     bool
-    EmulateLDRSHLiteral (ARMEncoding encoding);
+    EmulateLDRSHLiteral (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.84 LDRSH (register) - Encoding T1, T2
     bool
-    EmulateLDRSHRegister (ARMEncoding encoding);
+    EmulateLDRSHRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.105 MUL
     bool
-    EmulateMUL (ARMEncoding encoding);
+    EmulateMUL (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.106 MVN (immediate)
     bool
-    EmulateMVNImm (ARMEncoding encoding);
+    EmulateMVNImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.107 MVN (register)
     bool
-    EmulateMVNReg (ARMEncoding encoding);
+    EmulateMVNReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.113 ORR (immediate)
     bool
-    EmulateORRImm (ARMEncoding encoding);
+    EmulateORRImm (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.114 ORR (register)
     bool
-    EmulateORRReg (ARMEncoding encoding);
+    EmulateORRReg (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.117 PLD (immediate, literal) - Encoding T1, T2, T3, A1
     bool
-    EmulatePLDImmediate (ARMEncoding encoding);
+    EmulatePLDImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.119 PLI (immediate,literal) - Encoding T3, A1
     bool
-    EmulatePLIImmediate (ARMEncoding encoding);
+    EmulatePLIImmediate (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.120 PLI (register) - Encoding T1, A1
     bool
-    EmulatePLIRegister (ARMEncoding encoding);
+    EmulatePLIRegister (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.141 RSB (immediate)
     bool
-    EmulateRSBImm (ARMEncoding encoding);
+    EmulateRSBImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.142 RSB (register)
     bool
-    EmulateRSBReg (ARMEncoding encoding);
+    EmulateRSBReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.144 RSC (immediate)
     bool
-    EmulateRSCImm (ARMEncoding encoding);
+    EmulateRSCImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.145 RSC (register)
     bool
-    EmulateRSCReg (ARMEncoding encoding);
+    EmulateRSCReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.150 SBC (immediate)
     bool
-    EmulateSBCImm (ARMEncoding encoding);
+    EmulateSBCImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.151 SBC (register)
     bool
-    EmulateSBCReg (ARMEncoding encoding);
+    EmulateSBCReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.211 SUB (immediate, Thumb)
     bool
-    EmulateSUBImmThumb (ARMEncoding encoding);
+    EmulateSUBImmThumb (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.212 SUB (immediate, ARM)
     bool
-    EmulateSUBImmARM (ARMEncoding encoding);
+    EmulateSUBImmARM (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.222 SXTB  - Encoding T1
     bool
-    EmulateSXTB (ARMEncoding encoding);
+    EmulateSXTB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.224 SXTH  - EncodingT1
     bool
-    EmulateSXTH (ARMEncoding encoding);
+    EmulateSXTH (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.227 TEQ (immediate) - Encoding A1
     bool
-    EmulateTEQImm (ARMEncoding encoding);
+    EmulateTEQImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.228 TEQ (register)  - Encoding A1
     bool
-    EmulateTEQReg (ARMEncoding encoding);
+    EmulateTEQReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.230 TST (immediate) - Encoding A1
     bool
-    EmulateTSTImm (ARMEncoding encoding);
+    EmulateTSTImm (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.231 TST (register)  - Encoding T1, A1
     bool
-    EmulateTSTReg (ARMEncoding encoding);
+    EmulateTSTReg (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.262 UXTB  - Encoding T1
     bool
-    EmulateUXTB (ARMEncoding encoding);
+    EmulateUXTB (const uint32_t opcode, const ARMEncoding encoding);
     
     // A8.6.264 UXTH  - Encoding T1
     bool
-    EmulateUXTH (ARMEncoding encoding);
+    EmulateUXTH (const uint32_t opcode, const ARMEncoding encoding);
     
     // B6.1.8  RFE
     bool
-    EmulateRFE (ARMEncoding encoding);
+    EmulateRFE (const uint32_t opcode, const ARMEncoding encoding);
      
     uint32_t m_arm_isa;
     Mode m_opcode_mode;

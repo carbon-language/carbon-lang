@@ -16,6 +16,8 @@
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
+		26651A16133BF9CD005B64B7 /* Opcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A15133BF9CC005B64B7 /* Opcode.h */; };
+		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26680214115FD12C008E1FE4 /* lldb-types.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2910F1B3BC00F91463 /* lldb-types.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -631,6 +633,8 @@
 		2660D9F711922A1300958FBD /* StringExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractor.h; path = source/Utility/StringExtractor.h; sourceTree = "<group>"; };
 		2660D9FE11922A7F00958FBD /* ThreadPlanStepUntil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanStepUntil.cpp; path = source/Target/ThreadPlanStepUntil.cpp; sourceTree = "<group>"; };
 		26651A14133BEC76005B64B7 /* lldb-public.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-public.h"; path = "include/lldb/lldb-public.h"; sourceTree = "<group>"; };
+		26651A15133BF9CC005B64B7 /* Opcode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Opcode.h; path = include/lldb/Core/Opcode.h; sourceTree = "<group>"; };
+		26651A17133BF9DF005B64B7 /* Opcode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Opcode.cpp; path = source/Core/Opcode.cpp; sourceTree = "<group>"; };
 		26680207115FD0ED008E1FE4 /* LLDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LLDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		266960591199F4230075C61A /* build-llvm.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "build-llvm.pl"; sourceTree = "<group>"; };
 		2669605A1199F4230075C61A /* build-swig-wrapper-classes.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-swig-wrapper-classes.sh"; sourceTree = "<group>"; };
@@ -1832,6 +1836,8 @@
 				26BC7E8210F1B85900F91463 /* ModuleChild.cpp */,
 				26BC7D6C10F1B77400F91463 /* ModuleList.h */,
 				26BC7E8310F1B85900F91463 /* ModuleList.cpp */,
+				26651A15133BF9CC005B64B7 /* Opcode.h */,
+				26651A17133BF9DF005B64B7 /* Opcode.cpp */,
 				26BC7D7010F1B77400F91463 /* PluginInterface.h */,
 				26BC7D7110F1B77400F91463 /* PluginManager.h */,
 				26BC7E8A10F1B85900F91463 /* PluginManager.cpp */,
@@ -2521,6 +2527,7 @@
 				26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */,
 				264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */,
 				2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */,
+				26651A16133BF9CD005B64B7 /* Opcode.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3080,6 +3087,7 @@
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
 				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
+				26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

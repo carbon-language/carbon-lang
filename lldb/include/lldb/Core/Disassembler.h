@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Opcode.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {
@@ -27,6 +28,7 @@ class Instruction
 {
 public:
     Instruction (const Address &addr);
+    Instruction (const Address &addr, const Opcode &opcode);
 
     virtual
    ~Instruction();
@@ -59,10 +61,19 @@ public:
     DoesBranch () const = 0;
 
     virtual size_t
-    Extract (const DataExtractor& data, uint32_t data_offset) = 0;
+    Extract (const Disassembler &disassembler, 
+             const DataExtractor& data, 
+             uint32_t data_offset) = 0;
+
+    const Opcode &
+    GetOpcode () const
+    {
+        return m_opcode;
+    }
 
 protected:
-    Address m_addr;  // The section offset address of this instruction
+    Address m_addr; // The section offset address of this instruction
+    Opcode m_opcode; // The opcode for this instruction
 };
 
 
@@ -205,6 +216,12 @@ public:
 
     const InstructionList &
     GetInstructionList () const;
+
+    const ArchSpec &
+    GetArchitecture () const
+    {
+        return m_arch;
+    }
 
 protected:
     //------------------------------------------------------------------

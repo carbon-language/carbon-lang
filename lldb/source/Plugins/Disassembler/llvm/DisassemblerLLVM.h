@@ -22,7 +22,8 @@ public:
     class InstructionLLVM : public lldb_private::Instruction
     {
     public:
-        InstructionLLVM(EDDisassemblerRef disassembler, const lldb_private::Address &addr);
+        InstructionLLVM (const lldb_private::Address &addr,
+                         EDDisassemblerRef disassembler);
 
         virtual
         ~InstructionLLVM();
@@ -42,7 +43,8 @@ public:
         GetByteSize() const;
 
         size_t
-        Extract (const lldb_private::DataExtractor &data,
+        Extract (const Disassembler &disassembler,
+                 const lldb_private::DataExtractor &data,
                  uint32_t data_offset);
 
     protected:

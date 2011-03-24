@@ -65,33 +65,6 @@ namespace lldb_private
                                                  // pass it.
     } OptionDefinition;
 
-
-    enum OpcodeType
-    {
-        eOpcode8,
-        eOpcode16,
-        eOpcode32,
-        eOpcode64,
-        eOpcodeBytes
-    };
-
-    struct Opcode
-    {
-        OpcodeType type;
-        union
-        {
-            uint8_t inst8;
-            uint16_t inst16;
-            uint32_t inst32;
-            uint64_t inst64;
-            struct 
-            {
-                uint8_t length;
-                uint8_t bytes[16]; // This must be big enough to handle any opcode for any supported target.
-            } inst;
-        } data;
-    };
-
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
