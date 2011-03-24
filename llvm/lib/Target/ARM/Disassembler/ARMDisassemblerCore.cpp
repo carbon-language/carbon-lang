@@ -2302,6 +2302,7 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
 
 // VMOV (immediate)
 //   Qd/Dd imm
+// VBIC (immediate)
 // VORR (immediate)
 //   Qd/Dd imm src(=Qd/Dd)
 static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
@@ -2330,6 +2331,8 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
   case ARM::VMOVv8i16:
   case ARM::VMVNv4i16:
   case ARM::VMVNv8i16:
+  case ARM::VBICiv4i16:
+  case ARM::VBICiv8i16:
   case ARM::VORRiv4i16:
   case ARM::VORRiv8i16:
     esize = ESize16;
@@ -2338,6 +2341,8 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
   case ARM::VMOVv4i32:
   case ARM::VMVNv2i32:
   case ARM::VMVNv4i32:
+  case ARM::VBICiv2i32:
+  case ARM::VBICiv4i32:
   case ARM::VORRiv2i32:
   case ARM::VORRiv4i32:
     esize = ESize32;
@@ -2347,7 +2352,7 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
     esize = ESize64;
     break;
   default:
-    assert(0 && "Unreachable code!");
+    assert(0 && "Unexpected opcode!");
     return false;
   }
 
@@ -2357,7 +2362,7 @@ static bool DisassembleN1RegModImmFrm(MCInst &MI, unsigned Opcode,
 
   NumOpsAdded = 2;
 
-  // VORRiv*i* variants have an extra $src = $Vd to be filled in.
+  // VBIC/VORRiv*i* variants have an extra $src = $Vd to be filled in.
   if (NumOps >= 3 &&
       (OpInfo[2].RegClass == ARM::DPRRegClassID ||
        OpInfo[2].RegClass == ARM::QPRRegClassID)) {
