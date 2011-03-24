@@ -2945,6 +2945,9 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // no current handling of optional arguments. Fix here when a better handling
   // of optional arguments is implemented.
   if (Opcode == ARM::CPS3p) {
+    // Let's reject impossible imod values by returning false.
+    if (slice(insn, 19, 18) == 0 || slice(insn, 19, 18) == 1)
+      return false;
     MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 18))); // imod
     MI.addOperand(MCOperand::CreateImm(slice(insn, 8, 6)));   // iflags
     MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0)));   // mode
