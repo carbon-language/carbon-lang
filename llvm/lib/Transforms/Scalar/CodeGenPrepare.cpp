@@ -331,7 +331,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
-  if (DT) {
+  if (DT && !UpdateDT) {
     BasicBlock *BBIDom  = DT->getNode(BB)->getIDom()->getBlock();
     BasicBlock *DestBBIDom = DT->getNode(DestBB)->getIDom()->getBlock();
     BasicBlock *NewIDom = DT->findNearestCommonDominator(BBIDom, DestBBIDom);
@@ -534,7 +534,8 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     // happens.
     WeakVH IterHandle(CurInstIterator);
     
-    ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0, DT);
+    ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0,
+                              UpdateDT ? 0 : DT);
 
     // If the iterator instruction was recursively deleted, start over at the
     // start of the block.
