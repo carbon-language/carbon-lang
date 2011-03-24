@@ -594,15 +594,12 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
     return false;
 
   Value *V = RI->getReturnValue();
-  if (!V)
-    return false;
-
-  PHINode *PN = dyn_cast<PHINode>(V);
-  if (!PN)
+  PHINode *PN = V ? dyn_cast<PHINode>(V) : NULL;
+  if (V && !PN)
     return false;
 
   BasicBlock *BB = RI->getParent();
-  if (PN->getParent() != BB)
+  if (PN && PN->getParent() != BB)
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
@@ -612,21 +609,44 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
     return false;
 
-  // Make sure there are no instructions between PHI and return.
-  BasicBlock::iterator BI = PN;
-  do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
-  if (&*BI != RI)
-    return false;
+  // Make sure there are no instructions between the PHI and return, or that the
+  // return is the first instruction in the block.
+  if (PN) {
+    BasicBlock::iterator BI = BB->begin();
+    do { ++BI; } while (isa<DbgInfoIntrinsic>(BI));
+    if (&*BI != RI)
+      return false;
+  } else {
+    if (&*BB->begin() != RI)
+      return false;
+  }
 
   /// Only dup the ReturnInst if the CallInst is likely to be emitted as a tail
   /// call.
   SmallVector<CallInst*, 4> TailCalls;
-  for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
-    CallInst *CI = dyn_cast<CallInst>(PN->getIncomingValue(I));
-    // Make sure the phi value is indeed produced by the tail call.
-    if (CI && CI->hasOneUse() && CI->getParent() == PN->getIncomingBlock(I) &&
-        TLI->mayBeEmittedAsTailCall(CI))
-      TailCalls.push_back(CI);
+  if (PN) {
+    for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
+      CallInst *CI = dyn_cast<CallInst>(PN->getIncomingValue(I));
+      // Make sure the phi value is indeed produced by the tail call.
+      if (CI && CI->hasOneUse() && CI->getParent() == PN->getIncomingBlock(I) &&
+          TLI->mayBeEmittedAsTailCall(CI))
+        TailCalls.push_back(CI);
+    }
+  } else {
+    SmallPtrSet<BasicBlock*, 4> VisitedBBs;
+    for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
+      if (!VisitedBBs.insert(*PI))
+        continue;
+
+      BasicBlock::InstListType &InstList = (*PI)->getInstList();
+      BasicBlock::InstListType::reverse_iterator RI = InstList.rbegin();
+      BasicBlock::InstListType::reverse_iterator RE = InstList.rend();
+      if (++RI == RE)
+        continue;
+      CallInst *CI = dyn_cast<CallInst>(&*RI);
+      if (CI && CI->getType()->isVoidTy() && TLI->mayBeEmittedAsTailCall(CI))
+        TailCalls.push_back(CI);
+    }
   }
 
   bool Changed = false;
