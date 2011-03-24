@@ -9,7 +9,7 @@
 ; CHECK-NEXT: Ltmp
 ; CHECK-NEXT:         cltd
 ; CHECK-NEXT:         idivl   %r8d
-; CHECK-NEXT:         .loc 1 4 3
+; CHECK-NEXT:         .loc 2 4 3
 ; CHECK-NEXT: Ltmp
 ; CHECK-NEXT:         addl    %ecx, %eax
 ; CHECK-NEXT:         ret

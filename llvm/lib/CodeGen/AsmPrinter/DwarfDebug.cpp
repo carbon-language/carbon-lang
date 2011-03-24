@@ -516,7 +516,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DIVariable V) {
   unsigned Line = V.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = GetOrCreateSourceID(V.getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(V.getContext().getFilename(),
+                                        V.getContext().getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -532,7 +533,8 @@ void DwarfDebug::addSourceLine(DIE *Die, DIGlobalVariable G) {
   unsigned Line = G.getLineNumber();
   if (Line == 0)
     return;
-  unsigned FileID = GetOrCreateSourceID(G.getContext().getFilename());
+  unsigned FileID = GetOrCreateSourceID(G.getContext().getFilename(),
+                                        G.getContext().getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -551,7 +553,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DISubprogram SP) {
   unsigned Line = SP.getLineNumber();
   if (!SP.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(SP.getFilename());
+  unsigned FileID = GetOrCreateSourceID(SP.getFilename(), SP.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -567,7 +569,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DIType Ty) {
   unsigned Line = Ty.getLineNumber();
   if (Line == 0 || !Ty.getContext().Verify())
     return;
-  unsigned FileID = GetOrCreateSourceID(Ty.getFilename());
+  unsigned FileID = GetOrCreateSourceID(Ty.getFilename(), Ty.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -585,7 +587,7 @@ void DwarfDebug::addSourceLine(DIE *Die, DINameSpace NS) {
     return;
   StringRef FN = NS.getFilename();
 
-  unsigned FileID = GetOrCreateSourceID(FN);
+  unsigned FileID = GetOrCreateSourceID(FN, NS.getDirectory());
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, 0, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
@@ -1859,10 +1861,21 @@ DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
 
-unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName){
+unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName, 
+                                         StringRef DirName) {
   // If FE did not provide a file name, then assume stdin.
   if (FileName.empty())
-    return GetOrCreateSourceID("<stdin>");
+    return GetOrCreateSourceID("<stdin>", StringRef());
+
+  // MCStream expects full path name as filename.
+  if (!DirName.empty() && !FileName.startswith("/")) {
+    std::string FullPathName(DirName.data());
+    if (!DirName.endswith("/"))
+      FullPathName += "/";
+    FullPathName += FileName.data();
+    // Here FullPathName will be copied into StringMap by GetOrCreateSourceID.
+    return GetOrCreateSourceID(StringRef(FullPathName), StringRef());
+  }
 
   StringMapEntry<unsigned> &Entry = SourceIdMap.GetOrCreateValue(FileName);
   if (Entry.getValue())
@@ -1872,7 +1885,7 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName){
   Entry.setValue(SrcId);
 
   // Print out a .file directive to specify files for .loc directives.
-  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, FileName);
+  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, Entry.getKey());
 
   return SrcId;
 }
@@ -1898,7 +1911,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
   StringRef Dir = DIUnit.getDirectory();
-  unsigned ID = GetOrCreateSourceID(FN);
+  unsigned ID = GetOrCreateSourceID(FN, Dir);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   addString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
@@ -3102,7 +3115,7 @@ DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
 MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
                                        const MDNode *S) {
   StringRef Fn;
-
+  StringRef Dir;
   unsigned Src = 1;
   if (S) {
     DIDescriptor Scope(S);
@@ -3110,19 +3123,23 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
     if (Scope.isCompileUnit()) {
       DICompileUnit CU(S);
       Fn = CU.getFilename();
+      Dir = CU.getDirectory();
     } else if (Scope.isFile()) {
       DIFile F(S);
       Fn = F.getFilename();
+      Dir = F.getDirectory();
     } else if (Scope.isSubprogram()) {
       DISubprogram SP(S);
       Fn = SP.getFilename();
+      Dir = SP.getDirectory();
     } else if (Scope.isLexicalBlock()) {
       DILexicalBlock DB(S);
       Fn = DB.getFilename();
+      Dir = DB.getDirectory();
     } else
       assert(0 && "Unexpected scope info");
 
-    Src = GetOrCreateSourceID(Fn);
+    Src = GetOrCreateSourceID(Fn, Dir);
   }
 
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, DWARF2_FLAG_IS_STMT,

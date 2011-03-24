@@ -518,7 +518,7 @@ private:
   /// GetOrCreateSourceID - Look up the source id with the given directory and
   /// source file names. If none currently exists, create a new id and insert it
   /// in the SourceIds map.
-  unsigned GetOrCreateSourceID(StringRef FullName);
+  unsigned GetOrCreateSourceID(StringRef DirName, StringRef FullName);
 
   /// constructCompileUnit - Create new CompileUnit for the given 
   /// metadata node with tag DW_TAG_compile_unit.
