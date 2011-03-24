@@ -49,6 +49,7 @@ public:
   virtual StringRef LexUntilEndOfStatement();
 
   bool isAtStartOfComment(char Char);
+  bool isAtStatementSeparator(const char *Ptr);
 
   const MCAsmInfo &getMAI() const { return MAI; }
 

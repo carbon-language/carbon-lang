@@ -66,10 +66,9 @@ namespace llvm {
     /// relative expressions.
     const char *PCSymbol;                    // Defaults to "$".
 
-    /// SeparatorChar - This character, if specified, is used to separate
-    /// instructions from each other when on the same line.  This is used to
-    /// measure inline asm instructions.
-    char SeparatorChar;                      // Defaults to ';'
+    /// SeparatorString - This string, if specified, is used to separate
+    /// instructions from each other when on the same line.
+    const char *SeparatorString;             // Defaults to ';'
 
     /// CommentColumn - This indicates the comment num (zero-based) at
     /// which asm comments should be printed.
@@ -350,8 +349,8 @@ namespace llvm {
     const char *getPCSymbol() const {
       return PCSymbol;
     }
-    char getSeparatorChar() const {
-      return SeparatorChar;
+    const char *getSeparatorString() const {
+      return SeparatorString;
     }
     unsigned getCommentColumn() const {
       return CommentColumn;

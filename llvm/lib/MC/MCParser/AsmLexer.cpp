@@ -324,8 +324,8 @@ AsmToken AsmLexer::LexQuote() {
 StringRef AsmLexer::LexUntilEndOfStatement() {
   TokStart = CurPtr;
 
-  while (!isAtStartOfComment(*CurPtr) && // Start of line comment.
-          *CurPtr != ';' &&  // End of statement marker.
+  while (!isAtStartOfComment(*CurPtr) &&    // Start of line comment.
+         !isAtStatementSeparator(CurPtr) && // End of statement marker.
          *CurPtr != '\n' &&
          *CurPtr != '\r' &&
          (*CurPtr != 0 || CurPtr != CurBuf->getBufferEnd())) {
@@ -339,6 +339,11 @@ bool AsmLexer::isAtStartOfComment(char Char) {
   return Char == *MAI.getCommentString();
 }
 
+bool AsmLexer::isAtStatementSeparator(const char *Ptr) {
+  return strncmp(Ptr, MAI.getSeparatorString(),
+                 strlen(MAI.getSeparatorString())) == 0;
+}
+
 AsmToken AsmLexer::LexToken() {
   TokStart = CurPtr;
   // This always consumes at least one character.
@@ -346,6 +351,11 @@ AsmToken AsmLexer::LexToken() {
 
   if (isAtStartOfComment(CurChar))
     return LexLineComment();
+  if (isAtStatementSeparator(TokStart)) {
+    CurPtr += strlen(MAI.getSeparatorString()) - 1;
+    return AsmToken(AsmToken::EndOfStatement,
+                    StringRef(TokStart, strlen(MAI.getSeparatorString())));
+  }
 
   switch (CurChar) {
   default:
@@ -362,8 +372,8 @@ AsmToken AsmLexer::LexToken() {
     // Ignore whitespace.
     return LexToken();
   case '\n': // FALL THROUGH.
-  case '\r': // FALL THROUGH.
-  case ';': return AsmToken(AsmToken::EndOfStatement, StringRef(TokStart, 1));
+  case '\r':
+    return AsmToken(AsmToken::EndOfStatement, StringRef(TokStart, 1));
   case ':': return AsmToken(AsmToken::Colon, StringRef(TokStart, 1));
   case '+': return AsmToken(AsmToken::Plus, StringRef(TokStart, 1));
   case '-': return AsmToken(AsmToken::Minus, StringRef(TokStart, 1));

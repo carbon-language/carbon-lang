@@ -26,7 +26,7 @@ MCAsmInfo::MCAsmInfo() {
   LinkerRequiresNonEmptyDwarfLines = false;
   MaxInstLength = 4;
   PCSymbol = "$";
-  SeparatorChar = ';';
+  SeparatorString = ";";
   CommentColumn = 40;
   CommentString = "#";
   LabelSuffix = ":";

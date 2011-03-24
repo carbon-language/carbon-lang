@@ -149,10 +149,10 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
 
 /// Measure the specified inline asm to determine an approximation of its
 /// length.
-/// Comments (which run till the next SeparatorChar or newline) do not
+/// Comments (which run till the next SeparatorString or newline) do not
 /// count as an instruction.
 /// Any other non-whitespace text is considered an instruction, with
-/// multiple instructions separated by SeparatorChar or newlines.
+/// multiple instructions separated by SeparatorString or newlines.
 /// Variable-length instructions are not handled here; this function
 /// may be overloaded in the target code to do that.
 unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
@@ -163,7 +163,8 @@ unsigned TargetInstrInfo::getInlineAsmLength(const char *Str,
   bool atInsnStart = true;
   unsigned Length = 0;
   for (; *Str; ++Str) {
-    if (*Str == '\n' || *Str == MAI.getSeparatorChar())
+    if (*Str == '\n' || strncmp(Str, MAI.getSeparatorString(),
+                                strlen(MAI.getSeparatorString())) == 0)
       atInsnStart = true;
     if (atInsnStart && !std::isspace(*Str)) {
       Length += MAI.getMaxInstLength();
