@@ -589,6 +589,9 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
 ///   ret i32 %tmp2
 ///
 bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
+  if (!TLI)
+    return false;
+
   Value *V = RI->getReturnValue();
   if (!V)
     return false;
