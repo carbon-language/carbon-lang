@@ -1806,7 +1806,7 @@ static bool DisassembleVFPLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  assert(NumOps >= 5 && "VFPLdStMulFrm expects NumOps >= 5");
+  assert(NumOps >= 4 && "VFPLdStMulFrm expects NumOps >= 4");
 
   unsigned &OpIdx = NumOpsAdded;
 
@@ -1830,7 +1830,7 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   MI.addOperand(MCOperand::CreateImm(CondVal == 0xF ? 0xE : CondVal));
   MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
 
-  OpIdx += 4;
+  OpIdx += 3;
 
   bool isSPVFP = (Opcode == ARM::VLDMSIA     || Opcode == ARM::VLDMSDB     ||
                   Opcode == ARM::VLDMSIA_UPD || Opcode == ARM::VLDMSDB_UPD ||
@@ -1844,6 +1844,11 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // Fill the variadic part of reglist.
   unsigned char Imm8 = insn & 0xFF;
   unsigned Regs = isSPVFP ? Imm8 : Imm8/2;
+
+  // Apply some sanity checks before proceeding.
+  if (Regs == 0 || (RegD + Regs) > 32 || (!isSPVFP && Regs > 16))
+    return false;
+  
   for (unsigned i = 0; i < Regs; ++i) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassID,
                                                        RegD + i)));
