@@ -644,7 +644,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
       if (++RI == RE)
         continue;
       CallInst *CI = dyn_cast<CallInst>(&*RI);
-      if (CI && CI->getType()->isVoidTy() && TLI->mayBeEmittedAsTailCall(CI))
+      if (CI && CI->use_empty() && TLI->mayBeEmittedAsTailCall(CI))
         TailCalls.push_back(CI);
     }
   }
