@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   memcpy((char **)Args+2, argv+1, sizeof(char*)*argc);
 
   /* Run the JIT. */
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__MINGW64__)
   execvp(Interp, (char **)Args); /* POSIX execvp takes a char *const[]. */
 #else
   execvp(Interp, Args); /* windows execvp takes a const char *const *. */
