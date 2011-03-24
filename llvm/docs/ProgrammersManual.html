@@ -2219,11 +2219,8 @@ Instruction* newInst = new Instruction(..., pi);
 <div class="doc_text">
 
 <p>Deleting an instruction from an existing sequence of instructions that form a
-<a href="#BasicBlock"><tt>BasicBlock</tt></a> is very straight-forward. First,
-you must have a pointer to the instruction that you wish to delete.  Second, you
-need to obtain the pointer to that instruction's basic block. You use the
-pointer to the basic block to get its list of instructions and then use the
-erase function to remove your instruction. For example:</p>
+<a href="#BasicBlock"><tt>BasicBlock</tt></a> is very straight-forward: just
+call the instruction's eraseFromParent() method.  For example:</p>
 
 <div class="doc_code">
 <pre>
@@ -2231,6 +2228,10 @@ erase function to remove your instruction. For example:</p>
 I-&gt;eraseFromParent();
 </pre>
 </div>
+
+<p>This unlinks the instruction from its containing basic block and deletes 
+it.  If you'd just like to unlink the instruction from its containing basic
+block but not delete it, you can use the <tt>removeFromParent()</tt> method.</p>
 
 </div>
 
