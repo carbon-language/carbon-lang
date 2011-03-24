@@ -81,9 +81,9 @@ namespace {
     /// multiple load/stores of the same address.
     DenseMap<Value*, Value*> SunkAddrs;
 
-    /// UpdateDT - If CFG is modified in anyway, dominator tree may need to
+    /// ModifiedDT - If CFG is modified in anyway, dominator tree may need to
     /// be updated.
-    bool UpdateDT;
+    bool ModifiedDT;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -124,7 +124,7 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
 bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
-  UpdateDT = false;
+  ModifiedDT = false;
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
 
@@ -150,11 +150,11 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
       MadeChange |= ConstantFoldTerminator(BB);
 
     if (MadeChange)
-      UpdateDT = true;
+      ModifiedDT = true;
     EverMadeChange |= MadeChange;
   }
 
-  if (UpdateDT && DT)
+  if (ModifiedDT && DT)
     DT->DT->recalculate(F);
 
   return EverMadeChange;
@@ -331,7 +331,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   // The PHIs are now updated, change everything that refers to BB to use
   // DestBB and remove BB.
   BB->replaceAllUsesWith(DestBB);
-  if (DT && !UpdateDT) {
+  if (DT && !ModifiedDT) {
     BasicBlock *BBIDom  = DT->getNode(BB)->getIDom()->getBlock();
     BasicBlock *DestBBIDom = DT->getNode(DestBB)->getIDom()->getBlock();
     BasicBlock *NewIDom = DT->findNearestCommonDominator(BBIDom, DestBBIDom);
@@ -535,7 +535,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     WeakVH IterHandle(CurInstIterator);
     
     ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0,
-                              UpdateDT ? 0 : DT);
+                              ModifiedDT ? 0 : DT);
 
     // If the iterator instruction was recursively deleted, start over at the
     // start of the block.
@@ -669,7 +669,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
 
     // Duplicate the return into CallBB.
     (void)FoldReturnIntoUncondBranch(RI, BB, CallBB);
-    UpdateDT = Changed = true;
+    ModifiedDT = Changed = true;
     ++NumRetsDup;
   }
 
