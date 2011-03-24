@@ -29,6 +29,13 @@ public:
     virtual
     ~GDBRemoteCommunicationClient();
 
+    //------------------------------------------------------------------
+    // After connecting, send the handshake to the server to make sure
+    // we are communicating with it.
+    //------------------------------------------------------------------
+    bool
+    HandshakeWithServer (lldb_private::Error *error_ptr);
+
     size_t
     SendPacketAndWaitForResponse (const char *send_payload,
                                   StringExtractorGDBRemote &response,
@@ -49,8 +56,8 @@ public:
     virtual bool
     GetThreadSuffixSupported ();
 
-    virtual bool
-    GetSendAcks ();
+    void
+    QueryNoAckModeSupported ();
 
     bool
     SendAsyncSignal (int signo);
@@ -186,6 +193,23 @@ public:
     GetHostInfo ();
     
     bool
+    GetOSVersion (uint32_t &major, 
+                  uint32_t &minor, 
+                  uint32_t &update);
+
+    bool
+    GetOSBuildString (std::string &s);
+    
+    bool
+    GetOSKernelDescription (std::string &s);
+
+    lldb_private::ArchSpec
+    GetSystemArchitecture ();
+
+    bool
+    GetHostname (std::string &s);
+
+    bool
     GetSupportsThreadSuffix ();
 
     bool
@@ -232,7 +256,12 @@ protected:
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
     
     lldb_private::ArchSpec m_host_arch;
-    uint32_t m_cpusubtype;
+    uint32_t m_os_version_major;
+    uint32_t m_os_version_minor;
+    uint32_t m_os_version_update;
+    std::string m_os_build;
+    std::string m_os_kernel;
+    std::string m_hostname;
     
 private:
     //------------------------------------------------------------------

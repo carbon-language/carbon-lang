@@ -88,15 +88,18 @@ public:
         return m_public_is_running.GetValue();
     }
 
+    bool
+    GetSendAcks ()
+    {
+        return m_send_acks;
+    }
+
     //------------------------------------------------------------------
     // Client and server must implement these pure virtual functions
     //------------------------------------------------------------------
     virtual bool
     GetThreadSuffixSupported () = 0;
 
-    virtual bool
-    GetSendAcks () = 0;
-    
     //------------------------------------------------------------------
     // Set the global packet timeout.
     //
@@ -135,6 +138,10 @@ protected:
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;
+    bool m_send_acks;
+
+    
+
 
 private:
     //------------------------------------------------------------------

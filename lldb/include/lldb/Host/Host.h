@@ -101,6 +101,15 @@ public:
                   uint32_t &minor, 
                   uint32_t &update);
 
+    static bool
+    GetOSBuildString (std::string &s);
+    
+    static bool
+    GetOSKernelDescription (std::string &s);
+
+    static bool
+    GetHostname (std::string &s);
+
     //------------------------------------------------------------------
     /// Gets the host architecture.
     ///

@@ -50,7 +50,10 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_async_packet (),
     m_async_response (),
     m_async_signal (-1),
-    m_host_arch()
+    m_host_arch(),
+    m_os_version_major (UINT32_MAX),
+    m_os_version_minor (UINT32_MAX),
+    m_os_version_update (UINT32_MAX)
 {
     m_rx_packet_listener.StartListeningForEvents(this,
                                                  Communication::eBroadcastBitPacketAvailable  |
@@ -73,19 +76,36 @@ GDBRemoteCommunicationClient::~GDBRemoteCommunicationClient()
 }
 
 bool
-GDBRemoteCommunicationClient::GetSendAcks ()
+GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
+{
+    // Start the read thread after we send the handshake ack since if we
+    // fail to send the handshake ack, there is no reason to continue...
+    if (SendAck())
+        return StartReadThread (error_ptr);
+    
+    if (error_ptr)
+        error_ptr->SetErrorString("failed to send the handshake ack");
+    return false;
+}
+
+void
+GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
 {
     if (m_supports_not_sending_acks == eLazyBoolCalculate)
     {
-        StringExtractorGDBRemote response;
+        m_send_acks = true;
         m_supports_not_sending_acks = eLazyBoolNo;
+
+        StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse("QStartNoAckMode", response, false))
         {
             if (response.IsOKResponse())
+            {
+                m_send_acks = false;
                 m_supports_not_sending_acks = eLazyBoolYes;
+            }
         }
     }
-    return m_supports_not_sending_acks != eLazyBoolYes;
 }
 
 void
@@ -664,6 +684,79 @@ GDBRemoteCommunicationClient::SendEnvironmentPacket (char const *name_equal_valu
 }
 
 bool
+GDBRemoteCommunicationClient::GetOSVersion (uint32_t &major, 
+                                            uint32_t &minor, 
+                                            uint32_t &update)
+{
+    if (GetHostInfo ())
+    {
+        if (m_os_version_major != UINT32_MAX)
+        {
+            major = m_os_version_major;
+            minor = m_os_version_minor;
+            update = m_os_version_update;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetOSBuildString (std::string &s)
+{
+    if (GetHostInfo ())
+    {
+        if (!m_os_build.empty())
+        {
+            s = m_os_build;
+            return true;
+        }
+    }
+    s.clear();
+    return false;
+}
+
+
+bool
+GDBRemoteCommunicationClient::GetOSKernelDescription (std::string &s)
+{
+    if (GetHostInfo ())
+    {
+        if (!m_os_kernel.empty())
+        {
+            s = m_os_kernel;
+            return true;
+        }
+    }
+    s.clear();
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetHostname (std::string &s)
+{
+    if (GetHostInfo ())
+    {
+        if (!m_hostname.empty())
+        {
+            s = m_hostname;
+            return true;
+        }
+    }
+    s.clear();
+    return false;
+}
+
+ArchSpec
+GDBRemoteCommunicationClient::GetSystemArchitecture ()
+{
+    if (GetHostInfo ())
+        return m_host_arch;
+    return ArchSpec();
+}
+
+
+bool
 GDBRemoteCommunicationClient::GetHostInfo ()
 {
     if (m_supports_qHostInfo == eLazyBoolCalculate)
@@ -685,7 +778,9 @@ GDBRemoteCommunicationClient::GetHostInfo ()
             std::string arch_name;
             std::string os_name;
             std::string vendor_name;
+            std::string triple;
             uint32_t pointer_byte_size = 0;
+            StringExtractor extractor;
             ByteOrder byte_order = eByteOrderInvalid;
             while (response.GetNameColonValue(name, value))
             {
@@ -702,6 +797,31 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                 else if (name.compare("arch") == 0)
                 {
                     arch_name.swap (value);
+                }
+                else if (name.compare("triple") == 0)
+                {
+                    // The triple comes as ASCII hex bytes since it contains '-' chars
+                    extractor.GetStringRef().swap(value);
+                    extractor.SetFilePos(0);
+                    extractor.GetHexByteString (triple);
+                }
+                else if (name.compare("os_build") == 0)
+                {
+                    extractor.GetStringRef().swap(value);
+                    extractor.SetFilePos(0);
+                    extractor.GetHexByteString (m_os_build);
+                }
+                else if (name.compare("hostname") == 0)
+                {
+                    extractor.GetStringRef().swap(value);
+                    extractor.SetFilePos(0);
+                    extractor.GetHexByteString (m_hostname);
+                }
+                else if (name.compare("os_kernel") == 0)
+                {
+                    extractor.GetStringRef().swap(value);
+                    extractor.SetFilePos(0);
+                    extractor.GetHexByteString (m_os_kernel);
                 }
                 else if (name.compare("ostype") == 0)
                 {
@@ -724,13 +844,52 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                 {
                     pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 0);
                 }
+                else if (name.compare("os_version") == 0)
+                {
+                    Args::StringToVersion (value.c_str(), 
+                                           m_os_version_major,
+                                           m_os_version_minor,
+                                           m_os_version_update);
+                }
             }
             
-            if (arch_name.empty())
+            if (triple.empty())
             {
-                if (cpu != LLDB_INVALID_CPUTYPE)
+                if (arch_name.empty())
                 {
-                    m_host_arch.SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+                    if (cpu != LLDB_INVALID_CPUTYPE)
+                    {
+                        m_host_arch.SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+                        if (pointer_byte_size)
+                        {
+                            assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
+                        }
+                        if (byte_order != eByteOrderInvalid)
+                        {
+                            assert (byte_order == m_host_arch.GetByteOrder());
+                        }
+                        if (!vendor_name.empty())
+                            m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
+                        if (!os_name.empty())
+                            m_host_arch.GetTriple().setVendorName (llvm::StringRef (os_name));
+                            
+                    }
+                }
+                else
+                {
+                    std::string triple;
+                    triple += arch_name;
+                    triple += '-';
+                    if (vendor_name.empty())
+                        triple += "unknown";
+                    else
+                        triple += vendor_name;
+                    triple += '-';
+                    if (os_name.empty())
+                        triple += "unknown";
+                    else
+                        triple += os_name;
+                    m_host_arch.SetTriple (triple.c_str());
                     if (pointer_byte_size)
                     {
                         assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -739,29 +898,21 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                     {
                         assert (byte_order == m_host_arch.GetByteOrder());
                     }
-                    if (!vendor_name.empty())
-                        m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
-                    if (!os_name.empty())
-                        m_host_arch.GetTriple().setVendorName (llvm::StringRef (os_name));
-                        
+                    
                 }
             }
             else
             {
-                std::string triple;
-                triple += arch_name;
-                triple += '-';
-                if (vendor_name.empty())
-                    triple += "unknown";
-                else
-                    triple += vendor_name;
-                triple += '-';
-                if (os_name.empty())
-                    triple += "unknown";
-                else
-                    triple += os_name;
                 m_host_arch.SetTriple (triple.c_str());
-            }
+                if (pointer_byte_size)
+                {
+                    assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
+                }
+                if (byte_order != eByteOrderInvalid)
+                {
+                    assert (byte_order == m_host_arch.GetByteOrder());
+                }
+            }            
         }
     }
     return m_supports_qHostInfo == eLazyBoolYes;

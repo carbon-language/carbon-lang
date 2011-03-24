@@ -54,6 +54,7 @@
 #include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
+#include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 
 using namespace lldb;
@@ -86,6 +87,9 @@ lldb_private::Initialize ()
         ArchVolatileRegs_x86::Initialize();
 
 #if defined (__APPLE__)
+        //----------------------------------------------------------------------
+        // Apple/Darwin hosted plugins
+        //----------------------------------------------------------------------
         ABIMacOSX_i386::Initialize();
         ABISysV_x86_64::Initialize();
         DynamicLoaderMacOSXDYLD::Initialize();
@@ -102,11 +106,19 @@ lldb_private::Initialize ()
         PlatformRemoteiOS::Initialize();
 #endif
 #if defined (__linux__)
+        //----------------------------------------------------------------------
+        // Linux hosted plugins
+        //----------------------------------------------------------------------
         PlatformLinux::Initialize();
         ProcessLinux::Initialize();
         DynamicLoaderLinuxDYLD::Initialize();
 #endif
+        //----------------------------------------------------------------------
+        // Platform agnostic plugins
+        //----------------------------------------------------------------------
+        PlatformRemoteGDBServer::Initialize ();
         DynamicLoaderStatic::Initialize();
+
         // Scan for any system or user LLDB plug-ins
         PluginManager::Initialize();
 

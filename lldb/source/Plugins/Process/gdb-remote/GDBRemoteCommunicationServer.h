@@ -35,6 +35,7 @@ public:
 
     bool
     GetPacketAndSendResponse (const lldb_private::TimeValue* timeout_ptr,
+                              lldb_private::Error &error,
                               bool &interrupt, 
                               bool &quit);
 
@@ -44,22 +45,25 @@ public:
         return true;
     }
 
-    virtual bool
-    GetSendAcks ()
-    {
-        return m_send_acks;
-    }
+    // After connecting, do a little handshake with the client to make sure
+    // we are at least communicating
+    bool
+    HandshakeWithClient (lldb_private::Error *error_ptr);
 
 protected:
     lldb::thread_t m_async_thread;
-    bool m_send_acks;
 
     size_t
     SendUnimplementedResponse ();
 
+    size_t
+    SendOKResponse ();
 
     bool
     Handle_qHostInfo ();
+
+    bool
+    Handle_QStartNoAckMode ();
 
 private:
     //------------------------------------------------------------------

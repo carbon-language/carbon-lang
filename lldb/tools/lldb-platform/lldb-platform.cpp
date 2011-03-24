@@ -21,8 +21,10 @@
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/Debugger.h"
+#include "lldb/Core/StreamFile.h"
 #include "GDBRemoteCommunicationServer.h"
-
+#include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -66,12 +68,14 @@ main (int argc, char *argv[])
 {
     signal (SIGPIPE, signal_handler);
     int long_option_index = 0;
-    FILE* log_file = NULL;
-    uint32_t log_flags = 0;
-    std::string connect_url;
+    StreamSP log_stream_sp;
+    Args log_args;
+    std::string listen_host_post;
     char ch;
+    Debugger::Initialize();
+    
 
-    while ((ch = getopt_long(argc, argv, "l:f:", g_long_options, &long_option_index)) != -1)
+    while ((ch = getopt_long(argc, argv, "l:f:L:", g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
 //                    ch, (uint8_t)ch,
@@ -86,37 +90,51 @@ main (int argc, char *argv[])
         case 'l': // Set Log File
             if (optarg && optarg[0])
             {
-                if (strcasecmp(optarg, "stdout") == 0)
-                    log_file = stdout;
-                else if (strcasecmp(optarg, "stderr") == 0)
-                    log_file = stderr;
+                if ((strcasecmp(optarg, "stdout") == 0) || (strcmp(optarg, "/dev/stdout") == 0))
+                {
+                    log_stream_sp.reset (new StreamFile (stdout, false));
+                }
+                else if ((strcasecmp(optarg, "stderr") == 0) || (strcmp(optarg, "/dev/stderr") == 0))
+                {
+                    log_stream_sp.reset (new StreamFile (stderr, false));
+                }
                 else
                 {
-                    log_file = fopen(optarg, "w");
-                    if (log_file != NULL)
+                    FILE *log_file = fopen(optarg, "w");
+                    if (log_file)
+                    {
                         setlinebuf(log_file);
+                        log_stream_sp.reset (new StreamFile (log_file, true));
+                    }
+                    else
+                    {
+                        const char *errno_str = strerror(errno);
+                        fprintf (stderr, "Failed to open log file '%s' for writing: errno = %i (%s)", optarg, errno, errno_str ? errno_str : "unknown error");
+                    }
+
                 }
                 
-                if (log_file == NULL)
-                {
-                    const char *errno_str = strerror(errno);
-                    fprintf (stderr, "Failed to open log file '%s' for writing: errno = %i (%s)", optarg, errno, errno_str ? errno_str : "unknown error");
-                }
             }
             break;
 
         case 'f': // Log Flags
             if (optarg && optarg[0])
-                log_flags = strtoul(optarg, NULL, 0);
+                log_args.AppendArgument(optarg);
             break;
         
         case 'L':
-            connect_url.assign ("connect://");
-            connect_url.append (optarg);
+            listen_host_post.append (optarg);
             break;
         }
     }
     
+    if (log_stream_sp)
+    {
+        if (log_args.GetArgumentCount() == 0)
+            log_args.AppendArgument("default");
+        ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args, log_stream_sp.get());
+    }
+
     // Skip any options we consumed with getopt_long
     argc -= optind;
     argv += optind;
@@ -124,26 +142,19 @@ main (int argc, char *argv[])
 
     GDBRemoteCommunicationServer gdb_server;
     Error error;
-    if (!connect_url.empty())
+    if (!listen_host_post.empty())
     {
         std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {
-            const uint32_t max_retry_count = 50;
-            uint32_t retry_count = 0;
-            while (!gdb_server.IsConnected())
+            std::string connect_url ("listen://");
+            connect_url.append(listen_host_post.c_str());
+
+            printf ("Listening for a connection on %s...\n", listen_host_post.c_str());
+            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
             {
-                if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
-                {
-                    gdb_server.SetConnection (conn_ap.release());
-                    break;
-                }
-                retry_count++;
-
-                if (retry_count >= max_retry_count)
-                    break;
-
-                usleep (100000);
+                printf ("Connection established.\n");
+                gdb_server.SetConnection (conn_ap.release());
             }
         }
     }
@@ -151,19 +162,24 @@ main (int argc, char *argv[])
 
     if (gdb_server.IsConnected())
     {
-        if (gdb_server.StartReadThread(&error))
+        // After we connected, we need to get an initial ack from...
+        if (gdb_server.HandshakeWithClient(&error))
         {
             bool interrupt = false;
             bool done = false;
             while (!interrupt && !done)
             {
-                gdb_server.GetPacketAndSendResponse(NULL, interrupt, done);
+                if (!gdb_server.GetPacketAndSendResponse(NULL, error, interrupt, done))
+                    break;
             }
         }
         else
         {
+            fprintf(stderr, "error: handshake with client failed\n");
         }
     }
+
+    Debugger::Terminate();
 
     return 0;
 }

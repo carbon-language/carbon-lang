@@ -46,7 +46,8 @@ public:
         eServerPacketType_invalid,
         eServerPacketType_unimplemented,
         eServerPacketType_interrupt, // CTRL+c packet or "\x03"
-        eServerPacketType_qHostInfo
+        eServerPacketType_qHostInfo,
+        eServerPacketType_QStartNoAckMode
     };
     
     ServerPacketType

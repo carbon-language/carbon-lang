@@ -19,6 +19,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
@@ -28,174 +29,76 @@
 using namespace lldb;
 using namespace lldb_private;
     
+static uint32_t g_initialize_count = 0;
+
 void
 PlatformMacOSX::Initialize ()
 {
+    if (g_initialize_count++ == 0)
+    {
 #if defined (__APPLE__)
-    PlatformSP default_platform_sp (new PlatformMacOSX());
-    default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
-    Platform::SetDefaultPlatform (default_platform_sp);
-#endif
+        PlatformSP default_platform_sp (new PlatformMacOSX(true));
+        default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
+        Platform::SetDefaultPlatform (default_platform_sp);
+#endif        
+        PluginManager::RegisterPlugin (PlatformMacOSX::GetShortPluginNameStatic(false),
+                                       PlatformMacOSX::GetDescriptionStatic(false),
+                                       PlatformMacOSX::CreateInstance);
+    }
+
 }
 
 void
 PlatformMacOSX::Terminate ()
 {
-}
-
-Error
-PlatformMacOSX::ResolveExecutable (const FileSpec &exe_file,
-                                   const ArchSpec &exe_arch,
-                                   lldb::ModuleSP &exe_module_sp)
-{
-    Error error;
-    // Nothing special to do here, just use the actual file and architecture
-
-    FileSpec resolved_exe_file (exe_file);
-    
-    // If we have "ls" as the exe_file, resolve the executable loation based on
-    // the current path variables
-    if (!resolved_exe_file.Exists())
-        resolved_exe_file.ResolveExecutableLocation ();
-
-    // Resolve any executable within a bundle on MacOSX
-    Host::ResolveExecutableInBundle (resolved_exe_file);
-
-    if (resolved_exe_file.Exists())
+    if (g_initialize_count > 0)
     {
-        if (exe_arch.IsValid())
+        if (--g_initialize_count == 0)
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
-                                                 exe_module_sp, 
-                                                 NULL, 
-                                                 NULL);
-        
-            if (exe_module_sp->GetObjectFile() == NULL)
-            {
-                exe_module_sp.reset();
-                error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain the architecture %s",
-                                                exe_file.GetDirectory().AsCString(""),
-                                                exe_file.GetDirectory() ? "/" : "",
-                                                exe_file.GetFilename().AsCString(""),
-                                                exe_arch.GetArchitectureName());
-            }
-        }
-        else
-        {
-            // No valid architecture was specified, ask the platform for
-            // the architectures that we should be using (in the correct order)
-            // and see if we can find a match that way
-            StreamString arch_names;
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
-            {
-                error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                     platform_arch, 
-                                                     NULL,
-                                                     NULL, 
-                                                     0, 
-                                                     exe_module_sp, 
-                                                     NULL, 
-                                                     NULL);
-                // Did we find an executable using one of the 
-                if (error.Success())
-                {
-                    if (exe_module_sp && exe_module_sp->GetObjectFile())
-                        break;
-                    else
-                        error.SetErrorToGenericError();
-                }
-                
-                if (idx > 0)
-                    arch_names.PutCString (", ");
-                arch_names.PutCString (platform_arch.GetArchitectureName());
-            }
-            
-            if (error.Fail() || !exe_module_sp)
-            {
-                error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain any '%s' platform architectures: %s",
-                                                exe_file.GetDirectory().AsCString(""),
-                                                exe_file.GetDirectory() ? "/" : "",
-                                                exe_file.GetFilename().AsCString(""),
-                                                GetShortPluginName(),
-                                                arch_names.GetString().c_str());
-            }
+            PluginManager::UnregisterPlugin (PlatformMacOSX::CreateInstance);
         }
     }
+}
+
+Platform* 
+PlatformMacOSX::CreateInstance ()
+{
+    // The only time we create an instance is when we are creating a remote
+    // macosx platform
+    const bool is_host = false;
+    return new PlatformMacOSX (is_host);
+}
+
+
+const char *
+PlatformMacOSX::GetPluginNameStatic ()
+{
+    return "PlatformMacOSX";
+}
+
+const char *
+PlatformMacOSX::GetShortPluginNameStatic (bool is_host)
+{
+    if (is_host)
+        return "local-macosx";
     else
-    {
-        error.SetErrorStringWithFormat ("'%s%s%s' does not exist",
-                                        exe_file.GetDirectory().AsCString(""),
-                                        exe_file.GetDirectory() ? "/" : "",
-                                        exe_file.GetFilename().AsCString(""));
-    }
-
-    return error;
+        return "remote-macosx";
 }
 
-Error
-PlatformMacOSX::GetFile (const FileSpec &platform_file, 
-                         const UUID *uuid_ptr,
-                         FileSpec &local_file)
+const char *
+PlatformMacOSX::GetDescriptionStatic (bool is_host)
 {
-    // Default to the local case
-    local_file = platform_file;
-    return Error();
+    if (is_host)
+        return "Local Mac OS X user platform plug-in.";
+    else
+        return "Remote Mac OS X user platform plug-in.";
 }
-
-
-void
-PlatformMacOSX::GetStatus (Stream &strm)
-{
-    char sysctlstring[1024];
-    size_t datalen;
-    int mib[CTL_MAXNAME];
-
-    uint32_t major = UINT32_MAX;
-    uint32_t minor = UINT32_MAX;
-    uint32_t update = UINT32_MAX;
-    strm.PutCString("Host platform: Mac OS X Native\n");
-    if (GetOSVersion(major, minor, update))
-    {
-        strm.Printf("OS version: %u", major);
-        if (minor != UINT32_MAX)
-            strm.Printf(".%u", minor);
-        if (update != UINT32_MAX)
-            strm.Printf(".%u", update);
-
-
-        mib[0] = CTL_KERN;
-        mib[1] = KERN_OSVERSION;
-        datalen = sizeof(sysctlstring);
-        if (::sysctl (mib, 2, sysctlstring, &datalen, NULL, 0) == 0)
-        {
-            sysctlstring[datalen] = '\0';
-            strm.Printf(" (%s)", sysctlstring);
-        }
-
-        strm.EOL();
-    }
-        
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_VERSION;
-    datalen = sizeof(sysctlstring);
-    if (::sysctl (mib, 2, sysctlstring, &datalen, NULL, 0) == 0)
-    {
-        sysctlstring[datalen] = '\0';
-        strm.Printf("Kernel version: %s\n", sysctlstring);
-    }
-}
-
 
 //------------------------------------------------------------------
 /// Default Constructor
 //------------------------------------------------------------------
-PlatformMacOSX::PlatformMacOSX () :
-    Platform(true)  // This is the local host platform
+PlatformMacOSX::PlatformMacOSX (bool is_host) :
+    PlatformDarwin (is_host)
 {
 }
 
@@ -209,18 +112,55 @@ PlatformMacOSX::~PlatformMacOSX()
 {
 }
 
+Error
+PlatformMacOSX::GetFile (const FileSpec &platform_file, 
+                         const UUID *uuid_ptr,
+                         FileSpec &local_file)
+{
+    if (IsRemote())
+    {
+        if (m_remote_platform_sp)
+            return m_remote_platform_sp->GetFile (platform_file, uuid_ptr, local_file);
+    }
+
+    // Default to the local case
+    local_file = platform_file;
+    return Error();
+}
+
 uint32_t
 PlatformMacOSX::FindProcessesByName (const char *name_match, 
                                      lldb::NameMatchType name_match_type,
                                      ProcessInfoList &process_infos)
 {
-    return Host::FindProcessesByName (name_match, name_match_type, process_infos);
+    uint32_t match_count = 0;
+    if (IsHost())
+    {
+        match_count = Host::FindProcessesByName (name_match, name_match_type, process_infos);
+    
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            match_count = m_remote_platform_sp->FindProcessesByName (name_match, name_match_type, process_infos);
+    }
+    return 0;    
 }
 
 bool
 PlatformMacOSX::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
-    return Host::GetProcessInfo (pid, process_info);
+    bool sucess = false;
+    if (IsHost())
+    {
+        sucess = Host::GetProcessInfo (pid, process_info);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            sucess = m_remote_platform_sp->GetProcessInfo (pid, process_info);
+    }
+    return sucess;
 }
 
 bool
@@ -247,64 +187,3 @@ PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
     return false;
 }
 
-size_t
-PlatformMacOSX::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
-{
-    const uint8_t *trap_opcode = NULL;
-    uint32_t trap_opcode_size = 0;
-        
-    llvm::Triple::ArchType machine = target.GetArchitecture().GetMachine();
-    switch (machine)
-    {
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-        {
-            static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
-            trap_opcode = g_i386_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
-        }
-        break;
-        
-    case llvm::Triple::arm:
-        {
-            static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
-            static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
-
-            lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
-            if (bp_loc_sp)
-            {
-                const AddressClass addr_class = bp_loc_sp->GetAddress().GetAddressClass ();
-                if (addr_class == eAddressClassCodeAlternateISA)
-                {
-                    trap_opcode = g_thumb_breakpooint_opcode;
-                    trap_opcode_size = sizeof(g_thumb_breakpooint_opcode);
-                    break;
-                }
-            }
-            trap_opcode = g_arm_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
-        }
-        break;
-        
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-        {
-            static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
-            trap_opcode = g_ppc_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
-        }
-        break;
-        
-    default:
-        assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
-        break;
-    }
-    
-    if (trap_opcode && trap_opcode_size)
-    {
-        if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
-            return trap_opcode_size;
-    }
-    return 0;
-
-}

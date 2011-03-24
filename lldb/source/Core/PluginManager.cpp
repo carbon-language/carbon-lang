@@ -153,6 +153,7 @@ LoadPluginCallback
 void
 PluginManager::Initialize ()
 {
+#if 1
     FileSpec dir_spec;
     const bool find_directories = true;
     const bool find_files = true;
@@ -183,6 +184,7 @@ PluginManager::Initialize ()
                                           NULL);
         }
     }
+#endif
 }
 
 void

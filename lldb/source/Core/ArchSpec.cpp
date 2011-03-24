@@ -357,7 +357,7 @@ ArchSpec::GetMachOCPUSubType () const
         const ArchDefinitionEntry *arch_def = FindArchDefinitionEntry (&g_macho_arch_def, core_def->core);
         if (arch_def)
         {
-            return arch_def->cpu;
+            return arch_def->sub;
         }
     }
     return LLDB_INVALID_CPUTYPE;

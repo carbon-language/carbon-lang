@@ -68,7 +68,7 @@ public:
         }
         else
         {
-            result.AppendError ("command not implemented");
+            result.AppendError ("command not implemented\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -203,7 +203,7 @@ public:
         
         if (idx == 0)
         {
-            result.AppendError ("no platforms are available");
+            result.AppendError ("no platforms are available\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -243,7 +243,7 @@ public:
         }
         else
         {
-            result.AppendError ("no platform us currently selected");
+            result.AppendError ("no platform us currently selected\n");
             result.SetStatus (eReturnStatusFailed);            
         }
         return result.Succeeded();
@@ -274,7 +274,7 @@ public:
     virtual bool
     Execute (Args& args, CommandReturnObject &result)
     {
-        result.AppendError ("command not implemented");
+        result.AppendError ("command not implemented\n");
         result.SetStatus (eReturnStatusFailed);
         return result.Succeeded();
     }
@@ -306,27 +306,24 @@ public:
     {
         Stream &ostrm = result.GetOutputStream();      
         
-        // Get rid of the "connect" from the args and leave the rest to the platform
-        args.Shift();
         PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
         if (selected_platform_sp)
         {
             Error error (selected_platform_sp->ConnectRemote (args));
             if (error.Success())
             {
-                ostrm.Printf ("Connected to \"%s\"\n", selected_platform_sp->GetInstanceName());
                 selected_platform_sp->GetStatus (ostrm);
                 result.SetStatus (eReturnStatusSuccessFinishResult);            
             }
             else
             {
-                result.AppendErrorWithFormat ("connection failed: %s", error.AsCString());
+                result.AppendErrorWithFormat ("%s\n", error.AsCString());
                 result.SetStatus (eReturnStatusFailed);            
             }
         }
         else
         {
-            result.AppendError ("no platform us currently selected");
+            result.AppendError ("no platform us currently selected\n");
             result.SetStatus (eReturnStatusFailed);            
         }
         return result.Succeeded();
@@ -367,31 +364,31 @@ public:
                 {
                     // Cache the instance name if there is one since we are 
                     // about to disconnect and the name might go with it.
-                    const char *instance_name_cstr = selected_platform_sp->GetInstanceName();
-                    std::string instance_name;
-                    if (instance_name_cstr)
-                        instance_name.assign (instance_name_cstr);
+                    const char *hostname_cstr = selected_platform_sp->GetHostname();
+                    std::string hostname;
+                    if (hostname_cstr)
+                        hostname.assign (hostname_cstr);
 
                     error = selected_platform_sp->DisconnectRemote ();
                     if (error.Success())
                     {
                         Stream &ostrm = result.GetOutputStream();      
-                        if (instance_name.empty())
+                        if (hostname.empty())
                             ostrm.Printf ("Disconnected from \"%s\"\n", selected_platform_sp->GetShortPluginName());
                         else
-                            ostrm.Printf ("Disconnected from \"%s\"\n", instance_name.c_str());
+                            ostrm.Printf ("Disconnected from \"%s\"\n", hostname.c_str());
                         result.SetStatus (eReturnStatusSuccessFinishResult);            
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("disconnect failed: %s", error.AsCString());
+                        result.AppendErrorWithFormat ("%s", error.AsCString());
                         result.SetStatus (eReturnStatusFailed);            
                     }
                 }
                 else
                 {
                     // Not connected...
-                    result.AppendError ("not connected.");
+                    result.AppendErrorWithFormat ("not connected to '%s'", selected_platform_sp->GetShortPluginName());
                     result.SetStatus (eReturnStatusFailed);            
                 }
             }
@@ -404,7 +401,7 @@ public:
         }
         else
         {
-            result.AppendError ("no platform us currently selected");
+            result.AppendError ("no platform is currently selected");
             result.SetStatus (eReturnStatusFailed);            
         }
         return result.Succeeded();

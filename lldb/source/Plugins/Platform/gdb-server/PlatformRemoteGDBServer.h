@@ -79,9 +79,6 @@ namespace lldb_private {
         virtual const char *
         GetDescription ();
 
-        virtual void
-        GetStatus (Stream &strm);
-
         virtual Error
         GetFile (const FileSpec &platform_file, 
                  const UUID *uuid_ptr,
@@ -103,16 +100,31 @@ namespace lldb_private {
                                          BreakpointSite *bp_site);
 
         virtual bool
-        FetchRemoteOSVersion ();
+        GetRemoteOSVersion ();
+
+        virtual bool
+        GetRemoteOSBuildString (std::string &s);
+        
+        virtual bool
+        GetRemoteOSKernelDescription (std::string &s);
+
+        // Remote Platform subclasses need to override this function
+        virtual ArchSpec
+        GetRemoteSystemArchitecture ();
+
+        // Remote subclasses should override this and return a valid instance
+        // name if connected.
+        virtual const char *
+        GetRemoteHostname ();
+
+        virtual bool
+        IsConnected () const;
 
         virtual Error
         ConnectRemote (Args& args);
 
         virtual Error
         DisconnectRemote ();
-
-        virtual const char *
-        GetRemoteInstanceName ();
 
     protected:
         GDBRemoteCommunicationClient m_gdb_client;

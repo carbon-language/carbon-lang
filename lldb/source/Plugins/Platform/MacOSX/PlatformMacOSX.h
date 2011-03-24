@@ -14,13 +14,19 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Target/Platform.h"
+#include "PlatformDarwin.h"
 
 namespace lldb_private {
 
-    class PlatformMacOSX : public Platform
+    class PlatformMacOSX : public PlatformDarwin
     {
     public:
+
+        //------------------------------------------------------------
+        // Class functions
+        //------------------------------------------------------------
+        static Platform* 
+        CreateInstance ();
 
         static void
         Initialize ();
@@ -28,7 +34,19 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformMacOSX ();
+        static const char *
+        GetPluginNameStatic ();
+
+        static const char *
+        GetShortPluginNameStatic(bool is_host);
+
+        static const char *
+        GetDescriptionStatic(bool is_host);
+        
+        //------------------------------------------------------------
+        // Class Methods
+        //------------------------------------------------------------
+        PlatformMacOSX (bool is_host);
 
         virtual
         ~PlatformMacOSX();
@@ -39,13 +57,13 @@ namespace lldb_private {
         virtual const char *
         GetPluginName()
         {
-            return "PlatformMacOSX";
+            return GetPluginNameStatic ();
         }
         
         virtual const char *
         GetShortPluginName()
         {
-            return "local-macosx";
+            return GetShortPluginNameStatic (IsHost());
         }
         
         virtual uint32_t
@@ -54,23 +72,11 @@ namespace lldb_private {
             return 1;
         }
         
-
-        //------------------------------------------------------------
-        // lldb_private::Platform functions
-        //------------------------------------------------------------
-        virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
-                           lldb::ModuleSP &module_sp);
-
         virtual const char *
         GetDescription ()
         {
-            return "The native host platform on MacOSX.";
+            return GetDescriptionStatic (IsHost());
         }
-
-        virtual void
-        GetStatus (Stream &strm);
 
         virtual Error
         GetFile (const FileSpec &platform_file, 
@@ -87,10 +93,6 @@ namespace lldb_private {
 
         virtual bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
-
-        virtual size_t
-        GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
 
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformMacOSX);

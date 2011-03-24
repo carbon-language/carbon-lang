@@ -115,22 +115,14 @@ namespace lldb_private {
                       uint32_t minor, 
                       uint32_t update);
 
-        const char *
-        GetInstanceName ()
-        {
-            if (IsHost())
-                return "localhost";
+        bool
+        GetOSBuildString (std::string &s);
+        
+        bool
+        GetOSKernelDescription (std::string &s);
 
-            if (IsConnected())
-            {
-                if (m_remote_instance_name.empty())
-                    GetRemoteInstanceName ();
-                
-                if (!m_remote_instance_name.empty())        
-                    return m_remote_instance_name.c_str();
-            }
-            return "remote";
-        }
+        const char *
+        GetHostname ();
 
         virtual const char *
         GetDescription () = 0;
@@ -144,7 +136,7 @@ namespace lldb_private {
         /// what this platform is connected to.
         //------------------------------------------------------------------        
         virtual void
-        GetStatus (Stream &strm) = 0;
+        GetStatus (Stream &strm);
 
         //------------------------------------------------------------------
         // Subclasses must be able to fetch the current OS version
@@ -153,13 +145,41 @@ namespace lldb_private {
         // subclasses don't need to override this function as it will just
         // call the Host::GetOSVersion().
         //------------------------------------------------------------------
-protected:
         virtual bool
-        FetchRemoteOSVersion ()
+        GetRemoteOSVersion ()
         {
             return false;
         }
+
+        virtual bool
+        GetRemoteOSBuildString (std::string &s)
+        {
+            s.clear();
+            return false;
+        }
         
+        virtual bool
+        GetRemoteOSKernelDescription (std::string &s)
+        {
+            s.clear();
+            return false;
+        }
+
+        // Remote Platform subclasses need to override this function
+        virtual ArchSpec
+        GetRemoteSystemArchitecture ()
+        {
+            return ArchSpec(); // Return an invalid architecture
+        }
+
+        // Remote subclasses should override this and return a valid instance
+        // name if connected.
+        virtual const char *
+        GetRemoteHostname ()
+        {
+            return NULL;
+        }
+
         //------------------------------------------------------------------
         /// Locate a file for a platform.
         ///
@@ -179,7 +199,6 @@ protected:
         /// @return
         ///     An error object.
         //------------------------------------------------------------------
-public:
         virtual Error
         GetFile (const FileSpec &platform_file, 
                  const UUID *uuid_ptr,
@@ -190,15 +209,6 @@ public:
 
         virtual Error
         DisconnectRemote ();
-
-        // Remote subclasses should override this and return a valid instance
-        // name if connected.
-        virtual const char *
-        GetRemoteInstanceName ()
-        {
-            return NULL;
-        }
-
 
         //------------------------------------------------------------------
         /// Get the platform's supported architectures in the order in which
@@ -349,10 +359,11 @@ public:
             return !m_is_host;
         }
         
-        bool
+        virtual bool
         IsConnected () const
         {
-            return m_is_connected;
+            // Remote subclasses should override this function
+            return IsHost();
         }
         
         const ArchSpec &
@@ -366,16 +377,8 @@ public:
                 m_os_version_set_while_connected = m_system_arch.IsValid();
         }
 
-        // Remote Platform subclasses need to override this function
-        virtual ArchSpec
-        FetchRemoteSystemArchitecture ()
-        {
-            return ArchSpec(); // Return an invalid architecture
-        }
-
     protected:
         bool m_is_host;
-        bool m_is_connected;
         // Set to true when we are able to actually set the OS version while 
         // being connected. For remote platforms, we might set the version ahead
         // of time before we actually connect and this version might change when
@@ -384,7 +387,7 @@ public:
         bool m_os_version_set_while_connected;
         bool m_system_arch_set_while_connected;
         std::string m_remote_url;
-        std::string m_remote_instance_name;
+        std::string m_name;
         uint32_t m_major_os_version;
         uint32_t m_minor_os_version;
         uint32_t m_update_os_version;

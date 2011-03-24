@@ -75,6 +75,11 @@ StringExtractorGDBRemote::GetServerPacketType () const
             return eServerPacketType_ack;
         break;
 
+    case 'Q':
+        if (strcmp (packet_cstr, "QStartNoAckMode") == 0)
+            return eServerPacketType_QStartNoAckMode;
+        break;
+            
     case 'q':
         if (strcmp (packet_cstr, "qHostInfo") == 0)
             return eServerPacketType_qHostInfo;

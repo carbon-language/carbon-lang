@@ -360,6 +360,8 @@
 		2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1210F1B83100F91463 /* BreakpointResolver.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
+		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
+		2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A54C133A6305004E4240 /* PlatformDarwin.h */; };
 		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
 		26B1FCB913381071002886E2 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
@@ -669,6 +671,8 @@
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
 		269416AE119A024800FF2715 /* CommandObjectTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTarget.h; path = source/Commands/CommandObjectTarget.h; sourceTree = "<group>"; };
+		2697A54B133A6305004E4240 /* PlatformDarwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwin.cpp; sourceTree = "<group>"; };
+		2697A54C133A6305004E4240 /* PlatformDarwin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformDarwin.h; sourceTree = "<group>"; };
 		269FF07D12494F7D00225026 /* FuncUnwinders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FuncUnwinders.h; path = include/lldb/Symbol/FuncUnwinders.h; sourceTree = "<group>"; };
 		269FF07F12494F8E00225026 /* UnwindPlan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindPlan.h; path = include/lldb/Symbol/UnwindPlan.h; sourceTree = "<group>"; };
 		269FF08112494FC200225026 /* UnwindTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindTable.h; path = include/lldb/Symbol/UnwindTable.h; sourceTree = "<group>"; };
@@ -2246,6 +2250,8 @@
 		26C5577F132575C8008FD8FE /* MacOSX */ = {
 			isa = PBXGroup;
 			children = (
+				2697A54B133A6305004E4240 /* PlatformDarwin.cpp */,
+				2697A54C133A6305004E4240 /* PlatformDarwin.h */,
 				26C5577B132575AD008FD8FE /* PlatformMacOSX.cpp */,
 				26C5577C132575AD008FD8FE /* PlatformMacOSX.h */,
 				2675F6FE1332BE690067997B /* PlatformRemoteiOS.cpp */,
@@ -2512,6 +2518,7 @@
 				26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */,
 				26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */,
 				264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */,
+				2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3070,6 +3077,7 @@
 				26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */,
 				26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */,
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
+				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3595,6 +3603,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -3621,6 +3630,7 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -3646,6 +3656,7 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
 					"-framework",

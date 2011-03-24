@@ -28,14 +28,19 @@
 using namespace lldb;
 using namespace lldb_private;
 
-static bool g_initialized = false;
-    
+//------------------------------------------------------------------
+// Static Variables
+//------------------------------------------------------------------
+static uint32_t g_initialize_count = 0;
+
+//------------------------------------------------------------------
+// Static Functions
+//------------------------------------------------------------------
 void
 PlatformRemoteiOS::Initialize ()
 {
-    if (g_initialized == false)
+    if (g_initialize_count++ == 0)
     {
-        g_initialized = true;
         PluginManager::RegisterPlugin (PlatformRemoteiOS::GetShortPluginNameStatic(),
                                        PlatformRemoteiOS::GetDescriptionStatic(),
                                        PlatformRemoteiOS::CreateInstance);
@@ -45,10 +50,12 @@ PlatformRemoteiOS::Initialize ()
 void
 PlatformRemoteiOS::Terminate ()
 {
-    if (g_initialized)
+    if (g_initialize_count > 0)
     {
-        g_initialized = false;
-        PluginManager::UnregisterPlugin (PlatformRemoteiOS::CreateInstance);
+        if (--g_initialize_count == 0)
+        {
+            PluginManager::UnregisterPlugin (PlatformRemoteiOS::CreateInstance);
+        }
     }
 }
 
@@ -78,36 +85,36 @@ PlatformRemoteiOS::GetDescriptionStatic()
 }
 
 
+//------------------------------------------------------------------
+/// Default Constructor
+//------------------------------------------------------------------
+PlatformRemoteiOS::PlatformRemoteiOS () :
+    PlatformDarwin (false),    // This is a remote platform
+    m_device_support_directory (),
+    m_device_support_directory_for_os_version ()
+{
+}
+
+//------------------------------------------------------------------
+/// Destructor.
+///
+/// The destructor is virtual since this class is designed to be
+/// inherited from by the plug-in instance.
+//------------------------------------------------------------------
+PlatformRemoteiOS::~PlatformRemoteiOS()
+{
+}
+
+
 void
 PlatformRemoteiOS::GetStatus (Stream &strm)
 {
-    uint32_t major = UINT32_MAX;
-    uint32_t minor = UINT32_MAX;
-    uint32_t update = UINT32_MAX;
+    Platform::GetStatus (strm);
     const char *sdk_directory = GetDeviceSupportDirectoryForOSVersion();
-    strm.PutCString ("Remote platform: iOS platform\n");
-    if (GetOSVersion(major, minor, update))
-    {
-        strm.Printf("SDK version: %u", major);
-        if (minor != UINT32_MAX)
-            strm.Printf(".%u", minor);
-        if (update != UINT32_MAX)
-            strm.Printf(".%u", update);
-        strm.EOL();
-    }
-
-    if (!m_build_update.empty())
-        strm.Printf("SDK update: %s\n", m_build_update.c_str());
-
     if (sdk_directory)
-        strm.Printf ("SDK path: \"%s\"\n", sdk_directory);
+        strm.Printf ("SDKROOT: \"%s\"\n", sdk_directory);
     else
-        strm.PutCString ("SDK path: error: unable to locate SDK\n");
-
-    if (IsConnected())
-        strm.Printf("Connected to: %s\n", m_remote_url.c_str());
-    else
-        strm.PutCString("Not connected to a remote device.\n");
+        strm.PutCString ("SDKROOT: error: unable to locate SDK\n");
 }
 
 
@@ -411,26 +418,6 @@ PlatformRemoteiOS::GetFile (const FileSpec &platform_file,
     return error;
 }
 
-//------------------------------------------------------------------
-/// Default Constructor
-//------------------------------------------------------------------
-PlatformRemoteiOS::PlatformRemoteiOS () :
-    Platform(false),    // This is a remote platform
-    m_device_support_directory (),
-    m_device_support_directory_for_os_version ()
-{
-}
-
-//------------------------------------------------------------------
-/// Destructor.
-///
-/// The destructor is virtual since this class is designed to be
-/// inherited from by the plug-in instance.
-//------------------------------------------------------------------
-PlatformRemoteiOS::~PlatformRemoteiOS()
-{
-}
-
 uint32_t
 PlatformRemoteiOS::FindProcessesByName (const char *name_match, 
                                         lldb::NameMatchType name_match_type,
@@ -447,29 +434,6 @@ PlatformRemoteiOS::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
     // TODO: if connected, send a packet to get the remote process info
     process_info.Clear();
     return false;
-}
-
-const char *
-PlatformRemoteiOS::GetRemoteInstanceName ()
-{
-    if (m_remote_instance_name.empty())
-    {
-        const char *device_support_dir = GetDeviceSupportDirectory();
-        if (device_support_dir)
-        {
-            std::string latest_device_support_dir;
-            latest_device_support_dir.assign (device_support_dir);
-            latest_device_support_dir.append ("/Platforms/iPhoneOS.platform/DeviceSupport/Latest");
-            const bool resolve_path = true;
-            FileSpec file_spec (m_device_support_directory_for_os_version.c_str(), resolve_path);
-            // We are using the resolved basename of the "Latest" symlink (which
-            // is usually the latest and greatest SDK version and the update
-            // which is something like: "4.0 (8A123)"
-            if (file_spec.Exists())
-                m_remote_instance_name.assign (file_spec.GetFilename().GetCString());
-        }
-    }
-    return m_remote_instance_name.c_str();
 }
 
 bool
@@ -577,105 +541,4 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     }
     arch.Clear();
     return false;
-}
-
-bool
-PlatformRemoteiOS::FetchRemoteOSVersion ()
-{
-    return false;
-}
-
-
-size_t
-PlatformRemoteiOS::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)
-{
-    const uint8_t *trap_opcode = NULL;
-    uint32_t trap_opcode_size = 0;
-        
-    llvm::Triple::ArchType machine = target.GetArchitecture().GetMachine();
-    switch (machine)
-    {
-    case llvm::Triple::x86:
-    case llvm::Triple::x86_64:
-        {
-            static const uint8_t g_i386_breakpoint_opcode[] = { 0xCC };
-            trap_opcode = g_i386_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
-        }
-        break;
-        
-    case llvm::Triple::arm:
-        {
-            static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
-            static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
-
-            lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
-            if (bp_loc_sp)
-            {
-                const AddressClass addr_class = bp_loc_sp->GetAddress().GetAddressClass ();
-                if (addr_class == eAddressClassCodeAlternateISA)
-                {
-                    trap_opcode = g_thumb_breakpooint_opcode;
-                    trap_opcode_size = sizeof(g_thumb_breakpooint_opcode);
-                    break;
-                }
-            }
-            trap_opcode = g_arm_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
-        }
-        break;
-        
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-        {
-            static const uint8_t g_ppc_breakpoint_opcode[] = { 0x7F, 0xC0, 0x00, 0x08 };
-            trap_opcode = g_ppc_breakpoint_opcode;
-            trap_opcode_size = sizeof(g_ppc_breakpoint_opcode);
-        }
-        break;
-        
-    default:
-        assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
-        break;
-    }
-    
-    if (trap_opcode && trap_opcode_size)
-    {
-        if (bp_site->SetTrapOpcode(trap_opcode, trap_opcode_size))
-            return trap_opcode_size;
-    }
-    return 0;
-
-}
-
-Error
-PlatformRemoteiOS::ConnectRemote (Args& args)
-{
-    Error error;
-    error.SetErrorStringWithFormat ("'platform connect' is not implemented yet for platform '%s'", GetShortPluginNameStatic());
-
-//    if (args.GetArgumentCount() == 1)
-//    {
-//        const char *remote_url = args.GetArgumentAtIndex(0);
-//        ConnectionStatus status = m_gdb_client.Connect(remote_url, &error);
-//        if (status == eConnectionStatusSuccess)
-//        {
-//            m_gdb_client.GetHostInfo();
-//        }
-//    }
-//    else
-//    {
-//        error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
-//    }
-
-    return error;
-}
-
-Error
-PlatformRemoteiOS::DisconnectRemote ()
-{
-    Error error;
-    error.SetErrorStringWithFormat ("'platform disconnect' is not implemented yet for platform '%s'", GetShortPluginNameStatic());
-//    m_gdb_client.Disconnect(&error);
-    return error;
 }

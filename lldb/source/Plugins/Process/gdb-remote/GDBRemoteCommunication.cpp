@@ -32,7 +32,8 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name, const char
     m_rx_packet_listener (listener_name),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
-    m_private_is_running (false)
+    m_private_is_running (false),
+    m_send_acks (true)
 {
     m_rx_packet_listener.StartListeningForEvents(this,
                                                  Communication::eBroadcastBitPacketAvailable  |
@@ -127,7 +128,10 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
             if (GetSendAcks ())
             {
                 if (GetAck () != '+')
+                {
+                    printf("get ack failed...");
                     return 0;
+                }
             }
         }
         else
@@ -238,9 +242,10 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &packet, c
                 }
             }
         }
-        else if (Communication::eBroadcastBitReadThreadDidExit)
+        else if (event_type | Communication::eBroadcastBitReadThreadDidExit)
         {
             // Our read thread exited on us so just fall through and return zero...
+            Disconnect();
         }
     }
     return 0;

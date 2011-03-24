@@ -122,11 +122,11 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
             return eConnectionStatusSuccess;
         }
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat ("Unsupported connection URL: '%s'.\n", s);
+            error_ptr->SetErrorStringWithFormat ("unsupported connection URL: '%s'", s);
         return eConnectionStatusError;
     }
     if (error_ptr)
-        error_ptr->SetErrorString("NULL connection URL.");
+        error_ptr->SetErrorString("invalid connect arguments");
     return eConnectionStatusError;
 }
 
@@ -236,7 +236,7 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
     if (!IsConnected ())
     {
         if (error_ptr)
-            error_ptr->SetErrorString("Not connected.");
+            error_ptr->SetErrorString("not connected");
         status = eConnectionStatusNoConnection;
         return 0;
     }
@@ -375,7 +375,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     }
 
     if (error_ptr)
-        error_ptr->SetErrorString("Not connected.");
+        error_ptr->SetErrorString("not connected");
     return eConnectionStatusLostConnection;
 }
 
@@ -536,7 +536,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     if (regex.Execute (host_and_port, 2) == false)
     {
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Invalid host:port specification: '%s'.\n", host_and_port);
+            error_ptr->SetErrorStringWithFormat("invalid host:port specification: '%s'", host_and_port);
         return eConnectionStatusError;
     }
     std::string host_str;
@@ -545,7 +545,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
         regex.GetMatchAtIndex (host_and_port, 2, port_str) == false)
     {
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Invalid host:port specification '%s'.\n", host_and_port);
+            error_ptr->SetErrorStringWithFormat("invalid host:port specification '%s'", host_and_port);
         return eConnectionStatusError;
     }
 
@@ -553,7 +553,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     if (port == INT32_MIN)
     {
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Invalid port '%s'.\n", port_str.c_str());
+            error_ptr->SetErrorStringWithFormat("invalid port '%s'", port_str.c_str());
         return eConnectionStatusError;
     }
     // Create the socket
@@ -591,7 +591,7 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
                 if (inet_pton_result == -1)
                     error_ptr->SetErrorToErrno();
                 else
-                    error_ptr->SetErrorStringWithFormat("Invalid host string: '%s'.\n", host_str.c_str());
+                    error_ptr->SetErrorStringWithFormat("invalid host string: '%s'", host_str.c_str());
             }
             Close (m_fd, NULL);
             return eConnectionStatusError;

@@ -35,8 +35,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServer::GDBRemoteCommunicationServer() :
     GDBRemoteCommunication ("gdb-remote.server", "gdb-remote.server.rx_packet"),
-    m_async_thread (LLDB_INVALID_HOST_THREAD),
-    m_send_acks (true)
+    m_async_thread (LLDB_INVALID_HOST_THREAD)
 {
 }
 
@@ -73,6 +72,7 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //
 bool
 GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout_ptr, 
+                                                        Error &error,
                                                         bool &interrupt, 
                                                         bool &quit)
 {
@@ -87,10 +87,12 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
             break;
 
         case StringExtractorGDBRemote::eServerPacketType_invalid:
+            error.SetErrorString("invalid packet");
             quit = true;
             break;
 
         case StringExtractorGDBRemote::eServerPacketType_interrupt:
+            error.SetErrorString("interrupt received");
             interrupt = true;
             break;
         
@@ -99,9 +101,20 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
 
         case StringExtractorGDBRemote::eServerPacketType_qHostInfo:
             return Handle_qHostInfo ();
+            
+        case StringExtractorGDBRemote::eServerPacketType_QStartNoAckMode:
+            return Handle_QStartNoAckMode ();
         }
         return true;
     }
+    else
+    {
+        if (!IsConnected())
+            error.SetErrorString("lost connection");
+        else
+            error.SetErrorString("timeout");
+    }
+
     return false;
 }
 
@@ -111,6 +124,19 @@ GDBRemoteCommunicationServer::SendUnimplementedResponse ()
     return SendPacket ("");
 }
 
+size_t
+GDBRemoteCommunicationServer::SendOKResponse ()
+{
+    return SendPacket ("OK");
+}
+
+bool
+GDBRemoteCommunicationServer::HandshakeWithClient(Error *error_ptr)
+{
+    if (StartReadThread(error_ptr))
+        return GetAck();
+    return false;
+}
 
 bool
 GDBRemoteCommunicationServer::Handle_qHostInfo ()
@@ -120,17 +146,18 @@ GDBRemoteCommunicationServer::Handle_qHostInfo ()
     // $cputype:16777223;cpusubtype:3;ostype:Darwin;vendor:apple;endian:little;ptrsize:8;#00
 
     ArchSpec host_arch (Host::GetArchitecture ());
-    
     const llvm::Triple &host_triple = host_arch.GetTriple();
-    const llvm::StringRef arch_name (host_triple.getArchName());
-    const llvm::StringRef vendor_name (host_triple.getOSName());
-    const llvm::StringRef os_name (host_triple.getVendorName());
-    response.Printf ("arch:%.*s;ostype:%.*s;vendor:%.*s;ptrsize:%u", 
-                     (int)arch_name.size(), arch_name.data(),
-                     (int)os_name.size(), os_name.data(),
-                     (int)vendor_name.size(), vendor_name.data(),
-                     host_arch.GetAddressByteSize());
+    response.PutCString("triple:");
+    response.PutCStringAsRawHex8(host_triple.getTriple().c_str());
+    response.Printf (";ptrsize:%u;",host_arch.GetAddressByteSize());
 
+    uint32_t cpu = host_arch.GetMachOCPUType();
+    uint32_t sub = host_arch.GetMachOCPUSubType();
+    if (cpu != LLDB_INVALID_CPUTYPE)
+        response.Printf ("cputype:%u;", cpu);
+    if (sub != LLDB_INVALID_CPUTYPE)
+        response.Printf ("cpusubtype:%u;", sub);
+    
     switch (lldb::endian::InlHostByteOrder())
     {
     case eByteOrderBig:     response.PutCString ("endian:big;"); break;
@@ -139,5 +166,52 @@ GDBRemoteCommunicationServer::Handle_qHostInfo ()
     default:                response.PutCString ("endian:unknown;"); break;
     }
     
+    uint32_t major = UINT32_MAX;
+    uint32_t minor = UINT32_MAX;
+    uint32_t update = UINT32_MAX;
+    if (Host::GetOSVersion (major, minor, update))
+    {
+        if (major != UINT32_MAX)
+        {
+            response.Printf("os_version:%u", major);
+            if (minor != UINT32_MAX)
+            {
+                response.Printf(".%u", minor);
+                if (update != UINT32_MAX)
+                    response.Printf(".%u", update);
+            }
+            response.PutChar(';');
+        }
+    }
+
+    std::string s;
+    if (Host::GetOSBuildString (s))
+    {
+        response.PutCString ("os_build:");
+        response.PutCStringAsRawHex8(s.c_str());
+        response.PutChar(';');
+    }
+    if (Host::GetOSKernelDescription (s))
+    {
+        response.PutCString ("os_kernel:");
+        response.PutCStringAsRawHex8(s.c_str());
+        response.PutChar(';');
+    }
+    if (Host::GetHostname (s))
+    {
+        response.PutCString ("hostname:");
+        response.PutCStringAsRawHex8(s.c_str());
+        response.PutChar(';');
+    }
+    
     return SendPacket (response.GetString().c_str(),response.GetString().size()) > 0;
+}
+
+
+bool
+GDBRemoteCommunicationServer::Handle_QStartNoAckMode ()
+{
+    SendOKResponse ();
+    m_send_acks = false;
+    return true;
 }

@@ -121,11 +121,10 @@ Platform::GetConnectedRemotePlatformAtIndex (uint32_t idx)
 //------------------------------------------------------------------
 Platform::Platform (bool is_host) :
     m_is_host (is_host),
-    m_is_connected (is_host), // If this is the default host platform, then we are always connected
     m_os_version_set_while_connected (false),
     m_system_arch_set_while_connected (false),
     m_remote_url (),
-    m_remote_instance_name (),
+    m_name (),
     m_major_os_version (UINT32_MAX),
     m_minor_os_version (UINT32_MAX),
     m_update_os_version (UINT32_MAX)
@@ -140,6 +139,52 @@ Platform::Platform (bool is_host) :
 //------------------------------------------------------------------
 Platform::~Platform()
 {
+}
+
+void
+Platform::GetStatus (Stream &strm)
+{
+    uint32_t major = UINT32_MAX;
+    uint32_t minor = UINT32_MAX;
+    uint32_t update = UINT32_MAX;
+    std::string s;
+    strm.Printf ("Platform: %s\n", GetShortPluginName());
+
+    ArchSpec arch (GetSystemArchitecture());
+    if (arch.IsValid())
+    {
+        if (!arch.GetTriple().str().empty())
+        strm.Printf("Triple: %s\n", arch.GetTriple().str().c_str());        
+    }
+
+    if (GetOSVersion(major, minor, update))
+    {
+        strm.Printf("OS: %u", major);
+        if (minor != UINT32_MAX)
+            strm.Printf(".%u", minor);
+        if (update != UINT32_MAX)
+            strm.Printf(".%u", update);
+
+        if (GetOSBuildString (s))
+            strm.Printf(" (%s)", s.c_str());
+
+        strm.EOL();
+    }
+
+    if (GetOSKernelDescription (s))
+        strm.Printf("Kernel: %s\n", s.c_str());
+
+    if (IsHost())
+    {
+        strm.Printf("Hostname: %s\n", GetHostname());
+    }
+    else
+    {
+        if (IsConnected())
+            strm.Printf("Remote hostname: %s\n", GetHostname());
+        else
+            strm.PutCString("Not connected to a remote platform.\n");
+    }
 }
 
 
@@ -168,7 +213,7 @@ Platform::GetOSVersion (uint32_t &major,
         
         const bool is_connected = IsConnected();
 
-        bool fetch_os_version = false;
+        bool fetch = false;
         if (success)
         {
             // We have valid OS version info, check to make sure it wasn't
@@ -176,17 +221,17 @@ Platform::GetOSVersion (uint32_t &major,
             // to connecting, then lets fetch the actual OS version info
             // if we are now connected.
             if (is_connected && !m_os_version_set_while_connected)
-                fetch_os_version = true;
+                fetch = true;
         }
         else
         {
             // We don't have valid OS version info, fetch it if we are connected
-            fetch_os_version = is_connected;
+            fetch = is_connected;
         }
 
-        if (fetch_os_version)
+        if (fetch)
         {
-            success = FetchRemoteOSVersion ();
+            success = GetRemoteOSVersion ();
             m_os_version_set_while_connected = success;
         }
     }
@@ -199,7 +244,56 @@ Platform::GetOSVersion (uint32_t &major,
     }
     return success;
 }
-   
+
+bool
+Platform::GetOSBuildString (std::string &s)
+{
+    if (IsHost())
+        return Host::GetOSBuildString (s);
+    else
+        return GetRemoteOSBuildString (s);
+}
+
+bool
+Platform::GetOSKernelDescription (std::string &s)
+{
+    if (IsHost())
+        return Host::GetOSKernelDescription (s);
+    else
+        return GetRemoteOSKernelDescription (s);
+}
+
+const char *
+Platform::GetHostname ()
+{
+    if (m_name.empty())
+    {
+        if (IsHost())
+        {
+            if (!Host::GetHostname(m_name))
+                return "localhost";
+        }
+        else
+        {
+            if (IsConnected())
+            {
+                const char *instance_name = GetRemoteHostname ();
+                if (instance_name)
+                    m_name.assign (instance_name);
+            }
+            else
+            {
+                return "remote";
+            }
+        }
+    }
+    if (!m_name.empty())        
+        return m_name.c_str();
+    return NULL;
+}
+
+
+
 bool
 Platform::SetOSVersion (uint32_t major, 
                         uint32_t minor, 
@@ -324,7 +418,7 @@ Platform::GetSystemArchitecture()
 
         if (fetch)
         {
-            m_system_arch = FetchRemoteSystemArchitecture ();
+            m_system_arch = GetRemoteSystemArchitecture ();
             m_system_arch_set_while_connected = m_system_arch.IsValid();
         }
     }

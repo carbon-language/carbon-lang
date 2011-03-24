@@ -228,6 +228,9 @@ Communication::Write (const void *src, size_t src_len, ConnectionStatus &status,
 bool
 Communication::StartReadThread (Error *error_ptr)
 {
+    if (error_ptr)
+        error_ptr->Clear();
+
     if (IS_VALID_LLDB_HOST_THREAD(m_read_thread))
         return true;
 

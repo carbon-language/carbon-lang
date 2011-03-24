@@ -24,6 +24,7 @@
 
 #include <dlfcn.h>
 #include <errno.h>
+#include <netdb.h>
 
 #if defined (__APPLE__)
 
@@ -974,8 +975,10 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
         {
 #if defined (__APPLE__)
             static ConstString g_lldb_system_plugin_dir;
-            if (!g_lldb_system_plugin_dir)
+            static bool g_lldb_system_plugin_dir_located = false;
+            if (!g_lldb_system_plugin_dir_located)
             {
+                g_lldb_system_plugin_dir_located = true;
                 FileSpec lldb_file_spec;
                 if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
                 {
@@ -988,13 +991,18 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     {
                         framework_pos += strlen("LLDB.framework");
                         ::strncpy (framework_pos, "/Resources/PlugIns", PATH_MAX - (framework_pos - raw_path));
+                        FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
+                        g_lldb_system_plugin_dir.SetCString(resolved_path);
                     }
-                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
-                    g_lldb_system_plugin_dir.SetCString(resolved_path);
+                    return false;
                 }
             }
-            file_spec.GetDirectory() = g_lldb_system_plugin_dir;
-            return file_spec.GetDirectory();
+            
+            if (g_lldb_system_plugin_dir)
+            {
+                file_spec.GetDirectory() = g_lldb_system_plugin_dir;
+                return true;
+            }
 #endif
             // TODO: where would system LLDB plug-ins be located on linux? Other systems?
             return false;
@@ -1029,7 +1037,39 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     return false;
 }
 
+
+bool
+Host::GetHostname (std::string &s)
+{
+    char hostname[PATH_MAX];
+    hostname[sizeof(hostname) - 1] = '\0';
+    if (::gethostname (hostname, sizeof(hostname) - 1) == 0)
+    {
+        struct hostent* h = ::gethostbyname (hostname);
+        if (h)
+            s.assign (h->h_name);
+        else
+            s.assign (hostname);
+        return true;
+    }
+    return false;
+}
+
 #if !defined (__APPLE__) // see macosx/Host.mm
+
+bool
+Host::GetOSBuildString (std::string &s)
+{
+    s.clear();
+    return false;
+}
+
+bool
+Host::GetOSKernelDescription (std::string &s)
+{
+    s.clear();
+    return false;
+}
 
 uint32_t
 Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)

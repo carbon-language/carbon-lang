@@ -14,14 +14,17 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Target/Platform.h"
+#include "PlatformDarwin.h"
 
 namespace lldb_private {
 
-    class PlatformRemoteiOS : public Platform
+    class PlatformRemoteiOS : public PlatformDarwin
     {
     public:
 
+        //------------------------------------------------------------
+        // Class Functions
+        //------------------------------------------------------------
         static Platform* 
         CreateInstance ();
 
@@ -31,15 +34,6 @@ namespace lldb_private {
         static void
         Terminate ();
         
-        PlatformRemoteiOS ();
-
-        virtual
-        ~PlatformRemoteiOS();
-
-        //------------------------------------------------------------
-        // lldb_private::PluginInterface functions
-        //------------------------------------------------------------
-        
         static const char *
         GetPluginNameStatic ();
 
@@ -48,7 +42,18 @@ namespace lldb_private {
 
         static const char *
         GetDescriptionStatic();
+        
+        //------------------------------------------------------------
+        // Class Methods
+        //------------------------------------------------------------
+        PlatformRemoteiOS ();
 
+        virtual
+        ~PlatformRemoteiOS();
+
+        //------------------------------------------------------------
+        // lldb_private::PluginInterface functions
+        //------------------------------------------------------------
         virtual const char *
         GetPluginName()
         {
@@ -99,23 +104,6 @@ namespace lldb_private {
 
         virtual bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
-
-        virtual size_t
-        GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
-
-        virtual bool
-        FetchRemoteOSVersion ();
-
-        virtual Error
-        ConnectRemote (Args& args);
-
-        virtual Error
-        DisconnectRemote ();
-
-        virtual const char *
-        GetRemoteInstanceName ();
-
 
     protected:
         std::string m_device_support_directory;

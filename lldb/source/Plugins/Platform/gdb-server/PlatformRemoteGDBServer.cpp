@@ -15,8 +15,9 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Error.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginManager.h"
@@ -107,50 +108,6 @@ PlatformRemoteGDBServer::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
-
-void
-PlatformRemoteGDBServer::GetStatus (Stream &strm)
-{
-    char sysctlstring[1024];
-    size_t datalen;
-    int mib[CTL_MAXNAME];
-
-    uint32_t major = UINT32_MAX;
-    uint32_t minor = UINT32_MAX;
-    uint32_t update = UINT32_MAX;
-    strm.PutCString("Remote GDB server platform");
-    if (GetOSVersion(major, minor, update))
-    {
-        strm.Printf("OS version: %u", major);
-        if (minor != UINT32_MAX)
-            strm.Printf(".%u", minor);
-        if (update != UINT32_MAX)
-            strm.Printf(".%u", update);
-
-
-        mib[0] = CTL_KERN;
-        mib[1] = KERN_OSVERSION;
-        datalen = sizeof(sysctlstring);
-        if (::sysctl (mib, 2, sysctlstring, &datalen, NULL, 0) == 0)
-        {
-            sysctlstring[datalen] = '\0';
-            strm.Printf(" (%s)", sysctlstring);
-        }
-
-        strm.EOL();
-    }
-        
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_VERSION;
-    datalen = sizeof(sysctlstring);
-    if (::sysctl (mib, 2, sysctlstring, &datalen, NULL, 0) == 0)
-    {
-        sysctlstring[datalen] = '\0';
-        strm.Printf("Kernel version: %s\n", sysctlstring);
-    }
-}
-
-
 //------------------------------------------------------------------
 /// Default Constructor
 //------------------------------------------------------------------
@@ -198,27 +155,77 @@ PlatformRemoteGDBServer::GetSoftwareBreakpointTrapOpcode (Target &target, Breakp
 }
 
 bool
-PlatformRemoteGDBServer::FetchRemoteOSVersion ()
+PlatformRemoteGDBServer::GetRemoteOSVersion ()
 {
+    uint32_t major, minor, update;
+    if (m_gdb_client.GetOSVersion (major, minor, update))
+    {
+        m_major_os_version = major;
+        m_minor_os_version = minor;
+        m_update_os_version = update;
+        return true;
+    }
     return false;
 }
+
+bool
+PlatformRemoteGDBServer::GetRemoteOSBuildString (std::string &s)
+{
+    return m_gdb_client.GetOSBuildString (s);
+}
+
+bool
+PlatformRemoteGDBServer::GetRemoteOSKernelDescription (std::string &s)
+{
+    return m_gdb_client.GetOSKernelDescription (s);
+}
+
+// Remote Platform subclasses need to override this function
+ArchSpec
+PlatformRemoteGDBServer::GetRemoteSystemArchitecture ()
+{
+    return m_gdb_client.GetSystemArchitecture();
+}
+
+bool
+PlatformRemoteGDBServer::IsConnected () const
+{
+    return m_gdb_client.IsConnected();
+}        
 
 Error
 PlatformRemoteGDBServer::ConnectRemote (Args& args)
 {
     Error error;
-    if (args.GetArgumentCount() == 1)
+    if (IsConnected())
     {
-        const char *remote_url = args.GetArgumentAtIndex(0);
-        ConnectionStatus status = m_gdb_client.Connect(remote_url, &error);
-        if (status == eConnectionStatusSuccess)
-        {
-            m_gdb_client.GetHostInfo();
-        }
+        error.SetErrorStringWithFormat ("the platform is already connected to '%s', execute 'platform disconnect' to close the current connection", 
+                                        GetHostname());
     }
     else
     {
-        error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
+        if (args.GetArgumentCount() == 1)
+        {
+            const char *url = args.GetArgumentAtIndex(0);
+            m_gdb_client.SetConnection (new ConnectionFileDescriptor());
+            const ConnectionStatus status = m_gdb_client.Connect(url, &error);
+            if (status == eConnectionStatusSuccess)
+            {
+                if (m_gdb_client.HandshakeWithServer(&error))
+                {
+                    m_gdb_client.QueryNoAckModeSupported();
+                    m_gdb_client.GetHostInfo();
+                }
+                else
+                {
+                    m_gdb_client.Disconnect();
+                }
+            }
+        }
+        else
+        {
+            error.SetErrorString ("\"platform connect\" takes a single argument: <connect-url>");
+        }
     }
 
     return error;
@@ -233,8 +240,11 @@ PlatformRemoteGDBServer::DisconnectRemote ()
 }
 
 const char *
-PlatformRemoteGDBServer::GetRemoteInstanceName ()
+PlatformRemoteGDBServer::GetRemoteHostname ()
 {
-    return NULL;
+    m_gdb_client.GetHostname (m_name);
+    if (m_name.empty())
+        return NULL;
+    return m_name.c_str();
 }
 
