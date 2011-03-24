@@ -3761,19 +3761,76 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
         uint32_t data; // the literal data value from memory load
         bool add, index, wback;
         switch (encoding) {
-        case eEncodingT1:
-            Rt = Bits32(opcode, 5, 3);
-            Rn = Bits32(opcode, 2, 0);
-            imm32 = Bits32(opcode, 10, 6) << 2; // imm32 = ZeroExtend(imm5:'00', 32);
-            // index = TRUE; add = TRUE; wback = FALSE
-            add = true;
-            index = true;
-            wback = false;
-            break;
-        default:
-            return false;
+            case eEncodingT1:
+                Rt = Bits32(opcode, 5, 3);
+                Rn = Bits32(opcode, 2, 0);
+                imm32 = Bits32(opcode, 10, 6) << 2; // imm32 = ZeroExtend(imm5:'00', 32);
+                // index = TRUE; add = TRUE; wback = FALSE
+                add = true;
+                index = true;
+                wback = false;
+                  
+                break;
+                
+            case eEncodingT2:
+                // t = UInt(Rt); n = 13; imm32 = ZeroExtend(imm8:’00’, 32);
+                Rt = Bits32 (opcode, 10, 8);
+                Rn = 13;
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                  
+                // index = TRUE; add = TRUE; wback = FALSE;
+                index = true;
+                add = true;
+                wback = false;
+                  
+                break;
+                  
+            case eEncodingT3:
+                // if Rn == ‘1111’ then SEE LDR (literal);
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32);
+                Rt = Bits32 (opcode, 15, 12);
+                Rn = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = TRUE; add = TRUE; wback = FALSE;
+                index = true;
+                add = true;
+                wback = false;
+                  
+                // if t == 15 && InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+                if ((Rt == 15) && InITBlock() && !LastInITBlock())
+                    return false;
+                  
+                break;
+                  
+            case eEncodingT4:
+                // if Rn == ‘1111’ then SEE LDR (literal);
+                // if P == ‘1’ && U == ‘1’ && W == ‘0’ then SEE LDRT;
+                // if Rn == ‘1101’ && P == ‘0’ && U == ‘1’ && W == ‘1’ && imm8 == ‘00000100’ then SEE POP;
+                // if P == ‘0’ && W == ‘0’ then UNDEFINED;
+                if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
+                    return false;
+                  
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32);
+                Rt = Bits32 (opcode, 15, 12);
+                Rn = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0);
+                  
+                // index = (P == ‘1’); add = (U == ‘1’); wback = (W == ‘1’);
+                index = BitIsSet (opcode, 10);
+                add = BitIsSet (opcode, 9);
+                wback = BitIsSet (opcode, 8);
+                  
+                // if (wback && n == t) || (t == 15 && InITBlock() && !LastInITBlock()) then UNPREDICTABLE;
+                if ((wback && (Rn == Rt)) || ((Rt == 15) && InITBlock() && !LastInITBlock()))
+                    return false;
+                    
+                break;
+                  
+            default:
+                return false;
         }
-        uint32_t base = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_r0 + Rn, 0, &success);
+        uint32_t base = ReadCoreReg (Rn, &success);
         if (!success)
             return false;
         if (add)
@@ -3783,13 +3840,13 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
 
         address = (index ? offset_addr : base);
 
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rn);
         if (wback)
         {
             EmulateInstruction::Context ctx;
-            ctx.type = EmulateInstruction::eContextRegisterPlusOffset;
-            Register dwarf_reg;
-            dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rn);
-            ctx.SetRegisterPlusOffset (dwarf_reg, (int32_t) (offset_addr - base));
+            ctx.type = EmulateInstruction::eContextAdjustBaseRegister;
+            ctx.SetRegisterPlusOffset (base_reg, (int32_t) (offset_addr - base));
 
             if (!WriteRegisterUnsigned (ctx, eRegisterKindDWARF, dwarf_r0 + Rn, offset_addr))
                 return false;
@@ -3797,8 +3854,8 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
 
         // Prepare to write to the Rt register.
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextImmediate;
-        context.SetNoArgs ();
+        context.type = EmulateInstruction::eContextRegisterLoad;
+        context.SetRegisterPlusOffset (base_reg, (int32_t) (offset_addr - base));
 
         // Read memory from the address.
         data = MemURead(context, address, 4, 0, &success);
@@ -3821,7 +3878,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (ARMEncoding encoding)
                 return false;
         }
         else
-            return false;
+            WriteBits32Unknown (Rt);
     }
     return true;
 }
@@ -4504,7 +4561,7 @@ EmulateInstructionARM::EmulateSTRThumb (ARMEncoding encoding)
         addr_t address;
                   
         // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
-        uint32_t base_address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        uint32_t base_address = ReadCoreReg (n, &success);
         if (!success)
             return false;
                   
@@ -9763,8 +9820,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
         { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" },
         { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
-        { 0xfffff800, 0x00006800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"},
-        // Thumb2 PC-relative load into register
+        { 0xfffff800, 0x00006800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"},
+        { 0xfffff800, 0x00009800, ARMV4T_ABOVE,  eEncodingT2, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [SP{,#imm}]"},
+        { 0xfff00000, 0xf8d00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c>.w <Rt>, [<Rn>{,#imm12}]"},
+        { 0xfff00800, 0xf8500800, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#+/-<imm8>}]{!}"},
+                  // Thumb2 PC-relative load into register
         { 0xff7f0000, 0xf85f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr<c>.w <Rt>, [PC, +/-#imm}]"},
         { 0xfffffe00, 0x00005800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt>, [<Rn>, <Rm>]" }, 
         { 0xfff00fc0, 0xf8500000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c>.w <Rt>, [<Rn>,<Rm>{,LSL #<imm2>}]" },
