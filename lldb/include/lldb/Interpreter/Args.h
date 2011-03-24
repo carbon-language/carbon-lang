@@ -21,9 +21,9 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-private.h"
-#include "lldb/Core/Error.h"
+#include "lldb/lldb-private-types.h"
 #include "lldb/lldb-types.h"
+#include "lldb/Core/Error.h"
 
 namespace lldb_private {
 
@@ -349,7 +349,7 @@ public:
     StringToBoolean (const char *s, bool fail_value, bool *success_ptr);
     
     static int32_t
-    StringToOptionEnum (const char *s, lldb::OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr);
+    StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr);
 
     static lldb::ScriptLanguage
     StringToScriptLanguage (const char *s, lldb::ScriptLanguage fail_value, bool *success_ptr);

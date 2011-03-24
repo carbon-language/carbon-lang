@@ -71,7 +71,7 @@ CommandObjectArgs::CommandOptions::ResetOptionValues ()
     Options::ResetOptionValues();
 }
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectArgs::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
@@ -265,7 +265,7 @@ CommandObjectArgs::Execute
     return result.Succeeded();
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectArgs::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "debug", 'g', no_argument, NULL, 0, eArgTypeNone, "Enable verbose debug logging of the expression parsing and evaluation."},

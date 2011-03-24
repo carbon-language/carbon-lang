@@ -214,7 +214,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     {
         if (process->GetObjCLanguageRuntime())
         {
-            if (process->GetObjCLanguageRuntime()->GetRuntimeVersion() == lldb::eAppleObjC_V2)
+            if (process->GetObjCLanguageRuntime()->GetRuntimeVersion() == eAppleObjC_V2)
             {
                 m_compiler->getLangOpts().ObjCNonFragileABI = true;     // NOT i386
                 m_compiler->getLangOpts().ObjCNonFragileABI2 = true;    // NOT i386

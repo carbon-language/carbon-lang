@@ -92,7 +92,7 @@ GDBRemoteRegisterContext::GetRegisterCount ()
     return m_reg_info.GetNumRegisters ();
 }
 
-const lldb::RegisterInfo *
+const RegisterInfo *
 GDBRemoteRegisterContext::GetRegisterInfoAtIndex (uint32_t reg)
 {
     return m_reg_info.GetRegisterInfoAtIndex (reg);
@@ -106,7 +106,7 @@ GDBRemoteRegisterContext::GetRegisterSetCount ()
 
 
 
-const lldb::RegisterSet *
+const RegisterSet *
 GDBRemoteRegisterContext::GetRegisterSet (uint32_t reg_set)
 {
     return m_reg_info.GetRegisterSet (reg_set);
@@ -474,7 +474,7 @@ GDBRemoteRegisterContext::ConvertRegisterKindToRegisterNumber (uint32_t kind, ui
 void
 GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
 {
-    static lldb::RegisterInfo
+    static RegisterInfo
     g_register_infos[] =
     {
         //  NAME        ALT     SZ  OFF   ENCODING           FORMAT            COMPILER              DWARF               GENERIC              GDB                    LLDB NATIVE
@@ -555,7 +555,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
         {   "d30",      NULL,   8,  420,  eEncodingIEEE754,  eFormatFloat,   { LLDB_INVALID_REGNUM,  dwarf_d30,          LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,     73 }},
         {   "d31",      NULL,   8,  428,  eEncodingIEEE754,  eFormatFloat,   { LLDB_INVALID_REGNUM,  dwarf_d31,          LLDB_INVALID_REGNUM,  LLDB_INVALID_REGNUM,     74 }},
     };
-    static const uint32_t num_registers = sizeof (g_register_infos)/sizeof (lldb::RegisterInfo);
+    static const uint32_t num_registers = sizeof (g_register_infos)/sizeof (RegisterInfo);
     static ConstString gpr_reg_set ("General Purpose Registers");
     static ConstString vfp_reg_set ("Floating Point Registers");
     for (uint32_t i=0; i<num_registers; ++i)

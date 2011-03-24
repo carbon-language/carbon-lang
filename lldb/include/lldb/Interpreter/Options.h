@@ -164,7 +164,7 @@ public:
     // The following two pure virtual functions must be defined by every class that inherits from
     // this class.
 
-    virtual const lldb::OptionDefinition*
+    virtual const OptionDefinition*
     GetDefinitions () { return NULL; }
 
     virtual void

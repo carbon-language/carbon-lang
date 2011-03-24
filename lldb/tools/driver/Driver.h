@@ -94,7 +94,7 @@ public:
         void
         Clear();
 
-        //static lldb::OptionDefinition m_cmd_option_table[];
+        //static OptionDefinition m_cmd_option_table[];
 
         std::vector<std::string> m_args;
         lldb::ScriptLanguage m_script_lang;

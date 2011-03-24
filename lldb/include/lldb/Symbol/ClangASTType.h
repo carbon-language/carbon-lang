@@ -10,7 +10,7 @@
 #ifndef liblldb_ClangASTType_h_
 #define liblldb_ClangASTType_h_
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 
 namespace lldb_private {
@@ -221,7 +221,7 @@ public:
     bool
     ReadFromMemory (ExecutionContext *exe_ctx,
                     lldb::addr_t addr,
-                    lldb::AddressType address_type,
+                    AddressType address_type,
                     DataExtractor &data);
 
     static bool
@@ -229,13 +229,13 @@ public:
                     lldb::clang_type_t opaque_clang_qual_type,
                     ExecutionContext *exe_ctx,
                     lldb::addr_t addr,
-                    lldb::AddressType address_type,
+                    AddressType address_type,
                     DataExtractor &data);
 
     bool
     WriteToMemory (ExecutionContext *exe_ctx,
                    lldb::addr_t addr,
-                   lldb::AddressType address_type,
+                   AddressType address_type,
                    StreamString &new_value);
 
     static bool
@@ -243,7 +243,7 @@ public:
                    lldb::clang_type_t opaque_clang_qual_type,
                    ExecutionContext *exe_ctx,
                    lldb::addr_t addr,
-                   lldb::AddressType address_type,
+                   AddressType address_type,
                    StreamString &new_value);
 
     lldb::clang_type_t

@@ -286,7 +286,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
     Error error;
     using namespace clang;
-    lldb::ExecutionResults return_value = lldb::eExecutionSetupError;
+    ExecutionResults return_value = eExecutionSetupError;
 
     Process *process = exe_ctx.process;
 
@@ -461,13 +461,13 @@ ClangFunction::DeallocateFunctionResults (ExecutionContext &exe_ctx, lldb::addr_
     exe_ctx.process->DeallocateMemory(args_addr);
 }
 
-lldb::ExecutionResults
+ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, Value &results)
 {
     return ExecuteFunction (exe_ctx, errors, 1000, true, results);
 }
 
-lldb::ExecutionResults
+ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool stop_others, Value &results)
 {
     const bool try_all_threads = false;
@@ -475,7 +475,7 @@ ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool s
     return ExecuteFunction (exe_ctx, NULL, errors, stop_others, NULL, try_all_threads, discard_on_error, results);
 }
 
-lldb::ExecutionResults
+ExecutionResults
 ClangFunction::ExecuteFunction(
         ExecutionContext &exe_ctx, 
         Stream &errors, 
@@ -490,7 +490,7 @@ ClangFunction::ExecuteFunction(
 }
 
 // This is the static function
-lldb::ExecutionResults 
+ExecutionResults 
 ClangFunction::ExecuteFunction (
         ExecutionContext &exe_ctx, 
         lldb::addr_t function_address, 
@@ -506,7 +506,7 @@ ClangFunction::ExecuteFunction (
                                                                                errors, stop_others, discard_on_error, 
                                                                                this_arg));
     if (call_plan_sp == NULL)
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     
     call_plan_sp->SetPrivate(true);
     
@@ -514,7 +514,7 @@ ClangFunction::ExecuteFunction (
                                             single_thread_timeout_usec, errors);
 }  
 
-lldb::ExecutionResults
+ExecutionResults
 ClangFunction::ExecuteFunction(
         ExecutionContext &exe_ctx, 
         lldb::addr_t *args_addr_ptr, 
@@ -526,7 +526,7 @@ ClangFunction::ExecuteFunction(
         Value &results)
 {
     using namespace clang;
-    lldb::ExecutionResults return_value = lldb::eExecutionSetupError;
+    ExecutionResults return_value = eExecutionSetupError;
     
     lldb::addr_t args_addr;
     
@@ -536,12 +536,12 @@ ClangFunction::ExecuteFunction(
         args_addr = LLDB_INVALID_ADDRESS;
         
     if (CompileFunction(errors) != 0)
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     
     if (args_addr == LLDB_INVALID_ADDRESS)
     {
         if (!InsertFunction(exe_ctx, args_addr, errors))
-            return lldb::eExecutionSetupError;
+            return eExecutionSetupError;
     }
     
     return_value = ClangFunction::ExecuteFunction (exe_ctx, 
@@ -556,7 +556,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;
     
-    if (return_value != lldb::eExecutionCompleted)
+    if (return_value != eExecutionCompleted)
         return return_value;
 
     FetchFunctionResults(exe_ctx, args_addr, results);
@@ -564,7 +564,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr == NULL)
         DeallocateFunctionResults(exe_ctx, args_addr);
         
-    return lldb::eExecutionCompleted;
+    return eExecutionCompleted;
 }
 
 clang::ASTConsumer *

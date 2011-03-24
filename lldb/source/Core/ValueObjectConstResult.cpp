@@ -97,7 +97,7 @@ ValueObjectConstResult::ValueObjectConstResult
     void *clang_type,
     const ConstString &name,
     lldb::addr_t address,
-    lldb::AddressType address_type,
+    AddressType address_type,
     uint8_t addr_byte_size
 ) :
     ValueObject (NULL),

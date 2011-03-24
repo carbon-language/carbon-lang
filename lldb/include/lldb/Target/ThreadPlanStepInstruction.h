@@ -38,8 +38,8 @@ protected:
     ThreadPlanStepInstruction (Thread &thread,
                                bool step_over,
                                bool stop_others,
-                               lldb::Vote stop_vote,
-                               lldb::Vote run_vote);
+                               Vote stop_vote,
+                               Vote run_vote);
 
 private:
     friend ThreadPlan *

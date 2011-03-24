@@ -57,7 +57,7 @@ public:
                                     const char *value,
                                     const ConstString &instance_name,
                                     const SettingEntry &entry,
-                                    lldb::VarSetOperationType op,
+                                    VarSetOperationType op,
                                     Error &err,
                                     bool pending);
 

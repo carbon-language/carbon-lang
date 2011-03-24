@@ -41,7 +41,7 @@ public:
     struct CommandArgumentData  // Used to build individual command argument lists
     {
         lldb::CommandArgumentType arg_type;
-        lldb::ArgumentRepetitionType arg_repetition;
+        ArgumentRepetitionType arg_repetition;
     };
     
     typedef std::vector<CommandArgumentData> CommandArgumentEntry; // Used to build individual command argument lists
@@ -142,7 +142,7 @@ public:
     GetFormattedCommandArguments (Stream &str);
     
     bool
-    IsPairType (lldb::ArgumentRepetitionType arg_repeat_type);
+    IsPairType (ArgumentRepetitionType arg_repeat_type);
     
     enum 
     {

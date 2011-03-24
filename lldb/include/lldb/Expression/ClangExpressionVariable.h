@@ -21,7 +21,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Symbol/TaggedASTType.h"
@@ -174,11 +174,11 @@ public:
     const ConstString &
     GetName();
 
-    lldb::RegisterInfo *
+    RegisterInfo *
     GetRegisterInfo();
     
     void
-    SetRegisterInfo (const lldb::RegisterInfo *reg_info);
+    SetRegisterInfo (const RegisterInfo *reg_info);
 
     lldb::clang_type_t
     GetClangType ();

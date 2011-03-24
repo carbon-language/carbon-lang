@@ -7,18 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_types_h_
-#define LLDB_types_h_
+#ifndef LLDB_lldb_types_h_
+#define LLDB_lldb_types_h_
 
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-forward.h"
 #include "lldb/Utility/SharingPtr.h"
-
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-// MACOSX START
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
 
 #include <assert.h>
 #include <pthread.h>
@@ -88,79 +82,15 @@ const lldb::thread_t lldb_invalid_host_thread_const = { NULL, 0 } ;
 
 #define LLDB_INVALID_HOST_TIME           { 0, 0 }
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-// MACOSX END
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-
-#ifdef SWIG
-#define CONST_CHAR_PTR char *
-#else
-#define CONST_CHAR_PTR const char *
-#endif
-
-namespace lldb {
+namespace lldb 
+{
     typedef uint64_t    addr_t;
     typedef uint32_t    user_id_t;
     typedef int32_t     pid_t;
     typedef uint32_t    tid_t;
     typedef int32_t     break_id_t;
     typedef void *      clang_type_t;
-
-    //----------------------------------------------------------------------
-    // Every register is described in detail including its name, alternate
-    // name (optional), encoding, size in bytes and the default display
-    // format.
-    //----------------------------------------------------------------------
-    typedef struct
-    {
-        CONST_CHAR_PTR  name;           // Name of this register, can't be NULL
-        CONST_CHAR_PTR  alt_name;       // Alternate name of this register, can be NULL
-        uint32_t        byte_size;      // Size in bytes of the register
-        uint32_t        byte_offset;    // The byte offset in the register context data where this register's value is found
-        lldb::Encoding  encoding;       // Encoding of the register bits
-        lldb::Format    format;         // Default display format
-        uint32_t        kinds[kNumRegisterKinds];   // Holds all of the various register numbers for all register kinds
-    } RegisterInfo;
-
-    //----------------------------------------------------------------------
-    // Registers are grouped into register sets
-    //----------------------------------------------------------------------
-    typedef struct
-    {
-        CONST_CHAR_PTR name;           // Name of this register set
-        CONST_CHAR_PTR short_name;     // A short name for this register set
-        size_t num_registers;       // The number of registers in REGISTERS array below
-        const uint32_t *registers;  // An array of register numbers in this set
-    } RegisterSet;
-
-    typedef struct
-    {
-        int value;
-        CONST_CHAR_PTR string_value;
-        CONST_CHAR_PTR usage;
-    } OptionEnumValueElement;
-    
-    typedef struct
-    {
-        uint32_t        usage_mask;    // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
-                                       // then this option belongs to option set n.
-        bool            required;       // This option is required (in the current usage level)
-        CONST_CHAR_PTR  long_option;    // Full name for this option.
-        char            short_option;   // Single character for this option.
-        int             option_has_arg; // no_argument, required_argument or optional_argument
-        OptionEnumValueElement *enum_values;// If non-NULL an array of enum values.
-        uint32_t        completionType; // Cookie the option class can use to do define the argument completion.
-        lldb::CommandArgumentType argument_type; // Type of argument this option takes
-        CONST_CHAR_PTR  usage_text;     // Full text explaining what this options does and what (if any) argument to
-                                        // pass it.
-    } OptionDefinition;
-
-
-    typedef int (*comparison_function)(const void *, const void *);
 }
 
-#undef CONST_CHAR_PTR
 
-#endif  // LLDB_types_h_
+#endif  // LLDB_lldb_types_h_

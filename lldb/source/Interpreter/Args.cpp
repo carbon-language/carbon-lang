@@ -796,7 +796,7 @@ Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t
 
 
 int32_t
-Args::StringToOptionEnum (const char *s, lldb::OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr)
+Args::StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, bool *success_ptr)
 {    
     if (enum_values && s && s[0])
     {

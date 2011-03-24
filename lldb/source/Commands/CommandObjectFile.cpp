@@ -35,14 +35,14 @@ CommandObjectFile::CommandOptions::~CommandOptions ()
 {
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectFile::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "arch", 'a', required_argument, NULL, 0, eArgTypeArchitecture, "Specify the architecture to be used when the process is launched."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition *
+const OptionDefinition *
 CommandObjectFile::CommandOptions::GetDefinitions ()
 {
     return g_option_table;

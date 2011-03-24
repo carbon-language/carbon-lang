@@ -315,7 +315,7 @@ public:
     ///     \b true if \a resource_path was resolved, \a false otherwise.
     //------------------------------------------------------------------
     static bool
-    GetLLDBPath (lldb::PathType path_type,
+    GetLLDBPath (PathType path_type,
                  FileSpec &file_spec);
 
     //------------------------------------------------------------------
@@ -338,7 +338,7 @@ public:
 
     static uint32_t
     FindProcessesByName (const char *name, 
-                         lldb::NameMatchType name_match_type,
+                         NameMatchType name_match_type,
                          ProcessInfoList &proc_infos);
     
     static bool

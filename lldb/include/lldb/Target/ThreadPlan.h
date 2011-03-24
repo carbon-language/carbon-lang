@@ -210,8 +210,8 @@ public:
     ThreadPlan (ThreadPlanKind kind,
                 const char *name,
                 Thread &thread,
-                lldb::Vote stop_vote,
-                lldb::Vote run_vote);
+                Vote stop_vote,
+                Vote run_vote);
 
     virtual
     ~ThreadPlan();
@@ -293,10 +293,10 @@ public:
     // Whether a "stop class" event should be reported to the "outside world".  In general
     // if a thread plan is active, events should not be reported.
 
-    virtual lldb::Vote
+    virtual Vote
     ShouldReportStop (Event *event_ptr);
 
-    virtual lldb::Vote
+    virtual Vote
     ShouldReportRun (Event *event_ptr);
 
     virtual void
@@ -409,8 +409,8 @@ protected:
 
 
     Thread &m_thread;
-    lldb::Vote m_stop_vote;
-    lldb::Vote m_run_vote;
+    Vote m_stop_vote;
+    Vote m_run_vote;
 
 private:
     //------------------------------------------------------------------

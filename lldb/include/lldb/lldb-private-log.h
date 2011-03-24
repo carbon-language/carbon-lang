@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_lldb_log_h_
-#define liblldb_lldb_log_h_
+#ifndef liblldb_lldb_private_log_h_
+#define liblldb_lldb_private_log_h_
 
 // C Includes
 // C++ Includes
@@ -82,4 +82,4 @@ ListLogCategories (Stream *strm);
 
 } // namespace lldb_private
 
-#endif  // liblldb_lldb_log_h_
+#endif  // liblldb_lldb_private_log_h_

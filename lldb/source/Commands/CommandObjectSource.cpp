@@ -81,12 +81,12 @@ class CommandObjectSourceInfo : public CommandObject
             start_line = 0;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
         }
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         FileSpec file_spec;
@@ -131,7 +131,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectSourceInfo::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
@@ -210,12 +210,12 @@ class CommandObjectSourceList : public CommandObject
             m_modules.clear();
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
         }
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         FileSpec file_spec;
@@ -568,7 +568,7 @@ protected:
 
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectSourceList::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "count",    'c', required_argument, NULL, 0, eArgTypeCount,   "The number of source lines to display."},

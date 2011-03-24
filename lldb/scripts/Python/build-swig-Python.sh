@@ -31,7 +31,7 @@ else
 fi
 
 
-HEADER_FILES="${SRC_ROOT}/include/lldb/lldb-include.h"\
+HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/lldb-defines.h"\
 " ${SRC_ROOT}/include/lldb/lldb-enumerations.h"\
 " ${SRC_ROOT}/include/lldb/lldb-forward.h"\

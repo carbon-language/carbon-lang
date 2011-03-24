@@ -74,7 +74,7 @@ public:
     virtual size_t
     GetAddressByteSize ()  const;
 
-    virtual lldb::AddressClass
+    virtual lldb_private::AddressClass
     GetAddressClass (lldb::addr_t file_addr);
 
     virtual lldb_private::Symtab *

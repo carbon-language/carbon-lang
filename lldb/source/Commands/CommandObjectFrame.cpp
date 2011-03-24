@@ -139,7 +139,7 @@ public:
             relative_frame_offset = INT32_MIN;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -147,7 +147,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
         int32_t relative_frame_offset;
     };
     
@@ -271,7 +271,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectFrameSelect::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "relative", 'r', required_argument, NULL, 0, eArgTypeOffset, "A relative frame index offset from the current frame index."},
@@ -372,7 +372,7 @@ public:
             globals.clear();
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -380,7 +380,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
         bool use_objc:1,
              use_regex:1,
              show_args:1,
@@ -724,7 +724,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "debug",      'D', no_argument,       NULL, 0, eArgTypeNone,    "Enable verbose debug information."},

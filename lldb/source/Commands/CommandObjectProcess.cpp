@@ -94,7 +94,7 @@ public:
             no_stdio = false;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -102,7 +102,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 
@@ -404,7 +404,7 @@ protected:
 #define SET2 LLDB_OPT_SET_2
 #define SET3 LLDB_OPT_SET_3
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectProcessLaunch::CommandOptions::g_option_table[] =
 {
 { SET1 | SET2 | SET3, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,    "Stop at the entry point of the program when launching a process."},
@@ -489,7 +489,7 @@ public:
             waitfor = false;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -512,7 +512,7 @@ public:
     
             // We are only completing the name option for now...
             
-            const lldb::OptionDefinition *opt_defs = GetDefinitions();
+            const OptionDefinition *opt_defs = GetDefinitions();
             if (opt_defs[opt_defs_index].short_option == 'n')
             {
                 // Are we in the name?
@@ -527,7 +527,7 @@ public:
                 if (platform_sp)
                 {
                     ProcessInfoList process_infos;
-                    platform_sp->FindProcessesByName (partial_name, partial_name ? lldb::eNameMatchStartsWith : lldb::eNameMatchIgnore, process_infos);
+                    platform_sp->FindProcessesByName (partial_name, partial_name ? eNameMatchStartsWith : eNameMatchIgnore, process_infos);
                     const uint32_t num_matches = process_infos.GetSize();
                     if (num_matches > 0)
                     {
@@ -545,7 +545,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 
@@ -817,7 +817,7 @@ protected:
 };
 
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "plugin", 'P', required_argument, NULL, 0, eArgTypePlugin,        "Name of the process plugin you want to use."},
@@ -1015,7 +1015,7 @@ public:
             plugin_name.clear();
         }
         
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -1023,7 +1023,7 @@ public:
         
         // Options table: Required for subclasses of Options.
         
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
         
         // Instance variables to hold the values for command options.
         
@@ -1133,7 +1133,7 @@ protected:
 };
 
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectProcessConnect::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "plugin", 'p', required_argument, NULL, 0, eArgTypePlugin, "Name of the process plugin you want to use."},
@@ -1607,7 +1607,7 @@ public:
             pass.clear();
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -1615,7 +1615,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 
@@ -1848,7 +1848,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectProcessHandle::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "stop",   's', required_argument, NULL, 0, eArgTypeBoolean, "Whether or not the process should be stopped if the signal is received." },

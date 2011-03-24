@@ -186,7 +186,7 @@ RegisterContextMach_arm::~RegisterContextMach_arm()
 #define DEFINE_DBG(reg, i)  #reg, NULL, sizeof(((RegisterContextMach_arm::DBG *)NULL)->reg[i]), DBG_OFFSET(reg[i]), eEncodingUint, eFormatHex, { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, dbg_##reg##i }
 #define REG_CONTEXT_SIZE (sizeof (RegisterContextMach_arm::GPR) + sizeof (RegisterContextMach_arm::FPU) + sizeof (RegisterContextMach_arm::EXC))
 // General purpose registers
-static lldb::RegisterInfo
+static RegisterInfo
 g_register_infos[] =
 {
 //  NAME        ALT     SZ  OFFSET              ENCODING        FORMAT          COMPILER            DWARF               GENERIC                     LLDB NATIVE

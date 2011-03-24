@@ -125,7 +125,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
     const uint32_t length = m_cfi_data.GetU32(&offset);
     const dw_offset_t cie_id = m_cfi_data.GetU32(&offset);
     const dw_offset_t end_offset = cie_offset + length + 4;
-    if (length > 0 && (!m_is_eh_frame && cie_id == 0xfffffffful) || (m_is_eh_frame && cie_id == 0ul))
+    if (length > 0 && ((!m_is_eh_frame && cie_id == 0xfffffffful) || (m_is_eh_frame && cie_id == 0ul)))
     {
         size_t i;
         //    cie.offset = cie_offset;

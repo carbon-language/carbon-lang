@@ -342,7 +342,7 @@ RegisterContextMach_x86_64::GetRegisterInfosCount ()
     return k_num_register_infos;
 }
 
-const RegisterInfo *
+const lldb_private::RegisterInfo *
 RegisterContextMach_x86_64::GetRegisterInfos ()
 {
     return g_register_infos;

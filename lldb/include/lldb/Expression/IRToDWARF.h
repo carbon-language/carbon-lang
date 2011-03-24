@@ -13,7 +13,7 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 
 class Relocator;
 //----------------------------------------------------------------------

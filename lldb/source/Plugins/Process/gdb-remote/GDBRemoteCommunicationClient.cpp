@@ -859,7 +859,7 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                 {
                     if (cpu != LLDB_INVALID_CPUTYPE)
                     {
-                        m_host_arch.SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+                        m_host_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
                         if (pointer_byte_size)
                         {
                             assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -943,7 +943,7 @@ GDBRemoteCommunicationClient::SendAttach
 const lldb_private::ArchSpec &
 GDBRemoteCommunicationClient::GetHostArchitecture ()
 {
-    if (m_supports_qHostInfo == lldb::eLazyBoolCalculate)
+    if (m_supports_qHostInfo == eLazyBoolCalculate)
         GetHostInfo ();
     return m_host_arch;
 }

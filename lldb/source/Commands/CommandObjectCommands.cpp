@@ -75,7 +75,7 @@ private:
             m_stop_on_continue = true;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -83,7 +83,7 @@ private:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 
@@ -93,7 +93,7 @@ private:
     
     // Options table: Required for subclasses of Options.
 
-    static lldb::OptionDefinition g_option_table[];
+    static OptionDefinition g_option_table[];
 
     CommandOptions m_options;
     
@@ -165,7 +165,7 @@ public:
     }
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectCommandsSource::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "stop-on-error", 'e', required_argument, NULL, 0, eArgTypeBoolean,    "If true, stop executing commands on error."},

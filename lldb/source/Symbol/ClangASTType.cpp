@@ -1305,7 +1305,7 @@ ClangASTType::ReadFromMemory
 (
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
-    lldb::AddressType address_type,
+    AddressType address_type,
     lldb_private::DataExtractor &data
 )
 {
@@ -1325,11 +1325,11 @@ ClangASTType::ReadFromMemory
     clang_type_t clang_type,
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
-    lldb::AddressType address_type,
+    AddressType address_type,
     lldb_private::DataExtractor &data
 )
 {
-    if (address_type == lldb::eAddressTypeFile)
+    if (address_type == eAddressTypeFile)
     {
         // Can't convert a file address to anything valid without more
         // context (which Module it came from)
@@ -1347,7 +1347,7 @@ ClangASTType::ReadFromMemory
     uint8_t* dst = (uint8_t*)data.PeekData(0, byte_size);
     if (dst != NULL)
     {
-        if (address_type == lldb::eAddressTypeHost)
+        if (address_type == eAddressTypeHost)
         {
             // The address is an address in this process, so just copy it
             memcpy (dst, (uint8_t*)NULL + addr, byte_size);
@@ -1370,7 +1370,7 @@ ClangASTType::WriteToMemory
 (
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
-    lldb::AddressType address_type,
+    AddressType address_type,
     StreamString &new_value
 )
 {
@@ -1389,11 +1389,11 @@ ClangASTType::WriteToMemory
     clang_type_t clang_type,
     lldb_private::ExecutionContext *exe_ctx,
     lldb::addr_t addr,
-    lldb::AddressType address_type,
+    AddressType address_type,
     StreamString &new_value
 )
 {
-    if (address_type == lldb::eAddressTypeFile)
+    if (address_type == eAddressTypeFile)
     {
         // Can't convert a file address to anything valid without more
         // context (which Module it came from)
@@ -1404,7 +1404,7 @@ ClangASTType::WriteToMemory
 
     if (byte_size > 0)
     {
-        if (address_type == lldb::eAddressTypeHost)
+        if (address_type == eAddressTypeHost)
         {
             // The address is an address in this process, so just copy it
             memcpy ((void *)addr, new_value.GetData(), byte_size);

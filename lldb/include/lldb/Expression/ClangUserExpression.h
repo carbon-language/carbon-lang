@@ -129,7 +129,7 @@ public:
     /// @return
     ///     A Process::Execution results value.
     //------------------------------------------------------------------
-    lldb::ExecutionResults
+    ExecutionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              bool discard_on_error,
@@ -261,7 +261,7 @@ public:
     /// @result
     ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
-    static lldb::ExecutionResults
+    static ExecutionResults
     Evaluate (ExecutionContext &exe_ctx, 
               bool discard_on_error,
               bool keep_in_memory,

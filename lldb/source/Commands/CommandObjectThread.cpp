@@ -305,7 +305,7 @@ public:
             m_start = 0;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -313,7 +313,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         uint32_t m_count;
@@ -466,7 +466,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "count", 'c', required_argument, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
@@ -551,7 +551,7 @@ public:
             m_avoid_regexp.clear();
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -559,7 +559,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         bool m_avoid_no_debug;
@@ -775,7 +775,7 @@ protected:
     CommandOptions m_options;
 };
 
-static lldb::OptionEnumValueElement
+static OptionEnumValueElement
 g_tri_running_mode[] =
 {
 { eOnlyThisThread,     "this-thread",    "Run only this thread"},
@@ -784,7 +784,7 @@ g_tri_running_mode[] =
 { 0, NULL, NULL }
 };
 
-static lldb::OptionEnumValueElement
+static OptionEnumValueElement
 g_duo_running_mode[] =
 {
 { eOnlyThisThread,     "this-thread",    "Run only this thread"},
@@ -792,7 +792,7 @@ g_duo_running_mode[] =
 { 0, NULL, NULL }
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether step-in will step over functions with no debug information."},
@@ -1050,7 +1050,7 @@ public:
             m_stop_others = false;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -1061,7 +1061,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
     };
@@ -1259,7 +1259,7 @@ protected:
 
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "frame",   'f', required_argument, NULL,               0, eArgTypeFrameIndex,   "Frame index for until operation - defaults to 0"},

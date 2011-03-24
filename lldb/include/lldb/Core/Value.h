@@ -45,7 +45,7 @@ public:
                                         // ====================
         eContextTypeInvalid,            // undefined
         eContextTypeClangType,          // void * (an opaque clang::QualType * that can be fed to "static QualType QualType::getFromOpaquePtr(void *)")
-        eContextTypeRegisterInfo,       // lldb::RegisterInfo *
+        eContextTypeRegisterInfo,       // RegisterInfo *
         eContextTypeLLDBType,           // lldb_private::Type *
         eContextTypeVariable,           // lldb_private::Variable *
         eContextTypeValue               // Value * (making this a proxy value.  Used when putting locals on the DWARF expression parser stack)
@@ -80,7 +80,7 @@ public:
     ValueType
     GetValueType() const;
 
-    lldb::AddressType
+    AddressType
     GetValueAddressType () const;
 
     ContextType
@@ -95,7 +95,7 @@ public:
     void
     SetContext (ContextType context_type, void *p);
 
-    lldb::RegisterInfo *
+    RegisterInfo *
     GetRegisterInfo();
 
     Type *

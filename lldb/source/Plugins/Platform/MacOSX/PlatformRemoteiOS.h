@@ -96,7 +96,7 @@ namespace lldb_private {
 
         virtual uint32_t
         FindProcessesByName (const char *name_match, 
-                             lldb::NameMatchType name_match_type,
+                             NameMatchType name_match_type,
                              ProcessInfoList &process_infos);
 
         virtual bool

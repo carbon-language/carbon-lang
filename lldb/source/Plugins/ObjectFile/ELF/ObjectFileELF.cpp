@@ -754,7 +754,7 @@ ObjectFileELF::Dump(Stream *s)
         section_list->Dump(s, NULL, true, UINT32_MAX);
     Symtab *symtab = GetSymtab();
     if (symtab)
-        symtab->Dump(s, NULL, lldb::eSortOrderNone);
+        symtab->Dump(s, NULL, eSortOrderNone);
     s->EOL();
     DumpDependentModules(s);
     s->EOL();
@@ -1041,7 +1041,7 @@ ObjectFileELF::GetArchitecture (ArchSpec &arch)
     if (!ParseHeader())
         return false;
 
-    arch.SetArchitecture (lldb::eArchTypeELF, m_header.e_machine, LLDB_INVALID_CPUTYPE);
+    arch.SetArchitecture (eArchTypeELF, m_header.e_machine, LLDB_INVALID_CPUTYPE);
     arch.GetTriple().setOSName (Host::GetOSString().GetCString());
     arch.GetTriple().setVendorName(Host::GetVendorString().GetCString());
     return true;

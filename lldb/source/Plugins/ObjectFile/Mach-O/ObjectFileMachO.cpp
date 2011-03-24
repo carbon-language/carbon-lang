@@ -202,7 +202,7 @@ ObjectFileMachO::GetAddressByteSize () const
     return m_data.GetAddressByteSize ();
 }
 
-lldb::AddressClass
+AddressClass
 ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
 {
     Symtab *symtab = GetSymtab();
@@ -217,7 +217,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                 const Section *section = range_ptr->GetBaseAddress().GetSection();
                 if (section)
                 {
-                    const lldb::SectionType section_type = section->GetType();
+                    const SectionType section_type = section->GetType();
                     switch (section_type)
                     {
                     case eSectionTypeInvalid:               return eAddressClassUnknown;
@@ -233,7 +233,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
 
                     case eSectionTypeContainer:             return eAddressClassUnknown;
                     case eSectionTypeData:                  return eAddressClassData;
-                    case eSectionTypeDataCString:           return eAddressClassDataConst;
+                    case eSectionTypeDataCString:           return eAddressClassData;
                     case eSectionTypeDataCStringPointers:   return eAddressClassData;
                     case eSectionTypeDataSymbolAddress:     return eAddressClassData;
                     case eSectionTypeData4:                 return eAddressClassData;
@@ -241,8 +241,8 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeData16:                return eAddressClassData;
                     case eSectionTypeDataPointers:          return eAddressClassData;
                     case eSectionTypeZeroFill:              return eAddressClassData;
-                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassDataConst;
-                    case eSectionTypeDataObjCCFStrings:     return eAddressClassDataConst;
+                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassData;
+                    case eSectionTypeDataObjCCFStrings:     return eAddressClassData;
                     case eSectionTypeDebug:                 return eAddressClassDebug;
                     case eSectionTypeDWARFDebugAbbrev:      return eAddressClassDebug;
                     case eSectionTypeDWARFDebugAranges:     return eAddressClassDebug;
@@ -261,7 +261,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
                 }
             }
             
-            const lldb::SymbolType symbol_type = symbol->GetType();
+            const SymbolType symbol_type = symbol->GetType();
             switch (symbol_type)
             {
             case eSymbolTypeAny:            return eAddressClassUnknown;
@@ -1659,7 +1659,7 @@ ObjectFileMachO::GetEntryPointAddress ()
         
         SymbolContextList contexts;
         SymbolContext context;
-        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), lldb::eSymbolTypeCode, contexts))
+        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
             return m_entry_point_address;
         
         contexts.GetContextAtIndex(0, context);
@@ -1675,7 +1675,7 @@ bool
 ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
     lldb_private::Mutex::Locker locker(m_mutex);
-    arch.SetArchitecture (lldb::eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
+    arch.SetArchitecture (eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
     return true;
 }
 

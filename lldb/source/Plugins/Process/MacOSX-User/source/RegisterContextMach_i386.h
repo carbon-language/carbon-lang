@@ -33,13 +33,13 @@ public:
     virtual size_t
     GetRegisterCount ();
 
-    virtual const lldb::RegisterInfo *
+    virtual const lldb_private::RegisterInfo *
     GetRegisterInfoAtIndex (uint32_t reg);
 
     virtual size_t
     GetRegisterSetCount ();
 
-    virtual const lldb::RegisterSet *
+    virtual const lldb_private::RegisterSet *
     GetRegisterSet (uint32_t set);
 
     virtual bool
@@ -249,7 +249,7 @@ protected:
     static size_t
     GetRegisterInfosCount ();
 
-    static const lldb::RegisterInfo *
+    static const lldb_private::RegisterInfo *
     GetRegisterInfos ();
 };
 

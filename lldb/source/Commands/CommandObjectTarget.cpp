@@ -501,7 +501,7 @@ public:
         
         ~CommandOptions () {}
         
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -606,7 +606,7 @@ public:
         }
 
         
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
         
         std::string m_class_name;
         std::string m_function_name;
@@ -824,7 +824,7 @@ private:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectTargetStopHookAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,

@@ -128,7 +128,7 @@ public:
     DumpValueInMemory(ExecutionContext *exe_ctx,
                       Stream *s,
                       lldb::addr_t address,
-                      lldb::AddressType address_type,
+                      AddressType address_type,
                       bool show_types,
                       bool show_summary,
                       bool verbose);
@@ -136,13 +136,13 @@ public:
     bool
     ReadFromMemory (ExecutionContext *exe_ctx,
                     lldb::addr_t address,
-                    lldb::AddressType address_type,
+                    AddressType address_type,
                     DataExtractor &data);
 
     bool
     WriteToMemory (ExecutionContext *exe_ctx,
                    lldb::addr_t address,
-                   lldb::AddressType address_type,
+                   AddressType address_type,
                    DataExtractor &data);
 
     bool

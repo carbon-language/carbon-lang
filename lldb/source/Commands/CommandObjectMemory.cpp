@@ -174,7 +174,7 @@ public:
             m_output_as_binary = false;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -182,7 +182,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         lldb::Format m_format;
@@ -409,7 +409,7 @@ protected:
 #define SET1 LLDB_OPT_SET_1
 #define SET2 LLDB_OPT_SET_2
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectMemoryRead::CommandOptions::g_option_table[] =
 {
 { SET1       , false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,       "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
@@ -500,7 +500,7 @@ public:
             m_infile_offset = 0;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -508,7 +508,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         lldb::Format m_format;
@@ -864,7 +864,7 @@ protected:
 #define SET1 LLDB_OPT_SET_1
 #define SET2 LLDB_OPT_SET_2
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectMemoryWrite::CommandOptions::g_option_table[] =
 {
 { SET1       , false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,   "The format value types that will be decoded and written to memory."},

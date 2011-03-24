@@ -377,7 +377,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     case DumpStyleResolvedDescriptionNoModule:
         if (IsSectionOffset())
         {
-            lldb::AddressType addr_type = eAddressTypeLoad;
+            AddressType addr_type = eAddressTypeLoad;
             addr_t addr = GetLoadAddress (target);
             if (addr == LLDB_INVALID_ADDRESS)
             {
@@ -809,7 +809,7 @@ Address::ResolveLinkedAddress ()
     }
 }
 
-lldb::AddressClass
+AddressClass
 Address::GetAddressClass () const
 {
     Module *module = GetModule();

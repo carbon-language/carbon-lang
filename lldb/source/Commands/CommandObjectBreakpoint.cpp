@@ -70,7 +70,7 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 {
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
@@ -127,7 +127,7 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectBreakpointSet::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
@@ -649,7 +649,7 @@ CommandObjectBreakpointList::CommandOptions::~CommandOptions ()
 {
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectBreakpointList::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "internal", 'i', no_argument, NULL, 0, eArgTypeNone,
@@ -669,7 +669,7 @@ CommandObjectBreakpointList::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectBreakpointList::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
@@ -1060,7 +1060,7 @@ CommandObjectBreakpointClear::CommandOptions::~CommandOptions ()
 {
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectBreakpointClear::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1, false, "file", 'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
@@ -1072,7 +1072,7 @@ CommandObjectBreakpointClear::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectBreakpointClear::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
@@ -1376,7 +1376,7 @@ CommandObjectBreakpointModify::CommandOptions::~CommandOptions ()
 {
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument, NULL, NULL, eArgTypeCount, "Set the number of times this breakpoint is skipped before stopping." },
@@ -1390,7 +1390,7 @@ CommandObjectBreakpointModify::CommandOptions::g_option_table[] =
 { 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectBreakpointModify::CommandOptions::GetDefinitions ()
 {
     return g_option_table;

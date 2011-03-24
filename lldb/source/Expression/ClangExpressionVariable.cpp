@@ -62,16 +62,16 @@ ClangExpressionVariable::GetValueObject()
     return m_frozen_sp;
 }
 
-lldb::RegisterInfo *
+RegisterInfo *
 ClangExpressionVariable::GetRegisterInfo()
 {
     return m_frozen_sp->GetValue().GetRegisterInfo();
 }
 
 void
-ClangExpressionVariable::SetRegisterInfo (const lldb::RegisterInfo *reg_info)
+ClangExpressionVariable::SetRegisterInfo (const RegisterInfo *reg_info)
 {
-    return m_frozen_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<lldb::RegisterInfo *>(reg_info));
+    return m_frozen_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
 }
 
 lldb::clang_type_t

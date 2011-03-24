@@ -352,7 +352,7 @@ Type::DumpValueInMemory
     ExecutionContext *exe_ctx,
     Stream *s,
     lldb::addr_t address,
-    lldb::AddressType address_type,
+    AddressType address_type,
     bool show_types,
     bool show_summary,
     bool verbose
@@ -374,9 +374,9 @@ Type::DumpValueInMemory
 
 
 bool
-Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, DataExtractor &data)
+Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType address_type, DataExtractor &data)
 {
-    if (address_type == lldb::eAddressTypeFile)
+    if (address_type == eAddressTypeFile)
     {
         // Can't convert a file address to anything valid without more
         // context (which Module it came from)
@@ -393,7 +393,7 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::Addres
     uint8_t* dst = (uint8_t*)data.PeekData(0, byte_size);
     if (dst != NULL)
     {
-        if (address_type == lldb::eAddressTypeHost)
+        if (address_type == eAddressTypeHost)
         {
             // The address is an address in this process, so just copy it
             memcpy (dst, (uint8_t*)NULL + addr, byte_size);
@@ -413,7 +413,7 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::Addres
 
 
 bool
-Type::WriteToMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, lldb::AddressType address_type, DataExtractor &data)
+Type::WriteToMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType address_type, DataExtractor &data)
 {
     return false;
 }

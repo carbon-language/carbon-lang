@@ -10,7 +10,7 @@
 #ifndef liblldb_CleanUp_h_
 #define liblldb_CleanUp_h_
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 
 namespace lldb_utility {
 

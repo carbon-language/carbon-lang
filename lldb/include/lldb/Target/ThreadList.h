@@ -75,10 +75,10 @@ public:
     bool
     ShouldStop (Event *event_ptr);
 
-    lldb::Vote
+    Vote
     ShouldReportStop (Event *event_ptr);
 
-    lldb::Vote
+    Vote
     ShouldReportRun (Event *event_ptr);
 
     void

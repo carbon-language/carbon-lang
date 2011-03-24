@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_forward_h_
-#define LLDB_forward_h_
+#ifndef LLDB_lldb_forward_h_
+#define LLDB_lldb_forward_h_
 
 #if defined(__cplusplus)
 
@@ -169,4 +169,4 @@ struct  LineEntry;
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
-#endif  // LLDB_forward_h_
+#endif  // LLDB_lldb_forward_h_

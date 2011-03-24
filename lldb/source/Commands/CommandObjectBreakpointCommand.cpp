@@ -48,7 +48,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::~CommandOptions ()
 // FIXME: "script-type" needs to have its contents determined dynamically, so somebody can add a new scripting
 // language to lldb and have it pickable here without having to change this enumeration by hand and rebuild lldb proper.
 
-static lldb::OptionEnumValueElement
+static OptionEnumValueElement
 g_script_option_enumeration[4] =
 {
     { eScriptLanguageNone,    "command",         "Commands are in the lldb command interpreter language"},
@@ -57,7 +57,7 @@ g_script_option_enumeration[4] =
     { 0,                      NULL,              NULL }
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, NULL, eArgTypeOneLiner,
@@ -72,7 +72,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::g_option_table[] =
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectBreakpointCommandAdd::CommandOptions::GetDefinitions ()
 {
     return g_option_table;

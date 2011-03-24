@@ -273,20 +273,20 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
                 if (cputype & CPU_ARCH_ABI64)
                 {
                     // We have a 64 bit kernel on a 64 bit system
-                    g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, ~(CPU_ARCH_MASK) & cputype, cpusubtype);
-                    g_host_arch_64.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
+                    g_host_arch_32.SetArchitecture (eArchTypeMachO, ~(CPU_ARCH_MASK) & cputype, cpusubtype);
+                    g_host_arch_64.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                 }
                 else
                 {
                     // We have a 32 bit kernel on a 64 bit system
-                    g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
+                    g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                     cputype |= CPU_ARCH_ABI64;
-                    g_host_arch_64.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
+                    g_host_arch_64.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                 }
             }
             else
             {
-                g_host_arch_32.SetArchitecture (lldb::eArchTypeMachO, cputype, cpusubtype);
+                g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                 g_host_arch_64.Clear();
             }
         }

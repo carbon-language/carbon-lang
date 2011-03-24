@@ -193,7 +193,7 @@ lldb_private::GetVersion ()
 }
 
 const char *
-lldb_private::GetVoteAsCString (lldb::Vote vote)
+lldb_private::GetVoteAsCString (Vote vote)
 {
     switch (vote)
     {
@@ -208,7 +208,7 @@ lldb_private::GetVoteAsCString (lldb::Vote vote)
 
 
 const char *
-lldb_private::GetSectionTypeAsCString (lldb::SectionType sect_type)
+lldb_private::GetSectionTypeAsCString (SectionType sect_type)
 {
     switch (sect_type)
     {
@@ -247,7 +247,7 @@ lldb_private::GetSectionTypeAsCString (lldb::SectionType sect_type)
 
 bool
 lldb_private::NameMatches (const char *name, 
-                           lldb::NameMatchType match_type, 
+                           NameMatchType match_type, 
                            const char *match)
 {
     if (match_type == eNameMatchIgnore)

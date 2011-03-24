@@ -213,7 +213,7 @@ public:
             log_options = 0;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -221,7 +221,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 
@@ -235,7 +235,7 @@ protected:
     LogStreamMap m_log_streams;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectLogEnable::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, 0, eArgTypeFilename,   "Set the destination file to log to."},

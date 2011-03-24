@@ -237,15 +237,15 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunicationClient can see and modify these
     //------------------------------------------------------------------
-    lldb::LazyBool m_supports_not_sending_acks;
-    lldb::LazyBool m_supports_thread_suffix;
-    lldb::LazyBool m_supports_qHostInfo;
-    lldb::LazyBool m_supports_vCont_all;
-    lldb::LazyBool m_supports_vCont_any;
-    lldb::LazyBool m_supports_vCont_c;
-    lldb::LazyBool m_supports_vCont_C;
-    lldb::LazyBool m_supports_vCont_s;
-    lldb::LazyBool m_supports_vCont_S;
+    lldb_private::LazyBool m_supports_not_sending_acks;
+    lldb_private::LazyBool m_supports_thread_suffix;
+    lldb_private::LazyBool m_supports_qHostInfo;
+    lldb_private::LazyBool m_supports_vCont_all;
+    lldb_private::LazyBool m_supports_vCont_any;
+    lldb_private::LazyBool m_supports_vCont_c;
+    lldb_private::LazyBool m_supports_vCont_C;
+    lldb_private::LazyBool m_supports_vCont_s;
+    lldb_private::LazyBool m_supports_vCont_S;
 
     // If we need to send a packet while the target is running, the m_async_XXX
     // member variables take care of making this happen.

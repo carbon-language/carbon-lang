@@ -42,7 +42,7 @@ private:
 
     friend ThreadPlan *
     Thread::QueueThreadPlanForStepRange (bool abort_other_plans,
-                                         lldb::StepType type,
+                                         StepType type,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
                                          lldb::RunMode stop_others,

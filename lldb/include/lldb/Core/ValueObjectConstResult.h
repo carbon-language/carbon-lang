@@ -43,7 +43,7 @@ public:
                             void *clang_type,
                             const ConstString &name,
                             lldb::addr_t address,
-                            lldb::AddressType address_type,
+                            AddressType address_type,
                             uint8_t addr_byte_size);
 
     // When an expression fails to evaluate, we return an error

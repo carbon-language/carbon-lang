@@ -51,39 +51,33 @@ reset_stdin_termios ()
     ::tcsetattr (STDIN_FILENO, TCSANOW, &g_old_stdin_termios);
 }
 
-static lldb::OptionDefinition g_options[] =
+typedef struct
 {
-    { LLDB_OPT_SET_1,  true, "help", 'h',  no_argument,        NULL,  NULL,  eArgTypeNone,
-        "Prints out the usage information for the LLDB debugger." },
+    uint32_t usage_mask;                     // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
+                                             // then this option belongs to option set n.
+    bool required;                           // This option is required (in the current usage level)
+    const char * long_option;                // Full name for this option.
+    char short_option;                       // Single character for this option.
+    int option_has_arg;                      // no_argument, required_argument or optional_argument
+    uint32_t completionType;                 // Cookie the option class can use to do define the argument completion.
+    lldb::CommandArgumentType argument_type; // Type of argument this option takes
+    const char *  usage_text;                // Full text explaining what this options does and what (if any) argument to
+                                             // pass it.
+} OptionDefinition;
 
-    { LLDB_OPT_SET_2,  true, "version", 'v',  no_argument,        NULL,  NULL,  eArgTypeNone,
-        "Prints out the current version number of the LLDB debugger." },
 
-    { LLDB_OPT_SET_3,  true, "arch", 'a',  required_argument,  NULL,  NULL,  eArgTypeArchitecture,
-        "Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
-
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "script-language",'l',  required_argument,  NULL,  NULL,  eArgTypeScriptLang,
-        "Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
-
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "debug",          'd',  no_argument,        NULL,  NULL,  eArgTypeNone,
-        "Tells the debugger to print out extra information for debugging itself." },
-
-    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false,  "source",         's',  required_argument,  NULL,  NULL,  eArgTypeFilename,
-        "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
-
-    { LLDB_OPT_SET_3,  true,  "file",           'f',  required_argument,  NULL,  NULL,  eArgTypeFilename,
-        "Tells the debugger to use the file <filename> as the program to be debugged." },
-
-    { LLDB_OPT_SET_ALL,  false,  "editor",           'e',  no_argument,  NULL,  NULL,  eArgTypeNone,
-        "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
-
-    { LLDB_OPT_SET_ALL,  false,  "no-lldbinit",           'n',  no_argument,  NULL,  NULL,  eArgTypeNone,
-        "Do not automatically parse any '.lldbinit' files." },
-
-//    { LLDB_OPT_SET_4,  true,  "crash-log",      'c',  required_argument,  NULL,  NULL,  eArgTypeFilename,
-//        "Load executable images from a crash log for symbolication." },
-
-    { 0, false, NULL, 0, 0, NULL, NULL,  eArgTypeNone, NULL }
+static OptionDefinition g_options[] =
+{
+    { LLDB_OPT_SET_1,                   true , "help"           , 'h', no_argument      , NULL,  eArgTypeNone, "Prints out the usage information for the LLDB debugger." },
+    { LLDB_OPT_SET_2,                   true , "version"        , 'v', no_argument      , NULL,  eArgTypeNone, "Prints out the current version number of the LLDB debugger." },
+    { LLDB_OPT_SET_3,                   true , "arch"           , 'a', required_argument, NULL,  eArgTypeArchitecture,"Tells the debugger to use the specified architecture when starting and running the program.  <architecture> must be one of the architectures for which the program was compiled." },
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "script-language", 'l', required_argument, NULL,  eArgTypeScriptLang,"Tells the debugger to use the specified scripting language for user-defined scripts, rather than the default.  Valid scripting languages that can be specified include Python, Perl, Ruby and Tcl.  Currently only the Python extensions have been implemented." },
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "debug"          , 'd', no_argument      , NULL,  eArgTypeNone,"Tells the debugger to print out extra information for debugging itself." },
+    { LLDB_OPT_SET_3 | LLDB_OPT_SET_4,  false, "source"         , 's', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to read in and execute the file <file>, which should contain lldb commands." },
+    { LLDB_OPT_SET_3,                   true , "file"           , 'f', required_argument, NULL,  eArgTypeFilename, "Tells the debugger to use the file <filename> as the program to be debugged." },
+    { LLDB_OPT_SET_ALL,                 false, "editor"         , 'e', no_argument      , NULL,  eArgTypeNone, "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
+    { LLDB_OPT_SET_ALL,                 false, "no-lldbinit"    , 'n', no_argument      , NULL,  eArgTypeNone, "Do not automatically parse any '.lldbinit' files." },
+    { 0,                                false, NULL             , 0  , 0                , NULL,  eArgTypeNone, NULL }
 };
 
 
@@ -182,7 +176,7 @@ OutputFormattedUsageText (FILE *out, int indent, const char *text, int output_ma
 }
 
 void
-ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData data)
+ShowUsage (FILE *out, OptionDefinition *option_table, Driver::OptionData data)
 {
     uint32_t screen_width = 80;
     uint32_t indent_level = 0;
@@ -306,7 +300,7 @@ ShowUsage (FILE *out, lldb::OptionDefinition *option_table, Driver::OptionData d
 }
 
 void
-BuildGetOptTable (lldb::OptionDefinition *expanded_option_table, std::vector<struct option> &getopt_table, 
+BuildGetOptTable (OptionDefinition *expanded_option_table, std::vector<struct option> &getopt_table, 
                   uint32_t num_options)
 {
     if (num_options == 0)

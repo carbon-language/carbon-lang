@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_defines_h_
-#define LLDB_defines_h_
+#ifndef LLDB_lldb_defines_h_
+#define LLDB_lldb_defines_h_
 
 #include "lldb/lldb-types.h"
 
@@ -107,4 +107,4 @@
 
 #endif // #if defined(__cplusplus)
 
-#endif  // LLDB_defines_h_
+#endif  // LLDB_lldb_defines_h_

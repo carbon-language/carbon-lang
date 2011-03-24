@@ -144,16 +144,16 @@ public:
     //------------------------------------------------------------------
     const Symbol *
     FindFirstSymbolWithNameAndType (const ConstString &name, 
-                                    lldb::SymbolType symbol_type = lldb::eSymbolTypeAny);
+                                    SymbolType symbol_type = eSymbolTypeAny);
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name, 
-                                lldb::SymbolType symbol_type, 
+                                SymbolType symbol_type, 
                                 SymbolContextList &sc_list);
 
     size_t
     FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
-                                     lldb::SymbolType symbol_type, 
+                                     SymbolType symbol_type, 
                                      SymbolContextList &sc_list);
 
     //------------------------------------------------------------------

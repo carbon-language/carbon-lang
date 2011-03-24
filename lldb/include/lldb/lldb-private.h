@@ -12,9 +12,11 @@
 
 #if defined(__cplusplus)
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
+#include "lldb/lldb-private-enumerations.h"
 #include "lldb/lldb-private-interfaces.h"
 #include "lldb/lldb-private-log.h"
+#include "lldb/lldb-private-types.h"
 
 namespace lldb_private {
 
@@ -65,13 +67,13 @@ const char *
 GetVersion ();
 
 const char *
-GetVoteAsCString (lldb::Vote vote);
+GetVoteAsCString (Vote vote);
 
 const char *
-GetSectionTypeAsCString (lldb::SectionType sect_type);
+GetSectionTypeAsCString (SectionType sect_type);
     
 bool
-NameMatches (const char *name, lldb::NameMatchType match_type, const char *match);
+NameMatches (const char *name, NameMatchType match_type, const char *match);
 
 } // namespace lldb_private
 

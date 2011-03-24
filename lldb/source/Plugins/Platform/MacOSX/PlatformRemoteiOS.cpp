@@ -420,7 +420,7 @@ PlatformRemoteiOS::GetFile (const FileSpec &platform_file,
 
 uint32_t
 PlatformRemoteiOS::FindProcessesByName (const char *name_match, 
-                                        lldb::NameMatchType name_match_type,
+                                        NameMatchType name_match_type,
                                         ProcessInfoList &process_infos)
 {
     // TODO: if connected, send a packet to get the remote process infos by name

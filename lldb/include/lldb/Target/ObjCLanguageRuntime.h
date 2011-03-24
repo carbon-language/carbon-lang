@@ -58,10 +58,10 @@ public:
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *) = 0;
     
-    virtual lldb::ObjCRuntimeVersions
+    virtual ObjCRuntimeVersions
     GetRuntimeVersion ()
     {
-        return lldb::eObjC_VersionUnknown;
+        return eObjC_VersionUnknown;
     }
     
 protected:

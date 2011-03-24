@@ -136,7 +136,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
                                                      try_all_threads, 
                                                      unwind_on_error, 
                                                      ret);
-    if (results != lldb::eExecutionCompleted)
+    if (results != eExecutionCompleted)
     {
         str.Printf("Error evaluating Print Object function: %d.\n", results);
         return false;
@@ -246,7 +246,7 @@ AppleObjCRuntime::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-enum lldb::ObjCRuntimeVersions
+enum ObjCRuntimeVersions
 AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 {
     ModuleList &images = process->GetTarget().GetImages();
@@ -259,21 +259,21 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
             objc_module_sp = module_sp;
             ObjectFile *ofile = module_sp->GetObjectFile();
             if (!ofile)
-                return lldb::eObjC_VersionUnknown;
+                return eObjC_VersionUnknown;
             
             SectionList *sections = ofile->GetSectionList();
             if (!sections)
-                return lldb::eObjC_VersionUnknown;    
+                return eObjC_VersionUnknown;    
             SectionSP v1_telltale_section_sp = sections->FindSectionByName(ConstString ("__OBJC"));
             if (v1_telltale_section_sp)
             {
-                return lldb::eAppleObjC_V1;
+                return eAppleObjC_V1;
             }
-            return lldb::eAppleObjC_V2;
+            return eAppleObjC_V2;
         }
     }
             
-    return lldb::eObjC_VersionUnknown;
+    return eObjC_VersionUnknown;
 }
 
 void

@@ -110,8 +110,8 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                                                        NULL, 
                                                        true, 
                                                        stop_others, 
-                                                       lldb::eVoteNo, 
-                                                       lldb::eVoteNoOpinion,
+                                                       eVoteNo, 
+                                                       eVoteNoOpinion,
                                                        0);
     }
     else if (!InSymbol())

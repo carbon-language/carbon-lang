@@ -31,9 +31,9 @@ namespace lldb_private {
 typedef struct
 {
     const char *var_name;
-    lldb::SettableVariableType var_type;
+    SettableVariableType var_type;
     const char *default_value;
-    lldb::OptionEnumValueElement *enum_values;
+    OptionEnumValueElement *enum_values;
     bool initialized;
     bool hidden;
     const char *description;   //help text
@@ -69,7 +69,7 @@ public:
                        const char *index_value,
                        const char *value,
                        const SettingEntry &entry,
-                       const lldb::VarSetOperationType op,
+                       const VarSetOperationType op,
                        Error &err);
 
     virtual bool
@@ -80,14 +80,14 @@ public:
     // End of pure virtual functions.
     StringList
     GetVariable (const char *full_dot_name, 
-                 lldb::SettableVariableType &var_type,
+                 SettableVariableType &var_type,
                  const char *debugger_instance_name,
                  Error &err);
 
     Error
     SetVariable (const char *full_dot_name, 
                  const char *value, 
-                 const lldb::VarSetOperationType op,
+                 const VarSetOperationType op,
                  const bool override,
                  const char *debugger_instance_name,
                  const char *index_value = NULL);
@@ -179,41 +179,41 @@ public:
     BreakNameIntoPieces (const char *full_dot_name);
 
     static const char *
-    GetTypeString (lldb::SettableVariableType var_type);
+    GetTypeString (SettableVariableType var_type);
 
 
     static const char *
-    EnumToString (const lldb::OptionEnumValueElement *enum_values, int value);
+    EnumToString (const OptionEnumValueElement *enum_values, int value);
 
     static void
-    UpdateStringVariable (lldb::VarSetOperationType op, 
+    UpdateStringVariable (VarSetOperationType op, 
                           std::string &string_var, 
                           const char *new_value,
                           Error &err);
 
 
     static void
-    UpdateBooleanVariable (lldb::VarSetOperationType op,
+    UpdateBooleanVariable (VarSetOperationType op,
                            bool &bool_var,
                            const char *new_value,
                            Error &err);
 
     static void
-    UpdateStringArrayVariable (lldb::VarSetOperationType op, 
+    UpdateStringArrayVariable (VarSetOperationType op, 
                                const char *index_value, 
                                Args &array_var, 
                                const char *new_value,
                                Error &err);
   
     static void
-    UpdateDictionaryVariable (lldb::VarSetOperationType op,
+    UpdateDictionaryVariable (VarSetOperationType op,
                               const char *index_value,
                               std::map<std::string, std::string> &dictionary,
                               const char *new_value,
                               Error &err);
 
     static void
-    UpdateEnumVariable (lldb::OptionEnumValueElement *enum_values,
+    UpdateEnumVariable (OptionEnumValueElement *enum_values,
                         int *enum_var,
                         const char *new_value,
                         Error &err);
@@ -301,7 +301,7 @@ protected:
     void
     OverrideAllInstances (const ConstString &var_name, 
                           const char *value,
-                          lldb::VarSetOperationType op, 
+                          VarSetOperationType op, 
                           const char *index_value, 
                           Error &err);
 
@@ -313,23 +313,24 @@ protected:
     // -------------------------------------------------------------------------
 
     static void
-    PrintEnumValues (const lldb::OptionEnumValueElement *enum_values, Stream &str);
+    PrintEnumValues (const OptionEnumValueElement *enum_values, 
+                     Stream &str);
     
 
-     static int
-     BooleanMatches (const char *partial_value,
-                     bool &word_complete,
-                     StringList &matches);
-
-     static int
-     EnumMatches (const char *partial_value,
-                  lldb::OptionEnumValueElement *enum_values,
-                  bool &word_complete,
-                  StringList &matches);
+    static int
+    BooleanMatches (const char *partial_value,
+                    bool &word_complete,
+                    StringList &matches);
+    
+    static int
+    EnumMatches (const char *partial_value,
+                 OptionEnumValueElement *enum_values,
+                 bool &word_complete,
+                 StringList &matches);
 
     static void
-    VerifyOperationForType (lldb::SettableVariableType var_type, 
-                            lldb::VarSetOperationType op, 
+    VerifyOperationForType (SettableVariableType var_type, 
+                            VarSetOperationType op, 
                             const ConstString &var_name,
                             Error &err);
 
@@ -373,7 +374,7 @@ public:
                                     const char *value,
                                     const ConstString &instance_name,
                                     const SettingEntry &entry,
-                                    lldb::VarSetOperationType op,
+                                    VarSetOperationType op,
                                     Error &err,
                                     bool pending) = 0;
 

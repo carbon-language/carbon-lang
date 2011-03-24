@@ -57,7 +57,7 @@ RegisterContextMacOSXFrameBackchain::GetRegisterCount ()
     return m_thread.GetRegisterContext()->GetRegisterCount();
 }
 
-const lldb::RegisterInfo *
+const RegisterInfo *
 RegisterContextMacOSXFrameBackchain::GetRegisterInfoAtIndex (uint32_t reg)
 {
     return m_thread.GetRegisterContext()->GetRegisterInfoAtIndex(reg);
@@ -71,7 +71,7 @@ RegisterContextMacOSXFrameBackchain::GetRegisterSetCount ()
 
 
 
-const lldb::RegisterSet *
+const RegisterSet *
 RegisterContextMacOSXFrameBackchain::GetRegisterSet (uint32_t reg_set)
 {
     return m_thread.GetRegisterContext()->GetRegisterSet (reg_set);

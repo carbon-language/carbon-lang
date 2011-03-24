@@ -46,7 +46,10 @@ public:
     }
 
     void
-    AddRegister (lldb::RegisterInfo &reg_info, lldb_private::ConstString &reg_name, lldb_private::ConstString &reg_alt_name, lldb_private::ConstString &set_name)
+    AddRegister (lldb_private::RegisterInfo &reg_info, 
+                 lldb_private::ConstString &reg_name, 
+                 lldb_private::ConstString &reg_alt_name, 
+                 lldb_private::ConstString &set_name)
     {
         const uint32_t reg_num = m_regs.size();
         m_reg_names.push_back (reg_name);
@@ -94,7 +97,7 @@ public:
         return m_reg_data_byte_size;
     }
 
-    const lldb::RegisterInfo *
+    const lldb_private::RegisterInfo *
     GetRegisterInfoAtIndex (uint32_t i) const
     {
         if (i < m_regs.size())
@@ -102,7 +105,7 @@ public:
         return NULL;
     }
 
-    const lldb::RegisterSet *
+    const lldb_private::RegisterSet *
     GetRegisterSet (uint32_t i) const
     {
         if (i < m_sets.size())
@@ -122,7 +125,7 @@ public:
 
         m_set_names.push_back(set_name);
         m_set_reg_nums.resize(m_set_reg_nums.size()+1);
-        lldb::RegisterSet new_set = { set_name.AsCString(), NULL, 0, NULL };
+        lldb_private::RegisterSet new_set = { set_name.AsCString(), NULL, 0, NULL };
         m_sets.push_back (new_set);
         return m_sets.size() - 1;
     }
@@ -157,8 +160,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteRegisterContext can see and modify these
     //------------------------------------------------------------------
-    typedef std::vector <lldb::RegisterInfo> reg_collection;
-    typedef std::vector <lldb::RegisterSet> set_collection;
+    typedef std::vector <lldb_private::RegisterInfo> reg_collection;
+    typedef std::vector <lldb_private::RegisterSet> set_collection;
     typedef std::vector <uint32_t> reg_num_collection;
     typedef std::vector <reg_num_collection> set_reg_num_collection;
     typedef std::vector <lldb_private::ConstString> name_collection;
@@ -195,13 +198,13 @@ public:
     virtual size_t
     GetRegisterCount ();
 
-    virtual const lldb::RegisterInfo *
+    virtual const lldb_private::RegisterInfo *
     GetRegisterInfoAtIndex (uint32_t reg);
 
     virtual size_t
     GetRegisterSetCount ();
 
-    virtual const lldb::RegisterSet *
+    virtual const lldb_private::RegisterSet *
     GetRegisterSet (uint32_t reg_set);
 
     virtual bool

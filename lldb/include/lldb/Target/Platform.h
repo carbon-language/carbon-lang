@@ -17,7 +17,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Mutex.h"
@@ -335,7 +335,7 @@ namespace lldb_private {
         
         virtual uint32_t
         FindProcessesByName (const char *name, 
-                             lldb::NameMatchType name_match_type,
+                             NameMatchType name_match_type,
                              ProcessInfoList &proc_infos) = 0;
 
         virtual bool

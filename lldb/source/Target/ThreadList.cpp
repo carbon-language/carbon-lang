@@ -263,7 +263,7 @@ ThreadList::ShouldReportStop (Event *event_ptr)
         ThreadSP thread_sp(*pos);
         if (thread_sp->ThreadStoppedForAReason() && (thread_sp->GetResumeState () != eStateSuspended))
         {
-            const lldb::Vote vote = thread_sp->ShouldReportStop (event_ptr);
+            const Vote vote = thread_sp->ShouldReportStop (event_ptr);
             if (log)
                 log->Printf  ("%s thread 0x%4.4x: pc = 0x%16.16llx, vote = %s", 
                               __FUNCTION__,

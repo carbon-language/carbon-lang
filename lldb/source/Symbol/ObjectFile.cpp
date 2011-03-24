@@ -102,7 +102,7 @@ ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
     return m_module->SetArchitecture (new_arch);
 }
 
-lldb::AddressClass
+AddressClass
 ObjectFile::GetAddressClass (lldb::addr_t file_addr)
 {
     Symtab *symtab = GetSymtab();
@@ -117,14 +117,14 @@ ObjectFile::GetAddressClass (lldb::addr_t file_addr)
                 const Section *section = range_ptr->GetBaseAddress().GetSection();
                 if (section)
                 {
-                    const lldb::SectionType section_type = section->GetType();
+                    const SectionType section_type = section->GetType();
                     switch (section_type)
                     {
                     case eSectionTypeInvalid:               return eAddressClassUnknown;
                     case eSectionTypeCode:                  return eAddressClassCode;
                     case eSectionTypeContainer:             return eAddressClassUnknown;
                     case eSectionTypeData:                  return eAddressClassData;
-                    case eSectionTypeDataCString:           return eAddressClassDataConst;
+                    case eSectionTypeDataCString:           return eAddressClassData;
                     case eSectionTypeDataCStringPointers:   return eAddressClassData;
                     case eSectionTypeDataSymbolAddress:     return eAddressClassData;
                     case eSectionTypeData4:                 return eAddressClassData;
@@ -132,8 +132,8 @@ ObjectFile::GetAddressClass (lldb::addr_t file_addr)
                     case eSectionTypeData16:                return eAddressClassData;
                     case eSectionTypeDataPointers:          return eAddressClassData;
                     case eSectionTypeZeroFill:              return eAddressClassData;
-                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassDataConst;
-                    case eSectionTypeDataObjCCFStrings:     return eAddressClassDataConst;
+                    case eSectionTypeDataObjCMessageRefs:   return eAddressClassData;
+                    case eSectionTypeDataObjCCFStrings:     return eAddressClassData;
                     case eSectionTypeDebug:                 return eAddressClassDebug;
                     case eSectionTypeDWARFDebugAbbrev:      return eAddressClassDebug;
                     case eSectionTypeDWARFDebugAranges:     return eAddressClassDebug;
@@ -152,7 +152,7 @@ ObjectFile::GetAddressClass (lldb::addr_t file_addr)
                 }
             }
             
-            const lldb::SymbolType symbol_type = symbol->GetType();
+            const SymbolType symbol_type = symbol->GetType();
             switch (symbol_type)
             {
             case eSymbolTypeAny:            return eAddressClassUnknown;

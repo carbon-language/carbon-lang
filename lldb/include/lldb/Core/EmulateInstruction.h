@@ -10,7 +10,7 @@
 #ifndef lldb_EmulateInstruction_h_
 #define lldb_EmulateInstruction_h_
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/PluginInterface.h"
 
 //----------------------------------------------------------------------
@@ -351,34 +351,6 @@ public:
         
     };
 
-    union Opcode
-    {
-        uint8_t inst8;
-        uint16_t inst16;
-        uint32_t inst32;
-        uint64_t inst64;
-        union inst
-        {
-            uint8_t bytes[16];
-            uint8_t length;
-        };
-    };
-
-    enum OpcodeType
-    {
-        eOpcode8,
-        eOpcode16,
-        eOpcode32,
-        eOpcode64,
-        eOpcodeBytes
-    };
-
-    struct Instruction
-    {
-        OpcodeType opcode_type;
-        Opcode opcode;
-    };
-
     typedef size_t (*ReadMemory) (void *baton,
                                   const Context &context, 
                                   lldb::addr_t addr, 
@@ -465,12 +437,12 @@ public:
     {
         if (success_ptr)
             *success_ptr = true;
-        switch (m_inst.opcode_type)
+        switch (m_opcode.type)
         {
-        case eOpcode8:     return m_inst.opcode.inst8;
-        case eOpcode16:    return m_inst.opcode.inst16;
-        case eOpcode32:    return m_inst.opcode.inst32;
-        case eOpcode64:    return m_inst.opcode.inst64;
+        case eOpcode8:     return m_opcode.data.inst8;
+        case eOpcode16:    return m_opcode.data.inst16;
+        case eOpcode32:    return m_opcode.data.inst32;
+        case eOpcode64:    return m_opcode.data.inst64;
         case eOpcodeBytes: break;
         }
         if (success_ptr)
@@ -486,9 +458,8 @@ protected:
     WriteMemory         m_write_mem_callback;
     ReadRegister        m_read_reg_callback;
     WriteRegister       m_write_reg_callback;
-
-    lldb::addr_t m_inst_pc;
-    Instruction m_inst;
+    lldb::addr_t        m_opcode_pc;
+    Opcode              m_opcode;
     //------------------------------------------------------------------
     // For EmulateInstruction only
     //------------------------------------------------------------------

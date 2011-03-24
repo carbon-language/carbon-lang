@@ -39,8 +39,8 @@ public:
                        SymbolContext *addr_context,
                        bool first_insn,
                        bool stop_others,
-                       lldb::Vote stop_vote,
-                       lldb::Vote run_vote,
+                       Vote stop_vote,
+                       Vote run_vote,
                        uint32_t frame_idx);
 protected:
 
@@ -58,8 +58,8 @@ private:
                                        SymbolContext *addr_context,
                                        bool first_insn,
                                        bool stop_others,
-                                       lldb::Vote stop_vote,
-                                       lldb::Vote run_vote,
+                                       Vote stop_vote,
+                                       Vote run_vote,
                                        uint32_t frame_idx);
 
     // Need an appropriate marker for the current stack so we can tell step out

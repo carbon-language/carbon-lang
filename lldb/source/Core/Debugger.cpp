@@ -762,7 +762,7 @@ Debugger::FormatPrompt
                         RegisterKind reg_kind = kNumRegisterKinds; 
                         uint32_t reg_num = LLDB_INVALID_REGNUM;
                         FileSpec format_file_spec;
-                        const lldb::RegisterInfo *reg_info = NULL;
+                        const RegisterInfo *reg_info = NULL;
                         RegisterContext *reg_ctx = NULL;
 
                         // Each variable must set success to true below...
@@ -1440,7 +1440,7 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
                                                           const char *value,
                                                           const ConstString &instance_name,
                                                           const SettingEntry &entry,
-                                                          lldb::VarSetOperationType op,
+                                                          VarSetOperationType op,
                                                           Error &err,
                                                           bool pending)
 {

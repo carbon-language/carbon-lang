@@ -28,16 +28,21 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // ThreadPlanStepThroughObjCTrampoline constructor
 //----------------------------------------------------------------------
-AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoline(
-        Thread &thread, 
-        AppleObjCTrampolineHandler *trampoline_handler, 
-        lldb::addr_t args_addr, 
-        lldb::addr_t object_addr,
-        lldb::addr_t isa_addr,
-        lldb::addr_t sel_addr,
-        bool stop_others) :
-    ThreadPlan (ThreadPlan::eKindGeneric, "MacOSX Step through ObjC Trampoline", thread, 
-        lldb::eVoteNoOpinion, lldb::eVoteNoOpinion),
+AppleThreadPlanStepThroughObjCTrampoline::AppleThreadPlanStepThroughObjCTrampoline
+(
+    Thread &thread, 
+    AppleObjCTrampolineHandler *trampoline_handler, 
+    lldb::addr_t args_addr, 
+    lldb::addr_t object_addr,
+    lldb::addr_t isa_addr,
+    lldb::addr_t sel_addr,
+    bool stop_others
+) :
+    ThreadPlan (ThreadPlan::eKindGeneric, 
+                "MacOSX Step through ObjC Trampoline", 
+                thread, 
+                eVoteNoOpinion, 
+                eVoteNoOpinion),
     m_trampoline_handler (trampoline_handler),
     m_args_addr (args_addr),
     m_object_addr (object_addr),

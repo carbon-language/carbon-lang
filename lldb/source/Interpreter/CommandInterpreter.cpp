@@ -76,7 +76,7 @@ CommandInterpreter::CommandInterpreter
     StreamString var_name;
     var_name.Printf ("[%s].script-lang", dbg_name);
     debugger.GetSettingsController()->SetVariable (var_name.GetData(), lang_name.c_str(), 
-                                                   lldb::eVarSetOperationAssign, false, 
+                                                   eVarSetOperationAssign, false, 
                                                    m_debugger.GetInstanceName().AsCString());                                                   
     SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
     SetEventName (eBroadcastBitResetPrompt, "reset-prompt");

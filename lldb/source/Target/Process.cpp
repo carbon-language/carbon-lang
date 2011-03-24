@@ -2693,7 +2693,7 @@ Process::PopProcessInputReader ()
 void
 Process::SettingsInitialize ()
 {
-    static std::vector<lldb::OptionEnumValueElement> g_plugins;
+    static std::vector<OptionEnumValueElement> g_plugins;
     
     int i=0; 
     const char *name;
@@ -2781,13 +2781,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     if (thread_plan_sp.get() == NULL)
     {
         errors.Printf("RunThreadPlan called with empty thread plan.");
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     }
     
     if (m_private_state.GetValue() != eStateStopped)
     {
         errors.Printf ("RunThreadPlan called while the private state was not stopped.");
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     }
     
     // Save this value for restoration of the execution context after we run
@@ -2854,7 +2854,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (!resume_error.Success())
             {
                 errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
-                return_value = lldb::eExecutionSetupError;
+                return_value = eExecutionSetupError;
                 break;
             }
     
@@ -2869,7 +2869,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf("Didn't get any event after initial resume, exiting.");
 
                 errors.Printf("Didn't get any event after initial resume, exiting.");
-                return_value = lldb::eExecutionSetupError;
+                return_value = eExecutionSetupError;
                 break;
             }
             
@@ -2880,7 +2880,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf("Didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
 
                 errors.Printf("Didn't get running event after initial resume, got %s instead.", StateAsCString(stop_state));
-                return_value = lldb::eExecutionSetupError;
+                return_value = eExecutionSetupError;
                 break;
             }
         
@@ -2930,12 +2930,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     // Yay, we're done.
                     if (log)
                         log->Printf ("Execution completed successfully.");
-                    return_value = lldb::eExecutionCompleted;
+                    return_value = eExecutionCompleted;
                     break;
                 case lldb::eStateCrashed:
                     if (log)
                         log->Printf ("Execution crashed.");
-                    return_value = lldb::eExecutionInterrupted;
+                    return_value = eExecutionInterrupted;
                     break;
                 case lldb::eStateRunning:
                     do_resume = false;
@@ -2944,7 +2944,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 default:
                     if (log)
                         log->Printf("Execution stopped with unexpected state: %s.", StateAsCString(stop_state));
-                    return_value = lldb::eExecutionInterrupted;
+                    return_value = eExecutionInterrupted;
                     break;
                 }
                 if (keep_going)
@@ -2956,7 +2956,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (log)
                     log->Printf ("got_event was true, but the event pointer was null.  How odd...");
-                return_value = lldb::eExecutionInterrupted;
+                return_value = eExecutionInterrupted;
                 break;
             }
         }
@@ -3019,7 +3019,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             if (log)
                                 log->Printf ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
                                              "Exiting wait loop.");
-                            return_value = lldb::eExecutionCompleted;
+                            return_value = eExecutionCompleted;
                             break;
                         }
 
@@ -3027,7 +3027,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {
                             if (log)
                                 log->Printf ("try_all_threads was false, we stopped so now we're quitting.");
-                            return_value = lldb::eExecutionInterrupted;
+                            return_value = eExecutionInterrupted;
                             break;
                         }
                         
@@ -3046,7 +3046,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             // Running all threads failed, so return Interrupted.
                             if (log)
                                 log->Printf("Process::RunThreadPlan(): running all threads timed out.");
-                            return_value = lldb::eExecutionInterrupted;
+                            return_value = eExecutionInterrupted;
                             break;
                         }
                     }
@@ -3055,7 +3055,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 {   if (log)
                         log->Printf("Process::RunThreadPlan(): halt said it succeeded, but I got no event.  "
                                 "I'm getting out of here passing Interrupted.");
-                    return_value = lldb::eExecutionInterrupted;
+                    return_value = eExecutionInterrupted;
                     break;
                 }
             }
@@ -3075,7 +3075,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     // This is not going anywhere, bag out.
                     if (log)
                         log->Printf ("Process::RunThreadPlan(): halt failed: and waiting for the stopped event failed.");
-                    return_value = lldb::eExecutionInterrupted;
+                    return_value = eExecutionInterrupted;
                     break;                
                 }
                 else
@@ -3093,7 +3093,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             if (log)
                                 log->Printf ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
                                              "Exiting wait loop.");
-                            return_value = lldb::eExecutionCompleted;
+                            return_value = eExecutionCompleted;
                             break;
                         }
 
@@ -3112,7 +3112,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             // Running all threads failed, so return Interrupted.
                             if (log)
                                 log->Printf("Process::RunThreadPlan(): running all threads timed out.");
-                            return_value = lldb::eExecutionInterrupted;
+                            return_value = eExecutionInterrupted;
                             break;
                         }
                     }
@@ -3120,7 +3120,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     {
                         log->Printf ("Process::RunThreadPlan(): halt failed, I waited and didn't get"
                                      " a stopped event, instead got %s.", StateAsCString(stop_state));
-                        return_value = lldb::eExecutionInterrupted;
+                        return_value = eExecutionInterrupted;
                         break;                
                     }
                 }
@@ -3230,13 +3230,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         {
             if (log)
                 log->Printf("Process::RunThreadPlan(): thread plan is done");
-            return_value = lldb::eExecutionCompleted;
+            return_value = eExecutionCompleted;
         }
         else if (exe_ctx.thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
         {
             if (log)
                 log->Printf("Process::RunThreadPlan(): thread plan was discarded");
-            return_value = lldb::eExecutionDiscarded;
+            return_value = eExecutionDiscarded;
         }
         else
         {
@@ -3279,19 +3279,19 @@ Process::ExecutionResultAsCString (ExecutionResults result)
     
     switch (result)
     {
-        case lldb::eExecutionCompleted:
+        case eExecutionCompleted:
             result_name = "eExecutionCompleted";
             break;
-        case lldb::eExecutionDiscarded:
+        case eExecutionDiscarded:
             result_name = "eExecutionDiscarded";
             break;
-        case lldb::eExecutionInterrupted:
+        case eExecutionInterrupted:
             result_name = "eExecutionInterrupted";
             break;
-        case lldb::eExecutionSetupError:
+        case eExecutionSetupError:
             result_name = "eExecutionSetupError";
             break;
-        case lldb::eExecutionTimedOut:
+        case eExecutionTimedOut:
             result_name = "eExecutionTimedOut";
             break;
     }
@@ -3411,7 +3411,7 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
                                                          const char *value,
                                                          const ConstString &instance_name,
                                                          const SettingEntry &entry,
-                                                         lldb::VarSetOperationType op,
+                                                         VarSetOperationType op,
                                                          Error &err,
                                                          bool pending)
 {

@@ -208,7 +208,7 @@ Value::GetValueType() const
     return m_value_type;
 }
 
-lldb::AddressType
+AddressType
 Value::GetValueAddressType () const
 {
     if (m_context_type == eContextTypeValue)
@@ -515,7 +515,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 
     Error error;
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
-    lldb::AddressType address_type = eAddressTypeFile;
+    AddressType address_type = eAddressTypeFile;
     switch (m_value_type)
     {
     default:
@@ -663,7 +663,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         }
         else
         {
-            error.SetErrorStringWithFormat ("unsupported lldb::AddressType value (%i)", address_type);
+            error.SetErrorStringWithFormat ("unsupported AddressType value (%i)", address_type);
         }
     }
     else
@@ -714,7 +714,7 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
         case eValueTypeLoadAddress:          // load address value
         case eValueTypeHostAddress:          // host address value (for memory in the process that is using liblldb)
             {
-                lldb::AddressType address_type = m_value_type == eValueTypeLoadAddress ? eAddressTypeLoad : eAddressTypeHost;
+                AddressType address_type = m_value_type == eValueTypeLoadAddress ? eAddressTypeLoad : eAddressTypeHost;
                 lldb::addr_t addr = m_value.ULongLong(LLDB_INVALID_ADDRESS);
                 DataExtractor data;
                 if (ClangASTType::ReadFromMemory (ast_context, opaque_clang_qual_type, exe_ctx, addr, address_type, data))

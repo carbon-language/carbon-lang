@@ -453,7 +453,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     return true;
 }        
 
-lldb::ExecutionResults
+ExecutionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               bool discard_on_error,
@@ -471,7 +471,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         error_stream.Printf("We don't currently support executing DWARF expressions");
         
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     }
     else if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
@@ -481,7 +481,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         lldb::addr_t cmd_ptr = NULL;
         
         if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr))
-            return lldb::eExecutionSetupError;
+            return eExecutionSetupError;
         
         const bool stop_others = true;
         const bool try_all_threads = true;
@@ -497,7 +497,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                           shared_ptr_to_me));
         
         if (call_plan_sp == NULL || !call_plan_sp->ValidatePlan (NULL))
-            return lldb::eExecutionSetupError;
+            return eExecutionSetupError;
     
         call_plan_sp->SetPrivate(true);
     
@@ -506,7 +506,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         
-        lldb::ExecutionResults execution_result = exe_ctx.process->RunThreadPlan (exe_ctx, 
+        ExecutionResults execution_result = exe_ctx.process->RunThreadPlan (exe_ctx, 
                                                                                   call_plan_sp, 
                                                                                   stop_others, 
                                                                                   try_all_threads, 
@@ -517,7 +517,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
 
-        if (execution_result == lldb::eExecutionInterrupted)
+        if (execution_result == eExecutionInterrupted)
         {
             if (discard_on_error)
                 error_stream.Printf ("Expression execution was interrupted.  The process has been returned to the state before execution.");
@@ -526,21 +526,21 @@ ClangUserExpression::Execute (Stream &error_stream,
 
             return execution_result;
         }
-        else if (execution_result != lldb::eExecutionCompleted)
+        else if (execution_result != eExecutionCompleted)
         {
             error_stream.Printf ("Couldn't execute function; result was %s\n", Process::ExecutionResultAsCString (execution_result));
             return execution_result;
         }
         
         if  (FinalizeJITExecution (error_stream, exe_ctx, result))
-            return lldb::eExecutionCompleted;
+            return eExecutionCompleted;
         else
-            return lldb::eExecutionSetupError;
+            return eExecutionSetupError;
     }
     else
     {
         error_stream.Printf("Expression can't be run; neither DWARF nor a JIT compiled function is present");
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     }
 }
 
@@ -553,7 +553,7 @@ ClangUserExpression::DwarfOpcodeStream ()
     return *m_dwarf_opcodes.get();
 }
 
-lldb::ExecutionResults
+ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
                                bool discard_on_error,
                                bool keep_in_memory,
@@ -564,14 +564,14 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     Error error;
-    lldb::ExecutionResults execution_results = lldb::eExecutionSetupError;
+    ExecutionResults execution_results = eExecutionSetupError;
     
     if (exe_ctx.process == NULL)
     {
         error.SetErrorString ("Must have a process to evaluate expressions.");
             
         result_valobj_sp.reset (new ValueObjectConstResult (error));
-        return lldb::eExecutionSetupError;
+        return eExecutionSetupError;
     }
     
     if (!exe_ctx.process->GetDynamicCheckers())
@@ -591,7 +591,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                 error.SetErrorString (install_errors.GetString().c_str());
             
             result_valobj_sp.reset (new ValueObjectConstResult (error));
-            return lldb::eExecutionSetupError;
+            return eExecutionSetupError;
         }
             
         exe_ctx.process->SetDynamicCheckers(dynamic_checkers);
@@ -641,7 +641,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                              user_expression_sp, 
                                                              expr_result);
             
-            if (execution_results != lldb::eExecutionCompleted)
+            if (execution_results != eExecutionCompleted)
             {
                 if (log)
                     log->Printf("== [ClangUserExpression::Evaluate] Execution completed abnormally ==");

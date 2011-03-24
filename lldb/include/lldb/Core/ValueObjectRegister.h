@@ -106,7 +106,7 @@ public:
 protected:
 
     lldb::RegisterContextSP m_reg_ctx;
-    const lldb::RegisterSet *m_reg_set;
+    const RegisterSet *m_reg_set;
     uint32_t m_reg_set_idx;
 
 private:
@@ -151,7 +151,7 @@ public:
 protected:
 
     lldb::RegisterContextSP m_reg_ctx;
-    const lldb::RegisterInfo *m_reg_info;
+    const RegisterInfo *m_reg_info;
     uint32_t m_reg_num;
     ConstString m_type_name;
     void *m_clang_type;

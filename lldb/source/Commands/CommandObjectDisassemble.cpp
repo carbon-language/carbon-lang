@@ -136,13 +136,13 @@ CommandObjectDisassemble::CommandOptions::ResetOptionValues ()
     raw = false;
 }
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectDisassemble::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectDisassemble::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "bytes",    'b', no_argument,       NULL, 0, eArgTypeNone,             "Show opcode bytes when disassembling."},

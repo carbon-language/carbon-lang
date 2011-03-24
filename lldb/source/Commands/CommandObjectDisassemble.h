@@ -41,7 +41,7 @@ public:
         void
         ResetOptionValues ();
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ();
 
         bool show_mixed; // Show mixed source/assembly
@@ -53,7 +53,7 @@ public:
         lldb::addr_t m_start_addr;
         lldb::addr_t m_end_addr;
         bool m_at_pc;
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
     };
 
     CommandObjectDisassemble (CommandInterpreter &interpreter);

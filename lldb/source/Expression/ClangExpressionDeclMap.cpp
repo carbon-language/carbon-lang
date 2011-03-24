@@ -470,7 +470,7 @@ ClangExpressionDeclMap::GetSymbolAddress
     
     SymbolContextList sc_list;
     
-    m_parser_vars->m_exe_ctx->target->GetImages().FindSymbolsWithNameAndType(name, lldb::eSymbolTypeAny, sc_list);
+    m_parser_vars->m_exe_ctx->target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
     
     if (!sc_list.GetSize())
         return false;
@@ -598,7 +598,7 @@ ClangExpressionDeclMap::GetObjectPointer
                 return false;
             }
                         
-            lldb::RegisterInfo *register_info = location_value->GetRegisterInfo();
+            RegisterInfo *register_info = location_value->GetRegisterInfo();
             
             if (!register_info)
             {
@@ -990,7 +990,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                                                                                  var_sp->GetTypeFromUser().GetOpaqueQualType(),
                                                                                  var_sp->GetName(),
                                                                                  mem,
-                                                                                 lldb::eAddressTypeLoad,
+                                                                                 eAddressTypeLoad,
                                                                                  pvar_byte_size));
             }
             
@@ -1000,7 +1000,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 return false;
             }
             
-            if (var_sp->m_live_sp->GetValue().GetValueAddressType() != lldb::eAddressTypeLoad)
+            if (var_sp->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
             {
                 err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", var_sp->GetName().GetCString());
                 return false;
@@ -1084,7 +1084,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                                                                              var_sp->GetTypeFromUser().GetOpaqueQualType(),
                                                                              var_sp->GetName(),
                                                                              mem,
-                                                                             lldb::eAddressTypeLoad,
+                                                                             eAddressTypeLoad,
                                                                              pvar_byte_size));
             
             // Clear the flag if the variable will never be deallocated.
@@ -1221,7 +1221,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
             
             lldb::addr_t mem; // The address of a spare memory area aused to hold the variable.
             
-            lldb::RegisterInfo *register_info = location_value->GetRegisterInfo();
+            RegisterInfo *register_info = location_value->GetRegisterInfo();
             
             if (!register_info)
             {
@@ -1250,7 +1250,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     return false;
                 }
                 
-                if (expr_var->m_live_sp->GetValue().GetValueAddressType() != lldb::eAddressTypeLoad)
+                if (expr_var->m_live_sp->GetValue().GetValueAddressType() != eAddressTypeLoad)
                 {
                     err.SetErrorStringWithFormat("The address of the memory area for %s is in an incorrect format", name.GetCString());
                     return false;
@@ -1348,7 +1348,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                                                                    type.GetOpaqueQualType(),
                                                                                    name,
                                                                                    mem,
-                                                                                   lldb::eAddressTypeLoad,
+                                                                                   eAddressTypeLoad,
                                                                                    value_byte_size));
                 
                 // Now write the location of the area into the struct.
@@ -1432,7 +1432,7 @@ ClangExpressionDeclMap::DoMaterializeOneRegister
     bool dematerialize,
     ExecutionContext &exe_ctx,
     RegisterContext &reg_ctx,
-    const lldb::RegisterInfo &reg_info,
+    const RegisterInfo &reg_info,
     lldb::addr_t addr, 
     Error &err
 )
@@ -1762,7 +1762,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         
         if (m_parser_vars->m_exe_ctx->GetRegisterContext())
         {
-            const lldb::RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
+            const RegisterInfo *reg_info(m_parser_vars->m_exe_ctx->GetRegisterContext()->GetRegisterInfoByName(reg_name));
             
             if (reg_info)
                 AddOneRegister(context, reg_info);

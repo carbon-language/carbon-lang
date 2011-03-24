@@ -852,7 +852,11 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithIndex (uint32_t symbol_i
     CompileUnitInfo *comp_unit_info = NULL;
     if (oso_index_count)
     {
-        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_idx, &m_compile_unit_infos[0], m_compile_unit_infos.size(), sizeof(CompileUnitInfo), (comparison_function)SymbolContainsSymbolWithIndex);
+        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_idx, 
+                                                   &m_compile_unit_infos[0], 
+                                                   m_compile_unit_infos.size(), 
+                                                   sizeof(CompileUnitInfo), 
+                                                   (ComparisonFunction)SymbolContainsSymbolWithIndex);
     }
 
     if (oso_idx_ptr)
@@ -872,7 +876,11 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithID (user_id_t symbol_id,
     CompileUnitInfo *comp_unit_info = NULL;
     if (oso_index_count)
     {
-        comp_unit_info = (CompileUnitInfo*)bsearch(&symbol_id, &m_compile_unit_infos[0], m_compile_unit_infos.size(), sizeof(CompileUnitInfo), (comparison_function)SymbolContainsSymbolWithID);
+        comp_unit_info = (CompileUnitInfo*)::bsearch (&symbol_id, 
+                                                      &m_compile_unit_infos[0], 
+                                                      m_compile_unit_infos.size(), 
+                                                      sizeof(CompileUnitInfo), 
+                                                      (ComparisonFunction)SymbolContainsSymbolWithID);
     }
 
     if (oso_idx_ptr)

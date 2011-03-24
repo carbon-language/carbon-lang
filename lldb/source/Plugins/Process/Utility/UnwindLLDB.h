@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/RegisterContext.h"

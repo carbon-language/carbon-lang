@@ -285,7 +285,7 @@ ArchSpec::ArchSpec(const llvm::Triple &triple) :
     SetTriple(triple);
 }
 
-ArchSpec::ArchSpec (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t subtype) :
+ArchSpec::ArchSpec (ArchitectureType arch_type, uint32_t cpu, uint32_t subtype) :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid)
@@ -463,7 +463,7 @@ ArchSpec::SetTriple (const char *triple_cstr)
 }
 
 bool
-ArchSpec::SetArchitecture (lldb::ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
+ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
 {
     m_core = kCore_invalid;
     bool update_triple = true;

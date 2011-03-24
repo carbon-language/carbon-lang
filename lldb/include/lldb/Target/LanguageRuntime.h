@@ -14,7 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ValueObject.h"

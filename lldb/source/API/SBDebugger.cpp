@@ -9,7 +9,7 @@
 
 #include "lldb/API/SBDebugger.h"
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-private.h"
 
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBBroadcaster.h"
@@ -679,7 +679,10 @@ SBDebugger::SetInternalVariable (const char *var_name, const char *value, const 
 {
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
 
-    Error err = root_settings_controller->SetVariable (var_name, value, lldb::eVarSetOperationAssign, true,
+    Error err = root_settings_controller->SetVariable (var_name, 
+                                                       value, 
+                                                       eVarSetOperationAssign, 
+                                                       true,
                                                        debugger_instance_name);
     SBError sb_error;
     sb_error.SetError (err);
@@ -691,7 +694,7 @@ lldb::SBStringList
 SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger_instance_name)
 {
     SBStringList ret_value;
-    lldb::SettableVariableType var_type;
+    SettableVariableType var_type;
     lldb_private::Error err;
 
     lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();

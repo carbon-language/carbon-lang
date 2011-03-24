@@ -105,8 +105,8 @@ public:
                             read_reg_callback,
                             write_reg_callback),
         m_arm_isa (0),
-        m_inst_mode (eModeInvalid),
-        m_inst_cpsr (0),
+        m_opcode_mode (eModeInvalid),
+        m_opcode_cpsr (0),
         m_it_session ()
     {
     }
@@ -733,8 +733,8 @@ protected:
     EmulateRFE (ARMEncoding encoding);
      
     uint32_t m_arm_isa;
-    Mode m_inst_mode;
-    uint32_t m_inst_cpsr;
+    Mode m_opcode_mode;
+    uint32_t m_opcode_cpsr;
     uint32_t m_new_inst_cpsr; // This can get updated by the opcode.
     ITSession m_it_session;
 };

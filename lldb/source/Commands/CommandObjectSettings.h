@@ -70,12 +70,12 @@ public:
         void
         ResetOptionValues ();
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ();
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
 

@@ -59,9 +59,9 @@ EmulateInstruction::EmulateInstruction
     m_write_mem_callback (write_mem_callback),
     m_read_reg_callback (read_reg_callback),
     m_write_reg_callback (write_reg_callback),
-    m_inst_pc (LLDB_INVALID_ADDRESS)
+    m_opcode_pc (LLDB_INVALID_ADDRESS)
 {
-    ::memset (&m_inst, 0, sizeof (m_inst));
+    ::memset (&m_opcode, 0, sizeof (m_opcode));
 }
 
 uint64_t

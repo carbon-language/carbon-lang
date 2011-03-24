@@ -43,13 +43,13 @@ public:
     virtual size_t
     GetRegisterCount () = 0;
 
-    virtual const lldb::RegisterInfo *
+    virtual const RegisterInfo *
     GetRegisterInfoAtIndex (uint32_t reg) = 0;
 
     virtual size_t
     GetRegisterSetCount () = 0;
 
-    virtual const lldb::RegisterSet *
+    virtual const RegisterSet *
     GetRegisterSet (uint32_t reg_set) = 0;
 
     virtual bool
@@ -109,7 +109,7 @@ public:
         return m_thread;
     }
 
-    const lldb::RegisterInfo *
+    const RegisterInfo *
     GetRegisterInfoByName (const char *reg_name, uint32_t start_idx = 0);
 
     uint64_t

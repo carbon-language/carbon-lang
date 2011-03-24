@@ -24,8 +24,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 // Convenient macro definitions.
-#define APSR_C Bit32(m_inst_cpsr, CPSR_C_POS)
-#define APSR_V Bit32(m_inst_cpsr, CPSR_V_POS)
+#define APSR_C Bit32(m_opcode_cpsr, CPSR_C_POS)
+#define APSR_V Bit32(m_opcode_cpsr, CPSR_V_POS)
 
 #define AlignPC(pc_val) (pc_val & 0xFFFFFFFC)
 
@@ -848,10 +848,10 @@ EmulateInstructionARM::EmulateMUL (ARMEncoding encoding)
         {
             // APSR.N = result<31>; 
             // APSR.Z = IsZeroBit(result);
-            m_new_inst_cpsr = m_inst_cpsr;
+            m_new_inst_cpsr = m_opcode_cpsr;
             SetBit32 (m_new_inst_cpsr, CPSR_N_POS, Bit32 (result, 31));
             SetBit32 (m_new_inst_cpsr, CPSR_Z_POS, result == 0 ? 1 : 0);
-            if (m_new_inst_cpsr != m_inst_cpsr)
+            if (m_new_inst_cpsr != m_opcode_cpsr)
             {
                 if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
                     return false;
@@ -5959,7 +5959,7 @@ EmulateInstructionARM::EmulateLDRRegister (ARMEncoding encoding)
         addr_t address;
                   
         // offset = Shift(R[m], shift_t, shift_n, APSR.C);   -- Note "The APSR is an application level alias for the CPSR".
-        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_inst_cpsr, APSR_C));
+        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_opcode_cpsr, APSR_C));
                   
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         if (add)
@@ -9920,7 +9920,7 @@ bool
 EmulateInstructionARM::ReadInstruction ()
 {
     bool success = false;
-    m_inst_cpsr = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, 0, &success);
+    m_opcode_cpsr = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, 0, &success);
     if (success)
     {
         addr_t pc = ReadRegisterUnsigned (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, LLDB_INVALID_ADDRESS, &success);
@@ -9930,37 +9930,37 @@ EmulateInstructionARM::ReadInstruction ()
             read_inst_context.type = eContextReadOpcode;
             read_inst_context.SetNoArgs ();
                   
-            if (m_inst_cpsr & MASK_CPSR_T)
+            if (m_opcode_cpsr & MASK_CPSR_T)
             {
-                m_inst_mode = eModeThumb;
+                m_opcode_mode = eModeThumb;
                 uint32_t thumb_opcode = MemARead(read_inst_context, pc, 2, 0, &success);
                 
                 if (success)
                 {
-                    if ((m_inst.opcode.inst16 & 0xe000) != 0xe000 || ((m_inst.opcode.inst16 & 0x1800u) == 0))
+                    if ((m_opcode.data.inst16 & 0xe000) != 0xe000 || ((m_opcode.data.inst16 & 0x1800u) == 0))
                     {
-                        m_inst.opcode_type = eOpcode16;
-                        m_inst.opcode.inst16 = thumb_opcode;
+                        m_opcode.type = eOpcode16;
+                        m_opcode.data.inst16 = thumb_opcode;
                     }
                     else
                     {
-                        m_inst.opcode_type = eOpcode32;
-                        m_inst.opcode.inst32 = (thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success);
+                        m_opcode.type = eOpcode32;
+                        m_opcode.data.inst32 = (thumb_opcode << 16) | MemARead(read_inst_context, pc + 2, 2, 0, &success);
                     }
                 }
             }
             else
             {
-                m_inst_mode = eModeARM;
-                m_inst.opcode_type = eOpcode32;
-                m_inst.opcode.inst32 = MemARead(read_inst_context, pc, 4, 0, &success);
+                m_opcode_mode = eModeARM;
+                m_opcode.type = eOpcode32;
+                m_opcode.data.inst32 = MemARead(read_inst_context, pc, 4, 0, &success);
             }
         }
     }
     if (!success)
     {
-        m_inst_mode = eModeInvalid;
-        m_inst_pc = LLDB_INVALID_ADDRESS;
+        m_opcode_mode = eModeInvalid;
+        m_opcode_pc = LLDB_INVALID_ADDRESS;
     }
     return success;
 }
@@ -9974,7 +9974,7 @@ EmulateInstructionARM::ArchVersion ()
 bool
 EmulateInstructionARM::ConditionPassed ()
 {
-    if (m_inst_cpsr == 0)
+    if (m_opcode_cpsr == 0)
         return false;
 
     const uint32_t cond = CurrentCond ();
@@ -9985,23 +9985,23 @@ EmulateInstructionARM::ConditionPassed ()
     bool result = false;
     switch (UnsignedBits(cond, 3, 1))
     {
-    case 0: result = (m_inst_cpsr & MASK_CPSR_Z) != 0; break;
-    case 1: result = (m_inst_cpsr & MASK_CPSR_C) != 0; break;
-    case 2: result = (m_inst_cpsr & MASK_CPSR_N) != 0; break;
-    case 3: result = (m_inst_cpsr & MASK_CPSR_V) != 0; break;
-    case 4: result = ((m_inst_cpsr & MASK_CPSR_C) != 0) && ((m_inst_cpsr & MASK_CPSR_Z) == 0); break;
+    case 0: result = (m_opcode_cpsr & MASK_CPSR_Z) != 0; break;
+    case 1: result = (m_opcode_cpsr & MASK_CPSR_C) != 0; break;
+    case 2: result = (m_opcode_cpsr & MASK_CPSR_N) != 0; break;
+    case 3: result = (m_opcode_cpsr & MASK_CPSR_V) != 0; break;
+    case 4: result = ((m_opcode_cpsr & MASK_CPSR_C) != 0) && ((m_opcode_cpsr & MASK_CPSR_Z) == 0); break;
     case 5: 
         {
-            bool n = (m_inst_cpsr & MASK_CPSR_N);
-            bool v = (m_inst_cpsr & MASK_CPSR_V);
+            bool n = (m_opcode_cpsr & MASK_CPSR_N);
+            bool v = (m_opcode_cpsr & MASK_CPSR_V);
             result = n == v;
         }
         break;
     case 6: 
         {
-            bool n = (m_inst_cpsr & MASK_CPSR_N);
-            bool v = (m_inst_cpsr & MASK_CPSR_V);
-            result = n == v && ((m_inst_cpsr & MASK_CPSR_Z) == 0);
+            bool n = (m_opcode_cpsr & MASK_CPSR_N);
+            bool v = (m_opcode_cpsr & MASK_CPSR_V);
+            result = n == v && ((m_opcode_cpsr & MASK_CPSR_Z) == 0);
         }
         break;
     case 7: 
@@ -10017,31 +10017,31 @@ EmulateInstructionARM::ConditionPassed ()
 uint32_t
 EmulateInstructionARM::CurrentCond ()
 {
-    switch (m_inst_mode)
+    switch (m_opcode_mode)
     {
     default:
     case eModeInvalid:
         break;
 
     case eModeARM:
-        return UnsignedBits(m_inst.opcode.inst32, 31, 28);
+        return UnsignedBits(m_opcode.data.inst32, 31, 28);
     
     case eModeThumb:
         // For T1 and T3 encodings of the Branch instruction, it returns the 4-bit
         // 'cond' field of the encoding.
-        if (m_inst.opcode_type == eOpcode16 &&
-            Bits32(m_inst.opcode.inst16, 15, 12) == 0x0d &&
-            Bits32(m_inst.opcode.inst16, 11, 7) != 0x0f)
+        if (m_opcode.type == eOpcode16 &&
+            Bits32(m_opcode.data.inst16, 15, 12) == 0x0d &&
+            Bits32(m_opcode.data.inst16, 11, 7) != 0x0f)
         {
-            return Bits32(m_inst.opcode.inst16, 11, 7);
+            return Bits32(m_opcode.data.inst16, 11, 7);
         }
-        else if (m_inst.opcode_type == eOpcode32 &&
-                 Bits32(m_inst.opcode.inst32, 31, 27) == 0x1e &&
-                 Bits32(m_inst.opcode.inst32, 15, 14) == 0x02 &&
-                 Bits32(m_inst.opcode.inst32, 12, 12) == 0x00 &&
-                 Bits32(m_inst.opcode.inst32, 25, 22) <= 0x0d)
+        else if (m_opcode.type == eOpcode32 &&
+                 Bits32(m_opcode.data.inst32, 31, 27) == 0x1e &&
+                 Bits32(m_opcode.data.inst32, 15, 14) == 0x02 &&
+                 Bits32(m_opcode.data.inst32, 12, 12) == 0x00 &&
+                 Bits32(m_opcode.data.inst32, 25, 22) <= 0x0d)
         {
-            return Bits32(m_inst.opcode.inst32, 25, 22);
+            return Bits32(m_opcode.data.inst32, 25, 22);
         }
         
         return m_it_session.GetCond();
@@ -10083,7 +10083,7 @@ EmulateInstructionARM::BadMode (uint32_t mode)
 bool
 EmulateInstructionARM::CurrentModeIsPrivileged ()
 {
-    uint32_t mode = Bits32 (m_inst_cpsr, 4, 0);
+    uint32_t mode = Bits32 (m_opcode_cpsr, 4, 0);
                   
     if (BadMode (mode))
         return false;
@@ -10101,7 +10101,7 @@ EmulateInstructionARM::CPSRWriteByInstr (uint32_t value, uint32_t bytemask, bool
 
     uint32_t tmp_cpsr = 0;
         
-    tmp_cpsr = tmp_cpsr | (Bits32 (m_inst_cpsr, 23, 20) << 20);
+    tmp_cpsr = tmp_cpsr | (Bits32 (m_opcode_cpsr, 23, 20) << 20);
                   
     if (BitIsSet (bytemask, 3))
     {
@@ -10134,7 +10134,7 @@ EmulateInstructionARM::CPSRWriteByInstr (uint32_t value, uint32_t bytemask, bool
             tmp_cpsr = tmp_cpsr | Bits32 (value, 4, 0);
     }
                   
-    m_inst_cpsr = tmp_cpsr;
+    m_opcode_cpsr = tmp_cpsr;
 }
 
                   
@@ -10222,16 +10222,16 @@ EmulateInstructionARM::ALUWritePC (Context &context, uint32_t addr)
 EmulateInstructionARM::Mode
 EmulateInstructionARM::CurrentInstrSet ()
 {
-    return m_inst_mode;
+    return m_opcode_mode;
 }
 
-// Set the 'T' bit of our CPSR.  The m_inst_mode gets updated when the next
+// Set the 'T' bit of our CPSR.  The m_opcode_mode gets updated when the next
 // ReadInstruction() is performed.  This function has a side effect of updating
 // the m_new_inst_cpsr member variable if necessary.
 bool
 EmulateInstructionARM::SelectInstrSet (Mode arm_or_thumb)
 {
-    m_new_inst_cpsr = m_inst_cpsr;
+    m_new_inst_cpsr = m_opcode_cpsr;
     switch (arm_or_thumb)
     {
     default:
@@ -10401,14 +10401,14 @@ EmulateInstructionARM::WriteFlags (Context &context,
                                    const uint32_t carry,
                                    const uint32_t overflow)
 {
-    m_new_inst_cpsr = m_inst_cpsr;
+    m_new_inst_cpsr = m_opcode_cpsr;
     SetBit32(m_new_inst_cpsr, CPSR_N_POS, Bit32(result, CPSR_N_POS));
     SetBit32(m_new_inst_cpsr, CPSR_Z_POS, result == 0 ? 1 : 0);
     if (carry != ~0u)
         SetBit32(m_new_inst_cpsr, CPSR_C_POS, carry);
     if (overflow != ~0u)
         SetBit32(m_new_inst_cpsr, CPSR_V_POS, overflow);
-    if (m_new_inst_cpsr != m_inst_cpsr)
+    if (m_new_inst_cpsr != m_opcode_cpsr)
     {
         if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS, m_new_inst_cpsr))
             return false;
@@ -10420,7 +10420,7 @@ bool
 EmulateInstructionARM::EvaluateInstruction ()
 {
     // Advance the ITSTATE bits to their values for the next instruction.
-    if (m_inst_mode == eModeThumb && m_it_session.InITBlock())
+    if (m_opcode_mode == eModeThumb && m_it_session.InITBlock())
         m_it_session.ITAdvance();
 
     return false;

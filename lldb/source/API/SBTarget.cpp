@@ -9,7 +9,7 @@
 
 #include "lldb/API/SBTarget.h"
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBModule.h"

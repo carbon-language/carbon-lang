@@ -156,7 +156,7 @@ DumpBasename (Stream &strm, const FileSpec *file_spec_ptr, uint32_t width)
 
 
 static void
-DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module, lldb::SortOrder sort_order)
+DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module, SortOrder sort_order)
 {
     if (module)
     {
@@ -741,7 +741,7 @@ public:
             case 's':
                 {
                     bool found_one = false;
-                    m_sort_order = (lldb::SortOrder) Args::StringToOptionEnum (option_arg, 
+                    m_sort_order = (SortOrder) Args::StringToOptionEnum (option_arg, 
                                                                                g_option_table[option_idx].enum_values, 
                                                                                eSortOrderNone,
                                                                                &found_one);
@@ -767,14 +767,14 @@ public:
             m_sort_order = eSortOrderNone;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
         }
 
         // Options table: Required for subclasses of Options.
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         SortOrder m_sort_order;
     };
@@ -784,7 +784,7 @@ protected:
     CommandOptions m_options;
 };
 
-static lldb::OptionEnumValueElement
+static OptionEnumValueElement
 g_sort_option_enumeration[4] =
 {
     { eSortOrderNone,       "none",     "No sorting, use the original symbol table order."},
@@ -794,7 +794,7 @@ g_sort_option_enumeration[4] =
 };
 
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectImageDumpSymtab::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "sort", 's', required_argument, g_sort_option_enumeration, 0, eArgTypeSortOrder, "Supply a sort order when dumping the symbol table."},
@@ -1171,7 +1171,7 @@ public:
             m_format_array.clear();
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -1179,7 +1179,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
         typedef std::vector< std::pair<char, uint32_t> > FormatWidthCollection;
@@ -1311,7 +1311,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectImageList::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "arch",       'a', optional_argument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
@@ -1441,7 +1441,7 @@ public:
             m_verbose = false;
         }
 
-        const lldb::OptionDefinition*
+        const OptionDefinition*
         GetDefinitions ()
         {
             return g_option_table;
@@ -1449,7 +1449,7 @@ public:
 
         // Options table: Required for subclasses of Options.
 
-        static lldb::OptionDefinition g_option_table[];
+        static OptionDefinition g_option_table[];
         int             m_type;         // Should be a eLookupTypeXXX enum after parsing options
         std::string     m_str;          // Holds name lookup
         FileSpec        m_file;         // Files for file lookups
@@ -1679,7 +1679,7 @@ protected:
     CommandOptions m_options;
 };
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectImageLookup::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddress,    "Lookup an address in one or more executable images."},

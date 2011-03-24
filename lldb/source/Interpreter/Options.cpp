@@ -177,7 +177,7 @@ Options::BuildValidOptionSets ()
     if (num_options == 0)
         return;
 
-    const lldb::OptionDefinition *full_options_table = GetDefinitions();
+    const OptionDefinition *full_options_table = GetDefinitions();
     m_required_options.resize(1);
     m_optional_options.resize(1);
     
@@ -230,7 +230,7 @@ Options::BuildValidOptionSets ()
 uint32_t
 Options::NumCommandOptions ()
 {
-    const lldb::OptionDefinition *full_options_table = GetDefinitions ();
+    const OptionDefinition *full_options_table = GetDefinitions ();
     if (full_options_table == NULL) 
         return 0;
         
@@ -258,7 +258,7 @@ Options::GetLongOptions ()
 
         uint32_t i;
         uint32_t j;
-        const lldb::OptionDefinition *full_options_table = GetDefinitions();
+        const OptionDefinition *full_options_table = GetDefinitions();
 
         std::bitset<256> option_seen;
 
@@ -368,7 +368,7 @@ Options::GenerateOptionUsage
 {
     const uint32_t screen_width = interpreter.GetDebugger().GetTerminalWidth();
 
-    const lldb::OptionDefinition *full_options_table = GetDefinitions();
+    const OptionDefinition *full_options_table = GetDefinitions();
     const uint32_t save_indent_level = strm.GetIndentLevel();
     const char *name;
 

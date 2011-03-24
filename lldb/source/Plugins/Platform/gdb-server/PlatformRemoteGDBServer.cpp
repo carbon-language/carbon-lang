@@ -128,7 +128,7 @@ PlatformRemoteGDBServer::~PlatformRemoteGDBServer()
 
 uint32_t
 PlatformRemoteGDBServer::FindProcessesByName (const char *name_match, 
-                                              lldb::NameMatchType name_match_type,
+                                              NameMatchType name_match_type,
                                               ProcessInfoList &process_infos)
 {
     return 0;

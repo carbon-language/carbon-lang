@@ -105,7 +105,7 @@ CommandObjectExpression::CommandOptions::ResetOptionValues ()
     show_summary = true;
 }
 
-const lldb::OptionDefinition*
+const OptionDefinition*
 CommandObjectExpression::CommandOptions::GetDefinitions ()
 {
     return g_option_table;
@@ -236,7 +236,7 @@ CommandObjectExpression::EvaluateExpression
     {
         lldb::ValueObjectSP result_valobj_sp;
 
-        lldb::ExecutionResults exe_results;
+        ExecutionResults exe_results;
         
         bool keep_in_memory = true;
         
@@ -375,7 +375,7 @@ CommandObjectExpression::ExecuteRawCommandString
     return false;
 }
 
-lldb::OptionDefinition
+OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
   //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},

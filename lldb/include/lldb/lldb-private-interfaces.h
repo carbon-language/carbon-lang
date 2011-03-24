@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_lldb_interfaces_h_
-#define liblldb_lldb_interfaces_h_
+#ifndef liblldb_lldb_private_interfaces_h_
+#define liblldb_lldb_private_interfaces_h_
 
 #if defined(__cplusplus)
 
@@ -34,8 +34,10 @@ namespace lldb_private
     typedef UnwindAssemblyProfiler* (*UnwindAssemblyProfilerCreateInstance) (const ArchSpec &arch);
     typedef ArchDefaultUnwindPlan* (*ArchDefaultUnwindPlanCreateInstance) (const ArchSpec &arch);
     typedef ArchVolatileRegs* (*ArchVolatileRegsCreateInstance) (const ArchSpec &arch);
+    typedef int (*ComparisonFunction)(const void *, const void *);
+
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
 
-#endif  // liblldb_lldb_interfaces_h_
+#endif  // liblldb_lldb_private_interfaces_h_

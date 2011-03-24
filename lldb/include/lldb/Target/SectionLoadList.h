@@ -17,7 +17,7 @@
 // Other libraries and framework includes
 #include "llvm/ADT/DenseMap.h"
 // Project includes
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private {

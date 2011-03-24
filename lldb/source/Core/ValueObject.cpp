@@ -439,7 +439,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                     if (process != NULL)
                     {
                         lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
-                        lldb::AddressType cstr_address_type = eAddressTypeInvalid;
+                        AddressType cstr_address_type = eAddressTypeInvalid;
 
                         size_t cstr_len = 0;
                         if (type_flags.Test (ClangASTContext::eTypeIsArray))
@@ -521,7 +521,7 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                 }
                 else if (ClangASTContext::IsFunctionPointerType (clang_type))
                 {
-                    lldb::AddressType func_ptr_address_type = eAddressTypeInvalid;
+                    AddressType func_ptr_address_type = eAddressTypeInvalid;
                     lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
 
                     if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
@@ -684,7 +684,7 @@ ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
 }
 
 addr_t
-ValueObject::GetAddressOf (lldb::AddressType &address_type, bool scalar_is_load_address)
+ValueObject::GetAddressOf (AddressType &address_type, bool scalar_is_load_address)
 {
     switch (m_value.GetValueType())
     {
@@ -710,7 +710,7 @@ ValueObject::GetAddressOf (lldb::AddressType &address_type, bool scalar_is_load_
 }
 
 addr_t
-ValueObject::GetPointerValue (lldb::AddressType &address_type, bool scalar_is_load_address)
+ValueObject::GetPointerValue (AddressType &address_type, bool scalar_is_load_address)
 {
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     address_type = eAddressTypeInvalid;
@@ -1145,7 +1145,7 @@ ValueObject::DumpValueObject
                 {
                     // We have a pointer or reference whose value is an address.
                     // Make sure that address is not NULL
-                    lldb::AddressType ptr_address_type;
+                    AddressType ptr_address_type;
                     if (valobj->GetPointerValue (ptr_address_type, true) == 0)
                         print_children = false;
 
@@ -1339,7 +1339,7 @@ ValueObject::Dereference (Error &error)
 ValueObject::AddressOf (Error &error)
 {
     lldb::ValueObjectSP valobj_sp;
-    lldb::AddressType address_type = eAddressTypeInvalid;
+    AddressType address_type = eAddressTypeInvalid;
     const bool scalar_is_load_address = false;
     lldb::addr_t addr = GetAddressOf (address_type, scalar_is_load_address);
     error.Clear();

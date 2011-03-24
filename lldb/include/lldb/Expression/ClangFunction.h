@@ -265,7 +265,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
 	//------------------------------------------------------------------
-    static lldb::ExecutionResults 
+    static ExecutionResults 
     ExecuteFunction (ExecutionContext &exe_ctx, 
                      lldb::addr_t function_address, 
                      lldb::addr_t &void_arg, 
@@ -295,7 +295,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    lldb::ExecutionResults 
+    ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                      Stream &errors, 
                      Value &results);
@@ -321,7 +321,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    lldb::ExecutionResults 
+    ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                      Stream &errors, bool stop_others, 
                      Value &results);
@@ -351,7 +351,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    lldb::ExecutionResults 
+    ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                     Stream &errors, 
                     uint32_t single_thread_timeout_usec, 
@@ -391,7 +391,7 @@ public:
     /// @return
     ///     Returns one of the ExecutionResults enum indicating function call status.
     //------------------------------------------------------------------
-    lldb::ExecutionResults 
+    ExecutionResults 
     ExecuteFunction(ExecutionContext &exe_ctx, 
                     lldb::addr_t *args_addr_ptr, 
                     Stream &errors, 

@@ -369,7 +369,7 @@ MachException::Message::Reply(task_t task, pid_t pid, int signal)
         else
             err.Clear();
 
-        if (log && log->GetMask().Test(PD_LOG_EXCEPTIONS) || err.Fail())
+        if (log && (log->GetMask().Test(PD_LOG_EXCEPTIONS) || err.Fail()))
             err.PutToLog(log.get(), "::ptrace (request = PT_THUPDATE, pid = %i, tid = 0x%4.4x, signal = %i)", state_pid, state.thread_port, signal);
     }
 

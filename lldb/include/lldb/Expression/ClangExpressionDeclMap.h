@@ -20,7 +20,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "llvm/ADT/DenseMap.h"
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
@@ -721,7 +721,7 @@ private:
     //------------------------------------------------------------------
     void 
     AddOneRegister (NameSearchContext &context, 
-                    const lldb::RegisterInfo *reg_info);
+                    const RegisterInfo *reg_info);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
@@ -878,7 +878,7 @@ private:
     DoMaterializeOneRegister (bool dematerialize,
                               ExecutionContext &exe_ctx,
                               RegisterContext &reg_ctx,
-                              const lldb::RegisterInfo &reg_info,
+                              const RegisterInfo &reg_info,
                               lldb::addr_t addr, 
                               Error &err);
     

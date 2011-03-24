@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_forward_rtti_h_
-#define LLDB_forward_rtti_h_
+#ifndef LLDB_lldb_forward_rtti_h_
+#define LLDB_lldb_forward_rtti_h_
 
 #if defined(__cplusplus)
 
@@ -79,4 +79,4 @@ namespace lldb {
 
 #endif  // #if defined(__cplusplus)
 
-#endif  // LLDB_forward_rtti_h_
+#endif  // LLDB_lldb_forward_rtti_h_

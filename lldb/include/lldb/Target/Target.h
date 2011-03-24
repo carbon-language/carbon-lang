@@ -15,7 +15,7 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Breakpoint/BreakpointList.h"
 #include "lldb/Breakpoint/BreakpointLocationCollection.h"
 #include "lldb/Core/Broadcaster.h"
@@ -55,7 +55,7 @@ public:
                                     const char *value,
                                     const ConstString &instance_name,
                                     const SettingEntry &entry,
-                                    lldb::VarSetOperationType op,
+                                    VarSetOperationType op,
                                     Error &err,
                                     bool pending);
 
@@ -65,42 +65,6 @@ public:
                               StringList &value,
                               Error *err);
 
-    lldb::ExecutionLevel
-    GetExecutionLevel () const
-    {
-        return m_execution_level;
-    }
-    
-    void
-    SetExecutionLevel (lldb::ExecutionLevel execution_level)
-    {
-        m_execution_level = execution_level;
-    }
-    
-    lldb::ExecutionMode
-    GetExecutionMode () const
-    {
-        return m_execution_mode;
-    }
-    
-    void
-    SetExecutionMode (lldb::ExecutionMode execution_mode)
-    {
-        m_execution_mode = execution_mode;
-    }
-    
-    lldb::ExecutionOSType
-    GetExecutionOSType () const
-    {
-        return m_execution_os_type;
-    }
-    
-    void
-    SetExecutionOSType (lldb::ExecutionOSType execution_os_type)
-    {
-        m_execution_os_type = execution_os_type;
-    }
-    
 protected:
 
     void
@@ -112,9 +76,6 @@ protected:
     
     std::string m_expr_prefix_path;
     std::string m_expr_prefix_contents;
-    lldb::ExecutionLevel m_execution_level;
-    lldb::ExecutionMode m_execution_mode;
-    lldb::ExecutionOSType m_execution_os_type;
 
 };
 
@@ -492,7 +453,7 @@ public:
     // we provide a way for expressions to be evaluated from the Target itself.
     // If an expression is going to be run, then it should have a frame filled
     // in in th execution context. 
-    lldb::ExecutionResults
+    ExecutionResults
     EvaluateExpression (const char *expression,
                         StackFrame *frame,
                         bool unwind_on_error,
@@ -662,7 +623,7 @@ public:
                            const char *index_value,
                            const char *value,
                            const SettingEntry &entry,
-                           const lldb::VarSetOperationType op,
+                           const VarSetOperationType op,
                            Error&err);
         
         bool

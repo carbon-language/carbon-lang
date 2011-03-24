@@ -116,7 +116,7 @@
 /* The liblldb header files to be included. */
 
 %{
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBBlock.h"
 #include "lldb/API/SBBreakpoint.h"

@@ -42,7 +42,7 @@ public:
                                     const char *value,
                                     const ConstString &instance_name,
                                     const SettingEntry &entry,
-                                    lldb::VarSetOperationType op,
+                                    VarSetOperationType op,
                                     Error &err,
                                     bool pending);
 
@@ -270,10 +270,10 @@ public:
     bool
     ShouldStop (Event *event_ptr);
 
-    lldb::Vote
+    Vote
     ShouldReportStop (Event *event_ptr);
 
-    lldb::Vote
+    Vote
     ShouldReportRun (Event *event_ptr);
     
     // Return whether this thread matches the specification in ThreadSpec.  This is a virtual
@@ -442,7 +442,7 @@ public:
     //------------------------------------------------------------------
     virtual ThreadPlan *
     QueueThreadPlanForStepRange (bool abort_other_plans,
-                                 lldb::StepType type,
+                                 StepType type,
                                  const AddressRange &range,
                                  const SymbolContext &addr_context,
                                  lldb::RunMode stop_other_threads,
@@ -481,8 +481,8 @@ public:
                                SymbolContext *addr_context,
                                bool first_insn,
                                bool stop_other_threads,
-                               lldb::Vote stop_vote, // = lldb::eVoteYes,
-                               lldb::Vote run_vote, // = lldb::eVoteNoOpinion);
+                               Vote stop_vote, // = eVoteYes,
+                               Vote run_vote, // = eVoteNoOpinion);
                                uint32_t frame_idx);
 
     //------------------------------------------------------------------

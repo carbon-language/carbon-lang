@@ -59,7 +59,7 @@ public:
                                     const char *value,
                                     const ConstString &instance_name,
                                     const SettingEntry &entry,
-                                    lldb::VarSetOperationType op,
+                                    VarSetOperationType op,
                                     Error &err,
                                     bool pending);
 
@@ -1431,7 +1431,7 @@ public:
     lldb::StateType
     GetState ();
     
-    lldb::ExecutionResults
+    ExecutionResults
     RunThreadPlan (ExecutionContext &exe_ctx,    
                     lldb::ThreadPlanSP &thread_plan_sp,
                     bool stop_others,
@@ -1441,7 +1441,7 @@ public:
                     Stream &errors);
 
     static const char *
-    ExecutionResultAsCString (lldb::ExecutionResults result);
+    ExecutionResultAsCString (ExecutionResults result);
 
 protected:
     friend class CommandObjectProcessLaunch;

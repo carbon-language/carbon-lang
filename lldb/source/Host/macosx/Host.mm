@@ -958,7 +958,7 @@ GetMacOSXProcessCPUType (ProcessInfo &process_info)
                 case llvm::MachO::CPUTypeX86_64:    sub = llvm::MachO::CPUSubType_X86_64_ALL;   break;
                 default: break;
             }
-            process_info.GetArchitecture ().SetArchitecture (lldb::eArchTypeMachO, cpu, sub);
+            process_info.GetArchitecture ().SetArchitecture (eArchTypeMachO, cpu, sub);
             return true;
         }
     }

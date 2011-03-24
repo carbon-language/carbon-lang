@@ -55,7 +55,7 @@ public:
     FindSectionByID (lldb::user_id_t sect_id) const;
 
     lldb::SectionSP
-    FindSectionByType (lldb::SectionType sect_type, bool check_children, uint32_t start_idx = 0) const;
+    FindSectionByType (SectionType sect_type, bool check_children, uint32_t start_idx = 0) const;
 
     lldb::SectionSP
     GetSharedPointer (const Section *section, bool check_children) const;
@@ -105,7 +105,7 @@ public:
         Module* module,
         lldb::user_id_t sect_id,
         const ConstString &name,
-        lldb::SectionType sect_type,
+        SectionType sect_type,
         lldb::addr_t file_vm_addr,
         lldb::addr_t vm_size,
         uint64_t file_offset,
@@ -268,7 +268,7 @@ public:
     lldb::addr_t
     GetLinkedFileAddress () const;
 
-    lldb::SectionType
+    SectionType
     GetType () const
     {
         return m_type;
@@ -278,7 +278,7 @@ protected:
 
     Section *       m_parent;           // Parent section or NULL if no parent.
     ConstString     m_name;             // Name of this section
-    lldb::SectionType m_type;           // The type of this section
+    SectionType m_type;           // The type of this section
     lldb::addr_t    m_file_addr;        // The absolute file virtual address range of this section if m_parent == NULL,
                                         // offset from parent file virtual address if m_parent != NULL
     lldb::addr_t    m_byte_size;        // Size in bytes that this section will occupy in memory at runtime

@@ -10,7 +10,7 @@
 #ifndef liblldb_IRForTarget_h_
 #define liblldb_IRForTarget_h_
 
-#include "lldb/lldb-include.h"
+#include "lldb/lldb-public.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/TaggedASTType.h"

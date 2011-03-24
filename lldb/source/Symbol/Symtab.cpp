@@ -74,7 +74,7 @@ Symtab::GetNumSymbols() const
 }
 
 void
-Symtab::Dump (Stream *s, Target *target, lldb::SortOrder sort_order)
+Symtab::Dump (Stream *s, Target *target, SortOrder sort_order)
 {
     Mutex::Locker locker (m_mutex);
 
@@ -749,7 +749,11 @@ static SymbolSearchInfo
 FindIndexPtrForSymbolContainingAddress(Symtab* symtab, addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes)
 {
     SymbolSearchInfo info = { symtab, file_addr, NULL, NULL, 0 };
-    bsearch(&info, indexes, num_indexes, sizeof(uint32_t), (comparison_function)SymbolWithClosestFileAddress);
+    ::bsearch (&info, 
+               indexes, 
+               num_indexes, 
+               sizeof(uint32_t), 
+               (ComparisonFunction)SymbolWithClosestFileAddress);
     return info;
 }
 
@@ -851,7 +855,11 @@ Symtab::FindSymbolWithFileAddress (addr_t file_addr)
 
     SymbolSearchInfo info = { this, file_addr, NULL, NULL, 0 };
 
-    uint32_t* match = (uint32_t*)bsearch(&info, &m_addr_indexes[0], m_addr_indexes.size(), sizeof(uint32_t), (comparison_function)SymbolWithFileAddress);
+    uint32_t* match = (uint32_t*)::bsearch (&info, 
+                                            &m_addr_indexes[0], 
+                                            m_addr_indexes.size(), 
+                                            sizeof(uint32_t), 
+                                            (ComparisonFunction)SymbolWithFileAddress);
     if (match)
         return SymbolAtIndex (*match);
     return NULL;
@@ -865,7 +873,11 @@ Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* index
 
     SymbolSearchInfo info = { this, file_addr, NULL, NULL, 0 };
 
-    bsearch(&info, indexes, num_indexes, sizeof(uint32_t), (comparison_function)SymbolWithClosestFileAddress);
+    ::bsearch (&info, 
+               indexes, 
+               num_indexes, 
+               sizeof(uint32_t), 
+               (ComparisonFunction)SymbolWithClosestFileAddress);
 
     if (info.match_symbol)
     {

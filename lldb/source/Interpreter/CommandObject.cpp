@@ -489,7 +489,7 @@ CommandObject::GetArgumentName (CommandArgumentType arg_type)
 }
 
 bool
-CommandObject::IsPairType (lldb::ArgumentRepetitionType arg_repeat_type)
+CommandObject::IsPairType (ArgumentRepetitionType arg_repeat_type)
 {
     if ((arg_repeat_type == eArgRepeatPairPlain)
         ||  (arg_repeat_type == eArgRepeatPairOptional)
