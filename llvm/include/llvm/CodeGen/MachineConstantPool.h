@@ -80,7 +80,7 @@ public:
   } Val;
 
   /// The required alignment for this entry. The top bit is set when Val is
-  /// a MachineConstantPoolValue.
+  /// a target specific MachineConstantPoolValue.
   unsigned Alignment;
 
   MachineConstantPoolEntry(const Constant *V, unsigned A)
@@ -93,6 +93,9 @@ public:
     Alignment |= 1U << (sizeof(unsigned)*CHAR_BIT-1);
   }
 
+  /// isMachineConstantPoolEntry - Return true if the MachineConstantPoolEntry
+  /// is indeed a target specific constantpool entry, not a wrapper over a
+  /// Constant.
   bool isMachineConstantPoolEntry() const {
     return (int)Alignment < 0;
   }
