@@ -267,7 +267,7 @@ static inline uint32_t ThumbExpandImm_C(uint32_t opcode, uint32_t carry_in, uint
 
     if (bits(imm12, 11, 10) == 0)
     {
-        switch (bits(imm12, 8, 9)) {
+        switch (bits(imm12, 9, 8)) {
         case 0:
             imm32 = abcdefgh;
             break;
