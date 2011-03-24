@@ -157,7 +157,7 @@ class Parser : public CodeCompletionHandler {
   unsigned TemplateParameterDepth;
   
   /// Factory object for creating AttributeList objects.
-  AttributeList::Factory AttrFactory;
+  AttributeFactory AttrFactory;
 
 public:
   Parser(Preprocessor &PP, Sema &Actions);
@@ -801,10 +801,9 @@ private:
     ParsingDeclRAIIObject ParsingRAII;
 
   public:
-    ParsingDeclSpec(Parser &P) : ParsingRAII(P) {}
-    ParsingDeclSpec(ParsingDeclRAIIObject &RAII) : ParsingRAII(RAII) {}
+    ParsingDeclSpec(Parser &P) : DeclSpec(P.AttrFactory), ParsingRAII(P) {}
     ParsingDeclSpec(Parser &P, ParsingDeclRAIIObject *RAII)
-      : ParsingRAII(P, RAII) {}
+      : DeclSpec(P.AttrFactory), ParsingRAII(P, RAII) {}
 
     void complete(Decl *D) {
       ParsingRAII.complete(D);
@@ -943,6 +942,9 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   struct ParsedAttributesWithRange : ParsedAttributes {
+    ParsedAttributesWithRange(AttributeFactory &factory)
+      : ParsedAttributes(factory) {}
+
     SourceRange Range;
   };
 
@@ -1506,10 +1508,10 @@ private:
 
   void MaybeParseGNUAttributes(Declarator &D) {
     if (Tok.is(tok::kw___attribute)) {
-      ParsedAttributes attrs;
+      ParsedAttributes attrs(AttrFactory);
       SourceLocation endLoc;
       ParseGNUAttributes(attrs, &endLoc);
-      D.addAttributes(attrs.getList(), endLoc);
+      D.takeAttributes(attrs, endLoc);
     }
   }
   void MaybeParseGNUAttributes(ParsedAttributes &attrs,
@@ -1522,18 +1524,18 @@ private:
 
   void MaybeParseCXX0XAttributes(Declarator &D) {
     if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
-      ParsedAttributesWithRange attrs;
+      ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX0XAttributes(attrs, &endLoc);
-      D.addAttributes(attrs.getList(), endLoc);
+      D.takeAttributes(attrs, endLoc);
     }
   }
   void MaybeParseCXX0XAttributes(ParsedAttributes &attrs,
                                  SourceLocation *endLoc = 0) {
     if (getLang().CPlusPlus0x && isCXX0XAttributeSpecifier()) {
-      ParsedAttributesWithRange attrsWithRange;
+      ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX0XAttributes(attrsWithRange, endLoc);
-      attrs.append(attrsWithRange.getList());
+      attrs.takeAllFrom(attrsWithRange);
     }
   }
   void MaybeParseCXX0XAttributes(ParsedAttributesWithRange &attrs,

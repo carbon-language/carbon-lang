@@ -69,11 +69,9 @@ Decl *Parser::ParseNamespace(unsigned Context,
   }
 
   // Read label attributes, if present.
-  ParsedAttributes attrs;
+  ParsedAttributes attrs(AttrFactory);
   if (Tok.is(tok::kw___attribute)) {
     attrTok = Tok;
-
-    // FIXME: save these somewhere.
     ParseGNUAttributes(attrs);
   }
 
@@ -118,7 +116,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
                                       "parsing namespace");
 
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    ParsedAttributesWithRange attrs;
+    ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
     MaybeParseMicrosoftAttributes(attrs);
     ParseExternalDeclaration(attrs);
@@ -138,9 +136,9 @@ Decl *Parser::ParseNamespace(unsigned Context,
 /// alias definition.
 ///
 Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
-                                              SourceLocation AliasLoc,
-                                              IdentifierInfo *Alias,
-                                              SourceLocation &DeclEnd) {
+                                  SourceLocation AliasLoc,
+                                  IdentifierInfo *Alias,
+                                  SourceLocation &DeclEnd) {
   assert(Tok.is(tok::equal) && "Not equal token");
 
   ConsumeToken(); // eat the '='.
@@ -199,7 +197,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
                                       Tok.is(tok::l_brace) ? Tok.getLocation()
                                                            : SourceLocation());
 
-  ParsedAttributesWithRange attrs;
+  ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX0XAttributes(attrs);
   MaybeParseMicrosoftAttributes(attrs);
 
@@ -216,7 +214,7 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 
   SourceLocation LBrace = ConsumeBrace();
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-    ParsedAttributesWithRange attrs;
+    ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
     MaybeParseMicrosoftAttributes(attrs);
     ParseExternalDeclaration(attrs);
@@ -380,7 +378,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   }
 
   // Parse (optional) attributes (most likely GNU strong-using extension).
-  ParsedAttributes attrs;
+  ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
 
   // Eat ';'.
@@ -590,7 +588,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
   EndLocation = IdLoc;
 
   // Fake up a Declarator to use with ActOnTypeName.
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   DS.SetRangeStart(IdLoc);
   DS.SetRangeEnd(EndLocation);
   DS.getTypeSpecScope() = SS;
@@ -677,7 +675,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     SuppressingAccessChecks = true;
   }
 
-  ParsedAttributes attrs;
+  ParsedAttributes attrs(AttrFactory);
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))
     ParseGNUAttributes(attrs);
@@ -1488,7 +1486,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   // is a bitfield.
   ColonProtectionRAIIObject X(*this);
 
-  ParsedAttributesWithRange attrs;
+  ParsedAttributesWithRange attrs(AttrFactory);
   // Optional C++0x attribute-specifier
   MaybeParseCXX0XAttributes(attrs);
   MaybeParseMicrosoftAttributes(attrs);
@@ -1837,7 +1835,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   }
 
   // If attributes exist after class contents, parse them.
-  ParsedAttributes attrs;
+  ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
 
   if (TagDecl)
@@ -2309,8 +2307,8 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
           break;
         }
 
-        attrs.add(AttrFactory.Create(AttrName, AttrLoc, 0, AttrLoc, 0,
-                                     SourceLocation(), 0, 0, false, true));
+        attrs.addNew(AttrName, AttrLoc, 0, AttrLoc, 0,
+                     SourceLocation(), 0, 0, false, true);
         AttrParsed = true;
         break;
       }
@@ -2330,9 +2328,9 @@ void Parser::ParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
 
         ExprVector ArgExprs(Actions);
         ArgExprs.push_back(ArgExpr.release());
-        attrs.add(AttrFactory.Create(AttrName, AttrLoc, 0, AttrLoc,
-                                     0, ParamLoc, ArgExprs.take(), 1,
-                                     false, true));
+        attrs.addNew(AttrName, AttrLoc, 0, AttrLoc,
+                     0, ParamLoc, ArgExprs.take(), 1,
+                     false, true);
 
         AttrParsed = true;
         break;

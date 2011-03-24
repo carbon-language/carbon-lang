@@ -81,7 +81,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
 
-  ParsedAttributesWithRange attrs;
+  ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX0XAttributes(attrs);
 
   // Cases in this switch statement should fall through if the parser expects
@@ -500,7 +500,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       ConsumeToken();
     }
     
-    DeclSpec DS;
+    DeclSpec DS(AttrFactory);
     DeclGroupPtrTy Res = Actions.FinalizeDeclaratorGroup(getCurScope(), DS,
                                       DeclsInGroup.data(), DeclsInGroup.size());
     StmtResult R = Actions.ActOnDeclStmt(Res, LabelLoc, Tok.getLocation());
@@ -528,7 +528,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       while (Tok.is(tok::kw___extension__))
         ConsumeToken();
 
-      ParsedAttributesWithRange attrs;
+      ParsedAttributesWithRange attrs(AttrFactory);
       MaybeParseCXX0XAttributes(attrs);
 
       // If this is the start of a declaration, parse it as such.
@@ -1049,7 +1049,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     if (!C99orCXXorObjC)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
 
-    ParsedAttributesWithRange attrs;
+    ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
@@ -1359,7 +1359,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     msAsm = true;
     return FuzzyParseMicrosoftAsmStatement(AsmLoc);
   }
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   SourceLocation Loc = Tok.getLocation();
   ParseTypeQualifierListOpt(DS, true, false);
 
@@ -1643,7 +1643,7 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  ParsedAttributesWithRange attrs;
+  ParsedAttributesWithRange attrs(AttrFactory);
   StmtResult TryBlock(ParseCompoundStatement(attrs));
   if (TryBlock.isInvalid())
     return move(TryBlock);
@@ -1696,7 +1696,7 @@ StmtResult Parser::ParseCXXCatchBlock() {
   // without default arguments.
   Decl *ExceptionDecl = 0;
   if (Tok.isNot(tok::ellipsis)) {
-    DeclSpec DS;
+    DeclSpec DS(AttrFactory);
     if (ParseCXXTypeSpecifierSeq(DS))
       return StmtError();
     Declarator ExDecl(DS, Declarator::CXXCatchContext);
@@ -1712,7 +1712,7 @@ StmtResult Parser::ParseCXXCatchBlock() {
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
 
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
-  ParsedAttributes attrs;
+  ParsedAttributes attrs(AttrFactory);
   StmtResult Block(ParseCompoundStatement(attrs));
   if (Block.isInvalid())
     return move(Block);

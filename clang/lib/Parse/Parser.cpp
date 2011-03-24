@@ -441,7 +441,7 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
     return true;
   }
 
-  ParsedAttributesWithRange attrs;
+  ParsedAttributesWithRange attrs(AttrFactory);
   MaybeParseCXX0XAttributes(attrs);
   MaybeParseMicrosoftAttributes(attrs);
   
@@ -839,7 +839,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     SourceLocation DSStart = Tok.getLocation();
 
     // Parse the common declaration-specifiers piece.
-    DeclSpec DS;
+    DeclSpec DS(AttrFactory);
     ParseDeclarationSpecifiers(DS);
 
     // C99 6.9.1p6: 'each declaration in the declaration list shall have at

@@ -271,7 +271,6 @@ public:
   };
 
 private:
-
   // storage-class-specifier
   /*SCS*/unsigned StorageClassSpec : 3;
   unsigned SCS_thread_specified : 1;
@@ -358,7 +357,7 @@ private:
   void operator=(const DeclSpec&); // DO NOT IMPLEMENT
 public:
 
-  DeclSpec()
+  DeclSpec(AttributeFactory &attrFactory)
     : StorageClassSpec(SCS_unspecified),
       SCS_thread_specified(false),
       SCS_extern_in_linkage_spec(false),
@@ -377,6 +376,7 @@ public:
       Friend_specified(false),
       Constexpr_specified(false),
       StorageClassSpecAsWritten(SCS_unspecified),
+      Attrs(attrFactory),
       ProtocolQualifiers(0),
       NumProtocolQualifiers(0),
       ProtocolLocs(0),
@@ -581,6 +581,10 @@ public:
   bool isConstexprSpecified() const { return Constexpr_specified; }
   SourceLocation getConstexprSpecLoc() const { return ConstexprLoc; }
 
+  AttributePool &getAttributePool() const {
+    return Attrs.getPool();
+  }
+
   /// AddAttributes - contatenates two attribute lists.
   /// The GCC attribute syntax allows for the following:
   ///
@@ -594,9 +598,9 @@ public:
   /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
   ///
   void addAttributes(AttributeList *AL) {
-    Attrs.append(AL);
+    Attrs.addAll(AL);
   }
-  void aetAttributes(AttributeList *AL) {
+  void setAttributes(AttributeList *AL) {
     Attrs.set(AL);
   }
 
@@ -608,14 +612,12 @@ public:
   /// TakeAttributes - Return the current attribute list and remove them from
   /// the DeclSpec so that it doesn't own them.
   ParsedAttributes takeAttributes() {
-    ParsedAttributes saved = Attrs;
-    Attrs.clear();
-    return saved;
+    // The non-const "copy" constructor clears the operand automatically.
+    return Attrs;
   }
 
   void takeAttributesFrom(ParsedAttributes &attrs) {
-    Attrs.append(attrs.getList());
-    attrs.clear();
+    Attrs.takeAllFrom(attrs);
   }
 
   typedef Decl * const *ProtocolQualifierListTy;
@@ -1197,8 +1199,7 @@ struct DeclaratorChunk {
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,
                                     SourceLocation ConstQualLoc,
                                     SourceLocation VolatileQualLoc,
-                                    SourceLocation RestrictQualLoc,
-                                    const ParsedAttributes &attrs) {
+                                    SourceLocation RestrictQualLoc) {
     DeclaratorChunk I;
     I.Kind                = Pointer;
     I.Loc                 = Loc;
@@ -1206,35 +1207,33 @@ struct DeclaratorChunk {
     I.Ptr.ConstQualLoc    = ConstQualLoc.getRawEncoding();
     I.Ptr.VolatileQualLoc = VolatileQualLoc.getRawEncoding();
     I.Ptr.RestrictQualLoc = RestrictQualLoc.getRawEncoding();
-    I.Ptr.AttrList        = attrs.getList();
+    I.Ptr.AttrList        = 0;
     return I;
   }
 
   /// getReference - Return a DeclaratorChunk for a reference.
   ///
   static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc,
-                                      const ParsedAttributes &attrs,
                                       bool lvalue) {
     DeclaratorChunk I;
     I.Kind            = Reference;
     I.Loc             = Loc;
     I.Ref.HasRestrict = (TypeQuals & DeclSpec::TQ_restrict) != 0;
     I.Ref.LValueRef   = lvalue;
-    I.Ref.AttrList    = attrs.getList();
+    I.Ref.AttrList    = 0;
     return I;
   }
 
   /// getArray - Return a DeclaratorChunk for an array.
   ///
   static DeclaratorChunk getArray(unsigned TypeQuals,
-                                  const ParsedAttributes &attrs,
                                   bool isStatic, bool isStar, Expr *NumElts,
                                   SourceLocation LBLoc, SourceLocation RBLoc) {
     DeclaratorChunk I;
     I.Kind          = Array;
     I.Loc           = LBLoc;
     I.EndLoc        = RBLoc;
-    I.Arr.AttrList  = attrs.getList();
+    I.Arr.AttrList  = 0;
     I.Arr.TypeQuals = TypeQuals;
     I.Arr.hasStatic = isStatic;
     I.Arr.isStar    = isStar;
@@ -1244,8 +1243,7 @@ struct DeclaratorChunk {
 
   /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
   /// "TheDeclarator" is the declarator that this will be added to.
-  static DeclaratorChunk getFunction(const ParsedAttributes &attrs,
-                                     bool hasProto, bool isVariadic,
+  static DeclaratorChunk getFunction(bool hasProto, bool isVariadic,
                                      SourceLocation EllipsisLoc,
                                      ParamInfo *ArgInfo, unsigned NumArgs,
                                      unsigned TypeQuals, 
@@ -1265,25 +1263,24 @@ struct DeclaratorChunk {
 
   /// getBlockPointer - Return a DeclaratorChunk for a block.
   ///
-  static DeclaratorChunk getBlockPointer(unsigned TypeQuals, SourceLocation Loc,
-                                         const ParsedAttributes &attrs) {
+  static DeclaratorChunk getBlockPointer(unsigned TypeQuals,
+                                         SourceLocation Loc) {
     DeclaratorChunk I;
     I.Kind          = BlockPointer;
     I.Loc           = Loc;
     I.Cls.TypeQuals = TypeQuals;
-    I.Cls.AttrList  = attrs.getList();
+    I.Cls.AttrList  = 0;
     return I;
   }
 
   static DeclaratorChunk getMemberPointer(const CXXScopeSpec &SS,
                                           unsigned TypeQuals,
-                                          SourceLocation Loc,
-                                          const ParsedAttributes &attrs) {
+                                          SourceLocation Loc) {
     DeclaratorChunk I;
     I.Kind          = MemberPointer;
     I.Loc           = Loc;
     I.Mem.TypeQuals = TypeQuals;
-    I.Mem.AttrList  = attrs.getList();
+    I.Mem.AttrList  = 0;
     new (I.Mem.ScopeMem.Mem) CXXScopeSpec(SS);
     return I;
   }
@@ -1352,8 +1349,8 @@ private:
   /// GroupingParens - Set by Parser::ParseParenDeclarator().
   bool GroupingParens : 1;
 
-  /// AttrList - Attributes.
-  AttributeList *AttrList;
+  /// Attrs - Attributes.
+  ParsedAttributes Attrs;
 
   /// AsmLabel - The asm label, if specified.
   Expr *AsmLabel;
@@ -1377,8 +1374,8 @@ public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Range(ds.getSourceRange()), Context(C),
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
-      GroupingParens(false), AttrList(0), AsmLabel(0),
-      InlineParamsUsed(false), Extension(false) {
+      GroupingParens(false), Attrs(ds.getAttributePool().getFactory()),
+      AsmLabel(0), InlineParamsUsed(false), Extension(false) {
   }
 
   ~Declarator() {
@@ -1395,6 +1392,10 @@ public:
   /// Declarators.  This should only be done when the declspec is known to not
   /// be shared or when in error recovery etc.
   DeclSpec &getMutableDeclSpec() { return const_cast<DeclSpec &>(DS); }
+
+  AttributePool &getAttributePool() const {
+    return Attrs.getPool();
+  }
 
   /// getCXXScopeSpec - Return the C++ scope specifier (global scope or
   /// nested-name-specifier) that is part of the declarator-id.
@@ -1445,7 +1446,7 @@ public:
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
       DeclTypeInfo[i].destroy();
     DeclTypeInfo.clear();
-    AttrList = 0;
+    Attrs.clear();
     AsmLabel = 0;
     InlineParamsUsed = false;
   }
@@ -1552,8 +1553,13 @@ public:
   
   /// AddTypeInfo - Add a chunk to this declarator. Also extend the range to
   /// EndLoc, which should be the last token of the chunk.
-  void AddTypeInfo(const DeclaratorChunk &TI, SourceLocation EndLoc) {
+  void AddTypeInfo(const DeclaratorChunk &TI,
+                   ParsedAttributes &attrs,
+                   SourceLocation EndLoc) {
     DeclTypeInfo.push_back(TI);
+    DeclTypeInfo.back().getAttrListRef() = attrs.getList();
+    getAttributePool().takeAllFrom(attrs.getPool());
+
     if (!EndLoc.isInvalid())
       SetRangeEnd(EndLoc);
   }
@@ -1633,28 +1639,26 @@ public:
     return const_cast<Declarator*>(this)->getFunctionTypeInfo();
   }
 
-  /// AddAttributes - simply adds the attribute list to the Declarator.
+  /// takeAttributes - Takes attributes from the given parsed-attributes
+  /// set and add them to this declarator.
+  ///
   /// These examples both add 3 attributes to "var":
   ///  short int var __attribute__((aligned(16),common,deprecated));
   ///  short int x, __attribute__((aligned(16)) var
   ///                                 __attribute__((common,deprecated));
   ///
   /// Also extends the range of the declarator.
-  void addAttributes(AttributeList *alist, SourceLocation LastLoc) {
-    AttrList = addAttributeLists(AttrList, alist);
+  void takeAttributes(ParsedAttributes &attrs, SourceLocation lastLoc) {
+    Attrs.takeAllFrom(attrs);
 
-    if (!LastLoc.isInvalid())
-      SetRangeEnd(LastLoc);
+    if (!lastLoc.isInvalid())
+      SetRangeEnd(lastLoc);
   }
 
-  void addAttributes(const ParsedAttributes &attrs) {
-    addAttributes(attrs.getList(), SourceLocation());
-  }
+  const AttributeList *getAttributes() const { return Attrs.getList(); }
+  AttributeList *getAttributes() { return Attrs.getList(); }
 
-  const AttributeList *getAttributes() const { return AttrList; }
-  AttributeList *getAttributes() { return AttrList; }
-
-  AttributeList *&getAttrListRef() { return AttrList; }
+  AttributeList *&getAttrListRef() { return Attrs.getListRef(); }
 
   /// hasAttributes - do we contain any attributes?
   bool hasAttributes() const {

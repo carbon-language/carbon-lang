@@ -800,7 +800,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
   }
 
   // type-specifier-seq
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   ParseSpecifierQualifierList(DS);
 
   // declarator
@@ -1391,7 +1391,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   //     ptr-operator conversion-declarator[opt]
   
   // Parse the type-specifier-seq.
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   if (ParseCXXTypeSpecifierSeq(DS)) // FIXME: ObjectType?
     return true;
   
@@ -1644,7 +1644,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
   SourceLocation PlacementLParen, PlacementRParen;
 
   SourceRange TypeIdParens;
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   if (Tok.is(tok::l_paren)) {
     // If it turns out to be a placement, we change the type location.
@@ -1746,10 +1746,12 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
     first = false;
 
     SourceLocation RLoc = MatchRHSPunctuation(tok::r_square, LLoc);
-    D.AddTypeInfo(DeclaratorChunk::getArray(0, ParsedAttributes(),
+
+    ParsedAttributes attrs(AttrFactory);
+    D.AddTypeInfo(DeclaratorChunk::getArray(0,
                                             /*static=*/false, /*star=*/false,
                                             Size.release(), LLoc, RLoc),
-                  RLoc);
+                  attrs, RLoc);
 
     if (RLoc.isInvalid())
       return;

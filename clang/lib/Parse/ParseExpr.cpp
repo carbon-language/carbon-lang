@@ -683,7 +683,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         if (ParsedType Typ = Actions.getTypeName(II, ILoc, getCurScope()))
           if (Typ.get()->isObjCObjectOrInterfaceType()) {
             // Fake up a Declarator to use with ActOnTypeName.
-            DeclSpec DS;
+            DeclSpec DS(AttrFactory);
             DS.SetRangeStart(ILoc);
             DS.SetRangeEnd(ILoc);
             const char *PrevSpec = 0;
@@ -826,7 +826,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       ParsedType Type = getTypeAnnotation(Tok);
       
       // Fake up a Declarator to use with ActOnTypeName.
-      DeclSpec DS;
+      DeclSpec DS(AttrFactory);
       DS.SetRangeStart(Tok.getLocation());
       DS.SetRangeEnd(Tok.getLastLoc());
 
@@ -876,7 +876,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
     // postfix-expression: simple-type-specifier '(' expression-list[opt] ')'
     //
-    DeclSpec DS;
+    DeclSpec DS(AttrFactory);
     ParseCXXSimpleTypeSpecifier(DS);
     if (Tok.isNot(tok::l_paren))
       return ExprError(Diag(Tok, diag::err_expected_lparen_after_type)
@@ -1634,7 +1634,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    ParsedAttributes attrs;
+    ParsedAttributes attrs(AttrFactory);
     StmtResult Stmt(ParseCompoundStatement(attrs, true));
     ExprType = CompoundStmt;
 
@@ -1850,7 +1850,7 @@ void Parser::ParseBlockId() {
   }
   
   // Parse the specifier-qualifier-list piece.
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   ParseSpecifierQualifierList(DS);
 
   // Parse the block-declarator.
@@ -1858,7 +1858,7 @@ void Parser::ParseBlockId() {
   ParseDeclarator(DeclaratorInfo);
 
   // We do this for: ^ __attribute__((noreturn)) {, as DS has the attributes.
-  DeclaratorInfo.addAttributes(DS.takeAttributes());
+  DeclaratorInfo.takeAttributes(DS.getAttributes(), SourceLocation());
 
   MaybeParseGNUAttributes(DeclaratorInfo);
 
@@ -1894,7 +1894,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
   Actions.ActOnBlockStart(CaretLoc, getCurScope());
 
   // Parse the return type if present.
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   Declarator ParamInfo(DS, Declarator::BlockLiteralContext);
   // FIXME: Since the return type isn't actually parsed, it can't be used to
   // fill ParamInfo with an initial valid range, so do it manually.
@@ -1926,8 +1926,8 @@ ExprResult Parser::ParseBlockLiteralExpression() {
     ParseBlockId();
   } else {
     // Otherwise, pretend we saw (void).
-    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(ParsedAttributes(),
-                                                       true, false,
+    ParsedAttributes attrs(AttrFactory);
+    ParamInfo.AddTypeInfo(DeclaratorChunk::getFunction(true, false,
                                                        SourceLocation(),
                                                        0, 0, 0,
                                                        true, SourceLocation(),
@@ -1936,7 +1936,7 @@ ExprResult Parser::ParseBlockLiteralExpression() {
                                                        0, 0, 0, 0,
                                                        CaretLoc, CaretLoc,
                                                        ParamInfo),
-                          CaretLoc);
+                          attrs, CaretLoc);
 
     MaybeParseGNUAttributes(ParamInfo);
 

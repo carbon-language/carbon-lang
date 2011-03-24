@@ -536,7 +536,6 @@ static void maybeSynthesizeBlockSignature(TypeProcessingState &state,
 
   // ...and *prepend* it to the declarator.
   declarator.AddInnermostTypeInfo(DeclaratorChunk::getFunction(
-                             ParsedAttributes(),
                              /*proto*/ true,
                              /*variadic*/ false, SourceLocation(),
                              /*args*/ 0, 0,

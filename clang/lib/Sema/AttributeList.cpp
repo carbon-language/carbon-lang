@@ -12,46 +12,89 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/AttributeList.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
-AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
-                             IdentifierInfo *aName, SourceLocation aLoc,
-                             IdentifierInfo *sName, SourceLocation sLoc,
-                             IdentifierInfo *pName, SourceLocation pLoc,
-                             Expr **ExprList, unsigned numArgs,
-                             bool declspec, bool cxx0x)
-  : AttrName(aName), AttrLoc(aLoc), ScopeName(sName),
-    ScopeLoc(sLoc),
-    ParmName(pName), ParmLoc(pLoc), NumArgs(numArgs), Next(0),
-    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false) {
-
-  if (numArgs == 0)
-    Args = 0;
-  else {
-    // Allocate the Args array using the BumpPtrAllocator.
-    Args = Alloc.Allocate<Expr*>(numArgs);
-    memcpy(Args, ExprList, numArgs*sizeof(Args[0]));
-  }
+size_t AttributeList::allocated_size() const {
+  if (IsAvailability) return AttributeFactory::AvailabilityAllocSize;
+  return (sizeof(AttributeList) + NumArgs * sizeof(Expr*));
 }
 
-AttributeList::AttributeList(llvm::BumpPtrAllocator &Alloc,
-                             IdentifierInfo *AttrName, SourceLocation AttrLoc,
-                             IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
-                             IdentifierInfo *ParmName, SourceLocation ParmLoc,
-                             const AvailabilityChange &Introduced,
-                             const AvailabilityChange &Deprecated,
-                             const AvailabilityChange &Obsoleted,
-                             bool declspec, bool cxx0x)
-  : AttrName(AttrName), AttrLoc(AttrLoc), ScopeName(ScopeName), 
-    ScopeLoc(ScopeLoc), ParmName(ParmName), ParmLoc(ParmLoc), 
-    Args(0), NumArgs(0), Next(0),
-    DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), 
-    AvailabilityIntroduced(Introduced),
-    AvailabilityDeprecated(Deprecated),
-    AvailabilityObsoleted(Obsoleted),
-    Invalid(false) {
+AttributeFactory::AttributeFactory() {
+  // Go ahead and configure all the inline capacity.  This is just a memset.
+  FreeLists.resize(InlineFreeListsCapacity);
+}
+AttributeFactory::~AttributeFactory() {}
+
+static size_t getFreeListIndexForSize(size_t size) {
+  assert(size >= sizeof(AttributeList));
+  assert((size % sizeof(void*)) == 0);
+  return ((size - sizeof(AttributeList)) / sizeof(void*));
+}
+
+void *AttributeFactory::allocate(size_t size) {
+  // Check for a previously reclaimed attribute.
+  size_t index = getFreeListIndexForSize(size);
+  if (index < FreeLists.size()) {
+    if (AttributeList *attr = FreeLists[index]) {
+      FreeLists[index] = attr->NextInPool;
+      return attr;
+    }
+  }
+
+  // Otherwise, allocate something new.
+  return Alloc.Allocate(size, llvm::AlignOf<AttributeFactory>::Alignment);
+}
+
+void AttributeFactory::reclaimPool(AttributeList *cur) {
+  assert(cur && "reclaiming empty pool!");
+  do {
+    // Read this here, because we're going to overwrite NextInPool
+    // when we toss 'cur' into the appropriate queue.
+    AttributeList *next = cur->NextInPool;
+
+    size_t size = cur->allocated_size();
+    size_t freeListIndex = getFreeListIndexForSize(size);
+
+    // Expand FreeLists to the appropriate size, if required.
+    if (freeListIndex >= FreeLists.size())
+      FreeLists.resize(freeListIndex+1);
+
+    // Add 'cur' to the appropriate free-list.
+    cur->NextInPool = FreeLists[freeListIndex];
+    FreeLists[freeListIndex] = cur;
+    
+    cur = next;
+  } while (cur);
+}
+
+void AttributePool::takePool(AttributeList *pool) {
+  assert(pool);
+
+  // Fast path:  this pool is empty.
+  if (!Head) {
+    Head = pool;
+    return;
+  }
+
+  // Reverse the pool onto the current head.  This optimizes for the
+  // pattern of pulling a lot of pools into a single pool.
+  do {
+    AttributeList *next = pool->NextInPool;
+    pool->NextInPool = Head;
+    Head = pool;
+    pool = next;
+  } while (pool);
+}
+
+AttributeList *
+AttributePool::createIntegerAttribute(ASTContext &C, IdentifierInfo *Name,
+                                      SourceLocation TokLoc, int Arg) {
+  Expr *IArg = IntegerLiteral::Create(C, llvm::APInt(32, (uint64_t) Arg),
+                                      C.IntTy, TokLoc);
+  return create(Name, TokLoc, 0, TokLoc, 0, TokLoc, &IArg, 1, 0);
 }
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {

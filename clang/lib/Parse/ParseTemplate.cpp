@@ -196,7 +196,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
-  ParsedAttributesWithRange prefixAttrs;
+  ParsedAttributesWithRange prefixAttrs(AttrFactory);
   MaybeParseCXX0XAttributes(prefixAttrs);
 
   if (Tok.is(tok::kw_using))
@@ -205,7 +205,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   // Parse the declaration specifiers, stealing the accumulated
   // diagnostics from the template parameters.
-  ParsingDeclSpec DS(DiagsFromTParams);
+  ParsingDeclSpec DS(*this, &DiagsFromTParams);
 
   DS.takeAttributesFrom(prefixAttrs);
 
@@ -598,7 +598,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
   // Parse the declaration-specifiers (i.e., the type).
   // FIXME: The type should probably be restricted in some way... Not all
   // declarators (parts of declarators?) are accepted for parameters.
-  DeclSpec DS;
+  DeclSpec DS(AttrFactory);
   ParseDeclarationSpecifiers(DS);
 
   // Parse this as a typename.
