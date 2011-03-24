@@ -460,6 +460,7 @@ public:
     Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
+    (void)CE;
     assert((CE || CE->getValue() == 0) &&
            "No offset operand support in mode 7");
   }
