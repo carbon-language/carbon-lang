@@ -1758,8 +1758,24 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   if (TagDecl)
     Actions.ActOnTagStartDefinition(getCurScope(), TagDecl);
 
-  ClassVirtSpecifiers CVS;
-  ParseOptionalCXX0XClassVirtSpecifierSeq(CVS);
+  SourceLocation FinalLoc;
+
+  // Parse the optional 'final' keyword.
+  if (getLang().CPlusPlus && Tok.is(tok::identifier)) {
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    
+    // Initialize the contextual keywords.
+    if (!Ident_final) {
+      Ident_final = &PP.getIdentifierTable().get("final");
+      Ident_override = &PP.getIdentifierTable().get("override");
+    }
+      
+    if (II == Ident_final)
+      FinalLoc = ConsumeToken();
+
+    if (!getLang().CPlusPlus0x) 
+      Diag(FinalLoc, diag::ext_override_control_keyword) << "final";
+  }
 
   if (Tok.is(tok::colon)) {
     ParseBaseClause(TagDecl);
@@ -1776,9 +1792,6 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   assert(Tok.is(tok::l_brace));
 
   SourceLocation LBraceLoc = ConsumeBrace();
-
-  SourceLocation FinalLoc = 
-    CVS.isFinalSpecified() ? CVS.getFinalLoc() : SourceLocation();
 
   if (TagDecl)
     Actions.ActOnStartCXXMemberDeclarations(getCurScope(), TagDecl, FinalLoc,
