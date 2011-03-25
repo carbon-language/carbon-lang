@@ -44,6 +44,15 @@ public:
         const OptionDefinition*
         GetDefinitions ();
 
+        const char *
+        GetPluginName ()
+        {
+            if (m_plugin_name.empty())
+                return NULL;
+            return m_plugin_name.c_str();
+        }
+        
+
         bool show_mixed; // Show mixed source/assembly
         bool show_bytes;
         uint32_t num_lines_context;
@@ -53,6 +62,7 @@ public:
         lldb::addr_t m_start_addr;
         lldb::addr_t m_end_addr;
         bool m_at_pc;
+        std::string m_plugin_name;
         static OptionDefinition g_option_table[];
     };
 

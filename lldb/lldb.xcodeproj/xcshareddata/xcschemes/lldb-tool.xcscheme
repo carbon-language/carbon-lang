@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   version = "1.3">
+   version = "1.5">
    <BuildAction
       parallelizeBuildables = "NO"
       buildImplicitDependencies = "YES">
@@ -76,7 +76,7 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       displayScaleIsEnabled = "NO"
       displayScale = "1.00"
-      launchStyle = "1"
+      launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       buildConfiguration = "Debug">
       <BuildableProductRunnable>
@@ -189,4 +189,7 @@
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
+   <InstallAction
+      buildConfiguration = "Debug">
+   </InstallAction>
 </Scheme>

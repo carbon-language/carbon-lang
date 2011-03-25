@@ -708,7 +708,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     ArchSpec arch(exe_ctx.target->GetArchitecture());
     
-    Disassembler *disassembler = Disassembler::FindPlugin(arch);
+    Disassembler *disassembler = Disassembler::FindPlugin(arch, NULL);
     
     if (disassembler == NULL)
     {
@@ -743,8 +743,6 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     
     InstructionList &instruction_list = disassembler->GetInstructionList();
     
-    uint32_t bytes_offset = 0;
-    
     for (uint32_t instruction_index = 0, num_instructions = instruction_list.GetSize(); 
          instruction_index < num_instructions; 
          ++instruction_index)
@@ -752,12 +750,10 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index).get();
         instruction->Dump (&stream,
                            true,
-                           &extractor, 
-                           bytes_offset, 
+                           true,
                            &exe_ctx, 
                            true);
         stream.PutChar('\n');
-        bytes_offset += instruction->GetByteSize();
     }
     
     return ret;

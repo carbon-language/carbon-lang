@@ -110,7 +110,7 @@ ThreadPlanAssemblyTracer::InitializeTracer()
     
     ArchSpec arch(target.GetArchitecture());
     
-    m_disassembler = Disassembler::FindPlugin(arch);
+    m_disassembler = Disassembler::FindPlugin(arch, NULL);
     
     m_abi = process.GetABI();
     
@@ -215,8 +215,7 @@ ThreadPlanAssemblyTracer::Log ()
                 Instruction *instruction = instruction_list.GetInstructionAtIndex(0).get();
                 instruction->Dump (&desc,
                                    false,
-                                   NULL, 
-                                   0, 
+                                   false,
                                    NULL, 
                                    true);
             }

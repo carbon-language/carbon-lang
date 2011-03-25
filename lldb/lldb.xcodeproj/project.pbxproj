@@ -3371,6 +3371,10 @@
 				CURRENT_PROJECT_VERSION = 46;
 				DYLIB_CURRENT_VERSION = 46;
 				EXECUTABLE_EXTENSION = a;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3395,7 +3399,6 @@
 				);
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
-				SDKROOT = macosx;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -3411,6 +3414,10 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 46;
 				EXECUTABLE_EXTENSION = a;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3435,7 +3442,6 @@
 				);
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
-				SDKROOT = macosx;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -3451,6 +3457,10 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 46;
 				EXECUTABLE_EXTENSION = a;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
+				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3475,7 +3485,6 @@
 				);
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
-				SDKROOT = macosx;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";

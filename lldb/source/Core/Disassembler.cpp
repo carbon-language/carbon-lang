@@ -34,20 +34,36 @@ using namespace lldb_private;
 
 
 Disassembler*
-Disassembler::FindPlugin (const ArchSpec &arch)
+Disassembler::FindPlugin (const ArchSpec &arch, const char *plugin_name)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "Disassembler::FindPlugin (arch = %s)",
-                        arch.GetArchitectureName());
+                        "Disassembler::FindPlugin (arch = %s, plugin_name = %s)",
+                        arch.GetArchitectureName(),
+                        plugin_name);
 
     std::auto_ptr<Disassembler> disassembler_ap;
-    DisassemblerCreateInstance create_callback;
-    for (uint32_t idx = 0; (create_callback = PluginManager::GetDisassemblerCreateCallbackAtIndex(idx)) != NULL; ++idx)
+    DisassemblerCreateInstance create_callback = NULL;
+    
+    if (plugin_name)
     {
-        disassembler_ap.reset (create_callback(arch));
+        create_callback = PluginManager::GetDisassemblerCreateCallbackForPluginName (plugin_name);
+        if (create_callback)
+        {
+            disassembler_ap.reset (create_callback(arch));
+            
+            if (disassembler_ap.get())
+                return disassembler_ap.release();
+        }
+    }
+    else
+    {
+        for (uint32_t idx = 0; (create_callback = PluginManager::GetDisassemblerCreateCallbackAtIndex(idx)) != NULL; ++idx)
+        {
+            disassembler_ap.reset (create_callback(arch));
 
-        if (disassembler_ap.get())
-            return disassembler_ap.release();
+            if (disassembler_ap.get())
+                return disassembler_ap.release();
+        }
     }
     return NULL;
 }
@@ -59,6 +75,7 @@ Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     SymbolContextList &sc_list,
     uint32_t num_instructions,
@@ -79,8 +96,16 @@ Disassembler::Disassemble
             break;
         if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
         {
-            if (Disassemble (debugger, arch, exe_ctx, range, num_instructions,
-                             num_mixed_context_lines, show_bytes, raw, strm))
+            if (Disassemble (debugger, 
+                             arch, 
+                             plugin_name,
+                             exe_ctx, 
+                             range, 
+                             num_instructions,
+                             num_mixed_context_lines, 
+                             show_bytes, 
+                             raw, 
+                             strm))
             {
                 ++success_count;
                 strm.EOL();
@@ -95,6 +120,7 @@ Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     const ConstString &name,
     Module *module,
@@ -137,6 +163,7 @@ Disassembler::Disassemble
     {
         return Disassemble (debugger, 
                             arch, 
+                            plugin_name,
                             exe_ctx, 
                             sc_list,
                             num_instructions, 
@@ -153,6 +180,7 @@ lldb::DisassemblerSP
 Disassembler::DisassembleRange
 (
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     const AddressRange &range
 )
@@ -160,7 +188,7 @@ Disassembler::DisassembleRange
     lldb::DisassemblerSP disasm_sp;
     if (range.GetByteSize() > 0 && range.GetBaseAddress().IsValid())
     {
-        disasm_sp.reset (Disassembler::FindPlugin(arch));
+        disasm_sp.reset (Disassembler::FindPlugin(arch, plugin_name));
 
         if (disasm_sp)
         {
@@ -179,6 +207,7 @@ Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     const AddressRange &disasm_range,
     uint32_t num_instructions,
@@ -190,7 +219,7 @@ Disassembler::Disassemble
 {
     if (disasm_range.GetByteSize())
     {
-        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch));
+        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch, plugin_name));
 
         if (disasm_ap.get())
         {
@@ -216,23 +245,18 @@ Disassembler::Disassemble
             DataExtractor data;
             size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range, data);
             if (bytes_disassembled == 0)
-            {
                 return false;
-            }
-            else
-            {
-                return PrintInstructions (disasm_ap.get(),
-                                          data,
-                                          debugger,
-                                          arch,
-                                          exe_ctx,
-                                          disasm_range.GetBaseAddress(),
-                                          num_instructions,
-                                          num_mixed_context_lines,
-                                          show_bytes,
-                                          raw,
-                                          strm);
-            }
+
+            return PrintInstructions (disasm_ap.get(),
+                                      debugger,
+                                      arch,
+                                      exe_ctx,
+                                      disasm_range.GetBaseAddress(),
+                                      num_instructions,
+                                      num_mixed_context_lines,
+                                      show_bytes,
+                                      raw,
+                                      strm);
         }
     }
     return false;
@@ -243,6 +267,7 @@ Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     const Address &start_address,
     uint32_t num_instructions,
@@ -254,7 +279,7 @@ Disassembler::Disassemble
 {
     if (num_instructions > 0)
     {
-        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch));
+        std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch, plugin_name));
         Address addr = start_address;
 
         if (disasm_ap.get())
@@ -279,23 +304,17 @@ Disassembler::Disassemble
             DataExtractor data;
             size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, addr, num_instructions, data);
             if (bytes_disassembled == 0)
-            {
                 return false;
-            }
-            else
-            {
-                return PrintInstructions (disasm_ap.get(),
-                                          data,
-                                          debugger,
-                                          arch,
-                                          exe_ctx,
-                                          addr,
-                                          num_instructions,
-                                          num_mixed_context_lines,
-                                          show_bytes,
-                                          raw,
-                                          strm);
-            }
+            return PrintInstructions (disasm_ap.get(),
+                                      debugger,
+                                      arch,
+                                      exe_ctx,
+                                      addr,
+                                      num_instructions,
+                                      num_mixed_context_lines,
+                                      show_bytes,
+                                      raw,
+                                      strm);
         }
     }
     return false;
@@ -305,7 +324,6 @@ bool
 Disassembler::PrintInstructions
 (
     Disassembler *disasm_ptr,
-    DataExtractor &data,
     Debugger &debugger,
     const ArchSpec &arch,
     const ExecutionContext &exe_ctx,
@@ -407,12 +425,10 @@ Disassembler::PrintInstructions
             if (num_mixed_context_lines)
                 strm.IndentMore ();
             strm.Indent();
-            size_t inst_byte_size = inst->GetByteSize();
-            inst->Dump(&strm, true, show_bytes ? &data : NULL, offset, &exe_ctx, raw);
+            inst->Dump(&strm, true, show_bytes, &exe_ctx, raw);
             strm.EOL();
-            offset += inst_byte_size;
             
-            addr.SetOffset (addr.GetOffset() + inst_byte_size);
+            addr.Slide(inst->GetOpcode().GetByteSize());
 
             if (num_mixed_context_lines)
                 strm.IndentLess ();
@@ -434,6 +450,7 @@ Disassembler::Disassemble
 (
     Debugger &debugger,
     const ArchSpec &arch,
+    const char *plugin_name,
     const ExecutionContext &exe_ctx,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
@@ -463,19 +480,21 @@ Disassembler::Disassemble
             range.SetByteSize (DEFAULT_DISASM_BYTE_SIZE);
     }
 
-    return Disassemble(debugger, arch, exe_ctx, range, num_instructions, num_mixed_context_lines, show_bytes, raw, strm);
+    return Disassemble (debugger, 
+                        arch, 
+                        plugin_name,
+                        exe_ctx, 
+                        range, 
+                        num_instructions, 
+                        num_mixed_context_lines, 
+                        show_bytes, 
+                        raw, 
+                        strm);
 }
 
-Instruction::Instruction(const Address &addr) :
-    m_addr (addr)
-{
-    ::memset (&m_opcode, 0, sizeof (m_opcode));
-}
-
-
-Instruction::Instruction(const Address &addr, const Opcode &opcode) :
-    m_addr (addr),
-    m_opcode (opcode)
+Instruction::Instruction(const Address &address) :
+    m_address (address),
+    m_opcode()
 {
 }
 

@@ -171,6 +171,9 @@ namespace lldb_private {
             }
         }
 
+        int
+        Dump (Stream *s, uint32_t min_byte_width);
+
         const void *
         GetOpcodeBytes () const
         {

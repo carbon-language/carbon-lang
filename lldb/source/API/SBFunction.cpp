@@ -137,6 +137,7 @@ SBFunction::GetInstructions (SBTarget target)
         if (module)
         {
             sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module->GetArchitecture(),
+                                                                             NULL,
                                                                              exe_ctx,
                                                                              m_opaque_ptr->GetAddressRange()));
         }

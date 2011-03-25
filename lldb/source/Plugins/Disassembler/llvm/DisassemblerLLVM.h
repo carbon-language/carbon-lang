@@ -28,21 +28,17 @@ public:
         virtual
         ~InstructionLLVM();
 
-        void
+        virtual void
         Dump (lldb_private::Stream *s,
               bool show_address,
-              const lldb_private::DataExtractor *bytes,
-              uint32_t bytes_offset,
+              bool show_bytes,
               const lldb_private::ExecutionContext* exe_ctx,
               bool raw);
 
-        bool
+        virtual bool
         DoesBranch () const;
 
-        size_t
-        GetByteSize() const;
-
-        size_t
+        virtual size_t
         Extract (const Disassembler &disassembler,
                  const lldb_private::DataExtractor &data,
                  uint32_t data_offset);

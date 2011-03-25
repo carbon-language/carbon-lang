@@ -258,6 +258,7 @@ StackFrame::Disassemble ()
         Target &target = m_thread.GetProcess().GetTarget();
         Disassembler::Disassemble (target.GetDebugger(),
                                    target.GetArchitecture(),
+                                   NULL,
                                    exe_ctx,
                                    0,
                                    0,

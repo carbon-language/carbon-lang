@@ -27,8 +27,7 @@ namespace lldb_private {
 class Instruction
 {
 public:
-    Instruction (const Address &addr);
-    Instruction (const Address &addr, const Opcode &opcode);
+    Instruction (const Address &address);
 
     virtual
    ~Instruction();
@@ -36,24 +35,19 @@ public:
     const Address &
     GetAddress () const
     {
-        return m_addr;
+        return m_address;
     }
 
     void
     SetAddress (const Address &addr)
     {
-        m_addr = addr;
+        m_address = addr;
     }
 
-    virtual size_t
-    GetByteSize() const = 0;
-
-    
     virtual void
     Dump (Stream *s,
           bool show_address,
-          const DataExtractor *bytes, 
-          uint32_t bytes_offset, 
+          bool show_bytes,
           const ExecutionContext *exe_ctx, 
           bool raw) = 0;
     
@@ -72,7 +66,7 @@ public:
     }
 
 protected:
-    Address m_addr; // The section offset address of this instruction
+    Address m_address; // The section offset address of this instruction
     Opcode m_opcode; // The opcode for this instruction
 };
 
@@ -110,16 +104,18 @@ public:
 
 
     static Disassembler*
-    FindPlugin (const ArchSpec &arch);
+    FindPlugin (const ArchSpec &arch, const char *plugin_name);
 
     static lldb::DisassemblerSP
     DisassembleRange (const ArchSpec &arch,
+                      const char *plugin_name,
                       const ExecutionContext &exe_ctx,
                       const AddressRange &disasm_range);
 
     static bool
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
+                 const char *plugin_name,
                  const ExecutionContext &exe_ctx,
                  const AddressRange &range,
                  uint32_t num_instructions,
@@ -131,6 +127,7 @@ public:
     static bool
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
+                 const char *plugin_name,
                  const ExecutionContext &exe_ctx,
                  const Address &start,
                  uint32_t num_instructions,
@@ -142,6 +139,7 @@ public:
     static size_t
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
+                 const char *plugin_name,
                  const ExecutionContext &exe_ctx,
                  SymbolContextList &sc_list,
                  uint32_t num_instructions,
@@ -153,6 +151,7 @@ public:
     static bool
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
+                 const char *plugin_name,
                  const ExecutionContext &exe_ctx,
                  const ConstString &name,
                  Module *module,
@@ -165,6 +164,7 @@ public:
     static bool
     Disassemble (Debugger &debugger,
                  const ArchSpec &arch,
+                 const char *plugin_name,
                  const ExecutionContext &exe_ctx,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
@@ -182,7 +182,6 @@ public:
 
     static bool 
     PrintInstructions (Disassembler *disasm_ptr,
-                       DataExtractor &data,
                        Debugger &debugger,
                        const ArchSpec &arch,
                        const ExecutionContext &exe_ctx,

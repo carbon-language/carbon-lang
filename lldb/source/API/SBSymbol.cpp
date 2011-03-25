@@ -134,6 +134,7 @@ SBSymbol::GetInstructions (SBTarget target)
             if (module)
             {
                 sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module->GetArchitecture (),
+                                                                                 NULL,
                                                                                  exe_ctx,
                                                                                  *symbol_range));
             }

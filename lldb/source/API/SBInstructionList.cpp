@@ -98,7 +98,7 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
                 Instruction *inst = m_opaque_sp->GetInstructionList().GetInstructionAtIndex (i).get();
                 if (inst == NULL)
                     break;
-                inst->Dump (&sref, true, NULL, 0, NULL, false);
+                inst->Dump (&sref, true, false, NULL, false);
                 sref.EOL();
             }
             return true;

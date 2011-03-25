@@ -100,8 +100,7 @@ DisassemblerLLVM::InstructionLLVM::Dump
 (
     Stream *s,
     bool show_address,
-    const DataExtractor *bytes,
-    uint32_t bytes_offset,
+    bool show_bytes,
     const lldb_private::ExecutionContext* exe_ctx,
     bool raw
 )
@@ -125,18 +124,20 @@ DisassemblerLLVM::InstructionLLVM::Dump
     }
 
     // If we are supposed to show bytes, "bytes" will be non-NULL.
-    if (bytes)
+    if (show_bytes)
     {
-        uint32_t bytes_dumped = bytes->Dump(s, bytes_offset, eFormatBytes, 1, EDInstByteSize(m_inst), UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0) - bytes_offset;
-        // Allow for 15 bytes of opcodes since this is the max for x86_64.
-        // TOOD: We need to taylor this better for different architectures. For 
-        // ARM we would want to show 16 bit opcodes for Thumb as properly byte
-        // swapped uint16_t values, or 32 bit values swapped values for ARM.
-        const uint32_t default_num_opcode_bytes = 15;
-        if (bytes_dumped * 3 < (default_num_opcode_bytes*3))
+        if (m_opcode.GetType() == Opcode::eTypeBytes)
         {
-            uint32_t indent_level = (default_num_opcode_bytes*3) - (bytes_dumped * 3) + 1;
-            s->Printf("%*.*s", indent_level, indent_level, "");
+            // x86_64 and i386 are the only ones that use bytes right now so
+            // pad out the byte dump to be able to always show 15 bytes (3 chars each) 
+            // plus a space
+            m_opcode.Dump (s, 15 * 3 + 1);
+        }
+        else
+        {
+            // Else, we have ARM which can show up to a uint32_t 0x00000000 (10 spaces)
+            // plus two for padding...
+            m_opcode.Dump (s, 12);
         }
     }
 
@@ -328,12 +329,6 @@ DisassemblerLLVM::InstructionLLVM::DoesBranch() const
 }
 
 size_t
-DisassemblerLLVM::InstructionLLVM::GetByteSize() const
-{
-    return EDInstByteSize(m_inst);
-}
-
-size_t
 DisassemblerLLVM::InstructionLLVM::Extract (const Disassembler &disassembler, 
                                             const lldb_private::DataExtractor &data,
                                             uint32_t data_offset)
@@ -351,16 +346,21 @@ DisassemblerLLVM::InstructionLLVM::Extract (const Disassembler &disassembler,
             break;
 
         case llvm::Triple::arm:
-            assert (byte_size == 4);
-            m_opcode.SetOpcode32 (data.GetU32 (&offset));
-            break;
-
         case llvm::Triple::thumb:
-            assert ((byte_size == 2) || (byte_size == 4));
-            if (byte_size == 2)
-                m_opcode.SetOpcode16 (data.GetU16 (&offset));
-            else
+            switch (byte_size)
+            {
+            case 2: 
+                m_opcode.SetOpcode16 (data.GetU16 (&offset)); 
+                break;
+
+            case 4:
                 m_opcode.SetOpcode32 (data.GetU32 (&offset));
+                break;
+
+            default:
+                assert (!"Invalid ARM opcode size");
+                break;
+            }
             break;
 
         default:
@@ -497,13 +497,13 @@ DisassemblerLLVM::Terminate()
 const char *
 DisassemblerLLVM::GetPluginNameStatic()
 {
-    return "disassembler.llvm";
+    return "llvm";
 }
 
 const char *
 DisassemblerLLVM::GetPluginDescriptionStatic()
 {
-    return "Disassembler that uses LLVM opcode tables to disassemble i386 and x86_64.";
+    return "Disassembler that uses LLVM opcode tables to disassemble i386, x86_64 and ARM.";
 }
 
 //------------------------------------------------------------------
