@@ -2238,4 +2238,23 @@ missed cases:
 
 //===---------------------------------------------------------------------===//
 
+define i1 @test1(i32 %x) nounwind {
+  %and = and i32 %x, 3
+  %cmp = icmp ult i32 %and, 2
+  ret i1 %cmp
+}
 
+Can be folded to (x & 2) == 0.
+
+define i1 @test2(i32 %x) nounwind {
+  %and = and i32 %x, 3
+  %cmp = icmp ugt i32 %and, 1
+  ret i1 %cmp
+}
+
+Can be folded to (x & 2) != 0.
+
+SimplifyDemandedBits shrinks the "and" constant to 2 but instcombine misses the
+icmp transform.
+
+//===---------------------------------------------------------------------===//
