@@ -590,7 +590,6 @@ bool PointerExprEvaluator::VisitCastExpr(CastExpr* E) {
 
   case CK_NoOp:
   case CK_BitCast:
-  case CK_LValueBitCast:
   case CK_AnyPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
     return Visit(SubExpr);
@@ -756,68 +755,61 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
   const Expr* SE = E->getSubExpr();
   QualType SETy = SE->getType();
-  APValue Result = APValue();
 
-  // Check for vector->vector bitcast and scalar->vector splat.
-  if (SETy->isVectorType()) {
-    return this->Visit(const_cast<Expr*>(SE));
-  } else if (SETy->isIntegerType()) {
-    APSInt IntResult;
-    if (!EvaluateInteger(SE, IntResult, Info))
-      return APValue();
-    Result = APValue(IntResult);
-  } else if (SETy->isRealFloatingType()) {
-    APFloat F(0.0);
-    if (!EvaluateFloat(SE, F, Info))
-      return APValue();
-    Result = APValue(F);
-  } else
-    return APValue();
-
-  // For casts of a scalar to ExtVector, convert the scalar to the element type
-  // and splat it to all elements.
-  if (E->getType()->isExtVectorType()) {
-    if (EltTy->isIntegerType() && Result.isInt())
-      Result = APValue(HandleIntToIntCast(EltTy, SETy, Result.getInt(),
-                                          Info.Ctx));
-    else if (EltTy->isIntegerType())
-      Result = APValue(HandleFloatToIntCast(EltTy, SETy, Result.getFloat(),
-                                            Info.Ctx));
-    else if (EltTy->isRealFloatingType() && Result.isInt())
-      Result = APValue(HandleIntToFloatCast(EltTy, SETy, Result.getInt(),
-                                            Info.Ctx));
-    else if (EltTy->isRealFloatingType())
-      Result = APValue(HandleFloatToFloatCast(EltTy, SETy, Result.getFloat(),
-                                              Info.Ctx));
-    else
-      return APValue();
+  switch (E->getCastKind()) {
+  case CK_VectorSplat: {
+    APValue Result = APValue();
+    if (SETy->isIntegerType()) {
+      APSInt IntResult;
+      if (!EvaluateInteger(SE, IntResult, Info))
+         return APValue();
+      Result = APValue(IntResult);
+    } else if (SETy->isRealFloatingType()) {
+       APFloat F(0.0);
+       if (!EvaluateFloat(SE, F, Info))
+         return APValue();
+       Result = APValue(F);
+    } else {
+      return false;
+    }
 
     // Splat and create vector APValue.
     llvm::SmallVector<APValue, 4> Elts(NElts, Result);
     return APValue(&Elts[0], Elts.size());
   }
+  case CK_BitCast: {
+    if (SETy->isVectorType())
+      return Visit(const_cast<Expr*>(SE));
 
-  // For casts of a scalar to regular gcc-style vector type, bitcast the scalar
-  // to the vector. To construct the APValue vector initializer, bitcast the
-  // initializing value to an APInt, and shift out the bits pertaining to each
-  // element.
-  APSInt Init;
-  Init = Result.isInt() ? Result.getInt() : Result.getFloat().bitcastToAPInt();
+    if (!SETy->isIntegerType())
+      return false;
 
-  llvm::SmallVector<APValue, 4> Elts;
-  for (unsigned i = 0; i != NElts; ++i) {
-    APSInt Tmp = Init.extOrTrunc(EltWidth);
-
-    if (EltTy->isIntegerType())
-      Elts.push_back(APValue(Tmp));
-    else if (EltTy->isRealFloatingType())
-      Elts.push_back(APValue(APFloat(Tmp)));
-    else
+    APSInt Init;
+    if (!EvaluateInteger(SE, Init, Info))
       return APValue();
 
-    Init >>= EltWidth;
+    assert((EltTy->isIntegerType() || EltTy->isRealFloatingType()) &&
+           "Vectors must be composed of ints or floats");
+
+    llvm::SmallVector<APValue, 4> Elts;
+    for (unsigned i = 0; i != NElts; ++i) {
+      APSInt Tmp = Init.extOrTrunc(EltWidth);
+
+      if (EltTy->isIntegerType())
+        Elts.push_back(APValue(Tmp));
+      else
+        Elts.push_back(APValue(APFloat(Tmp)));
+
+      Init >>= EltWidth;
+    }
+    return APValue(&Elts[0], Elts.size());
   }
-  return APValue(&Elts[0], Elts.size());
+  case CK_LValueToRValue:
+  case CK_NoOp:
+    return Visit(const_cast<Expr*>(SE));
+  default:
+    return false;
+  }
 }
 
 APValue
@@ -1771,15 +1763,60 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   QualType DestType = E->getType();
   QualType SrcType = SubExpr->getType();
 
-  if (DestType->isBooleanType()) {
+  switch (E->getCastKind()) {
+  case CK_BitCast:
+  case CK_BaseToDerived:
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase:
+  case CK_Dynamic:
+  case CK_ToUnion:
+  case CK_ArrayToPointerDecay:
+  case CK_FunctionToPointerDecay:
+  case CK_NullToPointer:
+  case CK_NullToMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
+  case CK_DerivedToBaseMemberPointer:
+  case CK_ConstructorConversion:
+  case CK_IntegralToPointer:
+  case CK_ToVoid:
+  case CK_VectorSplat:
+  case CK_IntegralToFloating:
+  case CK_FloatingCast:
+  case CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
+  case CK_ObjCObjectLValueCast:
+  case CK_FloatingRealToComplex:
+  case CK_FloatingComplexToReal:
+  case CK_FloatingComplexCast:
+  case CK_FloatingComplexToIntegralComplex:
+  case CK_IntegralRealToComplex:
+  case CK_IntegralComplexCast:
+  case CK_IntegralComplexToFloatingComplex:
+    llvm_unreachable("invalid cast kind for integral value");
+
+  case CK_Dependent:
+  case CK_GetObjCProperty:
+  case CK_LValueBitCast:
+  case CK_UserDefinedConversion:
+    return false;
+
+  case CK_LValueToRValue:
+  case CK_NoOp:
+    return Visit(E->getSubExpr());
+
+  case CK_MemberPointerToBoolean:
+  case CK_PointerToBoolean:
+  case CK_IntegralToBoolean:
+  case CK_FloatingToBoolean:
+  case CK_FloatingComplexToBoolean:
+  case CK_IntegralComplexToBoolean: {
     bool BoolResult;
     if (!HandleConversionToBool(SubExpr, BoolResult, Info))
       return false;
     return Success(BoolResult, E);
   }
 
-  // Handle simple integer->integer casts.
-  if (SrcType->isIntegralOrEnumerationType()) {
+  case CK_IntegralCast: {
     if (!Visit(SubExpr))
       return false;
 
@@ -1792,8 +1829,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
                                       Result.getInt(), Info.Ctx), E);
   }
 
-  // FIXME: Clean this up!
-  if (SrcType->isPointerType()) {
+  case CK_PointerToIntegral: {
     LValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
@@ -1812,42 +1848,24 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
     return Success(HandleIntToIntCast(DestType, SrcType, AsInt, Info.Ctx), E);
   }
 
-  if (SrcType->isArrayType() || SrcType->isFunctionType()) {
-    // This handles double-conversion cases, where there's both
-    // an l-value promotion and an implicit conversion to int.
-    LValue LV;
-    if (!EvaluateLValue(SubExpr, LV, Info))
-      return false;
-
-    if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(Info.Ctx.VoidPtrTy))
-      return false;
-
-    LV.moveInto(Result);
-    return true;
-  }
-
-  if (SrcType->isAnyComplexType()) {
+  case CK_IntegralComplexToReal: {
     ComplexValue C;
     if (!EvaluateComplex(SubExpr, C, Info))
       return false;
-    if (C.isComplexFloat())
-      return Success(HandleFloatToIntCast(DestType, SrcType,
-                                          C.getComplexFloatReal(), Info.Ctx),
-                     E);
-    else
-      return Success(HandleIntToIntCast(DestType, SrcType,
-                                        C.getComplexIntReal(), Info.Ctx), E);
+    return Success(C.getComplexIntReal(), E);
   }
-  // FIXME: Handle vectors
 
-  if (!SrcType->isRealFloatingType())
-    return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
+  case CK_FloatingToIntegral: {
+    APFloat F(0.0);
+    if (!EvaluateFloat(SubExpr, F, Info))
+      return false;
 
-  APFloat F(0.0);
-  if (!EvaluateFloat(SubExpr, F, Info))
-    return Error(E->getExprLoc(), diag::note_invalid_subexpr_in_ice, E);
+    return Success(HandleFloatToIntCast(DestType, SrcType, F, Info.Ctx), E);
+  }
+  }
 
-  return Success(HandleFloatToIntCast(DestType, SrcType, F, Info.Ctx), E);
+  llvm_unreachable("unknown cast resulting in integral value");
+  return false;
 }
 
 bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
@@ -2282,7 +2300,6 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
 
   switch (E->getCastKind()) {
   case CK_BitCast:
-  case CK_LValueBitCast:
   case CK_BaseToDerived:
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
@@ -2322,6 +2339,7 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
 
   case CK_Dependent:
   case CK_GetObjCProperty:
+  case CK_LValueBitCast:
   case CK_UserDefinedConversion:
     return false;
 
