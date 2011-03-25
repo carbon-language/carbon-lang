@@ -2538,47 +2538,46 @@ const MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
 
 /// beginInstruction - Process beginning of an instruction.
 void DwarfDebug::beginInstruction(const MachineInstr *MI) {
-  if (InsnNeedsLabel.count(MI) == 0) {
-    LabelsBeforeInsn[MI] = PrevLabel;
-    return;
+  // Check if source location changes, but ignore DBG_VALUE locations.
+  if (!MI->isDebugValue()) {
+    DebugLoc DL = MI->getDebugLoc();
+    if (DL != PrevInstLoc && (!DL.isUnknown() || UnknownLocations)) {
+      PrevInstLoc = DL;
+      if (!DL.isUnknown()) {
+        const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
+        recordSourceLine(DL.getLine(), DL.getCol(), Scope);
+      } else
+        recordSourceLine(0, 0, 0);
+    }
   }
 
-  // Check location.
-  DebugLoc DL = MI->getDebugLoc();
-  if (!DL.isUnknown()) {
-    const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
-    PrevLabel = recordSourceLine(DL.getLine(), DL.getCol(), Scope);
-    PrevInstLoc = DL;
-    LabelsBeforeInsn[MI] = PrevLabel;
+  // Insert labels where requested.
+  if (!InsnNeedsLabel.count(MI))
     return;
-  }
 
-  // If location is unknown then use temp label for this DBG_VALUE
-  // instruction.
-  if (MI->isDebugValue()) {
+  if (!PrevLabel) {
     PrevLabel = MMI->getContext().CreateTempSymbol();
     Asm->OutStreamer.EmitLabel(PrevLabel);
-    LabelsBeforeInsn[MI] = PrevLabel;
-    return;
   }
-
-  if (UnknownLocations) {
-    PrevLabel = recordSourceLine(0, 0, 0);
-    LabelsBeforeInsn[MI] = PrevLabel;
-    return;
-  }
-
-  assert (0 && "Instruction is not processed!");
+  LabelsBeforeInsn[MI] = PrevLabel;
 }
 
 /// endInstruction - Process end of an instruction.
 void DwarfDebug::endInstruction(const MachineInstr *MI) {
-  if (InsnsNeedsLabelAfter.count(MI) != 0) {
-    // Emit a label if this instruction ends a scope.
-    MCSymbol *Label = MMI->getContext().CreateTempSymbol();
-    Asm->OutStreamer.EmitLabel(Label);
-    LabelsAfterInsn[MI] = Label;
+  // Don't create a new label after DBG_VALUE instructions.
+  // They don't generate code.
+  if (!MI->isDebugValue())
+    PrevLabel = 0;
+
+  if (!InsnsNeedsLabelAfter.count(MI))
+    return;
+
+  // We need a label after this instruction.
+  if (!PrevLabel) {
+    PrevLabel = MMI->getContext().CreateTempSymbol();
+    Asm->OutStreamer.EmitLabel(PrevLabel);
   }
+  LabelsAfterInsn[MI] = PrevLabel;
 }
 
 /// getOrCreateDbgScope - Create DbgScope for the scope.
@@ -2838,6 +2837,7 @@ void DwarfDebug::identifyScopeMarkers() {
            RE = Ranges.end(); RI != RE; ++RI) {
       assert(RI->first && "DbgRange does not have first instruction!");
       assert(RI->second && "DbgRange does not have second instruction!");
+      InsnNeedsLabel.insert(RI->first);
       InsnsNeedsLabelAfter.insert(RI->second);
     }
   }
@@ -2927,7 +2927,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   /// LiveUserVar - Map physreg numbers to the MDNode they contain.
   std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
 
-  DebugLoc PrevLoc;
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
        I != E; ++I)
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
@@ -2957,15 +2956,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         else if (!ProcessedArgs.insert(DV))
           InsnNeedsLabel.insert(MI);
       } else {
-        // If location is unknown then instruction needs a location only if
-        // UnknownLocations flag is set.
-        if (DL.isUnknown()) {
-          if (UnknownLocations && !PrevLoc.isUnknown())
-            InsnNeedsLabel.insert(MI);
-        } else if (DL != PrevLoc)
-          // Otherwise, instruction needs a location only if it is new location.
-          InsnNeedsLabel.insert(MI);
-
         // Check if the instruction clobbers any registers with debug vars.
         for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
                MOE = MI->operands_end(); MOI != MOE; ++MOI) {
@@ -2992,11 +2982,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
           }
         }
       }
-
-      if (!DL.isUnknown() || UnknownLocations)
-        PrevLoc = DL;
     }
 
+  PrevInstLoc = DebugLoc();
   PrevLabel = FunctionBeginSym;
 }
 
@@ -3112,8 +3100,7 @@ DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
 /// recordSourceLine - Register a source line with debug info. Returns the
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
-MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
-                                       const MDNode *S) {
+void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S){
   StringRef Fn;
   StringRef Dir;
   unsigned Src = 1;
@@ -3144,10 +3131,6 @@ MCSymbol *DwarfDebug::recordSourceLine(unsigned Line, unsigned Col,
 
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, DWARF2_FLAG_IS_STMT,
                                          0, 0);
-
-  MCSymbol *Label = MMI->getContext().CreateTempSymbol();
-  Asm->OutStreamer.EmitLabel(Label);
-  return Label;
 }
 
 //===----------------------------------------------------------------------===//

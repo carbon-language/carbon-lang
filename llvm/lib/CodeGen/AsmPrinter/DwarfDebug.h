@@ -536,7 +536,7 @@ private:
   /// recordSourceLine - Register a source line with debug info. Returns the
   /// unique label that was emitted and which provides correspondence to
   /// the source line list.
-  MCSymbol *recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope);
+  void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope);
   
   /// recordVariableFrameIndex - Record a variable's index.
   void recordVariableFrameIndex(const DbgVariable *V, int Index);

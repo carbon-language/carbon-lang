@@ -45,13 +45,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; The variable is in %rdi which is clobbered by 'movl %ebx, %edi'
 ; Here Ltmp7 is the end of the location range.
 
-;CHECK:Ltmp6
-;CHECK-NEXT: movl
-;CHECK-NEXT: Ltmp7
+;CHECK: .loc	1 7 2
+;CHECK: movl
+;CHECK-NEXT: [[CLOBBER:Ltmp[0-9]*]]
 
 ;CHECK:Ldebug_loc0:
-;CHECK-NEXT:	.quad	Ltmp
-;CHECK-NEXT:	.quad	Ltmp7
+;CHECK-NEXT:	.quad
+;CHECK-NEXT:	.quad	[[CLOBBER]]
 ;CHECK-NEXT:	.short	1
 ;CHECK-NEXT:	.byte	85
 ;CHECK-NEXT:	.quad	0

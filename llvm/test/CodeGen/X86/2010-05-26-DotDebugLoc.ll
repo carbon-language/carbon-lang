@@ -55,12 +55,21 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !29 = metadata !{i32 524299, metadata !9, i32 17, i32 0} ; [ DW_TAG_lexical_block ]
 !30 = metadata !{i32 19, i32 0, metadata !29, null}
 
+; The variable bar:myvar changes registers after the first movq.
+; It is cobbered by popq %rbx
+; CHECK: movq
+; CHECK-NEXT: [[LABEL:Ltmp[0-9]*]]
+; CHECK: .loc	1 19 0
+; CHECK: popq
+; CHECK-NEXT: [[CLOBBER:Ltmp[0-9]*]]
+
+
 ; CHECK: Ldebug_loc0:
 ; CHECK-NEXT: .quad   Lfunc_begin0
-; CHECK-NEXT: .quad   Ltmp3
+; CHECK-NEXT: .quad   [[LABEL]]
 ; CHECK-NEXT: .short  1
 ; CHECK-NEXT: .byte   85
-; CHECK-NEXT: .quad   Ltmp3
-; CHECK-NEXT: .quad   Ltmp6
+; CHECK-NEXT: .quad   [[LABEL]]
+; CHECK-NEXT: .quad   [[CLOBBER]]
 ; CHECK-NEXT: .short  1
 ; CHECK-NEXT: .byte   83

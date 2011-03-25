@@ -4,16 +4,11 @@
 ; represent this in the debug information. This is done by setting line
 ; and column to 0
 
-;      CHECK:         leal    (%rdi,%rsi), %eax
+;      CHECK:         leal
 ; CHECK-NEXT:         .loc 1 0 0
-; CHECK-NEXT: Ltmp
-; CHECK-NEXT:         cltd
-; CHECK-NEXT:         idivl   %r8d
+;      CHECK:         cltd
+; CHECK-NEXT:         idivl
 ; CHECK-NEXT:         .loc 2 4 3
-; CHECK-NEXT: Ltmp
-; CHECK-NEXT:         addl    %ecx, %eax
-; CHECK-NEXT:         ret
-; CHECK-NEXT: Ltmp
 
 define i32 @foo(i32 %w, i32 %x, i32 %y, i32 %z) nounwind {
 entry:
