@@ -880,6 +880,7 @@ bool AsmParser::ParseStatement() {
     EatToEndOfStatement();
     return false;
   }
+
   // Allow an integer followed by a ':' as a directional local label.
   if (Lexer.is(AsmToken::Integer)) {
     LocalLabelVal = getTok().getIntVal();
@@ -896,8 +897,7 @@ bool AsmParser::ParseStatement() {
           return TokError("unexpected token at start of statement");
       }
     }
-  }
-  else if (ParseIdentifier(IDVal)) {
+  } else if (ParseIdentifier(IDVal)) {
     if (!TheCondState.Ignore)
       return TokError("unexpected token at start of statement");
     IDVal = "";
