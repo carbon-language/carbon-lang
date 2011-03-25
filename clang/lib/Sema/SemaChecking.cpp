@@ -313,7 +313,8 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   for (specific_attr_iterator<NonNullAttr>
          i = FDecl->specific_attr_begin<NonNullAttr>(),
          e = FDecl->specific_attr_end<NonNullAttr>(); i != e; ++i) {
-    CheckNonNullArguments(*i, TheCall);
+    CheckNonNullArguments(*i, TheCall->getArgs(),
+                          TheCall->getCallee()->getLocStart());
   }
 
   return false;
@@ -1030,15 +1031,15 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
 
 void
 Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
-                            const CallExpr *TheCall) {
+                            const Expr * const *ExprArgs,
+                            SourceLocation CallSiteLoc) {
   for (NonNullAttr::args_iterator i = NonNull->args_begin(),
                                   e = NonNull->args_end();
        i != e; ++i) {
-    const Expr *ArgExpr = TheCall->getArg(*i);
+    const Expr *ArgExpr = ExprArgs[*i];
     if (ArgExpr->isNullPointerConstant(Context,
                                        Expr::NPC_ValueDependentIsNotNull))
-      Diag(TheCall->getCallee()->getLocStart(), diag::warn_null_arg)
-        << ArgExpr->getSourceRange();
+      Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
   }
 }
 

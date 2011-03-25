@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 struct S {
+  S(const char *) __attribute__((nonnull(2)));
+
   static void f(const char*, const char*) __attribute__((nonnull(1)));
 
   // GCC has a hidden 'this' argument in member functions, so the middle
@@ -10,7 +12,9 @@ struct S {
       expected-error{{invalid for the implicit this argument}}
 };
 
-void test(S s) {
+void test() {
+  S s(0); // expected-warning{{null passed}}
+
   s.f(0, ""); // expected-warning{{null passed}}
   s.f("", 0);
   s.g("", 0, ""); // expected-warning{{null passed}}

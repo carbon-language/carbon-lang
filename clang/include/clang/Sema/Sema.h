@@ -5300,7 +5300,8 @@ private:
                          bool isPrintf);
 
   void CheckNonNullArguments(const NonNullAttr *NonNull,
-                             const CallExpr *TheCall);
+                             const Expr * const *ExprArgs,
+                             SourceLocation CallSiteLoc);
 
   void CheckPrintfScanfArguments(const CallExpr *TheCall, bool HasVAListArg,
                                  unsigned format_idx, unsigned firstDataArg,
