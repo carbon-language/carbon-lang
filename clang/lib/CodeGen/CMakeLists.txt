@@ -29,6 +29,7 @@ add_clang_library(clangCodeGen
   CGObjC.cpp
   CGObjCGNU.cpp
   CGObjCMac.cpp
+  CGObjCRuntime.cpp
   CGRecordLayoutBuilder.cpp
   CGRTTI.cpp
   CGStmt.cpp
