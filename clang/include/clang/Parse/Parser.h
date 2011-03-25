@@ -1573,8 +1573,7 @@ private:
   VirtSpecifiers::Specifier isCXX0XVirtSpecifier() const;
   void ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS);
 
-  ClassVirtSpecifiers::Specifier isCXX0XClassVirtSpecifier() const;
-  void ParseOptionalCXX0XClassVirtSpecifierSeq(ClassVirtSpecifiers &CVS);
+  bool isCXX0XFinalKeyword() const;
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is

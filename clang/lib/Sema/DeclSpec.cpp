@@ -841,30 +841,3 @@ const char *VirtSpecifiers::getSpecifierName(Specifier VS) {
   case VS_Final: return "final";
   }
 }
-
-bool ClassVirtSpecifiers::SetSpecifier(Specifier CVS, SourceLocation Loc,
-                                       const char *&PrevSpec) {
-  if (Specifiers & CVS) {
-    PrevSpec = getSpecifierName(CVS);
-    return true;
-  }
-
-  Specifiers |= CVS;
-
-  switch (CVS) {
-  default: assert(0 && "Unknown specifier!");
-  case CVS_Final: CVS_finalLoc = Loc; break;
-  case CVS_Explicit: CVS_explicitLoc = Loc; break;
-  }
-
-  return false;
-}
-
-const char *ClassVirtSpecifiers::getSpecifierName(Specifier CVS) {
-  switch (CVS) {
-  default: assert(0 && "Unknown specifier");
-  case CVS_Final: return "final";
-  case CVS_Explicit: return "explicit";
-  }
-}
-
