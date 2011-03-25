@@ -126,3 +126,11 @@ int no_noexcept();
 // CHECK-0X: has_noexcept
 // CHECK-NO-0X: no_noexcept
 
+#if __has_feature(cxx_override_control)
+int has_override_control();
+#else
+int no_override_control();
+#endif
+
+// CHECK-0X: has_override_control
+// CHECK-NO-0X: no_override_control
