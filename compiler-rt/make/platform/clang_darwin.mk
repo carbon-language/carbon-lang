@@ -223,8 +223,7 @@ FUNCTIONS.cc_kext.x86_64 := $(CCKEXT_X86_FUNCTIONS) \
 CCKEXT_MISSING_FUNCTIONS := \
 	cmpdf2 cmpsf2 div0 \
 	ffssi2 \
-	gtdf2 gtsf2 ltdf2 ltsf2 \
-	udiv_w_sdiv unorddf2 unordsf2 bswapdi2 \
+	udiv_w_sdiv bswapdi2 \
 	bswapsi2 \
 	gcc_bcmp \
 	do_global_dtors \

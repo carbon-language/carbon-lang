@@ -25,6 +25,20 @@
 #include <stdbool.h>
 #include <limits.h>
 
+// Result enumerations used in comparison routines.
+enum LE_RESULT {
+    LE_LESS      = -1,
+    LE_EQUAL     =  0,
+    LE_GREATER   =  1,
+    LE_UNORDERED =  1
+};
+enum GE_RESULT {
+    GE_LESS      = -1,
+    GE_EQUAL     =  0,
+    GE_GREATER   =  1,
+    GE_UNORDERED = -1   // Note: different from LE_UNORDERED
+};
+
 #if defined SINGLE_PRECISION
 
 typedef uint32_t rep_t;
