@@ -1230,9 +1230,6 @@ static bool DisassembleThumb2LdStEx(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
-// LLVM, as of Jan-05-2010, does not output <Rt2>, i.e., Rs, in the asm.
-// Whereas the ARM Arch. Manual does not require that t2 = t+1 like in ARM ISA.
-//
 // t2LDRDi8: Rd Rs Rn imm8s4 (offset mode)
 // t2LDRDpci: Rd Rs imm8s4 (Not decoded, prefer the generic t2LDRDi8 version)
 // t2STRDi8: Rd Rs Rn imm8s4 (offset mode)
@@ -1246,18 +1243,21 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
   if (!OpInfo) return false;
 
   assert(NumOps >= 4
-         && OpInfo[0].RegClass == ARM::GPRRegClassID
-         && OpInfo[1].RegClass == ARM::GPRRegClassID
-         && OpInfo[2].RegClass == ARM::GPRRegClassID
+         && OpInfo[0].RegClass > 0
+         && OpInfo[0].RegClass == OpInfo[1].RegClass
+         && OpInfo[2].RegClass > 0
          && OpInfo[3].RegClass < 0
          && "Expect >= 4 operands and first 3 as reg operands");
 
   // Add the <Rt> <Rt2> operands.
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  unsigned RegClassPair = OpInfo[0].RegClass;
+  unsigned RegClassBase = OpInfo[2].RegClass;
+  
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassPair,
                                                      decodeRd(insn))));
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassPair,
                                                      decodeRs(insn))));
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RegClassBase,
                                                      decodeRn(insn))));
 
   // Finally add (+/-)imm8*4, depending on the U bit.
