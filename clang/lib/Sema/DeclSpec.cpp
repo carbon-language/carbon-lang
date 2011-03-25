@@ -829,7 +829,6 @@ bool VirtSpecifiers::SetSpecifier(Specifier VS, SourceLocation Loc,
   default: assert(0 && "Unknown specifier!");
   case VS_Override: VS_overrideLoc = Loc; break;
   case VS_Final:    VS_finalLoc = Loc; break;
-  case VS_New:      VS_newLoc = Loc; break;
   }
 
   return false;
@@ -840,7 +839,6 @@ const char *VirtSpecifiers::getSpecifierName(Specifier VS) {
   default: assert(0 && "Unknown specifier");
   case VS_Override: return "override";
   case VS_Final: return "final";
-  case VS_New: return "new";
   }
 }
 

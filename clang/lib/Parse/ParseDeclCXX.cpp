@@ -1269,13 +1269,9 @@ void Parser::HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
 ///       virt-specifier:
 ///         override
 ///         final
-///         new
 VirtSpecifiers::Specifier Parser::isCXX0XVirtSpecifier() const {
   if (!getLang().CPlusPlus)
     return VirtSpecifiers::VS_None;
-
-  if (Tok.is(tok::kw_new))
-    return VirtSpecifiers::VS_New;
 
   if (Tok.is(tok::identifier)) {
     IdentifierInfo *II = Tok.getIdentifierInfo();

@@ -1704,8 +1704,7 @@ public:
   enum Specifier {
     VS_None = 0,
     VS_Override = 1,
-    VS_Final = 2,
-    VS_New = 4
+    VS_Final = 2
   };
 
   VirtSpecifiers() : Specifiers(0) { }
@@ -1719,9 +1718,6 @@ public:
   bool isFinalSpecified() const { return Specifiers & VS_Final; }
   SourceLocation getFinalLoc() const { return VS_finalLoc; }
 
-  bool isNewSpecified() const { return Specifiers & VS_New; }
-  SourceLocation getNewLoc() const { return VS_newLoc; }
-
   void clear() { Specifiers = 0; }
 
   static const char *getSpecifierName(Specifier VS);
@@ -1731,7 +1727,7 @@ public:
 private:
   unsigned Specifiers;
 
-  SourceLocation VS_overrideLoc, VS_finalLoc, VS_newLoc;
+  SourceLocation VS_overrideLoc, VS_finalLoc;
   SourceLocation LastLocation;
 };
 

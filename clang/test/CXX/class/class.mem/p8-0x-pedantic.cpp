@@ -8,7 +8,6 @@ namespace inline_extension {
   struct B : Base1 {
     virtual void f() override {} // expected-warning {{'override' keyword only allowed in declarations, allowed as an extension}}
     virtual void g() final {} // expected-warning {{'final' keyword only allowed in declarations, allowed as an extension}}
-    virtual void h() new {} // expected-warning {{'new' keyword only allowed in declarations, allowed as an extension}}
   };
 }
 
