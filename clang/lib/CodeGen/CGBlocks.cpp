@@ -914,7 +914,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   // Begin generating the function.
   StartFunction(blockDecl, fnType->getResultType(), fn, fnInfo, args,
-                blockInfo.getBlockExpr()->getBody()->getLocEnd());
+                blockInfo.getBlockExpr()->getBody()->getLocStart());
   CurFuncDecl = outerFnDecl; // StartFunction sets this to blockDecl
 
   // Okay.  Undo some of what StartFunction did.
