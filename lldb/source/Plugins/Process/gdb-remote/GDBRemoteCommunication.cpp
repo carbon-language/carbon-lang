@@ -11,6 +11,8 @@
 #include "GDBRemoteCommunication.h"
 
 // C Includes
+#include <string.h>
+
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/Log.h"

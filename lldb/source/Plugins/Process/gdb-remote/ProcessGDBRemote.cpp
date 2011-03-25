@@ -10,6 +10,7 @@
 // C Includes
 #include <errno.h>
 #include <spawn.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -56,7 +57,7 @@ using namespace lldb_private;
 static inline uint16_t
 get_random_port ()
 {
-    return (arc4random() % (UINT16_MAX - 1000u)) + 1000u;
+    return (rand() % (UINT16_MAX - 1000u)) + 1000u;
 }
 
 
