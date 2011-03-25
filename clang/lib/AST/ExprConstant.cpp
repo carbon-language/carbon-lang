@@ -770,7 +770,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
          return APValue();
        Result = APValue(F);
     } else {
-      return false;
+      return APValue();
     }
 
     // Splat and create vector APValue.
@@ -782,7 +782,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
       return Visit(const_cast<Expr*>(SE));
 
     if (!SETy->isIntegerType())
-      return false;
+      return APValue();
 
     APSInt Init;
     if (!EvaluateInteger(SE, Init, Info))
@@ -808,7 +808,7 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
   case CK_NoOp:
     return Visit(const_cast<Expr*>(SE));
   default:
-    return false;
+    return APValue();
   }
 }
 
