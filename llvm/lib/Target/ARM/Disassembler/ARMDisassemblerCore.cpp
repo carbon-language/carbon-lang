@@ -2951,6 +2951,11 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   case ARM::WFI:
   case ARM::SEV:
     return true;
+  case ARM::SWP:
+  case ARM::SWPB:
+    // SWP, SWPB: Rd Rm Rn
+    // Delegate to DisassembleLdStExFrm()....
+    return DisassembleLdStExFrm(MI, Opcode, insn, NumOps, NumOpsAdded, B);
   default:
     break;
   }
