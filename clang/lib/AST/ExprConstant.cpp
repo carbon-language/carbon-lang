@@ -2166,7 +2166,15 @@ bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
 bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
   Expr* SubExpr = E->getSubExpr();
 
-  if (SubExpr->getType()->isIntegralOrEnumerationType()) {
+  switch (E->getCastKind()) {
+  default:
+    return false;
+
+  case CK_LValueToRValue:
+  case CK_NoOp:
+    return Visit(SubExpr);
+
+  case CK_IntegralToFloating: {
     APSInt IntResult;
     if (!EvaluateInteger(SubExpr, IntResult, Info))
       return false;
@@ -2174,7 +2182,8 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
                                   IntResult, Info.Ctx);
     return true;
   }
-  if (SubExpr->getType()->isRealFloatingType()) {
+
+  case CK_FloatingCast: {
     if (!Visit(SubExpr))
       return false;
     Result = HandleFloatToFloatCast(E->getType(), SubExpr->getType(),
@@ -2182,12 +2191,13 @@ bool FloatExprEvaluator::VisitCastExpr(CastExpr *E) {
     return true;
   }
 
-  if (E->getCastKind() == CK_FloatingComplexToReal) {
+  case CK_FloatingComplexToReal: {
     ComplexValue V;
     if (!EvaluateComplex(SubExpr, V, Info))
       return false;
     Result = V.getComplexFloatReal();
     return true;
+  }
   }
 
   return false;
