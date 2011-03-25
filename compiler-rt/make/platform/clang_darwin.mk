@@ -135,10 +135,8 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	floatsisf \
 	floatunsidf \
 	floatunsisf \
-	gtdf2 \
-	gtsf2 \
-	ltdf2 \
-	ltsf2 \
+	comparedf2 \
+	comparesf2 \
 	modsi3 \
 	muldf3 \
 	mulsf3 \
@@ -223,7 +221,6 @@ FUNCTIONS.cc_kext.x86_64 := $(CCKEXT_X86_FUNCTIONS) \
 CCKEXT_MISSING_FUNCTIONS := \
 	cmpdf2 cmpsf2 div0 \
 	ffssi2 \
-	gtdf2 gtsf2 ltdf2 ltsf2 \
 	udiv_w_sdiv unorddf2 unordsf2 bswapdi2 \
 	bswapsi2 \
 	gcc_bcmp \
