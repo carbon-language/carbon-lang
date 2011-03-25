@@ -1947,25 +1947,25 @@ static bool DisassembleThumb2DPReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   OpIdx = 0;
 
   assert(NumOps >= 2 &&
-         OpInfo[0].RegClass == ARM::rGPRRegClassID &&
-         OpInfo[1].RegClass == ARM::rGPRRegClassID &&
+         OpInfo[0].RegClass > 0 &&
+         OpInfo[1].RegClass > 0 &&
          "Expect >= 2 operands and first two as reg operands");
 
   // Build the register operands, followed by the optional rotation amount.
 
-  bool ThreeReg = NumOps > 2 && OpInfo[2].RegClass == ARM::rGPRRegClassID;
+  bool ThreeReg = NumOps > 2 && OpInfo[2].RegClass > 0;
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      decodeRs(insn))));
   ++OpIdx;
 
   if (ThreeReg) {
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B,OpInfo[OpIdx].RegClass,
                                                        decodeRn(insn))));
     ++OpIdx;
   }
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::rGPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      decodeRm(insn))));
   ++OpIdx;
 
