@@ -563,10 +563,9 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   CXXRecordDecl * CXXBaseDecl = cast<CXXRecordDecl>(BaseDecl);
   assert(CXXBaseDecl && "Base type is not a C++ type");
 
-  // C++ [class.derived]p2:
-  //   If a class is marked with the class-virt-specifier final and it appears
-  //   as a base-type-specifier in a base-clause (10 class.derived), the program
-  //   is ill-formed.
+  // C++ [class]p3:
+  //   If a class is marked final and it appears as a base-type-specifier in 
+  //   base-clause, the program is ill-formed.
   if (CXXBaseDecl->hasAttr<FinalAttr>()) {
     Diag(BaseLoc, diag::err_class_marked_final_used_as_base) 
       << CXXBaseDecl->getDeclName();

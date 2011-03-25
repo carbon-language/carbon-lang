@@ -810,7 +810,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // There are four options here.  If we have 'struct foo;', then this
   // is either a forward declaration or a friend declaration, which
   // have to be treated differently.  If we have 'struct foo {...',
-  // 'struct foo :...' or 'struct foo <class-virt-specifier>' then this is a
+  // 'struct foo :...' or 'struct foo final[opt]' then this is a
   // definition. Otherwise we have something like 'struct foo xyz', a reference.
   // However, in some contexts, things look like declarations but are just
   // references, e.g.
