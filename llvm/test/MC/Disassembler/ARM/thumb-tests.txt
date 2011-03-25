@@ -148,3 +148,6 @@
 
 # CHECK:	ldmia	r5!, {r0, r1, r2, r3, r4}
 0x1f 0xcd
+
+# CHECK:	addw	r0, pc, #1050
+0x0f 0xf2 0x1a 0x40

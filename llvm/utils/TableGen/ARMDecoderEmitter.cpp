@@ -1632,6 +1632,11 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (Name == "tADR")
       return false;
 
+    // Delegate t2ADR disassembly to the more generic t2ADDri12/t2SUBri12
+    // instructions.
+    if (Name == "t2ADR")
+      return false;
+
     // Ignore tADDrSP, tADDspr, and tPICADD, prefer the generic tADDhirr.
     // Ignore t2SUBrSPs, prefer the t2SUB[S]r[r|s].
     // Ignore t2ADDrSPs, prefer the t2ADD[S]r[r|s].
