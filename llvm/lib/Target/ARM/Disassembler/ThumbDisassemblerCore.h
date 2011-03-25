@@ -1194,8 +1194,8 @@ static bool DisassembleThumb2LdStEx(MCInst &MI, unsigned Opcode, uint32_t insn,
   OpIdx = 0;
 
   assert(NumOps >= 2
-         && OpInfo[0].RegClass == ARM::GPRRegClassID
-         && OpInfo[1].RegClass == ARM::GPRRegClassID
+         && OpInfo[0].RegClass > 0
+         && OpInfo[1].RegClass > 0
          && "Expect >=2 operands and first two as reg operands");
 
   bool isStore = (ARM::t2STREX <= Opcode && Opcode <= ARM::t2STREXH);
@@ -1205,25 +1205,25 @@ static bool DisassembleThumb2LdStEx(MCInst &MI, unsigned Opcode, uint32_t insn,
   // Add the destination operand for store.
   if (isStore) {
     MI.addOperand(MCOperand::CreateReg(
-                    getRegisterEnum(B, ARM::GPRRegClassID,
+                    getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                     isSW ? decodeRs(insn) : decodeRm(insn))));
     ++OpIdx;
   }
 
   // Source operand for store and destination operand for load.
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      decodeRd(insn))));
   ++OpIdx;
 
   // Thumb2 doubleword complication: with an extra source/destination operand.
   if (isDW) {
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B,OpInfo[OpIdx].RegClass,
                                                        decodeRs(insn))));
     ++OpIdx;
   }
 
   // Finally add the pointer operand.
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      decodeRn(insn))));
   ++OpIdx;
 
