@@ -42,9 +42,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-// Common CGObjCRuntime functions, these don't belong here, but they
-// don't belong in CGObjCRuntime either so we will live with it for
-// now.
 
 static void EmitNullReturnInitialization(CodeGenFunction &CGF,
                                          ReturnValueSlot &returnSlot,
@@ -55,112 +52,6 @@ static void EmitNullReturnInitialization(CodeGenFunction &CGF,
   CGF.EmitNullInitialization(returnSlot.getValue(), resultType);
 }
 
-static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
-                                     const ObjCInterfaceDecl *OID,
-                                     const ObjCImplementationDecl *ID,
-                                     const ObjCIvarDecl *Ivar) {
-  const ObjCInterfaceDecl *Container = Ivar->getContainingInterface();
-
-  // FIXME: We should eliminate the need to have ObjCImplementationDecl passed
-  // in here; it should never be necessary because that should be the lexical
-  // decl context for the ivar.
-
-  // If we know have an implementation (and the ivar is in it) then
-  // look up in the implementation layout.
-  const ASTRecordLayout *RL;
-  if (ID && ID->getClassInterface() == Container)
-    RL = &CGM.getContext().getASTObjCImplementationLayout(ID);
-  else
-    RL = &CGM.getContext().getASTObjCInterfaceLayout(Container);
-
-  // Compute field index.
-  //
-  // FIXME: The index here is closely tied to how ASTContext::getObjCLayout is
-  // implemented. This should be fixed to get the information from the layout
-  // directly.
-  unsigned Index = 0;
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().ShallowCollectObjCIvars(Container, Ivars);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
-    if (Ivar == Ivars[k])
-      break;
-    ++Index;
-  }
-  assert(Index != Ivars.size() && "Ivar is not inside container!");
-  assert(Index < RL->getFieldCount() && "Ivar is not inside record layout!");
-
-  return RL->getFieldOffset(Index);
-}
-
-uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                              const ObjCInterfaceDecl *OID,
-                                              const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID, 0, Ivar) / 8;
-}
-
-uint64_t CGObjCRuntime::ComputeIvarBaseOffset(CodeGen::CodeGenModule &CGM,
-                                              const ObjCImplementationDecl *OID,
-                                              const ObjCIvarDecl *Ivar) {
-  return LookupFieldBitOffset(CGM, OID->getClassInterface(), OID, Ivar) / 8;
-}
-
-LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
-                                               const ObjCInterfaceDecl *OID,
-                                               llvm::Value *BaseValue,
-                                               const ObjCIvarDecl *Ivar,
-                                               unsigned CVRQualifiers,
-                                               llvm::Value *Offset) {
-  // Compute (type*) ( (char *) BaseValue + Offset)
-  const llvm::Type *I8Ptr = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  QualType IvarTy = Ivar->getType();
-  const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
-  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
-  V = CGF.Builder.CreateInBoundsGEP(V, Offset, "add.ptr");
-  V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
-
-  if (!Ivar->isBitField()) {
-    LValue LV = CGF.MakeAddrLValue(V, IvarTy);
-    LV.getQuals().addCVRQualifiers(CVRQualifiers);
-    return LV;
-  }
-
-  // We need to compute an access strategy for this bit-field. We are given the
-  // offset to the first byte in the bit-field, the sub-byte offset is taken
-  // from the original layout. We reuse the normal bit-field access strategy by
-  // treating this as an access to a struct where the bit-field is in byte 0,
-  // and adjust the containing type size as appropriate.
-  //
-  // FIXME: Note that currently we make a very conservative estimate of the
-  // alignment of the bit-field, because (a) it is not clear what guarantees the
-  // runtime makes us, and (b) we don't have a way to specify that the struct is
-  // at an alignment plus offset.
-  //
-  // Note, there is a subtle invariant here: we can only call this routine on
-  // non-synthesized ivars but we may be called for synthesized ivars.  However,
-  // a synthesized ivar can never be a bit-field, so this is safe.
-  const ASTRecordLayout &RL =
-    CGF.CGM.getContext().getASTObjCInterfaceLayout(OID);
-  uint64_t TypeSizeInBits = CGF.CGM.getContext().toBits(RL.getSize());
-  uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
-  uint64_t BitOffset = FieldBitOffset % 8;
-  uint64_t ContainingTypeAlign = 8;
-  uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
-  uint64_t BitFieldSize =
-    Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
-
-  // Allocate a new CGBitFieldInfo object to describe this access.
-  //
-  // FIXME: This is incredibly wasteful, these should be uniqued or part of some
-  // layout object. However, this is blocked on other cleanups to the
-  // Objective-C code, so for now we just live with allocating a bunch of these
-  // objects.
-  CGBitFieldInfo *Info = new (CGF.CGM.getContext()) CGBitFieldInfo(
-    CGBitFieldInfo::MakeInfo(CGF.CGM.getTypes(), Ivar, BitOffset, BitFieldSize,
-                             ContainingTypeSize, ContainingTypeAlign));
-
-  return LValue::MakeBitfield(V, *Info,
-                              IvarTy.getCVRQualifiers() | CVRQualifiers);
-}
 
 ///
 
