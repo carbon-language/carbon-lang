@@ -1868,7 +1868,7 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
          OpInfo[1].RegClass == ARM::GPRRegClassID &&
          "Expect >= 3 operands and first two as reg operands");
 
-  bool ThreeReg = (OpInfo[2].RegClass == ARM::GPRRegClassID);
+  bool ThreeReg = (OpInfo[2].RegClass > 0);
   bool TIED_TO = ThreeReg && TID.getOperandConstraint(2, TOI::TIED_TO) != -1;
   bool Imm12 = !ThreeReg && slice(insn, 23, 23) == 1; // ARMInstrThumb2.td
 
@@ -1912,7 +1912,8 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
   ++OpIdx;
 
   if (ThreeReg) {
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+    // This could be an offset register or a TIED_TO register.
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B,OpInfo[OpIdx].RegClass,
                                                        R2)));
     ++OpIdx;
   }
