@@ -125,7 +125,7 @@ private:
 const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
 const ComparableFunction ComparableFunction::TombstoneKey =
     ComparableFunction(1);
-TargetData * const ComparableFunction::LookupOnly = (TargetData*)(-1);
+TargetData *const ComparableFunction::LookupOnly = (TargetData*)(-1);
 
 }
 
@@ -212,7 +212,7 @@ bool FunctionComparator::isEquivalentType(const Type *Ty1,
     return false;
   }
 
-  switch(Ty1->getTypeID()) {
+  switch (Ty1->getTypeID()) {
   default:
     llvm_unreachable("Unknown type!");
     // Fall through in Release mode.
