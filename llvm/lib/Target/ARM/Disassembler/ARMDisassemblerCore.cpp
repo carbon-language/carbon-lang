@@ -2965,8 +2965,10 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // opcodes which match the same real instruction. This is needed since there's
   // no current handling of optional arguments. Fix here when a better handling
   // of optional arguments is implemented.
-  if (Opcode == ARM::CPS3p) {
-    // Let's reject impossible imod values by returning false.
+  if (Opcode == ARM::CPS3p) {   // M = 1
+    // Let's reject these impossible imod values by returning false:
+    // 1. (imod=0b01)
+    //
     // AsmPrinter cannot handle imod=0b00, plus (imod=0b00,M=1,iflags!=0) is an
     // invalid combination, so we just check for imod=0b00 here.
     if (slice(insn, 19, 18) == 0 || slice(insn, 19, 18) == 1)
@@ -2977,13 +2979,18 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     NumOpsAdded = 3;
     return true;
   }
-  if (Opcode == ARM::CPS2p) {
+  if (Opcode == ARM::CPS2p) { // mode = 0, M = 0
+    // Let's reject these impossible imod values by returning false:
+    // 1. (imod=0b00,M=0)
+    // 2. (imod=0b01)
+    if (slice(insn, 19, 18) == 0 || slice(insn, 19, 18) == 1)
+      return false;
     MI.addOperand(MCOperand::CreateImm(slice(insn, 19, 18))); // imod
     MI.addOperand(MCOperand::CreateImm(slice(insn, 8, 6)));   // iflags
     NumOpsAdded = 2;
     return true;
   }
-  if (Opcode == ARM::CPS1p) {
+  if (Opcode == ARM::CPS1p) { // imod = 0, iflags = 0, M = 1
     MI.addOperand(MCOperand::CreateImm(slice(insn, 4, 0))); // mode
     NumOpsAdded = 1;
     return true;
