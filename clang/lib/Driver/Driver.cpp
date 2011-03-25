@@ -1226,7 +1226,13 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 
   llvm::SmallString<128> BasePath(BaseInput);
-  llvm::StringRef BaseName = llvm::sys::path::filename(BasePath);
+  llvm::StringRef BaseName;
+
+  // Dsymutil actions should use the full path.
+  if (isa<DsymutilJobAction>(JA))
+    BaseName = BasePath;
+  else
+    BaseName = llvm::sys::path::filename(BasePath);
 
   // Determine what the derived output name should be.
   const char *NamedOutput;
