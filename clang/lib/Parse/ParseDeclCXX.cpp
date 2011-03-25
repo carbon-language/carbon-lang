@@ -1777,8 +1777,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 
   SourceLocation LBraceLoc = ConsumeBrace();
 
+  SourceLocation FinalLoc = 
+    CVS.isFinalSpecified() ? CVS.getFinalLoc() : SourceLocation();
+
   if (TagDecl)
-    Actions.ActOnStartCXXMemberDeclarations(getCurScope(), TagDecl, CVS,
+    Actions.ActOnStartCXXMemberDeclarations(getCurScope(), TagDecl, FinalLoc,
                                             LBraceLoc);
 
   // C++ 11p3: Members of a class defined with the keyword class are private

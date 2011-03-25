@@ -6714,7 +6714,7 @@ void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {
 }
 
 void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
-                                           ClassVirtSpecifiers &CVS,
+                                           SourceLocation FinalLoc,
                                            SourceLocation LBraceLoc) {
   AdjustDeclIfTemplate(TagD);
   CXXRecordDecl *Record = cast<CXXRecordDecl>(TagD);
@@ -6724,10 +6724,8 @@ void Sema::ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagD,
   if (!Record->getIdentifier())
     return;
 
-  if (CVS.isFinalSpecified())
-    Record->addAttr(new (Context) FinalAttr(CVS.getFinalLoc(), Context));
-  if (CVS.isExplicitSpecified())
-    Record->addAttr(new (Context) ExplicitAttr(CVS.getExplicitLoc(), Context));
+  if (FinalLoc.isValid())
+    Record->addAttr(new (Context) FinalAttr(FinalLoc, Context));
     
   // C++ [class]p2:
   //   [...] The class-name is also inserted into the scope of the

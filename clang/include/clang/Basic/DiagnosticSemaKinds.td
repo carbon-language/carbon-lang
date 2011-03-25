@@ -967,9 +967,6 @@ def err_final_function_overridden : Error<
 def err_final_base : Error<
   "derivation from 'final' %0">;
 
-def err_function_overriding_without_override : Error<
-  "%0 overrides function%s1 without being marked 'override'">;
-
 // C++0x scoped enumerations
 def err_enum_invalid_underlying : Error<
   "non-integral type %0 is an invalid underlying type">;

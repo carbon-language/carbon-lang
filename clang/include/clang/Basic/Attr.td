@@ -245,10 +245,6 @@ def DLLImport : InheritableAttr {
   let Spellings = ["dllimport"];
 }
 
-def Explicit : InheritableAttr {
-  let Spellings = [];
-}
-
 def FastCall : InheritableAttr {
   let Spellings = ["fastcall", "__fastcall"];
 }

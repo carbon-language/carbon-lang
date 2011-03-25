@@ -999,7 +999,7 @@ public:
   /// C++ record definition's base-specifiers clause and are starting its
   /// member declarations.
   void ActOnStartCXXMemberDeclarations(Scope *S, Decl *TagDecl,
-                                       ClassVirtSpecifiers &CVS,
+                                       SourceLocation FinalLoc,
                                        SourceLocation LBraceLoc);
 
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
