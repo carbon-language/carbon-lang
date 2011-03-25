@@ -448,6 +448,10 @@ ARMBaseRegisterInfo::getAllocationOrder(const TargetRegisterClass *RC,
     ARM::R0, ARM::R2, ARM::R10,ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8
   };
 
+  // We only support even/odd hints for GPR and rGPR.
+  if (RC != ARM::GPRRegisterClass && RC != ARM::rGPRRegisterClass)
+    return std::make_pair(RC->allocation_order_begin(MF),
+                          RC->allocation_order_end(MF));
 
   if (HintType == ARMRI::RegPairEven) {
     if (isPhysicalRegister(HintReg) && getRegisterPairEven(HintReg, MF) == 0)

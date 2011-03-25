@@ -1110,6 +1110,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
   // list.
   if (physReg) {
     DEBUG(dbgs() <<  tri_->getName(physReg) << '\n');
+    assert(RC->contains(physReg) && "Invalid candidate");
     vrm_->assignVirt2Phys(cur->reg, physReg);
     addRegUse(physReg);
     active_.push_back(std::make_pair(cur, cur->begin()));
