@@ -1,4 +1,4 @@
-//===-- lib/ledf2.c - Double-precision comparisons ----------------*- C -*-===//
+//===-- lib/comparedf2.c - Double-precision comparisons -----------*- C -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -40,6 +40,13 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
+enum LE_RESULT {
+    LE_LESS      = -1,
+    LE_EQUAL     =  0,
+    LE_GREATER   =  1,
+    LE_UNORDERED =  1
+};
+
 enum LE_RESULT __ledf2(fp_t a, fp_t b) {
     
     const srep_t aInt = toRep(a);
@@ -71,3 +78,55 @@ enum LE_RESULT __ledf2(fp_t a, fp_t b) {
         else return LE_GREATER;
     }
 }
+
+enum GE_RESULT {
+    GE_LESS      = -1,
+    GE_EQUAL     =  0,
+    GE_GREATER   =  1,
+    GE_UNORDERED = -1   // Note: different from LE_UNORDERED
+};
+
+enum GE_RESULT __gedf2(fp_t a, fp_t b) {
+    
+    const srep_t aInt = toRep(a);
+    const srep_t bInt = toRep(b);
+    const rep_t aAbs = aInt & absMask;
+    const rep_t bAbs = bInt & absMask;
+    
+    if (aAbs > infRep || bAbs > infRep) return GE_UNORDERED;
+    if ((aAbs | bAbs) == 0) return GE_EQUAL;
+    if ((aInt & bInt) >= 0) {
+        if (aInt < bInt) return GE_LESS;
+        else if (aInt == bInt) return GE_EQUAL;
+        else return GE_GREATER;
+    } else {
+        if (aInt > bInt) return GE_LESS;
+        else if (aInt == bInt) return GE_EQUAL;
+        else return GE_GREATER;
+    }
+}
+
+int __unorddf2(fp_t a, fp_t b) {
+    const rep_t aAbs = toRep(a) & absMask;
+    const rep_t bAbs = toRep(b) & absMask;
+    return aAbs > infRep || bAbs > infRep;
+}
+
+// The following are alternative names for the preceeding routines.
+
+enum LE_RESULT __eqdf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum LE_RESULT __ltdf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum LE_RESULT __nedf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum GE_RESULT __gtdf2(fp_t a, fp_t b) {
+    return __gedf2(a, b);
+}
+
