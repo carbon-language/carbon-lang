@@ -1764,7 +1764,6 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   QualType SrcType = SubExpr->getType();
 
   switch (E->getCastKind()) {
-  case CK_BitCast:
   case CK_BaseToDerived:
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
@@ -1794,6 +1793,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   case CK_IntegralComplexToFloatingComplex:
     llvm_unreachable("invalid cast kind for integral value");
 
+  case CK_BitCast:
   case CK_Dependent:
   case CK_GetObjCProperty:
   case CK_LValueBitCast:
