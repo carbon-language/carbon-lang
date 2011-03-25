@@ -5902,65 +5902,12 @@ void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
   return;
 }
 
-namespace {
-  struct CallSyncExit : EHScopeStack::Cleanup {
-    llvm::Value *SyncExitFn;
-    llvm::Value *SyncArg;
-    CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
-      : SyncExitFn(SyncExitFn), SyncArg(SyncArg) {}
-
-    void Emit(CodeGenFunction &CGF, bool IsForEHCleanup) {
-      CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
-    }
-  };
-}
-
 void
 CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                              const ObjCAtSynchronizedStmt &S) {
-  // Evaluate the lock operand.  This should dominate the cleanup.
-  llvm::Value *SyncArg = CGF.EmitScalarExpr(S.getSynchExpr());
-
-  // Acquire the lock.
-  SyncArg = CGF.Builder.CreateBitCast(SyncArg, ObjCTypes.ObjectPtrTy);
-  CGF.Builder.CreateCall(ObjCTypes.getSyncEnterFn(), SyncArg)
-    ->setDoesNotThrow();
-
-  // Register an all-paths cleanup to release the lock.
-  CGF.EHStack.pushCleanup<CallSyncExit>(NormalAndEHCleanup,
-                                        ObjCTypes.getSyncExitFn(),
-                                        SyncArg);
-
-  // Emit the body of the statement.
-  CGF.EmitStmt(S.getSynchBody());
-
-  // Pop the lock-release cleanup.
-  CGF.PopCleanupBlock();
-}
-
-namespace {
-  struct CatchHandler {
-    const VarDecl *Variable;
-    const Stmt *Body;
-    llvm::BasicBlock *Block;
-    llvm::Value *TypeInfo;
-  };
-
-  struct CallObjCEndCatch : EHScopeStack::Cleanup {
-    CallObjCEndCatch(bool MightThrow, llvm::Value *Fn) :
-      MightThrow(MightThrow), Fn(Fn) {}
-    bool MightThrow;
-    llvm::Value *Fn;
-
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      if (!MightThrow) {
-        CGF.Builder.CreateCall(Fn)->setDoesNotThrow();
-        return;
-      }
-
-      CGF.EmitCallOrInvoke(Fn, 0, 0);
-    }
-  };
+  EmitAtSynchronizedStmt(CGF, S,
+      cast<llvm::Function>(ObjCTypes.getSyncEnterFn()),
+      cast<llvm::Function>(ObjCTypes.getSyncExitFn()));
 }
 
 llvm::Constant *
@@ -5990,104 +5937,10 @@ CGObjCNonFragileABIMac::GetEHType(QualType T) {
 
 void CGObjCNonFragileABIMac::EmitTryStmt(CodeGen::CodeGenFunction &CGF,
                                          const ObjCAtTryStmt &S) {
-  // Jump destination for falling out of catch bodies.
-  CodeGenFunction::JumpDest Cont;
-  if (S.getNumCatchStmts())
-    Cont = CGF.getJumpDestInCurrentScope("eh.cont");
-
-  CodeGenFunction::FinallyInfo FinallyInfo;
-  if (const ObjCAtFinallyStmt *Finally = S.getFinallyStmt())
-    FinallyInfo = CGF.EnterFinallyBlock(Finally->getFinallyBody(),
-                                        ObjCTypes.getObjCBeginCatchFn(),
-                                        ObjCTypes.getObjCEndCatchFn(),
-                                        ObjCTypes.getExceptionRethrowFn());
-
-  llvm::SmallVector<CatchHandler, 8> Handlers;
-
-  // Enter the catch, if there is one.
-  if (S.getNumCatchStmts()) {
-    for (unsigned I = 0, N = S.getNumCatchStmts(); I != N; ++I) {
-      const ObjCAtCatchStmt *CatchStmt = S.getCatchStmt(I);
-      const VarDecl *CatchDecl = CatchStmt->getCatchParamDecl();
-
-      Handlers.push_back(CatchHandler());
-      CatchHandler &Handler = Handlers.back();
-      Handler.Variable = CatchDecl;
-      Handler.Body = CatchStmt->getCatchBody();
-      Handler.Block = CGF.createBasicBlock("catch");
-
-      // @catch(...) always matches.
-      if (!CatchDecl) {
-        Handler.TypeInfo = 0; // catch-all
-        // Don't consider any other catches.
-        break;
-      }
-
-      Handler.TypeInfo = GetEHType(CatchDecl->getType());
-    }
-
-    EHCatchScope *Catch = CGF.EHStack.pushCatch(Handlers.size());
-    for (unsigned I = 0, E = Handlers.size(); I != E; ++I)
-      Catch->setHandler(I, Handlers[I].TypeInfo, Handlers[I].Block);
-  }
-  
-  // Emit the try body.
-  CGF.EmitStmt(S.getTryBody());
-
-  // Leave the try.
-  if (S.getNumCatchStmts())
-    CGF.EHStack.popCatch();
-
-  // Remember where we were.
-  CGBuilderTy::InsertPoint SavedIP = CGF.Builder.saveAndClearIP();
-
-  // Emit the handlers.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    CatchHandler &Handler = Handlers[I];
-
-    CGF.EmitBlock(Handler.Block);
-    llvm::Value *RawExn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
-
-    // Enter the catch.
-    llvm::CallInst *Exn =
-      CGF.Builder.CreateCall(ObjCTypes.getObjCBeginCatchFn(), RawExn,
-                             "exn.adjusted");
-    Exn->setDoesNotThrow();
-
-    // Add a cleanup to leave the catch.
-    bool EndCatchMightThrow = (Handler.Variable == 0);
-    CGF.EHStack.pushCleanup<CallObjCEndCatch>(NormalAndEHCleanup,
-                                              EndCatchMightThrow,
-                                              ObjCTypes.getObjCEndCatchFn());
-
-    // Bind the catch parameter if it exists.
-    if (const VarDecl *CatchParam = Handler.Variable) {
-      const llvm::Type *CatchType = CGF.ConvertType(CatchParam->getType());
-      llvm::Value *CastExn = CGF.Builder.CreateBitCast(Exn, CatchType);
-
-      CGF.EmitAutoVarDecl(*CatchParam);
-      CGF.Builder.CreateStore(CastExn, CGF.GetAddrOfLocalVar(CatchParam));
-    }
-
-    CGF.ObjCEHValueStack.push_back(Exn);
-    CGF.EmitStmt(Handler.Body);
-    CGF.ObjCEHValueStack.pop_back();
-
-    // Leave the earlier cleanup.
-    CGF.PopCleanupBlock();
-
-    CGF.EmitBranchThroughCleanup(Cont);
-  }  
-
-  // Go back to the try-statement fallthrough.
-  CGF.Builder.restoreIP(SavedIP);
-
-  // Pop out of the normal cleanup on the finally.
-  if (S.getFinallyStmt())
-    CGF.ExitFinallyBlock(FinallyInfo);
-
-  if (Cont.isValid())
-    CGF.EmitBlock(Cont.getBlock());
+  EmitTryCatchStmt(CGF, S,
+      cast<llvm::Function>(ObjCTypes.getObjCBeginCatchFn()),
+      cast<llvm::Function>(ObjCTypes.getObjCEndCatchFn()),
+      cast<llvm::Function>(ObjCTypes.getExceptionRethrowFn()));
 }
 
 /// EmitThrowStmt - Generate code for a throw statement.
