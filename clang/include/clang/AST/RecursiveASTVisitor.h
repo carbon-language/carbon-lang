@@ -1362,7 +1362,7 @@ DEF_TRAVERSE_DECL(EnumDecl, {
     if (D->getTypeForDecl())
       TRY_TO(TraverseType(QualType(D->getTypeForDecl(), 0)));
 
-    TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+    TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
     // The enumerators are already traversed by
     // decls_begin()/decls_end().
   })
@@ -1375,7 +1375,7 @@ bool RecursiveASTVisitor<Derived>::TraverseRecordHelper(
   // We shouldn't traverse D->getTypeForDecl(); it's a result of
   // declaring the type, not something that was written in the source.
 
-  TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
   return true;
 }
 
@@ -1472,7 +1472,7 @@ DEF_TRAVERSE_DECL(IndirectFieldDecl, {})
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseDeclaratorHelper(DeclaratorDecl *D) {
-  TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
   if (D->getTypeSourceInfo())
     TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
   else
@@ -1502,7 +1502,7 @@ DEF_TRAVERSE_DECL(ObjCIvarDecl, {
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
-  TRY_TO(TraverseNestedNameSpecifier(D->getQualifier()));
+  TRY_TO(TraverseNestedNameSpecifierLoc(D->getQualifierLoc()));
 
   // If we're an explicit template specialization, iterate over the
   // template args that were explicitly specified.  If we were doing
