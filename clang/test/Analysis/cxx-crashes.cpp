@@ -43,3 +43,14 @@ void *f(S* w) {
 }
 
 }
+
+namespace {
+
+struct C { 
+  void *p;
+  static void f();
+};
+
+void C::f() { }
+
+}

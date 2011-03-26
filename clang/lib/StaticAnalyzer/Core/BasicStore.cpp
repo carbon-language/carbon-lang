@@ -429,12 +429,15 @@ StoreRef BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
   }
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(InitLoc->getDecl())) {
-    // For C++ methods add symbolic region for 'this' in initial stack frame.
-    QualType ThisT = MD->getThisType(StateMgr.getContext());
-    MemRegionManager &RegMgr = svalBuilder.getRegionManager();
-    const CXXThisRegion *ThisR = RegMgr.getCXXThisRegion(ThisT, InitLoc);
-    SVal ThisV = svalBuilder.getRegionValueSymbolVal(ThisR);
-    St = Bind(St.getStore(), svalBuilder.makeLoc(ThisR), ThisV);
+    // For C++ non-static member variables, add a symbolic region for 'this' in
+    // the initial stack frame.
+    if (MD->isInstance()) {
+      QualType ThisT = MD->getThisType(StateMgr.getContext());
+      MemRegionManager &RegMgr = svalBuilder.getRegionManager();
+      const CXXThisRegion *ThisR = RegMgr.getCXXThisRegion(ThisT, InitLoc);
+      SVal ThisV = svalBuilder.getRegionValueSymbolVal(ThisR);
+      St = Bind(St.getStore(), svalBuilder.makeLoc(ThisR), ThisV);
+    }
   }
 
   return St;
