@@ -91,7 +91,7 @@ private:
 
   /// MethodBaseOffsetPairTy - Uniquely identifies a member function
   /// in a base subobject.
-  typedef std::pair<const CXXMethodDecl *, uint64_t> MethodBaseOffsetPairTy;
+  typedef std::pair<const CXXMethodDecl *, CharUnits> MethodBaseOffsetPairTy;
 
   typedef llvm::DenseMap<MethodBaseOffsetPairTy,
                          OverriderInfo> OverridersMapTy;
@@ -131,7 +131,7 @@ public:
   /// getOverrider - Get the final overrider for the given method declaration in
   /// the subobject with the given base offset. 
   OverriderInfo getOverrider(const CXXMethodDecl *MD, 
-                             uint64_t BaseOffset) const {
+                             CharUnits BaseOffset) const {
     assert(OverridersMap.count(std::make_pair(MD, BaseOffset)) && 
            "Did not find overrider!");
     
@@ -196,8 +196,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
         SubobjectLayoutClassOffsets[std::make_pair(OverriderRD, 
                                                    Method.Subobject)];
 
-      OverriderInfo& Overrider = 
-        OverridersMap[std::make_pair(MD, Context.toBits(BaseOffset))];
+      OverriderInfo& Overrider = OverridersMap[std::make_pair(MD, BaseOffset)];
       assert(!Overrider.Method && "Overrider should not exist yet!");
       
       Overrider.Offset = Context.toBits(OverriderOffset);
@@ -419,8 +418,7 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base,
     if (!MD->isVirtual())
       continue;
   
-    OverriderInfo Overrider = 
-      getOverrider(MD, Context.toBits(Base.getBaseOffset()));
+    OverriderInfo Overrider = getOverrider(MD, Base.getBaseOffset());
 
     Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
@@ -883,7 +881,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     if (Overriders) {
       // Get the final overrider.
       FinalOverriders::OverriderInfo Overrider = 
-        Overriders->getOverrider(MD, Context.toBits(Base.getBaseOffset()));
+        Overriders->getOverrider(MD, Base.getBaseOffset());
       
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
@@ -1261,7 +1259,8 @@ void VTableBuilder::ComputeThisAdjustments() {
     
     // Get the final overrider for this method.
     FinalOverriders::OverriderInfo Overrider =
-      Overriders.getOverrider(MD, MethodInfo.BaseOffset);
+      Overriders.getOverrider(MD, 
+                            Context.toCharUnitsFromBits(MethodInfo.BaseOffset));
     
     // Check if we need an adjustment at all.
     if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset) {
@@ -1636,7 +1635,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
 
     // Get the final overrider.
     FinalOverriders::OverriderInfo Overrider = 
-      Overriders.getOverrider(MD, Context.toBits(Base.getBaseOffset()));
+      Overriders.getOverrider(MD, Base.getBaseOffset());
 
     // Check if this virtual member function overrides a method in a primary
     // base. If this is the case, and the return type doesn't require adjustment
