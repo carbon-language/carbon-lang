@@ -3877,7 +3877,7 @@ Expr *ASTNodeImporter::VisitCompoundAssignOperator(CompoundAssignOperator *E) {
                                           Importer.Import(E->getOperatorLoc()));
 }
 
-bool ImportCastPath(CastExpr *E, CXXCastPath &Path) {
+static bool ImportCastPath(CastExpr *E, CXXCastPath &Path) {
   if (E->path_empty()) return false;
 
   // TODO: import cast paths

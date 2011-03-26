@@ -91,6 +91,7 @@ static bool isAlwaysUninit(const Value v) {
   return v == Uninitialized;
 }
 
+namespace {
 class ValueVector {
   llvm::BitVector vec;
 public:
@@ -126,7 +127,6 @@ public:
 
 typedef std::pair<ValueVector *, ValueVector *> BVPair;
 
-namespace {
 class CFGBlockValues {
   const CFG &cfg;
   BVPair *vals;
@@ -157,7 +157,7 @@ public:
   
   ValueVector::reference operator[](const VarDecl *vd);
 };  
-}
+} // end anonymous namespace
 
 CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {
   unsigned n = cfg.getNumBlockIDs();

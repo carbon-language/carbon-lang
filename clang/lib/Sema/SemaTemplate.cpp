@@ -1097,7 +1097,8 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
 
 /// \brief Check for unexpanded parameter packs within the template parameters
 /// of a template template parameter, recursively.
-bool DiagnoseUnexpandedParameterPacks(Sema &S, TemplateTemplateParmDecl *TTP){
+static bool DiagnoseUnexpandedParameterPacks(Sema &S,
+                                             TemplateTemplateParmDecl *TTP) {
   TemplateParameterList *Params = TTP->getTemplateParameters();
   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
     NamedDecl *P = Params->getParam(I);

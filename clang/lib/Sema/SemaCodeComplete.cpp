@@ -1785,9 +1785,9 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
 ///
 /// This routine provides a fast path where we provide constant strings for
 /// common type names.
-const char *GetCompletionTypeString(QualType T,
-                                    ASTContext &Context,
-                                    CodeCompletionAllocator &Allocator) {
+static const char *GetCompletionTypeString(QualType T,
+                                           ASTContext &Context,
+                                           CodeCompletionAllocator &Allocator) {
   PrintingPolicy Policy(Context.PrintingPolicy);
   Policy.AnonymousTagLocations = false;
 
