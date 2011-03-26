@@ -347,7 +347,7 @@ public:
     Append (const SymbolContext& sc);
 
     bool
-    AppendIfUnique (const SymbolContext& sc);
+    AppendIfUnique (const SymbolContext& sc, bool merge_symbol_into_function);
 
     //------------------------------------------------------------------
     /// Clear the object's state.

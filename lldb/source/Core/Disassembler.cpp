@@ -69,6 +69,33 @@ Disassembler::FindPlugin (const ArchSpec &arch, const char *plugin_name)
 }
 
 
+static void
+ResolveAddress (const ExecutionContext &exe_ctx,
+                const Address &addr, 
+                Address &resolved_addr)
+{
+    if (!addr.IsSectionOffset())
+    {
+        // If we weren't passed in a section offset address range,
+        // try and resolve it to something
+        if (exe_ctx.target)
+        {
+            if (exe_ctx.target->GetSectionLoadList().IsEmpty())
+            {
+                exe_ctx.target->GetImages().ResolveFileAddress (addr.GetOffset(), resolved_addr);
+            }
+            else
+            {
+                exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+            }
+            // We weren't able to resolve the address, just treat it as a
+            // raw address
+            if (resolved_addr.IsValid())
+                return;
+        }
+    }
+    resolved_addr = addr;
+}
 
 size_t
 Disassembler::Disassemble
@@ -192,8 +219,7 @@ Disassembler::DisassembleRange
 
         if (disasm_sp)
         {
-            DataExtractor data;
-            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range, data);
+            size_t bytes_disassembled = disasm_sp->ParseInstructions (&exe_ctx, range);
             if (bytes_disassembled == 0)
                 disasm_sp.reset();
         }
@@ -223,27 +249,11 @@ Disassembler::Disassemble
 
         if (disasm_ap.get())
         {
-            AddressRange range(disasm_range);
+            AddressRange range;
+            ResolveAddress (exe_ctx, disasm_range.GetBaseAddress(), range.GetBaseAddress());
+            range.SetByteSize (disasm_range.GetByteSize());
             
-            // If we weren't passed in a section offset address range,
-            // try and resolve it to something
-            if (range.GetBaseAddress().IsSectionOffset() == false)
-            {
-                if (exe_ctx.target)
-                {
-                    if (exe_ctx.target->GetSectionLoadList().IsEmpty())
-                    {
-                        exe_ctx.target->GetImages().ResolveFileAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
-                    }
-                    else
-                    {
-                        exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (range.GetBaseAddress().GetOffset(), range.GetBaseAddress());
-                    }
-                }
-            }
-
-            DataExtractor data;
-            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range, data);
+            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, range);
             if (bytes_disassembled == 0)
                 return false;
 
@@ -280,29 +290,12 @@ Disassembler::Disassemble
     if (num_instructions > 0)
     {
         std::auto_ptr<Disassembler> disasm_ap (Disassembler::FindPlugin(arch, plugin_name));
-        Address addr = start_address;
-
         if (disasm_ap.get())
         {
-            // If we weren't passed in a section offset address range,
-            // try and resolve it to something
-            if (addr.IsSectionOffset() == false)
-            {
-                if (exe_ctx.target)
-                {
-                    if (exe_ctx.target->GetSectionLoadList().IsEmpty())
-                    {
-                        exe_ctx.target->GetImages().ResolveFileAddress (addr.GetOffset(), addr);
-                    }
-                    else
-                    {
-                        exe_ctx.target->GetSectionLoadList().ResolveLoadAddress (addr.GetOffset(), addr);
-                    }
-                }
-            }
+            Address addr;
+            ResolveAddress (exe_ctx, start_address, addr);
 
-            DataExtractor data;
-            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, addr, num_instructions, data);
+            size_t bytes_disassembled = disasm_ap->ParseInstructions (&exe_ctx, addr, num_instructions);
             if (bytes_disassembled == 0)
                 return false;
             return PrintInstructions (disasm_ap.get(),
@@ -341,11 +334,12 @@ Disassembler::PrintInstructions
     if (num_instructions > 0 && num_instructions < num_instructions_found)
         num_instructions_found = num_instructions;
         
+    const uint32_t max_opcode_byte_size = disasm_ptr->GetInstructionList().GetMaxOpcocdeByteSize ();
     uint32_t offset = 0;
     SymbolContext sc;
     SymbolContext prev_sc;
     AddressRange sc_range;
-    Address addr = start_addr;
+    Address addr (start_addr);
     
     if (num_mixed_context_lines)
         strm.IndentMore ();
@@ -425,7 +419,7 @@ Disassembler::PrintInstructions
             if (num_mixed_context_lines)
                 strm.IndentMore ();
             strm.Indent();
-            inst->Dump(&strm, true, show_bytes, &exe_ctx, raw);
+            inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, raw);
             strm.EOL();
             
             addr.Slide(inst->GetOpcode().GetByteSize());
@@ -492,8 +486,9 @@ Disassembler::Disassemble
                         strm);
 }
 
-Instruction::Instruction(const Address &address) :
+Instruction::Instruction(const Address &address, AddressClass addr_class) :
     m_address (address),
+    m_address_class (addr_class),
     m_opcode()
 {
 }
@@ -502,6 +497,13 @@ Instruction::~Instruction()
 {
 }
 
+AddressClass
+Instruction::GetAddressClass ()
+{
+    if (m_address_class == eAddressClassInvalid)
+        m_address_class = m_address.GetAddressClass();
+    return m_address_class;
+}
 
 InstructionList::InstructionList() :
     m_instructions()
@@ -517,6 +519,23 @@ InstructionList::GetSize() const
 {
     return m_instructions.size();
 }
+
+uint32_t
+InstructionList::GetMaxOpcocdeByteSize () const
+{
+    uint32_t max_inst_size = 0;
+    collection::const_iterator pos, end;
+    for (pos = m_instructions.begin(), end = m_instructions.end();
+         pos != end;
+         ++pos)
+    {
+        uint32_t inst_size = (*pos)->GetOpcode().GetByteSize();
+        if (max_inst_size < inst_size)
+            max_inst_size = inst_size;
+    }
+    return max_inst_size;
+}
+
 
 
 InstructionSP
@@ -546,8 +565,7 @@ size_t
 Disassembler::ParseInstructions
 (
     const ExecutionContext *exe_ctx,
-    const AddressRange &range,
-    DataExtractor& data
+    const AddressRange &range
 )
 {
     Target *target = exe_ctx->target;
@@ -559,17 +577,20 @@ Disassembler::ParseInstructions
     DataBufferSP data_sp(heap_buffer);
 
     Error error;
-    bool prefer_file_cache = true;
-    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), prefer_file_cache, heap_buffer->GetBytes(), heap_buffer->GetByteSize(), error);
+    const bool prefer_file_cache = true;
+    const size_t bytes_read = target->ReadMemory (range.GetBaseAddress(), 
+                                                  prefer_file_cache, 
+                                                  heap_buffer->GetBytes(), 
+                                                  heap_buffer->GetByteSize(), 
+                                                  error);
     
     if (bytes_read > 0)
     {
         if (bytes_read != heap_buffer->GetByteSize())
             heap_buffer->SetByteSize (bytes_read);
-
-        data.SetData(data_sp);
-        data.SetByteOrder(target->GetArchitecture().GetByteOrder());
-        data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
+        DataExtractor data (data_sp, 
+                            m_arch.GetByteOrder(),
+                            m_arch.GetAddressByteSize());
         return DecodeInstructions (range.GetBaseAddress(), data, 0, UINT32_MAX, false);
     }
 
@@ -581,64 +602,45 @@ Disassembler::ParseInstructions
 (
     const ExecutionContext *exe_ctx,
     const Address &start,
-    uint32_t num_instructions,
-    DataExtractor& data
+    uint32_t num_instructions
 )
 {
-    Address addr = start;
-    
-    if (num_instructions == 0)
+    m_instruction_list.Clear();
+
+    if (num_instructions == 0 || !start.IsValid())
         return 0;
         
     Target *target = exe_ctx->target;
-    // We'll guess at a size for the buffer, if we don't get all the instructions we want we can just re-fill & reuse it.
-    const addr_t byte_size = num_instructions * 2;
-    addr_t data_offset = 0;
-    addr_t next_instruction_offset = 0;
-    size_t buffer_size = byte_size;
+    // Calculate the max buffer size we will need in order to disassemble
+    const addr_t byte_size = num_instructions * m_arch.GetMaximumOpcodeByteSize();
     
-    uint32_t num_instructions_found = 0;
-    
-    if (target == NULL || byte_size == 0 || !start.IsValid())
+    if (target == NULL || byte_size == 0)
         return 0;
 
     DataBufferHeap *heap_buffer = new DataBufferHeap (byte_size, '\0');
-    DataBufferSP data_sp(heap_buffer);
-    
-    data.SetData(data_sp);
-    data.SetByteOrder(target->GetArchitecture().GetByteOrder());
-    data.SetAddressByteSize(target->GetArchitecture().GetAddressByteSize());
+    DataBufferSP data_sp (heap_buffer);
 
     Error error;
     bool prefer_file_cache = true;
-    
-    m_instruction_list.Clear();
-    
-    while (num_instructions_found < num_instructions)
-    {
-        if (buffer_size < data_offset + byte_size)
-        {
-            buffer_size = data_offset + byte_size;
-            heap_buffer->SetByteSize (buffer_size);
-            data.SetData(data_sp);  // Resizing might have changed the backing store location, so we have to reset
-                                    // the DataBufferSP in the extractor so it changes to pointing at the right thing.
-        }
-        const size_t bytes_read = target->ReadMemory (addr, prefer_file_cache, heap_buffer->GetBytes() + data_offset, byte_size, error);
-        size_t num_bytes_read = 0;
-        if (bytes_read == 0)
-            break;
-            
-        num_bytes_read = DecodeInstructions (start, data, next_instruction_offset, num_instructions - num_instructions_found, true);
-        if (num_bytes_read == 0)
-            break;
-        num_instructions_found = m_instruction_list.GetSize();
-        
-        // Prepare for the next round.
-        data_offset += bytes_read;
-        addr.Slide (bytes_read);
-        next_instruction_offset += num_bytes_read;
-    }
-    
+    const size_t bytes_read = target->ReadMemory (start, 
+                                                  prefer_file_cache, 
+                                                  heap_buffer->GetBytes(), 
+                                                  byte_size, 
+                                                  error);
+
+    if (bytes_read == 0)
+        return 0;
+    DataExtractor data (data_sp,
+                        m_arch.GetByteOrder(),
+                        m_arch.GetAddressByteSize());
+
+    const bool append_instructions = true;
+    DecodeInstructions (start, 
+                        data, 
+                        0, 
+                        num_instructions, 
+                        append_instructions);
+
     return m_instruction_list.GetSize();
 }
 

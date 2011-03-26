@@ -89,7 +89,7 @@ SBInstruction::GetDescription (lldb::SBStream &s)
     {
         // Use the "ref()" instead of the "get()" accessor in case the SBStream 
         // didn't have a stream already created, one will get created...
-        m_opaque_sp->Dump (&s.ref(), true, false, NULL, false);
+        m_opaque_sp->Dump (&s.ref(), 0, true, false, NULL, false);
         return true;
     }
     return false;
@@ -104,6 +104,6 @@ SBInstruction::Print (FILE *out)
     if (m_opaque_sp)
     {
         StreamFile out_stream (out, false);
-        m_opaque_sp->Dump (&out_stream, true, false, NULL, false);
+        m_opaque_sp->Dump (&out_stream, 0, true, false, NULL, false);
     }
 }

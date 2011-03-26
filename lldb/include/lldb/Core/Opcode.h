@@ -11,8 +11,6 @@
 #define lldb_Opcode_h
 
 // C Includes
-#include <string.h>
-
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -163,6 +161,7 @@ namespace lldb_private {
             if (bytes && length > 0)
             {
                 m_type = eTypeBytes;
+                m_data.inst.length = length;
                 assert (length < sizeof (m_data.inst.bytes));
                 memcpy (m_data.inst.bytes, bytes, length);
             }

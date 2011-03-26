@@ -48,7 +48,7 @@ Opcode::Dump (Stream *s, uint32_t min_byte_width)
             for (uint32_t i=0; i<m_data.inst.length; ++i)
             {
                 if (i > 0)
-                    s->PutChar (' ');
+                    bytes_written += s->PutChar (' ');
                 bytes_written += s->Printf ("%2.2x", m_data.inst.bytes[i]); 
             }
         }

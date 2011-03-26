@@ -74,8 +74,10 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
     return -1;
 }
 
-DisassemblerLLVM::InstructionLLVM::InstructionLLVM (const Address &addr, EDDisassemblerRef disassembler) :
-    Instruction (addr),
+DisassemblerLLVM::InstructionLLVM::InstructionLLVM (const Address &addr, 
+                                                    AddressClass addr_class,
+                                                    EDDisassemblerRef disassembler) :
+    Instruction (addr, addr_class),
     m_disassembler (disassembler)
 {
 }
@@ -99,6 +101,7 @@ void
 DisassemblerLLVM::InstructionLLVM::Dump
 (
     Stream *s,
+    uint32_t max_opcode_byte_size,
     bool show_address,
     bool show_bytes,
     const lldb_private::ExecutionContext* exe_ctx,
@@ -131,13 +134,19 @@ DisassemblerLLVM::InstructionLLVM::Dump
             // x86_64 and i386 are the only ones that use bytes right now so
             // pad out the byte dump to be able to always show 15 bytes (3 chars each) 
             // plus a space
-            m_opcode.Dump (s, 15 * 3 + 1);
+            if (max_opcode_byte_size > 0)
+                m_opcode.Dump (s, max_opcode_byte_size * 3 + 1);
+            else
+                m_opcode.Dump (s, 15 * 3 + 1);
         }
         else
         {
             // Else, we have ARM which can show up to a uint32_t 0x00000000 (10 spaces)
             // plus two for padding...
-            m_opcode.Dump (s, 12);
+            if (max_opcode_byte_size > 0)
+                m_opcode.Dump (s, max_opcode_byte_size * 3 + 1);
+            else
+                m_opcode.Dump (s, 12);
         }
     }
 
@@ -329,9 +338,9 @@ DisassemblerLLVM::InstructionLLVM::DoesBranch() const
 }
 
 size_t
-DisassemblerLLVM::InstructionLLVM::Extract (const Disassembler &disassembler, 
-                                            const lldb_private::DataExtractor &data,
-                                            uint32_t data_offset)
+DisassemblerLLVM::InstructionLLVM::Decode (const Disassembler &disassembler, 
+                                           const lldb_private::DataExtractor &data,
+                                           uint32_t data_offset)
 {
     if (EDCreateInsts(&m_inst, 1, m_disassembler, DataExtractorByteReader, data_offset, (void*)(&data)))
     {
@@ -382,6 +391,7 @@ SyntaxForArchSpec (const ArchSpec &arch)
     case llvm::Triple::x86_64:
         return kEDAssemblySyntaxX86ATT;
     case llvm::Triple::arm:
+    case llvm::Triple::thumb:
         return kEDAssemblySyntaxARMUAL;
     default:
         break;
@@ -411,16 +421,15 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
         if (EDGetDisassembler(&m_disassembler, arch_triple.c_str(), SyntaxForArchSpec (arch)))
             m_disassembler = NULL;
         llvm::Triple::ArchType llvm_arch = arch.GetTriple().getArch();
+		// Don't have the lldb::Triple::thumb architecture here. If someone specifies
+		// "thumb" as the architecture, we want a thumb only disassembler. But if any
+		// architecture starting with "arm" if specified, we want to auto detect the
+		// arm/thumb code automatically using the AddressClass from section offset 
+		// addresses.
         if (llvm_arch == llvm::Triple::arm)
         {
             if (EDGetDisassembler(&m_disassembler_thumb, "thumb-apple-darwin", kEDAssemblySyntaxARMUAL))
                 m_disassembler_thumb = NULL;
-        }
-        else if (llvm_arch == llvm::Triple::thumb)
-        {
-            m_disassembler_thumb = m_disassembler;
-            if (EDGetDisassembler(&m_disassembler, "arm-apple-darwin-unknown", kEDAssemblySyntaxARMUAL))
-                m_disassembler = NULL;
         }
     }
 }
@@ -456,15 +465,18 @@ DisassemblerLLVM::DecodeInstructions
         // If we have a thumb disassembler, then we have an ARM architecture
         // so we need to check what the instruction address class is to make
         // sure we shouldn't be disassembling as thumb...
+        AddressClass inst_address_class = eAddressClassInvalid;
         if (m_disassembler_thumb)
         {
-            if (inst_addr.GetAddressClass () == eAddressClassCodeAlternateISA)
+            inst_address_class = inst_addr.GetAddressClass ();
+            if (inst_address_class == eAddressClassCodeAlternateISA)
                 use_thumb = true;
         }
         InstructionSP inst_sp (new InstructionLLVM (inst_addr, 
+                                                    inst_address_class,
                                                     use_thumb ? m_disassembler_thumb : m_disassembler));
 
-        size_t inst_byte_size = inst_sp->Extract (*this, data, data_offset);
+        size_t inst_byte_size = inst_sp->Decode (*this, data, data_offset);
 
         if (inst_byte_size == 0)
             break;

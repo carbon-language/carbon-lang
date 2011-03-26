@@ -93,12 +93,13 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
             // Call the ref() to make sure a stream is created if one deesn't 
             // exist already inside description...
             Stream &sref = description.ref();
+            const uint32_t max_opcode_byte_size = m_opaque_sp->GetInstructionList().GetMaxOpcocdeByteSize();
             for (size_t i=0; i<num_instructions; ++i)
             {
                 Instruction *inst = m_opaque_sp->GetInstructionList().GetInstructionAtIndex (i).get();
                 if (inst == NULL)
                     break;
-                inst->Dump (&sref, true, false, NULL, false);
+                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, false);
                 sref.EOL();
             }
             return true;

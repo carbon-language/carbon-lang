@@ -209,11 +209,13 @@ ThreadPlanAssemblyTracer::Log ()
                 m_disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1, false);
             
             InstructionList &instruction_list = m_disassembler->GetInstructionList();
-            
+            const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
+
             if (instruction_list.GetSize())
             {
                 Instruction *instruction = instruction_list.GetInstructionAtIndex(0).get();
                 instruction->Dump (&desc,
+                                   max_opcode_byte_size,
                                    false,
                                    false,
                                    NULL, 

@@ -23,6 +23,7 @@ public:
     {
     public:
         InstructionLLVM (const lldb_private::Address &addr,
+                         lldb_private::AddressClass addr_class,
                          EDDisassemblerRef disassembler);
 
         virtual
@@ -30,6 +31,7 @@ public:
 
         virtual void
         Dump (lldb_private::Stream *s,
+              uint32_t max_opcode_byte_size,
               bool show_address,
               bool show_bytes,
               const lldb_private::ExecutionContext* exe_ctx,
@@ -39,9 +41,9 @@ public:
         DoesBranch () const;
 
         virtual size_t
-        Extract (const Disassembler &disassembler,
-                 const lldb_private::DataExtractor &data,
-                 uint32_t data_offset);
+        Decode (const Disassembler &disassembler,
+                const lldb_private::DataExtractor &data,
+                uint32_t data_offset);
 
     protected:
         EDDisassemblerRef m_disassembler;

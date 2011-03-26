@@ -742,13 +742,14 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     disassembler->DecodeInstructions (Address (NULL, func_remote_addr), extractor, 0, UINT32_MAX, false);
     
     InstructionList &instruction_list = disassembler->GetInstructionList();
-    
+    const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
     for (uint32_t instruction_index = 0, num_instructions = instruction_list.GetSize(); 
          instruction_index < num_instructions; 
          ++instruction_index)
     {
         Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index).get();
         instruction->Dump (&stream,
+                           max_opcode_byte_size,
                            true,
                            true,
                            &exe_ctx, 

@@ -587,18 +587,16 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
 
     size_t bytes_read = 0;
-    Address resolved_addr(addr);
-    if (!resolved_addr.IsSectionOffset())
+    Address resolved_addr;
+    if (!addr.IsSectionOffset())
     {
         if (process_is_valid)
-        {
             m_section_load_list.ResolveLoadAddress (addr.GetOffset(), resolved_addr);
-        }
         else
-        {
             m_images.ResolveFileAddress(addr.GetOffset(), resolved_addr);
-        }
     }
+    if (!resolved_addr.IsValid())
+        resolved_addr = addr;
     
     if (prefer_file_cache)
     {

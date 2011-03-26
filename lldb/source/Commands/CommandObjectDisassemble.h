@@ -63,6 +63,7 @@ public:
         lldb::addr_t m_end_addr;
         bool m_at_pc;
         std::string m_plugin_name;
+        ArchSpec m_arch;
         static OptionDefinition g_option_table[];
     };
 

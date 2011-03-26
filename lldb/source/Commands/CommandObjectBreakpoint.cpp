@@ -155,7 +155,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             break;
 
         case 'f':
-            m_filename = option_arg;
+            m_filename.assign (option_arg);
             break;
 
         case 'l':
@@ -163,32 +163,32 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
             break;
 
         case 'b':
-            m_func_name = option_arg;
+            m_func_name.assign (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeBase;
             break;
 
         case 'n':
-            m_func_name = option_arg;
+            m_func_name.assign (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeAuto;
             break;
 
         case 'F':
-            m_func_name = option_arg;
+            m_func_name.assign (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeFull;
             break;
 
         case 'S':
-            m_func_name = option_arg;
+            m_func_name.assign (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeSelector;
             break;
 
         case 'M':
-            m_func_name = option_arg;
+            m_func_name.assign (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeMethod;
             break;
 
         case 'r':
-            m_func_regexp = option_arg;
+            m_func_regexp.assign (option_arg);
             break;
 
         case 's':
@@ -211,10 +211,10 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
         }
         break;
         case 'T':
-            m_thread_name = option_arg;
+            m_thread_name.assign (option_arg);
             break;
         case 'q':
-            m_queue_name = option_arg;
+            m_queue_name.assign (option_arg);
             break;
         case 'x':
         {
@@ -1087,7 +1087,7 @@ CommandObjectBreakpointClear::CommandOptions::SetOptionValue (int option_idx, co
     switch (short_option)
     {
         case 'f':
-            m_filename = option_arg;
+            m_filename.assign (option_arg);
             break;
 
         case 'l':
@@ -1406,7 +1406,7 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
     {
         case 'c':
             if (option_arg != NULL)
-                m_condition = option_arg;
+                m_condition.assign (option_arg);
             else
                 m_condition.clear();
             m_condition_passed = true;
@@ -1445,14 +1445,14 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
         break;
         case 'T':
             if (option_arg != NULL)
-                m_thread_name = option_arg;
+                m_thread_name.assign (option_arg);
             else
                 m_thread_name.clear();
             m_name_passed = true;
             break;
         case 'q':
             if (option_arg != NULL)
-                m_queue_name = option_arg;
+                m_queue_name.assign (option_arg);
             else
                 m_queue_name.clear();
             m_queue_passed = true;

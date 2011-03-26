@@ -334,11 +334,11 @@ bool
 lldb_private::operator!= (const SymbolContext& lhs, const SymbolContext& rhs)
 {
     return  lhs.function != rhs.function
-            && lhs.symbol != rhs.symbol 
-            && lhs.module_sp.get() != rhs.module_sp.get()
-            && lhs.comp_unit != rhs.comp_unit
-            && lhs.target_sp.get() != rhs.target_sp.get() 
-            && LineEntry::Compare(lhs.line_entry, rhs.line_entry) != 0;
+            || lhs.symbol != rhs.symbol 
+            || lhs.module_sp.get() != rhs.module_sp.get()
+            || lhs.comp_unit != rhs.comp_unit
+            || lhs.target_sp.get() != rhs.target_sp.get() 
+            || LineEntry::Compare(lhs.line_entry, rhs.line_entry) != 0;
 }
 
 bool
@@ -749,13 +749,42 @@ SymbolContextList::Append(const SymbolContext& sc)
 }
 
 bool
-SymbolContextList::AppendIfUnique (const SymbolContext& sc)
+SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_into_function)
 {
-    collection::const_iterator pos, end = m_symbol_contexts.end();
+    collection::iterator pos, end = m_symbol_contexts.end();
     for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
     {
         if (*pos == sc)
             return false;
+    }
+    if (merge_symbol_into_function 
+        && sc.symbol    != NULL
+        && sc.comp_unit == NULL
+        && sc.function  == NULL
+        && sc.block     == NULL
+        && sc.line_entry.IsValid() == false)
+    {
+        const AddressRange *symbol_range = sc.symbol->GetAddressRangePtr();
+        if (symbol_range)
+        {
+            for (pos = m_symbol_contexts.begin(); pos != end; ++pos)
+            {
+                if (pos->function)
+                {
+                    if (pos->function->GetAddressRange().GetBaseAddress() == symbol_range->GetBaseAddress())
+                    {
+                        // Do we already have a function with this symbol?
+                        if (pos->symbol == sc.symbol)
+                            return false;
+                        if (pos->symbol == NULL)
+                        {
+                            pos->symbol = sc.symbol;
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
     }
     m_symbol_contexts.push_back(sc);
     return true;

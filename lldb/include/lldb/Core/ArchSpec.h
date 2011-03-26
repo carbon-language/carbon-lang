@@ -46,7 +46,8 @@ public:
         eCore_arm_armv7f,
         eCore_arm_armv7k,
         eCore_arm_armv7s,
-        eCore_arm_xscale,        
+        eCore_arm_xscale,  
+        eCore_thumb_generic,
         
         eCore_ppc_generic,
         eCore_ppc_ppc601,
@@ -258,7 +259,16 @@ public:
     /// and the default/assumed byte order may be incorrect.
     //------------------------------------------------------------------
     void
-    SetByteOrder (lldb::ByteOrder byteorder);
+    SetByteOrder (lldb::ByteOrder byte_order)
+    {
+        m_byte_order = byte_order;
+    }
+
+    uint32_t
+    GetMinimumOpcodeByteSize() const;
+
+    uint32_t
+    GetMaximumOpcodeByteSize() const;
 
     Core
     GetCore () const

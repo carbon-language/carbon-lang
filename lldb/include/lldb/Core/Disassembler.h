@@ -27,7 +27,7 @@ namespace lldb_private {
 class Instruction
 {
 public:
-    Instruction (const Address &address);
+    Instruction (const Address &address, AddressClass addr_class);
 
     virtual
    ~Instruction();
@@ -38,14 +38,21 @@ public:
         return m_address;
     }
 
+    AddressClass
+    GetAddressClass ();
+
     void
     SetAddress (const Address &addr)
     {
+        // Invalidate the address class to lazily discover
+        // it if we need to.
+        m_address_class = eAddressClassInvalid; 
         m_address = addr;
     }
 
     virtual void
     Dump (Stream *s,
+          uint32_t max_opcode_byte_size,
           bool show_address,
           bool show_bytes,
           const ExecutionContext *exe_ctx, 
@@ -55,9 +62,9 @@ public:
     DoesBranch () const = 0;
 
     virtual size_t
-    Extract (const Disassembler &disassembler, 
-             const DataExtractor& data, 
-             uint32_t data_offset) = 0;
+    Decode (const Disassembler &disassembler, 
+            const DataExtractor& data, 
+            uint32_t data_offset) = 0;
 
     const Opcode &
     GetOpcode () const
@@ -67,6 +74,13 @@ public:
 
 protected:
     Address m_address; // The section offset address of this instruction
+    // We include an address class in the Instruction class to
+    // allow the instruction specify the eAddressClassCodeAlternateISA
+    // (currently used for thumb), and also to specify data (eAddressClassData).
+    // The usual value will be eAddressClassCode, but often when
+    // disassembling memory, you might run into data. This can
+    // help us to disassemble appropriately.
+    AddressClass m_address_class; 
     Opcode m_opcode; // The opcode for this instruction
 };
 
@@ -79,6 +93,9 @@ public:
 
     size_t
     GetSize() const;
+    
+    uint32_t
+    GetMaxOpcocdeByteSize () const;
 
     lldb::InstructionSP
     GetInstructionAtIndex (uint32_t idx) const;
@@ -194,14 +211,12 @@ public:
     
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
-                       const AddressRange &range,
-                       DataExtractor& data);
+                       const AddressRange &range);
 
     size_t
     ParseInstructions (const ExecutionContext *exe_ctx,
                        const Address &range,
-                       uint32_t num_instructions,
-                       DataExtractor& data);
+                       uint32_t num_instructions);
 
     virtual size_t
     DecodeInstructions (const Address &base_addr,

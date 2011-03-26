@@ -351,11 +351,12 @@ Module::FindFunctions (const ConstString &name,
                 const uint32_t num_matches = symbol_indexes.size();
                 if (num_matches)
                 {
+                    const bool merge_symbol_into_function = true;
                     SymbolContext sc(this);
                     for (uint32_t i=0; i<num_matches; i++)
                     {
                         sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        sc_list.AppendIfUnique (sc);
+                        sc_list.AppendIfUnique (sc, merge_symbol_into_function);
                     }
                 }
             }
@@ -392,11 +393,12 @@ Module::FindFunctions (const RegularExpression& regex,
                 const uint32_t num_matches = symbol_indexes.size();
                 if (num_matches)
                 {
+                    const bool merge_symbol_into_function = true;
                     SymbolContext sc(this);
                     for (uint32_t i=0; i<num_matches; i++)
                     {
                         sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
-                        sc_list.AppendIfUnique (sc);
+                        sc_list.AppendIfUnique (sc, merge_symbol_into_function);
                     }
                 }
             }
