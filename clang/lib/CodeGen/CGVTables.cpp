@@ -104,7 +104,7 @@ private:
   /// as a record decl and a subobject number) and its offsets in the most
   /// derived class as well as the layout class.
   typedef llvm::DenseMap<std::pair<const CXXRecordDecl *, unsigned>, 
-                         uint64_t> SubobjectOffsetMapTy;
+                         CharUnits> SubobjectOffsetMapTy;
 
   typedef llvm::DenseMap<const CXXRecordDecl *, unsigned> SubobjectCountMapTy;
   
@@ -182,7 +182,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
                                                    SubobjectNumber)) &&
              "Did not find subobject offset!");
       
-      uint64_t BaseOffset = SubobjectOffsets[std::make_pair(MD->getParent(),
+      CharUnits BaseOffset = SubobjectOffsets[std::make_pair(MD->getParent(),
                                                             SubobjectNumber)];
 
       assert(I->second.size() == 1 && "Final overrider is not unique!");
@@ -192,14 +192,15 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
       assert(SubobjectLayoutClassOffsets.count(
              std::make_pair(OverriderRD, Method.Subobject))
              && "Did not find subobject offset!");
-      uint64_t OverriderOffset =
+      CharUnits OverriderOffset =
         SubobjectLayoutClassOffsets[std::make_pair(OverriderRD, 
                                                    Method.Subobject)];
 
-      OverriderInfo& Overrider = OverridersMap[std::make_pair(MD, BaseOffset)];
+      OverriderInfo& Overrider = 
+        OverridersMap[std::make_pair(MD, Context.toBits(BaseOffset))];
       assert(!Overrider.Method && "Overrider should not exist yet!");
       
-      Overrider.Offset = OverriderOffset;
+      Overrider.Offset = Context.toBits(OverriderOffset);
       Overrider.Method = Method.Method;
     }
   }
@@ -339,10 +340,9 @@ FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
   assert(!SubobjectLayoutClassOffsets.count(std::make_pair(RD, SubobjectNumber)) 
          && "Subobject offset already exists!");
 
-  SubobjectOffsets[std::make_pair(RD, SubobjectNumber)] =
-    Context.toBits(Base.getBaseOffset());
+  SubobjectOffsets[std::make_pair(RD, SubobjectNumber)] = Base.getBaseOffset();
   SubobjectLayoutClassOffsets[std::make_pair(RD, SubobjectNumber)] =
-    OffsetInLayoutClass;
+    Context.toCharUnitsFromBits(OffsetInLayoutClass);
   
   // Traverse our bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
