@@ -35,8 +35,8 @@ id objc_getClass(const char *s);
 @implementation Derived
 + (int) class_func1
 {
-   int i = (size_t)[self class_func0];       // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
-   return i + (size_t)[super class_func0];   // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
+   int i = (size_t)[self class_func0];       // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
+   return i + (size_t)[super class_func0];   // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
 }
 + (int) class_func2
 {
@@ -55,8 +55,8 @@ id objc_getClass(const char *s);
 }   
 + (int) class_func5
 {
-   int i = (size_t)[Derived class_func0];    // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
-   return i + (size_t)[Object class_func0];  // expected-warning {{method '+class_func0' not found (return type defaults to 'id')}}
+   int i = (size_t)[Derived class_func0];    // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
+   return i + (size_t)[Object class_func0];  // expected-warning {{class method '+class_func0' not found (return type defaults to 'id')}}
 }
 + (int) class_func6
 {
@@ -68,7 +68,7 @@ id objc_getClass(const char *s);
 }
 - (int) instance_func1
 {
-   int i = (size_t)[self instance_func0];     // expected-warning {{method '-instance_func0' not found (return type defaults to 'id'))}}
+   int i = (size_t)[self instance_func0];     // expected-warning {{instance method '-instance_func0' not found (return type defaults to 'id'))}}
    return i + (size_t)[super instance_func0]; // expected-warning {{'Object' may not respond to 'instance_func0')}}
 }
 - (int) instance_func2
@@ -85,8 +85,8 @@ id objc_getClass(const char *s);
 }   
 - (int) instance_func5
 {
-   int i = (size_t)[Derived instance_func1]; // expected-warning {{method '+instance_func1' not found (return type defaults to 'id')}} 
-   return i + (size_t)[Object instance_func1]; // expected-warning {{method '+instance_func1' not found (return type defaults to 'id')}}
+   int i = (size_t)[Derived instance_func1]; // expected-warning {{class method '+instance_func1' not found (return type defaults to 'id')}} 
+   return i + (size_t)[Object instance_func1]; // expected-warning {{class method '+instance_func1' not found (return type defaults to 'id')}}
 }
 - (int) instance_func6
 {
