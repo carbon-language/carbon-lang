@@ -477,6 +477,8 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
     Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
   else if (ArgName == "IdentifierArgument")
     Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
+  else if (ArgName == "BoolArgument") Ptr = new SimpleArgument(Arg, Attr, 
+                                                               "bool");
   else if (ArgName == "IntArgument") Ptr = new SimpleArgument(Arg, Attr, "int");
   else if (ArgName == "StringArgument") Ptr = new StringArgument(Arg, Attr);
   else if (ArgName == "TypeArgument")
