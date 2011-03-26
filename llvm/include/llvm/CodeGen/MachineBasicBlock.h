@@ -309,6 +309,10 @@ public:
   /// instruction in the basic block, or end()
   iterator getLastNonDebugInstr();
 
+  const_iterator getLastNonDebugInstr() const {
+    return const_cast<MachineBasicBlock*>(this)->getLastNonDebugInstr();
+  }
+
   /// SplitCriticalEdge - Split the critical edge from this block to the
   /// given successor block, and return the newly created block, or null
   /// if splitting is not possible.

@@ -218,19 +218,16 @@ class DwarfDebug {
   /// instruction.
   DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
-  /// insnNeedsLabel - Collection of instructions that need a label to mark
-  /// a debuggging information entity.
-  SmallPtrSet<const MachineInstr *, 8> InsnNeedsLabel;
+  /// UserVariables - Every user variable mentioned by a DBG_VALUE instruction
+  /// in order of appearance.
+  SmallVector<const MDNode*, 8> UserVariables;
 
-  /// InsnsNeedsLabelAfter - Collection of instructions that need a label after
-  /// the instruction because they end a scope of clobber a register.
-  SmallPtrSet<const MachineInstr *, 8> InsnsNeedsLabelAfter;
-
-  /// RegClobberInsn - For each DBG_VALUE instruction referring to a register
-  /// that is clobbered before the variable gets a new DBG_VALUE, map the
-  /// instruction that clobbered the register. This instruction will also be in
-  /// InsnsNeedsLabelAfter.
-  DenseMap<const MachineInstr *, const MachineInstr *> RegClobberInsn;
+  /// DbgValues - For each user variable, keep a list of DBG_VALUE
+  /// instructions in order. The list can also contain normal instructions that
+  /// clobber the previous DBG_VALUE.
+  typedef DenseMap<const MDNode*, SmallVector<const MachineInstr*, 4> >
+    DbgValueHistoryMap;
+  DbgValueHistoryMap DbgValues;
 
   SmallVector<const MCSymbol *, 8> DebugRangeSymbols;
 
@@ -570,6 +567,23 @@ private:
   /// side table maintained by MMI.
   void collectVariableInfoFromMMITable(const MachineFunction * MF,
                                        SmallPtrSet<const MDNode *, 16> &P);
+
+  /// requestLabelBeforeInsn - Ensure that a label will be emitted before MI.
+  void requestLabelBeforeInsn(const MachineInstr *MI) {
+    LabelsBeforeInsn.insert(std::make_pair(MI, (MCSymbol*)0));
+  }
+
+  /// getLabelBeforeInsn - Return Label preceding the instruction.
+  const MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
+
+  /// requestLabelAfterInsn - Ensure that a label will be emitted after MI.
+  void requestLabelAfterInsn(const MachineInstr *MI) {
+    LabelsAfterInsn.insert(std::make_pair(MI, (MCSymbol*)0));
+  }
+
+  /// getLabelAfterInsn - Return Label immediately following the instruction.
+  const MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
+
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
@@ -592,12 +606,6 @@ public:
   /// endFunction - Gather and emit post-function debug information.
   ///
   void endFunction(const MachineFunction *MF);
-
-  /// getLabelBeforeInsn - Return Label preceding the instruction.
-  const MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
-
-  /// getLabelAfterInsn - Return Label immediately following the instruction.
-  const MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
   /// beginInstruction - Process beginning of an instruction.
   void beginInstruction(const MachineInstr *MI);

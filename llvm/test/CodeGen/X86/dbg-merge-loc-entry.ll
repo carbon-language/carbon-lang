@@ -4,7 +4,7 @@ target triple = "x86_64-apple-darwin8"
 
 ;CHECK: Ldebug_loc0:
 ;CHECK-NEXT:	.quad	Lfunc_begin0
-;CHECK-NEXT:	.quad	Lfunc_end0
+;CHECK-NEXT:	.quad	L
 ;CHECK-NEXT:	.short	1                       ## Loc expr size
 ;CHECK-NEXT:	.byte	85                      ## DW_OP_reg5
 ;CHECK-NEXT:	.quad	0
