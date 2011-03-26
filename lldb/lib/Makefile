@@ -34,6 +34,8 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderStatic.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
+	lldbPluginPlatformGDBServer.a \
+	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
 	lldbPluginUtility.a \
@@ -64,7 +66,6 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginDynamicLoaderMacOSX.a \
               lldbPluginObjectContainerUniversalMachO.a \
               lldbPluginObjectFileMachO.a \
-              lldbPluginProcessGDBRemote.a \
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginPlatformMacOSX.a
 endif
