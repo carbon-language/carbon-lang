@@ -65,9 +65,6 @@ private:
   /// live range trimmed or entirely removed.
   SmallPtrSet<const VNInfo*,4> rematted_;
 
-  /// createFrom - Create a new virtual register based on OldReg.
-  LiveInterval &createFrom(unsigned, LiveIntervals&, VirtRegMap &);
-
   /// scanRemattable - Identify the parent_ values that may rematerialize.
   void scanRemattable(LiveIntervals &lis,
                       const TargetInstrInfo &tii,
@@ -112,6 +109,9 @@ public:
   const SmallVectorImpl<LiveInterval*> *getUselessVRegs() {
     return uselessRegs_;
   }
+
+  /// createFrom - Create a new virtual register based on OldReg.
+  LiveInterval &createFrom(unsigned OldReg, LiveIntervals&, VirtRegMap&);
 
   /// create - Create a new register with the same class and original slot as
   /// parent.

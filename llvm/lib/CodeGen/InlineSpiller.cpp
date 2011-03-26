@@ -48,7 +48,7 @@ class InlineSpiller : public Spiller {
 
   // Variables that are valid during spill(), but used by multiple methods.
   LiveRangeEdit *Edit;
-  const TargetRegisterClass *RC;
+  LiveInterval *StackInt;
   int StackSlot;
   unsigned Original;
 
@@ -431,12 +431,12 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   // Conservatively extend the stack slot range to the range of the original
   // value. We may be able to do better with stack slot coloring by being more
   // careful here.
-  LiveInterval &StackInt = LSS.getInterval(StackSlot);
+  assert(StackInt && "No stack slot assigned yet.");
   LiveInterval &OrigLI = LIS.getInterval(Original);
   VNInfo *OrigVNI = OrigLI.getVNInfoAt(Idx);
-  StackInt.MergeValueInAsValue(OrigLI, OrigVNI, StackInt.getValNumInfo(0));
+  StackInt->MergeValueInAsValue(OrigLI, OrigVNI, StackInt->getValNumInfo(0));
   DEBUG(dbgs() << "\tmerged orig valno " << OrigVNI->id << ": "
-               << StackInt << '\n');
+               << *StackInt << '\n');
 
   // Already spilled everywhere.
   if (SVI.AllDefsAreReloads)
@@ -455,7 +455,8 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
     ++MII;
   }
   // Insert spill without kill flag immediately after def.
-  TII.storeRegToStackSlot(*MBB, MII, SVI.SpillReg, false, StackSlot, RC, &TRI);
+  TII.storeRegToStackSlot(*MBB, MII, SVI.SpillReg, false, StackSlot,
+                          MRI.getRegClass(SVI.SpillReg), &TRI);
   --MII; // Point to store instruction.
   LIS.InsertMachineInstrInMaps(MII);
   VRM.addSpillSlotUse(StackSlot, MII);
@@ -469,7 +470,7 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
   assert(VNI && "Missing value");
   SmallVector<std::pair<LiveInterval*, VNInfo*>, 8> WorkList;
   WorkList.push_back(std::make_pair(&SLI, VNI));
-  LiveInterval &StackInt = LSS.getInterval(StackSlot);
+  assert(StackInt && "No stack slot assigned yet.");
 
   do {
     LiveInterval *LI;
@@ -483,8 +484,8 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
       continue;
 
     // Add all of VNI's live range to StackInt.
-    StackInt.MergeValueInAsValue(*LI, VNI, StackInt.getValNumInfo(0));
-    DEBUG(dbgs() << "Merged to stack int: " << StackInt << '\n');
+    StackInt->MergeValueInAsValue(*LI, VNI, StackInt->getValNumInfo(0));
+    DEBUG(dbgs() << "Merged to stack int: " << *StackInt << '\n');
 
     // Find all spills and copies of VNI.
     for (MachineRegisterInfo::use_nodbg_iterator UI = MRI.use_nodbg_begin(Reg);
@@ -723,7 +724,8 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
                                  MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
   SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
-  TII.loadRegFromStackSlot(MBB, MI, NewLI.reg, StackSlot, RC, &TRI);
+  TII.loadRegFromStackSlot(MBB, MI, NewLI.reg, StackSlot,
+                           MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to load instruction.
   SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
   VRM.addSpillSlotUse(StackSlot, MI);
@@ -744,7 +746,8 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
   assert(VNI && VNI->def.getDefIndex() == Idx && "Inconsistent VNInfo");
   Idx = VNI->def;
 
-  TII.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, StackSlot, RC, &TRI);
+  TII.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, StackSlot,
+                          MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to store instruction.
   SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getDefIndex();
   VRM.addSpillSlotUse(StackSlot, MI);
@@ -818,7 +821,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
 
     // Allocate interval around instruction.
     // FIXME: Infer regclass from instruction alone.
-    LiveInterval &NewLI = Edit->create(LIS, VRM);
+    LiveInterval &NewLI = Edit->createFrom(Reg, LIS, VRM);
     NewLI.markNotSpillable();
 
     if (Reads)
@@ -853,6 +856,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   // Share a stack slot among all descendants of Original.
   Original = VRM.getOriginal(edit.getReg());
   StackSlot = VRM.getStackSlot(Original);
+  StackInt = 0;
 
   DEBUG(dbgs() << "Inline spilling "
                << MRI.getRegClass(edit.getReg())->getName()
@@ -870,22 +874,22 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   if (Edit->getParent().empty())
     return;
 
-  RC = MRI.getRegClass(edit.getReg());
-
-  if (StackSlot == VirtRegMap::NO_STACK_SLOT)
+  // Update LiveStacks now that we are committed to spilling.
+  if (StackSlot == VirtRegMap::NO_STACK_SLOT) {
     StackSlot = VRM.assignVirt2StackSlot(Original);
+    StackInt = &LSS.getOrCreateInterval(StackSlot, MRI.getRegClass(Original));
+    StackInt->getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
+  } else
+    StackInt = &LSS.getInterval(StackSlot);
 
   if (Original != edit.getReg())
     VRM.assignVirt2StackSlot(edit.getReg(), StackSlot);
 
-  // Update LiveStacks now that we are committed to spilling.
-  LiveInterval &stacklvr = LSS.getOrCreateInterval(StackSlot, RC);
-  if (!stacklvr.hasAtLeastOneValue())
-    stacklvr.getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
+  assert(StackInt->getNumValNums() == 1 && "Bad stack interval values");
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    stacklvr.MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
-                                  stacklvr.getValNumInfo(0));
-  DEBUG(dbgs() << "Merged spilled regs: " << stacklvr << '\n');
+    StackInt->MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
+                                   StackInt->getValNumInfo(0));
+  DEBUG(dbgs() << "Merged spilled regs: " << *StackInt << '\n');
 
   // Spill around uses of all RegsToSpill.
   for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
