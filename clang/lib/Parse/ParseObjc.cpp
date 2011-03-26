@@ -2350,7 +2350,7 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
         return ExprError(Diag(Tok, diag::err_expected_colon));
 
       ++nColons;
-      ConsumeToken(); // Eat the ':'.
+      ConsumeToken(); // Eat the ':' or '::'.
       if (Tok.is(tok::r_paren))
         break;
       
@@ -2366,7 +2366,7 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
       SourceLocation Loc;
       SelIdent = ParseObjCSelectorPiece(Loc);
       KeyIdents.push_back(SelIdent);
-      if (!SelIdent && Tok.isNot(tok::colon))
+      if (!SelIdent && Tok.isNot(tok::colon) && Tok.isNot(tok::coloncolon))
         break;
     }
   }
