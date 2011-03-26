@@ -164,7 +164,8 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
 }
 
 Error
-PlatformLinux::GetFile (const FileSpec &platform_file, FileSpec &local_file)
+PlatformLinux::GetFile (const FileSpec &platform_file, 
+                        const UUID *uuid, FileSpec &local_file)
 {
     // Default to the local case
     local_file = platform_file;
@@ -192,7 +193,7 @@ PlatformLinux::~PlatformLinux()
 
 uint32_t
 PlatformLinux::FindProcessesByName (const char *name_match, 
-                                    lldb::NameMatchType name_match_type,
+                                    NameMatchType name_match_type,
                                     ProcessInfoList &process_infos)
 {
     return Host::FindProcessesByName (name_match, name_match_type, process_infos);

@@ -32,13 +32,13 @@ public:
     size_t
     GetRegisterCount();
 
-    const lldb::RegisterInfo *
+    const lldb_private::RegisterInfo *
     GetRegisterInfoAtIndex(uint32_t reg);
 
     size_t
     GetRegisterSetCount();
 
-    const lldb::RegisterSet *
+    const lldb_private::RegisterSet *
     GetRegisterSet(uint32_t set);
 
     bool
