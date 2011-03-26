@@ -46,28 +46,22 @@ using llvm::dyn_cast;
 
 
 namespace {
-/**
- * Class that lazily initialises the runtime function.  Avoids inserting the
- * types and the function declaration into a module if they're not used, and
- * avoids constructing the type more than once if it's used more than once.
- */
+/// Class that lazily initialises the runtime function.  Avoids inserting the
+/// types and the function declaration into a module if they're not used, and
+/// avoids constructing the type more than once if it's used more than once.
 class LazyRuntimeFunction {
   CodeGenModule *CGM;
   std::vector<const llvm::Type*> ArgTys;
   const char *FunctionName;
   llvm::Function *Function;
   public:
-    /**
-     * Constructor leaves this class uninitialized, because it is intended to
-     * be used as a field in another class and not all of the types that are
-     * used as arguments will necessarily be available at construction time.
-     */
+    /// Constructor leaves this class uninitialized, because it is intended to
+    /// be used as a field in another class and not all of the types that are
+    /// used as arguments will necessarily be available at construction time.
     LazyRuntimeFunction() : CGM(0), FunctionName(0), Function(0) {}
 
-    /**
-     * Initialises the lazy function with the name, return type, and the types
-     * of the arguments.
-     */
+    /// Initialises the lazy function with the name, return type, and the types
+    /// of the arguments.
     END_WITH_NULL
     void init(CodeGenModule *Mod, const char *name,
         const llvm::Type *RetTy, ...) {
@@ -83,10 +77,8 @@ class LazyRuntimeFunction {
        // Push the return type on at the end so we can pop it off easily
        ArgTys.push_back(RetTy);
    }
-   /**
-    * Overloaded cast operator, allows the class to be implicitly cast to an
-    * LLVM constant.
-    */
+   /// Overloaded cast operator, allows the class to be implicitly cast to an
+   /// LLVM constant.
    operator llvm::Function*() {
      if (!Function) {
        if (0 == FunctionName) return 0;
@@ -105,127 +97,83 @@ class LazyRuntimeFunction {
 };
 
 
-/**
- * GNU Objective-C runtime code generation.  This class implements the parts of
- * Objective-C support that are specific to the GNU family of runtimes (GCC and
- * GNUstep).
- */
+/// GNU Objective-C runtime code generation.  This class implements the parts of
+/// Objective-C support that are specific to the GNU family of runtimes (GCC and
+/// GNUstep).
 class CGObjCGNU : public CGObjCRuntime {
 protected:
-  /**
-   * The module that is using this class
-   */
+  /// The module that is using this class
   CodeGenModule &CGM;
-  /**
-   * The LLVM module into which output is inserted
-   */
+  /// The LLVM module into which output is inserted
   llvm::Module &TheModule;
-  /**
-   * strut objc_super.  Used for sending messages to super.  This structure
-   * contains the receiver (object) and the expected class.
-   */
+  /// strut objc_super.  Used for sending messages to super.  This structure
+  /// contains the receiver (object) and the expected class.
   const llvm::StructType *ObjCSuperTy;
-  /**
-   * struct objc_super*.  The type of the argument to the superclass message
-   * lookup functions.  
-   */
+  /// struct objc_super*.  The type of the argument to the superclass message
+  /// lookup functions.  
   const llvm::PointerType *PtrToObjCSuperTy;
-  /**
-   * LLVM type for selectors.  Opaque pointer (i8*) unless a header declaring
-   * SEL is included in a header somewhere, in which case it will be whatever
-   * type is declared in that header, most likely {i8*, i8*}.
-   */
+  /// LLVM type for selectors.  Opaque pointer (i8*) unless a header declaring
+  /// SEL is included in a header somewhere, in which case it will be whatever
+  /// type is declared in that header, most likely {i8*, i8*}.
   const llvm::PointerType *SelectorTy;
-  /**
-   * LLVM i8 type.  Cached here to avoid repeatedly getting it in all of the
-   * places where it's used
-   */
+  /// LLVM i8 type.  Cached here to avoid repeatedly getting it in all of the
+  /// places where it's used
   const llvm::IntegerType *Int8Ty;
-  /**
-   * Pointer to i8 - LLVM type of char*, for all of the places where the
-   * runtime needs to deal with C strings.
-   */
+  /// Pointer to i8 - LLVM type of char*, for all of the places where the
+  /// runtime needs to deal with C strings.
   const llvm::PointerType *PtrToInt8Ty;
-  /**
-   * Instance Method Pointer type.  This is a pointer to a function that takes,
-   * at a minimum, an object and a selector, and is the generic type for
-   * Objective-C methods.  Due to differences between variadic / non-variadic
-   * calling conventions, it must always be cast to the correct type before
-   * actually being used.
-   */
+  /// Instance Method Pointer type.  This is a pointer to a function that takes,
+  /// at a minimum, an object and a selector, and is the generic type for
+  /// Objective-C methods.  Due to differences between variadic / non-variadic
+  /// calling conventions, it must always be cast to the correct type before
+  /// actually being used.
   const llvm::PointerType *IMPTy;
-  /**
-   * Type of an untyped Objective-C object.  Clang treats id as a built-in type
-   * when compiling Objective-C code, so this may be an opaque pointer (i8*),
-   * but if the runtime header declaring it is included then it may be a
-   * pointer to a structure.
-   */
+  /// Type of an untyped Objective-C object.  Clang treats id as a built-in type
+  /// when compiling Objective-C code, so this may be an opaque pointer (i8*),
+  /// but if the runtime header declaring it is included then it may be a
+  /// pointer to a structure.
   const llvm::PointerType *IdTy;
-  /**
-   * Pointer to a pointer to an Objective-C object.  Used in the new ABI
-   * message lookup function and some GC-related functions.
-   */
+  /// Pointer to a pointer to an Objective-C object.  Used in the new ABI
+  /// message lookup function and some GC-related functions.
   const llvm::PointerType *PtrToIdTy;
-  /**
-   * The clang type of id.  Used when using the clang CGCall infrastructure to
-   * call Objective-C methods.
-   */
+  /// The clang type of id.  Used when using the clang CGCall infrastructure to
+  /// call Objective-C methods.
   CanQualType ASTIdTy;
-  /**
-   * LLVM type for C int type.
-   */
+  /// LLVM type for C int type.
   const llvm::IntegerType *IntTy;
-  /**
-   * LLVM type for an opaque pointer.  This is identical to PtrToInt8Ty, but is
-   * used in the code to document the difference between i8* meaning a pointer
-   * to a C string and i8* meaning a pointer to some opaque type.
-   */
+  /// LLVM type for an opaque pointer.  This is identical to PtrToInt8Ty, but is
+  /// used in the code to document the difference between i8* meaning a pointer
+  /// to a C string and i8* meaning a pointer to some opaque type.
   const llvm::PointerType *PtrTy;
-  /**
-   * LLVM type for C long type.  The runtime uses this in a lot of places where
-   * it should be using intptr_t, but we can't fix this without breaking
-   * compatibility with GCC...
-   */
+  /// LLVM type for C long type.  The runtime uses this in a lot of places where
+  /// it should be using intptr_t, but we can't fix this without breaking
+  /// compatibility with GCC...
   const llvm::IntegerType *LongTy;
-  /**
-   * LLVM type for C size_t.  Used in various runtime data structures.
-   */
+  /// LLVM type for C size_t.  Used in various runtime data structures.
   const llvm::IntegerType *SizeTy;
-  /**
-   * LLVM type for C ptrdiff_t.  Mainly used in property accessor functions.
-   */
+  /// LLVM type for C ptrdiff_t.  Mainly used in property accessor functions.
   const llvm::IntegerType *PtrDiffTy;
-  /**
-   * LLVM type for C int*.  Used for GCC-ABI-compatible non-fragile instance
-   * variables.
-   */
+  /// LLVM type for C int*.  Used for GCC-ABI-compatible non-fragile instance
+  /// variables.
   const llvm::PointerType *PtrToIntTy;
-  /**
-   * LLVM type for Objective-C BOOL type.
-   */
+  /// LLVM type for Objective-C BOOL type.
   const llvm::Type *BoolTy;
-  /**
-   * Metadata kind used to tie method lookups to message sends.  The GNUstep
-   * runtime provides some LLVM passes that can use this to do things like
-   * automatic IMP caching and speculative inlining.
-   */
+  /// Metadata kind used to tie method lookups to message sends.  The GNUstep
+  /// runtime provides some LLVM passes that can use this to do things like
+  /// automatic IMP caching and speculative inlining.
   unsigned msgSendMDKind;
-  /**
-   * Helper function that generates a constant string and returns a pointer to
-   * the start of the string.  The result of this function can be used anywhere
-   * where the C code specifies const char*.  
-   */
+  /// Helper function that generates a constant string and returns a pointer to
+  /// the start of the string.  The result of this function can be used anywhere
+  /// where the C code specifies const char*.  
   llvm::Constant *MakeConstantString(const std::string &Str,
                                      const std::string &Name="") {
     llvm::Constant *ConstStr = CGM.GetAddrOfConstantCString(Str, Name.c_str());
     return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
   }
-  /**
-   * Emits a linkonce_odr string, whose name is the prefix followed by the
-   * string value.  This allows the linker to combine the strings between
-   * different modules.  Used for EH typeinfo names, selector strings, and a
-   * few other things.
-   */
+  /// Emits a linkonce_odr string, whose name is the prefix followed by the
+  /// string value.  This allows the linker to combine the strings between
+  /// different modules.  Used for EH typeinfo names, selector strings, and a
+  /// few other things.
   llvm::Constant *ExportUniqueString(const std::string &Str,
                                      const std::string prefix) {
     std::string name = prefix + Str;
@@ -237,11 +185,9 @@ protected:
     }
     return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
   }
-  /**
-   * Generates a global structure, initialized by the elements in the vector.
-   * The element types must match the types of the structure elements in the
-   * first argument.
-   */
+  /// Generates a global structure, initialized by the elements in the vector.
+  /// The element types must match the types of the structure elements in the
+  /// first argument.
   llvm::GlobalVariable *MakeGlobal(const llvm::StructType *Ty,
                                    std::vector<llvm::Constant*> &V,
                                    llvm::StringRef Name="",
@@ -251,11 +197,9 @@ protected:
     return new llvm::GlobalVariable(TheModule, Ty, false,
         linkage, C, Name);
   }
-  /**
-   * Generates a global array.  The vector must contain the same number of
-   * elements that the array type declares, of the type specified as the array
-   * element type.
-   */
+  /// Generates a global array.  The vector must contain the same number of
+  /// elements that the array type declares, of the type specified as the array
+  /// element type.
   llvm::GlobalVariable *MakeGlobal(const llvm::ArrayType *Ty,
                                    std::vector<llvm::Constant*> &V,
                                    llvm::StringRef Name="",
@@ -265,10 +209,8 @@ protected:
     return new llvm::GlobalVariable(TheModule, Ty, false,
                                     linkage, C, Name);
   }
-  /**
-   * Generates a global array, inferring the array type from the specified
-   * element type and the size of the initialiser.  
-   */
+  /// Generates a global array, inferring the array type from the specified
+  /// element type and the size of the initialiser.  
   llvm::GlobalVariable *MakeGlobalArray(const llvm::Type *Ty,
                                         std::vector<llvm::Constant*> &V,
                                         llvm::StringRef Name="",
@@ -277,217 +219,148 @@ protected:
     llvm::ArrayType *ArrayTy = llvm::ArrayType::get(Ty, V.size());
     return MakeGlobal(ArrayTy, V, Name, linkage);
   }
-  /**
-   * Ensures that the value has the required type, by inserting a bitcast if
-   * required.  This function lets us avoid inserting bitcasts that are
-   * redundant.
-   */
+  /// Ensures that the value has the required type, by inserting a bitcast if
+  /// required.  This function lets us avoid inserting bitcasts that are
+  /// redundant.
   llvm::Value* EnforceType(CGBuilderTy B, llvm::Value *V, const llvm::Type *Ty){
     if (V->getType() == Ty) return V;
     return B.CreateBitCast(V, Ty);
   }
   // Some zeros used for GEPs in lots of places.
   llvm::Constant *Zeros[2];
-  /**
-   * Null pointer value.  Mainly used as a terminator in various arrays.
-   */
+  /// Null pointer value.  Mainly used as a terminator in various arrays.
   llvm::Constant *NULLPtr;
-  /**
-   * LLVM context.
-   */
+  /// LLVM context.
   llvm::LLVMContext &VMContext;
 private:
-  /**
-   * Placeholder for the class.  Lots of things refer to the class before we've
-   * actually emitted it.  We use this alias as a placeholder, and then replace
-   * it with a pointer to the class structure before finally emitting the module.
-   */
+  /// Placeholder for the class.  Lots of things refer to the class before we've
+  /// actually emitted it.  We use this alias as a placeholder, and then replace
+  /// it with a pointer to the class structure before finally emitting the
+  /// module.
   llvm::GlobalAlias *ClassPtrAlias;
-  /**
-   * Placeholder for the metaclass.  Lots of things refer to the class before we've
-   * actually emitted it.  We use this alias as a placeholder, and then replace
-   * it with a pointer to the metaclass structure before finally emitting the
-   * module.
-   */
+  /// Placeholder for the metaclass.  Lots of things refer to the class before
+  /// we've / actually emitted it.  We use this alias as a placeholder, and then
+  /// replace / it with a pointer to the metaclass structure before finally
+  /// emitting the / module.
   llvm::GlobalAlias *MetaClassPtrAlias;
-  /**
-   * All of the classes that have been generated for this compilation units.
-   */
+  /// All of the classes that have been generated for this compilation units.
   std::vector<llvm::Constant*> Classes;
-  /**
-   * All of the categories that have been generated for this compilation units.
-   */
+  /// All of the categories that have been generated for this compilation units.
   std::vector<llvm::Constant*> Categories;
-  /**
-   * All of the Objective-C constant strings that have been generated for this
-   * compilation units.
-   */
+  /// All of the Objective-C constant strings that have been generated for this
+  /// compilation units.
   std::vector<llvm::Constant*> ConstantStrings;
-  /**
-   * Map from string values to Objective-C constant strings in the output.
-   * Used to prevent emitting Objective-C strings more than once.  This should
-   * not be required at all - CodeGenModule should manage this list.
-   */
+  /// Map from string values to Objective-C constant strings in the output.
+  /// Used to prevent emitting Objective-C strings more than once.  This should
+  /// not be required at all - CodeGenModule should manage this list.
   llvm::StringMap<llvm::Constant*> ObjCStrings;
-  /**
-   * All of the protocols that have been declared.
-   */
+  /// All of the protocols that have been declared.
   llvm::StringMap<llvm::Constant*> ExistingProtocols;
-  /**
-   * For each variant of a selector, we store the type encoding and a
-   * placeholder value.  For an untyped selector, the type will be the empty
-   * string.  Selector references are all done via the module's selector table,
-   * so we create an alias as a placeholder and then replace it with the real
-   * value later.
-   */
+  /// For each variant of a selector, we store the type encoding and a
+  /// placeholder value.  For an untyped selector, the type will be the empty
+  /// string.  Selector references are all done via the module's selector table,
+  /// so we create an alias as a placeholder and then replace it with the real
+  /// value later.
   typedef std::pair<std::string, llvm::GlobalAlias*> TypedSelector;
-  /**
-   * Type of the selector map.  This is roughly equivalent to the structure
-   * used in the GNUstep runtime, which maintains a list of all of the valid
-   * types for a selector in a table.
-   */
+  /// Type of the selector map.  This is roughly equivalent to the structure
+  /// used in the GNUstep runtime, which maintains a list of all of the valid
+  /// types for a selector in a table.
   typedef llvm::DenseMap<Selector, llvm::SmallVector<TypedSelector, 2> >
     SelectorMap;
-  /**
-   * A map from selectors to selector types.  This allows us to emit all
-   * selectors of the same name and type together.
-   */
+  /// A map from selectors to selector types.  This allows us to emit all
+  /// selectors of the same name and type together.
   SelectorMap SelectorTable;
 
-  /**
-   * Selectors related to memory management.  When compiling in GC mode, we
-   * omit these.
-   */
+  /// Selectors related to memory management.  When compiling in GC mode, we
+  /// omit these.
   Selector RetainSel, ReleaseSel, AutoreleaseSel;
-  /**
-   * Runtime functions used for memory management in GC mode.  Note that clang
-   * supports code generation for calling these functions, but neither GNU
-   * runtime actually supports this API properly yet.
-   */
+  /// Runtime functions used for memory management in GC mode.  Note that clang
+  /// supports code generation for calling these functions, but neither GNU
+  /// runtime actually supports this API properly yet.
   LazyRuntimeFunction IvarAssignFn, StrongCastAssignFn, MemMoveFn, WeakReadFn, 
     WeakAssignFn, GlobalAssignFn;
 
 protected:
-  /**
-   * Function used for throwing Objective-C exceptions.
-   */
+  /// Function used for throwing Objective-C exceptions.
   LazyRuntimeFunction ExceptionThrowFn;
-  /**
-   * Function used for rethrowing exceptions, used at the end of @finally or
-   * @synchronize blocks.
-   */
+  /// Function used for rethrowing exceptions, used at the end of @finally or
+  /// @synchronize blocks.
   LazyRuntimeFunction ExceptionReThrowFn;
-  /**
-   * Function called when entering a catch function.  This is required for
-   * differentiating Objective-C exceptions and foreign exceptions.
-   */
+  /// Function called when entering a catch function.  This is required for
+  /// differentiating Objective-C exceptions and foreign exceptions.
   LazyRuntimeFunction EnterCatchFn;
-  /**
-   * Function called when exiting from a catch block.  Used to do exception
-   * cleanup.
-   */
+  /// Function called when exiting from a catch block.  Used to do exception
+  /// cleanup.
   LazyRuntimeFunction ExitCatchFn;
-  /**
-   * Function called when entering an @synchronize block.  Acquires the lock.
-   */
+  /// Function called when entering an @synchronize block.  Acquires the lock.
   LazyRuntimeFunction SyncEnterFn;
-  /**
-   * Function called when exiting an @synchronize block.  Releases the lock.
-   */
+  /// Function called when exiting an @synchronize block.  Releases the lock.
   LazyRuntimeFunction SyncExitFn;
 
 private:
 
-  /**
-   * Function called if fast enumeration detects that the collection is
-   * modified during the update.
-   */
+  /// Function called if fast enumeration detects that the collection is
+  /// modified during the update.
   LazyRuntimeFunction EnumerationMutationFn;
-  /**
-   * Function for implementing synthesized property getters that return an
-   * object.
-   */
+  /// Function for implementing synthesized property getters that return an
+  /// object.
   LazyRuntimeFunction GetPropertyFn;
-  /**
-   * Function for implementing synthesized property setters that return an
-   * object.
-   */
+  /// Function for implementing synthesized property setters that return an
+  /// object.
   LazyRuntimeFunction SetPropertyFn;
-  /**
-   * Function used for non-object declared property getters.
-   */
+  /// Function used for non-object declared property getters.
   LazyRuntimeFunction GetStructPropertyFn;
-  /**
-   * Function used for non-object declared property setters.
-   */
+  /// Function used for non-object declared property setters.
   LazyRuntimeFunction SetStructPropertyFn;
 
-  /**
-   * The version of the runtime that this class targets.  Must match the
-   * version in the runtime.
-   */
+  /// The version of the runtime that this class targets.  Must match the
+  /// version in the runtime.
   const int RuntimeVersion;
-  /**
-   * The version of the protocol class.  Used to differentiate between ObjC1
-   * and ObjC2 protocols.  Objective-C 1 protocols can not contain optional
-   * components and can not contain declared properties.  We always emit
-   * Objective-C 2 property structures, but we have to pretend that they're
-   * Objective-C 1 property structures when targeting the GCC runtime or it
-   * will abort.
-   */
+  /// The version of the protocol class.  Used to differentiate between ObjC1
+  /// and ObjC2 protocols.  Objective-C 1 protocols can not contain optional
+  /// components and can not contain declared properties.  We always emit
+  /// Objective-C 2 property structures, but we have to pretend that they're
+  /// Objective-C 1 property structures when targeting the GCC runtime or it
+  /// will abort.
   const int ProtocolVersion;
 private:
-  /**
-   * Generates an instance variable list structure.  This is a structure
-   * containing a size and an array of structures containing instance variable
-   * metadata.  This is used purely for introspection in the fragile ABI.  In
-   * the non-fragile ABI, it's used for instance variable fixup.
-   */
+  /// Generates an instance variable list structure.  This is a structure
+  /// containing a size and an array of structures containing instance variable
+  /// metadata.  This is used purely for introspection in the fragile ABI.  In
+  /// the non-fragile ABI, it's used for instance variable fixup.
   llvm::Constant *GenerateIvarList(
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets);
-  /**
-   * Generates a method list structure.  This is a structure containing a size
-   * and an array of structures containing method metadata.
-   *
-   * This structure is used by both classes and categories, and contains a next
-   * pointer allowing them to be chained together in a linked list.
-   */
+  /// Generates a method list structure.  This is a structure containing a size
+  /// and an array of structures containing method metadata.
+  ///
+  /// This structure is used by both classes and categories, and contains a next
+  /// pointer allowing them to be chained together in a linked list.
   llvm::Constant *GenerateMethodList(const llvm::StringRef &ClassName,
       const llvm::StringRef &CategoryName,
       const llvm::SmallVectorImpl<Selector>  &MethodSels,
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes,
       bool isClassMethodList);
-  /**
-   * Emits an empty protocol.  This is used for @protocol() where no protocol
-   * is found.  The runtime will (hopefully) fix up the pointer to refer to the
-   * real protocol.
-   */
+  /// Emits an empty protocol.  This is used for @protocol() where no protocol
+  /// is found.  The runtime will (hopefully) fix up the pointer to refer to the
+  /// real protocol.
   llvm::Constant *GenerateEmptyProtocol(const std::string &ProtocolName);
-  /**
-   * Generates a list of property metadata structures.  This follows the same
-   * pattern as method and instance variable metadata lists.
-   */
+  /// Generates a list of property metadata structures.  This follows the same
+  /// pattern as method and instance variable metadata lists.
   llvm::Constant *GeneratePropertyList(const ObjCImplementationDecl *OID,
         llvm::SmallVectorImpl<Selector> &InstanceMethodSels,
         llvm::SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes);
-  /**
-   * Generates a list of referenced protocols.  Classes, categories, and
-   * protocols all use this structure.
-   */
+  /// Generates a list of referenced protocols.  Classes, categories, and
+  /// protocols all use this structure.
   llvm::Constant *GenerateProtocolList(
       const llvm::SmallVectorImpl<std::string> &Protocols);
-  /**
-   * To ensure that all protocols are seen by the runtime, we add a category on
-   * a class defined in the runtime, declaring no methods, but adopting the
-   * protocols.  This is a horribly ugly hack, but it allows us to collect all
-   * of the protocols without changing the ABI.
-   */
+  /// To ensure that all protocols are seen by the runtime, we add a category on
+  /// a class defined in the runtime, declaring no methods, but adopting the
+  /// protocols.  This is a horribly ugly hack, but it allows us to collect all
+  /// of the protocols without changing the ABI.
   void GenerateProtocolHolderCategory(void);
-  /**
-   * Generates a class structure.
-   */
+  /// Generates a class structure.
   llvm::Constant *GenerateClassStructure(
       llvm::Constant *MetaClass,
       llvm::Constant *SuperClass,
@@ -501,44 +374,32 @@ private:
       llvm::Constant *IvarOffsets,
       llvm::Constant *Properties,
       bool isMeta=false);
-  /**
-   * Generates a method list.  This is used by protocols to define the required
-   * and optional methods.
-   */
+  /// Generates a method list.  This is used by protocols to define the required
+  /// and optional methods.
   llvm::Constant *GenerateProtocolMethodList(
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodNames,
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes);
-  /**
-   * Returns a selector with the specified type encoding.  An empty string is
-   * used to return an untyped selector (with the types field set to NULL).
-   */
+  /// Returns a selector with the specified type encoding.  An empty string is
+  /// used to return an untyped selector (with the types field set to NULL).
   llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
     const std::string &TypeEncoding, bool lval);
-  /**
-   * Returns the variable used to store the offset of an instance variable.
-   */
+  /// Returns the variable used to store the offset of an instance variable.
   llvm::GlobalVariable *ObjCIvarOffsetVariable(const ObjCInterfaceDecl *ID,
       const ObjCIvarDecl *Ivar);
-  /**
-   * Emits a reference to a class.  This allows the linker to object if there
-   * is no class of the matching name.
-   */
+  /// Emits a reference to a class.  This allows the linker to object if there
+  /// is no class of the matching name.
   void EmitClassRef(const std::string &className);
 protected:
-  /**
-   * Looks up the method for sending a message to the specified object.  This
-   * mechanism differs between the GCC and GNU runtimes, so this method must be
-   * overridden in subclasses.
-   */
+  /// Looks up the method for sending a message to the specified object.  This
+  /// mechanism differs between the GCC and GNU runtimes, so this method must be
+  /// overridden in subclasses.
   virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
                                  llvm::Value *&Receiver,
                                  llvm::Value *cmd,
                                  llvm::MDNode *node) = 0;
-  /**
-   * Looks up the method for sending a message to a superclass.  This mechanism
-   * differs between the GCC and GNU runtimes, so this method must be
-   * overridden in subclasses.
-   */
+  /// Looks up the method for sending a message to a superclass.  This mechanism
+  /// differs between the GCC and GNU runtimes, so this method must be
+  /// overridden in subclasses.
   virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
                                       llvm::Value *ObjCSuper,
                                       llvm::Value *cmd) = 0;
@@ -625,27 +486,21 @@ public:
     return NULLPtr;
   }
 };
-/**
- * Class representing the legacy GCC Objective-C ABI.  This is the default when
- * -fobjc-nonfragile-abi is not specified.
- *
- * The GCC ABI target actually generates code that is approximately compatible
- * with the new GNUstep runtime ABI, but refrains from using any features that
- * would not work with the GCC runtime.  For example, clang always generates
- * the extended form of the class structure, and the extra fields are simply
- * ignored by GCC libobjc.
- */
+/// Class representing the legacy GCC Objective-C ABI.  This is the default when
+/// -fobjc-nonfragile-abi is not specified.
+///
+/// The GCC ABI target actually generates code that is approximately compatible
+/// with the new GNUstep runtime ABI, but refrains from using any features that
+/// would not work with the GCC runtime.  For example, clang always generates
+/// the extended form of the class structure, and the extra fields are simply
+/// ignored by GCC libobjc.
 class CGObjCGCC : public CGObjCGNU {
-  /**
-   * The GCC ABI message lookup function.  Returns an IMP pointing to the
-   * method implementation for this message.
-   */
+  /// The GCC ABI message lookup function.  Returns an IMP pointing to the
+  /// method implementation for this message.
   LazyRuntimeFunction MsgLookupFn;
-  /**
-   * The GCC ABI superclass message lookup function.  Takes a pointer to a
-   * structure describing the receiver and the class, and a selector as
-   * arguments.  Returns the IMP for the corresponding method.
-   */
+  /// The GCC ABI superclass message lookup function.  Takes a pointer to a
+  /// structure describing the receiver and the class, and a selector as
+  /// arguments.  Returns the IMP for the corresponding method.
   LazyRuntimeFunction MsgLookupSuperFn;
 protected:
   virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
@@ -676,26 +531,18 @@ protected:
               PtrToObjCSuperTy, SelectorTy, NULL);
     }
 };
-/**
- * Class used when targeting the new GNUstep runtime ABI.
- */
+/// Class used when targeting the new GNUstep runtime ABI.
 class CGObjCGNUstep : public CGObjCGNU {
-    /**
-     * The slot lookup function.  Returns a pointer to a cacheable structure
-     * that contains (among other things) the IMP.
-     */
+    /// The slot lookup function.  Returns a pointer to a cacheable structure
+    /// that contains (among other things) the IMP.
     LazyRuntimeFunction SlotLookupFn;
-    /**
-     * The GNUstep ABI superclass message lookup function.  Takes a pointer to
-     * a structure describing the receiver and the class, and a selector as
-     * arguments.  Returns the slot for the corresponding method.  Superclass
-     * message lookup rarely changes, so this is a good caching opportunity.
-     */
+    /// The GNUstep ABI superclass message lookup function.  Takes a pointer to
+    /// a structure describing the receiver and the class, and a selector as
+    /// arguments.  Returns the slot for the corresponding method.  Superclass
+    /// message lookup rarely changes, so this is a good caching opportunity.
     LazyRuntimeFunction SlotLookupSuperFn;
-    /**
-     * Type of an slot structure pointer.  This is returned by the various
-     * lookup functions.
-     */
+    /// Type of an slot structure pointer.  This is returned by the various
+    /// lookup functions.
     llvm::Type *SlotTy;
   protected:
     virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
