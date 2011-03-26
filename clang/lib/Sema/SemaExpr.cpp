@@ -7378,6 +7378,20 @@ static bool IsReadonlyProperty(Expr *E, Sema &S) {
   return false;
 }
 
+static bool IsReadonlyMessage(Expr *E, Sema &S) {
+  if (E->getStmtClass() != Expr::MemberExprClass) 
+    return false;
+  const MemberExpr *ME = cast<MemberExpr>(E);
+  NamedDecl *Member = ME->getMemberDecl();
+  if (isa<FieldDecl>(Member)) {
+    Expr *Base = ME->getBase()->IgnoreParenImpCasts();
+    if (Base->getStmtClass() != Expr::ObjCMessageExprClass)
+      return false;
+    return cast<ObjCMessageExpr>(Base)->getMethodDecl() != 0;
+  }
+  return false;
+}
+
 /// CheckForModifiableLvalue - Verify that E is a modifiable lvalue.  If not,
 /// emit an error and return true.  If so, return false.
 static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
@@ -7386,6 +7400,8 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
                                                               &Loc);
   if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
     IsLV = Expr::MLV_ReadonlyProperty;
+  else if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
+    IsLV = Expr::MLV_InvalidMessageExpression;
   if (IsLV == Expr::MLV_Valid)
     return false;
 
@@ -7427,6 +7443,9 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
     break;
   case Expr::MLV_NoSetterProperty:
     Diag = diag::error_nosetter_property_assignment;
+    break;
+  case Expr::MLV_InvalidMessageExpression:
+    Diag = diag::error_readonly_message_assignment;
     break;
   case Expr::MLV_SubObjCPropertySetting:
     Diag = diag::error_no_subobject_property_setting;
@@ -7812,7 +7831,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
   ValueDecl *dcl = getPrimaryDecl(op);
   Expr::LValueClassification lval = op->ClassifyLValue(S.Context);
 
-  if (lval == Expr::LV_ClassTemporary) {
+  if (lval == Expr::LV_ClassTemporary) { 
     bool sfinae = S.isSFINAEContext();
     S.Diag(OpLoc, sfinae ? diag::err_typecheck_addrof_class_temporary
                          : diag::ext_typecheck_addrof_class_temporary)

@@ -173,6 +173,7 @@ public:
     LV_IncompleteVoidType,
     LV_DuplicateVectorComponents,
     LV_InvalidExpression,
+    LV_InvalidMessageExpression,
     LV_MemberFunction,
     LV_SubObjCPropertySetting,
     LV_ClassTemporary
@@ -204,6 +205,7 @@ public:
     MLV_NoSetterProperty,
     MLV_MemberFunction,
     MLV_SubObjCPropertySetting,
+    MLV_InvalidMessageExpression,
     MLV_ClassTemporary
   };
   isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
@@ -223,6 +225,7 @@ public:
       CL_MemberFunction, // An expression referring to a member function
       CL_SubObjCPropertySetting,
       CL_ClassTemporary, // A prvalue of class type
+      CL_ObjCMessageRValue, // ObjC message is an rvalue
       CL_PRValue // A prvalue for any other reason, of any other type
     };
     /// \brief The results of modification testing.
