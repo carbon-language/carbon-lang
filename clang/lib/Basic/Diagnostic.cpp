@@ -51,11 +51,6 @@ Diagnostic::Diagnostic(const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &diags,
   ErrorLimit = 0;
   TemplateBacktraceLimit = 0;
 
-  // Create a DiagState and DiagStatePoint representing diagnostic changes
-  // through command-line.
-  DiagStates.push_back(DiagState());
-  PushDiagStatePoint(&DiagStates.back(), SourceLocation());
-
   Reset();
 }
 
@@ -102,6 +97,16 @@ void Diagnostic::Reset() {
   // displayed.
   LastDiagLevel = (DiagnosticIDs::Level)-1;
   DelayedDiagID = 0;
+
+  // Clear state related to #pragma diagnostic.
+  DiagStates.clear();
+  DiagStatePoints.clear();
+  DiagStateOnPushStack.clear();
+
+  // Create a DiagState and DiagStatePoint representing diagnostic changes
+  // through command-line.
+  DiagStates.push_back(DiagState());
+  PushDiagStatePoint(&DiagStates.back(), SourceLocation());
 }
 
 void Diagnostic::SetDelayedDiagnostic(unsigned DiagID, llvm::StringRef Arg1,
