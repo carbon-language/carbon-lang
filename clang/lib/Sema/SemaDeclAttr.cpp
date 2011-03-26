@@ -1091,6 +1091,7 @@ static void HandleAvailabilityAttr(Decl *d, const AttributeList &Attr,
   AvailabilityChange Introduced = Attr.getAvailabilityIntroduced();
   AvailabilityChange Deprecated = Attr.getAvailabilityDeprecated();
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
+  bool IsUnavailable = Attr.getUnavailableLoc().isValid();
 
   // Ensure that Introduced < Deprecated < Obsoleted (although not all
   // of these steps are needed).
@@ -1122,7 +1123,8 @@ static void HandleAvailabilityAttr(Decl *d, const AttributeList &Attr,
                                                 Platform,
                                                 Introduced.Version,
                                                 Deprecated.Version,
-                                                Obsoleted.Version));
+                                                Obsoleted.Version,
+                                                IsUnavailable));
 }
 
 static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {

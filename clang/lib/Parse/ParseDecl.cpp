@@ -484,6 +484,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
 ///   'introduced' '=' version
 ///   'deprecated' '=' version
 ///   'removed' = version
+///   'unavailable'
 void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                                         SourceLocation AvailabilityLoc,
                                         ParsedAttributes &attrs,
@@ -521,9 +522,11 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     Ident_introduced = PP.getIdentifierInfo("introduced");
     Ident_deprecated = PP.getIdentifierInfo("deprecated");
     Ident_obsoleted = PP.getIdentifierInfo("obsoleted");
+    Ident_unavailable = PP.getIdentifierInfo("unavailable");
   }
 
   // Parse the set of introductions/deprecations/removals.
+  SourceLocation UnavailableLoc;
   do {
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_availability_expected_change);
@@ -532,6 +535,20 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     }
     IdentifierInfo *Keyword = Tok.getIdentifierInfo();
     SourceLocation KeywordLoc = ConsumeToken();
+
+    if (Keyword == Ident_unavailable) {
+      if (UnavailableLoc.isValid()) {
+        Diag(KeywordLoc, diag::err_availability_redundant)
+          << Keyword << SourceRange(UnavailableLoc);
+      } 
+      UnavailableLoc = KeywordLoc;
+
+      if (Tok.isNot(tok::comma))
+        break;
+
+      ConsumeToken();
+      continue;
+    } 
 
     if (Tok.isNot(tok::equal)) {
       Diag(Tok, diag::err_expected_equal_after)
@@ -589,13 +606,33 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
   if (endLoc)
     *endLoc = RParenLoc;
 
+  // The 'unavailable' availability cannot be combined with any other
+  // availability changes. Make sure that hasn't happened.
+  if (UnavailableLoc.isValid()) {
+    bool Complained = false;
+    for (unsigned Index = Introduced; Index != Unknown; ++Index) {
+      if (Changes[Index].KeywordLoc.isValid()) {
+        if (!Complained) {
+          Diag(UnavailableLoc, diag::warn_availability_and_unavailable)
+            << SourceRange(Changes[Index].KeywordLoc,
+                           Changes[Index].VersionRange.getEnd());
+          Complained = true;
+        }
+
+        // Clear out the availability.
+        Changes[Index] = AvailabilityChange();
+      }
+    }
+  }
+
   // Record this attribute
-  attrs.addNew(&Availability, AvailabilityLoc,
+  attrs.addNew(&Availability, AvailabilityLoc, 
                0, SourceLocation(),
                Platform, PlatformLoc,
                Changes[Introduced],
                Changes[Deprecated],
-               Changes[Obsoleted], false, false);
+               Changes[Obsoleted], 
+               UnavailableLoc, false, false);
 }
 
 void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {

@@ -268,6 +268,17 @@ static AvailabilityResult CheckAvailability(ASTContext &Context,
   if (A->getPlatform()->getName() != TargetPlatform)
     return AR_Available;
 
+  // Make sure that this declaration has not been marked 'unavailable'.
+  if (A->getUnavailable()) {
+    if (Message) {
+      Message->clear();
+      llvm::raw_string_ostream Out(*Message);
+      Out << "not available on " << PrettyPlatformName;
+    }
+
+    return AR_Unavailable;
+  }
+
   // Make sure that this declaration has already been introduced.
   if (!A->getIntroduced().empty() && 
       TargetMinVersion < A->getIntroduced()) {

@@ -46,6 +46,7 @@ class Argument<string name> {
   string Name = name;
 }
 
+class BoolArgument<string name> : Argument<name>;
 class IdentifierArgument<string name> : Argument<name>;
 class IntArgument<string name> : Argument<name>;
 class StringArgument<string name> : Argument<name>;
@@ -140,7 +141,8 @@ def AsmLabel : InheritableAttr {
 def Availability : InheritableAttr {
   let Spellings = ["availability"];
   let Args = [IdentifierArgument<"platform">, VersionArgument<"introduced">,
-              VersionArgument<"deprecated">, VersionArgument<"obsoleted">];
+              VersionArgument<"deprecated">, VersionArgument<"obsoleted">,
+              BoolArgument<"unavailable">];
   let AdditionalMembers =
 [{static llvm::StringRef getPrettyPlatformName(llvm::StringRef Platform) {
     return llvm::StringSwitch<llvm::StringRef>(Platform)

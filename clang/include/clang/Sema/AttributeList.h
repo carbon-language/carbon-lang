@@ -62,20 +62,24 @@ private:
 
   /// The number of expression arguments this attribute has.
   /// The expressions themselves are stored after the object.
-  unsigned NumArgs;
+  unsigned NumArgs : 16;
 
   /// True if Microsoft style: declspec(foo).
-  bool DeclspecAttribute;
+  unsigned DeclspecAttribute : 1;
 
   /// True if C++0x-style: [[foo]].
-  bool CXX0XAttribute;
+  unsigned CXX0XAttribute : 1;
 
   /// True if already diagnosed as invalid.
-  mutable bool Invalid;
+  mutable unsigned Invalid : 1;
 
   /// True if this has the extra information associated with an
   /// availability attribute.
-  bool IsAvailability;
+  unsigned IsAvailability : 1;
+
+  /// \brief The location of the 'unavailable' keyword in an
+  /// availability attribute.
+  SourceLocation UnavailableLoc;
 
   /// The next attribute in the current position.
   AttributeList *NextInPosition;
@@ -127,11 +131,13 @@ private:
                 const AvailabilityChange &introduced,
                 const AvailabilityChange &deprecated,
                 const AvailabilityChange &obsoleted,
+                SourceLocation unavailable,
                 bool declspec, bool cxx0x)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
       AttrLoc(attrLoc), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(0), DeclspecAttribute(declspec), CXX0XAttribute(cxx0x),
-      Invalid(false), IsAvailability(true), NextInPosition(0), NextInPool(0) {
+      Invalid(false), IsAvailability(true), UnavailableLoc(unavailable),
+      NextInPosition(0), NextInPool(0) {
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
@@ -315,6 +321,11 @@ public:
     assert(getKind() == AT_availability && "Not an availability attribute");
     return getAvailabilitySlot(ObsoletedSlot);
   }
+
+  SourceLocation getUnavailableLoc() const {
+    assert(getKind() == AT_availability && "Not an availability attribute");
+    return UnavailableLoc;
+  }
 };
 
 /// A factory, from which one makes pools, from which one creates
@@ -435,12 +446,14 @@ public:
                         const AvailabilityChange &introduced,
                         const AvailabilityChange &deprecated,
                         const AvailabilityChange &obsoleted,
+                        SourceLocation unavailable,
                         bool declspec = false, bool cxx0x = false) {
     void *memory = allocate(AttributeFactory::AvailabilityAllocSize);
     return add(new (memory) AttributeList(attrName, attrLoc,
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
                                           introduced, deprecated, obsoleted,
+                                          unavailable,
                                           declspec, cxx0x));
   }
 
@@ -557,10 +570,12 @@ public:
                         const AvailabilityChange &introduced,
                         const AvailabilityChange &deprecated,
                         const AvailabilityChange &obsoleted,
+                        SourceLocation unavailable,
                         bool declspec = false, bool cxx0x = false) {
     AttributeList *attr =
       pool.create(attrName, attrLoc, scopeName, scopeLoc, parmName, parmLoc,
-                  introduced, deprecated, obsoleted, declspec, cxx0x);
+                  introduced, deprecated, obsoleted, unavailable,
+                  declspec, cxx0x);
     add(attr);
     return attr;
   }

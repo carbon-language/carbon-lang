@@ -121,6 +121,9 @@ class Parser : public CodeCompletionHandler {
   /// \brief Identifier for "obsoleted".
   IdentifierInfo *Ident_obsoleted;
 
+  /// \brief Identifier for "unavailable".
+  IdentifierInfo *Ident_unavailable;
+
   /// C++0x contextual keywords. 
   mutable IdentifierInfo *Ident_final;
   mutable IdentifierInfo *Ident_override;

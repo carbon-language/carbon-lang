@@ -426,6 +426,7 @@ void Parser::Initialize() {
   Ident_introduced = 0;
   Ident_deprecated = 0;
   Ident_obsoleted = 0;
+  Ident_unavailable = 0;
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
