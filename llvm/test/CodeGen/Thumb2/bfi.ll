@@ -49,3 +49,14 @@ define i32 @f4(i32 %a) nounwind {
   %ins12 = or i32 %ins7, 3137
   ret i32 %ins12
 }
+
+; rdar://9177502
+define i32 @f5(i32 %a, i32 %b) nounwind readnone {
+entry:
+; CHECK f5
+; CHECK-NOT: bfi r0, r2, #0, #1
+%and = and i32 %a, 2
+%b.masked = and i32 %b, -2
+%and3 = or i32 %b.masked, %and
+ret i32 %and3
+}
