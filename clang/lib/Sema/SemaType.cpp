@@ -138,6 +138,9 @@ namespace {
     /// Whether there are non-trivial modifications to the decl spec.
     bool trivial;
 
+    /// Whether we saved the attributes in the decl spec.
+    bool hasSavedAttrs;
+
     /// The original set of attributes on the DeclSpec.
     llvm::SmallVector<AttributeList*, 2> savedAttrs;
 
@@ -149,7 +152,7 @@ namespace {
     TypeProcessingState(Sema &sema, Declarator &declarator)
       : sema(sema), declarator(declarator),
         chunkIndex(declarator.getNumTypeObjects()),
-        trivial(true) {}
+        trivial(true), hasSavedAttrs(false) {}
 
     Sema &getSema() const {
       return sema;
@@ -178,13 +181,14 @@ namespace {
     /// Save the current set of attributes on the DeclSpec.
     void saveDeclSpecAttrs() {
       // Don't try to save them multiple times.
-      if (!savedAttrs.empty()) return;
+      if (hasSavedAttrs) return;
 
       DeclSpec &spec = getMutableDeclSpec();
       for (AttributeList *attr = spec.getAttributes().getList(); attr;
              attr = attr->getNext())
         savedAttrs.push_back(attr);
       trivial &= savedAttrs.empty();
+      hasSavedAttrs = true;
     }
 
     /// Record that we had nowhere to put the given type attribute.
@@ -214,7 +218,13 @@ namespace {
     }
 
     void restoreDeclSpecAttrs() {
-      assert(!savedAttrs.empty());
+      assert(hasSavedAttrs);
+
+      if (savedAttrs.empty()) {
+        getMutableDeclSpec().getAttributes().set(0);
+        return;
+      }
+
       getMutableDeclSpec().getAttributes().set(savedAttrs[0]);
       for (unsigned i = 0, e = savedAttrs.size() - 1; i != e; ++i)
         savedAttrs[i]->setNext(savedAttrs[i+1]);
@@ -360,8 +370,15 @@ distributeObjCPointerTypeAttrFromDeclarator(TypeProcessingState &state,
   // That might actually be the decl spec if we weren't blocked by
   // anything in the declarator.
   if (considerDeclSpec) {
-    if (handleObjCPointerTypeAttr(state, attr, declSpecType))
+    if (handleObjCPointerTypeAttr(state, attr, declSpecType)) {
+      // Splice the attribute into the decl spec.  Prevents the
+      // attribute from being applied multiple times and gives
+      // the source-location-filler something to work with.
+      state.saveDeclSpecAttrs();
+      moveAttrFromListToList(attr, declarator.getAttrListRef(),
+               declarator.getMutableDeclSpec().getAttributes().getListRef());
       return;
+    }
   }
 
   // Otherwise, if we found an appropriate chunk, splice the attribute

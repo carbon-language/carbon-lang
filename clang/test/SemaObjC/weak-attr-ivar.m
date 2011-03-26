@@ -72,3 +72,13 @@ typedef enum { Foo_HUH_NONE } FooHUHCode;
 }
 @end
 
+// rdar://problem/9123040
+@interface Test1 {
+@public
+  id ivar __attribute__((objc_gc(weak)));
+}
+@property (assign) id prop __attribute((objc_gc(weak)));
+@end
+void test1(Test1 *t) {
+  id *(__attribute__((objc_gc(strong))) x) = &t->ivar; // expected-warning {{initializing '__strong id *' with an expression of type '__weak id *' discards qualifiers}}
+}
