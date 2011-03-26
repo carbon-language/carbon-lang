@@ -354,8 +354,10 @@ static bool isCompleteOverwrite(const AliasAnalysis::Location &Later,
   // In this case, we see if the later store completely overlaps all bytes
   // stored by the previous store.
   if (Off1 < Off2 ||                       // Earlier starts before Later.
+      Off2 < 0 ||                          // Later is -.
       Off1+Earlier.Size > Off2+Later.Size) // Earlier goes beyond Later.
     return false;
+
   // Otherwise, we have complete overlap.
   return true;
 }
