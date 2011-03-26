@@ -1,4 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+
+#if !__has_feature(attribute_availability)
+#  error 'availability' attribute is not available
+#endif
+
 void f0() __attribute__((availability(macosx,introduced=10.2,deprecated=10.4,obsoleted=10.6)));
 
 void f1() __attribute__((availability(macosx,deprecated=10.4,introduced=10.2,obsoleted=10.6)));
