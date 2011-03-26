@@ -442,8 +442,7 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
       DeclSpec DS(AttrFactory);
       ParseStructDeclaration(DS, Callback);
 
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list, "",
-                       tok::at);
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_decl_list);
       break;
     }
   }
