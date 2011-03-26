@@ -111,7 +111,7 @@ private:
   /// ComputeBaseOffsets - Compute the offsets for all base subobjects of the
   /// given base.
   void ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
-                          uint64_t OffsetInLayoutClass,
+                          CharUnits OffsetInLayoutClass,
                           SubobjectOffsetMapTy &SubobjectOffsets,
                           SubobjectOffsetMapTy &SubobjectLayoutClassOffsets,
                           SubobjectCountMapTy &SubobjectCounts);
@@ -163,8 +163,9 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
   SubobjectCountMapTy SubobjectCounts;
   ComputeBaseOffsets(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
                      /*IsVirtual=*/false,
-                     MostDerivedClassOffset, SubobjectOffsets, 
-                     SubobjectLayoutClassOffsets, SubobjectCounts);
+                     Context.toCharUnitsFromBits(MostDerivedClassOffset), 
+                     SubobjectOffsets, SubobjectLayoutClassOffsets, 
+                     SubobjectCounts);
 
   // Get the the final overriders.
   CXXFinalOverriderMap FinalOverriders;
@@ -323,7 +324,7 @@ ComputeReturnAdjustmentBaseOffset(ASTContext &Context,
 
 void 
 FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
-                              uint64_t OffsetInLayoutClass,
+                              CharUnits OffsetInLayoutClass,
                               SubobjectOffsetMapTy &SubobjectOffsets,
                               SubobjectOffsetMapTy &SubobjectLayoutClassOffsets,
                               SubobjectCountMapTy &SubobjectCounts) {
@@ -341,7 +342,7 @@ FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
 
   SubobjectOffsets[std::make_pair(RD, SubobjectNumber)] = Base.getBaseOffset();
   SubobjectLayoutClassOffsets[std::make_pair(RD, SubobjectNumber)] =
-    Context.toCharUnitsFromBits(OffsetInLayoutClass);
+    OffsetInLayoutClass;
   
   // Traverse our bases.
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
@@ -367,12 +368,11 @@ FinalOverriders::ComputeBaseOffsets(BaseSubobject Base, bool IsVirtual,
       CharUnits Offset = Layout.getBaseClassOffset(BaseDecl);
     
       BaseOffset = Base.getBaseOffset() + Offset;
-      BaseOffsetInLayoutClass = 
-        Context.toCharUnitsFromBits(OffsetInLayoutClass) + Offset;
+      BaseOffsetInLayoutClass = OffsetInLayoutClass + Offset;
     }
 
     ComputeBaseOffsets(BaseSubobject(BaseDecl, BaseOffset), 
-                       I->isVirtual(), Context.toBits(BaseOffsetInLayoutClass), 
+                       I->isVirtual(), BaseOffsetInLayoutClass, 
                        SubobjectOffsets, SubobjectLayoutClassOffsets, 
                        SubobjectCounts);
   }
