@@ -1786,7 +1786,7 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRn(insn))));
   ++OpIdx;
 
-  if (OpInfo[OpIdx].RegClass == ARM::GPRRegClassID) {
+  if (OpInfo[OpIdx].RegClass == ARM::rGPRRegClassID) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
   } else {
@@ -1794,15 +1794,11 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
            && !OpInfo[OpIdx].isOptionalDef()
            && "Pure imm operand expected");
     int Offset = 0;
-    if (slice(insn, 19, 16) == 0xFF) {
-      bool Negative = slice(insn, 23, 23) == 0;
-      unsigned Imm12 = getImm12(insn);
-      Offset = Negative ? -1 - Imm12 : 1 * Imm12;
-    } else if (Opcode == ARM::t2PLDi8 || Opcode == ARM::t2PLDWi8 ||
-               Opcode == ARM::t2PLIi8) {
+    if (Opcode == ARM::t2PLDi8 || Opcode == ARM::t2PLDWi8 ||
+        Opcode == ARM::t2PLIi8) {
       // A8.6.117 Encoding T2: add = FALSE
       unsigned Imm8 = getImm8(insn);
-      Offset = -1 - Imm8;
+      Offset = -1 * Imm8;
     } else // The i12 forms.  See, for example, A8.6.117 Encoding T1.
       Offset = decodeImm12(insn);
     MI.addOperand(MCOperand::CreateImm(Offset));

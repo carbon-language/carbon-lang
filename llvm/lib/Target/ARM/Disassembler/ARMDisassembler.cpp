@@ -284,6 +284,24 @@ static unsigned T2Morph2LoadLiteral(unsigned Opcode) {
   }
 }
 
+// Helper function for special case handling of PLD (literal) and friends.
+// See A8.6.117 T1 & T2 and friends for why we morphed the opcode
+// before returning it.
+static unsigned T2Morph2PLDLiteral(unsigned Opcode) {
+  switch (Opcode) {
+  default:
+    return Opcode; // Return unmorphed opcode.
+
+  case ARM::t2PLDi8:   case ARM::t2PLDs:
+  case ARM::t2PLDWi12: case ARM::t2PLDWi8:
+  case ARM::t2PLDWs:
+    return ARM::t2PLDi12;
+
+  case ARM::t2PLIi8:   case ARM::t2PLIs:
+    return ARM::t2PLIi12;
+  }
+}
+
 /// decodeThumbSideEffect is a decorator function which can potentially twiddle
 /// the instruction or morph the returned opcode under Thumb2.
 ///
@@ -334,12 +352,27 @@ static unsigned decodeThumbSideEffect(bool IsThumb2, unsigned &insn) {
     }
     // --------- Transform End Marker ---------
 
+    unsigned unmorphed = decodeThumbInstruction(insn);
+
     // See, for example, A6.3.7 Load word: Table A6-18 Load word.
     // See A8.6.57 T3, T4 & A8.6.60 T2 and friends for why we morphed the opcode
     // before returning it to our caller.
     if (op1 == 3 && slice(op2, 6, 5) == 0 && slice(op2, 0, 0) == 1
-        && slice(insn, 19, 16) == 15)
-      return T2Morph2LoadLiteral(decodeThumbInstruction(insn));
+        && slice(insn, 19, 16) == 15) {
+      unsigned morphed = T2Morph2LoadLiteral(unmorphed);
+      if (morphed != unmorphed)
+        return morphed;
+    }
+
+    // See, for example, A8.6.117 PLD,PLDW (immediate) T1 & T2, and friends for
+    // why we morphed the opcode before returning it to our caller.
+    if (slice(insn, 31, 25) == 0x7C && slice(insn, 15, 12) == 0xF
+        && slice(insn, 22, 22) == 0 && slice(insn, 20, 20) == 1
+        && slice(insn, 19, 16) == 15) {
+      unsigned morphed = T2Morph2PLDLiteral(unmorphed);
+      if (morphed != unmorphed)
+        return morphed;
+    }
 
     // One last check for NEON/VFP instructions.
     if ((op1 == 1 || op1 == 3) && slice(op2, 6, 6) == 1)
