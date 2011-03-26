@@ -13,3 +13,30 @@ using namespace warn_in_header_in_global_context;
 namespace dont_warn_here {
 using namespace warn_in_header_in_global_context;
 }
+
+// We should warn in toplevel extern contexts.
+namespace warn_inside_linkage {}
+extern "C++" {
+using namespace warn_inside_linkage;
+}
+
+// This is really silly, but we should warn on it:
+extern "C++" {
+extern "C" {
+extern "C++" {
+using namespace warn_inside_linkage;
+}
+}
+}
+
+// But we shouldn't warn in extern contexts inside namespaces.
+namespace dont_warn_here {
+extern "C++" {
+using namespace warn_in_header_in_global_context;
+}
+}
+
+// We also shouldn't warn in case of functions.
+inline void foo() {
+  using namespace warn_in_header_in_global_context;
+}

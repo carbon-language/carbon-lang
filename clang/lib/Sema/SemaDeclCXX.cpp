@@ -3817,6 +3817,19 @@ NamespaceDecl *Sema::getOrCreateStdNamespace() {
   return getStdNamespace();
 }
 
+/// \brief Determine whether a using statement is in a context where it will be
+/// apply in all contexts.
+static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {
+  switch (CurContext->getDeclKind()) {
+    case Decl::TranslationUnit:
+      return true;
+    case Decl::LinkageSpec:
+      return IsUsingDirectiveInToplevelContext(CurContext->getParent());
+    default:
+      return false;
+  }
+}
+
 Decl *Sema::ActOnUsingDirective(Scope *S,
                                           SourceLocation UsingLoc,
                                           SourceLocation NamespcLoc,
@@ -3902,7 +3915,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
                                       SS.getWithLocInContext(Context),
                                       IdentLoc, Named, CommonAncestor);
 
-    if (CurContext->getDeclKind() == Decl::TranslationUnit &&
+    if (IsUsingDirectiveInToplevelContext(CurContext) &&
         !SourceMgr.isFromMainFile(IdentLoc)) {
       Diag(IdentLoc, diag::warn_using_directive_in_header);
     }
