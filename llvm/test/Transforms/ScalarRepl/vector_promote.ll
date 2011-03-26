@@ -187,3 +187,18 @@ entry:
 ; CHECK: extractelement <4 x i128>
 ; CHECK: insertelement <4 x i128>
 }
+
+define float @test13(<4 x float> %x, <2 x i32> %y) {
+	%a = alloca <4 x float>
+	store <4 x float> %x, <4 x float>* %a
+	%p = bitcast <4 x float>* %a to <2 x float>*
+	%b = load <2 x float>* %p
+	%q = getelementptr <4 x float>* %a, i32 0, i32 2
+	%c = load float* %q
+	%r = bitcast <4 x float>* %a to <2 x i32>*
+	store <2 x i32> %y, <2 x i32>* %r
+	ret float %c
+; CHECK: @test13
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x float> %x to i128
+}

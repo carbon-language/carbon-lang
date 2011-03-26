@@ -380,7 +380,7 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
     return true;
 
   const Type *ElementTy = cast<VectorType>(VectorTy)->getElementType();
-  const Type *InElementTy = cast<VectorType>(VectorTy)->getElementType();
+  const Type *InElementTy = cast<VectorType>(VInTy)->getElementType();
 
   // Do not allow mixed integer and floating-point accesses from vectors of
   // different sizes.
