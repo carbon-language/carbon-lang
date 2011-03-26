@@ -3891,8 +3891,8 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
-SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
-                            unsigned Depth) {
+static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
+                                   unsigned Depth) {
   if (Depth == 6)
     return SDValue();  // Limit search depth.
 
