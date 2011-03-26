@@ -17,3 +17,14 @@ static WEAK int h; // expected-warning {{'objc_gc' only applies to pointer types
 
 /* expected-warning {{'__weak' only applies to pointer types; type here is 'int'}}*/ static __we\
 ak int i;
+
+// rdar://problem/9126213
+void test2(id __attribute((objc_gc(strong))) *strong,
+           id __attribute((objc_gc(weak))) *weak) {
+  void *opaque;
+  opaque = strong;
+  strong = opaque;
+
+  opaque = weak;
+  weak = opaque;
+}

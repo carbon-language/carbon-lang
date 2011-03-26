@@ -5803,6 +5803,12 @@ checkPointerTypesForAssignment(Sema &S, QualType lhsType, QualType rhsType) {
     if (lhq.getAddressSpace() != rhq.getAddressSpace())
       ConvTy = Sema::IncompatiblePointerDiscardsQualifiers;
 
+    // It's okay to add or remove GC qualifiers when converting to
+    // and from void*.
+    else if (lhq.withoutObjCGCAttr().compatiblyIncludes(rhq.withoutObjCGCAttr())
+             && (lhptee->isVoidType() || rhptee->isVoidType()))
+      ; // keep old
+
     // For GCC compatibility, other qualifier mismatches are treated
     // as still compatible in C.
     else ConvTy = Sema::CompatiblePointerDiscardsQualifiers;

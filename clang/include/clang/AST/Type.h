@@ -213,6 +213,11 @@ public:
     assert(type);
     setObjCGCAttr(type);
   }
+  Qualifiers withoutObjCGCAttr() const {
+    Qualifiers qs = *this;
+    qs.removeObjCGCAttr();
+    return qs;
+  }
 
   bool hasAddressSpace() const { return Mask & AddressSpaceMask; }
   unsigned getAddressSpace() const { return Mask >> AddressSpaceShift; }
