@@ -1870,9 +1870,14 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   if (emittedWarning || (TagD && TagD->isInvalidDecl()))
     return TagD;
 
+  // Note that a linkage-specification sets a storage class, but
+  // 'extern "C" struct foo;' is actually valid and not theoretically
+  // useless.
   if (DeclSpec::SCS scs = DS.getStorageClassSpec())
-    Diag(DS.getStorageClassSpecLoc(), diag::warn_standalone_specifier)
-      << DeclSpec::getSpecifierName(scs);
+    if (!DS.isExternInLinkageSpec())
+      Diag(DS.getStorageClassSpecLoc(), diag::warn_standalone_specifier)
+        << DeclSpec::getSpecifierName(scs);
+
   if (DS.isThreadSpecified())
     Diag(DS.getThreadSpecLoc(), diag::warn_standalone_specifier) << "__thread";
   if (DS.getTypeQualifiers()) {
