@@ -25,6 +25,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Specifiers.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
@@ -33,53 +34,33 @@ using namespace clang;
 // NamedDecl Implementation
 //===----------------------------------------------------------------------===//
 
-static const VisibilityAttr *GetExplicitVisibility(const Decl *d) {
-  // Use the most recent declaration of a variable.
-  if (const VarDecl *var = dyn_cast<VarDecl>(d))
-    return var->getMostRecentDeclaration()->getAttr<VisibilityAttr>();
+static llvm::Optional<Visibility> getVisibilityOf(const Decl *D) {
+  // If this declaration has an explicit visibility attribute, use it.
+  if (const VisibilityAttr *A = D->getAttr<VisibilityAttr>()) {
+    switch (A->getVisibility()) {
+    case VisibilityAttr::Default:
+      return DefaultVisibility;
+    case VisibilityAttr::Hidden:
+      return HiddenVisibility;
+    case VisibilityAttr::Protected:
+      return ProtectedVisibility;
+    }
 
-  // Use the most recent declaration of a function, and also handle
-  // function template specializations.
-  if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(d)) {
-    if (const VisibilityAttr *attr
-          = fn->getMostRecentDeclaration()->getAttr<VisibilityAttr>())
-      return attr;
-
-    // If the function is a specialization of a template with an
-    // explicit visibility attribute, use that.
-    if (FunctionTemplateSpecializationInfo *templateInfo
-          = fn->getTemplateSpecializationInfo())
-      return templateInfo->getTemplate()->getTemplatedDecl()
-        ->getAttr<VisibilityAttr>();
-
-    return 0;
-  }
-
-  // Otherwise, just check the declaration itself first.
-  if (const VisibilityAttr *attr = d->getAttr<VisibilityAttr>())
-    return attr;
-
-  // If there wasn't explicit visibility there, and this is a
-  // specialization of a class template, check for visibility
-  // on the pattern.
-  if (const ClassTemplateSpecializationDecl *spec
-        = dyn_cast<ClassTemplateSpecializationDecl>(d))
-    return spec->getSpecializedTemplate()->getTemplatedDecl()
-      ->getAttr<VisibilityAttr>();
-
-  return 0;
-}
-
-static Visibility GetVisibilityFromAttr(const VisibilityAttr *A) {
-  switch (A->getVisibility()) {
-  case VisibilityAttr::Default:
     return DefaultVisibility;
-  case VisibilityAttr::Hidden:
-    return HiddenVisibility;
-  case VisibilityAttr::Protected:
-    return ProtectedVisibility;
   }
-  return DefaultVisibility;
+
+  // If we're on Mac OS X, an 'availability' for Mac OS X attribute
+  // implies visibility(default).
+  if (D->getASTContext().Target.getTriple().getOS() == llvm::Triple::Darwin) {
+    for (specific_attr_iterator<AvailabilityAttr> 
+              A = D->specific_attr_begin<AvailabilityAttr>(),
+           AEnd = D->specific_attr_end<AvailabilityAttr>();
+         A != AEnd; ++A)
+      if ((*A)->getPlatform()->getName().equals("macosx"))
+        return DefaultVisibility;
+  }
+
+  return llvm::Optional<Visibility>();
 }
 
 typedef NamedDecl::LinkageInfo LinkageInfo;
@@ -286,8 +267,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   LinkageInfo LV;
 
   if (F.ConsiderVisibilityAttributes) {
-    if (const VisibilityAttr *VA = GetExplicitVisibility(D)) {
-      LV.setVisibility(GetVisibilityFromAttr(VA), true);
+    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
+      LV.setVisibility(*Vis, true);
       F.ConsiderGlobalVisibility = false;
     } else {
       // If we're declared in a namespace with a visibility attribute,
@@ -296,9 +277,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
            !isa<TranslationUnitDecl>(DC);
            DC = DC->getParent()) {
         if (!isa<NamespaceDecl>(DC)) continue;
-        if (const VisibilityAttr *VA =
-              cast<NamespaceDecl>(DC)->getAttr<VisibilityAttr>()) {
-          LV.setVisibility(GetVisibilityFromAttr(VA), false);
+        if (llvm::Optional<Visibility> Vis
+                           = cast<NamespaceDecl>(DC)->getExplicitVisibility()) {
+          LV.setVisibility(*Vis, false);
           F.ConsiderGlobalVisibility = false;
           break;
         }
@@ -506,8 +487,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
 
   // If we have an explicit visibility attribute, merge that in.
   if (F.ConsiderVisibilityAttributes) {
-    if (const VisibilityAttr *VA = GetExplicitVisibility(D)) {
-      LV.mergeVisibility(GetVisibilityFromAttr(VA), true);
+    if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
+      LV.mergeVisibility(*Vis, true);
 
       // Ignore global visibility later, but not this attribute.
       F.ConsiderGlobalVisibility = false;
@@ -669,6 +650,41 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   return LI;
 }
 
+llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
+  // Use the most recent declaration of a variable.
+  if (const VarDecl *var = dyn_cast<VarDecl>(this))
+    return getVisibilityOf(var->getMostRecentDeclaration());
+
+  // Use the most recent declaration of a function, and also handle
+  // function template specializations.
+  if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(this)) {
+    if (llvm::Optional<Visibility> V
+                            = getVisibilityOf(fn->getMostRecentDeclaration())) 
+      return V;
+
+    // If the function is a specialization of a template with an
+    // explicit visibility attribute, use that.
+    if (FunctionTemplateSpecializationInfo *templateInfo
+          = fn->getTemplateSpecializationInfo())
+      return getVisibilityOf(templateInfo->getTemplate()->getTemplatedDecl());
+
+    return llvm::Optional<Visibility>();
+  }
+
+  // Otherwise, just check the declaration itself first.
+  if (llvm::Optional<Visibility> V = getVisibilityOf(this))
+    return V;
+
+  // If there wasn't explicit visibility there, and this is a
+  // specialization of a class template, check for visibility
+  // on the pattern.
+  if (const ClassTemplateSpecializationDecl *spec
+        = dyn_cast<ClassTemplateSpecializationDecl>(this))
+    return getVisibilityOf(spec->getSpecializedTemplate()->getTemplatedDecl());
+
+  return llvm::Optional<Visibility>();
+}
+
 static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
   // Objective-C: treat all Objective-C declarations as having external
   // linkage.
@@ -722,8 +738,8 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
 
       LinkageInfo LV;
       if (Flags.ConsiderVisibilityAttributes) {
-        if (const VisibilityAttr *VA = GetExplicitVisibility(Function))
-          LV.setVisibility(GetVisibilityFromAttr(VA));
+        if (llvm::Optional<Visibility> Vis = Function->getExplicitVisibility())
+          LV.setVisibility(*Vis);
       }
       
       if (const FunctionDecl *Prev = Function->getPreviousDeclaration()) {
@@ -745,8 +761,8 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
         if (Var->getStorageClass() == SC_PrivateExtern)
           LV.setVisibility(HiddenVisibility);
         else if (Flags.ConsiderVisibilityAttributes) {
-          if (const VisibilityAttr *VA = GetExplicitVisibility(Var))
-            LV.setVisibility(GetVisibilityFromAttr(VA));
+          if (llvm::Optional<Visibility> Vis = Var->getExplicitVisibility())
+            LV.setVisibility(*Vis);
         }
         
         if (const VarDecl *Prev = Var->getPreviousDeclaration()) {

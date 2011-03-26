@@ -20,6 +20,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/Basic/Linkage.h"
+#include "llvm/ADT/Optional.h"
 
 namespace clang {
 class CXXTemporary;
@@ -272,6 +273,10 @@ public:
 
   /// \brief Determines the linkage and visibility of this entity.
   LinkageInfo getLinkageAndVisibility() const;
+
+  /// \brief If visibility was explicitly specified for this
+  /// declaration, return that visibility.
+  llvm::Optional<Visibility> getExplicitVisibility() const;
 
   /// \brief Clear the linkage cache in response to a change
   /// to the declaration. 

@@ -224,7 +224,7 @@ void CodeGenModule::setTypeVisibility(llvm::GlobalValue *GV,
     return;
 
   // Don't override an explicit visibility attribute.
-  if (RD->hasAttr<VisibilityAttr>())
+  if (RD->getExplicitVisibility())
     return;
 
   switch (RD->getTemplateSpecializationKind()) {
