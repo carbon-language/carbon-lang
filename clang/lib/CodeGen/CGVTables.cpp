@@ -64,9 +64,9 @@ public:
     const CXXMethodDecl *Method;
 
     /// Offset - the base offset of the overrider in the layout class.
-    uint64_t Offset;
+    CharUnits Offset;
     
-    OverriderInfo() : Method(0), Offset(0) { }
+    OverriderInfo() : Method(0), Offset(CharUnits::Zero()) { }
   };
 
 private:
@@ -199,7 +199,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
       OverriderInfo& Overrider = OverridersMap[std::make_pair(MD, BaseOffset)];
       assert(!Overrider.Method && "Overrider should not exist yet!");
       
-      Overrider.Offset = Context.toBits(OverriderOffset);
+      Overrider.Offset = OverriderOffset;
       Overrider.Method = Method.Method;
     }
   }
@@ -422,7 +422,7 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base,
 
     Out << "  " << MD->getQualifiedNameAsString() << " - (";
     Out << Overrider.Method->getQualifiedNameAsString();
-    Out << ", " << ", " << Overrider.Offset / 8 << ')';
+    Out << ", " << ", " << Overrider.Offset.getQuantity() << ')';
 
     BaseOffset Offset;
     if (!Overrider.Method->isPure())
@@ -886,7 +886,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
       // FIXME: We should not use / 8 here.
-      Offset = (int64_t)(Overrider.Offset - VBaseOffset) / 8;
+      Offset = (int64_t)(Context.toBits(Overrider.Offset) - VBaseOffset) / 8;
     }
     
     Components.push_back(VTableComponent::MakeVCallOffset(Offset));
@@ -1263,7 +1263,8 @@ void VTableBuilder::ComputeThisAdjustments() {
                             Context.toCharUnitsFromBits(MethodInfo.BaseOffset));
     
     // Check if we need an adjustment at all.
-    if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset) {
+    uint64_t OverriderOffsetInBits = Context.toBits(Overrider.Offset);
+    if (MethodInfo.BaseOffsetInLayoutClass == OverriderOffsetInBits) {
       // When a return thunk is needed by a derived class that overrides a
       // virtual base, gcc uses a virtual 'this' adjustment as well. 
       // While the thunk itself might be needed by vtables in subclasses or
@@ -1409,8 +1410,7 @@ VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
                                           BaseOffsetInLayoutClass));
   
   BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
-                                       Context.toCharUnitsFromBits(
-                                         Overrider.Offset));
+                                       Overrider.Offset);
   
   // Compute the adjustment offset.
   BaseOffset Offset = ComputeThisAdjustmentBaseOffset(OverriddenBaseSubobject,
