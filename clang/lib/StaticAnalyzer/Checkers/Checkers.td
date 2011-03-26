@@ -188,7 +188,7 @@ def IteratorsChecker : Checker<"Iterators">,
 let ParentPackage = DeadCode in {
 
 def DeadStoresChecker : Checker<"DeadStores">,
-  HelpText<"Check for values stored to a variables that are never read afterwards">,
+  HelpText<"Check for values stored to variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
 
 def IdempotentOperationChecker : Checker<"IdempotentOperations">,
