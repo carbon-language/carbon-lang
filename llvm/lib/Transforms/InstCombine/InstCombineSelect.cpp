@@ -424,6 +424,19 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
       return ReplaceInstUsesWith(SI, TrueVal);
     /// NOTE: if we wanted to, this is where to detect integer MIN/MAX
   }
+
+  if (isa<Constant>(CmpRHS)) {
+    if (CmpLHS == TrueVal && Pred == ICmpInst::ICMP_EQ) {
+      // Transform (X == C) ? X : Y -> (X == C) ? C : Y
+      SI.setOperand(1, CmpRHS);
+      Changed = true;
+    } else if (CmpLHS == FalseVal && Pred == ICmpInst::ICMP_NE) {
+      // Transform (X != C) ? Y : X -> (X != C) ? Y : C
+      SI.setOperand(2, CmpRHS);
+      Changed = true;
+    }
+  }
+
   return Changed ? &SI : 0;
 }
 

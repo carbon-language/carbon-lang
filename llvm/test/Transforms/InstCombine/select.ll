@@ -724,3 +724,16 @@ define i32 @test53(i32 %x) nounwind {
 ; CHECK: select i1 %cmp
 ; CHECK: ret
 }
+
+define i32 @test54(i32 %X, i32 %Y) {
+  %A = ashr exact i32 %X, %Y
+  %B = icmp eq i32 %A, 0
+  %C = select i1 %B, i32 %A, i32 1
+  ret i32 %C
+; CHECK: @test54
+; CHECK-NOT: ashr
+; CHECK-NOT: select
+; CHECK: icmp ne i32 %X, 0
+; CHECK: zext 
+; CHECK: ret
+}
