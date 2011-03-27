@@ -214,7 +214,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
         unsigned OpToFold = 0;
         if ((SFO & 1) && FalseVal == TVI->getOperand(0)) {
           OpToFold = 1;
-        } else  if ((SFO & 2) && FalseVal == TVI->getOperand(1)) {
+        } else if ((SFO & 2) && FalseVal == TVI->getOperand(1)) {
           OpToFold = 2;
         }
 
@@ -227,9 +227,16 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
             Instruction *NewSel = SelectInst::Create(SI.getCondition(), OOp, C);
             InsertNewInstBefore(NewSel, SI);
             NewSel->takeName(TVI);
-            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
-              return BinaryOperator::Create(BO->getOpcode(), FalseVal, NewSel);
-            llvm_unreachable("Unknown instruction!!");
+	    BinaryOperator *TVI_BO = cast<BinaryOperator>(TVI);
+            BinaryOperator *BO = BinaryOperator::Create(TVI_BO->getOpcode(),
+                                                        FalseVal, NewSel);
+	    if (isa<PossiblyExactOperator>(BO))
+	      BO->setIsExact(TVI_BO->isExact());
+	    if (isa<OverflowingBinaryOperator>(BO)) {
+	      BO->setHasNoUnsignedWrap(TVI_BO->hasNoUnsignedWrap());
+	      BO->setHasNoSignedWrap(TVI_BO->hasNoSignedWrap());
+	    }
+	    return BO;
           }
         }
       }
@@ -243,7 +250,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
         unsigned OpToFold = 0;
         if ((SFO & 1) && TrueVal == FVI->getOperand(0)) {
           OpToFold = 1;
-        } else  if ((SFO & 2) && TrueVal == FVI->getOperand(1)) {
+        } else if ((SFO & 2) && TrueVal == FVI->getOperand(1)) {
           OpToFold = 2;
         }
 
@@ -256,9 +263,16 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
             Instruction *NewSel = SelectInst::Create(SI.getCondition(), C, OOp);
             InsertNewInstBefore(NewSel, SI);
             NewSel->takeName(FVI);
-            if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
-              return BinaryOperator::Create(BO->getOpcode(), TrueVal, NewSel);
-            llvm_unreachable("Unknown instruction!!");
+            BinaryOperator *FVI_BO = cast<BinaryOperator>(FVI);
+            BinaryOperator *BO = BinaryOperator::Create(FVI_BO->getOpcode(),
+                                                        TrueVal, NewSel);
+	    if (isa<PossiblyExactOperator>(BO))
+	      BO->setIsExact(FVI_BO->isExact());
+	    if (isa<OverflowingBinaryOperator>(BO)) {
+	      BO->setHasNoUnsignedWrap(FVI_BO->hasNoUnsignedWrap());
+	      BO->setHasNoSignedWrap(FVI_BO->hasNoSignedWrap());
+	    }
+	    return BO;
           }
         }
       }

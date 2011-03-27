@@ -737,3 +737,15 @@ define i32 @test54(i32 %X, i32 %Y) {
 ; CHECK: zext 
 ; CHECK: ret
 }
+
+define i1 @test55(i1 %X, i32 %Y, i32 %Z) {
+  %A = ashr exact i32 %Y, %Z
+  %B = select i1 %X, i32 %Y, i32 %A
+  %C = icmp eq i32 %B, 0
+  ret i1 %C
+; CHECK: @test55
+; CHECK-NOT: ashr
+; CHECK-NOT: select
+; CHECK: icmp eq
+; CHECK: ret i1
+}
