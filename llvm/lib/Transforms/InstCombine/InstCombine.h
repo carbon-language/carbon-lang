@@ -246,7 +246,10 @@ public:
     // segment of unreachable code, so just clobber the instruction.
     if (&I == V) 
       V = UndefValue::get(I.getType());
-      
+
+    DEBUG(errs() << "IC: Replacing " << I << "\n"
+                    "    with " << *V << '\n');
+
     I.replaceAllUsesWith(V);
     return &I;
   }
