@@ -324,6 +324,9 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 }
 
 bool Sema::isSelfExpr(Expr *RExpr) {
+  // 'self' is objc 'self' in an objc method only.
+  if (!isa<ObjCMethodDecl>(CurContext))
+    return false;
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RExpr))
     if (ICE->getCastKind() == CK_LValueToRValue)
       RExpr = ICE->getSubExpr();
