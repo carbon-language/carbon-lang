@@ -2130,7 +2130,6 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
         const BaseSubobject &Base = 
           AddressPointsByIndex.find(NextIndex)->second;
         
-        // FIXME: Instead of dividing by 8, we should be using CharUnits.
         Out << "       -- (" << Base.getBase()->getQualifiedNameAsString();
         Out << ", " << Base.getBaseOffset().getQuantity();
         Out << ") vtable address --\n";
