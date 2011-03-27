@@ -844,13 +844,13 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
       OS << "0b";
       for (unsigned j = 8; j--;) {
         unsigned Bit = (Code[i] >> j) & 1;
-        
+
         unsigned FixupBit;
         if (getContext().getTargetAsmInfo().isLittleEndian())
           FixupBit = i * 8 + j;
         else
           FixupBit = i * 8 + (7-j);
-        
+
         if (uint8_t MapEntry = FixupMap[FixupBit]) {
           assert(Bit == 0 && "Encoder wrote into fixed up bit!");
           OS << char('A' + MapEntry - 1);
