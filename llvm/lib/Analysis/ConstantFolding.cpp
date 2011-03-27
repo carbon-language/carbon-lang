@@ -1048,11 +1048,12 @@ llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
-  case Intrinsic::uadd_with_overflow:
-  case Intrinsic::usub_with_overflow:
   case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
+  case Intrinsic::usub_with_overflow:
   case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow:
   case Intrinsic::convert_from_fp16:
   case Intrinsic::convert_to_fp16:
   case Intrinsic::x86_sse_cvtss2si:
@@ -1362,7 +1363,8 @@ llvm::ConstantFoldCall(Function *F,
         case Intrinsic::uadd_with_overflow:
         case Intrinsic::ssub_with_overflow:
         case Intrinsic::usub_with_overflow:
-        case Intrinsic::smul_with_overflow: {
+        case Intrinsic::smul_with_overflow:
+        case Intrinsic::umul_with_overflow: {
           APInt Res;
           bool Overflow;
           switch (F->getIntrinsicID()) {
@@ -1381,6 +1383,9 @@ llvm::ConstantFoldCall(Function *F,
             break;
           case Intrinsic::smul_with_overflow:
             Res = Op1->getValue().smul_ov(Op2->getValue(), Overflow);
+            break;
+          case Intrinsic::umul_with_overflow:
+            Res = Op1->getValue().umul_ov(Op2->getValue(), Overflow);
             break;
           }
           Constant *Ops[] = {

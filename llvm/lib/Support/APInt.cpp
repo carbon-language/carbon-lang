@@ -2078,6 +2078,16 @@ APInt APInt::smul_ov(const APInt &RHS, bool &Overflow) const {
   return Res;
 }
 
+APInt APInt::umul_ov(const APInt &RHS, bool &Overflow) const {
+  APInt Res = *this * RHS;
+
+  if (*this != 0 && RHS != 0)
+    Overflow = Res.udiv(RHS) != *this || Res.udiv(*this) != RHS;
+  else
+    Overflow = false;
+  return Res;
+}
+
 APInt APInt::sshl_ov(unsigned ShAmt, bool &Overflow) const {
   Overflow = ShAmt >= getBitWidth();
   if (Overflow)

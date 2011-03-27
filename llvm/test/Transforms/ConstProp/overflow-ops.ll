@@ -2,6 +2,14 @@
 
 %i8i1 = type {i8, i1}
 
+declare {i8, i1} @llvm.uadd.with.overflow.i8(i8, i8)
+declare {i8, i1} @llvm.usub.with.overflow.i8(i8, i8)
+declare {i8, i1} @llvm.umul.with.overflow.i8(i8, i8)
+
+declare {i8, i1} @llvm.sadd.with.overflow.i8(i8, i8)
+declare {i8, i1} @llvm.ssub.with.overflow.i8(i8, i8)
+declare {i8, i1} @llvm.smul.with.overflow.i8(i8, i8)
+
 ;;-----------------------------
 ;; uadd
 ;;-----------------------------
@@ -44,6 +52,28 @@ entry:
 
 ; CHECK: @usub_2
 ; CHECK: ret %i8i1 { i8 -2, i1 true }
+}
+
+;;-----------------------------
+;; umul
+;;-----------------------------
+
+define {i8, i1} @umul_1() nounwind {
+entry:
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 100, i8 3)
+  ret {i8, i1} %t
+
+; CHECK: @umul_1
+; CHECK: ret %i8i1 { i8 44, i1 true }
+}
+
+define {i8, i1} @umul_2() nounwind {
+entry:
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 100, i8 2)
+  ret {i8, i1} %t
+
+; CHECK: @umul_2
+; CHECK: ret %i8i1 { i8 -56, i1 false }
 }
 
 ;;-----------------------------
@@ -163,14 +193,9 @@ entry:
 ; CHECK: ret %i8i1 { i8 -10, i1 false }
 }
 
-
-
-declare {i8, i1} @llvm.uadd.with.overflow.i8(i8, i8)
-declare {i8, i1} @llvm.usub.with.overflow.i8(i8, i8)
-
-declare {i8, i1} @llvm.sadd.with.overflow.i8(i8, i8)
-declare {i8, i1} @llvm.ssub.with.overflow.i8(i8, i8)
-declare {i8, i1} @llvm.smul.with.overflow.i8(i8, i8)
+;;-----------------------------
+;; smul
+;;-----------------------------
 
 ; rdar://8501501
 define {i8, i1} @smul_1() nounwind {
