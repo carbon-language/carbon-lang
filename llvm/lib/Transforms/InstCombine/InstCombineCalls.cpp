@@ -487,14 +487,15 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     APInt RHSKnownOne(BitWidth, 0);
     ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
 
-    // Get the largest possible values for each operand, extended to be large
-    // enough so that every possible product of two BitWidth-sized ints fits.
-    APInt LHSMax = (~LHSKnownZero).zext(BitWidth*2);
-    APInt RHSMax = (~RHSKnownZero).zext(BitWidth*2);
+    // Get the largest possible values for each operand.
+    APInt LHSMax = ~LHSKnownZero;
+    APInt RHSMax = ~RHSKnownZero;
 
     // If multiplying the maximum values does not overflow then we can turn
     // this into a plain NUW mul.
-    if ((LHSMax * RHSMax).getActiveBits() <= BitWidth) {
+    bool Overflow;
+    LHSMax.umul_ov(RHSMax, Overflow);
+    if (!Overflow) {
       Value *Mul = Builder->CreateNUWMul(LHS, RHS, "umul_with_overflow");
       Constant *V[] = {
         UndefValue::get(LHS->getType()),
