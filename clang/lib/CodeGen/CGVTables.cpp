@@ -970,7 +970,7 @@ private:
 
   /// MostDerivedClassOffset - If we're building a construction vtable, this
   /// holds the offset from the layout class to the most derived class.
-  const uint64_t MostDerivedClassOffset;
+  const CharUnits MostDerivedClassOffset;
   
   /// MostDerivedClassIsVirtual - Whether the most derived class is a virtual 
   /// base. (This only makes sense when building a construction vtable).
@@ -1156,16 +1156,14 @@ private:
 
 public:
   VTableBuilder(CodeGenVTables &VTables, const CXXRecordDecl *MostDerivedClass,
-                uint64_t MostDerivedClassOffset, bool MostDerivedClassIsVirtual,
-                const CXXRecordDecl *LayoutClass)
+                CharUnits MostDerivedClassOffset, 
+                bool MostDerivedClassIsVirtual, const 
+                CXXRecordDecl *LayoutClass)
     : VTables(VTables), MostDerivedClass(MostDerivedClass),
     MostDerivedClassOffset(MostDerivedClassOffset), 
     MostDerivedClassIsVirtual(MostDerivedClassIsVirtual), 
     LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
-    Overriders(MostDerivedClass, 
-      MostDerivedClass->getASTContext().toCharUnitsFromBits(
-        MostDerivedClassOffset), 
-      LayoutClass) {
+    Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
 
     LayoutVTable();
   }
@@ -1730,13 +1728,13 @@ void VTableBuilder::LayoutVTable() {
                                                  CharUnits::Zero()),
                                    /*BaseIsMorallyVirtual=*/false,
                                    MostDerivedClassIsVirtual,
-                                   MostDerivedClassOffset);
+                                   Context.toBits(MostDerivedClassOffset));
   
   VisitedVirtualBasesSetTy VBases;
   
   // Determine the primary virtual bases.
-  DeterminePrimaryVirtualBases(MostDerivedClass, MostDerivedClassOffset,
-                               VBases);
+  DeterminePrimaryVirtualBases(MostDerivedClass, 
+                               Context.toBits(MostDerivedClassOffset), VBases);
   VBases.clear();
   
   LayoutVTablesForVirtualBases(MostDerivedClass, VBases);
@@ -1771,7 +1769,7 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   // Add the offset to top.
   // FIXME: We should not use / 8 here.
   int64_t OffsetToTop = -(int64_t)(OffsetInLayoutClass -
-                                   MostDerivedClassOffset) / 8;
+                                   Context.toBits(MostDerivedClassOffset)) / 8;
   Components.push_back(VTableComponent::MakeOffsetToTop(OffsetToTop));
   
   // Next, add the RTTI.
@@ -1986,8 +1984,7 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
   if (isBuildingConstructorVTable()) {
     Out << "Construction vtable for ('";
     Out << MostDerivedClass->getQualifiedNameAsString() << "', ";
-    // FIXME: Don't use / 8 .
-    Out << MostDerivedClassOffset / 8 << ") in '";
+    Out << MostDerivedClassOffset.getQuantity() << ") in '";
     Out << LayoutClass->getQualifiedNameAsString();
   } else {
     Out << "Vtable for '";
@@ -2835,7 +2832,8 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
   if (Entry.getPointer())
     return;
 
-  VTableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
+  VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
+                        /*MostDerivedClassIsVirtual=*/0, RD);
 
   // Add the VTable layout.
   uint64_t NumVTableComponents = Builder.getNumVTableComponents();
@@ -3040,7 +3038,8 @@ CodeGenVTables::EmitVTableDefinition(llvm::GlobalVariable *VTable,
                                      const CXXRecordDecl *RD) {
   // Dump the vtable layout if necessary.
   if (CGM.getLangOptions().DumpVTableLayouts) {
-    VTableBuilder Builder(*this, RD, 0, /*MostDerivedClassIsVirtual=*/0, RD);
+    VTableBuilder Builder(*this, RD, CharUnits::Zero(), 
+                          /*MostDerivedClassIsVirtual=*/0, RD);
 
     Builder.dumpLayout(llvm::errs());
   }
@@ -3070,7 +3069,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                    llvm::GlobalVariable::LinkageTypes Linkage,
                                       VTableAddressPointsMapTy& AddressPoints) {
   VTableBuilder Builder(*this, Base.getBase(), 
-                        CGM.getContext().toBits(Base.getBaseOffset()), 
+                        Base.getBaseOffset(), 
                         /*MostDerivedClassIsVirtual=*/BaseIsVirtual, RD);
 
   // Dump the vtable layout if necessary.
