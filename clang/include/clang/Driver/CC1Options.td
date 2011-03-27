@@ -210,6 +210,9 @@ def fno_caret_diagnostics : Flag<"-fno-caret-diagnostics">,
   HelpText<"Do not include source line and caret with diagnostics">;
 def fno_diagnostics_fixit_info : Flag<"-fno-diagnostics-fixit-info">,
   HelpText<"Do not include fixit information in diagnostics">;
+def fno_diagnostics_show_note_include_stack :
+  Flag<"-fno-diagnostics-show-note-include-stack">,
+  HelpText<"Display include stacks for diagnostic notes">;
 def w : Flag<"-w">, HelpText<"Suppress all warnings">;
 def pedantic : Flag<"-pedantic">;
 def pedantic_errors : Flag<"-pedantic-errors">;
@@ -227,7 +230,9 @@ def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print diagnostic name with mappable diagnostics">;
 def fdiagnostics_show_category : Separate<"-fdiagnostics-show-category">,
   HelpText<"Print diagnostic category">;
-
+def fdiagnostics_show_note_include_stack :
+  Flag<"-fdiagnostics-show-note-include-stack">,
+  HelpText<"Display include stacks for diagnostic notes">;
 def ftabstop : Separate<"-ftabstop">, MetaVarName<"<N>">,
   HelpText<"Set the tab stop distance.">;
 def ferror_limit : Separate<"-ferror-limit">, MetaVarName<"<N>">,

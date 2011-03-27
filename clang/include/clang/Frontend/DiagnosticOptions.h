@@ -33,6 +33,7 @@ public:
   unsigned ShowParseableFixits : 1; /// Show machine parseable fix-its.
   unsigned ShowOptionNames : 1;  /// Show the diagnostic name for mappable
                                  /// diagnostics.
+  unsigned ShowNoteIncludeStack : 1; /// Show include stacks for notes.
   unsigned ShowCategories : 2;   /// Show categories: 0 -> none, 1 -> Number,
                                  /// 2 -> Full Name.
   unsigned ShowColors : 1;       /// Show diagnostics with ANSI color sequences.

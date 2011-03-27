@@ -53,8 +53,11 @@ TextDiagnosticPrinter::~TextDiagnosticPrinter() {
     delete &OS;
 }
 
-void TextDiagnosticPrinter::
-PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
+void TextDiagnosticPrinter::PrintIncludeStack(Diagnostic::Level Level,
+                                              SourceLocation Loc,
+                                              const SourceManager &SM) {
+  if (!DiagOpts->ShowNoteIncludeStack && Level == Diagnostic::Note) return;
+
   if (Loc.isInvalid()) return;
 
   PresumedLoc PLoc = SM.getPresumedLoc(Loc);
@@ -62,7 +65,7 @@ PrintIncludeStack(SourceLocation Loc, const SourceManager &SM) {
     return;
   
   // Print out the other include frames first.
-  PrintIncludeStack(PLoc.getIncludeLoc(), SM);
+  PrintIncludeStack(Level, PLoc.getIncludeLoc(), SM);
 
   if (DiagOpts->ShowLocation)
     OS << "In file included from " << PLoc.getFilename()
@@ -289,7 +292,8 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   }
 }
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
+void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
+                                                SourceLocation Loc,
                                                 CharSourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 const SourceManager &SM,
@@ -313,7 +317,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     // FIXME: Map ranges?
-    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns,
+    EmitCaretDiagnostic(Level, OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns,
                         OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
     
     // Map the location.
@@ -339,7 +343,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       // "included from" lines.
       if (LastWarningLoc != PLoc.getIncludeLoc()) {
         LastWarningLoc = PLoc.getIncludeLoc();
-        PrintIncludeStack(LastWarningLoc, SM);
+        PrintIncludeStack(Level, LastWarningLoc, SM);
       }
 
       if (DiagOpts->ShowLocation) {
@@ -351,8 +355,9 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
       }
       OS << "note: instantiated from:\n";
       
-      EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, Hints, NumHints, Columns,
-                          OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
+      EmitCaretDiagnostic(Level, Loc, Ranges, NumRanges, SM, Hints, NumHints,
+                          Columns, OnMacroInst + 1, MacroSkipStart,
+                          MacroSkipEnd);
       return;
     }
     
@@ -805,7 +810,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       // "included from" lines.
       if (LastWarningLoc != PLoc.getIncludeLoc()) {
         LastWarningLoc = PLoc.getIncludeLoc();
-        PrintIncludeStack(LastWarningLoc, SM);
+        PrintIncludeStack(Level, LastWarningLoc, SM);
         StartOfLocationInfo = OS.tell();
       }
 
@@ -1034,7 +1039,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       }
     }        
     
-    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
+    EmitCaretDiagnostic(Level, LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getFixItHints(),
                         Info.getNumFixItHints(),
                         DiagOpts->MessageLength, 
