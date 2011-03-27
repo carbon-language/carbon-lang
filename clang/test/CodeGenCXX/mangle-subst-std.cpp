@@ -5,8 +5,8 @@
 
 // CHECK: @_ZTTSd = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTVSd = linkonce_odr unnamed_addr constant 
-// CHECK: @_ZTCSd0_Si = internal constant 
-// CHECK: @_ZTCSd16_So = internal constant
+// CHECK: @_ZTCSd0_Si = linkonce_odr unnamed_addr constant 
+// CHECK: @_ZTCSd16_So = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTTSo = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTVSo = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTTSi = linkonce_odr unnamed_addr constant

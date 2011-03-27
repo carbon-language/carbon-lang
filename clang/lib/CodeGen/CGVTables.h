@@ -1,4 +1,4 @@
-//===--- CGVTables.h - Emit LLVM Code for C++ vtables ---------------------===//
+//===--- CGVTables.h - Emit LLVM Code for C++ vtables -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -260,6 +260,7 @@ public:
   llvm::GlobalVariable *
   GenerateConstructionVTable(const CXXRecordDecl *RD, const BaseSubobject &Base, 
                              bool BaseIsVirtual, 
+                             llvm::GlobalVariable::LinkageTypes Linkage,
                              VTableAddressPointsMapTy& AddressPoints);
 
     

@@ -313,6 +313,7 @@ public:
   enum TypeVisibilityKind {
     TVK_ForVTT,
     TVK_ForVTable,
+    TVK_ForConstructionVTable,
     TVK_ForRTTI,
     TVK_ForRTTIName
   };

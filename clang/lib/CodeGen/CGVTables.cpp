@@ -3065,6 +3065,7 @@ llvm::GlobalVariable *
 CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD, 
                                       const BaseSubobject &Base, 
                                       bool BaseIsVirtual, 
+                                   llvm::GlobalVariable::LinkageTypes Linkage,
                                       VTableAddressPointsMapTy& AddressPoints) {
   VTableBuilder Builder(*this, Base.getBase(), 
                         CGM.getContext().toBits(Base.getBaseOffset()), 
@@ -3093,8 +3094,11 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
 
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 
-    CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, 
-                                          llvm::GlobalValue::InternalLinkage);
+    CGM.CreateOrReplaceCXXRuntimeVariable(Name, ArrayType, Linkage);
+  CGM.setTypeVisibility(VTable, RD, CodeGenModule::TVK_ForConstructionVTable);
+
+  // V-tables are always unnamed_addr.
+  VTable->setUnnamedAddr(true);
 
   // Add the thunks.
   VTableThunksTy VTableThunks;

@@ -53,6 +53,10 @@ class VTTBuilder {
   /// GenerateDefinition - Whether the VTT builder should generate LLVM IR for
   /// the VTT.
   bool GenerateDefinition;
+
+  /// The linkage to use for any construction vtables required by this VTT.
+  /// Only required if we're building a definition.
+  llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables;
   
   /// GetAddrOfVTable - Returns the address of the vtable for the base class in
   /// the given vtable class.
@@ -109,7 +113,9 @@ class VTTBuilder {
   
 public:
   VTTBuilder(CodeGenModule &CGM, const CXXRecordDecl *MostDerivedClass,
-             bool GenerateDefinition);
+             bool GenerateDefinition,
+             llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables
+               = (llvm::GlobalVariable::LinkageTypes) -1);
 
   // getVTTComponents - Returns a reference to the VTT components.
   const VTTComponentsVectorTy &getVTTComponents() const {
@@ -132,10 +138,15 @@ public:
 
 VTTBuilder::VTTBuilder(CodeGenModule &CGM,
                        const CXXRecordDecl *MostDerivedClass,
-                       bool GenerateDefinition)
+                       bool GenerateDefinition,
+          llvm::GlobalVariable::LinkageTypes LinkageForConstructionVTables)
   : CGM(CGM), MostDerivedClass(MostDerivedClass), 
   MostDerivedClassLayout(CGM.getContext().getASTRecordLayout(MostDerivedClass)),
-  GenerateDefinition(GenerateDefinition) {
+    GenerateDefinition(GenerateDefinition),
+    LinkageForConstructionVTables(LinkageForConstructionVTables) {
+  assert(!GenerateDefinition ||
+         LinkageForConstructionVTables
+           != (llvm::GlobalVariable::LinkageTypes) -1);
     
   // Lay out this VTT.
   LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
@@ -157,6 +168,7 @@ VTTBuilder::GetAddrOfVTable(BaseSubobject Base, bool BaseIsVirtual,
   
   return CGM.getVTables().GenerateConstructionVTable(MostDerivedClass, 
                                                      Base, BaseIsVirtual,
+                                           LinkageForConstructionVTables,
                                                      AddressPoints);
 }
 
@@ -371,7 +383,7 @@ void
 CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
                                   llvm::GlobalVariable::LinkageTypes Linkage,
                                   const CXXRecordDecl *RD) {
-  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true);
+  VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/true, Linkage);
 
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   const llvm::ArrayType *ArrayType = 
