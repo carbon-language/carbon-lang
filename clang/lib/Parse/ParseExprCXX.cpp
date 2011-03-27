@@ -60,7 +60,8 @@ using namespace clang;
 bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                             ParsedType ObjectType,
                                             bool EnteringContext,
-                                            bool *MayBePseudoDestructor) {
+                                            bool *MayBePseudoDestructor,
+                                            bool IsTypename) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
 
@@ -314,12 +315,16 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       } 
       
       if (MemberOfUnknownSpecialization && (ObjectType || SS.isSet()) && 
-          IsTemplateArgumentList(1)) {
+          (IsTypename || IsTemplateArgumentList(1))) {
         // We have something like t::getAs<T>, where getAs is a 
         // member of an unknown specialization. However, this will only
         // parse correctly as a template, so suggest the keyword 'template'
         // before 'getAs' and treat this as a dependent template name.
-        Diag(Tok.getLocation(), diag::err_missing_dependent_template_keyword)
+        unsigned DiagID = diag::err_missing_dependent_template_keyword;
+        if (getLang().Microsoft)
+          DiagID = diag::war_missing_dependent_template_keyword;
+        
+        Diag(Tok.getLocation(), DiagID)
           << II.getName()
           << FixItHint::CreateInsertion(Tok.getLocation(), "template ");
         

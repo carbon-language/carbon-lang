@@ -1037,7 +1037,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
     //            simple-template-id
     SourceLocation TypenameLoc = ConsumeToken();
     CXXScopeSpec SS;
-    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), false))
+    if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/ParsedType(), false,
+                                       0, /*IsTypename*/true))
       return true;
     if (!SS.isSet()) {
       Diag(Tok.getLocation(), diag::err_expected_qualified_after_typename);

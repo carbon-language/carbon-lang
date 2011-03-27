@@ -1108,7 +1108,8 @@ private:
   bool ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       ParsedType ObjectType,
                                       bool EnteringContext,
-                                      bool *MayBePseudoDestructor = 0);
+                                      bool *MayBePseudoDestructor = 0,
+                                      bool IsTypename = false);
 
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts

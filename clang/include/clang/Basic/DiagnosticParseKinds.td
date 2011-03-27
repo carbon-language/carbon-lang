@@ -370,6 +370,8 @@ def err_enum_template : Error<"enumeration cannot be a template">;
 
 def err_missing_dependent_template_keyword : Error<
   "use 'template' keyword to treat '%0' as a dependent template name">;
+def war_missing_dependent_template_keyword : ExtWarn<
+  "use 'template' keyword to treat '%0' as a dependent template name">;
 
 def warn_static_inline_explicit_inst_ignored : Warning<
   "ignoring '%select{static|inline}0' keyword on explicit template "

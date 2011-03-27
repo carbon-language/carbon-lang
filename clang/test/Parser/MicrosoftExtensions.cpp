@@ -111,3 +111,27 @@ CtorCall& CtorCall::operator=(const CtorCall& that)
     }
     return *this;
 }
+
+template <class A>
+class C1 {
+public:
+  template <int B>
+  class Iterator {
+  };
+};
+ 
+template<class T>
+class C2  {
+  typename C1<T>:: /*template*/  Iterator<0> Mypos; // expected-warning {{use 'template' keyword to treat 'Iterator' as a dependent template name}}
+};
+
+template <class T>
+void f(){
+  typename C1<T>:: /*template*/ Iterator<0> Mypos; // expected-warning {{use 'template' keyword to treat 'Iterator' as a dependent template name}}
+}
+
+int main() {
+  f<int>();
+}
+
+
