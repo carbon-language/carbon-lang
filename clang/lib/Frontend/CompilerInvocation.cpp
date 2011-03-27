@@ -989,12 +989,12 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
 
-  // Default behavior is to show note include stacks.
-  Opts.ShowNoteIncludeStack = true;
+  // Default behavior is to not to show note include stacks.
+  Opts.ShowNoteIncludeStack = false;
   if (Arg *A = Args.getLastArg(OPT_fdiagnostics_show_note_include_stack,
                                OPT_fno_diagnostics_show_note_include_stack))
-    if (A->getOption().matches(OPT_fno_diagnostics_show_note_include_stack))
-      Opts.ShowNoteIncludeStack = false;
+    if (A->getOption().matches(OPT_fdiagnostics_show_note_include_stack))
+      Opts.ShowNoteIncludeStack = true;
 
   llvm::StringRef ShowOverloads =
     Args.getLastArgValue(OPT_fshow_overloads_EQ, "all");
