@@ -9,6 +9,18 @@ v8 foo(void) {
   a = (v8){4, 2};
   b = (v4)(5, 6, 7, 8, 9); // expected-warning {{excess elements in vector initializer}}
   b = (v4)(5, 6, 8, 8.0f);
+
+  vector int vi;
+  vi = (vector int)(1);
+  vi = (vector int)(1, 2);          // expected-error {{number of elements must be either one or match the size of the vector}}
+  vi = (vector int)(1, 2, 3, 4);
+  vi = (vector int)(1, 2, 3, 4, 5); // expected-warning {{excess elements in vector initializer}}
+  vi = (vector int){1};
+  vi = (vector int){1, 2};
+  vi = (vector int){1, 2, 3, 4, 5}; // expected-warning {{excess elements in vector initializer}}
+  vector float vf;
+  vf = (vector float)(1.0);
+
   return (v8){0, 1, 2, 3, 1, 2, 3, 4};
 
   // FIXME: test that (type)(fn)(args) still works with -faltivec

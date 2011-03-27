@@ -2226,6 +2226,8 @@ def err_bitfield_width_exceeds_type_size : Error<
   "size of bit-field %0 (%1 bits) exceeds size of its type (%2 bits)">;
 def err_anon_bitfield_width_exceeds_type_size : Error<
   "size of anonymous bit-field (%0 bits) exceeds size of its type (%1 bits)">;
+def err_incorrect_number_of_vector_initializers : Error<
+  "number of elements must be either one or match the size of the vector">;
   
 // Used by C++ which allows bit-fields that are wider than the type.
 def warn_bitfield_width_exceeds_type_size: Warning<

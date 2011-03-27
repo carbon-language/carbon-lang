@@ -5105,8 +5105,16 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType,
   if (castType->isExtVectorType())
     return CheckExtVectorCast(TyR, castType, castExpr, Kind);
 
-  if (castType->isVectorType())
-    return CheckVectorCast(TyR, castType, castExpr->getType(), Kind);
+  if (castType->isVectorType()) {
+    if (castType->getAs<VectorType>()->getVectorKind() ==
+        VectorType::AltiVecVector &&
+          (castExpr->getType()->isIntegerType() ||
+           castExpr->getType()->isFloatingType())) {
+      Kind = CK_VectorSplat;
+      return false;
+    } else
+      return CheckVectorCast(TyR, castType, castExpr->getType(), Kind);
+  }
   if (castExpr->getType()->isVectorType())
     return CheckVectorCast(TyR, castExpr->getType(), castType, Kind);
 
@@ -5254,9 +5262,9 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
                                TypeSourceInfo *TInfo) {
   ParenListExpr *PE = cast<ParenListExpr>(Op);
   QualType Ty = TInfo->getType();
-  bool isAltiVecLiteral = false;
+  bool isVectorLiteral = false;
 
-  // Check for an altivec literal,
+  // Check for an altivec or OpenCL literal,
   // i.e. all the elements are integer constants.
   if (getLangOptions().AltiVec && Ty->isVectorType()) {
     if (PE->getNumExprs() == 0) {
@@ -5265,18 +5273,45 @@ Sema::ActOnCastOfParenListExpr(Scope *S, SourceLocation LParenLoc,
     }
     if (PE->getNumExprs() == 1) {
       if (!PE->getExpr(0)->getType()->isVectorType())
-        isAltiVecLiteral = true;
+        isVectorLiteral = true;
     }
     else
-      isAltiVecLiteral = true;
+      isVectorLiteral = true;
   }
 
-  // If this is an altivec initializer, '(' type ')' '(' init, ..., init ')'
+  // If this is a vector initializer, '(' type ')' '(' init, ..., init ')'
   // then handle it as such.
-  if (isAltiVecLiteral) {
+  if (isVectorLiteral) {
     llvm::SmallVector<Expr *, 8> initExprs;
-    for (unsigned i = 0, e = PE->getNumExprs(); i != e; ++i)
-      initExprs.push_back(PE->getExpr(i));
+    // '(...)' form of vector initialization in AltiVec: the number of
+    // initializers must be one or must match the size of the vector.
+    // If a single value is specified in the initializer then it will be
+    // replicated to all the components of the vector
+    if (Ty->getAs<VectorType>()->getVectorKind() ==
+        VectorType::AltiVecVector) {
+      unsigned numElems = Ty->getAs<VectorType>()->getNumElements();
+      // The number of initializers must be one or must match the size of the
+      // vector. If a single value is specified in the initializer then it will
+      // be replicated to all the components of the vector
+      if (PE->getNumExprs() == 1) {
+        QualType ElemTy = Ty->getAs<VectorType>()->getElementType();
+        Expr *Literal = PE->getExpr(0);
+        ImpCastExprToType(Literal, ElemTy,
+                          PrepareScalarCast(*this, Literal, ElemTy));
+        return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, Literal);
+      }
+      else if (PE->getNumExprs() < numElems) {
+        Diag(PE->getExprLoc(),
+             diag::err_incorrect_number_of_vector_initializers);
+        return ExprError();
+      }
+      else
+        for (unsigned i = 0, e = PE->getNumExprs(); i != e; ++i)
+          initExprs.push_back(PE->getExpr(i));
+    }
+    else
+      for (unsigned i = 0, e = PE->getNumExprs(); i != e; ++i)
+        initExprs.push_back(PE->getExpr(i));
 
     // FIXME: This means that pretty-printing the final AST will produce curly
     // braces instead of the original commas.

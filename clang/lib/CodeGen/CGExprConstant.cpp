@@ -979,12 +979,29 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       llvm::SmallVector<llvm::Constant *, 4> Inits;
       unsigned NumElts = Result.Val.getVectorLength();
 
-      for (unsigned i = 0; i != NumElts; ++i) {
-        APValue &Elt = Result.Val.getVectorElt(i);
-        if (Elt.isInt())
-          Inits.push_back(llvm::ConstantInt::get(VMContext, Elt.getInt()));
-        else
-          Inits.push_back(llvm::ConstantFP::get(VMContext, Elt.getFloat()));
+      if (Context.getLangOptions().AltiVec &&
+          isa<CastExpr>(E) &&
+          cast<CastExpr>(E)->getCastKind() == CK_VectorSplat) {
+        // AltiVec vector initialization with a single literal
+        APValue &Elt = Result.Val.getVectorElt(0);
+
+        llvm::Constant* InitValue = Elt.isInt()
+          ? cast<llvm::Constant>
+              (llvm::ConstantInt::get(VMContext, Elt.getInt()))
+          : cast<llvm::Constant>
+              (llvm::ConstantFP::get(VMContext, Elt.getFloat()));
+
+        for (unsigned i = 0; i != NumElts; ++i)
+          Inits.push_back(InitValue);
+
+      } else {
+        for (unsigned i = 0; i != NumElts; ++i) {
+          APValue &Elt = Result.Val.getVectorElt(i);
+          if (Elt.isInt())
+            Inits.push_back(llvm::ConstantInt::get(VMContext, Elt.getInt()));
+          else
+            Inits.push_back(llvm::ConstantFP::get(VMContext, Elt.getFloat()));
+        }
       }
       return llvm::ConstantVector::get(Inits);
     }
