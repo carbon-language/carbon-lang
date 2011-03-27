@@ -118,6 +118,11 @@ fi
 llvmCore_srcdir=$BuildDir/llvmCore-$Release-rc$RC.src
 llvmgcc42_srcdir=$BuildDir/llvmgcc42-$Release-rc$RC.src
 
+# Location of log files.
+LogDirName="$Release-rc$RC.logs"
+LogDir=$BuildDir/$LogDirName
+mkdir -p $LogDir
+
 # SVN URLs for the sources.
 Base_url="http://llvm.org/svn/llvm-project"
 llvmCore_RC_url="$Base_url/llvm/tags/RELEASE_$Release_no_dot/rc$RC"
@@ -196,7 +201,8 @@ function configure_llvmCore() {
     $llvmCore_srcdir/configure --prefix=$InstallDir \
         --enable-optimized=$Optimized \
         --enable-assertions=$Assertions \
-        --with-llvmgccdir=$llvmgccDir
+        --with-llvmgccdir=$llvmgccDir \
+        > $LogDir/llvm.configure.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
 
@@ -217,11 +223,13 @@ function build_llvmCore() {
     cd $ObjDir
     echo "# Compiling llvm $Release-rc$RC $Flavor"
     echo "# make -j $NumJobs VERBOSE=1 $ExtraOpts"
-    make -j $NumJobs VERBOSE=1 $ExtraOpts $CompilerFlags
+    make -j $NumJobs VERBOSE=1 $ExtraOpts $CompilerFlags \
+        > $LogDir/llvm.make.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
 
     echo "# Installing llvm $Release-rc$RC $Flavor"
     echo "# make install"
-    make install
+    make install \
+        > $LogDir/llvm.install.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
 
@@ -231,9 +239,12 @@ function test_llvmCore() {
     ObjDir="$3"
 
     cd $ObjDir
-    make check
-    make -C tools/clang test
-    make unittests
+    make check \
+        > $LogDir/llvm.check.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make -C tools/clang test \
+        > $LogDir/clang.check.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
+    make unittests \
+        > $LogDir/llvm.unittests.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
 
@@ -262,7 +273,8 @@ function configure_llvm_gcc() {
         --enable-languages=$languages"
     $llvmgcc42_srcdir/configure --prefix=$InstallDir \
         --program-prefix=llvm- --enable-llvm=$llvmObjDir \
-        --enable-languages=$languages
+        --enable-languages=$languages \
+        > $LogDir/llvm-gcc.configure.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
 
@@ -280,11 +292,13 @@ function build_llvm_gcc() {
     cd $ObjDir
     echo "# Compiling llvm-gcc $Release-rc$RC $Flavor"
     echo "# make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release"
-    make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release $CompilerFlags
+    make -j $NumJobs bootstrap LLVM_VERSION_INFO=$Release $CompilerFlags \
+        > $LogDir/llvm-gcc.make.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
 
     echo "# Installing llvm-gcc $Release-rc$RC $Flavor"
     echo "# make install"
-    make install
+    make install \
+        > $LogDir/llvm-gcc.install.$Release-rc$RC-Phase$Phase-$Flavor.log 2>&1
     cd -
 }
 
@@ -292,6 +306,7 @@ if [ "$do_checkout" = "yes" ]; then
     export_sources
 fi
 
+(
 Flavors="Debug Release Release+Asserts"
 if [ "$do_64bit" = "yes" ]; then
     Flavors="$Flavors Release-64"
@@ -375,7 +390,9 @@ for Flavor in $Flavors ; do
     echo "# Testing - built with llvmgcc42"
     test_llvmCore 2 $Flavor $llvmCore_phase2_objdir
 done
+) 2>&1 | tee $LogDir/testing.$Release-rc$RC.log
 
 # Woo hoo!
 echo "### Testing Finished ###"
+echo "### Logs: $LogDir"
 exit 0
