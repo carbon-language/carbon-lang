@@ -77,7 +77,7 @@ private:
   /// MostDerivedClassOffset - If we're building final overriders for a 
   /// construction vtable, this holds the offset from the layout class to the
   /// most derived class.
-  const uint64_t MostDerivedClassOffset;
+  const CharUnits MostDerivedClassOffset;
 
   /// LayoutClass - The class we're using for layout information. Will be 
   /// different than the most derived class if the final overriders are for a
@@ -125,7 +125,7 @@ private:
   
 public:
   FinalOverriders(const CXXRecordDecl *MostDerivedClass,
-                  uint64_t MostDerivedClassOffset,
+                  CharUnits MostDerivedClassOffset,
                   const CXXRecordDecl *LayoutClass);
 
   /// getOverrider - Get the final overrider for the given method declaration in
@@ -150,7 +150,7 @@ public:
 #define DUMP_OVERRIDERS 0
 
 FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
-                                 uint64_t MostDerivedClassOffset,
+                                 CharUnits MostDerivedClassOffset,
                                  const CXXRecordDecl *LayoutClass)
   : MostDerivedClass(MostDerivedClass), 
   MostDerivedClassOffset(MostDerivedClassOffset), LayoutClass(LayoutClass),
@@ -163,7 +163,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
   SubobjectCountMapTy SubobjectCounts;
   ComputeBaseOffsets(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
                      /*IsVirtual=*/false,
-                     Context.toCharUnitsFromBits(MostDerivedClassOffset), 
+                     MostDerivedClassOffset, 
                      SubobjectOffsets, SubobjectLayoutClassOffsets, 
                      SubobjectCounts);
 
@@ -1162,7 +1162,10 @@ public:
     MostDerivedClassOffset(MostDerivedClassOffset), 
     MostDerivedClassIsVirtual(MostDerivedClassIsVirtual), 
     LayoutClass(LayoutClass), Context(MostDerivedClass->getASTContext()), 
-    Overriders(MostDerivedClass, MostDerivedClassOffset, LayoutClass) {
+    Overriders(MostDerivedClass, 
+      MostDerivedClass->getASTContext().toCharUnitsFromBits(
+        MostDerivedClassOffset), 
+      LayoutClass) {
 
     LayoutVTable();
   }
