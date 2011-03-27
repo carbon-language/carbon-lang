@@ -1073,7 +1073,7 @@ private:
   /// final overrider.
   ThisAdjustment 
   ComputeThisAdjustment(const CXXMethodDecl *MD, 
-                        uint64_t BaseOffsetInLayoutClass,
+                        CharUnits BaseOffsetInLayoutClass,
                         FinalOverriders::OverriderInfo Overrider);
 
   /// AddMethod - Add a single virtual member function to the vtable
@@ -1276,8 +1276,7 @@ void VTableBuilder::ComputeThisAdjustments() {
     }
 
     ThisAdjustment ThisAdjustment =
-      ComputeThisAdjustment(MD, 
-          Context.toBits(MethodInfo.BaseOffsetInLayoutClass), Overrider);
+      ComputeThisAdjustment(MD, MethodInfo.BaseOffsetInLayoutClass, Overrider);
 
     if (ThisAdjustment.isEmpty())
       continue;
@@ -1401,15 +1400,14 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
   
 ThisAdjustment 
 VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD, 
-                                     uint64_t BaseOffsetInLayoutClass,
+                                     CharUnits BaseOffsetInLayoutClass,
                                      FinalOverriders::OverriderInfo Overrider) {
   // Ignore adjustments for pure virtual member functions.
   if (Overrider.Method->isPure())
     return ThisAdjustment();
   
-  BaseSubobject OverriddenBaseSubobject(MD->getParent(),
-                                        Context.toCharUnitsFromBits(
-                                          BaseOffsetInLayoutClass));
+  BaseSubobject OverriddenBaseSubobject(MD->getParent(), 
+                                        BaseOffsetInLayoutClass);
   
   BaseSubobject OverriderBaseSubobject(Overrider.Method->getParent(),
                                        Overrider.Offset);
@@ -1669,8 +1667,9 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         if (!isBuildingConstructorVTable() && OverriddenMD != MD) {
           // Compute the this adjustment.
           ThisAdjustment ThisAdjustment =
-            ComputeThisAdjustment(OverriddenMD, BaseOffsetInLayoutClass,
-                                  Overrider);
+            ComputeThisAdjustment(OverriddenMD, 
+                           Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
+                           Overrider);
 
           if (ThisAdjustment.VCallOffsetOffset &&
               Overrider.Method->getParent() == MostDerivedClass) {
