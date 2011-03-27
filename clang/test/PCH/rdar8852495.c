@@ -16,7 +16,8 @@
 #else
 
 int f() {
-  int b = b==b;
+  int a;
+  int b = a==a;
   unsigned x;
   signed y;
   return x == y;

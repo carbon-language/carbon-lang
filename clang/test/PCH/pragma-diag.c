@@ -13,7 +13,8 @@
 #else
 
 void f() {
-  int b = b==b;
+  int a = 0;
+  int b = a==a;
 }
 
 #endif

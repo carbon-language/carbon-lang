@@ -25,6 +25,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/CharUnits.h"
@@ -4664,6 +4665,46 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   return true;
 }
 
+namespace {
+  // Visits an initialization expression to see if OrigDecl is evaluated in
+  // its own initialization and throws a warning if it does.
+  class SelfReferenceChecker
+      : public EvaluatedExprVisitor<SelfReferenceChecker> {
+    Sema &S;
+    Decl *OrigDecl;
+
+  public:
+    typedef EvaluatedExprVisitor<SelfReferenceChecker> Inherited;
+
+    SelfReferenceChecker(Sema &S, Decl *OrigDecl) : Inherited(S.Context),
+                                                    S(S), OrigDecl(OrigDecl) { }
+
+    void VisitExpr(Expr *E) {
+      if (isa<ObjCMessageExpr>(*E)) return;
+      Inherited::VisitExpr(E);
+    }
+
+    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
+      CheckForSelfReference(E);
+      Inherited::VisitImplicitCastExpr(E);
+    }
+
+    void CheckForSelfReference(ImplicitCastExpr *E) {
+      if (E->getCastKind() != CK_LValueToRValue) return;
+      Expr* SubExpr = E->getSubExpr()->IgnoreParenImpCasts();
+      DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(SubExpr);
+      if (!DRE) return;
+      Decl* ReferenceDecl = DRE->getDecl();
+      if (OrigDecl != ReferenceDecl) return;
+      LookupResult Result(S, DRE->getNameInfo(), Sema::LookupOrdinaryName,
+                          Sema::NotForRedeclaration);
+      S.Diag(SubExpr->getLocStart(), diag::warn_uninit_self_reference_in_init)
+        << Result.getLookupName() << OrigDecl->getLocation()
+        << SubExpr->getSourceRange();
+    }
+  };
+}
+
 /// AddInitializerToDecl - Adds the initializer Init to the
 /// declaration dcl. If DirectInit is true, this is C++ direct
 /// initialization rather than copy initialization.
@@ -4673,6 +4714,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // the initializer.
   if (RealDecl == 0 || RealDecl->isInvalidDecl())
     return;
+
+  SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {
     // With declarators parsed the way they are, the parser cannot
@@ -5231,7 +5274,7 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     if (Decl *D = Group[i])
       Decls.push_back(D);
 
-  return BuildDeclaratorGroup(Decls.data(), Decls.size(), 
+  return BuildDeclaratorGroup(Decls.data(), Decls.size(),
                               DS.getTypeSpecType() == DeclSpec::TST_auto);
 }
 

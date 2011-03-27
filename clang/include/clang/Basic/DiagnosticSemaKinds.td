@@ -871,6 +871,9 @@ def note_uninit_reference_member : Note<
   "uninitialized reference member is here">;
 def warn_field_is_uninit : Warning<"field is uninitialized when used here">,
   InGroup<Uninitialized>;
+def warn_uninit_self_reference_in_init : Warning<
+  "variable %0 is uninitialized when used within its own initialization">,
+  InGroup<Uninitialized>;
 def warn_uninit_var : Warning<"variable %0 is possibly uninitialized when used here">,
   InGroup<Uninitialized>, DefaultIgnore;
 def warn_maybe_uninit_var :

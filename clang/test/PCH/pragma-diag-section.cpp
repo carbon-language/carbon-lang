@@ -12,7 +12,10 @@
 #pragma clang diagnostic ignored "-Wtautological-compare"
 template <typename T>
 struct TS {
-    void m() { T b = b==b; }
+    void m() {
+      T a = 0;
+      T b = a==a;
+    }
 };
 #pragma clang diagnostic pop
 

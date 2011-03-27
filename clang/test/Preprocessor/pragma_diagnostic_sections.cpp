@@ -2,14 +2,14 @@
 
 // rdar://8365684
 struct S {
-    void m1() { int b = b==b; } // expected-warning {{always evaluates to true}}
+    void m1() { int b; while (b==b); } // expected-warning {{always evaluates to true}}
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-compare"
-    void m2() { int b = b==b; }
+    void m2() { int b; while (b==b); }
 #pragma clang diagnostic pop
 
-    void m3() { int b = b==b; } // expected-warning {{always evaluates to true}}
+    void m3() { int b; while (b==b); } // expected-warning {{always evaluates to true}}
 };
 
 //------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ struct S {
 #pragma clang diagnostic ignored "-Wtautological-compare"
 template <typename T>
 struct TS {
-    void m() { T b = b==b; }
+    void m() { T b; while (b==b); }
 };
 #pragma clang diagnostic pop
 
