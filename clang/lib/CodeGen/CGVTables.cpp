@@ -1005,23 +1005,26 @@ private:
   /// (Used for computing 'this' pointer adjustment thunks.
   struct MethodInfo {
     /// BaseOffset - The base offset of this method.
-    const uint64_t BaseOffset;
+    const CharUnits BaseOffset;
     
     /// BaseOffsetInLayoutClass - The base offset in the layout class of this
     /// method.
-    const uint64_t BaseOffsetInLayoutClass;
+    const CharUnits BaseOffsetInLayoutClass;
     
     /// VTableIndex - The index in the vtable that this method has.
     /// (For destructors, this is the index of the complete destructor).
     const uint64_t VTableIndex;
     
-    MethodInfo(uint64_t BaseOffset, uint64_t BaseOffsetInLayoutClass, 
+    MethodInfo(CharUnits BaseOffset, CharUnits BaseOffsetInLayoutClass, 
                uint64_t VTableIndex)
       : BaseOffset(BaseOffset), 
       BaseOffsetInLayoutClass(BaseOffsetInLayoutClass),
       VTableIndex(VTableIndex) { }
     
-    MethodInfo() : BaseOffset(0), BaseOffsetInLayoutClass(0), VTableIndex(0) { }
+    MethodInfo() 
+      : BaseOffset(CharUnits::Zero()), 
+      BaseOffsetInLayoutClass(CharUnits::Zero()), 
+      VTableIndex(0) { }
   };
   
   typedef llvm::DenseMap<const CXXMethodDecl *, MethodInfo> MethodInfoMapTy;
@@ -1259,12 +1262,10 @@ void VTableBuilder::ComputeThisAdjustments() {
     
     // Get the final overrider for this method.
     FinalOverriders::OverriderInfo Overrider =
-      Overriders.getOverrider(MD, 
-                            Context.toCharUnitsFromBits(MethodInfo.BaseOffset));
+      Overriders.getOverrider(MD, MethodInfo.BaseOffset);
     
     // Check if we need an adjustment at all.
-    uint64_t OverriderOffsetInBits = Context.toBits(Overrider.Offset);
-    if (MethodInfo.BaseOffsetInLayoutClass == OverriderOffsetInBits) {
+    if (MethodInfo.BaseOffsetInLayoutClass == Overrider.Offset) {
       // When a return thunk is needed by a derived class that overrides a
       // virtual base, gcc uses a virtual 'this' adjustment as well. 
       // While the thunk itself might be needed by vtables in subclasses or
@@ -1275,7 +1276,8 @@ void VTableBuilder::ComputeThisAdjustments() {
     }
 
     ThisAdjustment ThisAdjustment =
-      ComputeThisAdjustment(MD, MethodInfo.BaseOffsetInLayoutClass, Overrider);
+      ComputeThisAdjustment(MD, 
+          Context.toBits(MethodInfo.BaseOffsetInLayoutClass), Overrider);
 
     if (ThisAdjustment.isEmpty())
       continue;
@@ -1650,9 +1652,9 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
                "Did not find the overridden method!");
         MethodInfo &OverriddenMethodInfo = MethodInfoMap[OverriddenMD];
         
-        MethodInfo MethodInfo(Context.toBits(Base.getBaseOffset()), 
-                              BaseOffsetInLayoutClass,
-                              OverriddenMethodInfo.VTableIndex);
+        MethodInfo MethodInfo(Base.getBaseOffset(), 
+                          Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
+                          OverriddenMethodInfo.VTableIndex);
 
         assert(!MethodInfoMap.count(MD) &&
                "Should not have method info for this method yet!");
@@ -1692,8 +1694,9 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
     }
 
     // Insert the method info for this method.
-    MethodInfo MethodInfo(Context.toBits(Base.getBaseOffset()), 
-                          BaseOffsetInLayoutClass, Components.size());
+    MethodInfo MethodInfo(Base.getBaseOffset(), 
+                          Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
+                          Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");
