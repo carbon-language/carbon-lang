@@ -1107,9 +1107,9 @@ private:
   
   /// AddMethods - Add the methods of this base subobject and all its
   /// primary bases to the vtable components vector.
-  void AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,                  
+  void AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
                   const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                  uint64_t FirstBaseOffsetInLayoutClass,
+                  CharUnits FirstBaseOffsetInLayoutClass,
                   PrimaryBasesSetVectorTy &PrimaryBases);
 
   // LayoutVTable - Layout the vtable for the given base class, including its
@@ -1584,16 +1584,16 @@ FindNearestOverriddenMethod(const CXXMethodDecl *MD,
 }  
 
 void
-VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,                  
+VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
                           const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                          uint64_t FirstBaseOffsetInLayoutClass,
+                          CharUnits FirstBaseOffsetInLayoutClass,
                           PrimaryBasesSetVectorTy &PrimaryBases) {
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase()) {
     CharUnits PrimaryBaseOffset;
-    uint64_t PrimaryBaseOffsetInLayoutClass;
+    CharUnits PrimaryBaseOffsetInLayoutClass;
     if (Layout.isPrimaryBaseVirtual()) {
       assert(Layout.getVBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary vbase should have a zero offset!");
@@ -1608,7 +1608,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         Context.getASTRecordLayout(LayoutClass);
 
       PrimaryBaseOffsetInLayoutClass =
-        LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase);
+        LayoutClassLayout.getVBaseClassOffset(PrimaryBase);
     } else {
       assert(Layout.getBaseClassOffsetInBits(PrimaryBase) == 0 &&
              "Primary base should have a zero offset!");
@@ -1650,9 +1650,8 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
                "Did not find the overridden method!");
         MethodInfo &OverriddenMethodInfo = MethodInfoMap[OverriddenMD];
         
-        MethodInfo MethodInfo(Base.getBaseOffset(), 
-                          Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
-                          OverriddenMethodInfo.VTableIndex);
+        MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
+                              OverriddenMethodInfo.VTableIndex);
 
         assert(!MethodInfoMap.count(MD) &&
                "Should not have method info for this method yet!");
@@ -1667,9 +1666,8 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
         if (!isBuildingConstructorVTable() && OverriddenMD != MD) {
           // Compute the this adjustment.
           ThisAdjustment ThisAdjustment =
-            ComputeThisAdjustment(OverriddenMD, 
-                           Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
-                           Overrider);
+            ComputeThisAdjustment(OverriddenMD, BaseOffsetInLayoutClass,
+                                  Overrider);
 
           if (ThisAdjustment.VCallOffsetOffset &&
               Overrider.Method->getParent() == MostDerivedClass) {
@@ -1693,8 +1691,7 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
     }
 
     // Insert the method info for this method.
-    MethodInfo MethodInfo(Base.getBaseOffset(), 
-                          Context.toCharUnitsFromBits(BaseOffsetInLayoutClass),
+    MethodInfo MethodInfo(Base.getBaseOffset(), BaseOffsetInLayoutClass,
                           Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
@@ -1703,9 +1700,9 @@ VTableBuilder::AddMethods(BaseSubobject Base, uint64_t BaseOffsetInLayoutClass,
 
     // Check if this overrider is going to be used.
     const CXXMethodDecl *OverriderMD = Overrider.Method;
-    if (!IsOverriderUsed(OverriderMD, BaseOffsetInLayoutClass,
+    if (!IsOverriderUsed(OverriderMD, Context.toBits(BaseOffsetInLayoutClass),
                          FirstBaseInPrimaryBaseChain, 
-                         FirstBaseOffsetInLayoutClass)) {
+                         Context.toBits(FirstBaseOffsetInLayoutClass))) {
       Components.push_back(VTableComponent::MakeUnusedFunction(OverriderMD));
       continue;
     }
@@ -1781,7 +1778,8 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
 
   // Now go through all virtual member functions and add them.
   PrimaryBasesSetVectorTy PrimaryBases;
-  AddMethods(Base, OffsetInLayoutClass, Base.getBase(), OffsetInLayoutClass, 
+  AddMethods(Base, Context.toCharUnitsFromBits(OffsetInLayoutClass),
+             Base.getBase(), Context.toCharUnitsFromBits(OffsetInLayoutClass), 
              PrimaryBases);
 
   // Compute 'this' pointer adjustments.
