@@ -11,6 +11,8 @@
 #define lldb_Opcode_h
 
 // C Includes
+#include <string.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
