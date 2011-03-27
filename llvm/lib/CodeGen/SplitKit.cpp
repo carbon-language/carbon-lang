@@ -95,9 +95,10 @@ void SplitAnalysis::analyzeUses() {
     assert(fixed && "Couldn't fix broken live interval");
   }
 
-  DEBUG(dbgs() << "  counted "
+  DEBUG(dbgs() << "Analyze counted "
                << UsingInstrs.size() << " instrs, "
-               << UsingBlocks.size() << " blocks.\n");
+               << UsingBlocks.size() << " blocks, "
+               << LiveBlocks.size() << " spanned.\n");
 }
 
 /// calcLiveBlockInfo - Fill the LiveBlocks array with information about blocks
