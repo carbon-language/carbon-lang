@@ -160,7 +160,9 @@ def backend_option : Separate<"-backend-option">,
 def mregparm : Separate<"-mregparm">,
   HelpText<"Limit the number of registers available for integer arguments">;
 def mrelax_all : Flag<"-mrelax-all">,
-  HelpText<"Relax all machine instructions">;
+  HelpText<"(integrated-as) Relax all machine instructions">;
+def msave_temp_labels : Flag<"-msave-temp-labels">,
+  HelpText<"(integrated-as) Save temporary labels">;
 def mrtd: Flag<"-mrtd">,
   HelpText<"Make StdCall calling convention the default">;
 def mrelocation_model : Separate<"-mrelocation-model">,

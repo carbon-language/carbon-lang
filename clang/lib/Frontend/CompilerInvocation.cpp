@@ -197,6 +197,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (Opts.RelaxAll)
     Res.push_back("-mrelax-all");
+  if (Opts.SaveTempLabels)
+    Res.push_back("-msave-temp-labels");
   if (Opts.SoftFloat)
     Res.push_back("-msoft-float");
   if (Opts.UnwindTables)
@@ -935,6 +937,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.NumRegisterParameters = Args.getLastArgIntValue(OPT_mregparm, 0, Diags);
   Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
   Opts.OmitLeafFramePointer = Args.hasArg(OPT_momit_leaf_frame_pointer);
+  Opts.SaveTempLabels = Args.hasArg(OPT_msave_temp_labels);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
   Opts.UnsafeFPMath = Args.hasArg(OPT_cl_unsafe_math_optimizations) ||
                       Args.hasArg(OPT_cl_fast_relaxed_math);

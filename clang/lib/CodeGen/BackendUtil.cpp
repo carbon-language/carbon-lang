@@ -268,6 +268,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
 
   if (CodeGenOpts.RelaxAll)
     TM->setMCRelaxAll(true);
+  if (CodeGenOpts.SaveTempLabels)
+    TM->setMCSaveTempLabels(true);
 
   // Create the code generator passes.
   PassManager *PM = getCodeGenPasses();
