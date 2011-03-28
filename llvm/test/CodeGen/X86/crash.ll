@@ -189,7 +189,7 @@ for.inc44:                                        ; preds = %for.body
 }
 
 ; PR9028
-define void @f(i64 %A) nounwind {
+define void @func_60(i64 %A) nounwind {
 entry:
   %0 = zext i64 %A to i160
   %1 = shl i160 %0, 64
@@ -199,3 +199,19 @@ entry:
   store i576 %4, i576* undef, align 8
   ret void
 }
+
+; <rdar://problem/9187792>
+define fastcc void @func_61() nounwind sspreq {
+entry:
+  %t1 = tail call i64 @llvm.objectsize.i64(i8* undef, i1 false)
+  %t2 = icmp eq i64 %t1, -1
+  br i1 %t2, label %bb2, label %bb1
+
+bb1:
+  ret void
+
+bb2:
+  ret void
+}
+
+declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone

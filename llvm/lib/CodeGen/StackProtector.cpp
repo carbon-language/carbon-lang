@@ -221,7 +221,8 @@ bool StackProtector::InsertStackProtectors() {
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
     if (DT && DT->isReachableFromEntry(BB)) {
       DT->addNewBlock(NewBB, BB);
-      FailBBDom = DT->findNearestCommonDominator(FailBBDom, BB);
+      if (FailBBDom)
+        FailBBDom = DT->findNearestCommonDominator(FailBBDom, BB);
     }
 
     // Remove default branch instruction to the new BB.
