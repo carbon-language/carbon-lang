@@ -618,12 +618,11 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1 in {
-  // FIXME: should be able to write a pattern for brcond, but can't use
-  //        a two-value operand where a dag node expects two operands. :(
-  // NOTE: ARM & PowerPC backend also report the same problem
+  // FIXME: The pattern part is blank because I cannot (or do not yet know
+  // how to) use the first operand of PredicateOperand (a Preds register) here
   def BRAdp
     : InstPTX<(outs), (ins brtarget:$d), "bra\t$d",
-              [/*(brcond bb:$d, Preds:$p, i32imm:$c)*/]>;
+              [/*(brcond pred:$_p, bb:$d)*/]>;
 }
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {

@@ -247,11 +247,15 @@ AnalyzeBranch(MachineBasicBlock &MBB,
 }
 
 unsigned PTXInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
-  unsigned count;
-  for (count = 0; IsAnyKindOfBranch(MBB.back()); ++count)
-    MBB.pop_back();
+  unsigned count = 0;
+  while (!MBB.empty())
+    if (IsAnyKindOfBranch(MBB.back())) {
+      MBB.pop_back();
+      ++count;
+    } else
+      break;
   DEBUG(dbgs() << "RemoveBranch: MBB:   " << MBB.getName().str() << "\n");
-  DEBUG(dbgs() << "RemoveBranch: count: " << count << "\n");
+  DEBUG(dbgs() << "RemoveBranch: remove " << count << " branch inst\n");
   return count;
 }
 
@@ -262,12 +266,12 @@ InsertBranch(MachineBasicBlock &MBB,
              const SmallVectorImpl<MachineOperand> &Cond,
              DebugLoc DL) const {
   DEBUG(dbgs() << "InsertBranch: MBB: " << MBB.getName().str() << "\n");
-  DEBUG(if (TBB) dbgs() << "InsertBranch: TBB: "
-                        << TBB->getName().str() << "\n";
-      else dbgs() << "InsertBranch: TBB: (NULL)\n");
-  DEBUG(if (FBB) dbgs() << "InsertBranch: FBB: "
-                        << FBB->getName().str() << "\n";
-      else dbgs() << "InsertBranch: FBB: (NULL)\n");
+  DEBUG(if (TBB) dbgs() << "InsertBranch: TBB: " << TBB->getName().str()
+                        << "\n";
+        else     dbgs() << "InsertBranch: TBB: (NULL)\n");
+  DEBUG(if (FBB) dbgs() << "InsertBranch: FBB: " << FBB->getName().str()
+                        << "\n";
+        else     dbgs() << "InsertBranch: FBB: (NULL)\n");
   DEBUG(dbgs() << "InsertBranch: Cond size: " << Cond.size() << "\n");
 
   assert(TBB && "TBB is NULL");

@@ -56,8 +56,6 @@ SDValue PTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
       llvm_unreachable("Unimplemented operand");
     case ISD::GlobalAddress:
       return LowerGlobalAddress(Op, DAG);
-    case ISD::BRCOND:
-      return LowerGlobalAddress(Op, DAG);
   }
 }
 
