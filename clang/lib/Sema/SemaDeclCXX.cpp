@@ -2459,10 +2459,13 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
       continue;
     
     CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    if (FieldClassDecl->isInvalidDecl())
+      continue;
     if (FieldClassDecl->hasTrivialDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(FieldClassDecl);
+    assert(Dtor && "No dtor found for FieldClassDecl!");
     CheckDestructorAccess(Field->getLocation(), Dtor,
                           PDiag(diag::err_access_dtor_field)
                             << Field->getDeclName()
@@ -2483,12 +2486,16 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     if (Base->isVirtual())
       DirectVirtualBases.insert(RT);
 
-    // Ignore trivial destructors.
     CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    // If our base class is invalid, we probably can't get its dtor anyway.
+    if (BaseClassDecl->isInvalidDecl())
+      continue;
+    // Ignore trivial destructors.
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
+    assert(Dtor && "No dtor found for BaseClassDecl!");
 
     // FIXME: caret should be on the start of the class name
     CheckDestructorAccess(Base->getSourceRange().getBegin(), Dtor,
@@ -2510,12 +2517,16 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     if (DirectVirtualBases.count(RT))
       continue;
 
-    // Ignore trivial destructors.
     CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    // If our base class is invalid, we probably can't get its dtor anyway.
+    if (BaseClassDecl->isInvalidDecl())
+      continue;
+    // Ignore trivial destructors.
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
+    assert(Dtor && "No dtor found for BaseClassDecl!");
     CheckDestructorAccess(ClassDecl->getLocation(), Dtor,
                           PDiag(diag::err_access_dtor_vbase)
                             << VBase->getType());
