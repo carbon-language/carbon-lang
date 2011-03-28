@@ -428,6 +428,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     if (DiagnoseUseOfDecl(PD, MemberLoc))
       return ExprError();
     QualType ResTy = PD->getType();
+    ResTy = ResTy.getNonLValueExprType(Context);
     Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
     ObjCMethodDecl *Getter = IFace->lookupInstanceMethod(Sel);
     if (DiagnosePropertyAccessorMismatch(PD, Getter, MemberLoc))

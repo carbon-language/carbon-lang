@@ -294,11 +294,17 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     else {
         LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
                                     Ivar, 0);
-        CodeGenTypes &Types = CGM.getTypes();
-        RValue RV = EmitLoadOfLValue(LV, IVART);
-        RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
+        if (PD->getType()->isReferenceType()) {
+          RValue RV = RValue::get(LV.getAddress());
+          EmitReturnOfRValue(RV, PD->getType());
+        }
+        else {
+          CodeGenTypes &Types = CGM.getTypes();
+          RValue RV = EmitLoadOfLValue(LV, IVART);
+          RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
                                                Types.ConvertType(PD->getType())));
-        EmitReturnOfRValue(RV, PD->getType());
+          EmitReturnOfRValue(RV, PD->getType());
+        }
     }
   }
 
@@ -436,7 +442,10 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
       ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
       DeclRefExpr Base(Self, Self->getType(), VK_RValue, Loc);
       ParmVarDecl *ArgDecl = *OMD->param_begin();
-      DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), VK_LValue, Loc);
+      QualType T = ArgDecl->getType();
+      if (T->isReferenceType())
+        T = cast<ReferenceType>(T)->getPointeeType();
+      DeclRefExpr Arg(ArgDecl, T, VK_LValue, Loc);
       ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base, true, true);
     
       // The property type can differ from the ivar type in some situations with

@@ -7413,6 +7413,21 @@ static bool IsReadonlyProperty(Expr *E, Sema &S) {
   return false;
 }
 
+static bool IsConstProperty(Expr *E, Sema &S) {
+  if (E->getStmtClass() == Expr::ObjCPropertyRefExprClass) {
+    const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
+    if (PropExpr->isImplicitProperty()) return false;
+    
+    ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
+    QualType T = PDecl->getType();
+    if (T->isReferenceType())
+      T = cast<ReferenceType>(T)->getPointeeType();
+    CanQualType CT = S.Context.getCanonicalType(T);
+    return CT.isConstQualified();
+  }
+  return false;
+}
+
 static bool IsReadonlyMessage(Expr *E, Sema &S) {
   if (E->getStmtClass() != Expr::MemberExprClass) 
     return false;
@@ -7435,6 +7450,8 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
                                                               &Loc);
   if (IsLV == Expr::MLV_Valid && IsReadonlyProperty(E, S))
     IsLV = Expr::MLV_ReadonlyProperty;
+  else if (Expr::MLV_ConstQualified && IsConstProperty(E, S))
+    IsLV = Expr::MLV_Valid;
   else if (IsLV == Expr::MLV_ClassTemporary && IsReadonlyMessage(E, S))
     IsLV = Expr::MLV_InvalidMessageExpression;
   if (IsLV == Expr::MLV_Valid)

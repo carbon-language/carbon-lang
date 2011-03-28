@@ -45,11 +45,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                     !(Attributes & ObjCDeclSpec::DQ_PR_copy)));
 
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
-  QualType T = TSI->getType();
-  if (T->isReferenceType()) {
-    Diag(AtLoc, diag::error_reference_property);
-    return 0;
-  }
+
   // Proceed with constructing the ObjCPropertDecls.
   ObjCContainerDecl *ClassDecl =
     cast<ObjCContainerDecl>(ClassCategory);
@@ -404,13 +400,16 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
     QualType PropType = Context.getCanonicalType(property->getType());
+    QualType PropertyIvarType = PropType;
+    if (PropType->isReferenceType())
+      PropertyIvarType = cast<ReferenceType>(PropType)->getPointeeType();
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     ObjCInterfaceDecl *ClassDeclared;
     Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
       Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl,
                                   PropertyLoc, PropertyLoc, PropertyIvar,
-                                  PropType, /*Dinfo=*/0,
+                                  PropertyIvarType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
       ClassImpDecl->addDecl(Ivar);
@@ -433,19 +432,19 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     QualType IvarType = Context.getCanonicalType(Ivar->getType());
 
     // Check that type of property and its ivar are type compatible.
-    if (PropType != IvarType) {
+    if (PropertyIvarType != IvarType) {
       bool compat = false;
-      if (isa<ObjCObjectPointerType>(PropType) 
+      if (isa<ObjCObjectPointerType>(PropertyIvarType) 
             && isa<ObjCObjectPointerType>(IvarType))
         compat = 
           Context.canAssignObjCInterfaces(
-                                  PropType->getAs<ObjCObjectPointerType>(),
+                                  PropertyIvarType->getAs<ObjCObjectPointerType>(),
                                   IvarType->getAs<ObjCObjectPointerType>());
       else {
         SourceLocation Loc = PropertyIvarLoc;
         if (Loc.isInvalid())
           Loc = PropertyLoc;
-        compat = (CheckAssignmentConstraints(Loc, PropType, IvarType)
+        compat = (CheckAssignmentConstraints(Loc, PropertyIvarType, IvarType)
                     == Compatible);
       }
       if (!compat) {
@@ -460,7 +459,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // FIXME! Rules for properties are somewhat different that those
       // for assignments. Use a new routine to consolidate all cases;
       // specifically for property redeclarations as well as for ivars.
-      QualType lhsType =Context.getCanonicalType(PropType).getUnqualifiedType();
+      QualType lhsType =Context.getCanonicalType(PropertyIvarType).getUnqualifiedType();
       QualType rhsType =Context.getCanonicalType(IvarType).getUnqualifiedType();
       if (lhsType != rhsType &&
           lhsType->isArithmeticType()) {
@@ -539,7 +538,10 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                       SelfExpr, true, true);
       ObjCMethodDecl::param_iterator P = setterMethod->param_begin();
       ParmVarDecl *Param = (*P);
-      Expr *rhs = new (Context) DeclRefExpr(Param, Param->getType(),
+      QualType T = Param->getType();
+      if (T->isReferenceType())
+        T = cast<ReferenceType>(T)->getPointeeType();
+      Expr *rhs = new (Context) DeclRefExpr(Param, T,
                                             VK_LValue, SourceLocation());
       ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
                                   BO_Assign, lhs, rhs);

@@ -9,7 +9,7 @@ typedef struct {
 
 @interface A
 @property (assign) T p0;
-@property (assign) T& p1; // expected-error {{property of reference type is not supported}}
+@property (assign) T& p1; 
 @end
 
 int f0(const T& t) {
@@ -21,7 +21,7 @@ int f1(A *a) {
 }
 
 int f2(A *a) {
-  return f0(a.p1);	// expected-error {{property 'p1' not found on object of type 'A *'}}
+  return f0(a.p1);	
 }
 
 // PR7740
