@@ -2893,8 +2893,8 @@ static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
   // Preload Data/Instruction requires either 2 or 3 operands.
-  // PLDi, PLDWi, PLIi:                addrmode_imm12
-  // PLDr[a|m], PLDWr[a|m], PLIr[a|m]: ldst_so_reg
+  // PLDi12, PLDWi12, PLIi12: addrmode_imm12
+  // PLDrs, PLDWrs, PLIrs:    ldst_so_reg
 
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      decodeRn(insn))));
@@ -2903,10 +2903,19 @@ static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
       || Opcode == ARM::PLIi12) {
     unsigned Imm12 = slice(insn, 11, 0);
     bool Negative = getUBit(insn) == 0;
+
+    // A8.6.118 PLD (literal) PLDWi12 with Rn=PC is transformed to PLDi12.
+    if (Opcode == ARM::PLDWi12 && slice(insn, 19, 16) == 0xF) {
+      DEBUG(errs() << "Rn == '1111': PLDWi12 morphed to PLDi12\n");
+      MI.setOpcode(ARM::PLDi12);
+    }
+    
     // -0 is represented specially. All other values are as normal.
+    int Offset = Negative ? -1 * Imm12 : Imm12;
     if (Imm12 == 0 && Negative)
-      Imm12 = INT32_MIN;
-    MI.addOperand(MCOperand::CreateImm(Imm12));
+      Offset = INT32_MIN;
+
+    MI.addOperand(MCOperand::CreateImm(Offset));
     NumOpsAdded = 2;
   } else {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,

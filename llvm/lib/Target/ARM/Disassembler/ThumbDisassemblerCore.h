@@ -1799,8 +1799,12 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
       // A8.6.117 Encoding T2: add = FALSE
       unsigned Imm8 = getImm8(insn);
       Offset = -1 * Imm8;
-    } else // The i12 forms.  See, for example, A8.6.117 Encoding T1.
+    } else {
+      // The i12 forms.  See, for example, A8.6.117 Encoding T1.
+      // Note that currently t2PLDi12 also handles the previously named t2PLDpci
+      // opcode, that's why we use decodeImm12(insn) which returns +/- imm12.
       Offset = decodeImm12(insn);
+    }
     MI.addOperand(MCOperand::CreateImm(Offset));
   }
   ++OpIdx;
