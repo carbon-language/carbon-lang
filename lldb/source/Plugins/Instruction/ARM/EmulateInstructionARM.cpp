@@ -202,7 +202,7 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
 
         for (i = 0 to 14)
         {
-            if (registers<i> == ’1’)
+            if (registers<i> == '1')
             {
                 if i == 13 && i != LowestSetBit(registers) // Only possible for encoding A1 
                     MemA[address,4] = bits(32) UNKNOWN;
@@ -212,7 +212,7 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
             }
         }
 
-        if (registers<15> == ’1’) // Only possible for encoding A1 or A2 
+        if (registers<15> == '1') // Only possible for encoding A1 or A2 
             MemA[address,4] = PCStoreValue();
         
         SP = SP - 4*BitCount(registers);
@@ -326,15 +326,15 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
         EncodingSpecificOperations(); NullCheckIfThumbEE(13);
         address = SP;
         for i = 0 to 14
-            if registers<i> == ‘1’ then
+            if registers<i> == '1' then
                 R[i} = if UnalignedAllowed then MemU[address,4] else MemA[address,4]; address = address + 4;
-        if registers<15> == ‘1’ then
+        if registers<15> == '1' then
             if UnalignedAllowed then
                 LoadWritePC(MemU[address,4]);
             else 
                 LoadWritePC(MemA[address,4]);
-        if registers<13> == ‘0’ then SP = SP + 4*BitCount(registers);
-        if registers<13> == ‘1’ then SP = bits(32) UNKNOWN;
+        if registers<13> == '0' then SP = SP + 4*BitCount(registers);
+        if registers<13> == '1' then SP = bits(32) UNKNOWN;
     }
 #endif
 
@@ -383,7 +383,7 @@ EmulateInstructionARM::EmulatePOP (const uint32_t opcode, const ARMEncoding enco
             // which amounts to popping one reg from the full descending stacks.
             // if BitCount(register_list) < 2 then SEE LDM / LDMIA / LDMFD;
 
-            // if registers<13> == ‘1’ && ArchVersion() >= 7 then UNPREDICTABLE;
+            // if registers<13> == '1' && ArchVersion() >= 7 then UNPREDICTABLE;
             if (BitIsSet(opcode, 13) && ArchVersion() >= ARMv7)
                 return false;
             break;
@@ -454,7 +454,7 @@ EmulateInstructionARM::EmulateADDRdSPImm (const uint32_t opcode, const ARMEncodi
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        (result, carry, overflow) = AddWithCarry(SP, imm32, ‘0’);
+        (result, carry, overflow) = AddWithCarry(SP, imm32, '0');
         if d == 15 then
            ALUWritePC(result); // setflags is always FALSE here
         else
@@ -772,7 +772,7 @@ EmulateInstructionARM::EmulateMUL (const uint32_t opcode, const ARMEncoding enco
                 break;
                   
             case eEncodingA1:
-                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == ’1’); 
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == '1'); 
                 d = Bits32 (opcode, 19, 16);
                 n = Bits32 (opcode, 3, 0);
                 m = Bits32 (opcode, 11, 8);
@@ -994,8 +994,8 @@ EmulateInstructionARM::EmulateLDRRtPCRelative (const uint32_t opcode, const ARME
         address = if add then (base + imm32) else (base - imm32);
         data = MemU[address,4];
         if t == 15 then
-            if address<1:0> == ‘00’ then LoadWritePC(data); else UNPREDICTABLE;
-        elsif UnalignedSupport() || address<1:0> = ‘00’ then
+            if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE;
+        elsif UnalignedSupport() || address<1:0> = '00' then
             R[t] = data;
         else // Can only apply before ARMv7
             if CurrentInstrSet() == InstrSet_ARM then
@@ -1086,7 +1086,7 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        (result, carry, overflow) = AddWithCarry(SP, imm32, ‘0’);
+        (result, carry, overflow) = AddWithCarry(SP, imm32, '0');
         if d == 15 then // Can only occur for ARM encoding
             ALUWritePC(result); // setflags is always FALSE here
         else
@@ -1112,7 +1112,7 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
         switch (encoding) 
         {
             case eEncodingT1:
-                // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm8:’00’, 32);
+                // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm8:'00', 32);
                 d = Bits32 (opcode, 10, 8);
                 setflags = false;
                 imm32 = (Bits32 (opcode, 7, 0) << 2);
@@ -1120,7 +1120,7 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
                 break;
                   
             case eEncodingT2:
-                // d = 13; setflags = FALSE; imm32 = ZeroExtend(imm7:’00’, 32);
+                // d = 13; setflags = FALSE; imm32 = ZeroExtend(imm7:'00', 32);
                 d = 13;
                 setflags = false;
                 imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
@@ -1162,7 +1162,7 @@ EmulateInstructionARM::EmulateADDSPRm (const uint32_t opcode, const ARMEncoding 
     {
         EncodingSpecificOperations();
         shifted = Shift(R[m], shift_t, shift_n, APSR.C);
-        (result, carry, overflow) = AddWithCarry(SP, shifted, ‘0’);
+        (result, carry, overflow) = AddWithCarry(SP, shifted, '0');
         if d == 15 then
             ALUWritePC(result); // setflags is always FALSE here
         else
@@ -1320,7 +1320,7 @@ EmulateInstructionARM::EmulateBLXRm (const uint32_t opcode, const ARMEncoding en
             LR = next_instr_addr;
         else
             next_instr_addr = PC - 2;
-            LR = next_instr_addr<31:1> : ‘1’;
+            LR = next_instr_addr<31:1> : '1';
         BXWritePC(target);
     }
 #endif
@@ -1427,7 +1427,7 @@ EmulateInstructionARM::EmulateBXJRm (const uint32_t opcode, const ARMEncoding en
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        if JMCR.JE == ‘0’ || CurrentInstrSet() == InstrSet_ThumbEE then
+        if JMCR.JE == '0' || CurrentInstrSet() == InstrSet_ThumbEE then
             BXWritePC(R[m]);
         else
             if JazelleAcceptsExecution() then
@@ -1482,7 +1482,7 @@ EmulateInstructionARM::EmulateSUBR7IPImm (const uint32_t opcode, const ARMEncodi
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), '1');
         if d == 15 then // Can only occur for ARM encoding
            ALUWritePC(result); // setflags is always FALSE here
         else
@@ -1534,7 +1534,7 @@ EmulateInstructionARM::EmulateSUBIPSPImm (const uint32_t opcode, const ARMEncodi
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), '1');
         if d == 15 then // Can only occur for ARM encoding
            ALUWritePC(result); // setflags is always FALSE here
         else
@@ -1588,7 +1588,7 @@ EmulateInstructionARM::EmulateSUBSPImm (const uint32_t opcode, const ARMEncoding
     if (ConditionPassed())
     {
         EncodingSpecificOperations();
-        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), ‘1’);
+        (result, carry, overflow) = AddWithCarry(SP, NOT(imm32), '1');
         if d == 15 then        // Can only occur for ARM encoding
            ALUWritePC(result); // setflags is always FALSE here
         else
@@ -1834,10 +1834,12 @@ EmulateInstructionARM::EmulateVPUSH (const uint32_t opcode, const ARMEncoding en
         context.type = EmulateInstruction::eContextPushRegisterOnStack;
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
-        for (i=d; i<regs; ++i)
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        for (i=0; i<regs; ++i)
         {
-            dwarf_reg.num = start_reg + i;
-            context.SetRegisterPlusOffset ( dwarf_reg, addr - sp);
+            dwarf_reg.num = start_reg + d + i;
+            context.SetRegisterToRegisterPlusOffset ( dwarf_reg, sp_reg, addr - sp);
             // uint64_t to accommodate 64-bit registers.
             uint64_t reg_value = ReadRegisterUnsigned(eRegisterKindDWARF, dwarf_reg.num, 0, &success);
             if (!success)
@@ -1927,10 +1929,12 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
         context.type = EmulateInstruction::eContextPopRegisterOffStack;
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
-        for (i=d; i<regs; ++i)
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        for (i=0; i<regs; ++i)
         {
-            dwarf_reg.num = start_reg + i;
-            context.SetRegisterPlusOffset (dwarf_reg, addr - sp);
+            dwarf_reg.num = start_reg + d + i;
+            context.SetRegisterPlusOffset (sp_reg, addr - sp);
             data = MemARead(context, addr, reg_byte_size, 0, &success);
             if (!success)
                 return false;    
@@ -2218,7 +2222,7 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
 #if 0
     if ConditionPassed() then 
         EncodingSpecificOperations(); 
-        (result, carry, overflow) = AddWithCarry(R[n], imm32, ’0’); 
+        (result, carry, overflow) = AddWithCarry(R[n], imm32, '0'); 
         R[d] = result; 
         if setflags then
             APSR.N = result<31>;  
@@ -2259,9 +2263,9 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
                 break;
                 
             case eEncodingT3:
-                // if Rd == ’1111’ && S == ’1’ then SEE CMN (immediate); 
-                // if Rn == ’1101’ then SEE ADD (SP plus immediate); 
-                // d = UInt(Rd); n = UInt(Rn); setflags = (S == ’1’); imm32 = ThumbExpandImm(i:imm3:imm8); 
+                // if Rd == '1111' && S == '1' then SEE CMN (immediate); 
+                // if Rn == '1101' then SEE ADD (SP plus immediate); 
+                // d = UInt(Rd); n = UInt(Rn); setflags = (S == '1'); imm32 = ThumbExpandImm(i:imm3:imm8); 
                 d = Bits32 (opcode, 11, 8);
                 n = Bits32 (opcode, 19, 16);
                 setflags = BitIsSet (opcode, 20);
@@ -2275,8 +2279,8 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
                 
             case eEncodingT4:
             {
-                // if Rn == ’1111’ then SEE ADR; 
-                // if Rn == ’1101’ then SEE ADD (SP plus immediate); 
+                // if Rn == '1111' then SEE ADR; 
+                // if Rn == '1101' then SEE ADD (SP plus immediate); 
                 // d = UInt(Rd); n = UInt(Rn); setflags = FALSE; imm32 = ZeroExtend(i:imm3:imm8, 32); 
                 d = Bits32 (opcode, 11, 8);
                 n = Bits32 (opcode, 19, 16);
@@ -2300,7 +2304,7 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
         if (!success)
             return false;
         
-        //(result, carry, overflow) = AddWithCarry(R[n], imm32, ’0’); 
+        //(result, carry, overflow) = AddWithCarry(R[n], imm32, '0'); 
         AddWithCarryResult res = AddWithCarry (Rn, imm32, 0);
         
         Register reg_n;
@@ -2937,7 +2941,11 @@ EmulateInstructionARM::EmulateRRX (const uint32_t opcode, const ARMEncoding enco
 bool
 EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
-    assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
+    assert(shift_type == SRType_ASR 
+           || shift_type == SRType_LSL 
+           || shift_type == SRType_LSR 
+           || shift_type == SRType_ROR
+           || shift_type == SRType_RRX);
 
     bool success = false;
 
@@ -3115,7 +3123,7 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
         switch (encoding)
         {
             case eEncodingT1:
-                // n = UInt(Rn); registers = ’00000000’:register_list; wback = (registers<n> == ’0’);
+                // n = UInt(Rn); registers = '00000000':register_list; wback = (registers<n> == '0');
                 n = Bits32 (opcode, 10, 8);
                 registers = Bits32 (opcode, 7, 0);
                 registers = registers & 0x00ff;  // Make sure the top 8 bits are zeros.
@@ -3125,24 +3133,24 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
                     return false;
                 break;
             case eEncodingT2:
-                // if W == ’1’ && Rn == ’1101’ then SEE POP; 
-                // n = UInt(Rn); registers = P:M:’0’:register_list; wback = (W == ’1’); 
+                // if W == '1' && Rn == '1101' then SEE POP; 
+                // n = UInt(Rn); registers = P:M:'0':register_list; wback = (W == '1'); 
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 registers = registers & 0xdfff; // Make sure bit 13 is zero.
                 wback = BitIsSet (opcode, 21);
                   
-                // if n == 15 || BitCount(registers) < 2 || (P == ’1’ && M == ’1’) then UNPREDICTABLE; 
+                // if n == 15 || BitCount(registers) < 2 || (P == '1' && M == '1') then UNPREDICTABLE; 
                 if ((n == 15)
                     || (BitCount (registers) < 2)
                     || (BitIsSet (opcode, 14) && BitIsSet (opcode, 15)))
                     return false;
                   
-                // if registers<15> == ’1’ && InITBlock() && !LastInITBlock() then UNPREDICTABLE; 
+                // if registers<15> == '1' && InITBlock() && !LastInITBlock() then UNPREDICTABLE; 
                 if (BitIsSet (registers, 15) && InITBlock() && !LastInITBlock())
                     return false;
 
-                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
+                // if wback && registers<n> == '1' then UNPREDICTABLE;
                 if (wback
                     && BitIsSet (registers, n))
                     return false;
@@ -3222,9 +3230,9 @@ EmulateInstructionARM::EmulateLDM (const uint32_t opcode, const ARMEncoding enco
     return true;
 }
                 
-// LDMDA loads multiple registers from consecutive memory locations using an address from a base registers.
-// The consecutive memorty locations end at this address and the address just below the lowest of those locations
-// can optionally be written back tot he base registers.
+// LDMDA loads multiple registers from consecutive memory locations using an address from a base register.
+// The consecutive memory locations end at this address and the address just below the lowest of those locations
+// can optionally be written back to the base register.
 bool
 EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding encoding)
 {
@@ -3235,14 +3243,14 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
         address = R[n] - 4*BitCount(registers) + 4;
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                   R[i] = MemA[address,4]; address = address + 4; 
                   
-        if registers<15> == ’1’ then
+        if registers<15> == '1' then
             LoadWritePC(MemA[address,4]);
                   
-        if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers); 
-        if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+        if wback && registers<n> == '0' then R[n] = R[n] - 4*BitCount(registers); 
+        if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN;
 #endif
                   
     bool success = false;
@@ -3258,7 +3266,7 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -3275,12 +3283,12 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
         // address = R[n] - 4*BitCount(registers) + 4;
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadCoreReg (n, &success);
                   
         if (!success)
             return false;
             
-        address = address - (addr_byte_size * BitCount (registers)) + addr_byte_size;
+        addr_t address = Rn - (addr_byte_size * BitCount (registers)) + addr_byte_size;
                                                         
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterPlusOffset;
@@ -3291,11 +3299,11 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
         // for i = 0 to 14 
         for (int i = 0; i < 14; ++i)
         {
-            // if registers<i> == ’1’ then
+            // if registers<i> == '1' then
             if (BitIsSet (registers, i))
             {
                   // R[i] = MemA[address,4]; address = address + 4; 
-                  context.SetRegisterPlusOffset (dwarf_reg, offset);
+                  context.SetRegisterPlusOffset (dwarf_reg, Rn - (address + offset));
                   uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                   if (!success)
                       return false;
@@ -3305,7 +3313,7 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then
+        // if registers<15> == '1' then
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
@@ -3318,22 +3326,21 @@ EmulateInstructionARM::EmulateLDMDA (const uint32_t opcode, const ARMEncoding en
                 return false;
         }
                   
-        // if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers); 
+        // if wback && registers<n> == '0' then R[n] = R[n] - 4*BitCount(registers); 
         if (wback && BitIsClear (registers, n))
         {
-            addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
             if (!success)
                 return false;
 
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);      
-            addr = addr + offset;
+            addr_t addr = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
         }
                   
-        // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+        // if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN;
         if (wback && BitIsSet (registers, n))
             return WriteBits32Unknown (n);
     }
@@ -3353,13 +3360,13 @@ EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding en
         address = R[n] - 4*BitCount(registers);
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                   R[i] = MemA[address,4]; address = address + 4; 
-        if registers<15> == ’1’ then
+        if registers<15> == '1' then
                   LoadWritePC(MemA[address,4]);
                   
-        if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers); 
-        if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
+        if wback && registers<n> == '0' then R[n] = R[n] - 4*BitCount(registers); 
+        if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
 #endif
                   
     bool success = false;
@@ -3373,30 +3380,30 @@ EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingT1:
-                // n = UInt(Rn); registers = P:M:’0’:register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = P:M:'0':register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 registers = registers & 0xdfff;  // Make sure bit 13 is a zero.
                 wback = BitIsSet (opcode, 21);
 
-                // if n == 15 || BitCount(registers) < 2 || (P == ’1’ && M == ’1’) then UNPREDICTABLE;
+                // if n == 15 || BitCount(registers) < 2 || (P == '1' && M == '1') then UNPREDICTABLE;
                 if ((n == 15)
                     || (BitCount (registers) < 2)
                     || (BitIsSet (opcode, 14) && BitIsSet (opcode, 15)))
                     return false;
 
-                // if registers<15> == ’1’ && InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+                // if registers<15> == '1' && InITBlock() && !LastInITBlock() then UNPREDICTABLE;
                 if (BitIsSet (registers, 15) && InITBlock() && !LastInITBlock())
                     return false;
 
-                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
+                // if wback && registers<n> == '1' then UNPREDICTABLE;
                 if (wback && BitIsSet (registers, n))
                     return false;
                   
                 break;
                   
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -3414,24 +3421,24 @@ EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding en
         // address = R[n] - 4*BitCount(registers);
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
                   
         if (!success)
             return false;
                   
-        address = address - (addr_byte_size * BitCount (registers));
+        addr_t address = Rn - (addr_byte_size * BitCount (registers));
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterPlusOffset;
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
-        context.SetRegisterPlusOffset (dwarf_reg, offset);
+        context.SetRegisterPlusOffset (dwarf_reg, Rn - address);
                   
         for (int i = 0; i < 14; ++i)
         {
             if (BitIsSet (registers, i))
             {
                 // R[i] = MemA[address,4]; address = address + 4;
-                context.SetRegisterPlusOffset (dwarf_reg, offset);
+                context.SetRegisterPlusOffset (dwarf_reg, Rn - (address + offset));
                 uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
@@ -3443,7 +3450,7 @@ EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then
+        // if registers<15> == '1' then
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
@@ -3456,22 +3463,21 @@ EmulateInstructionARM::EmulateLDMDB (const uint32_t opcode, const ARMEncoding en
                 return false;
         }
                   
-        // if wback && registers<n> == ’0’ then R[n] = R[n] - 4*BitCount(registers);
+        // if wback && registers<n> == '0' then R[n] = R[n] - 4*BitCount(registers);
         if (wback && BitIsClear (registers, n))
         {
-            addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
             if (!success)
                 return false;
             
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
-            addr = addr + offset;
+            addr_t addr = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
         }
                   
-        // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
+        // if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
         if (wback && BitIsSet (registers, n))
             return WriteBits32Unknown (n);
     }
@@ -3490,13 +3496,13 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
         address = R[n] + 4;
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                   R[i] = MemA[address,4]; address = address + 4; 
-        if registers<15> == ’1’ then
+        if registers<15> == '1' then
             LoadWritePC(MemA[address,4]);
                   
-        if wback && registers<n> == ’0’ then R[n] = R[n] + 4*BitCount(registers); 
-        if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN;
+        if wback && registers<n> == '0' then R[n] = R[n] + 4*BitCount(registers); 
+        if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN;
 #endif
                   
     bool success = false;
@@ -3510,7 +3516,7 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -3526,12 +3532,12 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
         // address = R[n] + 4;
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
                   
         if (!success)
             return false;
                   
-        address = address + addr_byte_size;
+        addr_t address = Rn + addr_byte_size;
                   
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterPlusOffset;
@@ -3545,7 +3551,7 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
             {
                 // R[i] = MemA[address,4]; address = address + 4;
                 
-                context.SetRegisterPlusOffset (dwarf_reg, offset);
+                context.SetRegisterPlusOffset (dwarf_reg, offset + addr_byte_size);
                 uint32_t data = MemARead (context, address + offset, addr_byte_size, 0, &success);
                 if (!success)
                     return false;
@@ -3557,7 +3563,7 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then
+        // if registers<15> == '1' then
         //     LoadWritePC(MemA[address,4]);
         if (BitIsSet (registers, 15))
         {
@@ -3570,22 +3576,21 @@ EmulateInstructionARM::EmulateLDMIB (const uint32_t opcode, const ARMEncoding en
                 return false;
         }
                   
-        // if wback && registers<n> == ’0’ then R[n] = R[n] + 4*BitCount(registers);
+        // if wback && registers<n> == '0' then R[n] = R[n] + 4*BitCount(registers);
         if (wback && BitIsClear (registers, n))
         {
-            addr_t addr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
             if (!success)
                 return false;
 
             offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
-            addr = addr + offset;
+            addr_t addr = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, addr))
                 return false;
         }
                   
-        // if wback && registers<n> == ’1’ then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
+        // if wback && registers<n> == '1' then R[n] = bits(32) UNKNOWN; // Only possible for encoding A1
         if (wback && BitIsSet (registers, n))
             return WriteBits32Unknown (n);
     }
@@ -3639,7 +3644,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
                 break;
                 
             case eEncodingT2:
-                // t = UInt(Rt); n = 13; imm32 = ZeroExtend(imm8:’00’, 32);
+                // t = UInt(Rt); n = 13; imm32 = ZeroExtend(imm8:'00', 32);
                 Rt = Bits32 (opcode, 10, 8);
                 Rn = 13;
                 imm32 = Bits32 (opcode, 7, 0) << 2;
@@ -3652,7 +3657,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
                 break;
                   
             case eEncodingT3:
-                // if Rn == ‘1111’ then SEE LDR (literal);
+                // if Rn == '1111' then SEE LDR (literal);
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32);
                 Rt = Bits32 (opcode, 15, 12);
                 Rn = Bits32 (opcode, 19, 16);
@@ -3670,10 +3675,10 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
                 break;
                   
             case eEncodingT4:
-                // if Rn == ‘1111’ then SEE LDR (literal);
-                // if P == ‘1’ && U == ‘1’ && W == ‘0’ then SEE LDRT;
-                // if Rn == ‘1101’ && P == ‘0’ && U == ‘1’ && W == ‘1’ && imm8 == ‘00000100’ then SEE POP;
-                // if P == ‘0’ && W == ‘0’ then UNDEFINED;
+                // if Rn == '1111' then SEE LDR (literal);
+                // if P == '1' && U == '1' && W == '0' then SEE LDRT;
+                // if Rn == '1101' && P == '0' && U == '1' && W == '1' && imm8 == '00000100' then SEE POP;
+                // if P == '0' && W == '0' then UNDEFINED;
                 if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                     return false;
                   
@@ -3682,7 +3687,7 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
                 Rn = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ‘1’); add = (U == ‘1’); wback = (W == ‘1’);
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1');
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -3761,14 +3766,14 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
         address = R[n];
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                 if i == n && wback && i != LowestSetBit(registers) then 
                     MemA[address,4] = bits(32) UNKNOWN; // Only possible for encodings T1 and A1
                 else 
                     MemA[address,4] = R[i];
                 address = address + 4;
                   
-        if registers<15> == ’1’ then // Only possible for encoding A1 
+        if registers<15> == '1' then // Only possible for encoding A1 
             MemA[address,4] = PCStoreValue();
         if wback then R[n] = R[n] + 4*BitCount(registers);
 #endif
@@ -3786,7 +3791,7 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
         switch (encoding)
         {
             case eEncodingT1:
-                // n = UInt(Rn); registers = ’00000000’:register_list; wback = TRUE;
+                // n = UInt(Rn); registers = '00000000':register_list; wback = TRUE;
                 n = Bits32 (opcode, 10, 8);
                 registers = Bits32 (opcode, 7, 0);
                 registers = registers & 0x00ff;  // Make sure the top 8 bits are zeros.
@@ -3799,7 +3804,7 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
                 break;
                   
             case eEncodingT2:
-                // n = UInt(Rn); registers = ’0’:M:’0’:register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = '0':M:'0':register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 registers = registers & 0x5fff; // Make sure bits 15 & 13 are zeros.
@@ -3809,14 +3814,14 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
                 if ((n == 15) || (BitCount (registers) < 2))
                     return false;
                   
-                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
+                // if wback && registers<n> == '1' then UNPREDICTABLE;
                 if (wback && BitIsSet (registers, n))
                     return false;
                   
                 break;
                   
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -3843,10 +3848,10 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
         base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
         // for i = 0 to 14
+        int lowest_set_bit = 14;
         for (int i = 0; i < 14; ++i)
         {
-            int lowest_set_bit = 14;
-            // if registers<i> == ’1’ then
+            // if registers<i> == '1' then
             if (BitIsSet (registers, i))
             {
                   if (i < lowest_set_bit)
@@ -3874,7 +3879,7 @@ EmulateInstructionARM::EmulateSTM (const uint32_t opcode, const ARMEncoding enco
             }
         }
                   
-        // if registers<15> == ’1’ then // Only possible for encoding A1 
+        // if registers<15> == '1' then // Only possible for encoding A1 
         //     MemA[address,4] = PCStoreValue();
         if (BitIsSet (registers, 15))
         {
@@ -3915,14 +3920,14 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
         address = R[n] - 4*BitCount(registers) + 4;
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                 if i == n && wback && i != LowestSetBit(registers) then 
                     MemA[address,4] = bits(32) UNKNOWN;
                 else 
                     MemA[address,4] = R[i];
                 address = address + 4;
                   
-        if registers<15> == ’1’ then 
+        if registers<15> == '1' then 
             MemA[address,4] = PCStoreValue();
                   
         if wback then R[n] = R[n] - 4*BitCount(registers);
@@ -3941,7 +3946,7 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -3956,11 +3961,11 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
                   
         // address = R[n] - 4*BitCount(registers) + 4;
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadCoreReg (n, &success);
         if (!success)
             return false;
                   
-        address = address - (addr_byte_size * BitCount (registers)) + 4;
+        addr_t address = Rn - (addr_byte_size * BitCount (registers)) + 4;
                   
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterStore;
@@ -3968,10 +3973,10 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
         base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
         // for i = 0 to 14 
+        int lowest_bit_set = 14;
         for (int i = 0; i < 14; ++i)
         {
-            int lowest_bit_set = 14;
-            // if registers<i> == ’1’ then
+            // if registers<i> == '1' then
             if (BitIsSet (registers, i))
             {
                 if (i < lowest_bit_set)
@@ -3989,7 +3994,7 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
                   
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
-                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, Rn - (address + offset));
                     if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
@@ -3999,7 +4004,7 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then 
+        // if registers<15> == '1' then 
         //    MemA[address,4] = PCStoreValue();
         if (BitIsSet (registers, 15))
         {
@@ -4020,7 +4025,7 @@ EmulateInstructionARM::EmulateSTMDA (const uint32_t opcode, const ARMEncoding en
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
-            addr_t data = address + offset;
+            addr_t data = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
                 return false;
         }
@@ -4040,14 +4045,14 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
         address = R[n] - 4*BitCount(registers);
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                 if i == n && wback && i != LowestSetBit(registers) then 
                     MemA[address,4] = bits(32) UNKNOWN; // Only possible for encoding A1
                 else 
                     MemA[address,4] = R[i];
                 address = address + 4;
                   
-        if registers<15> == ’1’ then // Only possible for encoding A1 
+        if registers<15> == '1' then // Only possible for encoding A1 
             MemA[address,4] = PCStoreValue();
                   
         if wback then R[n] = R[n] - 4*BitCount(registers);
@@ -4067,12 +4072,12 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingT1:
-                // if W == ’1’ && Rn == ’1101’ then SEE PUSH;
+                // if W == '1' && Rn == '1101' then SEE PUSH;
                 if ((BitIsSet (opcode, 21)) && (Bits32 (opcode, 19, 16) == 13))
                 { 
                     // See PUSH 
                 }
-                // n = UInt(Rn); registers = ’0’:M:’0’:register_list; wback = (W == ’1’); 
+                // n = UInt(Rn); registers = '0':M:'0':register_list; wback = (W == '1'); 
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 registers = registers & 0x5fff;  // Make sure bits 15 & 13 are zeros.
@@ -4080,18 +4085,18 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
                 // if n == 15 || BitCount(registers) < 2 then UNPREDICTABLE;
                 if ((n == 15) || BitCount (registers) < 2)
                     return false;
-                // if wback && registers<n> == ’1’ then UNPREDICTABLE;
+                // if wback && registers<n> == '1' then UNPREDICTABLE;
                 if (wback && BitIsSet (registers, n))
                     return false;
                 break;
                   
             case eEncodingA1:
-                // if W == ’1’ && Rn == ’1101’ && BitCount(register_list) >= 2 then SEE PUSH; 
+                // if W == '1' && Rn == '1101’ && BitCount(register_list) >= 2 then SEE PUSH; 
                 if (BitIsSet (opcode, 21) && (Bits32 (opcode, 19, 16) == 13) && BitCount (Bits32 (opcode, 15, 0)) >= 2)
                 {
                     // See Push
                 }
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’);
+                // n = UInt(Rn); registers = register_list; wback = (W == '1');
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -4107,11 +4112,11 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
         // address = R[n] - 4*BitCount(registers);
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
         if (!success)
         return false;
                   
-        address = address - (addr_byte_size * BitCount (registers));
+        addr_t address = Rn - (addr_byte_size * BitCount (registers));
                   
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterStore;
@@ -4119,10 +4124,10 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
         base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
         // for i = 0 to 14
+        uint32_t lowest_set_bit = 14;
         for (int i = 0; i < 14; ++i)
         {
-            uint32_t lowest_set_bit = 14;
-            // if registers<i> == ’1’ then
+            // if registers<i> == '1' then
             if (BitIsSet (registers, i))
             {
                 if (i < lowest_set_bit)
@@ -4140,7 +4145,7 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
                   
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
-                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, Rn - (address + offset));
                     if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
@@ -4150,7 +4155,7 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then // Only possible for encoding A1 
+        // if registers<15> == '1' then // Only possible for encoding A1 
         //     MemA[address,4] = PCStoreValue();
         if (BitIsSet (registers, 15))
         {
@@ -4171,7 +4176,7 @@ EmulateInstructionARM::EmulateSTMDB (const uint32_t opcode, const ARMEncoding en
             offset = (addr_byte_size * BitCount (registers)) * -1;
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
-            addr_t data = address + offset;
+            addr_t data = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
                 return false;
         }
@@ -4191,14 +4196,14 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
         address = R[n] + 4;
                   
         for i = 0 to 14 
-            if registers<i> == ’1’ then
+            if registers<i> == '1' then
                 if i == n && wback && i != LowestSetBit(registers) then
                     MemA[address,4] = bits(32) UNKNOWN;
                 else 
                     MemA[address,4] = R[i];
                 address = address + 4;
                   
-        if registers<15> == ’1’ then 
+        if registers<15> == '1' then 
             MemA[address,4] = PCStoreValue();
                   
         if wback then R[n] = R[n] + 4*BitCount(registers);
@@ -4217,7 +4222,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
         switch (encoding)
         {
             case eEncodingA1:
-                // n = UInt(Rn); registers = register_list; wback = (W == ’1’); 
+                // n = UInt(Rn); registers = register_list; wback = (W == '1'); 
                 n = Bits32 (opcode, 19, 16);
                 registers = Bits32 (opcode, 15, 0);
                 wback = BitIsSet (opcode, 21);
@@ -4232,11 +4237,11 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
         // address = R[n] + 4;
                   
         int32_t offset = 0;
-        addr_t address = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        addr_t Rn = ReadCoreReg (n, &success);
         if (!success)
             return false;
                   
-        address = address + addr_byte_size;
+        addr_t address = Rn + addr_byte_size;
                   
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextRegisterStore;
@@ -4247,7 +4252,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
         // for i = 0 to 14
         for (int i = 0; i < 14; ++i)
         {
-            // if registers<i> == ’1’ then
+            // if registers<i> == '1' then
             if (BitIsSet (registers, i))
             {
                 if (i < lowest_set_bit)
@@ -4266,7 +4271,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
                   
                     Register data_reg;
                     data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + i);
-                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset);
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, offset + addr_byte_size);
                     if (!MemAWrite (context, address + offset, data, addr_byte_size))
                         return false;
                 }
@@ -4276,7 +4281,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
             }
         }
                   
-        // if registers<15> == ’1’ then 
+        // if registers<15> == '1' then 
             // MemA[address,4] = PCStoreValue();
         if (BitIsSet (registers, 15))
         {
@@ -4297,7 +4302,7 @@ EmulateInstructionARM::EmulateSTMIB (const uint32_t opcode, const ARMEncoding en
             offset = addr_byte_size * BitCount (registers);
             context.type = EmulateInstruction::eContextAdjustBaseRegister;
             context.SetImmediateSigned (offset);
-            addr_t data = address + offset;
+            addr_t data = Rn + offset;
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, data))
                 return false;
         }
@@ -4315,7 +4320,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
         EncodingSpecificOperations(); NullCheckIfThumbEE(n); 
         offset_addr = if add then (R[n] + imm32) else (R[n] - imm32); 
         address = if index then offset_addr else R[n]; 
-        if UnalignedSupport() || address<1:0> == ’00’ then
+        if UnalignedSupport() || address<1:0> == '00' then
             MemU[address,4] = R[t]; 
         else // Can only occur before ARMv7
             MemU[address,4] = bits(32) UNKNOWN; 
@@ -4338,7 +4343,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
         switch (encoding)
         {
             case eEncodingT1:
-                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5:’00’, 32);
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5:'00', 32);
                 t = Bits32 (opcode, 2, 0);
                 n = Bits32 (opcode, 5, 3);
                 imm32 = Bits32 (opcode, 10, 6) << 2;
@@ -4350,7 +4355,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
                 break;
                   
             case eEncodingT2:
-                // t = UInt(Rt); n = 13; imm32 = ZeroExtend(imm8:’00’, 32);
+                // t = UInt(Rt); n = 13; imm32 = ZeroExtend(imm8:'00', 32);
                 t = Bits32 (opcode, 10, 8);
                 n = 13;
                 imm32 = Bits32 (opcode, 7, 0) << 2;
@@ -4362,7 +4367,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
                 break;
                   
             case eEncodingT3:
-                // if Rn == ’1111’ then UNDEFINED;
+                // if Rn == '1111' then UNDEFINED;
                 if (Bits32 (opcode, 19, 16) == 15)
                     return false;
                   
@@ -4382,9 +4387,9 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
                 break;
                   
             case eEncodingT4:
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE STRT; 
-                // if Rn == ’1101’ && P == ’1’ && U == ’0’ && W == ’1’ && imm8 == ’00000100’ then SEE PUSH;
-                // if Rn == ’1111’ || (P == ’0’ && W == ’0’) then UNDEFINED;
+                // if P == '1' && U == '1' && W == '0' then SEE STRT; 
+                // if Rn == '1101' && P == '1' && U == '0' && W == '1' && imm8 == '00000100' then SEE PUSH;
+                // if Rn == '1111' || (P == '0' && W == '0') then UNDEFINED;
                 if ((Bits32 (opcode, 19, 16) == 15)
                       || (BitIsClear (opcode, 10) && BitIsClear (opcode, 8)))
                     return false;
@@ -4394,7 +4399,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1'); 
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -4432,7 +4437,7 @@ EmulateInstructionARM::EmulateSTRThumb (const uint32_t opcode, const ARMEncoding
         Register base_reg;
         base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 +  n);
                   
-        // if UnalignedSupport() || address<1:0> == ’00’ then
+        // if UnalignedSupport() || address<1:0> == '00' then
         if (UnalignedSupport () || (BitIsClear (address, 1) && BitIsClear (address, 0)))
         {
             // MemU[address,4] = R[t]; 
@@ -4480,7 +4485,7 @@ EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncod
             data = PCStoreValue(); 
         else
             data = R[t]; 
-        if UnalignedSupport() || address<1:0> == ’00’ || CurrentInstrSet() == InstrSet_ARM then
+        if UnalignedSupport() || address<1:0> == '00' || CurrentInstrSet() == InstrSet_ARM then
             MemU[address,4] = data; 
         else // Can only occur before ARMv7
             MemU[address,4] = bits(32) UNKNOWN; 
@@ -4523,7 +4528,7 @@ EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncod
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then UNDEFINED; 
+                // if Rn == '1111' then UNDEFINED; 
                 if (Bits32 (opcode, 19, 16) == 15)
                     return false;
                   
@@ -4548,13 +4553,13 @@ EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncod
                   
             case eEncodingA1:
             {
-                // if P == ’0’ && W == ’1’ then SEE STRT; 
+                // if P == '0' && W == '1' then SEE STRT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm);
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’);
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1');
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -4620,7 +4625,7 @@ EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncod
         EmulateInstruction::Context context;
         context.type = eContextRegisterStore;
 
-        // if UnalignedSupport() || address<1:0> == ’00’ || CurrentInstrSet() == InstrSet_ARM then
+        // if UnalignedSupport() || address<1:0> == '00' || CurrentInstrSet() == InstrSet_ARM then
         if (UnalignedSupport () 
             || (BitIsClear (address, 1) && BitIsClear (address, 0)) 
             || CurrentInstrSet() == eModeARM)
@@ -4694,7 +4699,7 @@ EmulateInstructionARM::EmulateSTRBThumb (const uint32_t opcode, const ARMEncodin
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then UNDEFINED; 
+                // if Rn == '1111' then UNDEFINED; 
                 if (Bits32 (opcode, 19, 16) == 15)
                     return false;
                   
@@ -4714,8 +4719,8 @@ EmulateInstructionARM::EmulateSTRBThumb (const uint32_t opcode, const ARMEncodin
                 break;
                   
             case eEncodingT3:
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE STRBT; 
-                // if Rn == ’1111’ || (P == ’0’ && W == ’0’) then UNDEFINED; 
+                // if P == '1' && U == '1' && W == '0' then SEE STRBT; 
+                // if Rn == '1111' || (P == '0' && W == '0') then UNDEFINED; 
                 if (Bits32 (opcode, 19, 16) == 15)
                     return false;
                   
@@ -4724,7 +4729,7 @@ EmulateInstructionARM::EmulateSTRBThumb (const uint32_t opcode, const ARMEncodin
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’);
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1');
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -4801,7 +4806,7 @@ EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEnco
         offset = Shift(R[m], shift_t, shift_n, APSR.C); 
         offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         address = if index then offset_addr else R[n]; 
-        if UnalignedSupport() || address<0> == ’0’ then
+        if UnalignedSupport() || address<0> == '0' then
             MemU[address,2] = R[t]<15:0>; 
         else // Can only occur before ARMv7
             MemU[address,2] = bits(16) UNKNOWN; 
@@ -4843,7 +4848,7 @@ EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEnco
                 break;
                 
             case eEncodingT2:
-                // if Rn == ’1111’ then UNDEFINED; 
+                // if Rn == '1111' then UNDEFINED; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -4867,13 +4872,13 @@ EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEnco
                 break;
                 
             case eEncodingA1:
-                // if P == ’0’ && W == ’1’ then SEE STRHT; 
+                // if P == '0' && W == '1' then SEE STRHT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                 
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -4928,7 +4933,7 @@ EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEnco
         Register offset_reg;
         offset_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
 
-        // if UnalignedSupport() || address<0> == ’0’ then
+        // if UnalignedSupport() || address<0> == '0' then
         if (UnalignedSupport() || BitIsClear (address, 0))
         {
             // MemU[address,2] = R[t]<15:0>; 
@@ -5393,7 +5398,7 @@ EmulateInstructionARM::EmulateBICImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
-            // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
                 return false;
@@ -5475,7 +5480,7 @@ EmulateInstructionARM::EmulateBICReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
-            // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+            // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
             // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
                 return false;
@@ -5520,8 +5525,8 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
         data = MemU[address,4]; 
         if wback then R[n] = offset_addr; 
         if t == 15 then
-            if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE; 
-        elsif UnalignedSupport() || address<1:0> = ’00’ then
+            if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE; 
+        elsif UnalignedSupport() || address<1:0> = '00' then
             R[t] = data; 
         else // Can only apply before ARMv7
             R[t] = ROR(data, 8*UInt(address<1:0>));
@@ -5543,18 +5548,18 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
         switch (encoding)
         {
             case eEncodingA1:
-                // if Rn == ’1111’ then SEE LDR (literal);
-                // if P == ’0’ && W == ’1’ then SEE LDRT; 
-                // if Rn == ’1101’ && P == ’0’ && U == ’1’ && W == ’0’ && imm12 == ’000000000100’ then SEE POP; 
+                // if Rn == '1111' then SEE LDR (literal);
+                // if P == '0' && W == '1' then SEE LDRT; 
+                // if Rn == '1101' && P == '0' && U == '1' && W == '0' && imm12 == '000000000100' then SEE POP; 
                 // t == UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 11, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’);
-                  index = BitIsSet (opcode, 24);
-                  add = BitIsSet (opcode, 23);
-                  wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1');
+                index = BitIsSet (opcode, 24);
+                add = BitIsSet (opcode, 23);
+                wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
                   
                 // if wback && n == t then UNPREDICTABLE;
                 if (wback && (n == t))
@@ -5609,7 +5614,7 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
         // if t == 15 then
         if (t == 15)
         {
-            // if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE; 
+            // if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE; 
             if (BitIsClear (address, 1) && BitIsClear (address, 0))
             {
                 // LoadWritePC (data);
@@ -5620,7 +5625,7 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
             else
                   return false;
         }
-        // elsif UnalignedSupport() || address<1:0> = ’00’ then
+        // elsif UnalignedSupport() || address<1:0> = '00' then
         else if (UnalignedSupport() || (BitIsClear (address, 1) && BitIsClear (address, 0)))
         {
             // R[t] = data; 
@@ -5658,8 +5663,8 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
         data = MemU[address,4]; 
         if wback then R[n] = offset_addr; 
         if t == 15 then
-            if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE; 
-        elsif UnalignedSupport() || address<1:0> = ’00’ then
+            if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE; 
+        elsif UnalignedSupport() || address<1:0> = '00' then
             R[t] = data; 
         else // Can only apply before ARMv7
             if CurrentInstrSet() == InstrSet_ARM then 
@@ -5704,7 +5709,7 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then SEE LDR (literal);
+                // if Rn == '1111' then SEE LDR (literal);
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm);
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -5731,13 +5736,13 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
                   
             case eEncodingA1:
             {
-                // if P == ’0’ && W == ’1’ then SEE LDRT; 
+                // if P == '0' && W == '1' then SEE LDRT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm);
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -5812,7 +5817,7 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
         // if t == 15 then
         if (t == 15)
         {
-            // if address<1:0> == ’00’ then LoadWritePC(data); else UNPREDICTABLE;
+            // if address<1:0> == '00' then LoadWritePC(data); else UNPREDICTABLE;
             if (BitIsClear (address, 1) && BitIsClear (address, 0))
             {
                 context.type = eContextRegisterLoad;
@@ -5822,7 +5827,7 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
             else
                 return false;
         }
-        // elsif UnalignedSupport() || address<1:0> = ’00’ then
+        // elsif UnalignedSupport() || address<1:0> = '00' then
         else if (UnalignedSupport () || (BitIsClear (address, 1) && BitIsClear (address, 0)))
         {
             // R[t] = data; 
@@ -5894,8 +5899,8 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT2:
-                // if Rt == ’1111’ then SEE PLD; 
-                // if Rn == ’1111’ then SEE LDRB (literal); 
+                // if Rt == '1111' then SEE PLD; 
+                // if Rn == '1111' then SEE LDRB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -5913,10 +5918,10 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT3:
-                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE PLD; 
-                // if Rn == ’1111’ then SEE LDRB (literal); 
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRBT; 
-                // if P == ’0’ && W == ’0’ then UNDEFINED;
+                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE PLD; 
+                // if Rn == '1111' then SEE LDRB (literal); 
+                // if P == '1' && U == '1' && W == '0' then SEE LDRBT; 
+                // if P == '0' && W == '0' then UNDEFINED;
                 if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                     return false;
                   
@@ -5925,7 +5930,7 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1'); 
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -6011,8 +6016,8 @@ EmulateInstructionARM::EmulateLDRBLiteral (const uint32_t opcode, const ARMEncod
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == ’1111’ then SEE PLD; 
-                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                // if Rt == '1111' then SEE PLD; 
+                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
@@ -6024,7 +6029,7 @@ EmulateInstructionARM::EmulateLDRBLiteral (const uint32_t opcode, const ARMEncod
                 break;
                   
             case eEncodingA1:
-                // t == UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                // t == UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
@@ -6116,8 +6121,8 @@ EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEnco
                 break;
                   
             case eEncodingT2:
-                // if Rt == ’1111’ then SEE PLD; 
-                // if Rn == ’1111’ then SEE LDRB (literal); 
+                // if Rt == '1111' then SEE PLD; 
+                // if Rn == '1111' then SEE LDRB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6139,13 +6144,13 @@ EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEnco
                   
             case eEncodingA1:
             {
-                // if P == ’0’ && W == ’1’ then SEE LDRBT; 
+                // if P == '0' && W == '1' then SEE LDRBT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -6235,7 +6240,7 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
         address = if index then offset_addr else R[n]; 
         data = MemU[address,2]; 
         if wback then R[n] = offset_addr; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = ZeroExtend(data, 32); 
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -6257,7 +6262,7 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
         switch (encoding)
         {
             case eEncodingT1:
-                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5:’0’, 32);
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm5:'0', 32);
                 t = Bits32 (opcode, 2, 0);
                 n = Bits32 (opcode, 5, 3);
                 imm32 = Bits32 (opcode, 10, 6) << 1;
@@ -6270,8 +6275,8 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT2:
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
-                // if Rn == ’1111’ then SEE LDRH (literal); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
+                // if Rn == '1111' then SEE LDRH (literal); 
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6288,10 +6293,10 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT3:
-                // if Rn == ’1111’ then SEE LDRH (literal); 
-                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE "Unallocated memory hints"; 
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRHT; 
-                // if P == ’0’ && W == ’0’ then UNDEFINED; 
+                // if Rn == '1111' then SEE LDRH (literal); 
+                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE "Unallocated memory hints"; 
+                // if P == '1' && U == '1' && W == '0' then SEE LDRHT; 
+                // if P == '0' && W == '0' then UNDEFINED; 
                 if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                     return false;
                   
@@ -6300,7 +6305,7 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1'); 
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -6354,7 +6359,7 @@ EmulateInstructionARM::EmulateLDRHImmediate (const uint32_t opcode, const ARMEnc
                 return false;
         }
                   
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport () || BitIsClear (address, 0))
         {
             // R[t] = ZeroExtend(data, 32); 
@@ -6383,7 +6388,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (const uint32_t opcode, const ARMEncod
         base = Align(PC,4); 
         address = if add then (base + imm32) else (base - imm32); 
         data = MemU[address,2]; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = ZeroExtend(data, 32); 
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -6401,8 +6406,8 @@ EmulateInstructionARM::EmulateLDRHLiteral (const uint32_t opcode, const ARMEncod
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
-                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
+                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
@@ -6418,7 +6423,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (const uint32_t opcode, const ARMEncod
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
                   
-                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == ’1’);
+                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == '1');
                 t = Bits32 (opcode, 15, 12);
                 imm32 = (imm4H << 4) | imm4L;
                 add = BitIsSet (opcode, 23);
@@ -6460,7 +6465,7 @@ EmulateInstructionARM::EmulateLDRHLiteral (const uint32_t opcode, const ARMEncod
             return false;
                   
         
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport () || BitIsClear (address, 0))
         {
             // R[t] = ZeroExtend(data, 32); 
@@ -6493,7 +6498,7 @@ EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEnco
         address = if index then offset_addr else R[n]; 
         data = MemU[address,2]; 
         if wback then R[n] = offset_addr; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = ZeroExtend(data, 32); 
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -6534,8 +6539,8 @@ EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEnco
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then SEE LDRH (literal); 
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
+                // if Rn == '1111' then SEE LDRH (literal); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6556,13 +6561,13 @@ EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEnco
                 break;
                   
             case eEncodingA1:
-                // if P == ’0’ && W == ’1’ then SEE LDRHT; 
+                // if P == '0' && W == '1' then SEE LDRHT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -6634,7 +6639,7 @@ EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEnco
                 return false;
         }
                   
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport() || BitIsClear (address, 0))
         {
             // R[t] = ZeroExtend(data, 32);
@@ -6682,8 +6687,8 @@ EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEn
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == ’1111’ then SEE PLI; 
-                // if Rn == ’1111’ then SEE LDRSB (literal); 
+                // if Rt == '1111' then SEE PLI; 
+                // if Rn == '1111' then SEE LDRSB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6701,10 +6706,10 @@ EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEn
                 break;
                   
             case eEncodingT2:
-                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE PLI; 
-                // if Rn == ’1111’ then SEE LDRSB (literal); 
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRSBT; 
-                // if P == ’0’ && W == ’0’ then UNDEFINED;
+                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE PLI; 
+                // if Rn == '1111' then SEE LDRSB (literal); 
+                // if P == '1' && U == '1' && W == '0' then SEE LDRSBT; 
+                // if P == '0' && W == '0' then UNDEFINED;
                 if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                     return false;
                   
@@ -6713,21 +6718,23 @@ EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEn
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1'); 
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
                   
                 // if BadReg(t) || (wback && n == t) then UNPREDICTABLE;
-                if (BadReg (t) || (wback && (n == t)))
+                  if (((t == 13) || ((t == 15) 
+                                     && (BitIsClear (opcode, 10) || BitIsSet (opcode, 9) || BitIsSet (opcode, 8)))) 
+                      || (wback && (n == t)))
                     return false;
                   
                 break;
                   
             case eEncodingA1:
             {
-                // if Rn == ’1111’ then SEE LDRSB (literal); 
-                // if P == ’0’ && W == ’1’ then SEE LDRSBT; 
+                // if Rn == '1111' then SEE LDRSB (literal); 
+                // if P == '0' && W == '1' then SEE LDRSBT; 
                 // t == UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm4H:imm4L, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6736,7 +6743,7 @@ EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEn
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
                 imm32 = (imm4H << 4) | imm4L;
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = (BitIsClear (opcode, 24) || BitIsSet (opcode, 21));
@@ -6752,7 +6759,7 @@ EmulateInstructionARM::EmulateLDRSBImmediate (const uint32_t opcode, const ARMEn
                 return false;
         }
                   
-        uint64_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
+        uint64_t Rn = ReadCoreReg (n, &success);
         if (!success)
             return false;
                   
@@ -6825,8 +6832,8 @@ EmulateInstructionARM::EmulateLDRSBLiteral (const uint32_t opcode, const ARMEnco
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == ’1111’ then SEE PLI; 
-                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                // if Rt == '1111' then SEE PLI; 
+                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
@@ -6839,7 +6846,7 @@ EmulateInstructionARM::EmulateLDRSBLiteral (const uint32_t opcode, const ARMEnco
                   
             case eEncodingA1:
             {
-                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == ’1’); 
+                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
@@ -6939,8 +6946,8 @@ EmulateInstructionARM::EmulateLDRSBRegister (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT2:
-                // if Rt == ’1111’ then SEE PLI; 
-                // if Rn == ’1111’ then SEE LDRSB (literal); 
+                // if Rt == '1111' then SEE PLI; 
+                // if Rn == '1111' then SEE LDRSB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6961,13 +6968,13 @@ EmulateInstructionARM::EmulateLDRSBRegister (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingA1:
-                // if P == ’0’ && W == ’1’ then SEE LDRSBT; 
+                // if P == '0' && W == '1' then SEE LDRSBT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = BitIsClear (opcode, 24) || BitIsSet (opcode, 21);
@@ -7058,7 +7065,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
         address = if index then offset_addr else R[n]; 
         data = MemU[address,2]; 
         if wback then R[n] = offset_addr; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = SignExtend(data, 32); 
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -7079,8 +7086,8 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rn == ’1111’ then SEE LDRSH (literal); 
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
+                // if Rn == '1111' then SEE LDRSH (literal); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -7098,10 +7105,10 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then SEE LDRSH (literal); 
-                // if Rt == ’1111’ && P == ’1’ && U == ’0’ && W == ’0’ then SEE "Unallocated memory hints"; 
-                // if P == ’1’ && U == ’1’ && W == ’0’ then SEE LDRSHT; 
-                // if P == ’0’ && W == ’0’ then UNDEFINED; 
+                // if Rn == '1111' then SEE LDRSH (literal); 
+                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE "Unallocated memory hints"; 
+                // if P == '1' && U == '1' && W == '0' then SEE LDRSHT; 
+                // if P == '0' && W == '0' then UNDEFINED; 
                   if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                   return false;
                   
@@ -7110,7 +7117,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
                   
-                // index = (P == ’1’); add = (U == ’1’); wback = (W == ’1’); 
+                // index = (P == '1'); add = (U == '1'); wback = (W == '1'); 
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
@@ -7123,8 +7130,8 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
                   
             case eEncodingA1:
             {
-                // if Rn == ’1111’ then SEE LDRSH (literal); 
-                // if P == ’0’ && W == ’1’ then SEE LDRSHT; 
+                // if Rn == '1111' then SEE LDRSH (literal); 
+                // if P == '0' && W == '1' then SEE LDRSHT; 
                 // t == UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm4H:imm4L, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -7132,7 +7139,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
                 imm32 = (imm4H << 4) | imm4L;
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = BitIsClear (opcode, 24) || BitIsSet (opcode, 21);
@@ -7187,7 +7194,7 @@ EmulateInstructionARM::EmulateLDRSHImmediate (const uint32_t opcode, const ARMEn
                 return false;
         }
                   
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport() || BitIsClear (address, 0))
         {
             // R[t] = SignExtend(data, 32); 
@@ -7217,7 +7224,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (const uint32_t opcode, const ARMEnco
         base = Align(PC,4); 
         address = if add then (base + imm32) else (base - imm32); 
         data = MemU[address,2]; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = SignExtend(data, 32);
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -7235,8 +7242,8 @@ EmulateInstructionARM::EmulateLDRSHLiteral (const uint32_t opcode, const ARMEnco
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
-                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == ’1’); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
+                // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32  (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
@@ -7249,7 +7256,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (const uint32_t opcode, const ARMEnco
                   
             case eEncodingA1:
             {
-                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == ’1’); 
+                // t == UInt(Rt); imm32 = ZeroExtend(imm4H:imm4L, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 uint32_t imm4H = Bits32 (opcode, 11, 8);
                 uint32_t imm4L = Bits32 (opcode, 3, 0);
@@ -7292,7 +7299,7 @@ EmulateInstructionARM::EmulateLDRSHLiteral (const uint32_t opcode, const ARMEnco
         if (!success)
             return false;
                   
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport() || BitIsClear (address, 0))
         {
             // R[t] = SignExtend(data, 32);
@@ -7323,7 +7330,7 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
         address = if index then offset_addr else R[n]; 
         data = MemU[address,2]; 
         if wback then R[n] = offset_addr; 
-        if UnalignedSupport() || address<0> = ’0’ then
+        if UnalignedSupport() || address<0> = '0' then
             R[t] = SignExtend(data, 32); 
         else // Can only apply before ARMv7
             R[t] = bits(32) UNKNOWN;
@@ -7364,8 +7371,8 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT2:
-                // if Rn == ’1111’ then SEE LDRSH (literal); 
-                // if Rt == ’1111’ then SEE "Unallocated memory hints"; 
+                // if Rn == '1111' then SEE LDRSH (literal); 
+                // if Rt == '1111' then SEE "Unallocated memory hints"; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -7387,13 +7394,13 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingA1:
-                // if P == ’0’ && W == ’1’ then SEE LDRSHT; 
+                // if P == '0' && W == '1' then SEE LDRSHT; 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                   
-                // index = (P == ’1’);	add = (U == ’1’);	wback = (P == ’0’) || (W == ’1’); 
+                // index = (P == '1');	add = (U == '1');	wback = (P == '0') || (W == '1'); 
                 index = BitIsSet (opcode, 24);
                 add = BitIsSet (opcode, 23);
                 wback = BitIsClear (opcode, 24) || BitIsSet (opcode, 21);
@@ -7466,7 +7473,7 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
                 return false;
         }
                   
-        // if UnalignedSupport() || address<0> = ’0’ then
+        // if UnalignedSupport() || address<0> = '0' then
         if (UnalignedSupport() || BitIsClear (address, 0))
         {
             // R[t] = SignExtend(data, 32); 
@@ -7518,7 +7525,7 @@ EmulateInstructionARM::EmulateSXTB (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingT2:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 11, 8);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 5, 4) << 3;
@@ -7530,7 +7537,7 @@ EmulateInstructionARM::EmulateSXTB (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingA1:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 15, 12);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 11, 10) << 3;
@@ -7600,7 +7607,7 @@ EmulateInstructionARM::EmulateSXTH (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingT2:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 11, 8);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 5, 4) << 3;
@@ -7612,7 +7619,7 @@ EmulateInstructionARM::EmulateSXTH (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingA1:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 15, 12);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 11, 10) << 3;
@@ -7682,7 +7689,7 @@ EmulateInstructionARM::EmulateUXTB (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingT2:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 11, 8);
                 m = Bits32 (opcode, 3, 0);
                   rotation = Bits32 (opcode, 5, 4) << 3;
@@ -7694,7 +7701,7 @@ EmulateInstructionARM::EmulateUXTB (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingA1:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 15, 12);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 11, 10) << 3;
@@ -7761,7 +7768,7 @@ EmulateInstructionARM::EmulateUXTH (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingT2:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 11, 8);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 5, 4) << 3;
@@ -7773,7 +7780,7 @@ EmulateInstructionARM::EmulateUXTH (const uint32_t opcode, const ARMEncoding enc
                 break;
                   
             case eEncodingA1:
-                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:’000’); 
+                // d = UInt(Rd); m = UInt(Rm); rotation = UInt(rotate:'000'); 
                 d = Bits32 (opcode, 15, 12);
                 m = Bits32 (opcode, 3, 0);
                 rotation = Bits32 (opcode, 11, 10) << 3;
@@ -7822,7 +7829,7 @@ EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding enco
         else
             address = if increment then R[n] else R[n]-8; 
             if wordhigher then address = address+4; 
-            CPSRWriteByInstr(MemA[address+4,4], ’1111’, TRUE); 
+            CPSRWriteByInstr(MemA[address+4,4], '1111', TRUE); 
             BranchWritePC(MemA[address,4]);
             if wback then R[n] = if increment then R[n]+8 else R[n]-8;
 #endif
@@ -7840,7 +7847,7 @@ EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding enco
         switch (encoding)
         {
             case eEncodingT1:
-                // n = UInt(Rn); wback = (W == ’1’); increment = FALSE; wordhigher = FALSE; 
+                // n = UInt(Rn); wback = (W == '1'); increment = FALSE; wordhigher = FALSE; 
                 n = Bits32 (opcode, 19, 16);
                 wback = BitIsSet (opcode, 21);
                 increment = false;
@@ -7857,7 +7864,7 @@ EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding enco
                 break;
                   
             case eEncodingT2:
-                // n = UInt(Rn); wback = (W == ’1’); increment = TRUE; wordhigher = FALSE; 
+                // n = UInt(Rn); wback = (W == '1'); increment = TRUE; wordhigher = FALSE; 
                 n = Bits32 (opcode, 19, 16);
                 wback = BitIsSet (opcode, 21);
                 increment = true;
@@ -7877,7 +7884,7 @@ EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding enco
                 // n = UInt(Rn); 
                 n = Bits32 (opcode, 19, 16);
                   
-                // wback = (W == ’1’); inc = (U == ’1’); wordhigher = (P == U); 
+                // wback = (W == '1'); inc = (U == '1'); wordhigher = (P == U); 
                 wback = BitIsSet (opcode, 21);
                 increment = BitIsSet (opcode, 23);
                 wordhigher = (Bit32 (opcode, 24) == Bit32 (opcode, 23));
@@ -7913,7 +7920,7 @@ EmulateInstructionARM::EmulateRFE (const uint32_t opcode, const ARMEncoding enco
             if (wordhigher)
                 address = address + 4;
                   
-            // CPSRWriteByInstr(MemA[address+4,4], ’1111’, TRUE);
+            // CPSRWriteByInstr(MemA[address+4,4], '1111', TRUE);
             Register base_reg;
             base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
                   
@@ -8158,7 +8165,7 @@ EmulateInstructionARM::EmulateORRImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ThumbExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ThumbExpandImm(i:imm3:imm8, APSR.C)
-            // if Rn == ‘1111’ then SEE MOV (immediate);
+            // if Rn == '1111' then SEE MOV (immediate);
             if (Rn == 15)
                 return EmulateMOVRdImm (opcode, eEncodingT2);
             if (BadReg(Rd) || Rn == 13)
@@ -8757,7 +8764,7 @@ EmulateInstructionARM::EmulateSUBImmThumb (const uint32_t opcode, const ARMEncod
         if (Rd == 15 && setflags)
             return EmulateCMPImm (opcode, eEncodingT2);
 
-        // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
+        // if Rn == '1101' then SEE SUB (SP minus immediate);
         if (Rn == 13)
             return EmulateSUBSPImm (opcode, eEncodingT2);
 
@@ -8836,11 +8843,11 @@ EmulateInstructionARM::EmulateSUBImmARM (const uint32_t opcode, const ARMEncodin
         setflags = BitIsSet(opcode, 20);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
 
-        // if Rn == ‘1111’ && S == ‘0’ then SEE ADR;
+        // if Rn == '1111' && S == '0' then SEE ADR;
         if (Rn == 15 && !setflags)
             return EmulateADR (opcode, eEncodingA2);
 
-        // if Rn == ‘1101’ then SEE SUB (SP minus immediate);
+        // if Rn == '1101' then SEE SUB (SP minus immediate);
         if (Rn == 13)
             return EmulateSUBSPImm (opcode, eEncodingA1);
 
