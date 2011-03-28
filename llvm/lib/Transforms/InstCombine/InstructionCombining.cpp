@@ -601,7 +601,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 
   // Okay, we can do the transformation: create the new PHI node.
   PHINode *NewPN = PHINode::Create(I.getType(), "");
-  NewPN->reserveOperandSpace(PN->getNumOperands()/2);
+  NewPN->reserveOperandSpace(PN->getNumIncomingValues());
   InsertNewInstBefore(NewPN, *PN);
   NewPN->takeName(PN);
   

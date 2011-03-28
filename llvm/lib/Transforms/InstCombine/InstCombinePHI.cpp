@@ -82,7 +82,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   if (LHSVal == 0) {
     NewLHS = PHINode::Create(LHSType,
                              FirstInst->getOperand(0)->getName() + ".pn");
-    NewLHS->reserveOperandSpace(PN.getNumOperands()/2);
+    NewLHS->reserveOperandSpace(PN.getNumIncomingValues());
     NewLHS->addIncoming(InLHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewLHS, PN);
     LHSVal = NewLHS;
@@ -91,7 +91,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   if (RHSVal == 0) {
     NewRHS = PHINode::Create(RHSType,
                              FirstInst->getOperand(1)->getName() + ".pn");
-    NewRHS->reserveOperandSpace(PN.getNumOperands()/2);
+    NewRHS->reserveOperandSpace(PN.getNumIncomingValues());
     NewRHS->addIncoming(InRHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewRHS, PN);
     RHSVal = NewRHS;
@@ -341,7 +341,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   // correct type, and PHI together all of the LHS's of the instructions.
   PHINode *NewPN = PHINode::Create(FirstLI->getOperand(0)->getType(),
                                    PN.getName()+".in");
-  NewPN->reserveOperandSpace(PN.getNumOperands()/2);
+  NewPN->reserveOperandSpace(PN.getNumIncomingValues());
   
   Value *InVal = FirstLI->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
@@ -447,7 +447,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // correct type, and PHI together all of the LHS's of the instructions.
   PHINode *NewPN = PHINode::Create(FirstInst->getOperand(0)->getType(),
                                    PN.getName()+".in");
-  NewPN->reserveOperandSpace(PN.getNumOperands()/2);
+  NewPN->reserveOperandSpace(PN.getNumIncomingValues());
 
   Value *InVal = FirstInst->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
