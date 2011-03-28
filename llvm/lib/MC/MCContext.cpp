@@ -28,7 +28,8 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 MCContext::MCContext(const MCAsmInfo &mai, const TargetAsmInfo *tai) :
   MAI(mai), TAI(tai), NextUniqueID(0),
-  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0) {
+  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
+  AllowTemporaryLabels(true) {
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
   COFFUniquingMap = 0;
@@ -76,8 +77,10 @@ MCSymbol *MCContext::GetOrCreateSymbol(StringRef Name) {
 }
 
 MCSymbol *MCContext::CreateSymbol(StringRef Name) {
-  // Determine whether this is an assembler temporary or normal label.
-  bool isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
+  // Determine whether this is an assembler temporary or normal label, if used.
+  bool isTemporary = false;
+  if (AllowTemporaryLabels)
+    isTemporary = Name.startswith(MAI.getPrivateGlobalPrefix());
 
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   if (NameEntry->getValue()) {

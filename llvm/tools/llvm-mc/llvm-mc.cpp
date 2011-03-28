@@ -113,6 +113,10 @@ static cl::opt<bool>
 NoInitialTextSection("n", cl::desc(
                    "Don't assume assembly file starts in the text section"));
 
+static cl::opt<bool>
+SaveTempLabels("L", cl::desc(
+                 "Don't discard temporary labels"));
+
 enum ActionType {
   AC_AsLex,
   AC_Assemble,
@@ -327,6 +331,8 @@ static int AssembleInput(const char *ProgName) {
 
   const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
   MCContext Ctx(*MAI, tai);
+  if (SaveTempLabels)
+    Ctx.setAllowTemporaryLabels(false);
 
   OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)

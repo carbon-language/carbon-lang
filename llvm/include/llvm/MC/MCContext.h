@@ -84,6 +84,11 @@ namespace llvm {
     MCDwarfLoc CurrentDwarfLoc;
     bool DwarfLocSeen;
 
+    /// Honor temporary labels, this is useful for debugging semantic
+    /// differences between temporary and non-temporary labels (primarily on
+    /// Darwin).
+    bool AllowTemporaryLabels;
+
     /// The dwarf line information from the .loc directives for the sections
     /// with assembled machine instructions have after seeing .loc directives.
     DenseMap<const MCSection *, MCLineSection *> MCLineSections;
@@ -108,6 +113,8 @@ namespace llvm {
     const MCAsmInfo &getAsmInfo() const { return MAI; }
 
     const TargetAsmInfo &getTargetAsmInfo() const { return *TAI; }
+
+    void setAllowTemporaryLabels(bool Value) { AllowTemporaryLabels = Value; }
 
     /// @name Symbol Management
     /// @{
