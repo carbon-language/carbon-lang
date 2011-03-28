@@ -1,7 +1,8 @@
 
 add_llvm_library(LLVMMCDisassembler
+  Disassembler.cpp
   EDDisassembler.cpp
-  EDOperand.cpp
   EDInst.cpp
+  EDOperand.cpp
   EDToken.cpp
   )
