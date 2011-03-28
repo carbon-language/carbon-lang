@@ -71,6 +71,7 @@ struct AssemblerInvocation {
 
   std::vector<std::string> IncludePaths;
   unsigned NoInitialTextSection : 1;
+  unsigned SaveTemporaryLabels : 1;
 
   /// @}
   /// @name Frontend Options
@@ -156,6 +157,7 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   // Language Options
   Opts.IncludePaths = Args->getAllArgValues(OPT_I);
   Opts.NoInitialTextSection = Args->hasArg(OPT_n);
+  Opts.SaveTemporaryLabels = Args->hasArg(OPT_L);
 
   // Frontend Options
   if (Args->hasArg(OPT_INPUT)) {
@@ -265,6 +267,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
 
   const TargetAsmInfo *tai = new TargetAsmInfo(*TM);
   MCContext Ctx(*MAI, tai);
+  if (Opts.SaveTemporaryLabels)
+    Ctx.setAllowTemporaryLabels(false);
 
   OwningPtr<MCStreamer> Str;
 
