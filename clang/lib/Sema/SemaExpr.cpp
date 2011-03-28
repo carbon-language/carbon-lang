@@ -9839,6 +9839,9 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
   SourceLocation parenLoc = parenE->getLocStart();
   if (parenLoc.isInvalid() || parenLoc.isMacroID())
     return;
+  // Don't warn for dependent expressions.
+  if (parenE->isTypeDependent())
+    return;
 
   Expr *E = parenE->IgnoreParens();
 
