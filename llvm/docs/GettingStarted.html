@@ -312,6 +312,11 @@ software you will need.</p>
   <td>Itanium (IA-64)</td>
   <td>HP aCC</td>
 </tr>
+<tr>
+  <td>Windows x64</td>
+  <td>x86-64</td>
+  <td>mingw-w64's GCC-4.5.x<sup><a href="#pf_12">12</a></sup></td>
+</tr>
 </table>
 
 <p><b>Notes:</b></p>
@@ -340,6 +345,8 @@ up</a></li>
     build to fail.</a></li>
 <li><a name="pf_11">To use LLVM modules on Win32-based system,
     you may configure LLVM with <i>&quot;--enable-shared&quot;</i>.</li>
+<li><a name="pf_12">To compile SPU backend, you need to add
+    <tt>&quot;LDFLAGS=-Wl,--stack,16777216&quot;</tt> to configure.</li>
 </ol>
 </div>
 
