@@ -11,7 +11,7 @@ from optparse import OptionParser
 
 def setupSysPath():
     """
-    Add LLDB.framework/Resources/Python to the search paths for modules.
+    Add LLDB.framework/Resources/Python and the test dir to the sys.path.
     """
     # Get the directory containing the current script.
     scriptPath = sys.path[0]
