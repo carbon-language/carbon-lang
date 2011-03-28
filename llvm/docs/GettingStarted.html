@@ -268,7 +268,8 @@ software you will need.</p>
 <tr>
   <td>MinGW/Win32</td>
   <td>x86<sup><a href="#pf_1">1</a>,<a href="#pf_6">6</a>,
-     <a href="#pf_8">8</a>, <a href="#pf_10">10</a></sup></td>
+     <a href="#pf_8">8</a>, <a href="#pf_10">10</a>,
+     <a href="#pf_11">11</a></sup></td>
   <td>GCC 3.4.X, binutils 2.20</td>
 </tr>
 </table>
@@ -337,9 +338,8 @@ up</a></li>
     before any Windows-based versions such as Strawberry Perl and
     ActivePerl, as these have Windows-specifics that will cause the
     build to fail.</a></li>
-<li><a name="pf_11">In general, LLVM modules requiring dynamic linking can
-    not be built on Windows. However, you can build LLVM tools using
-    <i>"make tools-only"</i>.</li>
+<li><a name="pf_11">To use LLVM modules on Win32-based system,
+    you may configure LLVM with <i>&quot;--enable-shared&quot;</i>.</li>
 </ol>
 </div>
 
