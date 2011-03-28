@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -fsyntax-only -verify %s
+// RUN: %clang_cc1  -fsyntax-only -fblocks -verify %s
 // rdar://9181463
 
 typedef struct objc_class *Class;
@@ -14,6 +14,9 @@ typedef struct objc_object {
 
 void foo(Class self) {
   [self alloc];
+  (^() {
+    [self alloc];
+   })();
 }
 
 void bar(Class self) {
