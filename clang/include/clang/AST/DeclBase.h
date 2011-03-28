@@ -441,7 +441,7 @@ public:
   /// \brief Determine whether this is a weak-imported symbol.
   ///
   /// Weak-imported symbols are typically marked with the
-  /// 'weak_import' attr ibute, but may also be marked with an
+  /// 'weak_import' attribute, but may also be marked with an
   /// 'availability' attribute where we're targing a platform prior to
   /// the introduction of this feature.
   bool isWeakImported() const;
