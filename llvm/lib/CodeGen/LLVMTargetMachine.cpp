@@ -126,6 +126,9 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     return true;
   assert(Context != 0 && "Failed to get MCContext");
 
+  if (hasMCSaveTempLabels())
+    Context->setAllowTemporaryLabels(false);
+
   const MCAsmInfo &MAI = *getMCAsmInfo();
   OwningPtr<MCStreamer> AsmStreamer;
 
@@ -230,6 +233,9 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   // Add common CodeGen passes.
   if (addCommonCodeGenPasses(PM, OptLevel, DisableVerify, Ctx))
     return true;
+
+  if (hasMCSaveTempLabels())
+    Ctx->setAllowTemporaryLabels(false);
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.

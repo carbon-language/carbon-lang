@@ -106,6 +106,7 @@ protected: // Can only create subclasses.
 
   unsigned MCRelaxAll : 1;
   unsigned MCNoExecStack : 1;
+  unsigned MCSaveTempLabels : 1;
   unsigned MCUseLoc : 1;
 
 public:
@@ -171,6 +172,14 @@ public:
   /// setMCRelaxAll - Set whether all machine code instructions should be
   /// relaxed.
   void setMCRelaxAll(bool Value) { MCRelaxAll = Value; }
+
+  /// hasMCSaveTempLabels - Check whether temporary labels will be preserved
+  /// (i.e., not treated as temporary).
+  bool hasMCSaveTempLabels() const { return MCSaveTempLabels; }
+
+  /// setMCSaveTempLabels - Set whether temporary labels will be preserved
+  /// (i.e., not treated as temporary).
+  void setMCSaveTempLabels(bool Value) { MCSaveTempLabels = Value; }
 
   /// hasMCNoExecStack - Check whether an executable stack is not needed.
   bool hasMCNoExecStack() const { return MCNoExecStack; }
