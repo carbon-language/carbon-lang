@@ -1,6 +1,6 @@
 ; This test case checks handling of llvm.dbg.declare intrinsic during isel.
-; RUN: %clang -mllvm -fast-isel=false -mllvm -regalloc=default -g %s -c -o %t.o
-; RUN: %clang %t.o -o %t.out
+; RUN: %clang -arch x86_64 -mllvm -fast-isel=false -mllvm -regalloc=default -g %s -c -o %t.o
+; RUN: %clang -arch x86_64 %t.o -o %t.out
 ; RUN: %test_debuginfo %s %t.out
 
 target triple = "x86_64-apple-darwin"

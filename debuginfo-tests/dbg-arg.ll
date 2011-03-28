@@ -1,6 +1,6 @@
 ; This test case checks debug info during register moves for an argument.
-; RUN: %clang -mllvm -fast-isel=false  %s -c -o %t.o
-; RUN: %clang %t.o -o %t.out
+; RUN: %clang -arch x86_64 -mllvm -fast-isel=false  %s -c -o %t.o
+; RUN: %clang -arch x86_64 %t.o -o %t.out
 ; RUN: %test_debuginfo %s %t.out
 ; Radar 8412415
 
