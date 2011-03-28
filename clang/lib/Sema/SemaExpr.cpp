@@ -7282,9 +7282,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
 
   // If AltiVec, the comparison results in a numeric type, i.e.
   // bool for C++, int for C
-  if (lType->getAs<VectorType>()->getVectorKind() == VectorType::AltiVecVector
-      && rType->getAs<VectorType>()->getVectorKind() ==
-         VectorType::AltiVecVector)
+  if (vType->getAs<VectorType>()->getVectorKind() == VectorType::AltiVecVector)
     return Context.getLogicalOperationType();
 
   // For non-floating point types, check for self-comparisons of the form

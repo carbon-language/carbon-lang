@@ -2119,9 +2119,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
 
     // If AltiVec, the comparison results in a numeric type, so we use
     // intrinsics comparing vectors and giving 0 or 1 as a result
-    if (LHSTy->isVectorType() &&
-        LHSTy->getAs<VectorType>()->getVectorKind() ==
-          VectorType::AltiVecVector) {
+    if (LHSTy->isVectorType() && !E->getType()->isVectorType()) {
       // constants for mapping CR6 register bits to predicate result
       enum { CR6_EQ=0, CR6_EQ_REV, CR6_LT, CR6_LT_REV } CR6;
 
