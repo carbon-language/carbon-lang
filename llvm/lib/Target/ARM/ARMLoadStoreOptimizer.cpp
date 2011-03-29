@@ -350,6 +350,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   bool isDef = (isi32Load(Opcode) || Opcode == ARM::VLDRS ||
                 Opcode == ARM::VLDRD);
   Opcode = getLoadStoreMultipleOpcode(Opcode, Mode);
+  if (!Opcode) return false;
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII->get(Opcode))
     .addReg(Base, getKillRegState(BaseKill))
     .addImm(Pred).addReg(PredReg);
