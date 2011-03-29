@@ -11,9 +11,11 @@ macro(add_llvm_library name)
 
   if( BUILD_SHARED_LIBS )
     llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-    get_system_libs(sl)
-    target_link_libraries( ${name} ${sl} )
   endif()
+
+  # Ensure that the system libraries always comes last on the
+  # list. Without this, linking the unit tests on MinGW fails.
+  link_system_libs( ${name} )
 
   install(TARGETS ${name}
     LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
@@ -47,8 +49,7 @@ ${name} ignored.")
     set_target_properties( ${name} PROPERTIES PREFIX "" )
 
     llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-    get_system_libs(sl)
-    target_link_libraries( ${name} ${sl} )
+    link_system_libs( ${name} )
 
     if (APPLE)
       # Darwin-specific linker flags for loadable modules.
@@ -73,21 +74,12 @@ macro(add_llvm_executable name)
     add_executable(${name} ${ALL_FILES})
   endif()
   set(EXCLUDE_FROM_ALL OFF)
-  if( LLVM_USED_LIBS )
-    foreach(lib ${LLVM_USED_LIBS})
-      target_link_libraries( ${name} ${lib} )
-    endforeach(lib)
-  endif( LLVM_USED_LIBS )
-  if( LLVM_LINK_COMPONENTS )
-    llvm_config(${name} ${LLVM_LINK_COMPONENTS})
-  endif( LLVM_LINK_COMPONENTS )
+  target_link_libraries( ${name} ${LLVM_USED_LIBS} )
+  llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )
   endif( LLVM_COMMON_DEPENDS )
-  get_system_libs(llvm_system_libs)
-  if( llvm_system_libs )
-    target_link_libraries(${name} ${llvm_system_libs})
-  endif()
+  link_system_libs( ${name} )
 endmacro(add_llvm_executable name)
 
 

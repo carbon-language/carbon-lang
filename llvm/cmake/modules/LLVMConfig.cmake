@@ -16,6 +16,12 @@ function(get_system_libs return_var)
 endfunction(get_system_libs)
 
 
+function(link_system_libs target)
+  get_system_libs(llvm_system_libs)
+  target_link_libraries(${target} ${llvm_system_libs})
+endfunction(link_system_libs)
+
+
 function(is_llvm_target_library library return_var)
   # Sets variable `return_var' to ON if `library' corresponds to a
   # LLVM supported target. To OFF if it doesn't.
