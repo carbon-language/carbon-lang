@@ -461,6 +461,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::UDIV, MVT::v8i8, Custom);
     setOperationAction(ISD::VSETCC, MVT::v1i64, Expand);
     setOperationAction(ISD::VSETCC, MVT::v2i64, Expand);
+    // Neon does not have single instruction SINT_TO_FP and UINT_TO_FP with
+    // a destination type that is wider than the source.
+    setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Custom);
 
     setTargetDAGCombine(ISD::INTRINSIC_VOID);
     setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
@@ -2854,8 +2858,39 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op);
 }
 
+static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+
+  EVT OperandVT = Op.getOperand(0).getValueType();
+  assert(OperandVT == MVT::v4i16 && "Invalid type for custom lowering!");
+  if (VT != MVT::v4f32)
+    return DAG.UnrollVectorOp(Op.getNode());
+
+  unsigned CastOpc;
+  unsigned Opc;
+  switch (Op.getOpcode()) {
+  default:
+    assert(0 && "Invalid opcode!");
+  case ISD::SINT_TO_FP:
+    CastOpc = ISD::SIGN_EXTEND;
+    Opc = ISD::SINT_TO_FP;
+    break;
+  case ISD::UINT_TO_FP:
+    CastOpc = ISD::ZERO_EXTEND;
+    Opc = ISD::UINT_TO_FP;
+    break;
+  }
+
+  Op = DAG.getNode(CastOpc, dl, MVT::v4i32, Op.getOperand(0));
+  return DAG.getNode(Opc, dl, VT, Op);
+}
+
 static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
+  if (VT.isVector())
+    return LowerVectorINT_TO_FP(Op, DAG);
+
   DebugLoc dl = Op.getDebugLoc();
   unsigned Opc;
 
