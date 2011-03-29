@@ -160,7 +160,11 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
 
   std::string p;
   p = OS.str();
+#ifdef LLVM_ON_WIN32
+  sprintf(OutString, "%s", p.c_str());
+#else
   snprintf(OutString, OutStringSize, "%s", p.c_str());
+#endif
   return Size;
 }
 
