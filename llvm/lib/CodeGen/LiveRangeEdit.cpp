@@ -11,6 +11,7 @@
 // is spilled or split.
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "regalloc"
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/SetVector.h"

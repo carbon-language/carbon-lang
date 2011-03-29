@@ -580,7 +580,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
     DEBUG(dbgs() << "\tadding <undef> flags: ");
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() && MO.getReg() == Edit->getReg())
+      if (MO.isReg() && MO.isUse() && MO.getReg() == VirtReg.reg)
         MO.setIsUndef();
     }
     DEBUG(dbgs() << UseIdx << '\t' << *MI);
@@ -601,11 +601,11 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
     return false;
   }
 
-  // If the instruction also writes Edit->getReg(), it had better not require
-  // the same register for uses and defs.
+  // If the instruction also writes VirtReg.reg, it had better not require the
+  // same register for uses and defs.
   bool Reads, Writes;
   SmallVector<unsigned, 8> Ops;
-  tie(Reads, Writes) = MI->readsWritesVirtualRegister(Edit->getReg(), &Ops);
+  tie(Reads, Writes) = MI->readsWritesVirtualRegister(VirtReg.reg, &Ops);
   if (Writes) {
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(Ops[i]);
@@ -626,7 +626,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   }
 
   // Alocate a new register for the remat.
-  LiveInterval &NewLI = Edit->create(LIS, VRM);
+  LiveInterval &NewLI = Edit->createFrom(VirtReg.reg, LIS, VRM);
   NewLI.markNotSpillable();
 
   // Rematting for a copy: Set allocation hint to be the destination register.
@@ -642,7 +642,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   // Replace operands
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(Ops[i]);
-    if (MO.isReg() && MO.isUse() && MO.getReg() == Edit->getReg()) {
+    if (MO.isReg() && MO.isUse() && MO.getReg() == VirtReg.reg) {
       MO.setReg(NewLI.reg);
       MO.setIsKill();
     }
