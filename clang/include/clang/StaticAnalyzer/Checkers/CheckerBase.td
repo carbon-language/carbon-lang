@@ -11,17 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-class Package<string name> {
-  string       PackageName = name;
-  bit          Hidden = 0;
-  Package ParentPackage;
-}
-class InPackage<Package P> { Package ParentPackage = P; }
-
 class CheckerGroup<string name> {
   string GroupName = name;
 }
 class InGroup<CheckerGroup G> { CheckerGroup Group = G; }
+
+class Package<string name> {
+  string       PackageName = name;
+  bit          Hidden = 0;
+  Package ParentPackage;
+  CheckerGroup Group;
+}
+class InPackage<Package P> { Package ParentPackage = P; }
 
 // All checkers are an indirect subclass of this.
 class Checker<string name = ""> {
