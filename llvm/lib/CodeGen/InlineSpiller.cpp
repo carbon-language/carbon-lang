@@ -684,8 +684,7 @@ void InlineSpiller::reMaterializeAll() {
     for (LiveInterval::vni_iterator I = LI.vni_begin(), E = LI.vni_end();
          I != E; ++I) {
       VNInfo *VNI = *I;
-      if (VNI->isUnused() || VNI->isPHIDef() || VNI->hasPHIKill() ||
-          UsedValues.count(VNI))
+      if (VNI->isUnused() || VNI->isPHIDef() || UsedValues.count(VNI))
         continue;
       MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
       MI->addRegisterDead(Reg, &TRI);
@@ -693,14 +692,30 @@ void InlineSpiller::reMaterializeAll() {
         continue;
       DEBUG(dbgs() << "All defs dead: " << *MI);
       DeadDefs.push_back(MI);
-      // Remove all Reg references so we don't insert spill code around MI.
-      for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
-             MOE = MI->operands_end(); MOI != MOE ; ++MOI)
-        if (MOI->isReg() && MOI->getReg() == Reg)
-          MOI->setReg(0);
-      VNI->setIsUnused(true);
     }
   }
+
+  // Eliminate dead code after remat. Note that some snippet copies may be
+  // deleted here.
+  if (DeadDefs.empty())
+    return;
+  DEBUG(dbgs() << "Remat created " << DeadDefs.size() << " dead defs.\n");
+  Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII);
+
+  // Get rid of deleted and empty intervals.
+  for (unsigned i = RegsToSpill.size(); i != 0; --i) {
+    unsigned Reg = RegsToSpill[i-1];
+    if (!LIS.hasInterval(Reg)) {
+      RegsToSpill.erase(RegsToSpill.begin() + (i - 1));
+      continue;
+    }
+    LiveInterval &LI = LIS.getInterval(Reg);
+    if (!LI.empty())
+      continue;
+    Edit->eraseVirtReg(Reg, LIS);
+    RegsToSpill.erase(RegsToSpill.begin() + (i - 1));
+  }
+  DEBUG(dbgs() << RegsToSpill.size() << " registers to spill after remat.\n");
 }
 
 /// If MI is a load or store of StackSlot, it can be removed.
@@ -913,7 +928,7 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   reMaterializeAll();
 
   // Remat may handle everything.
-  if (Edit->getParent().empty())
+  if (RegsToSpill.empty())
     return;
 
   // Update LiveStacks now that we are committed to spilling.
