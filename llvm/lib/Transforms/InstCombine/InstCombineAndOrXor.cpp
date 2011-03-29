@@ -756,6 +756,18 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
+
+    // (icmp slt A, 0) & (icmp slt B, 0) --> (icmp slt (A&B), 0)
+    if (LHSCC == ICmpInst::ICMP_SLT && LHSCst->isZero()) {
+      Value *NewAnd = Builder->CreateAnd(Val, Val2);
+      return Builder->CreateICmp(LHSCC, NewAnd, LHSCst);
+    }
+
+    // (icmp sgt A, -1) & (icmp sgt B, -1) --> (icmp sgt (A|B), -1)
+    if (LHSCC == ICmpInst::ICMP_SGT && LHSCst->isAllOnesValue()) {
+      Value *NewOr = Builder->CreateOr(Val, Val2);
+      return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
+    }
   }
   
   // From here on, we only handle:
@@ -1441,6 +1453,18 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     if (LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero()) {
       Value *NewOr = Builder->CreateOr(Val, Val2);
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
+    }
+
+    // (icmp slt A, 0) | (icmp slt B, 0) --> (icmp slt (A|B), 0)
+    if (LHSCC == ICmpInst::ICMP_SLT && LHSCst->isZero()) {
+      Value *NewOr = Builder->CreateOr(Val, Val2);
+      return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
+    }
+
+    // (icmp sgt A, -1) | (icmp sgt B, -1) --> (icmp sgt (A&B), -1)
+    if (LHSCC == ICmpInst::ICMP_SGT && LHSCst->isAllOnesValue()) {
+      Value *NewAnd = Builder->CreateAnd(Val, Val2);
+      return Builder->CreateICmp(LHSCC, NewAnd, LHSCst);
     }
   }
 
