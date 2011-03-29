@@ -9369,19 +9369,123 @@ bool
 EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], NOT(shifted), ‘1’);
+        if d == 15 then // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
 #endif
     
-    //bool success = false;
+    bool success = false;
     
     if (ConditionPassed(opcode))
     {
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        bool setflags;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n;
+                  
         switch (encoding)
         {
+            case eEncodingT1:
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = !InITBlock();
+                d = Bits32 (opcode, 2, 0);
+                n = Bits32 (opcode, 5, 3);
+                m = Bits32 (opcode, 8, 6);
+                setflags = !InITBlock();
+                  
+                // (shift_t, shift_n) = (SRType_LSL, 0);
+                shift_t = SRType_LSL;
+                shift_n = 0;
+                  
+                break;
+                  
+            case eEncodingT2:
+                // if Rd == ‘1111’ && S == ‘1’ then SEE CMP (register);
+                // if Rn == ‘1101’ then SEE SUB (SP minus register);
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == ‘1’);
+                d = Bits32 (opcode, 11, 8);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                setflags = BitIsSet (opcode, 20);
+                  
+                // (shift_t, shift_n) = DecodeImmShift(type, imm3:imm2);
+                shift_n = DecodeImmShiftThumb (opcode, shift_t);
+                  
+                // if d == 13 || (d == 15 && S == '0') || n == 15 || BadReg(m) then UNPREDICTABLE;
+                if ((d == 13) || ((d == 15) && BitIsClear (opcode, 20)) || (n == 15) || BadReg (m))
+                    return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                // if Rn == ‘1101’ then SEE SUB (SP minus register);
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == ‘1’);
+                d = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                setflags = BitIsSet (opcode, 20);
+                  
+                // (shift_t, shift_n) = DecodeImmShift(type, imm5);
+                shift_n = DecodeImmShiftARM (opcode, shift_t);
+                  
+                break;
+                  
+            default:
+                return false;
         }
+                  
+        // shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        uint32_t Rm = ReadCoreReg (m, &success);
+        if (!success)
+            return false;
+                  
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);
+                  
+        // (result, carry, overflow) = AddWithCarry(R[n], NOT(shifted), ‘1’);
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+                  
+        AddWithCarryResult res = AddWithCarry (Rn, ~shifted, 1);
+                  
+        // if d == 15 then // Can only occur for ARM encoding
+            // ALUWritePC(result); // setflags is always FALSE here
+        // else
+            // R[d] = result;
+            // if setflags then
+                // APSR.N = result<31>;
+                // APSR.Z = IsZeroBit(result);
+                // APSR.C = carry;
+                // APSR.V = overflow;
+                  
+        EmulateInstruction::Context context;
+        context.type = eContextSubtraction;
+        Register reg_n;
+        reg_n.SetRegister (eRegisterKindDWARF, n);
+        Register reg_m;
+        reg_m.SetRegister (eRegisterKindDWARF, m);
+        context.SetRegisterRegisterOperands (reg_n, reg_m);
+                  
+        uint32_t dest_reg_num = dwarf_r0 + d;
+                  
+        if (!WriteCoreRegOptionalFlags (context, res.result, dest_reg_num, setflags, res.carry_out, res.overflow))
+            return false;
     }
     return true;
 }
-
+                  
 // A8.6.202 STREX
 bool
 EmulateInstructionARM::EmulateSTREX (const uint32_t opcode, const ARMEncoding encoding)
@@ -10042,6 +10146,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBImmARM, "sub{s}<c> <Rd>, <Rn>, #<const>"},
         // sub (sp minus immediate)
         { 0x0fef0000, 0x024d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}<c> <Rd>, sp, #<const>"},
+        // sub (register)
+        { 0x0fe00010, 0x00400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c> <Rd>, <Rn>, <Rm>{,<shift>}"},
         // teq (immediate)
         { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
         // teq (register)
@@ -10282,6 +10388,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // sub (sp minus immediate)
         { 0xfbef8000, 0xf1ad0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}.w <Rd>, sp, #<const>"},
         { 0xfbff8000, 0xf2ad0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw<c> <Rd>, sp, #imm12"},
+        // sub (register)
+        { 0xfffffe00, 0x00001a00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBReg, "subs|sub<c> <Rd>, <Rn>, <Rm>"},
+        { 0xffe08000, 0xeba00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c>.w <Rd>, <Rn>, <Rm>{,<shift>}"},
         // teq (immediate)
         { 0xfbf08f00, 0xf0900f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #<const>"},
         // teq (register)
