@@ -215,10 +215,9 @@ bool StackProtector::InsertStackProtectors() {
     //     unreachable
 
     // Split the basic block before the return instruction.
-    bool BBIsReachable = (DT && DT->isReachableFromEntry(BB));
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
-    if (BBIsReachable) {
+    if (DT && DT->isReachableFromEntry(BB)) {
       DT->addNewBlock(NewBB, BB);
       FailBBDom = FailBBDom ? DT->findNearestCommonDominator(FailBBDom, BB) :BB;
     }
