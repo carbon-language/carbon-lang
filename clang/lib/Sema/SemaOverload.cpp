@@ -1074,9 +1074,9 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
         const Type *ClassType
           = S.Context.getTypeDeclType(Method->getParent()).getTypePtr();
         FromType = S.Context.getMemberPointerType(FromType, ClassType);
-      } else if (UnaryOperator *UnOp
-                 = dyn_cast<UnaryOperator>(From->IgnoreParens())) {
-        assert(UnOp->getOpcode() == UO_AddrOf &&
+      } else if (isa<UnaryOperator>(From->IgnoreParens())) {
+        assert(cast<UnaryOperator>(From->IgnoreParens())->getOpcode() ==
+               UO_AddrOf &&
                "Non-address-of operator for overloaded function expression");
         FromType = S.Context.getPointerType(FromType);
       }
