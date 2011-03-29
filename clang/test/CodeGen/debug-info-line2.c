@@ -6,8 +6,8 @@ int foo(int i) {
 	int j = 0;
 	if (i) {
 		j = bar();
-//CHECK:  store i32 %call, i32* %j, align 4, !dbg 
-//CHECK-NOT:  br label %if.end, !dbg 
+//CHECK: store i32
+//CHECK-NOT:  br label %{{%[a-zA-Z0-9\.]+}}, !dbg 
 	} 
 	else
 	{
