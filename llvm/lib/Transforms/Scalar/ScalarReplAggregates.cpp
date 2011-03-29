@@ -252,7 +252,7 @@ public:
 
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
-  void MergeInType(const Type *In, uint64_t Offset);
+  void MergeInType(const Type *In, uint64_t Offset, bool IsLoadOrStore);
   bool MergeInVectorType(const VectorType *VInTy, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
 
@@ -315,7 +315,8 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.  We mark this by setting VectorTy
 ///      to VoidTy.
-void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
+void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset,
+                                      bool IsLoadOrStore) {
   // If we already decided to turn this into a blob of integer memory, there is
   // nothing to be done.
   if (VectorTy && VectorTy->isVoidTy())
@@ -331,10 +332,14 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   } else if (In->isFloatTy() || In->isDoubleTy() ||
              (In->isIntegerTy() && In->getPrimitiveSizeInBits() >= 8 &&
               isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
+    // Full width accesses can be ignored, because they can always be turned
+    // into bitcasts.
+    unsigned EltSize = In->getPrimitiveSizeInBits()/8;
+    if (IsLoadOrStore && EltSize == AllocaSize)
+      return;
     // If we're accessing something that could be an element of a vector, see
     // if the implied vector agrees with what we already have and if Offset is
     // compatible with it.
-    unsigned EltSize = In->getPrimitiveSizeInBits()/8;
     if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
         (VectorTy == 0 ||
          cast<VectorType>(VectorTy)->getElementType()
@@ -442,7 +447,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (LI->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(LI->getType(), Offset);
+      MergeInType(LI->getType(), Offset, true);
       continue;
     }
 
@@ -453,7 +458,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (SI->getOperand(0)->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(SI->getOperand(0)->getType(), Offset);
+      MergeInType(SI->getOperand(0)->getType(), Offset, true);
       continue;
     }
 
@@ -691,11 +696,11 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
-    if (ToType->isVectorTy()) {
-      unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
-      if (ToTypeSize == AllocaSize)
-        return Builder.CreateBitCast(FromVal, ToType, "tmp");
+    unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
+    if (ToTypeSize == AllocaSize)
+      return Builder.CreateBitCast(FromVal, ToType, "tmp");
 
+    if (ToType->isVectorTy()) {
       assert(isPowerOf2_64(AllocaSize / ToTypeSize) &&
              "Partial vector access of an alloca must have a power-of-2 size "
              "ratio.");

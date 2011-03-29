@@ -94,7 +94,7 @@ define i64 @test6(<2 x float> %X) {
 	%tmp = load i64* %P
 	ret i64 %tmp
 ; CHECK: @test6
-; CHECK: bitcast <2 x float> %X to <1 x i64>
+; CHECK: bitcast <2 x float> %X to i64
 ; CHECK: ret i64
 }
 
