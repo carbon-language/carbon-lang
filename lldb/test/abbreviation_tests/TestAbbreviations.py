@@ -131,13 +131,13 @@ class AbbreviationsTestCase(TestBase):
                     patterns = ["Line table for .*main.cpp in `a.out"])
 
         self.expect("i d se",
-                    startstr = "Dumping sections for 5 modules.")
+                    patterns = ["Dumping sections for [0-9]+ modules."])
 
         self.expect("i d symf",
-                    startstr = "Dumping debug symbols for 5 modules.")
+                    patterns = ["Dumping debug symbols for [0-9]+ modules."])
 
         self.expect("i d symt",
-                    startstr = "Dumping symbol table for 5 modules.")
+                    patterns = ["Dumping symbol table for [0-9]+ modules."])
 
         self.expect("i li",
                     substrs = [ 'a.out',
