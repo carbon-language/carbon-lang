@@ -150,12 +150,9 @@ bool StackProtector::InsertStackProtectors() {
   BasicBlock *FailBBDom = 0;    // FailBB's dominator.
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Value *StackGuardVar = 0;  // The stack guard variable.
-  BasicBlock &Entry = F->getEntryBlock();
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ) {
     BasicBlock *BB = I++;
-    if (BB->getNumUses() == 0 && BB != &Entry) continue;
-
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
     if (!RI) continue;
 
@@ -180,6 +177,7 @@ bool StackProtector::InsertStackProtectors() {
         StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy); 
       }
 
+      BasicBlock &Entry = F->getEntryBlock();
       Instruction *InsPt = &Entry.front();
 
       AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
@@ -192,8 +190,6 @@ bool StackProtector::InsertStackProtectors() {
 
       // Create the basic block to jump to when the guard check fails.
       FailBB = CreateFailBB();
-      if (DT)
-        FailBBDom = DT->isReachableFromEntry(BB) ? BB : 0;
     }
 
     // For each block with a return instruction, convert this:
@@ -219,11 +215,12 @@ bool StackProtector::InsertStackProtectors() {
     //     unreachable
 
     // Split the basic block before the return instruction.
+    bool BBIsReachable = (DT && DT->isReachableFromEntry(BB));
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
-    if (DT && DT->isReachableFromEntry(BB)) {
+
+    if (BBIsReachable) {
       DT->addNewBlock(NewBB, BB);
-      if (FailBBDom)
-        FailBBDom = DT->findNearestCommonDominator(FailBBDom, BB);
+      FailBBDom = FailBBDom ? DT->findNearestCommonDominator(FailBBDom, BB) :BB;
     }
 
     // Remove default branch instruction to the new BB.
