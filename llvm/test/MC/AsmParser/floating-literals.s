@@ -9,6 +9,9 @@
 # CHECK: .long	2139095040
 .single InFinIty
 
+# CHECK: .long	4286578688
+.single -iNf
+
 # CHECK: .long	2147483647
 .single nAN
 
