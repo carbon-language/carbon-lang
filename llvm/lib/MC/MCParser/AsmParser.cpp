@@ -1552,13 +1552,21 @@ bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
         Lex();
 
       if (getLexer().isNot(AsmToken::Integer) &&
-          getLexer().isNot(AsmToken::Real))
+          getLexer().isNot(AsmToken::Real) &&
+          getLexer().isNot(AsmToken::Identifier))
         return TokError("unexpected token in directive");
 
       // Convert to an APFloat.
       APFloat Value(Semantics);
-      if (Value.convertFromString(getTok().getString(),
-                                  APFloat::rmNearestTiesToEven) ==
+      StringRef IDVal = getTok().getString();
+      if (getLexer().is(AsmToken::Identifier)) {
+        if (!IDVal.compare_lower("infinity") || !IDVal.compare_lower("inf"))
+          Value = APFloat::getInf(Semantics);
+        else if (!IDVal.compare_lower("nan"))
+          Value = APFloat::getNaN(Semantics, false, ~0);
+        else
+          return TokError("invalid floating point literal");
+      } else if (Value.convertFromString(IDVal, APFloat::rmNearestTiesToEven) ==
           APFloat::opInvalidOp)
         return TokError("invalid floating point literal");
       if (IsNeg)

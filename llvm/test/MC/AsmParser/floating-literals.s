@@ -6,6 +6,12 @@
 # CHECK: .long	1082549862
 .single 1.2455, +2.3, 3, + 4.2
 
+# CHECK: .long	2139095040
+.single InFinIty
+
+# CHECK: .long	2147483647
+.single nAN
+
 # CHECK: .long  1067928519
 .float 1.307
         
