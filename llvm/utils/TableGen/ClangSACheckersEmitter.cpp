@@ -71,13 +71,26 @@ static std::string getStringValue(const Record &R, StringRef field) {
 
 namespace {
 struct GroupInfo {
-  std::vector<const Record*> Checkers;
+  llvm::DenseSet<const Record*> Checkers;
   llvm::DenseSet<const Record *> SubGroups;
   bool Hidden;
   unsigned Index;
 
   GroupInfo() : Hidden(false) { }
 };
+}
+
+static void addPackageToCheckerGroup(const Record *package, const Record *group,
+                  llvm::DenseMap<const Record *, GroupInfo *> &recordGroupMap) {
+  llvm::DenseSet<const Record *> &checkers = recordGroupMap[package]->Checkers;
+  for (llvm::DenseSet<const Record *>::iterator
+         I = checkers.begin(), E = checkers.end(); I != E; ++I)
+    recordGroupMap[group]->Checkers.insert(*I);
+
+  llvm::DenseSet<const Record *> &subGroups = recordGroupMap[package]->SubGroups;
+  for (llvm::DenseSet<const Record *>::iterator
+         I = subGroups.begin(), E = subGroups.end(); I != E; ++I)
+    addPackageToCheckerGroup(*I, group, recordGroupMap);
 }
 
 void ClangSACheckersEmitter::run(raw_ostream &OS) {
@@ -150,9 +163,9 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
       GroupInfo &info = groupInfoByName[fullName];
       info.Hidden = R->getValueAsBit("Hidden");
       recordGroupMap[R] = &info;
-      info.Checkers.push_back(R);
+      info.Checkers.insert(R);
     } else {
-      recordGroupMap[package]->Checkers.push_back(R);
+      recordGroupMap[package]->Checkers.insert(R);
     }
 
     Record *currR = isCheckerNamed(R) ? R : package;
@@ -166,8 +179,14 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
     }
     // Insert the checker into the set of its group.
     if (DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group")))
-      recordGroupMap[DI->getDef()]->Checkers.push_back(R);
+      recordGroupMap[DI->getDef()]->Checkers.insert(R);
   }
+
+  // If a package is in group, add all its checkers and its sub-packages
+  // checkers into the group.
+  for (unsigned i = 0, e = packages.size(); i != e; ++i)
+    if (DefInit *DI = dynamic_cast<DefInit*>(packages[i]->getValueInit("Group")))
+      addPackageToCheckerGroup(packages[i], DI->getDef(), recordGroupMap);
 
   unsigned index = 0;
   for (std::map<std::string, GroupInfo>::iterator
@@ -183,11 +202,12 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
          I = groupInfoByName.begin(), E = groupInfoByName.end(); I != E; ++I) {
     maxLen = std::max(maxLen, (unsigned)I->first.size());
     
-    std::vector<const Record*> &V = I->second.Checkers;
-    if (!V.empty()) {
+    llvm::DenseSet<const Record *> &checkers = I->second.Checkers;
+    if (!checkers.empty()) {
       OS << "static const short CheckerArray" << I->second.Index << "[] = { ";
-      for (unsigned i = 0, e = V.size(); i != e; ++i)
-        OS << checkerRecIndexMap[V[i]] << ", ";
+      for (llvm::DenseSet<const Record *>::iterator
+          I = checkers.begin(), E = checkers.end(); I != E; ++I)
+        OS << checkerRecIndexMap[*I] << ", ";
       OS << "-1 };\n";
     }
     
