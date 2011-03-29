@@ -68,9 +68,8 @@ void DominatorTree::verifyAnalysis() const {
   DominatorTree OtherDT;
   OtherDT.getBase().recalculate(F);
   if (compare(OtherDT)) {
-    errs() << "DominatorTree is not up to date!  Computed:\n";
+    errs() << "DominatorTree is not up to date!\nComputed:\n";
     print(errs());
-    
     errs() << "\nActual:\n";
     OtherDT.print(errs());
     abort();
