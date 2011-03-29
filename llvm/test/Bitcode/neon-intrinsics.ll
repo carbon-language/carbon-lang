@@ -76,20 +76,13 @@
 ; CHECK: zext <4 x i16>
 ; CHECK-NEXT: sub <4 x i32>
 
-; vmull should be auto-upgraded to multiply with sext/zext
-; (but vmullp should remain an intrinsic)
+; vmull* intrinsics will remain intrinsics
 
 ; CHECK: vmulls8
-; CHECK-NOT: arm.neon.vmulls.v8i16
-; CHECK: sext <8 x i8>
-; CHECK-NEXT: sext <8 x i8>
-; CHECK-NEXT: mul <8 x i16>
+; CHECK: arm.neon.vmulls.v8i16
 
 ; CHECK: vmullu16
-; CHECK-NOT: arm.neon.vmullu.v4i32
-; CHECK: zext <4 x i16>
-; CHECK-NEXT: zext <4 x i16>
-; CHECK-NEXT: mul <4 x i32>
+; CHECK: arm.neon.vmullu.v4i32
 
 ; CHECK: vmullp8
 ; CHECK: arm.neon.vmullp.v8i16

@@ -129,8 +129,12 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vmulp : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqdmulh : Neon_2Arg_Intrinsic;
   def int_arm_neon_vqrdmulh : Neon_2Arg_Intrinsic;
+  def int_arm_neon_vmulls : Neon_2Arg_Long_Intrinsic;
+  def int_arm_neon_vmullu : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vmullp : Neon_2Arg_Long_Intrinsic;
   def int_arm_neon_vqdmull : Neon_2Arg_Long_Intrinsic;
+
+  // Vector Multiply and Accumulate/Subtract.
   def int_arm_neon_vqdmlal : Neon_3Arg_Long_Intrinsic;
   def int_arm_neon_vqdmlsl : Neon_3Arg_Long_Intrinsic;
 
@@ -292,7 +296,7 @@ def int_arm_neon_vcvtfp2hf
 def int_arm_neon_vcvthf2fp
     : Intrinsic<[llvm_v4f32_ty], [llvm_v4i16_ty], [IntrNoMem]>;
 
-// Narrowing Saturating Vector Moves.
+// Narrowing and Lengthening Vector Moves.
 def int_arm_neon_vqmovns : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;

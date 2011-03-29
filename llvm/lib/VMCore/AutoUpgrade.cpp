@@ -84,7 +84,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
             Name.compare(14, 5, "vsubl", 5) == 0 ||
             Name.compare(14, 5, "vaddw", 5) == 0 ||
             Name.compare(14, 5, "vsubw", 5) == 0 ||
-            Name.compare(14, 5, "vmull", 5) == 0 ||
             Name.compare(14, 5, "vmlal", 5) == 0 ||
             Name.compare(14, 5, "vmlsl", 5) == 0 ||
             Name.compare(14, 5, "vabdl", 5) == 0 ||

@@ -2157,6 +2157,13 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
     }
     return Result;
   }
+  case Intrinsic::arm_neon_vmulls:
+  case Intrinsic::arm_neon_vmullu: {
+    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmulls)
+      ? ARMISD::VMULLs : ARMISD::VMULLu;
+    return DAG.getNode(NewOpc, Op.getDebugLoc(), Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  }
   }
 }
 
