@@ -1058,27 +1058,33 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
           // otherwise, only a boolean conversion is standard   
           if (!ToType->isBooleanType()) 
             return false; 
-
-      }
-        
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
-        if (!Method->isStatic()) {
-          const Type *ClassType
-            = S.Context.getTypeDeclType(Method->getParent()).getTypePtr();
-          FromType = S.Context.getMemberPointerType(FromType, ClassType);
-        }
       }
 
-      // If the "from" expression takes the address of the overloaded
-      // function, update the type of the resulting expression accordingly.
-      if (FromType->getAs<FunctionType>())
-        if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(From->IgnoreParens()))
-          if (UnOp->getOpcode() == UO_AddrOf)
-            FromType = S.Context.getPointerType(FromType);
+      // Check if the "from" expression is taking the address of an overloaded
+      // function and recompute the FromType accordingly. Take advantage of the
+      // fact that non-static member functions *must* have such an address-of
+      // expression. 
+      CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn);
+      if (Method && !Method->isStatic()) {
+        assert(isa<UnaryOperator>(From->IgnoreParens()) &&
+               "Non-unary operator on non-static member address");
+        assert(cast<UnaryOperator>(From->IgnoreParens())->getOpcode()
+               == UO_AddrOf &&
+               "Non-address-of operator on non-static member address");
+        const Type *ClassType
+          = S.Context.getTypeDeclType(Method->getParent()).getTypePtr();
+        FromType = S.Context.getMemberPointerType(FromType, ClassType);
+      } else if (UnaryOperator *UnOp
+                 = dyn_cast<UnaryOperator>(From->IgnoreParens())) {
+        assert(UnOp->getOpcode() == UO_AddrOf &&
+               "Non-address-of operator for overloaded function expression");
+        FromType = S.Context.getPointerType(FromType);
+      }
 
       // Check that we've computed the proper type after overload resolution.
-      assert(S.Context.hasSameType(FromType,
-            S.FixOverloadedFunctionReference(From, AccessPair, Fn)->getType()));
+      assert(S.Context.hasSameType(
+        FromType,
+        S.FixOverloadedFunctionReference(From, AccessPair, Fn)->getType()));
     } else {
       return false;
     }
@@ -7174,6 +7180,21 @@ public:
         DeclAccessPair dap;
         if( FunctionDecl* Fn = S.ResolveSingleFunctionTemplateSpecialization(
                                             OvlExpr, false, &dap) ) {
+
+          if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
+            if (!Method->isStatic()) {
+              // If the target type is a non-function type and the function
+              // found is a non-static member function, pretend as if that was
+              // the target, it's the only possible type to end up with.
+              TargetTypeIsNonStaticMemberFunction = true;
+
+              // And skip adding the function if its not in the proper form.
+              // We'll diagnose this due to an empty set of functions.
+              if (!OvlExprInfo.HasFormOfMemberPointer)
+                return;
+            }
+          }
+
           Matches.push_back(std::make_pair(dap,Fn));
         }
       }
