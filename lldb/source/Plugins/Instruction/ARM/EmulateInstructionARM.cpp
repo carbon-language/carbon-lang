@@ -681,21 +681,66 @@ EmulateInstructionARM::EmulateMOVRdImm (const uint32_t opcode, const ARMEncoding
         uint32_t carry; // the carry bit after ThumbExpandImm_C or ARMExpandImm_C.
         bool setflags;
         switch (encoding) {
-        case eEncodingT1:
-            Rd = Bits32(opcode, 10, 8);
-            setflags = !InITBlock();
-            imm32 = Bits32(opcode, 7, 0); // imm32 = ZeroExtend(imm8, 32)
-            carry = APSR_C;
-            break;
-        case eEncodingT2:
-            Rd = Bits32(opcode, 11, 8);
-            setflags = BitIsSet(opcode, 20);
-            imm32 = ThumbExpandImm_C(opcode, APSR_C, carry);
-            if (BadReg(Rd))
+            case eEncodingT1:
+                Rd = Bits32(opcode, 10, 8);
+                setflags = !InITBlock();
+                imm32 = Bits32(opcode, 7, 0); // imm32 = ZeroExtend(imm8, 32)
+                carry = APSR_C;
+                  
+                break;
+                  
+            case eEncodingT2:
+                Rd = Bits32(opcode, 11, 8);
+                setflags = BitIsSet(opcode, 20);
+                imm32 = ThumbExpandImm_C(opcode, APSR_C, carry);
+                if (BadReg(Rd))
+                  return false;
+                  
+                break;
+                  
+            case eEncodingT3:
+            {
+                // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm4:i:imm3:imm8, 32);
+                Rd = Bits32 (opcode, 11, 8);
+                setflags = false;
+                uint32_t imm4 = Bits32 (opcode, 19, 16);
+                uint32_t imm3 = Bits32 (opcode, 14, 12);
+                uint32_t i = Bit32 (opcode, 26);
+                uint32_t imm8 = Bits32 (opcode, 7, 0);
+                imm32 = (imm4 << 12) | (i << 11) | (imm3 << 8) | imm8;
+                  
+                // if BadReg(d) then UNPREDICTABLE;
+                if (BadReg (Rd))
+                    return false;
+            }
+                break;
+                  
+            case eEncodingA1:
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                // d = UInt(Rd); setflags = (S == ‘1’); (imm32, carry) = ARMExpandImm_C(imm12, APSR.C);
+                Rd = Bits32 (opcode, 15, 12);
+                setflags = BitIsSet (opcode, 20);
+                imm32 = ARMExpandImm_C (opcode, APSR_C, carry);
+                  
+                break;
+                  
+            case eEncodingA2:
+            {
+                // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm4:imm12, 32);
+                Rd = Bits32 (opcode, 15, 12);
+                setflags = false;
+                uint32_t imm4 = Bits32 (opcode, 19, 16);
+                uint32_t imm12 = Bits32 (opcode, 11, 0);
+                imm32 = (imm4 << 12) | imm12;
+                  
+                // if d == 15 then UNPREDICTABLE;
+                if (Rd == 15)
+                    return false;
+            }
+                break;
+                  
+            default:
                 return false;
-            break;
-        default:
-            return false;
         }
         uint32_t result = imm32;
 
@@ -9242,7 +9287,9 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // tst (register)
         { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
 
-
+        // mov (immediate)
+        { 0x0fef0000, 0x03a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c> <Rd>, #<const>"},
+        { 0x0ff00000, 0x03000000, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>, #<imm16>" },
         // mov (register)
         { 0x0fef0ff0, 0x01a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c> <Rd>, <Rm>"},
         // mvn (immediate)
@@ -9490,6 +9537,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         // move immediate
         { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdImm, "movs|mov<c> <Rd>, #imm8"},
         { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c>.w <Rd>, #<const>"},
+        { 0xfbf08000, 0xf2400000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>,#<imm16>"},
         // mvn (immediate)
         { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s} <Rd>, #<const>"},
         // mvn (register)
