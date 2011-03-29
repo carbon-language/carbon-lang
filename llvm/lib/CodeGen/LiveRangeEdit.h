@@ -125,6 +125,11 @@ public:
   bool anyRematerializable(LiveIntervals&, const TargetInstrInfo&,
                            AliasAnalysis*);
 
+  /// checkRematerializable - Manually add VNI to the list of rematerializable
+  /// values if DefMI may be rematerializable.
+  void checkRematerializable(VNInfo *VNI, const MachineInstr *DefMI,
+                             const TargetInstrInfo&, AliasAnalysis*);
+
   /// Remat - Information needed to rematerialize at a specific location.
   struct Remat {
     VNInfo *ParentVNI;      // parent_'s value at the remat location.

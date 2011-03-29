@@ -120,13 +120,14 @@ private:
   }
 
   bool isSibling(unsigned Reg);
-  void traceSiblingValue(unsigned, VNInfo*, VNInfo*);
+  MachineInstr *traceSiblingValue(unsigned, VNInfo*, VNInfo*);
   void analyzeSiblingValues();
 
   bool hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI);
   void eliminateRedundantSpills(LiveInterval &LI, VNInfo *VNI);
 
-  bool reMaterializeFor(MachineBasicBlock::iterator MI);
+  void markValueUsed(LiveInterval*, VNInfo*);
+  bool reMaterializeFor(LiveInterval&, MachineBasicBlock::iterator MI);
   void reMaterializeAll();
 
   bool coalesceStackAccess(MachineInstr *MI, unsigned Reg);
@@ -277,10 +278,10 @@ bool InlineSpiller::isSibling(unsigned Reg) {
 /// Determine if the value is defined by all reloads, so spilling isn't
 /// necessary - the value is already in the stack slot.
 ///
-/// Find a defining instruction that may be a candidate for rematerialization.
+/// Return a defining instruction that may be a candidate for rematerialization.
 ///
-void InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
-                                      VNInfo *OrigVNI) {
+MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
+                                               VNInfo *OrigVNI) {
   DEBUG(dbgs() << "Tracing value " << PrintReg(UseReg) << ':'
                << UseVNI->id << '@' << UseVNI->def << '\n');
   SmallPtrSet<VNInfo*, 8> Visited;
@@ -365,7 +366,7 @@ void InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     // We have an 'original' def. Don't record trivial cases.
     if (VNI == UseVNI) {
       DEBUG(dbgs() << "Not a sibling copy.\n");
-      return;
+      return MI;
     }
 
     // Potential remat candidate.
@@ -385,10 +386,13 @@ void InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
              << SVI.SpillVNI->id << '@' << SVI.SpillVNI->def << '\n';
   });
   SibValues.insert(std::make_pair(UseVNI, SVI));
+  return SVI.DefMI;
 }
 
 /// analyzeSiblingValues - Trace values defined by sibling copies back to
 /// something that isn't a sibling copy.
+///
+/// Keep track of values that may be rematerializable.
 void InlineSpiller::analyzeSiblingValues() {
   SibValues.clear();
 
@@ -403,11 +407,19 @@ void InlineSpiller::analyzeSiblingValues() {
     for (LiveInterval::const_vni_iterator VI = LI.vni_begin(),
          VE = LI.vni_end(); VI != VE; ++VI) {
       VNInfo *VNI = *VI;
-      if (VNI->isUnused() || !(VNI->isPHIDef() || VNI->getCopy()))
+      if (VNI->isUnused())
         continue;
-      VNInfo *OrigVNI = OrigLI.getVNInfoAt(VNI->def);
-      if (OrigVNI->def != VNI->def)
-        traceSiblingValue(Reg, VNI, OrigVNI);
+      MachineInstr *DefMI = 0;
+      // Check possible sibling copies.
+      if (VNI->isPHIDef() || VNI->getCopy()) {
+        VNInfo *OrigVNI = OrigLI.getVNInfoAt(VNI->def);
+        if (OrigVNI->def != VNI->def)
+          DefMI = traceSiblingValue(Reg, VNI, OrigVNI);
+      }
+      if (!DefMI && !VNI->isPHIDef())
+        DefMI = LIS.getInstructionFromIndex(VNI->def);
+      if (DefMI)
+        Edit->checkRematerializable(VNI, DefMI, TII, AA);
     }
   }
 }
@@ -520,12 +532,51 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
   } while (!WorkList.empty());
 }
 
-/// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
-bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
-  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getUseIndex();
-  VNInfo *OrigVNI = Edit->getParent().getVNInfoAt(UseIdx);
 
-  if (!OrigVNI) {
+//===----------------------------------------------------------------------===//
+//                            Rematerialization
+//===----------------------------------------------------------------------===//
+
+/// markValueUsed - Remember that VNI failed to rematerialize, so its defining
+/// instruction cannot be eliminated. See through snippet copies
+void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
+  SmallVector<std::pair<LiveInterval*, VNInfo*>, 8> WorkList;
+  WorkList.push_back(std::make_pair(LI, VNI));
+  do {
+    tie(LI, VNI) = WorkList.pop_back_val();
+    if (!UsedValues.insert(VNI))
+      continue;
+
+    if (VNI->isPHIDef()) {
+      MachineBasicBlock *MBB = LIS.getMBBFromIndex(VNI->def);
+      for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+             PE = MBB->pred_end(); PI != PE; ++PI) {
+        VNInfo *PVNI = LI->getVNInfoAt(LIS.getMBBEndIdx(*PI).getPrevSlot());
+        if (PVNI)
+          WorkList.push_back(std::make_pair(LI, PVNI));
+      }
+      continue;
+    }
+
+    // Follow snippet copies.
+    MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
+    if (!SnippetCopies.count(MI))
+      continue;
+    LiveInterval &SnipLI = LIS.getInterval(MI->getOperand(1).getReg());
+    assert(isRegToSpill(SnipLI.reg) && "Unexpected register in copy");
+    VNInfo *SnipVNI = SnipLI.getVNInfoAt(VNI->def.getUseIndex());
+    assert(SnipVNI && "Snippet undefined before copy");
+    WorkList.push_back(std::make_pair(&SnipLI, SnipVNI));
+  } while (!WorkList.empty());
+}
+
+/// reMaterializeFor - Attempt to rematerialize before MI instead of reloading.
+bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
+                                     MachineBasicBlock::iterator MI) {
+  SlotIndex UseIdx = LIS.getInstructionIndex(MI).getUseIndex();
+  VNInfo *ParentVNI = VirtReg.getVNInfoAt(UseIdx);
+
+  if (!ParentVNI) {
     DEBUG(dbgs() << "\tadding <undef> flags: ");
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
@@ -536,15 +587,16 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
     return true;
   }
 
-  // FIXME: Properly remat for snippets as well.
-  if (SnippetCopies.count(MI)) {
-    UsedValues.insert(OrigVNI);
+  if (SnippetCopies.count(MI))
     return false;
-  }
 
-  LiveRangeEdit::Remat RM(OrigVNI);
+  // Use an OrigVNI from traceSiblingValue when ParentVNI is a sibling copy.
+  LiveRangeEdit::Remat RM(ParentVNI);
+  SibValueMap::const_iterator SibI = SibValues.find(ParentVNI);
+  if (SibI != SibValues.end())
+    RM.OrigMI = SibI->second.DefMI;
   if (!Edit->canRematerializeAt(RM, UseIdx, false, LIS)) {
-    UsedValues.insert(OrigVNI);
+    markValueUsed(&VirtReg, ParentVNI);
     DEBUG(dbgs() << "\tcannot remat for " << UseIdx << '\t' << *MI);
     return false;
   }
@@ -558,7 +610,7 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(Ops[i]);
       if (MO.isUse() ? MI->isRegTiedToDefOperand(Ops[i]) : MO.getSubReg()) {
-        UsedValues.insert(OrigVNI);
+        markValueUsed(&VirtReg, ParentVNI);
         DEBUG(dbgs() << "\tcannot remat tied reg: " << UseIdx << '\t' << *MI);
         return false;
       }
@@ -606,58 +658,48 @@ bool InlineSpiller::reMaterializeFor(MachineBasicBlock::iterator MI) {
 /// reMaterializeAll - Try to rematerialize as many uses as possible,
 /// and trim the live ranges after.
 void InlineSpiller::reMaterializeAll() {
-  // Do a quick scan of the interval values to find if any are remattable.
+  // analyzeSiblingValues has already tested all relevant defining instructions.
   if (!Edit->anyRematerializable(LIS, TII, AA))
     return;
 
   UsedValues.clear();
 
-  // Try to remat before all uses of Edit->getReg().
+  // Try to remat before all uses of snippets.
   bool anyRemat = false;
-  for (MachineRegisterInfo::use_nodbg_iterator
-       RI = MRI.use_nodbg_begin(Edit->getReg());
-       MachineInstr *MI = RI.skipInstruction();)
-     anyRemat |= reMaterializeFor(MI);
-
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i) {
+    unsigned Reg = RegsToSpill[i];
+    LiveInterval &LI = LIS.getInterval(Reg);
+    for (MachineRegisterInfo::use_nodbg_iterator
+         RI = MRI.use_nodbg_begin(Reg);
+         MachineInstr *MI = RI.skipInstruction();)
+      anyRemat |= reMaterializeFor(LI, MI);
+  }
   if (!anyRemat)
     return;
 
   // Remove any values that were completely rematted.
-  bool anyRemoved = false;
-  for (LiveInterval::vni_iterator I = Edit->getParent().vni_begin(),
-       E = Edit->getParent().vni_end(); I != E; ++I) {
-    VNInfo *VNI = *I;
-    if (VNI->hasPHIKill() || !Edit->didRematerialize(VNI) ||
-        UsedValues.count(VNI))
-      continue;
-    MachineInstr *DefMI = LIS.getInstructionFromIndex(VNI->def);
-    DEBUG(dbgs() << "\tremoving dead def: " << VNI->def << '\t' << *DefMI);
-    LIS.RemoveMachineInstrFromMaps(DefMI);
-    VRM.RemoveMachineInstrFromMaps(DefMI);
-    DefMI->eraseFromParent();
-    VNI->def = SlotIndex();
-    anyRemoved = true;
-  }
-
-  if (!anyRemoved)
-    return;
-
-  // Removing values may cause debug uses where parent is not live.
-  for (MachineRegisterInfo::use_iterator RI = MRI.use_begin(Edit->getReg());
-       MachineInstr *MI = RI.skipInstruction();) {
-    if (!MI->isDebugValue())
-      continue;
-    // Try to preserve the debug value if parent is live immediately after it.
-    MachineBasicBlock::iterator NextMI = MI;
-    ++NextMI;
-    if (NextMI != MI->getParent()->end() && !LIS.isNotInMIMap(NextMI)) {
-      SlotIndex Idx = LIS.getInstructionIndex(NextMI);
-      VNInfo *VNI = Edit->getParent().getVNInfoAt(Idx);
-      if (VNI && (VNI->hasPHIKill() || UsedValues.count(VNI)))
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i) {
+    unsigned Reg = RegsToSpill[i];
+    LiveInterval &LI = LIS.getInterval(Reg);
+    for (LiveInterval::vni_iterator I = LI.vni_begin(), E = LI.vni_end();
+         I != E; ++I) {
+      VNInfo *VNI = *I;
+      if (VNI->isUnused() || VNI->isPHIDef() || VNI->hasPHIKill() ||
+          UsedValues.count(VNI))
         continue;
+      MachineInstr *MI = LIS.getInstructionFromIndex(VNI->def);
+      MI->addRegisterDead(Reg, &TRI);
+      if (!MI->allDefsAreDead())
+        continue;
+      DEBUG(dbgs() << "All defs dead: " << *MI);
+      DeadDefs.push_back(MI);
+      // Remove all Reg references so we don't insert spill code around MI.
+      for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
+             MOE = MI->operands_end(); MOI != MOE ; ++MOI)
+        if (MOI->isReg() && MOI->getReg() == Reg)
+          MOI->setReg(0);
+      VNI->setIsUnused(true);
     }
-    DEBUG(dbgs() << "Removing debug info due to remat:" << "\t" << *MI);
-    MI->eraseFromParent();
   }
 }
 
