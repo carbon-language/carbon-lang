@@ -640,27 +640,14 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       if (AA->doesNotAccessMemory(CS))
         continue;
       
-      unsigned NumModRef = 0, NumOther = 0;
-      
       // If the call might load from any of our allocas, then any store above
       // the call is live.
       SmallVector<Value*, 8> LiveAllocas;
       for (SmallPtrSet<Value*, 16>::iterator I = DeadStackObjects.begin(),
            E = DeadStackObjects.end(); I != E; ++I) {
-        // If we detect that our AA is imprecise, it's not worth it to scan the
-        // rest of the DeadPointers set.  Just assume that the AA will return
-        // ModRef for everything, and go ahead and bail out.
-        if (NumModRef >= 16 && NumOther == 0)
-          return MadeChange;
-
         // See if the call site touches it.
         AliasAnalysis::ModRefResult A = 
           AA->getModRefInfo(CS, *I, getPointerSize(*I, *AA));
-        
-        if (A == AliasAnalysis::ModRef)
-          ++NumModRef;
-        else
-          ++NumOther;
         
         if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           LiveAllocas.push_back(*I);
