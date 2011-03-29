@@ -308,6 +308,10 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
     // VLDM/VSTM do not support DB mode without also updating the base reg.
     Mode = ARM_AM::db;
   else if (Offset != 0) {
+    // Check if this is a supported opcode before we insert instructions to
+    // calculate a new base register.
+    if (!getLoadStoreMultipleOpcode(Opcode, Mode)) return false;
+
     // If starting offset isn't zero, insert a MI to materialize a new base.
     // But only do so if it is cost effective, i.e. merging more than two
     // loads / stores.
