@@ -85,8 +85,7 @@ int main(int argc, const char **argv, char * const *envp) {
   // (basically, exactly one input, and the operation mode is hard wired).
   llvm::SmallVector<const char *, 16> Args(argv, argv + argc);
   Args.push_back("-fsyntax-only");
-  llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(Args.size(),
-                                                            Args.data()));
+  llvm::OwningPtr<Compilation> C(TheDriver.BuildCompilation(Args));
   if (!C)
     return 0;
 
