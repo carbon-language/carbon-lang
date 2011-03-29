@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only %s -verify
+// RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only -fcxx-exceptions %s -verify
 
 int test1_aux(int &x);
 int test1() {
@@ -49,3 +49,24 @@ test4_A test4() {
  return a; // expected-warning{{variable 'a' is possibly uninitialized when used here}}
 }
 
+// This test previously crashed Sema.
+class Rdar9188004A {
+public: 
+  virtual ~Rdar9188004A();
+};
+
+template< typename T > class Rdar9188004B : public Rdar9188004A {
+virtual double *foo(Rdar9188004B *next) const  {
+    double *values = next->foo(0);
+    try {
+    }
+    catch(double e) {
+      values[0] = e;
+    }
+    return 0;
+  }
+};
+class Rdar9188004C : public Rdar9188004B<Rdar9188004A> {
+  virtual void bar(void) const;
+};
+void Rdar9188004C::bar(void) const {}
