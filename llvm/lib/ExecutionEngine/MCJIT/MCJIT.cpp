@@ -67,7 +67,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
              JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), M(m), OS(Buffer) {
+  : ExecutionEngine(m), TM(tm), M(m), OS(Buffer), Dyld(JMM) {
 
   PM.add(new TargetData(*TM->getTargetData()));
 

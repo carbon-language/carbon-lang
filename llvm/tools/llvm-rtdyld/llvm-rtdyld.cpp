@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/CommandLine.h"
@@ -60,7 +61,7 @@ static int executeInput() {
     return Error("unable to read input: '" + ec.message() + "'");
 
   // Instantiate a dynamic linker.
-  RuntimeDyld Dyld;
+  RuntimeDyld Dyld(JITMemoryManager::CreateDefaultMemManager());
 
   // Load the object file into it.
   if (Dyld.loadObject(InputBuffer.take())) {

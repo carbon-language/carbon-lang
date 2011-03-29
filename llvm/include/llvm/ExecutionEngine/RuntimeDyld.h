@@ -21,6 +21,7 @@ namespace llvm {
 
 class RuntimeDyldImpl;
 class MemoryBuffer;
+class JITMemoryManager;
 
 class RuntimeDyld {
   RuntimeDyld(const RuntimeDyld &);     // DO NOT IMPLEMENT
@@ -30,7 +31,7 @@ class RuntimeDyld {
   // interface.
   RuntimeDyldImpl *Dyld;
 public:
-  RuntimeDyld();
+  RuntimeDyld(JITMemoryManager*);
   ~RuntimeDyld();
 
   bool loadObject(MemoryBuffer *InputBuffer);

@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -33,6 +34,9 @@ namespace llvm {
 class RuntimeDyldImpl {
   unsigned CPUType;
   unsigned CPUSubtype;
+
+  // The JITMemoryManager to load objects into.
+  JITMemoryManager *JMM;
 
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here.
@@ -68,7 +72,7 @@ class RuntimeDyldImpl {
                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
 
 public:
-  RuntimeDyldImpl() : HasError(false) {}
+  RuntimeDyldImpl(JITMemoryManager *jmm) : JMM(jmm), HasError(false) {}
 
   bool loadObject(MemoryBuffer *InputBuffer);
 
@@ -526,8 +530,8 @@ bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
 
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation
-RuntimeDyld::RuntimeDyld() {
-  Dyld = new RuntimeDyldImpl;
+RuntimeDyld::RuntimeDyld(JITMemoryManager *JMM) {
+  Dyld = new RuntimeDyldImpl(JMM);
 }
 
 RuntimeDyld::~RuntimeDyld() {
