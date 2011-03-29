@@ -4,10 +4,17 @@
 
 @class NSArray;
 
+int i;
 void f(NSArray *a) {
   id keys;
   for (id thisKey in keys) {
+    int j = i;
+    ++j;
+    i = j;
   }
   for (id thisKey in keys) {
+    int k = i;
+    ++k;
+    i = k;
   }
 }

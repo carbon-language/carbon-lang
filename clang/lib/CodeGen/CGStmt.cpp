@@ -270,6 +270,9 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
     // terminated, don't touch it.
   } else {
     // Otherwise, create a fall-through branch.
+    // There is no need to emit line number for unconditional branch.
+    if (getDebugInfo())
+      Builder.SetCurrentDebugLocation(llvm::DebugLoc());
     Builder.CreateBr(Target);
   }
 
