@@ -138,8 +138,9 @@ static void collectCheckers(const CheckNameOption *checkName,
 
   if (const short *member = checkName->Members) {
     if (enable) {
-      if (collectHidden || !StaticCheckerInfo[*member].Hidden)
-        checkers.insert(&StaticCheckerInfo[*member]);
+      for (; *member != -1; ++member)
+        if (collectHidden || !StaticCheckerInfo[*member].Hidden)
+          checkers.insert(&StaticCheckerInfo[*member]);
     } else {
       for (; *member != -1; ++member)
         checkers.erase(&StaticCheckerInfo[*member]);
