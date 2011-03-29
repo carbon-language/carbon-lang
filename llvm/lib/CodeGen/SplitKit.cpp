@@ -928,7 +928,8 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
       continue;
 
     openIntv();
-    SlotIndex SegStart = enterIntvBefore(BI.FirstUse);
+    SlotIndex SegStart = enterIntvBefore(std::min(BI.FirstUse,
+                                                  BI.LastSplitPoint));
     if (!BI.LiveOut || BI.LastUse < BI.LastSplitPoint) {
       useIntv(SegStart, leaveIntvAfter(BI.LastUse));
     } else {
