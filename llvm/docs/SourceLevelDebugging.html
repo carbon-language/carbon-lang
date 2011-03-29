@@ -407,7 +407,8 @@ height="369">
 </div>
 
 <p>These descriptors provide debug information about globals variables.  The
-provide details such as name, type and where the variable is defined.</p>
+provide details such as name, type and where the variable is defined. All
+global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 
 </div>
 
@@ -446,7 +447,10 @@ provide details such as name, type and where the variable is defined.</p>
 
 <p>These descriptors provide debug information about functions, methods and
    subprograms.  They provide details such as name, return types and the source
-   location where the subprogram is defined.</p>
+   location where the subprogram is defined.
+   All subprogram descriptors are collected by a named metadata 
+   <tt>!llvm.dbg.sp</tt>.
+</p>
 
 </div>
 
@@ -646,7 +650,8 @@ DW_TAG_inheritance      = 28
 
 <p>The members of enumeration types (tag = <tt>DW_TAG_enumeration_type</tt>) are
    <a href="#format_enumeration">enumerator descriptors</a>, each representing
-   the definition of enumeration value for the set.</p>
+   the definition of enumeration value for the set. All enumeration type
+   descriptors are collected by named metadata <tt>!llvm.dbg.enum</tt>.</p>
 
 <p>The members of structure (tag = <tt>DW_TAG_structure_type</tt>) or union (tag
    = <tt>DW_TAG_union_type</tt>) types are any one of
