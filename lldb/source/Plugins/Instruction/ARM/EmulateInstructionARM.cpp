@@ -9171,6 +9171,689 @@ EmulateInstructionARM::EmulateTSTReg (const uint32_t opcode, const ARMEncoding e
     }
     return true;
 }
+                  
+// A8.6.216 SUB (SP minus register)
+bool
+EmulateInstructionARM::EmulateSUBSPReg (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(SP, NOT(shifted), ‘1’);
+        if d == 15 then // Can only occur for ARM encoding
+            ALUWritePC(result); // setflags is always FALSE here
+        else
+            R[d] = result;
+            if setflags then
+                APSR.N = result<31>;
+                APSR.Z = IsZeroBit(result);
+                APSR.C = carry;
+                APSR.V = overflow;
+#endif
+                  
+    bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        uint32_t d;
+        uint32_t m;
+        bool setflags;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n;
+
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // d = UInt(Rd); m = UInt(Rm); setflags = (S == ‘1’);
+                d = Bits32 (opcode, 11, 8);
+                m = Bits32 (opcode, 3, 0);
+                setflags = BitIsSet (opcode, 20);
+
+                // (shift_t, shift_n) = DecodeImmShift(type, imm3:imm2);
+                shift_n = DecodeImmShiftThumb (opcode, shift_t);
+
+                // if d == 13 && (shift_t != SRType_LSL || shift_n > 3) then UNPREDICTABLE;
+                if ((d == 13) && ((shift_t != SRType_LSL) || (shift_n > 3)))
+                    return false;
+
+                // if d == 15 || BadReg(m) then UNPREDICTABLE;
+                if ((d == 15) || BadReg (m))
+                    return false;
+                break;
+
+            case eEncodingA1:
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                // d = UInt(Rd); m = UInt(Rm); setflags = (S == ‘1’);
+                d = Bits32 (opcode, 15, 12);
+                m = Bits32 (opcode, 3, 0);
+                setflags = BitIsSet (opcode, 20);
+
+                // (shift_t, shift_n) = DecodeImmShift(type, imm5);
+                shift_n = DecodeImmShiftARM (opcode, shift_t);
+                break;
+
+            default:
+                return false;
+        }
+
+        // shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        uint32_t Rm = ReadCoreReg (m, &success);
+        if (!success)
+            return false;
+
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);
+
+        // (result, carry, overflow) = AddWithCarry(SP, NOT(shifted), ‘1’);
+        uint32_t sp_val = ReadCoreReg (SP_REG, &success);
+        if (!success)
+            return false;
+
+        AddWithCarryResult res = AddWithCarry (sp_val, ~shifted, 1);
+
+        EmulateInstruction::Context context;
+        context.type = eContextSubtraction;
+        Register sp_reg;
+        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        Register dwarf_reg;
+        dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
+        context.SetRegisterRegisterOperands (sp_reg, dwarf_reg);
+
+        uint32_t regnum = dwarf_r0 + d;
+
+        if (!WriteCoreRegOptionalFlags(context, res.result, regnum, setflags, res.carry_out, res.overflow))
+            return false;
+    }
+    return true;
+}
+                  
+                 
+// A8.6.7 ADD (register-shifted register)
+bool
+EmulateInstructionARM::EmulateAddRegShift (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.213 SUB (register)
+bool
+EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.202 STREX
+bool
+EmulateInstructionARM::EmulateSTREX (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.197 STRB (immediate, ARM)
+bool
+EmulateInstructionARM::EmulateSTRBImmARM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.194 STR (immediate, ARM)
+bool
+EmulateInstructionARM::EmulateSTRImmARM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.74 LDRH (immediate, ARM)
+bool
+EmulateInstructionARM::EmulateLDRHImmediateARM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.69 LDREX
+bool
+EmulateInstructionARM::EmulateLDREX (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.62 LDRB (immediate, ARM)
+bool
+EmulateInstructionARM::EmulateLDRBImmediateARM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+// A8.6.59 LDR (literal)
+bool
+EmulateInstructionARM::EmulateLDRLiteral (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+
+
+// A8.6.65 LDRBT
+bool
+EmulateInstructionARM::EmulateLDRBT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+    
+    //bool success = false;
+    
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+
+
+// A8.6.66 LDRD (immediate)
+bool
+EmulateInstructionARM::EmulateLDRDImmediate (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+    
+// A8.6.67 LDRD (literal)
+bool
+EmulateInstructionARM::EmulateLDRDLiteral (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+    
+// A8.6.68 LDRD (register)
+bool
+EmulateInstructionARM::EmulateLDRDRegister (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.70 LDREXB
+bool
+EmulateInstructionARM::EmulateLDREXB (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.71 LDREXD
+bool
+EmulateInstructionARM::EmulateLDREXD (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.72 LDREXH
+bool
+EmulateInstructionARM::EmulateLDREXH (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+
+// A8.6.77 LDRHT
+bool
+EmulateInstructionARM::EmulateLDRHT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.81 LDRSBT
+bool
+EmulateInstructionARM::EmulateLDRSBT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.85 LDRSHT
+bool
+EmulateInstructionARM::EmulateLDRSHT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.86 LDRT
+bool
+EmulateInstructionARM::EmulateLDRT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+                  
+// A8.6.198 STRB (register)
+bool
+EmulateInstructionARM::EmulateSTRBReg (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                
+// A8.6.199 STRBT
+bool
+EmulateInstructionARM::EmulateSTRBT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.200 STRD (immediate)
+bool
+EmulateInstructionARM::EmulateSTRDImm (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.201 STRD (register)
+bool
+EmulateInstructionARM::EmulateSTRDReg (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.203 STREXB
+bool
+EmulateInstructionARM::EmulateSTREXB (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                
+// A8.6.204 STREXD
+bool
+EmulateInstructionARM::EmulateSTREXD (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.205 STREXH
+bool
+EmulateInstructionARM::EmulateSTREXH (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.206 STRH (immediate, Thumb)
+bool
+EmulateInstructionARM::EmulateSTRHImmThumb (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+
+// A8.6.207 STRH (immediate, ARM)
+bool
+EmulateInstructionARM::EmulateSTRHImmARM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+
+// A8.6.209 STRHT
+bool
+EmulateInstructionARM::EmulateSTRHT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+    //bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+// A8.6.210 STRT
+bool
+EmulateInstructionARM::EmulateSTRT (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+#endif
+                  
+   // bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+        switch (encoding)
+        {
+        }
+    }
+    return true;
+}
+                  
+                  
+                  
 
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
@@ -9196,6 +9879,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 
         // adjust the stack pointer
         { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #<const>"},
+        { 0x0fef0010, 0x004d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" }, 
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
@@ -9407,6 +10091,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #imm"},
         { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub.w sp, sp, #<const>"},
         { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw sp, sp, #imm12"},
+        { 0xffef8000, 0xebad0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" },
 
         // vector push consecutive extension register(s)
         { 0xffbf0f00, 0xed2d0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},

@@ -139,6 +139,8 @@ public:
         eContextMultiplication,
 
         eContextAddition,
+        
+        eContextSubtraction,
 
         eContextReturnFromException
     };
