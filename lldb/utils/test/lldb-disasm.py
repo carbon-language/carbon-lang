@@ -64,17 +64,20 @@ def setupSysPath():
     print "sys.path:", sys.path
 
 
-def run_command(ci, cmd, res):
-    print "run command:", cmd
+def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
+    if echoInput:
+        print "run command:", cmd
     ci.HandleCommand(cmd, res)
     if res.Succeeded():
-        print "output:", res.GetOutput()
+        if echoOutput:
+            print "run_command output:", res.GetOutput()
     else:
-        print "run command failed!"
-        print "error:", res.GetError()
+        if echoOutput:
+            print "run command failed!"
+            print "run_command error:", res.GetError()
 
-def do_lldb_disassembly(lldb_commands, lldb_options, exe):
-    import lldb, lldbutil, atexit
+def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols):
+    import lldb, lldbutil, atexit, re
 
     # Create the debugger instance now.
     dbg = lldb.SBDebugger.Create()
@@ -103,7 +106,50 @@ def do_lldb_disassembly(lldb_commands, lldb_options, exe):
     run_command(ci, 'file %s' % exe, res)
 
     # Send the 'image dump symtab' command.
-    run_command(ci, 'image dump symtab', res)    
+    run_command(ci, 'image dump symtab', res, echoOutput=False)
+
+    if not res.Succeeded():
+        print "Symbol table dump failed!"
+        sys.exit(-2)
+
+    # Do disassembly on the symbols.
+    # The following line from the 'image dump symtab' gives us a hint as to the
+    # starting char position of the symbol name.
+    # Index   UserID DSX Type         File Address/Value Load Address       Size               Flags      Name
+    # ------- ------ --- ------------ ------------------ ------------------ ------------------ ---------- ----------------------------------
+    # [    0]      0     Code         0x0000000000000820                    0x0000000000000000 0x000e0008 sandbox_init_internal
+    symtab_dump = res.GetOutput()
+    symbol_pos = -1
+    code_type_pos = -1
+    code_type_end = -1
+
+    # Heuristics: the first 50 lines should give us the answer for symbol_pos and code_type_pos.
+    for line in symtab_dump.splitlines()[:50]:
+        print "line:", line
+        if re.match("^Index.*Name$", line):
+            symbol_pos = line.rfind('Name')
+            #print "symbol_pos:", symbol_pos
+            code_type_pos = line.find('Type')
+            code_type_end = code_type_pos + 4
+            #print "code_type_pos:", code_type_pos
+            break
+
+    # Disassembly time.
+    limited = True if num_symbols != -1 else False
+    if limited:
+        count = 0
+    for line in symtab_dump.splitlines():
+        if line[code_type_pos:code_type_end] == 'Code':
+            symbol = line[symbol_pos:]
+            #print "symbol:", symbol
+            cmd = "disassemble %s '%s'" % (disassemble_options, symbol)
+            run_command(ci, cmd, res)
+            if limited:
+                count = count + 1
+                print "number of symbols disassembled:", count
+                if count >= num_symbols:
+                    break
+
 
 def main():
     # This is to set up the Python path to include the pexpect-2.4 dir.
@@ -120,32 +166,43 @@ Usage: %prog [options]
                       type='string', action='append', metavar='COMMAND',
                       default=[], dest='lldb_commands',
                       help='Command(s) lldb executes after starting up (can be empty)')
-    parser.add_option('-O', '--lldb-options',
-                      type='string', action='store',
-                      dest='lldb_options',
-                      help="""The options passed to 'lldb' command if specified.""")
     parser.add_option('-e', '--executable',
                       type='string', action='store',
                       dest='executable',
-                      help="""The executable to do disassembly on.""")
+                      help="""Mandatory: the executable to do disassembly on.""")
+    parser.add_option('-o', '--options',
+                      type='string', action='store',
+                      dest='disassemble_options',
+                      help="""Mandatory: the options passed to lldb's 'disassemble' command.""")
+    parser.add_option('-n', '--num-symbols',
+                      type='int', action='store',
+                      dest='num_symbols',
+                      help="""The number of symbols to disassemble, if specified.""")
 
     opts, args = parser.parse_args()
 
     lldb_commands = opts.lldb_commands
-    lldb_options = opts.lldb_options
 
-    if not opts.executable:
+    if not opts.executable or not opts.disassemble_options:
         parser.print_help()
         sys.exit(1)
+
     executable = opts.executable
+    disassemble_options = opts.disassemble_options
+
+    if opts.num_symbols:
+        num_symbols = opts.num_symbols
+    else:
+        num_symbols = -1
 
     # We have parsed the options.
     print "lldb commands:", lldb_commands
-    print "lldb options:", lldb_options
     print "executable:", executable
+    print "disassemble options:", disassemble_options
+    print "num of symbols to disassemble:", num_symbols
 
     setupSysPath()
-    do_lldb_disassembly(lldb_commands, lldb_options, executable)
+    do_lldb_disassembly(lldb_commands, executable, disassemble_options, num_symbols)
 
 if __name__ == '__main__':
     main()
