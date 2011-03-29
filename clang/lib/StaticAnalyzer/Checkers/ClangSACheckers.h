@@ -21,7 +21,7 @@ namespace ento {
 class CheckerManager;
 
 #define GET_CHECKERS
-#define CHECKER(FULLNAME,CLASS,CXXFILE,HELPTEXT,HIDDEN)    \
+#define CHECKER(FULLNAME,CLASS,CXXFILE,HELPTEXT,GROUPINDEX,HIDDEN)    \
   void register##CLASS(CheckerManager &mgr);
 #include "Checkers.inc"
 #undef CHECKER

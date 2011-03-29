@@ -57,9 +57,6 @@ CheckerManager *ento::registerCheckers(const AnalyzerOptions &opts,
 void ento::printCheckerHelp(llvm::raw_ostream &OS) {
   OS << "OVERVIEW: Clang Static Analyzer Checkers List\n";
   OS << '\n';
-  OS << "USAGE: -analyzer-checker <check1,check2,...>\n";
-  OS << '\n';
-  OS << "CHECKERS:\n";
 
   llvm::OwningPtr<CheckerProvider> provider(createClangSACheckerProvider());
   provider->printHelp(OS);
