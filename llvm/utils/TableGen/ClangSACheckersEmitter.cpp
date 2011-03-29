@@ -246,13 +246,13 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
 
     llvm::DenseSet<const Record *> &checkers = I->second.Checkers;
     if (!checkers.empty()) {
+      OS << "static const short CheckerArray" << I->second.Index << "[] = { ";
       // Make the output order deterministic.
       std::map<int, const Record *> sorted;
       for (llvm::DenseSet<const Record *>::iterator
              I = checkers.begin(), E = checkers.end(); I != E; ++I)
         sorted[(*I)->getID()] = *I;
 
-      OS << "static const short CheckerArray" << I->second.Index << "[] = { ";
       for (std::map<int, const Record *>::iterator
              I = sorted.begin(), E = sorted.end(); I != E; ++I)
         OS << checkerRecIndexMap[I->second] << ", ";
@@ -261,13 +261,13 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
     
     llvm::DenseSet<const Record *> &subGroups = I->second.SubGroups;
     if (!subGroups.empty()) {
+      OS << "static const short SubPackageArray" << I->second.Index << "[] = { ";
       // Make the output order deterministic.
       std::map<int, const Record *> sorted;
       for (llvm::DenseSet<const Record *>::iterator
              I = subGroups.begin(), E = subGroups.end(); I != E; ++I)
         sorted[(*I)->getID()] = *I;
 
-      OS << "static const short SubPackageArray" << I->second.Index << "[] = { ";
       for (std::map<int, const Record *>::iterator
              I = sorted.begin(), E = sorted.end(); I != E; ++I) {
         OS << recordGroupMap[I->second]->Index << ", ";
