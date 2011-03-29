@@ -148,6 +148,48 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
     }
   }
 
+  typedef std::map<std::string, const Record *> SortedRecords;
+
+  OS << "\n#ifdef GET_PACKAGES\n";
+  {
+    SortedRecords sortedPackages;
+    for (unsigned i = 0, e = packages.size(); i != e; ++i)
+      sortedPackages[getPackageFullName(packages[i])] = packages[i];
+  
+    for (SortedRecords::iterator
+           I = sortedPackages.begin(), E = sortedPackages.end(); I != E; ++I) {
+      const Record &R = *I->second;
+  
+      OS << "PACKAGE(" << "\"";
+      OS.write_escaped(getPackageFullName(&R)) << "\", ";
+      // Hidden bit
+      if (isHidden(R))
+        OS << "true";
+      else
+        OS << "false";
+      OS << ")\n";
+    }
+  }
+  OS << "#endif // GET_PACKAGES\n\n";
+
+  OS << "\n#ifdef GET_GROUPS\n";
+  {
+    SortedRecords sortedGroups;
+    for (unsigned i = 0, e = checkerGroups.size(); i != e; ++i)
+      sortedGroups[checkerGroups[i]->getValueAsString("GroupName")]
+                   = checkerGroups[i];
+
+    for (SortedRecords::iterator
+           I = sortedGroups.begin(), E = sortedGroups.end(); I != E; ++I) {
+      const Record &R = *I->second;
+  
+      OS << "GROUP(" << "\"";
+      OS.write_escaped(R.getValueAsString("GroupName")) << "\"";
+      OS << ")\n";
+    }
+  }
+  OS << "#endif // GET_GROUPS\n\n";
+
   for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
     Record *R = checkers[i];
     Record *package = 0;
@@ -201,22 +243,34 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
   for (std::map<std::string, GroupInfo>::iterator
          I = groupInfoByName.begin(), E = groupInfoByName.end(); I != E; ++I) {
     maxLen = std::max(maxLen, (unsigned)I->first.size());
-    
+
     llvm::DenseSet<const Record *> &checkers = I->second.Checkers;
     if (!checkers.empty()) {
-      OS << "static const short CheckerArray" << I->second.Index << "[] = { ";
+      // Make the output order deterministic.
+      std::map<int, const Record *> sorted;
       for (llvm::DenseSet<const Record *>::iterator
-          I = checkers.begin(), E = checkers.end(); I != E; ++I)
-        OS << checkerRecIndexMap[*I] << ", ";
+             I = checkers.begin(), E = checkers.end(); I != E; ++I)
+        sorted[(*I)->getID()] = *I;
+
+      OS << "static const short CheckerArray" << I->second.Index << "[] = { ";
+      for (std::map<int, const Record *>::iterator
+             I = sorted.begin(), E = sorted.end(); I != E; ++I)
+        OS << checkerRecIndexMap[I->second] << ", ";
       OS << "-1 };\n";
     }
     
     llvm::DenseSet<const Record *> &subGroups = I->second.SubGroups;
     if (!subGroups.empty()) {
-      OS << "static const short SubPackageArray" << I->second.Index << "[] = { ";
+      // Make the output order deterministic.
+      std::map<int, const Record *> sorted;
       for (llvm::DenseSet<const Record *>::iterator
-             I = subGroups.begin(), E = subGroups.end(); I != E; ++I) {
-        OS << recordGroupMap[*I]->Index << ", ";
+             I = subGroups.begin(), E = subGroups.end(); I != E; ++I)
+        sorted[(*I)->getID()] = *I;
+
+      OS << "static const short SubPackageArray" << I->second.Index << "[] = { ";
+      for (std::map<int, const Record *>::iterator
+             I = sorted.begin(), E = sorted.end(); I != E; ++I) {
+        OS << recordGroupMap[I->second]->Index << ", ";
       }
       OS << "-1 };\n";
     }
