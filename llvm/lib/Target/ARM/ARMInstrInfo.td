@@ -3430,8 +3430,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def _OPTION : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, i32imm:$option),
-      opc, "\tp$cop, cr$CRd, [$base], $option"> {
+      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, nohash_imm:$option),
+      opc, "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
@@ -3472,7 +3472,7 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
 
   def L_OPTION : ACI<(outs),
       (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, nohash_imm:$option),
-      !strconcat(opc, "l"), "\tp$cop, cr$CRd, [$base], $option"> {
+      !strconcat(opc, "l"), "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
