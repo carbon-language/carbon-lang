@@ -54,9 +54,16 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static bool rand_initialized = false;
+
 static inline uint16_t
 get_random_port ()
 {
+    if (!rand_initialized)
+    {
+        rand_initialized = true;
+        sranddev();
+    }
     return (rand() % (UINT16_MAX - 1000u)) + 1000u;
 }
 
