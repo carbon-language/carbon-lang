@@ -103,6 +103,9 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   // Don't recompute a target specific hint.
   bool noHint = mri.getRegAllocationHint(li.reg).first != 0;
 
+  // Don't recompute spill weight for an unspillable register.
+  bool Spillable = li.isSpillable();
+
   for (MachineRegisterInfo::reg_iterator I = mri.reg_begin(li.reg);
        MachineInstr *mi = I.skipInstruction();) {
     if (mi->isIdentityCopy() || mi->isImplicitDef() || mi->isDebugValue())
@@ -110,24 +113,27 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
     if (!visited.insert(mi))
       continue;
 
-    // Get loop info for mi.
-    if (mi->getParent() != mbb) {
-      mbb = mi->getParent();
-      loop = loops_.getLoopFor(mbb);
-      loopDepth = loop ? loop->getLoopDepth() : 0;
-      isExiting = loop ? loop->isLoopExiting(mbb) : false;
+    float weight = 1.0f;
+    if (Spillable) {
+      // Get loop info for mi.
+      if (mi->getParent() != mbb) {
+        mbb = mi->getParent();
+        loop = loops_.getLoopFor(mbb);
+        loopDepth = loop ? loop->getLoopDepth() : 0;
+        isExiting = loop ? loop->isLoopExiting(mbb) : false;
+      }
+
+      // Calculate instr weight.
+      bool reads, writes;
+      tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
+      weight = LiveIntervals::getSpillWeight(writes, reads, loopDepth);
+
+      // Give extra weight to what looks like a loop induction variable update.
+      if (writes && isExiting && lis_.isLiveOutOfMBB(li, mbb))
+        weight *= 3;
+
+      totalWeight += weight;
     }
-
-    // Calculate instr weight.
-    bool reads, writes;
-    tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
-    float weight = LiveIntervals::getSpillWeight(writes, reads, loopDepth);
-
-    // Give extra weight to what looks like a loop induction variable update.
-    if (writes && isExiting && lis_.isLiveOutOfMBB(li, mbb))
-      weight *= 3;
-
-    totalWeight += weight;
 
     // Get allocation hints from copies.
     if (noHint || !mi->isCopy())
@@ -150,9 +156,13 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
   // Always prefer the physreg hint.
   if (unsigned hint = hintPhys ? hintPhys : hintVirt) {
     mri.setRegAllocationHint(li.reg, 0, hint);
-    // Weakly boost the spill weifght of hinted registers.
+    // Weakly boost the spill weight of hinted registers.
     totalWeight *= 1.01F;
   }
+
+  // If the live interval was already unspillable, leave it that way.
+  if (!Spillable)
+    return;
 
   // Mark li as unspillable if all live ranges are tiny.
   if (li.isZeroLength()) {

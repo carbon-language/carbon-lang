@@ -139,6 +139,7 @@ private:
                    MachineBasicBlock::iterator MI);
 
   void spillAroundUses(unsigned Reg);
+  void spillAll();
 };
 }
 
@@ -629,10 +630,6 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   LiveInterval &NewLI = Edit->createFrom(VirtReg.reg, LIS, VRM);
   NewLI.markNotSpillable();
 
-  // Rematting for a copy: Set allocation hint to be the destination register.
-  if (MI->isCopy())
-    MRI.setRegAllocationHint(NewLI.reg, 0, MI->getOperand(0).getReg());
-
   // Finally we can rematerialize OrigMI before MI.
   SlotIndex DefIdx = Edit->rematerializeAt(*MI->getParent(), MI, NewLI.reg, RM,
                                            LIS, TII, TRI);
@@ -717,6 +714,11 @@ void InlineSpiller::reMaterializeAll() {
   }
   DEBUG(dbgs() << RegsToSpill.size() << " registers to spill after remat.\n");
 }
+
+
+//===----------------------------------------------------------------------===//
+//                                 Spilling
+//===----------------------------------------------------------------------===//
 
 /// If MI is a load or store of StackSlot, it can be removed.
 bool InlineSpiller::coalesceStackAccess(MachineInstr *MI, unsigned Reg) {
@@ -906,6 +908,50 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
   }
 }
 
+/// spillAll - Spill all registers remaining after rematerialization.
+void InlineSpiller::spillAll() {
+  // Update LiveStacks now that we are committed to spilling.
+  if (StackSlot == VirtRegMap::NO_STACK_SLOT) {
+    StackSlot = VRM.assignVirt2StackSlot(Original);
+    StackInt = &LSS.getOrCreateInterval(StackSlot, MRI.getRegClass(Original));
+    StackInt->getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
+  } else
+    StackInt = &LSS.getInterval(StackSlot);
+
+  if (Original != Edit->getReg())
+    VRM.assignVirt2StackSlot(Edit->getReg(), StackSlot);
+
+  assert(StackInt->getNumValNums() == 1 && "Bad stack interval values");
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    StackInt->MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
+                                   StackInt->getValNumInfo(0));
+  DEBUG(dbgs() << "Merged spilled regs: " << *StackInt << '\n');
+
+  // Spill around uses of all RegsToSpill.
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    spillAroundUses(RegsToSpill[i]);
+
+  // Hoisted spills may cause dead code.
+  if (!DeadDefs.empty()) {
+    DEBUG(dbgs() << "Eliminating " << DeadDefs.size() << " dead defs\n");
+    Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII);
+  }
+
+  // Finally delete the SnippetCopies.
+  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit->getReg());
+       MachineInstr *MI = RI.skipInstruction();) {
+    assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
+    // FIXME: Do this with a LiveRangeEdit callback.
+    VRM.RemoveMachineInstrFromMaps(MI);
+    LIS.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+  }
+
+  // Delete all spilled registers.
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
+    Edit->eraseVirtReg(RegsToSpill[i], LIS);
+}
+
 void InlineSpiller::spill(LiveRangeEdit &edit) {
   Edit = &edit;
   assert(!TargetRegisterInfo::isStackSlot(edit.getReg())
@@ -928,46 +974,8 @@ void InlineSpiller::spill(LiveRangeEdit &edit) {
   reMaterializeAll();
 
   // Remat may handle everything.
-  if (RegsToSpill.empty())
-    return;
+  if (!RegsToSpill.empty())
+    spillAll();
 
-  // Update LiveStacks now that we are committed to spilling.
-  if (StackSlot == VirtRegMap::NO_STACK_SLOT) {
-    StackSlot = VRM.assignVirt2StackSlot(Original);
-    StackInt = &LSS.getOrCreateInterval(StackSlot, MRI.getRegClass(Original));
-    StackInt->getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
-  } else
-    StackInt = &LSS.getInterval(StackSlot);
-
-  if (Original != edit.getReg())
-    VRM.assignVirt2StackSlot(edit.getReg(), StackSlot);
-
-  assert(StackInt->getNumValNums() == 1 && "Bad stack interval values");
-  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    StackInt->MergeRangesInAsValue(LIS.getInterval(RegsToSpill[i]),
-                                   StackInt->getValNumInfo(0));
-  DEBUG(dbgs() << "Merged spilled regs: " << *StackInt << '\n');
-
-  // Spill around uses of all RegsToSpill.
-  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    spillAroundUses(RegsToSpill[i]);
-
-  // Hoisted spills may cause dead code.
-  if (!DeadDefs.empty()) {
-    DEBUG(dbgs() << "Eliminating " << DeadDefs.size() << " dead defs\n");
-    Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII);
-  }
-
-  // Finally delete the SnippetCopies.
-  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(edit.getReg());
-       MachineInstr *MI = RI.skipInstruction();) {
-    assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
-    // FIXME: Do this with a LiveRangeEdit callback.
-    VRM.RemoveMachineInstrFromMaps(MI);
-    LIS.RemoveMachineInstrFromMaps(MI);
-    MI->eraseFromParent();
-  }
-
-  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i)
-    edit.eraseVirtReg(RegsToSpill[i], LIS);
+  Edit->calculateRegClassAndHint(MF, LIS, Loops);
 }

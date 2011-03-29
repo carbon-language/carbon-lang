@@ -17,7 +17,6 @@
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -881,14 +880,7 @@ void SplitEditor::finish() {
   }
 
   // Calculate spill weight and allocation hints for new intervals.
-  VirtRegAuxInfo vrai(VRM.getMachineFunction(), LIS, SA.Loops);
-  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I){
-    LiveInterval &li = **I;
-    vrai.CalculateRegClass(li.reg);
-    vrai.CalculateWeightAndHint(li);
-    DEBUG(dbgs() << "  new interval " << MRI.getRegClass(li.reg)->getName()
-                 << ":" << li << '\n');
-  }
+  Edit->calculateRegClassAndHint(VRM.getMachineFunction(), LIS, SA.Loops);
 }
 
 

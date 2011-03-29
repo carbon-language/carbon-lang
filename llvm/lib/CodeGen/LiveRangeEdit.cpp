@@ -15,6 +15,7 @@
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -236,3 +237,13 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
   }
 }
 
+void LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
+                                             LiveIntervals &LIS,
+                                             const MachineLoopInfo &Loops) {
+  VirtRegAuxInfo VRAI(MF, LIS, Loops);
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    LiveInterval &LI = **I;
+    VRAI.CalculateRegClass(LI.reg);
+    VRAI.CalculateWeightAndHint(LI);
+  }
+}
