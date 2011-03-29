@@ -150,9 +150,11 @@ bool StackProtector::InsertStackProtectors() {
   BasicBlock *FailBBDom = 0;    // FailBB's dominator.
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Value *StackGuardVar = 0;  // The stack guard variable.
+  BasicBlock &Entry = F->getEntryBlock();
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ) {
     BasicBlock *BB = I++;
+    if (BB->getNumUses() == 0 && BB != &Entry) continue;
 
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
     if (!RI) continue;
@@ -178,7 +180,6 @@ bool StackProtector::InsertStackProtectors() {
         StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy); 
       }
 
-      BasicBlock &Entry = F->getEntryBlock();
       Instruction *InsPt = &Entry.front();
 
       AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
