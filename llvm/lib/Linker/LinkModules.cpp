@@ -505,6 +505,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                            SGV->getType()->getAddressSpace());
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NewDGV, SGV);
+      NewDGV->setUnnamedAddr(SGV->hasUnnamedAddr());
 
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
