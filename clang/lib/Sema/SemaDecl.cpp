@@ -5701,7 +5701,9 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   DLLImportAttr *DA = FD->getAttr<DLLImportAttr>();
   if (DA && (!FD->getAttr<DLLExportAttr>())) {
     // dllimport attribute cannot be directly applied to definition.
-    if (!DA->isInherited()) {
+    // Microsoft accepts dllimport for functions defined within class scope. 
+    if (!DA->isInherited() &&
+        !(LangOpts.Microsoft && FD->getLexicalDeclContext()->isRecord())) {
       Diag(FD->getLocation(),
            diag::err_attribute_can_be_applied_only_to_symbol_declaration)
         << "dllimport";
