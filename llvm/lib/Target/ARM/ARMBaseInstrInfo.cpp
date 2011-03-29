@@ -1789,9 +1789,7 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
     llvm_unreachable("Unexpected multi-uops instruction!");
     break;
   case ARM::VLDMQIA:
-  case ARM::VLDMQDB:
   case ARM::VSTMQIA:
-  case ARM::VSTMQDB:
     return 2;
 
   // The number of uOps for load / store multiple are determined by the number
@@ -1805,19 +1803,15 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   // is not 64-bit aligned, then AGU would take an extra cycle.  For VFP / NEON
   // load / store multiple, the formula is (#reg / 2) + (#reg % 2) + 1.
   case ARM::VLDMDIA:
-  case ARM::VLDMDDB:
   case ARM::VLDMDIA_UPD:
   case ARM::VLDMDDB_UPD:
   case ARM::VLDMSIA:
-  case ARM::VLDMSDB:
   case ARM::VLDMSIA_UPD:
   case ARM::VLDMSDB_UPD:
   case ARM::VSTMDIA:
-  case ARM::VSTMDDB:
   case ARM::VSTMDIA_UPD:
   case ARM::VSTMDDB_UPD:
   case ARM::VSTMSIA:
-  case ARM::VSTMSDB:
   case ARM::VSTMSIA_UPD:
   case ARM::VSTMSDB_UPD: {
     unsigned NumRegs = MI->getNumOperands() - Desc.getNumOperands();
@@ -1907,7 +1901,6 @@ ARMBaseInstrInfo::getVLDMDefCycle(const InstrItineraryData *ItinData,
     switch (DefTID.getOpcode()) {
     default: break;
     case ARM::VLDMSIA:
-    case ARM::VLDMSDB:
     case ARM::VLDMSIA_UPD:
     case ARM::VLDMSDB_UPD:
       isSLoad = true;
@@ -1983,7 +1976,6 @@ ARMBaseInstrInfo::getVSTMUseCycle(const InstrItineraryData *ItinData,
     switch (UseTID.getOpcode()) {
     default: break;
     case ARM::VSTMSIA:
-    case ARM::VSTMSDB:
     case ARM::VSTMSIA_UPD:
     case ARM::VSTMSDB_UPD:
       isSStore = true;
@@ -2054,11 +2046,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     break;
 
   case ARM::VLDMDIA:
-  case ARM::VLDMDDB:
   case ARM::VLDMDIA_UPD:
   case ARM::VLDMDDB_UPD:
   case ARM::VLDMSIA:
-  case ARM::VLDMSDB:
   case ARM::VLDMSIA_UPD:
   case ARM::VLDMSDB_UPD:
     DefCycle = getVLDMDefCycle(ItinData, DefTID, DefClass, DefIdx, DefAlign);
@@ -2097,11 +2087,9 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     break;
 
   case ARM::VSTMDIA:
-  case ARM::VSTMDDB:
   case ARM::VSTMDIA_UPD:
   case ARM::VSTMDDB_UPD:
   case ARM::VSTMSIA:
-  case ARM::VSTMSDB:
   case ARM::VSTMSIA_UPD:
   case ARM::VSTMSDB_UPD:
     UseCycle = getVSTMUseCycle(ItinData, UseTID, UseClass, UseIdx, UseAlign);
@@ -2312,9 +2300,7 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   default:
     return ItinData->getStageLatency(get(Opcode).getSchedClass());
   case ARM::VLDMQIA:
-  case ARM::VLDMQDB:
   case ARM::VSTMQIA:
-  case ARM::VSTMQDB:
     return 2;
   }
 }

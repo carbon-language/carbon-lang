@@ -79,7 +79,7 @@ namespace {
       unsigned Position;
       MachineBasicBlock::iterator MBBI;
       bool Merged;
-      MemOpQueueEntry(int o, unsigned r, bool k, unsigned p, 
+      MemOpQueueEntry(int o, unsigned r, bool k, unsigned p,
                       MachineBasicBlock::iterator i)
         : Offset(o), Reg(r), isKill(k), Position(p), MBBI(i), Merged(false) {}
     };
@@ -174,7 +174,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMSIA;
-    case ARM_AM::db: return ARM::VLDMSDB;
+    case ARM_AM::db: return 0; // Only VLDMSDB_UPD exists.
     }
     break;
   case ARM::VSTRS:
@@ -182,7 +182,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMSIA;
-    case ARM_AM::db: return ARM::VSTMSDB;
+    case ARM_AM::db: return 0; // Only VSTMSDB_UPD exists.
     }
     break;
   case ARM::VLDRD:
@@ -190,7 +190,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMDIA;
-    case ARM_AM::db: return ARM::VLDMDDB;
+    case ARM_AM::db: return 0; // Only VLDMDDB_UPD exists.
     }
     break;
   case ARM::VSTRD:
@@ -198,7 +198,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMDIA;
-    case ARM_AM::db: return ARM::VSTMDDB;
+    case ARM_AM::db: return 0; // Only VSTMDDB_UPD exists.
     }
     break;
   }
@@ -246,13 +246,9 @@ AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
   case ARM::t2LDMDB_UPD:
   case ARM::t2STMDB:
   case ARM::t2STMDB_UPD:
-  case ARM::VLDMSDB:
   case ARM::VLDMSDB_UPD:
-  case ARM::VSTMSDB:
   case ARM::VSTMSDB_UPD:
-  case ARM::VLDMDDB:
   case ARM::VLDMDDB_UPD:
-  case ARM::VSTMDDB:
   case ARM::VSTMDDB_UPD:
     return ARM_AM::db;
 
@@ -567,14 +563,10 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   case ARM::t2STMIA:
   case ARM::t2STMDB:
   case ARM::VLDMSIA:
-  case ARM::VLDMSDB:
   case ARM::VSTMSIA:
-  case ARM::VSTMSDB:
     return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 4;
   case ARM::VLDMDIA:
-  case ARM::VLDMDDB:
   case ARM::VSTMDIA:
-  case ARM::VSTMDDB:
     return (MI->getNumOperands() - MI->getDesc().getNumOperands() + 1) * 8;
   }
 }
@@ -624,7 +616,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     }
     break;
   case ARM::VLDMSIA:
-  case ARM::VLDMSDB:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMSIA_UPD;
@@ -632,7 +623,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     }
     break;
   case ARM::VLDMDIA:
-  case ARM::VLDMDDB:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMDIA_UPD;
@@ -640,7 +630,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     }
     break;
   case ARM::VSTMSIA:
-  case ARM::VSTMSDB:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMSIA_UPD;
@@ -648,7 +637,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     }
     break;
   case ARM::VSTMDIA:
-  case ARM::VSTMDDB:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMDIA_UPD;

@@ -967,9 +967,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::VLDMQIA:
-    case ARM::VLDMQDB: {
-      unsigned NewOpc = (Opcode == ARM::VLDMQIA) ? ARM::VLDMDIA : ARM::VLDMDDB;
+    case ARM::VLDMQIA: {
+      unsigned NewOpc = ARM::VLDMDIA;
       MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
       unsigned OpIdx = 0;
@@ -998,9 +997,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       return true;
     }
 
-    case ARM::VSTMQIA:
-    case ARM::VSTMQDB: {
-      unsigned NewOpc = (Opcode == ARM::VSTMQIA) ? ARM::VSTMDIA : ARM::VSTMDDB;
+    case ARM::VSTMQIA: {
+      unsigned NewOpc = ARM::VSTMDIA;
       MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc));
       unsigned OpIdx = 0;
