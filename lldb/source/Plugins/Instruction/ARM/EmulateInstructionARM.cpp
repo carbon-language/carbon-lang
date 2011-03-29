@@ -9270,18 +9270,96 @@ EmulateInstructionARM::EmulateSUBSPReg (const uint32_t opcode, const ARMEncoding
                  
 // A8.6.7 ADD (register-shifted register)
 bool
-EmulateInstructionARM::EmulateAddRegShift (const uint32_t opcode, const ARMEncoding encoding)
+EmulateInstructionARM::EmulateADDRegShift (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        shift_n = UInt(R[s]<7:0>);
+        shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        (result, carry, overflow) = AddWithCarry(R[n], shifted, ‘0’);
+        R[d] = result;
+        if setflags then
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
+            APSR.V = overflow;
 #endif
     
-    //bool success = false;
+    bool success = false;
     
     if (ConditionPassed(opcode))
     {
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        uint32_t s;
+        bool setflags;
+        ARM_ShifterType shift_t;
+                  
         switch (encoding)
         {
+            case eEncodingA1:
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); s = UInt(Rs);
+                d = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                s = Bits32 (opcode, 11, 8);
+                  
+                // setflags = (S == ‘1’); shift_t = DecodeRegShift(type);
+                setflags = BitIsSet (opcode, 20);
+                shift_t = DecodeRegShift (Bits32 (opcode, 6, 5));
+                  
+                // if d == 15 || n == 15 || m == 15 || s == 15 then UNPREDICTABLE;
+                if ((d == 15) || (m == 15) || (m == 15) || (s == 15))
+                    return false;
+                break;
+                  
+            default:
+                return false;
         }
+                  
+        // shift_n = UInt(R[s]<7:0>);
+        uint32_t Rs = ReadCoreReg (s, &success);
+        if (!success)
+            return false;
+                  
+        uint32_t shift_n = Bits32 (Rs, 7, 0);
+                  
+        // shifted = Shift(R[m], shift_t, shift_n, APSR.C);
+        uint32_t Rm = ReadCoreReg (m, &success);
+        if (!success)
+            return false;
+                  
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);          
+                
+        // (result, carry, overflow) = AddWithCarry(R[n], shifted, ‘0’);
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+                  
+        AddWithCarryResult res = AddWithCarry (Rn, shifted, 0);
+                  
+        // R[d] = result;
+        EmulateInstruction::Context context;
+        context.type = eContextAddition;
+        Register reg_n;
+        reg_n.SetRegister (eRegisterKindDWARF, n);
+        Register reg_m;
+        reg_m.SetRegister (eRegisterKindDWARF, m);
+            
+        context.SetRegisterRegisterOperands (reg_n, reg_m);
+        
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, res.result))
+            return false;
+                  
+        // if setflags then
+            // APSR.N = result<31>;
+            // APSR.Z = IsZeroBit(result);
+            // APSR.C = carry;
+            // APSR.V = overflow;
+        if (setflags)
+            return WriteFlags (context, res.result, res.carry_out, res.overflow);
     }
     return true;
 }
@@ -9927,6 +10005,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s}<c> <Rd>, <Rn>, #const"},
         // add (register)
         { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        // add (register-shifted register)
+        { 0x0fe00090, 0x00800010, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRegShift, "add{s}<c> <Rd>, <Rn>m, <Rm>, <type> <RS>"},
         // adr
         { 0x0fff0000, 0x028f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
         { 0x0fff0000, 0x024f0000, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},

@@ -422,7 +422,7 @@ protected:
     
     // A8.6.7 ADD (register-shifted register)
     bool
-    EmulateAddRegShift (const uint32_t opcode, const ARMEncoding encoding);
+    EmulateADDRegShift (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.97 MOV (register)
     bool
