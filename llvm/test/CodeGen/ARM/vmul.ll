@@ -339,3 +339,32 @@ define <2 x i64> @vmull_extvec_u32(<2 x i32> %arg) nounwind {
   %tmp4 = mul <2 x i64> %tmp3, <i64 1234, i64 1234>
   ret <2 x i64> %tmp4
 }
+
+; rdar://9197392
+define void @distribue(i16* %dst, i8* %src, i32 %mul) nounwind {
+entry:
+; CHECK: distribue:
+; CHECK: vmull.u8 [[REG1:(q[0-9]+)]], d{{.*}}, [[REG2:(d[0-9]+)]]
+; CHECK: vmlal.u8 [[REG1]], d{{.*}}, [[REG2]]
+  %0 = trunc i32 %mul to i8
+  %1 = insertelement <8 x i8> undef, i8 %0, i32 0
+  %2 = shufflevector <8 x i8> %1, <8 x i8> undef, <8 x i32> zeroinitializer
+  %3 = tail call <16 x i8> @llvm.arm.neon.vld1.v16i8(i8* %src, i32 1)
+  %4 = bitcast <16 x i8> %3 to <2 x double>
+  %5 = extractelement <2 x double> %4, i32 1
+  %6 = bitcast double %5 to <8 x i8>
+  %7 = zext <8 x i8> %6 to <8 x i16>
+  %8 = zext <8 x i8> %2 to <8 x i16>
+  %9 = extractelement <2 x double> %4, i32 0
+  %10 = bitcast double %9 to <8 x i8>
+  %11 = zext <8 x i8> %10 to <8 x i16>
+  %12 = add <8 x i16> %7, %11
+  %13 = mul <8 x i16> %12, %8
+  %14 = bitcast i16* %dst to i8*
+  tail call void @llvm.arm.neon.vst1.v8i16(i8* %14, <8 x i16> %13, i32 2)
+  ret void
+}
+
+declare <16 x i8> @llvm.arm.neon.vld1.v16i8(i8*, i32) nounwind readonly
+
+declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>, i32) nounwind
