@@ -261,6 +261,10 @@ public:
   /// now).
   void ModifyStackSlotOrReMat(int SlotOrReMat);
 
+  /// ClobberSharingStackSlots - When a register mapped to a stack slot changes,
+  /// other stack slots sharing the same register are no longer valid.
+  void ClobberSharingStackSlots(int StackSlot);
+
   /// AddAvailableRegsToLiveIn - Availability information is being kept coming
   /// into the specified MBB. Add available physical registers as potential
   /// live-in's. If they are reused in the MBB, they will be added to the
@@ -829,6 +833,26 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
     if (I->second == SlotOrReMat) break;
   }
   PhysRegsAvailable.erase(I);
+}
+
+void AvailableSpills::ClobberSharingStackSlots(int StackSlot) {
+  std::map<int, unsigned>::iterator It =
+    SpillSlotsOrReMatsAvailable.find(StackSlot);
+  if (It == SpillSlotsOrReMatsAvailable.end()) return;
+  unsigned Reg = It->second >> 1;
+
+  // Erase entries in PhysRegsAvailable for other stack slots.
+  std::multimap<unsigned, int>::iterator I = PhysRegsAvailable.lower_bound(Reg);
+  while (I != PhysRegsAvailable.end() && I->first == Reg) {
+    std::multimap<unsigned, int>::iterator NextI = llvm::next(I);
+    if (I->second != StackSlot) {
+      DEBUG(dbgs() << "Clobbered sharing SS#" << I->second << " in "
+                   << PrintReg(Reg, TRI) << '\n');
+      SpillSlotsOrReMatsAvailable.erase(I->second);
+      PhysRegsAvailable.erase(I);
+    }
+    I = NextI;
+  }
 }
 
 // ************************** //
@@ -2549,6 +2573,10 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
                       Spills, MaybeDeadStores, RegKills, KillOps, *VRM);
         }
       }
+
+      // If StackSlot is available in a register that also holds other stack
+      // slots, clobber those stack slots now.
+      Spills.ClobberSharingStackSlots(StackSlot);
 
       assert(PhysReg && "VR not assigned a physical register?");
       MRI->setPhysRegUsed(PhysReg);
