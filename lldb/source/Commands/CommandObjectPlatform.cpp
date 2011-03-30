@@ -206,6 +206,8 @@ public:
             result.AppendError ("no platforms are available\n");
             result.SetStatus (eReturnStatusFailed);
         }
+        else
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
 };
