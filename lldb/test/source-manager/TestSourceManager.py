@@ -62,14 +62,14 @@ class SourceManagerTestCase(TestBase):
                                                      "=>", # prefix for current line
                                                      stream)
 
-        # 2   	
-        # 3   	int main(int argc, char const *argv[]) {
-        # 4 =>	    printf("Hello world.\n"); // Set break point at this line.
-        # 5   	    return 0;
-        # 6   	}
+        #    2   	
+        #    3    int main(int argc, char const *argv[]) {
+        # => 4        printf("Hello world.\n"); // Set break point at this line.
+        #    5        return 0;
+        #    6    }
         self.expect(stream.GetData(), "Source code displayed correctly",
                     exe=False,
-            patterns = ['%d =>.*Hello world' % self.line])        
+            patterns = ['=> %d.*Hello world' % self.line])        
 
     def modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
