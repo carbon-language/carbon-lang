@@ -1954,8 +1954,8 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
         !PrimaryVirtualBases.count(BaseDecl) && VBases.insert(BaseDecl)) {
       const ASTRecordLayout &MostDerivedClassLayout =
         Context.getASTRecordLayout(MostDerivedClass);
-      uint64_t BaseOffset = 
-        MostDerivedClassLayout.getVBaseClassOffsetInBits(BaseDecl);
+      CharUnits BaseOffset = 
+        MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       
       const ASTRecordLayout &LayoutClassLayout =
         Context.getASTRecordLayout(LayoutClass);
@@ -1963,7 +1963,7 @@ VTableBuilder::LayoutVTablesForVirtualBases(const CXXRecordDecl *RD,
         LayoutClassLayout.getVBaseClassOffset(BaseDecl);
 
       LayoutPrimaryAndSecondaryVTables(
-        BaseSubobject(BaseDecl, Context.toCharUnitsFromBits(BaseOffset)),
+        BaseSubobject(BaseDecl, BaseOffset),
         /*BaseIsMorallyVirtual=*/true,
         /*BaseIsVirtualInLayoutClass=*/true,
         BaseOffsetInLayoutClass);
