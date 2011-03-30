@@ -98,28 +98,6 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
   llvm::DenseMap<const Record *, unsigned> checkerRecIndexMap;
   for (unsigned i = 0, e = checkers.size(); i != e; ++i)
     checkerRecIndexMap[checkers[i]] = i;
-  
-  OS << "\n#ifdef GET_CHECKERS\n";
-  for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
-    const Record &R = *checkers[i];
-
-    OS << "CHECKER(" << "\"";
-    std::string name;
-    if (isCheckerNamed(&R))
-      name = getCheckerFullName(&R);
-    OS.write_escaped(name) << "\", ";
-    OS << R.getName() << ", ";
-    OS << getStringValue(R, "DescFile") << ", ";
-    OS << "\"";
-    OS.write_escaped(getStringValue(R, "HelpText")) << "\", ";
-    // Hidden bit
-    if (isHidden(R))
-      OS << "true";
-    else
-      OS << "false";
-    OS << ")\n";
-  }
-  OS << "#endif // GET_CHECKERS\n\n";
 
   // Invert the mapping of checkers to package/group into a one to many
   // mapping of packages/groups to checkers.
@@ -147,48 +125,6 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
       recordGroupMap[R] = &info;
     }
   }
-
-  typedef std::map<std::string, const Record *> SortedRecords;
-
-  OS << "\n#ifdef GET_PACKAGES\n";
-  {
-    SortedRecords sortedPackages;
-    for (unsigned i = 0, e = packages.size(); i != e; ++i)
-      sortedPackages[getPackageFullName(packages[i])] = packages[i];
-  
-    for (SortedRecords::iterator
-           I = sortedPackages.begin(), E = sortedPackages.end(); I != E; ++I) {
-      const Record &R = *I->second;
-  
-      OS << "PACKAGE(" << "\"";
-      OS.write_escaped(getPackageFullName(&R)) << "\", ";
-      // Hidden bit
-      if (isHidden(R))
-        OS << "true";
-      else
-        OS << "false";
-      OS << ")\n";
-    }
-  }
-  OS << "#endif // GET_PACKAGES\n\n";
-
-  OS << "\n#ifdef GET_GROUPS\n";
-  {
-    SortedRecords sortedGroups;
-    for (unsigned i = 0, e = checkerGroups.size(); i != e; ++i)
-      sortedGroups[checkerGroups[i]->getValueAsString("GroupName")]
-                   = checkerGroups[i];
-
-    for (SortedRecords::iterator
-           I = sortedGroups.begin(), E = sortedGroups.end(); I != E; ++I) {
-      const Record &R = *I->second;
-  
-      OS << "GROUP(" << "\"";
-      OS.write_escaped(R.getValueAsString("GroupName")) << "\"";
-      OS << ")\n";
-    }
-  }
-  OS << "#endif // GET_GROUPS\n\n";
 
   for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
     Record *R = checkers[i];
@@ -229,6 +165,85 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = packages.size(); i != e; ++i)
     if (DefInit *DI = dynamic_cast<DefInit*>(packages[i]->getValueInit("Group")))
       addPackageToCheckerGroup(packages[i], DI->getDef(), recordGroupMap);
+
+  typedef std::map<std::string, const Record *> SortedRecords;
+  typedef llvm::DenseMap<const Record *, unsigned> RecToSortIndex;
+
+  SortedRecords sortedGroups;
+  RecToSortIndex groupToSortIndex;
+  OS << "\n#ifdef GET_GROUPS\n";
+  {
+    for (unsigned i = 0, e = checkerGroups.size(); i != e; ++i)
+      sortedGroups[checkerGroups[i]->getValueAsString("GroupName")]
+                   = checkerGroups[i];
+
+    unsigned sortIndex = 0;
+    for (SortedRecords::iterator
+           I = sortedGroups.begin(), E = sortedGroups.end(); I != E; ++I) {
+      const Record *R = I->second;
+  
+      OS << "GROUP(" << "\"";
+      OS.write_escaped(R->getValueAsString("GroupName")) << "\"";
+      OS << ")\n";
+
+      groupToSortIndex[R] = sortIndex++;
+    }
+  }
+  OS << "#endif // GET_GROUPS\n\n";
+
+  OS << "\n#ifdef GET_PACKAGES\n";
+  {
+    SortedRecords sortedPackages;
+    for (unsigned i = 0, e = packages.size(); i != e; ++i)
+      sortedPackages[getPackageFullName(packages[i])] = packages[i];
+  
+    for (SortedRecords::iterator
+           I = sortedPackages.begin(), E = sortedPackages.end(); I != E; ++I) {
+      const Record &R = *I->second;
+  
+      OS << "PACKAGE(" << "\"";
+      OS.write_escaped(getPackageFullName(&R)) << "\", ";
+      // Group index
+      if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
+        OS << groupToSortIndex[DI->getDef()] << ", ";
+      else
+        OS << "-1, ";
+      // Hidden bit
+      if (isHidden(R))
+        OS << "true";
+      else
+        OS << "false";
+      OS << ")\n";
+    }
+  }
+  OS << "#endif // GET_PACKAGES\n\n";
+  
+  OS << "\n#ifdef GET_CHECKERS\n";
+  for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
+    const Record &R = *checkers[i];
+
+    OS << "CHECKER(" << "\"";
+    std::string name;
+    if (isCheckerNamed(&R))
+      name = getCheckerFullName(&R);
+    OS.write_escaped(name) << "\", ";
+    OS << R.getName() << ", ";
+    OS << getStringValue(R, "DescFile") << ", ";
+    OS << "\"";
+    OS.write_escaped(getStringValue(R, "HelpText")) << "\", ";
+    // Group index
+    if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
+      OS << groupToSortIndex[DI->getDef()] << ", ";
+    else
+      OS << "-1, ";
+    // Hidden bit
+    if (isHidden(R))
+      OS << "true";
+    else
+      OS << "false";
+    OS << ")\n";
+  }
+  OS << "#endif // GET_CHECKERS\n\n";
 
   unsigned index = 0;
   for (std::map<std::string, GroupInfo>::iterator
