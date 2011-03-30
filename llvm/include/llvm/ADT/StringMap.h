@@ -81,16 +81,6 @@ protected:
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
 
-  /// ShouldRehash - Return true if the table should be rehashed after a new
-  /// element was recently inserted.
-  bool ShouldRehash() const {
-    // If the hash table is now more than 3/4 full, or if fewer than 1/8 of
-    // the buckets are empty (meaning that many are filled with tombstones),
-    // grow the table.
-    return NumItems*4 > NumBuckets*3 ||
-           NumBuckets-(NumItems+NumTombstones) < NumBuckets/8;
-  }
-
   /// LookupBucketFor - Look up the bucket that the specified string should end
   /// up in.  If it already exists as a key in the map, the Item pointer for the
   /// specified bucket will be non-null.  Otherwise, it will be null.  In either
@@ -340,8 +330,7 @@ public:
     Bucket.Item = KeyValue;
     ++NumItems;
 
-    if (ShouldRehash())
-      RehashTable();
+    RehashTable();
     return true;
   }
 
@@ -383,8 +372,7 @@ public:
     // filled in by LookupBucketFor.
     Bucket.Item = NewItem;
 
-    if (ShouldRehash())
-      RehashTable();
+    RehashTable();
     return *NewItem;
   }
 
