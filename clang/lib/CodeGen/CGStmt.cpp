@@ -270,9 +270,6 @@ void CodeGenFunction::EmitBranch(llvm::BasicBlock *Target) {
     // terminated, don't touch it.
   } else {
     // Otherwise, create a fall-through branch.
-    // There is no need to emit line number for unconditional branch.
-    if (getDebugInfo())
-      Builder.SetCurrentDebugLocation(llvm::DebugLoc());
     Builder.CreateBr(Target);
   }
 
@@ -400,11 +397,17 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
+    // There is no need to emit line number for unconditional branch.
+    if (getDebugInfo())
+      Builder.SetCurrentDebugLocation(llvm::DebugLoc());
     EmitBlock(ElseBlock);
     {
       RunCleanupsScope ElseScope(*this);
       EmitStmt(Else);
     }
+    // There is no need to emit line number for unconditional branch.
+    if (getDebugInfo())
+      Builder.SetCurrentDebugLocation(llvm::DebugLoc());
     EmitBranch(ContBlock);
   }
 

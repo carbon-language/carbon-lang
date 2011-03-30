@@ -2317,6 +2317,9 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
 
   // Emit an unconditional branch from this block to ContBlock.  Insert an entry
   // into the phi node for the edge with the value of RHSCond.
+  if (CGF.getDebugInfo())
+    // There is no need to emit line number for unconditional branch.
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
   CGF.EmitBlock(ContBlock);
   PN->addIncoming(RHSCond, RHSBlock);
 
