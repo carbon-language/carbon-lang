@@ -876,7 +876,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
       continue;
 
-    int64_t Offset = 0;
+    CharUnits Offset = CharUnits::Zero();
 
     if (Overriders) {
       // Get the final overrider.
@@ -885,11 +885,11 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
       
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
-      // FIXME: We should not use / 8 here.
-      Offset = (int64_t)(Context.toBits(Overrider.Offset) - VBaseOffset) / 8;
+      Offset = Overrider.Offset - Context.toCharUnitsFromBits(VBaseOffset);
     }
     
-    Components.push_back(VTableComponent::MakeVCallOffset(Offset));
+    Components.push_back(
+      VTableComponent::MakeVCallOffset(Offset.getQuantity()));
   }
 
   // And iterate over all non-virtual bases (ignoring the primary base).
