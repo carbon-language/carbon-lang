@@ -289,9 +289,12 @@ private:
     // table completely filled with tombstones, no lookup would ever succeed,
     // causing infinite loops in lookup.
     ++NumEntries;
-    if (NumEntries*4 >= NumBuckets*3 ||
-        NumBuckets-(NumEntries+NumTombstones) < NumBuckets/8) {
+    if (NumEntries*4 >= NumBuckets*3) {
       this->grow(NumBuckets * 2);
+      LookupBucketFor(Key, TheBucket);
+    }
+    if (NumBuckets-(NumEntries+NumTombstones) < NumBuckets/8) {
+      this->grow(NumBuckets);
       LookupBucketFor(Key, TheBucket);
     }
 
