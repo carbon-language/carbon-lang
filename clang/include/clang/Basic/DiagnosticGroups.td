@@ -96,6 +96,8 @@ def Padded : DiagGroup<"padded">;
 def PointerArith : DiagGroup<"pointer-arith">;
 def PoundWarning : DiagGroup<"#warnings">,
                    DiagCategory<"#warning Directive">;
+def PoundPragmaMessage : DiagGroup<"#pragma messages">,
+                         DiagCategory<"#pragma message Directive">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
 def ReturnType : DiagGroup<"return-type">;
