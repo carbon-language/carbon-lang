@@ -9,13 +9,13 @@
 
 // C Includes
 // C++ Includes
-#include <iostream>
-
 // Other libraries and framework includes
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
+#include "lldb/Target/ThreadPlanRunToAddress.h"
 
 #include "AuxVector.h"
 #include "DynamicLoaderLinuxDYLD.h"
@@ -287,14 +287,55 @@ DynamicLoaderLinuxDYLD::RefreshModules()
 }
 
 ThreadPlanSP
-DynamicLoaderLinuxDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop_others)
+DynamicLoaderLinuxDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
 {
     LogSP log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
     ThreadPlanSP thread_plan_sp;
 
-    if (log)
-        log->PutCString("DynamicLoaderLinuxDYLD: "
-                        "GetStepThroughTrampolinePlan not implemented\n");
+    StackFrame *frame = thread.GetStackFrameAtIndex(0).get();
+    const SymbolContext &context = frame->GetSymbolContext(eSymbolContextSymbol);
+    Symbol *sym = context.symbol;
+
+    if (sym == NULL || !sym->IsTrampoline())
+        return thread_plan_sp;
+
+    const ConstString &sym_name = sym->GetMangled().GetName(Mangled::ePreferMangled);
+    if (!sym_name)
+        return thread_plan_sp;
+
+    SymbolContextList target_symbols;
+    Target &target = thread.GetProcess().GetTarget();
+    ModuleList &images = target.GetImages();
+
+    images.FindSymbolsWithNameAndType(sym_name, eSymbolTypeCode, target_symbols);
+    size_t num_targets = target_symbols.GetSize();
+    if (!num_targets)
+        return thread_plan_sp;
+
+    typedef std::vector<lldb::addr_t> AddressVector;
+    AddressVector addrs;
+    for (size_t i = 0; i < num_targets; ++i)
+    {
+        SymbolContext context;
+        AddressRange range;
+        if (target_symbols.GetContextAtIndex(i, context))
+        {
+            context.GetAddressRange(eSymbolContextEverything, range);
+            lldb::addr_t addr = range.GetBaseAddress().GetLoadAddress(&target);
+            if (addr != LLDB_INVALID_ADDRESS)
+                addrs.push_back(addr);
+        }
+    }
+
+    if (addrs.size() > 0) 
+    {
+        AddressVector::iterator start = addrs.begin();
+        AddressVector::iterator end = addrs.end();
+
+        std::sort(start, end);
+        addrs.erase(std::unique(start, end), end);
+        thread_plan_sp.reset(new ThreadPlanRunToAddress(thread, addrs, stop));
+    }
 
     return thread_plan_sp;
 }
