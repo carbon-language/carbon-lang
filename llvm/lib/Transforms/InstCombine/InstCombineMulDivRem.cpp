@@ -452,6 +452,18 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   if (Value *V = SimplifyFDivInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
+    const APFloat &Op1F = Op1C->getValueAPF();
+
+    // If the divisor has an exact multiplicative inverse we can turn the fdiv
+    // into a cheaper fmul.
+    APFloat Reciprocal(Op1F.getSemantics());
+    if (Op1F.getExactInverse(&Reciprocal)) {
+      ConstantFP *RFP = ConstantFP::get(Builder->getContext(), Reciprocal);
+      return BinaryOperator::CreateFMul(Op0, RFP);
+    }
+  }
+
   return 0;
 }
 
