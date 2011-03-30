@@ -26,7 +26,10 @@
 #ifndef __STDDEF_H
 #define __STDDEF_H
 
+#ifndef _PTRDIFF_T
+#define _PTRDIFF_T
 typedef __typeof__(((int*)0)-((int*)0)) ptrdiff_t;
+#endif
 #ifndef _SIZE_T
 #define _SIZE_T
 typedef __typeof__(sizeof(int)) size_t;
