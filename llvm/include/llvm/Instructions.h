@@ -1829,6 +1829,8 @@ class PHINode : public Instruction {
 protected:
   virtual PHINode *clone_impl() const;
 public:
+  /// Constructors - NumReservedValues is a hint for the number of incoming
+  /// edges that this phi node will have (use 0 if you really have no idea).
   static PHINode *Create(const Type *Ty, unsigned NumReservedValues,
                          const Twine &NameStr = "",
                          Instruction *InsertBefore = 0) {
