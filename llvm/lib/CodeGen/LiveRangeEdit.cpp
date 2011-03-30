@@ -231,8 +231,11 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       continue;
     DEBUG(dbgs() << NumComp << " components: " << *LI << '\n');
     SmallVector<LiveInterval*, 8> Dups(1, LI);
-    for (unsigned i = 1; i != NumComp; ++i)
+    for (unsigned i = 1; i != NumComp; ++i) {
       Dups.push_back(&createFrom(LI->reg, LIS, VRM));
+      if (delegate_)
+        delegate_->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
+    }
     ConEQ.Distribute(&Dups[0], VRM.getRegInfo());
   }
 }

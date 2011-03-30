@@ -90,7 +90,8 @@ class RAGreedy : public MachineFunctionPass,
   // range splitting algorithm terminates, something that is otherwise hard to
   // ensure.
   enum LiveRangeStage {
-    RS_Original, ///< Never seen before, never split.
+    RS_New,      ///< Never seen before.
+    RS_First,    ///< First time in the queue.
     RS_Second,   ///< Second time in the queue.
     RS_Region,   ///< Produced by region splitting.
     RS_Block,    ///< Produced by per-block splitting.
@@ -107,8 +108,11 @@ class RAGreedy : public MachineFunctionPass,
   template<typename Iterator>
   void setStage(Iterator Begin, Iterator End, LiveRangeStage NewStage) {
     LRStage.resize(MRI->getNumVirtRegs());
-    for (;Begin != End; ++Begin)
-      LRStage[(*Begin)->reg] = NewStage;
+    for (;Begin != End; ++Begin) {
+      unsigned Reg = (*Begin)->reg;
+      if (LRStage[Reg] == RS_New)
+        LRStage[Reg] = NewStage;
+    }
   }
 
   // splitting state.
@@ -162,6 +166,7 @@ private:
   void LRE_WillEraseInstruction(MachineInstr*);
   bool LRE_CanEraseVirtReg(unsigned);
   void LRE_WillShrinkVirtReg(unsigned);
+  void LRE_DidCloneVirtReg(unsigned, unsigned);
 
   void mapGlobalInterference(unsigned, SmallVectorImpl<IndexPair>&);
   float calcSplitConstraints(const SmallVectorImpl<IndexPair>&);
@@ -192,7 +197,7 @@ FunctionPass* llvm::createGreedyRegisterAllocator() {
   return new RAGreedy();
 }
 
-RAGreedy::RAGreedy(): MachineFunctionPass(ID), LRStage(RS_Original) {
+RAGreedy::RAGreedy(): MachineFunctionPass(ID), LRStage(RS_New) {
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
@@ -265,6 +270,14 @@ void RAGreedy::LRE_WillShrinkVirtReg(unsigned VirtReg) {
   enqueue(&LI);
 }
 
+void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
+  // LRE may clone a virtual register because dead code elimination causes it to
+  // be split into connected components. Ensure that the new register gets the
+  // same stage as the parent.
+  LRStage.grow(New);
+  LRStage[New] = LRStage[Old];
+}
+
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
   LRStage.clear();
@@ -281,6 +294,9 @@ void RAGreedy::enqueue(LiveInterval *LI) {
   unsigned Prio;
 
   LRStage.grow(Reg);
+  if (LRStage[Reg] == RS_New)
+    LRStage[Reg] = RS_First;
+
   if (LRStage[Reg] == RS_Second)
     // Unsplit ranges that couldn't be allocated immediately are deferred until
     // everything else has been allocated. Long ranges are allocated last so
@@ -1146,7 +1162,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
   LiveRangeStage Stage = getStage(VirtReg);
-  if (Stage == RS_Original) {
+  if (Stage == RS_First) {
     LRStage[VirtReg.reg] = RS_Second;
     DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(&VirtReg);

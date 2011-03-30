@@ -43,6 +43,10 @@ public:
     /// Called before shrinking the live range of a virtual register.
     virtual void LRE_WillShrinkVirtReg(unsigned) {}
 
+    /// Called after cloning a virtual register.
+    /// This is used for new registers representing connected components of Old.
+    virtual void LRE_DidCloneVirtReg(unsigned New, unsigned Old) {}
+
     virtual ~Delegate() {}
   };
 
