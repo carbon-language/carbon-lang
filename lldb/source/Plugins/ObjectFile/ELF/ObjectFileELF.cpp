@@ -23,6 +23,8 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Host/Host.h"
 
+#include "llvm/ADT/PointerUnion.h"
+
 #define CASE_AND_STREAM(s, def, width)                  \
     case def: s->Printf("%-*s", width, #def); break;
 
@@ -30,6 +32,113 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace elf;
 using namespace llvm::ELF;
+
+namespace {
+//===----------------------------------------------------------------------===//
+/// @class ELFRelocation
+/// @brief Generic wrapper for ELFRel and ELFRela.
+///
+/// This helper class allows us to parse both ELFRel and ELFRela relocation
+/// entries in a generic manner.
+class ELFRelocation
+{
+public:
+
+    /// Constructs an ELFRelocation entry with a personality as given by @p
+    /// type.
+    ///
+    /// @param type Either DT_REL or DT_RELA.  Any other value is invalid.
+    ELFRelocation(unsigned type);
+ 
+    ~ELFRelocation();
+
+    bool
+    Parse(const lldb_private::DataExtractor &data, uint32_t *offset);
+
+    static unsigned
+    RelocType32(const ELFRelocation &rel);
+
+    static unsigned
+    RelocType64(const ELFRelocation &rel);
+
+    static unsigned
+    RelocSymbol32(const ELFRelocation &rel);
+
+    static unsigned
+    RelocSymbol64(const ELFRelocation &rel);
+
+private:
+    typedef llvm::PointerUnion<ELFRel*, ELFRela*> RelocUnion;
+
+    RelocUnion reloc;
+};
+
+ELFRelocation::ELFRelocation(unsigned type)
+{ 
+    if (type == DT_REL)
+        reloc = new ELFRel();
+    else if (type == DT_RELA)
+        reloc = new ELFRela();
+    else {
+        assert(false && "unexpected relocation type");
+        reloc = static_cast<ELFRel*>(NULL);
+    }
+}
+
+ELFRelocation::~ELFRelocation()
+{
+    if (reloc.is<ELFRel*>())
+        delete reloc.get<ELFRel*>();
+    else
+        delete reloc.get<ELFRela*>();            
+}
+
+bool
+ELFRelocation::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+{
+    if (reloc.is<ELFRel*>())
+        return reloc.get<ELFRel*>()->Parse(data, offset);
+    else
+        return reloc.get<ELFRela*>()->Parse(data, offset);
+}
+
+unsigned
+ELFRelocation::RelocType32(const ELFRelocation &rel)
+{
+    if (rel.reloc.is<ELFRel*>())
+        return ELFRel::RelocType32(*rel.reloc.get<ELFRel*>());
+    else
+        return ELFRela::RelocType32(*rel.reloc.get<ELFRela*>());
+}
+
+unsigned
+ELFRelocation::RelocType64(const ELFRelocation &rel)
+{
+    if (rel.reloc.is<ELFRel*>())
+        return ELFRel::RelocType64(*rel.reloc.get<ELFRel*>());
+    else
+        return ELFRela::RelocType64(*rel.reloc.get<ELFRela*>());
+}
+
+unsigned
+ELFRelocation::RelocSymbol32(const ELFRelocation &rel)
+{
+    if (rel.reloc.is<ELFRel*>())
+        return ELFRel::RelocSymbol32(*rel.reloc.get<ELFRel*>());
+    else
+        return ELFRela::RelocSymbol32(*rel.reloc.get<ELFRela*>());
+}
+
+unsigned
+ELFRelocation::RelocSymbol64(const ELFRelocation &rel)
+{
+    if (rel.reloc.is<ELFRel*>())
+        return ELFRel::RelocSymbol64(*rel.reloc.get<ELFRel*>());
+    else
+        return ELFRela::RelocSymbol64(*rel.reloc.get<ELFRela*>());
+}
+
+} // end anonymous namespace
 
 //------------------------------------------------------------------
 // Static methods.
@@ -195,54 +304,54 @@ ObjectFileELF::GetDependentModules(FileSpecList &files)
     return num_specs;
 }
 
-Address
-ObjectFileELF::GetImageInfoAddress()
+user_id_t
+ObjectFileELF::GetSectionIndexByType(unsigned type)
 {
     if (!ParseSectionHeaders())
-        return Address();
+        return 0;
 
-    user_id_t dynsym_id = 0;
     for (SectionHeaderCollIter sh_pos = m_section_headers.begin();
          sh_pos != m_section_headers.end(); ++sh_pos) 
     {
-        if (sh_pos->sh_type == SHT_DYNAMIC)
-        {
-            dynsym_id = SectionIndex(sh_pos);
-            break;
-        }
+        if (sh_pos->sh_type == type)
+            return SectionIndex(sh_pos);
     }
 
-    if (!dynsym_id)
+    return 0;
+}
+
+Address
+ObjectFileELF::GetImageInfoAddress()
+{
+    if (!ParseDynamicSymbols())
         return Address();
 
     SectionList *section_list = GetSectionList();
     if (!section_list)
         return Address();
 
-    // Resolve the dynamic table entries.
+    user_id_t dynsym_id = GetSectionIndexByType(SHT_DYNAMIC);
+    if (!dynsym_id)
+        return Address();
+
+    const ELFSectionHeader *dynsym_hdr = GetSectionHeaderByIndex(dynsym_id);
+    if (!dynsym_hdr)
+        return Address();
+
     Section *dynsym = section_list->FindSectionByID(dynsym_id).get();
     if (!dynsym)
         return Address();
-
-    DataExtractor dynsym_data;
-    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data))
+    
+    for (size_t i = 0; i < m_dynamic_symbols.size(); ++i)
     {
-        ELFDynamic symbol;
-        const unsigned section_size = dynsym_data.GetByteSize();
-        unsigned offset = 0;
-        unsigned cursor = 0;
+        ELFDynamic &symbol = m_dynamic_symbols[i];
 
-        // Look for a DT_DEBUG entry.
-        while (cursor < section_size)
+        if (symbol.d_tag == DT_DEBUG)
         {
-            offset = cursor;
-            if (!symbol.Parse(dynsym_data, &cursor))
-                break;
-
-            if (symbol.d_tag != DT_DEBUG)
-                continue;
-
-            return Address(dynsym, offset + sizeof(symbol.d_tag));
+            // Compute the offset as the number of previous entries plus the
+            // size of d_tag.
+            addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
+            return Address(dynsym, offset);
         }
     }
 
@@ -476,6 +585,18 @@ ObjectFileELF::GetSectionIndexByName(const char *name)
     return 0;
 }
 
+const elf::ELFSectionHeader *
+ObjectFileELF::GetSectionHeaderByIndex(lldb::user_id_t id)
+{
+    if (!ParseSectionHeaders() || !id)
+        return NULL;
+
+    if (--id < m_section_headers.size())
+        return &m_section_headers[id];
+
+    return NULL;
+}
+
 SectionList *
 ObjectFileELF::GetSectionList()
 {
@@ -548,16 +669,18 @@ ObjectFileELF::GetSectionList()
     return m_sections_ap.get();
 }
 
-static void
-ParseSymbols(Symtab *symtab, SectionList *section_list,
-             const ELFSectionHeader &symtab_shdr,
+static unsigned
+ParseSymbols(Symtab *symtab, 
+             user_id_t start_id,
+             SectionList *section_list,
+             const ELFSectionHeader *symtab_shdr,
              const DataExtractor &symtab_data,
              const DataExtractor &strtab_data)
 {
     ELFSymbol symbol;
     uint32_t offset = 0;
-    const unsigned numSymbols = 
-        symtab_data.GetByteSize() / symtab_shdr.sh_entsize;
+    const unsigned num_symbols = 
+        symtab_data.GetByteSize() / symtab_shdr->sh_entsize;
 
     static ConstString text_section_name(".text");
     static ConstString init_section_name(".init");
@@ -571,7 +694,8 @@ ParseSymbols(Symtab *symtab, SectionList *section_list,
     static ConstString data2_section_name(".data1");
     static ConstString bss_section_name(".bss");
 
-    for (unsigned i = 0; i < numSymbols; ++i)
+    unsigned i;
+    for (i = 0; i < num_symbols; ++i)
     {
         if (symbol.Parse(symtab_data, &offset) == false)
             break;
@@ -658,7 +782,7 @@ ParseSymbols(Symtab *symtab, SectionList *section_list,
         uint32_t flags = symbol.st_other << 8 | symbol.st_info;
 
         Symbol dc_symbol(
-            i,               // ID is the original symbol table index.
+            i + start_id,    // ID is the original symbol table index.
             symbol_name,     // Symbol name.
             false,           // Is the symbol name mangled?
             symbol_type,     // Type of this symbol
@@ -672,26 +796,29 @@ ParseSymbols(Symtab *symtab, SectionList *section_list,
             flags);          // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
+
+    return i;
 }
 
-void
-ObjectFileELF::ParseSymbolTable(Symtab *symbol_table,
-                                const ELFSectionHeader &symtab_hdr,
+unsigned
+ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id,
+                                const ELFSectionHeader *symtab_hdr,
                                 user_id_t symtab_id)
 {
-    assert(symtab_hdr.sh_type == SHT_SYMTAB || 
-           symtab_hdr.sh_type == SHT_DYNSYM);
+    assert(symtab_hdr->sh_type == SHT_SYMTAB || 
+           symtab_hdr->sh_type == SHT_DYNSYM);
 
     // Parse in the section list if needed.
     SectionList *section_list = GetSectionList();
     if (!section_list)
-        return;
+        return 0;
 
     // Section ID's are ones based.
-    user_id_t strtab_id = symtab_hdr.sh_link + 1;
+    user_id_t strtab_id = symtab_hdr->sh_link + 1;
 
     Section *symtab = section_list->FindSectionByID(symtab_id).get();
     Section *strtab = section_list->FindSectionByID(strtab_id).get();
+    unsigned num_symbols = 0;
     if (symtab && strtab)
     {
         DataExtractor symtab_data;
@@ -699,10 +826,244 @@ ObjectFileELF::ParseSymbolTable(Symtab *symbol_table,
         if (symtab->ReadSectionDataFromObjectFile(this, symtab_data) &&
             strtab->ReadSectionDataFromObjectFile(this, strtab_data))
         {
-            ParseSymbols(symbol_table, section_list, symtab_hdr,
-                         symtab_data, strtab_data);
+            num_symbols = ParseSymbols(symbol_table, start_id, 
+                                       section_list, symtab_hdr,
+                                       symtab_data, strtab_data);
         }
     }
+
+    return num_symbols;
+}
+
+size_t
+ObjectFileELF::ParseDynamicSymbols()
+{
+    if (m_dynamic_symbols.size())
+        return m_dynamic_symbols.size();
+
+    user_id_t dyn_id = GetSectionIndexByType(SHT_DYNAMIC);
+    if (!dyn_id)
+        return NULL;
+
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return NULL;
+
+    Section *dynsym = section_list->FindSectionByID(dyn_id).get();
+    if (!dynsym)
+        return NULL;
+
+    ELFDynamic symbol;
+    DataExtractor dynsym_data;
+    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data))
+    {
+
+        const unsigned section_size = dynsym_data.GetByteSize();
+        unsigned offset = 0;
+        unsigned cursor = 0;
+
+        while (cursor < section_size)
+        {
+            offset = cursor;
+            if (!symbol.Parse(dynsym_data, &cursor))
+                break;
+
+            m_dynamic_symbols.push_back(symbol);
+        }
+    }
+
+    return m_dynamic_symbols.size();
+}
+
+const ELFDynamic *
+ObjectFileELF::FindDynamicSymbol(unsigned tag)
+{
+    if (!ParseDynamicSymbols())
+        return NULL;
+
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return 0;
+
+    DynamicSymbolCollIter I = m_dynamic_symbols.begin();
+    DynamicSymbolCollIter E = m_dynamic_symbols.end();
+    for ( ; I != E; ++I)
+    {
+        ELFDynamic *symbol = &*I;
+
+        if (symbol->d_tag == tag)
+            return symbol;
+    }
+
+    return NULL;
+}
+
+Section *
+ObjectFileELF::PLTSection()
+{
+    const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
+    SectionList *section_list = GetSectionList();
+
+    if (symbol && section_list)
+    {
+        addr_t addr = symbol->d_ptr;
+        return section_list->FindSectionContainingFileAddress(addr).get();
+    }
+
+    return NULL;
+}
+
+unsigned
+ObjectFileELF::PLTRelocationType()
+{
+    const ELFDynamic *symbol = FindDynamicSymbol(DT_PLTREL);
+
+    if (symbol)
+        return symbol->d_val;
+
+    return 0;
+}
+
+static unsigned
+ParsePLTRelocations(Symtab *symbol_table,
+                    user_id_t start_id,
+                    unsigned rel_type,
+                    const ELFHeader *hdr,
+                    const ELFSectionHeader *rel_hdr,
+                    const ELFSectionHeader *plt_hdr,
+                    const ELFSectionHeader *sym_hdr,
+                    Section *plt_section,
+                    DataExtractor &rel_data,
+                    DataExtractor &symtab_data,
+                    DataExtractor &strtab_data)
+{
+    ELFRelocation rel(rel_type);
+    ELFSymbol symbol;
+    uint32_t offset = 0;
+    const unsigned plt_entsize = plt_hdr->sh_entsize;
+    const unsigned num_relocations = rel_hdr->sh_size / rel_hdr->sh_entsize;
+
+    typedef unsigned (*reloc_info_fn)(const ELFRelocation &rel);
+    reloc_info_fn reloc_type;
+    reloc_info_fn reloc_symbol;
+
+    if (hdr->Is32Bit() == 4)
+    {
+        reloc_type = ELFRelocation::RelocType32;
+        reloc_symbol = ELFRelocation::RelocSymbol32;
+    }
+    else
+    {
+        reloc_type = ELFRelocation::RelocType64;
+        reloc_symbol = ELFRelocation::RelocSymbol64;
+    }
+
+    unsigned slot_type = hdr->GetRelocationJumpSlotType();
+    unsigned i;
+    for (i = 0; i < num_relocations; ++i)
+    {
+        if (rel.Parse(rel_data, &offset) == false)
+            break;
+
+        if (reloc_type(rel) != slot_type)
+            continue;
+
+        unsigned symbol_offset = reloc_symbol(rel) * sym_hdr->sh_entsize;
+        uint64_t plt_index = (i + 1) * plt_entsize;
+
+        if (!symbol.Parse(symtab_data, &symbol_offset))
+            break;
+
+        const char *symbol_name = strtab_data.PeekCStr(symbol.st_name);
+
+        Symbol jump_symbol(
+            i + start_id,    // Symbol table index
+            symbol_name,     // symbol name.
+            false,           // is the symbol name mangled?
+            eSymbolTypeTrampoline, // Type of this symbol
+            false,           // Is this globally visible?
+            false,           // Is this symbol debug info?
+            true,            // Is this symbol a trampoline?
+            true,            // Is this symbol artificial?
+            plt_section,     // Section in which this symbol is defined or null.
+            plt_index,       // Offset in section or symbol value.
+            plt_entsize,     // Size in bytes of this symbol.
+            0);              // Symbol flags.
+
+        symbol_table->AddSymbol(jump_symbol);
+    }
+
+    return i;
+}
+
+unsigned
+ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
+                                      user_id_t start_id,
+                                      const ELFSectionHeader *rel_hdr,
+                                      user_id_t rel_id)
+{
+    assert(rel_hdr->sh_type == SHT_RELA || rel_hdr->sh_type == SHT_REL);
+
+    // The link field points to the asscoiated symbol table.  The info field
+    // points to the section holding the plt.
+    user_id_t symtab_id = rel_hdr->sh_link;
+    user_id_t plt_id = rel_hdr->sh_info;
+
+    if (!symtab_id || !plt_id)
+        return 0;
+
+    // Section ID's are ones based;
+    symtab_id++;
+    plt_id++;
+
+    const ELFSectionHeader *plt_hdr = GetSectionHeaderByIndex(plt_id);
+    if (!plt_hdr)
+        return 0;
+
+    const ELFSectionHeader *sym_hdr = GetSectionHeaderByIndex(symtab_id);
+    if (!sym_hdr)
+        return 0;
+
+    SectionList *section_list = GetSectionList();
+    if (!section_list)
+        return 0;
+
+    Section *rel_section = section_list->FindSectionByID(rel_id).get();
+    if (!rel_section)
+        return 0;
+
+    Section *plt_section = section_list->FindSectionByID(plt_id).get();
+    if (!plt_section)
+        return 0;
+
+    Section *symtab = section_list->FindSectionByID(symtab_id).get();
+    if (!symtab)
+        return 0;
+
+    Section *strtab = section_list->FindSectionByID(sym_hdr->sh_link + 1).get();
+    if (!strtab)
+        return 0;
+
+    DataExtractor rel_data;
+    if (!rel_section->ReadSectionDataFromObjectFile(this, rel_data))
+        return 0;
+
+    DataExtractor symtab_data;
+    if (!symtab->ReadSectionDataFromObjectFile(this, symtab_data))
+        return 0;
+
+    DataExtractor strtab_data;
+    if (!strtab->ReadSectionDataFromObjectFile(this, strtab_data))
+        return 0;
+
+    unsigned rel_type = PLTRelocationType();
+    if (!rel_type)
+        return 0;
+
+    return ParsePLTRelocations(symbol_table, start_id, rel_type,
+                               &m_header, rel_hdr, plt_hdr, sym_hdr,
+                               plt_section, 
+                               rel_data, symtab_data, strtab_data);
 }
 
 Symtab *
@@ -714,21 +1075,34 @@ ObjectFileELF::GetSymtab()
     Symtab *symbol_table = new Symtab(this);
     m_symtab_ap.reset(symbol_table);
 
-    Mutex::Locker locker (symbol_table->GetMutex ());
+    Mutex::Locker locker(symbol_table->GetMutex());
     
     if (!(ParseSectionHeaders() && GetSectionHeaderStringTable()))
         return symbol_table;
 
     // Locate and parse all linker symbol tables.
+    uint64_t symbol_id = 0;
     for (SectionHeaderCollIter I = m_section_headers.begin();
          I != m_section_headers.end(); ++I)
     {
         if (I->sh_type == SHT_SYMTAB)
         {
-            const ELFSectionHeader &symtab_section = *I;
+            const ELFSectionHeader &symtab_header = *I;
             user_id_t section_id = SectionIndex(I);
-            ParseSymbolTable (symbol_table, symtab_section, section_id);
+            symbol_id += ParseSymbolTable(symbol_table, symbol_id,
+                                          &symtab_header, section_id);
         }
+    }
+    
+    // Synthesize trampoline symbols to help navigate the PLT.
+    Section *reloc_section = PLTSection();
+    if (reloc_section) 
+    {
+        user_id_t reloc_id = reloc_section->GetID();
+        const ELFSectionHeader *reloc_header = GetSectionHeaderByIndex(reloc_id);
+        assert(reloc_header);
+
+        ParseTrampolineSymbols(symbol_table, symbol_id, reloc_header, reloc_id);
     }
 
     return symbol_table;

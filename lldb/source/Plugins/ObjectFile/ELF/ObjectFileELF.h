@@ -120,6 +120,10 @@ private:
     typedef SectionHeaderColl::iterator         SectionHeaderCollIter;
     typedef SectionHeaderColl::const_iterator   SectionHeaderCollConstIter;
 
+    typedef std::vector<elf::ELFDynamic>        DynamicSymbolColl;
+    typedef DynamicSymbolColl::iterator         DynamicSymbolCollIter;
+    typedef DynamicSymbolColl::const_iterator   DynamicSymbolCollConstIter;
+
     /// Version of this reader common to all plugins based on this class.
     static const uint32_t m_plugin_version = 1;
 
@@ -131,6 +135,9 @@ private:
 
     /// Collection of section headers.
     SectionHeaderColl m_section_headers;
+
+    /// Collection of symbols from the dynamic table.
+    DynamicSymbolColl m_dynamic_symbols;
 
     /// List of sections present in this ELF object file.
     mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
@@ -147,7 +154,7 @@ private:
 
     /// Cached value of the entry point for this module.
     lldb_private::Address  m_entry_point_address;
-    
+
     /// Returns a 1 based index of the given section header.
     unsigned
     SectionIndex(const SectionHeaderCollIter &I);
@@ -175,12 +182,28 @@ private:
     size_t
     ParseDependentModules();
 
+    /// Parses the dynamic symbol table and populates m_dynamic_symbols.  The
+    /// vector retains the order as found in the object file.  Returns the
+    /// number of dynamic symbols parsed.
+    size_t
+    ParseDynamicSymbols();
+
     /// Populates m_symtab_ap will all non-dynamic linker symbols.  This method
     /// will parse the symbols only once.  Returns the number of symbols parsed.
-    void
+    unsigned
     ParseSymbolTable(lldb_private::Symtab *symbol_table,
-                     const elf::ELFSectionHeader &symtab_section,
+                     lldb::user_id_t start_id,
+                     const elf::ELFSectionHeader *symtab_section,
                      lldb::user_id_t symtab_id);
+
+    /// Scans the relocation entries and adds a set of artificial symbols to the
+    /// given symbol table for each PLT slot.  Returns the number of symbols
+    /// added.
+    unsigned
+    ParseTrampolineSymbols(lldb_private::Symtab *symbol_table, 
+                           lldb::user_id_t start_id,
+                           const elf::ELFSectionHeader *rela_hdr,
+                           lldb::user_id_t section_id);
 
     /// Loads the section name string table into m_shstr_data.  Returns the
     /// number of bytes constituting the table.
@@ -193,6 +216,14 @@ private:
     /// section index 0 is never valid).
     lldb::user_id_t
     GetSectionIndexByName(const char *name);
+
+    // Returns the ID of the first section that has the given type.
+    lldb::user_id_t
+    GetSectionIndexByType(unsigned type);
+
+    /// Returns the section header with the given id or NULL.
+    const elf::ELFSectionHeader *
+    GetSectionHeaderByIndex(lldb::user_id_t id);
 
     /// @name  ELF header dump routines
     //@{
@@ -246,6 +277,14 @@ private:
     void
     DumpDependentModules(lldb_private::Stream *s);
 
+    const elf::ELFDynamic *
+    FindDynamicSymbol(unsigned tag);
+        
+    lldb_private::Section *
+    PLTSection();
+
+    unsigned
+    PLTRelocationType();
 };
 
 #endif // #ifndef liblldb_ObjectFileELF_h_
