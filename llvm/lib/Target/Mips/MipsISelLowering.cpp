@@ -197,7 +197,7 @@ unsigned MipsTargetLowering::getFunctionAlignment(const Function *) const {
 //  multHi/Lo: product of multiplication
 //  Lo0: initial value of Lo register
 //  Hi0: initial value of Hi register
-// Return true if mattern matching was successful.
+// Return true if pattern matching was successful.
 static bool SelectMadd(SDNode* ADDENode, SelectionDAG* CurDAG) {
   // ADDENode's second operand must be a flag output of an ADDC node in order
   // for the matching to be successful.
@@ -271,7 +271,7 @@ static bool SelectMadd(SDNode* ADDENode, SelectionDAG* CurDAG) {
 //  multHi/Lo: product of multiplication
 //  Lo0: initial value of Lo register
 //  Hi0: initial value of Hi register
-// Return true if mattern matching was successful.
+// Return true if pattern matching was successful.
 static bool SelectMsub(SDNode* SUBENode, SelectionDAG* CurDAG) {
   // SUBENode's second operand must be a flag output of an SUBC node in order
   // for the matching to be successful.
