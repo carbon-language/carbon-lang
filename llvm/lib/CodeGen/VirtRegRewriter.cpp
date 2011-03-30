@@ -1791,8 +1791,8 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
       else
         DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
       DEBUG(dbgs() << " from physreg "
-                   << TRI->getName(InReg) << " for vreg"
-                   << VirtReg <<" instead of reloading into physreg "
+                   << TRI->getName(InReg) << " for " << PrintReg(VirtReg)
+                   <<" instead of reloading into physreg "
                    << TRI->getName(Phys) << '\n');
 
       // Reusing a physreg may resurrect it. But we expect ProcessUses to update
@@ -1807,8 +1807,8 @@ bool LocalRewriter::InsertRestores(MachineInstr *MI,
       else
         DEBUG(dbgs() << "Reusing SS#" << SSorRMId);
       DEBUG(dbgs() << " from physreg "
-                   << TRI->getName(InReg) << " for vreg"
-                   << VirtReg <<" by copying it into physreg "
+                   << TRI->getName(InReg) << " for " << PrintReg(VirtReg)
+                   <<" by copying it into physreg "
                    << TRI->getName(Phys) << '\n');
 
       // If the reloaded / remat value is available in another register,
@@ -2025,7 +2025,8 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
               TRI->regsOverlap(MOk.getReg(), PhysReg)) {
             CanReuse = false;
             DEBUG(dbgs() << "Not reusing physreg " << TRI->getName(PhysReg)
-                         << " for vreg" << VirtReg << ": " << MOk << '\n');
+                         << " for " << PrintReg(VirtReg) << ": " << MOk
+                         << '\n');
             break;
           }
         }
@@ -2039,9 +2040,9 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
         else
           DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
         DEBUG(dbgs() << " from physreg "
-              << TRI->getName(PhysReg) << " for vreg"
-              << VirtReg <<" instead of reloading into physreg "
-              << TRI->getName(VRM->getPhys(VirtReg)) << '\n');
+              << TRI->getName(PhysReg) << " for " << PrintReg(VirtReg)
+              << " instead of reloading into "
+              << PrintReg(VRM->getPhys(VirtReg), TRI) << '\n');
         unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
         MI.getOperand(i).setReg(RReg);
         MI.getOperand(i).setSubReg(0);
@@ -2126,7 +2127,7 @@ void LocalRewriter::ProcessUses(MachineInstr &MI, AvailableSpills &Spills,
         else
           DEBUG(dbgs() << "Reusing SS#" << ReuseSlot);
         DEBUG(dbgs() << " from physreg " << TRI->getName(PhysReg)
-              << " for vreg" << VirtReg
+              << " for " << PrintReg(VirtReg)
               << " instead of reloading into same physreg.\n");
         unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
         MI.getOperand(i).setReg(RReg);
@@ -2315,7 +2316,7 @@ LocalRewriter::RewriteMBB(LiveIntervals *LIs,
     for (unsigned FVI = 0, FVE = FoldedVirts.size(); FVI != FVE; ++FVI) {
       unsigned VirtReg = FoldedVirts[FVI].first;
       VirtRegMap::ModRef MR = FoldedVirts[FVI].second;
-      DEBUG(dbgs() << "Folded vreg: " << VirtReg << "  MR: " << MR);
+      DEBUG(dbgs() << "Folded " << PrintReg(VirtReg) << "  MR: " << MR);
 
       int SS = VRM->getStackSlot(VirtReg);
       if (SS == VirtRegMap::NO_STACK_SLOT)
