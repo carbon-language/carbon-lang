@@ -403,9 +403,17 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // We have to special case property setters, otherwise we must have
   // a simple lvalue (no aggregates inside vectors, bitfields).
   if (LHS.isPropertyRef()) {
-    AggValueSlot Slot = EnsureSlot(E->getRHS()->getType());
-    CGF.EmitAggExpr(E->getRHS(), Slot);
-    CGF.EmitStoreThroughPropertyRefLValue(Slot.asRValue(), LHS);
+    const ObjCPropertyRefExpr *RE = LHS.getPropertyRefExpr();
+    QualType ArgType = RE->getSetterArgType();
+    RValue Src;
+    if (ArgType->isReferenceType())
+      Src = CGF.EmitReferenceBindingToExpr(E->getRHS(), 0);
+    else {
+      AggValueSlot Slot = EnsureSlot(E->getRHS()->getType());
+      CGF.EmitAggExpr(E->getRHS(), Slot);
+      Src = Slot.asRValue();
+    }
+    CGF.EmitStoreThroughPropertyRefLValue(Src, LHS);
   } else {
     bool GCollection = false;
     if (CGF.getContext().getLangOptions().getGCMode())

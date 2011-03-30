@@ -216,10 +216,19 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                                        InitializedDecl);
   }
 
+  if (const ObjCPropertyRefExpr *PRE = 
+      dyn_cast<ObjCPropertyRefExpr>(E->IgnoreParenImpCasts()))
+    if (PRE->getGetterResultType()->isReferenceType())
+      E = PRE;
+    
   RValue RV;
   if (E->isGLValue()) {
     // Emit the expression as an lvalue.
     LValue LV = CGF.EmitLValue(E);
+    if (LV.isPropertyRef()) {
+      RV = CGF.EmitLoadOfPropertyRefLValue(LV);
+      return RV.getScalarVal();
+    }
     if (LV.isSimple())
       return LV.getAddress();
     
