@@ -142,6 +142,8 @@ public:
   Pass *findImplPass(Pass *P, AnalysisID PI, Function &F);
 
   void addAnalysisImplsPair(AnalysisID PI, Pass *P) {
+    if (findImplPass(PI) == P)
+      return;
     std::pair<AnalysisID, Pass*> pir = std::make_pair(PI,P);
     AnalysisImpls.push_back(pir);
   }
