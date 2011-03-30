@@ -296,7 +296,7 @@ def int_arm_neon_vcvtfp2hf
 def int_arm_neon_vcvthf2fp
     : Intrinsic<[llvm_v4f32_ty], [llvm_v4i16_ty], [IntrNoMem]>;
 
-// Narrowing and Lengthening Vector Moves.
+// Narrowing Saturating Vector Moves.
 def int_arm_neon_vqmovns : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnu : Neon_1Arg_Narrow_Intrinsic;
 def int_arm_neon_vqmovnsu : Neon_1Arg_Narrow_Intrinsic;
