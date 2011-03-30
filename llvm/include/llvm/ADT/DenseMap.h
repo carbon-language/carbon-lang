@@ -422,7 +422,8 @@ private:
     }
 
 #ifndef NDEBUG
-    memset(OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
+    if (OldNumBuckets)
+      memset(OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
 #endif
     // Free the old table.
     operator delete(OldBuckets);
