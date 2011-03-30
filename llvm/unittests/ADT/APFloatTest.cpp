@@ -576,4 +576,27 @@ TEST(APFloatTest, StringHexadecimalExponentDeath) {
 #endif
 #endif
 
+TEST(APFloatTest, exactInverse) {
+  APFloat inv(0.0f);
+
+  // Trivial operation.
+  EXPECT_TRUE(APFloat(2.0).getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(0.5)));
+  EXPECT_TRUE(APFloat(2.0f).getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(0.5f)));
+
+  // FLT_MIN
+  EXPECT_TRUE(APFloat(1.17549435e-38f).getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(8.5070592e+37f)));
+
+  // Large float
+  EXPECT_TRUE(APFloat(1.7014118e38f).getExactInverse(&inv));
+  EXPECT_TRUE(inv.bitwiseIsEqual(APFloat(5.8774718e-39f)));
+
+  // Zero
+  EXPECT_FALSE(APFloat(0.0).getExactInverse(0));
+  // Denormalized float
+  EXPECT_FALSE(APFloat(1.40129846e-45f).getExactInverse(0));
+}
+
 }

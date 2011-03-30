@@ -3562,3 +3562,29 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
   for (; I != NDigits; ++I)
     Str.push_back(buffer[NDigits-I-1]);
 }
+
+bool APFloat::getExactInverse(APFloat *inv) const {
+  // We can only guarantee the existance of an exact inverse for IEEE floats.
+  if (semantics != &IEEEhalf && semantics != &IEEEsingle &&
+      semantics != &IEEEdouble && semantics != &IEEEquad)
+    return false;
+
+  // Special floats and denormals have no exact inverse.
+  if (category != fcNormal)
+    return false;
+
+  // Check that the number is a power of two by making sure that only the
+  // integer bit is set in the significand.
+  if (significandLSB() != semantics->precision - 1)
+    return false;
+
+  // Get the inverse.
+  APFloat reciprocal(*semantics, 1ULL);
+  if (reciprocal.divide(*this, rmNearestTiesToEven) != opOK)
+    return false;
+
+  if (inv)
+    *inv = reciprocal;
+
+  return true;
+}

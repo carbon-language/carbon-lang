@@ -353,6 +353,10 @@ namespace llvm {
                   unsigned FormatPrecision = 0,
                   unsigned FormatMaxPadding = 3) const;
 
+    /// getExactInverse - If this value has an exact multiplicative inverse,
+    /// store it in inv and return true.
+    bool getExactInverse(APFloat *inv) const;
+
   private:
 
     /* Trivial queries.  */
