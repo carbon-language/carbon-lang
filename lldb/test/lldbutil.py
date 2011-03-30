@@ -83,7 +83,7 @@ def int_to_bytearray(val, bytesize):
     It returns the bytearray in the little endian format.  It is easy to get the
     big endian format, just do ba.reverse() on the returned object.
     """
-    from struct import *
+    import struct
 
     if bytesize == 1:
         return bytearray([val])
@@ -99,7 +99,7 @@ def int_to_bytearray(val, bytesize):
     else:
         return None
 
-    packed = pack(fmt, val)
+    packed = struct.pack(fmt, val)
     return bytearray(map(ord, packed))
 
 def bytearray_to_int(bytes, bytesize):
@@ -108,7 +108,7 @@ def bytearray_to_int(bytes, bytesize):
     It interprets the bytearray in the little endian format. For a big endian
     bytearray, just do ba.reverse() on the object before passing it in.
     """
-    from struct import *
+    import struct
 
     if bytesize == 1:
         return ba[0]
@@ -124,7 +124,7 @@ def bytearray_to_int(bytes, bytesize):
     else:
         return None
 
-    unpacked = unpack(fmt, str(bytes))
+    unpacked = struct.unpack(fmt, str(bytes))
     return unpacked[0]
 
 
