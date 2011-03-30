@@ -222,9 +222,10 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
     // If we already inserted something for this BB, don't reprocess it.
     if (SSAUpdate.HasValueForBlock(ExitBB)) continue;
     
-    PHINode *PN = PHINode::Create(Inst->getType(), Inst->getName()+".lcssa",
+    PHINode *PN = PHINode::Create(Inst->getType(),
+                                  PredCache.GetNumPreds(ExitBB),
+                                  Inst->getName()+".lcssa",
                                   ExitBB->begin());
-    PN->reserveOperandSpace(PredCache.GetNumPreds(ExitBB));
 
     // Add inputs from inside the loop for this PHI.
     for (BasicBlock **PI = PredCache.GetPreds(ExitBB); *PI; ++PI) {

@@ -1811,38 +1811,34 @@ class PHINode : public Instruction {
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  explicit PHINode(const Type *Ty, const Twine &NameStr = "",
-                   Instruction *InsertBefore = 0)
+  explicit PHINode(const Type *Ty, unsigned NumReservedValues,
+                   const Twine &NameStr = "", Instruction *InsertBefore = 0)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertBefore),
-      ReservedSpace(0) {
+      ReservedSpace(NumReservedValues * 2) {
     setName(NameStr);
+    OperandList = allocHungoffUses(ReservedSpace);
   }
 
-  PHINode(const Type *Ty, const Twine &NameStr, BasicBlock *InsertAtEnd)
+  PHINode(const Type *Ty, unsigned NumReservedValues, const Twine &NameStr,
+          BasicBlock *InsertAtEnd)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertAtEnd),
-      ReservedSpace(0) {
+      ReservedSpace(NumReservedValues * 2) {
     setName(NameStr);
+    OperandList = allocHungoffUses(ReservedSpace);
   }
 protected:
   virtual PHINode *clone_impl() const;
 public:
-  static PHINode *Create(const Type *Ty, const Twine &NameStr = "",
+  static PHINode *Create(const Type *Ty, unsigned NumReservedValues,
+                         const Twine &NameStr = "",
                          Instruction *InsertBefore = 0) {
-    return new PHINode(Ty, NameStr, InsertBefore);
+    return new PHINode(Ty, NumReservedValues, NameStr, InsertBefore);
   }
-  static PHINode *Create(const Type *Ty, const Twine &NameStr,
-                         BasicBlock *InsertAtEnd) {
-    return new PHINode(Ty, NameStr, InsertAtEnd);
+  static PHINode *Create(const Type *Ty, unsigned NumReservedValues, 
+                         const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return new PHINode(Ty, NumReservedValues, NameStr, InsertAtEnd);
   }
   ~PHINode();
-
-  /// reserveOperandSpace - This method can be used to avoid repeated
-  /// reallocation of PHI operand lists by reserving space for the correct
-  /// number of operands before adding them.  Unlike normal vector reserves,
-  /// this method can also be used to trim the operand space.
-  void reserveOperandSpace(unsigned NumValues) {
-    resizeOperands(NumValues*2);
-  }
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);

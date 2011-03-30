@@ -80,18 +80,16 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Value *InRHS = FirstInst->getOperand(1);
   PHINode *NewLHS = 0, *NewRHS = 0;
   if (LHSVal == 0) {
-    NewLHS = PHINode::Create(LHSType,
+    NewLHS = PHINode::Create(LHSType, PN.getNumIncomingValues(),
                              FirstInst->getOperand(0)->getName() + ".pn");
-    NewLHS->reserveOperandSpace(PN.getNumIncomingValues());
     NewLHS->addIncoming(InLHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewLHS, PN);
     LHSVal = NewLHS;
   }
   
   if (RHSVal == 0) {
-    NewRHS = PHINode::Create(RHSType,
+    NewRHS = PHINode::Create(RHSType, PN.getNumIncomingValues(),
                              FirstInst->getOperand(1)->getName() + ".pn");
-    NewRHS->reserveOperandSpace(PN.getNumIncomingValues());
     NewRHS->addIncoming(InRHS, PN.getIncomingBlock(0));
     InsertNewInstBefore(NewRHS, PN);
     RHSVal = NewRHS;
@@ -202,11 +200,10 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   for (unsigned i = 0, e = FixedOperands.size(); i != e; ++i) {
     if (FixedOperands[i]) continue;  // operand doesn't need a phi.
     Value *FirstOp = FirstInst->getOperand(i);
-    PHINode *NewPN = PHINode::Create(FirstOp->getType(),
+    PHINode *NewPN = PHINode::Create(FirstOp->getType(), e,
                                      FirstOp->getName()+".pn");
     InsertNewInstBefore(NewPN, PN);
     
-    NewPN->reserveOperandSpace(e);
     NewPN->addIncoming(FirstOp, PN.getIncomingBlock(0));
     OperandPhis[i] = NewPN;
     FixedOperands[i] = NewPN;
@@ -340,8 +337,8 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
   // Okay, they are all the same operation.  Create a new PHI node of the
   // correct type, and PHI together all of the LHS's of the instructions.
   PHINode *NewPN = PHINode::Create(FirstLI->getOperand(0)->getType(),
+                                   PN.getNumIncomingValues(),
                                    PN.getName()+".in");
-  NewPN->reserveOperandSpace(PN.getNumIncomingValues());
   
   Value *InVal = FirstLI->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
@@ -446,8 +443,8 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // Okay, they are all the same operation.  Create a new PHI node of the
   // correct type, and PHI together all of the LHS's of the instructions.
   PHINode *NewPN = PHINode::Create(FirstInst->getOperand(0)->getType(),
+                                   PN.getNumIncomingValues(),
                                    PN.getName()+".in");
-  NewPN->reserveOperandSpace(PN.getNumIncomingValues());
 
   Value *InVal = FirstInst->getOperand(0);
   NewPN->addIncoming(InVal, PN.getIncomingBlock(0));
@@ -699,8 +696,8 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
     if ((EltPHI = ExtractedVals[LoweredPHIRecord(PN, Offset, Ty)]) == 0) {
       
       // Otherwise, Create the new PHI node for this user.
-      EltPHI = PHINode::Create(Ty, PN->getName()+".off"+Twine(Offset), PN);
-      EltPHI->reserveOperandSpace(PN->getNumIncomingValues());
+      EltPHI = PHINode::Create(Ty, PN->getNumIncomingValues(),
+                               PN->getName()+".off"+Twine(Offset), PN);
       assert(EltPHI->getType() != PN->getType() &&
              "Truncate didn't shrink phi?");
     

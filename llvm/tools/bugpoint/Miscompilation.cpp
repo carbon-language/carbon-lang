@@ -885,9 +885,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           new StoreInst(CastedResolver, Cache, LookupBB);
           BranchInst::Create(DoCallBB, LookupBB);
 
-          PHINode *FuncPtr = PHINode::Create(NullPtr->getType(),
+          PHINode *FuncPtr = PHINode::Create(NullPtr->getType(), 2,
                                              "fp", DoCallBB);
-          FuncPtr->reserveOperandSpace(2);
           FuncPtr->addIncoming(CastedResolver, LookupBB);
           FuncPtr->addIncoming(CachedVal, EntryBB);
 

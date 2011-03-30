@@ -1070,8 +1070,9 @@ public:
   // Instruction creation methods: Other Instructions
   //===--------------------------------------------------------------------===//
 
-  PHINode *CreatePHI(const Type *Ty, const Twine &Name = "") {
-    return Insert(PHINode::Create(Ty), Name);
+  PHINode *CreatePHI(const Type *Ty, unsigned NumReservedValues,
+                     const Twine &Name = "") {
+    return Insert(PHINode::Create(Ty, NumReservedValues), Name);
   }
 
   CallInst *CreateCall(Value *Callee, const Twine &Name = "") {

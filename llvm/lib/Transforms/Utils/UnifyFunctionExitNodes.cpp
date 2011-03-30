@@ -116,8 +116,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     ReturnInst::Create(F.getContext(), NULL, NewRetBlock);
   } else {
     // If the function doesn't return void... add a PHI node to the block...
-    PN = PHINode::Create(F.getReturnType(), "UnifiedRetVal");
-    PN->reserveOperandSpace(ReturningBlocks.size());
+    PN = PHINode::Create(F.getReturnType(), ReturningBlocks.size(),
+                         "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
     ReturnInst::Create(F.getContext(), PN, NewRetBlock);
   }

@@ -430,9 +430,8 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   // This PHI node will be in the new block created from the
   // splitBasicBlock call.
-  PHINode* PHI = PHINode::Create(Type::getInt32Ty(Inst->getContext()),
+  PHINode* PHI = PHINode::Create(Type::getInt32Ty(Inst->getContext()), 2,
                                  "SetJmpReturn", Inst);
-  PHI->reserveOperandSpace(2);
 
   // Coming from a call to setjmp, the return is 0.
   PHI->addIncoming(Constant::getNullValue(Type::getInt32Ty(Inst->getContext())),

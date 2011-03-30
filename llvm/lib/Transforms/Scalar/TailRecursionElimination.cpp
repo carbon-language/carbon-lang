@@ -496,9 +496,8 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
     Instruction *InsertPos = OldEntry->begin();
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I) {
-      PHINode *PN = PHINode::Create(I->getType(),
+      PHINode *PN = PHINode::Create(I->getType(), 2,
                                     I->getName() + ".tr", InsertPos);
-      PN->reserveOperandSpace(2);
       I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
       PN->addIncoming(I, NewEntry);
       ArgumentPHIs.push_back(PN);
@@ -531,8 +530,8 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
     pred_iterator PB = pred_begin(OldEntry), PE = pred_end(OldEntry);
     PHINode *AccPN =
       PHINode::Create(AccumulatorRecursionEliminationInitVal->getType(),
+                      std::distance(PB, PE) + 1,
                       "accumulator.tr", OldEntry->begin());
-    AccPN->reserveOperandSpace(std::distance(PB, PE) + 1);
 
     // Loop over all of the predecessors of the tail recursion block.  For the
     // real entry into the function we seed the PHI with the initial value,

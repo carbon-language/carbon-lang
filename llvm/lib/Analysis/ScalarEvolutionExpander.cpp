@@ -935,8 +935,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   BasicBlock *Header = L->getHeader();
   Builder.SetInsertPoint(Header, Header->begin());
   pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
-  PHINode *PN = Builder.CreatePHI(ExpandTy, "lsr.iv");
-  PN->reserveOperandSpace(std::distance(HPB, HPE));
+  PHINode *PN = Builder.CreatePHI(ExpandTy, std::distance(HPB, HPE), "lsr.iv");
   rememberInstruction(PN);
 
   // Create the step instructions and populate the PHI.
@@ -1143,8 +1142,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // specified loop.
     BasicBlock *Header = L->getHeader();
     pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
-    CanonicalIV = PHINode::Create(Ty, "indvar", Header->begin());
-    CanonicalIV->reserveOperandSpace(std::distance(HPB, HPE));
+    CanonicalIV = PHINode::Create(Ty, std::distance(HPB, HPE), "indvar",
+                                  Header->begin());
     rememberInstruction(CanonicalIV);
 
     Constant *One = ConstantInt::get(Ty, 1);

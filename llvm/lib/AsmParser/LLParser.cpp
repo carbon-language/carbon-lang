@@ -3634,8 +3634,7 @@ int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
   if (!Ty->isFirstClassType())
     return Error(TypeLoc, "phi node must have first class type");
 
-  PHINode *PN = PHINode::Create(Ty);
-  PN->reserveOperandSpace(PHIVals.size());
+  PHINode *PN = PHINode::Create(Ty, PHIVals.size());
   for (unsigned i = 0, e = PHIVals.size(); i != e; ++i)
     PN->addIncoming(PHIVals[i].first, PHIVals[i].second);
   Inst = PN;

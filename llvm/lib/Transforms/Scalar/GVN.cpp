@@ -1945,10 +1945,9 @@ bool GVN::performPRE(Function &F) {
 
       // Create a PHI to make the value available in this block.
       pred_iterator PB = pred_begin(CurrentBlock), PE = pred_end(CurrentBlock);
-      PHINode* Phi = PHINode::Create(CurInst->getType(),
+      PHINode* Phi = PHINode::Create(CurInst->getType(), std::distance(PB, PE),
                                      CurInst->getName() + ".pre-phi",
                                      CurrentBlock->begin());
-      Phi->reserveOperandSpace(std::distance(PB, PE));
       for (pred_iterator PI = PB; PI != PE; ++PI) {
         BasicBlock *P = *PI;
         Phi->addIncoming(predMap[P], P);

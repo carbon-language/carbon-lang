@@ -1491,8 +1491,7 @@ void LSRInstance::OptimizeShadowIV() {
     if (!C->getValue().isStrictlyPositive()) continue;
 
     /* Add new PHINode. */
-    PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
-    NewPH->reserveOperandSpace(2);
+    PHINode *NewPH = PHINode::Create(DestTy, 2, "IV.S.", PH);
 
     /* create new increment. '++d' in above example. */
     Constant *CFP = ConstantFP::get(DestTy, C->getZExtValue());

@@ -1348,12 +1348,10 @@ void CppWriter::printInstruction(const Instruction *I,
     const PHINode* phi = cast<PHINode>(I);
 
     Out << "PHINode* " << iName << " = PHINode::Create("
-        << getCppName(phi->getType()) << ", \"";
+        << getCppName(phi->getType()) << ", \""
+        << phi->getNumIncomingValues() << ", \"";
     printEscapedString(phi->getName());
     Out << "\", " << bbname << ");";
-    nl(Out) << iName << "->reserveOperandSpace("
-      << phi->getNumIncomingValues()
-        << ");";
     nl(Out);
     for (unsigned i = 0; i < phi->getNumOperands(); i+=2) {
       Out << iName << "->addIncoming("

@@ -931,9 +931,9 @@ void PathProfiler::preparePHI(BLInstrumentationNode* node) {
   BasicBlock::iterator insertPoint = block->getFirstNonPHI();
   pred_iterator PB = pred_begin(node->getBlock()),
           PE = pred_end(node->getBlock());
-  PHINode* phi = PHINode::Create(Type::getInt32Ty(*Context), "pathNumber",
+  PHINode* phi = PHINode::Create(Type::getInt32Ty(*Context),
+                                 std::distance(PB, PE), "pathNumber",
                                  insertPoint );
-  phi->reserveOperandSpace(std::distance(PB, PE));
   node->setPathPHI(phi);
   node->setStartingPathNumber(phi);
   node->setEndingPathNumber(phi);

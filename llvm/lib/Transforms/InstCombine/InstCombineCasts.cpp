@@ -196,8 +196,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   }
   case Instruction::PHI: {
     PHINode *OPN = cast<PHINode>(I);
-    PHINode *NPN = PHINode::Create(Ty);
-    NPN->reserveOperandSpace(OPN->getNumIncomingValues());
+    PHINode *NPN = PHINode::Create(Ty, OPN->getNumIncomingValues());
     for (unsigned i = 0, e = OPN->getNumIncomingValues(); i != e; ++i) {
       Value *V =EvaluateInDifferentType(OPN->getIncomingValue(i), Ty, isSigned);
       NPN->addIncoming(V, OPN->getIncomingBlock(i));

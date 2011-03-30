@@ -163,9 +163,8 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
       PHINode *PN = cast<PHINode>(AfterPHIs);
       // Create a new PHI node in the new region, which has an incoming value
       // from OldPred of PN.
-      PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".ce",
-                                       NewBB->begin());
-      NewPN->reserveOperandSpace(1+NumPredsFromRegion);
+      PHINode *NewPN = PHINode::Create(PN->getType(), 1 + NumPredsFromRegion,
+                                       PN->getName()+".ce", NewBB->begin());
       NewPN->addIncoming(PN, OldPred);
 
       // Loop over all of the incoming value in PN, moving them to NewPN if they

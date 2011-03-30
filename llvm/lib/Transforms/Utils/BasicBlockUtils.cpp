@@ -447,8 +447,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
       // If the values coming into the block are not the same, we need a PHI.
       // Create the new PHI node, insert it into NewBB at the end of the block
       PHINode *NewPHI =
-        PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
-      NewPHI->reserveOperandSpace(NumPreds);
+        PHINode::Create(PN->getType(), NumPreds, PN->getName()+".ph", BI);
       if (AA) AA->copyValue(PN, NewPHI);
       
       // Move all of the PHI values for 'Preds' to the new PHI.

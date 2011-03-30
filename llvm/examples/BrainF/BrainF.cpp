@@ -294,8 +294,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
           // Make part of PHI instruction now, wait until end of loop to finish
           PHINode *phi_0 =
             PHINode::Create(PointerType::getUnqual(IntegerType::getInt8Ty(C)),
-                            headreg, testbb);
-          phi_0->reserveOperandSpace(2);
+                            2, headreg, testbb);
           phi_0->addIncoming(curhead, bb_0);
           curhead = phi_0;
 
@@ -449,8 +448,8 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
       //%head.%d = phi i8 *[%head.%d, %main.%d]
       PHINode *phi_1 = builder->
-        CreatePHI(PointerType::getUnqual(IntegerType::getInt8Ty(C)), headreg);
-      phi_1->reserveOperandSpace(1);
+        CreatePHI(PointerType::getUnqual(IntegerType::getInt8Ty(C)), 1,
+                  headreg);
       phi_1->addIncoming(head_0, testbb);
       curhead = phi_1;
     }

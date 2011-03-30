@@ -1227,8 +1227,8 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
     }
     
     const Type *LoadTy = cast<PointerType>(PN->getType())->getElementType();
-    PHINode *NewPN = PHINode::Create(LoadTy, PN->getName()+".ld", PN);
-    NewPN->reserveOperandSpace(PN->getNumIncomingValues());
+    PHINode *NewPN = PHINode::Create(LoadTy, PN->getNumIncomingValues(),
+                                     PN->getName()+".ld", PN);
 
     // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
     // matter which one we get and if any differ, it doesn't matter.

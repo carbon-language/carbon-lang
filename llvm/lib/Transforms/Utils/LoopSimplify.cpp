@@ -648,9 +648,8 @@ LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
   // the backedge block which correspond to any PHI nodes in the header block.
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
-    PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".be",
-                                     BETerminator);
-    NewPN->reserveOperandSpace(BackedgeBlocks.size());
+    PHINode *NewPN = PHINode::Create(PN->getType(), BackedgeBlocks.size(),
+                                     PN->getName()+".be", BETerminator);
     if (AA) AA->copyValue(PN, NewPN);
 
     // Loop over the PHI node, moving all entries except the one for the

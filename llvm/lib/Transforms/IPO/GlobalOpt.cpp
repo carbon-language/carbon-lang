@@ -1195,8 +1195,8 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
 
     PHINode *NewPN =
      PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
+                     PN->getNumIncomingValues(),
                      PN->getName()+".f"+Twine(FieldNo), PN);
-    NewPN->reserveOperandSpace(PN->getNumIncomingValues());
     Result = NewPN;
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {

@@ -439,9 +439,9 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
       if (InVal == 0) {
         // Different unwind edges have different values.  Create a new PHI node
         // in NewBB.
-        PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".unwind",
-                                         NewBB);
-        NewPN->reserveOperandSpace(PN->getNumIncomingValues());
+        PHINode *NewPN = PHINode::Create(PN->getType(),
+                                         PN->getNumIncomingValues(),
+                                         PN->getName()+".unwind", NewBB);
         // Add an entry for each unwind edge, using the value from the old PHI.
         for (pred_iterator PI = PB; PI != PE; ++PI)
           NewPN->addIncoming(PN->getIncomingValueForBlock(*PI), *PI);

@@ -170,8 +170,8 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   }
 
   // Ok, we have no way out, insert a new one now.
-  PHINode *InsertedPHI = PHINode::Create(ProtoType, ProtoName, &BB->front());
-  InsertedPHI->reserveOperandSpace(PredValues.size());
+  PHINode *InsertedPHI = PHINode::Create(ProtoType, PredValues.size(),
+                                         ProtoName, &BB->front());
 
   // Fill in all the predecessors of the PHI.
   for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
@@ -289,9 +289,8 @@ public:
   /// Reserve space for the operands but do not fill them in yet.
   static Value *CreateEmptyPHI(BasicBlock *BB, unsigned NumPreds,
                                SSAUpdater *Updater) {
-    PHINode *PHI = PHINode::Create(Updater->ProtoType, Updater->ProtoName,
-                                   &BB->front());
-    PHI->reserveOperandSpace(NumPreds);
+    PHINode *PHI = PHINode::Create(Updater->ProtoType, NumPreds,
+                                   Updater->ProtoName, &BB->front());
     return PHI;
   }
 

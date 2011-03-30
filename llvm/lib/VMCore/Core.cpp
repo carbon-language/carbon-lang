@@ -2082,7 +2082,7 @@ LLVMValueRef LLVMBuildFCmp(LLVMBuilderRef B, LLVMRealPredicate Op,
 /*--.. Miscellaneous instructions ..........................................--*/
 
 LLVMValueRef LLVMBuildPhi(LLVMBuilderRef B, LLVMTypeRef Ty, const char *Name) {
-  return wrap(unwrap(B)->CreatePHI(unwrap(Ty), Name));
+  return wrap(unwrap(B)->CreatePHI(unwrap(Ty), 0, Name));
 }
 
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
