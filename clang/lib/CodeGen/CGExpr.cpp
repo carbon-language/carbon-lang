@@ -1765,9 +1765,8 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
 
   EmitBlock(contBlock);
 
-  llvm::PHINode *phi = Builder.CreatePHI(lhs.getAddress()->getType(),
+  llvm::PHINode *phi = Builder.CreatePHI(lhs.getAddress()->getType(), 2,
                                          "cond-lvalue");
-  phi->reserveOperandSpace(2);
   phi->addIncoming(lhs.getAddress(), lhsBlock);
   phi->addIncoming(rhs.getAddress(), rhsBlock);
   return MakeAddrLValue(phi, expr->getType());

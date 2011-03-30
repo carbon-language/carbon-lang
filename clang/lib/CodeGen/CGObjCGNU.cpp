@@ -1144,32 +1144,28 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
     CGF.EmitBlock(continueBB);
     if (msgRet.isScalar()) {
       llvm::Value *v = msgRet.getScalarVal();
-      llvm::PHINode *phi = Builder.CreatePHI(v->getType());
-      phi->reserveOperandSpace(2);
+      llvm::PHINode *phi = Builder.CreatePHI(v->getType(), 2);
       phi->addIncoming(v, messageBB);
       phi->addIncoming(llvm::Constant::getNullValue(v->getType()), startBB);
       msgRet = RValue::get(phi);
     } else if (msgRet.isAggregate()) {
       llvm::Value *v = msgRet.getAggregateAddr();
-      llvm::PHINode *phi = Builder.CreatePHI(v->getType());
+      llvm::PHINode *phi = Builder.CreatePHI(v->getType(), 2);
       const llvm::PointerType *RetTy = cast<llvm::PointerType>(v->getType());
       llvm::AllocaInst *NullVal = 
           CGF.CreateTempAlloca(RetTy->getElementType(), "null");
       CGF.InitTempAlloca(NullVal,
           llvm::Constant::getNullValue(RetTy->getElementType()));
-      phi->reserveOperandSpace(2);
       phi->addIncoming(v, messageBB);
       phi->addIncoming(NullVal, startBB);
       msgRet = RValue::getAggregate(phi);
     } else /* isComplex() */ {
       std::pair<llvm::Value*,llvm::Value*> v = msgRet.getComplexVal();
-      llvm::PHINode *phi = Builder.CreatePHI(v.first->getType());
-      phi->reserveOperandSpace(2);
+      llvm::PHINode *phi = Builder.CreatePHI(v.first->getType(), 2);
       phi->addIncoming(v.first, messageBB);
       phi->addIncoming(llvm::Constant::getNullValue(v.first->getType()),
           startBB);
-      llvm::PHINode *phi2 = Builder.CreatePHI(v.second->getType());
-      phi2->reserveOperandSpace(2);
+      llvm::PHINode *phi2 = Builder.CreatePHI(v.second->getType(), 2);
       phi2->addIncoming(v.second, messageBB);
       phi2->addIncoming(llvm::Constant::getNullValue(v.second->getType()),
           startBB);

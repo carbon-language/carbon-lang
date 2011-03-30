@@ -618,8 +618,7 @@ static void emitNonZeroVLAInit(CodeGenFunction &CGF, QualType baseType,
   // count must be nonzero.
   CGF.EmitBlock(loopBB);
 
-  llvm::PHINode *cur = Builder.CreatePHI(i8p, "vla.cur");
-  cur->reserveOperandSpace(2);
+  llvm::PHINode *cur = Builder.CreatePHI(i8p, 2, "vla.cur");
   cur->addIncoming(begin, originBB);
 
   // memcpy the individual element bit-pattern.
@@ -729,7 +728,8 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
   CGBuilderTy TmpBuilder(createBasicBlock("indirectgoto"));
   
   // Create the PHI node that indirect gotos will add entries to.
-  llvm::Value *DestVal = TmpBuilder.CreatePHI(Int8PtrTy, "indirect.goto.dest");
+  llvm::Value *DestVal = TmpBuilder.CreatePHI(Int8PtrTy, 0,
+                                              "indirect.goto.dest");
   
   // Create the indirect branch instruction.
   IndirectBranch = TmpBuilder.CreateIndirectBr(DestVal);

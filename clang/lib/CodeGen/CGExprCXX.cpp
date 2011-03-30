@@ -1053,8 +1053,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     llvm::BasicBlock *notNullBB = Builder.GetInsertBlock();
     EmitBlock(contBB);
 
-    llvm::PHINode *PHI = Builder.CreatePHI(result->getType());
-    PHI->reserveOperandSpace(2);
+    llvm::PHINode *PHI = Builder.CreatePHI(result->getType(), 2);
     PHI->addIncoming(result, notNullBB);
     PHI->addIncoming(llvm::Constant::getNullValue(result->getType()),
                      nullCheckBB);
@@ -1474,8 +1473,7 @@ llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *V,
   }
   EmitBlock(ContBlock);
   if (CanBeZero) {
-    llvm::PHINode *PHI = Builder.CreatePHI(LTy);
-    PHI->reserveOperandSpace(2);
+    llvm::PHINode *PHI = Builder.CreatePHI(LTy, 2);
     PHI->addIncoming(V, NonZeroBlock);
     PHI->addIncoming(llvm::Constant::getNullValue(LTy), NullBlock);
     V = PHI;

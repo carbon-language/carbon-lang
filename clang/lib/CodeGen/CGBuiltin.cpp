@@ -473,9 +473,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     BasicBlock *End = createBasicBlock("fpclassify_end", this->CurFn);
     Builder.SetInsertPoint(End);
     PHINode *Result =
-      Builder.CreatePHI(ConvertType(E->getArg(0)->getType()),
+      Builder.CreatePHI(ConvertType(E->getArg(0)->getType()), 4,
                         "fpclassify_result");
-    Result->reserveOperandSpace(4);
 
     // if (V==0) return FP_ZERO
     Builder.SetInsertPoint(Begin);

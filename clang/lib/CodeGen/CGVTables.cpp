@@ -2689,8 +2689,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
       Builder.CreateBr(AdjustEnd);
       EmitBlock(AdjustEnd);
     
-      llvm::PHINode *PHI = Builder.CreatePHI(ReturnValue->getType());
-      PHI->reserveOperandSpace(2);
+      llvm::PHINode *PHI = Builder.CreatePHI(ReturnValue->getType(), 2);
       PHI->addIncoming(ReturnValue, AdjustNotNull);
       PHI->addIncoming(llvm::Constant::getNullValue(ReturnValue->getType()), 
                        AdjustNull);
