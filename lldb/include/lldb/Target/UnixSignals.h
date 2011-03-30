@@ -133,10 +133,6 @@ protected:
     void
     Reset ();
 
-private:
-    //------------------------------------------------------------------
-    // For UnixSignals only
-    //------------------------------------------------------------------
     typedef std::map <int32_t, Signal> collection;
 
     collection m_signals;
