@@ -72,7 +72,9 @@ ProcessLinux::GetPluginDescriptionStatic()
 ProcessLinux::ProcessLinux(Target& target, Listener &listener)
     : Process(target, listener),
       m_monitor(NULL),
-      m_module(NULL)
+      m_module(NULL),
+      m_in_limbo(false),
+      m_exit_now(false)
 {
     // FIXME: Putting this code in the ctor and saving the byte order in a
     // member variable is a hack to avoid const qual issues in GetByteOrder.
@@ -147,11 +149,20 @@ ProcessLinux::DidLaunch()
 Error
 ProcessLinux::DoResume()
 {
-    assert(GetPrivateState() == eStateStopped && "Bad state for DoResume!");
+    StateType state = GetPrivateState();
 
-    // Set our state to running.  This ensures inferior threads do not post a
-    // state change first.
-    SetPrivateState(eStateRunning);
+    assert(state == eStateStopped || state == eStateCrashed);
+
+    // We are about to resume a thread that will cause the process to exit so
+    // set our exit status now.  Do not change our state if the inferior
+    // crashed.
+    if (state == eStateStopped) 
+    {
+        if (m_in_limbo)
+            SetExitStatus(m_exit_status, NULL);
+        else
+            SetPrivateState(eStateRunning);
+    }
 
     bool did_resume = false;
     uint32_t thread_count = m_thread_list.GetSize(false);
@@ -182,7 +193,23 @@ ProcessLinux::GetImageInfoAddress()
 Error
 ProcessLinux::DoHalt(bool &caused_stop)
 {
-    return Error(1, eErrorTypeGeneric);
+    Error error;
+
+    if (IsStopped())
+    {
+        caused_stop = false;
+    }
+    else if (kill(GetID(), SIGSTOP))
+    {
+        caused_stop = false;
+        error.SetErrorToErrno();
+    }
+    else
+    {
+        caused_stop = true;
+    }
+
+    return error;
 }
 
 Error
@@ -194,7 +221,12 @@ ProcessLinux::DoDetach()
 Error
 ProcessLinux::DoSignal(int signal)
 {
-    return Error(1, eErrorTypeGeneric);
+    Error error;
+
+    if (kill(GetID(), signal))
+        error.SetErrorToErrno();
+
+    return error;
 }
 
 Error
@@ -204,41 +236,18 @@ ProcessLinux::DoDestroy()
 
     if (!HasExited())
     {
-        // Shut down the private state thread as we will synchronize with events
-        // ourselves.  Discard all current thread plans.
-        PausePrivateStateThread();
-        GetThreadList().DiscardThreadPlans();
+        // Drive the exit event to completion (do not keep the inferior in
+        // limbo).
+        m_exit_now = true;
 
-        // Bringing the inferior into limbo will be caught by our monitor
-        // thread, in turn updating the process state.
-        if (!m_monitor->BringProcessIntoLimbo())
+        if (kill(m_monitor->GetPID(), SIGKILL) && error.Success())
         {
-            error.SetErrorToGenericError();
-            error.SetErrorString("Process termination failed.");
+            error.SetErrorToErrno();
             return error;
         }
 
-        // Wait for the event to arrive.  This is guaranteed to be an exit event.
-        StateType state;
-        EventSP event;
-        do {
-            TimeValue timeout_time;
-            timeout_time = TimeValue::Now();
-            timeout_time.OffsetWithSeconds(2);
-            state = WaitForStateChangedEventsPrivate(&timeout_time, event);
-        } while (state != eStateExited && state != eStateInvalid);
-
-        // Check if we timed out waiting for the exit event to arrive.
-        if (state == eStateInvalid)
-            error.SetErrorString("ProcessLinux::DoDestroy timed out.");
-
-        // Restart standard event handling and send the process the final kill,
-        // driving it out of limbo.
-        ResumePrivateStateThread();
+        SetPrivateState(eStateExited);
     }
-
-    if (kill(m_monitor->GetPID(), SIGKILL) && error.Success())
-        error.SetErrorToErrno();
 
     return error;
 }
@@ -251,18 +260,41 @@ ProcessLinux::SendMessage(const ProcessMessage &message)
     switch (message.GetKind())
     {
     default:
-        SetPrivateState(eStateStopped);
+        assert(false && "Unexpected process message!");
         break;
 
     case ProcessMessage::eInvalidMessage:
         return;
 
+    case ProcessMessage::eLimboMessage:
+        m_in_limbo = true;
+        m_exit_status = message.GetExitStatus();
+        if (m_exit_now)
+        {
+            SetPrivateState(eStateExited);
+            m_monitor->Detach();
+        }
+        else
+            SetPrivateState(eStateStopped);
+        break;
+
     case ProcessMessage::eExitMessage:
-        SetExitStatus(message.GetExitStatus(), NULL);
+        m_exit_status = message.GetExitStatus();
+        SetExitStatus(m_exit_status, NULL);
+        break;
+
+    case ProcessMessage::eTraceMessage:
+    case ProcessMessage::eBreakpointMessage:
+        SetPrivateState(eStateStopped);
         break;
 
     case ProcessMessage::eSignalMessage:
-        SetExitStatus(-1, NULL);
+    case ProcessMessage::eSignalDeliveredMessage:
+        SetPrivateState(eStateStopped);
+        break;
+
+    case ProcessMessage::eCrashMessage:
+        SetPrivateState(eStateCrashed);
         break;
     }
 
@@ -278,30 +310,12 @@ ProcessLinux::RefreshStateAfterStop()
 
     ProcessMessage &message = m_message_queue.front();
 
-    // Resolve the thread this message corresponds to.
+    // Resolve the thread this message corresponds to and pass it along.
     lldb::tid_t tid = message.GetTID();
     LinuxThread *thread = static_cast<LinuxThread*>(
         GetThreadList().FindThreadByID(tid, false).get());
 
-    switch (message.GetKind())
-    {
-    default:
-        assert(false && "Unexpected message kind!");
-        break;
-
-    case ProcessMessage::eExitMessage:
-    case ProcessMessage::eSignalMessage:
-        thread->ExitNotify();
-        break;
-
-    case ProcessMessage::eTraceMessage:
-        thread->TraceNotify();
-        break;
-
-    case ProcessMessage::eBreakpointMessage:
-        thread->BreakNotify();
-        break;
-    }
+    thread->Notify(message);
 
     m_message_queue.pop();
 }
@@ -432,6 +446,11 @@ ProcessLinux::GetSTDERR(char *buf, size_t len, Error &error)
     return GetSTDOUT(buf, len, error);
 }
 
+UnixSignals &
+ProcessLinux::GetUnixSignals()
+{
+    return m_linux_signals;
+}
 
 //------------------------------------------------------------------------------
 // ProcessInterface protocol.
@@ -482,10 +501,25 @@ ProcessLinux::HasExited()
     default:
         break;
 
-    case eStateUnloaded:
-    case eStateCrashed:
     case eStateDetached:
     case eStateExited:
+        return true;
+    }
+
+    return false;
+}
+
+bool
+ProcessLinux::IsStopped()
+{
+    switch (GetPrivateState())
+    {
+    default:
+        break;
+
+    case eStateStopped:
+    case eStateCrashed:
+    case eStateSuspended:
         return true;
     }
 

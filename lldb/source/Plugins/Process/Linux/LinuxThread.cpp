@@ -12,11 +12,13 @@
 
 // C++ Includes
 // Other libraries and framework includes
+// Project includes
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 
+#include "LinuxStopInfo.h"
 #include "LinuxThread.h"
 #include "ProcessLinux.h"
 #include "ProcessMonitor.h"
@@ -26,11 +28,10 @@
 
 using namespace lldb_private;
 
+
 LinuxThread::LinuxThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
-      m_frame_ap(0),
-      m_stop_info_id(0),
-      m_note(eNone)
+      m_frame_ap(0)
 {
 }
 
@@ -49,7 +50,6 @@ LinuxThread::GetMonitor()
 void
 LinuxThread::RefreshStateAfterStop()
 {
-    RefreshPrivateStopReason();
 }
 
 const char *
@@ -117,10 +117,6 @@ LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 lldb::StopInfoSP
 LinuxThread::GetPrivateStopReason()
 {
-    const uint32_t process_stop_id = GetProcess().GetStopID();
-
-    if (m_stop_info_id != process_stop_id || !m_stop_info || !m_stop_info->IsValid())
-        RefreshPrivateStopReason();
     return m_stop_info;
 }
 
@@ -152,34 +148,64 @@ LinuxThread::Resume()
     ProcessMonitor &monitor = GetMonitor();
     bool status;
 
-    switch (GetResumeState())
+    switch (resume_state)
     {
     default:
         assert(false && "Unexpected state for resume!");
         status = false;
         break;
 
-    case lldb::eStateSuspended:
-        // FIXME: Implement process suspension.
-        status = false;
-
     case lldb::eStateRunning:
         SetState(resume_state);
-        status = monitor.Resume(GetID());
+        status = monitor.Resume(GetID(), GetResumeSignal());
         break;
 
     case lldb::eStateStepping:
         SetState(resume_state);
-        status = monitor.SingleStep(GetID());
+        status = monitor.SingleStep(GetID(), GetResumeSignal());
         break;
     }
 
-    m_note = eNone;
     return status;
 }
 
 void
-LinuxThread::BreakNotify()
+LinuxThread::Notify(const ProcessMessage &message)
+{
+    switch (message.GetKind())
+    {
+    default:
+        assert(false && "Unexpected message kind!");
+        break;
+
+    case ProcessMessage::eLimboMessage:
+        LimboNotify(message);
+        break;
+        
+    case ProcessMessage::eSignalMessage:
+        SignalNotify(message);
+        break;
+
+    case ProcessMessage::eSignalDeliveredMessage:
+        SignalDeliveredNotify(message);
+        break;
+
+    case ProcessMessage::eTraceMessage:
+        TraceNotify(message);
+        break;
+
+    case ProcessMessage::eBreakpointMessage:
+        BreakNotify(message);
+        break;
+
+    case ProcessMessage::eCrashMessage:
+        CrashNotify(message);
+        break;
+    }
+}
+
+void
+LinuxThread::BreakNotify(const ProcessMessage &message)
 {
     bool status;
 
@@ -190,47 +216,53 @@ LinuxThread::BreakNotify()
     // corresponding to our current PC.
     lldb::addr_t pc = GetRegisterContext()->GetPC();
     lldb::BreakpointSiteSP bp_site(GetProcess().GetBreakpointSiteList().FindByAddress(pc));
+    lldb::break_id_t bp_id = bp_site->GetID();
     assert(bp_site && bp_site->ValidForThisThread(this));
 
-    m_note = eBreak;
+    
     m_breakpoint = bp_site;
+    m_stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id);
 }
 
 void
-LinuxThread::TraceNotify()
+LinuxThread::TraceNotify(const ProcessMessage &message)
 {
-    m_note = eTrace;
+    m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
 }
 
 void
-LinuxThread::ExitNotify()
+LinuxThread::LimboNotify(const ProcessMessage &message)
 {
-    m_note = eExit;
+    m_stop_info = lldb::StopInfoSP(new LinuxLimboStopInfo(*this));
 }
 
 void
-LinuxThread::RefreshPrivateStopReason()
+LinuxThread::SignalNotify(const ProcessMessage &message)
 {
-    m_stop_info_id = GetProcess().GetStopID();
+    int signo = message.GetSignal();
 
-    switch (m_note) {
+    m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, signo);
+    SetResumeSignal(signo);
+}
 
-    default:
-    case eNone:
-        m_stop_info.reset();
-        break;
+void
+LinuxThread::SignalDeliveredNotify(const ProcessMessage &message)
+{
+    int signo = message.GetSignal();
 
-    case eBreak:
-        m_stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(
-            *this, m_breakpoint->GetID());
-        break;
+    // Just treat debugger generated signal events like breakpoints for now.
+    m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
+    SetResumeSignal(signo);
+}
 
-    case eTrace:
-        m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
-        break;
+void
+LinuxThread::CrashNotify(const ProcessMessage &message)
+{
+    int signo = message.GetSignal();
 
-    case eExit:
-        m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, SIGCHLD);
-        break;
-    }
+    assert(message.GetKind() == ProcessMessage::eCrashMessage);
+
+    m_stop_info = lldb::StopInfoSP(new LinuxCrashStopInfo(
+                                       *this, signo, message.GetCrashReason()));
+    SetResumeSignal(signo);
 }

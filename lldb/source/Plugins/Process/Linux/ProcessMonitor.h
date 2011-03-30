@@ -12,6 +12,7 @@
 
 // C Includes
 #include <semaphore.h>
+#include <signal.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -127,19 +128,25 @@ public:
     bool
     GetEventMessage(lldb::tid_t tid, unsigned long *message);
 
-    /// Resumes the given thread.
+    /// Resumes the given thread.  If @p signo is anything but
+    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
     bool
-    Resume(lldb::tid_t tid);
+    Resume(lldb::tid_t tid, uint32_t signo);
 
-    /// Single steps the given thread.
+    /// Single steps the given thread.  If @p signo is anything but
+    /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
     bool
-    SingleStep(lldb::tid_t tid);
+    SingleStep(lldb::tid_t tid, uint32_t signo);
 
     /// Sends the inferior process a PTRACE_KILL signal.  The inferior will
     /// still exists and can be interrogated.  Once resumed it will exit as
     /// though it received a SIGKILL.
     bool
     BringProcessIntoLimbo();
+
+    bool
+    Detach();
+
 
 private:
     ProcessLinux *m_process;
@@ -207,13 +214,37 @@ private:
                     lldb::pid_t pid, int signal, int status);
 
     static ProcessMessage
-    MonitorSIGTRAP(ProcessMonitor *monitor, lldb::pid_t pid);
+    MonitorSIGTRAP(ProcessMonitor *monitor,
+                   const struct siginfo *info, lldb::pid_t pid);
+
+    static ProcessMessage
+    MonitorSignal(ProcessMonitor *monitor, 
+                  const struct siginfo *info, lldb::pid_t pid);
+
+    static ProcessMessage::CrashReason
+    GetCrashReasonForSIGSEGV(const struct siginfo *info);
+
+    static ProcessMessage::CrashReason
+    GetCrashReasonForSIGILL(const struct siginfo *info);
+
+    static ProcessMessage::CrashReason
+    GetCrashReasonForSIGFPE(const struct siginfo *info);
+
+    static ProcessMessage::CrashReason
+    GetCrashReasonForSIGBUS(const struct siginfo *info);
 
     void
     DoOperation(Operation *op);
 
     /// Stops the child monitor thread.
-    void StopMonitoringChildProcess();
+    void
+    StopMonitoringChildProcess();
+
+    void 
+    StopMonitor();
+
+    void
+    CloseFD(int &fd);
 };
 
 #endif // #ifndef liblldb_ProcessMonitor_H_

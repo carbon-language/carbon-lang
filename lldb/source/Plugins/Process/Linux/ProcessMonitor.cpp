@@ -338,20 +338,26 @@ ReadFPROperation::Execute(ProcessMonitor *monitor)
 class ResumeOperation : public Operation
 {
 public:
-    ResumeOperation(lldb::tid_t tid, bool &result) :
-        m_tid(tid), m_result(result) { }
+    ResumeOperation(lldb::tid_t tid, uint32_t signo, bool &result) :
+        m_tid(tid), m_signo(signo), m_result(result) { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
     lldb::tid_t m_tid;
+    uint32_t m_signo;
     bool &m_result;
 };
 
 void
 ResumeOperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_CONT, m_tid, NULL, NULL))
+    int data = 0;
+
+    if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
+        data = m_signo;
+
+    if (ptrace(PTRACE_CONT, m_tid, NULL, data))
         m_result = false;
     else
         m_result = true;
@@ -363,20 +369,26 @@ ResumeOperation::Execute(ProcessMonitor *monitor)
 class SingleStepOperation : public Operation
 {
 public:
-    SingleStepOperation(lldb::tid_t tid, bool &result)
-        : m_tid(tid), m_result(result) { }
+    SingleStepOperation(lldb::tid_t tid, uint32_t signo, bool &result)
+        : m_tid(tid), m_signo(signo), m_result(result) { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
     lldb::tid_t m_tid;
+    uint32_t m_signo;
     bool &m_result;
 };
 
 void
 SingleStepOperation::Execute(ProcessMonitor *monitor)
 {
-    if (ptrace(PTRACE_SINGLESTEP, m_tid, NULL, NULL))
+    int data = 0;
+
+    if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
+        data = m_signo;
+
+    if (ptrace(PTRACE_SINGLESTEP, m_tid, NULL, data))
         m_result = false;
     else
         m_result = true;
@@ -457,32 +469,6 @@ KillOperation::Execute(ProcessMonitor *monitor)
         m_result = false;
     else
         m_result = true;
-
-#if 0
-    // First, stop the inferior process.
-    if (kill(pid, SIGSTOP))
-    {
-        m_result = false;
-        return;
-    }
-
-    // Clear any ptrace options.  When PTRACE_O_TRACEEXIT is set, a plain
-    // PTRACE_KILL (or any termination signal) will not truely terminate the
-    // inferior process.  Instead, the process is left in a state of "limbo"
-    // allowing us to interrogate its state.  However in this case we really do
-    // want the process gone.
-    if (ptrace(PTRACE_SETOPTIONS, pid, NULL, 0UL))
-    {
-        m_result = false;
-        return;
-    }
-
-    // Kill it.
-    if (ptrace(PTRACE_KILL, pid, NULL, NULL))
-        m_result = false;
-    else
-        m_result = true;
-#endif
 }
 
 ProcessMonitor::LaunchArgs::LaunchArgs(ProcessMonitor *monitor,
@@ -586,12 +572,7 @@ WAIT_AGAIN:
 
 ProcessMonitor::~ProcessMonitor()
 {
-    StopMonitoringChildProcess();
-    StopOperationThread();
-
-    close(m_terminal_fd);
-    close(m_client_fd);
-    close(m_server_fd);
+    StopMonitor();
 }
 
 //------------------------------------------------------------------------------
@@ -768,50 +749,39 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     ProcessMessage message;
     ProcessMonitor *monitor = static_cast<ProcessMonitor*>(callback_baton);
     ProcessLinux *process = monitor->m_process;
+    bool stop_monitoring;
+    siginfo_t info;
 
-    switch (signal)
-    {
-    case 0:
-        // No signal.  The child has exited normally.
-        message = ProcessMessage::Exit(pid, status);
-        break;
+    if (!monitor->GetSignalInfo(pid, &info))
+        stop_monitoring = true; // pid is gone.  Bail.
+    else {
+        switch (info.si_signo)
+        {
+        case SIGTRAP:
+            message = MonitorSIGTRAP(monitor, &info, pid);
+            break;
+            
+        default:
+            message = MonitorSignal(monitor, &info, pid);
+            break;
+        }
 
-    case SIGTRAP:
-        // Specially handle SIGTRAP and form the appropriate message.
-        message = MonitorSIGTRAP(monitor, pid);
-        break;
-
-    default:
-        // For all other signals simply notify the process instance.  Note that
-        // the process exit status is set when the signal resulted in
-        // termination.
-        //
-        // FIXME: We need a specialized message to inform the process instance
-        // about "crashes".
-        if (status)
-            message = ProcessMessage::Exit(pid, status);
-        else
-            message = ProcessMessage::Signal(pid, signal);
+        process->SendMessage(message);
+        stop_monitoring = message.GetKind() == ProcessMessage::eExitMessage;
     }
 
-    process->SendMessage(message);
-    bool stop_monitoring = message.GetKind() == ProcessMessage::eExitMessage;
     return stop_monitoring;
 }
 
 ProcessMessage
-ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor, lldb::pid_t pid)
+ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
+                               const struct siginfo *info, lldb::pid_t pid)
 {
-    siginfo_t info;
     ProcessMessage message;
-    bool status;
 
-    status = monitor->GetSignalInfo(pid, &info);
-    assert(status && "GetSignalInfo failed!");
+    assert(info->si_signo == SIGTRAP && "Unexpected child signal!");
 
-    assert(info.si_signo == SIGTRAP && "Unexpected child signal!");
-
-    switch (info.si_code)
+    switch (info->si_code)
     {
     default:
         assert(false && "Unexpected SIGTRAP code!");
@@ -825,7 +795,7 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor, lldb::pid_t pid)
         unsigned long data = 0;
         if (!monitor->GetEventMessage(pid, &data))
             data = -1;
-        message = ProcessMessage::Exit(pid, (data >> 8));
+        message = ProcessMessage::Limbo(pid, (data >> 8));
         break;
     }
 
@@ -841,6 +811,193 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor, lldb::pid_t pid)
     }
 
     return message;
+}
+
+ProcessMessage
+ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
+                              const struct siginfo *info, lldb::pid_t pid)
+{
+    ProcessMessage message;
+    int signo = info->si_signo;
+
+    // POSIX says that process behaviour is undefined after it ignores a SIGFPE,
+    // SIGILL, SIGSEGV, or SIGBUS *unless* that signal was generated by a
+    // kill(2) or raise(3).  Similarly for tgkill(2) on Linux.
+    //
+    // IOW, user generated signals never generate what we consider to be a
+    // "crash".
+    //
+    // Similarly, ACK signals generated by this monitor.
+    if (info->si_code == SI_TKILL || info->si_code == SI_USER)
+    {
+        if (info->si_pid == getpid())
+            return ProcessMessage::SignalDelivered(pid, signo);
+        else
+            return ProcessMessage::Signal(pid, signo);
+    }
+
+    if (signo == SIGSEGV) {
+        lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
+        ProcessMessage::CrashReason reason = GetCrashReasonForSIGSEGV(info);
+        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+    }
+
+    if (signo == SIGILL) {
+        lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
+        ProcessMessage::CrashReason reason = GetCrashReasonForSIGILL(info);
+        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+    }
+
+    if (signo == SIGFPE) {
+        lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
+        ProcessMessage::CrashReason reason = GetCrashReasonForSIGFPE(info);
+        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+    }
+
+    if (signo == SIGBUS) {
+        lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
+        ProcessMessage::CrashReason reason = GetCrashReasonForSIGBUS(info);
+        return ProcessMessage::Crash(pid, reason, signo, fault_addr);
+    }
+
+    // Everything else is "normal" and does not require any special action on
+    // our part.
+    return ProcessMessage::Signal(pid, signo);
+}
+
+ProcessMessage::CrashReason
+ProcessMonitor::GetCrashReasonForSIGSEGV(const struct siginfo *info)
+{
+    ProcessMessage::CrashReason reason;
+    assert(info->si_signo == SIGSEGV);
+
+    reason = ProcessMessage::eInvalidCrashReason;
+
+    switch (info->si_code) 
+    {
+    default:
+        assert(false && "unexpected si_code for SIGSEGV");
+        break;
+    case SEGV_MAPERR:
+        reason = ProcessMessage::eInvalidAddress;
+        break;
+    case SEGV_ACCERR:
+        reason = ProcessMessage::ePrivilegedAddress;
+        break;
+    }
+        
+    return reason;
+}
+
+ProcessMessage::CrashReason
+ProcessMonitor::GetCrashReasonForSIGILL(const struct siginfo *info)
+{
+    ProcessMessage::CrashReason reason;
+    assert(info->si_signo == SIGILL);
+
+    reason = ProcessMessage::eInvalidCrashReason;
+
+    switch (info->si_code)
+    {
+    default:
+        assert(false && "unexpected si_code for SIGILL");
+        break;
+    case ILL_ILLOPC:
+        reason = ProcessMessage::eIllegalOpcode;
+        break;
+    case ILL_ILLOPN:
+        reason = ProcessMessage::eIllegalOperand;
+        break;
+    case ILL_ILLADR:
+        reason = ProcessMessage::eIllegalAddressingMode;
+        break;
+    case ILL_ILLTRP:
+        reason = ProcessMessage::eIllegalTrap;
+        break;
+    case ILL_PRVOPC:
+        reason = ProcessMessage::ePrivilegedOpcode;
+        break;
+    case ILL_PRVREG:
+        reason = ProcessMessage::ePrivilegedRegister;
+        break;
+    case ILL_COPROC:
+        reason = ProcessMessage::eCoprocessorError;
+        break;
+    case ILL_BADSTK:
+        reason = ProcessMessage::eInternalStackError;
+        break;
+    }
+
+    return reason;
+}
+
+ProcessMessage::CrashReason
+ProcessMonitor::GetCrashReasonForSIGFPE(const struct siginfo *info)
+{
+    ProcessMessage::CrashReason reason;
+    assert(info->si_signo == SIGFPE);
+
+    reason = ProcessMessage::eInvalidCrashReason;
+
+    switch (info->si_code)
+    {
+    default:
+        assert(false && "unexpected si_code for SIGFPE");
+        break;
+    case FPE_INTDIV:
+        reason = ProcessMessage::eIntegerDivideByZero;
+        break;
+    case FPE_INTOVF:
+        reason = ProcessMessage::eIntegerOverflow;
+        break;
+    case FPE_FLTDIV:
+        reason = ProcessMessage::eFloatDivideByZero;
+        break;
+    case FPE_FLTOVF:
+        reason = ProcessMessage::eFloatOverflow;
+        break;
+    case FPE_FLTUND:
+        reason = ProcessMessage::eFloatUnderflow;
+        break;
+    case FPE_FLTRES:
+        reason = ProcessMessage::eFloatInexactResult;
+        break;
+    case FPE_FLTINV:
+        reason = ProcessMessage::eFloatInvalidOperation;
+        break;
+    case FPE_FLTSUB:
+        reason = ProcessMessage::eFloatSubscriptRange;
+        break;
+    }
+
+    return reason;
+}
+
+ProcessMessage::CrashReason
+ProcessMonitor::GetCrashReasonForSIGBUS(const struct siginfo *info)
+{
+    ProcessMessage::CrashReason reason;
+    assert(info->si_signo == SIGBUS);
+
+    reason = ProcessMessage::eInvalidCrashReason;
+
+    switch (info->si_code)
+    {
+    default:
+        assert(false && "unexpected si_code for SIGBUS");
+        break;
+    case BUS_ADRALN:
+        reason = ProcessMessage::eIllegalAlignment;
+        break;
+    case BUS_ADRERR:
+        reason = ProcessMessage::eIllegalAddress;
+        break;
+    case BUS_OBJERR:
+        reason = ProcessMessage::eHardwareError;
+        break;
+    }
+
+    return reason;
 }
 
 void
@@ -976,19 +1133,19 @@ ProcessMonitor::ReadFPR(void *buf)
 }
 
 bool
-ProcessMonitor::Resume(lldb::tid_t tid)
+ProcessMonitor::Resume(lldb::tid_t tid, uint32_t signo)
 {
     bool result;
-    ResumeOperation op(tid, result);
+    ResumeOperation op(tid, signo, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::SingleStep(lldb::tid_t tid)
+ProcessMonitor::SingleStep(lldb::tid_t tid, uint32_t signo)
 {
     bool result;
-    SingleStepOperation op(tid, result);
+    SingleStepOperation op(tid, signo, result);
     DoOperation(&op);
     return result;
 }
@@ -1021,6 +1178,16 @@ ProcessMonitor::GetEventMessage(lldb::tid_t tid, unsigned long *message)
 }
 
 bool
+ProcessMonitor::Detach()
+{
+    bool result;
+    KillOperation op(result);
+    DoOperation(&op);
+    StopMonitor();
+    return result;
+}    
+
+bool
 ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
 {
     int target_fd = open(path, flags);
@@ -1041,5 +1208,25 @@ ProcessMonitor::StopMonitoringChildProcess()
         Host::ThreadCancel(m_monitor_thread, NULL);
         Host::ThreadJoin(m_monitor_thread, &thread_result, NULL);
         m_monitor_thread = LLDB_INVALID_HOST_THREAD;
+    }
+}
+
+void
+ProcessMonitor::StopMonitor()
+{
+    StopMonitoringChildProcess();
+    StopOperationThread();
+    CloseFD(m_terminal_fd);
+    CloseFD(m_client_fd);
+    CloseFD(m_server_fd);
+}
+
+void
+ProcessMonitor::CloseFD(int &fd)
+{
+    if (fd != -1)
+    {
+        close(fd);
+        fd = -1;
     }
 }

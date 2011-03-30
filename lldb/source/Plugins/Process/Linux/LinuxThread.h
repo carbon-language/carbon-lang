@@ -17,6 +17,7 @@
 // Other libraries and framework includes
 #include "lldb/Target/Thread.h"
 
+class ProcessMessage;
 class ProcessMonitor;
 class RegisterContextLinux;
 
@@ -51,9 +52,7 @@ public:
     //
     bool Resume();
 
-    void BreakNotify();
-    void TraceNotify();
-    void ExitNotify();
+    void Notify(const ProcessMessage &message);
 
 protected:
     virtual bool
@@ -63,7 +62,6 @@ protected:
     RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint);
 
 private:
-    
     RegisterContextLinux *
     GetRegisterContextLinux ()
     {
@@ -77,26 +75,18 @@ private:
     lldb::BreakpointSiteSP m_breakpoint;
     lldb::StopInfoSP m_stop_info;
 
-    // Cached process stop id.  Used to ensure we do not recalculate stop
-    // information/state needlessly.
-    uint32_t m_stop_info_id;
-
-    enum Notification {
-        eNone,
-        eBreak,
-        eTrace,
-        eExit
-    };
-
-    Notification m_note;
-
-    ProcessMonitor &GetMonitor();
+    ProcessMonitor &
+    GetMonitor();
 
     lldb::StopInfoSP
     GetPrivateStopReason();
 
-    void
-    RefreshPrivateStopReason();
+    void BreakNotify(const ProcessMessage &message);
+    void TraceNotify(const ProcessMessage &message);
+    void LimboNotify(const ProcessMessage &message);
+    void SignalNotify(const ProcessMessage &message);
+    void SignalDeliveredNotify(const ProcessMessage &message);
+    void CrashNotify(const ProcessMessage &message);
 
     lldb_private::Unwind *
     GetUnwinder();

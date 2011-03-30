@@ -17,6 +17,7 @@
 
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
+#include "LinuxSignals.h"
 #include "ProcessMessage.h"
 
 class ProcessMonitor;
@@ -178,6 +179,9 @@ public:
 
     ProcessMonitor &GetMonitor() { return *m_monitor; }
 
+    lldb_private::UnixSignals &
+    GetUnixSignals();
+
 private:
     /// Target byte order.
     lldb::ByteOrder m_byte_order;
@@ -192,6 +196,19 @@ private:
     lldb_private::Mutex m_message_mutex;
     std::queue<ProcessMessage> m_message_queue;
 
+    /// True when the process has entered a state of "limbo".
+    ///
+    /// This flag qualifies eStateStopped.  It lets us know that when we
+    /// continue from this state the process will exit.  Also, when true,
+    /// Process::m_exit_status is set.
+    bool m_in_limbo;
+
+    /// Drive any exit events to completion.
+    bool m_exit_now;
+
+    /// Linux-specific signal set.
+    LinuxSignals m_linux_signals;
+
     /// Updates the loaded sections provided by the executable.
     ///
     /// FIXME:  It would probably be better to delegate this task to the
@@ -200,6 +217,9 @@ private:
 
     /// Returns true if the process has exited.
     bool HasExited();
+
+    /// Returns true if the process is stopped.
+    bool IsStopped();
 };
 
 #endif  // liblldb_MacOSXProcess_H_
