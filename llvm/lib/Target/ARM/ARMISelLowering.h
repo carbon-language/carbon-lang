@@ -179,6 +179,9 @@ namespace llvm {
       // Vector AND with NOT of immediate
       VBICIMM,
 
+      // Vector bitwise select
+      VBSL,
+
       // Vector load N-element structure to all lanes:
       VLD2DUP = ISD::FIRST_TARGET_MEMORY_OPCODE,
       VLD3DUP,
