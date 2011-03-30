@@ -76,7 +76,7 @@ def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
             print "run command failed!"
             print "run_command error:", res.GetError()
 
-def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols):
+def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble):
     import lldb, lldbutil, atexit, re
 
     # Create the debugger instance now.
@@ -134,21 +134,32 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols):
             #print "code_type_pos:", code_type_pos
             break
 
-    # Disassembly time.
-    limited = True if num_symbols != -1 else False
-    if limited:
-        count = 0
-    for line in symtab_dump.splitlines():
-        if line[code_type_pos:code_type_end] == 'Code':
-            symbol = line[symbol_pos:]
-            #print "symbol:", symbol
-            cmd = "disassemble %s '%s'" % (disassemble_options, symbol)
-            run_command(ci, cmd, res)
+    # Define a generator for the symbols to disassemble.
+    def symbol_iter(num, symbols, symtab_dump):
+        # If we specify the symbols to disassemble, ignore symbol table dump.
+        if symbols:
+            for i in range(len(symbols)):
+                print "symbol:", symbols[i]
+                yield symbols[i]
+        else:
+            limited = True if num != -1 else False
             if limited:
-                count = count + 1
-                print "number of symbols disassembled:", count
-                if count >= num_symbols:
-                    break
+                count = 0
+            for line in symtab_dump.splitlines():
+                if limited and count >= num:
+                    return
+                if line[code_type_pos:code_type_end] == 'Code':
+                    symbol = line[symbol_pos:]
+                    print "symbol:", symbol
+                    if limited:
+                        count = count + 1
+                        print "symbol count:", count
+                        yield symbol
+
+    # Disassembly time.
+    for symbol in symbol_iter(num_symbols, symbols_to_disassemble, symtab_dump):
+        cmd = "disassemble %s '%s'" % (disassemble_options, symbol)
+        run_command(ci, cmd, res)
 
 
 def main():
@@ -175,10 +186,14 @@ Usage: %prog [options]
                       dest='disassemble_options',
                       help="""Mandatory: the options passed to lldb's 'disassemble' command.""")
     parser.add_option('-n', '--num-symbols',
-                      type='int', action='store',
+                      type='int', action='store', default=-1,
                       dest='num_symbols',
                       help="""The number of symbols to disassemble, if specified.""")
-
+    parser.add_option('-s', '--symbol',
+                      type='string', action='append', metavar='SYMBOL', default=[],
+                      dest='symbols_to_disassemble',
+                      help="""The symbol(s) to invoke lldb's 'disassemble' command on, if specified.""")
+    
     opts, args = parser.parse_args()
 
     lldb_commands = opts.lldb_commands
@@ -189,20 +204,18 @@ Usage: %prog [options]
 
     executable = opts.executable
     disassemble_options = opts.disassemble_options
-
-    if opts.num_symbols:
-        num_symbols = opts.num_symbols
-    else:
-        num_symbols = -1
+    num_symbols = opts.num_symbols
+    symbols_to_disassemble = opts.symbols_to_disassemble
 
     # We have parsed the options.
     print "lldb commands:", lldb_commands
     print "executable:", executable
     print "disassemble options:", disassemble_options
     print "num of symbols to disassemble:", num_symbols
+    print "symbols to disassemble:", symbols_to_disassemble
 
     setupSysPath()
-    do_lldb_disassembly(lldb_commands, executable, disassemble_options, num_symbols)
+    do_lldb_disassembly(lldb_commands, executable, disassemble_options, num_symbols, symbols_to_disassemble)
 
 if __name__ == '__main__':
     main()
