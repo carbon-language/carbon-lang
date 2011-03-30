@@ -1492,6 +1492,7 @@ void LSRInstance::OptimizeShadowIV() {
 
     /* Add new PHINode. */
     PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
+    NewPH->reserveOperandSpace(2);
 
     /* create new increment. '++d' in above example. */
     Constant *CFP = ConstantFP::get(DestTy, C->getZExtValue());

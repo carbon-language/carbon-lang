@@ -259,11 +259,12 @@ static bool MergeEmptyReturnBlocks(Function &F) {
     PHINode *RetBlockPHI = dyn_cast<PHINode>(RetBlock->begin());
     if (RetBlockPHI == 0) {
       Value *InVal = cast<ReturnInst>(RetBlock->getTerminator())->getOperand(0);
+      pred_iterator PB = pred_begin(RetBlock), PE = pred_end(RetBlock);
       RetBlockPHI = PHINode::Create(Ret->getOperand(0)->getType(), "merge",
                                     &RetBlock->front());
+      RetBlockPHI->reserveOperandSpace(std::distance(PB, PE));
       
-      for (pred_iterator PI = pred_begin(RetBlock), E = pred_end(RetBlock);
-           PI != E; ++PI)
+      for (pred_iterator PI = PB; PI != PE; ++PI)
         RetBlockPHI->addIncoming(InVal, *PI);
       RetBlock->getTerminator()->setOperand(0, RetBlockPHI);
     }

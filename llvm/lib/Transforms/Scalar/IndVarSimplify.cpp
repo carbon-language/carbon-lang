@@ -1039,6 +1039,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
 
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Int32Ty, PN->getName()+".int", PN);
+  NewPHI->reserveOperandSpace(2);
   NewPHI->addIncoming(ConstantInt::get(Int32Ty, InitValue),
                       PN->getIncomingBlock(IncomingEdge));
 

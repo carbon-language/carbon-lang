@@ -142,6 +142,7 @@ static void CreatePHIsForSplitLoopExit(SmallVectorImpl<BasicBlock *> &Preds,
     // Otherwise a new PHI is needed. Create one and populate it.
     PHINode *NewPN = PHINode::Create(PN->getType(), "split",
                                      SplitBB->getTerminator());
+    NewPN->reserveOperandSpace(Preds.size());
     for (unsigned i = 0, e = Preds.size(); i != e; ++i)
       NewPN->addIncoming(V, Preds[i]);
     // Update the original PHI.

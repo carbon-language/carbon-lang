@@ -432,6 +432,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   // splitBasicBlock call.
   PHINode* PHI = PHINode::Create(Type::getInt32Ty(Inst->getContext()),
                                  "SetJmpReturn", Inst);
+  PHI->reserveOperandSpace(2);
 
   // Coming from a call to setjmp, the return is 0.
   PHI->addIncoming(Constant::getNullValue(Type::getInt32Ty(Inst->getContext())),

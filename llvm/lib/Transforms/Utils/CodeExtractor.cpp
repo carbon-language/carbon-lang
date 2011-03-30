@@ -104,7 +104,7 @@ namespace {
 /// region, we need to split the entry block of the region so that the PHI node
 /// is easier to deal with.
 void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
-  bool HasPredsFromRegion = false;
+  unsigned NumPredsFromRegion = 0;
   unsigned NumPredsOutsideRegion = 0;
 
   if (Header != &Header->getParent()->getEntryBlock()) {
@@ -116,7 +116,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
     // header block into two.
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
       if (BlocksToExtract.count(PN->getIncomingBlock(i)))
-        HasPredsFromRegion = true;
+        ++NumPredsFromRegion;
       else
         ++NumPredsOutsideRegion;
 
@@ -147,7 +147,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
   // Okay, now we need to adjust the PHI nodes and any branches from within the
   // region to go to the new header block instead of the old header block.
-  if (HasPredsFromRegion) {
+  if (NumPredsFromRegion) {
     PHINode *PN = cast<PHINode>(OldPred->begin());
     // Loop over all of the predecessors of OldPred that are in the region,
     // changing them to branch to NewBB instead.
@@ -165,6 +165,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
       // from OldPred of PN.
       PHINode *NewPN = PHINode::Create(PN->getType(), PN->getName()+".ce",
                                        NewBB->begin());
+      NewPN->reserveOperandSpace(1+NumPredsFromRegion);
       NewPN->addIncoming(PN, OldPred);
 
       // Loop over all of the incoming value in PN, moving them to NewPN if they

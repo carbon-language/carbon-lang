@@ -929,14 +929,16 @@ BasicBlock::iterator PathProfiler::getInsertionPoint(BasicBlock* block, Value*
 void PathProfiler::preparePHI(BLInstrumentationNode* node) {
   BasicBlock* block = node->getBlock();
   BasicBlock::iterator insertPoint = block->getFirstNonPHI();
+  pred_iterator PB = pred_begin(node->getBlock()),
+          PE = pred_end(node->getBlock());
   PHINode* phi = PHINode::Create(Type::getInt32Ty(*Context), "pathNumber",
                                  insertPoint );
+  phi->reserveOperandSpace(std::distance(PB, PE));
   node->setPathPHI(phi);
   node->setStartingPathNumber(phi);
   node->setEndingPathNumber(phi);
 
-  for(pred_iterator predIt = pred_begin(node->getBlock()),
-        end = pred_end(node->getBlock()); predIt != end; predIt++) {
+  for(pred_iterator predIt = PB; predIt != PE; predIt++) {
     BasicBlock* pred = (*predIt);
 
     if(pred != NULL)

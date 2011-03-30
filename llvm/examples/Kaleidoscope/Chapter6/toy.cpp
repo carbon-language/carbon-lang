@@ -656,6 +656,7 @@ Value *IfExprAST::Codegen() {
   Builder.SetInsertPoint(MergeBB);
   PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()),
                                   "iftmp");
+  PN->reserveOperandSpace(2);
   
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
@@ -697,6 +698,7 @@ Value *ForExprAST::Codegen() {
   
   // Start the PHI node with an entry for Start.
   PHINode *Variable = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), VarName.c_str());
+  Variable->reserveOperandSpace(2);
   Variable->addIncoming(StartVal, PreheaderBB);
   
   // Within the loop, the variable is defined equal to the PHI node.  If it

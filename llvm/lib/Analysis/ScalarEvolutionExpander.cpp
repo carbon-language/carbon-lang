@@ -932,14 +932,15 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   Value *StepV = expandCodeFor(Step, IntTy, L->getHeader()->begin());
 
   // Create the PHI.
-  Builder.SetInsertPoint(L->getHeader(), L->getHeader()->begin());
+  BasicBlock *Header = L->getHeader();
+  Builder.SetInsertPoint(Header, Header->begin());
+  pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
   PHINode *PN = Builder.CreatePHI(ExpandTy, "lsr.iv");
+  PN->reserveOperandSpace(std::distance(HPB, HPE));
   rememberInstruction(PN);
 
   // Create the step instructions and populate the PHI.
-  BasicBlock *Header = L->getHeader();
-  for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
-       HPI != HPE; ++HPI) {
+  for (pred_iterator HPI = HPB; HPI != HPE; ++HPI) {
     BasicBlock *Pred = *HPI;
 
     // Add a start value.
@@ -1141,12 +1142,13 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
+    pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
     CanonicalIV = PHINode::Create(Ty, "indvar", Header->begin());
+    CanonicalIV->reserveOperandSpace(std::distance(HPB, HPE));
     rememberInstruction(CanonicalIV);
 
     Constant *One = ConstantInt::get(Ty, 1);
-    for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
-         HPI != HPE; ++HPI) {
+    for (pred_iterator HPI = HPB; HPI != HPE; ++HPI) {
       BasicBlock *HP = *HPI;
       if (L->contains(HP)) {
         // Insert a unit add instruction right before the terminator

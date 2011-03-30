@@ -928,13 +928,14 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   array_pod_sort(AvailablePreds.begin(), AvailablePreds.end());
 
   // Create a PHI node at the start of the block for the PRE'd load value.
+  pred_iterator PB = pred_begin(LoadBB), PE = pred_end(LoadBB);
   PHINode *PN = PHINode::Create(LI->getType(), "", LoadBB->begin());
+  PN->reserveOperandSpace(std::distance(PB, PE));
   PN->takeName(LI);
 
   // Insert new entries into the PHI for each predecessor.  A single block may
   // have multiple entries here.
-  for (pred_iterator PI = pred_begin(LoadBB), E = pred_end(LoadBB); PI != E;
-       ++PI) {
+  for (pred_iterator PI = PB; PI != PE; ++PI) {
     BasicBlock *P = *PI;
     AvailablePredsTy::iterator I =
       std::lower_bound(AvailablePreds.begin(), AvailablePreds.end(),

@@ -1193,9 +1193,11 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     const StructType *ST =
       cast<StructType>(cast<PointerType>(PN->getType())->getElementType());
 
-    Result =
+    PHINode *NewPN =
      PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
                      PN->getName()+".f"+Twine(FieldNo), PN);
+    NewPN->reserveOperandSpace(PN->getNumIncomingValues());
+    Result = NewPN;
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
     llvm_unreachable("Unknown usable value");

@@ -752,6 +752,7 @@ Value *IfExprAST::Codegen() {
   Builder.SetInsertPoint(MergeBB);
   PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()),
                                   "iftmp");
+  PN->reserveOperandSpace(2);
   
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);

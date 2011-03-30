@@ -1598,13 +1598,15 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     // in the constant and simplify the block result.  Subsequent passes of
     // simplifycfg will thread the block.
     if (BlockIsSimpleEnoughToThreadThrough(BB)) {
+      pred_iterator PB = pred_begin(BB), PE = pred_end(BB);
       PHINode *NewPN = PHINode::Create(Type::getInt1Ty(BB->getContext()),
                                        BI->getCondition()->getName() + ".pr",
                                        BB->begin());
+      NewPN->reserveOperandSpace(std::distance(PB, PE));
       // Okay, we're going to insert the PHI node.  Since PBI is not the only
       // predecessor, compute the PHI'd conditional value for all of the preds.
       // Any predecessor where the condition is not computable we keep symbolic.
-      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      for (pred_iterator PI = PB; PI != PE; ++PI) {
         BasicBlock *P = *PI;
         if ((PBI = dyn_cast<BranchInst>(P->getTerminator())) &&
             PBI != BI && PBI->isConditional() &&

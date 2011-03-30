@@ -27,6 +27,7 @@ TEST(Local, RecursivelyDeleteDeadPHINodes) {
 
   builder.SetInsertPoint(bb0);
   PHINode    *phi = builder.CreatePHI(Type::getInt32Ty(C));
+  phi->reserveOperandSpace(2);
   BranchInst *br0 = builder.CreateCondBr(builder.getTrue(), bb0, bb1);
 
   builder.SetInsertPoint(bb1);

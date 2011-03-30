@@ -96,6 +96,7 @@ Function* PartialInliner::unswitchFunction(Function* F) {
     if (!OldPhi) break;
     
     PHINode* retPhi = PHINode::Create(OldPhi->getType(), "", Ins);
+    retPhi->reserveOperandSpace(2);
     OldPhi->replaceAllUsesWith(retPhi);
     Ins = newReturnBlock->getFirstNonPHI();
     

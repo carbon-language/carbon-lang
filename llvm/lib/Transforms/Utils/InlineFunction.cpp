@@ -626,6 +626,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     if (!TheCall->use_empty()) {
       PHI = PHINode::Create(RTy, TheCall->getName(),
                             AfterCallBB->begin());
+      PHI->reserveOperandSpace(Returns.size());
       // Anything that used the result of the function call should now use the
       // PHI node as their operand.
       TheCall->replaceAllUsesWith(PHI);

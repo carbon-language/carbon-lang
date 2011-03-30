@@ -700,6 +700,7 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
       
       // Otherwise, Create the new PHI node for this user.
       EltPHI = PHINode::Create(Ty, PN->getName()+".off"+Twine(Offset), PN);
+      EltPHI->reserveOperandSpace(PN->getNumIncomingValues());
       assert(EltPHI->getType() != PN->getType() &&
              "Truncate didn't shrink phi?");
     
