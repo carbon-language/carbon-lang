@@ -31,13 +31,14 @@ target = debugger.CreateTargetWithFileAndArch (sys.argv[1], lldb.LLDB_ARCH_DEFAU
 
 if target.IsValid():
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("main", sys.argv[1]);
+    main_bp = target.BreakpointCreateByName ("main", target.GetExecutable().GetFilename());
 
     print main_bp
 
     # Launch the process. Since we specified synchronous mode, we won't return
     # from this function until we hit the breakpoint at main
-    process = target.LaunchProcess ([''], [''], "/dev/stdout", 0, False)
+    error = lldb.SBError()
+    process = target.Launch (debugger.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
     
     # Make sure the launch went ok
     if process.IsValid():
@@ -72,6 +73,19 @@ if target.IsValid():
                             # Now get all instructions for this symbol and print them
                             insts = symbol.GetInstructions(target)
                             disassemble_instructions (insts)
+
+                    print "Frame registers:"
+                    registerList = frame.GetRegisters()
+                    numRegisterSets = registerList.GetSize()
+                    for i in range (0, numRegisterSets):
+                        value = registerList.GetValueAtIndex(i)
+                        print value
+                        numChildren = value.GetNumChildren()
+                        if numChildren > 0:
+                            for j in range (0, numChildren):
+                                child = value.GetChildAtIndex(j)
+                                print "Name: ", child.GetName(), " Value: ", child.GetValue(frame)
+
             print "Hit the breakpoint at main, continue and wait for program to exit..."
             # Now continue to the program exit
             process.Continue()
