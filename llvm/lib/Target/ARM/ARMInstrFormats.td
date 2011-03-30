@@ -1682,7 +1682,8 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 }
 
 // NEON 3 vector register format.
-class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+
+class N3VCommon<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
           dag oops, dag iops, Format f, InstrItinClass itin,
           string opc, string dt, string asm, string cstr, list<dag> pattern>
   : NDataI<oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
@@ -1692,6 +1693,13 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{11-8}  = op11_8;
   let Inst{6}     = op6;
   let Inst{4}     = op4;
+}
+
+class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+          dag oops, dag iops, Format f, InstrItinClass itin,
+          string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : N3VCommon<op24, op23, op21_20, op11_8, op6, op4,
+              oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
 
   // Instruction operands.
   bits<5> Vd;
@@ -1704,6 +1712,47 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{7}     = Vn{4};
   let Inst{3-0}   = Vm{3-0};
   let Inst{5}     = Vm{4};
+}
+
+class N3VLane32<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+          dag oops, dag iops, Format f, InstrItinClass itin,
+          string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : N3VCommon<op24, op23, op21_20, op11_8, op6, op4,
+              oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
+
+  // Instruction operands.
+  bits<5> Vd;
+  bits<5> Vn;
+  bits<5> Vm;
+  bit lane;
+
+  let Inst{15-12} = Vd{3-0};
+  let Inst{22}    = Vd{4};
+  let Inst{19-16} = Vn{3-0};
+  let Inst{7}     = Vn{4};
+  let Inst{3-0}   = Vm{3-0};
+  let Inst{5}     = lane;
+}
+
+class N3VLane16<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
+          dag oops, dag iops, Format f, InstrItinClass itin,
+          string opc, string dt, string asm, string cstr, list<dag> pattern>
+  : N3VCommon<op24, op23, op21_20, op11_8, op6, op4,
+              oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
+
+  // Instruction operands.
+  bits<5> Vd;
+  bits<5> Vn;
+  bits<5> Vm;
+  bits<2> lane;
+
+  let Inst{15-12} = Vd{3-0};
+  let Inst{22}    = Vd{4};
+  let Inst{19-16} = Vn{3-0};
+  let Inst{7}     = Vn{4};
+  let Inst{2-0}   = Vm{2-0};
+  let Inst{5}     = lane{1};
+  let Inst{3}     = lane{0};
 }
 
 // Same as N3V except it doesn't have a data type suffix.
