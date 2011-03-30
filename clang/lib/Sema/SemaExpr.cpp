@@ -7421,7 +7421,7 @@ static bool IsConstProperty(Expr *E, Sema &S) {
     ObjCPropertyDecl *PDecl = PropExpr->getExplicitProperty();
     QualType T = PDecl->getType();
     if (T->isReferenceType())
-      T = cast<ReferenceType>(T)->getPointeeType();
+      T = T->getAs<ReferenceType>()->getPointeeType();
     CanQualType CT = S.Context.getCanonicalType(T);
     return CT.isConstQualified();
   }

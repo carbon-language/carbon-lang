@@ -540,7 +540,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       ParmVarDecl *Param = (*P);
       QualType T = Param->getType();
       if (T->isReferenceType())
-        T = cast<ReferenceType>(T)->getPointeeType();
+        T = T->getAs<ReferenceType>()->getPointeeType();
       Expr *rhs = new (Context) DeclRefExpr(Param, T,
                                             VK_LValue, SourceLocation());
       ExprResult Res = BuildBinOp(S, lhs->getLocEnd(), 
