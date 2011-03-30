@@ -52,10 +52,14 @@ bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
     // Otherwise, hit the big set case, which will call grow.
   }
   
-  // If more than 3/4 of the array is full, grow.
-  if (NumElements*4 >= CurArraySize*3 ||
-      CurArraySize-(NumElements+NumTombstones) < CurArraySize/8)
-    Grow();
+  if (NumElements*4 >= CurArraySize*3) {
+    // If more than 3/4 of the array is full, grow.
+    Grow(CurArraySize < 64 ? 128 : CurArraySize*2);
+  } else if (CurArraySize-(NumElements+NumTombstones) < CurArraySize/8) {
+    // If fewer of 1/8 of the array is empty (meaning that many are filled with
+    // tombstones), rehash.
+    Grow(CurArraySize);
+  }
   
   // Okay, we know we have space.  Find a hash bucket.
   const void **Bucket = const_cast<const void**>(FindBucketFor(Ptr));
@@ -125,10 +129,9 @@ const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
 
 /// Grow - Allocate a larger backing store for the buckets and move it over.
 ///
-void SmallPtrSetImpl::Grow() {
+void SmallPtrSetImpl::Grow(unsigned NewSize) {
   // Allocate at twice as many buckets, but at least 128.
   unsigned OldSize = CurArraySize;
-  unsigned NewSize = OldSize < 64 ? 128 : OldSize*2;
   
   const void **OldBuckets = CurArray;
   bool WasSmall = isSmall();

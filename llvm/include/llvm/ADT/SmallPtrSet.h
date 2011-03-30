@@ -133,7 +133,7 @@ private:
   void shrink_and_clear();
 
   /// Grow - Allocate a larger backing store for the buckets and move it over.
-  void Grow();
+  void Grow(unsigned NewSize);
 
   void operator=(const SmallPtrSetImpl &RHS);  // DO NOT IMPLEMENT.
 protected:
