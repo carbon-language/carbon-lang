@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 
 // C++ Includes
 #include <algorithm>
@@ -61,8 +62,10 @@ get_random_port ()
 {
     if (!rand_initialized)
     {
+        time_t seed = time(NULL);
+
         rand_initialized = true;
-        sranddev();
+        srand(seed);
     }
     return (rand() % (UINT16_MAX - 1000u)) + 1000u;
 }
