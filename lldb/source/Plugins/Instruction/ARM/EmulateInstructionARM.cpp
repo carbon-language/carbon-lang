@@ -9692,14 +9692,106 @@ bool
 EmulateInstructionARM::EmulateSTRImmARM (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+        address = if index then offset_addr else R[n];
+        MemU[address,4] = if t == 15 then PCStoreValue() else R[t];
+        if wback then R[n] = offset_addr;
 #endif
     
-    //bool success = false;
+    bool success = false;
     
     if (ConditionPassed(opcode))
     {
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        bool index;
+        bool add;
+        bool wback;
+                  
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
         switch (encoding)
         {
+            case eEncodingA1:
+                // if P == ‘0’ && W == ‘1’ then SEE STRT;
+                // if Rn == ‘1101’ && P == ‘1’ && U == ‘0’ && W == ‘1’ && imm12 == ‘000000000100’ then SEE PUSH;
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32);
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 11, 0);
+                  
+                // index = (P == ‘1’); add = (U == ‘1’); wback = (P == ‘0’) || (W == ‘1’);
+                index = BitIsSet (opcode, 24);
+                add = BitIsSet (opcode, 23);
+                wback = BitIsClear (opcode, 24) || BitIsSet (opcode, 21);
+                  
+                // if wback && (n == 15 || n == t) then UNPREDICTABLE;
+                if (wback && ((n == 15) || (n == t)))
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        // offset_addr = if add then (R[n] + imm32) else (R[n] - imm32);
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+                  
+        addr_t offset_addr;
+        if (add)
+            offset_addr = Rn + imm32;
+        else
+            offset_addr = Rn - imm32;
+                  
+        // address = if index then offset_addr else R[n];
+        addr_t address;
+        if (index)
+            address = offset_addr;
+        else
+            address = Rn;
+                  
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, n);
+        Register data_reg;
+        data_reg.SetRegister (eRegisterKindDWARF, t);
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterStore;
+        context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
+                  
+        // MemU[address,4] = if t == 15 then PCStoreValue() else R[t];
+        uint32_t Rt = ReadCoreReg (t, &success);
+        if (!success)
+            return false;
+                  
+        if (t == 15)
+        {
+            uint32_t pc_value = ReadCoreReg (SP_REG, &success);
+            if (!success)
+                return false;
+                  
+            if (!MemUWrite (context, address, pc_value, addr_byte_size))
+                return false;
+        }
+        else
+        {
+            if (!MemUWrite (context, address, Rt, addr_byte_size))
+                  return false;
+        }
+                  
+        // if wback then R[n] = offset_addr;
+        if (wback)
+        {
+            context.type = eContextAdjustBaseRegister;
+            context.SetImmediate (offset_addr);
+                  
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+                return false;
         }
     }
     return true;
@@ -10391,6 +10483,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e5000f0, 0x000000b0, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,+/-<Rm>[{!}" },
         { 0x0ff00ff0, 0x01800f90, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn>]"},
         { 0x0e500000, 0x04400000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRBImmARM, "strb<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
+        { 0x0e500000, 0x04000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRImmARM, "str<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
                   
         //----------------------------------------------------------------------
         // Other instructions
