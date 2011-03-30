@@ -13,7 +13,7 @@ define float @test2(float %x) nounwind readnone ssp {
   ret float %div
 
 ; CHECK: @test2
-; CHECK-NEXT: fmul float %x, 0x3800000000000000
+; CHECK-NEXT: fdiv float %x, 0x47E0000000000000
 }
 
 define float @test3(float %x) nounwind readnone ssp {

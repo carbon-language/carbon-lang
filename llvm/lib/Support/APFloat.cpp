@@ -3583,6 +3583,14 @@ bool APFloat::getExactInverse(APFloat *inv) const {
   if (reciprocal.divide(*this, rmNearestTiesToEven) != opOK)
     return false;
 
+  // Avoid multiplication with a denormal, it is not safe on all platforms and
+  // may be slower than a normal division.
+  if (reciprocal.significandMSB() + 1 < reciprocal.semantics->precision)
+    return false;
+
+  assert(reciprocal.category == fcNormal &&
+         reciprocal.significandLSB() == reciprocal.semantics->precision - 1);
+
   if (inv)
     *inv = reciprocal;
 
