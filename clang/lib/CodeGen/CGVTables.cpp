@@ -1135,7 +1135,7 @@ private:
   /// \param BaseIsMorallyVirtual whether the base subobject is a virtual base
   /// or a direct or indirect base of a virtual base.
   void LayoutSecondaryVTables(BaseSubobject Base, bool BaseIsMorallyVirtual,
-                              uint64_t OffsetInLayoutClass);
+                              CharUnits OffsetInLayoutClass);
 
   /// DeterminePrimaryVirtualBases - Determine the primary virtual bases in this
   /// class hierarchy.
@@ -1815,13 +1815,12 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   }
 
   // Layout secondary vtables.
-  LayoutSecondaryVTables(Base, BaseIsMorallyVirtual, 
-                         Context.toBits(OffsetInLayoutClass));
+  LayoutSecondaryVTables(Base, BaseIsMorallyVirtual, OffsetInLayoutClass);
 }
 
 void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
                                            bool BaseIsMorallyVirtual,
-                                           uint64_t OffsetInLayoutClass) {
+                                           CharUnits OffsetInLayoutClass) {
   // Itanium C++ ABI 2.5.2:
   //   Following the primary virtual table of a derived class are secondary 
   //   virtual tables for each of its proper base classes, except any primary
@@ -1859,14 +1858,13 @@ void VTableBuilder::LayoutSecondaryVTables(BaseSubobject Base,
     CharUnits BaseOffset = Base.getBaseOffset() + RelativeBaseOffset;
     
     CharUnits BaseOffsetInLayoutClass = 
-      Context.toCharUnitsFromBits(OffsetInLayoutClass) + RelativeBaseOffset;
+      OffsetInLayoutClass + RelativeBaseOffset;
     
     // Don't emit a secondary vtable for a primary base. We might however want 
     // to emit secondary vtables for other bases of this base.
     if (BaseDecl == PrimaryBase) {
-      LayoutSecondaryVTables(
-        BaseSubobject(BaseDecl, BaseOffset),
-        BaseIsMorallyVirtual, Context.toBits(BaseOffsetInLayoutClass));
+      LayoutSecondaryVTables(BaseSubobject(BaseDecl, BaseOffset),
+                             BaseIsMorallyVirtual, BaseOffsetInLayoutClass);
       continue;
     }
 
