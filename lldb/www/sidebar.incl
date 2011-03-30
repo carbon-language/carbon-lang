@@ -7,6 +7,8 @@
       <li><a href="goals.html">Goals</a></li>
       <li><a href="features.html">Features</a></li>
       <li><a href="status.html">Status</a></li>
+      <li><a href="tutorial.html">Tutorial</a></li>
+      <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
     </ul>
   </div>
   <div class="menu">
