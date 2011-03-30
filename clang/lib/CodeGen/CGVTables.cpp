@@ -746,7 +746,7 @@ private:
                                uint64_t RealBaseOffset);
   
   /// AddVCallOffsets - Add vcall offsets for the given base subobject.
-  void AddVCallOffsets(BaseSubobject Base, uint64_t VBaseOffset);
+  void AddVCallOffsets(BaseSubobject Base, CharUnits VBaseOffset);
   
   /// AddVBaseOffsets - Add vbase offsets for the given class.
   void AddVBaseOffsets(const CXXRecordDecl *Base, uint64_t OffsetInLayoutClass);
@@ -825,7 +825,7 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual)
-    AddVCallOffsets(Base, RealBaseOffset);
+    AddVCallOffsets(Base, Context.toCharUnitsFromBits(RealBaseOffset));
 }
 
 int64_t VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
@@ -843,7 +843,7 @@ int64_t VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
 }
 
 void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base, 
-                                                 uint64_t VBaseOffset) {
+                                                 CharUnits VBaseOffset) {
   const CXXRecordDecl *RD = Base.getBase();
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
 
@@ -885,7 +885,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
       
       /// The vcall offset is the offset from the virtual base to the object 
       /// where the function was overridden.
-      Offset = Overrider.Offset - Context.toCharUnitsFromBits(VBaseOffset);
+      Offset = Overrider.Offset - VBaseOffset;
     }
     
     Components.push_back(
