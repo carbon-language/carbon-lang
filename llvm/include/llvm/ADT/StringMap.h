@@ -329,6 +329,7 @@ public:
       --NumTombstones;
     Bucket.Item = KeyValue;
     ++NumItems;
+    assert(NumItems + NumTombstones <= NumBuckets);
 
     RehashTable();
     return true;
@@ -348,6 +349,7 @@ public:
     }
 
     NumItems = 0;
+    NumTombstones = 0;
   }
 
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
@@ -367,6 +369,7 @@ public:
     if (Bucket.Item == getTombstoneVal())
       --NumTombstones;
     ++NumItems;
+    assert(NumItems + NumTombstones <= NumBuckets);
 
     // Fill in the bucket for the hash table.  The FullHashValue was already
     // filled in by LookupBucketFor.

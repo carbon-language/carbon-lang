@@ -169,6 +169,8 @@ StringMapEntryBase *StringMapImpl::RemoveKey(StringRef Key) {
   TheTable[Bucket].Item = getTombstoneVal();
   --NumItems;
   ++NumTombstones;
+  assert(NumItems + NumTombstones <= NumBuckets);
+
   return Result;
 }
 
@@ -224,4 +226,5 @@ void StringMapImpl::RehashTable() {
   
   TheTable = NewTableArray;
   NumBuckets = NewSize;
+  NumTombstones = 0;
 }
