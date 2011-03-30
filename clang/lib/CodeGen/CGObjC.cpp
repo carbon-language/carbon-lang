@@ -831,10 +831,12 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // The current index into the buffer.
   llvm::PHINode *index = Builder.CreatePHI(UnsignedLongLTy, "forcoll.index");
+  index->reserveOperandSpace(3);
   index->addIncoming(zero, LoopInitBB);
 
   // The current buffer size.
   llvm::PHINode *count = Builder.CreatePHI(UnsignedLongLTy, "forcoll.count");
+  count->reserveOperandSpace(3);
   count->addIncoming(initialBufferLimit, LoopInitBB);
 
   // Check whether the mutations value has changed from where it was
