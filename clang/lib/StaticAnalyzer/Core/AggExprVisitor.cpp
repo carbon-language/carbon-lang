@@ -60,7 +60,7 @@ void AggExprVisitor::VisitCXXConstructExpr(CXXConstructExpr *E) {
 }
 
 void AggExprVisitor::VisitCXXMemberCallExpr(CXXMemberCallExpr *E) {
-  Eng.VisitCXXMemberCallExpr(E, Pred, DstSet);
+  Eng.Visit(E, Pred, DstSet);
 }
 
 void ExprEngine::VisitAggExpr(const Expr *E, const MemRegion *Dest, 

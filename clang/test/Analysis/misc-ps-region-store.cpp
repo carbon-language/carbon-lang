@@ -240,3 +240,19 @@ void test_namespace() {
   int x = i;
 }
 
+// Test handling methods that accept references as parameters, and that
+// variables are properly invalidated.
+class RDar9203355 {
+  bool foo(unsigned valA, long long &result) const;
+  bool foo(unsigned valA, int &result) const;
+};
+bool RDar9203355::foo(unsigned valA, int &result) const {
+  long long val;
+  if (foo(valA, val) ||
+      (int)val != val) // no-warning
+    return true;
+  result = val; // no-warning
+  return false;
+}
+
+

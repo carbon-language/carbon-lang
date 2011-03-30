@@ -109,13 +109,27 @@ const Expr *ObjCMessage::getArgExpr(unsigned i) const {
 }
 
 QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
+  QualType resultTy;
+  bool isLVal = false;
+  
   if (CallE) {
+    isLVal = CallE->isLValue();
     const Expr *Callee = CallE->getCallee();
     if (const FunctionDecl *FD = State->getSVal(Callee).getAsFunctionDecl())
-      return FD->getResultType();
-    return CallE->getType();
+      resultTy = FD->getResultType();
+    else
+      resultTy = CallE->getType();
   }
-  return Msg.getResultType(ctx);
+  else {
+    isLVal = isa<ObjCMessageExpr>(Msg.getOriginExpr()) &&
+             Msg.getOriginExpr()->isLValue();
+    resultTy = Msg.getResultType(ctx);
+  }
+
+  if (isLVal)
+    resultTy = ctx.getPointerType(resultTy);
+
+  return resultTy;
 }
 
 SVal CallOrObjCMessage::getArgSValAsScalarOrLoc(unsigned i) const {

@@ -62,6 +62,34 @@ void ExprEngine::evalArguments(ConstExprIterator AI, ConstExprIterator AE,
   }
 }
 
+void ExprEngine::evalCallee(const CallExpr *callExpr,
+                            const ExplodedNodeSet &src,
+                            ExplodedNodeSet &dest) {
+  
+  const Expr *callee = 0;
+  
+  switch (callExpr->getStmtClass()) {
+    case Stmt::CXXMemberCallExprClass: {
+      // Evaluate the implicit object argument that is the recipient of the
+      // call.
+      callee = cast<CXXMemberCallExpr>(callExpr)->getImplicitObjectArgument();
+      
+      // FIXME: handle member pointers.
+      if (!callee)
+        return;
+
+      break;      
+    }
+    default: {
+      callee = callExpr->getCallee()->IgnoreParens();
+      break;
+    }
+  }
+
+  for (ExplodedNodeSet::iterator i = src.begin(), e = src.end(); i != e; ++i)
+    Visit(callee, *i, dest);
+}
+
 const CXXThisRegion *ExprEngine::getCXXThisRegion(const CXXRecordDecl *D,
                                                  const StackFrameContext *SFC) {
   const Type *T = D->getTypeForDecl();
@@ -167,89 +195,6 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
   ExplodedNode *N = Builder->generateNode(PP, state, Pred);
   if (N)
     Dst.Add(N);
-}
-
-void ExprEngine::VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, 
-                                          ExplodedNode *Pred, 
-                                          ExplodedNodeSet &Dst) {
-  // Get the method type.
-  const FunctionProtoType *FnType = 
-                       MCE->getCallee()->getType()->getAs<FunctionProtoType>();
-  assert(FnType && "Method type not available");
-
-  // Evaluate explicit arguments with a worklist.
-  ExplodedNodeSet argsEvaluated;
-  evalArguments(MCE->arg_begin(), MCE->arg_end(), FnType, Pred, argsEvaluated);
- 
-  // Evaluate the implicit object argument.
-  ExplodedNodeSet AllargsEvaluated;
-  const MemberExpr *ME = dyn_cast<MemberExpr>(MCE->getCallee()->IgnoreParens());
-  if (!ME)
-    return;
-  Expr *ObjArgExpr = ME->getBase();
-  for (ExplodedNodeSet::iterator I = argsEvaluated.begin(), 
-                                 E = argsEvaluated.end(); I != E; ++I) {
-      Visit(ObjArgExpr, *I, AllargsEvaluated);
-  }
-
-  // Now evaluate the call itself.
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
-  assert(MD && "not a CXXMethodDecl?");
-  evalMethodCall(MCE, MD, ObjArgExpr, Pred, AllargsEvaluated, Dst);
-}
-
-void ExprEngine::VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
-                                            ExplodedNode *Pred,
-                                            ExplodedNodeSet &Dst) {
-  const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(C->getCalleeDecl());
-  if (!MD) {
-    // If the operator doesn't represent a method call treat as regular call.
-    VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
-    return;
-  }
-
-  // Determine the type of function we're calling (if available).
-  const FunctionProtoType *Proto = NULL;
-  QualType FnType = C->getCallee()->IgnoreParens()->getType();
-  if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
-    Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
-
-  // Evaluate arguments treating the first one (object method is called on)
-  // as alvalue.
-  ExplodedNodeSet argsEvaluated;
-  evalArguments(C->arg_begin(), C->arg_end(), Proto, Pred, argsEvaluated, true);
-
-  // Now evaluate the call itself.
-  evalMethodCall(C, MD, C->getArg(0), Pred, argsEvaluated, Dst);
-}
-
-void ExprEngine::evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
-                                  const Expr *ThisExpr, ExplodedNode *Pred,
-                                  ExplodedNodeSet &Src, ExplodedNodeSet &Dst) {
-  // Allow checkers to pre-visit the member call.
-  ExplodedNodeSet PreVisitChecks;
-  getCheckerManager().runCheckersForPreStmt(PreVisitChecks, Src, MCE, *this);
-
-  if (!(MD->isThisDeclarationADefinition() && AMgr.shouldInlineCall())) {
-    // FIXME: conservative method call evaluation.
-    getCheckerManager().runCheckersForPostStmt(Dst, PreVisitChecks, MCE, *this);
-    return;
-  }
-
-  const StackFrameContext *SFC = AMgr.getStackFrame(MD, 
-                                                    Pred->getLocationContext(),
-                                                    MCE,
-                                                    Builder->getBlock(), 
-                                                    Builder->getIndex());
-  const CXXThisRegion *ThisR = getCXXThisRegion(MD, SFC);
-  CallEnter Loc(MCE, SFC, Pred->getLocationContext());
-  for (ExplodedNodeSet::iterator I = PreVisitChecks.begin(),
-         E = PreVisitChecks.end(); I != E; ++I) {
-    // Set up 'this' region.
-    const GRState *state = GetState(*I);
-    state = state->bindLoc(loc::MemRegionVal(ThisR), state->getSVal(ThisExpr));
-    Dst.Add(Builder->generateNode(Loc, state, *I));
-  }
 }
 
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,

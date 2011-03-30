@@ -99,7 +99,10 @@ public:
   /// getImplicitObjectArgument - Retrieves the implicit object
   /// argument for the member call. For example, in "x.f(5)", this
   /// operation would return "x".
-  Expr *getImplicitObjectArgument();
+  Expr *getImplicitObjectArgument() const;
+  
+  /// Retrieves the declaration of the called method.
+  CXXMethodDecl *getMethodDecl() const;
 
   /// getRecordDecl - Retrieves the CXXRecordDecl for the underlying type of
   /// the implicit object argument. Note that this is may not be the same

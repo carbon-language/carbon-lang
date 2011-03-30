@@ -264,10 +264,8 @@ public:
 
 
   /// VisitCall - Transfer function for function calls.
-  void VisitCall(const CallExpr* CE, ExplodedNode* Pred,
-                 CallExpr::const_arg_iterator AI, 
-                 CallExpr::const_arg_iterator AE,
-                 ExplodedNodeSet& Dst);
+  void VisitCallExpr(const CallExpr* CE, ExplodedNode* Pred,
+                     ExplodedNodeSet& Dst);
 
   /// VisitCast - Transfer function logic for all casts (implicit and explicit).
   void VisitCast(const CastExpr *CastE, const Expr *Ex, ExplodedNode *Pred,
@@ -362,12 +360,6 @@ public:
                           const MemRegion *Dest, const Stmt *S,
                           ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
-  void VisitCXXMemberCallExpr(const CXXMemberCallExpr *MCE, ExplodedNode *Pred,
-                              ExplodedNodeSet &Dst);
-
-  void VisitCXXOperatorCallExpr(const CXXOperatorCallExpr *C,
-                                ExplodedNode *Pred, ExplodedNodeSet &Dst);
-
   void VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                        ExplodedNodeSet &Dst);
 
@@ -393,12 +385,10 @@ public:
                      const FunctionProtoType *FnType, 
                      ExplodedNode *Pred, ExplodedNodeSet &Dst,
                      bool FstArgAsLValue = false);
-
-  /// Evaluate method call itself. Used for CXXMethodCallExpr and
-  /// CXXOperatorCallExpr.
-  void evalMethodCall(const CallExpr *MCE, const CXXMethodDecl *MD,
-                      const Expr *ThisExpr, ExplodedNode *Pred,
-                      ExplodedNodeSet &Src, ExplodedNodeSet &Dst);
+  
+  /// Evaluate callee expression (for a function call).
+  void evalCallee(const CallExpr *callExpr, const ExplodedNodeSet &src,
+                  ExplodedNodeSet &dest);
 
   /// evalEagerlyAssume - Given the nodes in 'Src', eagerly assume symbolic
   ///  expressions of the form 'x != 0' and generate new nodes (stored in Dst)

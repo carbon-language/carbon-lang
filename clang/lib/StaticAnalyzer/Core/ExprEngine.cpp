@@ -554,9 +554,10 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
     }
 
-    case Stmt::CallExprClass: {
-      const CallExpr* C = cast<CallExpr>(S);
-      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
+    case Stmt::CallExprClass:
+    case Stmt::CXXOperatorCallExprClass:
+    case Stmt::CXXMemberCallExprClass: {
+      VisitCallExpr(cast<CallExpr>(S), Pred, Dst);
       break;
     }
 
@@ -565,18 +566,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       // For block-level CXXConstructExpr, we don't have a destination region.
       // Let VisitCXXConstructExpr() create one.
       VisitCXXConstructExpr(C, 0, Pred, Dst);
-      break;
-    }
-
-    case Stmt::CXXMemberCallExprClass: {
-      const CXXMemberCallExpr *MCE = cast<CXXMemberCallExpr>(S);
-      VisitCXXMemberCallExpr(MCE, Pred, Dst);
-      break;
-    }
-
-    case Stmt::CXXOperatorCallExprClass: {
-      const CXXOperatorCallExpr *C = cast<CXXOperatorCallExpr>(S);
-      VisitCXXOperatorCallExpr(C, Pred, Dst);
       break;
     }
 
@@ -1554,6 +1543,15 @@ void ExprEngine::evalLocation(ExplodedNodeSet &Dst, const Stmt *S,
 
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, 
                               ExplodedNode *Pred) {
+  return false;
+  
+  // Inlining isn't correct right now because we:
+  // (a) don't generate CallExit nodes.
+  // (b) we need a way to postpone doing post-visits of CallExprs until
+  // the CallExit.  This means we need CallExits for the non-inline
+  // cases as well.
+  
+#if 0
   const GRState *state = GetState(Pred);
   const Expr *Callee = CE->getCallee();
   SVal L = state->getSVal(Callee);
@@ -1562,6 +1560,29 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
   if (!FD)
     return false;
 
+  // Specially handle CXXMethods.
+  const CXXMethodDecl *methodDecl = 0;
+  
+  switch (CE->getStmtClass()) {
+    default: break;
+    case Stmt::CXXOperatorCallExprClass: {
+      const CXXOperatorCallExpr *opCall = cast<CXXOperatorCallExpr>(CE);
+      methodDecl = 
+        llvm::dyn_cast_or_null<CXXMethodDecl>(opCall->getCalleeDecl());
+      break;
+    }
+    case Stmt::CXXMemberCallExprClass: {
+      const CXXMemberCallExpr *memberCall = cast<CXXMemberCallExpr>(CE);
+      const MemberExpr *memberExpr = 
+        cast<MemberExpr>(memberCall->getCallee()->IgnoreParens());
+      methodDecl = cast<CXXMethodDecl>(memberExpr->getMemberDecl());
+      break;
+    }
+  }
+      
+  
+  
+  
   // Check if the function definition is in the same translation unit.
   if (FD->hasBody(FD)) {
     const StackFrameContext *stackFrame = 
@@ -1589,14 +1610,15 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
     Dst.Add(N);
     return true;
   }
+  
+  // Generate the CallExit node.
 
   return false;
+#endif
 }
 
-void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
-                             CallExpr::const_arg_iterator AI,
-                             CallExpr::const_arg_iterator AE,
-                             ExplodedNodeSet& Dst) {
+void ExprEngine::VisitCallExpr(const CallExpr* CE, ExplodedNode* Pred,
+                               ExplodedNodeSet& dst) {
 
   // Determine the type of function we're calling (if available).
   const FunctionProtoType *Proto = NULL;
@@ -1604,73 +1626,78 @@ void ExprEngine::VisitCall(const CallExpr* CE, ExplodedNode* Pred,
   if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
     Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
 
-  // Evaluate the arguments.
-  ExplodedNodeSet ArgsEvaluated;
-  evalArguments(CE->arg_begin(), CE->arg_end(), Proto, Pred, ArgsEvaluated);
-
-  // Now process the call itself.
-  ExplodedNodeSet DstTmp;
-  const Expr* Callee = CE->getCallee()->IgnoreParens();
-
-  for (ExplodedNodeSet::iterator NI=ArgsEvaluated.begin(),
-                                 NE=ArgsEvaluated.end(); NI != NE; ++NI) {
-    // Evaluate the callee.
-    ExplodedNodeSet DstTmp2;
-    Visit(Callee, *NI, DstTmp2);
-    // Perform the previsit of the CallExpr, storing the results in DstTmp.
-    getCheckerManager().runCheckersForPreStmt(DstTmp, DstTmp2, CE, *this);
+  // Should the first argument be evaluated as an lvalue?
+  bool firstArgumentAsLvalue = false;
+  switch (CE->getStmtClass()) {
+    case Stmt::CXXOperatorCallExprClass:
+      firstArgumentAsLvalue = true;
+      break;
+    default:
+      break;
   }
+  
+  // Evaluate the arguments.
+  ExplodedNodeSet dstArgsEvaluated;
+  evalArguments(CE->arg_begin(), CE->arg_end(), Proto, Pred, dstArgsEvaluated,
+                firstArgumentAsLvalue);
 
+  // Evaluate the callee.
+  ExplodedNodeSet dstCalleeEvaluated;
+  evalCallee(CE, dstArgsEvaluated, dstCalleeEvaluated);
+
+  // Perform the previsit of the CallExpr.
+  ExplodedNodeSet dstPreVisit;
+  getCheckerManager().runCheckersForPreStmt(dstPreVisit, dstCalleeEvaluated,
+                                            CE, *this);
+    
+  // Now evaluate the call itself.
   class DefaultEval : public GraphExpander {
     ExprEngine &Eng;
     const CallExpr *CE;
   public:
-    bool Inlined;
     
     DefaultEval(ExprEngine &eng, const CallExpr *ce)
-      : Eng(eng), CE(ce), Inlined(false) { }
+      : Eng(eng), CE(ce) {}
     virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
+      // Should we inline the call?
       if (Eng.getAnalysisManager().shouldInlineCall() &&
           Eng.InlineCall(Dst, CE, Pred)) {
-        Inlined = true;
-      } else {
-        StmtNodeBuilder &Builder = Eng.getBuilder();
-        assert(&Builder && "StmtNodeBuilder must be defined.");
-
-        // Dispatch to the plug-in transfer function.
-        unsigned oldSize = Dst.size();
-        SaveOr OldHasGen(Builder.hasGeneratedNode);
-
-        // Dispatch to transfer function logic to handle the call itself.
-        const Expr* Callee = CE->getCallee()->IgnoreParens();
-        const GRState* state = Eng.GetState(Pred);
-        SVal L = state->getSVal(Callee);
-        Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
-
-        // Handle the case where no nodes where generated.  Auto-generate that
-        // contains the updated state if we aren't generating sinks.
-        if (!Builder.BuildSinks && Dst.size() == oldSize &&
-            !Builder.hasGeneratedNode)
-          Eng.MakeNode(Dst, CE, Pred, state);
+        return;
       }
+
+      StmtNodeBuilder &Builder = Eng.getBuilder();
+      assert(&Builder && "StmtNodeBuilder must be defined.");
+
+      // Dispatch to the plug-in transfer function.
+      unsigned oldSize = Dst.size();
+      SaveOr OldHasGen(Builder.hasGeneratedNode);
+
+      // Dispatch to transfer function logic to handle the call itself.
+      const Expr* Callee = CE->getCallee()->IgnoreParens();
+      const GRState* state = Eng.GetState(Pred);
+      SVal L = state->getSVal(Callee);
+      Eng.getTF().evalCall(Dst, Eng, Builder, CE, L, Pred);
+
+      // Handle the case where no nodes where generated.  Auto-generate that
+      // contains the updated state if we aren't generating sinks.
+      if (!Builder.BuildSinks && Dst.size() == oldSize &&
+          !Builder.hasGeneratedNode)
+        Eng.MakeNode(Dst, CE, Pred, state);
     }
   };
 
   // Finally, evaluate the function call.  We try each of the checkers
   // to see if the can evaluate the function call.
-  ExplodedNodeSet DstTmp3;
+  ExplodedNodeSet dstCallEvaluated;
   DefaultEval defEval(*this, CE);
-
-  getCheckerManager().runCheckersForEvalCall(DstTmp3, DstTmp, CE,
-                                             *this, &defEval);
-
-  // Callee is inlined. We shouldn't do post call checking.
-  if (defEval.Inlined)
-    return;
+  getCheckerManager().runCheckersForEvalCall(dstCallEvaluated,
+                                             dstPreVisit,
+                                             CE, *this, &defEval);
 
   // Finally, perform the post-condition check of the CallExpr and store
   // the created nodes in 'Dst'.
-  getCheckerManager().runCheckersForPostStmt(Dst, DstTmp3, CE, *this);
+  getCheckerManager().runCheckersForPostStmt(dst, dstCallEvaluated, CE,
+                                             *this);
 }
 
 //===----------------------------------------------------------------------===//

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store region -analyzer-inline-call -cfg-add-initializers -verify %s
+// XFAIL: *
 
 class A {
   int x;

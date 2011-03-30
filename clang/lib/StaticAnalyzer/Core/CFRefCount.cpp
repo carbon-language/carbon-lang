@@ -16,6 +16,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceManager.h"
@@ -2680,11 +2681,14 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
       // FIXME: We eventually should handle structs and other compound types
       // that are returned by value.
 
-      QualType T = callOrMsg.getResultType(Eng.getContext());
-      if (Loc::isLocType(T) || (T->isIntegerType() && T->isScalarType())) {
+      // Use the result type from callOrMsg as it automatically adjusts
+      // for methods/functions that return references.
+      QualType resultTy = callOrMsg.getResultType(Eng.getContext());
+      if (Loc::isLocType(resultTy) || 
+            (resultTy->isIntegerType() && resultTy->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         SValBuilder &svalBuilder = Eng.getSValBuilder();
-        SVal X = svalBuilder.getConjuredSymbolVal(NULL, Ex, T, Count);
+        SVal X = svalBuilder.getConjuredSymbolVal(NULL, Ex, resultTy, Count);
         state = state->BindExpr(Ex, X, false);
       }
 
@@ -2711,9 +2715,12 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
       unsigned Count = Builder.getCurrentBlockCount();
       SValBuilder &svalBuilder = Eng.getSValBuilder();
       SymbolRef Sym = svalBuilder.getConjuredSymbol(Ex, Count);
-      QualType RetT = GetReturnType(Ex, svalBuilder.getContext());
+
+      // Use the result type from callOrMsg as it automatically adjusts
+      // for methods/functions that return references.      
+      QualType resultTy = callOrMsg.getResultType(Eng.getContext());
       state = state->set<RefBindings>(Sym, RefVal::makeOwned(RE.getObjKind(),
-                                                            RetT));
+                                                            resultTy));
       state = state->BindExpr(Ex, svalBuilder.makeLoc(Sym), false);
 
       // FIXME: Add a flag to the checker where allocations are assumed to
@@ -2766,11 +2773,17 @@ void CFRefCount::evalCall(ExplodedNodeSet& Dst,
   if (dyn_cast_or_null<BlockDataRegion>(L.getAsRegion())) {
     Summ = Summaries.getPersistentStopSummary();
   }
-  else {
-    const FunctionDecl* FD = L.getAsFunctionDecl();
-    Summ = !FD ? Summaries.getDefaultSummary() :
-                 Summaries.getSummary(FD);
+  else if (const FunctionDecl* FD = L.getAsFunctionDecl()) {
+    Summ = Summaries.getSummary(FD);
   }
+  else if (const CXXMemberCallExpr *me = dyn_cast<CXXMemberCallExpr>(CE)) {
+    if (const CXXMethodDecl *MD = me->getMethodDecl())
+      Summ = Summaries.getSummary(MD);
+    else
+      Summ = Summaries.getDefaultSummary();    
+  }
+  else
+    Summ = Summaries.getDefaultSummary();
 
   assert(Summ);
   evalSummary(Dst, Eng, Builder, CE,
