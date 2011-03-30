@@ -9487,18 +9487,109 @@ EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding e
 }
                   
 // A8.6.202 STREX
+// Store Register Exclusive calculates an address from a base register value and an immediate offset, and stores a 
+// word from a register to memory if the executing processor has exclusive access to the memory addressed.
 bool
 EmulateInstructionARM::EmulateSTREX (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); NullCheckIfThumbEE(n);
+        address = R[n] + imm32;
+        if ExclusiveMonitorsPass(address,4) then
+            MemA[address,4] = R[t];
+            R[d] = 0;
+        else
+            R[d] = 1;
 #endif
     
-    //bool success = false;
+    bool success = false;
     
     if (ConditionPassed(opcode))
     {
+        uint32_t d;
+        uint32_t t;
+        uint32_t n;
+        uint32_t imm32;
+        const uint32_t addr_byte_size = GetAddressByteSize();
+                  
         switch (encoding)
         {
+            case eEncodingT1:
+                // d = UInt(Rd); t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8:’00’, 32);
+                d = Bits32 (opcode, 11, 8);
+                t = Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                  
+                // if BadReg(d) || BadReg(t) || n == 15 then UNPREDICTABLE;
+                if (BadReg (d) || BadReg (t) || (n == 15))
+                  return false;
+                  
+                // if d == n || d == t then UNPREDICTABLE;
+                if ((d == n) || (d == t))
+                  return false;
+                  
+                break;
+                  
+            case eEncodingA1:
+                // d = UInt(Rd); t = UInt(Rt); n = UInt(Rn); imm32 = Zeros(32); // Zero offset
+                d = Bits32 (opcode, 15, 12);
+                t = Bits32 (opcode, 3, 0);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = 0;
+                  
+                // if d == 15 || t == 15 || n == 15 then UNPREDICTABLE;
+                if ((d == 15) || (t == 15) || (n == 15))
+                    return false;
+                  
+                // if d == n || d == t then UNPREDICTABLE;
+                if ((d == n) || (d == t))
+                    return false;
+                  
+                break;
+                  
+            default:
+                return false;
+        }
+                  
+        // address = R[n] + imm32;
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+                  
+        addr_t address = Rn + imm32;
+                  
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        Register data_reg;
+        data_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + t);
+        EmulateInstruction::Context context;
+        context.type = eContextRegisterStore;
+        context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, imm32);
+                  
+        // if ExclusiveMonitorsPass(address,4) then
+        // if (ExclusiveMonitorsPass (address, addr_byte_size)) -- For now, for the sake of emulation, we will say this
+        //                                                         always return true.
+        if (true)
+        {
+            // MemA[address,4] = R[t];
+            uint32_t Rt = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + t, 0, &success);
+            if (!success)
+                return false;
+                  
+            if (!MemAWrite (context, address, Rt, addr_byte_size))
+                return false;
+                  
+            // R[d] = 0;
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, 0))
+                return false;
+        }
+        else
+        {
+            // R[d] = 1;
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, 1))
+                return false;
         }
     }
     return true;
@@ -10224,6 +10315,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fd00000, 0x09800000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMIB, "stmib<c> <Rn>{!} <registers>" },
         { 0x0e500010, 0x06000000, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> [<Rn> +/-<Rm> {<shift>}]{!}" },
         { 0x0e5000f0, 0x000000b0, ARMvAll,      eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,+/-<Rm>[{!}" },
+        { 0x0ff00ff0, 0x01800f90, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn>]"},
                   
         //----------------------------------------------------------------------
         // Other instructions
@@ -10513,6 +10605,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> ,[<Rn>, #+/-<imm8>]{!}" },
         { 0xfffffe00, 0x00005200, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,<Rm>]" },
         { 0xfff00fc0, 0xf8200000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfff00000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn{,#<imm>}]" },
                   
         //----------------------------------------------------------------------
         // Other instructions
