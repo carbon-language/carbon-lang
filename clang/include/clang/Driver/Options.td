@@ -421,6 +421,14 @@ def ftemplate_backtrace_limit_EQ : Joined<"-ftemplate-backtrace-limit=">,
                                    Group<f_Group>;
 def Wlarge_by_value_copy_def : Flag<"-Wlarge-by-value-copy">;
 def Wlarge_by_value_copy_EQ : Joined<"-Wlarge-by-value-copy=">;
+
+// Just silence warnings about -Wlarger-than,  -Wframe-larger-than for now.
+def Wlarger_than : Separate<"-Wlarger-than">, Group<clang_ignored_f_Group>;
+def Wlarger_than_EQ : Joined<"-Wlarger-than=">, Alias<Wlarger_than>;
+def Wlarger_than_ : Joined<"-Wlarger-than-">, Alias<Wlarger_than>;
+def Wframe_larger_than : Separate<"-Wframe-larger-than">, Group<clang_ignored_f_Group>;
+def Wframe_larger_than_EQ : Joined<"-Wframe-larger-than=">, Alias<Wframe_larger_than>;
+
 def fterminated_vtables : Flag<"-fterminated-vtables">, Group<f_Group>;
 def fthreadsafe_statics : Flag<"-fthreadsafe-statics">, Group<f_Group>;
 def ftime_report : Flag<"-ftime-report">, Group<f_Group>;
