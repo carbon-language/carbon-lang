@@ -12,6 +12,7 @@
 
 // C Includes
 // C++ Includes
+#include <map>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,7 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Mutex.h"
 
@@ -121,7 +123,7 @@ namespace lldb_private {
         bool
         GetOSKernelDescription (std::string &s);
 
-        const char *
+        virtual const char *
         GetHostname ();
 
         virtual const char *
@@ -172,13 +174,11 @@ namespace lldb_private {
             return ArchSpec(); // Return an invalid architecture
         }
 
-        // Remote subclasses should override this and return a valid instance
-        // name if connected.
         virtual const char *
-        GetRemoteHostname ()
-        {
-            return NULL;
-        }
+        GetUserName (uint32_t uid);
+
+        virtual const char *
+        GetGroupName (uint32_t gid);
 
         //------------------------------------------------------------------
         /// Locate a file for a platform.
@@ -188,6 +188,15 @@ namespace lldb_private {
         ///
         /// @param[in] platform_file
         ///     The platform file path to locate and cache locally.
+        ///
+        /// @param[in] uuid_ptr
+        ///     If we know the exact UUID of the file we are looking for, it
+        ///     can be specified. If it is not specified, we might now know
+        ///     the exact file. The UUID is usually some sort of MD5 checksum
+        ///     for the file and is sometimes known by dynamic linkers/loaders.
+        ///     If the UUID is known, it is best to supply it to platform
+        ///     file queries to ensure we are finding the correct file, not
+        ///     just a file at the correct path.
         ///
         /// @param[out] local_file
         ///     A locally cached version of the platform file. For platforms
@@ -203,6 +212,16 @@ namespace lldb_private {
         GetFile (const FileSpec &platform_file, 
                  const UUID *uuid_ptr,
                  FileSpec &local_file);
+
+        virtual Error
+        GetSharedModule (const FileSpec &platform_file, 
+                         const ArchSpec &arch,
+                         const UUID *uuid_ptr,
+                         const ConstString *object_name_ptr,
+                         off_t object_offset,
+                         lldb::ModuleSP &module_sp,
+                         lldb::ModuleSP *old_module_sp_ptr,
+                         bool *did_create_ptr);
 
         virtual Error
         ConnectRemote (Args& args);
@@ -333,13 +352,16 @@ namespace lldb_private {
 //                bool wait_for_launch, 
 //                Error &error) = 0;
         
+        //------------------------------------------------------------------
+        // The base class Platform will take care of the host platform.
+        // Subclasses will need to fill in the remote case.
+        //------------------------------------------------------------------
         virtual uint32_t
-        FindProcessesByName (const char *name, 
-                             NameMatchType name_match_type,
-                             ProcessInfoList &proc_infos) = 0;
+        FindProcesses (const ProcessInfoMatch &match_info,
+                       ProcessInfoList &proc_infos);
 
         virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info) = 0;
+        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
 
         const std::string &
         GetRemoteURL () const
@@ -377,6 +399,18 @@ namespace lldb_private {
                 m_os_version_set_while_connected = m_system_arch.IsValid();
         }
 
+        // Used for column widths
+        uint32_t
+        GetMaxUserIDNameLength() const
+        {
+            return m_max_uid_name_len;
+        }
+        // Used for column widths
+        uint32_t
+        GetMaxGroupIDNameLength() const
+        {
+            return m_max_gid_name_len;
+        }
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 
@@ -392,6 +426,99 @@ namespace lldb_private {
         uint32_t m_minor_os_version;
         uint32_t m_update_os_version;
         ArchSpec m_system_arch; // The architecture of the kernel or the remote platform
+        typedef std::map<uint32_t, ConstString> IDToNameMap;
+        Mutex m_uid_map_mutex;
+        Mutex m_gid_map_mutex;
+        IDToNameMap m_uid_map;
+        IDToNameMap m_gid_map;
+        uint32_t m_max_uid_name_len;
+        uint32_t m_max_gid_name_len;
+        
+        const char *
+        GetCachedUserName (uint32_t uid)
+        {
+            Mutex::Locker locker (m_uid_map_mutex);
+            IDToNameMap::iterator pos = m_uid_map.find (uid);
+            if (pos != m_uid_map.end())
+            {
+                // return the empty string if our string is NULL
+                // so we can tell when things were in the negative
+                // cached (didn't find a valid user name, don't keep
+                // trying)
+                return pos->second.AsCString("");
+            }
+            return NULL;
+        }
+
+        const char *
+        SetCachedUserName (uint32_t uid, const char *name, size_t name_len)
+        {
+            Mutex::Locker locker (m_uid_map_mutex);
+            ConstString const_name (name);
+            m_uid_map[uid] = const_name;
+            if (m_max_uid_name_len < name_len)
+                m_max_uid_name_len = name_len;
+            // Const strings lives forever in our const string pool, so we can return the const char *
+            return const_name.GetCString(); 
+        }
+
+        void
+        SetUserNameNotFound (uint32_t uid)
+        {
+            Mutex::Locker locker (m_uid_map_mutex);
+            m_uid_map[uid] = ConstString();
+        }
+        
+
+        void
+        ClearCachedUserNames ()
+        {
+            Mutex::Locker locker (m_uid_map_mutex);
+            m_uid_map.clear();
+        }
+    
+        const char *
+        GetCachedGroupName (uint32_t gid)
+        {
+            Mutex::Locker locker (m_gid_map_mutex);
+            IDToNameMap::iterator pos = m_gid_map.find (gid);
+            if (pos != m_gid_map.end())
+            {
+                // return the empty string if our string is NULL
+                // so we can tell when things were in the negative
+                // cached (didn't find a valid group name, don't keep
+                // trying)
+                return pos->second.AsCString("");
+            }
+            return NULL;
+        }
+
+        const char *
+        SetCachedGroupName (uint32_t gid, const char *name, size_t name_len)
+        {
+            Mutex::Locker locker (m_gid_map_mutex);
+            ConstString const_name (name);
+            m_gid_map[gid] = const_name;
+            if (m_max_gid_name_len < name_len)
+                m_max_gid_name_len = name_len;
+            // Const strings lives forever in our const string pool, so we can return the const char *
+            return const_name.GetCString(); 
+        }
+
+        void
+        SetGroupNameNotFound (uint32_t gid)
+        {
+            Mutex::Locker locker (m_gid_map_mutex);
+            m_gid_map[gid] = ConstString();
+        }
+
+        void
+        ClearCachedGroupNames ()
+        {
+            Mutex::Locker locker (m_gid_map_mutex);
+            m_gid_map.clear();
+        }
+
     private:
         DISALLOW_COPY_AND_ASSIGN (Platform);
     };

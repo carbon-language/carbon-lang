@@ -68,7 +68,7 @@ public:
         }
         else
         {
-            result.AppendError ("command not implemented\n");
+            result.AppendError ("platform create takes a platform name as an argument\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -409,6 +409,308 @@ public:
 };
 
 
+//----------------------------------------------------------------------
+// "platform process list"
+//----------------------------------------------------------------------
+class CommandObjectPlatformProcessList : public CommandObject
+{
+public:
+    CommandObjectPlatformProcessList (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "platform process list",
+                   "List processes on a remote platform by name, pid, or many other matching attributes.",
+                   "platform process list",
+                   0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformProcessList ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        
+        if (platform_sp)
+        {
+            Error error;
+            if (args.GetArgumentCount() == 0)
+            {
+                
+                if (platform_sp)
+                {
+                    lldb::pid_t pid = m_options.match_info.GetProcessInfo().GetProcessID();
+                    if (pid != LLDB_INVALID_PROCESS_ID)
+                    {
+                        ProcessInfo proc_info;
+                        if (platform_sp->GetProcessInfo (pid, proc_info))
+                        {
+                            proc_info.Dump (result.GetOutputStream(), platform_sp.get());
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("no process found with pid = %i\n", pid);
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                    }
+                    else
+                    {
+                        ProcessInfoList proc_infos;
+                        const uint32_t matches = platform_sp->FindProcesses (m_options.match_info, proc_infos);
+                        if (matches == 0)
+                        {
+                            const char *match_desc = NULL;
+                            const char *match_name = m_options.match_info.GetProcessInfo().GetName();
+                            if (match_name && match_name[0])
+                            {
+                                switch (m_options.match_info.GetNameMatchType())
+                                {
+                                    case eNameMatchIgnore: break;
+                                    case eNameMatchEquals: match_desc = "match"; break;
+                                    case eNameMatchContains: match_desc = "contains"; break;
+                                    case eNameMatchStartsWith: match_desc = "starts with"; break;
+                                    case eNameMatchEndsWith: match_desc = "end with"; break;
+                                    case eNameMatchRegularExpression: match_desc = "match the regular expression"; break;
+                                }
+                            }
+                            if (match_desc)
+                                result.AppendErrorWithFormat ("no processes were found that %s \"%s\" on the \"%s\" platform\n", 
+                                                              match_desc,
+                                                              match_name,
+                                                              platform_sp->GetShortPluginName());
+                            else
+                                result.AppendErrorWithFormat ("no processes were found on the \"%s\" platform\n", platform_sp->GetShortPluginName());
+                            result.SetStatus (eReturnStatusFailed);
+                        }
+                        else
+                        {
+                            Stream &ostrm = result.GetOutputStream();      
+
+                            ProcessInfo::DumpTableHeader (ostrm, platform_sp.get());
+                            for (uint32_t i=0; i<matches; ++i)
+                            {
+                                proc_infos.GetProcessInfoAtIndex(i).DumpAsTableRow(ostrm, platform_sp.get());
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                result.AppendError ("invalid args: process list takes only options\n");
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform is selected\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    
+    class CommandOptions : public Options
+    {
+    public:
+        
+        CommandOptions () :
+            match_info ()
+        {
+        }
+        
+        virtual
+        ~CommandOptions ()
+        {
+        }
+        
+        virtual Error
+        SetOptionValue (int option_idx, const char *option_arg)
+        {
+            Error error;
+            char short_option = (char) m_getopt_table[option_idx].val;
+            bool success = false;
+
+            switch (short_option)
+            {
+                case 'p':
+                    match_info.GetProcessInfo().SetProcessID (Args::StringToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid process ID string: '%s'", option_arg);
+                    break;
+                
+                case 'P':
+                    match_info.GetProcessInfo().SetParentProcessID (Args::StringToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid parent process ID string: '%s'", option_arg);
+                    break;
+
+                case 'u':
+                    match_info.GetProcessInfo().SetRealUserID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid user ID string: '%s'", option_arg);
+                    break;
+
+                case 'U':
+                    match_info.GetProcessInfo().SetEffectiveUserID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid effective user ID string: '%s'", option_arg);
+                    break;
+
+                case 'g':
+                    match_info.GetProcessInfo().SetRealGroupID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid group ID string: '%s'", option_arg);
+                    break;
+
+                case 'G':
+                    match_info.GetProcessInfo().SetEffectiveGroupID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid effective group ID string: '%s'", option_arg);
+                    break;
+
+                case 'a':
+                    match_info.GetProcessInfo().GetArchitecture().SetTriple (option_arg);
+                    break;
+
+                case 'n':
+                    match_info.GetProcessInfo().SetName (option_arg);
+                    if (match_info.GetNameMatchType() == eNameMatchIgnore)
+                        match_info.SetNameMatchType (eNameMatchEquals);
+                    break;
+
+                case 'e':
+                    match_info.SetNameMatchType (eNameMatchEndsWith);
+                    break;
+
+                case 's':
+                    match_info.SetNameMatchType (eNameMatchStartsWith);
+                    break;
+                    
+                case 'c':
+                    match_info.SetNameMatchType (eNameMatchContains);
+                    break;
+                    
+                case 'r':
+                    match_info.SetNameMatchType (eNameMatchRegularExpression);
+                    break;
+
+                default:
+                    error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+                    break;
+            }
+            
+            return error;
+        }
+        
+        void
+        ResetOptionValues ()
+        {
+            match_info.Clear();
+        }
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            return g_option_table;
+        }
+        
+        // Options table: Required for subclasses of Options.
+        
+        static OptionDefinition g_option_table[];
+        
+        // Instance variables to hold the values for command options.
+        
+        ProcessInfoMatch match_info;
+    };
+    CommandOptions m_options;
+};
+
+OptionDefinition
+CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "pid"              , 'p', required_argument, NULL, 0, eArgTypePid          , "List the process info for a specific process ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5, true , "name"             , 'n', required_argument, NULL, 0, eArgTypeProcessName  , "Find processes that match the supplied name." },
+{ LLDB_OPT_SET_2, false, "ends-with"        , 'e', no_argument      , NULL, 0, eArgTypeNone         , "Process names must end with the name supplied with the --name option." },
+{ LLDB_OPT_SET_3, false, "starts-with"      , 's', no_argument      , NULL, 0, eArgTypeNone         , "Process names must start with the name supplied with the --name option." },
+{ LLDB_OPT_SET_4, false, "contains"         , 'c', no_argument      , NULL, 0, eArgTypeNone         , "Process names must contain the name supplied with the --name option." },
+{ LLDB_OPT_SET_5, false, "regex"            , 'r', no_argument      , NULL, 0, eArgTypeNone         , "Process names must match name supplied with the --name option as a regular expression." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "parent"           , 'P', required_argument, NULL, 0, eArgTypePid          , "Find processes that have a matching parent process ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "uid"              , 'u', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching user ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "euid"             , 'U', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching effective user ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "gid"              , 'g', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching group ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "egid"             , 'G', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching effective group ID." },
+{ LLDB_OPT_SET_2|
+  LLDB_OPT_SET_3|
+  LLDB_OPT_SET_4|
+  LLDB_OPT_SET_5|
+  LLDB_OPT_SET_6, false, "arch"             , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Find processes that have a matching architecture." },
+{ 0             , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
+};
+
+class CommandObjectPlatformProcess : public CommandObjectMultiword
+{
+public:
+    //------------------------------------------------------------------
+    // Constructors and Destructors
+    //------------------------------------------------------------------
+     CommandObjectPlatformProcess (CommandInterpreter &interpreter) :
+        CommandObjectMultiword (interpreter,
+                                "platform process",
+                                "A set of commands to query, launch and attach to platform processes",
+                                "platform process [attach|launch|list] ...")
+    {
+//        LoadSubCommand ("attach", CommandObjectSP (new CommandObjectPlatformProcessAttach (interpreter)));
+//        LoadSubCommand ("launch", CommandObjectSP (new CommandObjectPlatformProcessLaunch (interpreter)));
+        LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformProcessList (interpreter)));
+
+    }
+    
+    virtual
+    ~CommandObjectPlatformProcess ()
+    {
+    }
+    
+private:
+    //------------------------------------------------------------------
+    // For CommandObjectPlatform only
+    //------------------------------------------------------------------
+    DISALLOW_COPY_AND_ASSIGN (CommandObjectPlatformProcess);
+};
 
 //----------------------------------------------------------------------
 // CommandObjectPlatform constructor
@@ -425,6 +727,7 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus  (interpreter)));
     LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect  (interpreter)));
     LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect  (interpreter)));
+    LoadSubCommand ("process", CommandObjectSP (new CommandObjectPlatformProcess  (interpreter)));
 }
 
 

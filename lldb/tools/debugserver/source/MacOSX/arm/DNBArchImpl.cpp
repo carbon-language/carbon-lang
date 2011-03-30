@@ -93,6 +93,29 @@ static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
 #define MNEMONIC_STRING_SIZE 32
 #define OPERAND_STRING_SIZE 128
 
+
+void
+DNBArchMachARM::Initialize()
+{
+    DNBArchPluginInfo arch_plugin_info = 
+    {
+        CPU_TYPE_ARM, 
+        DNBArchMachARM::Create, 
+        DNBArchMachARM::GetRegisterSetInfo,
+        DNBArchMachARM::SoftwareBreakpointOpcode
+    };
+    
+    // Register this arch plug-in with the main protocol class
+    DNBArchProtocol::RegisterArchPlugin (arch_plugin_info);
+}
+
+
+DNBArchProtocol *
+DNBArchMachARM::Create (MachThread *thread)
+{
+    return new DNBArchMachARM (thread);
+}
+
 const uint8_t * const
 DNBArchMachARM::SoftwareBreakpointOpcode (nub_size_t byte_size)
 {
@@ -153,8 +176,29 @@ DNBArchMachARM::GetGPRState(bool force)
     mach_msg_type_number_t count = ARM_THREAD_STATE_COUNT;
     kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_THREAD_STATE, (thread_state_t)&m_state.context.gpr, &count);
     uint32_t *r = &m_state.context.gpr.__r[0];
-    DNBLogThreadedIf(LOG_THREAD, "thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x regs r0=%8.8x r1=%8.8x r2=%8.8x r3=%8.8x r4=%8.8x r5=%8.8x r6=%8.8x r7=%8.8x r8=%8.8x r9=%8.8x r10=%8.8x r11=%8.8x s12=%8.8x sp=%8.8x lr=%8.8x pc=%8.8x cpsr=%8.8x", m_thread->ThreadID(), ARM_THREAD_STATE, ARM_THREAD_STATE_COUNT, kret,
-     r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15], r[16]);
+    DNBLogThreadedIf(LOG_THREAD, "thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x (count = %u) regs r0=%8.8x r1=%8.8x r2=%8.8x r3=%8.8x r4=%8.8x r5=%8.8x r6=%8.8x r7=%8.8x r8=%8.8x r9=%8.8x r10=%8.8x r11=%8.8x s12=%8.8x sp=%8.8x lr=%8.8x pc=%8.8x cpsr=%8.8x", 
+                     m_thread->ThreadID(), 
+                     ARM_THREAD_STATE, 
+                     ARM_THREAD_STATE_COUNT, 
+                     kret,
+                     count,
+                     r[0], 
+                     r[1], 
+                     r[2], 
+                     r[3], 
+                     r[4], 
+                     r[5], 
+                     r[6], 
+                     r[7], 
+                     r[8], 
+                     r[9], 
+                     r[10], 
+                     r[11], 
+                     r[12], 
+                     r[13], 
+                     r[14], 
+                     r[15], 
+                     r[16]);
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -170,6 +214,24 @@ DNBArchMachARM::GetVFPState(bool force)
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_VFP_STATE_COUNT;
     kern_return_t kret = ::thread_get_state(m_thread->ThreadID(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, &count);
+    if (DNBLogEnabledForAny (LOG_THREAD))
+    {
+        uint32_t *r = &m_state.context.vfp.__r[0];
+        DNBLogThreaded ("thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x (count => %u)",
+                        m_thread->ThreadID(), 
+                        ARM_THREAD_STATE, 
+                        ARM_THREAD_STATE_COUNT, 
+                        kret,
+                        count);
+        DNBLogThreaded("   s0=%8.8x  s1=%8.8x  s2=%8.8x  s3=%8.8x  s4=%8.8x  s5=%8.8x  s6=%8.8x  s7=%8.8x",r[ 0],r[ 1],r[ 2],r[ 3],r[ 4],r[ 5],r[ 6],r[ 7]);
+        DNBLogThreaded("   s8=%8.8x  s9=%8.8x s10=%8.8x s11=%8.8x s12=%8.8x s13=%8.8x s14=%8.8x s15=%8.8x",r[ 8],r[ 9],r[10],r[11],r[12],r[13],r[14],r[15]);
+        DNBLogThreaded("  s16=%8.8x s17=%8.8x s18=%8.8x s19=%8.8x s20=%8.8x s21=%8.8x s22=%8.8x s23=%8.8x",r[16],r[17],r[18],r[19],r[20],r[21],r[22],r[23]);
+        DNBLogThreaded("  s24=%8.8x s25=%8.8x s26=%8.8x s27=%8.8x s28=%8.8x s29=%8.8x s30=%8.8x s31=%8.8x",r[24],r[25],r[26],r[27],r[28],r[29],r[30],r[31]);
+        DNBLogThreaded("  s32=%8.8x s33=%8.8x s34=%8.8x s35=%8.8x s36=%8.8x s37=%8.8x s38=%8.8x s39=%8.8x",r[32],r[33],r[34],r[35],r[36],r[37],r[38],r[39]);
+        DNBLogThreaded("  s40=%8.8x s41=%8.8x s42=%8.8x s43=%8.8x s44=%8.8x s45=%8.8x s46=%8.8x s47=%8.8x",r[40],r[41],r[42],r[43],r[44],r[45],r[46],r[47]);
+        DNBLogThreaded("  s48=%8.8x s49=%8.8x s50=%8.8x s51=%8.8x s52=%8.8x s53=%8.8x s54=%8.8x s55=%8.8x",r[48],r[49],r[50],r[51],r[52],r[53],r[54],r[55]);
+        DNBLogThreaded("  s56=%8.8x s57=%8.8x s58=%8.8x s59=%8.8x s60=%8.8x s61=%8.8x s62=%8.8x s63=%8.8x fpscr=%8.8x",r[56],r[57],r[58],r[59],r[60],r[61],r[62],r[63],r[64]);
+    }
     m_state.SetError(set, Read, kret);
     return kret;
 }
@@ -2338,6 +2400,22 @@ enum
     vfp_s29,
     vfp_s30,
     vfp_s31,
+    vfp_d0,
+    vfp_d1,
+    vfp_d2,
+    vfp_d3,
+    vfp_d4,
+    vfp_d5,
+    vfp_d6,
+    vfp_d7,
+    vfp_d8,
+    vfp_d9,
+    vfp_d10,
+    vfp_d11,
+    vfp_d12,
+    vfp_d13,
+    vfp_d14,
+    vfp_d15,
     vfp_d16,
     vfp_d17,
     vfp_d18,
@@ -2445,8 +2523,8 @@ enum
 
 #define GPR_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::GPR, __r[idx]))
 #define GPR_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::GPR, __##reg))
-#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[idx]) + offsetof (DNBArchMachARM::Context, vfp))
-#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX (32) + (((idx) - 16) * 8))
+#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[(idx)]) + offsetof (DNBArchMachARM::Context, vfp))
+#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 2))
 #define VFP_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::FPU, __##reg) + offsetof (DNBArchMachARM::Context, vfp))
 #define EXC_OFFSET(reg)      (offsetof (DNBArchMachARM::EXC, __##reg)  + offsetof (DNBArchMachARM::Context, exc))
 
@@ -2456,9 +2534,11 @@ enum
 // sizes and offsets.
 #define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
 #define DEFINE_GPR_NAME(reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
-
-#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, 4, Float, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
-#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, 8, Float, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
+//#define FLOAT_FORMAT Float
+#define FLOAT_FORMAT Hex
+#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
+//#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, Float, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, gdb_d##idx }
+#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM }
 
 // General purpose registers
 const DNBRegisterInfo
@@ -2519,6 +2599,22 @@ DNBArchMachARM::g_vfp_registers[] =
     DEFINE_VFP_S_IDX (29),
     DEFINE_VFP_S_IDX (30),
     DEFINE_VFP_S_IDX (31),
+    DEFINE_VFP_D_IDX (0),
+    DEFINE_VFP_D_IDX (1),
+    DEFINE_VFP_D_IDX (2),
+    DEFINE_VFP_D_IDX (3),
+    DEFINE_VFP_D_IDX (4),
+    DEFINE_VFP_D_IDX (5),
+    DEFINE_VFP_D_IDX (6),
+    DEFINE_VFP_D_IDX (7),
+    DEFINE_VFP_D_IDX (8),
+    DEFINE_VFP_D_IDX (9),
+    DEFINE_VFP_D_IDX (10),
+    DEFINE_VFP_D_IDX (11),
+    DEFINE_VFP_D_IDX (12),
+    DEFINE_VFP_D_IDX (13),
+    DEFINE_VFP_D_IDX (14),
+    DEFINE_VFP_D_IDX (15),
     DEFINE_VFP_D_IDX (16),
     DEFINE_VFP_D_IDX (17),
     DEFINE_VFP_D_IDX (18),
@@ -2535,7 +2631,7 @@ DNBArchMachARM::g_vfp_registers[] =
     DEFINE_VFP_D_IDX (29),
     DEFINE_VFP_D_IDX (30),
     DEFINE_VFP_D_IDX (31),
-    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, 4, Hex, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr }
+    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, Hex, 4, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr }
 };
 
 // Exception registers
@@ -2543,9 +2639,9 @@ DNBArchMachARM::g_vfp_registers[] =
 const DNBRegisterInfo
 DNBArchMachARM::g_exc_registers[] =
 {
-  { e_regSetVFP, exc_exception  , "exception"   , NULL, Uint, 4, Hex, EXC_OFFSET(exception) , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
-  { e_regSetVFP, exc_fsr        , "fsr"         , NULL, Uint, 4, Hex, EXC_OFFSET(fsr)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
-  { e_regSetVFP, exc_far        , "far"         , NULL, Uint, 4, Hex, EXC_OFFSET(far)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM }
+  { e_regSetVFP, exc_exception  , "exception"   , NULL, Uint, Hex, 4, EXC_OFFSET(exception) , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
+  { e_regSetVFP, exc_fsr        , "fsr"         , NULL, Uint, Hex, 4, EXC_OFFSET(fsr)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM },
+  { e_regSetVFP, exc_far        , "far"         , NULL, Uint, Hex, 4, EXC_OFFSET(far)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM }
 };
 
 // Number of registers in each register set
@@ -2633,12 +2729,20 @@ DNBArchMachARM::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             break;
 
         case e_regSetVFP:
-            if (reg < 32)
+            if (reg <= vfp_s31)
             {
                 value->value.uint32 = m_state.context.vfp.__r[reg];
                 return true;
             }
-            else if (reg == 32)
+            else if (reg <= vfp_d31)
+            {
+                uint32_t d_reg_idx = reg - vfp_d0;
+                uint32_t s_reg_idx = d_reg_idx * 2;
+                value->value.v_sint32[0] = m_state.context.vfp.__r[s_reg_idx + 0];
+                value->value.v_sint32[1] = m_state.context.vfp.__r[s_reg_idx + 1];
+                return true;
+            }
+            else if (reg == vfp_fpscr)
             {
                 value->value.uint32 = m_state.context.vfp.__fpscr;
                 return true;
@@ -2712,12 +2816,20 @@ DNBArchMachARM::SetRegisterValue(int set, int reg, const DNBRegisterValue *value
             break;
 
         case e_regSetVFP:
-            if (reg < 32)
+            if (reg <= vfp_s31)
             {
-                m_state.context.vfp.__r[reg] = value->value.float64;
+                m_state.context.vfp.__r[reg] = value->value.uint32;
                 success = true;
             }
-            else if (reg == 32)
+            else if (reg <= vfp_d31)
+            {
+                uint32_t d_reg_idx = reg - vfp_d0;
+                uint32_t s_reg_idx = d_reg_idx * 2;
+                m_state.context.vfp.__r[s_reg_idx + 0] = value->value.v_sint32[0];
+                m_state.context.vfp.__r[s_reg_idx + 1] = value->value.v_sint32[1];
+                success = true;
+            }
+            else if (reg == vfp_fpscr)
             {
                 m_state.context.vfp.__fpscr = value->value.uint32;
                 success = true;

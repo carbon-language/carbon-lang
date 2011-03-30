@@ -38,13 +38,17 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet"),
     m_supports_not_sending_acks (eLazyBoolCalculate),
     m_supports_thread_suffix (eLazyBoolCalculate),
-    m_supports_qHostInfo (eLazyBoolCalculate),
     m_supports_vCont_all (eLazyBoolCalculate),
     m_supports_vCont_any (eLazyBoolCalculate),
     m_supports_vCont_c (eLazyBoolCalculate),
     m_supports_vCont_C (eLazyBoolCalculate),
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
+    m_qHostInfo_is_valid (eLazyBoolCalculate),
+    m_supports_qProcessInfoPID (true),
+    m_supports_qfProcessInfo (true),
+    m_supports_qUserName (true),
+    m_supports_qGroupName (true),
     m_async_mutex (Mutex::eMutexTypeRecursive),
     m_async_packet_predicate (false),
     m_async_packet (),
@@ -113,11 +117,15 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
 {
     m_supports_not_sending_acks = eLazyBoolCalculate;
     m_supports_thread_suffix = eLazyBoolCalculate;
-    m_supports_qHostInfo = eLazyBoolCalculate;
     m_supports_vCont_c = eLazyBoolCalculate;
     m_supports_vCont_C = eLazyBoolCalculate;
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
+    m_qHostInfo_is_valid = eLazyBoolCalculate;
+    m_supports_qProcessInfoPID = true;
+    m_supports_qfProcessInfo = true;
+    m_supports_qUserName = true;
+    m_supports_qGroupName = true;
     m_host_arch.Clear();
 }
 
@@ -759,107 +767,159 @@ GDBRemoteCommunicationClient::GetSystemArchitecture ()
 bool
 GDBRemoteCommunicationClient::GetHostInfo ()
 {
-    if (m_supports_qHostInfo == eLazyBoolCalculate)
+    if (m_qHostInfo_is_valid == eLazyBoolCalculate)
     {
-        m_supports_qHostInfo = eLazyBoolNo;
-
+        m_qHostInfo_is_valid = eLazyBoolNo;
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse ("qHostInfo", response, false))
         {
             if (response.IsUnsupportedResponse())
+            {
                 return false;
-
-            m_supports_qHostInfo = eLazyBoolYes;
-
-            std::string name;
-            std::string value;
-            uint32_t cpu = LLDB_INVALID_CPUTYPE;
-            uint32_t sub = 0;
-            std::string arch_name;
-            std::string os_name;
-            std::string vendor_name;
-            std::string triple;
-            uint32_t pointer_byte_size = 0;
-            StringExtractor extractor;
-            ByteOrder byte_order = eByteOrderInvalid;
-            while (response.GetNameColonValue(name, value))
-            {
-                if (name.compare("cputype") == 0)
-                {
-                    // exception type in big endian hex
-                    cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0);
-                }
-                else if (name.compare("cpusubtype") == 0)
-                {
-                    // exception count in big endian hex
-                    sub = Args::StringToUInt32 (value.c_str(), 0, 0);
-                }
-                else if (name.compare("arch") == 0)
-                {
-                    arch_name.swap (value);
-                }
-                else if (name.compare("triple") == 0)
-                {
-                    // The triple comes as ASCII hex bytes since it contains '-' chars
-                    extractor.GetStringRef().swap(value);
-                    extractor.SetFilePos(0);
-                    extractor.GetHexByteString (triple);
-                }
-                else if (name.compare("os_build") == 0)
-                {
-                    extractor.GetStringRef().swap(value);
-                    extractor.SetFilePos(0);
-                    extractor.GetHexByteString (m_os_build);
-                }
-                else if (name.compare("hostname") == 0)
-                {
-                    extractor.GetStringRef().swap(value);
-                    extractor.SetFilePos(0);
-                    extractor.GetHexByteString (m_hostname);
-                }
-                else if (name.compare("os_kernel") == 0)
-                {
-                    extractor.GetStringRef().swap(value);
-                    extractor.SetFilePos(0);
-                    extractor.GetHexByteString (m_os_kernel);
-                }
-                else if (name.compare("ostype") == 0)
-                {
-                    os_name.swap (value);
-                }
-                else if (name.compare("vendor") == 0)
-                {
-                    vendor_name.swap(value);
-                }
-                else if (name.compare("endian") == 0)
-                {
-                    if (value.compare("little") == 0)
-                        byte_order = eByteOrderLittle;
-                    else if (value.compare("big") == 0)
-                        byte_order = eByteOrderBig;
-                    else if (value.compare("pdp") == 0)
-                        byte_order = eByteOrderPDP;
-                }
-                else if (name.compare("ptrsize") == 0)
-                {
-                    pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 0);
-                }
-                else if (name.compare("os_version") == 0)
-                {
-                    Args::StringToVersion (value.c_str(), 
-                                           m_os_version_major,
-                                           m_os_version_minor,
-                                           m_os_version_update);
-                }
             }
-            
-            if (triple.empty())
+            else if (response.IsNormalResponse())
             {
-                if (arch_name.empty())
+                std::string name;
+                std::string value;
+                uint32_t cpu = LLDB_INVALID_CPUTYPE;
+                uint32_t sub = 0;
+                std::string arch_name;
+                std::string os_name;
+                std::string vendor_name;
+                std::string triple;
+                uint32_t pointer_byte_size = 0;
+                StringExtractor extractor;
+                ByteOrder byte_order = eByteOrderInvalid;
+                uint32_t num_keys_decoded = 0;
+                while (response.GetNameColonValue(name, value))
                 {
-                    if (cpu != LLDB_INVALID_CPUTYPE)
+                    if (name.compare("cputype") == 0)
                     {
-                        m_host_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
+                        // exception type in big endian hex
+                        cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0);
+                        if (cpu != LLDB_INVALID_CPUTYPE)
+                            ++num_keys_decoded;
+                    }
+                    else if (name.compare("cpusubtype") == 0)
+                    {
+                        // exception count in big endian hex
+                        sub = Args::StringToUInt32 (value.c_str(), 0, 0);
+                        if (sub != 0)
+                            ++num_keys_decoded;
+                    }
+                    else if (name.compare("arch") == 0)
+                    {
+                        arch_name.swap (value);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("triple") == 0)
+                    {
+                        // The triple comes as ASCII hex bytes since it contains '-' chars
+                        extractor.GetStringRef().swap(value);
+                        extractor.SetFilePos(0);
+                        extractor.GetHexByteString (triple);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("os_build") == 0)
+                    {
+                        extractor.GetStringRef().swap(value);
+                        extractor.SetFilePos(0);
+                        extractor.GetHexByteString (m_os_build);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("hostname") == 0)
+                    {
+                        extractor.GetStringRef().swap(value);
+                        extractor.SetFilePos(0);
+                        extractor.GetHexByteString (m_hostname);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("os_kernel") == 0)
+                    {
+                        extractor.GetStringRef().swap(value);
+                        extractor.SetFilePos(0);
+                        extractor.GetHexByteString (m_os_kernel);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("ostype") == 0)
+                    {
+                        os_name.swap (value);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("vendor") == 0)
+                    {
+                        vendor_name.swap(value);
+                        ++num_keys_decoded;
+                    }
+                    else if (name.compare("endian") == 0)
+                    {
+                        ++num_keys_decoded;
+                        if (value.compare("little") == 0)
+                            byte_order = eByteOrderLittle;
+                        else if (value.compare("big") == 0)
+                            byte_order = eByteOrderBig;
+                        else if (value.compare("pdp") == 0)
+                            byte_order = eByteOrderPDP;
+                        else
+                            --num_keys_decoded;
+                    }
+                    else if (name.compare("ptrsize") == 0)
+                    {
+                        pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 0);
+                        if (pointer_byte_size != 0)
+                            ++num_keys_decoded;
+                    }
+                    else if (name.compare("os_version") == 0)
+                    {
+                        Args::StringToVersion (value.c_str(), 
+                                               m_os_version_major,
+                                               m_os_version_minor,
+                                               m_os_version_update);
+                        if (m_os_version_major != UINT32_MAX)
+                            ++num_keys_decoded;
+                    }
+                }
+                
+                if (num_keys_decoded > 0)
+                    m_qHostInfo_is_valid = eLazyBoolYes;
+
+                if (triple.empty())
+                {
+                    if (arch_name.empty())
+                    {
+                        if (cpu != LLDB_INVALID_CPUTYPE)
+                        {
+                            m_host_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
+                            if (pointer_byte_size)
+                            {
+                                assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
+                            }
+                            if (byte_order != eByteOrderInvalid)
+                            {
+                                assert (byte_order == m_host_arch.GetByteOrder());
+                            }
+                            if (!vendor_name.empty())
+                                m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
+                            if (!os_name.empty())
+                                m_host_arch.GetTriple().setVendorName (llvm::StringRef (os_name));
+                                
+                        }
+                    }
+                    else
+                    {
+                        std::string triple;
+                        triple += arch_name;
+                        triple += '-';
+                        if (vendor_name.empty())
+                            triple += "unknown";
+                        else
+                            triple += vendor_name;
+                        triple += '-';
+                        if (os_name.empty())
+                            triple += "unknown";
+                        else
+                            triple += os_name;
+                        m_host_arch.SetTriple (triple.c_str());
                         if (pointer_byte_size)
                         {
                             assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -868,27 +928,11 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                         {
                             assert (byte_order == m_host_arch.GetByteOrder());
                         }
-                        if (!vendor_name.empty())
-                            m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
-                        if (!os_name.empty())
-                            m_host_arch.GetTriple().setVendorName (llvm::StringRef (os_name));
-                            
+                        
                     }
                 }
                 else
                 {
-                    std::string triple;
-                    triple += arch_name;
-                    triple += '-';
-                    if (vendor_name.empty())
-                        triple += "unknown";
-                    else
-                        triple += vendor_name;
-                    triple += '-';
-                    if (os_name.empty())
-                        triple += "unknown";
-                    else
-                        triple += os_name;
                     m_host_arch.SetTriple (triple.c_str());
                     if (pointer_byte_size)
                     {
@@ -898,24 +942,11 @@ GDBRemoteCommunicationClient::GetHostInfo ()
                     {
                         assert (byte_order == m_host_arch.GetByteOrder());
                     }
-                    
-                }
+                }       
             }
-            else
-            {
-                m_host_arch.SetTriple (triple.c_str());
-                if (pointer_byte_size)
-                {
-                    assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
-                }
-                if (byte_order != eByteOrderInvalid)
-                {
-                    assert (byte_order == m_host_arch.GetByteOrder());
-                }
-            }            
         }
     }
-    return m_supports_qHostInfo == eLazyBoolYes;
+    return m_qHostInfo_is_valid == eLazyBoolYes;
 }
 
 int
@@ -927,10 +958,10 @@ GDBRemoteCommunicationClient::SendAttach
 {
     if (pid != LLDB_INVALID_PROCESS_ID)
     {
-        StreamString packet;
-        packet.Printf("vAttach;%x", pid);
-        
-        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+        char packet[64];
+        const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", pid);
+        assert (packet_len < sizeof(packet));
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
             if (response.IsErrorResponse())
                 return response.GetError();
@@ -943,7 +974,7 @@ GDBRemoteCommunicationClient::SendAttach
 const lldb_private::ArchSpec &
 GDBRemoteCommunicationClient::GetHostArchitecture ()
 {
-    if (m_supports_qHostInfo == eLazyBoolCalculate)
+    if (m_qHostInfo_is_valid == eLazyBoolCalculate)
         GetHostInfo ();
     return m_host_arch;
 }
@@ -952,12 +983,13 @@ addr_t
 GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
 {
     char packet[64];
-    ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
-                permissions & lldb::ePermissionsReadable ? "r" : "",
-                permissions & lldb::ePermissionsWritable ? "w" : "",
-                permissions & lldb::ePermissionsExecutable ? "x" : "");
+    const int packet_len = ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
+                                       permissions & lldb::ePermissionsReadable ? "r" : "",
+                                       permissions & lldb::ePermissionsWritable ? "w" : "",
+                                       permissions & lldb::ePermissionsExecutable ? "x" : "");
+    assert (packet_len < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, response, false))
+    if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
     {
         if (!response.IsErrorResponse())
             return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
@@ -969,9 +1001,10 @@ bool
 GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
 {
     char packet[64];
-    snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
+    const int packet_len = ::snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
+    assert (packet_len < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, response, false))
+    if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
     {
         if (response.IsOKResponse())
             return true;
@@ -1070,11 +1103,11 @@ GDBRemoteCommunicationClient::SetWorkingDir (char const *path)
 int
 GDBRemoteCommunicationClient::SetDisableASLR (bool enable)
 {
-    StreamString packet;
-    packet.Printf("QSetDisableASLR:%i", enable ? 1 : 0);
-       
+    char packet[32];
+    const int packet_len = ::snprintf (packet, sizeof (packet), "QSetDisableASLR:%i", enable ? 1 : 0);
+    assert (packet_len < sizeof(packet));
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+    if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
     {
         if (response.IsOKResponse())
             return 0;
@@ -1083,4 +1116,252 @@ GDBRemoteCommunicationClient::SetDisableASLR (bool enable)
             return error;
     }
     return -1;
+}
+
+bool
+GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemote &response, ProcessInfo &process_info)
+{
+    if (response.IsNormalResponse())
+    {
+        std::string name;
+        std::string value;
+        StringExtractor extractor;
+        
+        while (response.GetNameColonValue(name, value))
+        {
+            if (name.compare("pid") == 0)
+            {
+                process_info.SetProcessID (Args::StringToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
+            }
+            else if (name.compare("ppid") == 0)
+            {
+                process_info.SetParentProcessID (Args::StringToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
+            }
+            else if (name.compare("uid") == 0)
+            {
+                process_info.SetRealUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+            }
+            else if (name.compare("euid") == 0)
+            {
+                process_info.SetEffectiveUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+            }
+            else if (name.compare("gid") == 0)
+            {
+                process_info.SetRealGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+            }
+            else if (name.compare("egid") == 0)
+            {
+                process_info.SetEffectiveGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+            }
+            else if (name.compare("triple") == 0)
+            {
+                // The triple comes as ASCII hex bytes since it contains '-' chars
+                extractor.GetStringRef().swap(value);
+                extractor.SetFilePos(0);
+                extractor.GetHexByteString (value);
+                process_info.GetArchitecture ().SetTriple (value.c_str());
+            }
+            else if (name.compare("name") == 0)
+            {
+                StringExtractor extractor;
+                // The the process name from ASCII hex bytes since we can't 
+                // control the characters in a process name
+                extractor.GetStringRef().swap(value);
+                extractor.SetFilePos(0);
+                extractor.GetHexByteString (value);
+                process_info.SwapName (value);
+            }
+        }
+        
+        if (process_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
+            return true;
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+{
+    process_info.Clear();
+    
+    if (m_supports_qProcessInfoPID)
+    {
+        char packet[32];
+        const int packet_len = ::snprintf (packet, sizeof (packet), "qProcessInfoPID:%i", pid);
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_qProcessInfoPID = false;
+                return false;
+            }
+
+            return DecodeProcessInfoResponse (response, process_info);
+        }
+    }
+    return false;
+}
+
+uint32_t
+GDBRemoteCommunicationClient::FindProcesses (const ProcessInfoMatch &match_info,
+                                             ProcessInfoList &process_infos)
+{
+    process_infos.Clear();
+    
+    if (m_supports_qfProcessInfo)
+    {
+        StreamString packet;
+        packet.PutCString ("qfProcessInfo");
+        if (!match_info.MatchAllProcesses())
+        {
+            packet.PutChar (':');
+            const char *name = match_info.GetProcessInfo().GetName();
+            bool has_name_match = false;
+            if (name && name[0])
+            {
+                has_name_match = true;
+                NameMatchType name_match_type = match_info.GetNameMatchType();
+                switch (name_match_type)
+                {
+                case eNameMatchIgnore:  
+                    has_name_match = false;
+                    break;
+
+                case eNameMatchEquals:  
+                    packet.PutCString ("name_match:equals;"); 
+                    break;
+
+                case eNameMatchContains:
+                    packet.PutCString ("name_match:contains;"); 
+                    break;
+                
+                case eNameMatchStartsWith:
+                    packet.PutCString ("name_match:starts_with;"); 
+                    break;
+                
+                case eNameMatchEndsWith:
+                    packet.PutCString ("name_match:ends_with;"); 
+                    break;
+
+                case eNameMatchRegularExpression:
+                    packet.PutCString ("name_match:regex;"); 
+                    break;
+                }
+                if (has_name_match)
+                {
+                    packet.PutCString ("name:");
+                    packet.PutBytesAsRawHex8(name, ::strlen(name));
+                    packet.PutChar (';');
+                }
+            }
+            
+            if (match_info.GetProcessInfo().ProcessIDIsValid())
+                packet.Printf("pid:%u;",match_info.GetProcessInfo().GetProcessID());
+            if (match_info.GetProcessInfo().ParentProcessIDIsValid())
+                packet.Printf("parent_pid:%u;",match_info.GetProcessInfo().GetParentProcessID());
+            if (match_info.GetProcessInfo().RealUserIDIsValid())
+                packet.Printf("uid:%u;",match_info.GetProcessInfo().GetRealUserID());
+            if (match_info.GetProcessInfo().RealGroupIDIsValid())
+                packet.Printf("gid:%u;",match_info.GetProcessInfo().GetRealGroupID());
+            if (match_info.GetProcessInfo().EffectiveUserIDIsValid())
+                packet.Printf("euid:%u;",match_info.GetProcessInfo().GetEffectiveUserID());
+            if (match_info.GetProcessInfo().EffectiveGroupIDIsValid())
+                packet.Printf("egid:%u;",match_info.GetProcessInfo().GetEffectiveGroupID());
+            if (match_info.GetProcessInfo().EffectiveGroupIDIsValid())
+                packet.Printf("all_users:%u;",match_info.GetMatchAllUsers() ? 1 : 0);
+            if (match_info.GetProcessInfo().GetArchitecture().IsValid())
+            {
+                const ArchSpec &match_arch = match_info.GetProcessInfo().GetArchitecture();
+                const llvm::Triple &triple = match_arch.GetTriple();
+                packet.PutCString("triple:");
+                packet.PutCStringAsRawHex8(triple.getTriple().c_str());
+                packet.PutChar (';');
+            }
+        }
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_qfProcessInfo = false;
+                return 0;
+            }
+
+            do
+            {
+                ProcessInfo process_info;
+                if (!DecodeProcessInfoResponse (response, process_info))
+                    break;
+                process_infos.Append(process_info);
+                response.GetStringRef().clear();
+                response.SetFilePos(0);
+            } while (SendPacketAndWaitForResponse ("qsProcessInfo", strlen ("qsProcessInfo"), response, false));
+        }
+    }
+    return process_infos.GetSize();
+    
+}
+
+bool
+GDBRemoteCommunicationClient::GetUserName (uint32_t uid, std::string &name)
+{
+    if (m_supports_qUserName)
+    {
+        char packet[32];
+        const int packet_len = ::snprintf (packet, sizeof (packet), "qUserName:%i", uid);
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_qUserName = false;
+                return false;
+            }
+                
+            if (response.IsNormalResponse())
+            {
+                // Make sure we parsed the right number of characters. The response is
+                // the hex encoded user name and should make up the entire packet.
+                // If there are any non-hex ASCII bytes, the length won't match below..
+                if (response.GetHexByteString (name) * 2 == response.GetStringRef().size())
+                    return true;
+            }
+        }
+    }
+    return false;
+
+}
+
+bool
+GDBRemoteCommunicationClient::GetGroupName (uint32_t gid, std::string &name)
+{
+    if (m_supports_qGroupName)
+    {
+        char packet[32];
+        const int packet_len = ::snprintf (packet, sizeof (packet), "qGroupName:%i", gid);
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_qGroupName = false;
+                return false;
+            }
+            
+            if (response.IsNormalResponse())
+            {
+                // Make sure we parsed the right number of characters. The response is
+                // the hex encoded group name and should make up the entire packet.
+                // If there are any non-hex ASCII bytes, the length won't match below..
+                if (response.GetHexByteString (name) * 2 == response.GetStringRef().size())
+                    return true;
+            }
+        }
+    }
+    return false;
+
 }

@@ -151,56 +151,47 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  NULL);
         
-            if (exe_module_sp->GetObjectFile() == NULL)
-            {
-                exe_module_sp.reset();
-                error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain the architecture %s",
-                                                exe_file.GetDirectory().AsCString(""),
-                                                exe_file.GetDirectory() ? "/" : "",
-                                                exe_file.GetFilename().AsCString(""),
-                                                exe_arch.GetArchitectureName());
-            }
+            if (exe_module_sp->GetObjectFile())
+                return error;
+            exe_module_sp.reset();
         }
-        else
+        // No valid architecture was specified or the exact ARM slice wasn't
+        // found so ask the platform for the architectures that we should be
+        // using (in the correct order) and see if we can find a match that way
+        StreamString arch_names;
+        ArchSpec platform_arch;
+        for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
         {
-            // No valid architecture was specified, ask the platform for
-            // the architectures that we should be using (in the correct order)
-            // and see if we can find a match that way
-            StreamString arch_names;
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+            error = ModuleList::GetSharedModule (resolved_exe_file, 
+                                                 platform_arch, 
+                                                 NULL,
+                                                 NULL, 
+                                                 0, 
+                                                 exe_module_sp, 
+                                                 NULL, 
+                                                 NULL);
+            // Did we find an executable using one of the 
+            if (error.Success())
             {
-                error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                     platform_arch, 
-                                                     NULL,
-                                                     NULL, 
-                                                     0, 
-                                                     exe_module_sp, 
-                                                     NULL, 
-                                                     NULL);
-                // Did we find an executable using one of the 
-                if (error.Success())
-                {
-                    if (exe_module_sp && exe_module_sp->GetObjectFile())
-                        break;
-                    else
-                        error.SetErrorToGenericError();
-                }
-                
-                if (idx > 0)
-                    arch_names.PutCString (", ");
-                arch_names.PutCString (platform_arch.GetArchitectureName());
+                if (exe_module_sp && exe_module_sp->GetObjectFile())
+                    break;
+                else
+                    error.SetErrorToGenericError();
             }
             
-            if (error.Fail() || !exe_module_sp)
-            {
-                error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain any '%s' platform architectures: %s",
-                                                exe_file.GetDirectory().AsCString(""),
-                                                exe_file.GetDirectory() ? "/" : "",
-                                                exe_file.GetFilename().AsCString(""),
-                                                GetShortPluginName(),
-                                                arch_names.GetString().c_str());
-            }
+            if (idx > 0)
+                arch_names.PutCString (", ");
+            arch_names.PutCString (platform_arch.GetArchitectureName());
+        }
+        
+        if (error.Fail() || !exe_module_sp)
+        {
+            error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain any '%s' platform architectures: %s",
+                                            exe_file.GetDirectory().AsCString(""),
+                                            exe_file.GetDirectory() ? "/" : "",
+                                            exe_file.GetFilename().AsCString(""),
+                                            GetShortPluginName(),
+                                            arch_names.GetString().c_str());
         }
     }
     else
@@ -418,10 +409,46 @@ PlatformRemoteiOS::GetFile (const FileSpec &platform_file,
     return error;
 }
 
+Error
+PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file, 
+                                    const ArchSpec &arch,
+                                    const UUID *uuid_ptr,
+                                    const ConstString *object_name_ptr,
+                                    off_t object_offset,
+                                    ModuleSP &module_sp,
+                                    ModuleSP *old_module_sp_ptr,
+                                    bool *did_create_ptr)
+{
+    // For iOS, the SDK files are all cached locally on the host
+    // system. So first we ask for the file in the cached SDK,
+    // then we attempt to get a shared module for the right architecture
+    // with the right UUID.
+    Error error;
+    FileSpec local_file;
+    error = GetFile (platform_file, uuid_ptr, local_file);
+    if (error.Success())
+    {
+        const bool always_create = false;
+        error = ModuleList::GetSharedModule (local_file, 
+                                             arch, 
+                                             uuid_ptr, 
+                                             object_name_ptr, 
+                                             object_offset, 
+                                             module_sp,
+                                             old_module_sp_ptr,
+                                             did_create_ptr,
+                                             always_create);
+    }
+    if (module_sp)
+        module_sp->SetPlatformFileSpec(platform_file);
+
+    return error;
+}
+
+
 uint32_t
-PlatformRemoteiOS::FindProcessesByName (const char *name_match, 
-                                        NameMatchType name_match_type,
-                                        ProcessInfoList &process_infos)
+PlatformRemoteiOS::FindProcesses (const ProcessInfoMatch &match_info,
+                                  ProcessInfoList &process_infos)
 {
     // TODO: if connected, send a packet to get the remote process infos by name
     process_infos.Clear();

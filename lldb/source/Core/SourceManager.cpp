@@ -119,7 +119,7 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
                 break;
             }
 
-            s->Printf("%4u %2.2s\t", curr_line, curr_line == line ? current_line_cstr : "");
+            s->Printf("%2.2s %-4u\t", curr_line == line ? current_line_cstr : "", curr_line);
             if (m_last_file_sp->DisplaySourceLines (curr_line, 0, 0, s) == 0)
             {
                 m_last_file_line = UINT32_MAX;

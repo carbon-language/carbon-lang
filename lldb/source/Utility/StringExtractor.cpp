@@ -157,6 +157,26 @@ StringExtractor::GetHexU8 (uint8_t fail_value)
 }
 
 uint32_t
+StringExtractor::GetU32 (uint32_t fail_value, int base)
+{
+    if (m_index < m_packet.size())
+    {
+        char *end = NULL;
+        const char *start = m_packet.c_str();
+        const char *uint_cstr = start + m_index;
+        uint32_t result = ::strtoul (uint_cstr, &end, base);
+
+        if (end && end != uint_cstr)
+        {
+            m_index = end - start;
+            return result;
+        }
+    }
+    return fail_value;
+}
+
+
+uint32_t
 StringExtractor::GetHexMaxU32 (bool little_endian, uint32_t fail_value)
 {
     uint32_t result = 0;

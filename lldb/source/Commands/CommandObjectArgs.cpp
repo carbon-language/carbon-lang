@@ -68,7 +68,6 @@ CommandObjectArgs::CommandOptions::SetOptionValue (int option_idx, const char *o
 void
 CommandObjectArgs::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
 }
 
 const OptionDefinition*

@@ -68,7 +68,6 @@ TargetList::CreateTarget
     {
         ModuleSP exe_module_sp;
         FileSpec resolved_file(file);
-        ArchSpec platform_arch;
         
         if (platform_sp)
             error = platform_sp->ResolveExecutable (file, arch, exe_module_sp);
@@ -94,7 +93,7 @@ TargetList::CreateTarget
                 }
                 return error;
             }
-            target_sp.reset(new Target(debugger, platform_sp));
+            target_sp.reset(new Target(debugger, arch, platform_sp));
             target_sp->SetExecutableModule (exe_module_sp, get_dependent_files);
         }
     }
@@ -102,9 +101,7 @@ TargetList::CreateTarget
     {
         // No file was specified, just create an empty target with any arch
         // if a valid arch was specified
-        target_sp.reset(new Target(debugger, platform_sp));
-        if (arch.IsValid())
-            target_sp->SetArchitecture(arch);
+        target_sp.reset(new Target(debugger, arch, platform_sp));
     }
 
     if (target_sp)

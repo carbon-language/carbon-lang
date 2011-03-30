@@ -97,13 +97,28 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
             break;
         
         case StringExtractorGDBRemote::eServerPacketType_unimplemented:
-            return SendUnimplementedResponse () > 0;
+            return SendUnimplementedResponse (packet.GetStringRef().c_str()) > 0;
 
         case StringExtractorGDBRemote::eServerPacketType_qHostInfo:
-            return Handle_qHostInfo ();
-            
+            return Handle_qHostInfo (packet);
+
+        case StringExtractorGDBRemote::eServerPacketType_qProcessInfoPID:
+            return Handle_qProcessInfoPID (packet);
+
+        case StringExtractorGDBRemote::eServerPacketType_qfProcessInfo:
+            return Handle_qfProcessInfo (packet);
+
+        case StringExtractorGDBRemote::eServerPacketType_qsProcessInfo:
+            return Handle_qsProcessInfo (packet);
+        
+        case StringExtractorGDBRemote::eServerPacketType_qUserName:
+            return Handle_qUserName (packet);
+
+        case StringExtractorGDBRemote::eServerPacketType_qGroupName:
+            return Handle_qGroupName (packet);
+
         case StringExtractorGDBRemote::eServerPacketType_QStartNoAckMode:
-            return Handle_QStartNoAckMode ();
+            return Handle_QStartNoAckMode (packet);
         }
         return true;
     }
@@ -119,10 +134,21 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
 }
 
 size_t
-GDBRemoteCommunicationServer::SendUnimplementedResponse ()
+GDBRemoteCommunicationServer::SendUnimplementedResponse (const char *)
 {
+    // TODO: Log the packet we aren't handling...
     return SendPacket ("");
 }
+
+size_t
+GDBRemoteCommunicationServer::SendErrorResponse (uint8_t err)
+{
+    char packet[16];
+    int packet_len = ::snprintf (packet, sizeof(packet), "E%2.2x", err);
+    assert (packet_len < sizeof(packet));
+    return SendPacket (packet, packet_len);
+}
+
 
 size_t
 GDBRemoteCommunicationServer::SendOKResponse ()
@@ -139,7 +165,7 @@ GDBRemoteCommunicationServer::HandshakeWithClient(Error *error_ptr)
 }
 
 bool
-GDBRemoteCommunicationServer::Handle_qHostInfo ()
+GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet)
 {
     StreamString response;
     
@@ -204,13 +230,208 @@ GDBRemoteCommunicationServer::Handle_qHostInfo ()
         response.PutChar(';');
     }
     
-    return SendPacket (response.GetString().c_str(),response.GetString().size()) > 0;
+    return SendPacket (response) > 0;
 }
 
+static void
+CreateProcessInfoResponse (const ProcessInfo &proc_info, StreamString &response)
+{
+    response.Printf ("pid:%i;ppid:%i;uid:%i;gid:%i;euid:%i;egid:%i;", 
+                     proc_info.GetProcessID(),
+                     proc_info.GetParentProcessID(),
+                     proc_info.GetRealUserID(),
+                     proc_info.GetRealGroupID(),
+                     proc_info.GetEffectiveUserID(),
+                     proc_info.GetEffectiveGroupID());
+    response.PutCString ("name:");
+    response.PutCStringAsRawHex8(proc_info.GetName());
+    response.PutChar(';');
+    const ArchSpec &proc_arch = proc_info.GetArchitecture();
+    if (proc_arch.IsValid())
+    {
+        const llvm::Triple &proc_triple = proc_arch.GetTriple();
+        response.PutCString("triple:");
+        response.PutCStringAsRawHex8(proc_triple.getTriple().c_str());
+        response.PutChar(';');
+    }
+}
 
 bool
-GDBRemoteCommunicationServer::Handle_QStartNoAckMode ()
+GDBRemoteCommunicationServer::Handle_qProcessInfoPID (StringExtractorGDBRemote &packet)
 {
+    // Packet format: "qProcessInfoPID:%i" where %i is the pid
+    packet.SetFilePos(strlen ("qProcessInfoPID:"));
+    lldb::pid_t pid = packet.GetU32 (LLDB_INVALID_PROCESS_ID);
+    if (pid != LLDB_INVALID_PROCESS_ID)
+    {
+        ProcessInfo proc_info;
+        if (Host::GetProcessInfo(pid, proc_info))
+        {
+            StreamString response;
+            CreateProcessInfoResponse (proc_info, response);
+            return SendPacket (response);
+        }
+    }
+    return SendErrorResponse (1);
+}
+
+bool 
+GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &packet)
+{
+    m_proc_infos_index = 0;
+    m_proc_infos.Clear();
+
+    ProcessInfoMatch match_info;
+    packet.SetFilePos(strlen ("qfProcessInfo"));
+    if (packet.GetChar() == ':')
+    {
+    
+        std::string key;
+        std::string value;
+        while (packet.GetNameColonValue(key, value))
+        {
+            bool success = true;
+            if (key.compare("name") == 0)
+            {
+                StringExtractor extractor;
+                extractor.GetStringRef().swap(value);
+                extractor.GetHexByteString (value);
+                match_info.GetProcessInfo().SetName (value.c_str());
+            }
+            else if (key.compare("name_match") == 0)
+            {
+                if (value.compare("equals") == 0)
+                {
+                    match_info.SetNameMatchType (eNameMatchEquals);
+                }
+                else if (value.compare("starts_with") == 0)
+                {
+                    match_info.SetNameMatchType (eNameMatchStartsWith);
+                }
+                else if (value.compare("ends_with") == 0)
+                {
+                    match_info.SetNameMatchType (eNameMatchEndsWith);
+                }
+                else if (value.compare("contains") == 0)
+                {
+                    match_info.SetNameMatchType (eNameMatchContains);
+                }
+                else if (value.compare("regex") == 0)       
+                {
+                    match_info.SetNameMatchType (eNameMatchRegularExpression);
+                }
+                else 
+                {
+                    success = false;
+                }
+            }
+            else if (key.compare("pid") == 0)
+            {
+                match_info.GetProcessInfo().SetProcessID (Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
+            }
+            else if (key.compare("parent_pid") == 0)
+            {
+                match_info.GetProcessInfo().SetParentProcessID (Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
+            }
+            else if (key.compare("uid") == 0)
+            {
+                match_info.GetProcessInfo().SetRealUserID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+            }
+            else if (key.compare("gid") == 0)
+            {
+                match_info.GetProcessInfo().SetRealGroupID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+            }
+            else if (key.compare("euid") == 0)
+            {
+                match_info.GetProcessInfo().SetEffectiveUserID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+            }
+            else if (key.compare("egid") == 0)
+            {
+                match_info.GetProcessInfo().SetEffectiveGroupID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+            }
+            else if (key.compare("all_users") == 0)
+            {
+                match_info.SetMatchAllUsers(Args::StringToBoolean(value.c_str(), false, &success));
+            }
+            else if (key.compare("triple") == 0)
+            {
+                match_info.GetProcessInfo().GetArchitecture().SetTriple(value.c_str());
+            }
+            else
+            {
+                success = false;
+            }
+            
+            if (!success)
+                return SendErrorResponse (2);
+        }
+    }
+
+    if (Host::FindProcesses (match_info, m_proc_infos))
+    {
+        // We found something, return the first item by calling the get
+        // subsequent process info packet handler...
+        return Handle_qsProcessInfo (packet);
+    }
+    return SendErrorResponse (3);
+}
+
+bool 
+GDBRemoteCommunicationServer::Handle_qsProcessInfo (StringExtractorGDBRemote &packet)
+{
+    if (m_proc_infos_index < m_proc_infos.GetSize())
+    {
+        StreamString response;
+        CreateProcessInfoResponse (m_proc_infos.GetProcessInfoAtIndex(m_proc_infos_index), response);
+        ++m_proc_infos_index;
+        return SendPacket (response);
+    }
+    return SendErrorResponse (4);
+}
+
+bool 
+GDBRemoteCommunicationServer::Handle_qUserName (StringExtractorGDBRemote &packet)
+{
+    // Packet format: "qUserName:%i" where %i is the uid
+    packet.SetFilePos(strlen ("qUserName:"));
+    uint32_t uid = packet.GetU32 (UINT32_MAX);
+    if (uid != UINT32_MAX)
+    {
+        std::string name;
+        if (Host::GetUserName (uid, name))
+        {
+            StreamString response;
+            response.PutCStringAsRawHex8 (name.c_str());
+            return SendPacket (response);
+        }
+    }
+    return SendErrorResponse (5);
+    
+}
+
+bool 
+GDBRemoteCommunicationServer::Handle_qGroupName (StringExtractorGDBRemote &packet)
+{
+    // Packet format: "qGroupName:%i" where %i is the gid
+    packet.SetFilePos(strlen ("qGroupName:"));
+    uint32_t gid = packet.GetU32 (UINT32_MAX);
+    if (gid != UINT32_MAX)
+    {
+        std::string name;
+        if (Host::GetGroupName (gid, name))
+        {
+            StreamString response;
+            response.PutCStringAsRawHex8 (name.c_str());
+            return SendPacket (response);
+        }
+    }
+    return SendErrorResponse (6);
+}
+
+bool
+GDBRemoteCommunicationServer::Handle_QStartNoAckMode (StringExtractorGDBRemote &packet)
+{
+    // Send response first before changing m_send_acks to we ack this packet
     SendOKResponse ();
     m_send_acks = false;
     return true;

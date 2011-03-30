@@ -24,7 +24,11 @@
 
 #include <dlfcn.h>
 #include <errno.h>
+#include <grp.h>
 #include <netdb.h>
+#include <pwd.h>
+#include <sys/types.h>
+
 
 #if defined (__APPLE__)
 
@@ -32,6 +36,7 @@
 #include <libproc.h>
 #include <mach-o/dyld.h>
 #include <sys/sysctl.h>
+
 
 #elif defined (__linux__)
 
@@ -1055,6 +1060,66 @@ Host::GetHostname (std::string &s)
     return false;
 }
 
+const char *
+Host::GetUserName (uint32_t uid, std::string &user_name)
+{
+    struct passwd user_info;
+    struct passwd *user_info_ptr = &user_info;
+    char user_buffer[PATH_MAX];
+    size_t user_buffer_size = sizeof(user_buffer);
+    if (::getpwuid_r (uid,
+                      &user_info,
+                      user_buffer,
+                      user_buffer_size,
+                      &user_info_ptr) == 0)
+    {
+        if (user_info_ptr)
+        {
+            user_name.assign (user_info_ptr->pw_name);
+            return user_name.c_str();
+        }
+    }
+    user_name.clear();
+    return NULL;
+}
+
+const char *
+Host::GetGroupName (uint32_t gid, std::string &group_name)
+{
+    char group_buffer[PATH_MAX];
+    size_t group_buffer_size = sizeof(group_buffer);
+    struct group group_info;
+    struct group *group_info_ptr = &group_info;
+    // Try the threadsafe version first
+    if (::getgrgid_r (gid,
+                      &group_info,
+                      group_buffer,
+                      group_buffer_size,
+                      &group_info_ptr) == 0)
+    {
+        if (group_info_ptr)
+        {
+            group_name.assign (group_info_ptr->gr_name);
+            return group_name.c_str();
+        }
+    }
+    else
+    {
+        // The threadsafe version isn't currently working
+        // for me on darwin, but the non-threadsafe version 
+        // is, so I am calling it below.
+        group_info_ptr = ::getgrgid (gid);
+        if (group_info_ptr)
+        {
+            group_name.assign (group_info_ptr->gr_name);
+            return group_name.c_str();
+        }
+    }
+    group_name.clear();
+    return NULL;
+}
+
+
 #if !defined (__APPLE__) // see macosx/Host.mm
 
 bool
@@ -1072,7 +1137,7 @@ Host::GetOSKernelDescription (std::string &s)
 }
 
 uint32_t
-Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)
+Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &process_infos)
 {
     process_infos.Clear();
     return process_infos.GetSize();

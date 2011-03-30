@@ -27,7 +27,8 @@ namespace lldb_private {
 class Instruction
 {
 public:
-    Instruction (const Address &address, AddressClass addr_class);
+    Instruction (const Address &address, 
+                 AddressClass addr_class = eAddressClassInvalid);
 
     virtual
    ~Instruction();
@@ -202,7 +203,6 @@ public:
                        Debugger &debugger,
                        const ArchSpec &arch,
                        const ExecutionContext &exe_ctx,
-                       const  Address &start_addr,
                        uint32_t num_instructions,
                        uint32_t num_mixed_context_lines,
                        bool show_bytes,

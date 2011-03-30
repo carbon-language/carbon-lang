@@ -103,6 +103,7 @@ class   Platform;
 class   Process;
 class   ProcessInfo;
 class   ProcessInfoList;
+class   ProcessInfoMatch;
 class   RegisterContext;
 class   RegisterLocation;
 class   RegisterLocationList;

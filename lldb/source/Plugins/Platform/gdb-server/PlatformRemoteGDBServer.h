@@ -19,121 +19,123 @@
 #include "lldb/Target/Platform.h"
 #include "../../Process/gdb-remote/GDBRemoteCommunicationClient.h"
 
-namespace lldb_private {
+class PlatformRemoteGDBServer : public lldb_private::Platform
+{
+public:
 
-    class PlatformRemoteGDBServer : public Platform
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+    
+    static lldb_private::Platform* 
+    CreateInstance ();
+
+    static const char *
+    GetShortPluginNameStatic();
+
+    static const char *
+    GetDescriptionStatic();
+
+
+    PlatformRemoteGDBServer ();
+
+    virtual
+    ~PlatformRemoteGDBServer();
+
+    //------------------------------------------------------------
+    // lldb_private::PluginInterface functions
+    //------------------------------------------------------------
+    virtual const char *
+    GetPluginName()
     {
-    public:
-
-        static void
-        Initialize ();
-
-        static void
-        Terminate ();
-        
-        static Platform* 
-        CreateInstance ();
-
-        static const char *
-        GetShortPluginNameStatic();
-
-        static const char *
-        GetDescriptionStatic();
+        return "PlatformRemoteGDBServer";
+    }
+    
+    virtual const char *
+    GetShortPluginName()
+    {
+        return GetShortPluginNameStatic();
+    }
+    
+    virtual uint32_t
+    GetPluginVersion()
+    {
+        return 1;
+    }
     
 
-        PlatformRemoteGDBServer ();
+    //------------------------------------------------------------
+    // lldb_private::Platform functions
+    //------------------------------------------------------------
+    virtual lldb_private::Error
+    ResolveExecutable (const lldb_private::FileSpec &exe_file,
+                       const lldb_private::ArchSpec &arch,
+                       lldb::ModuleSP &module_sp);
 
-        virtual
-        ~PlatformRemoteGDBServer();
+    virtual const char *
+    GetDescription ();
 
-        //------------------------------------------------------------
-        // lldb_private::PluginInterface functions
-        //------------------------------------------------------------
-        virtual const char *
-        GetPluginName()
-        {
-            return "PlatformRemoteGDBServer";
-        }
-        
-        virtual const char *
-        GetShortPluginName()
-        {
-            return GetShortPluginNameStatic();
-        }
-        
-        virtual uint32_t
-        GetPluginVersion()
-        {
-            return 1;
-        }
-        
+    virtual lldb_private::Error
+    GetFile (const lldb_private::FileSpec &platform_file, 
+             const lldb_private::UUID *uuid_ptr,
+             lldb_private::FileSpec &local_file);
 
-        //------------------------------------------------------------
-        // lldb_private::Platform functions
-        //------------------------------------------------------------
-        virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
-                           lldb::ModuleSP &module_sp);
+    virtual bool
+    GetProcessInfo (lldb::pid_t pid, lldb_private::ProcessInfo &proc_info);
+    
+    virtual uint32_t
+    FindProcesses (const lldb_private::ProcessInfoMatch &match_info,
+                   lldb_private::ProcessInfoList &process_infos);
 
-        virtual const char *
-        GetDescription ();
+    virtual bool
+    GetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
 
-        virtual Error
-        GetFile (const FileSpec &platform_file, 
-                 const UUID *uuid_ptr,
-                 FileSpec &local_file);
+    virtual size_t
+    GetSoftwareBreakpointTrapOpcode (lldb_private::Target &target, 
+                                     lldb_private::BreakpointSite *bp_site);
 
-        virtual uint32_t
-        FindProcessesByName (const char *name_match, 
-                             NameMatchType name_match_type,
-                             ProcessInfoList &process_infos);
+    virtual bool
+    GetRemoteOSVersion ();
 
-        virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
+    virtual bool
+    GetRemoteOSBuildString (std::string &s);
+    
+    virtual bool
+    GetRemoteOSKernelDescription (std::string &s);
 
-        virtual bool
-        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
+    // Remote Platform subclasses need to override this function
+    virtual lldb_private::ArchSpec
+    GetRemoteSystemArchitecture ();
 
-        virtual size_t
-        GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
+    // Remote subclasses should override this and return a valid instance
+    // name if connected.
+    virtual const char *
+    GetHostname ();
 
-        virtual bool
-        GetRemoteOSVersion ();
+    virtual const char *
+    GetUserName (uint32_t uid);
+    
+    virtual const char *
+    GetGroupName (uint32_t gid);
 
-        virtual bool
-        GetRemoteOSBuildString (std::string &s);
-        
-        virtual bool
-        GetRemoteOSKernelDescription (std::string &s);
+    virtual bool
+    IsConnected () const;
 
-        // Remote Platform subclasses need to override this function
-        virtual ArchSpec
-        GetRemoteSystemArchitecture ();
+    virtual lldb_private::Error
+    ConnectRemote (lldb_private::Args& args);
 
-        // Remote subclasses should override this and return a valid instance
-        // name if connected.
-        virtual const char *
-        GetRemoteHostname ();
+    virtual lldb_private::Error
+    DisconnectRemote ();
 
-        virtual bool
-        IsConnected () const;
+protected:
+    GDBRemoteCommunicationClient m_gdb_client;
+    std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
 
-        virtual Error
-        ConnectRemote (Args& args);
+private:
+    DISALLOW_COPY_AND_ASSIGN (PlatformRemoteGDBServer);
 
-        virtual Error
-        DisconnectRemote ();
-
-    protected:
-        GDBRemoteCommunicationClient m_gdb_client;
-        std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
-
-    private:
-        DISALLOW_COPY_AND_ASSIGN (PlatformRemoteGDBServer);
-
-    };
-} // namespace lldb_private
+};
 
 #endif  // liblldb_PlatformRemoteGDBServer_h_

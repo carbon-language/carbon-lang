@@ -320,12 +320,47 @@ public:
     //------------------------------------------------------------------
     /// Get const accessor for the module file specification.
     ///
+    /// This function returns the file for the module on the host system
+    /// that is running LLDB. This can differ from the path on the 
+    /// platform since we might be doing remote debugging.
+    ///
     /// @return
     ///     A const reference to the file specification object.
     //------------------------------------------------------------------
     const FileSpec &
-    GetFileSpec () const;
+    GetFileSpec () const
+    {
+        return m_file;
+    }
 
+    //------------------------------------------------------------------
+    /// Get accessor for the module platform file specification.
+    ///
+    /// Platform file refers to the path of the module as it is known on
+    /// the remote system on which it is being debugged. For local 
+    /// debugging this is always the same as Module::GetFileSpec(). But
+    /// remote debugging might mention a file "/usr/lib/liba.dylib"
+    /// which might be locally downloaded and cached. In this case the
+    /// platform file could be something like:
+    /// "/tmp/lldb/platform-cache/remote.host.computer/usr/lib/liba.dylib"
+    /// The file could also be cached in a local developer kit directory.
+    ///
+    /// @return
+    ///     A const reference to the file specification object.
+    //------------------------------------------------------------------
+    const FileSpec &
+    GetPlatformFileSpec () const
+    {
+        if (m_platform_file)
+            return m_platform_file;
+        return m_file;
+    }
+
+    void
+    SetPlatformFileSpec (const FileSpec &file)
+    {
+        m_platform_file = file;
+    }
 
     const TimeValue &
     GetModificationTime () const;
@@ -561,6 +596,7 @@ protected:
     ArchSpec                    m_arch;         ///< The architecture for this module.
     lldb_private::UUID          m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
+    FileSpec                    m_platform_file;///< The path to the module on the platform on which it is being debugged
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.

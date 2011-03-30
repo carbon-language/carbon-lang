@@ -312,6 +312,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         else
         {
             response_type = StringExtractorGDBRemote::eError;
+            break;
         }
     }
 
@@ -377,6 +378,7 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
     {
         // We have a valid process
         SetID (pid);
+        UpdateThreadListIfNeeded ();
         StringExtractorGDBRemote response;
         if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, false))
         {
@@ -601,23 +603,28 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
         return error;
     }
 
-    if (m_gdb_comm.StartReadThread(&error))
+    // We always seem to be able to open a connection to a local port
+    // so we need to make sure we can then send data to it. If we can't
+    // then we aren't actually connected to anything, so try and do the
+    // handshake with the remote GDB server and make sure that goes 
+    // alright.
+    if (!m_gdb_comm.HandshakeWithServer (NULL))
     {
-        // Send an initial ack
-        m_gdb_comm.SendAck();
-
-        if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
-            m_debugserver_thread = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
-                                                                      this,
-                                                                      m_debugserver_pid,
-                                                                      false);
-        
-        m_gdb_comm.ResetDiscoverableSettings();
-        m_gdb_comm.GetSendAcks ();
-        m_gdb_comm.GetThreadSuffixSupported ();
-        m_gdb_comm.GetHostInfo ();
-        m_gdb_comm.GetVContSupported ('c');
+        m_gdb_comm.Disconnect();
+        if (error.Success())
+            error.SetErrorString("not connected to remote gdb server");
+        return error;
     }
+    if (m_debugserver_pid != LLDB_INVALID_PROCESS_ID)
+        m_debugserver_thread = Host::StartMonitoringChildProcess (MonitorDebugserverProcess,
+                                                                  this,
+                                                                  m_debugserver_pid,
+                                                                  false);
+    m_gdb_comm.ResetDiscoverableSettings();
+    m_gdb_comm.QueryNoAckModeSupported ();
+    m_gdb_comm.GetThreadSuffixSupported ();
+    m_gdb_comm.GetHostInfo ();
+    m_gdb_comm.GetVContSupported ('c');
     return error;
 }
 
@@ -632,9 +639,6 @@ ProcessGDBRemote::DidLaunchOrAttach ()
         m_dispatch_queue_offsets_addr = LLDB_INVALID_ADDRESS;
 
         BuildDynamicRegisterInfo (false);
-
-
-        StreamString strm;
 
         // See if the GDB server supports the qHostInfo information
 
@@ -2364,13 +2368,13 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         {
             static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
             const Symbol *dispatch_queue_offsets_symbol = NULL;
-            ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false)));
+            ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false), NULL, NULL));
             if (module_sp)
                 dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             
             if (dispatch_queue_offsets_symbol == NULL)
             {
-                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib", false));
+                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib", false), NULL, NULL);
                 if (module_sp)
                     dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             }

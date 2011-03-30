@@ -10105,7 +10105,7 @@ EmulateInstructionARM::EmulateSTRDReg (const uint32_t opcode, const ARMEncoding 
 //        {
 //        }
 //    }
-//    return true;
+    return true;
 }
                   
 EmulateInstructionARM::ARMOpcode*

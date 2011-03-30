@@ -261,7 +261,6 @@ Disassembler::Disassemble
                                       debugger,
                                       arch,
                                       exe_ctx,
-                                      disasm_range.GetBaseAddress(),
                                       num_instructions,
                                       num_mixed_context_lines,
                                       show_bytes,
@@ -302,7 +301,6 @@ Disassembler::Disassemble
                                       debugger,
                                       arch,
                                       exe_ctx,
-                                      addr,
                                       num_instructions,
                                       num_mixed_context_lines,
                                       show_bytes,
@@ -320,7 +318,6 @@ Disassembler::PrintInstructions
     Debugger &debugger,
     const ArchSpec &arch,
     const ExecutionContext &exe_ctx,
-    const Address &start_addr,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
     bool show_bytes,
@@ -339,41 +336,53 @@ Disassembler::PrintInstructions
     SymbolContext sc;
     SymbolContext prev_sc;
     AddressRange sc_range;
-    Address addr (start_addr);
-    
-    if (num_mixed_context_lines)
-        strm.IndentMore ();
-
-    // We extract the section to make sure we don't transition out
-    // of the current section when disassembling
-    const Section *addr_section = addr.GetSection();
-    Module *range_module = addr.GetModule();
+    Address *pc_addr_ptr = NULL;
+    if (exe_ctx.frame)
+        pc_addr_ptr = &exe_ctx.frame->GetFrameCodeAddress();
 
     for (size_t i=0; i<num_instructions_found; ++i)
     {
         Instruction *inst = disasm_ptr->GetInstructionList().GetInstructionAtIndex (i).get();
         if (inst)
         {
-            addr_t file_addr = addr.GetFileAddress();
-            if (addr_section == NULL || addr_section->ContainsFileAddress (file_addr) == false)
-            {
-                if (range_module)
-                    range_module->ResolveFileAddress (file_addr, addr);
-                else if (exe_ctx.target)
-                    exe_ctx.target->GetImages().ResolveFileAddress (file_addr, addr);
-                    
-                addr_section = addr.GetSection();
-            }
+            const Address &addr = inst->GetAddress();
+            const bool inst_is_at_pc = pc_addr_ptr && addr == *pc_addr_ptr;
 
             prev_sc = sc;
 
-            if (addr_section)
+            Module *module = addr.GetModule();
+            if (module)
             {
-                Module *module = addr_section->GetModule();
                 uint32_t resolved_mask = module->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
                 if (resolved_mask)
                 {
-                    if (!(prev_sc.function == sc.function || prev_sc.symbol == sc.symbol))
+                    if (num_mixed_context_lines)
+                    {
+                        if (!sc_range.ContainsFileAddress (addr))
+                        {
+                            sc.GetAddressRange (eSymbolContextEverything, sc_range);
+                            
+                            if (sc != prev_sc)
+                            {
+                                if (offset != 0)
+                                    strm.EOL();
+                                
+                                sc.DumpStopContext(&strm, exe_ctx.process, addr, false, true, false);
+                                strm.EOL();
+                                
+                                if (sc.comp_unit && sc.line_entry.IsValid())
+                                {
+                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
+                                                                                                   sc.line_entry.line,
+                                                                                                   num_mixed_context_lines,
+                                                                                                   num_mixed_context_lines,
+                                                                                                   num_mixed_context_lines ? "->" : "",
+                                                                                                   &strm);
+                                }
+                            }
+                        }
+                    }
+                    else if (!(prev_sc.function == sc.function || prev_sc.symbol == sc.symbol))
                     {
                         if (prev_sc.function || prev_sc.symbol)
                             strm.EOL();
@@ -386,54 +395,28 @@ Disassembler::PrintInstructions
                             strm << '`' << sc.symbol->GetMangled().GetName();
                         strm << ":\n";
                     }
-
-                    if (num_mixed_context_lines && !sc_range.ContainsFileAddress (addr))
-                    {
-                        sc.GetAddressRange (eSymbolContextEverything, sc_range);
-                            
-                        if (sc != prev_sc)
-                        {
-                            if (offset != 0)
-                                strm.EOL();
-
-                            sc.DumpStopContext(&strm, exe_ctx.process, addr, false, true, false);
-                            strm.EOL();
-
-                            if (sc.comp_unit && sc.line_entry.IsValid())
-                            {
-                                debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
-                                                                                               sc.line_entry.line,
-                                                                                               num_mixed_context_lines,
-                                                                                               num_mixed_context_lines,
-                                                                                               num_mixed_context_lines ? "->" : "",
-                                                                                               &strm);
-                            }
-                        }
-                    }
                 }
                 else
                 {
                     sc.Clear();
                 }
             }
-            if (num_mixed_context_lines)
-                strm.IndentMore ();
-            strm.Indent();
-            inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, raw);
-            strm.EOL();
-            
-            addr.Slide(inst->GetOpcode().GetByteSize());
 
-            if (num_mixed_context_lines)
-                strm.IndentLess ();
+            if (pc_addr_ptr)
+            {
+                if (inst_is_at_pc)
+                    strm.PutCString("-> ");
+                else
+                    strm.PutCString("   ");
+            }
+            inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, raw);
+            strm.EOL();            
         }
         else
         {
             break;
         }
     }
-    if (num_mixed_context_lines)
-        strm.IndentLess ();
         
     return true;
 }

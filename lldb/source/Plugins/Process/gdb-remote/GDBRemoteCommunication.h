@@ -49,6 +49,9 @@ public:
     SendPacket (const char *payload,
                 size_t payload_length);
 
+    size_t
+    SendPacket (lldb_private::StreamString &response);
+
     // Wait for a packet within 'nsec' seconds
     size_t
     WaitForPacket (StringExtractorGDBRemote &response,

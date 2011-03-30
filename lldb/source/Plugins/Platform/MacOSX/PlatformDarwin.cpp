@@ -238,8 +238,11 @@ PlatformDarwin::GetRemoteSystemArchitecture ()
 
 
 const char *
-PlatformDarwin::GetRemoteHostname ()
+PlatformDarwin::GetHostname ()
 {
+    if (IsHost())
+        return Platform::GetHostname();
+
     if (m_remote_platform_sp)
         return m_remote_platform_sp->GetHostname ();
     return NULL;
@@ -310,4 +313,68 @@ PlatformDarwin::DisconnectRemote ()
     }
     return error;
 }
+
+
+bool
+PlatformDarwin::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+{
+    bool sucess = false;
+    if (IsHost())
+    {
+        sucess = Platform::GetProcessInfo (pid, process_info);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            sucess = m_remote_platform_sp->GetProcessInfo (pid, process_info);
+    }
+    return sucess;
+}
+
+
+
+uint32_t
+PlatformDarwin::FindProcesses (const ProcessInfoMatch &match_info,
+                               ProcessInfoList &process_infos)
+{
+    uint32_t match_count = 0;
+    if (IsHost())
+    {
+        // Let the base class figure out the host details
+        match_count = Platform::FindProcesses (match_info, process_infos);
+    }
+    else
+    {
+        // If we are remote, we can only return results if we are connected
+        if (m_remote_platform_sp)
+            match_count = m_remote_platform_sp->FindProcesses (match_info, process_infos);
+    }
+    return match_count;    
+}
+
+const char *
+PlatformDarwin::GetUserName (uint32_t uid)
+{
+    // Check the cache in Platform in case we have already looked this uid up
+    const char *user_name = Platform::GetUserName(uid);
+    if (user_name)
+        return user_name;
+
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetUserName(uid);
+    return NULL;
+}
+
+const char *
+PlatformDarwin::GetGroupName (uint32_t gid)
+{
+    const char *group_name = Platform::GetGroupName(gid);
+    if (group_name)
+        return group_name;
+
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetGroupName(gid);
+    return NULL;
+}
+
 

@@ -216,14 +216,20 @@ public:
     ModuleMatches (const FileSpec *file_spec_ptr,
                    const ArchSpec *arch_ptr,
                    const lldb_private::UUID *uuid_ptr,
-                   const ConstString *object_name) :
+                   const ConstString *object_name,
+                   bool file_spec_is_platform) :
         m_file_spec_ptr (file_spec_ptr),
         m_arch_ptr (arch_ptr),
         m_uuid_ptr (uuid_ptr),
-        m_object_name (object_name)
+        m_object_name (object_name),
+        m_file_spec_compare_basename_only (false),
+        m_file_spec_is_platform (file_spec_is_platform)
     {
+        if (file_spec_ptr)
+            m_file_spec_compare_basename_only = file_spec_ptr->GetDirectory();
     }
 
+    
     //--------------------------------------------------------------
     /// Unary predicate function object callback.
     //--------------------------------------------------------------
@@ -232,8 +238,21 @@ public:
     {
         if (m_file_spec_ptr)
         {
-            if (!FileSpec::Equal (*m_file_spec_ptr, module_sp->GetFileSpec(), m_file_spec_ptr->GetDirectory()))
-                return false;
+            if (m_file_spec_is_platform)
+            {
+                if (!FileSpec::Equal (*m_file_spec_ptr, 
+                                      module_sp->GetPlatformFileSpec(), 
+                                      m_file_spec_compare_basename_only))
+                    return false;
+        
+            }
+            else
+            {
+                if (!FileSpec::Equal (*m_file_spec_ptr, 
+                                      module_sp->GetFileSpec(), 
+                                      m_file_spec_compare_basename_only))
+                    return false;
+            }
         }
 
         if (m_arch_ptr && m_arch_ptr->IsValid())
@@ -264,6 +283,8 @@ private:
     const ArchSpec *            m_arch_ptr;
     const lldb_private::UUID *  m_uuid_ptr;
     const ConstString *         m_object_name;
+    bool                        m_file_spec_compare_basename_only;
+    bool                        m_file_spec_is_platform;
 };
 
 size_t
@@ -277,7 +298,7 @@ ModuleList::FindModules
 ) const
 {
     size_t existing_matches = matching_module_list.GetSize();
-    ModuleMatches matcher (file_spec_ptr, arch_ptr, uuid_ptr, object_name);
+    ModuleMatches matcher (file_spec_ptr, arch_ptr, uuid_ptr, object_name, false);
 
     Mutex::Locker locker(m_modules_mutex);
     collection::const_iterator end = m_modules.end();
@@ -316,6 +337,28 @@ ModuleList::FindModule (const Module *module_ptr)
 
 }
 
+ModuleSP
+ModuleList::FindModule (const UUID &uuid)
+{
+    ModuleSP module_sp;
+    
+    if (uuid.IsValid())
+    {
+        Mutex::Locker locker(m_modules_mutex);
+        collection::const_iterator pos, end = m_modules.end();
+        
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            if ((*pos)->GetUUID() == uuid)
+            {
+                module_sp = (*pos);
+                break;
+            }
+        }
+    }
+    return module_sp;
+}
+
 
 uint32_t
 ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool append, uint32_t max_matches, TypeList& types)
@@ -340,10 +383,16 @@ ModuleList::FindTypes (const SymbolContext& sc, const ConstString &name, bool ap
 
 
 ModuleSP
-ModuleList::FindFirstModuleForFileSpec (const FileSpec &file_spec, const ConstString *object_name)
+ModuleList::FindFirstModuleForFileSpec (const FileSpec &file_spec, 
+                                        const ArchSpec *arch_ptr,
+                                        const ConstString *object_name)
 {
     ModuleSP module_sp;
-    ModuleMatches matcher (&file_spec, NULL, NULL, NULL);
+    ModuleMatches matcher (&file_spec, 
+                           arch_ptr, 
+                           NULL, 
+                           object_name, 
+                           false);
 
     // Scope for "locker"
     {
@@ -357,6 +406,32 @@ ModuleList::FindFirstModuleForFileSpec (const FileSpec &file_spec, const ConstSt
     }
     return module_sp;
 
+}
+
+ModuleSP
+ModuleList::FindFirstModuleForPlatormFileSpec (const FileSpec &file_spec, 
+                                               const ArchSpec *arch_ptr,
+                                               const ConstString *object_name)
+{
+    ModuleSP module_sp;
+    ModuleMatches matcher (&file_spec, 
+                           arch_ptr, 
+                           NULL, 
+                           object_name, 
+                           true);
+    
+    // Scope for "locker"
+    {
+        Mutex::Locker locker(m_modules_mutex);
+        collection::const_iterator end = m_modules.end();
+        collection::const_iterator pos = m_modules.begin();
+        
+        pos = std::find_if (pos, end, matcher);
+        if (pos != end)
+            module_sp = (*pos);
+    }
+    return module_sp;
+    
 }
 
 

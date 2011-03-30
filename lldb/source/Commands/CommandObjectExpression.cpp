@@ -95,7 +95,6 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
 void
 CommandObjectExpression::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
     //language.Clear();
     debug = false;
     format = eFormatDefault;
@@ -298,7 +297,7 @@ CommandObjectExpression::ExecuteRawCommandString
 {
     m_exe_ctx = m_interpreter.GetDebugger().GetExecutionContext();
 
-    m_options.ResetOptionValues();
+    m_options.Reset();
 
     const char * expr = NULL;
 

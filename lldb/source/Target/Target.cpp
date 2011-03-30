@@ -39,22 +39,25 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // Target constructor
 //----------------------------------------------------------------------
-Target::Target(Debugger &debugger, const lldb::PlatformSP &platform_sp) :
-    Broadcaster("lldb.target"),
-    m_platform_sp (platform_sp),
+Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp) :
+    Broadcaster ("lldb.target"),
+    ExecutionContextScope (),
     TargetInstanceSettings (*GetSettingsController()),
     m_debugger (debugger),
+    m_platform_sp (platform_sp),
     m_mutex (Mutex::eMutexTypeRecursive), 
-    m_images(),
+    m_arch (target_arch),
+    m_images (),
     m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
-    m_process_sp(),
-    m_search_filter_sp(),
+    m_process_sp (),
+    m_search_filter_sp (),
     m_image_search_paths (ImageSearchPathsChanged, this),
     m_scratch_ast_context_ap (NULL),
     m_persistent_variables (),
-    m_stop_hook_next_id(0)
+    m_stop_hooks (),
+    m_stop_hook_next_id (0)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -412,10 +415,9 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 
         m_images.Append(executable_sp); // The first image is our exectuable file
 
-        ArchSpec exe_arch = executable_sp->GetArchitecture();
         // If we haven't set an architecture yet, reset our architecture based on what we found in the executable module.
-        if (!m_arch_spec.IsValid())
-            m_arch_spec = exe_arch;
+        if (!m_arch.IsValid())
+            m_arch = executable_sp->GetArchitecture();
         
         FileSpecList dependent_files;
         ObjectFile *executable_objfile = executable_sp->GetObjectFile();
@@ -433,7 +435,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
                     platform_dependent_file_spec = dependent_file_spec;
 
                 ModuleSP image_module_sp(GetSharedModule (platform_dependent_file_spec,
-                                                          exe_arch));
+                                                          m_arch));
                 if (image_module_sp.get())
                 {
                     //image_module_sp->Dump(&s);// REMOVE THIS, DEBUG ONLY
@@ -445,9 +447,9 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
         }
         
         // Now see if we know the target triple, and if so, create our scratch AST context:
-        if (m_arch_spec.IsValid())
+        if (m_arch.IsValid())
         {
-            m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch_spec.GetTriple().str().c_str()));
+            m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
         }
     }
 
@@ -458,22 +460,22 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
-    if (m_arch_spec == arch_spec)
+    if (m_arch == arch_spec)
     {
         // If we're setting the architecture to our current architecture, we
         // don't need to do anything.
         return true;
     }
-    else if (!m_arch_spec.IsValid())
+    else if (!m_arch.IsValid())
     {
         // If we haven't got a valid arch spec, then we just need to set it.
-        m_arch_spec = arch_spec;
+        m_arch = arch_spec;
         return true;
     }
     else
     {
         // If we have an executable file, try to reset the executable to the desired architecture
-        m_arch_spec = arch_spec;
+        m_arch = arch_spec;
         ModuleSP executable_sp = GetExecutableModule ();
         m_images.Clear();
         m_scratch_ast_context_ap.reset();
@@ -668,10 +670,9 @@ Target::GetSharedModule
     bool did_create_module = false;
     ModuleSP module_sp;
 
-    // If there are image search path entries, try to use them first to acquire a suitable image.
-
     Error error;
 
+    // If there are image search path entries, try to use them first to acquire a suitable image.
     if (m_image_search_paths.GetSize())
     {
         FileSpec transformed_spec;        
@@ -682,13 +683,26 @@ Target::GetSharedModule
         }
     }
 
-    // If a module hasn't been found yet, use the unmodified path.
-
-    if (!module_sp)
+    // The platform is responsible for finding and caching an appropriate
+    // module in the shared module cache.
+    if (m_platform_sp)
     {
-        error = (ModuleList::GetSharedModule (file_spec, arch, uuid_ptr, object_name, object_offset, module_sp, &old_module_sp, &did_create_module));
+        FileSpec platform_file_spec;        
+        error = m_platform_sp->GetSharedModule (file_spec, 
+                                                arch, 
+                                                uuid_ptr, 
+                                                object_name, 
+                                                object_offset, 
+                                                module_sp, 
+                                                &old_module_sp, 
+                                                &did_create_module);
+    }
+    else
+    {
+        error.SetErrorString("no platform is currently set");
     }
 
+    // If a module hasn't been found yet, use the unmodified path.
     if (module_sp)
     {
         m_images.Append (module_sp);
@@ -1130,17 +1144,17 @@ Target::RunStopHooks ()
                 bool echo_commands = false;
                 bool print_results = true; 
                 GetDebugger().GetCommandInterpreter().HandleCommands (cur_hook_sp->GetCommands(), 
-                                                                          &exc_ctx_with_reasons[i], 
-                                                                          stop_on_continue, 
-                                                                          stop_on_error, 
-                                                                          echo_commands,
-                                                                          print_results, 
-                                                                          result);
+                                                                      &exc_ctx_with_reasons[i], 
+                                                                      stop_on_continue, 
+                                                                      stop_on_error, 
+                                                                      echo_commands,
+                                                                      print_results, 
+                                                                      result);
 
                 // If the command started the target going again, we should bag out of
                 // running the stop hooks.
-                if ((result.GetStatus() == eReturnStatusSuccessContinuingNoResult)
-                        || (result.GetStatus() == eReturnStatusSuccessContinuingResult))
+                if ((result.GetStatus() == eReturnStatusSuccessContinuingNoResult) || 
+                    (result.GetStatus() == eReturnStatusSuccessContinuingResult))
                 {
                     result.AppendMessageWithFormat ("Aborting stop hooks, hook %d set the program running.", cur_hook_sp->GetID());
                     keep_going = false;

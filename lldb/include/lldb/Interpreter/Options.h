@@ -167,8 +167,13 @@ public:
     virtual const OptionDefinition*
     GetDefinitions () { return NULL; }
 
-    virtual void
-    ResetOptionValues ();
+    // Call this prior to parsing any options. This call will call the
+    // subclass ResetOptionValues() and will avoid the need for all
+    // ResetOptionValues() function instances from having to call the
+    // Option::ResetOptionValues() like they did before. This was error
+    // prone and subclasses shouldn't have to do it.
+    void
+    Reset ();
 
     //------------------------------------------------------------------
     /// Set the value of an option.
@@ -313,6 +318,12 @@ protected:
 
     void
     OptionsSetUnion (const OptionSet &set_a, const OptionSet &set_b, OptionSet &union_set);
+    
+    // Subclasses must reset their option values prior to starting a new
+    // option parse. Each subclass must override this function and revert
+    // all option settings to default values.
+    virtual void
+    ResetOptionValues () = 0;
 };
 
 } // namespace lldb_private

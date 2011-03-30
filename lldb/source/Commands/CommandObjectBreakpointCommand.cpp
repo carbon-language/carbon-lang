@@ -135,8 +135,6 @@ CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue
 void
 CommandObjectBreakpointCommandAdd::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
-
     m_use_commands = true;
     m_use_script_language = false;
     m_script_language = eScriptLanguageNone;

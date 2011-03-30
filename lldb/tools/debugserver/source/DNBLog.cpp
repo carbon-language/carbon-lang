@@ -90,6 +90,13 @@ DNBLogEnabled ()
     return g_log_callback != NULL;
 }
 
+bool
+DNBLogEnabledForAny (uint32_t mask)
+{
+    if (g_log_callback)
+        return (g_log_bits & mask) != 0;
+    return false;
+}
 static inline void
 _DNBLogVAPrintf(uint32_t flags, const char *format, va_list args)
 {

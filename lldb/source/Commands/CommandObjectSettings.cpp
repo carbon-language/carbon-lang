@@ -287,8 +287,6 @@ CommandObjectSettingsSet::CommandOptions::SetOptionValue (int option_idx, const 
 void
 CommandObjectSettingsSet::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues ();
-    
     m_override = true;
     m_reset = false;
 }

@@ -26,6 +26,7 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_arch (arch),
     m_uuid (),
     m_file (file_spec),
+    m_platform_file(),
     m_object_name (),
     m_objfile_ap (),
     m_symfile_ap (),
@@ -446,12 +447,6 @@ Module::GetSymbolVendor (bool can_create)
         }
     }
     return m_symfile_ap.get();
-}
-
-const FileSpec &
-Module::GetFileSpec () const
-{
-    return m_file;
 }
 
 void

@@ -30,7 +30,7 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name, const char *listener_name) :
     Communication(comm_name),
-    m_packet_timeout (1),
+    m_packet_timeout (60),
     m_rx_packet_listener (listener_name),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
@@ -57,7 +57,6 @@ GDBRemoteCommunication::~GDBRemoteCommunication()
     }
 }
 
-
 char
 GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_length)
 {
@@ -80,7 +79,7 @@ GDBRemoteCommunication::SendAck ()
         log->Printf ("send packet: +");
     ConnectionStatus status = eConnectionStatusSuccess;
     char ack_char = '+';
-    return Write (&ack_char, 1, status, NULL) == 1;
+    return Write (&ack_char, 1, status, NULL);
 }
 
 size_t
@@ -91,7 +90,15 @@ GDBRemoteCommunication::SendNack ()
         log->Printf ("send packet: -");
     ConnectionStatus status = eConnectionStatusSuccess;
     char nack_char = '-';
-    return Write (&nack_char, 1, status, NULL) == 1;
+    return Write (&nack_char, 1, status, NULL);
+}
+
+size_t
+GDBRemoteCommunication::SendPacket (lldb_private::StreamString &payload)
+{
+    Mutex::Locker locker(m_sequence_mutex);
+    const std::string &p (payload.GetString());
+    return SendPacketNoLock (p.c_str(), p.size());
 }
 
 size_t

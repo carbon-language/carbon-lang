@@ -99,6 +99,9 @@ public:
     GetNameColonValue (std::string &name, std::string &value);
 
     uint32_t
+    GetU32 (uint32_t fail_value, int base = 0);
+
+    uint32_t
     GetHexMaxU32 (bool little_endian, uint32_t fail_value);
 
     uint64_t

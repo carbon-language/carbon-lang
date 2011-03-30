@@ -110,6 +110,12 @@ public:
     static bool
     GetHostname (std::string &s);
 
+    static const char *
+    GetUserName (uint32_t uid, std::string &user_name);
+    
+    static const char *
+    GetGroupName (uint32_t gid, std::string &group_name);
+    
     //------------------------------------------------------------------
     /// Gets the host architecture.
     ///
@@ -337,9 +343,8 @@ public:
     SetCrashDescription (const char *description);
 
     static uint32_t
-    FindProcessesByName (const char *name, 
-                         NameMatchType name_match_type,
-                         ProcessInfoList &proc_infos);
+    FindProcesses (const ProcessInfoMatch &match_info,
+                   ProcessInfoList &proc_infos);
     
     static bool
     GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);

@@ -47,9 +47,9 @@ public:
         const char *
         GetPluginName ()
         {
-            if (m_plugin_name.empty())
+            if (plugin_name.empty())
                 return NULL;
-            return m_plugin_name.c_str();
+            return plugin_name.c_str();
         }
         
 
@@ -58,12 +58,13 @@ public:
         uint32_t num_lines_context;
         uint32_t num_instructions;
         bool raw;
-        std::string m_func_name;
-        lldb::addr_t m_start_addr;
-        lldb::addr_t m_end_addr;
-        bool m_at_pc;
-        std::string m_plugin_name;
-        ArchSpec m_arch;
+        std::string func_name;
+        lldb::addr_t start_addr;
+        lldb::addr_t end_addr;
+        bool at_pc;
+        bool frame_line;
+        std::string plugin_name;
+        ArchSpec arch;
         static OptionDefinition g_option_table[];
     };
 

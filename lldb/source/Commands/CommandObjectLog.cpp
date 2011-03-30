@@ -208,7 +208,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             log_file.clear();
             log_options = 0;
         }

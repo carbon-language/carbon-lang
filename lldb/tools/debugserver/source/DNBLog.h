@@ -51,6 +51,7 @@ uint32_t    DNBLogSetLogMask (uint32_t mask) DNB_EXPORT;
 uint32_t    DNBLogGetLogMask () DNB_EXPORT;
 void        DNBLogSetLogCallback (DNBCallbackLog callback, void *baton) DNB_EXPORT;
 bool        DNBLogEnabled () DNB_EXPORT;
+bool        DNBLogEnabledForAny (uint32_t mask) DNB_EXPORT;
 int         DNBLogGetDebug () DNB_EXPORT;
 void        DNBLogSetDebug (int g) DNB_EXPORT;
 int         DNBLogGetVerbose () DNB_EXPORT;
@@ -60,7 +61,7 @@ void        DNBLogSetVerbose (int g) DNB_EXPORT;
 #define     DNBLogDebug(fmt, ...)               do { if (DNBLogEnabled()) { _DNBLogDebug(fmt, ## __VA_ARGS__);               } } while (0)
 #define     DNBLogDebugVerbose(fmt, ...)        do { if (DNBLogEnabled()) { _DNBLogDebugVerbose(fmt, ## __VA_ARGS__);        } } while (0)
 #define     DNBLogThreaded(fmt, ...)            do { if (DNBLogEnabled()) { _DNBLogThreaded(fmt, ## __VA_ARGS__);            } } while (0)
-#define     DNBLogThreadedIf(mask, fmt, ...)    do { if (DNBLogEnabled()) { _DNBLogThreadedIf(mask, fmt, ## __VA_ARGS__);    } } while (0)
+#define     DNBLogThreadedIf(mask, fmt, ...)    do { if (DNBLogEnabledForAny(mask)) { _DNBLogThreaded(fmt, ## __VA_ARGS__);  } } while (0)
 #define     DNBLogError(fmt, ...)               do { if (DNBLogEnabled()) { _DNBLogError(fmt, ## __VA_ARGS__);               } } while (0)
 #define     DNBLogFatalError(err, fmt, ...)     do { if (DNBLogEnabled()) { _DNBLogFatalError(err, fmt, ## __VA_ARGS__);     } } while (0)
 #define     DNBLogVerbose(fmt, ...)             do { if (DNBLogEnabled()) { _DNBLogVerbose(fmt, ## __VA_ARGS__);             } } while (0)

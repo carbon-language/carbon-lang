@@ -135,7 +135,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             relative_frame_offset = INT32_MIN;
         }
 
@@ -352,8 +351,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
-
             use_objc      = false;
             use_regex     = false;
             show_args     = true;

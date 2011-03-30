@@ -235,8 +235,6 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
 void
 CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
-
     m_filename.clear();
     m_line_num = 0;
     m_column = 0;
@@ -706,8 +704,6 @@ CommandObjectBreakpointList::CommandOptions::SetOptionValue (int option_idx, con
 void
 CommandObjectBreakpointList::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
-
     m_level = lldb::eDescriptionLevelBrief;
     m_internal = false;
 }
@@ -1105,8 +1101,6 @@ CommandObjectBreakpointClear::CommandOptions::SetOptionValue (int option_idx, co
 void
 CommandObjectBreakpointClear::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
-
     m_filename.clear();
     m_line_num = 0;
 }
@@ -1485,8 +1479,6 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
 void
 CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
-
     m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;
     m_thread_id_passed = false;

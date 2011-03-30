@@ -842,7 +842,7 @@ g_gdb_register_map_arm[] =
     { 21, 12,  "f5",    {0}, k_zero_bytes, 0},
     { 22, 12,  "f6",    {0}, k_zero_bytes, 0},
     { 23, 12,  "f7",    {0}, k_zero_bytes, 0},
-    { 24,  4, "fps",    {0}, NULL, 0},
+    { 24,  4, "fps",    {0}, k_zero_bytes, 0},
     { 25,  4,"cpsr",    {0}, NULL, 1},
     { 26,  4,  "s0",    {0}, NULL, 0},
     { 27,  4,  "s1",    {0}, NULL, 0},
@@ -3351,30 +3351,3 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
         strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
     return SendPacket (strm.str());
 }
-
-rnb_err_t
-RNBRemote::HandlePacket_qProcessInfo (const char *p)
-{
-    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
-}
-
-rnb_err_t
-RNBRemote::HandlePacket_qfProcessInfoAll (const char *p)
-{
-    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
-}
-
-rnb_err_t 
-RNBRemote::HandlePacket_qfProcessInfoName (const char *p)
-{
-    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
-}
-
-rnb_err_t 
-RNBRemote::HandlePacket_qsProcessInfo (const char *p)
-{
-    return RNBRemote::HandlePacket_UNIMPLEMENTED (p);
-}
-
-
-

@@ -47,6 +47,11 @@ public:
         eServerPacketType_unimplemented,
         eServerPacketType_interrupt, // CTRL+c packet or "\x03"
         eServerPacketType_qHostInfo,
+        eServerPacketType_qProcessInfoPID,
+        eServerPacketType_qfProcessInfo,
+        eServerPacketType_qsProcessInfo,
+        eServerPacketType_qUserName,
+        eServerPacketType_qGroupName,
         eServerPacketType_QStartNoAckMode
     };
     

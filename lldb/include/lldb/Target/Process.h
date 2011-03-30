@@ -233,7 +233,8 @@ public:
         m_effective_uid (UINT32_MAX),
         m_effective_gid (UINT32_MAX),
         m_arch(),
-        m_pid (LLDB_INVALID_PROCESS_ID)
+        m_pid (LLDB_INVALID_PROCESS_ID),
+        m_parent_pid (LLDB_INVALID_PROCESS_ID)
     {
     }
 
@@ -246,7 +247,8 @@ public:
         m_effective_uid (UINT32_MAX),
         m_effective_gid (UINT32_MAX),
         m_arch (arch),
-        m_pid (pid)
+        m_pid (pid),
+        m_parent_pid (LLDB_INVALID_PROCESS_ID)
     {
     }
     
@@ -260,11 +262,14 @@ public:
         m_effective_gid = UINT32_MAX;
         m_arch.Clear();
         m_pid = LLDB_INVALID_PROCESS_ID;
+        m_parent_pid = LLDB_INVALID_PROCESS_ID;
     }
     
     const char *
     GetName() const
     {
+        if (m_name.empty())
+            return NULL;
         return m_name.c_str();
     }
 
@@ -283,12 +288,18 @@ public:
             m_name.clear();
     }
 
+    void
+    SwapName (std::string &name)
+    {
+        m_name.swap (name);
+    }
+
     uint32_t
     GetRealUserID() const
     {
         return m_real_uid;
     }
-
+    
     uint32_t
     GetRealGroupID() const
     {
@@ -305,6 +316,30 @@ public:
     GetEffectiveGroupID() const
     {
         return m_effective_gid;
+    }
+    
+    bool
+    RealUserIDIsValid () const
+    {
+        return m_real_uid != UINT32_MAX;
+    }
+    
+    bool
+    RealGroupIDIsValid () const
+    {
+        return m_real_gid != UINT32_MAX;
+    }
+    
+    bool
+    EffectiveUserIDIsValid () const
+    {
+        return m_effective_uid != UINT32_MAX;
+    }
+
+    bool
+    EffectiveGroupIDIsValid () const
+    {
+        return m_effective_gid != UINT32_MAX;
     }
 
     void
@@ -378,6 +413,15 @@ public:
     {
         return m_parent_pid != LLDB_INVALID_PROCESS_ID;
     }
+    
+    void
+    Dump (Stream &s, Platform *platform) const;
+
+    static void
+    DumpTableHeader (Stream &s, Platform *platform);
+
+    void
+    DumpAsTableRow (Stream &s, Platform *platform) const;
 
 protected:
     std::string m_name;
@@ -388,6 +432,78 @@ protected:
     ArchSpec m_arch;
     lldb::pid_t m_pid;
     lldb::pid_t m_parent_pid;
+};
+
+class ProcessInfoMatch
+{
+public:
+    ProcessInfoMatch () :
+        m_match_info (),
+        m_name_match_type (lldb_private::eNameMatchIgnore),
+        m_match_all_users (false)
+    {
+    }
+
+    ProcessInfoMatch (const char *process_name, 
+                      lldb_private::NameMatchType process_name_match_type) :
+        m_match_info (),
+        m_name_match_type (process_name_match_type),
+        m_match_all_users (false)
+    {
+        m_match_info.SetName (process_name);
+    }
+
+    ProcessInfo &
+    GetProcessInfo ()
+    {
+        return m_match_info;
+    }
+
+    const ProcessInfo &
+    GetProcessInfo () const
+    {
+        return m_match_info;
+    }
+    
+    bool
+    GetMatchAllUsers () const
+    {
+        return m_match_all_users;
+    }
+
+    void
+    SetMatchAllUsers (bool b)
+    {
+        m_match_all_users = b;
+    }
+
+    lldb_private::NameMatchType 
+    GetNameMatchType () const
+    {
+        return m_name_match_type;
+    }
+
+    void
+    SetNameMatchType (lldb_private::NameMatchType name_match_type)
+    {
+        m_name_match_type = name_match_type;
+    }
+    
+    bool
+    NameMatches (const char *process_name) const;
+
+    bool
+    Matches (const ProcessInfo &proc_info) const;
+
+    bool
+    MatchAllProcesses () const;
+    void
+    Clear ();
+
+protected:
+    ProcessInfo m_match_info;
+    lldb_private::NameMatchType m_name_match_type;
+    bool m_match_all_users;
 };
 
 class ProcessInfoList
@@ -449,6 +565,14 @@ public:
             return true;
         }
         return false;
+    }
+    
+    // You must ensure "idx" is valid before calling this function
+    const ProcessInfo &
+    GetProcessInfoAtIndex (uint32_t idx) const
+    {
+        assert (idx < m_infos.size());
+        return m_infos[idx];
     }
     
 protected:

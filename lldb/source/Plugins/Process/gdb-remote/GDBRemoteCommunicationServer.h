@@ -14,9 +14,12 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Target/Process.h"
+
 #include "GDBRemoteCommunication.h"
 
 class ProcessGDBRemote;
+class StringExtractorGDBRemote;
 
 class GDBRemoteCommunicationServer : public GDBRemoteCommunication
 {
@@ -52,18 +55,38 @@ public:
 
 protected:
     lldb::thread_t m_async_thread;
+    lldb_private::ProcessInfoList m_proc_infos;
+    uint32_t m_proc_infos_index;
 
     size_t
-    SendUnimplementedResponse ();
+    SendUnimplementedResponse (const char *packet);
+
+    size_t
+    SendErrorResponse (uint8_t error);
 
     size_t
     SendOKResponse ();
 
     bool
-    Handle_qHostInfo ();
+    Handle_qHostInfo (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_qProcessInfoPID (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_qfProcessInfo (StringExtractorGDBRemote &packet);
+    
+    bool 
+    Handle_qsProcessInfo (StringExtractorGDBRemote &packet);
+
+    bool 
+    Handle_qUserName (StringExtractorGDBRemote &packet);
+
+    bool 
+    Handle_qGroupName (StringExtractorGDBRemote &packet);
 
     bool
-    Handle_QStartNoAckMode ();
+    Handle_QStartNoAckMode (StringExtractorGDBRemote &packet);
 
 private:
     //------------------------------------------------------------------

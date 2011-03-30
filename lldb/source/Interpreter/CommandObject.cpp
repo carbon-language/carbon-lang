@@ -177,7 +177,7 @@ CommandObject::ParseOptions
     if (options != NULL)
     {
         Error error;
-        options->ResetOptionValues();
+        options->Reset();
 
         // ParseOptions calls getopt_long, which always skips the zero'th item in the array and starts at position 1,
         // so we need to push a dummy value into position zero.

@@ -16,111 +16,119 @@
 // Project includes
 #include "PlatformDarwin.h"
 
-namespace lldb_private {
+class PlatformRemoteiOS : public PlatformDarwin
+{
+public:
 
-    class PlatformRemoteiOS : public PlatformDarwin
+    //------------------------------------------------------------
+    // Class Functions
+    //------------------------------------------------------------
+    static lldb_private::Platform* 
+    CreateInstance ();
+
+    static void
+    Initialize ();
+
+    static void
+    Terminate ();
+    
+    static const char *
+    GetPluginNameStatic ();
+
+    static const char *
+    GetShortPluginNameStatic();
+
+    static const char *
+    GetDescriptionStatic();
+    
+    //------------------------------------------------------------
+    // Class Methods
+    //------------------------------------------------------------
+    PlatformRemoteiOS ();
+
+    virtual
+    ~PlatformRemoteiOS();
+
+    //------------------------------------------------------------
+    // lldb_private::PluginInterface functions
+    //------------------------------------------------------------
+    virtual const char *
+    GetPluginName()
     {
-    public:
+        return GetPluginNameStatic();
+    }
+    
+    virtual const char *
+    GetShortPluginName()
+    {
+        return GetShortPluginNameStatic();
+    }
+    
+    virtual uint32_t
+    GetPluginVersion()
+    {
+        return 1;
+    }
 
-        //------------------------------------------------------------
-        // Class Functions
-        //------------------------------------------------------------
-        static Platform* 
-        CreateInstance ();
+    //------------------------------------------------------------
+    // lldb_private::Platform functions
+    //------------------------------------------------------------
+    virtual lldb_private::Error
+    ResolveExecutable (const lldb_private::FileSpec &exe_file,
+                       const lldb_private::ArchSpec &arch,
+                       lldb::ModuleSP &module_sp);
 
-        static void
-        Initialize ();
+    virtual const char *
+    GetDescription ()
+    {
+        return GetDescriptionStatic();
+    }
 
-        static void
-        Terminate ();
-        
-        static const char *
-        GetPluginNameStatic ();
+    virtual void
+    GetStatus (lldb_private::Stream &strm);
 
-        static const char *
-        GetShortPluginNameStatic();
+    virtual lldb_private::Error
+    GetFile (const lldb_private::FileSpec &platform_file, 
+             const lldb_private::UUID *uuid_ptr,
+             lldb_private::FileSpec &local_file);
 
-        static const char *
-        GetDescriptionStatic();
-        
-        //------------------------------------------------------------
-        // Class Methods
-        //------------------------------------------------------------
-        PlatformRemoteiOS ();
+    lldb_private::Error
+    GetSharedModule (const lldb_private::FileSpec &platform_file, 
+                     const lldb_private::ArchSpec &arch,
+                     const lldb_private::UUID *uuid_ptr,
+                     const lldb_private::ConstString *object_name_ptr,
+                     off_t object_offset,
+                     lldb::ModuleSP &module_sp,
+                     lldb::ModuleSP *old_module_sp_ptr,
+                     bool *did_create_ptr);
 
-        virtual
-        ~PlatformRemoteiOS();
+    virtual uint32_t
+    FindProcesses (const lldb_private::ProcessInfoMatch &match_info,
+                   lldb_private::ProcessInfoList &process_infos);
 
-        //------------------------------------------------------------
-        // lldb_private::PluginInterface functions
-        //------------------------------------------------------------
-        virtual const char *
-        GetPluginName()
-        {
-            return GetPluginNameStatic();
-        }
-        
-        virtual const char *
-        GetShortPluginName()
-        {
-            return GetShortPluginNameStatic();
-        }
-        
-        virtual uint32_t
-        GetPluginVersion()
-        {
-            return 1;
-        }
+    virtual bool
+    GetProcessInfo (lldb::pid_t pid, 
+                    lldb_private::ProcessInfo &proc_info);
 
-        //------------------------------------------------------------
-        // lldb_private::Platform functions
-        //------------------------------------------------------------
-        virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
-                           lldb::ModuleSP &module_sp);
+    virtual bool
+    GetSupportedArchitectureAtIndex (uint32_t idx, 
+                                     lldb_private::ArchSpec &arch);
 
-        virtual const char *
-        GetDescription ()
-        {
-            return GetDescriptionStatic();
-        }
+protected:
+    std::string m_device_support_directory;
+    std::string m_device_support_directory_for_os_version;
+    std::string m_build_update;
+    //std::vector<FileSpec> m_device_support_os_dirs;
+    
+    const char *
+    GetDeviceSupportDirectory();
 
-        virtual void
-        GetStatus (Stream &strm);
+    const char *
+    GetDeviceSupportDirectoryForOSVersion();
 
-        virtual Error
-        GetFile (const FileSpec &platform_file, 
-                 const UUID *uuid_ptr,
-                 FileSpec &local_file);
+private:
+    DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);
 
-        virtual uint32_t
-        FindProcessesByName (const char *name_match, 
-                             NameMatchType name_match_type,
-                             ProcessInfoList &process_infos);
-
-        virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
-
-        virtual bool
-        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
-
-    protected:
-        std::string m_device_support_directory;
-        std::string m_device_support_directory_for_os_version;
-        std::string m_build_update;
-        //std::vector<FileSpec> m_device_support_os_dirs;
-        
-        const char *
-        GetDeviceSupportDirectory();
-
-        const char *
-        GetDeviceSupportDirectoryForOSVersion();
-
-    private:
-        DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);
-
-    };
-} // namespace lldb_private
+};
 
 #endif  // liblldb_PlatformRemoteiOS_h_

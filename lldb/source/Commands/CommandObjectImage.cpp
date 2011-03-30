@@ -763,7 +763,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_sort_order = eSortOrderNone;
         }
 
@@ -1167,7 +1166,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_format_array.clear();
         }
 
@@ -1429,7 +1427,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_type = eLookupTypeInvalid;
             m_str.clear();
             m_file.Clear();

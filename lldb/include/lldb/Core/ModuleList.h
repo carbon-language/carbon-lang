@@ -266,9 +266,25 @@ public:
     lldb::ModuleSP
     FindModule (const Module *module_ptr);
 
+    //------------------------------------------------------------------
+    // Find a module by UUID
+    //
+    // The UUID value for a module is extracted from the ObjectFile and
+    // is the MD5 checksum, or a smarter object file equivalent, so 
+    // finding modules by UUID values is very efficient and accurate.
+    //------------------------------------------------------------------
+    lldb::ModuleSP
+    FindModule (const UUID &uuid);
+    
     lldb::ModuleSP
     FindFirstModuleForFileSpec (const FileSpec &file_spec,
-                                const ConstString *object_name = NULL);
+                                const ArchSpec *arch_ptr,
+                                const ConstString *object_name);
+
+    lldb::ModuleSP
+    FindFirstModuleForPlatormFileSpec (const FileSpec &platform_file_spec, 
+                                       const ArchSpec *arch_ptr,
+                                       const ConstString *object_name);
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name,

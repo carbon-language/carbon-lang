@@ -912,8 +912,7 @@ Host::GetOSVersion
 }
 
 static bool
-GetMacOSXProcessName (NameMatchType name_match_type,
-                      const char *name_match, 
+GetMacOSXProcessName (const ProcessInfoMatch *match_info_ptr,
                       ProcessInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
@@ -923,7 +922,9 @@ GetMacOSXProcessName (NameMatchType name_match_type,
         if (name_len == 0)
             return false;
         
-        if (NameMatches(process_name, name_match_type, name_match))
+        if (match_info_ptr == NULL || NameMatches(process_name,
+                                                  match_info_ptr->GetNameMatchType(),
+                                                  match_info_ptr->GetProcessInfo().GetName()))
         {
             process_info.SetName (process_name);
             return true;
@@ -966,56 +967,6 @@ GetMacOSXProcessCPUType (ProcessInfo &process_info)
     return false;
 }
 
-// TODO: move this into the platform
-static bool
-GetGroupName (uint32_t gid, std::string &group_name)
-{
-    char group_buffer[PATH_MAX];
-    size_t group_buffer_size = sizeof(group_buffer);
-    struct group group_info;
-    struct group *group_info_ptr = &group_info;
-    // User the real user ID here, not the effective user ID
-    if (::getgrgid_r (gid,
-                      &group_info,
-                      group_buffer,
-                      group_buffer_size,
-                      &group_info_ptr) == 0)
-    {
-        if (group_info_ptr)
-        {
-            group_name.assign (group_info_ptr->gr_name);
-            return true;
-        }
-    }
-    group_name.clear();
-    return false;
-}
-
-// TODO: move this into the platform
-static bool
-GetUserName (uint32_t uid, std::string &user_name)
-{
-    struct passwd user_info;
-    struct passwd *user_info_ptr = &user_info;
-    char user_buffer[PATH_MAX];
-    size_t user_buffer_size = sizeof(user_buffer);
-    if (::getpwuid_r (uid,
-                      &user_info,
-                      user_buffer,
-                      user_buffer_size,
-                      &user_info_ptr) == 0)
-    {
-        if (user_info_ptr)
-        {
-            user_name.assign (user_info_ptr->pw_name);
-            return true;
-        }
-    }
-    user_name.clear();
-    return false;
-}
-
-
 static bool
 GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
 {
@@ -1055,7 +1006,7 @@ GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
 
 
 uint32_t
-Host::FindProcessesByName (const char *name, NameMatchType name_match_type, ProcessInfoList &process_infos)
+Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &process_infos)
 {
     int num_pids;
     int size_of_pids;
@@ -1091,11 +1042,12 @@ Host::FindProcessesByName (const char *name, NameMatchType name_match_type, Proc
         
         ProcessInfo process_info;
         process_info.SetProcessID (bsd_info.pbi_pid);
-        if (GetMacOSXProcessName (name_match_type, name, process_info))
+        if (GetMacOSXProcessName (&match_info, process_info))
         {
             GetMacOSXProcessCPUType (process_info);
             GetMacOSXProcessUserAndGroup (process_info);
-            process_infos.Append (process_info);
+            if (match_info.Matches (process_info))
+                process_infos.Append (process_info);
         }
     }    
     return process_infos.GetSize();
@@ -1105,7 +1057,7 @@ bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
     process_info.SetProcessID(pid);
-    if (GetMacOSXProcessName (eNameMatchIgnore, NULL, process_info))
+    if (GetMacOSXProcessName (NULL, process_info))
     {
         GetMacOSXProcessCPUType (process_info);
         GetMacOSXProcessUserAndGroup (process_info);

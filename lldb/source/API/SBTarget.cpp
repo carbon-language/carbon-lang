@@ -743,7 +743,7 @@ SBTarget::FindModule (const SBFileSpec &sb_file_spec)
     if (m_opaque_sp && sb_file_spec.IsValid())
     {
         // The module list is thread safe, no need to lock
-        sb_module.SetModule (m_opaque_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL));
+        sb_module.SetModule (m_opaque_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL, NULL));
     }
     return sb_module;
 }

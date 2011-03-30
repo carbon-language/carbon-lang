@@ -213,6 +213,20 @@ public:
     GetSupportsThreadSuffix ();
 
     bool
+    GetProcessInfo (lldb::pid_t pid, 
+                    lldb_private::ProcessInfo &process_info);
+
+    uint32_t
+    FindProcesses (const lldb_private::ProcessInfoMatch &process_match_info,
+                   lldb_private::ProcessInfoList &process_infos);
+
+    bool
+    GetUserName (uint32_t uid, std::string &name);
+    
+    bool
+    GetGroupName (uint32_t gid, std::string &name);
+
+    bool
     HasFullVContSupport ()
     {
         return GetVContSupported ('A');
@@ -239,13 +253,17 @@ protected:
     //------------------------------------------------------------------
     lldb_private::LazyBool m_supports_not_sending_acks;
     lldb_private::LazyBool m_supports_thread_suffix;
-    lldb_private::LazyBool m_supports_qHostInfo;
     lldb_private::LazyBool m_supports_vCont_all;
     lldb_private::LazyBool m_supports_vCont_any;
     lldb_private::LazyBool m_supports_vCont_c;
     lldb_private::LazyBool m_supports_vCont_C;
     lldb_private::LazyBool m_supports_vCont_s;
     lldb_private::LazyBool m_supports_vCont_S;
+    lldb_private::LazyBool m_qHostInfo_is_valid;
+    bool m_supports_qProcessInfoPID;
+    bool m_supports_qfProcessInfo;
+    bool m_supports_qUserName;
+    bool m_supports_qGroupName;
 
     // If we need to send a packet while the target is running, the m_async_XXX
     // member variables take care of making this happen.
@@ -263,6 +281,9 @@ protected:
     std::string m_os_kernel;
     std::string m_hostname;
     
+    bool
+    DecodeProcessInfoResponse (StringExtractorGDBRemote &response, 
+                               lldb_private::ProcessInfo &process_info);
 private:
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationClient only

@@ -128,39 +128,51 @@ PlatformMacOSX::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
-uint32_t
-PlatformMacOSX::FindProcessesByName (const char *name_match, 
-                                     NameMatchType name_match_type,
-                                     ProcessInfoList &process_infos)
+Error
+PlatformMacOSX::GetSharedModule (const FileSpec &platform_file, 
+                                 const ArchSpec &arch,
+                                 const UUID *uuid_ptr,
+                                 const ConstString *object_name_ptr,
+                                 off_t object_offset,
+                                 ModuleSP &module_sp,
+                                 ModuleSP *old_module_sp_ptr,
+                                 bool *did_create_ptr)
 {
-    uint32_t match_count = 0;
-    if (IsHost())
-    {
-        match_count = Host::FindProcessesByName (name_match, name_match_type, process_infos);
-    
-    }
-    else
-    {
-        if (m_remote_platform_sp)
-            match_count = m_remote_platform_sp->FindProcessesByName (name_match, name_match_type, process_infos);
-    }
-    return 0;    
-}
+    Error error;
+    module_sp.reset();
 
-bool
-PlatformMacOSX::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
-{
-    bool sucess = false;
-    if (IsHost())
+    if (IsRemote())
     {
-        sucess = Host::GetProcessInfo (pid, process_info);
-    }
-    else
-    {
+        // If we have a remote platform always, let it try and locate
+        // the shared module first.
         if (m_remote_platform_sp)
-            sucess = m_remote_platform_sp->GetProcessInfo (pid, process_info);
+        {
+            error = m_remote_platform_sp->GetSharedModule (platform_file,
+                                                           arch,
+                                                           uuid_ptr,
+                                                           object_name_ptr,
+                                                           object_offset,
+                                                           module_sp,
+                                                           old_module_sp_ptr,
+                                                           did_create_ptr);
+        }
     }
-    return sucess;
+    
+    if (!module_sp)
+    {
+        // Fall back to the local platform and find the file locally
+        error = Platform::GetSharedModule(platform_file,
+                                          arch,
+                                          uuid_ptr,
+                                          object_name_ptr,
+                                          object_offset,
+                                          module_sp,
+                                          old_module_sp_ptr,
+                                          did_create_ptr);
+    }
+    if (module_sp)
+        module_sp->SetPlatformFileSpec(platform_file);
+    return error;
 }
 
 bool
@@ -186,4 +198,5 @@ PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
     }
     return false;
 }
+
 

@@ -278,6 +278,12 @@ protected:
             return lldb::endian::InlHostByteOrder();
         }
 
+        lldb_private::ArchSpec
+        GetArchitecture () const
+        {
+            return lldb_private::ArchSpec (lldb_private::eArchTypeMachO, header.cputype, header.cpusubtype);
+        }
+
         const Segment *
         FindSegment (const lldb_private::ConstString &name) const;
 
@@ -337,20 +343,24 @@ protected:
 
     uint32_t
     ParseLoadCommands (const lldb_private::DataExtractor& data,
-                       struct DYLDImageInfo& dylib_info,
+                       DYLDImageInfo& dylib_info,
                        lldb_private::FileSpec *lc_id_dylinker);
 
     bool
     UpdateImageLoadAddress(lldb_private::Module *module,
-                           struct DYLDImageInfo& info);
+                           DYLDImageInfo& info);
 
     bool
     UnloadImageLoadAddress (lldb_private::Module *module,
-                            struct DYLDImageInfo& info);
+                            DYLDImageInfo& info);
+
+    lldb::ModuleSP
+    FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &image_info,
+                                      bool can_create,
+                                      bool *did_create_ptr);
 
     DYLDImageInfo *
-    GetImageInfo (const lldb_private::FileSpec &file_spec, 
-                  const lldb_private::UUID &uuid);
+    GetImageInfo (lldb_private::Module *module);
 
     bool
     NeedToLocateDYLD () const;

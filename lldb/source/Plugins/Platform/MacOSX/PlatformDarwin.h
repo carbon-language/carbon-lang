@@ -16,61 +16,71 @@
 // Project includes
 #include "lldb/Target/Platform.h"
 
-namespace lldb_private {
+class PlatformDarwin : public lldb_private::Platform
+{
+public:
+    PlatformDarwin (bool is_host);
 
-    class PlatformDarwin : public Platform
-    {
-    public:
-        PlatformDarwin (bool is_host);
+    virtual
+    ~PlatformDarwin();
+    
+    //------------------------------------------------------------
+    // lldb_private::Platform functions
+    //------------------------------------------------------------
+    virtual lldb_private::Error
+    ResolveExecutable (const lldb_private::FileSpec &exe_file,
+                       const lldb_private::ArchSpec &arch,
+                       lldb::ModuleSP &module_sp);
 
-        virtual
-        ~PlatformDarwin();
-        
-        //------------------------------------------------------------
-        // lldb_private::Platform functions
-        //------------------------------------------------------------
-        virtual Error
-        ResolveExecutable (const FileSpec &exe_file,
-                           const ArchSpec &arch,
-                           lldb::ModuleSP &module_sp);
+    virtual size_t
+    GetSoftwareBreakpointTrapOpcode (lldb_private::Target &target, 
+                                     lldb_private::BreakpointSite *bp_site);
 
-        virtual size_t
-        GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
+    virtual bool
+    GetRemoteOSVersion ();
 
-        virtual bool
-        GetRemoteOSVersion ();
+    virtual bool
+    GetRemoteOSBuildString (std::string &s);
+    
+    virtual bool
+    GetRemoteOSKernelDescription (std::string &s);
 
-        virtual bool
-        GetRemoteOSBuildString (std::string &s);
-        
-        virtual bool
-        GetRemoteOSKernelDescription (std::string &s);
+    // Remote Platform subclasses need to override this function
+    virtual lldb_private::ArchSpec
+    GetRemoteSystemArchitecture ();
 
-        // Remote Platform subclasses need to override this function
-        virtual ArchSpec
-        GetRemoteSystemArchitecture ();
+    virtual bool
+    IsConnected () const;
 
-        virtual bool
-        IsConnected () const;
+    virtual lldb_private::Error
+    ConnectRemote (lldb_private::Args& args);
 
-        virtual Error
-        ConnectRemote (Args& args);
+    virtual lldb_private::Error
+    DisconnectRemote ();
 
-        virtual Error
-        DisconnectRemote ();
+    virtual const char *
+    GetHostname ();
 
-        virtual const char *
-        GetRemoteHostname ();
+    virtual const char *
+    GetUserName (uint32_t uid);
+    
+    virtual const char *
+    GetGroupName (uint32_t gid);
 
+    virtual bool
+    GetProcessInfo (lldb::pid_t pid, 
+                    lldb_private::ProcessInfo &proc_info);
+    
+    virtual uint32_t
+    FindProcesses (const lldb_private::ProcessInfoMatch &match_info,
+                   lldb_private::ProcessInfoList &process_infos);
+    
+protected:
+    lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
 
-    protected:
-        lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
+private:
+    DISALLOW_COPY_AND_ASSIGN (PlatformDarwin);
 
-    private:
-        DISALLOW_COPY_AND_ASSIGN (PlatformDarwin);
-
-    };
-} // namespace lldb_private
+};
 
 #endif  // liblldb_PlatformDarwin_h_

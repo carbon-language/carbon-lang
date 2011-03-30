@@ -300,7 +300,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_count = -1;
             m_start = 0;
         }
@@ -545,7 +544,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_avoid_no_debug = true;
             m_run_mode = eOnlyDuringStepping;
             m_avoid_regexp.clear();
@@ -1044,7 +1042,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_thread_idx = LLDB_INVALID_THREAD_ID;
             m_frame_idx = 0;
             m_stop_others = false;

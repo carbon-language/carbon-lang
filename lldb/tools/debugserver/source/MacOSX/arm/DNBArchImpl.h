@@ -45,6 +45,7 @@ public:
     {
     }
 
+    static void Initialize();
     static const DNBRegisterSetInfo *
     GetRegisterSetInfo(nub_size_t *num_reg_sets);
 
@@ -63,6 +64,7 @@ public:
     virtual void            ThreadWillResume();
     virtual bool            ThreadDidStop();
 
+    static DNBArchProtocol *Create (MachThread *thread);
     static const uint8_t * const SoftwareBreakpointOpcode (nub_size_t byte_size);
     static uint32_t         GetCPUType();
 

@@ -39,11 +39,12 @@ Options::~Options ()
 {
 }
 
-
 void
-Options::ResetOptionValues ()
+Options::Reset ()
 {
     m_seen_options.clear();
+    // Let the subclass reset its option values
+    ResetOptionValues ();
 }
 
 void

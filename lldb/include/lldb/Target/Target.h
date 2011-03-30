@@ -135,7 +135,9 @@ private:
     ///
     /// @see TargetList::CreateTarget(const FileSpec*, const ArchSpec*)
     //------------------------------------------------------------------
-    Target(Debugger &debugger, const lldb::PlatformSP &platform_sp);
+    Target (Debugger &debugger,
+            const ArchSpec &target_arch,
+            const lldb::PlatformSP &platform_sp);
 
 public:
     ~Target();
@@ -345,13 +347,13 @@ public:
     ArchSpec &
     GetArchitecture ()
     {
-        return m_arch_spec;
+        return m_arch;
     }
     
     const ArchSpec &
     GetArchitecture () const
     {
-        return m_arch_spec;
+        return m_arch;
     }
     
     //------------------------------------------------------------------
@@ -662,7 +664,7 @@ protected:
     Debugger &      m_debugger;
     lldb::PlatformSP m_platform_sp;     ///< The platform for this target.
     Mutex           m_mutex;            ///< An API mutex that is used by the lldb::SB* classes make the SB interface thread safe
-    ArchSpec        m_arch_spec;
+    ArchSpec        m_arch;
     ModuleList      m_images;           ///< The list of images for this process (shared libraries and anything dynamically loaded).
     SectionLoadList m_section_load_list;
     BreakpointList  m_breakpoint_list;

@@ -474,9 +474,9 @@ SymbolContextSpecifier::AddSpecification (const char *spec_string, Specification
         break;
     case eModuleSpecified:
         {
-        // See if we can find the Module, if so stick it in the SymbolContext.
-            FileSpec module_spec(spec_string, true);
-            lldb::ModuleSP module_sp = m_target_sp->GetImages().FindFirstModuleForFileSpec (module_spec);
+            // See if we can find the Module, if so stick it in the SymbolContext.
+            FileSpec module_spec(spec_string, false);
+            lldb::ModuleSP module_sp = m_target_sp->GetImages().FindFirstModuleForFileSpec (module_spec, NULL, NULL);
             m_type |= eModuleSpecified;
             if (module_sp)
                 m_module_sp = module_sp;
@@ -487,7 +487,7 @@ SymbolContextSpecifier::AddSpecification (const char *spec_string, Specification
     case eFileSpecified:
         // CompUnits can't necessarily be resolved here, since an inlined function might show up in 
         // a number of CompUnits.  Instead we just convert to a FileSpec and store it away.
-        m_file_spec_ap.reset (new FileSpec (spec_string, true));
+        m_file_spec_ap.reset (new FileSpec (spec_string, false));
         m_type |= eFileSpecified;
         break;
     case eLineStartSpecified:

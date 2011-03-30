@@ -161,8 +161,8 @@ StopInfoMachException::GetDescription ()
                 case llvm::Triple::x86_64:
                     switch (m_exc_code)
                     {
-                    case 1: subcode_desc = "EXC_I386_SGL"; break;
-                    case 2: subcode_desc = "EXC_I386_BPT"; break;
+                    case 1: code_desc = "EXC_I386_SGL"; break;
+                    case 2: code_desc = "EXC_I386_BPT"; break;
                     }
                     break;
 
@@ -170,14 +170,14 @@ StopInfoMachException::GetDescription ()
                 case llvm::Triple::ppc64:
                     switch (m_exc_code)
                     {
-                    case 1: subcode_desc = "EXC_PPC_BREAKPOINT"; break;
+                    case 1: code_desc = "EXC_PPC_BREAKPOINT"; break;
                     }
                     break;
                 
                 case llvm::Triple::arm:
                     switch (m_exc_code)
                     {
-                    case 1: subcode_desc = "EXC_ARM_BREAKPOINT"; break;
+                    case 1: code_desc = "EXC_ARM_BREAKPOINT"; break;
                     }
                     break;
 
@@ -332,7 +332,10 @@ StopInfoMachException::CreateStopReasonWithMachException
                         else
                             return StopInfoSP();
                     }
-
+                    else if (cpu == llvm::Triple::arm)
+                    {
+                        return StopInfo::CreateStopReasonToTrace (thread);
+                    }
                 }
             }
             break;

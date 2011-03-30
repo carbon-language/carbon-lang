@@ -77,7 +77,6 @@ CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *o
 void
 CommandObjectFile::CommandOptions::ResetOptionValues ()
 {
-    Options::ResetOptionValues();
     m_arch.Clear();
 }
 

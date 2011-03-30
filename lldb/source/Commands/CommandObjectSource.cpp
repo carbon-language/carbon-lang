@@ -74,8 +74,6 @@ class CommandObjectSourceInfo : public CommandObject
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
-
             file_spec.Clear();
             file_name.clear();
             start_line = 0;
@@ -200,8 +198,6 @@ class CommandObjectSourceList : public CommandObject
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
-
             file_spec.Clear();
             file_name.clear();
             symbol_name.clear();

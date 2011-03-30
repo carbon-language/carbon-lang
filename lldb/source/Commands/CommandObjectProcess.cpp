@@ -82,7 +82,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             stop_at_entry = false;
             in_new_tty = false;
             tty_name.clear();
@@ -483,7 +482,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             pid = LLDB_INVALID_PROCESS_ID;
             name.clear();
             waitfor = false;
@@ -527,7 +525,13 @@ public:
                 if (platform_sp)
                 {
                     ProcessInfoList process_infos;
-                    platform_sp->FindProcessesByName (partial_name, partial_name ? eNameMatchStartsWith : eNameMatchIgnore, process_infos);
+                    ProcessInfoMatch match_info;
+                    if (partial_name)
+                    {
+                        match_info.GetProcessInfo().SetName(partial_name);
+                        match_info.SetNameMatchType(eNameMatchStartsWith);
+                    }
+                    platform_sp->FindProcesses (match_info, process_infos);
                     const uint32_t num_matches = process_infos.GetSize();
                     if (num_matches > 0)
                     {
@@ -706,7 +710,8 @@ public:
                         PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
                         if (platform_sp)
                         {
-                            platform_sp->FindProcessesByName (wait_name, eNameMatchEquals, process_infos);
+                            ProcessInfoMatch match_info (wait_name, eNameMatchEquals);
+                            platform_sp->FindProcesses (match_info, process_infos);
                         }
                         if (process_infos.GetSize() > 1)
                         {
@@ -1011,7 +1016,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             plugin_name.clear();
         }
         
@@ -1601,7 +1605,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             stop.clear();
             notify.clear();
             pass.clear();

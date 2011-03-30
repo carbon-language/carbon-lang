@@ -126,20 +126,6 @@ PlatformRemoteGDBServer::~PlatformRemoteGDBServer()
 {
 }
 
-uint32_t
-PlatformRemoteGDBServer::FindProcessesByName (const char *name_match, 
-                                              NameMatchType name_match_type,
-                                              ProcessInfoList &process_infos)
-{
-    return 0;
-}
-
-bool
-PlatformRemoteGDBServer::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
-{
-    return false;
-}
-
 bool
 PlatformRemoteGDBServer::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
@@ -240,11 +226,55 @@ PlatformRemoteGDBServer::DisconnectRemote ()
 }
 
 const char *
-PlatformRemoteGDBServer::GetRemoteHostname ()
+PlatformRemoteGDBServer::GetHostname ()
 {
     m_gdb_client.GetHostname (m_name);
     if (m_name.empty())
         return NULL;
     return m_name.c_str();
 }
+
+const char *
+PlatformRemoteGDBServer::GetUserName (uint32_t uid)
+{
+    // Try and get a cache user name first
+    const char *cached_user_name = Platform::GetUserName(uid);
+    if (cached_user_name)
+        return cached_user_name;
+    std::string name;
+    if (m_gdb_client.GetUserName(uid, name))
+        return SetCachedUserName(uid, name.c_str(), name.size());
+
+    SetUserNameNotFound(uid); // Negative cache so we don't keep sending packets
+    return NULL;
+}
+
+const char *
+PlatformRemoteGDBServer::GetGroupName (uint32_t gid)
+{
+    const char *cached_group_name = Platform::GetGroupName(gid);
+    if (cached_group_name)
+        return cached_group_name;
+    std::string name;
+    if (m_gdb_client.GetGroupName(gid, name))
+        return SetCachedGroupName(gid, name.c_str(), name.size());
+
+    SetGroupNameNotFound(gid); // Negative cache so we don't keep sending packets
+    return NULL;
+}
+
+uint32_t
+PlatformRemoteGDBServer::FindProcesses (const ProcessInfoMatch &match_info,
+                                        ProcessInfoList &process_infos)
+{
+    return m_gdb_client.FindProcesses (match_info, process_infos);
+}
+
+bool
+PlatformRemoteGDBServer::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+{
+    return m_gdb_client.GetProcessInfo (pid, process_info);
+}
+
+
 

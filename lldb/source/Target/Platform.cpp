@@ -78,6 +78,35 @@ Platform::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
+Error
+Platform::GetSharedModule (const FileSpec &platform_file, 
+                           const ArchSpec &arch,
+                           const UUID *uuid_ptr,
+                           const ConstString *object_name_ptr,
+                           off_t object_offset,
+                           ModuleSP &module_sp,
+                           ModuleSP *old_module_sp_ptr,
+                           bool *did_create_ptr)
+{
+    // Don't do any path remapping for the default implementation
+    // of the platform GetSharedModule function, just call through
+    // to our static ModuleList function. Platform subclasses that
+    // implement remote debugging, might have a developer kits
+    // installed that have cached versions of the files for the
+    // remote target, or might implement a download and cache 
+    // locally implementation.
+    const bool always_create = false;
+    return ModuleList::GetSharedModule (platform_file, 
+                                        arch, 
+                                        uuid_ptr, 
+                                        object_name_ptr, 
+                                        object_offset, 
+                                        module_sp,
+                                        old_module_sp_ptr,
+                                        did_create_ptr,
+                                        always_create);
+}
+
 
 PlatformSP
 Platform::Create (const char *platform_name, Error &error)
@@ -127,7 +156,14 @@ Platform::Platform (bool is_host) :
     m_name (),
     m_major_os_version (UINT32_MAX),
     m_minor_os_version (UINT32_MAX),
-    m_update_os_version (UINT32_MAX)
+    m_update_os_version (UINT32_MAX),
+    m_system_arch(),
+    m_uid_map_mutex (Mutex::eMutexTypeNormal),
+    m_gid_map_mutex (Mutex::eMutexTypeNormal),
+    m_uid_map(),
+    m_gid_map(),
+    m_max_uid_name_len (0),
+    m_max_gid_name_len (0)
 {
 }
 
@@ -148,18 +184,18 @@ Platform::GetStatus (Stream &strm)
     uint32_t minor = UINT32_MAX;
     uint32_t update = UINT32_MAX;
     std::string s;
-    strm.Printf ("Platform: %s\n", GetShortPluginName());
+    strm.Printf ("  Platform: %s\n", GetShortPluginName());
 
     ArchSpec arch (GetSystemArchitecture());
     if (arch.IsValid())
     {
         if (!arch.GetTriple().str().empty())
-        strm.Printf("Triple: %s\n", arch.GetTriple().str().c_str());        
+        strm.Printf("    Triple: %s\n", arch.GetTriple().str().c_str());        
     }
 
     if (GetOSVersion(major, minor, update))
     {
-        strm.Printf("OS: %u", major);
+        strm.Printf("OS Version: %u", major);
         if (minor != UINT32_MAX)
             strm.Printf(".%u", minor);
         if (update != UINT32_MAX)
@@ -172,18 +208,18 @@ Platform::GetStatus (Stream &strm)
     }
 
     if (GetOSKernelDescription (s))
-        strm.Printf("Kernel: %s\n", s.c_str());
+        strm.Printf("    Kernel: %s\n", s.c_str());
 
     if (IsHost())
     {
-        strm.Printf("Hostname: %s\n", GetHostname());
+        strm.Printf("  Hostname: %s\n", GetHostname());
     }
     else
     {
-        if (IsConnected())
-            strm.Printf("Remote hostname: %s\n", GetHostname());
-        else
-            strm.PutCString("Not connected to a remote platform.\n");
+        const bool is_connected = IsConnected();
+        if (is_connected)
+            strm.Printf("  Hostname: %s\n", GetHostname());
+        strm.Printf(" Connected: %s\n", is_connected ? "yes" : "no");
     }
 }
 
@@ -266,33 +302,46 @@ Platform::GetOSKernelDescription (std::string &s)
 const char *
 Platform::GetHostname ()
 {
-    if (m_name.empty())
+    if (IsHost() && m_name.empty())
     {
-        if (IsHost())
-        {
-            if (!Host::GetHostname(m_name))
-                return "localhost";
-        }
-        else
-        {
-            if (IsConnected())
-            {
-                const char *instance_name = GetRemoteHostname ();
-                if (instance_name)
-                    m_name.assign (instance_name);
-            }
-            else
-            {
-                return "remote";
-            }
-        }
+        if (!Host::GetHostname(m_name))
+            return "localhost";
     }
-    if (!m_name.empty())        
-        return m_name.c_str();
+
+    if (m_name.empty())        
+        return NULL;
+    return m_name.c_str();
+}
+
+const char *
+Platform::GetUserName (uint32_t uid)
+{
+    const char *user_name = GetCachedUserName(uid);
+    if (user_name)
+        return user_name;
+    if (IsHost())
+    {
+        std::string name;
+        if (Host::GetUserName(uid, name))
+            return SetCachedUserName (uid, name.c_str(), name.size());
+    }
     return NULL;
 }
 
-
+const char *
+Platform::GetGroupName (uint32_t gid)
+{
+    const char *group_name = GetCachedGroupName(gid);
+    if (group_name)
+        return group_name;
+    if (IsHost())
+    {
+        std::string name;
+        if (Host::GetGroupName(gid, name))
+            return SetCachedGroupName (gid, name.c_str(), name.size());
+    }
+    return NULL;
+}
 
 bool
 Platform::SetOSVersion (uint32_t major, 
@@ -446,4 +495,24 @@ Platform::DisconnectRemote ()
     else
         error.SetErrorStringWithFormat ("Platform::DisconnectRemote() is not supported by %s", GetShortPluginName());
     return error;
+}
+
+bool
+Platform::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+{
+    // Take care of the host case so that each subclass can just 
+    // call Platform::GetProcessInfo (pid, process_info)
+    if (IsHost())
+        return Host::GetProcessInfo (pid, process_info);
+    return false;
+}
+
+uint32_t
+Platform::FindProcesses (const ProcessInfoMatch &match_info,
+                         ProcessInfoList &process_infos)
+{
+    uint32_t match_count = 0;
+    if (IsHost())
+        match_count = Host::FindProcesses (match_info, process_infos);
+    return match_count;    
 }

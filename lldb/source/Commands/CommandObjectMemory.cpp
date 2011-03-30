@@ -164,7 +164,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_format = eFormatBytesWithASCII;
             m_byte_size = 0;
             m_count = 0;
@@ -493,7 +492,6 @@ public:
         void
         ResetOptionValues ()
         {
-            Options::ResetOptionValues();
             m_format = eFormatBytes;
             m_byte_size = 1;
             m_infile.Clear();

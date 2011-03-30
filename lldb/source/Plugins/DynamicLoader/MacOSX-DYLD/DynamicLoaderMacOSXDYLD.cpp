@@ -34,7 +34,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-using namespace llvm::MachO;
 
 /// FIXME - The ObjC Runtime trampoline handler doesn't really belong here.
 /// I am putting it here so I can invoke it in the Trampoline code here, but
@@ -42,16 +41,37 @@ using namespace llvm::MachO;
 
 
 DynamicLoaderMacOSXDYLD::DYLDImageInfo *
-DynamicLoaderMacOSXDYLD::GetImageInfo (const FileSpec &file_spec, const lldb_private::UUID &uuid)
+DynamicLoaderMacOSXDYLD::GetImageInfo (Module *module)
 {
+    const UUID &module_uuid = module->GetUUID();
     DYLDImageInfo::collection::iterator pos, end = m_dyld_image_infos.end();
+
+    // First try just by UUID as it is the safest.
+    if (module_uuid.IsValid())
+    {
+        for (pos = m_dyld_image_infos.begin(); pos != end; ++pos)
+        {
+            if (pos->uuid == module_uuid)
+                return &(*pos);
+        }
+        
+        if (m_dyld.uuid == module_uuid)
+            return &m_dyld;
+    }
+
+    // Next try by platform path only for things that don't have a valid UUID
+    // since if a file has a valid UUID in real life it should also in the
+    // dyld info. This is the next safest because the paths in the dyld info
+    // are platform paths, not local paths. For local debugging platform == local
+    // paths.
+    const FileSpec &platform_file_spec = module->GetPlatformFileSpec();
     for (pos = m_dyld_image_infos.begin(); pos != end; ++pos)
     {
-        if (pos->uuid == uuid && pos->file_spec == file_spec)
+        if (pos->file_spec == platform_file_spec && pos->uuid.IsValid() == false)
             return &(*pos);
     }
     
-    if (m_dyld.uuid == uuid && m_dyld.file_spec == file_spec)
+    if (m_dyld.file_spec == platform_file_spec && m_dyld.uuid.IsValid() == false)
         return &m_dyld;
 
     return NULL;
@@ -205,6 +225,35 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
     return false;
 }
 
+ModuleSP
+DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &image_info, bool can_create, bool *did_create_ptr)
+{
+    if (did_create_ptr)
+        *did_create_ptr = false;
+    ModuleSP module_sp;
+    ModuleList &target_images = m_process->GetTarget().GetImages();
+    const bool image_info_uuid_is_valid = image_info.uuid.IsValid();
+    if (image_info_uuid_is_valid)
+        module_sp = target_images.FindModule(image_info.uuid);
+    
+    if (!module_sp)
+    {
+        ArchSpec arch(image_info.GetArchitecture ());
+
+        module_sp = target_images.FindFirstModuleForFileSpec (image_info.file_spec, &arch, NULL);
+
+        if (can_create && !module_sp)
+        {
+            module_sp = m_process->GetTarget().GetSharedModule (image_info.file_spec,
+                                                                arch,
+                                                                image_info_uuid_is_valid ? &image_info.uuid : NULL);
+            if (did_create_ptr)
+                *did_create_ptr = module_sp;
+        }
+    }
+    return module_sp;
+}
+
 //----------------------------------------------------------------------
 // Assume that dyld is in memory at ADDR and try to parse it's load
 // commands
@@ -215,7 +264,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
     DataExtractor data; // Load command data
     if (ReadMachHeader (addr, &m_dyld.header, &data))
     {
-        if (m_dyld.header.filetype == HeaderFileTypeDynamicLinkEditor)
+        if (m_dyld.header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
         {
             m_dyld.address = addr;
             ModuleSP dyld_module_sp;
@@ -223,17 +272,10 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             {
                 if (m_dyld.file_spec)
                 {
-                    ArchSpec dyld_arch(eArchTypeMachO, m_dyld.header.cputype, m_dyld.header.cpusubtype);
-                    dyld_module_sp = m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (m_dyld.file_spec);
+                    dyld_module_sp = FindTargetModuleForDYLDImageInfo (m_dyld, true, NULL);
 
-                    if (dyld_module_sp.get() == NULL || dyld_module_sp->GetArchitecture() != dyld_arch)
-                    {
-                        dyld_module_sp = m_process->GetTarget().GetSharedModule (m_dyld.file_spec,
-                                                                                 dyld_arch,
-                                                                                 &m_dyld.uuid);
-                    }
-
-                    UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
+                    if (dyld_module_sp)
+                        UpdateImageLoadAddress (dyld_module_sp.get(), m_dyld);
                 }
             }
 
@@ -307,7 +349,7 @@ DynamicLoaderMacOSXDYLD::UpdateCommPageLoadAddress(Module *module)
 // updated INFO that is passed in.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, struct DYLDImageInfo& info)
+DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& info)
 {
     bool changed = false;
     if (module)
@@ -379,7 +421,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, struct DYLDImag
 // updated INFO that is passed in.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, struct DYLDImageInfo& info)
+DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& info)
 {
     bool changed = false;
     if (module)
@@ -551,6 +593,8 @@ uint32_t
 DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    ModuleList& target_images = m_process->GetTarget().GetImages();
+
     if (ReadAllImageInfosStructure ())
     {
         Mutex::Locker locker(m_mutex);
@@ -627,13 +671,12 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                 // we might have shared libraries that got loaded from
                 // elsewhere due to DYLD_FRAMEWORK_PATH, or DYLD_LIBRARY_PATH
                 // environment variables...
-                ModuleList& images = m_process->GetTarget().GetImages();
-                const size_t num_images = images.GetSize();
+                const size_t num_images = target_images.GetSize();
                 for (idx = 0; idx < num_images; ++idx)
                 {
-                    ModuleSP module_sp (images.GetModuleAtIndex (idx));
+                    ModuleSP module_sp (target_images.GetModuleAtIndex (idx));
                     
-                    if (GetImageInfo (module_sp->GetFileSpec(), module_sp->GetUUID()) == NULL)
+                    if (GetImageInfo (module_sp.get()) == NULL)
                         unloaded_module_list.AppendIfNeeded (module_sp);
                 }
             }
@@ -658,7 +701,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                     {
                         if (log)
                             old_dyld_all_image_infos[old_idx].PutToLog (log.get());
-                        ModuleSP unload_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (old_dyld_all_image_infos[old_idx].file_spec));
+                        ModuleSP unload_image_module_sp (FindTargetModuleForDYLDImageInfo (old_dyld_all_image_infos[old_idx], false, NULL));
                         if (unload_image_module_sp.get())
                         {
                             if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[old_idx]))
@@ -696,18 +739,11 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
         ModuleList loaded_module_list;
         for (uint32_t idx = 0; idx<num_dylibs; ++idx)
         {
-            ArchSpec arch_spec(eArchTypeMachO, m_dyld_image_infos[idx].header.cputype, m_dyld_image_infos[idx].header.cpusubtype);
-            ModuleSP image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (m_dyld_image_infos[idx].file_spec));
-            if (image_module_sp.get() == NULL || image_module_sp->GetArchitecture() != arch_spec)
-            {
-                image_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[idx].file_spec,
-                                                                          arch_spec,
-                                                                          &m_dyld_image_infos[idx].uuid);
-            }
+            ModuleSP image_module_sp (FindTargetModuleForDYLDImageInfo (m_dyld_image_infos[idx], true, NULL));
 
             if (image_module_sp)
             {
-                if (m_dyld_image_infos[idx].header.filetype == HeaderFileTypeDynamicLinkEditor)
+                if (m_dyld_image_infos[idx].header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
                     image_module_sp->SetIsDynamicLinkEditor (true);
 
                 ObjectFile *objfile = image_module_sp->GetObjectFile ();
@@ -720,17 +756,19 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                         Section *commpage_section = sections->FindSectionByName(commpage_dbstr).get();
                         if (commpage_section)
                         {
-                            FileSpec objfile_file_spec(objfile->GetFileSpec());
-                            ModuleSP commpage_image_module_sp(m_process->GetTarget().GetImages().FindFirstModuleForFileSpec (objfile_file_spec, &commpage_dbstr));
-                            if (commpage_image_module_sp.get() == NULL)
+                            const FileSpec objfile_file_spec = objfile->GetFileSpec();
+                            ArchSpec arch (m_dyld_image_infos[idx].GetArchitecture ());
+                            ModuleSP commpage_image_module_sp(target_images.FindFirstModuleForFileSpec (objfile_file_spec, &arch, &commpage_dbstr));
+                            if (!commpage_image_module_sp)
                             {
                                 commpage_image_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[idx].file_spec,
-                                                                                                   arch_spec,
+                                                                                                   arch,
                                                                                                    &m_dyld_image_infos[idx].uuid,
                                                                                                    &commpage_dbstr,
                                                                                                    objfile->GetOffset() + commpage_section->GetOffset());
-                                UpdateCommPageLoadAddress(commpage_image_module_sp.get());
                             }
+                            if (commpage_image_module_sp)
+                                UpdateCommPageLoadAddress (commpage_image_module_sp.get());
                         }
                     }
                 }
@@ -781,15 +819,15 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 // Returns true if we succeed, false if we fail for any reason.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header, DataExtractor *load_command_data)
+DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_header *header, DataExtractor *load_command_data)
 {
-    DataBufferHeap header_bytes(sizeof(mach_header), 0);
+    DataBufferHeap header_bytes(sizeof(llvm::MachO::mach_header), 0);
     Error error;
     size_t bytes_read = m_process->ReadMemory (addr, 
                                                header_bytes.GetBytes(), 
                                                header_bytes.GetByteSize(), 
                                                error);
-    if (bytes_read == sizeof(mach_header))
+    if (bytes_read == sizeof(llvm::MachO::mach_header))
     {
         uint32_t offset = 0;
         ::memset (header, 0, sizeof(header));
@@ -804,13 +842,13 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header,
         case llvm::MachO::HeaderMagic32:
         case llvm::MachO::HeaderMagic32Swapped:
             data.SetAddressByteSize(4);
-            load_cmd_addr += sizeof(mach_header);
+            load_cmd_addr += sizeof(llvm::MachO::mach_header);
             break;
 
         case llvm::MachO::HeaderMagic64:
         case llvm::MachO::HeaderMagic64Swapped:
             data.SetAddressByteSize(8);
-            load_cmd_addr += sizeof(mach_header_64);
+            load_cmd_addr += sizeof(llvm::MachO::mach_header_64);
             break;
 
         default:
@@ -818,7 +856,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header,
         }
 
         // Read the rest of dyld's mach header
-        if (data.GetU32(&offset, &header->cputype, (sizeof(mach_header)/sizeof(uint32_t)) - 1))
+        if (data.GetU32(&offset, &header->cputype, (sizeof(llvm::MachO::mach_header)/sizeof(uint32_t)) - 1))
         {
             if (load_command_data == NULL)
                 return true; // We were able to read the mach_header and weren't asked to read the load command bytes
@@ -851,7 +889,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, mach_header *header,
 // Parse the load commands for an image
 //----------------------------------------------------------------------
 uint32_t
-DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DYLDImageInfo& dylib_info, FileSpec *lc_id_dylinker)
+DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImageInfo& dylib_info, FileSpec *lc_id_dylinker)
 {
     uint32_t offset = 0;
     uint32_t cmd_idx;
@@ -863,15 +901,15 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
         // Clear out any load command specific data from DYLIB_INFO since
         // we are about to read it.
 
-        if (data.ValidOffsetForDataOfSize (offset, sizeof(load_command)))
+        if (data.ValidOffsetForDataOfSize (offset, sizeof(llvm::MachO::load_command)))
         {
-            load_command load_cmd;
+            llvm::MachO::load_command load_cmd;
             uint32_t load_cmd_offset = offset;
             load_cmd.cmd = data.GetU32 (&offset);
             load_cmd.cmdsize = data.GetU32 (&offset);
             switch (load_cmd.cmd)
             {
-            case LoadCommandSegment32:
+            case llvm::MachO::LoadCommandSegment32:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
                     segment.addr = data.GetU32 (&offset);
@@ -880,7 +918,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LoadCommandSegment64:
+            case llvm::MachO::LoadCommandSegment64:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
                     segment.addr = data.GetU64 (&offset);
@@ -889,7 +927,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LoadCommandDynamicLinkerIdent:
+            case llvm::MachO::LoadCommandDynamicLinkerIdent:
                 if (lc_id_dylinker)
                 {
                     uint32_t name_offset = load_cmd_offset + data.GetU32 (&offset);
@@ -898,7 +936,7 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, struct DY
                 }
                 break;
 
-            case LoadCommandUUID:
+            case llvm::MachO::LoadCommandUUID:
                 dylib_info.uuid.SetBytes(data.GetData (&offset, 16));
                 break;
 
@@ -920,6 +958,7 @@ void
 DynamicLoaderMacOSXDYLD::UpdateAllImageInfosHeaderAndLoadCommands()
 {
     uint32_t exe_idx = UINT32_MAX;
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     // Read any UUID values that we can get
     for (uint32_t i = 0; i < m_dyld_all_image_infos.dylib_info_count; i++)
     {
@@ -931,37 +970,35 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfosHeaderAndLoadCommands()
 
             ParseLoadCommands (data, m_dyld_image_infos[i], NULL);
 
-            if (m_dyld_image_infos[i].header.filetype == HeaderFileTypeExecutable)
+            if (m_dyld_image_infos[i].header.filetype == llvm::MachO::HeaderFileTypeExecutable)
                 exe_idx = i;
+            
+            if (log)
+                m_dyld_image_infos[i].PutToLog (log.get());
         }
     }
 
     if (exe_idx < m_dyld_image_infos.size())
     {
-        bool set_executable = false;
-        ArchSpec dyld_exe_arch_spec(eArchTypeMachO, m_dyld_image_infos[exe_idx].header.cputype, m_dyld_image_infos[exe_idx].header.cpusubtype);
-        ModuleSP exe_module_sp(m_process->GetTarget().GetExecutableModule());
-        if (exe_module_sp.get())
-        {
-            if (exe_module_sp->GetFileSpec() != m_dyld_image_infos[exe_idx].file_spec ||
-                exe_module_sp->GetArchitecture() != dyld_exe_arch_spec)
-                set_executable = true;
-        }
-        else
-            set_executable = true;
+        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (m_dyld_image_infos[exe_idx], false, NULL));
 
-        if (set_executable)
+        if (!exe_module_sp)
         {
+            ArchSpec exe_arch_spec (m_dyld_image_infos[exe_idx].GetArchitecture ());
             exe_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[exe_idx].file_spec,
-                                                                    dyld_exe_arch_spec,
+                                                                    exe_arch_spec,
                                                                     &m_dyld_image_infos[exe_idx].uuid);
-            if (exe_module_sp.get())
+        }
+        
+        if (exe_module_sp)
+        {
+            if (exe_module_sp.get() != m_process->GetTarget().GetExecutableModule().get())
             {
-                // If we found the file where it purported to be, then it should
-                // be safe to load dependent images.
-                bool get_dependent_images = exe_module_sp->GetFileSpec() == m_dyld_image_infos[exe_idx].file_spec;
-
-                m_process->GetTarget().SetExecutableModule (exe_module_sp, get_dependent_images);
+                // Don't load dependent images since we are in dyld where we will know
+                // and find out about all images that are loaded
+                bool get_dependent_images = false;
+                m_process->GetTarget().SetExecutableModule (exe_module_sp, 
+                                                            get_dependent_images);
             }
         }
     }
