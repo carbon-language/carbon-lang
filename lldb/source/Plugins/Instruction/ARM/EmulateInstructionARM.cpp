@@ -9771,7 +9771,7 @@ EmulateInstructionARM::EmulateSTRImmARM (const uint32_t opcode, const ARMEncodin
                   
         if (t == 15)
         {
-            uint32_t pc_value = ReadCoreReg (SP_REG, &success);
+            uint32_t pc_value = ReadCoreReg (PC_REG, &success);
             if (!success)
                 return false;
                   
