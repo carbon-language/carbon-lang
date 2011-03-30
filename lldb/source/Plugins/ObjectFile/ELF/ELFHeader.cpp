@@ -153,6 +153,33 @@ ELFHeader::AddressSizeInBytes(const uint8_t *magic)
     return address_size;
 }
 
+unsigned
+ELFHeader::GetRelocationJumpSlotType() const
+{
+    unsigned slot = 0;
+
+    switch (e_machine)
+    {
+    default:
+        assert(false && "architecture not supported");
+        break;
+    case EM_386:
+    case EM_486:
+        slot = R_386_JUMP_SLOT;
+        break;
+    case EM_X86_64:
+        slot = R_X86_64_JUMP_SLOT;
+        break;
+    case EM_ARM:
+        slot = R_ARM_JUMP_SLOT;
+        break;
+    case EM_MBLAZE:
+        slot = R_MICROBLAZE_JUMP_SLOT;
+    }
+
+    return slot;
+}
+
 //------------------------------------------------------------------------------
 // ELFSectionHeader
 
@@ -293,10 +320,54 @@ ELFDynamic::ELFDynamic()
 }
 
 bool
-ELFDynamic::Parse(const lldb_private::DataExtractor &data, uint32_t *offset) 
+ELFDynamic::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
 {
     const unsigned byte_size = data.GetAddressByteSize();
     return GetMaxS64(data, offset, &d_tag, byte_size, 2);
+}
+
+//------------------------------------------------------------------------------
+// ELFRel
+
+ELFRel::ELFRel()
+{
+    memset(this, 0, sizeof(ELFRel));
+}
+
+bool
+ELFRel::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+{
+    const unsigned byte_size = data.GetAddressByteSize();
+
+    // Read r_offset and r_info.
+    if (GetMaxU64(data, offset, &r_offset, byte_size, 2) == false)
+        return false;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+// ELFRela
+
+ELFRela::ELFRela()
+{
+    memset(this, 0, sizeof(ELFRela));
+}
+
+bool
+ELFRela::Parse(const lldb_private::DataExtractor &data, uint32_t *offset)
+{
+    const unsigned byte_size = data.GetAddressByteSize();
+
+    // Read r_offset and r_info.
+    if (GetMaxU64(data, offset, &r_offset, byte_size, 2) == false)
+        return false;
+
+    // Read r_addend;
+    if (GetMaxS64(data, offset, &r_addend, byte_size) == false)
+        return false;
+
+    return true;
 }
 
 

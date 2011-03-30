@@ -102,6 +102,11 @@ struct ELFHeader
     GetByteOrder() const;
 
     //--------------------------------------------------------------------------
+    /// The jump slot relocation type of this ELF.
+    unsigned
+    GetRelocationJumpSlotType() const;
+
+    //--------------------------------------------------------------------------
     /// Parse an ELFSectionHeader entry starting at position \p offset and
     /// update the data extractor with the address size and byte order
     /// attributes as defined by the header.
@@ -288,6 +293,123 @@ struct ELFDynamic
     ///    otherwise.
     bool
     Parse(const lldb_private::DataExtractor &data, uint32_t *offset);
+};
+
+//------------------------------------------------------------------------------
+/// @class ELFRel
+/// @brief Represents a relocation entry with an implicit addend.
+struct ELFRel
+{
+    elf_addr  r_offset;         ///< Address of reference.
+    elf_xword r_info;           ///< symbol index and type of relocation.
+
+    ELFRel();
+
+    /// Parse an ELFRel entry from the given DataExtractor starting at position
+    /// \p offset.  The address size of the DataExtractor determines if a 32 or
+    /// 64 bit object is to be parsed.
+    ///
+    /// @param[in] data
+    ///    The DataExtractor to read from.  The address size of the extractor
+    ///    determines if a 32 or 64 bit object should be read.
+    ///
+    /// @param[in,out] offset
+    ///    Pointer to an offset in the data.  On return the offset will be
+    ///    advanced by the number of bytes read.
+    ///
+    /// @return
+    ///    True if the ELFRel entry was successfully read and false otherwise.
+    bool
+    Parse(const lldb_private::DataExtractor &data, uint32_t *offset);
+
+    /// Returns the type when the given entry represents a 32-bit relocation.
+    static unsigned
+    RelocType32(const ELFRel &rel)
+    {
+        return rel.r_info & 0x0ff;
+    }
+
+    /// Returns the type when the given entry represents a 64-bit relocation.
+    static unsigned
+    RelocType64(const ELFRel &rel)
+    {
+        return rel.r_info & 0xffffffff;
+    }
+
+    /// Returns the symbol index when the given entry represents a 32-bit
+    /// reloction.
+    static unsigned
+    RelocSymbol32(const ELFRel &rel)
+    {
+        return rel.r_info >> 8;
+    }
+
+    /// Returns the symbol index when the given entry represents a 64-bit
+    /// reloction.
+    static unsigned
+    RelocSymbol64(const ELFRel &rel)
+    {
+        return rel.r_info >> 32;
+    }
+};
+
+//------------------------------------------------------------------------------
+/// @class ELFRela
+/// @brief Represents a relocation entry with an explicit addend.
+struct ELFRela
+{
+    elf_addr   r_offset;        ///< Address of reference.
+    elf_xword  r_info;          ///< Symbol index and type of relocation.
+    elf_sxword r_addend;        ///< Constant part of expression.
+
+    ELFRela();
+
+    /// Parse an ELFRela entry from the given DataExtractor starting at position
+    /// \p offset.  The address size of the DataExtractor determines if a 32 or
+    /// 64 bit object is to be parsed.
+    ///
+    /// @param[in] data
+    ///    The DataExtractor to read from.  The address size of the extractor
+    ///    determines if a 32 or 64 bit object should be read.
+    ///
+    /// @param[in,out] offset
+    ///    Pointer to an offset in the data.  On return the offset will be
+    ///    advanced by the number of bytes read.
+    ///
+    /// @return
+    ///    True if the ELFRela entry was successfully read and false otherwise.
+    bool
+    Parse(const lldb_private::DataExtractor &data, uint32_t *offset);
+
+    /// Returns the type when the given entry represents a 32-bit relocation.
+    static unsigned
+    RelocType32(const ELFRela &rela)
+    {
+        return rela.r_info & 0x0ff;
+    }
+
+    /// Returns the type when the given entry represents a 64-bit relocation.
+    static unsigned
+    RelocType64(const ELFRela &rela)
+    {
+        return rela.r_info & 0xffffffff;
+    }
+
+    /// Returns the symbol index when the given entry represents a 32-bit
+    /// reloction.
+    static unsigned
+    RelocSymbol32(const ELFRela &rela)
+    {
+        return rela.r_info >> 8;
+    }
+
+    /// Returns the symbol index when the given entry represents a 64-bit
+    /// reloction.
+    static unsigned
+    RelocSymbol64(const ELFRela &rela)
+    {
+        return rela.r_info >> 32;
+    }
 };
 
 } // End namespace elf.
