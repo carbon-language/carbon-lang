@@ -2124,106 +2124,95 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
 
   if (const ExplicitCastExpr *ExCast=dyn_cast_or_null<ExplicitCastExpr>(CastE))
     T = ExCast->getTypeAsWritten();
- 
-#if 0
-  // If we are evaluating the cast in an lvalue context, we implicitly want
-  // the cast to evaluate to a location.
-  if (asLValue) {
-    ASTContext &Ctx = getContext();
-    T = Ctx.getPointerType(Ctx.getCanonicalType(T));
-    ExTy = Ctx.getPointerType(Ctx.getCanonicalType(ExTy));
-  }
-#endif
 
-  switch (CastE->getCastKind()) {
-  case CK_ToVoid:
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I)
-      Dst.Add(*I);
-    return;
+  for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
+    Pred = *I;
 
-  case CK_LValueToRValue:
-  case CK_NoOp:
-  case CK_FunctionToPointerDecay:
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
-      // Copy the SVal of Ex to CastE.
-      ExplodedNode *N = *I;
-      const GRState *state = GetState(N);
-      SVal V = state->getSVal(Ex);
-      state = state->BindExpr(CastE, V);
-      MakeNode(Dst, CastE, N, state);
+    switch (CastE->getCastKind()) {
+      case CK_ToVoid:
+        Dst.Add(Pred);
+        continue;
+      case CK_LValueToRValue:
+      case CK_NoOp:
+      case CK_FunctionToPointerDecay: {
+        // Copy the SVal of Ex to CastE.
+        const GRState *state = GetState(Pred);
+        SVal V = state->getSVal(Ex);
+        state = state->BindExpr(CastE, V);
+        MakeNode(Dst, CastE, Pred, state);
+        continue;
+      }
+      case CK_GetObjCProperty:
+      case CK_Dependent:
+      case CK_ArrayToPointerDecay:
+      case CK_BitCast:
+      case CK_LValueBitCast:
+      case CK_IntegralCast:
+      case CK_NullToPointer:
+      case CK_IntegralToPointer:
+      case CK_PointerToIntegral:
+      case CK_PointerToBoolean:
+      case CK_IntegralToBoolean:
+      case CK_IntegralToFloating:
+      case CK_FloatingToIntegral:
+      case CK_FloatingToBoolean:
+      case CK_FloatingCast:
+      case CK_FloatingRealToComplex:
+      case CK_FloatingComplexToReal:
+      case CK_FloatingComplexToBoolean:
+      case CK_FloatingComplexCast:
+      case CK_FloatingComplexToIntegralComplex:
+      case CK_IntegralRealToComplex:
+      case CK_IntegralComplexToReal:
+      case CK_IntegralComplexToBoolean:
+      case CK_IntegralComplexCast:
+      case CK_IntegralComplexToFloatingComplex:
+      case CK_AnyPointerToObjCPointerCast:
+      case CK_AnyPointerToBlockPointerCast:  
+      case CK_ObjCObjectLValueCast: {
+        // Delegate to SValBuilder to process.
+        const GRState* state = GetState(Pred);
+        SVal V = state->getSVal(Ex);
+        V = svalBuilder.evalCast(V, T, ExTy);
+        state = state->BindExpr(CastE, V);
+        MakeNode(Dst, CastE, Pred, state);
+        continue;
+      }
+      case CK_DerivedToBase:
+      case CK_UncheckedDerivedToBase: {
+        // For DerivedToBase cast, delegate to the store manager.
+        const GRState *state = GetState(Pred);
+        SVal val = state->getSVal(Ex);
+        val = getStoreManager().evalDerivedToBase(val, T);
+        state = state->BindExpr(CastE, val);
+        MakeNode(Dst, CastE, Pred, state);
+        continue;
+      }
+      // Various C++ casts that are not handled yet.
+      case CK_Dynamic:  
+      case CK_ToUnion:
+      case CK_BaseToDerived:
+      case CK_NullToMemberPointer:
+      case CK_BaseToDerivedMemberPointer:
+      case CK_DerivedToBaseMemberPointer:
+      case CK_UserDefinedConversion:
+      case CK_ConstructorConversion:
+      case CK_VectorSplat:
+      case CK_MemberPointerToBoolean: {
+        // Recover some path-sensitivty by conjuring a new value.
+        QualType resultType = CastE->getType();
+        if (CastE->isLValue())
+          resultType = getContext().getPointerType(resultType);
+
+        SVal result =
+          svalBuilder.getConjuredSymbolVal(NULL, CastE, resultType,
+                                           Builder->getCurrentBlockCount());
+
+        const GRState *state = GetState(Pred)->BindExpr(CastE, result);
+        MakeNode(Dst, CastE, Pred, state);
+        continue;
+      }
     }
-    return;
-
-  case CK_GetObjCProperty:
-  case CK_Dependent:
-  case CK_ArrayToPointerDecay:
-  case CK_BitCast:
-  case CK_LValueBitCast:
-  case CK_IntegralCast:
-  case CK_NullToPointer:
-  case CK_IntegralToPointer:
-  case CK_PointerToIntegral:
-  case CK_PointerToBoolean:
-  case CK_IntegralToBoolean:
-  case CK_IntegralToFloating:
-  case CK_FloatingToIntegral:
-  case CK_FloatingToBoolean:
-  case CK_FloatingCast:
-  case CK_FloatingRealToComplex:
-  case CK_FloatingComplexToReal:
-  case CK_FloatingComplexToBoolean:
-  case CK_FloatingComplexCast:
-  case CK_FloatingComplexToIntegralComplex:
-  case CK_IntegralRealToComplex:
-  case CK_IntegralComplexToReal:
-  case CK_IntegralComplexToBoolean:
-  case CK_IntegralComplexCast:
-  case CK_IntegralComplexToFloatingComplex:
-  case CK_AnyPointerToObjCPointerCast:
-  case CK_AnyPointerToBlockPointerCast:
-  
-  case CK_ObjCObjectLValueCast: {
-    // Delegate to SValBuilder to process.
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
-      ExplodedNode* N = *I;
-      const GRState* state = GetState(N);
-      SVal V = state->getSVal(Ex);
-      V = svalBuilder.evalCast(V, T, ExTy);
-      state = state->BindExpr(CastE, V);
-      MakeNode(Dst, CastE, N, state);
-    }
-    return;
-  }
-
-  case CK_DerivedToBase:
-  case CK_UncheckedDerivedToBase:
-    // For DerivedToBase cast, delegate to the store manager.
-    for (ExplodedNodeSet::iterator I = S2.begin(), E = S2.end(); I != E; ++I) {
-      ExplodedNode *node = *I;
-      const GRState *state = GetState(node);
-      SVal val = state->getSVal(Ex);
-      val = getStoreManager().evalDerivedToBase(val, T);
-      state = state->BindExpr(CastE, val);
-      MakeNode(Dst, CastE, node, state);
-    }
-    return;
-
-  // Various C++ casts that are not handled yet.
-  case CK_Dynamic:  
-  case CK_ToUnion:
-  case CK_BaseToDerived:
-  case CK_NullToMemberPointer:
-  case CK_BaseToDerivedMemberPointer:
-  case CK_DerivedToBaseMemberPointer:
-  case CK_UserDefinedConversion:
-  case CK_ConstructorConversion:
-  case CK_VectorSplat:
-  case CK_MemberPointerToBoolean: {
-    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
-    Builder->BuildSinks = true;
-    MakeNode(Dst, CastE, Pred, GetState(Pred));
-    return;
-  }
   }
 }
 

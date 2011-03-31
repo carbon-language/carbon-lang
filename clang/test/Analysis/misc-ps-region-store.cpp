@@ -264,3 +264,17 @@ void rdar9212512() {
   }
 }
 
+// Test basic support for dynamic_cast<>.
+struct Rdar9212495_C { virtual void bar() const; };
+class Rdar9212495_B : public Rdar9212495_C {};
+class Rdar9212495_A : public Rdar9212495_B {};
+const Rdar9212495_A& rdar9212495(const Rdar9212495_C* ptr) {
+  const Rdar9212495_A& val = dynamic_cast<const Rdar9212495_A&>(*ptr);
+  
+  if (&val == 0) {
+    val.bar(); // FIXME: This should eventually be a null dereference.
+  }
+  
+  return val;
+}
+
