@@ -627,7 +627,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   }
 
   // Alocate a new register for the remat.
-  LiveInterval &NewLI = Edit->createFrom(VirtReg.reg, LIS, VRM);
+  LiveInterval &NewLI = Edit->createFrom(Original, LIS, VRM);
   NewLI.markNotSpillable();
 
   // Finally we can rematerialize OrigMI before MI.
