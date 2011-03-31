@@ -1,4 +1,7 @@
-; RUN: llc < %s -mtriple=armv6-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=armv6-linux-gnu -regalloc=linearscan | FileCheck %s
+; RUN: llc < %s -mtriple=armv6-linux-gnu -regalloc=basic | FileCheck %s
+
+; The greedy register allocator uses a single CSR here, invalidating the test.
 
 @b = external global i64*
 

@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=NEON
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s -check-prefix=A8
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 -regalloc=basic | FileCheck %s -check-prefix=A8
 
 define float @t1(float %acc, float %a, float %b) nounwind {
 entry:
@@ -11,8 +12,8 @@ entry:
 ; NEON: vnmla.f32
 
 ; A8: t1:
-; A8: vnmul.f32 s0, s{{[01]}}, s{{[01]}}
-; A8: vsub.f32 d0, d0, d1
+; A8: vnmul.f32 s{{[0-9]}}, s{{[0-9]}}, s{{[0-9]}}
+; A8: vsub.f32 d{{[0-9]}}, d{{[0-9]}}, d{{[0-9]}}
 	%0 = fmul float %a, %b
 	%1 = fsub float -0.0, %0
         %2 = fsub float %1, %acc
@@ -28,8 +29,8 @@ entry:
 ; NEON: vnmla.f32
 
 ; A8: t2:
-; A8: vnmul.f32 s0, s{{[01]}}, s{{[01]}}
-; A8: vsub.f32 d0, d0, d1
+; A8: vnmul.f32 s{{[0123]}}, s{{[0123]}}, s{{[0123]}}
+; A8: vsub.f32 d{{[0-9]}}, d{{[0-9]}}, d{{[0-9]}}
 	%0 = fmul float %a, %b
 	%1 = fmul float -1.0, %0
         %2 = fsub float %1, %acc
@@ -45,8 +46,8 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t3:
-; A8: vnmul.f64 d16, d1{{[67]}}, d1{{[67]}}
-; A8: vsub.f64 d16, d16, d17
+; A8: vnmul.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
+; A8: vsub.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
 	%0 = fmul double %a, %b
 	%1 = fsub double -0.0, %0
         %2 = fsub double %1, %acc
@@ -62,8 +63,8 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t4:
-; A8: vnmul.f64 d16, d1{{[67]}}, d1{{[67]}}
-; A8: vsub.f64 d16, d16, d17
+; A8: vnmul.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
+; A8: vsub.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
 	%0 = fmul double %a, %b
 	%1 = fmul double -1.0, %0
         %2 = fsub double %1, %acc

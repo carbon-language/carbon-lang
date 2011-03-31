@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+vfp2 -disable-post-ra | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+vfp2 -disable-post-ra -regalloc=basic | FileCheck %s
 
 define void @test(float* %P, double* %D) {
 	%A = load float* %P		; <float> [#uses=1]
@@ -39,10 +40,10 @@ define void @test_add(float* %P, double* %D) {
 define void @test_ext_round(float* %P, double* %D) {
 ;CHECK: test_ext_round:
 	%a = load float* %P		; <float> [#uses=1]
+;CHECK: vcvt.f32.f64
 ;CHECK: vcvt.f64.f32
 	%b = fpext float %a to double		; <double> [#uses=1]
 	%A = load double* %D		; <double> [#uses=1]
-;CHECK: vcvt.f32.f64
 	%B = fptrunc double %A to float		; <float> [#uses=1]
 	store double %b, double* %D
 	store float %B, float* %P

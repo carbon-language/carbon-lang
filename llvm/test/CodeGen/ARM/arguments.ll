@@ -14,7 +14,7 @@ define i32 @f1(i32 %a, i64 %b) {
 define i32 @f2() nounwind optsize {
 ; ELF: f2:
 ; ELF: mov  [[REGISTER:(r[0-9]+)]], #128
-; ELF: str  [[REGISTER]], [sp]
+; ELF: str  [[REGISTER]], [
 ; DARWIN: f2:
 ; DARWIN: mov	r3, #128
 entry:

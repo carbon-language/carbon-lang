@@ -1,7 +1,10 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 -regalloc=linearscan | FileCheck %s
 
 ; vmov s0, r0 + vmov r0, s0 should have been optimized away.
 ; rdar://9104514
+
+; Peephole leaves a dead vmovsr instruction behind, and depends on linear scan
+; to remove it.
 
 define void @t(float %x) nounwind ssp {
 entry:

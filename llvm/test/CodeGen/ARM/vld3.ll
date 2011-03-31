@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -regalloc=basic | FileCheck %s
 
 %struct.__neon_int8x8x3_t = type { <8 x i8>,  <8 x i8>,  <8 x i8> }
 %struct.__neon_int16x4x3_t = type { <4 x i16>, <4 x i16>, <4 x i16> }
@@ -36,7 +37,7 @@ define <4 x i16> @vld3i16(i16* %A) nounwind {
 ;Check for a post-increment updating load with register increment.
 define <4 x i16> @vld3i16_update(i16** %ptr, i32 %inc) nounwind {
 ;CHECK: vld3i16_update:
-;CHECK: vld3.16 {d16, d17, d18}, [r2], r1
+;CHECK: vld3.16 {d16, d17, d18}, [{{r[0-9]+}}], {{r[0-9]+}}
 	%A = load i16** %ptr
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3.v4i16(i8* %tmp0, i32 1)
@@ -121,8 +122,8 @@ define <4 x i32> @vld3Qi32(i32* %A) nounwind {
 ;Check for a post-increment updating load. 
 define <4 x i32> @vld3Qi32_update(i32** %ptr) nounwind {
 ;CHECK: vld3Qi32_update:
-;CHECK: vld3.32 {d16, d18, d20}, [r1]!
-;CHECK: vld3.32 {d17, d19, d21}, [r1]!
+;CHECK: vld3.32 {d16, d18, d20}, [r[[R:[0-9]+]]]!
+;CHECK: vld3.32 {d17, d19, d21}, [r[[R]]]!
 	%A = load i32** %ptr
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = call %struct.__neon_int32x4x3_t @llvm.arm.neon.vld3.v4i32(i8* %tmp0, i32 1)

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv6-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin -regalloc=basic | FileCheck %s
 ; rdar://8819685
 
 @__bar = external hidden global i8*
@@ -12,12 +13,13 @@ entry:
 	%0 = load i8** @__bar, align 4
 	%1 = icmp eq i8* %0, null
 	br i1 %1, label %bb1, label %bb3
+; CHECK: bne
 		
 bb1:
 	store i32 1026, i32* %size, align 4
 	%2 = alloca [1026 x i8], align 1
-; CHECK: mov     r0, sp
-; CHECK: adds    r4, r0, r4
+; CHECK: mov     [[R0:r[0-9]+]], sp
+; CHECK: adds    {{r[0-9]+}}, [[R0]], {{r[0-9]+}}
 	%3 = getelementptr inbounds [1026 x i8]* %2, i32 0, i32 0
 	%4 = call i32 @_called_func(i8* %3, i32* %size) nounwind
 	%5 = icmp eq i32 %4, 0

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -regalloc=basic | FileCheck %s
 
 define <8 x i8> @vld1lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vld1lanei8:
@@ -279,7 +280,7 @@ define <8 x i16> @vld3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;Check for a post-increment updating load with register increment.
 define <8 x i16> @vld3laneQi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounwind {
 ;CHECK: vld3laneQi16_update:
-;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [r2], r1
+;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [{{r[0-9]+}}], {{r[0-9]+}}
 	%A = load i16** %ptr
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B

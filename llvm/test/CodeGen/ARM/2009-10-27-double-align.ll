@@ -1,4 +1,6 @@
-; RUN: llc < %s  -mtriple=arm-linux-gnueabi  | FileCheck %s
+; RUN: llc < %s  -mtriple=arm-linux-gnueabi -regalloc=linearscan | FileCheck %s
+
+; This test depends on linear scan's reserved register coalescing.
 
 @.str = private constant [1 x i8] zeroinitializer, align 1
 

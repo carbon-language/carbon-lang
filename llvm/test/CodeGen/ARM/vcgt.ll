@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -regalloc=basic | FileCheck %s
 
 define <8 x i8> @vcgts8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vcgts8:
@@ -161,9 +162,9 @@ define <4 x i32> @vacgtQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 ; rdar://7923010
 define <4 x i32> @vcgt_zext(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK: vcgt_zext:
-;CHECK: vmov.i32 q10, #0x1
-;CHECK: vcgt.f32 q8
-;CHECK: vand q8, q8, q10
+;CHECK: vmov.i32 [[Q0:q[0-9]+]], #0x1
+;CHECK: vcgt.f32 [[Q1:q[0-9]+]]
+;CHECK: vand [[Q2:q[0-9]+]], [[Q1]], [[Q0]]
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = fcmp ogt <4 x float> %tmp1, %tmp2
