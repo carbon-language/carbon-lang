@@ -1107,13 +1107,6 @@ public:
   llvm::Constant *GenerateCopyHelperFunction(const CGBlockInfo &blockInfo);
   llvm::Constant *GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo);
 
-  llvm::Constant *GeneratebyrefCopyHelperFunction(const llvm::Type *,
-                                                  BlockFieldFlags flags,
-                                                  const VarDecl *BD);
-  llvm::Constant *GeneratebyrefDestroyHelperFunction(const llvm::Type *T, 
-                                                     BlockFieldFlags flags, 
-                                                     const VarDecl *BD);
-
   void BuildBlockRelease(llvm::Value *DeclPtr, BlockFieldFlags flags);
 
   class AutoVarEmission;
@@ -2182,6 +2175,10 @@ private:
   }
 
   void EmitDeclMetadata();
+
+  CodeGenModule::ByrefHelpers *
+  buildByrefHelpers(const llvm::StructType &byrefType,
+                    const AutoVarEmission &emission);
 };
 
 /// Helper class with most of the code for saving a value for a

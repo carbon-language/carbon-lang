@@ -55,3 +55,35 @@ namespace test1 {
   // ...or non-trivial copy constructors, but it's not clear how to do
   // that and still have a constant initializer in '03.
 }
+
+namespace test2 {
+  struct A {
+    A();
+    A(const A &);
+    ~A();
+  };
+
+  struct B {
+    B();
+    B(const B &);
+    ~B();
+  };
+
+  // CHECK: define void @_ZN5test24testEv()
+  void test() {
+    __block A a;
+    __block B b;
+  }
+
+  // CHECK: define internal void @__Block_byref_object_copy
+  // CHECK: call void @_ZN5test21AC1ERKS0_(
+
+  // CHECK: define internal void @__Block_byref_object_dispose
+  // CHECK: call void @_ZN5test21AD1Ev(
+
+  // CHECK: define internal void @__Block_byref_object_copy
+  // CHECK: call void @_ZN5test21BC1ERKS0_(
+
+  // CHECK: define internal void @__Block_byref_object_dispose
+  // CHECK: call void @_ZN5test21BD1Ev(
+}
