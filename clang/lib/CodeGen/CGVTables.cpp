@@ -760,13 +760,12 @@ public:
                              const CXXRecordDecl *LayoutClass,
                              const FinalOverriders *Overriders,
                              BaseSubobject Base, bool BaseIsVirtual,
-                             uint64_t OffsetInLayoutClass)
+                             CharUnits OffsetInLayoutClass)
     : MostDerivedClass(MostDerivedClass), LayoutClass(LayoutClass), 
     Context(MostDerivedClass->getASTContext()), Overriders(Overriders) {
       
     // Add vcall and vbase offsets.
-    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, 
-                            Context.toCharUnitsFromBits(OffsetInLayoutClass));
+    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, OffsetInLayoutClass);
   }
   
   /// Methods for iterating over the components.
@@ -1434,7 +1433,8 @@ VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
                                          BaseSubobject(Offset.VirtualBase,
                                                        CharUnits::Zero()),
                                          /*BaseIsVirtual=*/true,
-                                         /*OffsetInLayoutClass=*/0);
+                                         /*OffsetInLayoutClass=*/
+                                             CharUnits::Zero());
         
       VCallOffsets = Builder.getVCallOffsets();
     }
@@ -1751,7 +1751,7 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   // Add vcall and vbase offsets for this vtable.
   VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, LayoutClass, &Overriders,
                                      Base, BaseIsVirtualInLayoutClass, 
-                                     Context.toBits(OffsetInLayoutClass));
+                                     OffsetInLayoutClass);
   Components.append(Builder.components_begin(), Builder.components_end());
   
   // Check if we need to add these vcall offsets.
@@ -2434,7 +2434,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/0,
                                      BaseSubobject(RD, CharUnits::Zero()),
                                      /*BaseIsVirtual=*/false,
-                                     /*OffsetInLayoutClass=*/0);
+                                     /*OffsetInLayoutClass=*/CharUnits::Zero());
 
   for (VCallAndVBaseOffsetBuilder::VBaseOffsetOffsetsMapTy::const_iterator I =
        Builder.getVBaseOffsetOffsets().begin(), 
