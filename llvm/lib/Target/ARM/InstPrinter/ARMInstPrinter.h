@@ -22,11 +22,9 @@ class MCOperand;
 class TargetMachine;
 
 class ARMInstPrinter : public MCInstPrinter {
-private:
-  TargetMachine &TM;
 public:
-  ARMInstPrinter(TargetMachine &_TM, const MCAsmInfo &MAI)
-    : MCInstPrinter(MAI), TM(_TM) {}
+  ARMInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
+    : MCInstPrinter(MAI) {}
 
   virtual void printInst(const MCInst *MI, raw_ostream &O);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
@@ -44,11 +42,7 @@ public:
   void printSOImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
   void printSORegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-
   void printAddrMode2Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printAM2PostIndexOp(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O);
   void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);

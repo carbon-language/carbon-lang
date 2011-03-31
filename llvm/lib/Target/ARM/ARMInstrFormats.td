@@ -515,15 +515,15 @@ class AI2stridx<bit isByte, bit isPre, dag oops, dag iops,
   : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
                pattern> {
   // AM2 store w/ two operands: (GPR, am2offset)
-  // {17-14}  Rn
   // {13}     1 == Rm, 0 == imm12
   // {12}     isAdd
   // {11-0}   imm12/Rm
-  bits<18> addr;
-  let Inst{25} = addr{13};
-  let Inst{23} = addr{12};
-  let Inst{19-16} = addr{17-14};
-  let Inst{11-0} = addr{11-0};
+  bits<14> offset;
+  bits<4> Rn;
+  let Inst{25} = offset{13};
+  let Inst{23} = offset{12};
+  let Inst{19-16} = Rn;
+  let Inst{11-0} = offset{11-0};
 }
 
 // addrmode3 instructions

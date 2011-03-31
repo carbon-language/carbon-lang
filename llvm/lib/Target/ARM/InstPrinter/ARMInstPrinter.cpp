@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "asm-printer"
 #include "ARMBaseInfo.h"
 #include "ARMInstPrinter.h"
-#include "ARMInstrInfo.h"
 #include "ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -182,11 +181,17 @@ void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
   }
 }
 
-void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
-                                                raw_ostream &O) {
+
+void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
+                                           raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
   const MCOperand &MO2 = MI->getOperand(Op+1);
   const MCOperand &MO3 = MI->getOperand(Op+2);
+
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
+    printOperand(MI, Op, O);
+    return;
+  }
 
   O << "[" << getRegisterName(MO1.getReg());
 
@@ -208,52 +213,6 @@ void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
     << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
     << " #" << ShImm;
   O << "]";
-}
-
-void ARMInstPrinter::printAM2PostIndexOp(const MCInst *MI, unsigned Op,
-                                         raw_ostream &O) {
-  const MCOperand &MO1 = MI->getOperand(Op);
-  const MCOperand &MO2 = MI->getOperand(Op+1);
-  const MCOperand &MO3 = MI->getOperand(Op+2);
-
-  O << "[" << getRegisterName(MO1.getReg()) << "], ";
-
-  if (!MO2.getReg()) {
-    unsigned ImmOffs = ARM_AM::getAM2Offset(MO3.getImm());
-    O << '#'
-      << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
-      << ImmOffs;
-    return;
-  }
-
-  O << ARM_AM::getAddrOpcStr(ARM_AM::getAM2Op(MO3.getImm()))
-    << getRegisterName(MO2.getReg());
-
-  if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
-    O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
-    << " #" << ShImm;
-}
-
-void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op,
-                                           raw_ostream &O) {
-  const MCOperand &MO1 = MI->getOperand(Op);
-
-  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
-    printOperand(MI, Op, O);
-    return;
-  }
-
-  unsigned Opcode = MI->getOpcode();
-  const TargetInstrDesc &Desc = TM.getInstrInfo()->get(Opcode);
-  uint64_t TSFlags = Desc.TSFlags;
-  unsigned IdxMode = (TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
-
-  if (IdxMode == ARMII::IndexModePost) {
-    printAM2PostIndexOp(MI, Op, O);
-    return;
-  }
-  printAM2PreOrOffsetIndexOp(MI, Op, O);
 }
 
 void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
