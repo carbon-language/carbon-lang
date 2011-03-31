@@ -1464,9 +1464,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmulp, &Ty, 1),
                         Ops, "vmul");
   case ARM::BI__builtin_neon_vmull_v:
-    assert(poly && "vmull builtin only supported for polynomial types");
-    return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vmullp, &Ty, 1),
-                        Ops, "vmull");
+    Int = usgn ? Intrinsic::arm_neon_vmullu : Intrinsic::arm_neon_vmulls;
+    Int = poly ? Intrinsic::arm_neon_vmullp : Int;
+    return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmull");
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v: {
     Int = usgn ? Intrinsic::arm_neon_vpadalu : Intrinsic::arm_neon_vpadals;
