@@ -440,13 +440,18 @@ void TransferFunctions::BlockStmt_VisitObjCForCollectionStmt(
 void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
   if (!flagBlockUses || !handler)
     return;
-  AnalysisContext::referenced_decls_iterator i, e;
-  llvm::tie(i, e) = ac.getReferencedBlockVars(be->getBlockDecl());
-  for ( ; i != e; ++i) {
-    const VarDecl *vd = *i;
-    if (vd->getAttr<BlocksAttr>() || !vd->hasLocalStorage() || 
-        !isTrackedVar(vd))
+  const BlockDecl *bd = be->getBlockDecl();
+  for (BlockDecl::capture_const_iterator i = bd->capture_begin(),
+        e = bd->capture_end() ; i != e; ++i) {
+    const VarDecl *vd = i->getVariable();
+    if (!vd->hasLocalStorage())
       continue;
+    if (!isTrackedVar(vd))
+      continue;
+    if (i->isByRef()) {
+      vals[vd] = Initialized;
+      continue;
+    }
     Value v = vals[vd];
     if (isUninitialized(v))
       handler->handleUseOfUninitVariable(be, vd, isAlwaysUninit(v));

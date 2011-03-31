@@ -328,3 +328,12 @@ void test50()
   char c[1 ? : 2]; // no-warning
 }
 
+int test51(void)
+{
+    __block int a;
+    ^(void) {
+      a = 42;
+    }();
+    return a; // no-warning
+}
+
