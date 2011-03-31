@@ -32,3 +32,11 @@ define i1 @test4(float %a) nounwind {
 ; CHECK: @test4
 ; CHECK-NEXT: fpext float %a to double
 }
+
+define i1 @test5(float %a) nounwind {
+  %neg = fsub float -0.000000e+00, %a
+  %cmp = fcmp ogt float %neg, 1.000000e+00
+  ret i1 %cmp
+; CHECK: @test5
+; CHECK-NEXT: fcmp olt float %a, -1.0
+}

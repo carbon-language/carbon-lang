@@ -2834,6 +2834,14 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
           return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
         break;
       }
+      case Instruction::FSub: {
+        // fcmp pred (fneg x), C -> fcmp swap(pred) x, -C
+        Value *Op;
+        if (match(LHSI, m_FNeg(m_Value(Op))))
+          return new FCmpInst(I.getSwappedPredicate(), Op,
+                              ConstantExpr::getFNeg(RHSC));
+        break;
+      }
       case Instruction::Load:
         if (GetElementPtrInst *GEP =
             dyn_cast<GetElementPtrInst>(LHSI->getOperand(0))) {
