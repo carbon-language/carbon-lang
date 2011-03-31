@@ -252,7 +252,7 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
 
   case Mips::FCOND_F:
   case Mips::FCOND_UN:
-  case Mips::FCOND_EQ:
+  case Mips::FCOND_OEQ:
   case Mips::FCOND_UEQ:
   case Mips::FCOND_OLT:
   case Mips::FCOND_ULT:
@@ -269,8 +269,8 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
 
   case Mips::FCOND_T:
   case Mips::FCOND_OR:
-  case Mips::FCOND_NEQ:
-  case Mips::FCOND_OGL:
+  case Mips::FCOND_UNE:
+  case Mips::FCOND_ONE:
   case Mips::FCOND_UGE:
   case Mips::FCOND_OGE:
   case Mips::FCOND_UGT:
@@ -300,8 +300,8 @@ Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC)
   case Mips::COND_LEZ : return Mips::COND_GZ;
   case Mips::FCOND_F  : return Mips::FCOND_T;
   case Mips::FCOND_UN : return Mips::FCOND_OR;
-  case Mips::FCOND_EQ : return Mips::FCOND_NEQ;
-  case Mips::FCOND_UEQ: return Mips::FCOND_OGL;
+  case Mips::FCOND_OEQ: return Mips::FCOND_UNE;
+  case Mips::FCOND_UEQ: return Mips::FCOND_ONE;
   case Mips::FCOND_OLT: return Mips::FCOND_UGE;
   case Mips::FCOND_ULT: return Mips::FCOND_OGE;
   case Mips::FCOND_OLE: return Mips::FCOND_UGT;

@@ -37,7 +37,7 @@ namespace Mips {
     // To be used with float branch True
     FCOND_F,
     FCOND_UN,
-    FCOND_EQ,
+    FCOND_OEQ,
     FCOND_UEQ,
     FCOND_OLT,
     FCOND_ULT,
@@ -57,8 +57,8 @@ namespace Mips {
     // above ones, but are used with a branch False;
     FCOND_T,
     FCOND_OR,
-    FCOND_NEQ,
-    FCOND_OGL,
+    FCOND_UNE,
+    FCOND_ONE,
     FCOND_UGE,
     FCOND_OGE,
     FCOND_UGT,
@@ -98,10 +98,10 @@ namespace Mips {
       case FCOND_T:   return "f";
       case FCOND_UN:
       case FCOND_OR:  return "un";
-      case FCOND_EQ:
-      case FCOND_NEQ: return "eq";
+      case FCOND_OEQ:
+      case FCOND_UNE: return "eq";
       case FCOND_UEQ:
-      case FCOND_OGL: return "ueq";
+      case FCOND_ONE: return "ueq";
       case FCOND_OLT:
       case FCOND_UGE: return "olt";
       case FCOND_ULT:
@@ -121,11 +121,11 @@ namespace Mips {
       case FCOND_LT:
       case FCOND_NLT: return "lt";
       case FCOND_NGE:
-      case FCOND_GE:  return "ge";
+      case FCOND_GE:  return "nge";
       case FCOND_LE:
-      case FCOND_NLE: return "nle";
+      case FCOND_NLE: return "le";
       case FCOND_NGT:
-      case FCOND_GT:  return "gt";
+      case FCOND_GT:  return "ngt";
     }
   }
 }

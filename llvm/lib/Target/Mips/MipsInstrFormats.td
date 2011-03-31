@@ -180,3 +180,48 @@ class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
   let Inst{5-4}   = 0b11;
   let Inst{3-0}   = cc;
 }
+
+
+class FCMOV<bits<1> _tf, dag outs, dag ins, string asmstr,
+            list<dag> pattern> :
+  MipsInst<outs, ins, asmstr, pattern, NoItinerary>
+{
+  bits<5>  rd;
+  bits<5>  rs;
+  bits<3>  N;
+  bits<1>  tf;
+
+  let opcode = 0;
+  let tf = _tf;
+
+  let Inst{25-21} = rs;
+  let Inst{20-18} = N;
+  let Inst{17} = 0;
+  let Inst{16} = tf;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0;
+  let Inst{5-0}   = 1;
+}
+
+class FFCMOV<bits<5> _fmt, bits<1> _tf, dag outs, dag ins, string asmstr,
+             list<dag> pattern> :
+  MipsInst<outs, ins, asmstr, pattern, NoItinerary>
+{
+  bits<5>  fd;
+  bits<5>  fs;
+  bits<3>  N;
+  bits<5>  fmt;
+  bits<1>  tf;
+
+  let opcode = 17;
+  let fmt = _fmt;
+  let tf = _tf;
+
+  let Inst{25-21} = fmt;
+  let Inst{20-18} = N;
+  let Inst{17} = 0;
+  let Inst{16} = tf;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5-0}   = 17;
+}
