@@ -4751,8 +4751,8 @@ entry:
 
 <h5>Example:</h5>
 <pre>
-  %X = fpext float 3.1415 to double        <i>; yields double:3.1415</i>
-  %Y = fpext float 1.0 to float            <i>; yields float:1.0 (no-op)</i>
+  %X = fpext float 3.125 to double         <i>; yields double:3.125000e+00</i>
+  %Y = fpext double %X to fp128            <i>; yields fp128:0xL00000000000000004000900000000000</i>
 </pre>
 
 </div>
