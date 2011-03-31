@@ -749,7 +749,8 @@ private:
   void AddVCallOffsets(BaseSubobject Base, CharUnits VBaseOffset);
   
   /// AddVBaseOffsets - Add vbase offsets for the given class.
-  void AddVBaseOffsets(const CXXRecordDecl *Base, uint64_t OffsetInLayoutClass);
+  void AddVBaseOffsets(const CXXRecordDecl *Base, 
+                       CharUnits OffsetInLayoutClass);
   
   /// getCurrentOffsetOffset - Get the current vcall or vbase offset offset in
   /// bytes, relative to the vtable address point.
@@ -821,7 +822,7 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
       PrimaryBaseIsVirtual, RealBaseOffset);
   }
 
-  AddVBaseOffsets(Base.getBase(), Context.toBits(RealBaseOffset));
+  AddVBaseOffsets(Base.getBase(), RealBaseOffset);
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual)
@@ -913,8 +914,9 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   }
 }
 
-void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
-                                                 uint64_t OffsetInLayoutClass) {
+void 
+VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
+                                            CharUnits OffsetInLayoutClass) {
   const ASTRecordLayout &LayoutClassLayout = 
     Context.getASTRecordLayout(LayoutClass);
 
@@ -926,10 +928,8 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
 
     // Check if this is a virtual base that we haven't visited before.
     if (I->isVirtual() && VisitedVirtualBases.insert(BaseDecl)) {
-      // FIXME: We shouldn't use / 8 here.
-      int64_t Offset = 
-        (int64_t)(LayoutClassLayout.getVBaseClassOffsetInBits(BaseDecl) - 
-                  OffsetInLayoutClass) / 8;
+      CharUnits Offset = 
+        LayoutClassLayout.getVBaseClassOffset(BaseDecl) - OffsetInLayoutClass;
 
       // Add the vbase offset offset.
       assert(!VBaseOffsetOffsets.count(BaseDecl) &&
@@ -938,7 +938,8 @@ void VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
       int64_t VBaseOffsetOffset = getCurrentOffsetOffset();
       VBaseOffsetOffsets.insert(std::make_pair(BaseDecl, VBaseOffsetOffset));
 
-      Components.push_back(VTableComponent::MakeVBaseOffset(Offset));
+      Components.push_back(
+          VTableComponent::MakeVBaseOffset(Offset.getQuantity()));
     }
 
     // Check the base class looking for more vbase offsets.
