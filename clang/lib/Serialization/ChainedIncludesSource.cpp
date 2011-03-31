@@ -94,6 +94,8 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
     Clang->createPreprocessor();
+    Clang->getDiagnosticClient().BeginSourceFile(Clang->getLangOpts(),
+                                                 &Clang->getPreprocessor());
     Clang->createASTContext();
 
     llvm::SmallVector<char, 256> serialAST;
@@ -136,6 +138,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
 
     ParseAST(Clang->getSema());
     OS.flush();
+    Clang->getDiagnosticClient().EndSourceFile();
     serialBufs.push_back(
       llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(serialAST.data(),
                                                            serialAST.size())));
