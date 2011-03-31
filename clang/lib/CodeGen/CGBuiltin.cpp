@@ -1465,7 +1465,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                         Ops, "vmul");
   case ARM::BI__builtin_neon_vmull_v:
     Int = usgn ? Intrinsic::arm_neon_vmullu : Intrinsic::arm_neon_vmulls;
-    Int = poly ? Intrinsic::arm_neon_vmullp : Int;
+    Int = poly ? unsigned(Intrinsic::arm_neon_vmullp) : Int;
     return EmitNeonCall(CGM.getIntrinsic(Int, &Ty, 1), Ops, "vmull");
   case ARM::BI__builtin_neon_vpadal_v:
   case ARM::BI__builtin_neon_vpadalq_v: {
