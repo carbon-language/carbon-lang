@@ -66,6 +66,7 @@ public:
   void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_random(const CallExpr *CE, const FunctionDecl *FD);
   void CheckUncheckedReturnValue(CallExpr *CE);
@@ -98,6 +99,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     CheckCall_gets(CE, FD);
     CheckCall_getpw(CE, FD);
     CheckCall_mktemp(CE, FD);
+    CheckCall_strcpy(CE, FD);
     if (CheckRand) {
       CheckCall_rand(CE, FD);
       CheckCall_random(CE, FD);
@@ -345,6 +347,58 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
                      "Security",
                      "Call to function 'mktemp' is insecure as it always "
                      "creates or uses insecure temporary file.  Use 'mkstemp' instead",
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: Any use of 'strcpy' is insecure.
+//
+// CWE-119: Improper Restriction of Operations within 
+// the Bounds of a Memory Buffer 
+//===----------------------------------------------------------------------===//
+void WalkAST::CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
+  IdentifierInfo *II = FD->getIdentifier();
+  if (!II)   // if no identifier, not a simple C function
+    return;
+  llvm::StringRef Name = II->getName();
+  if (Name.startswith("__builtin_"))
+    Name = Name.substr(10);
+
+  if ((Name != "strcpy") &&
+      (Name != "__strcpy_chk"))
+    return;
+
+  const FunctionProtoType *FPT
+    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  if (!FPT)
+    return;
+
+  // Verify the function takes two arguments
+  int numArgs = FPT->getNumArgs();
+  if (numArgs != 2 && numArgs != 3)
+    return;
+
+  // Verify the type for both arguments
+  for (int i = 0; i < 2; i++) {
+    // Verify that the arguments are pointers
+    const PointerType *PT = dyn_cast<PointerType>(FPT->getArgType(i));
+    if (!PT)
+      return;
+
+    // Verify that the argument is a 'char*'.
+    if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
+      return;
+  }
+
+  // Issue a warning
+  SourceRange R = CE->getCallee()->getSourceRange();
+  BR.EmitBasicReport("Potential insecure memory buffer bounds restriction in "
+		     "call 'strcpy'",
+		     "Security",
+		     "Call to function 'strcpy' is insecure as it does not "
+		     "provide bounding of the memory buffer. Replace "
+		     "unbounded copy functions with analogous functions that "
+		     "support length arguments such as 'strncpy'. CWE-119.",
                      CE->getLocStart(), &R, 1);
 }
 

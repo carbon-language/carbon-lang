@@ -1,4 +1,16 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DVARIANT -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -analyze -DUSE_BUILTINS -DVARIANT -analyzer-checker=security.experimental.SecuritySyntactic %s -verify
+
+#ifdef USE_BUILTINS
+# define BUILTIN(f) __builtin_ ## f
+#else /* USE_BUILTINS */
+# define BUILTIN(f) f
+#endif /* USE_BUILTINS */
+
+typedef typeof(sizeof(int)) size_t;
+
 
 // <rdar://problem/6336718> rule request: floating point used as loop 
 //  condition (FLP30-C, FLP-30-CPP)
@@ -102,4 +114,29 @@ char *mktemp(char *buf);
 
 void test_mktemp() {
   char *x = mktemp("/tmp/zxcv"); // expected-warning{{Call to function 'mktemp' is insecure as it always creates or uses insecure temporary file}}
+}
+
+
+//===----------------------------------------------------------------------===
+// strcpy()
+//===----------------------------------------------------------------------===
+#ifdef VARIANT
+
+#define __strcpy_chk BUILTIN(__strcpy_chk)
+char *__strcpy_chk(char *restrict s1, const char *restrict s2, size_t destlen);
+
+#define strcpy(a,b) __strcpy_chk(a,b,(size_t)-1)
+
+#else /* VARIANT */
+
+#define strcpy BUILTIN(strcpy)
+char *strcpy(char *restrict s1, const char *restrict s2);
+
+#endif /* VARIANT */
+
+void test_strcpy() {
+  char x[4];
+  char *y;
+
+  strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncpy'. CWE-119.}}
 }
