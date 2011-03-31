@@ -255,12 +255,8 @@ class DwarfDebug {
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
 
   DIEInteger *DIEIntegerOne;
-private:
 
-  /// getNumSourceIds - Return the number of unique source ids.
-  unsigned getNumSourceIds() const {
-    return SourceIdMap.size();
-  }
+private:
 
   /// assignAbbrevNumber - Define a unique number for the abbreviation.
   ///
