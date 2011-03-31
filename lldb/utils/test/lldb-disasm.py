@@ -76,10 +76,6 @@ def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
             print "run command failed!"
             print "run_command error:", res.GetError()
 
-def IsCodeType(symbol):
-    """Check whether an SBSymbol represents code."""
-    return True
-
 def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble):
     import lldb, atexit, re
     from lldbutil import lldb_iter
@@ -107,12 +103,20 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
     for cmd in lldb_commands:
         run_command(ci, cmd, res)
 
+    # Now issue the file command.
+    run_command(ci, 'file %s' % exe, res)
+
     # Create a target.
-    target = dbg.CreateTarget(exe)
+    #target = dbg.CreateTarget(exe)
+    target = dbg.GetSelectedTarget()
     stream = lldb.SBStream()
 
+    def IsCodeType(symbol):
+        """Check whether an SBSymbol represents code."""
+        return symbol.GetType() == lldb.eSymbolTypeCode
+
     # Define a generator for the symbols to disassemble.
-    def symbol_iter_2(num, symbols, target):
+    def symbol_iter(num, symbols, target):
         # If we specify the symbols to disassemble, ignore symbol table dump.
         if symbols:
             for i in range(len(symbols)):
@@ -132,6 +136,7 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
                     if IsCodeType(s):
                         if limited:
                             count = count + 1
+                            print "returning symbol:", s.GetName()
                         yield s.GetName()
                     #print "start address:", s.GetStartAddress()
                     #print "end address:", s.GetEndAddress()
@@ -139,62 +144,8 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
                     #print "symbol description:", stream.GetData()
                     #stream.Clear()
 
-    # Now issue the file command.
-    run_command(ci, 'file %s' % exe, res)
-
-    # Send the 'image dump symtab' command.
-    run_command(ci, 'image dump symtab', res, echoOutput=False)
-
-    if not res.Succeeded():
-        print "Symbol table dump failed!"
-        sys.exit(-2)
-
-    # Do disassembly on the symbols.
-    # The following line from the 'image dump symtab' gives us a hint as to the
-    # starting char position of the symbol name.
-    # Index   UserID DSX Type         File Address/Value Load Address       Size               Flags      Name
-    # ------- ------ --- ------------ ------------------ ------------------ ------------------ ---------- ----------------------------------
-    # [    0]      0     Code         0x0000000000000820                    0x0000000000000000 0x000e0008 sandbox_init_internal
-    symtab_dump = res.GetOutput()
-    symbol_pos = -1
-    code_type_pos = -1
-    code_type_end = -1
-
-    # Heuristics: the first 50 lines should give us the answer for symbol_pos and code_type_pos.
-    for line in symtab_dump.splitlines()[:50]:
-        print "line:", line
-        if re.match("^Index.*Name$", line):
-            symbol_pos = line.rfind('Name')
-            #print "symbol_pos:", symbol_pos
-            code_type_pos = line.find('Type')
-            code_type_end = code_type_pos + 4
-            #print "code_type_pos:", code_type_pos
-            break
-
-    # Define a generator for the symbols to disassemble.
-    def symbol_iter(num, symbols, symtab_dump):
-        # If we specify the symbols to disassemble, ignore symbol table dump.
-        if symbols:
-            for i in range(len(symbols)):
-                print "symbol:", symbols[i]
-                yield symbols[i]
-        else:
-            limited = True if num != -1 else False
-            if limited:
-                count = 0
-            for line in symtab_dump.splitlines():
-                if limited and count >= num:
-                    return
-                if line[code_type_pos:code_type_end] == 'Code':
-                    symbol = line[symbol_pos:]
-                    print "symbol:", symbol
-                    if limited:
-                        count = count + 1
-                        print "symbol count:", count
-                        yield symbol
-
     # Disassembly time.
-    for symbol in symbol_iter(num_symbols, symbols_to_disassemble, symtab_dump):
+    for symbol in symbol_iter(num_symbols, symbols_to_disassemble, target):
         cmd = "disassemble %s '%s'" % (disassemble_options, symbol)
         run_command(ci, cmd, res)
 
