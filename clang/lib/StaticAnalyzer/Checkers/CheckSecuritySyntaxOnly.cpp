@@ -326,7 +326,7 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   if(!FPT)
     return;
 
-  // Verify that the funcion takes a single argument.
+  // Verify that the function takes a single argument.
   if (FPT->getNumArgs() != 1)
     return;
 
