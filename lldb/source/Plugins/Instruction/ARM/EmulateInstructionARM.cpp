@@ -10388,13 +10388,14 @@ EmulateInstructionARM::EmulateVLDM (const uint32_t opcode, const ARMEncoding enc
                   
     if (ConditionPassed(opcode))
     {
-                                           bool single_regs;
-                                           bool add;
-                                           bool wback;
-                                           uint32_t d;
-                                           uint32_t n;
-                                           uint32_t imm32;
-                                           uint32_t regs;
+        bool single_regs;
+        bool add;
+        bool wback;
+        uint32_t d;
+        uint32_t n;
+        uint32_t imm32;
+        uint32_t regs;
+                                           
         switch (encoding)
         {
             case eEncodingT1:
@@ -10502,7 +10503,7 @@ EmulateInstructionARM::EmulateVLDM (const uint32_t opcode, const ARMEncoding enc
         context.type = eContextRegisterLoad;
                                            
         // for r = 0 to regs-1
-        for (uint32_t r = 0; r < regs; r++)
+        for (uint32_t r = 0; r < regs; ++r)
         {
             if (single_regs)
             {
@@ -10553,6 +10554,202 @@ EmulateInstructionARM::EmulateVLDM (const uint32_t opcode, const ARMEncoding enc
     }
     return true;
 }
+
+// A8.6.399 VSTM
+bool                                      
+EmulateInstructionARM::EmulateVSTM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); CheckVFPEnabled(TRUE); NullCheckIfThumbEE(n);
+        address = if add then R[n] else R[n]-imm32;
+        if wback then R[n] = if add then R[n}+imm32 else R[n]-imm32;
+        for r = 0 to regs-1
+            if single_regs then
+                MemA[address,4] = S[d+r]; address = address+4;
+            else
+                // Store as two word-aligned words in the correct order for current endianness.
+                MemA[address,4] = if BigEndian() then D[d+r]<63:32> else D[d+r]<31:0>;
+                MemA[address+4,4] = if BigEndian() then D[d+r]<31:0> else D[d+r]<63:32>;
+                address = address+8;
+#endif
+                                           
+    bool success = false;
+                                        
+    if (ConditionPassed (opcode))
+    {
+        bool single_regs;
+        bool add;
+        bool wback;
+        uint32_t d;
+        uint32_t n;
+        uint32_t imm32;
+        uint32_t regs;
+        
+        switch (encoding)
+        {
+            case eEncodingT1:
+            case eEncodingA1:
+                // if P == ‘0’ && U == ‘0’ && W == ‘0’ then SEE “Related encodings”;
+                // if P == ‘1’ && U == ‘0’ && W == ‘1’ && Rn == ‘1101’ then SEE VPUSH;
+                // if P == ‘1’ && W == ‘0’ then SEE VSTR;
+                // if P == U && W == ‘1’ then UNDEFINED;
+                if ((Bit32 (opcode, 24) == Bit32 (opcode, 23)) && BitIsSet (opcode, 21))
+                    return false;
+                    
+                // // Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+                // single_regs = FALSE; add = (U == ‘1’); wback = (W == ‘1’);
+                single_regs = false;
+                add = BitIsSet (opcode, 23);
+                wback = BitIsSet (opcode, 21);
+                
+                // d = UInt(D:Vd); n = UInt(Rn); imm32 = ZeroExtend(imm8:’00’, 32);
+                d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                
+                // regs = UInt(imm8) DIV 2; // If UInt(imm8) is odd, see “FSTMX”.
+                regs = Bits32 (opcode, 7, 0) / 2;
+                
+                // if n == 15 && (wback || CurrentInstrSet() != InstrSet_ARM) then UNPREDICTABLE;
+                if ((n == 15) && (wback || (CurrentInstrSet() != eModeARM)))
+                    return false;
+                    
+                // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;           
+                if ((regs == 0) || (regs > 16) || ((d + regs) > 32))
+                    return false;
+                    
+                break;
+                                           
+            case eEncodingT2:
+            case eEncodingA2:
+                // if P == ‘0’ && U == ‘0’ && W == ‘0’ then SEE “Related encodings”;
+                // if P == ‘1’ && U == ‘0’ && W == ‘1’ && Rn == ‘1101’ then SEE VPUSH;
+                // if P == ‘1’ && W == ‘0’ then SEE VSTR;
+                // if P == U && W == ‘1’ then UNDEFINED;
+                if ((Bit32 (opcode, 24) == Bit32 (opcode, 23)) && BitIsSet (opcode, 21))
+                    return false;
+                    
+                // // Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+                // single_regs = TRUE; add = (U == ‘1’); wback = (W == ‘1’); d = UInt(Vd:D); n = UInt(Rn);
+                single_regs = true;
+                add = BitIsSet (opcode, 23);
+                wback = BitIsSet (opcode, 21);
+                d = (Bits32 (opcode, 15, 12) << 1) | Bit32 (opcode, 22);
+                n = Bits32 (opcode, 19, 16);
+                
+                // imm32 = ZeroExtend(imm8:’00’, 32); regs = UInt(imm8);
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                regs = Bits32 (opcode, 7, 0);
+                
+                // if n == 15 && (wback || CurrentInstrSet() != InstrSet_ARM) then UNPREDICTABLE;
+                if ((n == 15) && (wback || (CurrentInstrSet () != eModeARM)))
+                    return false;
+                    
+                // if regs == 0 || (d+regs) > 32 then UNPREDICTABLE;                     
+                if ((regs == 0) || ((d + regs) > 32))
+                    return false;
+                    
+                break;
+                                           
+            default:
+                return false;
+        }
+        
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+            
+        // address = if add then R[n] else R[n]-imm32;
+        addr_t address;
+        if (add)
+            address = Rn;
+        else
+            address = Rn - imm32;
+            
+        EmulateInstruction::Context context;
+        // if wback then R[n] = if add then R[n}+imm32 else R[n]-imm32;
+        if (wback)
+        {
+            uint32_t value;
+            if (add)
+                value = Rn + imm32;
+            else
+                value = Rn - imm32;
+                
+            context.type = eContextAdjustBaseRegister;
+            context.SetRegisterPlusOffset (base_reg, value - Rn);
+            
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, value))
+                return false;
+        }
+        
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        uint32_t start_reg = single_regs ? dwarf_s0 : dwarf_d0;
+
+        context.type = eContextRegisterStore;
+        // for r = 0 to regs-1
+        for (int r = 0; r < regs; ++r)
+        {
+            Register data_reg;
+            data_reg.SetRegister (eRegisterKindDWARF, 0);
+            if (single_regs)
+            {
+                // MemA[address,4] = S[d+r]; address = address+4;
+                uint32_t data = ReadRegisterUnsigned (eRegisterKindDWARF, start_reg + d + r, 0, &success);
+                if (!success)
+                    return false;
+                
+                data_reg.num = start_reg + d + r;
+                context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
+                if (!MemAWrite (context, address, data, addr_byte_size))
+                    return false;
+                    
+                address = address + 4;
+            }
+            else
+            {
+                // // Store as two word-aligned words in the correct order for current endianness.
+                // MemA[address,4] = if BigEndian() then D[d+r]<63:32> else D[d+r]<31:0>;
+                // MemA[address+4,4] = if BigEndian() then D[d+r]<31:0> else D[d+r]<63:32>;
+                uint64_t data = ReadRegisterUnsigned (eRegisterKindDWARF, start_reg + d + r, 0, &success);
+                if (!success)
+                    return false;
+                    
+                data_reg.num = start_reg + d + r;
+                
+                if (m_byte_order == eByteOrderBig)
+                {
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
+                    if (!MemAWrite (context, address, Bits64 (data, 63, 32), addr_byte_size))
+                        return false;
+                        
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, (address + 4) - Rn);
+                    if (!MemAWrite (context, address+ 4, Bits64 (data, 31, 0), addr_byte_size))
+                        return false;
+                }
+                else
+                {
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
+                    if (!MemAWrite (context, address, Bits64 (data, 31, 0), addr_byte_size))
+                        return false;
+                        
+                    context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, (address + 4) - Rn);
+                    if (!MemAWrite (context, address + 4, Bits64 (data, 63, 32), addr_byte_size))
+                        return false;
+                }    
+                // address = address+8;
+                address = address + 8;
+            }
+        }
+    }
+    return true;
+}
+                                
+                                           
                   
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
@@ -10734,7 +10931,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e5000f0, 0x004000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt>, <Rt2>, [<Rn>,#+/-<imm8>]!"},
         { 0x0e500ff0, 0x000000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDRegister, "ldrd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
         { 0x0e100f00, 0x0c100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
-        { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{most}<c> <Rn>{!}, <list>"},
+        { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -10750,6 +10947,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRImmARM, "str<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
         { 0x0e5000f0, 0x004000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strc<c> <Rt>, <Rt2>, [<Rn> #+/-<imm8>]!"},
         { 0x0e500ff0, 0x000000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDReg, "strd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
+        { 0x0e100f00, 0x0c000b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!} <list>"},
+        { 0x0e100f00, 0x0c000a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!} <list>"},
                   
         //----------------------------------------------------------------------
         // Other instructions
@@ -11044,6 +11243,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00fc0, 0xf8200000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
         { 0xfff00000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn{,#<imm>}]" },
         { 0xfe500000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strd<c> <Rt>, <Rt2>, [<Rn>, #+/-<imm>]!"},
+        { 0xfe100f00, 0xec000b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!}, <list>"},
+        { 0xfea00f00, 0xec000a00, ARMvAll,       eEncodingT2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!}, <list>"},
                   
         //----------------------------------------------------------------------
         // Other instructions

@@ -15,6 +15,15 @@
 namespace lldb_private {
 
 // Return the bit field(s) from the most significant bit (msbit) to the
+// least significant bit (lsbit) of a 64-bit unsigned value.
+static inline uint64_t
+Bits64 (const uint64_t bits, const uint32_t msbit, const uint32_t lsbit)
+{
+    assert(msbit < 64 && lsbit <= msbit);
+    return (bits >> lsbit) & ((1u << (msbit - lsbit + 1)) - 1);
+}
+
+// Return the bit field(s) from the most significant bit (msbit) to the
 // least significant bit (lsbit) of a 32-bit unsigned value.
 static inline uint32_t
 Bits32 (const uint32_t bits, const uint32_t msbit, const uint32_t lsbit)
