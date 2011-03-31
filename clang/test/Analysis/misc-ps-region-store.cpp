@@ -255,4 +255,12 @@ bool RDar9203355::foo(unsigned valA, int &result) const {
   return false;
 }
 
+// Test handling of new[].
+void rdar9212512() {
+  int *x = new int[10];
+  for (unsigned i = 0 ; i < 2 ; ++i) {
+    // This previously triggered an uninitialized values warning.
+    x[i] = 1;  // no-warning
+  }
+}
 

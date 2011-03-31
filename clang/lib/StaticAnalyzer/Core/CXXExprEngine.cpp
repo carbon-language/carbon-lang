@@ -199,20 +199,23 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
 
 void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                                    ExplodedNodeSet &Dst) {
-  if (CNE->isArray()) {
-    // FIXME: allocating an array has not been handled.
-    return;
-  }
-
+  
   unsigned Count = Builder->getCurrentBlockCount();
   DefinedOrUnknownSVal symVal =
     svalBuilder.getConjuredSymbolVal(NULL, CNE, CNE->getType(), Count);
-  const MemRegion *NewReg = cast<loc::MemRegionVal>(symVal).getRegion();
-
+  const MemRegion *NewReg = cast<loc::MemRegionVal>(symVal).getRegion();  
   QualType ObjTy = CNE->getType()->getAs<PointerType>()->getPointeeType();
-
   const ElementRegion *EleReg = 
-                         getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
+    getStoreManager().GetElementZeroRegion(NewReg, ObjTy);
+
+  if (CNE->isArray()) {
+    // FIXME: allocating an array requires simulating the constructors.
+    // For now, just return a symbolicated region.
+    const GRState *state = GetState(Pred);
+    state = state->BindExpr(CNE, loc::MemRegionVal(EleReg));
+    MakeNode(Dst, CNE, Pred, state);
+    return;
+  }
 
   // Evaluate constructor arguments.
   const FunctionProtoType *FnType = NULL;
