@@ -166,7 +166,7 @@ public:
     unsigned Tag, UserTag;
 
   public:
-    Query(): LiveUnion(), VirtReg() {}
+    Query(): LiveUnion(), VirtReg(), Tag(0), UserTag(0) {}
 
     Query(LiveInterval *VReg, LiveIntervalUnion *LIU):
       LiveUnion(LIU), VirtReg(VReg), CheckedFirstInterference(false),
