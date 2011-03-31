@@ -2855,6 +2855,11 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       }
   }
 
+  // fcmp (fneg x), (fneg y) -> fcmp x, y
+  Value *X, *Y;
+  if (match(Op0, m_FNeg(m_Value(X))) && match(Op1, m_FNeg(m_Value(Y))))
+    return new FCmpInst(I.getPredicate(), X, Y);
+
   // fcmp (fpext x), (fpext y) -> fcmp x, y
   if (FPExtInst *LHSExt = dyn_cast<FPExtInst>(Op0))
     if (FPExtInst *RHSExt = dyn_cast<FPExtInst>(Op1))

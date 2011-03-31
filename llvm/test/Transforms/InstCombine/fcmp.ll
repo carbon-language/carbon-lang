@@ -40,3 +40,12 @@ define i1 @test5(float %a) nounwind {
 ; CHECK: @test5
 ; CHECK-NEXT: fcmp olt float %a, -1.0
 }
+
+define i1 @test6(float %x, float %y) nounwind {
+  %neg1 = fsub float -0.000000e+00, %x
+  %neg2 = fsub float -0.000000e+00, %y
+  %cmp = fcmp ogt float %neg1, %neg2
+  ret i1 %cmp
+; CHECK: @test6
+; CHECK-NEXT: fcmp ogt float %x, %y
+}
