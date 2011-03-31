@@ -1231,8 +1231,8 @@ public:
   ObjectByrefHelpers(CharUnits alignment, BlockFieldFlags flags)
     : ByrefHelpers(alignment), Flags(flags) {}
 
-  void emitCopy(CodeGenFunction &CGF, llvm::Value *srcField,
-                llvm::Value *destField) {
+  void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
+                llvm::Value *srcField) {
     destField = CGF.Builder.CreateBitCast(destField, CGF.VoidPtrTy);
 
     srcField = CGF.Builder.CreateBitCast(srcField, CGF.VoidPtrPtrTy);
