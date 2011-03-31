@@ -991,6 +991,7 @@ multiclass AI_ldr1<bit isByte, string opc, InstrItinClass iii,
                  [(set GPR:$Rt, (opnode ldst_so_reg:$shift))]> {
     bits<4>  Rt;
     bits<17> shift;
+    let shift{4}    = 0;            // Inst{4} = 0
     let Inst{23}    = shift{12};    // U (add = ('U' == 1))
     let Inst{19-16} = shift{16-13}; // Rn
     let Inst{15-12} = Rt;
@@ -1020,6 +1021,7 @@ multiclass AI_str1<bit isByte, string opc, InstrItinClass iii,
                  [(opnode GPR:$Rt, ldst_so_reg:$shift)]> {
     bits<4> Rt;
     bits<17> shift;
+    let shift{4}    = 0;            // Inst{4} = 0
     let Inst{23}    = shift{12};    // U (add = ('U' == 1))
     let Inst{19-16} = shift{16-13}; // Rn
     let Inst{15-12} = Rt;
