@@ -11338,7 +11338,7 @@ EmulateInstructionARM::EmulateVLD1Single (const uint32_t opcode, const ARMEncodi
         uint64_t mask = all_ones << ((index+1) * esize);  // mask is all 1's to left of where 'element' goes, & all 0's
                                                           // at element & to the right of element.
         if (index > 0)
-            mask = mask | Bits32 (all_ones, (index * esize) - 1, 0); // add 1's to the right of where 'element' goes.
+            mask = mask | Bits64 (all_ones, (index * esize) - 1, 0); // add 1's to the right of where 'element' goes.
                                                                      // now mask should be 0's where element goes & 1's 
                                                                      // everywhere else.
 
@@ -11503,7 +11503,7 @@ EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding e
             for (int e = 0; e < elements; ++e)
             {
                 // MemU[address,ebytes] = Elem[D[d+r],e,esize];
-                uint32_t word = Bits32 (register_data, ((e + 1) * esize) - 1, e * esize);
+                uint64_t word = Bits64 (register_data, ((e + 1) * esize) - 1, e * esize);
                 
                 context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
                 if (!MemUWrite (context, address, word, ebytes))
@@ -11513,6 +11513,164 @@ EmulateInstructionARM::EmulateVST1Multiple (const uint32_t opcode, ARMEncoding e
                 address = address + ebytes;
             }
         }
+    }
+    return true;
+}
+
+// A8.6.392 VST1 (single element from one lane)
+// This instruction stores one element to memory from one element of a register.  
+bool
+EmulateInstructionARM::EmulateVST1Single (const uint32_t opcode, ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); CheckAdvSIMDEnabled(); NullCheckIfThumbEE(n);
+        address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        if wback then R[n] = R[n] + (if register_index then R[m] else ebytes);
+        MemU[address,ebytes] = Elem[D[d],index,esize];
+#endif
+
+    bool success = false;
+    
+    if (ConditionPassed (opcode))
+    {
+        uint32_t ebytes;
+        uint32_t esize;
+        uint32_t index;
+        uint32_t alignment;
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        bool wback;
+        bool register_index;
+        
+        switch (encoding)
+        {
+            case eEncodingT1:
+            case eEncodingA1:
+            {
+                uint32_t size = Bits32 (opcode, 11, 10);
+                uint32_t index_align = Bits32 (opcode, 7, 4);
+                
+                // if size == ‘11’ then UNDEFINED;
+                if (size == 3)
+                    return false;
+                    
+                // case size of
+                if (size == 0) // when ‘00’
+                {
+                    // if index_align<0> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 0))
+                        return false;
+                    // ebytes = 1; esize = 8; index = UInt(index_align<3:1>); alignment = 1;
+                    ebytes = 1;
+                    esize = 8;
+                    index = Bits32 (index_align, 3, 1);
+                    alignment = 1;
+                }
+                else if (size == 1) // when ‘01’
+                {
+                    // if index_align<1> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 1))
+                        return false;
+                            
+                    // ebytes = 2; esize = 16; index = UInt(index_align<3:2>);
+                    ebytes = 2;
+                    esize = 16;
+                    index = Bits32 (index_align, 3, 2);
+                    
+                    // alignment = if index_align<0> == ‘0’ then 1 else 2;
+                    if (BitIsClear (index_align, 0))
+                        alignment = 1;
+                    else
+                        alignment = 2;
+                }
+                else if (size == 2) // when ‘10’
+                {
+                    // if index_align<2> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 2))
+                        return false;
+                        
+                    // if index_align<1:0> != ‘00’ && index_align<1:0> != ‘11’ then UNDEFINED;
+                    if ((Bits32 (index_align, 1, 0) != 0) && (Bits32 (index_align, 1, 0) != 3))
+                        return false;
+                        
+                    // ebytes = 4; esize = 32; index = UInt(index_align<3>);
+                    ebytes = 4;
+                    esize = 32;
+                    index = Bit32 (index_align, 3);
+                    
+                    // alignment = if index_align<1:0> == ‘00’ then 1 else 4;
+                    if (Bits32 (index_align, 1, 0) == 0)
+                        alignment = 1;
+                    else
+                        alignment = 4;
+                }
+                // d = UInt(D:Vd); n = UInt(Rn); m = UInt(Rm);
+                d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                
+                // wback = (m != 15); register_index = (m != 15 && m != 13);  if n == 15 then UNPREDICTABLE;          
+                wback = (m != 15);
+                register_index = ((m != 15) && (m != 13));
+                
+                if (n == 15)
+                    return false;
+            }
+                break;
+                
+            default:
+                return false;
+        }
+        
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+            
+        // address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        addr_t address = Rn;
+        if ((address % alignment) != 0)
+            return false;
+            
+        EmulateInstruction::Context context;
+        // if wback then R[n] = R[n] + (if register_index then R[m] else ebytes);
+        if (wback)
+        {
+            uint32_t Rm = ReadCoreReg (m, &success);
+            if (!success)
+                return false;
+                
+            uint32_t offset;
+            if (register_index)
+                offset = Rm;
+            else
+                offset = ebytes;
+                
+            context.type = eContextAdjustBaseRegister;
+            context.SetRegisterPlusOffset (base_reg, offset);
+            
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, Rn + offset))
+                return false;
+        }
+        
+        // MemU[address,ebytes] = Elem[D[d],index,esize];
+        uint64_t register_data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_d0 + d, 0, &success);
+        if (!success)
+            return false;
+            
+        uint64_t word = Bits64 (register_data, ((index + 1) * esize) - 1,  index * esize);
+        
+        Register data_reg;
+        data_reg.SetRegister (eRegisterKindDWARF, dwarf_d0 + d);
+        context.type = eContextRegisterStore;
+        context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
+        
+        if (!MemUWrite (context, address, word, ebytes))
+            return false;
     }
     return true;
 }
@@ -11722,6 +11880,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0f300f00, 0x0d000b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVSTR, "vstr<c> <Dd> [<Rn>{,#+/-<imm>}]"},
         { 0x0f300f00, 0x0d000a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVSTR, "vstr<c> <Sd> [<Rn>{,#+/-<imm>}]"},
         { 0xffb00000, 0xf4000000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVST1Multiple, "vst1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"},
+        { 0xffb00300, 0xf4800000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVST1Single, "vst1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"},
                   
         //----------------------------------------------------------------------
         // Other instructions
@@ -12025,6 +12184,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xff300f00, 0xed000b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVSTR, "vstr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
         { 0xff300f00, 0xed000a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVSTR, "vstr<c> <Sd>, [<Rn>{,#+/-<imm>}]"},
         { 0xffb00000, 0xfa000000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVST1Multiple, "vst1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"},
+        { 0xffb00300, 0xf9800000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVST1Single, "vst1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"}, 
                   
         //----------------------------------------------------------------------
         // Other instructions
