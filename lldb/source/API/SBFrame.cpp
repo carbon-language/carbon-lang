@@ -369,7 +369,7 @@ SBFrame::FindVariable (const char *name)
     SBValue sb_value;
     
     if (var_sp)
-        *sb_value = ValueObjectSP (new ValueObjectVariable (var_sp));
+        *sb_value = ValueObjectSP (new ValueObjectVariable (m_opaque_sp.get(), var_sp));
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -416,7 +416,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
                             variable_sp->GetScope() == value_type &&
                             variable_sp->GetName() == const_name)
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectVariable (variable_sp));
+                            *sb_value = ValueObjectSP (new ValueObjectVariable (m_opaque_sp.get(), variable_sp));
                             break;
                         }
                     }
@@ -437,7 +437,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
                             ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
                              (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectRegister (NULL, reg_ctx, reg_idx));
+                            *sb_value = ValueObjectSP (new ValueObjectRegister (m_opaque_sp.get(), reg_ctx, reg_idx));
                         }
                     }
                 }
@@ -457,7 +457,7 @@ SBFrame::FindValue (const char *name, ValueType value_type)
                             ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
                              (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectRegisterSet (NULL, reg_ctx, set_idx));
+                            *sb_value = ValueObjectSP (new ValueObjectRegisterSet (m_opaque_sp.get(), reg_ctx, set_idx));
                         }
                     }
                 }
@@ -651,7 +651,7 @@ SBFrame::GetRegisters ()
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
             for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
             {
-                value_list.Append(ValueObjectSP (new ValueObjectRegisterSet (NULL, reg_ctx, set_idx)));
+                value_list.Append(ValueObjectSP (new ValueObjectRegisterSet (m_opaque_sp.get(), reg_ctx, set_idx)));
             }
         }
     }

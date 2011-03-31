@@ -138,16 +138,19 @@ SBValue::GetByteSize ()
 bool
 SBValue::IsInScope (const SBFrame &sb_frame)
 {
+    return IsInScope();
+}
+
+bool
+SBValue::IsInScope ()
+{
     bool result = false;
 
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            result = m_opaque_sp->IsInScope (frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        result = m_opaque_sp->IsInScope ();
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -160,23 +163,26 @@ SBValue::IsInScope (const SBFrame &sb_frame)
 const char *
 SBValue::GetValue (const SBFrame &sb_frame)
 {
+    return GetValue();
+}
+
+const char *
+SBValue::GetValue ()
+{
     const char *cstr = NULL;
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            cstr = m_opaque_sp->GetValueAsCString (frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        cstr = m_opaque_sp->GetValueAsCString ();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
-            log->Printf ("SBValue(%p)::GetValue (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), sb_frame.get(), cstr);
+            log->Printf ("SBValue(%p)::GetValue => \"%s\"", m_opaque_sp.get(), cstr);
         else
-            log->Printf ("SBValue(%p)::GetValue (SBFrame(%p)) => NULL", m_opaque_sp.get(), sb_frame.get());
+            log->Printf ("SBValue(%p)::GetValue => NULL", m_opaque_sp.get());
     }
 
     return cstr;
@@ -210,23 +216,26 @@ SBValue::GetValueType ()
 const char *
 SBValue::GetObjectDescription (const SBFrame &sb_frame)
 {
+    return GetObjectDescription ();
+}
+
+const char *
+SBValue::GetObjectDescription ()
+{
     const char *cstr = NULL;
-    if ( m_opaque_sp)
+    if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            cstr = m_opaque_sp->GetObjectDescription (frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        cstr = m_opaque_sp->GetObjectDescription ();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
-            log->Printf ("SBValue(%p)::GetObjectDescription (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), sb_frame.get(), cstr);
+            log->Printf ("SBValue(%p)::GetObjectDescription => \"%s\"", m_opaque_sp.get(), cstr);
         else
-            log->Printf ("SBValue(%p)::GetObjectDescription (SBFrame(%p)) => NULL", m_opaque_sp.get(), sb_frame.get());
+            log->Printf ("SBValue(%p)::GetObjectDescription => NULL", m_opaque_sp.get());
     }
     return cstr;
 }
@@ -234,19 +243,22 @@ SBValue::GetObjectDescription (const SBFrame &sb_frame)
 bool
 SBValue::GetValueDidChange (const SBFrame &sb_frame)
 {
+    return GetValueDidChange ();
+}
+
+bool
+SBValue::GetValueDidChange ()
+{
     bool result = false;
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            result = m_opaque_sp->GetValueDidChange (frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        result = m_opaque_sp->GetValueDidChange ();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBValue(%p)::GetValueDidChange (SBFrame(%p)) => %i", m_opaque_sp.get(), sb_frame.get(), result);
+        log->Printf ("SBValue(%p)::GetValueDidChange => %i", m_opaque_sp.get(), result);
 
     return result;
 }
@@ -254,23 +266,26 @@ SBValue::GetValueDidChange (const SBFrame &sb_frame)
 const char *
 SBValue::GetSummary (const SBFrame &sb_frame)
 {
+    return GetSummary ();
+}
+
+const char *
+SBValue::GetSummary ()
+{
     const char *cstr = NULL;
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            cstr = m_opaque_sp->GetSummaryAsCString(frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        cstr = m_opaque_sp->GetSummaryAsCString();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
-            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), sb_frame.get(), cstr);
+            log->Printf ("SBValue(%p)::GetSummary => \"%s\"", m_opaque_sp.get(), cstr);
         else
-            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => NULL", m_opaque_sp.get(), sb_frame.get());
+            log->Printf ("SBValue(%p)::GetSummary => NULL", m_opaque_sp.get());
     }
     return cstr;
 }
@@ -278,23 +293,26 @@ SBValue::GetSummary (const SBFrame &sb_frame)
 const char *
 SBValue::GetLocation (const SBFrame &sb_frame)
 {
+    return GetLocation ();
+}
+
+const char *
+SBValue::GetLocation ()
+{
     const char *cstr = NULL;
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            cstr = m_opaque_sp->GetLocationAsCString(frame);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        cstr = m_opaque_sp->GetLocationAsCString();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         if (cstr)
-            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => \"%s\"", m_opaque_sp.get(), sb_frame.get(), cstr);
+            log->Printf ("SBValue(%p)::GetSummary => \"%s\"", m_opaque_sp.get(), cstr);
         else
-            log->Printf ("SBValue(%p)::GetSummary (SBFrame(%p)) => NULL", m_opaque_sp.get(), sb_frame.get());
+            log->Printf ("SBValue(%p)::GetSummary => NULL", m_opaque_sp.get());
     }
     return cstr;
 }
@@ -302,15 +320,18 @@ SBValue::GetLocation (const SBFrame &sb_frame)
 bool
 SBValue::SetValueFromCString (const SBFrame &sb_frame, const char *value_str)
 {
+    return SetValueFromCString (value_str);
+}
+
+bool
+SBValue::SetValueFromCString (const char *value_str)
+{
     bool success = false;
     if (m_opaque_sp)
     {
-        StackFrame *frame = sb_frame.get();
-        if (frame)
-        {
-            Mutex::Locker api_locker (frame->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            success = m_opaque_sp->SetValueFromCString (frame, value_str);
-        }
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        success = m_opaque_sp->SetValueFromCString (value_str);
     }
     return success;
 }

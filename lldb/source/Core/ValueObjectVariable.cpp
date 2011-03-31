@@ -32,8 +32,8 @@
 
 using namespace lldb_private;
 
-ValueObjectVariable::ValueObjectVariable (const lldb::VariableSP &var_sp) :
-    ValueObject(NULL),
+ValueObjectVariable::ValueObjectVariable (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp) :
+    ValueObject(exe_scope),
     m_variable_sp(var_sp)
 {
     // Do not attempt to construct one of these objects with no variable!
@@ -93,8 +93,8 @@ ValueObjectVariable::GetValueType() const
     return lldb::eValueTypeInvalid;
 }
 
-void
-ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectVariable::UpdateValue ()
 {
     SetValueIsValid (false);
     m_error.Clear();
@@ -102,7 +102,7 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
     Variable *variable = m_variable_sp.get();
     DWARFExpression &expr = variable->LocationExpression();
     lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
-    ExecutionContext exe_ctx (exe_scope);
+    ExecutionContext exe_ctx (GetExecutionContextScope());
     
     if (exe_ctx.target)
     {
@@ -192,13 +192,22 @@ ValueObjectVariable::UpdateValue (ExecutionContextScope *exe_scope)
 
         SetValueIsValid (m_error.Success());
     }
+    return m_error.Success();
 }
 
 
 
 bool
-ValueObjectVariable::IsInScope (StackFrame *frame)
+ValueObjectVariable::IsInScope ()
 {
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
+    if (!exe_scope)
+        return true;
+        
+    StackFrame *frame = exe_scope->CalculateStackFrame();
+    if (!frame)
+        return true;
+         
     return m_variable_sp->IsInScope (frame);
 }
 

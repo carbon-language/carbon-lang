@@ -26,7 +26,7 @@ namespace lldb_private {
 class ValueObjectRegisterContext : public ValueObject
 {
 public:
-    ValueObjectRegisterContext (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp);
+    ValueObjectRegisterContext (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp);
 
     virtual
     ~ValueObjectRegisterContext();
@@ -52,14 +52,14 @@ public:
     virtual uint32_t
     CalculateNumChildren();
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
     virtual lldb::ValueObjectSP
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
 protected:
-    lldb::RegisterContextSP m_reg_ctx;
+    virtual bool
+    UpdateValue ();
+
+    lldb::RegisterContextSP m_reg_ctx_sp;
 
 private:
     //------------------------------------------------------------------
@@ -71,7 +71,7 @@ private:
 class ValueObjectRegisterSet : public ValueObject
 {
 public:
-    ValueObjectRegisterSet (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
+    ValueObjectRegisterSet (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
 
     virtual
     ~ValueObjectRegisterSet();
@@ -97,15 +97,21 @@ public:
     virtual uint32_t
     CalculateNumChildren();
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
     virtual lldb::ValueObjectSP
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+    
+    virtual lldb::ValueObjectSP
+    GetChildMemberWithName (const ConstString &name, bool can_create);
+
+    virtual uint32_t
+    GetIndexOfChildWithName (const ConstString &name);
+
 
 protected:
+    virtual bool
+    UpdateValue ();
 
-    lldb::RegisterContextSP m_reg_ctx;
+    lldb::RegisterContextSP m_reg_ctx_sp;
     const RegisterSet *m_reg_set;
     uint32_t m_reg_set_idx;
 
@@ -119,7 +125,8 @@ private:
 class ValueObjectRegister : public ValueObject
 {
 public:
-    ValueObjectRegister (ValueObject *parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
+    ValueObjectRegister (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
+    ValueObjectRegister (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
 
     virtual
     ~ValueObjectRegister();
@@ -145,18 +152,19 @@ public:
     virtual uint32_t
     CalculateNumChildren();
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
 protected:
+    virtual bool
+    UpdateValue ();
 
-    lldb::RegisterContextSP m_reg_ctx;
+    lldb::RegisterContextSP m_reg_ctx_sp;
     const RegisterInfo *m_reg_info;
     uint32_t m_reg_num;
     ConstString m_type_name;
     void *m_clang_type;
 
 private:
+    void
+    ConstructObject ();
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

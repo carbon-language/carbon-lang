@@ -30,12 +30,16 @@ ClangPersistentVariables::CreatePersistentVariable (const lldb::ValueObjectSP &v
 }
 
 ClangExpressionVariableSP
-ClangPersistentVariables::CreatePersistentVariable (const ConstString &name, const TypeFromUser& user_type, lldb::ByteOrder byte_order, uint32_t addr_byte_size)
+ClangPersistentVariables::CreatePersistentVariable (ExecutionContextScope *exe_scope, 
+                                                    const ConstString &name, 
+                                                    const TypeFromUser& user_type, 
+                                                    lldb::ByteOrder byte_order, 
+                                                    uint32_t addr_byte_size)
 {
     ClangExpressionVariableSP var_sp (GetVariable(name));
     
     if (!var_sp)
-        var_sp = CreateVariable(name, user_type, byte_order, addr_byte_size);
+        var_sp = CreateVariable(exe_scope, name, user_type, byte_order, addr_byte_size);
 
     return var_sp;
 }

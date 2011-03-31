@@ -61,7 +61,7 @@ class ValueObjectConstResult;
 class ClangExpressionVariable
 {
 public:
-    ClangExpressionVariable(lldb::ByteOrder byte_order, uint32_t addr_byte_size);
+    ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size);
 
     ClangExpressionVariable(const lldb::ValueObjectSP &valobj_sp);
 
@@ -345,9 +345,9 @@ public:
     /// Create a new variable in the list and return its index
     //----------------------------------------------------------------------
     lldb::ClangExpressionVariableSP
-    CreateVariable (lldb::ByteOrder byte_order, uint32_t addr_byte_size)
+    CreateVariable (ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size)
     {
-        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(byte_order, addr_byte_size));
+        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size));
         m_variables.push_back(var_sp);
         return var_sp;
     }
@@ -363,12 +363,13 @@ public:
     
 
     lldb::ClangExpressionVariableSP
-    CreateVariable (const ConstString &name, 
+    CreateVariable (ExecutionContextScope *exe_scope,
+                    const ConstString &name, 
                     const TypeFromUser& user_type,
                     lldb::ByteOrder byte_order, 
                     uint32_t addr_byte_size)
     {
-        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(byte_order, addr_byte_size));
+        lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size));
         var_sp->SetName (name);
         var_sp->SetClangType (user_type.GetOpaqueQualType());
         var_sp->SetClangAST (user_type.GetASTContext());

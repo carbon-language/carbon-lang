@@ -257,7 +257,6 @@ CommandObjectExpression::EvaluateExpression
                     result_valobj_sp->SetFormat (m_options.format);
 
                 ValueObject::DumpValueObject (output_stream,
-                                              m_exe_ctx.GetBestExecutionContextScope(),
                                               result_valobj_sp.get(),   // Variable object to dump
                                               result_valobj_sp->GetName().GetCString(),// Root object name
                                               0,                        // Pointer depth to traverse (zero means stop at pointers)

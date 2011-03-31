@@ -46,7 +46,10 @@ public:
     GetByteSize ();
 
     bool
-    IsInScope (const lldb::SBFrame &frame);
+    IsInScope (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+
+    bool
+    IsInScope ();
 
     lldb::Format
     GetFormat () const;
@@ -55,25 +58,43 @@ public:
     SetFormat (lldb::Format format);
 
     const char *
-    GetValue (const lldb::SBFrame &frame);
+    GetValue (const lldb::SBFrame &frame);   // DEPRECATED - SBValues know their own frames.
+
+    const char *
+    GetValue ();
 
     ValueType
     GetValueType ();
 
     bool
-    GetValueDidChange (const lldb::SBFrame &frame);
-
-    const char *
-    GetSummary (const lldb::SBFrame &frame);
-    
-    const char *
-    GetObjectDescription (const lldb::SBFrame &frame);
-
-    const char *
-    GetLocation (const lldb::SBFrame &frame);
+    GetValueDidChange (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
 
     bool
-    SetValueFromCString (const lldb::SBFrame &frame, const char *value_str);
+    GetValueDidChange ();
+
+    const char *
+    GetSummary (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+    
+    const char *
+    GetSummary ();
+    
+    const char *
+    GetObjectDescription (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+
+    const char *
+    GetObjectDescription ();
+
+    const char *
+    GetLocation (const lldb::SBFrame &frame);  // DEPRECATED - SBValues know their own frames.
+
+    const char *
+    GetLocation ();
+
+    bool
+    SetValueFromCString (const lldb::SBFrame &frame, const char *value_str);  // DEPRECATED - SBValues know their own frames.
+
+    bool
+    SetValueFromCString (const char *value_str);
 
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);

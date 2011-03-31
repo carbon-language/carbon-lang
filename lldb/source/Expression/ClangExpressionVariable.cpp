@@ -25,10 +25,10 @@
 using namespace lldb_private;
 using namespace clang;
 
-ClangExpressionVariable::ClangExpressionVariable(lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
+ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scope, lldb::ByteOrder byte_order, uint32_t addr_byte_size) :
     m_parser_vars(),
     m_jit_vars (),
-    m_frozen_sp (new ValueObjectConstResult(byte_order, addr_byte_size)),
+    m_frozen_sp (new ValueObjectConstResult(exe_scope, byte_order, addr_byte_size)),
     m_flags (EVNone)
 {
 }

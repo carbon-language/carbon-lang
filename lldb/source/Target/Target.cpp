@@ -926,8 +926,7 @@ Target::EvaluateExpression
             const_valobj_sp->SetName (persistent_variable_name);
         }
         else
-            const_valobj_sp = result_valobj_sp->CreateConstantValue (exe_ctx.GetBestExecutionContextScope(), 
-                                                                     persistent_variable_name);
+            const_valobj_sp = result_valobj_sp->CreateConstantValue (persistent_variable_name);
 
         lldb::ValueObjectSP live_valobj_sp = result_valobj_sp;
         

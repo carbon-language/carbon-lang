@@ -24,13 +24,171 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/StackID.h"
 
 namespace lldb_private {
 
+/// ValueObject:
+/// This abstract class provides an interface to a particular value, be it a register, a local or global variable,
+/// that is evaluated in some particular scope.  The ValueObject also has the capibility of being the "child" of
+/// some other variable object, and in turn of having children.  
+/// If a ValueObject is a root variable object - having no parent - then it must be constructed with respect to some
+/// particular ExecutionContextScope.  If it is a child, it inherits the ExecutionContextScope from its parent.
+/// The ValueObject will update itself if necessary before fetching its value, summary, object description, etc.
+/// But it will always update itself in the ExecutionContextScope with which it was originally created.
 class ValueObject : public UserID
 {
 public:
+
+    class EvaluationPoint 
+    {
+    public:
+        
+        EvaluationPoint ();
+        
+        EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected = false);
+        
+        EvaluationPoint (const EvaluationPoint &rhs);
+        
+        ~EvaluationPoint ();
+        
+        ExecutionContextScope *
+        GetExecutionContextScope ();
+        
+        Target *
+        GetTarget () const
+        {
+            return m_target_sp.get();
+        }
+        
+        Process *
+        GetProcess () const
+        {
+            return m_process_sp.get();
+        }
+                
+        // Set the EvaluationPoint to the values in exe_scope,
+        // Return true if the Evaluation Point changed.
+        // Since the ExecutionContextScope is always going to be valid currently, 
+        // the Updated Context will also always be valid.
+        
+        bool
+        SetContext (ExecutionContextScope *exe_scope);
+        
+        void
+        SetIsConstant ()
+        {
+            SetUpdated();
+            m_stop_id = LLDB_INVALID_UID;
+        }
+        
+        bool
+        IsConstant () const
+        {
+            return m_stop_id == LLDB_INVALID_UID;
+        }
+        
+        lldb::user_id_t
+        GetUpdateID () const
+        {
+            return m_stop_id;
+        }
+
+        void
+        SetUpdateID (lldb::user_id_t new_id)
+        {
+            m_stop_id = new_id;
+        }
+        
+        bool
+        IsFirstEvaluation () const
+        {
+            return m_first_update;
+        }
+        
+        void
+        SetNeedsUpdate ()
+        {
+            m_needs_update = true;
+        }
+        
+        void
+        SetUpdated ()
+        {
+            m_first_update = false;
+            m_needs_update = false;
+        }
+        
+        bool
+        NeedsUpdating()
+        {
+            SyncWithProcessState();
+            return m_needs_update;
+        }
+        
+        bool
+        IsValid ()
+        {
+            if (m_stop_id == LLDB_INVALID_UID)
+                return false;
+            else if (SyncWithProcessState ())
+            {
+                if (m_stop_id == LLDB_INVALID_UID)
+                    return false;
+            }
+            return true;
+        }
+        
+        void
+        SetInvalid ()
+        {
+            // Use the stop id to mark us as invalid, leave the thread id and the stack id around for logging and
+            // history purposes.
+            m_stop_id = LLDB_INVALID_UID;
+            
+            // Can't update an invalid state.
+            m_needs_update = false;
+            
+//            m_thread_id = LLDB_INVALID_THREAD_ID;
+//            m_stack_id.Clear();
+        }
+        
+    private:
+        bool
+        SyncWithProcessState ();
+                
+        ExecutionContextScope *m_exe_scope;   // This is not the way to store the evaluation point state, it is just
+                                            // a cache of the lookup, and gets thrown away when we update.
+        bool             m_needs_update;
+        bool             m_first_update;
+
+        lldb::TargetSP   m_target_sp;
+        lldb::ProcessSP  m_process_sp;
+        lldb::user_id_t  m_thread_id;
+        StackID          m_stack_id;
+        lldb::user_id_t  m_stop_id; // This is the stop id when this ValueObject was last evaluated.
+    };
+
+    const EvaluationPoint &
+    GetUpdatePoint () const
+    {
+        return m_update_point;
+    }
+    
+    EvaluationPoint &
+    GetUpdatePoint ()
+    {
+        return m_update_point;
+    }
+    
+    ExecutionContextScope *
+    GetExecutionContextScope ()
+    {
+        return m_update_point.GetExecutionContextScope();
+    }
+    
     friend class ValueObjectList;
 
     virtual ~ValueObject();
@@ -50,30 +208,11 @@ public:
     virtual lldb::ValueType
     GetValueType() const = 0;
 
-protected:
-    // Should only be called by ValueObject::GetNumChildren()
-    virtual uint32_t
-    CalculateNumChildren() = 0;
-
-public:
     virtual ConstString
     GetTypeName() = 0;
 
     virtual lldb::LanguageType
     GetObjectRuntimeLanguage();
-    
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope) = 0;
-
-    //------------------------------------------------------------------
-    // Sublasses can implement the functions below if they need to.
-    //------------------------------------------------------------------
-protected:
-    // Should only be called by ValueObject::GetChildAtIndex()
-    virtual lldb::ValueObjectSP
-    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
-
-public:
 
     virtual bool
     IsPointerType ();
@@ -103,7 +242,7 @@ public:
     GetExpressionPath (Stream &s, bool qualify_cxx_base_classes);
 
     virtual bool
-    IsInScope (StackFrame *frame)
+    IsInScope ()
     {
         return true;
     }
@@ -133,10 +272,10 @@ public:
     }
 
     virtual const char *
-    GetValueAsCString (ExecutionContextScope *exe_scope);
+    GetValueAsCString ();
 
     virtual bool
-    SetValueFromCString (ExecutionContextScope *exe_scope, const char *value_str);
+    SetValueFromCString (const char *value_str);
 
     //------------------------------------------------------------------
     // The functions below should NOT be modified by sublasses
@@ -150,10 +289,10 @@ public:
     lldb::ValueObjectSP
     GetChildAtIndex (uint32_t idx, bool can_create);
 
-    lldb::ValueObjectSP
+    virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
 
-    uint32_t
+    virtual uint32_t
     GetIndexOfChildWithName (const ConstString &name);
 
     uint32_t
@@ -166,29 +305,25 @@ public:
     GetValue();
 
     bool
-    ResolveValue (ExecutionContextScope *exe_scope, Scalar &scalar);
+    ResolveValue (Scalar &scalar);
 
     const char *
-    GetLocationAsCString (ExecutionContextScope *exe_scope);
+    GetLocationAsCString ();
 
     const char *
-    GetSummaryAsCString (ExecutionContextScope *exe_scope);
+    GetSummaryAsCString ();
     
     const char *
-    GetObjectDescription (ExecutionContextScope *exe_scope);
-
-
-    lldb::user_id_t
-    GetUpdateID() const;
+    GetObjectDescription ();
 
     bool
     GetValueIsValid () const;
 
     bool
-    GetValueDidChange (ExecutionContextScope *exe_scope);
+    GetValueDidChange ();
 
     bool
-    UpdateValueIfNeeded (ExecutionContextScope *exe_scope);
+    UpdateValueIfNeeded ();
 
     const DataExtractor &
     GetDataExtractor () const;
@@ -216,7 +351,7 @@ public:
     }
     
     virtual lldb::ValueObjectSP
-    CreateConstantValue (ExecutionContextScope *exe_scope, const ConstString &name);
+    CreateConstantValue (const ConstString &name);
 
     virtual lldb::ValueObjectSP
     Dereference (Error &error);
@@ -239,7 +374,6 @@ public:
 
     static void
     DumpValueObject (Stream &s,
-                     ExecutionContextScope *exe_scope,
                      ValueObject *valobj,
                      const char *root_valobj_name,
                      uint32_t ptr_depth,
@@ -254,13 +388,13 @@ public:
     bool
     GetIsConstant () const
     {
-        return m_update_id == LLDB_INVALID_UID;
+        return m_update_point.IsConstant();
     }
     
     void
     SetIsConstant ()
     {
-        m_update_id = LLDB_INVALID_UID;
+        m_update_point.SetIsConstant();
     }
 
     lldb::Format
@@ -303,12 +437,9 @@ protected:
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
     ValueObject*        m_parent;       // The parent value object, or NULL if this has no parent
-    lldb::user_id_t     m_update_id;    // An integer that specifies the update number for this value in
-                                        // this value object list. If this value object is asked to update itself
-                                        // it will first check if the update ID match the value object
-                                        // list update number. If the update numbers match, no update is
-                                        // needed, if it does not match, this value object should update its
-                                        // the next time it is asked.
+    EvaluationPoint   m_update_point; // Stores both the stop id and the full context at which this value was last 
+                                        // updated.  When we are asked to update the value object, we check whether
+                                        // the context & stop id are the same before updating.
     ConstString         m_name;         // The name of this object
     DataExtractor       m_data;         // A data extractor that can be used to extract the value.
     Value               m_value;
@@ -333,10 +464,35 @@ protected:
     friend class CommandObjectExpression;
     friend class ClangExpressionVariable;
     friend class Target;
+    friend class ValueObjectChild;
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ValueObject (ValueObject *parent);
+    
+    // Use the no-argument constructor to make a constant variable object (with no ExecutionContextScope.)
+    
+    ValueObject();
+    
+    // Use this constructor to create a "root variable object".  The ValueObject will be locked to this context
+    // through-out its lifespan.
+    
+    ValueObject (ExecutionContextScope *exe_scope);
+    
+    // Use this constructor to create a ValueObject owned by another ValueObject.  It will inherit the ExecutionContext
+    // of its parent.
+    
+    ValueObject (ValueObject &parent);
+
+    virtual bool
+    UpdateValue () = 0;
+
+    // Should only be called by ValueObject::GetChildAtIndex()
+    virtual lldb::ValueObjectSP
+    CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
+
+    // Should only be called by ValueObject::GetNumChildren()
+    virtual uint32_t
+    CalculateNumChildren() = 0;
 
     void
     SetName (const char *name);

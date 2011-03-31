@@ -25,7 +25,7 @@ namespace lldb_private {
 class ValueObjectVariable : public ValueObject
 {
 public:
-    ValueObjectVariable (const lldb::VariableSP &var_sp);
+    ValueObjectVariable (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp);
 
     virtual
     ~ValueObjectVariable();
@@ -48,13 +48,12 @@ public:
     virtual lldb::ValueType
     GetValueType() const;
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
     virtual bool
-    IsInScope (StackFrame *frame);
+    IsInScope ();
 
 protected:
+    virtual bool
+    UpdateValue ();
 
     lldb::VariableSP  m_variable_sp;  ///< The variable that this value object is based upon
 

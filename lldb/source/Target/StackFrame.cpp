@@ -810,7 +810,7 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp)
             {
                 if (m_variable_list_value_objects.GetSize() < num_variables)
                     m_variable_list_value_objects.Resize(num_variables);
-                valobj_sp.reset (new ValueObjectVariable (variable_sp));
+                valobj_sp.reset (new ValueObjectVariable (this, variable_sp));
                 m_variable_list_value_objects.SetValueObjectAtIndex (var_idx, valobj_sp);
             }
         }

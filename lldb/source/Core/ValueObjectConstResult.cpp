@@ -28,10 +28,11 @@ using namespace lldb_private;
 
 ValueObjectConstResult::ValueObjectConstResult
 (
+    ExecutionContextScope *exe_scope,
     ByteOrder byte_order, 
     uint32_t addr_byte_size
 ) :
-    ValueObject (NULL),
+    ValueObject (exe_scope),
     m_clang_ast (NULL),
     m_type_name (),
     m_byte_size (0)
@@ -45,12 +46,13 @@ ValueObjectConstResult::ValueObjectConstResult
 
 ValueObjectConstResult::ValueObjectConstResult
 (
+    ExecutionContextScope *exe_scope,
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
     const DataExtractor &data
 ) :
-    ValueObject (NULL),
+    ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0)
@@ -67,6 +69,7 @@ ValueObjectConstResult::ValueObjectConstResult
 
 ValueObjectConstResult::ValueObjectConstResult
 (
+    ExecutionContextScope *exe_scope,
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
@@ -74,7 +77,7 @@ ValueObjectConstResult::ValueObjectConstResult
     lldb::ByteOrder data_byte_order, 
     uint8_t data_addr_size
 ) :
-    ValueObject (NULL),
+    ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0)
@@ -93,6 +96,7 @@ ValueObjectConstResult::ValueObjectConstResult
 
 ValueObjectConstResult::ValueObjectConstResult 
 (
+    ExecutionContextScope *exe_scope,
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
@@ -100,7 +104,7 @@ ValueObjectConstResult::ValueObjectConstResult
     AddressType address_type,
     uint8_t addr_byte_size
 ) :
-    ValueObject (NULL),
+    ValueObject (exe_scope),
     m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0)
@@ -124,8 +128,10 @@ ValueObjectConstResult::ValueObjectConstResult
     m_pointers_point_to_load_addrs = true;
 }
 
-ValueObjectConstResult::ValueObjectConstResult (const Error& error) :
-    ValueObject (NULL),
+ValueObjectConstResult::ValueObjectConstResult (
+    ExecutionContextScope *exe_scope,
+    const Error& error) :
+    ValueObject (exe_scope),
     m_clang_ast (NULL),
     m_type_name (),
     m_byte_size (0)
@@ -188,16 +194,17 @@ ValueObjectConstResult::GetTypeName()
     return m_type_name;
 }
 
-void
-ValueObjectConstResult::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectConstResult::UpdateValue ()
 {
     // Const value is always valid
     SetValueIsValid (true);
+    return true;
 }
 
 
 bool
-ValueObjectConstResult::IsInScope (StackFrame *frame)
+ValueObjectConstResult::IsInScope ()
 {
     // A const result value is always in scope since it serializes all 
     // information needed to contain the constant value.

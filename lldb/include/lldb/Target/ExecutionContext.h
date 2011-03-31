@@ -79,6 +79,7 @@ public:
 
     ExecutionContextScope *
     GetBestExecutionContextScope () const;
+    
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------

@@ -923,7 +923,7 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 if (result_valobj_sp->GetError().Success())
                 {
                     Scalar scalar;
-                    if (result_valobj_sp->ResolveValue (frame_sp.get(), scalar))
+                    if (result_valobj_sp->ResolveValue (scalar))
                     {
                         addr_t image_ptr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
                         if (image_ptr != 0 && image_ptr != LLDB_INVALID_ADDRESS)
@@ -989,7 +989,7 @@ Process::UnloadImage (uint32_t image_token)
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;
-                            if (result_valobj_sp->ResolveValue (frame_sp.get(), scalar))
+                            if (result_valobj_sp->ResolveValue (scalar))
                             {
                                 if (scalar.UInt(1))
                                 {

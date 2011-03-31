@@ -131,18 +131,19 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                                               const llvm::APInt& value)
 {
     assert (m_parser_vars.get());
-
-    clang::ASTContext *context(m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+    ExecutionContext *exe_ctx = m_parser_vars->m_exe_ctx;
+    clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
     TypeFromUser user_type(ClangASTContext::CopyType(context, 
                                                      type.GetASTContext(),
                                                      type.GetOpaqueQualType()),
                            context);
     
-    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (name, 
+    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx->GetBestExecutionContextScope (),
+                                                                     name, 
                                                                      user_type, 
-                                                                     m_parser_vars->m_exe_ctx->process->GetByteOrder(),
-                                                                     m_parser_vars->m_exe_ctx->process->GetAddressByteSize()))
+                                                                     exe_ctx->process->GetByteOrder(),
+                                                                     exe_ctx->process->GetAddressByteSize()))
         return lldb::ClangExpressionVariableSP();
     
     ClangExpressionVariableSP pvar_sp (m_parser_vars->m_persistent_vars->GetVariable(name));
@@ -156,7 +157,7 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
     
     uint64_t value64 = value.getLimitedValue();
     
-    ByteOrder byte_order = m_parser_vars->m_exe_ctx->process->GetByteOrder();
+    ByteOrder byte_order = exe_ctx->process->GetByteOrder();
     
     size_t num_val_bytes = sizeof(value64);
     size_t num_data_bytes = pvar_sp->GetByteSize();
@@ -209,18 +210,20 @@ ClangExpressionDeclMap::AddPersistentVariable
     assert (m_parser_vars.get());
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    ExecutionContext *exe_ctx = m_parser_vars->m_exe_ctx;
     
-    clang::ASTContext *context(m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+    clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
     
     TypeFromUser user_type(ClangASTContext::CopyType(context, 
                                                      parser_type.GetASTContext(),
                                                      parser_type.GetOpaqueQualType()),
                            context);
     
-    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (name, 
+    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx->GetBestExecutionContextScope (),
+                                                                     name, 
                                                                      user_type, 
-                                                                     m_parser_vars->m_exe_ctx->process->GetByteOrder(),
-                                                                     m_parser_vars->m_exe_ctx->process->GetAddressByteSize()))
+                                                                     exe_ctx->process->GetByteOrder(),
+                                                                     exe_ctx->process->GetAddressByteSize()))
         return false;
     
     ClangExpressionVariableSP var_sp (m_parser_vars->m_persistent_vars->GetVariable(name));
@@ -986,7 +989,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 // If the reference comes from the program, then the ClangExpressionVariable's
                 // live variable data hasn't been set up yet.  Do this now.
                 
-                var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(var_sp->GetTypeFromUser().GetASTContext(),
+                var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope (),
+                                                                                 var_sp->GetTypeFromUser().GetASTContext(),
                                                                                  var_sp->GetTypeFromUser().GetOpaqueQualType(),
                                                                                  var_sp->GetName(),
                                                                                  mem,
@@ -1080,7 +1084,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             
             // Put the location of the spare memory into the live data of the ValueObject.
             
-            var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(var_sp->GetTypeFromUser().GetASTContext(),
+            var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope(),
+                                                                             var_sp->GetTypeFromUser().GetASTContext(),
                                                                              var_sp->GetTypeFromUser().GetOpaqueQualType(),
                                                                              var_sp->GetName(),
                                                                              mem,
@@ -1344,7 +1349,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 
                 // Put the location of the spare memory into the live data of the ValueObject.
                 
-                expr_var->m_live_sp.reset(new lldb_private::ValueObjectConstResult(type.GetASTContext(),
+                expr_var->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope(),
+                                                                                   type.GetASTContext(),
                                                                                    type.GetOpaqueQualType(),
                                                                                    name,
                                                                                    mem,
@@ -1920,7 +1926,8 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, Variable* va
     NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(pt.GetASTContext(), pt.GetOpaqueQualType()));
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (entity_name, 
+    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope (),
+                                                                      entity_name, 
                                                                       ut,
                                                                       m_parser_vars->m_exe_ctx->process->GetByteOrder(),
                                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
@@ -2002,7 +2009,8 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     
     NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
     
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->process->GetByteOrder(),
+    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope(),
+                                                                      m_parser_vars->m_exe_ctx->process->GetByteOrder(),
                                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
     assert (entity.get());
     std::string decl_name(context.m_decl_name.getAsString());
@@ -2098,7 +2106,8 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
     
-    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->process->GetByteOrder(),
+    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope (),
+                                                                      m_parser_vars->m_exe_ctx->process->GetByteOrder(),
                                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
     assert (entity.get());
     std::string decl_name(context.m_decl_name.getAsString());

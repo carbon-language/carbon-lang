@@ -24,7 +24,7 @@ namespace lldb_private {
 class ValueObjectChild : public ValueObject
 {
 public:
-    ValueObjectChild (ValueObject *parent,
+    ValueObjectChild (ValueObject &parent,
                       clang::ASTContext *clang_ast,
                       void *clang_type,
                       const ConstString &name,
@@ -83,11 +83,8 @@ public:
     virtual ConstString
     GetTypeName();
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
     virtual bool
-    IsInScope (StackFrame *frame);
+    IsInScope ();
 
     virtual bool
     IsBaseClass ()
@@ -102,6 +99,9 @@ public:
     }
 
 protected:
+    virtual bool
+    UpdateValue ();
+
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
     ConstString m_type_name;

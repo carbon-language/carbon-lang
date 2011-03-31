@@ -76,6 +76,23 @@ public:
     }
 
     void
+    Clear ()
+    {
+        m_pc = LLDB_INVALID_ADDRESS;
+        m_cfa = LLDB_INVALID_ADDRESS;
+        m_symbol_scope = NULL;
+    }
+    
+    bool
+    IsValid ()
+    {
+        if (m_pc == LLDB_INVALID_ADDRESS && m_cfa == LLDB_INVALID_ADDRESS)
+            return false;
+        else
+            return true;
+    }
+    
+    void
     Dump (Stream *s);
 
     //------------------------------------------------------------------

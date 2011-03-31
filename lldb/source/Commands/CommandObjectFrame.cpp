@@ -501,7 +501,6 @@ public:
                                         }
 
                                         ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                      exe_ctx.frame, 
                                                                       valobj_sp.get(), 
                                                                       name_cstr, 
                                                                       m_options.ptr_depth, 
@@ -563,7 +562,6 @@ public:
                                                 }
                                                 
                                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                              exe_ctx.frame, 
                                                                               valobj_sp.get(), 
                                                                               var_sp->GetName().AsCString(), 
                                                                               m_options.ptr_depth, 
@@ -608,7 +606,6 @@ public:
                                     s.PutCString (": ");
                                 }
                                 ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                              exe_ctx.frame, 
                                                               valobj_sp.get(), 
                                                               valobj_sp->GetParent() ? name_cstr : NULL, 
                                                               ptr_depth, 
@@ -686,7 +683,7 @@ public:
                                     
                                     // When dumping all variables, don't print any variables
                                     // that are not in scope to avoid extra unneeded output
-                                    if (valobj_sp->IsInScope (exe_ctx.frame))
+                                    if (valobj_sp->IsInScope ())
                                     {
                                         if (m_options.show_decl && var_sp->GetDeclaration ().GetFile())
                                         {
@@ -694,7 +691,6 @@ public:
                                             s.PutCString (": ");
                                         }
                                         ValueObject::DumpValueObject (result.GetOutputStream(), 
-                                                                      exe_ctx.frame, 
                                                                       valobj_sp.get(), 
                                                                       name_cstr, 
                                                                       m_options.ptr_depth, 

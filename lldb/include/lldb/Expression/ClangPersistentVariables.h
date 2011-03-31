@@ -36,7 +36,8 @@ public:
     CreatePersistentVariable (const lldb::ValueObjectSP &valobj_sp);
 
     lldb::ClangExpressionVariableSP
-    CreatePersistentVariable (const ConstString &name, 
+    CreatePersistentVariable (ExecutionContextScope *exe_scope,
+                              const ConstString &name, 
                               const TypeFromUser& user_type, 
                               lldb::ByteOrder byte_order, 
                               uint32_t addr_byte_size);

@@ -29,9 +29,9 @@ using namespace lldb_private;
 
 #pragma mark ValueObjectRegisterContext
 
-ValueObjectRegisterContext::ValueObjectRegisterContext (ValueObject *parent, RegisterContextSP &reg_ctx) :
+ValueObjectRegisterContext::ValueObjectRegisterContext (ValueObject &parent, RegisterContextSP &reg_ctx) :
     ValueObject (parent),
-    m_reg_ctx (reg_ctx)
+    m_reg_ctx_sp (reg_ctx)
 {
     assert (reg_ctx);
     m_name.SetCString("Registers");
@@ -58,7 +58,7 @@ ValueObjectRegisterContext::GetTypeName()
 uint32_t
 ValueObjectRegisterContext::CalculateNumChildren()
 {
-    return m_reg_ctx->GetRegisterSetCount();
+    return m_reg_ctx_sp->GetRegisterSetCount();
 }
 
 clang::ASTContext *
@@ -73,17 +73,26 @@ ValueObjectRegisterContext::GetByteSize()
     return 0;
 }
 
-void
-ValueObjectRegisterContext::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectRegisterContext::UpdateValue ()
 {
     m_error.Clear();
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
     StackFrame *frame = exe_scope->CalculateStackFrame();
     if (frame)
-        m_reg_ctx = frame->GetRegisterContext();
+        m_reg_ctx_sp = frame->GetRegisterContext();
     else
-        m_reg_ctx.reset();
+        m_reg_ctx_sp.reset();
 
-    SetValueIsValid (m_reg_ctx.get() != NULL);
+    if (m_reg_ctx_sp.get() == NULL)
+    {
+        SetValueIsValid (false);
+        m_error.SetErrorToGenericError();
+    }
+    else
+        SetValueIsValid (true);
+        
+    return m_error.Success();
 }
 
 ValueObjectSP
@@ -93,7 +102,7 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
 
     const uint32_t num_children = GetNumChildren();
     if (idx < num_children)
-        valobj_sp.reset (new ValueObjectRegisterSet(this, m_reg_ctx, idx));
+        valobj_sp.reset (new ValueObjectRegisterSet(GetExecutionContextScope(), m_reg_ctx_sp, idx));
     return valobj_sp;
 }
 
@@ -101,9 +110,9 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
 #pragma mark -
 #pragma mark ValueObjectRegisterSet
 
-ValueObjectRegisterSet::ValueObjectRegisterSet (ValueObject *parent, lldb::RegisterContextSP &reg_ctx, uint32_t reg_set_idx) :
-    ValueObject (parent),
-    m_reg_ctx (reg_ctx),
+ValueObjectRegisterSet::ValueObjectRegisterSet (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx, uint32_t reg_set_idx) :
+    ValueObject (exe_scope),
+    m_reg_ctx_sp (reg_ctx),
     m_reg_set (NULL),
     m_reg_set_idx (reg_set_idx)
 {
@@ -134,7 +143,7 @@ ValueObjectRegisterSet::GetTypeName()
 uint32_t
 ValueObjectRegisterSet::CalculateNumChildren()
 {
-    const RegisterSet *reg_set = m_reg_ctx->GetRegisterSet(m_reg_set_idx);
+    const RegisterSet *reg_set = m_reg_ctx_sp->GetRegisterSet(m_reg_set_idx);
     if (reg_set)
         return reg_set->num_registers;
     return 0;
@@ -152,22 +161,23 @@ ValueObjectRegisterSet::GetByteSize()
     return 0;
 }
 
-void
-ValueObjectRegisterSet::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectRegisterSet::UpdateValue ()
 {
     m_error.Clear();
     SetValueDidChange (false);
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
     StackFrame *frame = exe_scope->CalculateStackFrame();
     if (frame == NULL)
-        m_reg_ctx.reset();
+        m_reg_ctx_sp.reset();
     else
     {
-        m_reg_ctx = frame->GetRegisterContext ();
-        if (m_reg_ctx)
+        m_reg_ctx_sp = frame->GetRegisterContext ();
+        if (m_reg_ctx_sp)
         {
-            const RegisterSet *reg_set = m_reg_ctx->GetRegisterSet (m_reg_set_idx);
+            const RegisterSet *reg_set = m_reg_ctx_sp->GetRegisterSet (m_reg_set_idx);
             if (reg_set == NULL)
-                m_reg_ctx.reset();
+                m_reg_ctx_sp.reset();
             else if (m_reg_set != reg_set)
             {
                 SetValueDidChange (true);
@@ -175,15 +185,17 @@ ValueObjectRegisterSet::UpdateValue (ExecutionContextScope *exe_scope)
             }
         }
     }
-    if (m_reg_ctx)
+    if (m_reg_ctx_sp)
     {
         SetValueIsValid (true);
     }
     else
     {
         SetValueIsValid (false);
+        m_error.SetErrorToGenericError ();
         m_children.clear();
     }
+    return m_error.Success();
 }
 
 
@@ -191,29 +203,47 @@ ValueObjectSP
 ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
     ValueObjectSP valobj_sp;
-    if (m_reg_ctx && m_reg_set)
+    if (m_reg_ctx_sp && m_reg_set)
     {
         const uint32_t num_children = GetNumChildren();
         if (idx < num_children)
-            valobj_sp.reset (new ValueObjectRegister(this, m_reg_ctx, m_reg_set->registers[idx]));
+            valobj_sp.reset (new ValueObjectRegister(*this, m_reg_ctx_sp, m_reg_set->registers[idx]));
     }
     return valobj_sp;
 }
 
+lldb::ValueObjectSP
+ValueObjectRegisterSet::GetChildMemberWithName (const ConstString &name, bool can_create)
+{
+    ValueObjectSP valobj_sp;
+    if (m_reg_ctx_sp && m_reg_set)
+    {
+        const RegisterInfo *reg_info = m_reg_ctx_sp->GetRegisterInfoByName (name.AsCString());
+        if (reg_info != NULL)
+            valobj_sp.reset (new ValueObjectRegister(*this, m_reg_ctx_sp, reg_info->kinds[eRegisterKindLLDB]));
+    }
+    return valobj_sp;
+}
+
+uint32_t
+ValueObjectRegisterSet::GetIndexOfChildWithName (const ConstString &name)
+{
+    if (m_reg_ctx_sp && m_reg_set)
+    {
+        const RegisterInfo *reg_info = m_reg_ctx_sp->GetRegisterInfoByName (name.AsCString());
+        if (reg_info != NULL)
+            return reg_info->kinds[eRegisterKindLLDB];
+    }
+    return UINT32_MAX;
+}
 
 #pragma mark -
 #pragma mark ValueObjectRegister
 
-ValueObjectRegister::ValueObjectRegister (ValueObject *parent, lldb::RegisterContextSP &reg_ctx, uint32_t reg_num) :
-    ValueObject (parent),
-    m_reg_ctx (reg_ctx),
-    m_reg_info (NULL),
-    m_reg_num (reg_num),
-    m_type_name (),
-    m_clang_type (NULL)
+void
+ValueObjectRegister::ConstructObject ()
 {
-    assert (reg_ctx);
-    m_reg_info = reg_ctx->GetRegisterInfoAtIndex(reg_num);
+    m_reg_info = m_reg_ctx_sp->GetRegisterInfoAtIndex(m_reg_num);
     if (m_reg_info)
     {
         if (m_reg_info->name)
@@ -221,6 +251,30 @@ ValueObjectRegister::ValueObjectRegister (ValueObject *parent, lldb::RegisterCon
         else if (m_reg_info->alt_name)
             m_name.SetCString(m_reg_info->alt_name);
     }
+}
+
+ValueObjectRegister::ValueObjectRegister (ValueObject &parent, lldb::RegisterContextSP &reg_ctx, uint32_t reg_num) :
+    ValueObject (parent),
+    m_reg_ctx_sp (reg_ctx),
+    m_reg_info (NULL),
+    m_reg_num (reg_num),
+    m_type_name (),
+    m_clang_type (NULL)
+{
+    assert (reg_ctx);
+    ConstructObject();
+}
+
+ValueObjectRegister::ValueObjectRegister (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx, uint32_t reg_num) :
+    ValueObject (exe_scope),
+    m_reg_ctx_sp (reg_ctx),
+    m_reg_info (NULL),
+    m_reg_num (reg_num),
+    m_type_name (),
+    m_clang_type (NULL)
+{
+    assert (reg_ctx);
+    ConstructObject();
 }
 
 ValueObjectRegister::~ValueObjectRegister()
@@ -232,7 +286,7 @@ ValueObjectRegister::GetClangType ()
 {
     if (m_clang_type == NULL && m_reg_info)
     {
-        Process *process = m_reg_ctx->CalculateProcess ();
+        Process *process = m_reg_ctx_sp->CalculateProcess ();
         if (process)
         {
             Module *exe_module = process->GetTarget().GetExecutableModule ().get();
@@ -262,7 +316,7 @@ ValueObjectRegister::CalculateNumChildren()
 clang::ASTContext *
 ValueObjectRegister::GetClangAST ()
 {
-    Process *process = m_reg_ctx->CalculateProcess ();
+    Process *process = m_reg_ctx_sp->CalculateProcess ();
     if (process)
     {
         Module *exe_module = process->GetTarget().GetExecutableModule ().get();
@@ -278,17 +332,18 @@ ValueObjectRegister::GetByteSize()
     return m_reg_info->byte_size;
 }
 
-void
-ValueObjectRegister::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectRegister::UpdateValue ()
 {
     m_error.Clear();
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
     StackFrame *frame = exe_scope->CalculateStackFrame();
     if (frame)
     {
-        m_reg_ctx = frame->GetRegisterContext();
-        if (m_reg_ctx)
+        m_reg_ctx_sp = frame->GetRegisterContext();
+        if (m_reg_ctx_sp)
         {
-            const RegisterInfo *reg_info = m_reg_ctx->GetRegisterInfoAtIndex(m_reg_num);
+            const RegisterInfo *reg_info = m_reg_ctx_sp->GetRegisterInfoAtIndex(m_reg_num);
             if (m_reg_info != reg_info)
             {
                 m_reg_info = reg_info;
@@ -304,23 +359,26 @@ ValueObjectRegister::UpdateValue (ExecutionContextScope *exe_scope)
     }
     else
     {
-        m_reg_ctx.reset();
+        m_reg_ctx_sp.reset();
         m_reg_info = NULL;
     }
 
 
-    if (m_reg_ctx && m_reg_info)
+    if (m_reg_ctx_sp && m_reg_info)
     {
-        if (m_reg_ctx->ReadRegisterBytes (m_reg_num, m_data))
+        if (m_reg_ctx_sp->ReadRegisterBytes (m_reg_num, m_data))
         {
             m_value.SetContext(Value::eContextTypeRegisterInfo, (void *)m_reg_info);
             m_value.SetValueType(Value::eValueTypeHostAddress);
             m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
             SetValueIsValid (true);
-            return;
+            return true;
         }
     }
+    
     SetValueIsValid (false);
+    m_error.SetErrorToGenericError ();
+    return false;
 }
 
 

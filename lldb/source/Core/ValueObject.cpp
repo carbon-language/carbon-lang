@@ -45,10 +45,9 @@ static lldb::user_id_t g_value_obj_uid = 0;
 //----------------------------------------------------------------------
 // ValueObject constructor
 //----------------------------------------------------------------------
-ValueObject::ValueObject (ValueObject *parent) :
+ValueObject::ValueObject (ValueObject &parent) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
-    m_parent (parent),
-    m_update_id (0),    // Value object lists always start at 1, value objects start at zero
+    m_parent (&parent),
     m_name (),
     m_data (),
     m_value (),
@@ -67,7 +66,37 @@ ValueObject::ValueObject (ValueObject *parent) :
     m_children_count_valid (false),
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
-    m_is_deref_of_parent (false)
+    m_is_deref_of_parent (false),
+    m_update_point (parent.GetUpdatePoint ())
+{
+}
+
+//----------------------------------------------------------------------
+// ValueObject constructor
+//----------------------------------------------------------------------
+ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
+    UserID (++g_value_obj_uid), // Unique identifier for every value object
+    m_parent (NULL),
+    m_name (),
+    m_data (),
+    m_value (),
+    m_error (),
+    m_value_str (),
+    m_old_value_str (),
+    m_location_str (),
+    m_summary_str (),
+    m_object_desc_str (),
+    m_children (),
+    m_synthetic_children (),
+    m_dynamic_value_sp (),
+    m_format (eFormatDefault),
+    m_value_is_valid (false),
+    m_value_did_change (false),
+    m_children_count_valid (false),
+    m_old_value_valid (false),
+    m_pointers_point_to_load_addrs (false),
+    m_is_deref_of_parent (false),
+    m_update_point (exe_scope)
 {
 }
 
@@ -78,68 +107,53 @@ ValueObject::~ValueObject ()
 {
 }
 
-user_id_t
-ValueObject::GetUpdateID() const
-{
-    return m_update_id;
-}
-
 bool
-ValueObject::UpdateValueIfNeeded (ExecutionContextScope *exe_scope)
+ValueObject::UpdateValueIfNeeded ()
 {
     // If this is a constant value, then our success is predicated on whether
     // we have an error or not
     if (GetIsConstant())
         return m_error.Success();
 
-    if (exe_scope)
+    bool first_update = m_update_point.IsFirstEvaluation();
+    
+    if (m_update_point.NeedsUpdating())
     {
-        Process *process = exe_scope->CalculateProcess();
-        if (process)
+        m_update_point.SetUpdated();
+        
+        // Save the old value using swap to avoid a string copy which
+        // also will clear our m_value_str
+        if (m_value_str.empty())
         {
-            const user_id_t stop_id = process->GetStopID();
-            if (m_update_id != stop_id)
-            {
-                bool first_update = m_update_id == 0;
-                // Save the old value using swap to avoid a string copy which
-                // also will clear our m_value_str
-                if (m_value_str.empty())
-                {
-                    m_old_value_valid = false;
-                }
-                else
-                {
-                    m_old_value_valid = true;
-                    m_old_value_str.swap (m_value_str);
-                    m_value_str.clear();
-                }
-                m_location_str.clear();
-                m_summary_str.clear();
-                m_object_desc_str.clear();
+            m_old_value_valid = false;
+        }
+        else
+        {
+            m_old_value_valid = true;
+            m_old_value_str.swap (m_value_str);
+            m_value_str.clear();
+        }
+        m_location_str.clear();
+        m_summary_str.clear();
+        m_object_desc_str.clear();
 
-                const bool value_was_valid = GetValueIsValid();
-                SetValueDidChange (false);
+        const bool value_was_valid = GetValueIsValid();
+        SetValueDidChange (false);
 
-                m_error.Clear();
+        m_error.Clear();
 
-                // Call the pure virtual function to update the value
-                UpdateValue (exe_scope);
-                
-                // Update the fact that we tried to update the value for this
-                // value object whether or not we succeed
-                m_update_id = stop_id;
-                bool success = m_error.Success();
-                SetValueIsValid (success);
-                
-                if (first_update)
-                    SetValueDidChange (false);
-                else if (!m_value_did_change && success == false)
-                {
-                    // The value wasn't gotten successfully, so we mark this
-                    // as changed if the value used to be valid and now isn't
-                    SetValueDidChange (value_was_valid);
-                }
-            }
+        // Call the pure virtual function to update the value
+        bool success = UpdateValue ();
+        
+        SetValueIsValid (success);
+        
+        if (first_update)
+            SetValueDidChange (false);
+        else if (!m_value_did_change && success == false)
+        {
+            // The value wasn't gotten successfully, so we mark this
+            // as changed if the value used to be valid and now isn't
+            SetValueDidChange (value_was_valid);
         }
     }
     return m_error.Success();
@@ -170,9 +184,9 @@ ValueObject::GetName() const
 }
 
 const char *
-ValueObject::GetLocationAsCString (ExecutionContextScope *exe_scope)
+ValueObject::GetLocationAsCString ()
 {
-    if (UpdateValueIfNeeded(exe_scope))
+    if (UpdateValueIfNeeded())
     {
         if (m_location_str.empty())
         {
@@ -227,10 +241,12 @@ ValueObject::GetValue() const
 }
 
 bool
-ValueObject::ResolveValue (ExecutionContextScope *exe_scope, Scalar &scalar)
+ValueObject::ResolveValue (Scalar &scalar)
 {
     ExecutionContext exe_ctx;
-    exe_scope->CalculateExecutionContext(exe_ctx);
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
+    if (exe_scope)
+        exe_scope->CalculateExecutionContext(exe_ctx);
     scalar = m_value.ResolveValue(&exe_ctx, GetClangAST ());
     return scalar.IsValid();
 }
@@ -249,9 +265,9 @@ ValueObject::SetValueIsValid (bool b)
 }
 
 bool
-ValueObject::GetValueDidChange (ExecutionContextScope *exe_scope)
+ValueObject::GetValueDidChange ()
 {
-    GetValueAsCString (exe_scope);
+    GetValueAsCString ();
     return m_value_did_change;
 }
 
@@ -398,7 +414,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
         if (!child_name_str.empty())
             child_name.SetCString (child_name_str.c_str());
 
-        valobj_sp.reset (new ValueObjectChild (this,
+        valobj_sp.reset (new ValueObjectChild (*this,
                                                clang_ast,
                                                child_clang_type,
                                                child_name,
@@ -415,9 +431,9 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
 }
 
 const char *
-ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
+ValueObject::GetSummaryAsCString ()
 {
-    if (UpdateValueIfNeeded (exe_scope))
+    if (UpdateValueIfNeeded ())
     {
         if (m_summary_str.empty())
         {
@@ -432,132 +448,136 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
                                                                       GetClangAST(), 
                                                                       &elem_or_pointee_clang_type));
 
-                if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
-                    ClangASTContext::IsCharType (elem_or_pointee_clang_type))
+                ExecutionContextScope *exe_scope = GetExecutionContextScope();
+                if (exe_scope)
                 {
-                    Process *process = exe_scope->CalculateProcess();
-                    if (process != NULL)
+                    if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
+                        ClangASTContext::IsCharType (elem_or_pointee_clang_type))
                     {
-                        lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
-                        AddressType cstr_address_type = eAddressTypeInvalid;
+                        Process *process = exe_scope->CalculateProcess();
+                        if (process != NULL)
+                        {
+                            lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
+                            AddressType cstr_address_type = eAddressTypeInvalid;
 
-                        size_t cstr_len = 0;
-                        if (type_flags.Test (ClangASTContext::eTypeIsArray))
-                        {
-                            // We have an array
-                            cstr_len = ClangASTContext::GetArraySize (clang_type);
-                            cstr_address = GetAddressOf (cstr_address_type, true);
-                        }
-                        else
-                        {
-                            // We have a pointer
-                            cstr_address = GetPointerValue (cstr_address_type, true);
-                        }
-                        if (cstr_address != LLDB_INVALID_ADDRESS)
-                        {
-                            DataExtractor data;
-                            size_t bytes_read = 0;
-                            std::vector<char> data_buffer;
-                            Error error;
-                            if (cstr_len > 0)
+                            size_t cstr_len = 0;
+                            if (type_flags.Test (ClangASTContext::eTypeIsArray))
                             {
-                                data_buffer.resize(cstr_len);
-                                data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
-                                bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
-                                if (bytes_read > 0)
-                                {
-                                    sstr << '"';
-                                    data.Dump (&sstr,
-                                               0,                 // Start offset in "data"
-                                               eFormatChar,       // Print as characters
-                                               1,                 // Size of item (1 byte for a char!)
-                                               bytes_read,        // How many bytes to print?
-                                               UINT32_MAX,        // num per line
-                                               LLDB_INVALID_ADDRESS,// base address
-                                               0,                 // bitfield bit size
-                                               0);                // bitfield bit offset
-                                    sstr << '"';
-                                }
+                                // We have an array
+                                cstr_len = ClangASTContext::GetArraySize (clang_type);
+                                cstr_address = GetAddressOf (cstr_address_type, true);
                             }
                             else
                             {
-                                const size_t k_max_buf_size = 256;
-                                data_buffer.resize (k_max_buf_size + 1);
-                                // NULL terminate in case we don't get the entire C string
-                                data_buffer.back() = '\0';
-
-                                sstr << '"';
-
-                                data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
-                                while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
-                                {
-                                    size_t len = strlen(&data_buffer.front());
-                                    if (len == 0)
-                                        break;
-                                    if (len > bytes_read)
-                                        len = bytes_read;
-
-                                    data.Dump (&sstr,
-                                               0,                 // Start offset in "data"
-                                               eFormatChar,       // Print as characters
-                                               1,                 // Size of item (1 byte for a char!)
-                                               len,               // How many bytes to print?
-                                               UINT32_MAX,        // num per line
-                                               LLDB_INVALID_ADDRESS,// base address
-                                               0,                 // bitfield bit size
-                                               0);                // bitfield bit offset
-                                    
-                                    if (len < k_max_buf_size)
-                                        break;
-                                    cstr_address += k_max_buf_size;
-                                }
-                                sstr << '"';
+                                // We have a pointer
+                                cstr_address = GetPointerValue (cstr_address_type, true);
                             }
-                        }
-                    }
-                    
-                    if (sstr.GetSize() > 0)
-                        m_summary_str.assign (sstr.GetData(), sstr.GetSize());
-                }
-                else if (ClangASTContext::IsFunctionPointerType (clang_type))
-                {
-                    AddressType func_ptr_address_type = eAddressTypeInvalid;
-                    lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
-
-                    if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
-                    {
-                        switch (func_ptr_address_type)
-                        {
-                        case eAddressTypeInvalid:
-                        case eAddressTypeFile:
-                            break;
-
-                        case eAddressTypeLoad:
+                            if (cstr_address != LLDB_INVALID_ADDRESS)
                             {
-                                Address so_addr;
-                                Target *target = exe_scope->CalculateTarget();
-                                if (target && target->GetSectionLoadList().IsEmpty() == false)
+                                DataExtractor data;
+                                size_t bytes_read = 0;
+                                std::vector<char> data_buffer;
+                                Error error;
+                                if (cstr_len > 0)
                                 {
-                                    if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
+                                    data_buffer.resize(cstr_len);
+                                    data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
+                                    bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
+                                    if (bytes_read > 0)
                                     {
-                                        so_addr.Dump (&sstr, 
-                                                      exe_scope, 
-                                                      Address::DumpStyleResolvedDescription, 
-                                                      Address::DumpStyleSectionNameOffset);
+                                        sstr << '"';
+                                        data.Dump (&sstr,
+                                                   0,                 // Start offset in "data"
+                                                   eFormatChar,       // Print as characters
+                                                   1,                 // Size of item (1 byte for a char!)
+                                                   bytes_read,        // How many bytes to print?
+                                                   UINT32_MAX,        // num per line
+                                                   LLDB_INVALID_ADDRESS,// base address
+                                                   0,                 // bitfield bit size
+                                                   0);                // bitfield bit offset
+                                        sstr << '"';
                                     }
                                 }
-                            }
-                            break;
+                                else
+                                {
+                                    const size_t k_max_buf_size = 256;
+                                    data_buffer.resize (k_max_buf_size + 1);
+                                    // NULL terminate in case we don't get the entire C string
+                                    data_buffer.back() = '\0';
 
-                        case eAddressTypeHost:
-                            break;
+                                    sstr << '"';
+
+                                    data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
+                                    while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
+                                    {
+                                        size_t len = strlen(&data_buffer.front());
+                                        if (len == 0)
+                                            break;
+                                        if (len > bytes_read)
+                                            len = bytes_read;
+
+                                        data.Dump (&sstr,
+                                                   0,                 // Start offset in "data"
+                                                   eFormatChar,       // Print as characters
+                                                   1,                 // Size of item (1 byte for a char!)
+                                                   len,               // How many bytes to print?
+                                                   UINT32_MAX,        // num per line
+                                                   LLDB_INVALID_ADDRESS,// base address
+                                                   0,                 // bitfield bit size
+                                                   0);                // bitfield bit offset
+                                        
+                                        if (len < k_max_buf_size)
+                                            break;
+                                        cstr_address += k_max_buf_size;
+                                    }
+                                    sstr << '"';
+                                }
+                            }
                         }
+                        
+                        if (sstr.GetSize() > 0)
+                            m_summary_str.assign (sstr.GetData(), sstr.GetSize());
                     }
-                    if (sstr.GetSize() > 0)
+                    else if (ClangASTContext::IsFunctionPointerType (clang_type))
                     {
-                        m_summary_str.assign (1, '(');
-                        m_summary_str.append (sstr.GetData(), sstr.GetSize());
-                        m_summary_str.append (1, ')');
+                        AddressType func_ptr_address_type = eAddressTypeInvalid;
+                        lldb::addr_t func_ptr_address = GetPointerValue (func_ptr_address_type, true);
+
+                        if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
+                        {
+                            switch (func_ptr_address_type)
+                            {
+                            case eAddressTypeInvalid:
+                            case eAddressTypeFile:
+                                break;
+
+                            case eAddressTypeLoad:
+                                {
+                                    Address so_addr;
+                                    Target *target = exe_scope->CalculateTarget();
+                                    if (target && target->GetSectionLoadList().IsEmpty() == false)
+                                    {
+                                        if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
+                                        {
+                                            so_addr.Dump (&sstr, 
+                                                          exe_scope, 
+                                                          Address::DumpStyleResolvedDescription, 
+                                                          Address::DumpStyleSectionNameOffset);
+                                        }
+                                    }
+                                }
+                                break;
+
+                            case eAddressTypeHost:
+                                break;
+                            }
+                        }
+                        if (sstr.GetSize() > 0)
+                        {
+                            m_summary_str.assign (1, '(');
+                            m_summary_str.append (sstr.GetData(), sstr.GetSize());
+                            m_summary_str.append (1, ')');
+                        }
                     }
                 }
             }
@@ -569,14 +589,18 @@ ValueObject::GetSummaryAsCString (ExecutionContextScope *exe_scope)
 }
 
 const char *
-ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
+ValueObject::GetObjectDescription ()
 {
     if (!m_object_desc_str.empty())
         return m_object_desc_str.c_str();
         
-    if (!GetValueIsValid())
+    if (!UpdateValueIfNeeded ())
         return NULL;
-    
+        
+    ExecutionContextScope *exe_scope = GetExecutionContextScope();
+    if (exe_scope == NULL)
+        return NULL;
+        
     Process *process = exe_scope->CalculateProcess();
     if (process == NULL)
         return NULL;
@@ -613,12 +637,12 @@ ValueObject::GetObjectDescription (ExecutionContextScope *exe_scope)
 }
 
 const char *
-ValueObject::GetValueAsCString (ExecutionContextScope *exe_scope)
+ValueObject::GetValueAsCString ()
 {
     // If our byte size is zero this is an aggregate type that has children
     if (ClangASTContext::IsAggregateType (GetClangType()) == false)
     {
-        if (UpdateValueIfNeeded(exe_scope))
+        if (UpdateValueIfNeeded())
         {
             if (m_value_str.empty())
             {
@@ -744,11 +768,11 @@ ValueObject::GetPointerValue (AddressType &address_type, bool scalar_is_load_add
 }
 
 bool
-ValueObject::SetValueFromCString (ExecutionContextScope *exe_scope, const char *value_str)
+ValueObject::SetValueFromCString (const char *value_str)
 {
     // Make sure our value is up to date first so that our location and location
     // type is valid.
-    if (!UpdateValueIfNeeded(exe_scope))
+    if (!UpdateValueIfNeeded())
         return false;
 
     uint32_t count = 0;
@@ -833,7 +857,7 @@ ValueObject::Write ()
 {
     // Clear the update ID so the next time we try and read the value
     // we try and read it again.
-    m_update_id = 0;
+    m_update_point.SetNeedsUpdate();
 
     // TODO: when Value has a method to write a value back, call it from here.
     return false;
@@ -1035,7 +1059,6 @@ void
 ValueObject::DumpValueObject 
 (
     Stream &s,
-    ExecutionContextScope *exe_scope,
     ValueObject *valobj,
     const char *root_valobj_name,
     uint32_t ptr_depth,
@@ -1048,7 +1071,7 @@ ValueObject::DumpValueObject
     bool flat_output
 )
 {
-    if (valobj)
+    if (valobj  && valobj->UpdateValueIfNeeded ())
     {
         clang_type_t clang_type = valobj->GetClangType();
 
@@ -1063,7 +1086,7 @@ ValueObject::DumpValueObject
         {
             if (show_location)
             {
-                s.Printf("%s: ", valobj->GetLocationAsCString(exe_scope));
+                s.Printf("%s: ", valobj->GetLocationAsCString());
             }
 
             s.Indent();
@@ -1086,7 +1109,7 @@ ValueObject::DumpValueObject
                 s.Printf ("%s =", name_cstr);
             }
 
-            if (!scope_already_checked && !valobj->IsInScope(exe_scope->CalculateStackFrame()))
+            if (!scope_already_checked && !valobj->IsInScope())
             {
                 err_cstr = "error: out of scope";
             }
@@ -1096,7 +1119,7 @@ ValueObject::DumpValueObject
         
         if (err_cstr == NULL)
         {
-            val_cstr = valobj->GetValueAsCString(exe_scope);
+            val_cstr = valobj->GetValueAsCString();
             err_cstr = valobj->GetError().AsCString();
         }
 
@@ -1109,7 +1132,7 @@ ValueObject::DumpValueObject
             const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
-                const char *sum_cstr = valobj->GetSummaryAsCString(exe_scope);
+                const char *sum_cstr = valobj->GetSummaryAsCString();
 
                 if (val_cstr)
                     s.Printf(" %s", val_cstr);
@@ -1119,7 +1142,7 @@ ValueObject::DumpValueObject
                 
                 if (use_objc)
                 {
-                    const char *object_desc = valobj->GetObjectDescription(exe_scope);
+                    const char *object_desc = valobj->GetObjectDescription();
                     if (object_desc)
                         s.Printf(" %s\n", object_desc);
                     else
@@ -1185,7 +1208,6 @@ ValueObject::DumpValueObject
                             if (child_sp.get())
                             {
                                 DumpValueObject (s,
-                                                 exe_scope,
                                                  child_sp.get(),
                                                  NULL,
                                                  (is_ptr || is_ref) ? curr_ptr_depth - 1 : curr_ptr_depth,
@@ -1236,31 +1258,37 @@ ValueObject::DumpValueObject
 
 
 ValueObjectSP
-ValueObject::CreateConstantValue (ExecutionContextScope *exe_scope, const ConstString &name)
+ValueObject::CreateConstantValue (const ConstString &name)
 {
     ValueObjectSP valobj_sp;
     
-    if (UpdateValueIfNeeded(exe_scope) && m_error.Success())
+    if (UpdateValueIfNeeded() && m_error.Success())
     {
-        ExecutionContext exe_ctx;
-        exe_scope->CalculateExecutionContext(exe_ctx);
+        ExecutionContextScope *exe_scope = GetExecutionContextScope();
+        if (exe_scope)
+        {
+            ExecutionContext exe_ctx;
+            exe_scope->CalculateExecutionContext(exe_ctx);
 
-        clang::ASTContext *ast = GetClangAST ();
+            clang::ASTContext *ast = GetClangAST ();
 
-        DataExtractor data;
-        data.SetByteOrder (m_data.GetByteOrder());
-        data.SetAddressByteSize(m_data.GetAddressByteSize());
+            DataExtractor data;
+            data.SetByteOrder (m_data.GetByteOrder());
+            data.SetAddressByteSize(m_data.GetAddressByteSize());
 
-        m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0);
+            m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0);
 
-        valobj_sp.reset (new ValueObjectConstResult (ast,
-                                                     GetClangType(),
-                                                     name,
-                                                     data));
+            valobj_sp.reset (new ValueObjectConstResult (exe_scope, 
+                                                         ast,
+                                                         GetClangType(),
+                                                         name,
+                                                         data));
+        }
     }
-    else
+    
+    if (!valobj_sp)
     {
-        valobj_sp.reset (new ValueObjectConstResult (m_error));
+        valobj_sp.reset (new ValueObjectConstResult (NULL, m_error));
     }
     return valobj_sp;
 }
@@ -1304,7 +1332,7 @@ ValueObject::Dereference (Error &error)
             if (!child_name_str.empty())
                 child_name.SetCString (child_name_str.c_str());
 
-            valobj_sp.reset (new ValueObjectChild (this,
+            valobj_sp.reset (new ValueObjectChild (*this,
                                                    clang_ast,
                                                    child_clang_type,
                                                    child_name,
@@ -1366,7 +1394,8 @@ ValueObject::AddressOf (Error &error)
                 {
                     std::string name (1, '&');
                     name.append (m_name.AsCString(""));
-                    valobj_sp.reset (new ValueObjectConstResult (ast, 
+                    valobj_sp.reset (new ValueObjectConstResult (GetExecutionContextScope(),
+                                                                 ast, 
                                                                  ClangASTContext::CreatePointerType (ast, clang_type),
                                                                  ConstString (name.c_str()),
                                                                  addr, 
@@ -1380,3 +1409,247 @@ ValueObject::AddressOf (Error &error)
     return valobj_sp;
 }
 
+ValueObject::EvaluationPoint::EvaluationPoint () :
+    m_stop_id (0),
+    m_thread_id (LLDB_INVALID_UID)  
+{
+}
+
+ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected):
+    m_stop_id (0),
+    m_thread_id (LLDB_INVALID_UID),
+    m_needs_update (true),
+    m_first_update (true)
+{
+    ExecutionContext exe_ctx;
+    ExecutionContextScope *computed_exe_scope = exe_scope;  // If use_selected is true, we may find a better scope,
+                                                            // and if so we want to cache that not the original.
+    if (exe_scope)                                            
+        exe_scope->CalculateExecutionContext(exe_ctx);
+    if (exe_ctx.target != NULL)
+    {
+        m_target_sp = exe_ctx.target->GetSP();
+        
+        if (exe_ctx.process == NULL)
+            m_process_sp = exe_ctx.target->GetProcessSP();
+        else
+            m_process_sp = exe_ctx.process->GetSP();
+        
+        if (m_process_sp != NULL)
+        {
+            m_stop_id = m_process_sp->GetStopID();
+            Thread *thread = NULL;
+            
+            if (exe_ctx.thread == NULL)
+            {
+                if (use_selected)
+                {
+                    thread = m_process_sp->GetThreadList().GetSelectedThread().get();
+                    if (thread)
+                        computed_exe_scope = thread;
+                }
+            }
+            else 
+                thread = exe_ctx.thread;
+                
+            if (thread != NULL)
+            {
+                m_thread_id = thread->GetIndexID();
+                if (exe_ctx.frame == NULL)
+                {
+                    if (use_selected)
+                    {
+                        StackFrame *frame = exe_ctx.thread->GetSelectedFrame().get();
+                        if (frame)
+                        {
+                            m_stack_id = frame->GetStackID();
+                            computed_exe_scope = frame;
+                        }
+                    }
+                }
+                else
+                    m_stack_id = exe_ctx.frame->GetStackID();
+            }
+        }
+    }
+    m_exe_scope = computed_exe_scope;
+}
+
+ValueObject::EvaluationPoint::EvaluationPoint (const ValueObject::EvaluationPoint &rhs) :
+    m_exe_scope (rhs.m_exe_scope),
+    m_target_sp (rhs.m_target_sp),
+    m_process_sp (rhs.m_process_sp),
+    m_thread_id (rhs.m_thread_id),
+    m_stack_id (rhs.m_stack_id),
+    m_needs_update(true),
+    m_first_update(true),
+    m_stop_id (0)
+{
+}
+
+ValueObject::EvaluationPoint::~EvaluationPoint () 
+{
+}
+
+ExecutionContextScope *
+ValueObject::EvaluationPoint::GetExecutionContextScope ()
+{
+    // We have to update before giving out the scope, or we could be handing out stale pointers.    
+    SyncWithProcessState();
+    
+    return m_exe_scope;
+}
+
+// This function checks the EvaluationPoint against the current process state.  If the current
+// state matches the evaluation point, or the evaluation point is already invalid, then we return
+// false, meaning "no change".  If the current state is different, we update our state, and return
+// true meaning "yes, change".  If we did see a change, we also set m_needs_update to true, so 
+// future calls to NeedsUpdate will return true.
+
+bool
+ValueObject::EvaluationPoint::SyncWithProcessState()
+{
+    // If we're already invalid, we don't need to do anything, and nothing has changed:
+    if (m_stop_id == LLDB_INVALID_UID)
+    {
+        // Can't update with an invalid state.
+        m_needs_update = false;
+        return false;
+    }
+    
+    // If we don't have a process nothing can change.
+    if (!m_process_sp)
+        return false;
+        
+    // If our stop id is the current stop ID, nothing has changed:
+    if (m_stop_id == m_process_sp->GetStopID())
+        return false;
+    
+    m_stop_id = m_process_sp->GetStopID();
+    m_needs_update = true;
+    m_exe_scope = m_process_sp.get();
+    
+    // Something has changed, so we will return true.  Now make sure the thread & frame still exist, and if either
+    // doesn't, mark ourselves as invalid.
+    
+    if (m_thread_id != LLDB_INVALID_THREAD_ID)
+    {
+        Thread *our_thread = m_process_sp->GetThreadList().FindThreadByIndexID (m_thread_id).get();
+        if (our_thread == NULL)
+            SetInvalid();
+        else
+        {
+            m_exe_scope = our_thread;
+            
+            if (m_stack_id.IsValid())
+            {
+                StackFrame *our_frame = our_thread->GetFrameWithStackID (m_stack_id).get();
+                if (our_frame == NULL)
+                    SetInvalid();
+                else
+                    m_exe_scope = our_frame;
+            }
+        }
+    }
+    return true;
+}
+
+bool
+ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
+{
+    if (!IsValid())
+        return false;
+    
+    bool needs_update = false;
+    m_exe_scope = NULL;
+    
+    // The target has to be non-null, and the 
+    Target *target = exe_scope->CalculateTarget();
+    if (target != NULL)
+    {
+        Target *old_target = m_target_sp.get();
+        assert (target == old_target);
+        Process *process = exe_scope->CalculateProcess();
+        if (process != NULL)
+        {
+            // FOR NOW - assume you can't update variable objects across process boundaries.
+            Process *old_process = m_process_sp.get();
+            assert (process == old_process);
+            
+            lldb::user_id_t stop_id = process->GetStopID();
+            if (stop_id != m_stop_id)
+            {
+                needs_update = true;
+                m_stop_id = stop_id;
+            }
+            // See if we're switching the thread or stack context.  If no thread is given, this is
+            // being evaluated in a global context.            
+            Thread *thread = exe_scope->CalculateThread();
+            if (thread != NULL)
+            {
+                lldb::user_id_t new_thread_index = thread->GetIndexID();
+                if (new_thread_index != m_thread_id)
+                {
+                    needs_update = true;
+                    m_thread_id = new_thread_index;
+                    m_stack_id.Clear();
+                }
+                
+                StackFrame *new_frame = exe_scope->CalculateStackFrame();
+                if (new_frame != NULL)
+                {
+                    if (new_frame->GetStackID() != m_stack_id)
+                    {
+                        needs_update = true;
+                        m_stack_id = new_frame->GetStackID();
+                    }
+                }
+                else
+                {
+                    m_stack_id.Clear();
+                    needs_update = true;
+                }
+            }
+            else
+            {
+                // If this had been given a thread, and now there is none, we should update.
+                // Otherwise we don't have to do anything.
+                if (m_thread_id != LLDB_INVALID_UID)
+                {
+                    m_thread_id = LLDB_INVALID_UID;
+                    m_stack_id.Clear();
+                    needs_update = true;
+                }
+            }
+        }
+        else
+        {
+            // If there is no process, then we don't need to update anything.
+            // But if we're switching from having a process to not, we should try to update.
+            if (m_process_sp.get() != NULL)
+            {
+                needs_update = true;
+                m_process_sp.reset();
+                m_thread_id = LLDB_INVALID_UID;
+                m_stack_id.Clear();
+            }
+        }
+    }
+    else
+    {
+        // If there's no target, nothing can change so we don't need to update anything.
+        // But if we're switching from having a target to not, we should try to update.
+        if (m_target_sp.get() != NULL)
+        {
+            needs_update = true;
+            m_target_sp.reset();
+            m_process_sp.reset();
+            m_thread_id = LLDB_INVALID_UID;
+            m_stack_id.Clear();
+        }
+    }
+    if (!m_needs_update)
+        m_needs_update = needs_update;
+        
+    return needs_update;
+}

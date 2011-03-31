@@ -26,7 +26,7 @@ using namespace lldb_private;
 
 ValueObjectChild::ValueObjectChild
 (
-    ValueObject* parent,
+    ValueObject &parent,
     clang::ASTContext *clang_ast,
     void *clang_type,
     const ConstString &name,
@@ -89,15 +89,15 @@ ValueObjectChild::GetTypeName()
     return m_type_name;
 }
 
-void
-ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
+bool
+ValueObjectChild::UpdateValue ()
 {
     m_error.Clear();
     SetValueIsValid (false);
     ValueObject* parent = m_parent;
     if (parent)
     {
-        if (parent->UpdateValueIfNeeded(exe_scope))
+        if (parent->UpdateValue())
         {
             m_value.SetContext(Value::eContextTypeClangType, m_clang_type);
 
@@ -168,7 +168,7 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
 
             if (m_error.Success())
             {
-                ExecutionContext exe_ctx (exe_scope);
+                ExecutionContext exe_ctx (GetExecutionContextScope());
                 m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0);
             }
         }
@@ -181,11 +181,13 @@ ValueObjectChild::UpdateValue (ExecutionContextScope *exe_scope)
     {
         m_error.SetErrorString("ValueObjectChild has a NULL parent ValueObject.");
     }
+    
+    return m_error.Success();
 }
 
 
 bool
-ValueObjectChild::IsInScope (StackFrame *frame)
+ValueObjectChild::IsInScope ()
 {
-    return m_parent->IsInScope (frame);
+    return m_parent->IsInScope ();
 }

@@ -24,22 +24,26 @@ namespace lldb_private {
 class ValueObjectConstResult : public ValueObject
 {
 public:
-    ValueObjectConstResult (lldb::ByteOrder byte_order, 
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            lldb::ByteOrder byte_order, 
                             uint32_t addr_byte_size);
 
-    ValueObjectConstResult (clang::ASTContext *clang_ast,
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
                             void *clang_type,
                             const ConstString &name,
                             const DataExtractor &data);
 
-    ValueObjectConstResult (clang::ASTContext *clang_ast,
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
                             void *clang_type,
                             const ConstString &name,
                             const lldb::DataBufferSP &result_data_sp,
                             lldb::ByteOrder byte_order, 
                             uint8_t addr_size);
 
-    ValueObjectConstResult (clang::ASTContext *clang_ast,
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
                             void *clang_type,
                             const ConstString &name,
                             lldb::addr_t address,
@@ -47,7 +51,8 @@ public:
                             uint8_t addr_byte_size);
 
     // When an expression fails to evaluate, we return an error
-    ValueObjectConstResult (const Error& error);
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            const Error& error);
 
     virtual ~ValueObjectConstResult();
 
@@ -69,11 +74,8 @@ public:
     virtual ConstString
     GetTypeName();
 
-    virtual void
-    UpdateValue (ExecutionContextScope *exe_scope);
-
     virtual bool
-    IsInScope (StackFrame *frame);
+    IsInScope ();
 
     virtual bool
     SetClangAST (clang::ASTContext *ast)
@@ -86,6 +88,9 @@ public:
     SetByteSize (size_t size);
 
 protected:
+    virtual bool
+    UpdateValue ();
+
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
     uint32_t m_byte_size;
