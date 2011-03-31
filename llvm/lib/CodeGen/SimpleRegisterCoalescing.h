@@ -176,6 +176,9 @@ namespace llvm {
     /// cycles Start and End or NULL if there are no uses.
     MachineOperand *lastRegisterUse(SlotIndex Start, SlotIndex End,
                                     unsigned Reg, SlotIndex &LastUseIdx) const;
+
+    /// markAsJoined - Remember that CopyMI has already been joined.
+    void markAsJoined(MachineInstr *CopyMI);
   };
 
 } // End llvm namespace

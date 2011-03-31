@@ -104,6 +104,18 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+void SimpleRegisterCoalescing::markAsJoined(MachineInstr *CopyMI) {
+  /// Joined copies are not deleted immediately, but kept in JoinedCopies.
+  JoinedCopies.insert(CopyMI);
+
+  /// Mark all register operands of CopyMI as <undef> so they won't affect dead
+  /// code elimination.
+  for (MachineInstr::mop_iterator I = CopyMI->operands_begin(),
+       E = CopyMI->operands_end(); I != E; ++I)
+    if (I->isReg())
+      I->setIsUndef(true);
+}
+
 /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy with IntA
 /// being the source and IntB being the dest, thus this defines a value number
 /// in IntB.  If the source value number (in IntA) is defined by a copy from B,
@@ -471,7 +483,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     DEBUG(dbgs() << "\t\tnoop: " << DefIdx << '\t' << *UseMI);
     assert(DVNI->def == DefIdx);
     BValNo = IntB.MergeValueNumberInto(BValNo, DVNI);
-    JoinedCopies.insert(UseMI);
+    markAsJoined(UseMI);
   }
 
   // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
@@ -1070,7 +1082,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (!CP.isPartial()) {
       if (AdjustCopiesBackFrom(CP, CopyMI) ||
           RemoveCopyByCommutingDef(CP, CopyMI)) {
-        JoinedCopies.insert(CopyMI);
+        markAsJoined(CopyMI);
         DEBUG(dbgs() << "\tTrivial!\n");
         return true;
       }
@@ -1090,7 +1102,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   }
 
   // Remember to delete the copy instruction.
-  JoinedCopies.insert(CopyMI);
+  markAsJoined(CopyMI);
 
   UpdateRegDefsUses(CP);
 
