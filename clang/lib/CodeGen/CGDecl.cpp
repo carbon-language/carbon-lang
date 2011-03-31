@@ -14,7 +14,6 @@
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "CGBlocks.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
@@ -302,114 +301,6 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   }
 }
 
-unsigned CodeGenFunction::getByRefValueLLVMField(const ValueDecl *VD) const {
-  assert(ByRefValueInfo.count(VD) && "Did not find value!");
-  
-  return ByRefValueInfo.find(VD)->second.second;
-}
-
-llvm::Value *CodeGenFunction::BuildBlockByrefAddress(llvm::Value *BaseAddr,
-                                                     const VarDecl *V) {
-  llvm::Value *Loc = Builder.CreateStructGEP(BaseAddr, 1, "forwarding");
-  Loc = Builder.CreateLoad(Loc);
-  Loc = Builder.CreateStructGEP(Loc, getByRefValueLLVMField(V),
-                                V->getNameAsString());
-  return Loc;
-}
-
-/// BuildByRefType - This routine changes a __block variable declared as T x
-///   into:
-///
-///      struct {
-///        void *__isa;
-///        void *__forwarding;
-///        int32_t __flags;
-///        int32_t __size;
-///        void *__copy_helper;       // only if needed
-///        void *__destroy_helper;    // only if needed
-///        char padding[X];           // only if needed
-///        T x;
-///      } x
-///
-const llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
-  std::pair<const llvm::Type *, unsigned> &Info = ByRefValueInfo[D];
-  if (Info.first)
-    return Info.first;
-  
-  QualType Ty = D->getType();
-
-  std::vector<const llvm::Type *> Types;
-  
-  llvm::PATypeHolder ByRefTypeHolder = llvm::OpaqueType::get(getLLVMContext());
-  
-  // void *__isa;
-  Types.push_back(Int8PtrTy);
-  
-  // void *__forwarding;
-  Types.push_back(llvm::PointerType::getUnqual(ByRefTypeHolder));
-  
-  // int32_t __flags;
-  Types.push_back(Int32Ty);
-    
-  // int32_t __size;
-  Types.push_back(Int32Ty);
-
-  bool HasCopyAndDispose = getContext().BlockRequiresCopying(Ty);
-  if (HasCopyAndDispose) {
-    /// void *__copy_helper;
-    Types.push_back(Int8PtrTy);
-    
-    /// void *__destroy_helper;
-    Types.push_back(Int8PtrTy);
-  }
-
-  bool Packed = false;
-  CharUnits Align = getContext().getDeclAlign(D);
-  if (Align > getContext().toCharUnitsFromBits(Target.getPointerAlign(0))) {
-    // We have to insert padding.
-    
-    // The struct above has 2 32-bit integers.
-    unsigned CurrentOffsetInBytes = 4 * 2;
-    
-    // And either 2 or 4 pointers.
-    CurrentOffsetInBytes += (HasCopyAndDispose ? 4 : 2) *
-      CGM.getTargetData().getTypeAllocSize(Int8PtrTy);
-    
-    // Align the offset.
-    unsigned AlignedOffsetInBytes = 
-      llvm::RoundUpToAlignment(CurrentOffsetInBytes, Align.getQuantity());
-    
-    unsigned NumPaddingBytes = AlignedOffsetInBytes - CurrentOffsetInBytes;
-    if (NumPaddingBytes > 0) {
-      const llvm::Type *Ty = llvm::Type::getInt8Ty(getLLVMContext());
-      // FIXME: We need a sema error for alignment larger than the minimum of
-      // the maximal stack alignmint and the alignment of malloc on the system.
-      if (NumPaddingBytes > 1)
-        Ty = llvm::ArrayType::get(Ty, NumPaddingBytes);
-    
-      Types.push_back(Ty);
-
-      // We want a packed struct.
-      Packed = true;
-    }
-  }
-
-  // T x;
-  Types.push_back(ConvertTypeForMem(Ty));
-  
-  const llvm::Type *T = llvm::StructType::get(getLLVMContext(), Types, Packed);
-  
-  cast<llvm::OpaqueType>(ByRefTypeHolder.get())->refineAbstractTypeTo(T);
-  CGM.getModule().addTypeName("struct.__block_byref_" + D->getNameAsString(), 
-                              ByRefTypeHolder.get());
-  
-  Info.first = ByRefTypeHolder.get();
-  
-  Info.second = Types.size() - 1;
-  
-  return Info.first;
-}
-
 namespace {
   struct CallArrayDtor : EHScopeStack::Cleanup {
     CallArrayDtor(const CXXDestructorDecl *Dtor, 
@@ -503,15 +394,6 @@ namespace {
       Args.push_back(std::make_pair(RValue::get(Arg),
                             CGF.getContext().getPointerType(Var.getType())));
       CGF.EmitCall(FnInfo, CleanupFn, ReturnValueSlot(), Args);
-    }
-  };
-
-  struct CallBlockRelease : EHScopeStack::Cleanup {
-    llvm::Value *Addr;
-    CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
-
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }
   };
 }
@@ -803,74 +685,13 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     EnsureInsertPoint();
   }
 
-  CharUnits alignment = emission.Alignment;
-
-  if (emission.IsByRef) {
-    llvm::Value *V;
-
-    BlockFieldFlags fieldFlags;
-    bool fieldNeedsCopyDispose = false;
-
-    if (type->isBlockPointerType()) {
-      fieldFlags |= BLOCK_FIELD_IS_BLOCK;
-      fieldNeedsCopyDispose = true;
-    } else if (getContext().isObjCNSObjectType(type) || 
-               type->isObjCObjectPointerType()) {
-      fieldFlags |= BLOCK_FIELD_IS_OBJECT;
-      fieldNeedsCopyDispose = true;
-    } else if (getLangOptions().CPlusPlus) {
-      if (getContext().getBlockVarCopyInits(&D))
-        fieldNeedsCopyDispose = true;
-      else if (const CXXRecordDecl *record = type->getAsCXXRecordDecl())
-        fieldNeedsCopyDispose = !record->hasTrivialDestructor();
-    }
-
-    llvm::Value *addr = emission.Address;
-
-    // FIXME: Someone double check this.
-    if (type.isObjCGCWeak())
-      fieldFlags |= BLOCK_FIELD_IS_WEAK;
-
-    // Initialize the 'isa', which is just 0 or 1.
-    int isa = 0;
-    if (fieldFlags & BLOCK_FIELD_IS_WEAK)
-      isa = 1;
-    V = Builder.CreateIntToPtr(Builder.getInt32(isa), Int8PtrTy, "isa");
-    Builder.CreateStore(V, Builder.CreateStructGEP(addr, 0, "byref.isa"));
-
-    // Store the address of the variable into its own forwarding pointer.
-    Builder.CreateStore(addr,
-                        Builder.CreateStructGEP(addr, 1, "byref.forwarding"));
-
-    // Blocks ABI:
-    //   c) the flags field is set to either 0 if no helper functions are
-    //      needed or BLOCK_HAS_COPY_DISPOSE if they are,
-    BlockFlags flags;
-    if (fieldNeedsCopyDispose) flags |= BLOCK_HAS_COPY_DISPOSE;
-    Builder.CreateStore(llvm::ConstantInt::get(IntTy, flags.getBitMask()),
-                        Builder.CreateStructGEP(addr, 2, "byref.flags"));
-
-    const llvm::Type *V1;
-    V1 = cast<llvm::PointerType>(addr->getType())->getElementType();
-    V = llvm::ConstantInt::get(IntTy, CGM.GetTargetTypeStoreSize(V1).getQuantity());
-    Builder.CreateStore(V, Builder.CreateStructGEP(addr, 3, "byref.size"));
-
-    if (fieldNeedsCopyDispose) {
-      llvm::Value *copy_helper = Builder.CreateStructGEP(addr, 4);
-      Builder.CreateStore(CGM.BuildbyrefCopyHelper(addr->getType(), fieldFlags,
-                                                   alignment.getQuantity(), &D),
-                          copy_helper);
-
-      llvm::Value *destroy_helper = Builder.CreateStructGEP(addr, 5);
-      Builder.CreateStore(CGM.BuildbyrefDestroyHelper(addr->getType(),
-                                                      fieldFlags,
-                                                      alignment.getQuantity(),
-                                                      &D),
-                          destroy_helper);
-    }
-  }
+  // Initialize the structure of a __block variable.
+  if (emission.IsByRef)
+    emitByrefStructureInit(emission);
 
   if (!Init) return;
+
+  CharUnits alignment = emission.Alignment;
 
   // Check whether this is a byref variable that's potentially
   // captured and moved by its own initializer.  If so, we'll need to
@@ -1020,9 +841,8 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
   // If this is a block variable, call _Block_object_destroy
   // (on the unforwarded address).
-  if (emission.IsByRef &&
-      CGM.getLangOptions().getGCMode() != LangOptions::GCOnly)
-    EHStack.pushCleanup<CallBlockRelease>(NormalAndEHCleanup, emission.Address);
+  if (emission.IsByRef)
+    enterByrefCleanup(emission);
 }
 
 /// Emit an alloca (or GlobalValue depending on target)

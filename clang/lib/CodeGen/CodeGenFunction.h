@@ -1116,6 +1116,11 @@ public:
 
   void BuildBlockRelease(llvm::Value *DeclPtr, BlockFieldFlags flags);
 
+  class AutoVarEmission;
+
+  void emitByrefStructureInit(const AutoVarEmission &emission);
+  void enterByrefCleanup(const AutoVarEmission &emission);
+
   llvm::Value *LoadBlockStruct() {
     assert(BlockPointer && "no block pointer set!");
     return BlockPointer;
