@@ -230,8 +230,16 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                           ConstantInt::get(Int32Ty,
                                                            SrcIdx, false));
       }
+    } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
+      // Canonicalize extractelement(cast) -> cast(extractelement)
+      // bitcasts can change the number of vector elements and they cost nothing
+      if (CI->hasOneUse() && EI.hasOneUse() &&
+          (CI->getOpcode() != Instruction::BitCast)) {
+        Value *EE = Builder->CreateExtractElement(CI->getOperand(0),
+                                                  EI.getIndexOperand());
+        return CastInst::Create(CI->getOpcode(), EE, EI.getType());
+      }
     }
-    // FIXME: Canonicalize extractelement(bitcast) -> bitcast(extractelement)
   }
   return 0;
 }
