@@ -69,4 +69,21 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
   def int_xcore_checkevent : Intrinsic<[llvm_ptr_ty],[llvm_ptr_ty]>;
 
   def int_xcore_clre : Intrinsic<[],[],[]>;
+
+  // Intrinsics for threads.
+  def int_xcore_getst : Intrinsic <[llvm_anyptr_ty],[llvm_anyptr_ty],
+                                   [NoCapture<0>]>;
+  def int_xcore_msync : Intrinsic <[],[llvm_anyptr_ty], [NoCapture<0>]>;
+  def int_xcore_ssync : Intrinsic <[],[]>;
+  def int_xcore_mjoin : Intrinsic <[],[llvm_anyptr_ty], [NoCapture<0>]>;
+  def int_xcore_initsp : Intrinsic <[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                    [NoCapture<0>]>;
+  def int_xcore_initpc : Intrinsic <[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                    [NoCapture<0>]>;
+  def int_xcore_initlr : Intrinsic <[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                    [NoCapture<0>]>;
+  def int_xcore_initcp : Intrinsic <[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                    [NoCapture<0>]>;
+  def int_xcore_initdp : Intrinsic <[],[llvm_anyptr_ty, llvm_ptr_ty],
+                                    [NoCapture<0>]>;
 }
