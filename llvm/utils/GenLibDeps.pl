@@ -202,7 +202,7 @@ sub gen_one_entry {
     print "$lib:";
     if ($WHY) { print "\n"; }
   } else {
-    print "  <dt><b>$lib</b</dt><dd><ul>\n";
+    print "  <dt><b>$lib</b></dt><dd><ul>\n";
   }
   open UNDEFS, 
     "$nmPath -u $Directory/$lib | sed -e 's/^[ 0]* U //' | sort | uniq |";
