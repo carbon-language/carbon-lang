@@ -2762,6 +2762,40 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
+      case Instruction::FPExt: {
+        // fcmp (fpext x), C -> fcmp x, (fptrunc C) if fptrunc is lossless
+        FPExtInst *LHSExt = cast<FPExtInst>(LHSI);
+        ConstantFP *RHSF = dyn_cast<ConstantFP>(RHSC);
+        if (!RHSF)
+          break;
+
+        const fltSemantics *Sem;
+        // FIXME: This shouldn't be here.
+        if (LHSExt->getSrcTy()->isFloatTy())
+          Sem = &APFloat::IEEEsingle;
+        else if (LHSExt->getSrcTy()->isDoubleTy())
+          Sem = &APFloat::IEEEdouble;
+        else if (LHSExt->getSrcTy()->isFP128Ty())
+          Sem = &APFloat::IEEEquad;
+        else if (LHSExt->getSrcTy()->isX86_FP80Ty())
+          Sem = &APFloat::x87DoubleExtended;
+        else if (LHSExt->getSrcTy()->isPPC_FP128Ty())
+          Sem = &APFloat::PPCDoubleDouble;
+        else
+          break;
+
+        bool Lossy;
+        APFloat F = RHSF->getValueAPF();
+        F.convert(*Sem, APFloat::rmNearestTiesToEven, &Lossy);
+
+        // Avoid lossy conversions and denormals.
+        if (!Lossy &&
+            F.compare(APFloat::getSmallestNormalized(*Sem)) !=
+                                                           APFloat::cmpLessThan)
+          return new FCmpInst(I.getPredicate(), LHSExt->getOperand(0),
+                              ConstantFP::get(RHSC->getContext(), F));
+        break;
+      }
       case Instruction::PHI:
         // Only fold fcmp into the PHI if the phi and fcmp are in the same
         // block.  If in the same block, we're encouraging jump threading.  If
