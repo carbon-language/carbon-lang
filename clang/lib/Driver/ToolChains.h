@@ -103,6 +103,16 @@ public:
     return TargetIsIPhoneOS;
   }
 
+  bool isTargetIOSSimulator() const {
+    // In GCC, the simulator historically was treated as being OS X in some
+    // contexts, like determining the link logic, despite generally being called
+    // with an iOS deployment target. For compatibility, we detect the
+    // simulator is iOS + x86, and treat it differently in a few contexts.
+    return isTargetIPhoneOS() && 
+      (getTriple().getArch() == llvm::Triple::x86 ||
+       getTriple().getArch() == llvm::Triple::x86_64);
+  }
+
   bool isTargetInitialized() const { return TargetInitialized; }
 
   void getTargetVersion(unsigned (&Res)[3]) const {
