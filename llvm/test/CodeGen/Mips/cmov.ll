@@ -1,10 +1,11 @@
 ; RUN: llc -march=mips -mcpu=4ke < %s | FileCheck %s
+; RUN: llc -march=mips -mcpu=4ke -regalloc=basic < %s | FileCheck %s
 
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4
 @i3 = common global i32* null, align 4
 
-; CHECK:  lw  $3, %got(i3)($gp)
-; CHECK:  addiu $5, $gp, %got(i1)
+; CHECK:  lw  ${{[0-9]+}}, %got(i3)($gp)
+; CHECK:  addiu ${{[0-9]+}}, $gp, %got(i1)
 define i32* @cmov1(i32 %s) nounwind readonly {
 entry:
   %tobool = icmp ne i32 %s, 0

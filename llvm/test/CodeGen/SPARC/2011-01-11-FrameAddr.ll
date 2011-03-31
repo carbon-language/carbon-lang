@@ -1,5 +1,7 @@
-;RUN: llc -march=sparc < %s | FileCheck %s -check-prefix=V8
-;RUN: llc -march=sparc -mattr=v9 < %s | FileCheck %s -check-prefix=V9
+;RUN: llc -march=sparc -regalloc=linearscan < %s | FileCheck %s -check-prefix=V8
+;RUN: llc -march=sparc -regalloc=linearscan -mattr=v9 < %s | FileCheck %s -check-prefix=V9
+
+; These tests depend on linear scan's trivial coalescer for reserved registers.
 
 define i8* @frameaddr() nounwind readnone {
 entry:
