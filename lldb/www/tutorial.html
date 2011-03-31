@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <link href="style.css" rel="stylesheet" type="text/css" />
-<title>LLDB Goals</title>
+<title>LLDB Tutorial</title>
 </head>
 
 <body>
@@ -20,7 +20,7 @@
 				<div class="postcontent">
 
                     <p>Here's a short precis of how to run lldb if you are familiar with the gdb command set.
-                        We will first start with some details on lldb command structure to help orient you.</p>
+                        We will start with some details on lldb command structure and syntax to help orient you.</p>
 
 				</div>
 				<div class="postfooter"></div>
@@ -34,13 +34,14 @@
                    form:</p>
 
                    <code color=#ff0000>
-                   &lt;noun&gt; &lt;verb&lt; [-options [option-value]] [argument [argument...]]
+                   &lt;noun&gt; &lt;verb&gt; [-options [option-value]] [argument [argument...]]
                    </code>
 
                    <p>The command line parsing is done before command execution, so it is
-                   uniform across all the commands.  The command syntax is very simple,
-                   basically arguments, options and option values are all white-space
-                   separated.  If you need to put a backslash or double-quote character
+                   uniform across all the commands.  The command syntax for basic commands is very simple,
+                   arguments, options and option values are all white-space
+                   separated, and double-quotes are used to protect white-spaces in an argument.  
+                   If you need to put a backslash or double-quote character
                    in an argument you back-slash it in the argument.  That makes the
                    command syntax more regular, but it also means you may have to
                    quote some arguments in lldb that you wouldn't in gdb.</p>
@@ -61,15 +62,18 @@
                    parsers, which sometimes forces the user to be a little more explicit
                    about stating their intentions.  The first instance you'll note of
                    this is the breakpoint command.  In gdb, to set a breakpoint, you
-                   might enter one of:</p>
+                   might enter</p>
 
                    <code>
                        (gdb) break foo.c:12
-                       <br>(gdb) break foo
+                   </code>
+                   <p>to break at line 12 of foo.c, and:</p>
+                   <code>
+                       (gdb) break foo
                    </code>
 
-                   <p>if <code>foo</code> is a function.  As time went on, the parser that tells <code>foo.c:12</code>
-                   from foo from <code>foo.c::foo</code> (which means the function foo in the file
+                   <p>to break at the function <code>foo</code>.  As time went on, the parser that tells <code>foo.c:12</code>
+                   from <code>foo</code> from <code>foo.c::foo</code> (which means the function foo in the file
                    foo.c) got more and more complex and bizarre, and especially in C++
                    there are times where there's really no way to specify the function
                    you want to break on. The lldb commands are more verbose but also more precise
@@ -89,7 +93,7 @@
                         <br>(lldb) breakpoint set -n foo
                     </code>
 
-                   <p>Setting breakpoints by name is event more specialized in LLDB as you can specify
+                   <p>Setting breakpoints by name is even more specialized in LLDB as you can specify
                        that you want to set a breakpoint at a function by method name. To set a breakpoint
                        on all C++ methods named <code>foo</code> you can entier either of:</p>
 
@@ -121,7 +125,7 @@
 
                    <code>
                        (lldb) breakpoint set -n "-[SKTGraphicView alignLeftEdges:]"
-                       <br>(lldb) b s -n "-[SKTGraphicView alignLeftEdges:]"
+                       <br>(lldb) br s -n "-[SKTGraphicView alignLeftEdges:]"
                   </code>
 
                    <p>lldb also supports command completion for source file names, symbol
@@ -155,7 +159,7 @@
                    "next" and "continue") but we haven't tried to be exhaustive because
                    in our experience it is more convenient to make the basic commands
                    unique down to a letter or two, and then learn these sequences than
-                   fill the namespace with lots of aliases, and then have to type them
+                   to fill the namespace with lots of aliases, and then have to type them
                    all the way out.</p>
 
                    <p>However, users are free to customize lldb's command set however they
@@ -164,6 +168,37 @@
                    you.  Your aliases are also documented in the help command so you can
                    remind yourself of what you've set up.</p>
 
+                   <p> One alias of note that we do include by popular demand is a weak emulator
+                   of gdb's &quot;break&quot; command.  It doesn't try to do everything that gdb's
+                   break command does (for instance, it doesn't handle <code>foo.c::bar</code>.  But
+                   it mostly works, and makes the transition easier.  Also by popular demand, it
+                   is aliased to <code>b</code>.  If you actually want to learn the lldb command
+                   set natively, that means it will get in the way of the rest of the breakpoint
+                   commands.  Fortunately, if you don't like one of our aliases, you an easily
+                   get rid of it by running (for example):</p>
+
+                   <code>
+                    (lldb) command unalias b
+                   </code>
+
+                   <p>I actually also do:</p>
+
+                   <code>
+                     (lldb) command alias b breakpoint
+                   </code>
+
+                   <p>so I can run the native lldb breakpoint command with just <code>b</code></p>
+                     
+                   <p>The lldb command parser also supports "raw" commands, where, after command options
+                   are stripped off, the rest of the command string is passed uninterpreted to the command.
+                   This is convenient for commands whose arguments might be some complex expression that would
+                   be painful to backslash protect.
+                   For instance the "expression" command is a "raw" command for obvious reasons.  The
+                   "help" output for a command will tell you if it is "raw" or not, so you know what to expect.
+                   The one thing you have to watch out for is that since raw commands still can have options,
+                   if your command string has dashes in it, you'll have to indicate these are not option
+                   markers by putting "--" after the command name, but before your command string.  
+
                    <p>lldb also has a built-in Python interpreter, which is accessible by
                    the "script" command.  All the functionality of the debugger is
                    available as classes in the Python interpreter, so the more complex
@@ -171,6 +206,9 @@
                    be done by writing Python functions using the lldb-Python library,
                    then loading the scripts into your running session and accessing them
                    with the "script" command.</p>
+
+                   <p>Having given an overview of lldb's command syntax, we proceed to lay out the stages
+                   of a standard debug session.</p>
 
 				</div>
 				<div class="postfooter"></div>
@@ -219,12 +257,17 @@ Current breakpoints:
   1.1: where = Sketch`-[SKTGraphicView alignLeftEdges:] + 33 at /Projects/Sketch/SKTGraphicView.m:1405, address = 0x0000000100010d5b, resolved, hit count = 0 
 </tt></pre>
 
-                    <p>Note that each <i>logical</i> breakpoint can have multiple <i>locations</i>.
-                    The logical breakpoint has an integer id, and it's locations have an
+                    <p>Note that setting a breakpoint creates a <i>logical</i> breakpoint, which could
+                    resolve to one or more <i>locations</i>.  For instance, break by selector would
+                    set a breakpoint on all the methods that implement that selector in the classes in
+                    your program.  Similarly, a file and line breakpoint might result in multiple
+                    locations if that file and line were inlined in different places in your code.</p>
+
+                    <p>The logical breakpoint has an integer id, and it's locations have an
                     id within their parent breakpoint (the two are joined by a ".",
                     e.g. 1.1 in the example above.)  </p>
 
-                    <p>Also the breakpoints remain <i>live</i> so that if another shared library
+                    <p>Also the logical breakpoints remain <i>live</i> so that if another shared library
                     were to be loaded that had another implementation of the
                     "<code>alignLeftEdges:</code>" selector, the new location would be added to
                     breakpoint 1 (e.g. a "1.2" breakpoint would be set on the newly loaded
@@ -243,7 +286,7 @@ Current breakpoints:
                         (gdb) set breakpoint pending on
                     </code>
 
-                    <p>That is, lldb should always make a breakpoint from your specification, even
+                    <p>That is, lldb will always make a breakpoint from your specification, even
                     if it couldn't find any locations that match the specification.  You can tell
                     whether the expression was resolved or not by checking the locations field
                     in "breakpoint list", and we report the breakpoint as "pending" when you
@@ -257,22 +300,43 @@ Current breakpoints:
                     </code>
 
                     <p>You can delete, disable, set conditions and ignore counts either on all the
-                    locations generated by your logical breakpoint, or on particular locations
+                    locations generated by your logical breakpoint, or on any one of the particular locations
                     your specification resolved to.  For instance if we wanted to add a command
                     to print a backtrace when we hit this breakpoint we could do:</p>
 
                     <code>
-                        (lldb) breakpoint command add --commands 1.1
+                        (lldb) breakpoint command add 1.1
                         <br>Enter your debugger command(s).  Type 'DONE' to end.
                         <br>&gt; bt
                         <br>&gt; DONE
                     </code>
 
-                    <p>The "<code>--command</code>" option specifies that the breakpoint command is a set of lldb
-                    commmand interpreter commands.  Use "<code>--script</code>" if you want to implement your
-                    breakpoint command using the Python script instead.</p>
+                    <p>By default, the <code> breakpoint command add</code> command takes lldb command line commands.
+                    You can also specify this explicitly by passing the "<code>--command</code>" option.
+                    Use "<code>--script</code>" if you want to implement your breakpoint command using the Python script instead.</p>
 
-				</div>
+                    <p>This is an convenient point to bring up another feature of the lldb command help.  Do:</p>
+
+                    <code>
+                    (lldb) help break command add
+                     <br>Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.
+                     <br>
+                     <br>Syntax: breakpoint command add &lt;cmd-options&gt; &lt;breakpt-id&gt;
+                     <br> etc...
+                    </code>
+                     
+                     <p>When you see arguments to commands specified in the Syntax in angle 
+                     brackets like <code>&lt;breakpt-id&gt;</code>, that indicates that
+                     that is some common argument type that you can get further help on from the command system.  
+                     So in this case you could do:</p>
+
+                     <code>
+                    (lldb) help &lt;breakpt-id&gt;
+                    <br>&lt;breakpt-id&gt; -- Breakpoint ID's consist major and minor numbers;  the major
+                    <br> etc...
+                     </code>
+
+			</div>
 				<div class="postfooter"></div>
 
     			<div class="post">
@@ -375,7 +439,7 @@ Current breakpoints:
                         the process is running anything you type will go to the STDIN of the
                         inferior process. To interrupt your inferior program, type CTRL+C.</p>
                         
-                    <p>If you attach to a process, or launch a process with the "<code>--no-stdin</code>
+                    <p>If you attach to a process, or launch a process with the &quot;<code>--no-stdin</code>&quot;
                         option, the command interpreter is always available to enter commands. This 
                         might be a little disconcerting to gdb users when always have an <code>(lldb)</code>
                         prompt. This allows you to set a breakpoint, etc without having to explicitly interrupt
@@ -394,12 +458,32 @@ Current breakpoints:
                         This mode will allow us to run all threads and only stop the threads
                         that are at breakpoints or have exceptions or signals.</p>
 
-                    <p>There command commands that currently work while running include
+                    <p>The commands that currently work while running include
                         interrupting the process to halt execution ("<code>process interrupt</code>"),
                         getting the process status ("<code>process status</code>"),
                         breakpoint setting and clearing ("<code> breakpoint [set|clear|enable|disable|list] ...</code>"),
                         and memory reading and writing  ("<code> memory [read|write] ...</code>").
                         </p>
+
+                    <p>The question of disabling stdio when running brings up a good opportunity to 
+                        show how to set debugger properties in general.  
+                        If you always want to run in the <code>--no-stdin</code> mode, you can set this
+                        as a generic process property using the lldb &quot;<code>settings</code>&qout; command, 
+                        which is equivalent to gdb's &quot;<code>set</code>&quot; command.  For instance, 
+                        in this case you would say:</p>
+                    
+                    <code>
+                    (lldb) settings set target.process.disable-stdio true
+                    </code>
+
+                    <p>Over time, gdb's &quot;<code>set</code> command became a wilderness of disordered options, 
+                        so that there were useful options that even experienced gdb users didn't know about
+                        because they were too hard to find.  We tried to organize the settings hierarchically
+                        using the structure of the basic entities in the debugger.  For the most part anywhere
+                        you can specify a setting on a generic entity (threads, for example) you can also apply
+                        the option to a particular instance, which can also be convenient at times.
+                        You can view the available settings with &quot;<code>settings list</code>&quot; and
+                        there is help on the settings command explaining how it works more generally.</p>
 
     				</div>
     				<div class="postfooter"></div>
@@ -409,7 +493,7 @@ Current breakpoints:
         				<div class="postcontent">
 
                     <p>Once you've stopped, lldb will choose a current thread, usually the
-                    one that stopped "for a reason", and a current frame in that thread.
+                    one that stopped "for a reason", and a current frame in that thread (on stop this is always the bottom-most frame).
                     Many the commands for inspecting state work on this current
                     thread/frame.</p>
 
@@ -447,7 +531,16 @@ thread #1: tid = 0x2c03, stop reason = breakpoint 1.1, queue = com.apple.main-th
                     <code>
                         (lldb) thread backtrace all
                     </code>
-                    <p>
+
+                    <p>You can select the current thread, which will be used by default in all the commands in 
+                    the next section, with the "thread select" command:</p>
+
+                    <code>
+                      (lldb) thread select 2
+                    </code>
+
+                    <p>where the thread index is just the one shown in the &quot;<code>thread list</code>&quot listing.
+                    
 				</div>
 				<div class="postfooter"></div>
 
@@ -469,12 +562,21 @@ thread #1: tid = 0x2c03, stop reason = breakpoint 1.1, queue = com.apple.main-th
                     </code>
 
                     <p>As you see above, if you don't specify any variable names, all arguments 
-                        and locals will be shown. If give "<code>frame variable</code>" some arguments,
-                        they should be the name of locals or paths to children of the variables:</p>
+                        and locals will be shown. If you call "<code>frame variable</code>" 
+                        passing in the names of a particular local(s), only those variables
+                        will be printed.  For instance:
+                        </p>
 
                     <code>
                         (lldb) frame variable self
                         <br>(SKTGraphicView *) self = 0x0000000100208b40
+                    </code>
+
+                    <p>You can also pass in a path to some subelement of one of the available locals,
+                      and that sub-element will be printed. For instance:
+                      </p>
+
+                    <code>
                         <br>(lldb) frame variable self.isa
                         <br>(struct objc_class *) self.isa = 0x0000000100023730
                     </code>
@@ -499,19 +601,24 @@ thread #1: tid = 0x2c03, stop reason = breakpoint 1.1, queue = com.apple.main-th
                     </code>
 
                     <p>The frame variable command will also perform "object printing" operations on
-                    variables (currently we only support NSPrintForDebugger) with:</p>
+                    variables (currently we only support ObjC printing, using the object's "description" method.
+                    Turn this on by passing the -o flag to frame variable:</p>
 
                     <code>
                         (lldb) frame variable -o self
                         (SKTGraphicView *) self = 0x0000000100208b40 &lt;SKTGraphicView: 0x100208b40&gt;
                     </code>
 
-                    <p>You can select another frame to view with by selecting a frame with the "<code>frame select</code>"</p>
+                    <p>You can select another frame to view with the "<code>frame select</code>" command</p>
 
                     <code>
                         (lldb) frame select 9
-                        frame #9: 0x0000000100015ae3, where = Sketch`function1 + 33 at /Projects/Sketch/SKTFunctions.m:11
+                        <br>frame #9: 0x0000000100015ae3, where = Sketch`function1 + 33 at /Projects/Sketch/SKTFunctions.m:11
                     </code>
+
+                    <p>You can also move up and down the stack by passing the &quot;<code>--relative</code>&quot; (&quot;<code>-r</code>&quot;)
+                      option.  And we have built-in aliases &quot;<code>u</code>&quot; and &quot;<code>d</code>&quot; which
+                      behave like their gdb equivalents.
 
                     <p>If you need to view more complex data or change program data, you can
                     use the general "expression" command.  It takes an expression and
@@ -534,8 +641,7 @@ thread #1: tid = 0x2c03, stop reason = breakpoint 1.1, queue = com.apple.main-th
                         <br>I have a pointer 0x0.
                     </code>
 
-                    <p>One thing to note from this example is that lldb commands can be defined to
-                    take "raw" input.  "expression" is one of these.  So in the expression command,
+                    <p>As I said above, &quot;expression&quot; is one of the &quot;raw&quot; commands.  So
                     you don't have to quote your whole expression, nor backslash protect quotes,
                     etc...</p>
 
