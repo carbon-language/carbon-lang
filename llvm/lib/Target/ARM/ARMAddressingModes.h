@@ -408,18 +408,16 @@ namespace ARM_AM {
   //
   // The first operand is always a Reg.  The second operand is a reg if in
   // reg/reg form, otherwise it's reg#0.  The third field encodes the operation
-  // in bit 12, the immediate in bits 0-11, and the shift op in 13-15. The
-  // forth operand 16-17 encodes the index mode.
+  // in bit 12, the immediate in bits 0-11, and the shift op in 13-15.
   //
   // If this addressing mode is a frame index (before prolog/epilog insertion
   // and code rewriting), this operand will have the form:  FI#, reg0, <offs>
   // with no shift amount for the frame offset.
   //
-  static inline unsigned getAM2Opc(AddrOpc Opc, unsigned Imm12, ShiftOpc SO,
-                                   unsigned IdxMode = 0) {
+  static inline unsigned getAM2Opc(AddrOpc Opc, unsigned Imm12, ShiftOpc SO) {
     assert(Imm12 < (1 << 12) && "Imm too large!");
     bool isSub = Opc == sub;
-    return Imm12 | ((int)isSub << 12) | (SO << 13) | (IdxMode << 16) ;
+    return Imm12 | ((int)isSub << 12) | (SO << 13);
   }
   static inline unsigned getAM2Offset(unsigned AM2Opc) {
     return AM2Opc & ((1 << 12)-1);
@@ -428,10 +426,7 @@ namespace ARM_AM {
     return ((AM2Opc >> 12) & 1) ? sub : add;
   }
   static inline ShiftOpc getAM2ShiftOpc(unsigned AM2Opc) {
-    return (ShiftOpc)((AM2Opc >> 13) & 7);
-  }
-  static inline unsigned getAM2IdxMode(unsigned AM2Opc) {
-    return (AM2Opc >> 16);
+    return (ShiftOpc)(AM2Opc >> 13);
   }
 
 

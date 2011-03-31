@@ -643,11 +643,8 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
     if (PW) {
       MI.addOperand(MCOperand::CreateReg(0));
       ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
-      const TargetInstrDesc &TID = ARMInsts[Opcode];
-      unsigned IndexMode =
-                  (TID.TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
       unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, slice(insn, 7, 0) << 2,
-                                          ARM_AM::no_shift, IndexMode);
+                                          ARM_AM::no_shift);
       MI.addOperand(MCOperand::CreateImm(Offset));
       OpIdx = 5;
     } else {
@@ -1076,8 +1073,6 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return false;
 
   ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
-  unsigned IndexMode =
-               (TID.TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
   if (getIBit(insn) == 0) {
     // For pre- and post-indexed case, add a reg0 operand (Addressing Mode #2).
     // Otherwise, skip the reg operand since for addrmode_imm12, Rn has already
@@ -1089,8 +1084,7 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     // Disassemble the 12-bit immediate offset.
     unsigned Imm12 = slice(insn, 11, 0);
-    unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, Imm12, ARM_AM::no_shift,
-                                        IndexMode);
+    unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, Imm12, ARM_AM::no_shift);
     MI.addOperand(MCOperand::CreateImm(Offset));
     OpIdx += 1;
   } else {
@@ -1105,7 +1099,7 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     // A8.4.1.  Possible rrx or shift amount of 32...
     getImmShiftSE(ShOp, ShImm);
     MI.addOperand(MCOperand::CreateImm(
-                    ARM_AM::getAM2Opc(AddrOpcode, ShImm, ShOp, IndexMode)));
+                    ARM_AM::getAM2Opc(AddrOpcode, ShImm, ShOp)));
     OpIdx += 2;
   }
 
