@@ -525,6 +525,24 @@ class AI2stridx<bit isByte, bit isPre, dag oops, dag iops,
   let Inst{19-16} = Rn;
   let Inst{11-0} = offset{11-0};
 }
+// FIXME: Merge with the above class when addrmode2 gets used for STR, STRB
+// but for now use this class for STRT and STRBT.
+class AI2stridxT<bit isByte, bit isPre, dag oops, dag iops,
+                IndexMode im, Format f, InstrItinClass itin, string opc,
+                string asm, string cstr, list<dag> pattern>
+  : AI2ldstidx<0, isByte, isPre, oops, iops, im, f, itin, opc, asm, cstr,
+               pattern> {
+  // AM2 store w/ two operands: (GPR, am2offset)
+  // {17-14}  Rn
+  // {13}     1 == Rm, 0 == imm12
+  // {12}     isAdd
+  // {11-0}   imm12/Rm
+  bits<18> addr;
+  let Inst{25} = addr{13};
+  let Inst{23} = addr{12};
+  let Inst{19-16} = addr{17-14};
+  let Inst{11-0} = addr{11-0};
+}
 
 // addrmode3 instructions
 class AI3ld<bits<4> op, bit op20, dag oops, dag iops, Format f,
