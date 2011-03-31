@@ -1528,6 +1528,16 @@ let isBranch = 1, isTerminator = 1 in {
   }
 }
 
+// BLX (immediate) -- for disassembly only
+def BLXi : AXI<(outs), (ins br_target:$target), BrMiscFrm, NoItinerary,
+               "blx\t$target", [/* pattern left blank */]>,
+           Requires<[IsARM, HasV5T]> {
+  let Inst{31-25} = 0b1111101;
+  bits<25> target;
+  let Inst{23-0} = target{24-1};
+  let Inst{24} = target{0};
+}
+
 // Branch and Exchange Jazelle -- for disassembly only
 def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
               [/* For disassembly only; pattern left blank */]> {

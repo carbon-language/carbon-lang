@@ -764,7 +764,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
           || Opcode == ARM::SMC || Opcode == ARM::SVC) &&
          "Unexpected Opcode");
 
-  assert(NumOps >= 1 && OpInfo[0].RegClass < 0 && "Reg operand expected");
+  assert(NumOps >= 1 && OpInfo[0].RegClass < 0 && "Imm operand expected");
 
   int Imm32 = 0;
   if (Opcode == ARM::SMC) {
@@ -787,7 +787,7 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 }
 
 // Misc. Branch Instructions.
-// BLX, BX
+// BLX, BLXi, BX
 // BX, BX_RET
 static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
@@ -810,6 +810,17 @@ static bool DisassembleBrMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
            "Reg operand expected");
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
+    OpIdx = 1;
+    return true;
+  }
+
+  // BLXi takes imm32 (the PC offset).
+  if (Opcode == ARM::BLXi) {
+    assert(NumOps >= 1 && OpInfo[0].RegClass < 0 && "Imm operand expected");
+    // SignExtend(imm24:H:'0', 32) where imm24 = Inst{23-0} and H = Inst{24}.
+    unsigned Imm26 = slice(insn, 23, 0) << 2 | slice(insn, 24, 24) << 1;
+    int Imm32 = SignExtend32<26>(Imm26);
+    MI.addOperand(MCOperand::CreateImm(Imm32));
     OpIdx = 1;
     return true;
   }
