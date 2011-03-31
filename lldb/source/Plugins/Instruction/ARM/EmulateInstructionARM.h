@@ -886,6 +886,10 @@ protected:
     bool
     EmulateVLD1Single (const uint32_t opcode, const ARMEncoding encoding);
     
+    // A8.6.309 VLD1 (single element to all lanes)
+    bool
+    EmulateVLD1SingleAll (const uint32_t opcode, const ARMEncoding encoding);
+    
     // A8.6.391 VST1 (multiple single elements)
     bool
     EmulateVST1Multiple (const uint32_t opcode, const ARMEncoding encoding);
@@ -893,6 +897,10 @@ protected:
     // A8.6.392 VST1 (single element from one lane)
     bool
     EmulateVST1Single (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.393 VST1 (single element to all lanes
+    bool
+    EmulateVST1SingleAll (const uint32_t opcode, const ARMEncoding encoding);
      
     // A8.6.317 VLDR
     bool
