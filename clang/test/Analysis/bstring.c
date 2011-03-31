@@ -129,7 +129,108 @@ void memcpy11() {
 void memcpy12() {
   char a[4] = {0};
   memcpy(0, a, 0); // no-warning
+}
+
+void memcpy13() {
+  char a[4] = {0};
   memcpy(a, 0, 0); // no-warning
+}
+
+//===----------------------------------------------------------------------===
+// mempcpy()
+//===----------------------------------------------------------------------===
+
+#define mempcpy BUILTIN(mempcpy)
+void *mempcpy(void *restrict s1, const void *restrict s2, size_t n);
+
+void mempcpy0 () {
+  char src[] = {1, 2, 3, 4};
+  char dst[5] = {0};
+
+  mempcpy(dst, src, 4); // no-warning
+
+  if (mempcpy(dst, src, 4) != &dst[4]) {
+    (void)*(char*)0; // no-warning
+  }
+
+  if (dst[0] != 0)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void mempcpy1 () {
+  char src[] = {1, 2, 3, 4};
+  char dst[10];
+
+  mempcpy(dst, src, 5); // expected-warning{{Byte string function accesses out-of-bound array element}}
+}
+
+void mempcpy2 () {
+  char src[] = {1, 2, 3, 4};
+  char dst[1];
+
+  mempcpy(dst, src, 4); // expected-warning{{Byte string function overflows destination buffer}}
+}
+
+void mempcpy3 () {
+  char src[] = {1, 2, 3, 4};
+  char dst[3];
+
+  mempcpy(dst+1, src+2, 2); // no-warning
+}
+
+void mempcpy4 () {
+  char src[] = {1, 2, 3, 4};
+  char dst[10];
+
+  mempcpy(dst+2, src+2, 3); // expected-warning{{Byte string function accesses out-of-bound array element}}
+}
+
+void mempcpy5() {
+  char src[] = {1, 2, 3, 4};
+  char dst[3];
+
+  mempcpy(dst+2, src+2, 2); // expected-warning{{Byte string function overflows destination buffer}}
+}
+
+void mempcpy6() {
+  int a[4] = {0};
+  mempcpy(a, a, 8); // expected-warning{{overlapping}}  
+}
+
+void mempcpy7() {
+  int a[4] = {0};
+  mempcpy(a+2, a+1, 8); // expected-warning{{overlapping}}
+}
+
+void mempcpy8() {
+  int a[4] = {0};
+  mempcpy(a+1, a+2, 8); // expected-warning{{overlapping}}
+}
+
+void mempcpy9() {
+  int a[4] = {0};
+  mempcpy(a+2, a+1, 4); // no-warning
+  mempcpy(a+1, a+2, 4); // no-warning
+}
+
+void mempcpy10() {
+  char a[4] = {0};
+  mempcpy(0, a, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void mempcpy11() {
+  char a[4] = {0};
+  mempcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void mempcpy12() {
+  char a[4] = {0};
+  mempcpy(0, a, 0); // no-warning
+}
+
+void mempcpy13() {
+  char a[4] = {0};
+  mempcpy(a, 0, 0); // no-warning
 }
 
 //===----------------------------------------------------------------------===

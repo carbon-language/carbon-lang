@@ -49,11 +49,14 @@ public:
                                           const CallExpr *) const;
 
   void evalMemcpy(CheckerContext &C, const CallExpr *CE) const;
+  void evalMempcpy(CheckerContext &C, const CallExpr *CE) const;
   void evalMemmove(CheckerContext &C, const CallExpr *CE) const;
   void evalBcopy(CheckerContext &C, const CallExpr *CE) const;
-  void evalCopyCommon(CheckerContext &C, const GRState *state,
+  void evalCopyCommon(CheckerContext &C, const CallExpr *CE,
+                      const GRState *state,
                       const Expr *Size, const Expr *Source, const Expr *Dest,
-                      bool Restricted = false) const;
+                      bool Restricted = false,
+                      bool IsMempcpy = false) const;
 
   void evalMemcmp(CheckerContext &C, const CallExpr *CE) const;
 
@@ -655,9 +658,12 @@ bool CStringChecker::SummarizeRegion(llvm::raw_ostream& os, ASTContext& Ctx,
 // evaluation of individual function calls.
 //===----------------------------------------------------------------------===//
 
-void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
+void CStringChecker::evalCopyCommon(CheckerContext &C, 
+                                    const CallExpr *CE,
+                                    const GRState *state,
                                     const Expr *Size, const Expr *Dest,
-                                    const Expr *Source, bool Restricted) const {
+                                    const Expr *Source, bool Restricted,
+                                    bool IsMempcpy) const {
   // See if the size argument is zero.
   SVal sizeVal = state->getSVal(Size);
   QualType sizeTy = Size->getType();
@@ -665,12 +671,39 @@ void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
   const GRState *stateZeroSize, *stateNonZeroSize;
   llvm::tie(stateZeroSize, stateNonZeroSize) = assumeZero(C, state, sizeVal, sizeTy);
 
-  // If the size is zero, there won't be any actual memory access.
-  if (stateZeroSize)
+  // Get the value of the Dest.
+  SVal destVal = state->getSVal(Dest);
+
+  // If the size is zero, there won't be any actual memory access, so
+  // just bind the return value to the destination buffer and return.
+  if (stateZeroSize) {
     C.addTransition(stateZeroSize);
+    if (IsMempcpy)
+      state->BindExpr(CE, destVal);
+    else
+      state->BindExpr(CE, sizeVal);
+    return;
+  }
 
   // If the size can be nonzero, we have to check the other arguments.
   if (stateNonZeroSize) {
+
+    // Ensure the destination is not null. If it is NULL there will be a
+    // NULL pointer dereference.
+    state = checkNonNull(C, state, Dest, destVal);
+    if (!state)
+      return;
+
+    // Get the value of the Src.
+    SVal srcVal = state->getSVal(Source);
+    
+    // Ensure the source is not null. If it is NULL there will be a
+    // NULL pointer dereference.
+    state = checkNonNull(C, state, Source, srcVal);
+    if (!state)
+      return;
+
+    // Ensure the buffers do not overlap.
     state = stateNonZeroSize;
     state = CheckBufferAccess(C, state, Size, Dest, Source,
                               /* FirstIsDst = */ true);
@@ -678,6 +711,26 @@ void CStringChecker::evalCopyCommon(CheckerContext &C, const GRState *state,
       state = CheckOverlap(C, state, Size, Dest, Source);
 
     if (state) {
+
+      // If this is mempcpy, get the byte after the last byte copied and 
+      // bind the expr.
+      if (IsMempcpy) {
+        loc::MemRegionVal *destRegVal = dyn_cast<loc::MemRegionVal>(&destVal);
+        
+        // Get the length to copy.
+        SVal lenVal = state->getSVal(Size);
+        NonLoc *lenValNonLoc = dyn_cast<NonLoc>(&lenVal);
+        
+        // Get the byte after the last byte copied.
+        SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
+                                                          *destRegVal,
+                                                          *lenValNonLoc, 
+                                                          Dest->getType());
+        
+        // The byte after the last byte copied is the return value.
+        state = state->BindExpr(CE, lastElement);
+      }
+
       // Invalidate the destination.
       // FIXME: Even if we can't perfectly model the copy, we should see if we
       // can use LazyCompoundVals to copy the source values into the destination.
@@ -696,7 +749,16 @@ void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) const {
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
   state = state->BindExpr(CE, state->getSVal(Dest));
-  evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1), true);
+  evalCopyCommon(C, CE, state, CE->getArg(2), Dest, CE->getArg(1), true);
+}
+
+void CStringChecker::evalMempcpy(CheckerContext &C, const CallExpr *CE) const {
+  // void *mempcpy(void *restrict dst, const void *restrict src, size_t n);
+  // The return value is a pointer to the byte following the last written byte.
+  const Expr *Dest = CE->getArg(0);
+  const GRState *state = C.getState();
+  
+  evalCopyCommon(C, CE, state, CE->getArg(2), Dest, CE->getArg(1), true, true);
 }
 
 void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) const {
@@ -705,12 +767,13 @@ void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) const {
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
   state = state->BindExpr(CE, state->getSVal(Dest));
-  evalCopyCommon(C, state, CE->getArg(2), Dest, CE->getArg(1));
+  evalCopyCommon(C, CE, state, CE->getArg(2), Dest, CE->getArg(1));
 }
 
 void CStringChecker::evalBcopy(CheckerContext &C, const CallExpr *CE) const {
   // void bcopy(const void *src, void *dst, size_t n);
-  evalCopyCommon(C, C.getState(), CE->getArg(2), CE->getArg(1), CE->getArg(0));
+  evalCopyCommon(C, CE, C.getState(), 
+                 CE->getArg(2), CE->getArg(1), CE->getArg(0));
 }
 
 void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
@@ -982,6 +1045,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Cases("memcpy", "__memcpy_chk", &CStringChecker::evalMemcpy)
+    .Case("mempcpy", &CStringChecker::evalMempcpy)
     .Cases("memcmp", "bcmp", &CStringChecker::evalMemcmp)
     .Cases("memmove", "__memmove_chk", &CStringChecker::evalMemmove)
     .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
