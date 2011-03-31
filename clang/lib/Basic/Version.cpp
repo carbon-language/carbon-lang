@@ -22,6 +22,9 @@ using namespace std;
 namespace clang {
   
 std::string getClangRepositoryPath() {
+#if defined(CLANG_REPOSITORY_STRING)
+  return CLANG_REPOSITORY_STRING;
+#else
 #ifdef SVN_REPOSITORY
   llvm::StringRef URL(SVN_REPOSITORY);
 #else
@@ -45,6 +48,7 @@ std::string getClangRepositoryPath() {
     URL = URL.substr(Start + 4);
 
   return URL;
+#endif
 }
 
 std::string getClangRevision() {

@@ -46,6 +46,9 @@ CPP.Flags += -I$(PROJ_SRC_DIR)/$(CLANG_LEVEL)/include -I$(PROJ_OBJ_DIR)/$(CLANG_
 ifdef CLANG_VENDOR
 CPP.Flags += -DCLANG_VENDOR='"$(CLANG_VENDOR) "'
 endif
+ifdef CLANG_REPOSITORY_STRING
+CPP.Flags += -DCLANG_REPOSITORY_STRING='"$(CLANG_REPOSITORY_STRING)"'
+endif
 
 # Disable -fstrict-aliasing. Darwin disables it by default (and LLVM doesn't
 # work with it enabled with GCC), Clang/llvm-gcc don't support it yet, and newer
