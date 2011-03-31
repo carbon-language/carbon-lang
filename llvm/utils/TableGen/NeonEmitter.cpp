@@ -608,16 +608,9 @@ static std::string GenOpString(OpKind op, const std::string &proto,
   case OpMul:
     s += "__a * __b;";
     break;
-  case OpMullN:
-    s += Extend(typestr, "__a") + " * " +
-      Extend(typestr, Duplicate(nElts << (int)quad, typestr, "__b")) + ";";
-    break;
   case OpMullLane:
-    s += Extend(typestr, "__a") + " * " +
-      Extend(typestr, SplatLane(nElts, "__b", "__c")) + ";";
-    break;
-  case OpMull:
-    s += Extend(typestr, "__a") + " * " + Extend(typestr, "__b") + ";";
+    s += MangleName("vmull", typestr, ClassS) + "(__a, " +
+      SplatLane(nElts, "__b", "__c") + ");";
     break;
   case OpMlaN:
     s += "__a + (__b * " + Duplicate(nElts, typestr, "__c") + ");";
@@ -629,16 +622,15 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a + (__b * __c);";
     break;
   case OpMlalN:
-    s += "__a + (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    s += "__a + " + MangleName("vmull", typestr, ClassS) + "(__b, " +
+      Duplicate(nElts, typestr, "__c") + ");";
     break;
   case OpMlalLane:
-    s += "__a + (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    s += "__a + " + MangleName("vmull", typestr, ClassS) + "(__b, " +
+      SplatLane(nElts, "__c", "__d") + ");";
     break;
   case OpMlal:
-    s += "__a + (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, "__c") + ");";
+    s += "__a + " + MangleName("vmull", typestr, ClassS) + "(__b, __c);";
     break;
   case OpMlsN:
     s += "__a - (__b * " + Duplicate(nElts, typestr, "__c") + ");";
@@ -650,16 +642,15 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     s += "__a - (__b * __c);";
     break;
   case OpMlslN:
-    s += "__a - (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, Duplicate(nElts, typestr, "__c")) + ");";
+    s += "__a - " + MangleName("vmull", typestr, ClassS) + "(__b, " +
+      Duplicate(nElts, typestr, "__c") + ");";
     break;
   case OpMlslLane:
-    s += "__a - (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, SplatLane(nElts, "__c", "__d")) + ");";
+    s += "__a - " + MangleName("vmull", typestr, ClassS) + "(__b, " +
+      SplatLane(nElts, "__c", "__d") + ");";
     break;
   case OpMlsl:
-    s += "__a - (" + Extend(typestr, "__b") + " * " +
-      Extend(typestr, "__c") + ");";
+    s += "__a - " + MangleName("vmull", typestr, ClassS) + "(__b, __c);";
     break;
   case OpQDMullLane:
     s += MangleName("vqdmull", typestr, ClassS) + "(__a, " +
@@ -1148,17 +1139,20 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
-  // Emit vmovl and vabd intrinsics first so they can be used by other
+  // Emit vmovl, vmull and vabd intrinsics first so they can be used by other
   // intrinsics.  (Some of the saturating multiply instructions are also
   // used to implement the corresponding "_lane" variants, but tablegen
   // sorts the records into alphabetical order so that the "_lane" variants
   // come after the intrinsics they use.)
   emitIntrinsic(OS, Records.getDef("VMOVL"));
+  emitIntrinsic(OS, Records.getDef("VMULL"));
   emitIntrinsic(OS, Records.getDef("VABD"));
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-    if (R->getName() != "VMOVL" && R->getName() != "VABD")
+    if (R->getName() != "VMOVL" &&
+        R->getName() != "VMULL" &&
+        R->getName() != "VABD")
       emitIntrinsic(OS, R);
   }
 
