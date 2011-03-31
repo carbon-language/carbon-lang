@@ -12,6 +12,7 @@
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Target.h"
 
@@ -170,3 +171,31 @@ SBAddress::GetDescription (SBStream &description)
 
     return true;
 }
+
+SectionType
+SBAddress::GetSectionType ()
+{
+    if (m_opaque_ap.get())
+    {
+        const Section *section = m_opaque_ap->GetSection();
+        if (section)
+            return section->GetType();
+    }
+    return eSectionTypeInvalid;
+}
+
+
+SBModule
+SBAddress::GetModule ()
+{
+    SBModule sb_module;
+    if (m_opaque_ap.get())
+    {
+        const Module *module = m_opaque_ap->GetModule();
+        if (module)
+            *sb_module = module->GetSP();
+    }
+    return sb_module;
+}
+
+

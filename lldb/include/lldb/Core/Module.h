@@ -90,7 +90,7 @@ public:
     /// pointer if it has one in the shared module list.
     //------------------------------------------------------------------
     lldb::ModuleSP
-    GetSP ();
+    GetSP () const;
 
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
@@ -144,16 +144,16 @@ public:
     //------------------------------------------------------------------
     const Symbol *
     FindFirstSymbolWithNameAndType (const ConstString &name, 
-                                    SymbolType symbol_type = eSymbolTypeAny);
+                                    lldb::SymbolType symbol_type = lldb::eSymbolTypeAny);
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name, 
-                                SymbolType symbol_type, 
+                                lldb::SymbolType symbol_type, 
                                 SymbolContextList &sc_list);
 
     size_t
     FindSymbolsMatchingRegExAndType (const RegularExpression &regex, 
-                                     SymbolType symbol_type, 
+                                     lldb::SymbolType symbol_type, 
                                      SymbolContextList &sc_list);
 
     //------------------------------------------------------------------

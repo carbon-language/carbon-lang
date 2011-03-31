@@ -54,6 +54,9 @@ public:
     uint32_t
     GetPrologueByteSize ();
 
+    SymbolType
+    GetType ();
+
 #ifndef SWIG
     bool
     operator == (const lldb::SBSymbol &rhs) const;

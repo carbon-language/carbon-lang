@@ -74,7 +74,7 @@ Module::~Module()
 
 
 ModuleSP
-Module::GetSP ()
+Module::GetSP () const
 {
     return ModuleList::GetModuleSP (this);
 }

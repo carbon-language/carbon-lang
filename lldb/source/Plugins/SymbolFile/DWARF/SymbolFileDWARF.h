@@ -168,7 +168,9 @@ public:
     const DWARFDebugRanges* DebugRanges() const;
 
     const lldb_private::DataExtractor&
-    GetCachedSectionData (uint32_t got_flag, lldb_private::SectionType sect_type, lldb_private::DataExtractor &data);
+    GetCachedSectionData (uint32_t got_flag, 
+                          lldb::SectionType sect_type, 
+                          lldb_private::DataExtractor &data);
 
     static bool
     SupportedVersion(uint16_t version);

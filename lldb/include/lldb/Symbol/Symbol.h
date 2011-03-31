@@ -31,7 +31,7 @@ public:
     Symbol (lldb::user_id_t symID,
             const char *name,
             bool name_is_mangled,
-            SymbolType type,
+            lldb::SymbolType type,
             bool external,
             bool is_debug,
             bool is_trampoline,
@@ -44,7 +44,7 @@ public:
     Symbol (lldb::user_id_t symID,
             const char *name,
             bool name_is_mangled,
-            SymbolType type,
+            lldb::SymbolType type,
             bool external,
             bool is_debug,
             bool is_trampoline,
@@ -58,7 +58,7 @@ public:
     operator= (const Symbol& rhs);
 
     bool
-    Compare (const ConstString& name, SymbolType type) const;
+    Compare (const ConstString& name, lldb::SymbolType type) const;
 
     void
     Dump (Stream *s, Target *target, uint32_t index) const;
@@ -96,11 +96,11 @@ public:
     lldb::addr_t
     GetByteSize () const { return m_addr_range.GetByteSize(); }
 
-    SymbolType
+    lldb::SymbolType
     GetType () const { return m_type; }
 
     void
-    SetType (SymbolType type) { m_type = type; }
+    SetType (lldb::SymbolType type) { m_type = type; }
 
     const char *
     GetTypeAsString () const;
@@ -186,7 +186,7 @@ public:
 protected:
 
     Mangled         m_mangled;              // uniqued symbol name/mangled name pair
-    SymbolType m_type;                 // symbol type
+    lldb::SymbolType m_type;                 // symbol type
     uint16_t        m_type_data;            // data specific to m_type
     uint16_t        m_type_data_resolved:1, // True if the data in m_type_data has already been calculated
                     m_is_synthetic:1,       // non-zero if this symbol is not actually in the symbol table, but synthesized from other info in the object file.

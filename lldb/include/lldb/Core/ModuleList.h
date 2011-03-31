@@ -288,7 +288,7 @@ public:
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name,
-                                SymbolType symbol_type,
+                                lldb::SymbolType symbol_type,
                                 SymbolContextList &sc_list);
 
     //------------------------------------------------------------------

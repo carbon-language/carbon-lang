@@ -198,3 +198,11 @@ SBSymbol::GetPrologueByteSize ()
         return m_opaque_ptr->GetPrologueByteSize();
     return 0;
 }
+
+SymbolType
+SBSymbol::GetType ()
+{
+    if (m_opaque_ptr)
+        return m_opaque_ptr->GetType();
+    return eSymbolTypeInvalid;
+}

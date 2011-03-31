@@ -66,9 +66,10 @@ public:
     GetSymbolAtIndex (size_t idx);
 
 private:
+    friend class SBAddress;
+    friend class SBFrame;
     friend class SBSymbolContext;
     friend class SBTarget;
-    friend class SBFrame;
 
     explicit SBModule (const lldb::ModuleSP& module_sp);
 

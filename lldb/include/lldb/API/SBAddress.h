@@ -11,6 +11,7 @@
 #define LLDB_SBAddress_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBModule.h"
 
 namespace lldb {
 
@@ -46,6 +47,12 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+
+    SectionType
+    GetSectionType ();
+
+    lldb::SBModule
+    GetModule ();
 
 protected:
 

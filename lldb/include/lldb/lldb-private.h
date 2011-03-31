@@ -70,7 +70,7 @@ const char *
 GetVoteAsCString (Vote vote);
 
 const char *
-GetSectionTypeAsCString (SectionType sect_type);
+GetSectionTypeAsCString (lldb::SectionType sect_type);
     
 bool
 NameMatches (const char *name, NameMatchType match_type, const char *match);
