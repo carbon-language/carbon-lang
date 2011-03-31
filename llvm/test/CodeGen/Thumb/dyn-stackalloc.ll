@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra -regalloc=basic | FileCheck %s
 
 	%struct.state = type { i32, %struct.info*, float**, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i64, i64, i64, i64, i64, i8* }
 	%struct.info = type { i32, i32, i32, i32, i32, i32, i32, i8* }
@@ -7,9 +8,10 @@ define void @t1(%struct.state* %v) {
 ; CHECK: t1:
 ; CHECK: push
 ; CHECK: add r7, sp, #12
-; CHECK: mov r2, sp
-; CHECK: subs r4, r2, r1
-; CHECK: mov sp, r4
+; CHECK: lsls r[[R0:[0-9]+]]
+; CHECK: mov r[[R1:[0-9]+]], sp
+; CHECK: subs r[[R2:[0-9]+]], r[[R1]], r[[R0]]
+; CHECK: mov sp, r[[R2]]
 	%tmp6 = load i32* null
 	%tmp8 = alloca float, i32 %tmp6
 	store i32 1, i32* null
@@ -40,15 +42,16 @@ define void @t2(%struct.comment* %vc, i8* %tag, i8* %contents) {
 ; CHECK: t2:
 ; CHECK: push
 ; CHECK: add r7, sp, #12
-; CHECK: sub sp, #8
-; CHECK: mov r6, sp
-; CHECK: str r2, [r6, #4]
-; CHECK: str r0, [r6]
+; CHECK: sub sp, #
+; CHECK: mov r[[R0:[0-9]+]], sp
+; CHECK: str r{{[0-9+]}}, [r[[R0]]
+; CHECK: str r{{[0-9+]}}, [r[[R0]]
 ; CHECK-NOT: ldr r0, [sp
-; CHECK: ldr r0, [r6, #4]
-; CHECK: mov r0, sp
-; CHECK: subs r5, r0, r1
-; CHECK: mov sp, r5
+; CHECK: mov r[[R1:[0-9]+]], sp
+; CHECK: subs r[[R2:[0-9]+]], r[[R1]], r{{[0-9]+}}
+; CHECK: mov sp, r[[R2]]
+; CHECK-NOT: ldr r0, [sp
+; CHECK: bx
 	%tmp1 = call i32 @strlen( i8* %tag )
 	%tmp3 = call i32 @strlen( i8* %contents )
 	%tmp4 = add i32 %tmp1, 2

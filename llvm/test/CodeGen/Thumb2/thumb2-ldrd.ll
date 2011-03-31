@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 -regalloc=linearscan | FileCheck %s
 
 @b = external global i64*
 
