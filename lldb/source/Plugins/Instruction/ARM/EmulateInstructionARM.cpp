@@ -11181,6 +11181,177 @@ EmulateInstructionARM::EmulateVLD1Multiple (const uint32_t opcode, ARMEncoding e
     return true;
 }
 
+// A8.6.308 VLD1 (single element to one lane)
+//
+bool
+EmulateInstructionARM::EmulateVLD1Single (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); CheckAdvSIMDEnabled(); NullCheckIfThumbEE(n);
+        address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        if wback then R[n] = R[n] + (if register_index then R[m] else ebytes);
+        Elem[D[d],index,esize] = MemU[address,ebytes];
+#endif
+
+    bool success = false;
+    
+    if (ConditionPassed (opcode))
+    {
+        uint32_t ebytes;
+        uint32_t esize;
+        uint32_t index;
+        uint32_t alignment;
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        bool wback;
+        bool register_index;
+        
+        switch (encoding)
+        {
+            case eEncodingT1:
+            case eEncodingA1:
+            {
+                uint32_t size = Bits32 (opcode, 11, 10);
+                uint32_t index_align = Bits32 (opcode, 7, 4);
+                // if size == ‘11’ then SEE VLD1 (single element to all lanes);
+                // if (size == 3)
+                //    return EmulateVLD1SingleAll (opcode, encoding);
+                // case size of
+                if (size == 0) // when '00'
+                {
+                    // if index_align<0> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 0))
+                        return false;
+                        
+                    // ebytes = 1; esize = 8; index = UInt(index_align<3:1>); alignment = 1;
+                    ebytes = 1;
+                    esize = 8;
+                    index = Bits32 (index_align, 3, 1);
+                    alignment = 1;
+                }
+                else if (size == 1) // when ‘01’
+                {
+                    // if index_align<1> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 1))
+                        return false;
+                        
+                    // ebytes = 2; esize = 16; index = UInt(index_align<3:2>);
+                    ebytes = 2;
+                    esize = 16;
+                    index = Bits32 (index_align, 3, 2);
+                    
+                    // alignment = if index_align<0> == ‘0’ then 1 else 2;
+                    if (BitIsClear (index_align, 0))
+                        alignment = 1;
+                    else
+                        alignment = 2;
+                }
+                else if (size == 2) // when ‘10’
+                {
+                    // if index_align<2> != ‘0’ then UNDEFINED;
+                    if (BitIsClear (index_align, 2))
+                        return false;
+                        
+                    // if index_align<1:0> != ‘00’ && index_align<1:0> != ‘11’ then UNDEFINED;
+                    if ((Bits32 (index_align, 1, 0) != 0) && (Bits32 (index_align, 1, 0) != 3))
+                        return false;
+                        
+                    // ebytes = 4; esize = 32; index = UInt(index_align<3>);
+                    ebytes = 4;
+                    esize = 32;
+                    index = Bit32 (index_align, 3);
+                    
+                    // alignment = if index_align<1:0> == ‘00’ then 1 else 4;
+                    if (Bits32 (index_align, 1, 0) == 0)
+                        alignment = 1;
+                    else
+                        alignment = 4;
+                }
+                // d = UInt(D:Vd); n = UInt(Rn); m = UInt(Rm);
+                d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                
+                // wback = (m != 15); register_index = (m != 15 && m != 13); if n == 15 then UNPREDICTABLE;
+                wback = (m != 15);
+                register_index = ((m != 15) && (m != 13));
+                
+                if (n == 15)
+                    return false;
+                
+            }
+                break;
+                
+            default:
+                return false;
+        }
+        
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+            
+        // address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        addr_t address = Rn;
+        if ((address % alignment) != 0)
+            return false;
+            
+        EmulateInstruction::Context context;
+        // if wback then R[n] = R[n] + (if register_index then R[m] else ebytes);
+        if (wback)
+        {
+            uint32_t Rm = ReadCoreReg (m, &success);
+            if (!success)
+                return false;
+                
+            uint32_t offset;
+            if (register_index)
+                offset = Rm;
+            else
+                offset = ebytes;
+                
+            uint32_t value = Rn + offset;
+            
+            context.type = eContextAdjustBaseRegister;
+            context.SetRegisterPlusOffset (base_reg, offset);
+            
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, value))
+                return false;
+        }
+        
+        // Elem[D[d],index,esize] = MemU[address,ebytes];
+        uint32_t element = MemURead (context, address, esize, 0, &success);
+        if (!success)
+            return false;
+            
+        element = element << (index * esize);
+        
+        uint64_t reg_data = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_d0 + d, 0, &success);
+        if (!success)
+            return false;
+            
+        uint64_t all_ones = -1;
+        uint64_t mask = all_ones << ((index+1) * esize);  // mask is all 1's to left of where 'element' goes, & all 0's
+                                                          // at element & to the right of element.
+        if (index > 0)
+            mask = mask | Bits32 (all_ones, (index * esize) - 1, 0); // add 1's to the right of where 'element' goes.
+                                                                     // now mask should be 0's where element goes & 1's 
+                                                                     // everywhere else.
+
+        uint64_t masked_reg = reg_data & mask;  // Take original reg value & zero out 'element' bits
+        reg_data = masked_reg & element;        // Put 'element' into those bits in reg_data.
+        
+        context.type = eContextRegisterLoad;
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, reg_data))
+            return false;
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -11364,7 +11535,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
         { 0x0f300f00, 0x0d100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
         { 0x0f300f00, 0x0d100a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, [<Rn>{,#+/-<imm>}]"},
-        { 0xffb00000, 0xf4200000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld1<c>.<size> <list>, [<Rn{@<align>}],<RM>"},
+        { 0xffb00000, 0xf4200000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"},
+        { 0xffb00300, 0xf4a00000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Single, "vld1<c>.<size> <list>, [<Rn>{@<align>}], <Rm>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -11660,7 +11832,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfe100f00, 0xec100a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>" },
         { 0xffe00f00, 0xed100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
         { 0xff300f00, 0xed100a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, {<Rn>{,#+/-<imm>}]"},
-        { 0xffb00000, 0xf9200000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld<c>.<size> <list>, [<Rn>{@<align>}],<Rm>"},
+        { 0xffb00000, 0xf9200000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld1<c>.<size> <list>, [<Rn>{@<align>}],<Rm>"},
+        { 0xffb00300, 0xf9a00000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Single, "vld1<c>.<size> <list>, [<Rn>{@<align>}],<Rm>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
