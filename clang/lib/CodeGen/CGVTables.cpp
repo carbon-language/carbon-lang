@@ -743,7 +743,7 @@ private:
   /// AddVCallAndVBaseOffsets - Add vcall offsets and vbase offsets for the
   /// given base subobject.
   void AddVCallAndVBaseOffsets(BaseSubobject Base, bool BaseIsVirtual,
-                               uint64_t RealBaseOffset);
+                               CharUnits RealBaseOffset);
   
   /// AddVCallOffsets - Add vcall offsets for the given base subobject.
   void AddVCallOffsets(BaseSubobject Base, CharUnits VBaseOffset);
@@ -765,7 +765,8 @@ public:
     Context(MostDerivedClass->getASTContext()), Overriders(Overriders) {
       
     // Add vcall and vbase offsets.
-    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, OffsetInLayoutClass);
+    AddVCallAndVBaseOffsets(Base, BaseIsVirtual, 
+                            Context.toCharUnitsFromBits(OffsetInLayoutClass));
   }
   
   /// Methods for iterating over the components.
@@ -782,7 +783,7 @@ public:
 void 
 VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
                                                     bool BaseIsVirtual,
-                                                    uint64_t RealBaseOffset) {
+                                                    CharUnits RealBaseOffset) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base.getBase());
   
   // Itanium C++ ABI 2.5.2:
@@ -821,11 +822,11 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
       PrimaryBaseIsVirtual, RealBaseOffset);
   }
 
-  AddVBaseOffsets(Base.getBase(), RealBaseOffset);
+  AddVBaseOffsets(Base.getBase(), Context.toBits(RealBaseOffset));
 
   // We only want to add vcall offsets for virtual bases.
   if (BaseIsVirtual)
-    AddVCallOffsets(Base, Context.toCharUnitsFromBits(RealBaseOffset));
+    AddVCallOffsets(Base, RealBaseOffset);
 }
 
 int64_t VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
