@@ -200,6 +200,59 @@ inline static unsigned getARMRegisterNumbering(unsigned Reg) {
 }
 
 namespace ARMII {
+
+  /// ARM Index Modes
+  enum IndexMode {
+    IndexModeNone  = 0,
+    IndexModePre   = 1,
+    IndexModePost  = 2,
+    IndexModeUpd   = 3
+  };
+
+  /// ARM Addressing Modes
+  enum AddrMode {
+    AddrModeNone    = 0,
+    AddrMode1       = 1,
+    AddrMode2       = 2,
+    AddrMode3       = 3,
+    AddrMode4       = 4,
+    AddrMode5       = 5,
+    AddrMode6       = 6,
+    AddrModeT1_1    = 7,
+    AddrModeT1_2    = 8,
+    AddrModeT1_4    = 9,
+    AddrModeT1_s    = 10, // i8 * 4 for pc and sp relative data
+    AddrModeT2_i12  = 11,
+    AddrModeT2_i8   = 12,
+    AddrModeT2_so   = 13,
+    AddrModeT2_pc   = 14, // +/- i12 for pc relative data
+    AddrModeT2_i8s4 = 15, // i8 * 4
+    AddrMode_i12    = 16
+  };
+
+  inline static const char *AddrModeToString(AddrMode addrmode) {
+    switch (addrmode) {
+    default: llvm_unreachable("Unknown memory operation");
+    case AddrModeNone:    return "AddrModeNone";
+    case AddrMode1:       return "AddrMode1";
+    case AddrMode2:       return "AddrMode2";
+    case AddrMode3:       return "AddrMode3";
+    case AddrMode4:       return "AddrMode4";
+    case AddrMode5:       return "AddrMode5";
+    case AddrMode6:       return "AddrMode6";
+    case AddrModeT1_1:    return "AddrModeT1_1";
+    case AddrModeT1_2:    return "AddrModeT1_2";
+    case AddrModeT1_4:    return "AddrModeT1_4";
+    case AddrModeT1_s:    return "AddrModeT1_s";
+    case AddrModeT2_i12:  return "AddrModeT2_i12";
+    case AddrModeT2_i8:   return "AddrModeT2_i8";
+    case AddrModeT2_so:   return "AddrModeT2_so";
+    case AddrModeT2_pc:   return "AddrModeT2_pc";
+    case AddrModeT2_i8s4: return "AddrModeT2_i8s4";
+    case AddrMode_i12:    return "AddrMode_i12";
+    }
+  }
+
   /// Target Operand Flag enum.
   enum TOF {
     //===------------------------------------------------------------------===//

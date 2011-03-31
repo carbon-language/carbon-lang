@@ -34,25 +34,7 @@ namespace ARMII {
 
     //===------------------------------------------------------------------===//
     // This four-bit field describes the addressing mode used.
-
-    AddrModeMask  = 0x1f,
-    AddrModeNone    = 0,
-    AddrMode1       = 1,
-    AddrMode2       = 2,
-    AddrMode3       = 3,
-    AddrMode4       = 4,
-    AddrMode5       = 5,
-    AddrMode6       = 6,
-    AddrModeT1_1    = 7,
-    AddrModeT1_2    = 8,
-    AddrModeT1_4    = 9,
-    AddrModeT1_s    = 10, // i8 * 4 for pc and sp relative data
-    AddrModeT2_i12  = 11,
-    AddrModeT2_i8   = 12,
-    AddrModeT2_so   = 13,
-    AddrModeT2_pc   = 14, // +/- i12 for pc relative data
-    AddrModeT2_i8s4 = 15, // i8 * 4
-    AddrMode_i12    = 16,
+    AddrModeMask  = 0x1f, // The AddrMode enums are declared in ARMBaseInfo.h
 
     // Size* - Flags to keep track of the size of an instruction.
     SizeShift     = 5,
@@ -64,11 +46,9 @@ namespace ARMII {
 
     // IndexMode - Unindex, pre-indexed, or post-indexed are valid for load
     // and store ops only.  Generic "updating" flag is used for ld/st multiple.
+    // The index mode enums are declared in ARMBaseInfo.h
     IndexModeShift = 8,
     IndexModeMask  = 3 << IndexModeShift,
-    IndexModePre   = 1,
-    IndexModePost  = 2,
-    IndexModeUpd   = 3,
 
     //===------------------------------------------------------------------===//
     // Instruction encoding formats.
