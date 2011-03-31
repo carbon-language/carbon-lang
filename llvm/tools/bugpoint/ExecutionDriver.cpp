@@ -323,7 +323,7 @@ void BugDriver::compileProgram(Module *M, std::string *Error) const {
   }
 
   // Remove the temporary bitcode file when we are done.
-  FileRemover BitcodeFileRemover(BitcodeFile, !SaveTemps);
+  FileRemover BitcodeFileRemover(BitcodeFile.str(), !SaveTemps);
 
   // Actually compile the program!
   Interpreter->compileProgram(BitcodeFile.str(), Error, Timeout, MemoryLimit);
@@ -364,7 +364,8 @@ std::string BugDriver::executeProgram(const Module *Program,
 
   // Remove the temporary bitcode file when we are done.
   sys::Path BitcodePath(BitcodeFile);
-  FileRemover BitcodeFileRemover(BitcodePath, CreatedBitcode && !SaveTemps);
+  FileRemover BitcodeFileRemover(BitcodePath.str(),
+    CreatedBitcode && !SaveTemps);
 
   if (OutputFile.empty()) OutputFile = OutputPrefix + "-execution-output";
 

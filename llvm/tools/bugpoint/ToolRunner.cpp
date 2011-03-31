@@ -503,7 +503,7 @@ int LLC::ExecuteProgram(const std::string &Bitcode,
   sys::Path OutputAsmFile;
   GCC::FileType FileKind = OutputCode(Bitcode, OutputAsmFile, *Error, Timeout,
                                       MemoryLimit);
-  FileRemover OutFileRemover(OutputAsmFile, !SaveTemps);
+  FileRemover OutFileRemover(OutputAsmFile.str(), !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
@@ -675,7 +675,7 @@ int CBE::ExecuteProgram(const std::string &Bitcode,
   sys::Path OutputCFile;
   OutputCode(Bitcode, OutputCFile, *Error, Timeout, MemoryLimit);
 
-  FileRemover CFileRemove(OutputCFile, !SaveTemps);
+  FileRemover CFileRemove(OutputCFile.str(), !SaveTemps);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
   GCCArgs.insert(GCCArgs.end(), SharedLibs.begin(), SharedLibs.end());
@@ -851,7 +851,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         errs() << "\n";
         );
 
-  FileRemover OutputBinaryRemover(OutputBinary, !SaveTemps);
+  FileRemover OutputBinaryRemover(OutputBinary.str(), !SaveTemps);
 
   if (RemoteClientPath.isEmpty()) {
     DEBUG(errs() << "<run locally>");

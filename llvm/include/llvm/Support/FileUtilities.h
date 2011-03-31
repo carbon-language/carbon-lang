@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_FILEUTILITIES_H
 #define LLVM_SUPPORT_FILEUTILITIES_H
 
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
 namespace llvm {
@@ -37,29 +38,36 @@ namespace llvm {
   /// specified (if deleteIt is true).
   ///
   class FileRemover {
-    sys::Path Filename;
+    SmallString<128> Filename;
     bool DeleteIt;
   public:
     FileRemover() : DeleteIt(false) {}
 
-    explicit FileRemover(const sys::Path &filename, bool deleteIt = true)
-      : Filename(filename), DeleteIt(deleteIt) {}
+    explicit FileRemover(const Twine& filename, bool deleteIt = true)
+      : DeleteIt(deleteIt) {
+      filename.toVector(Filename);
+    }
 
     ~FileRemover() {
       if (DeleteIt) {
         // Ignore problems deleting the file.
-        Filename.eraseFromDisk();
+        bool existed;
+        sys::fs::remove(Filename.str(), existed);
       }
     }
 
     /// setFile - Give ownership of the file to the FileRemover so it will
     /// be removed when the object is destroyed.  If the FileRemover already
     /// had ownership of a file, remove it first.
-    void setFile(const sys::Path &filename, bool deleteIt = true) {
-      if (DeleteIt)
-        Filename.eraseFromDisk();
+    void setFile(const Twine& filename, bool deleteIt = true) {
+      if (DeleteIt) {
+        // Ignore problems deleting the file.
+        bool existed;
+        sys::fs::remove(Filename.str(), existed);
+      }
 
-      Filename = filename;
+      Filename.clear();
+      filename.toVector(Filename);
       DeleteIt = deleteIt;
     }
 
