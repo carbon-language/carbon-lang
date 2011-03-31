@@ -117,6 +117,32 @@ SBTarget::GetDebugger () const
     return debugger;
 }
 
+SBProcess
+SBTarget::LaunchSimple
+(
+    char const **argv,
+    char const **envp,
+    const char *working_directory
+)
+{
+    char *stdin_path = NULL;
+    char *stdout_path = NULL;
+    char *stderr_path = NULL;
+    uint32_t launch_flags = 0;
+    bool stop_at_entry = false;
+    SBError error;
+    SBListener listener = GetDebugger().GetListener();
+    return Launch (listener,
+                   argv,
+                   envp,
+                   stdin_path,
+                   stdout_path,
+                   stderr_path,
+                   working_directory,
+                   launch_flags,
+                   stop_at_entry,
+                   error);
+}
 
 SBProcess
 SBTarget::Launch 

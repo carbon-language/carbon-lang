@@ -101,9 +101,11 @@ public:
     ///     Some launch options specified by logical OR'ing 
     ///     lldb::LaunchFlags enumeration values together.
     ///
+    /// @param[out]
+    ///     An error object. Contains the reason if there is some failure.
+    ///
     /// @return
-    ///     An error object. Call GetID() to get the process ID if
-    ///     the error object is success.
+    ///      A process object for the newly created process.
     //------------------------------------------------------------------
     lldb::SBProcess
     Launch (SBListener &listener, 
@@ -116,22 +118,10 @@ public:
             uint32_t launch_flags,   // See LaunchFlags
             bool stop_at_entry,
             lldb::SBError& error);
+            
     
     //------------------------------------------------------------------
-    /// Launch a new process.
-    ///
-    /// Launch a new process by spawning a new process using the
-    /// target object's executable module's file as the file to launch.
-    /// Arguments are given in \a argv, and the environment variables
-    /// are in \a envp. Standard input and output files can be
-    /// optionally re-directed to \a stdin_path, \a stdout_path, and
-    /// \a stderr_path.
-    ///
-    /// @param[in] listener
-    ///     An optional listener that will receive all process events.
-    ///     If NULL, then the this target's debugger (SBTarget::GetDebugger())
-    ///     will listen to all process events. If non-NULL, \a listener
-    ///     will listen to all process events.
+    /// Launch a new process with sensible defaults.
     ///
     /// @param[in] argv
     ///     The argument array.
@@ -139,35 +129,28 @@ public:
     /// @param[in] envp
     ///     The environment array.
     ///
-    /// @param[in] launch_flags
-    ///     Flags to modify the launch (@see lldb::LaunchFlags)
-    ///
-    /// @param[in] stdin_path
-    ///     The path to use when re-directing the STDIN of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stdout_path
-    ///     The path to use when re-directing the STDOUT of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stderr_path
-    ///     The path to use when re-directing the STDERR of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
     /// @param[in] working_directory
     ///     The working directory to have the child process run in
     ///
-    /// @param[in] launch_flags
-    ///     Some launch options specified by logical OR'ing 
-    ///     lldb::LaunchFlags enumeration values together.
+    /// Default: listener
+    ///     Set to the target's debugger (SBTarget::GetDebugger())
+    ///
+    /// Default: launch_flags
+    ///     Empty launch flags
+    ///
+    /// Default: stdin_path
+    /// Default: stdout_path
+    /// Default: stderr_path
+    ///     A pseudo terminal will be used.
     ///
     /// @return
-    ///     An error object. Call GetID() to get the process ID if
-    ///     the error object is success.
+    ///      A process object for the newly created process.
     //------------------------------------------------------------------
+    lldb::SBProcess
+    LaunchSimple (const char **argv, 
+                  const char **envp,
+                  const char *working_directory);
+    
     lldb::SBProcess
     AttachToProcessWithID (SBListener &listener, 
                            lldb::pid_t pid, // The process ID to attach to
