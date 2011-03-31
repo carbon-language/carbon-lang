@@ -5142,8 +5142,11 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     ByrefType += " void (*__Block_byref_id_object_copy)(void*, void*);\n";
     ByrefType += " void (*__Block_byref_id_object_dispose)(void*);\n";
   }
-  
-  Ty.getAsStringInternal(Name, Context->PrintingPolicy);
+
+  QualType T = Ty;
+  (void)convertBlockPointerToFunctionPointer(T);
+  T.getAsStringInternal(Name, Context->PrintingPolicy);
+    
   ByrefType += " " + Name + ";\n";
   ByrefType += "};\n";
   // Insert this type in global scope. It is needed by helper function.
@@ -5201,7 +5204,12 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
       ByrefType += utostr(flag);
     }
     ByrefType += "};\n";
-    ReplaceText(DeclLoc, endBuf-startBuf+Name.size(), ByrefType);
+    unsigned nameSize = Name.size();
+    // for block or function pointer declaration. Name is aleady
+    // part of the declaration.
+    if (Ty->isBlockPointerType() || Ty->isFunctionPointerType())
+      nameSize = 1;
+    ReplaceText(DeclLoc, endBuf-startBuf+nameSize, ByrefType);
   }
   else {
     SourceLocation startLoc;
