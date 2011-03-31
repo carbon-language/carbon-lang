@@ -22,7 +22,7 @@ namespace llvm {
 
   /// DiffFilesWithTolerance - Compare the two files specified, returning 0 if
   /// the files match, 1 if they are different, and 2 if there is a file error.
-  /// This function allows you to specify an absolete and relative FP error that
+  /// This function allows you to specify an absolute and relative FP error that
   /// is allowed to exist.  If you specify a string to fill in for the error
   /// option, it will set the string to an error message if an error occurs, or
   /// if the files are different.
