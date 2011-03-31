@@ -11013,7 +11013,174 @@ EmulateInstructionARM::EmulateVSTR (const uint32_t opcode, ARMEncoding encoding)
     }
     return true;
 }
-                  
+
+// A8.6.307 VLDI1 (multiple single elements)
+// This instruction loads elements from memory into one, two, three or four registers, without de-interleaving.  Every
+// element of each register is loaded.
+bool
+EmulateInstructionARM::EmulateVLD1Multiple (const uint32_t opcode, ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); CheckAdvSIMDEnabled(); NullCheckIfThumbEE(n);
+        address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        if wback then R[n] = R[n] + (if register_index then R[m] else 8*regs);
+        for r = 0 to regs-1
+            for e = 0 to elements-1
+                Elem[D[d+r],e,esize] = MemU[address,ebytes];
+                address = address + ebytes;
+#endif
+
+    bool success = false;
+    
+    if (ConditionPassed (opcode))
+    {
+        uint32_t regs;
+        uint32_t alignment;
+        uint32_t ebytes;
+        uint32_t esize;
+        uint32_t elements;
+        uint32_t d;
+        uint32_t n;
+        uint32_t m;
+        bool wback;
+        bool register_index;
+        
+        switch (encoding)
+        {
+            case eEncodingT1:
+            case eEncodingA1:
+            {
+                // case type of
+                    // when ‘0111’
+                        // regs = 1; if align<1> == ‘1’ then UNDEFINED;
+                    // when ‘1010’
+                        // regs = 2; if align == ‘11’ then UNDEFINED;
+                    // when ‘0110’
+                        // regs = 3; if align<1> == ‘1’ then UNDEFINED;
+                    // when ‘0010’
+                        // regs = 4;
+                    // otherwise
+                        // SEE “Related encodings”;
+                uint32_t type = Bits32 (opcode, 11, 8);
+                uint32_t align = Bits32 (opcode, 5, 4);
+                if (type == 7) // '0111'
+                {
+                    regs = 1;
+                    if (BitIsSet (align, 1))
+                        return false;
+                }
+                else if (type == 10) // '1010'
+                {
+                    regs = 2;
+                    if (align == 3)
+                        return false;
+                    
+                }
+                else if (type == 6) // '0110'
+                {
+                    regs = 3;
+                    if (BitIsSet (align, 1))
+                        return false;
+                }
+                else if (type == 2) // '0010'
+                {
+                    regs = 4;
+                }
+                else
+                    return false;
+                
+                // alignment = if align == ‘00’ then 1 else 4 << UInt(align);
+                if (align == 0)
+                    alignment = 1;
+                else
+                    alignment = 4 << align;
+                    
+                // ebytes = 1 << UInt(size); esize = 8 * ebytes; elements = 8 DIV ebytes;
+                ebytes = 1 << Bits32 (opcode, 7, 6);
+                esize = 8 * ebytes;
+                elements = 8 / ebytes;
+                
+                // d = UInt(D:Vd); n = UInt(Rn); m = UInt(Rm);
+                d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 15);
+                m = Bits32 (opcode, 3, 0);
+                
+                // wback = (m != 15); register_index = (m != 15 && m != 13);
+                wback = (m != 15);
+                register_index = ((m != 15) && (m != 13));
+                
+                // if d+regs > 32 then UNPREDICTABLE;            
+                if ((d + regs) > 32)
+                    return false;
+            }
+                break;
+                
+            default:
+                return false;
+        }
+        
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+        
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+            
+        // address = R[n]; if (address MOD alignment) != 0 then GenerateAlignmentException();
+        addr_t address = Rn;
+        if ((address % alignment) != 0)
+            return false;
+            
+        EmulateInstruction::Context context;
+        // if wback then R[n] = R[n] + (if register_index then R[m] else 8*regs);
+        if (wback)
+        {
+            uint32_t Rm = ReadCoreReg (m, &success);
+            if (!success)
+                return false;
+                
+            uint32_t offset;
+            if (register_index)
+                offset = Rm;
+            else
+                offset = 8 * regs;
+                
+            uint32_t value = Rn + offset;
+            context.type = eContextAdjustBaseRegister;
+            context.SetRegisterPlusOffset (base_reg, offset);
+            
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, value))
+                return false;
+            
+        }
+        
+        // for r = 0 to regs-1
+        for (int r = 0; r < regs; ++r)
+        {
+            // for e = 0 to elements-1
+            uint64_t assembled_data = 0;
+            for (int e = 0; e < elements; ++e)
+            {
+                // Elem[D[d+r],e,esize] = MemU[address,ebytes];
+                context.type = eContextRegisterLoad;
+                context.SetRegisterPlusOffset (base_reg, address - Rn);
+                uint64_t data = MemURead (context, address, ebytes, 0, &success);
+                if (!success)
+                    return false;
+                    
+                assembled_data = (data << (e * esize)) | assembled_data; // New data goes to the left of existing data
+                
+                // address = address + ebytes;
+                address = address + ebytes;
+            }
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_d0 + d + r, assembled_data))
+                return false;
+        }
+    }
+    return true;
+}
+
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -11193,10 +11360,11 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0e5000f0, 0x001000f0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,+/-<Rm>]{!}" },
         { 0x0e5000f0, 0x004000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt>, <Rt2>, [<Rn>,#+/-<imm8>]!"},
         { 0x0e500ff0, 0x000000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDRegister, "ldrd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
-        { 0x0e100f00, 0x0c100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
-        { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
-        { 0x0f300f00, 0x0d100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
-        { 0x0f300f00, 0x0d100a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, [<Rn>{,#+/-<imm>}]"},
+        { 0x0e100f00, 0x0c100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
+        { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
+        { 0x0f300f00, 0x0d100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
+        { 0x0f300f00, 0x0d100a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, [<Rn>{,#+/-<imm>}]"},
+        { 0xffb00000, 0xf4200000, ARMvAll,       eEncodingA1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld1<c>.<size> <list>, [<Rn{@<align>}],<RM>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
@@ -11488,10 +11656,11 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfffffe00, 0x00005e00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,<Rm>]" },
         { 0xfff00fc0, 0xf9300000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
         { 0xfe500000, 0xe8500000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt?, <Rt2>, [<Rn>,#+/-<imm>]!"},
-        { 0xfe100f00, 0xec100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
-        { 0xfe100f00, 0xec100a00, ARMvAll,       eEncodingT2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>" },
-        { 0xffe00f00, 0xed100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
-        { 0xff300f00, 0xed100a00, ARMvAll,       eEncodingT2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, {<Rn>{,#+/-<imm>}]"},
+        { 0xfe100f00, 0xec100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
+        { 0xfe100f00, 0xec100a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>" },
+        { 0xffe00f00, 0xed100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
+        { 0xff300f00, 0xed100a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Sd>, {<Rn>{,#+/-<imm>}]"},
+        { 0xffb00000, 0xf9200000, ARMvAll,       eEncodingT1, AdvancedSIMD, eSize32, &EmulateInstructionARM::EmulateVLD1Multiple, "vld<c>.<size> <list>, [<Rn>{@<align>}],<Rm>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
