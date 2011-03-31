@@ -2813,5 +2813,12 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       }
   }
 
+  // fcmp (fpext x), (fpext y) -> fcmp x, y
+  if (FPExtInst *LHSExt = dyn_cast<FPExtInst>(Op0))
+    if (FPExtInst *RHSExt = dyn_cast<FPExtInst>(Op1))
+      if (LHSExt->getSrcTy() == RHSExt->getSrcTy())
+        return new FCmpInst(I.getPredicate(), LHSExt->getOperand(0),
+                            RHSExt->getOperand(0));
+
   return Changed ? &I : 0;
 }
