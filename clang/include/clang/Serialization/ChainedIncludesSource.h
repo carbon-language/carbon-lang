@@ -14,23 +14,23 @@
 #ifndef LLVM_CLANG_SERIALIZATION_CHAINEDINCLUDESSOURCE_H
 #define LLVM_CLANG_SERIALIZATION_CHAINEDINCLUDESSOURCE_H
 
-#include "clang/AST/ExternalASTSource.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include <vector>
 
 namespace clang {
   class CompilerInstance;
 
-class ChainedIncludesSource : public ExternalASTSource {
+class ChainedIncludesSource : public ExternalSemaSource {
 public:
   virtual ~ChainedIncludesSource();
 
   static ChainedIncludesSource *create(CompilerInstance &CI);
 
 private:
-  ExternalASTSource &getFinalReader() const { return *FinalReader; }
+  ExternalSemaSource &getFinalReader() const { return *FinalReader; }
 
   std::vector<CompilerInstance *> CIs;
-  llvm::OwningPtr<ExternalASTSource> FinalReader;
+  llvm::OwningPtr<ExternalSemaSource> FinalReader;
 
   
 protected:
@@ -56,6 +56,16 @@ protected:
   virtual void FinishedDeserializing();
   virtual void StartTranslationUnit(ASTConsumer *Consumer);
   virtual void PrintStats();
+
+//===----------------------------------------------------------------------===//
+// ExternalSemaSource interface.
+//===----------------------------------------------------------------------===//
+
+  virtual void InitializeSema(Sema &S);
+  virtual void ForgetSema();
+  virtual std::pair<ObjCMethodList,ObjCMethodList> ReadMethodPool(Selector Sel);
+  virtual bool LookupUnqualified(LookupResult &R, Scope *S);
+
 };
 
 }

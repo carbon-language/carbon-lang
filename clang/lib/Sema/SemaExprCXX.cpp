@@ -343,7 +343,7 @@ ExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
   // Find the std::type_info type.
-  if (!StdNamespace)
+  if (!getStdNamespace())
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
   if (!CXXTypeInfoDecl) {
