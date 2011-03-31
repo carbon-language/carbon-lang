@@ -49,3 +49,12 @@ define i1 @test6(float %x, float %y) nounwind {
 ; CHECK: @test6
 ; CHECK-NEXT: fcmp ogt float %x, %y
 }
+
+define i1 @test7(float %x) nounwind readnone ssp noredzone {
+  %ext = fpext float %x to ppc_fp128
+  %cmp = fcmp ogt ppc_fp128 %ext, 0xM00000000000000000000000000000000
+  ret i1 %cmp
+; Can't convert ppc_fp128
+; CHECK: @test7
+; CHECK-NEXT: fpext float %x to ppc_fp128
+}
