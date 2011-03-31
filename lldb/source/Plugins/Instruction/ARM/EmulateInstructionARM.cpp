@@ -11216,8 +11216,8 @@ EmulateInstructionARM::EmulateVLD1Single (const uint32_t opcode, const ARMEncodi
                 uint32_t size = Bits32 (opcode, 11, 10);
                 uint32_t index_align = Bits32 (opcode, 7, 4);
                 // if size == ‘11’ then SEE VLD1 (single element to all lanes);
-                // if (size == 3)
-                //    return EmulateVLD1SingleAll (opcode, encoding);
+                if (size == 3)
+                   return EmulateVLD1SingleAll (opcode, encoding);
                 // case size of
                 if (size == 0) // when '00'
                 {
@@ -11675,10 +11675,10 @@ EmulateInstructionARM::EmulateVST1Single (const uint32_t opcode, ARMEncoding enc
     return true;
 }
 
-// A8.6.309 VST1 (single element to all lanes)
-//
+// A8.6.309 VLD1 (single element to all lanes)
+// This instruction loads one element from memory into every element of one or two vectors.
 bool
-EmulateInstructionARM::EmulateVST1SingleAll (const uint32_t opcode, const ARMEncoding encoding)
+EmulateInstructionARM::EmulateVLD1SingleAll (const uint32_t opcode, const ARMEncoding encoding)
 {
 #if 0
     if ConditionPassed() then
