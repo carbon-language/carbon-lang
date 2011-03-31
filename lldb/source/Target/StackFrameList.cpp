@@ -356,6 +356,21 @@ StackFrameList::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
     return frame_sp;
 }
 
+StackFrameSP
+StackFrameList::GetFrameWithStackID (StackID &stack_id)
+{
+    uint32_t frame_idx = 0;
+    StackFrameSP frame_sp;
+    do
+    {
+        frame_sp = GetFrameAtIndex (frame_idx);
+        if (frame_sp && frame_sp->GetStackID() == stack_id)
+            break;
+        frame_idx++;
+    }
+    while (frame_sp);
+    return frame_sp;
+}
 
 bool
 StackFrameList::SetFrameAtIndex (uint32_t idx, StackFrameSP &frame_sp)

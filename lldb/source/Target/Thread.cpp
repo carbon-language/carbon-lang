@@ -950,6 +950,11 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
     return GetStackFrameList().GetFrameWithConcreteFrameIndex (unwind_idx);
 }
 
+lldb::StackFrameSP
+Thread::GetFrameWithStackID(StackID &stack_id)
+{
+    return GetStackFrameList().GetFrameWithStackID (stack_id);
+}
 
 
 lldb::StackFrameSP

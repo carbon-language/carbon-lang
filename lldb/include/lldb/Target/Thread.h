@@ -324,6 +324,9 @@ public:
     
     virtual lldb::StackFrameSP
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
+    
+    virtual lldb::StackFrameSP
+    GetFrameWithStackID(StackID &stack_id);
 
     uint32_t
     GetSelectedFrameIndex ();
