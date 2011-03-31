@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=bfin -join-liveintervals=0 -verify-machineinstrs
+; RUN: llc < %s -march=bfin -join-liveintervals=0 -verify-machineinstrs -regalloc=greedy
 
 ; Provoke an error in LowerSubregsPass::LowerExtract where the live range of a
 ; super-register is illegally extended.
