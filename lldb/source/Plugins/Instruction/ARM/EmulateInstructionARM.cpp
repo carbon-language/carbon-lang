@@ -134,6 +134,16 @@ uint32_t ITSession::GetCond()
 #define ARMV6_ABOVE   (ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8) 
 #define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
 
+#define No_VFP  0
+#define VFPv1   (1u << 1)
+#define VFPv2   (1u << 2)
+#define VFPv3   (1u << 3)
+#define AdvancedSIMD (1u << 4)
+
+#define VFPv1_ABOVE (VFPv1 | VFPv2 | VFPv3 | AdvancedSIMD)
+#define VFPv2_ABOVE (VFPv2 | VFPv3 | AdvancedSIMD)
+#define VFPv2v3     (VFPv2 | VFPv3)
+
 //----------------------------------------------------------------------
 //
 // EmulateInstructionARM implementation
@@ -10277,7 +10287,7 @@ EmulateInstructionARM::EmulateSTRDReg (const uint32_t opcode, const ARMEncoding 
                    return false;
                   
                 // if ArchVersion() < 6 && wback && m == n then UNPREDICTABLE;
-                if ((ArchVersion() < 6) && wback && (n == n))
+                if ((ArchVersion() < 6) && wback && (m == n))
                    return false;
                    
                 break;
@@ -10354,6 +10364,196 @@ EmulateInstructionARM::EmulateSTRDReg (const uint32_t opcode, const ARMEncoding 
     return true;
 }
                   
+// A8.6.319 VLDM
+// Vector Load Multiple loads multiple extension registers from consecutive memory locations using an address from 
+// an ARM core register.
+bool
+EmulateInstructionARM::EmulateVLDM (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations(); CheckVFPEnabled(TRUE); NullCheckIfThumbEE(n);
+        address = if add then R[n] else R[n]-imm32;
+        if wback then R[n] = if add then R[n}+imm32 else R[n]-imm32;
+        for r = 0 to regs-1
+            if single_regs then
+                S[d+r] = MemA[address,4]; address = address+4;
+            else
+                word1 = MemA[address,4]; word2 = MemA[address+4,4]; address = address+8;
+                // Combine the word-aligned words in the correct order for current endianness.
+                D[d+r] = if BigEndian() then word1:word2 else word2:word1;
+#endif
+                  
+    bool success = false;
+                  
+    if (ConditionPassed(opcode))
+    {
+                                           bool single_regs;
+                                           bool add;
+                                           bool wback;
+                                           uint32_t d;
+                                           uint32_t n;
+                                           uint32_t imm32;
+                                           uint32_t regs;
+        switch (encoding)
+        {
+            case eEncodingT1:
+            case eEncodingA1:
+                // if P == ‘0’ && U == ‘0’ && W == ‘0’ then SEE “Related encodings”;
+                // if P == ‘0’ && U == ‘1’ && W == ‘1’ && Rn == ‘1101’ then SEE VPOP;
+                // if P == ‘1’ && W == ‘0’ then SEE VLDR;
+                // if P == U && W == ‘1’ then UNDEFINED;
+                if ((Bit32 (opcode, 24) == Bit32 (opcode, 23)) && BitIsSet (opcode, 21))
+                    return false;
+                                           
+                // // Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+                // single_regs = FALSE; add = (U == ‘1’); wback = (W == ‘1’);
+                single_regs = false;
+                add = BitIsSet (opcode, 23);
+                wback = BitIsSet (opcode, 21);
+                                           
+                // d = UInt(D:Vd); n = UInt(Rn); imm32 = ZeroExtend(imm8:’00’, 32);
+                d = (Bit32 (opcode, 22) << 4) | Bits32 (opcode, 15, 12);
+                n = Bits32 (opcode, 19, 16);
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                                           
+                // regs = UInt(imm8) DIV 2; // If UInt(imm8) is odd, see “FLDMX”.
+                regs = Bits32 (opcode, 7, 0) / 2;
+                                           
+                // if n == 15 && (wback || CurrentInstrSet() != InstrSet_ARM) then UNPREDICTABLE;
+                if (n == 15 && (wback || CurrentInstrSet() != eModeARM))
+                    return false;
+                                           
+                // if regs == 0 || regs > 16 || (d+regs) > 32 then UNPREDICTABLE;
+                if ((regs == 0) || (regs > 16) || ((d + regs) > 32))
+                    return false;
+                                           
+                break;
+                  
+            case eEncodingT2:
+            case eEncodingA2:
+                // if P == ‘0’ && U == ‘0’ && W == ‘0’ then SEE “Related encodings”;
+                // if P == ‘0’ && U == ‘1’ && W == ‘1’ && Rn == ‘1101’ then SEE VPOP;
+                // if P == ‘1’ && W == ‘0’ then SEE VLDR;
+                // if P == U && W == ‘1’ then UNDEFINED;
+                if ((Bit32 (opcode, 24) == Bit32 (opcode, 23)) && BitIsSet (opcode, 21))
+                    return false;
+                                           
+                // // Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+                // single_regs = TRUE; add = (U == ‘1’); wback = (W == ‘1’); d = UInt(Vd:D); n = UInt(Rn);
+                single_regs = true;
+                add = BitIsSet (opcode, 23);
+                wback = BitIsSet (opcode, 21);
+                d = (Bits32 (opcode, 15, 12) << 1) | Bit32 (opcode, 22);
+                n = Bits32 (opcode, 19, 16);
+                                           
+                // imm32 = ZeroExtend(imm8:’00’, 32); regs = UInt(imm8);
+                imm32 = Bits32 (opcode, 7, 0) << 2;
+                regs = Bits32 (opcode, 7, 0);
+                                           
+                // if n == 15 && (wback || CurrentInstrSet() != InstrSet_ARM) then UNPREDICTABLE;
+                if ((n == 15) && (wback || (CurrentInstrSet() != eModeARM)))
+                    return false;
+                                           
+                // if regs == 0 || (d+regs) > 32 then UNPREDICTABLE;
+                if ((regs == 0) || ((d + regs) > 32))
+                    return false;
+                break;
+                  
+            default:
+                return false;
+        }
+                                           
+        Register base_reg;
+        base_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + n);
+                                           
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+                                           
+        // address = if add then R[n] else R[n]-imm32;
+        addr_t address;
+        if (add)
+            address = Rn;
+        else
+            address = Rn - imm32;
+                                           
+        // if wback then R[n] = if add then R[n}+imm32 else R[n]-imm32;
+        EmulateInstruction::Context context;
+                                           
+        if (wback)
+        {
+            uint32_t value;
+            if (add)
+                value = Rn + imm32;
+            else
+                value = Rn - imm32;
+                                           
+            context.type = eContextAdjustBaseRegister;
+            context.SetImmediateSigned (value - Rn);
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, value))
+                return false;
+                                           
+        }
+                                           
+        const uint32_t addr_byte_size = GetAddressByteSize();
+        uint32_t start_reg = single_regs ? dwarf_s0 : dwarf_d0;
+
+        context.type = eContextRegisterLoad;
+                                           
+        // for r = 0 to regs-1
+        for (uint32_t r = 0; r < regs; r++)
+        {
+            if (single_regs)
+            {
+                // S[d+r] = MemA[address,4]; address = address+4;
+                context.SetRegisterPlusOffset (base_reg, address - Rn);
+                                           
+                uint32_t data = MemARead (context, address, addr_byte_size, 0, &success);
+                if (!success)
+                    return false;
+                                
+                if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, start_reg + d + r, data))
+                    return false;
+                                           
+                address = address + 4;
+            }
+            else
+            {
+                // word1 = MemA[address,4]; word2 = MemA[address+4,4]; address = address+8;
+                context.SetRegisterPlusOffset (base_reg, address - Rn);
+                uint32_t word1 = MemARead (context, address, addr_byte_size, 0, &success);
+                if (!success)
+                    return false;
+                                    
+                context.SetRegisterPlusOffset (base_reg, (address + 4) - Rn);
+                uint32_t word2 = MemARead (context, address + 4, addr_byte_size, 0, &success);
+                if (!success)
+                    return false;
+                                           
+                address = address + 8;
+                // // Combine the word-aligned words in the correct order for current endianness.
+                // D[d+r] = if BigEndian() then word1:word2 else word2:word1;
+                uint64_t data;
+                if (m_byte_order == eByteOrderBig)
+                {
+                    data = word1;
+                    data = (data << 32) | word2;
+                }
+                else
+                {
+                    data = word2;
+                    data = (data << 32) | word1;
+                }
+                                           
+                if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, start_reg + d + r, data))
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+                  
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -10365,198 +10565,200 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
-        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <register>" },
+        { 0x0fff0000, 0x092d0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
+        { 0x0fff0fff, 0x052d0004, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulatePUSH, "push <register>" },
 
         // set r7 to point to a stack offset
-        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #<const>" },
-        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBR7IPImm, "sub r7, ip, #<const>"},
+        { 0x0ffff000, 0x028d7000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #<const>" },
+        { 0x0ffff000, 0x024c7000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBR7IPImm, "sub r7, ip, #<const>"},
         // copy the stack pointer to ip
-        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdSP, "mov ip, sp" },
-        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add ip, sp, #<const>" },
-        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBIPSPImm, "sub ip, sp, #<const>"},
+        { 0x0fffffff, 0x01a0c00d, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdSP, "mov ip, sp" },
+        { 0x0ffff000, 0x028dc000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDRdSPImm, "add ip, sp, #<const>" },
+        { 0x0ffff000, 0x024dc000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBIPSPImm, "sub ip, sp, #<const>"},
 
         // adjust the stack pointer
-        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #<const>"},
-        { 0x0fef0010, 0x004d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" }, 
+        { 0x0ffff000, 0x024dd000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #<const>"},
+        { 0x0fef0010, 0x004d0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" }, 
 
         // push one register
         // if Rn == '1101' && imm12 == '000000000100' then SEE PUSH;
-        { 0x0e5f0000, 0x040d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
+        { 0x0e5f0000, 0x040d0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRRtSP, "str Rt, [sp, #-imm12]!" },
 
         // vector push consecutive extension register(s)
-        { 0x0fbf0f00, 0x0d2d0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0x0fbf0f00, 0x0d2d0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0x0fbf0f00, 0x0d2d0b00, ARMV6T2_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0x0fbf0f00, 0x0d2d0a00, ARMV6T2_ABOVE, eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
-        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <register>"},
-        { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
+        { 0x0fff0000, 0x08bd0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
+        { 0x0fff0fff, 0x049d0004, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulatePOP, "pop <register>"},
+        { 0x0fbf0f00, 0x0cbd0b00, ARMV6T2_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0x0fbf0f00, 0x0cbd0a00, ARMV6T2_ABOVE, eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
 
         //----------------------------------------------------------------------
         // Supervisor Call (previously Software Interrupt)
         //----------------------------------------------------------------------
-        { 0x0f000000, 0x0f000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSVC, "svc #imm24"},
+        { 0x0f000000, 0x0f000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSVC, "svc #imm24"},
 
         //----------------------------------------------------------------------
         // Branch instructions
         //----------------------------------------------------------------------
-        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateB, "b #imm24"},
+        { 0x0f000000, 0x0a000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateB, "b #imm24"},
         // To resolve ambiguity, "blx <label>" should come before "bl <label>".
-        { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
-        { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
-        { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
+        { 0xfe000000, 0xfa000000, ARMV5_ABOVE,   eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0x0f000000, 0x0b000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        { 0x0ffffff0, 0x012fff30, ARMV5_ABOVE,   eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
-        { 0x0ffffff0, 0x012fff10, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
+        { 0x0ffffff0, 0x012fff10, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
         // bxj
-        { 0x0ffffff0, 0x012fff20, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
+        { 0x0ffffff0, 0x012fff20, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
 
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
         // adc (immediate)
-        { 0x0fe00000, 0x02a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02a00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #const"},
         // adc (register)
-        { 0x0fe00010, 0x00a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00a00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (immediate)
-        { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDImmARM, "add{s}<c> <Rd>, <Rn>, #const"},
         // add (register)
-        { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (register-shifted register)
-        { 0x0fe00090, 0x00800010, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADDRegShift, "add{s}<c> <Rd>, <Rn>m, <Rm>, <type> <RS>"},
+        { 0x0fe00090, 0x00800010, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDRegShift, "add{s}<c> <Rd>, <Rn>m, <Rm>, <type> <RS>"},
         // adr
-        { 0x0fff0000, 0x028f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
-        { 0x0fff0000, 0x024f0000, ARMvAll,       eEncodingA2, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
+        { 0x0fff0000, 0x028f0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
+        { 0x0fff0000, 0x024f0000, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
         // and (immediate)
-        { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #const"},
         // and (register)
-        { 0x0fe00010, 0x00000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // bic (immediate)
-        { 0x0fe00000, 0x03c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x03c00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #const"},
         // bic (register)
-        { 0x0fe00010, 0x01c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x01c00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // eor (immediate)
-        { 0x0fe00000, 0x02200000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x02200000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #const"},
         // eor (register)
-        { 0x0fe00010, 0x00200000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateEORReg, "eor{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00200000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateEORReg, "eor{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // orr (immediate)
-        { 0x0fe00000, 0x03800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #const"},
+        { 0x0fe00000, 0x03800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #const"},
         // orr (register)
-        { 0x0fe00010, 0x01800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x01800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // rsb (immediate)
-        { 0x0fe00000, 0x02600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0x0fe00000, 0x02600000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c> <Rd>, <Rn>, #<const>"},
         // rsb (register)
-        { 0x0fe00010, 0x00600000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00600000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // rsc (immediate)
-        { 0x0fe00000, 0x02e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSCImm, "rsc{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0x0fe00000, 0x02e00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSCImm, "rsc{s}<c> <Rd>, <Rn>, #<const>"},
         // rsc (register)
-        { 0x0fe00010, 0x00e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRSCReg, "rsc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00e00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSCReg, "rsc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // sbc (immediate)
-        { 0x0fe00000, 0x02c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0x0fe00000, 0x02c00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
         // sbc (register)
-        { 0x0fe00010, 0x00c00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0x0fe00010, 0x00c00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // sub (immediate, ARM)
-        { 0x0fe00000, 0x02400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBImmARM, "sub{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0x0fe00000, 0x02400000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBImmARM, "sub{s}<c> <Rd>, <Rn>, #<const>"},
         // sub (sp minus immediate)
-        { 0x0fef0000, 0x024d0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}<c> <Rd>, sp, #<const>"},
+        { 0x0fef0000, 0x024d0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}<c> <Rd>, sp, #<const>"},
         // sub (register)
-        { 0x0fe00010, 0x00400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c> <Rd>, <Rn>, <Rm>{,<shift>}"},
+        { 0x0fe00010, 0x00400000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c> <Rd>, <Rn>, <Rm>{,<shift>}"},
         // teq (immediate)
-        { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
+        { 0x0ff0f000, 0x03300000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #const"},
         // teq (register)
-        { 0x0ff0f010, 0x01300000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTEQReg, "teq<c> <Rn>, <Rm> {,<shift>}"},
+        { 0x0ff0f010, 0x01300000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTEQReg, "teq<c> <Rn>, <Rm> {,<shift>}"},
         // tst (immediate)
-        { 0x0ff0f000, 0x03100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tst<c> <Rn>, #const"},
+        { 0x0ff0f000, 0x03100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tst<c> <Rn>, #const"},
         // tst (register)
-        { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
+        { 0x0ff0f010, 0x01100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rn>, <Rm> {,<shift>}"},
 
         // mov (immediate)
-        { 0x0fef0000, 0x03a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c> <Rd>, #<const>"},
-        { 0x0ff00000, 0x03000000, ARMV6T2_ABOVE, eEncodingA2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>, #<imm16>" },
+        { 0x0fef0000, 0x03a00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c> <Rd>, #<const>"},
+        { 0x0ff00000, 0x03000000, ARMV6T2_ABOVE, eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>, #<imm16>" },
         // mov (register)
-        { 0x0fef0ff0, 0x01a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c> <Rd>, <Rm>"},
+        { 0x0fef0ff0, 0x01a00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c> <Rd>, <Rm>"},
         // mvn (immediate)
-        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
+        { 0x0fef0000, 0x03e00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s}<c> <Rd>, #<const>"},
         // mvn (register)
-        { 0x0fef0010, 0x01e00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c> <Rd>, <Rm> {,<shift>}"},
+        { 0x0fef0010, 0x01e00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c> <Rd>, <Rm> {,<shift>}"},
         // cmn (immediate)
-        { 0x0ff0f000, 0x03700000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
+        { 0x0ff0f000, 0x03700000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
         // cmn (register)
-        { 0x0ff0f010, 0x01700000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
+        { 0x0ff0f010, 0x01700000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
         // cmp (immediate)
-        { 0x0ff0f000, 0x03500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #<const>"},
+        { 0x0ff0f000, 0x03500000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #<const>"},
         // cmp (register)
-        { 0x0ff0f010, 0x01500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm> {,<shift>}"},
+        { 0x0ff0f010, 0x01500000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm> {,<shift>}"},
         // asr (immediate)
-        { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
+        { 0x0fef0070, 0x01a00040, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c> <Rd>, <Rm>, #imm"},
         // asr (register)
-        { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c> <Rd>, <Rn>, <Rm>"},
+        { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c> <Rd>, <Rn>, <Rm>"},
         // lsl (immediate)
-        { 0x0fef0070, 0x01a00000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c> <Rd>, <Rm>, #imm"},
+        { 0x0fef0070, 0x01a00000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c> <Rd>, <Rm>, #imm"},
         // lsl (register)
-        { 0x0fef00f0, 0x01a00010, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c> <Rd>, <Rn>, <Rm>"},
+        { 0x0fef00f0, 0x01a00010, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c> <Rd>, <Rn>, <Rm>"},
         // lsr (immediate)
-        { 0x0fef0070, 0x01a00020, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c> <Rd>, <Rm>, #imm"},
+        { 0x0fef0070, 0x01a00020, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c> <Rd>, <Rm>, #imm"},
         // lsr (register)
-        { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c> <Rd>, <Rn>, <Rm>"},
+        { 0x0fef00f0, 0x01a00050, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c> <Rd>, <Rn>, <Rm>"},
         // rrx is a special case encoding of ror (immediate)
-        { 0x0fef0ff0, 0x01a00060, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c> <Rd>, <Rm>"},
+        { 0x0fef0ff0, 0x01a00060, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c> <Rd>, <Rm>"},
         // ror (immediate)
-        { 0x0fef0070, 0x01a00060, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c> <Rd>, <Rm>, #imm"},
+        { 0x0fef0070, 0x01a00060, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c> <Rd>, <Rm>, #imm"},
         // ror (register)
-        { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
+        { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
         // mul
-        { 0x0fe000f0, 0x00000090, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateMUL, "mul{s}<c> <Rd>,<R>,<Rm>" },
+        { 0x0fe000f0, 0x00000090, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul{s}<c> <Rd>,<R>,<Rm>" },
 
         //----------------------------------------------------------------------
         // Load instructions
         //----------------------------------------------------------------------
-        { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x08100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDA, "ldmda<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" },
-        { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
-        { 0x0e500010, 0x06100000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt> [<Rn> +/-<Rm> {<shift>}] {!}" },
-        { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"},
-        { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" },
-        { 0x0e5f00f0, 0x005f00b0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
-        { 0x0e5000f0, 0x001000b0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>,[<Rn>,+/-<Rm>]{!}"  }, 
-        { 0x0e5000f0, 0x005000d0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>, [<Rn>{,#+/-<imm8>}]" },
-        { 0x0e5f00f0, 0x005f00d0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSBLiteral, "ldrsb<c> <Rt> <label>" },
-        { 0x0e5000f0, 0x001000d0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c> <Rt>,[<Rn>,+/-<Rm>]{!}" },
-        { 0x0e5000f0, 0x005000f0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>{,#+/-<imm8>}]"},
-        { 0x0e5f00f0, 0x005f00f0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSHLiteral, "ldrsh<c> <Rt>,<label>" },
-        { 0x0e5000f0, 0x001000f0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,+/-<Rm>]{!}" },
-        { 0x0e5000f0, 0x004000d0, ARMV5TE_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt>, <Rt2>, [<Rn>,#+/-<imm8>]!"},
-        { 0x0e500ff0, 0x000000d0, ARMV5TE_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateLDRDRegister, "ldrd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
+        { 0x0fd00000, 0x08900000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x08100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDMDA, "ldmda<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09900000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDMIB, "ldmib<c> <Rn<{!} <registers>" },
+        { 0x0e500000, 0x04100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRImmediateARM, "ldr<c> <Rt> [<Rn> {#+/-<imm12>}]" },
+        { 0x0e500010, 0x06100000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt> [<Rn> +/-<Rm> {<shift>}] {!}" },
+        { 0x0e5f0000, 0x045f0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>, [...]"},
+        { 0xfe500010, 0x06500000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>, [<Rn>,+/-<Rm>{, <shift>}]{!}" },
+        { 0x0e5f00f0, 0x005f00b0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
+        { 0x0e5000f0, 0x001000b0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>,[<Rn>,+/-<Rm>]{!}"  }, 
+        { 0x0e5000f0, 0x005000d0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>, [<Rn>{,#+/-<imm8>}]" },
+        { 0x0e5f00f0, 0x005f00d0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBLiteral, "ldrsb<c> <Rt> <label>" },
+        { 0x0e5000f0, 0x001000d0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c> <Rt>,[<Rn>,+/-<Rm>]{!}" },
+        { 0x0e5000f0, 0x005000f0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>{,#+/-<imm8>}]"},
+        { 0x0e5f00f0, 0x005f00f0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHLiteral, "ldrsh<c> <Rt>,<label>" },
+        { 0x0e5000f0, 0x001000f0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,+/-<Rm>]{!}" },
+        { 0x0e5000f0, 0x004000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt>, <Rt2>, [<Rn>,#+/-<imm8>]!"},
+        { 0x0e500ff0, 0x000000d0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDRegister, "ldrd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
+        { 0x0e100f00, 0x0c100b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
+        { 0x0e100f00, 0x0c100a00, ARMvAll,       eEncodingA2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{most}<c> <Rn>{!}, <list>"},
                   
         //----------------------------------------------------------------------
         // Store instructions
         //----------------------------------------------------------------------
-        { 0x0fd00000, 0x08800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x08000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
-        { 0x0fd00000, 0x09800000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTMIB, "stmib<c> <Rn>{!} <registers>" },
-        { 0x0e500010, 0x06000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> [<Rn> +/-<Rm> {<shift>}]{!}" },
-        { 0x0e5000f0, 0x000000b0, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,+/-<Rm>[{!}" },
-        { 0x0ff00ff0, 0x01800f90, ARMV6_ABOVE,   eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn>]"},
-        { 0x0e500000, 0x04400000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRBImmARM, "strb<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
-        { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRImmARM, "str<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
-        { 0x0e5000f0, 0x004000f0, ARMV5TE_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strc<c> <Rt>, <Rt2>, [<Rn> #+/-<imm8>]!"},
-        { 0x0e500ff0, 0x000000f0, ARMV5TE_ABOVE, eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSTRDReg, "strd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
+        { 0x0fd00000, 0x08800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x08000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTMDA, "stmda<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
+        { 0x0fd00000, 0x09800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTMIB, "stmib<c> <Rn>{!} <registers>" },
+        { 0x0e500010, 0x06000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> [<Rn> +/-<Rm> {<shift>}]{!}" },
+        { 0x0e5000f0, 0x000000b0, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,+/-<Rm>[{!}" },
+        { 0x0ff00ff0, 0x01800f90, ARMV6_ABOVE,   eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn>]"},
+        { 0x0e500000, 0x04400000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRBImmARM, "strb<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
+        { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRImmARM, "str<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
+        { 0x0e5000f0, 0x004000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strc<c> <Rt>, <Rt2>, [<Rn> #+/-<imm8>]!"},
+        { 0x0e500ff0, 0x000000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDReg, "strd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
                   
         //----------------------------------------------------------------------
         // Other instructions
         //----------------------------------------------------------------------
-        { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" },
-        { 0x0fff00f0, 0x06bf0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>{,<rotation>}" },
-        { 0x0fff00f0, 0x06ef0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>{,<rotation>}" },
-        { 0x0fff00f0, 0x06ff0070, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>{,<rotation>}" },
-        { 0xfe500000, 0xf8100000, ARMV6_ABOVE,  eEncodingA1, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{<amode>} <Rn>{!}" }
+        { 0x0fff00f0, 0x06af00f0, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0x0fff00f0, 0x06bf0070, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0x0fff00f0, 0x06ef0070, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0x0fff00f0, 0x06ff0070, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>{,<rotation>}" },
+        { 0xfe500000, 0xf8100000, ARMV6_ABOVE,  eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{<amode>} <Rn>{!}" }
                   
     };
     static const size_t k_num_arm_opcodes = sizeof(g_arm_opcodes)/sizeof(ARMOpcode);
@@ -10582,278 +10784,280 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         //----------------------------------------------------------------------
 
         // push register(s)
-        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
-        { 0xffff0000, 0xe92d0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <registers>" },
-        { 0xffff0fff, 0xf84d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <register>" },
+        { 0xfffffe00, 0x0000b400, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulatePUSH, "push <registers>" },
+        { 0xffff0000, 0xe92d0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <registers>" },
+        { 0xffff0fff, 0xf84d0d04, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulatePUSH, "push.w <register>" },
 
         // set r7 to point to a stack offset
-        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #imm" },
+        { 0xffffff00, 0x0000af00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDRdSPImm, "add r7, sp, #imm" },
         // copy the stack pointer to r7
-        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdSP, "mov r7, sp" },
+        { 0xffffffff, 0x0000466f, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMOVRdSP, "mov r7, sp" },
         // move from high register to low register (comes after "mov r7, sp" to resolve ambiguity)
-        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVLowHigh, "mov r0-r7, r8-r15" },
+        { 0xffffffc0, 0x00004640, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMOVLowHigh, "mov r0-r7, r8-r15" },
 
         // PC-relative load into register (see also EmulateADDSPRm)
-        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr <Rt>, [PC, #imm]"},
+        { 0xfffff800, 0x00004800, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr <Rt>, [PC, #imm]"},
 
         // adjust the stack pointer
-        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPRm, "add sp, <Rm>"},
-        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #imm"},
-        { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub.w sp, sp, #<const>"},
-        { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw sp, sp, #imm12"},
-        { 0xffef8000, 0xebad0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" },
+        { 0xffffff87, 0x00004485, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDSPRm, "add sp, <Rm>"},
+        { 0xffffff80, 0x0000b080, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSUBSPImm, "sub sp, sp, #imm"},
+        { 0xfbef8f00, 0xf1ad0d00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub.w sp, sp, #<const>"},
+        { 0xfbff8f00, 0xf2ad0d00, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw sp, sp, #imm12"},
+        { 0xffef8000, 0xebad0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPReg, "sub{s}<c> <Rd>, sp, <Rm>{,<shift>}" },
 
         // vector push consecutive extension register(s)
-        { 0xffbf0f00, 0xed2d0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
-        { 0xffbf0f00, 0xed2d0a00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
+        { 0xffbf0f00, 0xed2d0b00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.64 <list>"},
+        { 0xffbf0f00, 0xed2d0a00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPUSH, "vpush.32 <list>"},
 
         //----------------------------------------------------------------------
         // Epilogue instructions
         //----------------------------------------------------------------------
 
-        { 0xfffff800, 0x0000a800, ARMV4T_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add<c> <Rd>, sp, #imm"},
-        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add sp, #imm"},
-        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
-        { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <registers>" },
-        { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <register>" },
-        { 0xffbf0f00, 0xecbd0b00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
-        { 0xffbf0f00, 0xecbd0a00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
+        { 0xfffff800, 0x0000a800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add<c> <Rd>, sp, #imm"},
+        { 0xffffff80, 0x0000b000, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDSPImm, "add sp, #imm"},
+        { 0xfffffe00, 0x0000bc00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulatePOP, "pop <registers>"},
+        { 0xffff0000, 0xe8bd0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <registers>" },
+        { 0xffff0fff, 0xf85d0d04, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulatePOP, "pop.w <register>" },
+        { 0xffbf0f00, 0xecbd0b00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.64 <list>"},
+        { 0xffbf0f00, 0xecbd0a00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateVPOP, "vpop.32 <list>"},
 
         //----------------------------------------------------------------------
         // Supervisor Call (previously Software Interrupt)
         //----------------------------------------------------------------------
-        { 0xffffff00, 0x0000df00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSVC, "svc #imm8"},
+        { 0xffffff00, 0x0000df00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSVC, "svc #imm8"},
 
         //----------------------------------------------------------------------
         // If Then makes up to four following instructions conditional.
         //----------------------------------------------------------------------
-        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"},
+        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"},
 
         //----------------------------------------------------------------------
         // Branch instructions
         //----------------------------------------------------------------------
         // To resolve ambiguity, "b<c> #imm8" should come after "svc #imm8".
-        { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
-        { 0xfffff800, 0x0000e000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm11 (outside or last in IT)"},
-        { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
-        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside or last in IT)"},
+        { 0xfffff000, 0x0000d000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm8 (outside IT)"},
+        { 0xfffff800, 0x0000e000, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateB, "b<c> #imm11 (outside or last in IT)"},
+        { 0xf800d000, 0xf0008000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside IT)"},
+        { 0xf800d000, 0xf0009000, ARMV6T2_ABOVE, eEncodingT4, No_VFP, eSize32, &EmulateInstructionARM::EmulateB, "b<c>.w #imm8 (outside or last in IT)"},
         // J1 == J2 == 1
-        { 0xf800d000, 0xf000d000, ARMV4T_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
+        { 0xf800d000, 0xf000d000, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "bl <label>"},
         // J1 == J2 == 1
-        { 0xf800d001, 0xf000c000, ARMV5_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
-        { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
+        { 0xf800d001, 0xf000c000, ARMV5_ABOVE,   eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateBLXImmediate, "blx <label>"},
+        { 0xffffff87, 0x00004780, ARMV5_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateBLXRm, "blx <Rm>"},
         // for example, "bx lr"
-        { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
+        { 0xffffff87, 0x00004700, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXRm, "bx <Rm>"},
         // bxj
-        { 0xfff0ffff, 0xf3c08f00, ARMV5J_ABOVE,  eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
+        { 0xfff0ffff, 0xf3c08f00, ARMV5J_ABOVE,  eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBXJRm, "bxj <Rm>"},
         // compare and branch
-        { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
+        { 0xfffff500, 0x0000b100, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateCB, "cb{n}z <Rn>, <label>"},
         // table branch byte
-        { 0xfff0fff0, 0xe8d0f000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTB, "tbb<c> <Rn>, <Rm>"},
+        { 0xfff0fff0, 0xe8d0f000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTB, "tbb<c> <Rn>, <Rm>"},
         // table branch halfword
-        { 0xfff0fff0, 0xe8d0f010, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTB, "tbh<c> <Rn>, <Rm>, lsl #1"},
+        { 0xfff0fff0, 0xe8d0f010, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTB, "tbh<c> <Rn>, <Rm>, lsl #1"},
 
         //----------------------------------------------------------------------
         // Data-processing instructions
         //----------------------------------------------------------------------
         // adc (immediate)
-        { 0xfbe08000, 0xf1400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf1400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADCImm, "adc{s}<c> <Rd>, <Rn>, #<const>"},
         // adc (register)
-        { 0xffffffc0, 0x00004140, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADCReg, "adcs|adc<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xeb400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004140, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADCReg, "adcs|adc<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xeb400000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateADCReg, "adc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (register)
-        { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
+        { 0xfffffe00, 0x00001800, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDReg, "adds|add<c> <Rd>, <Rn>, <Rm>"},
         // Make sure "add sp, <Rm>" comes before this instruction, so there's no ambiguity decoding the two.
-        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDReg, "add<c> <Rdn>, <Rm>"},
+        { 0xffffff00, 0x00004400, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDReg, "add<c> <Rdn>, <Rm>"},
         // adr
-        { 0xfffff800, 0x0000a000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
-        { 0xfbff8000, 0xf2af0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
-        { 0xfbff8000, 0xf20f0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
+        { 0xfffff800, 0x0000a000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
+        { 0xfbff8000, 0xf2af0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
+        { 0xfbff8000, 0xf20f0000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
         // and (immediate)
-        { 0xfbe08000, 0xf0000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf0000000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateANDImm, "and{s}<c> <Rd>, <Rn>, #<const>"},
         // and (register)
-        { 0xffffffc0, 0x00004000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateANDReg, "ands|and<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xea000000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateANDReg, "ands|and<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xea000000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateANDReg, "and{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // bic (immediate)
-        { 0xfbe08000, 0xf0200000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf0200000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateBICImm, "bic{s}<c> <Rd>, <Rn>, #<const>"},
         // bic (register)
-        { 0xffffffc0, 0x00004380, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateBICReg, "bics|bic<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xea200000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004380, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateBICReg, "bics|bic<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xea200000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateBICReg, "bic{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // eor (immediate)
-        { 0xfbe08000, 0xf0800000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf0800000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateEORImm, "eor{s}<c> <Rd>, <Rn>, #<const>"},
         // eor (register)
-        { 0xffffffc0, 0x00004040, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateEORReg, "eors|eor<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xea800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateEORReg, "eor{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004040, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateEORReg, "eors|eor<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xea800000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateEORReg, "eor{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // orr (immediate)
-        { 0xfbe08000, 0xf0400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf0400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateORRImm, "orr{s}<c> <Rd>, <Rn>, #<const>"},
         // orr (register)
-        { 0xffffffc0, 0x00004300, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateORRReg, "orrs|orr<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004300, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateORRReg, "orrs|orr<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateORRReg, "orr{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // rsb (immediate)
-        { 0xffffffc0, 0x00004240, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateRSBImm, "rsbs|rsb<c> <Rd>, <Rn>, #0"},
-        { 0xfbe08000, 0xf1c00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c>.w <Rd>, <Rn>, #<const>"},
+        { 0xffffffc0, 0x00004240, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateRSBImm, "rsbs|rsb<c> <Rd>, <Rn>, #0"},
+        { 0xfbe08000, 0xf1c00000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSBImm, "rsb{s}<c>.w <Rd>, <Rn>, #<const>"},
         // rsb (register)
-        { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffe08000, 0xea400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRSBReg, "rsb{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // sbc (immediate)
-        { 0xfbe08000, 0xf1600000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
+        { 0xfbe08000, 0xf1600000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSBCImm, "sbc{s}<c> <Rd>, <Rn>, #<const>"},
         // sbc (register)
-        { 0xffffffc0, 0x00004180, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSBCReg, "sbcs|sbc<c> <Rdn>, <Rm>"},
-        { 0xffe08000, 0xeb600000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004180, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSBCReg, "sbcs|sbc<c> <Rdn>, <Rm>"},
+        { 0xffe08000, 0xeb600000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSBCReg, "sbc{s}<c>.w <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (immediate, Thumb)
-        { 0xfffffe00, 0x00001c00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rd>,<Rn>,#<imm3>" },
-        { 0xfffff800, 0x00003000, ARMV4T_ABOVE,  eEncodingT2, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rdn>,#<imm8>" },
-        { 0xfbe08000, 0xf1000000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "add{s}<c>.w <Rd>,<Rn>,#<const>" },
-        { 0xfbf08000, 0xf2000000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "addw<c> <Rd>,<Rn>,#<imm12>" },
+        { 0xfffffe00, 0x00001c00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rd>,<Rn>,#<imm3>" },
+        { 0xfffff800, 0x00003000, ARMV4T_ABOVE,  eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateADDImmThumb, "adds|add<c> <Rdn>,#<imm8>" },
+        { 0xfbe08000, 0xf1000000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "add{s}<c>.w <Rd>,<Rn>,#<const>" },
+        { 0xfbf08000, 0xf2000000, ARMV6T2_ABOVE, eEncodingT4, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDImmThumb, "addw<c> <Rd>,<Rn>,#<imm12>" },
         // sub (immediate, Thumb)
-        { 0xfffffe00, 0x00001e00, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rd>, <Rn> #imm3"},
-        { 0xfffff800, 0x00003800, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rdn>, #imm8"},
-        { 0xfbe08000, 0xf1a00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "sub{s}<c>.w <Rd>, <Rn>, #<const>"},
-        { 0xfbf08000, 0xf2a00000, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "subw<c> <Rd>, <Rn>, #imm12"},
+        { 0xfffffe00, 0x00001e00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rd>, <Rn> #imm3"},
+        { 0xfffff800, 0x00003800, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateSUBImmThumb, "subs|sub<c> <Rdn>, #imm8"},
+        { 0xfbe08000, 0xf1a00000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "sub{s}<c>.w <Rd>, <Rn>, #<const>"},
+        { 0xfbf08000, 0xf2a00000, ARMV6T2_ABOVE, eEncodingT4, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBImmThumb, "subw<c> <Rd>, <Rn>, #imm12"},
         // sub (sp minus immediate)
-        { 0xfbef8000, 0xf1ad0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}.w <Rd>, sp, #<const>"},
-        { 0xfbff8000, 0xf2ad0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw<c> <Rd>, sp, #imm12"},
+        { 0xfbef8000, 0xf1ad0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "sub{s}.w <Rd>, sp, #<const>"},
+        { 0xfbff8000, 0xf2ad0000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPImm, "subw<c> <Rd>, sp, #imm12"},
         // sub (register)
-        { 0xfffffe00, 0x00001a00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSUBReg, "subs|sub<c> <Rd>, <Rn>, <Rm>"},
-        { 0xffe08000, 0xeba00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c>.w <Rd>, <Rn>, <Rm>{,<shift>}"},
+        { 0xfffffe00, 0x00001a00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSUBReg, "subs|sub<c> <Rd>, <Rn>, <Rm>"},
+        { 0xffe08000, 0xeba00000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBReg, "sub{s}<c>.w <Rd>, <Rn>, <Rm>{,<shift>}"},
         // teq (immediate)
-        { 0xfbf08f00, 0xf0900f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #<const>"},
+        { 0xfbf08f00, 0xf0900f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTEQImm, "teq<c> <Rn>, #<const>"},
         // teq (register)
-        { 0xfff08f00, 0xea900f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTEQReg, "teq<c> <Rn>, <Rm> {,<shift>}"},
+        { 0xfff08f00, 0xea900f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTEQReg, "teq<c> <Rn>, <Rm> {,<shift>}"},
         // tst (immediate)
-        { 0xfbf08f00, 0xf0100f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tst<c> <Rn>, #<const>"},
+        { 0xfbf08f00, 0xf0100f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateTSTImm, "tst<c> <Rn>, #<const>"},
         // tst (register)
-        { 0xffffffc0, 0x00004200, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rdn>, <Rm>"},
-        { 0xfff08f00, 0xea100f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c>.w <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x00004200, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateTSTReg, "tst<c> <Rdn>, <Rm>"},
+        { 0xfff08f00, 0xea100f00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateTSTReg, "tst<c>.w <Rn>, <Rm> {,<shift>}"},
 
 
         // move from high register to high register
-        { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "mov<c> <Rd>, <Rm>"},
+        { 0xffffff00, 0x00004600, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "mov<c> <Rd>, <Rm>"},
         // move from low register to low register
-        { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "movs <Rd>, <Rm>"},
+        { 0xffffffc0, 0x00000000, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateMOVRdRm, "movs <Rd>, <Rm>"},
         // mov{s}<c>.w <Rd>, <Rm>
-        { 0xffeff0f0, 0xea4f0000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c>.w <Rd>, <Rm>"},
+        { 0xffeff0f0, 0xea4f0000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdRm, "mov{s}<c>.w <Rd>, <Rm>"},
         // move immediate
-        { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMOVRdImm, "movs|mov<c> <Rd>, #imm8"},
-        { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c>.w <Rd>, #<const>"},
-        { 0xfbf08000, 0xf2400000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>,#<imm16>"},
+        { 0xfffff800, 0x00002000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMOVRdImm, "movs|mov<c> <Rd>, #imm8"},
+        { 0xfbef8000, 0xf04f0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "mov{s}<c>.w <Rd>, #<const>"},
+        { 0xfbf08000, 0xf2400000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateMOVRdImm, "movw<c> <Rd>,#<imm16>"},
         // mvn (immediate)
-        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s} <Rd>, #<const>"},
+        { 0xfbef8000, 0xf06f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMVNImm, "mvn{s} <Rd>, #<const>"},
         // mvn (register)
-        { 0xffffffc0, 0x000043c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMVNReg, "mvns|mvn<c> <Rd>, <Rm>"},
-        { 0xffef8000, 0xea6f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c>.w <Rd>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x000043c0, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMVNReg, "mvns|mvn<c> <Rd>, <Rm>"},
+        { 0xffef8000, 0xea6f0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMVNReg, "mvn{s}<c>.w <Rd>, <Rm> {,<shift>}"},
         // cmn (immediate)
-        { 0xfbf08f00, 0xf1100f00, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
+        { 0xfbf08f00, 0xf1100f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMNImm, "cmn<c> <Rn>, #<const>"},
         // cmn (register)
-        { 0xffffffc0, 0x000042c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm>"},
-        { 0xfff08f00, 0xeb100f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
+        { 0xffffffc0, 0x000042c0, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm>"},
+        { 0xfff08f00, 0xeb100f00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMNReg, "cmn<c> <Rn>, <Rm> {,<shift>}"},
         // cmp (immediate)
-        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #imm8"},
-        { 0xfbf08f00, 0xf1b00f00, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c>.w <Rn>, #<const>"},
+        { 0xfffff800, 0x00002800, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPImm, "cmp<c> <Rn>, #imm8"},
+        { 0xfbf08f00, 0xf1b00f00, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateCMPImm, "cmp<c>.w <Rn>, #<const>"},
         // cmp (register) (Rn and Rm both from r0-r7)
-        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
+        { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
         // cmp (register) (Rn and Rm not both from r0-r7)
-        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
+        { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
         // asr (immediate)
-        { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
-        { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
+        { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
         // asr (register)
-        { 0xffffffc0, 0x00004100, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateASRReg, "asrs|asr<c> <Rdn>, <Rm>"},
-        { 0xffe0f0f0, 0xfa40f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        { 0xffffffc0, 0x00004100, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateASRReg, "asrs|asr<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa40f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateASRReg, "asr{s}<c>.w <Rd>, <Rn>, <Rm>"},
         // lsl (immediate)
-        { 0xfffff800, 0x00000000, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSLImm, "lsls|lsl<c> <Rd>, <Rm>, #imm"},
-        { 0xffef8030, 0xea4f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c>.w <Rd>, <Rm>, #imm"},
+        { 0xfffff800, 0x00000000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLSLImm, "lsls|lsl<c> <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSLImm, "lsl{s}<c>.w <Rd>, <Rm>, #imm"},
         // lsl (register)
-        { 0xffffffc0, 0x00004080, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSLReg, "lsls|lsl<c> <Rdn>, <Rm>"},
-        { 0xffe0f0f0, 0xfa00f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        { 0xffffffc0, 0x00004080, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLSLReg, "lsls|lsl<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa00f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSLReg, "lsl{s}<c>.w <Rd>, <Rn>, <Rm>"},
         // lsr (immediate)
-        { 0xfffff800, 0x00000800, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRImm, "lsrs|lsr<c> <Rd>, <Rm>, #imm"},
-        { 0xffef8030, 0xea4f0010, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c>.w <Rd>, <Rm>, #imm"},
+        { 0xfffff800, 0x00000800, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLSRImm, "lsrs|lsr<c> <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0010, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSRImm, "lsr{s}<c>.w <Rd>, <Rm>, #imm"},
         // lsr (register)
-        { 0xffffffc0, 0x000040c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLSRReg, "lsrs|lsr<c> <Rdn>, <Rm>"},
-        { 0xffe0f0f0, 0xfa20f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        { 0xffffffc0, 0x000040c0, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLSRReg, "lsrs|lsr<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa20f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLSRReg, "lsr{s}<c>.w <Rd>, <Rn>, <Rm>"},
         // rrx is a special case encoding of ror (immediate)
-        { 0xffeff0f0, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c>.w <Rd>, <Rm>"},
+        { 0xffeff0f0, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRRX, "rrx{s}<c>.w <Rd>, <Rm>"},
         // ror (immediate)
-        { 0xffef8030, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c>.w <Rd>, <Rm>, #imm"},
+        { 0xffef8030, 0xea4f0030, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORImm, "ror{s}<c>.w <Rd>, <Rm>, #imm"},
         // ror (register)
-        { 0xffffffc0, 0x000041c0, ARMvAll,       eEncodingT1, eSize16, &EmulateInstructionARM::EmulateRORReg, "rors|ror<c> <Rdn>, <Rm>"},
-        { 0xffe0f0f0, 0xfa60f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c>.w <Rd>, <Rn>, <Rm>"},
+        { 0xffffffc0, 0x000041c0, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateRORReg, "rors|ror<c> <Rdn>, <Rm>"},
+        { 0xffe0f0f0, 0xfa60f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c>.w <Rd>, <Rn>, <Rm>"},
         // mul
-        { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
+        { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
         // mul
-        { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
+        { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
  
         //----------------------------------------------------------------------
         // Load instructions
         //----------------------------------------------------------------------
-        { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
-        { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" },
-        { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
-        { 0xfffff800, 0x00006800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"},
-        { 0xfffff800, 0x00009800, ARMV4T_ABOVE,  eEncodingT2, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [SP{,#imm}]"},
-        { 0xfff00000, 0xf8d00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c>.w <Rt>, [<Rn>{,#imm12}]"},
-        { 0xfff00800, 0xf8500800, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#+/-<imm8>}]{!}"},
+        { 0xfffff800, 0x0000c800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDM, "ldm<c> <Rn>{!} <registers>" },
+        { 0xffd02000, 0xe8900000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDM, "ldm<c>.w <Rn>{!} <registers>" },
+        { 0xffd00000, 0xe9100000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDMDB, "ldmdb<c> <Rn>{!} <registers>" },
+        { 0xfffff800, 0x00006800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#imm}]"},
+        { 0xfffff800, 0x00009800, ARMV4T_ABOVE,  eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [SP{,#imm}]"},
+        { 0xfff00000, 0xf8d00000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c>.w <Rt>, [<Rn>{,#imm12}]"},
+        { 0xfff00800, 0xf8500800, ARMV6T2_ABOVE, eEncodingT4, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRtRnImm, "ldr<c> <Rt>, [<Rn>{,#+/-<imm8>}]{!}"},
                   // Thumb2 PC-relative load into register
-        { 0xff7f0000, 0xf85f0000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr<c>.w <Rt>, [PC, +/-#imm}]"},
-        { 0xfffffe00, 0x00005800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt>, [<Rn>, <Rm>]" }, 
-        { 0xfff00fc0, 0xf8500000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c>.w <Rt>, [<Rn>,<Rm>{,LSL #<imm2>}]" },
-        { 0xfffff800, 0x00007800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[<Rn>{,#<imm5>}]" },
-        { 0xfff00000, 0xf8900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
-        { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[>Rn>, #+/-<imm8>]{!}" },
-        { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
-        { 0xfffffe00, 0x00005c00, ARMV6T2_ABOVE, eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>,[<Rn>,<Rm>]" },
-        { 0xfff00fc0, 0xf8100000, ARMV6T2_ABOVE, eEncodingT2, eSize32,&EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]" },
-        { 0xfffff800, 0x00008800, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>, [<Rn>{,#<imm>}]"  },
-        { 0xfff00000, 0xf8b00000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
-        { 0xfff00800, 0xf8300800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>,[<Rn>,#+/-<imm8>]{!}"  },
-        { 0xff7f0000, 0xf83f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
-        { 0xfffffe00, 0x00005a00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>, [<Rn>,<Rm>]" },
-        { 0xfff00fc0, 0xf8300000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
-        { 0xfff00000, 0xf9900000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#<imm12>]" },
-        { 0xfff00800, 0xf9100800, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#+/-<imm8>]" },
-        { 0xff7f0000, 0xf91f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRSBLiteral, "ldrsb<c> <Rt>, <label>" },
-        { 0xfffffe00, 0x00005600, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c> <Rt>,[<Rn>,<Rm>]" },
-        { 0xfff00fc0, 0xf9100000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]"  },
-        { 0xfff00000, 0xf9b00000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>,#<imm12>]" },
-        { 0xfff00800, 0xf9300800, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>,#+/-<imm8>]" },
-        { 0xff7f0000, 0xf93f0000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRSHLiteral, "ldrsh<c> <Rt>,<label>" },
-        { 0xfffffe00, 0x00005e00, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,<Rm>]" },
-        { 0xfff00fc0, 0xf9300000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
-        { 0xfe500000, 0xe8500000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt?, <Rt2>, [<Rn>,#+/-<imm>]!"},
+        { 0xff7f0000, 0xf85f0000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRtPCRelative, "ldr<c>.w <Rt>, [PC, +/-#imm}]"},
+        { 0xfffffe00, 0x00005800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c> <Rt>, [<Rn>, <Rm>]" }, 
+        { 0xfff00fc0, 0xf8500000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c>.w <Rt>, [<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfffff800, 0x00007800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[<Rn>{,#<imm5>}]" },
+        { 0xfff00000, 0xf8900000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
+        { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[>Rn>, #+/-<imm8>]{!}" },
+        { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
+        { 0xfffffe00, 0x00005c00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>,[<Rn>,<Rm>]" },
+        { 0xfff00fc0, 0xf8100000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]" },
+        { 0xfffff800, 0x00008800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>, [<Rn>{,#<imm>}]"  },
+        { 0xfff00000, 0xf8b00000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
+        { 0xfff00800, 0xf8300800, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHImmediate, "ldrh<c> <Rt>,[<Rn>,#+/-<imm8>]{!}"  },
+        { 0xff7f0000, 0xf83f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHLiteral, "ldrh<c> <Rt>, <label>" },
+        { 0xfffffe00, 0x00005a00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c> <Rt>, [<Rn>,<Rm>]" },
+        { 0xfff00fc0, 0xf8300000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRHRegister, "ldrh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfff00000, 0xf9900000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#<imm12>]" },
+        { 0xfff00800, 0xf9100800, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBImmediate, "ldrsb<c> <Rt>,[<Rn>,#+/-<imm8>]" },
+        { 0xff7f0000, 0xf91f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBLiteral, "ldrsb<c> <Rt>, <label>" },
+        { 0xfffffe00, 0x00005600, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c> <Rt>,[<Rn>,<Rm>]" },
+        { 0xfff00fc0, 0xf9100000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSBRegister, "ldrsb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]"  },
+        { 0xfff00000, 0xf9b00000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>,#<imm12>]" },
+        { 0xfff00800, 0xf9300800, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHImmediate, "ldrsh<c> <Rt>,[<Rn>,#+/-<imm8>]" },
+        { 0xff7f0000, 0xf93f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHLiteral, "ldrsh<c> <Rt>,<label>" },
+        { 0xfffffe00, 0x00005e00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,<Rm>]" },
+        { 0xfff00fc0, 0xf9300000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfe500000, 0xe8500000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt?, <Rt2>, [<Rn>,#+/-<imm>]!"},
+        { 0xfe100f00, 0xec100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE, eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
+        { 0xfe100f00, 0xec100a00, ARMvAll,       eEncodingT2, VFPv2v3,     eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>" },
                   
         //----------------------------------------------------------------------
         // Store instructions
         //----------------------------------------------------------------------
-        { 0xfffff800, 0x0000c000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
-        { 0xffd00000, 0xe8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c>.w <Rn>{!} <registers>" },
-        { 0xffd00000, 0xe9000000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
-        { 0xfffff800, 0x00006000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [<Rn>{,#<imm>}]" },
-        { 0xfffff800, 0x00009000, ARMV4T_ABOVE,  eEncodingT2, eSize16, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [SP,#<imm>]" },
-        { 0xfff00000, 0xf8c00000, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c>.w <Rt>, [<Rn>,#<imm12>]" },
-        { 0xfff00800, 0xf8400800, ARMV6T2_ABOVE, eEncodingT4, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [<Rn>,#+/-<imm8>]" },
-        { 0xfffffe00, 0x00005000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> ,{<Rn>, <Rm>]" },
-        { 0xfff00fc0, 0xf8400000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c>.w <Rt>, [<Rn>, <Rm> {lsl #imm2>}]" },
-        { 0xfffff800, 0x00007000, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt>, [<Rn>, #<imm5>]" },
-        { 0xfff00000, 0xf8800000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c>.w <Rt>, [<Rn>, #<imm12>]" },
-        { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> ,[<Rn>, #+/-<imm8>]{!}" },
-        { 0xfffffe00, 0x00005200, ARMV4T_ABOVE,  eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,<Rm>]" },
-        { 0xfff00fc0, 0xf8200000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
-        { 0xfff00000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn{,#<imm>}]" },
-        { 0xfe500000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strd<c> <Rt>, <Rt2>, [<Rn>, #+/-<imm>]!"},
+        { 0xfffff800, 0x0000c000, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTM, "stm<c> <Rn>{!} <registers>" },
+        { 0xffd00000, 0xe8800000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTM, "stm<c>.w <Rn>{!} <registers>" },
+        { 0xffd00000, 0xe9000000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTMDB, "stmdb<c> <Rn>{!} <registers>" },
+        { 0xfffff800, 0x00006000, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [<Rn>{,#<imm>}]" },
+        { 0xfffff800, 0x00009000, ARMV4T_ABOVE,  eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [SP,#<imm>]" },
+        { 0xfff00000, 0xf8c00000, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c>.w <Rt>, [<Rn>,#<imm12>]" },
+        { 0xfff00800, 0xf8400800, ARMV6T2_ABOVE, eEncodingT4, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRThumb, "str<c> <Rt>, [<Rn>,#+/-<imm8>]" },
+        { 0xfffffe00, 0x00005000, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTRRegister, "str<c> <Rt> ,{<Rn>, <Rm>]" },
+        { 0xfff00fc0, 0xf8400000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRRegister, "str<c>.w <Rt>, [<Rn>, <Rm> {lsl #imm2>}]" },
+        { 0xfffff800, 0x00007000, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt>, [<Rn>, #<imm5>]" },
+        { 0xfff00000, 0xf8800000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c>.w <Rt>, [<Rn>, #<imm12>]" },
+        { 0xfff00800, 0xf8000800, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRBThumb, "strb<c> <Rt> ,[<Rn>, #+/-<imm8>]{!}" },
+        { 0xfffffe00, 0x00005200, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c> <Rt>,[<Rn>,<Rm>]" },
+        { 0xfff00fc0, 0xf8200000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRHRegister, "strh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
+        { 0xfff00000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn{,#<imm>}]" },
+        { 0xfe500000, 0xe8400000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strd<c> <Rt>, <Rt2>, [<Rn>, #+/-<imm>]!"},
                   
         //----------------------------------------------------------------------
         // Other instructions
         //----------------------------------------------------------------------
-        { 0xffffffc0, 0x0000b240, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa4ff080, ARMV6_ABOVE,   eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
-        { 0xffffffc0, 0x0000b200, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa0ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c>.w <Rd>,<Rm>{,<rotation>}" },
-        { 0xffffffc0, 0x0000b2c0, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa5ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
-        { 0xffffffc0, 0x0000b280, ARMV6_ABOVE,   eEncodingT1, eSize16, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>" },
-        { 0xfffff080, 0xfa1ff080, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c>.w <Rd>,<Rm>{,<rotation>}" },
-        { 0xffd00000, 0xe8100000, ARMV6T2_ABOVE, eEncodingT1, eSize32, &EmulateInstructionARM::EmulateRFE, "rfedb<c> <Rn>{!}" },
-        { 0xffd00000, 0xe9900000, ARMV6T2_ABOVE, eEncodingT2, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{ia}<c> <Rn>{!}" }
+        { 0xffffffc0, 0x0000b240, ARMV6_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSXTB, "sxtb<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa4ff080, ARMV6_ABOVE,   eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSXTB, "sxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffffffc0, 0x0000b200, ARMV6_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateSXTH, "sxth<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa0ff080, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSXTH, "sxth<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffffffc0, 0x0000b2c0, ARMV6_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateUXTB, "uxtb<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa5ff080, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateUXTB, "uxtb<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffffffc0, 0x0000b280, ARMV6_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateUXTH, "uxth<c> <Rd>,<Rm>" },
+        { 0xfffff080, 0xfa1ff080, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateUXTH, "uxth<c>.w <Rd>,<Rm>{,<rotation>}" },
+        { 0xffd00000, 0xe8100000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRFE, "rfedb<c> <Rn>{!}" },
+        { 0xffd00000, 0xe9900000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateRFE, "rfe{ia}<c> <Rn>{!}" }
                   
     };
 

@@ -300,6 +300,7 @@ protected:
         uint32_t value;
         uint32_t variants;
         EmulateInstructionARM::ARMEncoding encoding;
+        uint32_t vfp_variants;
         ARMInstrSize size;
         bool (EmulateInstructionARM::*callback) (const uint32_t opcode, const EmulateInstructionARM::ARMEncoding encoding);
         const char *name;
@@ -868,7 +869,41 @@ protected:
     // B6.1.8  RFE
     bool
     EmulateRFE (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.319 VLDM
+    bool
+    EmulateVLDM (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.399 VSTM
+    bool
+    EmulateVSTM (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.307 VLD1 (multiple single elements)
+    bool
+    EmulateVLD1Multiple (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.308 VLD1 (single element to one lane)
+    bool
+    EmulateVLD1Single (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.391 VST1 (multiple single elements)
+    bool
+    EmulateVST1Multiple (const uint32_t opcode, const ARMEncoding encoding);
+    
+    // A8.6.392 VST1 (single element from one lane)
+    bool
+    EmulateVST1Single (const uint32_t opcode, const ARMEncoding encoding);
      
+    // A8.6.317 VLDR
+    bool
+    EmulateVLDR (const uint32_t opcode, const ARMEncoding encoding);
+    
+    
+    // A8.6.400 VSTR
+    bool
+    EmulateVSTR (const uint32_t opcode, const ARMEncoding encoding);
+    
+    
     uint32_t m_arm_isa;
     Mode m_opcode_mode;
     uint32_t m_opcode_cpsr;
