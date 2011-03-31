@@ -76,8 +76,13 @@ def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
             print "run command failed!"
             print "run_command error:", res.GetError()
 
+def IsCodeType(symbol):
+    """Check whether an SBSymbol represents code."""
+    return True
+
 def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble):
-    import lldb, lldbutil, atexit, re
+    import lldb, atexit, re
+    from lldbutil import lldb_iter
 
     # Create the debugger instance now.
     dbg = lldb.SBDebugger.Create()
@@ -101,6 +106,38 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
     # See if there any extra command(s) to execute before we issue the file command.
     for cmd in lldb_commands:
         run_command(ci, cmd, res)
+
+    # Create a target.
+    target = dbg.CreateTarget(exe)
+    stream = lldb.SBStream()
+
+    # Define a generator for the symbols to disassemble.
+    def symbol_iter_2(num, symbols, target):
+        # If we specify the symbols to disassemble, ignore symbol table dump.
+        if symbols:
+            for i in range(len(symbols)):
+                print "symbol:", symbols[i]
+                yield symbols[i]
+        else:
+            limited = True if num != -1 else False
+            if limited:
+                count = 0
+            stream = lldb.SBStream()
+            for m in lldb_iter(target, 'GetNumModules', 'GetModuleAtIndex'):
+                print "module:", m
+                for s in lldb_iter(m, 'GetNumSymbols', 'GetSymbolAtIndex'):
+                    if limited and count >= num:
+                        return
+                    print "symbol:", s.GetName()
+                    if IsCodeType(s):
+                        if limited:
+                            count = count + 1
+                        yield s.GetName()
+                    #print "start address:", s.GetStartAddress()
+                    #print "end address:", s.GetEndAddress()
+                    #s.GetDescription(stream)
+                    #print "symbol description:", stream.GetData()
+                    #stream.Clear()
 
     # Now issue the file command.
     run_command(ci, 'file %s' % exe, res)
