@@ -247,7 +247,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   Builder.defineMacro("__GNUC_PATCHLEVEL__", "1");
   Builder.defineMacro("__GNUC__", "4");
   Builder.defineMacro("__GXX_ABI_VERSION", "1002");
-  Builder.defineMacro("__VERSION__", "\"4.2.1 Compatible Clang Compiler\"");
+
+  // As sad as it is, enough software depends on the __VERSION__ for version
+  // checks that it is necessary to report 4.2.1 (the base GCC version we claim
+  // compatibility with) first.
+  Builder.defineMacro("__VERSION__", "\"4.2.1 Compatible " + 
+                      llvm::Twine(getClangFullCPPVersion()) + "\"");
 
   // Initialize language-specific preprocessor defines.
 

@@ -982,7 +982,7 @@
 // SPARC:#define __SIZE_WIDTH__ 32
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
 // SPARC:#define __USER_LABEL_PREFIX__ _
-// SPARC:#define __VERSION__ "4.2.1 Compatible Clang Compiler"
+// SPARC:#define __VERSION__ "4.2.1 Compatible
 // SPARC:#define __WCHAR_MAX__ 2147483647
 // SPARC:#define __WCHAR_TYPE__ int
 // SPARC:#define __WCHAR_WIDTH__ 32

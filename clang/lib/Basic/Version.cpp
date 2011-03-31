@@ -91,4 +91,17 @@ std::string getClangFullVersion() {
   return OS.str();
 }
 
+std::string getClangFullCPPVersion() {
+  // The version string we report in __VERSION__ is just a compacted version of
+  // the one we report on the command line.
+  std::string buf;
+  llvm::raw_string_ostream OS(buf);
+#ifdef CLANG_VENDOR
+  OS << CLANG_VENDOR;
+#endif
+  OS << "Clang " CLANG_VERSION_STRING " ("
+     << getClangFullRepositoryVersion() << ')';
+  return OS.str();
+}
+
 } // end namespace clang
