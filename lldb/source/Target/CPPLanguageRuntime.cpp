@@ -28,7 +28,7 @@ CPPLanguageRuntime::CPPLanguageRuntime (Process *process) :
 }
 
 bool
-CPPLanguageRuntime::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
+CPPLanguageRuntime::GetObjectDescription (Stream &str, ValueObject &object)
 {
     // C++ has no generic way to do this.
     return false;

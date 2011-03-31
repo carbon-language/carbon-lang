@@ -32,7 +32,7 @@ static const char *pluginDesc = "Itanium ABI for the C++ language";
 static const char *pluginShort = "language.itanium";
 
 lldb::ValueObjectSP
-ItaniumABILanguageRuntime::GetDynamicValue (ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+ItaniumABILanguageRuntime::GetDynamicValue (ValueObjectSP in_value)
 {
     ValueObjectSP ret_sp;
     return ret_sp;

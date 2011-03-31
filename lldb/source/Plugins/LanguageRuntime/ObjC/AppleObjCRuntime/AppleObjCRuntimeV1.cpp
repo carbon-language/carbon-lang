@@ -41,7 +41,7 @@ static const char *pluginDesc = "Apple Objective C Language Runtime - Version 1"
 static const char *pluginShort = "language.apple.objc.v1";
 
 lldb::ValueObjectSP
-AppleObjCRuntimeV1::GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+AppleObjCRuntimeV1::GetDynamicValue (lldb::ValueObjectSP in_value)
 {
     lldb::ValueObjectSP ret_sp;
     return ret_sp;

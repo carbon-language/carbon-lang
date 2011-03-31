@@ -625,7 +625,7 @@ ValueObject::GetObjectDescription ()
         }
     }
     
-    if (runtime && runtime->GetObjectDescription(s, *this, exe_scope))
+    if (runtime && runtime->GetObjectDescription(s, *this))
     {
         m_object_desc_str.append (s.GetData());
     }

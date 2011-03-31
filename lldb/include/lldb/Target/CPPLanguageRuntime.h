@@ -37,7 +37,7 @@ public:
     IsVTableName (const char *name) = 0;
     
     virtual bool
-    GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope);
+    GetObjectDescription (Stream &str, ValueObject &object);
     
     virtual bool
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);

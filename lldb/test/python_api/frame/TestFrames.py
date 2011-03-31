@@ -87,6 +87,18 @@ class FrameAPITestCase(TestBase):
                                                   val.GetName(),
                                                   val.GetValue(frame)))
                 print >> session, "%s(%s)" % (name, ", ".join(argList))
+                
+                # Also check the generic pc & stack pointer.  We can't test their absolute values,
+                # but they should be valid.  
+                # It is kind of goofy that the register set is a value, and then we just have 
+                # to magically know that element 0 is the GPR set...
+                gpr_reg_set = frame.GetRegisters().GetValueAtIndex(0)
+                pc_value = gpr_reg_set.GetChildMemberWithName("pc")
+                self.assertTrue (pc_value.IsValid(), "We should have a valid PC.")
+                self.assertTrue (int(pc_value.GetValue(frame), 0) == frame.GetPC(), "PC gotten as a value should equal frame's GetPC")
+                sp_value = gpr_reg_set.GetChildMemberWithName("sp")
+                self.assertTrue (sp_value.IsValid(), "We should have a valid Stack Pointer.")
+                self.assertTrue (int(sp_value.GetValue(frame), 0) == frame.GetSP(), "SP gotten as a value should equal frame's GetSP")
 
             print >> session, "---"
             process.Continue()

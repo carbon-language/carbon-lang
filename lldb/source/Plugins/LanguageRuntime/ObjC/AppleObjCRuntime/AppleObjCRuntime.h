@@ -35,10 +35,10 @@ public:
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope);
     
     virtual bool
-    GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope);
+    GetObjectDescription (Stream &str, ValueObject &object);
     
     virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope);
+    GetDynamicValue (lldb::ValueObjectSP in_value);
 
     // These are the ObjC specific functions.
     

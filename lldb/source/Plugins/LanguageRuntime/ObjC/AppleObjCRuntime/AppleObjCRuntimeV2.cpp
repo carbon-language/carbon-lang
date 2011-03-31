@@ -47,7 +47,7 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, ModuleSP &objc_module_
 }
 
 lldb::ValueObjectSP
-AppleObjCRuntimeV2::GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+AppleObjCRuntimeV2::GetDynamicValue (lldb::ValueObjectSP in_value)
 {
     lldb::ValueObjectSP ret_sp;
     return ret_sp;

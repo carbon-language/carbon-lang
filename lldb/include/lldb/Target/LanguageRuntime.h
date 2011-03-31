@@ -37,13 +37,13 @@ public:
     GetLanguageType () const = 0;
     
     virtual bool
-    GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope) = 0;
+    GetObjectDescription (Stream &str, ValueObject &object) = 0;
     
     virtual bool
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) = 0;
     
     virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope) = 0;
+    GetDynamicValue (lldb::ValueObjectSP in_value) = 0;
     
     virtual void
     SetExceptionBreakpoints ()

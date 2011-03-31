@@ -39,7 +39,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 bool
-AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object, ExecutionContextScope *exe_scope)
+AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object)
 {
     bool is_signed;
     // ObjC objects can only be pointers, but we extend this to integer types because an expression might just
@@ -60,7 +60,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object, Execut
         return NULL;
                         
     Value val(scalar);                   
-    return GetObjectDescription(str, val, exe_scope);
+    return GetObjectDescription(str, val, object.GetExecutionContextScope());
                    
 }
 bool
@@ -192,7 +192,7 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 }
 
 lldb::ValueObjectSP
-AppleObjCRuntime::GetDynamicValue (lldb::ValueObjectSP in_value, ExecutionContextScope *exe_scope)
+AppleObjCRuntime::GetDynamicValue (lldb::ValueObjectSP in_value)
 {
     lldb::ValueObjectSP ret_sp;
     return ret_sp;
