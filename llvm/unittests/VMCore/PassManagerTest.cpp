@@ -40,7 +40,7 @@ namespace llvm {
   void initializeCGPassPass(PassRegistry&);
   void initializeLPassPass(PassRegistry&);
   void initializeBPassPass(PassRegistry&);
-  
+
   namespace {
     // ND = no deps
     // NM = no modifications
