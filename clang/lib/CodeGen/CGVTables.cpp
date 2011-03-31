@@ -753,8 +753,8 @@ private:
                        CharUnits OffsetInLayoutClass);
   
   /// getCurrentOffsetOffset - Get the current vcall or vbase offset offset in
-  /// bytes, relative to the vtable address point.
-  int64_t getCurrentOffsetOffset() const;
+  /// chars, relative to the vtable address point.
+  CharUnits getCurrentOffsetOffset() const;
   
 public:
   VCallAndVBaseOffsetBuilder(const CXXRecordDecl *MostDerivedClass,
@@ -829,17 +829,16 @@ VCallAndVBaseOffsetBuilder::AddVCallAndVBaseOffsets(BaseSubobject Base,
     AddVCallOffsets(Base, RealBaseOffset);
 }
 
-int64_t VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
+CharUnits VCallAndVBaseOffsetBuilder::getCurrentOffsetOffset() const {
   // OffsetIndex is the index of this vcall or vbase offset, relative to the 
   // vtable address point. (We subtract 3 to account for the information just
   // above the address point, the RTTI info, the offset to top, and the
   // vcall offset itself).
   int64_t OffsetIndex = -(int64_t)(3 + Components.size());
     
-  // FIXME: We shouldn't use / 8 here.
-  int64_t OffsetOffset = OffsetIndex * 
-    (int64_t)Context.Target.getPointerWidth(0) / 8;
-
+  CharUnits PointerWidth = 
+    Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+  CharUnits OffsetOffset = PointerWidth * OffsetIndex;
   return OffsetOffset;
 }
 
@@ -870,11 +869,11 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     if (!MD->isVirtual())
       continue;
 
-    int64_t OffsetOffset = getCurrentOffsetOffset();
+    CharUnits OffsetOffset = getCurrentOffsetOffset();
     
     // Don't add a vcall offset if we already have one for this member function
     // signature.
-    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
+    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset.getQuantity()))
       continue;
 
     CharUnits Offset = CharUnits::Zero();
@@ -935,8 +934,9 @@ VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
       assert(!VBaseOffsetOffsets.count(BaseDecl) &&
              "vbase offset offset already exists!");
 
-      int64_t VBaseOffsetOffset = getCurrentOffsetOffset();
-      VBaseOffsetOffsets.insert(std::make_pair(BaseDecl, VBaseOffsetOffset));
+      CharUnits VBaseOffsetOffset = getCurrentOffsetOffset();
+      VBaseOffsetOffsets.insert(
+          std::make_pair(BaseDecl, VBaseOffsetOffset.getQuantity()));
 
       Components.push_back(
           VTableComponent::MakeVBaseOffset(Offset.getQuantity()));
