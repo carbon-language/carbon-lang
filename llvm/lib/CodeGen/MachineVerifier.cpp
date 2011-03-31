@@ -610,13 +610,9 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
       if (MI->isRegTiedToDefOperand(MONum, &defIdx)) {
         // A two-addr use counts as a kill if use and def are the same.
         unsigned DefReg = MI->getOperand(defIdx).getReg();
-        if (Reg == DefReg) {
+        if (Reg == DefReg)
           isKill = true;
-          // And in that case an explicit kill flag is not allowed.
-          if (MO->isKill())
-            report("Illegal kill flag on two-address instruction operand",
-                   MO, MONum);
-        } else if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        else if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
           report("Two-address instruction operands must be identical",
                  MO, MONum);
         }
