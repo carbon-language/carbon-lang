@@ -530,6 +530,10 @@ void atomic_signal_fence(memory_order m);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#if !__has_feature(cxx_atomic)
+#error <atomic> is not implemented
+#else
+
 typedef enum memory_order
 {
     memory_order_relaxed, memory_order_consume, memory_order_acquire,
@@ -1501,6 +1505,8 @@ typedef atomic<uintmax_t> atomic_uintmax_t;
 #define ATOMIC_INT_LOCK_FREE 0
 #define ATOMIC_LONG_LOCK_FREE 0
 #define ATOMIC_LLONG_LOCK_FREE 0
+
+#endif  //  !__has_feature(cxx_atomic)
 
 _LIBCPP_END_NAMESPACE_STD
 
