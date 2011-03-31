@@ -51,6 +51,12 @@ def FeatureVFPOnlySP : SubtargetFeature<"fp-only-sp", "FPOnlySP", "true",
 // to just not use them.
 def FeatureHasSlowFPVMLx : SubtargetFeature<"slowfpvmlx", "SlowFPVMLx", "true",
                                          "Disable VFP / NEON MAC instructions">;
+
+// Cortex-A8 / A9 Advanced SIMD has multiplier accumulator forwarding.
+def FeatureVMLxForwarding : SubtargetFeature<"vmlx-forwarding",
+                                       "HasVMLxForwarding", "true",
+                                       "Has multiplier accumulator forwarding">;
+
 // Some processors benefit from using NEON instructions for scalar
 // single-precision FP operations.
 def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
@@ -100,11 +106,12 @@ def ProcOthers  : SubtargetFeature<"others", "ARMProcFamily", "Others",
 def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                    "Cortex-A8 ARM processors",
                                    [FeatureSlowFPBrcc, FeatureNEONForFP,
-                                    FeatureHasSlowFPVMLx, FeatureT2XtPk]>;
+                                    FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
+                                    FeatureT2XtPk]>;
 def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    "Cortex-A9 ARM processors",
-                                   [FeatureHasSlowFPVMLx, FeatureT2XtPk,
-                                    FeatureFP16]>;
+                                   [FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
+                                    FeatureT2XtPk, FeatureFP16]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, GenericItineraries, Features>;

@@ -61,6 +61,10 @@ protected:
   /// whether the FP VML[AS] instructions are slow (if so, don't use them).
   bool SlowFPVMLx;
 
+  /// HasVMLxForwarding - If true, NEON has special multiplier accumulator
+  /// forwarding to allow mul + mla being issued back to back.
+  bool HasVMLxForwarding;
+
   /// SlowFPBrcc - True if floating point compare + branch is slow.
   bool SlowFPBrcc;
 
@@ -182,6 +186,7 @@ protected:
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool hasDataBarrier() const { return HasDataBarrier; }
   bool useFPVMLx() const { return !SlowFPVMLx; }
+  bool hasVMLxForwarding() const { return HasVMLxForwarding; }
   bool isFPBrccSlow() const { return SlowFPBrcc; }
   bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
