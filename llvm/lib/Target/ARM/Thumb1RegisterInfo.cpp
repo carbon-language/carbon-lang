@@ -48,6 +48,11 @@ Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
   : ARMBaseRegisterInfo(tii, sti) {
 }
 
+const TargetRegisterClass *
+Thumb1RegisterInfo::getPointerRegClass(unsigned Kind) const {
+  return ARM::tGPRRegisterClass;
+}
+
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
 void
