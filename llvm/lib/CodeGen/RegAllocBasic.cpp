@@ -508,7 +508,7 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   ReservedRegs = TRI->getReservedRegs(*MF);
 
-  SpillerInstance.reset(createSpiller(*this, *MF, *VRM));
+  SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
 
   allocatePhysRegs();
 
