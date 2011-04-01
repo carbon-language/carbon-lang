@@ -95,6 +95,31 @@ SBModule::GetUUIDBytes () const
 }
 
 
+const char *
+SBModule::GetUUIDString () const
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    static char uuid_string[80];
+    const char * uuid_c_string = NULL;
+    if (m_opaque_sp)
+        uuid_c_string = (const char *)m_opaque_sp->GetUUID().GetAsCString(uuid_string, sizeof(uuid_string));
+
+    if (log)
+    {
+        if (uuid_c_string)
+        {
+            StreamString s;
+            m_opaque_sp->GetUUID().Dump (&s);
+            log->Printf ("SBModule(%p)::GetUUIDString () => %s", m_opaque_sp.get(), s.GetData());
+        }
+        else
+            log->Printf ("SBModule(%p)::GetUUIDString () => NULL", m_opaque_sp.get());
+    }
+    return uuid_c_string;
+}
+
+
 bool
 SBModule::operator == (const SBModule &rhs) const
 {

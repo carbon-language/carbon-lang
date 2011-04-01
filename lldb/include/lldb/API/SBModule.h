@@ -39,6 +39,9 @@ public:
     const uint8_t *
     GetUUIDBytes () const;
 
+    const char *
+    GetUUIDString () const;
+
 #ifndef SWIG
     bool
     operator == (const lldb::SBModule &rhs) const;
