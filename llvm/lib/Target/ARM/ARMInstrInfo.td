@@ -2009,6 +2009,7 @@ def MOVs : AsI1<0b1101, (outs GPR:$Rd), (ins shift_so_reg:$src),
   bits<4> Rd;
   bits<12> src;
   let Inst{15-12} = Rd;
+  let Inst{19-16} = 0b0000;
   let Inst{11-0} = src;
   let Inst{25} = 0;
 }
