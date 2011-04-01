@@ -912,7 +912,8 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
       APInt TypeMask(APInt::getAllOnesValue(BitWidth));
       ComputeMaskedBits(Op0, TypeMask, KnownZero, KnownOne);
 
-      if ((~KnownZero).isPowerOf2()) {
+      APInt KnownZeroMask(~KnownZero);
+      if (KnownZeroMask.isPowerOf2()) {
         Value *In = ICI->getOperand(0);
 
         if (!Op1C->isZero() == (Pred == ICmpInst::ICMP_NE)) {
