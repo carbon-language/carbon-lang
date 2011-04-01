@@ -2845,7 +2845,10 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // Derived from startfile spec.
     if (Args.hasArg(options::OPT_dynamiclib)) {
       // Derived from darwin_dylib1 spec.
-      if (getDarwinToolChain().isTargetIPhoneOS()) {
+      if (getDarwinToolChain().isTargetIOSSimulator()) {
+        // The simulator doesn't have a versioned crt1 file.
+        CmdArgs.push_back("-ldylib1.o");
+      } else if (getDarwinToolChain().isTargetIPhoneOS()) {
         if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
           CmdArgs.push_back("-ldylib1.o");
       } else {
@@ -2858,7 +2861,10 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
       if (Args.hasArg(options::OPT_bundle)) {
         if (!Args.hasArg(options::OPT_static)) {
           // Derived from darwin_bundle1 spec.
-          if (getDarwinToolChain().isTargetIPhoneOS()) {
+          if (getDarwinToolChain().isTargetIOSSimulator()) {
+            // The simulator doesn't have a versioned crt1 file.
+            CmdArgs.push_back("-lbundle1.o");
+          } else if (getDarwinToolChain().isTargetIPhoneOS()) {
             if (getDarwinToolChain().isIPhoneOSVersionLT(3, 1))
               CmdArgs.push_back("-lbundle1.o");
           } else {
