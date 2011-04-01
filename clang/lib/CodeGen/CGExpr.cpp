@@ -1424,7 +1424,6 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA or Objective-C interface.
   llvm::Value *Address = 0;
-  unsigned ArrayAlignment = 0;
   if (const VariableArrayType *VAT =
         getContext().getAsVariableArrayType(E->getType())) {
     llvm::Value *VLASize = GetVLASize(VAT);
@@ -1460,14 +1459,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     // "gep x, i" here.  Emit one "gep A, 0, i".
     assert(Array->getType()->isArrayType() &&
            "Array to pointer decay must have array source type!");
-    LValue ArrayLV = EmitLValue(Array);
-    llvm::Value *ArrayPtr = ArrayLV.getAddress();
+    llvm::Value *ArrayPtr = EmitLValue(Array).getAddress();
     llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
     llvm::Value *Args[] = { Zero, Idx };
     
-    // Propagate the alignment from the array itself to the result.
-    ArrayAlignment = ArrayLV.getAlignment();
-
     if (getContext().getLangOptions().isSignedOverflowDefined())
       Address = Builder.CreateGEP(ArrayPtr, Args, Args+2, "arrayidx");
     else
@@ -1485,7 +1480,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   assert(!T.isNull() &&
          "CodeGenFunction::EmitArraySubscriptExpr(): Illegal base type");
 
-  LValue LV = MakeAddrLValue(Address, T, ArrayAlignment);
+  LValue LV = MakeAddrLValue(Address, T);
   LV.getQuals().setAddressSpace(E->getBase()->getType().getAddressSpace());
 
   if (getContext().getLangOptions().ObjC1 &&
