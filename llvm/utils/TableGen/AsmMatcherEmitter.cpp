@@ -1483,10 +1483,10 @@ static void EmitConvertToMCInst(CodeGenTarget &Target, StringRef ClassName,
     MatchableInfo &II = **it;
 
     // Check if we have a custom match function.
-    StringRef AsmMatchConverter = II.getResultInst()->TheDef->getValueAsString(
-      "AsmMatchConverter");
+    std::string AsmMatchConverter =
+      II.getResultInst()->TheDef->getValueAsString("AsmMatchConverter");
     if (!AsmMatchConverter.empty()) {
-      std::string Signature = "ConvertCustom_" + AsmMatchConverter.str();
+      std::string Signature = "ConvertCustom_" + AsmMatchConverter;
       II.ConversionFnKind = Signature;
 
       // Check if we have already generated this signature.
