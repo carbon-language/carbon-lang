@@ -42,6 +42,12 @@ Communication::Communication(const char *name) :
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT | LIBLLDB_LOG_COMMUNICATION,
                                  "%p Communication::Communication (name = %s)",
                                  this, name);
+
+    SetEventName (eBroadcastBitDisconnected, "disconnected");
+    SetEventName (eBroadcastBitReadThreadGotBytes, "got bytes");
+    SetEventName (eBroadcastBitReadThreadDidExit, "read thread did exit");
+    SetEventName (eBroadcastBitReadThreadShouldExit, "read thread should exit");
+    SetEventName (eBroadcastBitPacketAvailable, "packet available");
 }
 
 //----------------------------------------------------------------------

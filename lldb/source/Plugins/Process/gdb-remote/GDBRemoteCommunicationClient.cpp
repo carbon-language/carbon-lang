@@ -1169,7 +1169,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
                 extractor.GetStringRef().swap(value);
                 extractor.SetFilePos(0);
                 extractor.GetHexByteString (value);
-                process_info.SwapName (value);
+                process_info.SetName (value.c_str());
             }
         }
         

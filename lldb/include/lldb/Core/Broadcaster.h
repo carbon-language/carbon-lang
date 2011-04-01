@@ -171,6 +171,15 @@ public:
         m_event_names[event_mask] = name;
     }
     
+    const char *
+    GetEventName (uint32_t event_mask) const
+    {
+        event_names_map::const_iterator pos = m_event_names.find (event_mask);
+        if (pos != m_event_names.end())
+            return pos->second.c_str();
+        return NULL;
+    }
+
     bool
     EventTypeHasListeners (uint32_t event_type);
 

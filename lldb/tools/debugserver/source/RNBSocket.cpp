@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "RNBSocket.h"
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <termios.h>
@@ -103,6 +105,55 @@ RNBSocket::Listen (in_port_t listen_port_num)
         SetSocketOption (m_conn_port, IPPROTO_TCP, TCP_NODELAY, 1);
     }
 
+    return rnb_success;
+}
+
+rnb_err_t
+RNBSocket::Connect (const char *host, uint16_t port)
+{
+    Disconnect (false);
+
+    // Create the socket
+    m_conn_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_conn_port == -1)
+        return rnb_err;
+    
+    // Enable local address reuse
+    SetSocketOption (m_conn_port, SOL_SOCKET, SO_REUSEADDR, 1);
+    
+    struct sockaddr_in sa;
+    ::memset (&sa, 0, sizeof (sa));
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons (port);
+    
+    if (host == NULL)
+        host = "localhost";
+
+    int inet_pton_result = ::inet_pton (AF_INET, host, &sa.sin_addr);
+    
+    if (inet_pton_result <= 0)
+    {
+        struct hostent *host_entry = gethostbyname (host);
+        if (host_entry)
+        {
+            std::string host_str (::inet_ntoa (*(struct in_addr *)*host_entry->h_addr_list));
+            inet_pton_result = ::inet_pton (AF_INET, host_str.c_str(), &sa.sin_addr);
+            if (inet_pton_result <= 0)
+            {
+                Disconnect (false);
+                return rnb_err;
+            }
+        }
+    }
+    
+    if (-1 == ::connect (m_conn_port, (const struct sockaddr *)&sa, sizeof(sa)))
+    {
+        Disconnect (false);
+        return rnb_err;
+    }
+    
+    // Keep our TCP packets coming without any delays.
+    SetSocketOption (m_conn_port, IPPROTO_TCP, TCP_NODELAY, 1);
     return rnb_success;
 }
 

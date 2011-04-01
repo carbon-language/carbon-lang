@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <list>
+#include <vector>
 
 // Other libraries and framework includes
 // Project includes
@@ -29,6 +30,7 @@
 #include "lldb/Breakpoint/BreakpointSiteList.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -227,7 +229,8 @@ class ProcessInfo
 {
 public:
     ProcessInfo () :
-        m_name (),
+        m_executable (),
+        m_args (),
         m_real_uid (UINT32_MAX),
         m_real_gid (UINT32_MAX),
         m_effective_uid (UINT32_MAX),
@@ -241,7 +244,8 @@ public:
     ProcessInfo (const char *name,
                  const ArchSpec &arch,
                  lldb::pid_t pid) :
-        m_name (),
+        m_executable (),
+        m_args (),
         m_real_uid (UINT32_MAX),
         m_real_gid (UINT32_MAX),
         m_effective_uid (UINT32_MAX),
@@ -255,7 +259,8 @@ public:
     void
     Clear ()
     {
-        m_name.clear();
+        m_executable.Clear();
+        m_args.Clear();
         m_real_uid = UINT32_MAX;
         m_real_gid = UINT32_MAX;
         m_effective_uid = UINT32_MAX;
@@ -268,30 +273,31 @@ public:
     const char *
     GetName() const
     {
-        if (m_name.empty())
-            return NULL;
-        return m_name.c_str();
+        return m_executable.GetFilename().GetCString();
     }
 
     size_t
     GetNameLength() const
     {
-        return m_name.size();
+        return m_executable.GetFilename().GetLength();
     }
     
     void
     SetName (const char *name)
     {
-        if (name && name[0])
-            m_name.assign (name);
-        else
-            m_name.clear();
+        m_executable.GetFilename().SetCString (name);
+    }
+    
+    FileSpec &
+    GetExecutableFile ()
+    {
+        return m_executable;
     }
 
-    void
-    SwapName (std::string &name)
+    const FileSpec &
+    GetExecutableFile () const
     {
-        m_name.swap (name);
+        return m_executable;
     }
 
     uint32_t
@@ -418,13 +424,26 @@ public:
     Dump (Stream &s, Platform *platform) const;
 
     static void
-    DumpTableHeader (Stream &s, Platform *platform);
+    DumpTableHeader (Stream &s, Platform *platform, bool verbose = false);
 
     void
-    DumpAsTableRow (Stream &s, Platform *platform) const;
+    DumpAsTableRow (Stream &s, Platform *platform, bool verbose = false) const;
+
+    StringList &
+    GetArguments()
+    {
+        return m_args;
+    }
+    
+    const StringList &
+    GetArguments() const
+    {
+        return m_args;
+    }
 
 protected:
-    std::string m_name;
+    FileSpec m_executable;
+    StringList m_args;
     uint32_t m_real_uid;
     uint32_t m_real_gid;    
     uint32_t m_effective_uid;

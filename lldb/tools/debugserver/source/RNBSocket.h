@@ -36,6 +36,8 @@ public:
     }
 
     rnb_err_t Listen (in_port_t listen_port_num);
+    rnb_err_t Connect (const char *host, uint16_t port);
+
 #if defined (__arm__)
     rnb_err_t ConnectToService();
 #endif

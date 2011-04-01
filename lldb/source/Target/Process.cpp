@@ -42,76 +42,133 @@ void
 ProcessInfo::Dump (Stream &s, Platform *platform) const
 {
     const char *cstr;
-    if (m_pid != LLDB_INVALID_PROCESS_ID)       s.Printf ("   pid = %i\n", m_pid);
-    if (!m_name.empty())                        s.Printf ("  name = \"%s\"\n", m_name.c_str());
-    if (m_arch.IsValid())                       s.Printf ("  arch = %s\n", m_arch.GetTriple().str().c_str());
-    if (m_parent_pid != LLDB_INVALID_PROCESS_ID)s.Printf ("parent = %i\n", m_parent_pid);
+    if (m_pid != LLDB_INVALID_PROCESS_ID)       
+        s.Printf ("    pid = %i\n", m_pid);
+
+    if (m_parent_pid != LLDB_INVALID_PROCESS_ID)
+        s.Printf (" parent = %i\n", m_parent_pid);
+
+    if (m_executable)
+    {
+        s.Printf ("   name = %s\n", m_executable.GetFilename().GetCString());
+        s.PutCString ("   file = ");
+        m_executable.Dump(&s);
+        s.EOL();
+    }
+    const uint32_t argc = m_args.GetSize();
+    if (argc > 0)
+    {
+        for (uint32_t i=0; i<argc; i++)
+        {
+            if (i < 10)
+                s.Printf (" arg[%u] = %s\n", i, m_args.GetStringAtIndex(i));
+            else
+                s.Printf ("arg[%u] = %s\n", i, m_args.GetStringAtIndex(i));
+        }
+    }
+    if (m_arch.IsValid())                       
+        s.Printf ("   arch = %s\n", m_arch.GetTriple().str().c_str());
+
     if (m_real_uid != UINT32_MAX)
     {
         cstr = platform->GetUserName (m_real_uid);
-        s.Printf ("   uid = %u %s\n", m_real_uid, cstr ? cstr : "");
+        s.Printf ("    uid = %-5u (%s)\n", m_real_uid, cstr ? cstr : "");
     }
     if (m_real_gid != UINT32_MAX)
     {
         cstr = platform->GetGroupName (m_real_gid);
-        s.Printf ("   gid = %u %s\n", m_real_gid, cstr ? cstr : "");
+        s.Printf ("    gid = %-5u (%s)\n", m_real_gid, cstr ? cstr : "");
     }
     if (m_effective_uid != UINT32_MAX)
     {
         cstr = platform->GetUserName (m_effective_uid);
-        s.Printf ("  euid = %u %s\n", m_effective_uid, cstr ? cstr : "");
+        s.Printf ("   euid = %-5u (%s)\n", m_effective_uid, cstr ? cstr : "");
     }
     if (m_effective_gid != UINT32_MAX)
     {
         cstr = platform->GetGroupName (m_effective_gid);
-        s.Printf ("  egid = %u %s\n", m_effective_gid, cstr ? cstr : "");
+        s.Printf ("   egid = %-5u (%s)\n", m_effective_gid, cstr ? cstr : "");
     }
 }
 
 void
-ProcessInfo::DumpTableHeader (Stream &s, Platform *platform)
+ProcessInfo::DumpTableHeader (Stream &s, Platform *platform, bool verbose)
 {
-//    s.PutCString ("PID    PARENT UID   GID   EUID  EGID  TRIPLE                   NAME\n");
-//    s.PutCString ("====== ====== ===== ===== ===== ===== ======================== ============================\n");
-    s.PutCString ("PID    PARENT USER       GROUP      EFF USER   EFF GROUP  TRIPLE                   NAME\n");
-    s.PutCString ("====== ====== ========== ========== ========== ========== ======================== ============================\n");
+    if (verbose)
+    {
+        s.PutCString ("PID    PARENT USER       GROUP      EFF USER   EFF GROUP  TRIPLE                   NAME\n");
+        s.PutCString ("====== ====== ========== ========== ========== ========== ======================== ============================\n");
+    }
+    else
+    {
+        s.PutCString ("PID    PARENT USER       ARCH    NAME\n");
+        s.PutCString ("====== ====== ========== ======= ============================\n");
+    }
 }
 
 void
-ProcessInfo::DumpAsTableRow (Stream &s, Platform *platform) const
+ProcessInfo::DumpAsTableRow (Stream &s, Platform *platform, bool verbose) const
 {
     if (m_pid != LLDB_INVALID_PROCESS_ID)
     {
         const char *cstr;
         s.Printf ("%-6u %-6u ", m_pid, m_parent_pid);
 
-        cstr = platform->GetUserName (m_real_uid);
-        if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
-            s.Printf ("%-10s ", cstr);
-        else
-            s.Printf ("%-10u ", m_real_uid);
     
-        cstr = platform->GetGroupName (m_real_gid);
-        if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
-            s.Printf ("%-10s ", cstr);
-        else
-            s.Printf ("%-10u ", m_real_gid);
+        if (verbose)
+        {
+            cstr = platform->GetUserName (m_real_uid);
+            if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
+                s.Printf ("%-10s ", cstr);
+            else
+                s.Printf ("%-10u ", m_real_uid);
 
-        cstr = platform->GetUserName (m_effective_uid);
-        if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
-            s.Printf ("%-10s ", cstr);
-        else
-            s.Printf ("%-10u ", m_effective_uid);
-        
-        cstr = platform->GetGroupName (m_effective_gid);
-        if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
-            s.Printf ("%-10s ", cstr);
-        else
-            s.Printf ("%-10u ", m_effective_gid);
+            cstr = platform->GetGroupName (m_real_gid);
+            if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
+                s.Printf ("%-10s ", cstr);
+            else
+                s.Printf ("%-10u ", m_real_gid);
 
-        s.Printf ("%-24s %s\n", 
-                  m_arch.IsValid() ? m_arch.GetTriple().str().c_str() : "",
-                  m_name.c_str());
+            cstr = platform->GetUserName (m_effective_uid);
+            if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
+                s.Printf ("%-10s ", cstr);
+            else
+                s.Printf ("%-10u ", m_effective_uid);
+            
+            cstr = platform->GetGroupName (m_effective_gid);
+            if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
+                s.Printf ("%-10s ", cstr);
+            else
+                s.Printf ("%-10u ", m_effective_gid);
+            s.Printf ("%-24s ", m_arch.IsValid() ? m_arch.GetTriple().str().c_str() : "");
+        }
+        else
+        {
+            s.Printf ("%-10s %.*-7s ", 
+                      platform->GetUserName (m_effective_uid),
+                      (int)m_arch.GetTriple().getArchName().size(),
+                      m_arch.GetTriple().getArchName().data());
+        }
+
+        if (verbose)
+        {
+            const uint32_t argc = m_args.GetSize();
+            if (argc > 0)
+            {
+                for (uint32_t i=0; i<argc; i++)
+                {
+                    if (i > 0)
+                        s.PutChar (' ');
+                    s.PutCString (m_args.GetStringAtIndex(i));
+                }
+            }
+        }
+        else
+        {
+            s.PutCString (GetName());
+        }
+
+        s.EOL();
     }
 }
 

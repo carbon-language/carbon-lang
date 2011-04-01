@@ -374,6 +374,8 @@ signal_handler(int signo)
                         case eStateStepping:
                             DNBProcessSignal (g_pid, SIGSTOP);
                             return;
+                        default:
+                            break;
                     }
                 }
             }
@@ -455,6 +457,7 @@ HandleProcessStateChange (RNBRemote *remote, bool initialize)
 
         case eStateExited:
             remote->HandlePacket_last_signal(NULL);
+        case eStateDetached:
             return eRNBRunLoopModeExit;
 
     }

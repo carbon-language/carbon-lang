@@ -134,6 +134,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_local_debugserver (true),
     m_thread_observation_bps()
 {
+    m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
+    m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
 }
 
 //----------------------------------------------------------------------

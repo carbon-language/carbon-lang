@@ -24,6 +24,8 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/DataExtractor.h"
+#include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamFile.h"
@@ -968,6 +970,59 @@ GetMacOSXProcessCPUType (ProcessInfo &process_info)
 }
 
 static bool
+GetMacOSXProcessArgs (const ProcessInfoMatch *match_info_ptr,
+                      ProcessInfo &process_info)
+{
+    if (process_info.ProcessIDIsValid())
+    {
+        int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, process_info.GetProcessID() };
+
+        char arg_data[8192];
+        size_t arg_data_size = sizeof(arg_data);
+        if (::sysctl (proc_args_mib, 3, arg_data, &arg_data_size , NULL, 0) == 0)
+        {
+            DataExtractor data (arg_data, arg_data_size, lldb::endian::InlHostByteOrder(), sizeof(void *));
+            uint32_t offset = 0;
+            uint32_t start_offset;
+            uint32_t argc = data.GetU32 (&offset);
+            const char *cstr;
+            
+            cstr = data.GetCStr (&offset);
+            if (cstr)
+            {
+                process_info.GetExecutableFile().SetFile(cstr, false);
+
+                if (match_info_ptr == NULL || 
+                    NameMatches (process_info.GetExecutableFile().GetFilename().GetCString(),
+                                 match_info_ptr->GetNameMatchType(),
+                                 match_info_ptr->GetProcessInfo().GetName()))
+                {
+                    // Skip NULLs
+                    while (1)
+                    {
+                        const uint8_t *p = data.PeekData(offset, 1);
+                        if ((p == NULL) || (*p != '\0'))
+                            break;
+                        ++offset;
+                    }
+                    // Now extract all arguments
+                    StringList &proc_args = process_info.GetArguments();
+                    for (int i=0; i<argc; ++i)
+                    {
+                        start_offset = offset;
+                        cstr = data.GetCStr(&offset);
+                        if (cstr)
+                            proc_args.AppendString (cstr, offset - start_offset);
+                    }
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+static bool
 GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
@@ -1008,46 +1063,67 @@ GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
 uint32_t
 Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &process_infos)
 {
-    int num_pids;
-    int size_of_pids;
-    std::vector<int> pid_list;
+    std::vector<struct kinfo_proc> kinfos;
     
-    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (size_of_pids == -1)
+    int mib[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+    
+    size_t pid_data_size = 0;
+    if (::sysctl (mib, 4, NULL, &pid_data_size, NULL, 0) != 0)
         return 0;
-        
-    num_pids = size_of_pids/sizeof(int);
     
-    pid_list.resize (size_of_pids);
-    size_of_pids = proc_listpids(PROC_ALL_PIDS, 0, &pid_list[0], size_of_pids);
-    if (size_of_pids == -1)
+    // Add a few extra in case a few more show up
+    const size_t estimated_pid_count = (pid_data_size / sizeof(struct kinfo_proc)) + 10;
+
+    kinfos.resize (estimated_pid_count);
+    pid_data_size = kinfos.size() * sizeof(struct kinfo_proc);
+    
+    if (::sysctl (mib, 4, &kinfos[0], &pid_data_size, NULL, 0) != 0)
         return 0;
-        
-    lldb::pid_t our_pid = getpid();
-    
-    for (int i = 0; i < num_pids; i++)
+
+    const size_t actual_pid_count = (pid_data_size / sizeof(struct kinfo_proc));
+
+    bool all_users = match_info.GetMatchAllUsers();
+    const lldb::pid_t our_pid = getpid();
+    const uid_t our_uid = getuid();
+    for (int i = 0; i < actual_pid_count; i++)
     {
-        struct proc_bsdinfo bsd_info;
-        int error = proc_pidinfo (pid_list[i], PROC_PIDTBSDINFO, (uint64_t) 0, &bsd_info, PROC_PIDTBSDINFO_SIZE);
-        if (error == 0)
+        const struct kinfo_proc &kinfo = kinfos[i];
+        
+        bool kinfo_user_matches = false;
+        if (all_users)
+            kinfo_user_matches = true;
+        else
+            kinfo_user_matches = kinfo.kp_eproc.e_pcred.p_ruid == our_uid;
+
+        if (kinfo_user_matches == false         || // Make sure the user is acceptable
+            kinfo.kp_proc.p_pid == our_pid      || // Skip this process
+            kinfo.kp_proc.p_pid == 0            || // Skip kernel (kernel pid is zero)
+            kinfo.kp_proc.p_stat == SZOMB       || // Zombies are bad, they like brains...
+            kinfo.kp_proc.p_flag & P_TRACED     || // Being debugged?
+            kinfo.kp_proc.p_flag & P_WEXIT      || // Working on exiting?
+            kinfo.kp_proc.p_flag & P_TRANSLATED)   // Skip translated ppc (Rosetta)
             continue;
-        
-        // Don't offer to attach to zombie processes, already traced or exiting
-        // processes, and of course, ourselves...  It looks like passing the second arg of
-        // 0 to proc_listpids will exclude zombies anyway, but that's not documented so...
-        if (((bsd_info.pbi_flags & (PROC_FLAG_TRACED | PROC_FLAG_INEXIT)) != 0)
-             || (bsd_info.pbi_status == SZOMB)
-             || (bsd_info.pbi_pid == our_pid))
-             continue;
-        
+
         ProcessInfo process_info;
-        process_info.SetProcessID (bsd_info.pbi_pid);
-        if (GetMacOSXProcessName (&match_info, process_info))
+        process_info.SetProcessID (kinfo.kp_proc.p_pid);
+        process_info.SetParentProcessID (kinfo.kp_eproc.e_ppid);
+        process_info.SetRealUserID (kinfo.kp_eproc.e_pcred.p_ruid);
+        process_info.SetRealGroupID (kinfo.kp_eproc.e_pcred.p_rgid);
+        process_info.SetEffectiveUserID (kinfo.kp_eproc.e_ucred.cr_uid);
+        if (kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
+            process_info.SetEffectiveGroupID (kinfo.kp_eproc.e_ucred.cr_groups[0]);
+        else
+            process_info.SetEffectiveGroupID (UINT32_MAX);            
+
+        // Make sure our info matches before we go fetch the name and cpu type
+        if (match_info.Matches (process_info))
         {
-            GetMacOSXProcessCPUType (process_info);
-            GetMacOSXProcessUserAndGroup (process_info);
-            if (match_info.Matches (process_info))
-                process_infos.Append (process_info);
+            if (GetMacOSXProcessArgs (&match_info, process_info))
+            {
+                GetMacOSXProcessCPUType (process_info);
+                if (match_info.Matches (process_info))
+                    process_infos.Append (process_info);
+            }
         }
     }    
     return process_infos.GetSize();
@@ -1057,7 +1133,7 @@ bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
     process_info.SetProcessID(pid);
-    if (GetMacOSXProcessName (NULL, process_info))
+    if (GetMacOSXProcessArgs (NULL, process_info))
     {
         GetMacOSXProcessCPUType (process_info);
         GetMacOSXProcessUserAndGroup (process_info);

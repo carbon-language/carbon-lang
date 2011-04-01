@@ -237,10 +237,10 @@ public:
     {
         Stream &ostrm = result.GetOutputStream();      
         
-        PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
-        if (selected_platform_sp)
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
         {
-            selected_platform_sp->GetStatus (ostrm);
+            platform_sp->GetStatus (ostrm);
             result.SetStatus (eReturnStatusSuccessFinishResult);            
         }
         else
@@ -308,13 +308,13 @@ public:
     {
         Stream &ostrm = result.GetOutputStream();      
         
-        PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
-        if (selected_platform_sp)
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
         {
-            Error error (selected_platform_sp->ConnectRemote (args));
+            Error error (platform_sp->ConnectRemote (args));
             if (error.Success())
             {
-                selected_platform_sp->GetStatus (ostrm);
+                platform_sp->GetStatus (ostrm);
                 result.SetStatus (eReturnStatusSuccessFinishResult);            
             }
             else
@@ -355,28 +355,28 @@ public:
     virtual bool
     Execute (Args& args, CommandReturnObject &result)
     {
-        PlatformSP selected_platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
-        if (selected_platform_sp)
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
         {
             if (args.GetArgumentCount() == 0)
             {
                 Error error;
                 
-                if (selected_platform_sp->IsConnected())
+                if (platform_sp->IsConnected())
                 {
                     // Cache the instance name if there is one since we are 
                     // about to disconnect and the name might go with it.
-                    const char *hostname_cstr = selected_platform_sp->GetHostname();
+                    const char *hostname_cstr = platform_sp->GetHostname();
                     std::string hostname;
                     if (hostname_cstr)
                         hostname.assign (hostname_cstr);
 
-                    error = selected_platform_sp->DisconnectRemote ();
+                    error = platform_sp->DisconnectRemote ();
                     if (error.Success())
                     {
                         Stream &ostrm = result.GetOutputStream();      
                         if (hostname.empty())
-                            ostrm.Printf ("Disconnected from \"%s\"\n", selected_platform_sp->GetShortPluginName());
+                            ostrm.Printf ("Disconnected from \"%s\"\n", platform_sp->GetShortPluginName());
                         else
                             ostrm.Printf ("Disconnected from \"%s\"\n", hostname.c_str());
                         result.SetStatus (eReturnStatusSuccessFinishResult);            
@@ -390,7 +390,7 @@ public:
                 else
                 {
                     // Not connected...
-                    result.AppendErrorWithFormat ("not connected to '%s'", selected_platform_sp->GetShortPluginName());
+                    result.AppendErrorWithFormat ("not connected to '%s'", platform_sp->GetShortPluginName());
                     result.SetStatus (eReturnStatusFailed);            
                 }
             }
@@ -444,13 +444,16 @@ public:
                 
                 if (platform_sp)
                 {
+                    Stream &ostrm = result.GetOutputStream();      
+
                     lldb::pid_t pid = m_options.match_info.GetProcessInfo().GetProcessID();
                     if (pid != LLDB_INVALID_PROCESS_ID)
                     {
                         ProcessInfo proc_info;
                         if (platform_sp->GetProcessInfo (pid, proc_info))
                         {
-                            proc_info.Dump (result.GetOutputStream(), platform_sp.get());
+                            ProcessInfo::DumpTableHeader (ostrm, platform_sp.get());
+                            proc_info.DumpAsTableRow(ostrm, platform_sp.get());
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -490,7 +493,6 @@ public:
                         }
                         else
                         {
-                            Stream &ostrm = result.GetOutputStream();      
 
                             ProcessInfo::DumpTableHeader (ostrm, platform_sp.get());
                             for (uint32_t i=0; i<matches; ++i)
@@ -684,6 +686,106 @@ CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 { 0             , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
 };
 
+
+//----------------------------------------------------------------------
+// "platform process info"
+//----------------------------------------------------------------------
+class CommandObjectPlatformProcessInfo : public CommandObject
+{
+public:
+    CommandObjectPlatformProcessInfo (CommandInterpreter &interpreter) :
+    CommandObject (interpreter, 
+                   "platform process info",
+                   "Get detailed information for one or more process by process ID.",
+                   "platform process info <pid> [<pid> <pid> ...]",
+                   0)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData pid_args;
+        
+        // Define the first (and only) variant of this arg.
+        pid_args.arg_type = eArgTypePid;
+        pid_args.arg_repetition = eArgRepeatStar;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (pid_args);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+    }
+    
+    virtual
+    ~CommandObjectPlatformProcessInfo ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        if (platform_sp)
+        {
+            const size_t argc = args.GetArgumentCount();
+            if (argc > 0)
+            {
+                Error error;
+                
+                if (platform_sp->IsConnected())
+                {
+                    Stream &ostrm = result.GetOutputStream();      
+                    bool success;
+                    for (size_t i=0; i<argc; ++ i)
+                    {
+                        const char *arg = args.GetArgumentAtIndex(i);
+                        lldb::pid_t pid = Args::StringToUInt32 (arg, LLDB_INVALID_PROCESS_ID, 0, &success);
+                        if (success)
+                        {
+                            ProcessInfo proc_info;
+                            if (platform_sp->GetProcessInfo (pid, proc_info))
+                            {
+                                ostrm.Printf ("Process information for process %i:\n", pid);
+                                proc_info.Dump (ostrm, platform_sp.get());
+                            }
+                            else
+                            {
+                                ostrm.Printf ("error: no process information is available for process %i\n", pid);
+                            }
+                            ostrm.EOL();
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("invalid process ID argument '%s'", arg);
+                            result.SetStatus (eReturnStatusFailed);            
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // Not connected...
+                    result.AppendErrorWithFormat ("not connected to '%s'", platform_sp->GetShortPluginName());
+                    result.SetStatus (eReturnStatusFailed);            
+                }
+            }
+            else
+            {
+                // Bad args
+                result.AppendError ("\"platform disconnect\" doesn't take any arguments");
+                result.SetStatus (eReturnStatusFailed);            
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform is currently selected");
+            result.SetStatus (eReturnStatusFailed);            
+        }
+        return result.Succeeded();
+    }
+};
+
+
+
+
 class CommandObjectPlatformProcess : public CommandObjectMultiword
 {
 public:
@@ -698,6 +800,7 @@ public:
     {
 //        LoadSubCommand ("attach", CommandObjectSP (new CommandObjectPlatformProcessAttach (interpreter)));
 //        LoadSubCommand ("launch", CommandObjectSP (new CommandObjectPlatformProcessLaunch (interpreter)));
+        LoadSubCommand ("info"  , CommandObjectSP (new CommandObjectPlatformProcessInfo (interpreter)));
         LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformProcessList (interpreter)));
 
     }
@@ -721,7 +824,7 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "platform",
                             "A set of commands to manage and create platforms.",
-                            "platform [connect|create|disconnect|list|status|select] ...")
+                            "platform [connect|create|disconnect|info|list|status|select] ...")
 {
     LoadSubCommand ("create", CommandObjectSP (new CommandObjectPlatformCreate  (interpreter)));
     LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList    (interpreter)));
