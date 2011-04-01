@@ -201,8 +201,8 @@ sub SetHtmlEnv {
   die "No build command." if (scalar(@$Args) == 0);
   
   my $Cmd = $$Args[0];
-  
-  if ($Cmd =~ /configure/) {
+
+  if ($Cmd =~ /configure/ || $Cmd =~ /autogen/) {
     return;
   }
   
