@@ -93,6 +93,19 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::UREM_I32] = "__umodsi3";
   Names[RTLIB::UREM_I64] = "__umoddi3";
   Names[RTLIB::UREM_I128] = "__umodti3";
+
+  // These are generally not available.
+  Names[RTLIB::SDIVREM_I8] = 0;
+  Names[RTLIB::SDIVREM_I16] = 0;
+  Names[RTLIB::SDIVREM_I32] = 0;
+  Names[RTLIB::SDIVREM_I64] = 0;
+  Names[RTLIB::SDIVREM_I128] = 0;
+  Names[RTLIB::UDIVREM_I8] = 0;
+  Names[RTLIB::UDIVREM_I16] = 0;
+  Names[RTLIB::UDIVREM_I32] = 0;
+  Names[RTLIB::UDIVREM_I64] = 0;
+  Names[RTLIB::UDIVREM_I128] = 0;
+
   Names[RTLIB::NEG_I32] = "__negsi2";
   Names[RTLIB::NEG_I64] = "__negdi2";
   Names[RTLIB::ADD_F32] = "__addsf3";

@@ -153,6 +153,7 @@ private:
                            RTLIB::Libcall Call_I32,
                            RTLIB::Libcall Call_I64,
                            RTLIB::Libcall Call_I128);
+  SDValue ExpandDivRemLibCall(SDNode *Node, bool isSigned, bool isDIV);
 
   SDValue EmitStackConvert(SDValue SrcOp, EVT SlotVT, EVT DestVT, DebugLoc dl);
   SDValue ExpandBUILD_VECTOR(SDNode *Node);
@@ -786,7 +787,7 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
       }
     }
   }
-  return SDValue();
+  return SDValue(0, 0);
 }
 
 /// LegalizeOp - We know that the specified value has a legal type, and
@@ -2114,6 +2115,116 @@ SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
   return ExpandLibCall(LC, Node, isSigned);
 }
 
+/// ExpandDivRemLibCall - Issue libcalls to __{u}divmod to compute div / rem
+/// pairs.
+SDValue SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node, bool isSigned,
+                                                  bool isDIV) {
+  RTLIB::Libcall LC;
+  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  default: assert(0 && "Unexpected request for libcall!");
+  case MVT::i8:   LC= isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
+  case MVT::i16:  LC= isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
+  case MVT::i32:  LC= isSigned ? RTLIB::SDIVREM_I32 : RTLIB::UDIVREM_I32; break;
+  case MVT::i64:  LC= isSigned ? RTLIB::SDIVREM_I64 : RTLIB::UDIVREM_I64; break;
+  case MVT::i128: LC= isSigned ? RTLIB::SDIVREM_I128:RTLIB::UDIVREM_I128; break;
+  }
+
+  if (!TLI.getLibcallName(LC))
+    return SDValue();
+
+  // Only issue divrem libcall if both quotient and remainder are needed.
+  unsigned OtherOpcode = 0;
+  if (isSigned) {
+    OtherOpcode = isDIV ? ISD::SREM : ISD::SDIV;
+  } else {
+    OtherOpcode = isDIV ? ISD::UREM : ISD::UDIV;
+  }
+  SDNode *OtherNode = 0;
+  SDValue Op0 = Node->getOperand(0);
+  SDValue Op1 = Node->getOperand(1);
+  for (SDNode::use_iterator UI = Op0.getNode()->use_begin(),
+         UE = Op0.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User == Node)
+      continue;
+    if (User->getOpcode() == OtherOpcode &&
+        User->getOperand(0) == Op0 &&
+        User->getOperand(1) == Op1) {
+      OtherNode = User;
+      break;
+    }
+  }
+  if (!OtherNode)
+    return SDValue();
+
+  // If the libcall is already generated, no need to issue it again.
+  DenseMap<SDValue, SDValue>::iterator I
+    = LegalizedNodes.find(SDValue(OtherNode,0));
+  if (I != LegalizedNodes.end()) {
+    OtherNode = I->second.getNode();
+    SDNode *Chain = OtherNode->getOperand(0).getNode();
+    for (SDNode::use_iterator UI = Chain->use_begin(), UE = Chain->use_end();
+         UI != UE; ++UI) {
+      SDNode *User = *UI;
+      if (User == OtherNode)
+        continue;
+      if (isDIV) {
+        assert(User->getOpcode() == ISD::CopyFromReg);
+      } else {
+        assert(User->getOpcode() == ISD::LOAD);
+      }
+      return SDValue(User, 0);
+    }
+  }
+
+  // The input chain to this libcall is the entry node of the function.
+  // Legalizing the call will automatically add the previous call to the
+  // dependence.
+  SDValue InChain = DAG.getEntryNode();
+
+  EVT RetVT = Node->getValueType(0);
+  const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+    EVT ArgVT = Node->getOperand(i).getValueType();
+    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+
+  // Also pass the return address of the remainder.
+  SDValue FIPtr = DAG.CreateStackTemporary(RetVT);
+  Entry.Node = FIPtr;
+  Entry.Ty = RetTy->getPointerTo();
+  Entry.isSExt = isSigned;
+  Entry.isZExt = !isSigned;
+  Args.push_back(Entry);
+
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                         TLI.getPointerTy());
+
+  // Splice the libcall in wherever FindInputOutputChains tells us to.
+  DebugLoc dl = Node->getDebugLoc();
+  std::pair<SDValue, SDValue> CallInfo =
+    TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
+                    0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
+                    /*isReturnValueUsed=*/true, Callee, Args, DAG, dl);
+
+  // Legalize the call sequence, starting with the chain.  This will advance
+  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // was added by LowerCallTo (guaranteeing proper serialization of calls).
+  LegalizeOp(CallInfo.second);
+
+  // Remainder is loaded back from the stack frame.
+  SDValue Rem = DAG.getLoad(RetVT, dl, LastCALLSEQ_END, FIPtr,
+                            MachinePointerInfo(), false, false, 0);
+  return isDIV ? CallInfo.first : Rem;
+}
+
 /// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
 /// INT_TO_FP operation of the specified operand when the target requests that
 /// we expand it.  At this point, we know that the result and operand types are
@@ -3095,15 +3206,19 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       Tmp1 = DAG.getNode(ISD::MUL, dl, VT, Tmp1, Tmp3);
       Tmp1 = DAG.getNode(ISD::SUB, dl, VT, Tmp2, Tmp1);
     } else if (isSigned) {
-      Tmp1 = ExpandIntLibCall(Node, true,
-                              RTLIB::SREM_I8,
-                              RTLIB::SREM_I16, RTLIB::SREM_I32,
-                              RTLIB::SREM_I64, RTLIB::SREM_I128);
+      Tmp1 = ExpandDivRemLibCall(Node, true, false);
+      if (!Tmp1.getNode())
+        Tmp1 = ExpandIntLibCall(Node, true,
+                                RTLIB::SREM_I8,
+                                RTLIB::SREM_I16, RTLIB::SREM_I32,
+                                RTLIB::SREM_I64, RTLIB::SREM_I128);
     } else {
-      Tmp1 = ExpandIntLibCall(Node, false,
-                              RTLIB::UREM_I8,
-                              RTLIB::UREM_I16, RTLIB::UREM_I32,
-                              RTLIB::UREM_I64, RTLIB::UREM_I128);
+      Tmp1 = ExpandDivRemLibCall(Node, false, false);
+      if (!Tmp1.getNode())
+        Tmp1 = ExpandIntLibCall(Node, false,
+                                RTLIB::UREM_I8,
+                                RTLIB::UREM_I16, RTLIB::UREM_I32,
+                                RTLIB::UREM_I64, RTLIB::UREM_I128);
     }
     Results.push_back(Tmp1);
     break;
@@ -3117,16 +3232,23 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     if (TLI.isOperationLegalOrCustom(DivRemOpc, VT))
       Tmp1 = DAG.getNode(DivRemOpc, dl, VTs, Node->getOperand(0),
                          Node->getOperand(1));
-    else if (isSigned)
-      Tmp1 = ExpandIntLibCall(Node, true,
-                              RTLIB::SDIV_I8,
-                              RTLIB::SDIV_I16, RTLIB::SDIV_I32,
-                              RTLIB::SDIV_I64, RTLIB::SDIV_I128);
-    else
-      Tmp1 = ExpandIntLibCall(Node, false,
-                              RTLIB::UDIV_I8,
-                              RTLIB::UDIV_I16, RTLIB::UDIV_I32,
-                              RTLIB::UDIV_I64, RTLIB::UDIV_I128);
+    else if (isSigned) {
+      Tmp1 = ExpandDivRemLibCall(Node, true, true);
+      if (!Tmp1.getNode()) {
+        Tmp1 = ExpandIntLibCall(Node, true,
+                                RTLIB::SDIV_I8,
+                                RTLIB::SDIV_I16, RTLIB::SDIV_I32,
+                                RTLIB::SDIV_I64, RTLIB::SDIV_I128);
+      }
+    } else {
+      Tmp1 = ExpandDivRemLibCall(Node, false, true);
+      if (!Tmp1.getNode()) {
+        Tmp1 = ExpandIntLibCall(Node, false,
+                                RTLIB::UDIV_I8,
+                                RTLIB::UDIV_I16, RTLIB::UDIV_I32,
+                                RTLIB::UDIV_I64, RTLIB::UDIV_I128);
+      }
+    }
     Results.push_back(Tmp1);
     break;
   }
