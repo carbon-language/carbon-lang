@@ -1106,6 +1106,14 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     MI.addOperand(MCOperand::CreateImm(Offset));
     OpIdx += 1;
   } else {
+    // The opcode ARM::LDRT actually corresponds to both Encoding A1 and A2 of
+    // A8.6.86 LDRT.  So if Inst{4} != 0 while Inst{25} (getIBit(insn)) == 1,
+    // we should reject this insn as invalid.
+    //
+    // Ditto for LDRBT.
+    if ((Opcode == ARM::LDRT || Opcode == ARM::LDRBT) && (slice(insn,4,4) == 1))
+      return false;
+
     // Disassemble the offset reg (Rm), shift type, and immediate shift length.
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
