@@ -94,5 +94,6 @@ void test9204669() {
    addChangeToData = ^() {
       return 'b';
    };
+   addChangeToData();
 }
 

@@ -4795,7 +4795,8 @@ Stmt *RewriteObjC::RewriteBlockDeclRefExpr(Expr *DeclRefExp) {
   
   
   // Need parens to enforce precedence.
-  ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), 
+  ParenExpr *PE = new (Context) ParenExpr(DeclRefExp->getExprLoc(), 
+                                          DeclRefExp->getExprLoc(), 
                                           ME);
   ReplaceStmt(DeclRefExp, PE);
   return PE;
