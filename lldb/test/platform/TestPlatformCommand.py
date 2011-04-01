@@ -20,7 +20,7 @@ class PlatformCommandTestCase(TestBase):
 
     def test_process_list(self):
         self.expect("platform process list",
-            substrs = ['PID', 'TRIPLE', 'NAME'])
+            substrs = ['PID', 'ARCH', 'NAME'])
 
     def test_status(self):
         self.expect("platform status",
