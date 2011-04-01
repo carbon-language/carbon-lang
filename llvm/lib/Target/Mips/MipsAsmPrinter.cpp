@@ -247,7 +247,32 @@ bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *
     if (isa<SwitchInst>(bb->getTerminator()))
       return false;
 
-  return AsmPrinter::isBlockOnlyReachableByFallthrough(MBB);
+  // If this is a landing pad, it isn't a fall through.  If it has no preds,
+  // then nothing falls through to it.
+  if (MBB->isLandingPad() || MBB->pred_empty())
+    return false;
+
+  // If there isn't exactly one predecessor, it can't be a fall through.
+  MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
+  ++PI2;
+ 
+  if (PI2 != MBB->pred_end())
+    return false;  
+
+  // The predecessor has to be immediately before this block.
+  if (!Pred->isLayoutSuccessor(MBB))
+    return false;
+   
+  // If the block is completely empty, then it definitely does fall through.
+  if (Pred->empty())
+    return true;
+  
+  // Otherwise, check the last instruction.
+  // Check if the last terminator is an unconditional branch.
+  MachineBasicBlock::const_iterator I = Pred->end();
+  while (I != Pred->begin() && !(--I)->getDesc().isTerminator());
+
+  return !I->getDesc().isBarrier();
 }
 
 // Print out an operand for an inline asm expression.
