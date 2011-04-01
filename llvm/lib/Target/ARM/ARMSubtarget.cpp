@@ -38,6 +38,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , ARMFPUType(None)
   , UseNEONForSinglePrecisionFP(false)
   , SlowFPVMLx(false)
+  , HasVMLxForwarding(false)
   , SlowFPBrcc(false)
   , IsThumb(isT)
   , ThumbMode(Thumb1)
