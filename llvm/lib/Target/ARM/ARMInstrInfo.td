@@ -939,6 +939,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
     bits<4> Rd;
     bits<4> Rn;
     bits<12> imm;
+    let Inst{31-27} = 0b1110; // non-predicated
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
     let Inst{11-0} = imm;
@@ -952,6 +953,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
     bits<4> Rd;
     bits<4> Rn;
     bits<4> Rm;
+    let Inst{31-27} = 0b1110; // non-predicated
     let Inst{11-4} = 0b00000000;
     let isCommutable = Commutable;
     let Inst{3-0} = Rm;
@@ -967,6 +969,7 @@ multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
     bits<4> Rd;
     bits<4> Rn;
     bits<12> shift;
+    let Inst{31-27} = 0b1110; // non-predicated
     let Inst{11-0} = shift;
     let Inst{15-12} = Rd;
     let Inst{19-16} = Rn;
