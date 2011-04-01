@@ -9,7 +9,7 @@
 
 define i64 @t(i64 %a) nounwind readonly {
 entry:
-;V6:   ldrd r2, [r2]
+;V6:   ldrd r2, r3, [r2]
 
 ;V5:   ldr r{{[0-9]+}}, [r2]
 ;V5:   ldr r{{[0-9]+}}, [r2, #4]

@@ -1649,15 +1649,11 @@ def LDRSB : AI3ld<0b1101, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1,
-    isCodeGenOnly = 1 in { // $dst2 doesn't exist in asmstring?
-// FIXME: $dst2 isn't in the asm string as it's implied by $Rd (dst2 = Rd+1)
-//        how to represent that such that tblgen is happy and we don't
-//        mark this codegen only?
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
                  (ins addrmode3:$addr), LdMiscFrm,
-                 IIC_iLoad_d_r, "ldrd", "\t$Rd, $addr",
+                 IIC_iLoad_d_r, "ldrd", "\t$Rd, $dst2, $addr",
                  []>, Requires<[IsARM, HasV5TE]>;
 }
 
@@ -1792,11 +1788,10 @@ def STRH : AI3str<0b1011, (outs), (ins GPR:$Rt, addrmode3:$addr), StMiscFrm,
                [(truncstorei16 GPR:$Rt, addrmode3:$addr)]>;
 
 // Store doubleword
-let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1,
-    isCodeGenOnly = 1 in  // $src2 doesn't exist in asm string
-def STRD : AI3str<0b1111, (outs), (ins GPR:$src1, GPR:$src2, addrmode3:$addr),
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in
+def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
                StMiscFrm, IIC_iStore_d_r,
-               "strd", "\t$src1, $addr", []>, Requires<[IsARM, HasV5TE]>;
+               "strd", "\t$Rt, $src2, $addr", []>, Requires<[IsARM, HasV5TE]>;
 
 // Indexed stores
 def STR_PRE  : AI2stridx<0, 1, (outs GPR:$Rn_wb),
