@@ -97,3 +97,11 @@ void test9204669() {
    addChangeToData();
 }
 
+void test9204669_1() {
+   __attribute__((__blocks__(byref))) void (^addChangeToData)();
+
+   addChangeToData = ^() {
+    addChangeToData();
+   };
+}
+

@@ -4330,20 +4330,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
       S += "  ";
       std::string FieldName = (*I)->getNameAsString();
       std::string ArgName = "_" + FieldName;
-      // Handle nested closure invocation. For example:
-      //
-      //   void (^myImportedBlock)(void);
-      //   myImportedBlock  = ^(void) { setGlobalInt(x + y); };
-      //
-      //   void (^anotherBlock)(void);
-      //   anotherBlock = ^(void) {
-      //     myImportedBlock(); // import and invoke the closure
-      //   };
-      //
-      if (isTopLevelBlockPointerType((*I)->getType())) {
-        S += "struct __block_impl *";
-        Constructor += ", void *" + ArgName;
-      } else {
+      {
         std::string TypeString;
         RewriteByRefString(TypeString, FieldName, (*I));
         TypeString += " *";
@@ -4381,11 +4368,7 @@ std::string RewriteObjC::SynthesizeBlockImpl(BlockExpr *CE, std::string Tag,
       }
       else
         Constructor += ", ";
-      if (isTopLevelBlockPointerType((*I)->getType()))
-        Constructor += Name + "((struct __block_impl *)_" 
-                        + Name + "->__forwarding)";
-      else
-        Constructor += Name + "(_" + Name + "->__forwarding)";
+      Constructor += Name + "(_" + Name + "->__forwarding)";
     }
     
     Constructor += " {\n";
