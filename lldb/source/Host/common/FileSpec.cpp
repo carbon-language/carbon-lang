@@ -904,7 +904,9 @@ FileSpec::EnumerateDirectory
                 case DT_REG:        file_type = eFileTypeRegular;       call_callback = find_files;         break;
                 case DT_LNK:        file_type = eFileTypeSymbolicLink;  call_callback = find_other;         break;
                 case DT_SOCK:       file_type = eFileTypeSocket;        call_callback = find_other;         break;
+#if !defined(__OpenBSD__)
                 case DT_WHT:        file_type = eFileTypeOther;         call_callback = find_other;         break;
+#endif
                 }
 
                 if (call_callback)

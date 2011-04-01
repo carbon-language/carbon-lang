@@ -18,7 +18,7 @@
 
 #include "lldb/Host/linux/Config.h"
 
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 
 #include "lldb/Host/freebsd/Config.h"
 

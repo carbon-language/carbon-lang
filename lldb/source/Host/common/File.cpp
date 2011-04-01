@@ -12,6 +12,7 @@
 
 #include <fcntl.h>
 #include <stdarg.h>
+#include <sys/stat.h>
 
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Config.h"
