@@ -2297,8 +2297,12 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
                                                 // Casting from vector
       return DestPTy->getBitWidth() == SrcPTy->getBitWidth();
-    } else {                                    // Casting from something else
-      return DestPTy->getBitWidth() == SrcBits;
+    } else if (DestPTy->getBitWidth() == SrcBits) {
+      return true;                              // float/int -> vector
+    } else if (SrcTy->isX86_MMXTy()) {
+      return DestPTy->getBitWidth() == 64;      // MMX to 64-bit vector
+    } else {
+      return false;
     }
   } else if (DestTy->isPointerTy()) {        // Casting to pointer
     if (SrcTy->isPointerTy()) {              // Casting from pointer
@@ -2308,8 +2312,12 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
     } else {                                    // Casting from something else
       return false;
     }
-  } else if (DestTy->isX86_MMXTy()) {     
-    return SrcBits == 64;
+  } else if (DestTy->isX86_MMXTy()) {
+    if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
+      return SrcPTy->getBitWidth() == 64;       // 64-bit vector to MMX
+    } else {
+      return false;
+    }
   } else {                                      // Casting to something else
     return false;
   }
