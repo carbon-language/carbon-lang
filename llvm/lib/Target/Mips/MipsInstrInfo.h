@@ -143,10 +143,10 @@ namespace MipsII {
     /// for the relocatable object file being produced.
     MO_GPREL,
 
-    /// MO_ABS_HILO - Represents the hi or low part of an absolute symbol
+    /// MO_ABS_HI/LO - Represents the hi or low part of an absolute symbol
     /// address.
-    MO_ABS_HILO
-
+    MO_ABS_HI,
+    MO_ABS_LO
   };
 }
 

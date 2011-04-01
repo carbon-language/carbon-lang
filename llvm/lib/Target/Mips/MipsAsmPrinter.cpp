@@ -298,22 +298,9 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   switch(MO.getTargetFlags()) {
   case MipsII::MO_GPREL:    O << "%gp_rel("; break;
   case MipsII::MO_GOT_CALL: O << "%call16("; break;
-  case MipsII::MO_GOT: {
-    const MachineOperand &LastMO = MI->getOperand(opNum-1);
-    bool LastMOIsGP = LastMO.getType() == MachineOperand::MO_Register
-                      && LastMO.getReg() == Mips::GP;
-    if (MI->getOpcode() == Mips::LW || LastMOIsGP)
-      O << "%got(";
-    else
-      O << "%lo(";
-    break;
-  }
-  case MipsII::MO_ABS_HILO:
-    if (MI->getOpcode() == Mips::LUi)
-      O << "%hi(";
-    else
-      O << "%lo(";
-    break;
+  case MipsII::MO_GOT:      O << "%got(";    break;
+  case MipsII::MO_ABS_HI:   O << "%hi(";     break;
+  case MipsII::MO_ABS_LO:   O << "%lo(";     break;
   }
 
   switch (MO.getType()) {

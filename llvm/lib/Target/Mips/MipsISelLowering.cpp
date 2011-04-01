@@ -769,12 +769,13 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
       return DAG.getNode(ISD::ADD, dl, MVT::i32, GOT, GPRelNode);
     }
     // %hi/%lo relocation
-    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                            MipsII::MO_ABS_HILO);
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GA, 1);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
+    SDValue GAHi = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_ABS_HI);
+    SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_ABS_LO);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GAHi, 1);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
-
   } else {
     SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
                                             MipsII::MO_GOT);
@@ -785,7 +786,9 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
     // a load from got/GP is necessary for PIC to work.
     if (!GV->hasLocalLinkage() || isa<Function>(GV))
       return ResNode;
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GA);
+    SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_ABS_LO);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
   }
 
@@ -806,7 +809,7 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
     SDValue BAGOTOffset = DAG.getBlockAddress(BA, MVT::i32, true,
                                               MipsII::MO_GOT);
     SDValue BALOOffset = DAG.getBlockAddress(BA, MVT::i32, true,
-                                             MipsII::MO_ABS_HILO);
+                                             MipsII::MO_ABS_LO);
     SDValue Load = DAG.getLoad(MVT::i32, dl,
                                DAG.getEntryNode(), BAGOTOffset,
                                MachinePointerInfo(), false, false, 0);
@@ -830,7 +833,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  unsigned char OpFlag = IsPIC ? MipsII::MO_GOT : MipsII::MO_ABS_HILO;
+  unsigned char OpFlag = IsPIC ? MipsII::MO_GOT : MipsII::MO_ABS_HI;
 
   EVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
@@ -845,7 +848,8 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
                          MachinePointerInfo(),
                          false, false, 0);
 
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTI);
+  SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_LO);
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTILo);
   ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
   return ResNode;
@@ -871,18 +875,22 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   //  ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode);
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
-    SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                      N->getOffset(), MipsII::MO_ABS_HILO);
-    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CP);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
+    SDValue CPHi = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
+                                             N->getOffset(), MipsII::MO_ABS_HI);
+    SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
+                                             N->getOffset(), MipsII::MO_ABS_LO);
+    SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CPHi);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
   } else {
     SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                      N->getOffset(), MipsII::MO_GOT);
+                                           N->getOffset(), MipsII::MO_GOT);
     SDValue Load = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(),
                                CP, MachinePointerInfo::getConstantPool(),
                                false, false, 0);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CP);
+    SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
+                                             N->getOffset(), MipsII::MO_ABS_LO);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
   }
 
