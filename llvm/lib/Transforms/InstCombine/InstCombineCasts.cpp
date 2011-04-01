@@ -882,10 +882,6 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
   Value *Op0 = ICI->getOperand(0), *Op1 = ICI->getOperand(1);
   ICmpInst::Predicate Pred = ICI->getPredicate();
 
-  // Transforming icmps with more than one use is not profitable.
-  if (!ICI->hasOneUse())
-    return 0;
-
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
     // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
@@ -906,7 +902,8 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
     // If we know that only one bit of the LHS of the icmp can be set and we
     // have an equality comparison with zero or a power of 2, we can transform
     // the icmp and sext into bitwise/integer operations.
-    if (ICI->isEquality() && (Op1C->isZero() || Op1C->getValue().isPowerOf2())){
+    if (ICI->hasOneUse() &&
+        ICI->isEquality() && (Op1C->isZero() || Op1C->getValue().isPowerOf2())){
       unsigned BitWidth = Op1C->getType()->getBitWidth();
       APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
       APInt TypeMask(APInt::getAllOnesValue(BitWidth));
@@ -915,6 +912,9 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
       APInt KnownZeroMask(~KnownZero);
       if (KnownZeroMask.isPowerOf2()) {
         Value *In = ICI->getOperand(0);
+
+        assert((Op1C->isZero() || Op1C->getValue() == KnownZeroMask) &&
+               "Constant icmp not folded?");
 
         if (!Op1C->isZero() == (Pred == ICmpInst::ICMP_NE)) {
           // sext ((x & 2^n) == 0)   -> (x >> n) - 1
@@ -932,7 +932,7 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
                                   "sext");
         } else {
           // sext ((x & 2^n) != 0)   -> (x << bitwidth-n) a>> bitwidth-1
-          // sext ((x & 2^n) != 2^n) -> (x << bitwidth-n) a>> bitwidth-1
+          // sext ((x & 2^n) == 2^n) -> (x << bitwidth-n) a>> bitwidth-1
           unsigned ShiftAmt = KnownZeroMask.countLeadingZeros();
           // Perform a left shift to place the desired bit in the MSB.
           if (ShiftAmt)
