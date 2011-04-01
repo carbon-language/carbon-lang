@@ -1650,24 +1650,27 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
     unsigned BrOffset = GetOffsetOf(Br.MI) + 4 - 2;
     unsigned DestOffset = BBOffsets[DestBB->getNumber()];
     if (BrOffset < DestOffset && (DestOffset - BrOffset) <= 126) {
-      MachineBasicBlock::iterator CmpMI = Br.MI; --CmpMI;
-      if (CmpMI->getOpcode() == ARM::tCMPi8) {
-        unsigned Reg = CmpMI->getOperand(0).getReg();
-        Pred = llvm::getInstrPredicate(CmpMI, PredReg);
-        if (Pred == ARMCC::AL &&
-            CmpMI->getOperand(1).getImm() == 0 &&
-            isARMLowRegister(Reg)) {
-          MachineBasicBlock *MBB = Br.MI->getParent();
-          MachineInstr *NewBR =
-            BuildMI(*MBB, CmpMI, Br.MI->getDebugLoc(), TII->get(NewOpc))
-            .addReg(Reg).addMBB(DestBB, Br.MI->getOperand(0).getTargetFlags());
-          CmpMI->eraseFromParent();
-          Br.MI->eraseFromParent();
-          Br.MI = NewBR;
-          BBSizes[MBB->getNumber()] -= 2;
-          AdjustBBOffsetsAfter(MBB, -2);
-          ++NumCBZ;
-          MadeChange = true;
+      MachineBasicBlock::iterator CmpMI = Br.MI;
+      if (CmpMI != Br.MI->getParent()->begin()) {
+        --CmpMI;
+        if (CmpMI->getOpcode() == ARM::tCMPi8) {
+          unsigned Reg = CmpMI->getOperand(0).getReg();
+          Pred = llvm::getInstrPredicate(CmpMI, PredReg);
+          if (Pred == ARMCC::AL &&
+              CmpMI->getOperand(1).getImm() == 0 &&
+              isARMLowRegister(Reg)) {
+            MachineBasicBlock *MBB = Br.MI->getParent();
+            MachineInstr *NewBR =
+              BuildMI(*MBB, CmpMI, Br.MI->getDebugLoc(), TII->get(NewOpc))
+              .addReg(Reg).addMBB(DestBB,Br.MI->getOperand(0).getTargetFlags());
+            CmpMI->eraseFromParent();
+            Br.MI->eraseFromParent();
+            Br.MI = NewBR;
+            BBSizes[MBB->getNumber()] -= 2;
+            AdjustBBOffsetsAfter(MBB, -2);
+            ++NumCBZ;
+            MadeChange = true;
+          }
         }
       }
     }
