@@ -1211,9 +1211,7 @@ tryParseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 /// tryParseMemMode2Operand - Try to parse memory addressing mode 2 operand.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 tryParseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  SMLoc S = Parser.getTok().getLoc();
-  const AsmToken &Tok = Parser.getTok();
-  assert(Tok.is(AsmToken::LBrac) && "Token is not a \"[\"");
+  assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
 
   if (ParseMemory(Operands, ARMII::AddrMode2))
     return MatchOperand_NoMatch;
