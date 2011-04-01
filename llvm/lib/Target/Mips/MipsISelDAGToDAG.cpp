@@ -171,11 +171,6 @@ SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
     }
   }
 
-  if (isa<BlockAddressSDNode>(Addr.getOperand(1))) {
-    Base = Addr.getOperand(0);
-    Offset = Addr.getOperand(1);
-  }
-
   Base   = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
