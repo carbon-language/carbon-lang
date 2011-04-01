@@ -876,6 +876,46 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
   return 0;
 }
 
+/// transformSExtICmp - Transform (sext icmp) to bitwise / integer operations
+/// in order to eliminate the icmp.
+Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
+  Value *Op0 = ICI->getOperand(0), *Op1 = ICI->getOperand(1);
+  ICmpInst::Predicate Pred = ICI->getPredicate();
+
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+    // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
+    // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
+    if ((Pred == ICmpInst::ICMP_SLT && Op1C->isZero()) ||
+        (Pred == ICmpInst::ICMP_SGT && Op1C->isAllOnesValue())) {
+
+      Value *Sh = ConstantInt::get(Op0->getType(),
+                                   Op0->getType()->getScalarSizeInBits()-1);
+      Value *In = Builder->CreateAShr(Op0, Sh, Op0->getName()+".lobit");
+      if (In->getType() != CI.getType())
+        In = Builder->CreateIntCast(In, CI.getType(), true/*SExt*/, "tmp");
+
+      if (Pred == ICmpInst::ICMP_SGT)
+        In = Builder->CreateNot(In, In->getName()+".not");
+      return ReplaceInstUsesWith(CI, In);
+    }
+  }
+
+  // vector (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed.
+  if (const VectorType *VTy = dyn_cast<VectorType>(CI.getType())) {
+    if (Pred == ICmpInst::ICMP_SLT && match(Op1, m_Zero()) &&
+        Op0->getType() == CI.getType()) {
+      const Type *EltTy = VTy->getElementType();
+
+      // splat the shift constant to a constant vector.
+      Constant *VSh = ConstantInt::get(VTy, EltTy->getScalarSizeInBits()-1);
+      Value *In = Builder->CreateAShr(Op0, VSh, Op0->getName()+".lobit");
+      return ReplaceInstUsesWith(CI, In);
+    }
+  }
+
+  return 0;
+}
+
 /// CanEvaluateSExtd - Return true if we can take the specified value
 /// and return it as type Ty without inserting any new casts and without
 /// changing the value of the common low bits.  This is used by code that tries
@@ -999,44 +1039,9 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
       Value *Res = Builder->CreateShl(TI->getOperand(0), ShAmt, "sext");
       return BinaryOperator::CreateAShr(Res, ShAmt);
     }
-  
-  
-  // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
-  // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
-  {
-  ICmpInst::Predicate Pred; Value *CmpLHS; ConstantInt *CmpRHS;
-  if (match(Src, m_ICmp(Pred, m_Value(CmpLHS), m_ConstantInt(CmpRHS)))) {
-    // sext (x <s  0) to i32 --> x>>s31       true if signbit set.
-    // sext (x >s -1) to i32 --> (x>>s31)^-1  true if signbit clear.
-    if ((Pred == ICmpInst::ICMP_SLT && CmpRHS->isZero()) ||
-        (Pred == ICmpInst::ICMP_SGT && CmpRHS->isAllOnesValue())) {
-      Value *Sh = ConstantInt::get(CmpLHS->getType(),
-                                   CmpLHS->getType()->getScalarSizeInBits()-1);
-      Value *In = Builder->CreateAShr(CmpLHS, Sh, CmpLHS->getName()+".lobit");
-      if (In->getType() != CI.getType())
-        In = Builder->CreateIntCast(In, CI.getType(), true/*SExt*/, "tmp");
-      
-      if (Pred == ICmpInst::ICMP_SGT)
-        In = Builder->CreateNot(In, In->getName()+".not");
-      return ReplaceInstUsesWith(CI, In);
-    }
-  }
-  }
 
-  // vector (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed.
-  if (const VectorType *VTy = dyn_cast<VectorType>(DestTy)) {
-    ICmpInst::Predicate Pred; Value *CmpLHS;
-    if (match(Src, m_ICmp(Pred, m_Value(CmpLHS), m_Zero()))) {
-      if (Pred == ICmpInst::ICMP_SLT && CmpLHS->getType() == DestTy) {
-        const Type *EltTy = VTy->getElementType();
-
-        // splat the shift constant to a constant vector.
-        Constant *VSh = ConstantInt::get(VTy, EltTy->getScalarSizeInBits()-1);
-        Value *In = Builder->CreateAShr(CmpLHS, VSh,CmpLHS->getName()+".lobit");
-        return ReplaceInstUsesWith(CI, In);
-      }
-    }
-  }
+  if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src))
+    return transformSExtICmp(ICI, CI);
 
   // If the input is a shl/ashr pair of a same constant, then this is a sign
   // extension from a smaller value.  If we could trust arbitrary bitwidth
