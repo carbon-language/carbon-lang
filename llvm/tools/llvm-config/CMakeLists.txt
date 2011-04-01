@@ -92,10 +92,6 @@ add_custom_command(OUTPUT ${FINAL_LIBDEPS}
   COMMENT "Checking for cyclic dependencies between LLVM libraries.")
 
 set(C_FLGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
-message(STATUS "C_FLGS: ${C_FLGS}")
-message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
-message(STATUS "LLVM_DEFINITIONS: ${LLVM_DEFINITIONS}")
-message(STATUS "other: ${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
 set(CXX_FLGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 set(CPP_FLGS "${CMAKE_CPP_FLAGS} ${CMAKE_CPP_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${LLVM_DEFINITIONS}")
 
