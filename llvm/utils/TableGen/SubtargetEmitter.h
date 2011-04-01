@@ -48,7 +48,8 @@ class SubtargetEmitter : public TableGenBackend {
                      std::vector<Record*> &ItinClassList,
                      std::vector<std::vector<InstrItinerary> > &ProcList);
   void EmitProcessorData(raw_ostream &OS,
-                       std::vector<std::vector<InstrItinerary> > &ProcList);
+                         std::vector<Record*> &ItinClassList,
+                         std::vector<std::vector<InstrItinerary> > &ProcList);
   void EmitProcessorLookup(raw_ostream &OS);
   void EmitData(raw_ostream &OS);
   void ParseFeaturesFunction(raw_ostream &OS);
