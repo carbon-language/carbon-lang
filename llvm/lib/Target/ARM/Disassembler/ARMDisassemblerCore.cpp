@@ -1098,10 +1098,11 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
       OpIdx += 1;
     }
 
-    // Disassemble the 12-bit immediate offset.
+    // Disassemble the 12-bit immediate offset, which is the second operand in
+    // $addrmode_imm12 => (ops GPR:$base, i32imm:$offsimm).
+    // 
     unsigned Imm12 = slice(insn, 11, 0);
-    unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, Imm12, ARM_AM::no_shift,
-                                        IndexMode);
+    int Offset = AddrOpcode == ARM_AM::add ? 1 * Imm12 : -1 * Imm12;
     MI.addOperand(MCOperand::CreateImm(Offset));
     OpIdx += 1;
   } else {
