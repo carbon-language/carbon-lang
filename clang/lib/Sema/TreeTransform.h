@@ -4521,6 +4521,7 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
     // Copy information relevant to the template specialization.
     TemplateSpecializationTypeLoc NamedTL
       = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
+    NamedTL.setTemplateNameLoc(TL.getNameLoc());
     NamedTL.setLAngleLoc(TL.getLAngleLoc());
     NamedTL.setRAngleLoc(TL.getRAngleLoc());
     for (unsigned I = 0, E = NewTemplateArgs.size(); I != E; ++I)
@@ -4535,14 +4536,15 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
       = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
     SpecTL.setKeywordLoc(TL.getKeywordLoc());
     SpecTL.setQualifierLoc(QualifierLoc);
+    SpecTL.setNameLoc(TL.getNameLoc());
     SpecTL.setLAngleLoc(TL.getLAngleLoc());
     SpecTL.setRAngleLoc(TL.getRAngleLoc());
-    SpecTL.setNameLoc(TL.getNameLoc());
     for (unsigned I = 0, E = NewTemplateArgs.size(); I != E; ++I)
       SpecTL.setArgLocInfo(I, NewTemplateArgs[I].getLocInfo());
   } else {
     TemplateSpecializationTypeLoc SpecTL
       = TLB.push<TemplateSpecializationTypeLoc>(Result);
+    SpecTL.setTemplateNameLoc(TL.getNameLoc());
     SpecTL.setLAngleLoc(TL.getLAngleLoc());
     SpecTL.setRAngleLoc(TL.getRAngleLoc());
     for (unsigned I = 0, E = NewTemplateArgs.size(); I != E; ++I)
