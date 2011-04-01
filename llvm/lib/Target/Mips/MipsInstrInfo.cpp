@@ -218,103 +218,42 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 // Branch Analysis
 //===----------------------------------------------------------------------===//
 
-/// GetCondFromBranchOpc - Return the Mips CC that matches
-/// the correspondent Branch instruction opcode.
-static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
-{
-  switch (BrOpc) {
-  default: return Mips::COND_INVALID;
-  case Mips::BEQ  : return Mips::COND_E;
-  case Mips::BNE  : return Mips::COND_NE;
-  case Mips::BGTZ : return Mips::COND_GZ;
-  case Mips::BGEZ : return Mips::COND_GEZ;
-  case Mips::BLTZ : return Mips::COND_LZ;
-  case Mips::BLEZ : return Mips::COND_LEZ;
+static unsigned GetAnalyzableBrOpc(unsigned Opc) {
+  return (Opc == Mips::BEQ  || Opc == Mips::BNE  || Opc == Mips::BGTZ ||
+          Opc == Mips::BGEZ || Opc == Mips::BLTZ || Opc == Mips::BLEZ ||
+          Opc == Mips::BC1T || Opc == Mips::BC1F || Opc == Mips::J) ? Opc : 0;
+}
 
-  // We dont do fp branch analysis yet!
-  case Mips::BC1T :
-  case Mips::BC1F : return Mips::COND_INVALID;
+/// GetOppositeBranchOpc - Return the inverse of the specified
+/// opcode, e.g. turning BEQ to BNE.
+unsigned Mips::GetOppositeBranchOpc(unsigned Opc)
+{
+  switch (Opc) {
+  default: llvm_unreachable("Illegal opcode!");
+  case Mips::BEQ  : return Mips::BNE;
+  case Mips::BNE  : return Mips::BEQ;
+  case Mips::BGTZ : return Mips::BLEZ;
+  case Mips::BGEZ : return Mips::BLTZ;
+  case Mips::BLTZ : return Mips::BGEZ;
+  case Mips::BLEZ : return Mips::BGTZ;
+  case Mips::BC1T : return Mips::BC1F;
+  case Mips::BC1F : return Mips::BC1T;
   }
 }
 
-/// GetCondBranchFromCond - Return the Branch instruction
-/// opcode that matches the cc.
-unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
-{
-  switch (CC) {
-  default: llvm_unreachable("Illegal condition code!");
-  case Mips::COND_E   : return Mips::BEQ;
-  case Mips::COND_NE  : return Mips::BNE;
-  case Mips::COND_GZ  : return Mips::BGTZ;
-  case Mips::COND_GEZ : return Mips::BGEZ;
-  case Mips::COND_LZ  : return Mips::BLTZ;
-  case Mips::COND_LEZ : return Mips::BLEZ;
+static void AnalyzeCondBr(const MachineInstr* Inst, unsigned Opc,
+                          MachineBasicBlock *&BB,
+                          SmallVectorImpl<MachineOperand>& Cond) {
+  assert(GetAnalyzableBrOpc(Opc) && "Not an analyzable branch");
+  int NumOp = Inst->getNumExplicitOperands();
+  
+  // for both int and fp branches, the last explicit operand is the
+  // MBB.
+  BB = Inst->getOperand(NumOp-1).getMBB();
+  Cond.push_back(MachineOperand::CreateImm(Opc));
 
-  case Mips::FCOND_F:
-  case Mips::FCOND_UN:
-  case Mips::FCOND_OEQ:
-  case Mips::FCOND_UEQ:
-  case Mips::FCOND_OLT:
-  case Mips::FCOND_ULT:
-  case Mips::FCOND_OLE:
-  case Mips::FCOND_ULE:
-  case Mips::FCOND_SF:
-  case Mips::FCOND_NGLE:
-  case Mips::FCOND_SEQ:
-  case Mips::FCOND_NGL:
-  case Mips::FCOND_LT:
-  case Mips::FCOND_NGE:
-  case Mips::FCOND_LE:
-  case Mips::FCOND_NGT: return Mips::BC1T;
-
-  case Mips::FCOND_T:
-  case Mips::FCOND_OR:
-  case Mips::FCOND_UNE:
-  case Mips::FCOND_ONE:
-  case Mips::FCOND_UGE:
-  case Mips::FCOND_OGE:
-  case Mips::FCOND_UGT:
-  case Mips::FCOND_OGT:
-  case Mips::FCOND_ST:
-  case Mips::FCOND_GLE:
-  case Mips::FCOND_SNE:
-  case Mips::FCOND_GL:
-  case Mips::FCOND_NLT:
-  case Mips::FCOND_GE:
-  case Mips::FCOND_NLE:
-  case Mips::FCOND_GT: return Mips::BC1F;
-  }
-}
-
-/// GetOppositeBranchCondition - Return the inverse of the specified
-/// condition, e.g. turning COND_E to COND_NE.
-Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC)
-{
-  switch (CC) {
-  default: llvm_unreachable("Illegal condition code!");
-  case Mips::COND_E   : return Mips::COND_NE;
-  case Mips::COND_NE  : return Mips::COND_E;
-  case Mips::COND_GZ  : return Mips::COND_LEZ;
-  case Mips::COND_GEZ : return Mips::COND_LZ;
-  case Mips::COND_LZ  : return Mips::COND_GEZ;
-  case Mips::COND_LEZ : return Mips::COND_GZ;
-  case Mips::FCOND_F  : return Mips::FCOND_T;
-  case Mips::FCOND_UN : return Mips::FCOND_OR;
-  case Mips::FCOND_OEQ: return Mips::FCOND_UNE;
-  case Mips::FCOND_UEQ: return Mips::FCOND_ONE;
-  case Mips::FCOND_OLT: return Mips::FCOND_UGE;
-  case Mips::FCOND_ULT: return Mips::FCOND_OGE;
-  case Mips::FCOND_OLE: return Mips::FCOND_UGT;
-  case Mips::FCOND_ULE: return Mips::FCOND_OGT;
-  case Mips::FCOND_SF:  return Mips::FCOND_ST;
-  case Mips::FCOND_NGLE:return Mips::FCOND_GLE;
-  case Mips::FCOND_SEQ: return Mips::FCOND_SNE;
-  case Mips::FCOND_NGL: return Mips::FCOND_GL;
-  case Mips::FCOND_LT:  return Mips::FCOND_NLT;
-  case Mips::FCOND_NGE: return Mips::FCOND_GE;
-  case Mips::FCOND_LE:  return Mips::FCOND_NLE;
-  case Mips::FCOND_NGT: return Mips::FCOND_GT;
-  }
+  for (int i=0; i<NumOp-1; i++)
+    Cond.push_back(Inst->getOperand(i));
 }
 
 bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
@@ -323,91 +262,92 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                   SmallVectorImpl<MachineOperand> &Cond,
                                   bool AllowModify) const
 {
-  // If the block has no terminators, it just falls into the block after it.
-  MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin())
-    return false;
-  --I;
-  while (I->isDebugValue()) {
-    if (I == MBB.begin())
-      return false;
-    --I;
-  }
-  if (!isUnpredicatedTerminator(I))
-    return false;
+  MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
 
-  // Get the last instruction in the block.
-  MachineInstr *LastInst = I;
+  // Skip all the debug instructions.
+  while (I != REnd && I->isDebugValue())
+    ++I;
+
+  if (I == REnd || !isUnpredicatedTerminator(&*I)) {
+    // If this block ends with no branches (it just falls through to its succ)
+    // just return false, leaving TBB/FBB null.
+    TBB = FBB = NULL;
+    return false;
+  }
+
+  MachineInstr *LastInst = &*I;
+  unsigned LastOpc = LastInst->getOpcode();
+
+  // Not an analyzable branch (must be an indirect jump).
+  if (!GetAnalyzableBrOpc(LastOpc))
+    return true;
+
+  // Get the second to last instruction in the block.
+  unsigned SecondLastOpc = 0;
+  MachineInstr *SecondLastInst = NULL;
+
+  if (++I != REnd) {
+    SecondLastInst = &*I;
+    SecondLastOpc = GetAnalyzableBrOpc(SecondLastInst->getOpcode());
+
+    // Not an analyzable branch (must be an indirect jump).
+    if (isUnpredicatedTerminator(SecondLastInst) && !SecondLastOpc)
+      return true;
+  }
 
   // If there is only one terminator instruction, process it.
-  unsigned LastOpc = LastInst->getOpcode();
-  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (!LastInst->getDesc().isBranch())
-      return true;
-
+  if (!SecondLastOpc) {
     // Unconditional branch
     if (LastOpc == Mips::J) {
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
 
-    Mips::CondCode BranchCode = GetCondFromBranchOpc(LastInst->getOpcode());
-    if (BranchCode == Mips::COND_INVALID)
-      return true;  // Can't handle indirect branch.
-
     // Conditional branch
-    // Block ends with fall-through condbranch.
-    if (LastOpc != Mips::COND_INVALID) {
-      int LastNumOp = LastInst->getNumOperands();
-
-      TBB = LastInst->getOperand(LastNumOp-1).getMBB();
-      Cond.push_back(MachineOperand::CreateImm(BranchCode));
-
-      for (int i=0; i<LastNumOp-1; i++) {
-        Cond.push_back(LastInst->getOperand(i));
-      }
-
-      return false;
-    }
+    AnalyzeCondBr(LastInst, LastOpc, TBB, Cond);
+    return false;
   }
 
-  // Get the instruction before it if it is a terminator.
-  MachineInstr *SecondLastInst = I;
-
+  // If we reached here, there are two branches.
   // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
+  if (++I != REnd && isUnpredicatedTerminator(&*I))
     return true;
 
-  // If the block ends with Mips::J and a Mips::BNE/Mips::BEQ, handle it.
-  unsigned SecondLastOpc    = SecondLastInst->getOpcode();
-  Mips::CondCode BranchCode = GetCondFromBranchOpc(SecondLastOpc);
+  // If second to last instruction is an unconditional branch,
+  // analyze it and remove the last instruction.
+  if (SecondLastOpc == Mips::J) {
+    // Return if the last instruction cannot be removed.
+    if (!AllowModify)
+      return true;
 
-  if (BranchCode != Mips::COND_INVALID && LastOpc == Mips::J) {
-    int SecondNumOp = SecondLastInst->getNumOperands();
-
-    TBB = SecondLastInst->getOperand(SecondNumOp-1).getMBB();
-    Cond.push_back(MachineOperand::CreateImm(BranchCode));
-
-    for (int i=0; i<SecondNumOp-1; i++) {
-      Cond.push_back(SecondLastInst->getOperand(i));
-    }
-
-    FBB = LastInst->getOperand(0).getMBB();
-    return false;
-  }
-
-  // If the block ends with two unconditional branches, handle it. The last
-  // one is not executed, so remove it.
-  if ((SecondLastOpc == Mips::J) && (LastOpc == Mips::J)) {
     TBB = SecondLastInst->getOperand(0).getMBB();
-    I = LastInst;
-    if (AllowModify)
-      I->eraseFromParent();
+    LastInst->eraseFromParent();
     return false;
   }
 
-  // Otherwise, can't handle this.
-  return true;
+  // Conditional branch followed by an unconditional branch.
+  // The last one must be unconditional.
+  if (LastOpc != Mips::J)
+    return true;
+
+  AnalyzeCondBr(SecondLastInst, SecondLastOpc, TBB, Cond);
+  FBB = LastInst->getOperand(0).getMBB();
+
+  return false;
+} 
+  
+void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
+                                MachineBasicBlock *TBB, DebugLoc DL,
+                                const SmallVectorImpl<MachineOperand>& Cond)
+  const {
+  unsigned Opc = Cond[0].getImm();
+  const TargetInstrDesc &TID = get(Opc);
+  MachineInstrBuilder MIB = BuildMI(&MBB, DL, TID);
+
+  for (unsigned i = 1; i < Cond.size(); ++i)
+    MIB.addReg(Cond[i].getReg());
+
+  MIB.addMBB(TBB);
 }
 
 unsigned MipsInstrInfo::
@@ -417,72 +357,53 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
              DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-  assert((Cond.size() == 3 || Cond.size() == 2 || Cond.size() == 0) &&
-         "Mips branch conditions can have two|three components!");
 
-  if (FBB == 0) { // One way branch.
-    if (Cond.empty()) {
-      // Unconditional branch?
-      BuildMI(&MBB, DL, get(Mips::J)).addMBB(TBB);
-    } else {
-      // Conditional branch.
-      unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
-      const TargetInstrDesc &TID = get(Opc);
-
-      if (TID.getNumOperands() == 3)
-        BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg())
-                          .addReg(Cond[2].getReg())
-                          .addMBB(TBB);
-      else
-        BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg())
-                          .addMBB(TBB);
-
-    }
-    return 1;
-  }
+  // # of condition operands:
+  //  Unconditional branches: 0
+  //  Floating point branches: 1 (opc)
+  //  Int BranchZero: 2 (opc, reg)
+  //  Int Branch: 3 (opc, reg0, reg1)
+  assert((Cond.size() <= 3) &&
+         "# of Mips branch conditions must be <= 3!");
 
   // Two-way Conditional branch.
-  unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
-  const TargetInstrDesc &TID = get(Opc);
+  if (FBB) {
+    BuildCondBr(MBB, TBB, DL, Cond);
+    BuildMI(&MBB, DL, get(Mips::J)).addMBB(FBB);
+    return 2;
+  }
 
-  if (TID.getNumOperands() == 3)
-    BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
-                      .addMBB(TBB);
-  else
-    BuildMI(&MBB, DL, TID).addReg(Cond[1].getReg()).addMBB(TBB);
-
-  BuildMI(&MBB, DL, get(Mips::J)).addMBB(FBB);
-  return 2;
+  // One way branch.
+  // Unconditional branch.
+  if (Cond.empty())
+    BuildMI(&MBB, DL, get(Mips::J)).addMBB(TBB);
+  else // Conditional branch.
+    BuildCondBr(MBB, TBB, DL, Cond);
+  return 1;
 }
 
 unsigned MipsInstrInfo::
 RemoveBranch(MachineBasicBlock &MBB) const
 {
-  MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return 0;
-  --I;
-  while (I->isDebugValue()) {
-    if (I == MBB.begin())
-      return 0;
-    --I;
-  }
-  if (I->getOpcode() != Mips::J &&
-      GetCondFromBranchOpc(I->getOpcode()) == Mips::COND_INVALID)
-    return 0;
+  MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
+  MachineBasicBlock::reverse_iterator FirstBr;
+  unsigned removed;
 
-  // Remove the branch.
-  I->eraseFromParent();
+  // Skip all the debug instructions.
+  while (I != REnd && I->isDebugValue())
+    ++I;
 
-  I = MBB.end();
+  FirstBr = I;
 
-  if (I == MBB.begin()) return 1;
-  --I;
-  if (GetCondFromBranchOpc(I->getOpcode()) == Mips::COND_INVALID)
-    return 1;
+  // Up to 2 branches are removed.
+  // Note that indirect branches are not removed.
+  for(removed = 0; I != REnd && removed < 2; ++I, ++removed)
+    if (!GetAnalyzableBrOpc(I->getOpcode()))
+      break;
 
-  // Remove the branch.
-  I->eraseFromParent();
-  return 2;
+  MBB.erase(I.base(), FirstBr.base());
+
+  return removed;
 }
 
 /// ReverseBranchCondition - Return the inverse opcode of the
@@ -490,9 +411,9 @@ RemoveBranch(MachineBasicBlock &MBB) const
 bool MipsInstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
 {
-  assert( (Cond.size() == 3 || Cond.size() == 2) &&
+  assert( (Cond.size() && Cond.size() <= 3) &&
           "Invalid Mips branch condition!");
-  Cond[0].setImm(GetOppositeBranchCondition((Mips::CondCode)Cond[0].getImm()));
+  Cond[0].setImm(Mips::GetOppositeBranchOpc(Cond[0].getImm()));
   return false;
 }
 

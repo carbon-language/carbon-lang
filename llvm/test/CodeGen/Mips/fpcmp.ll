@@ -10,9 +10,9 @@ entry:
 ; CHECK-MIPS32R2: c.olt.s
 ; CHECK-MIPS32R2: movt
 ; CHECK-MIPS1: c.olt.s
-; CHECK-MIPS1: bc1f
+; CHECK-MIPS1: bc1t
 ; CHECK-MIPS1: c.olt.s
-; CHECK-MIPS1: bc1f
+; CHECK-MIPS1: bc1t
   %cmp = fcmp olt float %f0, %f1
   %conv = zext i1 %cmp to i32
   %tmp2 = load i32* @g1, align 4
