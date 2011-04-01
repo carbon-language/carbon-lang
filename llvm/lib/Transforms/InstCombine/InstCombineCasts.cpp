@@ -883,8 +883,8 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
   ICmpInst::Predicate Pred = ICI->getPredicate();
 
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    // (x <s 0) ? -1 : 0 -> ashr x, 31   -> all ones if signed
-    // (x >s -1) ? -1 : 0 -> ashr x, 31  -> all ones if not signed
+    // (x <s  0) ? -1 : 0 -> ashr x, 31        -> all ones if negative
+    // (x >s -1) ? -1 : 0 -> not (ashr x, 31)  -> all ones if positive
     if ((Pred == ICmpInst::ICMP_SLT && Op1C->isZero()) ||
         (Pred == ICmpInst::ICMP_SGT && Op1C->isAllOnesValue())) {
 
