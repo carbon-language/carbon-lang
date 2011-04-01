@@ -1983,6 +1983,7 @@ def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
   bits<4> Rd;
   bits<4> Rm;
 
+  let Inst{19-16} = 0b0000;
   let Inst{11-4} = 0b00000000;
   let Inst{25} = 0;
   let Inst{3-0} = Rm;
