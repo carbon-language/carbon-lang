@@ -136,3 +136,51 @@ define i64 @test12(i32 %x) nounwind {
 ; CHECK: sext
 ; CHECK: ret
 }
+
+define i32 @test13(i32 %x) nounwind {
+  %and = and i32 %x, 8
+  %cmp = icmp eq i32 %and, 0
+  %ext = sext i1 %cmp to i32
+  ret i32 %ext
+; CHECK: @test13
+; CHECK-NEXT: %and = lshr i32 %x, 3
+; CHECK-NEXT: %1 = and i32 %and, 1
+; CHECK-NEXT: %sext = add i32 %1, -1
+; CHECK-NEXT: ret i32 %sext
+}
+
+define i32 @test14(i16 %x) nounwind {
+  %and = and i16 %x, 16
+  %cmp = icmp ne i16 %and, 16
+  %ext = sext i1 %cmp to i32
+  ret i32 %ext
+; CHECK: @test14
+; CHECK-NEXT: %and = lshr i16 %x, 4
+; CHECK-NEXT: %1 = and i16 %and, 1
+; CHECK-NEXT: %sext = add i16 %1, -1
+; CHECK-NEXT: %ext = sext i16 %sext to i32
+; CHECK-NEXT: ret i32 %ext
+}
+
+define i32 @test15(i32 %x) nounwind {
+  %and = and i32 %x, 16
+  %cmp = icmp ne i32 %and, 0
+  %ext = sext i1 %cmp to i32
+  ret i32 %ext
+; CHECK: @test15
+; CHECK-NEXT: %1 = shl i32 %x, 27
+; CHECK-NEXT: %sext = ashr i32 %1, 31
+; CHECK-NEXT: ret i32 %sext
+}
+
+define i32 @test16(i16 %x) nounwind {
+  %and = and i16 %x, 8
+  %cmp = icmp eq i16 %and, 8
+  %ext = sext i1 %cmp to i32
+  ret i32 %ext
+; CHECK: @test16
+; CHECK-NEXT: %1 = shl i16 %x, 12
+; CHECK-NEXT: %sext = ashr i16 %1, 15
+; CHECK-NEXT: %ext = sext i16 %sext to i32
+; CHECK-NEXT: ret i32 %ext
+}
