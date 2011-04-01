@@ -416,20 +416,21 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 // FIXME: This should be in a separate file.
 class DarwinARMAsmBackend : public ARMAsmBackend {
 public:
-  DarwinARMAsmBackend(const Target &T) : ARMAsmBackend(T) { }
-
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const;
+  const object::mach::CPUSubtypeARM Subtype;
+  DarwinARMAsmBackend(const Target &T, object::mach::CPUSubtypeARM st)
+    : ARMAsmBackend(T), Subtype(st) { }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    // FIXME: Subtarget info should be derived. Force v7 for now.
     return createMachObjectWriter(new ARMMachObjectWriter(
                                     /*Is64Bit=*/false,
                                     object::mach::CTM_ARM,
-                                    object::mach::CSARM_V7),
+                                    Subtype),
                                   OS,
                                   /*IsLittleEndian=*/true);
   }
+
+  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                  uint64_t Value) const;
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
     return false;
@@ -499,9 +500,14 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 
 TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                             const std::string &TT) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
-    return new DarwinARMAsmBackend(T);
+  Triple TheTriple(TT);
+  switch (TheTriple.getOS()) {
+  case Triple::Darwin: {
+    if (TheTriple.getArchName() == "armv6" ||
+        TheTriple.getArchName() == "thumbv6")
+      return new DarwinARMAsmBackend(T, object::mach::CSARM_V6);
+    return new DarwinARMAsmBackend(T, object::mach::CSARM_V7);
+  }
   case Triple::MinGW32:
   case Triple::Cygwin:
   case Triple::Win32:
