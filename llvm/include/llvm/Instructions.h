@@ -1910,7 +1910,7 @@ public:
            "All operands to PHI node must be the same type as the PHI node!");
     unsigned OpNo = NumOperands;
     if (OpNo+2 > ReservedSpace)
-      resizeOperands(0);  // Get more space!
+      growOperands();  // Get more space!
     // Initialize some new operands.
     NumOperands = OpNo+2;
     OperandList[OpNo] = V;
@@ -1960,7 +1960,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
  private:
-  void resizeOperands(unsigned NumOperands);
+  void growOperands();
 };
 
 template <>
@@ -2152,7 +2152,7 @@ class SwitchInst : public TerminatorInst {
   // Operand[2n+1] = BasicBlock to go to on match
   SwitchInst(const SwitchInst &SI);
   void init(Value *Value, BasicBlock *Default, unsigned NumReserved);
-  void resizeOperands(unsigned No);
+  void growOperands();
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
     return User::operator new(s, 0);
@@ -2304,7 +2304,7 @@ class IndirectBrInst : public TerminatorInst {
   // Operand[2n+1] = BasicBlock to go to on match
   IndirectBrInst(const IndirectBrInst &IBI);
   void init(Value *Address, unsigned NumDests);
-  void resizeOperands(unsigned No);
+  void growOperands();
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
     return User::operator new(s, 0);
