@@ -887,7 +887,7 @@ uint64_t
 DataExtractor::GetGNUEHPointer (uint32_t *offset_ptr, uint32_t eh_ptr_enc, lldb::addr_t pc_rel_addr, lldb::addr_t text_addr, lldb::addr_t data_addr)//, BSDRelocs *data_relocs) const
 {
     if (eh_ptr_enc == DW_EH_PE_omit)
-        return ULONG_LONG_MAX;  // Value isn't in the buffer...
+        return ULLONG_MAX;  // Value isn't in the buffer...
 
     uint64_t baseAddress = 0;
     uint64_t addressValue = 0;

@@ -4266,7 +4266,7 @@ ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type,
         if (member_type)
             *member_type = cast<ConstantArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
-            *size = cast<ConstantArrayType>(qual_type)->getSize().getLimitedValue(ULONG_LONG_MAX);
+            *size = cast<ConstantArrayType>(qual_type)->getSize().getLimitedValue(ULLONG_MAX);
         return true;
     case clang::Type::IncompleteArray:
         if (member_type)

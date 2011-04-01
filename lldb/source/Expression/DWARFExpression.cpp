@@ -2175,9 +2175,9 @@ DWARFExpression::Evaluate
                 stack.pop_back();
                 
                 Scalar &index_scalar = index_val.ResolveValue(exe_ctx, ast_context);
-                int64_t index = index_scalar.SLongLong(LONG_LONG_MAX);
+                int64_t index = index_scalar.SLongLong(LLONG_MAX);
                 
-                if (index == LONG_LONG_MAX)
+                if (index == LLONG_MAX)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Invalid array index.");

@@ -207,7 +207,7 @@ uint64_t
 DNBDataRef::GetDwarfEHPtr(offset_t *offset_ptr, uint32_t encoding) const
 {
     if (encoding == DW_EH_PE_omit)
-        return ULONG_LONG_MAX;    // Value isn't in the buffer...
+        return ULLONG_MAX;    // Value isn't in the buffer...
 
     uint64_t baseAddress = 0;
     uint64_t addressValue = 0;
