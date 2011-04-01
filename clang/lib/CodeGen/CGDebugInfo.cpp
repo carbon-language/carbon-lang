@@ -1226,6 +1226,14 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   } else if (Ty->isIncompleteArrayType()) {
     Size = 0;
     Align = CGM.getContext().getTypeAlign(Ty->getElementType());
+  } else if (Ty->isDependentSizedArrayType()) {
+    Size = 0;
+    Align = 0;
+  } else if (Ty->getElementType()->getTypeClass() 
+             == Type::TemplateSpecialization) {
+    // FIXME : Emit appropriate element type info.
+    Size = 0;
+    Align = 0;
   } else {
     // Size and align of the whole array, not the element type.
     Size = CGM.getContext().getTypeSize(Ty);
