@@ -1101,9 +1101,9 @@ private:
   ///   C-in-D's copy of A's vtable is never referenced, so this is not 
   ///   necessary.
   bool IsOverriderUsed(const CXXMethodDecl *Overrider,
-                       uint64_t BaseOffsetInLayoutClass,
+                       CharUnits BaseOffsetInLayoutClass,
                        const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                       uint64_t FirstBaseOffsetInLayoutClass) const;
+                       CharUnits FirstBaseOffsetInLayoutClass) const;
 
   
   /// AddMethods - Add the methods of this base subobject and all its
@@ -1500,9 +1500,9 @@ OverridesIndirectMethodInBases(const CXXMethodDecl *MD,
 
 bool 
 VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
-                               uint64_t BaseOffsetInLayoutClass,
+                               CharUnits BaseOffsetInLayoutClass,
                                const CXXRecordDecl *FirstBaseInPrimaryBaseChain,
-                               uint64_t FirstBaseOffsetInLayoutClass) const {
+                               CharUnits FirstBaseOffsetInLayoutClass) const {
   // If the base and the first base in the primary base chain have the same
   // offsets, then this overrider will be used.
   if (BaseOffsetInLayoutClass == FirstBaseOffsetInLayoutClass)
@@ -1540,7 +1540,7 @@ VTableBuilder::IsOverriderUsed(const CXXMethodDecl *Overrider,
 
       // Now check if this is the primary base that is not a primary base in the
       // most derived class.
-      if (LayoutClassLayout.getVBaseClassOffsetInBits(PrimaryBase) !=
+      if (LayoutClassLayout.getVBaseClassOffset(PrimaryBase) !=
           FirstBaseOffsetInLayoutClass) {
         // We found it, stop walking the chain.
         break;
@@ -1703,9 +1703,9 @@ VTableBuilder::AddMethods(BaseSubobject Base, CharUnits BaseOffsetInLayoutClass,
 
     // Check if this overrider is going to be used.
     const CXXMethodDecl *OverriderMD = Overrider.Method;
-    if (!IsOverriderUsed(OverriderMD, Context.toBits(BaseOffsetInLayoutClass),
+    if (!IsOverriderUsed(OverriderMD, BaseOffsetInLayoutClass,
                          FirstBaseInPrimaryBaseChain, 
-                         Context.toBits(FirstBaseOffsetInLayoutClass))) {
+                         FirstBaseOffsetInLayoutClass)) {
       Components.push_back(VTableComponent::MakeUnusedFunction(OverriderMD));
       continue;
     }
