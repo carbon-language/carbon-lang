@@ -729,9 +729,9 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, unsigned Depth) {
   // copying a sign bit (sdiv int_min, 2).
   if (match(V, m_LShr(m_Value(), m_Value())) ||
       match(V, m_UDiv(m_Value(), m_Value()))) {
-    BinaryOperator *BO = cast<BinaryOperator>(V);
-    if (BO->isExact())
-      return isPowerOfTwo(BO->getOperand(0), TD, Depth);
+    PossiblyExactOperator *PEO = cast<PossiblyExactOperator>(V);
+    if (PEO->isExact())
+      return isPowerOfTwo(PEO->getOperand(0), TD, Depth);
   }
 
   return false;
