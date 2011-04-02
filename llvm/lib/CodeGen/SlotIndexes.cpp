@@ -32,7 +32,7 @@ void SlotIndexes::getAnalysisUsage(AnalysisUsage &au) const {
 
 void SlotIndexes::releaseMemory() {
   mi2iMap.clear();
-  mbb2IdxMap.clear();
+  MBBRanges.clear();
   idx2MBBMap.clear();
   clearList();
 }
@@ -58,13 +58,15 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
          "Index list non-empty at initial numbering?");
   assert(idx2MBBMap.empty() &&
          "Index -> MBB mapping non-empty at initial numbering?");
-  assert(mbb2IdxMap.empty() &&
+  assert(MBBRanges.empty() &&
          "MBB -> Index mapping non-empty at initial numbering?");
   assert(mi2iMap.empty() &&
          "MachineInstr -> Index mapping non-empty at initial numbering?");
 
   functionSize = 0;
   unsigned index = 0;
+  MBBRanges.resize(mf->getNumBlockIDs());
+  idx2MBBMap.reserve(mf->size());
 
   push_back(createEntry(0, index));
 
@@ -94,10 +96,8 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
     // We insert one blank instructions between basic blocks.
     push_back(createEntry(0, index += SlotIndex::InstrDist));
 
-    SlotIndex blockEndIndex(back(), SlotIndex::LOAD);
-    mbb2IdxMap.insert(
-      std::make_pair(mbb, std::make_pair(blockStartIndex, blockEndIndex)));
-
+    MBBRanges[mbb->getNumber()].first = blockStartIndex;
+    MBBRanges[mbb->getNumber()].second = SlotIndex(back(), SlotIndex::LOAD);
     idx2MBBMap.push_back(IdxMBBPair(blockStartIndex, mbb));
   }
 
@@ -158,11 +158,9 @@ void SlotIndexes::dump() const {
     }
   }
 
-  for (MBB2IdxMap::const_iterator itr = mbb2IdxMap.begin();
-       itr != mbb2IdxMap.end(); ++itr) {
-    dbgs() << "MBB " << itr->first->getNumber() << " (" << itr->first << ") - ["
-           << itr->second.first << ", " << itr->second.second << "]\n";
-  }
+  for (unsigned i = 0, e = MBBRanges.size(); i != e; ++i)
+    dbgs() << "BB#" << i << "\t[" << MBBRanges[i].first << ';'
+           << MBBRanges[i].second << ")\n";
 }
 
 // Print a SlotIndex to a raw_ostream.
