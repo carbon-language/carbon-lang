@@ -706,7 +706,7 @@ CharUnits VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
 /// VCallAndVBaseOffsetBuilder - Class for building vcall and vbase offsets.
 class VCallAndVBaseOffsetBuilder {
 public:
-  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+  typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> 
     VBaseOffsetOffsetsMapTy;
 
 private:
@@ -937,7 +937,7 @@ VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
 
       CharUnits VBaseOffsetOffset = getCurrentOffsetOffset();
       VBaseOffsetOffsets.insert(
-          std::make_pair(BaseDecl, VBaseOffsetOffset.getQuantity()));
+          std::make_pair(BaseDecl, VBaseOffsetOffset));
 
       Components.push_back(
           VTableComponent::MakeVBaseOffset(Offset));
@@ -956,7 +956,7 @@ public:
   typedef llvm::SmallSetVector<const CXXRecordDecl *, 8> 
     PrimaryBasesSetVectorTy;
   
-  typedef llvm::DenseMap<const CXXRecordDecl *, int64_t> 
+  typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> 
     VBaseOffsetOffsetsMapTy;
   
   typedef llvm::DenseMap<BaseSubobject, uint64_t> 
@@ -1335,7 +1335,7 @@ ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
       if (Offset.DerivedClass == MostDerivedClass) {
         // We can get the offset offset directly from our map.
         Adjustment.VBaseOffsetOffset = 
-          VBaseOffsetOffsets.lookup(Offset.VirtualBase);
+          VBaseOffsetOffsets.lookup(Offset.VirtualBase).getQuantity();
       } else {
         Adjustment.VBaseOffsetOffset = 
           VTables.getVirtualBaseOffsetOffset(Offset.DerivedClass,
@@ -2177,8 +2177,9 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     for (VBaseOffsetOffsetsMapTy::const_iterator I = VBaseOffsetOffsets.begin(),
          E = VBaseOffsetOffsets.end(); I != E; ++I) {
       std::string ClassName = I->first->getQualifiedNameAsString();
-      int64_t OffsetOffset = I->second;
-      ClassNamesAndOffsets.insert(std::make_pair(ClassName, OffsetOffset));
+      CharUnits OffsetOffset = I->second;
+      ClassNamesAndOffsets.insert(
+          std::make_pair(ClassName, OffsetOffset.getQuantity()));
     }
     
     Out << "Virtual base offset offsets for '";
@@ -2450,7 +2451,8 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
     // Insert all types.
     ClassPairTy ClassPair(RD, I->first);
     
-    VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
+    VirtualBaseClassOffsetOffsets.insert(
+        std::make_pair(ClassPair, I->second.getQuantity()));
   }
   
   I = VirtualBaseClassOffsetOffsets.find(ClassPair);
@@ -2907,7 +2909,8 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
     // Insert all types.
     ClassPairTy ClassPair(RD, I->first);
     
-    VirtualBaseClassOffsetOffsets.insert(std::make_pair(ClassPair, I->second));
+    VirtualBaseClassOffsetOffsets.insert(
+        std::make_pair(ClassPair, I->second.getQuantity()));
   }
 }
 
