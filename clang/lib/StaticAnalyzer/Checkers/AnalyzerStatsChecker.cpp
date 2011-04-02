@@ -88,8 +88,8 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
   }
   
   output << " -> Total CFGBlocks: " << total << " | Unreachable CFGBlocks: "
-      << unreachable << " | Aborted Block: "
-      << (Eng.wasBlockAborted() ? "yes" : "no")
+      << unreachable << " | Exhausted Block: "
+      << (Eng.wasBlocksExhausted() ? "yes" : "no")
       << " | Empty WorkList: "
       << (Eng.hasEmptyWorkList() ? "yes" : "no");
 
@@ -97,10 +97,10 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
       D->getLocation());
 
   // Emit warning for each block we bailed out on
-  typedef CoreEngine::BlocksExhausted::const_iterator AbortedIterator;
+  typedef CoreEngine::BlocksExhausted::const_iterator ExhaustedIterator;
   const CoreEngine &CE = Eng.getCoreEngine();
-  for (AbortedIterator I = CE.blocks_aborted_begin(),
-      E = CE.blocks_aborted_end(); I != E; ++I) {
+  for (ExhaustedIterator I = CE.blocks_exhausted_begin(),
+      E = CE.blocks_exhausted_end(); I != E; ++I) {
     const BlockEdge &BE =  I->first;
     const CFGBlock *Exit = BE.getDst();
     const CFGElement &CE = Exit->front();

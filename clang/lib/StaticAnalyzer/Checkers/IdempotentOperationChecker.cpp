@@ -534,9 +534,9 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
   CFGReverseBlockReachabilityAnalysis *CRA = AC->getCFGReachablityAnalysis();
   
   // Test for reachability from any aborted blocks to this block
-  typedef CoreEngine::BlocksExhausted::const_iterator AbortedIterator;
-  for (AbortedIterator I = CE.blocks_aborted_begin(),
-      E = CE.blocks_aborted_end(); I != E; ++I) {
+  typedef CoreEngine::BlocksExhausted::const_iterator ExhaustedIterator;
+  for (ExhaustedIterator I = CE.blocks_exhausted_begin(),
+      E = CE.blocks_exhausted_end(); I != E; ++I) {
     const BlockEdge &BE =  I->first;
 
     // The destination block on the BlockEdge is the first block that was not
@@ -547,6 +547,15 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
     // While technically reachable, it means we aborted the analysis on
     // a path that included that block.
     const CFGBlock *destBlock = BE.getDst();
+    if (destBlock == CB || CRA->isReachable(destBlock, CB))
+      return false;
+  }
+
+  // Test for reachability from blocks we just gave up on.
+  typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  for (AbortedIterator I = CE.blocks_aborted_begin(),
+       E = CE.blocks_aborted_end(); I != E; ++I) {
+    const CFGBlock *destBlock = I->first;
     if (destBlock == CB || CRA->isReachable(destBlock, CB))
       return false;
   }

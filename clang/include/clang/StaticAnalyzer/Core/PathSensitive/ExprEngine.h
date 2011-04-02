@@ -213,11 +213,9 @@ public:
   const SymbolManager& getSymbolManager() const { return SymMgr; }
 
   // Functions for external checking of whether we have unfinished work
-  bool wasBlockAborted() const { return Engine.wasBlockAborted(); }
+  bool wasBlocksExhausted() const { return Engine.wasBlocksExhausted(); }
   bool hasEmptyWorkList() const { return !Engine.getWorkList()->hasWork(); }
-  bool hasWorkRemaining() const {
-    return wasBlockAborted() || Engine.getWorkList()->hasWork();
-  }
+  bool hasWorkRemaining() const { return Engine.hasWorkRemaining(); }
 
   const CoreEngine &getCoreEngine() const { return Engine; }
 

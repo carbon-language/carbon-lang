@@ -48,6 +48,10 @@ class CoreEngine {
 public:
   typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
             BlocksExhausted;
+  
+  typedef std::vector<std::pair<const CFGBlock*, const ExplodedNode*> >
+            BlocksAborted;
+
 private:
 
   SubEngine& SubEng;
@@ -68,6 +72,10 @@ private:
   /// The locations where we stopped doing work because we visited a location
   ///  too many times.
   BlocksExhausted blocksExhausted;
+  
+  /// The locations where we stopped because the engine aborted analysis,
+  /// usually because it could not reason about something.
+  BlocksAborted blocksAborted;
 
   void generateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
@@ -122,16 +130,31 @@ public:
                                        ExplodedNodeSet &Dst);
 
   // Functions for external checking of whether we have unfinished work
-  bool wasBlockAborted() const { return !blocksExhausted.empty(); }
-  bool hasWorkRemaining() const { return wasBlockAborted() || WList->hasWork(); }
+  bool wasBlockAborted() const { return !blocksAborted.empty(); }
+  bool wasBlocksExhausted() const { return !blocksExhausted.empty(); }
+  bool hasWorkRemaining() const { return wasBlocksExhausted() || 
+                                         WList->hasWork() || 
+                                         wasBlockAborted(); }
 
+  /// Inform the CoreEngine that a basic block was aborted because
+  /// it could not be completely analyzed.
+  void addAbortedBlock(const ExplodedNode *node, const CFGBlock *block) {
+    blocksAborted.push_back(std::make_pair(block, node));
+  }
+  
   WorkList *getWorkList() const { return WList; }
 
-  BlocksExhausted::const_iterator blocks_aborted_begin() const {
+  BlocksExhausted::const_iterator blocks_exhausted_begin() const {
     return blocksExhausted.begin();
   }
-  BlocksExhausted::const_iterator blocks_aborted_end() const {
+  BlocksExhausted::const_iterator blocks_exhausted_end() const {
     return blocksExhausted.end();
+  }
+  BlocksAborted::const_iterator blocks_aborted_begin() const {
+    return blocksAborted.begin();
+  }
+  BlocksAborted::const_iterator blocks_aborted_end() const {
+    return blocksAborted.end();
   }
 };
 

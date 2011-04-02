@@ -444,7 +444,8 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     {
       SaveAndRestore<bool> OldSink(Builder->BuildSinks);
       Builder->BuildSinks = true;
-      MakeNode(Dst, S, Pred, GetState(Pred));
+      const ExplodedNode *node = MakeNode(Dst, S, Pred, GetState(Pred));
+      Engine.addAbortedBlock(node, Builder->getBlock());
       break;
     }
       
