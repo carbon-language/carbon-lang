@@ -43,15 +43,16 @@ struct BaseOffset {
   /// (Or the offset from the virtual base class to the base class, if the 
   /// path from the derived class to the base class involves a virtual base
   /// class.
-  int64_t NonVirtualOffset;
+  CharUnits NonVirtualOffset;
   
-  BaseOffset() : DerivedClass(0), VirtualBase(0), NonVirtualOffset(0) { }
+  BaseOffset() : DerivedClass(0), VirtualBase(0), 
+    NonVirtualOffset(CharUnits::Zero()) { }
   BaseOffset(const CXXRecordDecl *DerivedClass,
-             const CXXRecordDecl *VirtualBase, int64_t NonVirtualOffset)
+             const CXXRecordDecl *VirtualBase, CharUnits NonVirtualOffset)
     : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
     NonVirtualOffset(NonVirtualOffset) { }
 
-  bool isEmpty() const { return !NonVirtualOffset && !VirtualBase; }
+  bool isEmpty() const { return NonVirtualOffset.isZero() && !VirtualBase; }
 };
 
 /// FinalOverriders - Contains the final overrider member functions for all
@@ -214,7 +215,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
 static BaseOffset ComputeBaseOffset(ASTContext &Context, 
                                     const CXXRecordDecl *DerivedRD,
                                     const CXXBasePath &Path) {
-  int64_t NonVirtualOffset = 0;
+  CharUnits NonVirtualOffset = CharUnits::Zero();
 
   unsigned NonVirtualStart = 0;
   const CXXRecordDecl *VirtualBase = 0;
@@ -243,13 +244,13 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
     const RecordType *BaseType = Element.Base->getType()->getAs<RecordType>();
     const CXXRecordDecl *Base = cast<CXXRecordDecl>(BaseType->getDecl());
 
-    NonVirtualOffset += Layout.getBaseClassOffsetInBits(Base);
+    NonVirtualOffset += Layout.getBaseClassOffset(Base);
   }
   
   // FIXME: This should probably use CharUnits or something. Maybe we should
   // even change the base offsets in ASTRecordLayout to be specified in 
   // CharUnits.
-  return BaseOffset(DerivedRD, VirtualBase, NonVirtualOffset / 8);
+  return BaseOffset(DerivedRD, VirtualBase, NonVirtualOffset);
   
 }
 
@@ -433,7 +434,7 @@ void FinalOverriders::dump(llvm::raw_ostream &Out, BaseSubobject Base,
       if (Offset.VirtualBase)
         Out << Offset.VirtualBase->getQualifiedNameAsString() << " vbase, ";
              
-      Out << Offset.NonVirtualOffset << " nv]";
+      Out << Offset.NonVirtualOffset.getQuantity() << " nv]";
     }
     
     Out << "\n";
@@ -1342,7 +1343,7 @@ ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
       }
     }
 
-    Adjustment.NonVirtual = Offset.NonVirtualOffset;
+    Adjustment.NonVirtual = Offset.NonVirtualOffset.getQuantity();
   }
   
   return Adjustment;
@@ -1369,8 +1370,7 @@ VTableBuilder::ComputeThisAdjustmentBaseOffset(BaseSubobject Base,
        I != E; ++I) {
     BaseOffset Offset = ComputeBaseOffset(Context, DerivedRD, *I);
     
-    CharUnits OffsetToBaseSubobject = 
-      CharUnits::fromQuantity(Offset.NonVirtualOffset);
+    CharUnits OffsetToBaseSubobject = Offset.NonVirtualOffset;
     
     if (Offset.VirtualBase) {
       // If we have a virtual base class, the non-virtual offset is relative
@@ -1445,7 +1445,7 @@ VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
   }
 
   // Set the non-virtual part of the adjustment.
-  Adjustment.NonVirtual = Offset.NonVirtualOffset;
+  Adjustment.NonVirtual = Offset.NonVirtualOffset.getQuantity();
   
   return Adjustment;
 }
