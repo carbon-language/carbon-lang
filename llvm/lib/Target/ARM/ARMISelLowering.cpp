@@ -5561,6 +5561,37 @@ static SDValue PerformVMOVRRDCombine(SDNode *N,
   SDValue InDouble = N->getOperand(0);
   if (InDouble.getOpcode() == ARMISD::VMOVDRR)
     return DCI.CombineTo(N, InDouble.getOperand(0), InDouble.getOperand(1));
+
+  // vmovrrd(load f64) -> (load i32), (load i32)
+  SDNode *InNode = InDouble.getNode();
+  if (ISD::isNormalLoad(InNode) && InNode->hasOneUse() &&
+      InNode->getValueType(0) == MVT::f64 &&
+      InNode->getOperand(1).getOpcode() == ISD::FrameIndex &&
+      !cast<LoadSDNode>(InNode)->isVolatile()) {
+    // TODO: Should this be done for non-FrameIndex operands?
+    LoadSDNode *LD = cast<LoadSDNode>(InNode);
+
+    SelectionDAG &DAG = DCI.DAG;
+    DebugLoc DL = LD->getDebugLoc();
+    SDValue BasePtr = LD->getBasePtr();
+    SDValue NewLD1 = DAG.getLoad(MVT::i32, DL, LD->getChain(), BasePtr,
+                                 LD->getPointerInfo(), LD->isVolatile(),
+                                 LD->isNonTemporal(), LD->getAlignment());
+
+    SDValue OffsetPtr = DAG.getNode(ISD::ADD, DL, MVT::i32, BasePtr,
+                                    DAG.getConstant(4, MVT::i32));
+    SDValue NewLD2 = DAG.getLoad(MVT::i32, DL, NewLD1.getValue(1), OffsetPtr,
+                                 LD->getPointerInfo(), LD->isVolatile(),
+                                 LD->isNonTemporal(),
+                                 std::min(4U, LD->getAlignment() / 2));
+
+    DAG.ReplaceAllUsesOfValueWith(SDValue(LD, 1), NewLD2.getValue(1));
+    SDValue Result = DCI.CombineTo(N, NewLD1, NewLD2);
+    DCI.RemoveFromWorklist(LD);
+    DAG.DeleteNode(LD);
+    return Result;
+  }
+
   return SDValue();
 }
 
