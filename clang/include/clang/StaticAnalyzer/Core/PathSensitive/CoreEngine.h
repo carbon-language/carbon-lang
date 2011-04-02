@@ -47,7 +47,7 @@ class CoreEngine {
 
 public:
   typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
-            BlocksAborted;
+            BlocksExhausted;
 private:
 
   SubEngine& SubEng;
@@ -67,7 +67,7 @@ private:
 
   /// The locations where we stopped doing work because we visited a location
   ///  too many times.
-  BlocksAborted blocksAborted;
+  BlocksExhausted blocksExhausted;
 
   void generateNode(const ProgramPoint& Loc, const GRState* State,
                     ExplodedNode* Pred);
@@ -122,16 +122,16 @@ public:
                                        ExplodedNodeSet &Dst);
 
   // Functions for external checking of whether we have unfinished work
-  bool wasBlockAborted() const { return !blocksAborted.empty(); }
+  bool wasBlockAborted() const { return !blocksExhausted.empty(); }
   bool hasWorkRemaining() const { return wasBlockAborted() || WList->hasWork(); }
 
   WorkList *getWorkList() const { return WList; }
 
-  BlocksAborted::const_iterator blocks_aborted_begin() const {
-    return blocksAborted.begin();
+  BlocksExhausted::const_iterator blocks_aborted_begin() const {
+    return blocksExhausted.begin();
   }
-  BlocksAborted::const_iterator blocks_aborted_end() const {
-    return blocksAborted.end();
+  BlocksExhausted::const_iterator blocks_aborted_end() const {
+    return blocksExhausted.end();
   }
 };
 

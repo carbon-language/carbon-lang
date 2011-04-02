@@ -310,7 +310,7 @@ void CoreEngine::HandleBlockEdge(const BlockEdge& L, ExplodedNode* Pred) {
   for (llvm::SmallVectorImpl<ExplodedNode*>::const_iterator
        I = nodeBuilder.sinks().begin(), E = nodeBuilder.sinks().end();
        I != E; ++I) {
-    blocksAborted.push_back(std::make_pair(L, *I));
+    blocksExhausted.push_back(std::make_pair(L, *I));
   }
 }
 

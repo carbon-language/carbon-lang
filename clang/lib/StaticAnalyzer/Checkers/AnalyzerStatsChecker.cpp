@@ -97,7 +97,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
       D->getLocation());
 
   // Emit warning for each block we bailed out on
-  typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  typedef CoreEngine::BlocksExhausted::const_iterator AbortedIterator;
   const CoreEngine &CE = Eng.getCoreEngine();
   for (AbortedIterator I = CE.blocks_aborted_begin(),
       E = CE.blocks_aborted_end(); I != E; ++I) {

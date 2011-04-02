@@ -534,7 +534,7 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
   CFGReverseBlockReachabilityAnalysis *CRA = AC->getCFGReachablityAnalysis();
   
   // Test for reachability from any aborted blocks to this block
-  typedef CoreEngine::BlocksAborted::const_iterator AbortedIterator;
+  typedef CoreEngine::BlocksExhausted::const_iterator AbortedIterator;
   for (AbortedIterator I = CE.blocks_aborted_begin(),
       E = CE.blocks_aborted_end(); I != E; ++I) {
     const BlockEdge &BE =  I->first;
