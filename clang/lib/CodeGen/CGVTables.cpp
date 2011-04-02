@@ -610,7 +610,7 @@ private:
 /// VCallOffsetMap - Keeps track of vcall offsets when building a vtable.
 struct VCallOffsetMap {
   
-  typedef std::pair<const CXXMethodDecl *, int64_t> MethodAndOffsetPairTy;
+  typedef std::pair<const CXXMethodDecl *, CharUnits> MethodAndOffsetPairTy;
   
   /// Offsets - Keeps track of methods and their offsets.
   // FIXME: This should be a real map and not a vector.
@@ -625,11 +625,11 @@ public:
   /// AddVCallOffset - Adds a vcall offset to the map. Returns true if the
   /// add was successful, or false if there was already a member function with
   /// the same signature in the map.
-  bool AddVCallOffset(const CXXMethodDecl *MD, int64_t OffsetOffset);
+  bool AddVCallOffset(const CXXMethodDecl *MD, CharUnits OffsetOffset);
   
   /// getVCallOffsetOffset - Returns the vcall offset offset (relative to the
   /// vtable address point) for the given virtual member function.
-  int64_t getVCallOffsetOffset(const CXXMethodDecl *MD);
+  CharUnits getVCallOffsetOffset(const CXXMethodDecl *MD);
   
   // empty - Return whether the offset map is empty or not.
   bool empty() const { return Offsets.empty(); }
@@ -679,7 +679,7 @@ bool VCallOffsetMap::MethodsCanShareVCallOffset(const CXXMethodDecl *LHS,
 }
 
 bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD, 
-                                    int64_t OffsetOffset) {
+                                    CharUnits OffsetOffset) {
   // Check if we can reuse an offset.
   for (unsigned I = 0, E = Offsets.size(); I != E; ++I) {
     if (MethodsCanShareVCallOffset(Offsets[I].first, MD))
@@ -691,7 +691,7 @@ bool VCallOffsetMap::AddVCallOffset(const CXXMethodDecl *MD,
   return true;
 }
 
-int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
+CharUnits VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
   // Look for an offset.
   for (unsigned I = 0, E = Offsets.size(); I != E; ++I) {
     if (MethodsCanShareVCallOffset(Offsets[I].first, MD))
@@ -699,7 +699,7 @@ int64_t VCallOffsetMap::getVCallOffsetOffset(const CXXMethodDecl *MD) {
   }
   
   assert(false && "Should always find a vcall offset offset!");
-  return 0;
+  return CharUnits::Zero();
 }
 
 /// VCallAndVBaseOffsetBuilder - Class for building vcall and vbase offsets.
@@ -873,7 +873,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     
     // Don't add a vcall offset if we already have one for this member function
     // signature.
-    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset.getQuantity()))
+    if (!VCallOffsets.AddVCallOffset(MD, OffsetOffset))
       continue;
 
     CharUnits Offset = CharUnits::Zero();
@@ -1440,7 +1440,8 @@ VTableBuilder::ComputeThisAdjustment(const CXXMethodDecl *MD,
       VCallOffsets = Builder.getVCallOffsets();
     }
       
-    Adjustment.VCallOffsetOffset = VCallOffsets.getVCallOffsetOffset(MD);
+    Adjustment.VCallOffsetOffset = 
+      VCallOffsets.getVCallOffsetOffset(MD).getQuantity();
   }
 
   // Set the non-virtual part of the adjustment.
