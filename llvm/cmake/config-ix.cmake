@@ -271,6 +271,10 @@ if( LLVM_ENABLE_FFI )
   check_symbol_exists(ffi_call ${FFI_HEADER} HAVE_FFI_CALL)
   list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES ${FFI_INCLUDE_PATH})
   list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${FFI_LIBRARY_PATH})
+else()
+  unset(HAVE_FFI_FFI_H CACHE)
+  unset(HAVE_FFI_H CACHE)
+  unset(HAVE_FFI_CALL CACHE)
 endif( LLVM_ENABLE_FFI )
 
 # Define LLVM_MULTITHREADED if gcc atomic builtins exists.
