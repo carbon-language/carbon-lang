@@ -913,8 +913,13 @@ Instruction *InstCombiner::transformSExtICmp(ICmpInst *ICI, Instruction &CI) {
       if (KnownZeroMask.isPowerOf2()) {
         Value *In = ICI->getOperand(0);
 
-        assert((Op1C->isZero() || Op1C->getValue() == KnownZeroMask) &&
-               "Constant icmp not folded?");
+        // If the icmp tests for a known zero bit we can constant fold it.
+        if (!Op1C->isZero() && Op1C->getValue() != KnownZeroMask) {
+          Value *V = Pred == ICmpInst::ICMP_NE ?
+                       ConstantInt::getAllOnesValue(CI.getType()) :
+                       ConstantInt::getNullValue(CI.getType());
+          return ReplaceInstUsesWith(CI, V);
+        }
 
         if (!Op1C->isZero() == (Pred == ICmpInst::ICMP_NE)) {
           // sext ((x & 2^n) == 0)   -> (x >> n) - 1
