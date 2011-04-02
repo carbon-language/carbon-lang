@@ -808,7 +808,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
   for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
          BE = RD->bases_end(); BI != BE; ++BI) {
     unsigned BFlags = 0;
-    uint64_t BaseOffset;
+    CharUnits BaseOffset;
     
     const CXXRecordDecl *Base =
       cast<CXXRecordDecl>(BI->getType()->getAs<RecordType>()->getDecl());
@@ -816,10 +816,11 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
     if (BI->isVirtual()) {
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
-      BaseOffset = 0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base);
+      BaseOffset = CharUnits::Zero() - 
+        CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base);
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
-      BaseOffset = RL.getBaseClassOffsetInBits(Base);
+      BaseOffset = RL.getBaseClassOffset(Base);
     
     AccessSpecifier Access = BI->getAccessSpecifier();
     if (Access == clang::AS_private)
@@ -830,7 +831,7 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
     llvm::DIType DTy = 
       DBuilder.createInheritance(RecordTy,                                     
                                  getOrCreateType(BI->getType(), Unit),
-                                 BaseOffset, BFlags);
+                                 BaseOffset.getQuantity(), BFlags);
     EltTys.push_back(DTy);
   }
 }

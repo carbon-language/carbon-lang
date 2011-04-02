@@ -1339,7 +1339,7 @@ ReturnAdjustment VTableBuilder::ComputeReturnAdjustment(BaseOffset Offset) {
       } else {
         Adjustment.VBaseOffsetOffset = 
           VTables.getVirtualBaseOffsetOffset(Offset.DerivedClass,
-                                             Offset.VirtualBase);
+                                             Offset.VirtualBase).getQuantity();
       }
     }
 
@@ -2431,14 +2431,15 @@ uint64_t CodeGenVTables::getMethodVTableIndex(GlobalDecl GD) {
   return I->second;
 }
 
-int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
-                                                   const CXXRecordDecl *VBase) {
+CharUnits 
+CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD, 
+                                           const CXXRecordDecl *VBase) {
   ClassPairTy ClassPair(RD, VBase);
   
   VirtualBaseClassOffsetOffsetsMapTy::iterator I = 
     VirtualBaseClassOffsetOffsets.find(ClassPair);
   if (I != VirtualBaseClassOffsetOffsets.end())
-    return I->second.getQuantity();
+    return I->second;
   
   VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/0,
                                      BaseSubobject(RD, CharUnits::Zero()),
@@ -2458,7 +2459,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   I = VirtualBaseClassOffsetOffsets.find(ClassPair);
   assert(I != VirtualBaseClassOffsetOffsets.end() && "Did not find index!");
   
-  return I->second.getQuantity();
+  return I->second;
 }
 
 uint64_t
