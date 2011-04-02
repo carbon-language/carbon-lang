@@ -632,6 +632,7 @@ const GRState *MallocChecker::evalAssume(const GRState *state, SVal Cond,
   RegionStateTy RS = state->get<RegionState>();
 
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+    // If the symbol is assumed to NULL, this will return an APSInt*.
     if (state->getSymVal(I.getKey()))
       state = state->set<RegionState>(I.getKey(),RefState::getAllocateFailed());
   }

@@ -273,8 +273,6 @@ public:
 
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
   
-  const llvm::APSInt *getSymVal(SymbolRef sym);
-
   bool scanReachableSymbols(SVal val, SymbolVisitor& visitor) const;
   
   bool scanReachableSymbols(const SVal *I, const SVal *E,
@@ -626,10 +624,6 @@ public:
 // Out-of-line method definitions for GRState.
 //===----------------------------------------------------------------------===//
 
-inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) {
-  return getStateManager().getSymVal(this, sym);
-}
-  
 inline const VarRegion* GRState::getRegion(const VarDecl *D,
                                            const LocationContext *LC) const {
   return getStateManager().getRegionManager().getVarRegion(D, LC);
