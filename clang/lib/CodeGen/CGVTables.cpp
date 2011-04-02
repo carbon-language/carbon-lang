@@ -462,15 +462,15 @@ public:
     CK_UnusedFunctionPointer
   };
 
-  static VTableComponent MakeVCallOffset(int64_t Offset) {
+  static VTableComponent MakeVCallOffset(CharUnits Offset) {
     return VTableComponent(CK_VCallOffset, Offset);
   }
 
-  static VTableComponent MakeVBaseOffset(int64_t Offset) {
+  static VTableComponent MakeVBaseOffset(CharUnits Offset) {
     return VTableComponent(CK_VBaseOffset, Offset);
   }
 
-  static VTableComponent MakeOffsetToTop(int64_t Offset) {
+  static VTableComponent MakeOffsetToTop(CharUnits Offset) {
     return VTableComponent(CK_OffsetToTop, Offset);
   }
   
@@ -512,19 +512,19 @@ public:
     return (Kind)(Value & 0x7);
   }
 
-  int64_t getVCallOffset() const {
+  CharUnits getVCallOffset() const {
     assert(getKind() == CK_VCallOffset && "Invalid component kind!");
     
     return getOffset();
   }
 
-  int64_t getVBaseOffset() const {
+  CharUnits getVBaseOffset() const {
     assert(getKind() == CK_VBaseOffset && "Invalid component kind!");
     
     return getOffset();
   }
 
-  int64_t getOffsetToTop() const {
+  CharUnits getOffsetToTop() const {
     assert(getKind() == CK_OffsetToTop && "Invalid component kind!");
     
     return getOffset();
@@ -556,13 +556,13 @@ public:
   }
   
 private:
-  VTableComponent(Kind ComponentKind, int64_t Offset) {
+  VTableComponent(Kind ComponentKind, CharUnits Offset) {
     assert((ComponentKind == CK_VCallOffset || 
             ComponentKind == CK_VBaseOffset ||
             ComponentKind == CK_OffsetToTop) && "Invalid component kind!");
-    assert(Offset <= ((1LL << 56) - 1) && "Offset is too big!");
+    assert(Offset.getQuantity() <= ((1LL << 56) - 1) && "Offset is too big!");
     
-    Value = ((Offset << 3) | ComponentKind);
+    Value = ((Offset.getQuantity() << 3) | ComponentKind);
   }
 
   VTableComponent(Kind ComponentKind, uintptr_t Ptr) {
@@ -578,11 +578,11 @@ private:
     Value = Ptr | ComponentKind;
   }
   
-  int64_t getOffset() const {
+  CharUnits getOffset() const {
     assert((getKind() == CK_VCallOffset || getKind() == CK_VBaseOffset ||
             getKind() == CK_OffsetToTop) && "Invalid component kind!");
     
-    return Value >> 3;
+    return CharUnits::fromQuantity(Value >> 3);
   }
 
   uintptr_t getPointer() const {
@@ -889,7 +889,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
     }
     
     Components.push_back(
-      VTableComponent::MakeVCallOffset(Offset.getQuantity()));
+      VTableComponent::MakeVCallOffset(Offset));
   }
 
   // And iterate over all non-virtual bases (ignoring the primary base).
@@ -939,7 +939,7 @@ VCallAndVBaseOffsetBuilder::AddVBaseOffsets(const CXXRecordDecl *RD,
           std::make_pair(BaseDecl, VBaseOffsetOffset.getQuantity()));
 
       Components.push_back(
-          VTableComponent::MakeVBaseOffset(Offset.getQuantity()));
+          VTableComponent::MakeVBaseOffset(Offset));
     }
 
     // Check the base class looking for more vbase offsets.
@@ -1772,7 +1772,7 @@ VTableBuilder::LayoutPrimaryAndSecondaryVTables(BaseSubobject Base,
   // Add the offset to top.
   CharUnits OffsetToTop = MostDerivedClassOffset - OffsetInLayoutClass;
   Components.push_back(
-    VTableComponent::MakeOffsetToTop(OffsetToTop.getQuantity()));
+    VTableComponent::MakeOffsetToTop(OffsetToTop));
   
   // Next, add the RTTI.
   Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
@@ -2017,15 +2017,21 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     switch (Component.getKind()) {
 
     case VTableComponent::CK_VCallOffset:
-      Out << "vcall_offset (" << Component.getVCallOffset() << ")";
+      Out << "vcall_offset ("
+          << Component.getVCallOffset().getQuantity() 
+          << ")";
       break;
 
     case VTableComponent::CK_VBaseOffset:
-      Out << "vbase_offset (" << Component.getVBaseOffset() << ")";
+      Out << "vbase_offset ("
+          << Component.getVBaseOffset().getQuantity()
+          << ")";
       break;
 
     case VTableComponent::CK_OffsetToTop:
-      Out << "offset_to_top (" << Component.getOffsetToTop() << ")";
+      Out << "offset_to_top ("
+          << Component.getOffsetToTop().getQuantity()
+          << ")";
       break;
     
     case VTableComponent::CK_RTTI:
@@ -2932,15 +2938,18 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
 
     switch (Component.getKind()) {
     case VTableComponent::CK_VCallOffset:
-      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getVCallOffset());
+      Init = llvm::ConstantInt::get(PtrDiffTy, 
+                                    Component.getVCallOffset().getQuantity());
       Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
       break;
     case VTableComponent::CK_VBaseOffset:
-      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getVBaseOffset());
+      Init = llvm::ConstantInt::get(PtrDiffTy, 
+                                    Component.getVBaseOffset().getQuantity());
       Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
       break;
     case VTableComponent::CK_OffsetToTop:
-      Init = llvm::ConstantInt::get(PtrDiffTy, Component.getOffsetToTop());
+      Init = llvm::ConstantInt::get(PtrDiffTy, 
+                                    Component.getOffsetToTop().getQuantity());
       Init = llvm::ConstantExpr::getIntToPtr(Init, Int8PtrTy);
       break;
     case VTableComponent::CK_RTTI:
