@@ -40,3 +40,11 @@ using namespace warn_in_header_in_global_context;
 inline void foo() {
   using namespace warn_in_header_in_global_context;
 }
+
+
+namespace macronamespace {}
+#define USING_MACRO using namespace macronamespace;
+
+// |using namespace| through a macro should warn if the instantiation is in a
+// header.
+USING_MACRO

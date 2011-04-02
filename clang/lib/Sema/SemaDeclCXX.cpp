@@ -3927,7 +3927,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
                                       IdentLoc, Named, CommonAncestor);
 
     if (IsUsingDirectiveInToplevelContext(CurContext) &&
-        !SourceMgr.isFromMainFile(IdentLoc)) {
+        !SourceMgr.isFromMainFile(SourceMgr.getInstantiationLoc(IdentLoc))) {
       Diag(IdentLoc, diag::warn_using_directive_in_header);
     }
 

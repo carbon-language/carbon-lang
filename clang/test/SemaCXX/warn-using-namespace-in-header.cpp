@@ -25,3 +25,30 @@ using namespace dont_warn;
 
 
 // expected-warning {{using namespace directive in global context in header}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// expected-warning {{using namespace directive in global context in header}}
+
+// |using namespace| through a macro shouldn't warn if the instantiation is in a
+// cc file.
+USING_MACRO

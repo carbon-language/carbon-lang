@@ -193,7 +193,7 @@ unsigned ScanReachableFromBlock(const CFGBlock &Start,
   unsigned count = 0;
   llvm::SmallVector<const CFGBlock*, 32> WL;
 
-    // Prep work queue
+  // Prep work queue
   Reachable.set(Start.getBlockID());
   ++count;
   WL.push_back(&Start);
