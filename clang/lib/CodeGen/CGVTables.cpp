@@ -2438,7 +2438,7 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
   VirtualBaseClassOffsetOffsetsMapTy::iterator I = 
     VirtualBaseClassOffsetOffsets.find(ClassPair);
   if (I != VirtualBaseClassOffsetOffsets.end())
-    return I->second;
+    return I->second.getQuantity();
   
   VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/0,
                                      BaseSubobject(RD, CharUnits::Zero()),
@@ -2452,13 +2452,13 @@ int64_t CodeGenVTables::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
     ClassPairTy ClassPair(RD, I->first);
     
     VirtualBaseClassOffsetOffsets.insert(
-        std::make_pair(ClassPair, I->second.getQuantity()));
+        std::make_pair(ClassPair, I->second));
   }
   
   I = VirtualBaseClassOffsetOffsets.find(ClassPair);
   assert(I != VirtualBaseClassOffsetOffsets.end() && "Did not find index!");
   
-  return I->second;
+  return I->second.getQuantity();
 }
 
 uint64_t
@@ -2910,7 +2910,7 @@ void CodeGenVTables::ComputeVTableRelatedInformation(const CXXRecordDecl *RD,
     ClassPairTy ClassPair(RD, I->first);
     
     VirtualBaseClassOffsetOffsets.insert(
-        std::make_pair(ClassPair, I->second.getQuantity()));
+        std::make_pair(ClassPair, I->second));
   }
 }
 
