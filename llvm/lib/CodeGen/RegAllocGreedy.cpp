@@ -14,7 +14,7 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "AllocationOrder.h"
-#include "LiveIntervalUnion.h"
+#include "InterferenceCache.h"
 #include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"

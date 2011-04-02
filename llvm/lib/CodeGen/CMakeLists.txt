@@ -19,6 +19,7 @@ add_llvm_library(LLVMCodeGen
   GCStrategy.cpp
   IfConversion.cpp
   InlineSpiller.cpp
+  InterferenceCache.cpp
   IntrinsicLowering.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp

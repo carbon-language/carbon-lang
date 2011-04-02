@@ -1328,6 +1328,10 @@ public:
   /// const_iterator - Create an iterator that isn't pointing anywhere.
   const_iterator() : map(0) {}
 
+  /// setMap - Change the map iterated over. This call must be followed by a
+  /// call to goToBegin(), goToEnd(), or find()
+  void setMap(const IntervalMap &m) { map = const_cast<IntervalMap*>(&m); }
+
   /// valid - Return true if the current position is valid, false for end().
   bool valid() const { return path.valid(); }
 
