@@ -325,14 +325,66 @@ multiclass INT3ntnc<string opcstr, SDNode opnode> {
 
 multiclass PTX_SETP<RegisterClass RC, string regclsname, Operand immcls,
                         CondCode cmp, string cmpstr> {
+  // TODO 1. support floating-point 2. support 5-operand format: p|q, a, b, c
+
   def rr
-    : InstPTX<(outs Preds:$d), (ins RC:$a, RC:$b),
-              !strconcat("setp.", cmpstr, ".", regclsname, "\t$d, $a, $b"),
-              [(set Preds:$d, (setcc RC:$a, RC:$b, cmp))]>;
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b),
+              !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
+              [(set Preds:$p, (setcc RC:$a, RC:$b, cmp))]>;
   def ri
-    : InstPTX<(outs Preds:$d), (ins RC:$a, immcls:$b),
-              !strconcat("setp.", cmpstr, ".", regclsname, "\t$d, $a, $b"),
-              [(set Preds:$d, (setcc RC:$a, imm:$b, cmp))]>;
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b),
+              !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
+              [(set Preds:$p, (setcc RC:$a, imm:$b, cmp))]>;
+
+  def rr_and_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (and (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+  def ri_and_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (and (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+  def rr_or_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (or (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+  def ri_or_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (or (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+  def rr_xor_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+  def ri_xor_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, $c"),
+              [(set Preds:$p, (xor (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+
+  def rr_and_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (and (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+  def ri_and_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (and (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
+  def rr_or_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (or (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+  def ri_or_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (or (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
+  def rr_xor_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+  def ri_xor_not_r
+    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+              !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, !$c"),
+              [(set Preds:$p, (xor (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
 }
 
 multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
@@ -601,6 +653,10 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 // defm STp : PTX_ST_ALL<"st.param",  store_parameter>;
 // defm LDp : PTX_LD_ALL<"ld.param",  load_parameter>;
 // TODO: Do something with st.param if/when it is needed.
+
+def CVT_pred_u32
+  : InstPTX<(outs Preds:$d), (ins RRegu32:$a), "cvt.pred.u32\t$d, $a",
+            [(set Preds:$d, (trunc RRegu32:$a))]>;
 
 def CVT_u32_pred
   : InstPTX<(outs RRegu32:$d), (ins Preds:$a), "cvt.u32.pred\t$d, $a",

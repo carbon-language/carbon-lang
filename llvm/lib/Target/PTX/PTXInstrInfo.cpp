@@ -130,42 +130,37 @@ PredicateInstruction(MachineInstr *MI,
 bool PTXInstrInfo::
 SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
                   const SmallVectorImpl<MachineOperand> &Pred2) const {
-  // TODO Implement SubsumesPredicate
-  // Returns true if the first specified predicate subsumes the second,
-  // e.g. GE subsumes GT.
-  return false;
+  const MachineOperand &PredReg1 = Pred1[0];
+  const MachineOperand &PredReg2 = Pred2[0];
+  if (PredReg1.getReg() != PredReg2.getReg())
+    return false;
+
+  const MachineOperand &PredOp1 = Pred1[1];
+  const MachineOperand &PredOp2 = Pred2[1];
+  if (PredOp1.getImm() != PredOp2.getImm())
+    return false;
+
+  return true;
 }
 
 bool PTXInstrInfo::
 DefinesPredicate(MachineInstr *MI,
                  std::vector<MachineOperand> &Pred) const {
-  // TODO Implement DefinesPredicate
-  // If the specified instruction defines any predicate or condition code
-  // register(s) used for predication, returns true as well as the definition
-  // predicate(s) by reference.
+  // If an instruction sets a predicate register, it defines a predicate.
 
-  switch (MI->getOpcode()) {
-  default:
+  // TODO supprot 5-operand format of setp instruction
+
+  if (MI->getNumOperands() < 1)
     return false;
-  case PTX::SETPEQu32rr:
-  case PTX::SETPEQu32ri:
-  case PTX::SETPNEu32rr:
-  case PTX::SETPNEu32ri:
-  case PTX::SETPLTu32rr:
-  case PTX::SETPLTu32ri:
-  case PTX::SETPLEu32rr:
-  case PTX::SETPLEu32ri:
-  case PTX::SETPGTu32rr:
-  case PTX::SETPGTu32ri:
-  case PTX::SETPGEu32rr:
-  case PTX::SETPGEu32ri: {
-    const MachineOperand &MO = MI->getOperand(0);
-    assert(MO.isReg() && RI.getRegClass(MO.getReg()) == &PTX::PredsRegClass);
-    Pred.push_back(MO);
-    Pred.push_back(MachineOperand::CreateImm(PTX::PRED_NORMAL));
-    return true;
-  }
-  }
+
+  const MachineOperand &MO = MI->getOperand(0);
+
+  if (!MO.isReg() || RI.getRegClass(MO.getReg()) != &PTX::PredsRegClass)
+    return false;
+
+  Pred.push_back(MO);
+  Pred.push_back(MachineOperand::CreateImm(PTX::PRED_NORMAL));
+  return true;
 }
 
 // branch support
