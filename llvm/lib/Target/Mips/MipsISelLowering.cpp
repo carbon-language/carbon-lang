@@ -1201,34 +1201,12 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
   unsigned char OpFlag = IsPIC ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
-  bool LoadSymAddr = false;
-
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-                                        getPointerTy(), 0, OpFlag);
-    LoadSymAddr = true;
-  }
-  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+                                getPointerTy(), 0, OpFlag);
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
                                 getPointerTy(), OpFlag);
-    LoadSymAddr = true;
-  }
-
-  // Create nodes that load address of callee and copy it to T9
-  if (IsPIC) {
-    if (LoadSymAddr) {
-      // load callee address
-      Callee = DAG.getLoad(MVT::i32, dl, Chain, Callee,
-                           MachinePointerInfo::getGOT(),
-                           false, false, 0);
-      Chain = Callee.getValue(1);
-    }
-
-    // copy to T9
-    Chain = DAG.getCopyToReg(Chain, dl, Mips::T9, Callee, SDValue(0, 0));
-    InFlag = Chain.getValue(1);
-    Callee = DAG.getRegister(Mips::T9, MVT::i32);
-  }
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...
