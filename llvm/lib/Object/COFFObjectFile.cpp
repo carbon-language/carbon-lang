@@ -91,6 +91,7 @@ extern char coff_coff_section_layout_static_assert
 namespace {
 class COFFObjectFile : public ObjectFile {
 private:
+        uint64_t         HeaderOff;
   const coff_file_header *Header;
   const coff_section     *SectionTable;
   const coff_symbol      *SymbolTable;
@@ -256,7 +257,7 @@ StringRef COFFObjectFile::getSectionName(DataRefImpl Sec) const {
   // Check for string table entry. First byte is '/'.
   if (name[0] == '/') {
     uint32_t Offset;
-    name.getAsInteger(10, Offset);
+    name.substr(1).getAsInteger(10, Offset);
     return StringRef(getString(Offset));
   }
 
@@ -287,9 +288,20 @@ bool COFFObjectFile::isSectionText(DataRefImpl Sec) const {
 
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object)
   : ObjectFile(Object) {
-  Header = reinterpret_cast<const coff_file_header *>(base);
+
+  HeaderOff = 0;
+
+  if (base[0] == 0x4d && base[1] == 0x5a) {
+    // PE/COFF, seek through MS-DOS compatibility stub and 4-byte
+    // PE signature to find 'normal' COFF header.
+    HeaderOff += *reinterpret_cast<const ulittle32_t *>(base + 0x3c);
+    HeaderOff += 4;
+  }
+
+  Header = reinterpret_cast<const coff_file_header *>(base + HeaderOff);
   SectionTable =
     reinterpret_cast<const coff_section *>( base
+                                          + HeaderOff
                                           + sizeof(coff_file_header)
                                           + Header->SizeOfOptionalHeader);
   SymbolTable =
@@ -303,6 +315,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object)
 
 ObjectFile::symbol_iterator COFFObjectFile::begin_symbols() const {
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SymbolTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
@@ -310,18 +323,21 @@ ObjectFile::symbol_iterator COFFObjectFile::begin_symbols() const {
 ObjectFile::symbol_iterator COFFObjectFile::end_symbols() const {
   // The symbol table ends where the string table begins.
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(StringTable);
   return symbol_iterator(SymbolRef(ret, this));
 }
 
 ObjectFile::section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SectionTable);
   return section_iterator(SectionRef(ret, this));
 }
 
 ObjectFile::section_iterator COFFObjectFile::end_sections() const {
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(SectionTable + Header->NumberOfSections);
   return section_iterator(SectionRef(ret, this));
 }

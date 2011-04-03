@@ -547,6 +547,7 @@ template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::begin_sections() const {
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base + Header->e_shoff);
   return section_iterator(SectionRef(ret, this));
 }
@@ -555,6 +556,7 @@ template<support::endianness target_endianness, bool is64Bits>
 ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::end_sections() const {
   DataRefImpl ret;
+  memset(&ret, 0, sizeof(DataRefImpl));
   ret.p = reinterpret_cast<intptr_t>(base
                                      + Header->e_shoff
                                      + (Header->e_shentsize * Header->e_shnum));
