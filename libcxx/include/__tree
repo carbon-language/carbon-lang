@@ -769,6 +769,7 @@ public:
     typedef typename __alloc_traits::difference_type difference_type;
 
     typedef __tree_node<value_type, typename __alloc_traits::void_pointer> __node;
+    typedef __tree_node_base<typename __alloc_traits::void_pointer> __node_base;
     typedef typename __alloc_traits::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind_alloc<__node>
@@ -779,10 +780,10 @@ public:
     typedef allocator_traits<__node_allocator>       __node_traits;
     typedef typename __node_traits::pointer          __node_pointer;
     typedef typename __node_traits::const_pointer    __node_const_pointer;
-    typedef typename __node::base::pointer           __node_base_pointer;
-    typedef typename __node::base::const_pointer     __node_base_const_pointer;
+    typedef typename __node_base::pointer            __node_base_pointer;
+    typedef typename __node_base::const_pointer      __node_base_const_pointer;
 private:
-    typedef typename __node::base::base __end_node_t;
+    typedef typename __node_base::base __end_node_t;
     typedef typename pointer_traits<__node_pointer>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind<__end_node_t>
@@ -996,19 +997,19 @@ public:
 
     __node_holder remove(const_iterator __p);
 private:
-    typename __node::base::pointer&
-        __find_leaf_low(typename __node::base::pointer& __parent, const value_type& __v);
-    typename __node::base::pointer&
-        __find_leaf_high(typename __node::base::pointer& __parent, const value_type& __v);
-    typename __node::base::pointer&
+    typename __node_base::pointer&
+        __find_leaf_low(typename __node_base::pointer& __parent, const value_type& __v);
+    typename __node_base::pointer&
+        __find_leaf_high(typename __node_base::pointer& __parent, const value_type& __v);
+    typename __node_base::pointer&
         __find_leaf(const_iterator __hint,
-                    typename __node::base::pointer& __parent, const value_type& __v);
+                    typename __node_base::pointer& __parent, const value_type& __v);
     template <class _Key>
-        typename __node::base::pointer&
-        __find_equal(typename __node::base::pointer& __parent, const _Key& __v);
+        typename __node_base::pointer&
+        __find_equal(typename __node_base::pointer& __parent, const _Key& __v);
     template <class _Key>
-        typename __node::base::pointer&
-        __find_equal(const_iterator __hint, typename __node::base::pointer& __parent,
+        typename __node_base::pointer&
+        __find_equal(const_iterator __hint, typename __node_base::pointer& __parent,
                      const _Key& __v);
 
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
@@ -1410,8 +1411,8 @@ __tree<_Tp, _Compare, _Allocator>::clear()
 // Set __parent to parent of null leaf
 // Return reference to null leaf
 template <class _Tp, class _Compare, class _Allocator>
-typename __tree<_Tp, _Compare, _Allocator>::__node::base::pointer&
-__tree<_Tp, _Compare, _Allocator>::__find_leaf_low(typename __node::base::pointer& __parent,
+typename __tree<_Tp, _Compare, _Allocator>::__node_base::pointer&
+__tree<_Tp, _Compare, _Allocator>::__find_leaf_low(typename __node_base::pointer& __parent,
                                                    const value_type& __v)
 {
     __node_pointer __nd = __root();
@@ -1449,8 +1450,8 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_low(typename __node::base::pointe
 // Set __parent to parent of null leaf
 // Return reference to null leaf
 template <class _Tp, class _Compare, class _Allocator>
-typename __tree<_Tp, _Compare, _Allocator>::__node::base::pointer&
-__tree<_Tp, _Compare, _Allocator>::__find_leaf_high(typename __node::base::pointer& __parent,
+typename __tree<_Tp, _Compare, _Allocator>::__node_base::pointer&
+__tree<_Tp, _Compare, _Allocator>::__find_leaf_high(typename __node_base::pointer& __parent,
                                                     const value_type& __v)
 {
     __node_pointer __nd = __root();
@@ -1491,9 +1492,9 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf_high(typename __node::base::point
 // Set __parent to parent of null leaf
 // Return reference to null leaf
 template <class _Tp, class _Compare, class _Allocator>
-typename __tree<_Tp, _Compare, _Allocator>::__node::base::pointer&
+typename __tree<_Tp, _Compare, _Allocator>::__node_base::pointer&
 __tree<_Tp, _Compare, _Allocator>::__find_leaf(const_iterator __hint,
-                                               typename __node::base::pointer& __parent,
+                                               typename __node_base::pointer& __parent,
                                                const value_type& __v)
 {
     if (__hint == end() || !value_comp()(*__hint, __v))  // check before
@@ -1527,8 +1528,8 @@ __tree<_Tp, _Compare, _Allocator>::__find_leaf(const_iterator __hint,
 // If __v exists, set parent to node of __v and return reference to node of __v
 template <class _Tp, class _Compare, class _Allocator>
 template <class _Key>
-typename __tree<_Tp, _Compare, _Allocator>::__node::base::pointer&
-__tree<_Tp, _Compare, _Allocator>::__find_equal(typename __node::base::pointer& __parent,
+typename __tree<_Tp, _Compare, _Allocator>::__node_base::pointer&
+__tree<_Tp, _Compare, _Allocator>::__find_equal(typename __node_base::pointer& __parent,
                                                 const _Key& __v)
 {
     __node_pointer __nd = __root();
@@ -1576,9 +1577,9 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(typename __node::base::pointer& 
 // If __v exists, set parent to node of __v and return reference to node of __v
 template <class _Tp, class _Compare, class _Allocator>
 template <class _Key>
-typename __tree<_Tp, _Compare, _Allocator>::__node::base::pointer&
+typename __tree<_Tp, _Compare, _Allocator>::__node_base::pointer&
 __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
-                                                typename __node::base::pointer& __parent,
+                                                typename __node_base::pointer& __parent,
                                                 const _Key& __v)
 {
     if (__hint == end() || value_comp()(__v, *__hint))  // check before
