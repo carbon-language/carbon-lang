@@ -24,7 +24,6 @@ add_llvm_library(LLVMCore
   LeakDetector.cpp
   Metadata.cpp
   Module.cpp
-  Object.cpp
   Pass.cpp
   PassManager.cpp
   PassRegistry.cpp
