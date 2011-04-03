@@ -41,6 +41,16 @@ int no_auto_type();
 // CHECK-NO-0X: no_auto_type
 
 
+#if __has_feature(cxx_trailing_return)
+int has_trailing_return();
+#else
+int no_trailing_return();
+#endif
+
+// CHECK-0X: has_trailing_return
+// CHECK-NO-0X: no_trailing_return
+
+
 #if __has_feature(cxx_attributes)
 int has_attributes();
 #else
