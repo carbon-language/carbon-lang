@@ -307,6 +307,8 @@ public:
 
   BlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
 
+  ExplodedNode* generateNode(const Stmt *Condition, const GRState* State);
+
   ExplodedNode* generateNode(const GRState* State, bool branch);
 
   const CFGBlock* getTargetBlock(bool branch) const {

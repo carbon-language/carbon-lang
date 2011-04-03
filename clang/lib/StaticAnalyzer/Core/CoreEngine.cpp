@@ -602,6 +602,25 @@ StmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
   return NULL;
 }
 
+// This function generate a new ExplodedNode but not a new branch(block edge).
+ExplodedNode* BranchNodeBuilder::generateNode(const Stmt* Condition,
+                                              const GRState* State) {
+  bool IsNew;
+  
+  ExplodedNode* Succ 
+    = Eng.G->getNode(PostCondition(Condition, Pred->getLocationContext()), State,
+                     &IsNew);
+  
+  Succ->addPredecessor(Pred, *Eng.G);
+  
+  Pred = Succ;
+  
+  if (IsNew) 
+    return Succ;
+  
+  return NULL;
+}
+
 ExplodedNode* BranchNodeBuilder::generateNode(const GRState* State,
                                                 bool branch) {
 

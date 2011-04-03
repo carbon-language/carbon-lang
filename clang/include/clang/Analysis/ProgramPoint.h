@@ -43,6 +43,7 @@ public:
               PostStoreKind,
               PostPurgeDeadSymbolsKind,
               PostStmtCustomKind,
+              PostConditionKind,
               PostLValueKind,
               PostInitializerKind,
               CallEnterKind,
@@ -221,7 +222,17 @@ public:
   }
 };
 
-  
+// PostCondition represents the post program point of a branch condition.
+class PostCondition : public PostStmt {
+public:
+  PostCondition(const Stmt* S, const LocationContext *L, const void *tag = 0)
+    : PostStmt(S, PostConditionKind, L, tag) {}
+
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostConditionKind;
+  }
+};
+
 class LocationCheck : public StmtPoint {
 protected:
   LocationCheck(const Stmt *S, const LocationContext *L,
