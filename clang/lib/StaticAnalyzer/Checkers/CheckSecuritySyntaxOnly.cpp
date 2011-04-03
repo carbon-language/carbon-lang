@@ -17,6 +17,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
 using namespace ento;
@@ -33,21 +34,13 @@ static bool isArc4RandomAvailable(const ASTContext &Ctx) {
 namespace {
 class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
-  IdentifierInfo *II_gets;
-  IdentifierInfo *II_getpw;
-  IdentifierInfo *II_mktemp;
-  enum { num_rands = 9 };
-  IdentifierInfo *II_rand[num_rands];
-  IdentifierInfo *II_random;
   enum { num_setids = 6 };
   IdentifierInfo *II_setid[num_setids];
 
   const bool CheckRand;
 
 public:
-  WalkAST(BugReporter &br) : BR(br),
-                             II_gets(0), II_getpw(0), II_mktemp(0),
-                             II_rand(), II_random(0), II_setid(),
+  WalkAST(BugReporter &br) : BR(br), II_setid(),
                  CheckRand(isArc4RandomAvailable(BR.getContext())) {}
 
   // Statement visitor methods.
@@ -61,12 +54,16 @@ public:
   // Helpers.
   IdentifierInfo *GetIdentifier(IdentifierInfo *& II, const char *str);
 
+  typedef void (WalkAST::*FnCheck)(const CallExpr *,
+				   const FunctionDecl *);
+
   // Checker-specific methods.
   void CheckLoopConditionForFloat(const ForStmt *FS);
   void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD);
+  void CheckCall_strcat(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD);
   void CheckCall_random(const CallExpr *CE, const FunctionDecl *FD);
   void CheckUncheckedReturnValue(CallExpr *CE);
@@ -95,16 +92,42 @@ void WalkAST::VisitChildren(Stmt *S) {
 }
 
 void WalkAST::VisitCallExpr(CallExpr *CE) {
-  if (const FunctionDecl *FD = CE->getDirectCallee()) {
-    CheckCall_gets(CE, FD);
-    CheckCall_getpw(CE, FD);
-    CheckCall_mktemp(CE, FD);
-    CheckCall_strcpy(CE, FD);
-    if (CheckRand) {
-      CheckCall_rand(CE, FD);
-      CheckCall_random(CE, FD);
-    }
-  }
+  // Get the callee.  
+  const FunctionDecl *FD = CE->getDirectCallee();
+
+  if (!FD)
+    return;
+
+  // Get the name of the callee. If it's a builtin, strip off the prefix.
+  IdentifierInfo *II = FD->getIdentifier();
+  if (!II)   // if no identifier, not a simple C function
+    return;
+  llvm::StringRef Name = II->getName();
+  if (Name.startswith("__builtin_"))
+    Name = Name.substr(10);
+
+  // Set the evaluation function by switching on the callee name.
+  FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
+    .Case("gets", &WalkAST::CheckCall_gets)
+    .Case("getpw", &WalkAST::CheckCall_getpw)
+    .Case("mktemp", &WalkAST::CheckCall_mktemp)
+    .Cases("strcpy", "__strcpy_chk", &WalkAST::CheckCall_strcpy)
+    .Case("drand48", &WalkAST::CheckCall_rand)
+    .Case("erand48", &WalkAST::CheckCall_rand)
+    .Case("jrand48", &WalkAST::CheckCall_rand)
+    .Case("lrand48", &WalkAST::CheckCall_rand)
+    .Case("mrand48", &WalkAST::CheckCall_rand)
+    .Case("nrand48", &WalkAST::CheckCall_rand)
+    .Case("lcong48", &WalkAST::CheckCall_rand)
+    .Case("rand", &WalkAST::CheckCall_rand)
+    .Case("rand_r", &WalkAST::CheckCall_rand)
+    .Case("random", &WalkAST::CheckCall_random)
+    .Default(NULL);
+
+  // If the callee isn't defined, it is not of security concern.
+  // Check and evaluate the call.
+  if (evalFunction)
+    (this->*evalFunction)(CE, FD);
 
   // Recurse and check children.
   VisitChildren(CE);
@@ -246,9 +269,6 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
-  if (FD->getIdentifier() != GetIdentifier(II_gets, "gets"))
-    return;
-
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -281,9 +301,6 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
-  if (FD->getIdentifier() != GetIdentifier(II_getpw, "getpw"))
-    return;
-
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -320,9 +337,6 @@ void WalkAST::CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
-  if (FD->getIdentifier() != GetIdentifier(II_mktemp, "mktemp"))
-    return;
-
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if(!FPT)
@@ -357,17 +371,6 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
 // the Bounds of a Memory Buffer 
 //===----------------------------------------------------------------------===//
 void WalkAST::CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
-  IdentifierInfo *II = FD->getIdentifier();
-  if (!II)   // if no identifier, not a simple C function
-    return;
-  llvm::StringRef Name = II->getName();
-  if (Name.startswith("__builtin_"))
-    Name = Name.substr(10);
-
-  if ((Name != "strcpy") &&
-      (Name != "__strcpy_chk"))
-    return;
-
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -409,26 +412,7 @@ void WalkAST::CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
-  if (II_rand[0] == NULL) {
-    // This check applies to these functions
-    static const char * const identifiers[num_rands] = {
-      "drand48", "erand48", "jrand48", "lrand48", "mrand48", "nrand48",
-      "lcong48",
-      "rand", "rand_r"
-    };
-
-    for (size_t i = 0; i < num_rands; i++)
-      II_rand[i] = &BR.getContext().Idents.get(identifiers[i]);
-  }
-
-  const IdentifierInfo *id = FD->getIdentifier();
-  size_t identifierid;
-
-  for (identifierid = 0; identifierid < num_rands; identifierid++)
-    if (id == II_rand[identifierid])
-      break;
-
-  if (identifierid >= num_rands)
+  if (!CheckRand)
     return;
 
   const FunctionProtoType *FTP
@@ -470,7 +454,7 @@ void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::CheckCall_random(const CallExpr *CE, const FunctionDecl *FD) {
-  if (FD->getIdentifier() != GetIdentifier(II_random, "random"))
+  if (!CheckRand)
     return;
 
   const FunctionProtoType *FTP
