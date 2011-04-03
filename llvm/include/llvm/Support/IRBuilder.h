@@ -301,7 +301,7 @@ public:
     : IRBuilderBase(C), Inserter(I), Folder(F) {
   }
 
-  explicit IRBuilder(LLVMContext &C) : IRBuilderBase(C), Folder(C) {
+  explicit IRBuilder(LLVMContext &C) : IRBuilderBase(C), Folder() {
   }
 
   explicit IRBuilder(BasicBlock *TheBB, const T &F)
@@ -310,12 +310,12 @@ public:
   }
 
   explicit IRBuilder(BasicBlock *TheBB)
-    : IRBuilderBase(TheBB->getContext()), Folder(Context) {
+    : IRBuilderBase(TheBB->getContext()), Folder() {
     SetInsertPoint(TheBB);
   }
 
   explicit IRBuilder(Instruction *IP)
-    : IRBuilderBase(IP->getContext()), Folder(Context) {
+    : IRBuilderBase(IP->getContext()), Folder() {
     SetInsertPoint(IP);
   }
   
@@ -325,7 +325,7 @@ public:
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-    : IRBuilderBase(TheBB->getContext()), Folder(Context) {
+    : IRBuilderBase(TheBB->getContext()), Folder() {
     SetInsertPoint(TheBB, IP);
   }
 

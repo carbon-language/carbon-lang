@@ -27,12 +27,10 @@
 
 namespace llvm {
 
-class LLVMContext;
-
 /// NoFolder - Create "constants" (actually, instructions) with no folding.
 class NoFolder {
 public:
-  explicit NoFolder(LLVMContext &) {}
+  explicit NoFolder() {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators

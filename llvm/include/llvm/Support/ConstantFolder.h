@@ -22,12 +22,10 @@
 
 namespace llvm {
 
-class LLVMContext;
-
 /// ConstantFolder - Create constants with minimum, target independent, folding.
 class ConstantFolder {
 public:
-  explicit ConstantFolder(LLVMContext &) {}
+  explicit ConstantFolder() {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
