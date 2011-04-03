@@ -1274,3 +1274,28 @@ int PR9455_2() {
   return 1;
 }
 
+// Test initialization of substructs via lazy compound values.
+typedef float RDar9163742_Float;
+
+typedef struct {
+    RDar9163742_Float x, y;
+} RDar9163742_Point;
+typedef struct {
+    RDar9163742_Float width, height;
+} RDar9163742_Size;
+typedef struct {
+    RDar9163742_Point origin;
+    RDar9163742_Size size;
+} RDar9163742_Rect;
+
+extern  RDar9163742_Rect RDar9163742_RectIntegral(RDar9163742_Rect);
+
+RDar9163742_Rect RDar9163742_IntegralRect(RDar9163742_Rect frame)
+{
+    RDar9163742_Rect integralFrame;
+    integralFrame.origin.x = frame.origin.x;
+    integralFrame.origin.y = frame.origin.y;
+    integralFrame.size = frame.size;
+    return RDar9163742_RectIntegral(integralFrame); // no-warning; all fields initialized
+}
+
