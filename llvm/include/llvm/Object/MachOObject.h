@@ -19,6 +19,7 @@
 namespace llvm {
 
 class MemoryBuffer;
+class raw_ostream;
 
 namespace object {
 
@@ -172,7 +173,26 @@ public:
     InMemoryStruct<macho::Symbol64TableEntry> &Res) const;
 
   /// @}
+  
+  /// @name Object Dump Facilities
+  /// @{
+  /// dump - Support for debugging, callable in GDB: V->dump()
+  //
+  void dump() const;
+  void dumpHeader() const;
+  
+  /// print - Implement operator<< on Value.
+  ///
+  void print(raw_ostream &O) const;
+  void printHeader(raw_ostream &O) const;
+
+  /// @}
 };
+  
+inline raw_ostream &operator<<(raw_ostream &OS, const MachOObject &V) {
+  V.print(OS);
+  return OS;
+}
 
 } // end namespace object
 } // end namespace llvm

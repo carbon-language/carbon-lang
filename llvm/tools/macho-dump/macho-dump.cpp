@@ -376,8 +376,8 @@ int main(int argc, char **argv) {
   if (!InputObject)
     return Error("unable to load object: '" + ErrorStr + "'");
 
-  if (int Res = DumpHeader(*InputObject))
-    return Res;
+  // Print the header
+  InputObject->printHeader(outs());
 
   // Print the load commands.
   int Res = 0;
