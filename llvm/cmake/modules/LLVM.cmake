@@ -20,10 +20,10 @@ set(LLVM_NATIVE_ARCH @LLVM_NATIVE_ARCH@)
 
 set(LLVM_ENABLE_PIC @LLVM_ENABLE_PIC@)
 
-set(LLVM_ENABLE_THREADS @LLVM_ENABLE_THREADS)
-
 set(HAVE_LIBDL @HAVE_LIBDL@)
-set(HAVE_LIBPTHREAD @HAVE_LIBPTHREAD)
+set(HAVE_LIBPTHREAD @HAVE_LIBPTHREAD@)
+set(LLVM_ON_UNIX @LLVM_ON_UNIX@)
+set(LLVM_ON_WIN32 @LLVM_ON_WIN32@)
 
 # We try to include using the current setting of CMAKE_MODULE_PATH,
 # which suppossedly was filled by the user with the directory where
