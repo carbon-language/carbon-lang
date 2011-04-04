@@ -1729,6 +1729,8 @@ public:
     // FIXME: Should we just treat this as a feature?
     IsThumb = getTriple().getArchName().startswith("thumb");
     if (IsThumb) {
+      // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
+      // so set preferred for small types to 32.
       DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                            "i64:64:64-f32:32:32-f64:64:64-"
                            "v64:64:64-v128:64:128-a0:0:32-n32");
@@ -1758,6 +1760,8 @@ public:
       UseBitFieldTypeAlignment = false;
 
       if (IsThumb) {
+        // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
+        // so set preferred for small types to 32.
         DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                              "i64:32:32-f32:32:32-f64:32:32-"
                              "v64:32:64-v128:32:128-a0:0:32-n32");
