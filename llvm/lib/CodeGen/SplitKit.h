@@ -85,10 +85,6 @@ public:
     bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
-
-    // Per-interference pattern scratch data.
-    bool OverlapEntry;    ///< Interference overlaps entering interval.
-    bool OverlapExit;     ///< Interference overlaps exiting interval.
   };
 
   /// Basic blocks where var is live. This array is parallel to
