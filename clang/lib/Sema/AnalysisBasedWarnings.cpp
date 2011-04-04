@@ -24,6 +24,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Analyses/ReachableCode.h"
@@ -377,6 +378,45 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 // -Wuninitialized
 //===----------------------------------------------------------------------===//
 
+namespace {
+class ContainsReference : public EvaluatedExprVisitor<ContainsReference> {
+  bool containsReference;
+  const DeclRefExpr *dr;  
+public:
+  ContainsReference(ASTContext &context,
+                    const DeclRefExpr *dr) :
+    EvaluatedExprVisitor<ContainsReference>(context),
+    containsReference(false), dr(dr) {}
+  
+  void VisitExpr(Expr *e) {
+    // Stop evaluating if we already have a reference.
+    if (containsReference)
+      return;
+    
+    EvaluatedExprVisitor<ContainsReference>::VisitExpr(e);
+  }
+  
+  void VisitDeclRefExpr(DeclRefExpr *e) {
+    if (e == dr)
+      containsReference = true;
+    else 
+      EvaluatedExprVisitor<ContainsReference>::VisitDeclRefExpr(e);
+  }
+  
+  bool doesContainReference() const { return containsReference; }
+};
+}
+
+static bool isSelfInit(ASTContext &context,
+                       const VarDecl *vd, const DeclRefExpr *dr) {
+  if (const Expr *exp = vd->getInit()) {
+    ContainsReference contains(context, dr);
+    contains.Visit(const_cast<Expr*>(exp));
+    return contains.doesContainReference();
+  }
+  return false;
+}
+
 typedef std::pair<const Expr*, bool> UninitUse;
 
 namespace {
@@ -432,8 +472,11 @@ public:
         const bool isAlwaysUninit = vi->second;
         if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(vi->first)) {
           S.Diag(dr->getLocStart(),
-                 isAlwaysUninit ? diag::warn_uninit_var
-                                : diag::warn_maybe_uninit_var)
+                 isAlwaysUninit ?
+                  (isSelfInit(S.Context, vd, dr) 
+                    ? diag::warn_uninit_self_reference_in_init
+                    : diag::warn_uninit_var)
+                  : diag::warn_maybe_uninit_var)
             << vd->getDeclName() << dr->getSourceRange();          
         }
         else {
