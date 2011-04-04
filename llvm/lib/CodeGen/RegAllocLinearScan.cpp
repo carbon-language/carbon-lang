@@ -572,7 +572,7 @@ void RALinScan::initIntervalSets()
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
     if (TargetRegisterInfo::isPhysicalRegister(i->second->reg)) {
-      if (!i->second->empty()) {
+      if (!i->second->empty() && allocatableRegs_.test(i->second->reg)) {
         mri_->setPhysRegUsed(i->second->reg);
         fixed_.push_back(std::make_pair(i->second, i->second->begin()));
       }

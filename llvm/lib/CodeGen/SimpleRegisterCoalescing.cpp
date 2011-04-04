@@ -919,13 +919,23 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
 /// are not spillable! If the destination interval uses are far away, think
 /// twice about coalescing them!
 bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
+  bool Allocatable = li_->isAllocatable(CP.getDstReg());
+  LiveInterval &JoinVInt = li_->getInterval(CP.getSrcReg());
+
+  /// Always join simple intervals that are defined by a single copy from a
+  /// reserved register. This doesn't increase register pressure, so it is
+  /// always beneficial.
+  if (!Allocatable && CP.isFlipped() && JoinVInt.containsOneValue())
+    return true;
+
   if (DisablePhysicalJoin) {
     DEBUG(dbgs() << "\tPhysreg joins disabled.\n");
     return false;
   }
 
-  // Only coalesce to allocatable physreg.
-  if (!li_->isAllocatable(CP.getDstReg())) {
+  // Only coalesce to allocatable physreg, we don't want to risk modifying
+  // reserved registers.
+  if (!Allocatable) {
     DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
     return false;  // Not coalescable.
   }
@@ -944,8 +954,6 @@ bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
   // FIXME: Why are we skipping this test for partial copies?
   //        CodeGen/X86/phys_subreg_coalesce-3.ll needs it.
   if (!CP.isPartial()) {
-    LiveInterval &JoinVInt = li_->getInterval(CP.getSrcReg());
-
     const TargetRegisterClass *RC = mri_->getRegClass(CP.getSrcReg());
     unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
     unsigned Length = li_->getApproximateInstructionCount(JoinVInt);

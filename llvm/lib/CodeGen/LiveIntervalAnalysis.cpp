@@ -572,7 +572,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
   if (TargetRegisterInfo::isVirtualRegister(MO.getReg()))
     handleVirtualRegisterDef(MBB, MI, MIIdx, MO, MOIdx,
                              getOrCreateInterval(MO.getReg()));
-  else if (allocatableRegs_[MO.getReg()]) {
+  else {
     MachineInstr *CopyMI = NULL;
     if (MI->isCopyLike())
       CopyMI = MI;
