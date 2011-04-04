@@ -17,7 +17,7 @@ namespace M {
   struct Y : N::X { };
 }
 
-void f();
+void f(); // expected-note 2 {{'f' declared here}}
 
 void test_operator_adl(N::X x, M::Y y) {
   (void)(x + x);

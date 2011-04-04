@@ -2,7 +2,7 @@
 
 // PR3588
 void g0(int, int);
-void g0(); // expected-note{{previous declaration is here}}
+void g0(); // expected-note{{previous declaration is here}} expected-note{{'g0' declared here}}
 
 void f0() {
   g0(1, 2, 3); // expected-error{{too many arguments to function call}}

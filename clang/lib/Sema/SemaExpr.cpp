@@ -4385,6 +4385,13 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
         << NumArgsInProto << NumArgs << Fn->getSourceRange()
         << SourceRange(Args[NumArgsInProto]->getLocStart(),
                        Args[NumArgs-1]->getLocEnd());
+
+      // Emit the location of the prototype.
+      if (FDecl && !FDecl->getBuiltinID())
+        Diag(FDecl->getLocStart(),
+             diag::note_typecheck_call_too_many_args)
+             << FDecl;
+      
       // This deletes the extra arguments.
       Call->setNumArgs(Context, NumArgsInProto);
       return true;
