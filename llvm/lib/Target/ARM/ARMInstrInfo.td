@@ -2687,7 +2687,9 @@ def MULv5: ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
 def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
                    [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
-                   Requires<[IsARM, HasV6]>;
+                   Requires<[IsARM, HasV6]> {
+  let Inst{15-12} = 0b0000;
+}
 }
 
 let Constraints = "@earlyclobber $Rd" in
