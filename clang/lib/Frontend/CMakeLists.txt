@@ -16,6 +16,7 @@ add_clang_library(clangFrontend
   CacheTokens.cpp
   CompilerInstance.cpp
   CompilerInvocation.cpp
+  CreateInvocationFromCommandLine.cpp
   DependencyFile.cpp
   DiagChecker.cpp
   FrontendAction.cpp
