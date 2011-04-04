@@ -4687,7 +4687,8 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
   //  exitMBB:
   //   ...
   BB = exitMBB;
-  BuildMI(BB, dl, TII->get(PPC::SRW), dest).addReg(TmpDestReg).addReg(ShiftReg);
+  BuildMI(*BB, BB->begin(), dl, TII->get(PPC::SRW), dest).addReg(TmpDestReg)
+    .addReg(ShiftReg);
   return BB;
 }
 
@@ -5036,7 +5037,8 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //  exitMBB:
     //   ...
     BB = exitMBB;
-    BuildMI(BB, dl, TII->get(PPC::SRW),dest).addReg(TmpReg).addReg(ShiftReg);
+    BuildMI(*BB, BB->begin(), dl, TII->get(PPC::SRW),dest).addReg(TmpReg)
+      .addReg(ShiftReg);
   } else {
     llvm_unreachable("Unexpected instr type to insert");
   }
