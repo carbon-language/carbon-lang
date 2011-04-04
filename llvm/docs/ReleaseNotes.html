@@ -138,32 +138,32 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="dragonegg">DragonEgg: llvm-gcc ported to gcc-4.5</a>
+<a name="dragonegg">DragonEgg: GCC front-ends, LLVM back-end</a>
 </div>
 
 <div class="doc_text">
-NOTE: This should be written to be self-contained without referencing llvm-gcc.
-
 <p>
-<a href="http://dragonegg.llvm.org/">DragonEgg</a> is a port of llvm-gcc to
-gcc-4.5.  Unlike llvm-gcc, dragonegg in theory does not require any gcc-4.5
-modifications whatsoever (currently one small patch is needed) thanks to the
-new <a href="http://gcc.gnu.org/wiki/plugins">gcc plugin architecture</a>.
-DragonEgg is a gcc plugin that makes gcc-4.5 use the LLVM optimizers and code
-generators instead of gcc's, just like with llvm-gcc.
-</p>
-
-<p>
-DragonEgg is still a work in progress, but it is able to compile a lot of code,
-for example all of gcc, LLVM and clang.  Currently Ada, C, C++ and Fortran work
-well, while all other languages either don't work at all or only work poorly.
-For the moment only the x86-32 and x86-64 targets are supported, and only on
-linux and darwin (darwin may need additional gcc patches).
+<a href="http://dragonegg.llvm.org/">DragonEgg</a> is a
+<a href="http://gcc.gnu.org/wiki/plugins">gcc plugin</a> that replaces GCC's
+optimizers and code generators with LLVM's.
+Currently it requires a patched version of gcc-4.5.
+The plugin can target the x86-32 and x86-64 processor families and has been
+used successfully on the Darwin, FreeBSD and Linux platforms.
+The Ada, C, C++ and Fortran languages work well.
+The plugin is capable of compiling plenty of Obj-C, Obj-C++ and Java but it is
+not known whether the compiled code actually works or not!
 </p>
 
 <p>
 The 2.9 release has the following notable changes:
 <ul>
+<li>The plugin is much more stable when compiling Fortran.</li>
+<li>Inline asm where an asm output is tied to an input of a different size is
+now supported in many more cases.</li>
+<li>Basic support for the __float128 type was added.  It is now possible to
+generate LLVM IR from programs using __float128 but code generation does not
+work yet.</li>
+<li>Compiling Java programs no longer systematically crashes the plugin.</li>
 </ul>
 
 </div>
