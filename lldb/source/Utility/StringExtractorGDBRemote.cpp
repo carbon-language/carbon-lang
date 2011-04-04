@@ -81,7 +81,9 @@ StringExtractorGDBRemote::GetServerPacketType () const
         break;
             
     case 'q':
-        if (packet_cstr[1] == 'H' && 0 == ::strcmp (packet_cstr, "qHostInfo"))
+             if (packet_cstr[1] == 'S' && 0 == ::strncmp(packet_cstr, "qSpeedTest:", strlen("qSpeedTest:")))
+            return eServerPacketType_qSpeedTest;
+        else if (packet_cstr[1] == 'H' && 0 == ::strcmp (packet_cstr, "qHostInfo"))
             return eServerPacketType_qHostInfo;
         else if (packet_cstr[1] == 'P' && 0 == ::strncmp(packet_cstr, "qProcessInfoPID:", strlen("qProcessInfoPID:")))
             return eServerPacketType_qProcessInfoPID;

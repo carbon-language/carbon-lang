@@ -21,6 +21,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
 #include "GDBRemoteCommunicationServer.h"
@@ -70,11 +71,50 @@ main (int argc, char *argv[])
     int long_option_index = 0;
     StreamSP log_stream_sp;
     Args log_args;
+    Error error;
     std::string listen_host_post;
     char ch;
     Debugger::Initialize();
     
-
+//    ConnectionMachPort a;
+//    ConnectionMachPort b;
+//
+//    lldb::ConnectionStatus status;
+//    const char *bootstrap_service_name = "HelloWorld";
+//    status = a.BootstrapCheckIn(bootstrap_service_name, &error);
+//    
+//    if (status != eConnectionStatusSuccess)
+//    {
+//        fprintf(stderr, "%s", error.AsCString());
+//        return 1;
+//    }
+//    status = b.BootstrapLookup (bootstrap_service_name, &error);
+//    if (status != eConnectionStatusSuccess)
+//    {
+//        fprintf(stderr, "%s", error.AsCString());
+//        return 2;
+//    }
+//    
+//    if (a.Write ("hello", 5, status, &error) == 5)
+//    {
+//        char buf[32];
+//        memset(buf, 0, sizeof(buf));
+//        if (b.Read (buf, 5, status, &error))
+//        {
+//            printf("read returned bytes: %s", buf);
+//        }
+//        else
+//        {
+//            fprintf(stderr, "%s", error.AsCString());
+//            return 4;
+//        }
+//    }
+//    else
+//    {
+//        fprintf(stderr, "%s", error.AsCString());
+//        return 3;
+//    }
+    
     while ((ch = getopt_long(argc, argv, "l:f:L:", g_long_options, &long_option_index)) != -1)
     {
 //        DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
@@ -141,7 +181,6 @@ main (int argc, char *argv[])
 
 
     GDBRemoteCommunicationServer gdb_server;
-    Error error;
     if (!listen_host_post.empty())
     {
         std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());

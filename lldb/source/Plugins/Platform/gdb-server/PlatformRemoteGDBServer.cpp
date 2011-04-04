@@ -201,6 +201,9 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
                 {
                     m_gdb_client.QueryNoAckModeSupported();
                     m_gdb_client.GetHostInfo();
+#if 0
+                    m_gdb_client.TestPacketSpeed(10000);
+#endif
                 }
                 else
                 {

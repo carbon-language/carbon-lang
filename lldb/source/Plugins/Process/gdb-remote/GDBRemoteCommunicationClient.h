@@ -190,7 +190,7 @@ public:
     ResetDiscoverableSettings();
 
     bool
-    GetHostInfo ();
+    GetHostInfo (bool force = false);
     
     bool
     GetOSVersion (uint32_t &major, 
@@ -246,6 +246,17 @@ public:
         return old_packet_timeout;
     }
 
+    void
+    TestPacketSpeed (const uint32_t num_packets);
+
+    // This packet is for testing the speed of the interface only. Both
+    // the client and server need to support it, but this allows us to
+    // measure the packet speed without any other work being done on the
+    // other end and avoids any of that work affecting the packet send
+    // and response times.
+    bool
+    SendSpeedTestPacket (uint32_t send_size, 
+                         uint32_t recv_size);
 protected:
 
     //------------------------------------------------------------------

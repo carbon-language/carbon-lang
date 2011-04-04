@@ -108,7 +108,8 @@ public:
     size_t
     MemoryMapFromFileSpec (const FileSpec* file,
                            off_t offset = 0,
-                           size_t length = SIZE_MAX);
+                           size_t length = SIZE_MAX,
+                           bool writeable = false);
 
     //------------------------------------------------------------------
     /// Memory map all or part of a file.
@@ -134,7 +135,11 @@ public:
     ///     The number of bytes mapped starting from the \a offset.
     //------------------------------------------------------------------
     size_t
-    MemoryMapFromFileDescriptor (int fd, off_t offset = 0, size_t length = SIZE_MAX);
+    MemoryMapFromFileDescriptor (int fd, 
+                                 off_t offset,
+                                 size_t length,
+                                 bool write,
+                                 bool fd_is_file);
 
 protected:
     //------------------------------------------------------------------
@@ -144,7 +149,6 @@ protected:
     size_t m_mmap_size;     ///< The actual number of bytes that were mapped when \c mmap() was called
     uint8_t *m_data;        ///< The data the user requested somewhere within the memory mapped data.
     size_t m_size;          ///< The size of the data the user got when data was requested
-    Error m_error;      ///< An error object that describes any errors that occurred during the memory mapping process
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DataBufferMemoryMap);

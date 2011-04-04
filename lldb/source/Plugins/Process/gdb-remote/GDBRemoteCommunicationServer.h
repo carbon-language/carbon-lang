@@ -86,6 +86,9 @@ protected:
     Handle_qGroupName (StringExtractorGDBRemote &packet);
 
     bool
+    Handle_qSpeedTest (StringExtractorGDBRemote &packet);
+
+    bool
     Handle_QStartNoAckMode (StringExtractorGDBRemote &packet);
 
 private:

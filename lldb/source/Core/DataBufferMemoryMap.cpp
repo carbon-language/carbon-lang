@@ -27,8 +27,7 @@ DataBufferMemoryMap::DataBufferMemoryMap() :
     m_mmap_addr(NULL),
     m_mmap_size(0),
     m_data(NULL),
-    m_size(0),
-    m_error()
+    m_size(0)
 {
 }
 
@@ -85,14 +84,6 @@ DataBufferMemoryMap::Clear()
         m_data = NULL;
         m_size = 0;
     }
-    m_error.Clear();
-}
-
-
-const Error &
-DataBufferMemoryMap::GetError() const
-{
-    return m_error;
 }
 
 //----------------------------------------------------------------------
@@ -104,23 +95,33 @@ DataBufferMemoryMap::GetError() const
 // offset.
 //----------------------------------------------------------------------
 size_t
-DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file, off_t offset, size_t length)
+DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file, 
+                                            off_t offset, 
+                                            size_t length,
+                                            bool writeable)
 {
     if (file != NULL)
     {
         char path[PATH_MAX];
         if (file->GetPath(path, sizeof(path)))
         {
-            int fd = ::open(path, O_RDONLY, 0);
+            int oflag = 0;
+            if (writeable)
+                oflag = O_RDWR;
+            else
+                oflag = O_RDONLY;
+
+            int fd = ::open(path, oflag, 0);
             if (fd >= 0)
             {
-                MemoryMapFromFileDescriptor (fd, offset, length);
+                const bool fd_is_file = true;
+                MemoryMapFromFileDescriptor (fd, offset, length, writeable, fd_is_file);
                 ::close(fd);
                 return GetByteSize();
             }
             else
             {
-                m_error.SetErrorToErrno();
+                //error.SetErrorToErrno();
                 return 0;
             }
         }
@@ -144,7 +145,11 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file, off_t offset, 
 //  Number of bytes mapped starting from the requested offset.
 //----------------------------------------------------------------------
 size_t
-DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, off_t offset, size_t length)
+DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, 
+                                                  off_t offset, 
+                                                  size_t length,
+                                                  bool writeable,
+                                                  bool fd_is_file)
 {
     Clear();
     if (fd >= 0)
@@ -167,18 +172,27 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, off_t offset, size_t l
 
                 if (length > 0)
                 {
-                    m_mmap_addr = (uint8_t *)::mmap(NULL, length, PROT_READ, MAP_FILE | MAP_SHARED, fd, offset);
+                    int prot = PROT_READ;
+                    if (writeable)
+                        prot |= PROT_WRITE;
+
+                    int flags = MAP_SHARED;
+                    if (fd_is_file)
+                        flags |= MAP_FILE;
+
+                    m_mmap_addr = (uint8_t *)::mmap(NULL, length, prot, flags, fd, offset);
 
                     if (m_mmap_addr == (void*)-1)
                     {
-                        m_error.SetErrorToErrno ();
-                        if (m_error.GetError() == EINVAL)
+                        Error error;
+                        error.SetErrorToErrno ();
+                        if (error.GetError() == EINVAL)
                         {
                             // We may still have a shot at memory mapping if we align things correctly
                             size_t page_offset = offset % Host::GetPageSize();
                             if (page_offset != 0)
                             {
-                                m_mmap_addr = (uint8_t *)::mmap(NULL, length + page_offset, PROT_READ, MAP_FILE | MAP_SHARED, fd, offset - page_offset);
+                                m_mmap_addr = (uint8_t *)::mmap(NULL, length + page_offset, prot, flags, fd, offset - page_offset);
                                 if (m_mmap_addr == (void*)-1)
                                 {
                                     // Failed to map file
@@ -188,7 +202,6 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd, off_t offset, size_t l
                                 {
                                     // We recovered and were able to memory map
                                     // after we aligned things to page boundaries
-                                    m_error.Clear ();
 
                                     // Save the actual mmap'ed size
                                     m_mmap_size = length + page_offset;

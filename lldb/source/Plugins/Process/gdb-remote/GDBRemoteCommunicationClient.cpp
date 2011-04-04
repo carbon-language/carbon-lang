@@ -765,9 +765,9 @@ GDBRemoteCommunicationClient::GetSystemArchitecture ()
 
 
 bool
-GDBRemoteCommunicationClient::GetHostInfo ()
+GDBRemoteCommunicationClient::GetHostInfo (bool force)
 {
-    if (m_qHostInfo_is_valid == eLazyBoolCalculate)
+    if (force || m_qHostInfo_is_valid == eLazyBoolCalculate)
     {
         m_qHostInfo_is_valid = eLazyBoolNo;
         StringExtractorGDBRemote response;
@@ -1363,5 +1363,87 @@ GDBRemoteCommunicationClient::GetGroupName (uint32_t gid, std::string &name)
         }
     }
     return false;
+}
 
+void
+GDBRemoteCommunicationClient::TestPacketSpeed (const uint32_t num_packets)
+{
+    uint32_t i;
+    TimeValue start_time, end_time;
+    uint64_t total_time_nsec;
+    float packets_per_second;
+    if (SendSpeedTestPacket (0, 0))
+    {
+        for (uint32_t send_size = 0; send_size <= 1024; send_size *= 2)
+        {
+            for (uint32_t recv_size = 0; recv_size <= 1024; recv_size *= 2)
+            {
+                start_time = TimeValue::Now();
+                for (i=0; i<num_packets; ++i)
+                {
+                    SendSpeedTestPacket (send_size, recv_size);
+                }
+                end_time = TimeValue::Now();
+                total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
+                packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)NSEC_PER_SEC;
+                printf ("%u qSpeedTest(send=%-5u, recv=%-5u) in %llu.%09.9llu sec for %f packets/sec.\n", 
+                        num_packets, 
+                        send_size,
+                        recv_size,
+                        total_time_nsec / NSEC_PER_SEC, 
+                        total_time_nsec % NSEC_PER_SEC, 
+                        packets_per_second);
+                if (recv_size == 0)
+                    recv_size = 32;
+            }
+            if (send_size == 0)
+                send_size = 32;
+        }
+    }
+    else
+    {
+        start_time = TimeValue::Now();
+        for (i=0; i<num_packets; ++i)
+        {
+            GetCurrentProcessID ();
+        }
+        end_time = TimeValue::Now();
+        total_time_nsec = end_time.GetAsNanoSecondsSinceJan1_1970() - start_time.GetAsNanoSecondsSinceJan1_1970();
+        packets_per_second = (((float)num_packets)/(float)total_time_nsec) * (float)NSEC_PER_SEC;
+        printf ("%u 'qC' packets packets in 0x%llu%09.9llu sec for %f packets/sec.\n", 
+                num_packets, 
+                total_time_nsec / NSEC_PER_SEC, 
+                total_time_nsec % NSEC_PER_SEC, 
+                packets_per_second);
+    }
+}
+
+bool
+GDBRemoteCommunicationClient::SendSpeedTestPacket (uint32_t send_size, uint32_t recv_size)
+{
+    StreamString packet;
+    packet.Printf ("qSpeedTest:response_size:%i;data:", recv_size);
+    uint32_t bytes_left = send_size;
+    while (bytes_left > 0)
+    {
+        if (bytes_left >= 26)
+        {
+            packet.PutCString("abcdefghijklmnopqrstuvwxyz");
+            bytes_left -= 26;
+        }
+        else
+        {
+            packet.Printf ("%*.*s;", bytes_left, bytes_left, "abcdefghijklmnopqrstuvwxyz");
+            bytes_left = 0;
+        }
+    }
+
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+    {
+        if (response.IsUnsupportedResponse())
+            return false;
+        return true;
+    }
+    return false;
 }

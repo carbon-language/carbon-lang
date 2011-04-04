@@ -117,6 +117,8 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout
         case StringExtractorGDBRemote::eServerPacketType_qGroupName:
             return Handle_qGroupName (packet);
 
+        case StringExtractorGDBRemote::eServerPacketType_qSpeedTest:
+            return Handle_qSpeedTest (packet);
         case StringExtractorGDBRemote::eServerPacketType_QStartNoAckMode:
             return Handle_QStartNoAckMode (packet);
         }
@@ -428,6 +430,42 @@ GDBRemoteCommunicationServer::Handle_qGroupName (StringExtractorGDBRemote &packe
     return SendErrorResponse (6);
 }
 
+bool
+GDBRemoteCommunicationServer::Handle_qSpeedTest (StringExtractorGDBRemote &packet)
+{
+    packet.SetFilePos(strlen ("qSpeedTest:"));
+
+    std::string key;
+    std::string value;
+    bool success = packet.GetNameColonValue(key, value);
+    if (success && key.compare("response_size") == 0)
+    {
+        uint32_t response_size = Args::StringToUInt32(value.c_str(), 0, 0, &success);
+        if (success)
+        {
+            if (response_size == 0)
+                return SendOKResponse();
+            StreamString response;
+            uint32_t bytes_left = response_size;
+            response.PutCString("data:");
+            while (bytes_left > 0)
+            {
+                if (bytes_left >= 26)
+                {
+                    response.PutCString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                    bytes_left -= 26;
+                }
+                else
+                {
+                    response.Printf ("%*.*s;", bytes_left, bytes_left, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                    bytes_left = 0;
+                }
+            }
+            return SendPacket (response);
+        }
+    }
+    return SendErrorResponse (7);
+}
 bool
 GDBRemoteCommunicationServer::Handle_QStartNoAckMode (StringExtractorGDBRemote &packet)
 {

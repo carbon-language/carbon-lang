@@ -52,6 +52,7 @@ public:
         eServerPacketType_qsProcessInfo,
         eServerPacketType_qUserName,
         eServerPacketType_qGroupName,
+        eServerPacketType_qSpeedTest,
         eServerPacketType_QStartNoAckMode
     };
     
