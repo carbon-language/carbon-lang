@@ -49,6 +49,7 @@ static void Warning(const Twine &Msg) {
 
 ///
 
+#if 0
 static int DumpHeader(MachOObject &Obj) {
   // Read the header.
   const macho::Header &Hdr = Obj.getHeader();
@@ -67,6 +68,7 @@ static int DumpHeader(MachOObject &Obj) {
 
   return 0;
 }
+#endif
 
 static void DumpSegmentCommandData(StringRef Name,
                                    uint64_t VMAddr, uint64_t VMSize,
