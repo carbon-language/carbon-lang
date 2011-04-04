@@ -73,8 +73,6 @@ public:
   ///
   struct BlockInfo {
     MachineBasicBlock *MBB;
-    SlotIndex Start;      ///< Beginining of block.
-    SlotIndex Stop;       ///< End of block.
     SlotIndex FirstUse;   ///< First instr using current reg.
     SlotIndex LastUse;    ///< Last instr using current reg.
     SlotIndex Kill;       ///< Interval end point inside block.

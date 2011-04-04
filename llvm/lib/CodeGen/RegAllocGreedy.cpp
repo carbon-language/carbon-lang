@@ -433,7 +433,7 @@ float RAGreedy::calcSplitConstraints(unsigned PhysReg) {
 
     // Interference for the live-in value.
     if (BI.LiveIn) {
-      if (Intf.first() <= BI.Start)
+      if (Intf.first() <= Indexes->getMBBStartIdx(BC.Number))
         BC.Entry = SpillPlacement::MustSpill, Ins += BI.Uses;
       else if (!BI.Uses)
         BC.Entry = SpillPlacement::PrefSpill;
@@ -525,17 +525,19 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!BI.LiveOut || !RegOut)
       continue;
 
+    SlotIndex Start, Stop;
+    tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
     Intf.moveToBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " -> EB#"
                  << Bundles->getBundle(BI.MBB->getNumber(), 1)
-                 << " [" << BI.Start << ';' << BI.LastSplitPoint << '-'
-                 << BI.Stop << ") intf [" << Intf.first() << ';' << Intf.last()
+                 << " [" << Start << ';' << BI.LastSplitPoint << '-'
+                 << Stop << ") intf [" << Intf.first() << ';' << Intf.last()
                  << ')');
 
     // The interference interval should either be invalid or overlap MBB.
-    assert((!Intf.hasInterference() || Intf.first() < BI.Stop)
+    assert((!Intf.hasInterference() || Intf.first() < Stop)
            && "Bad interference");
-    assert((!Intf.hasInterference() || Intf.last() > BI.Start)
+    assert((!Intf.hasInterference() || Intf.last() > Start)
            && "Bad interference");
 
     // Check interference leaving the block.
@@ -553,14 +555,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", not live-through.\n");
-        SE->useIntv(SE->enterIntvBefore(BI.Def), BI.Stop);
+        SE->useIntv(SE->enterIntvBefore(BI.Def), Stop);
         continue;
       }
       if (!RegIn) {
         // Block is live-through, but entry bundle is on the stack.
         // Reload just before the first use.
         DEBUG(dbgs() << ", not live-in, enter before first use.\n");
-        SE->useIntv(SE->enterIntvBefore(BI.FirstUse), BI.Stop);
+        SE->useIntv(SE->enterIntvBefore(BI.FirstUse), Stop);
         continue;
       }
       DEBUG(dbgs() << ", live-through.\n");
@@ -573,7 +575,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!BI.LiveThrough && Intf.last() <= BI.Def) {
       // The interference doesn't reach the outgoing segment.
       DEBUG(dbgs() << " doesn't affect def from " << BI.Def << '\n');
-      SE->useIntv(BI.Def, BI.Stop);
+      SE->useIntv(BI.Def, Stop);
       continue;
     }
 
@@ -601,7 +603,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         SlotIndex SegStart = SE->enterIntvBefore(Use);
         assert(SegStart >= Intf.last() && "Couldn't avoid interference");
         assert(SegStart < BI.LastSplitPoint && "Impossible split point");
-        SE->useIntv(SegStart, BI.Stop);
+        SE->useIntv(SegStart, Stop);
         continue;
       }
     }
@@ -623,10 +625,12 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       continue;
 
     // We have an incoming register. Check for interference.
+    SlotIndex Start, Stop;
+    tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
     Intf.moveToBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << "EB#" << Bundles->getBundle(BI.MBB->getNumber(), 0)
-                 << " -> BB#" << BI.MBB->getNumber() << " [" << BI.Start << ';'
-                 << BI.LastSplitPoint << '-' << BI.Stop << ')');
+                 << " -> BB#" << BI.MBB->getNumber() << " [" << Start << ';'
+                 << BI.LastSplitPoint << '-' << Stop << ')');
 
     // Check interference entering the block.
     if (!Intf.hasInterference()) {
@@ -637,7 +641,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // Block is live-through without interference.
         if (RegOut) {
           DEBUG(dbgs() << ", no uses, live-through.\n");
-          SE->useIntv(BI.Start, BI.Stop);
+          SE->useIntv(Start, Stop);
         } else {
           DEBUG(dbgs() << ", no uses, stack-out.\n");
           SE->leaveIntvAtTop(*BI.MBB);
@@ -646,7 +650,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       if (!BI.LiveThrough) {
         DEBUG(dbgs() << ", killed in block.\n");
-        SE->useIntv(BI.Start, SE->leaveIntvAfter(BI.Kill));
+        SE->useIntv(Start, SE->leaveIntvAfter(BI.Kill));
         continue;
       }
       if (!RegOut) {
@@ -654,7 +658,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // Spill immediately after the last use.
         if (BI.LastUse < BI.LastSplitPoint) {
           DEBUG(dbgs() << ", uses, stack-out.\n");
-          SE->useIntv(BI.Start, SE->leaveIntvAfter(BI.LastUse));
+          SE->useIntv(Start, SE->leaveIntvAfter(BI.LastUse));
           continue;
         }
         // The last use is after the last split point, it is probably an
@@ -662,7 +666,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         DEBUG(dbgs() << ", uses at " << BI.LastUse << " after split point "
                      << BI.LastSplitPoint << ", stack-out.\n");
         SlotIndex SegEnd = SE->leaveIntvBefore(BI.LastSplitPoint);
-        SE->useIntv(BI.Start, SegEnd);
+        SE->useIntv(Start, SegEnd);
         // Run a double interval from the split to the last use.
         // This makes it possible to spill the complement without affecting the
         // indirect branch.
@@ -671,7 +675,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       }
       // Register is live-through.
       DEBUG(dbgs() << ", uses, live-through.\n");
-      SE->useIntv(BI.Start, BI.Stop);
+      SE->useIntv(Start, Stop);
       continue;
     }
 
@@ -681,7 +685,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     if (!BI.LiveThrough && Intf.first() >= BI.Kill) {
       // The interference doesn't reach the outgoing segment.
       DEBUG(dbgs() << " doesn't affect kill at " << BI.Kill << '\n');
-      SE->useIntv(BI.Start, BI.Kill);
+      SE->useIntv(Start, BI.Kill);
       continue;
     }
 
@@ -703,7 +707,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       DEBUG(dbgs() << ", free use at " << *UI << ".\n");
       SlotIndex SegEnd = SE->leaveIntvAfter(Use);
       assert(SegEnd <= Intf.first() && "Couldn't avoid interference");
-      SE->useIntv(BI.Start, SegEnd);
+      SE->useIntv(Start, SegEnd);
       continue;
     }
 

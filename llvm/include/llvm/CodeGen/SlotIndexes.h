@@ -518,9 +518,19 @@ namespace llvm {
       return getMBBRange(MBB->getNumber());
     }
 
+    /// Returns the first index in the given basic block number.
+    SlotIndex getMBBStartIdx(unsigned Num) const {
+      return getMBBRange(Num).first;
+    }
+
     /// Returns the first index in the given basic block.
     SlotIndex getMBBStartIdx(const MachineBasicBlock *mbb) const {
       return getMBBRange(mbb).first;
+    }
+
+    /// Returns the last index in the given basic block number.
+    SlotIndex getMBBEndIdx(unsigned Num) const {
+      return getMBBRange(Num).second;
     }
 
     /// Returns the last index in the given basic block.
