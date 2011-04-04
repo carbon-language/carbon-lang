@@ -4715,7 +4715,16 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   if (RealDecl == 0 || RealDecl->isInvalidDecl())
     return;
 
-  SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);
+  // Check for self-references within variable initializers.
+  if (VarDecl *vd = dyn_cast<VarDecl>(RealDecl)) {
+    // Variables declared within a function/method body are handled
+    // by a dataflow analysis.
+    if (!vd->hasLocalStorage() && !vd->isStaticLocal())
+      SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);    
+  }
+  else {
+    SelfReferenceChecker(*this, RealDecl).VisitExpr(Init);
+  }
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {
     // With declarators parsed the way they are, the parser cannot

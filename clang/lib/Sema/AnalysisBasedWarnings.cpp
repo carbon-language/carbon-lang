@@ -470,14 +470,25 @@ public:
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
       {
         const bool isAlwaysUninit = vi->second;
+        bool showDefinition = true;
+
         if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(vi->first)) {
-          S.Diag(dr->getLocStart(),
-                 isAlwaysUninit ?
-                  (isSelfInit(S.Context, vd, dr) 
-                    ? diag::warn_uninit_self_reference_in_init
-                    : diag::warn_uninit_var)
-                  : diag::warn_maybe_uninit_var)
-            << vd->getDeclName() << dr->getSourceRange();          
+          if (isAlwaysUninit) {
+            if (isSelfInit(S.Context, vd, dr)) {
+              S.Diag(dr->getLocStart(), 
+                     diag::warn_uninit_self_reference_in_init)
+              << vd->getDeclName() << vd->getLocation() << dr->getSourceRange();             
+              showDefinition = false;
+            }
+            else {
+              S.Diag(dr->getLocStart(), diag::warn_uninit_var)
+                << vd->getDeclName() << dr->getSourceRange();          
+            }
+          }
+          else {
+            S.Diag(dr->getLocStart(), diag::warn_maybe_uninit_var)
+              << vd->getDeclName() << dr->getSourceRange();          
+          }          
         }
         else {
           const BlockExpr *be = cast<BlockExpr>(vi->first);
@@ -488,8 +499,9 @@ public:
         }
         
         // Report where the variable was declared.
-        S.Diag(vd->getLocStart(), diag::note_uninit_var_def)
-          << vd->getDeclName();
+        if (showDefinition)
+          S.Diag(vd->getLocStart(), diag::note_uninit_var_def)
+            << vd->getDeclName();
 
         // Only report the fixit once.
         if (fixitIssued)

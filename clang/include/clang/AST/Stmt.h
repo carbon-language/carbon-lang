@@ -691,6 +691,12 @@ public:
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
   
+  /// If this IfStmt has a condition variable, return the faux DeclStmt
+  /// associated with the creation of that condition variable.
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return reinterpret_cast<DeclStmt*>(SubExprs[VAR]);
+  }
+  
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
   const Stmt *getThen() const { return SubExprs[THEN]; }
@@ -757,6 +763,12 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
+  
+  /// If this SwitchStmt has a condition variable, return the faux DeclStmt
+  /// associated with the creation of that condition variable.
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return reinterpret_cast<DeclStmt*>(SubExprs[VAR]);
+  }
 
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Stmt *getBody() const { return SubExprs[BODY]; }
@@ -837,6 +849,12 @@ public:
   /// \endcode
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
+
+  /// If this WhileStmt has a condition variable, return the faux DeclStmt
+  /// associated with the creation of that condition variable.
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return reinterpret_cast<DeclStmt*>(SubExprs[VAR]);
+  }
 
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
@@ -942,6 +960,12 @@ public:
   VarDecl *getConditionVariable() const;
   void setConditionVariable(ASTContext &C, VarDecl *V);
   
+  /// If this ForStmt has a condition variable, return the faux DeclStmt
+  /// associated with the creation of that condition variable.
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return reinterpret_cast<DeclStmt*>(SubExprs[CONDVAR]);
+  }
+
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }
   Stmt *getBody() { return SubExprs[BODY]; }

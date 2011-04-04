@@ -138,6 +138,8 @@ public:
   CFGBlockValues(const CFG &cfg);
   ~CFGBlockValues();
   
+  unsigned getNumEntries() const { return declToIndex.size(); }
+  
   void computeSetOfDeclarations(const DeclContext &dc);  
   ValueVector &getValueVector(const CFGBlock *block,
                                 const CFGBlock *dstBlock);
@@ -470,7 +472,6 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
        DI != DE; ++DI) {
     if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
       if (isTrackedVar(vd)) {
-        vals[vd] = Uninitialized;
         if (Stmt *init = vd->getInit()) {
           Visit(init);
           vals[vd] = Initialized;
@@ -669,9 +670,23 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   vals.computeSetOfDeclarations(dc);
   if (vals.hasNoDeclarations())
     return;
+
+  // Mark all variables uninitialized at the entry.
+  const CFGBlock &entry = cfg.getEntry();
+  for (CFGBlock::const_succ_iterator i = entry.succ_begin(), 
+        e = entry.succ_end(); i != e; ++i) {
+    if (const CFGBlock *succ = *i) {
+      ValueVector &vec = vals.getValueVector(&entry, succ);
+      const unsigned n = vals.getNumEntries();
+      for (unsigned j = 0; j < n ; ++j) {
+        vec[j] = Uninitialized;
+      }
+    }
+  }
+
+  // Proceed with the workist.
   DataflowWorklist worklist(cfg);
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
-  
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
 

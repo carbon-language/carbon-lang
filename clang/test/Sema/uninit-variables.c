@@ -92,7 +92,7 @@ void test14() {
 }
 
 void test15() {
-  int x = x; // expected-warning{{variable 'x' is uninitialized when used within its own initialization}} expected-note{{variable 'x' is declared here}}
+  int x = x; // expected-warning{{variable 'x' is uninitialized when used within its own initialization}}
 }
 
 // Don't warn in the following example; shows dataflow confluence.

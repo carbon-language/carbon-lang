@@ -393,11 +393,11 @@ private:
   void addLocalScopeAndDtors(Stmt* S);
 
   // Interface to CFGBlock - adding CFGElements.
-  void appendStmt(CFGBlock *B, Stmt *S) {
+  void appendStmt(CFGBlock *B, const Stmt *S) {
     if (alwaysAdd(S))
       cachedEntry->second = B;
 
-    B->appendStmt(S, cfg->getBumpVectorContext());
+    B->appendStmt(const_cast<Stmt*>(S), cfg->getBumpVectorContext());
   }
   void appendInitializer(CFGBlock *B, CXXCtorInitializer *I) {
     B->appendInitializer(I, cfg->getBumpVectorContext());
@@ -1495,7 +1495,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   if (VarDecl *VD = I->getConditionVariable()) {
     if (Expr *Init = VD->getInit()) {
       autoCreateBlock();
-      appendStmt(Block, I);
+      appendStmt(Block, I->getConditionVariableDeclStmt());
       addStmt(Init);
     }
   }
@@ -1633,7 +1633,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     if (VarDecl *VD = F->getConditionVariable()) {
       if (Expr *Init = VD->getInit()) {
         autoCreateBlock();
-        appendStmt(Block, F);
+        appendStmt(Block, F->getConditionVariableDeclStmt());
         EntryConditionBlock = addStmt(Init);
         assert(Block == EntryConditionBlock);
       }
@@ -1917,7 +1917,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     if (VarDecl *VD = W->getConditionVariable()) {
       if (Expr *Init = VD->getInit()) {
         autoCreateBlock();
-        appendStmt(Block, W);
+        appendStmt(Block, W->getConditionVariableDeclStmt());        
         EntryConditionBlock = addStmt(Init);
         assert(Block == EntryConditionBlock);
       }
@@ -2279,7 +2279,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   if (VarDecl *VD = Terminator->getConditionVariable()) {
     if (Expr *Init = VD->getInit()) {
       autoCreateBlock();
-      appendStmt(Block, Terminator);
+      appendStmt(Block, Terminator->getConditionVariableDeclStmt());
       addStmt(Init);
     }
   }

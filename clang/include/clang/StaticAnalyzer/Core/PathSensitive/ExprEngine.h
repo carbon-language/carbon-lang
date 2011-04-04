@@ -284,11 +284,6 @@ public:
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
   void VisitGuardedExpr(const Expr* Ex, const Expr* L, const Expr* R, 
                         ExplodedNode* Pred, ExplodedNodeSet& Dst);
-
-  /// VisitCondInit - Transfer function for handling the initialization
-  ///  of a condition variable in an IfStmt, SwitchStmt, etc.
-  void VisitCondInit(const VarDecl *VD, const Stmt *S, ExplodedNode *Pred,
-                     ExplodedNodeSet& Dst);
   
   void VisitInitListExpr(const InitListExpr* E, ExplodedNode* Pred,
                          ExplodedNodeSet& Dst);

@@ -459,11 +459,15 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ContinueStmtClass:
     case Stmt::DefaultStmtClass:
     case Stmt::DoStmtClass:
+    case Stmt::ForStmtClass:
     case Stmt::GotoStmtClass:
+    case Stmt::IfStmtClass:
     case Stmt::IndirectGotoStmtClass:
     case Stmt::LabelStmtClass:
     case Stmt::NoStmtClass:
     case Stmt::NullStmtClass:
+    case Stmt::SwitchStmtClass:
+    case Stmt::WhileStmtClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
       break;
 
@@ -620,12 +624,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
       break;
 
-    case Stmt::ForStmtClass:
-      // This case isn't for branch processing, but for handling the
-      // initialization of a condition variable.
-      VisitCondInit(cast<ForStmt>(S)->getConditionVariable(), S, Pred, Dst);
-      break;
-
     case Stmt::ImplicitCastExprClass:
     case Stmt::CStyleCastExprClass:
     case Stmt::CXXStaticCastExprClass:
@@ -637,12 +635,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       VisitCast(C, C->getSubExpr(), Pred, Dst);
       break;
     }
-
-    case Stmt::IfStmtClass:
-      // This case isn't for branch processing, but for handling the
-      // initialization of a condition variable.
-      VisitCondInit(cast<IfStmt>(S)->getConditionVariable(), S, Pred, Dst);
-      break;
 
     case Stmt::InitListExprClass:
       VisitInitListExpr(cast<InitListExpr>(S), Pred, Dst);
@@ -713,12 +705,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       return;
     }
 
-    case Stmt::SwitchStmtClass:
-      // This case isn't for branch processing, but for handling the
-      // initialization of a condition variable.
-      VisitCondInit(cast<SwitchStmt>(S)->getConditionVariable(), S, Pred, Dst);
-      break;
-
     case Stmt::UnaryOperatorClass: {
       const UnaryOperator *U = cast<UnaryOperator>(S);
       if (AMgr.shouldEagerlyAssume()&&(U->getOpcode() == UO_LNot)) {
@@ -730,12 +716,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
         VisitUnaryOperator(U, Pred, Dst);
       break;
     }
-
-    case Stmt::WhileStmtClass:
-      // This case isn't for branch processing, but for handling the
-      // initialization of a condition variable.
-      VisitCondInit(cast<WhileStmt>(S)->getConditionVariable(), S, Pred, Dst);
-      break;
   }
 }
 
@@ -2305,33 +2285,6 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       state = state->bindDeclWithNoInit(state->getRegion(VD, LC));
       MakeNode(Dst, DS, *I, state);
     }
-  }
-}
-
-void ExprEngine::VisitCondInit(const VarDecl *VD, const Stmt *S,
-                                 ExplodedNode *Pred, ExplodedNodeSet& Dst) {
-
-  const Expr* InitEx = VD->getInit();
-  ExplodedNodeSet Tmp;
-  Visit(InitEx, Pred, Tmp);
-
-  for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-    ExplodedNode *N = *I;
-    const GRState *state = GetState(N);
-
-    const LocationContext *LC = N->getLocationContext();
-    SVal InitVal = state->getSVal(InitEx);
-
-    // Recover some path-sensitivity if a scalar value evaluated to
-    // UnknownVal.
-    if (InitVal.isUnknown() ||
-        !getConstraintManager().canReasonAbout(InitVal)) {
-      InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
-                                            Builder->getCurrentBlockCount());
-    }
-
-    evalBind(Dst, S, N, state,
-             loc::MemRegionVal(state->getRegion(VD, LC)), InitVal, true);
   }
 }
 
