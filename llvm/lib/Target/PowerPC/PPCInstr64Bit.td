@@ -130,7 +130,7 @@ def : Pat<(PPCnop),
 
 // Atomic operations
 let usesCustomInserter = 1 in {
-  let Uses = [CR0] in {
+  let Defs = [CR0] in {
     def ATOMIC_LOAD_ADD_I64 : Pseudo<
       (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr), "",
       [(set G8RC:$dst, (atomic_load_add_64 xoaddr:$ptr, G8RC:$incr))]>;

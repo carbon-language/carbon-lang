@@ -550,7 +550,7 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
 
 // Atomic operations
 let usesCustomInserter = 1 in {
-  let Uses = [CR0] in {
+  let Defs = [CR0] in {
     def ATOMIC_LOAD_ADD_I8 : Pseudo<
       (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr), "",
       [(set GPRC:$dst, (atomic_load_add_8 xoaddr:$ptr, GPRC:$incr))]>;
