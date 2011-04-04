@@ -347,7 +347,7 @@ namespace X86II {
     // set, there is no prefix byte for obtaining a multibyte opcode.
     //
     Op0Shift    = 8,
-    Op0Mask     = 0xF << Op0Shift,
+    Op0Mask     = 0x1F << Op0Shift,
 
     // TB - TwoByte - Set if this instruction has a two byte opcode, which
     // starts with a 0x0F byte before the real opcode.
@@ -380,13 +380,13 @@ namespace X86II {
     // etc. We only cares about REX.W and REX.R bits and only the former is
     // statically determined.
     //
-    REXShift    = 12,
+    REXShift    = Op0Shift + 5,
     REX_W       = 1 << REXShift,
 
     //===------------------------------------------------------------------===//
     // This three-bit field describes the size of an immediate operand.  Zero is
     // unused so that we can tell if we forgot to set a value.
-    ImmShift = 13,
+    ImmShift = REXShift + 1,
     ImmMask    = 7 << ImmShift,
     Imm8       = 1 << ImmShift,
     Imm8PCRel  = 2 << ImmShift,
@@ -400,7 +400,7 @@ namespace X86II {
     // FP Instruction Classification...  Zero is non-fp instruction.
 
     // FPTypeMask - Mask for all of the FP types...
-    FPTypeShift = 16,
+    FPTypeShift = ImmShift + 3,
     FPTypeMask  = 7 << FPTypeShift,
 
     // NotFP - The default, set for instructions that do not use FP registers.
@@ -433,25 +433,26 @@ namespace X86II {
     SpecialFP  = 7 << FPTypeShift,
 
     // Lock prefix
-    LOCKShift = 19,
+    LOCKShift = FPTypeShift + 3,
     LOCK = 1 << LOCKShift,
 
     // Segment override prefixes. Currently we just need ability to address
     // stuff in gs and fs segments.
-    SegOvrShift = 20,
+    SegOvrShift = LOCKShift + 1,
     SegOvrMask  = 3 << SegOvrShift,
     FS          = 1 << SegOvrShift,
     GS          = 2 << SegOvrShift,
 
-    // Execution domain for SSE instructions in bits 22, 23.
-    // 0 in bits 22-23 means normal, non-SSE instruction.
-    SSEDomainShift = 22,
+    // Execution domain for SSE instructions in bits 23, 24.
+    // 0 in bits 23-24 means normal, non-SSE instruction.
+    SSEDomainShift = SegOvrShift + 2,
 
-    OpcodeShift   = 24,
+    OpcodeShift   = SSEDomainShift + 2,
     OpcodeMask    = 0xFF << OpcodeShift,
 
     //===------------------------------------------------------------------===//
     /// VEX - The opcode prefix used by AVX instructions
+    VEXShift = OpcodeShift + 8,
     VEX         = 1U << 0,
 
     /// VEX_W - Has a opcode specific functionality, but is used in the same
@@ -549,7 +550,7 @@ namespace X86II {
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem: {
-      bool HasVEX_4V = (TSFlags >> 32) & X86II::VEX_4V;
+      bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
       unsigned FirstMemOp = 1;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
