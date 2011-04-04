@@ -70,3 +70,11 @@ class Rdar9188004C : public Rdar9188004B<Rdar9188004A> {
   virtual void bar(void) const;
 };
 void Rdar9188004C::bar(void) const {}
+
+// Don't warn about uninitialized variables in unreachable code.
+void PR9625() {
+  if (false) {
+    int x;
+    (void)static_cast<float>(x); // no-warning
+  }
+}

@@ -156,6 +156,8 @@ public:
     return declToIndex.getValueIndex(vd).hasValue();
   }
   
+  bool hasValues(const CFGBlock *block);
+  
   void resetScratch();
   ValueVector &getScratch() { return scratch; }
   
@@ -229,6 +231,11 @@ ValueVector &CFGBlockValues::getValueVector(const CFGBlock *block,
 
   assert(vals[idx].second == 0);
   return lazyCreate(vals[idx].first);
+}
+
+bool CFGBlockValues::hasValues(const CFGBlock *block) {
+  unsigned idx = block->getBlockID();
+  return vals[idx].second != 0;  
 }
 
 BVPair &CFGBlockValues::getValueVectors(const clang::CFGBlock *block,
@@ -603,8 +610,11 @@ void TransferFunctions::VisitUnaryExprOrTypeTraitExpr(
 
 static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
                        AnalysisContext &ac, CFGBlockValues &vals,
+                       llvm::BitVector &wasAnalyzed,
                        UninitVariablesHandler *handler = 0,
                        bool flagBlockUses = false) {
+  
+  wasAnalyzed[block->getBlockID()] = true;
   
   if (const BinaryOperator *b = getLogicalOperatorInChain(block)) {
     CFGBlock::const_pred_iterator itr = block->pred_begin();
@@ -663,10 +673,11 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
   
   worklist.enqueueSuccessors(&cfg.getEntry());
+  llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
 
   while (const CFGBlock *block = worklist.dequeue()) {
     // Did the block change?
-    bool changed = runOnBlock(block, cfg, ac, vals);    
+    bool changed = runOnBlock(block, cfg, ac, vals, wasAnalyzed);    
     if (changed || !previouslyVisited[block->getBlockID()])
       worklist.enqueueSuccessors(block);    
     previouslyVisited[block->getBlockID()] = true;
@@ -674,7 +685,9 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   
   // Run through the blocks one more time, and report uninitialized variabes.
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
-    runOnBlock(*BI, cfg, ac, vals, &handler, /* flagBlockUses */ true);
+    if (wasAnalyzed[(*BI)->getBlockID()])
+      runOnBlock(*BI, cfg, ac, vals, wasAnalyzed, &handler,
+                 /* flagBlockUses */ true);
   }
 }
 

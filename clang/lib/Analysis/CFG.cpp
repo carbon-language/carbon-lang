@@ -428,8 +428,8 @@ private:
     if (!BuildOpts.PruneTriviallyFalseEdges)
       return false;
     return !S->isTypeDependent() && 
-    !S->isValueDependent() &&
-    S->Evaluate(outResult, *Context);
+           !S->isValueDependent() &&
+           S->Evaluate(outResult, *Context);
   }
 
   /// tryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
