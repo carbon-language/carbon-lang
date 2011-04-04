@@ -13,7 +13,6 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/CommandLine.h"
@@ -41,6 +40,20 @@ Action(cl::desc("Action to perform:"),
 
 /* *** */
 
+// A trivial memory manager that doesn't do anything fancy, just uses the
+// support library allocation routines directly.
+class TrivialMemoryManager : public RTDyldMemoryManager {
+public:
+  uint64_t startFunctionBody(const char *Name, uintptr_t &Size);
+  void endFunctionBody(const char *Name, uint64_t FunctionStart,
+                       uint64_t FunctionEnd) {}
+};
+
+uint64_t TrivialMemoryManager::startFunctionBody(const char *Name,
+                                                 uintptr_t &Size) {
+  return (uint64_t)sys::Memory::AllocateRWX(Size, 0, 0).base();
+}
+
 static const char *ProgramName;
 
 static void Message(const char *Type, const Twine &Msg) {
@@ -61,7 +74,7 @@ static int executeInput() {
     return Error("unable to read input: '" + ec.message() + "'");
 
   // Instantiate a dynamic linker.
-  RuntimeDyld Dyld(JITMemoryManager::CreateDefaultMemManager());
+  RuntimeDyld Dyld(new TrivialMemoryManager);
 
   // Load the object file into it.
   if (Dyld.loadObject(InputBuffer.take())) {
@@ -69,7 +82,7 @@ static int executeInput() {
   }
 
   // Get the address of "_main".
-  void *MainAddress = Dyld.getSymbolAddress("_main");
+  uint64_t MainAddress = Dyld.getSymbolAddress("_main");
   if (MainAddress == 0)
     return Error("no definition for '_main'");
 
@@ -83,7 +96,7 @@ static int executeInput() {
     return Error("unable to mark function executable: '" + ErrorStr + "'");
 
   // Dispatch to _main().
-  errs() << "loaded '_main' at: " << MainAddress << "\n";
+  errs() << "loaded '_main' at: " << (void*)MainAddress << "\n";
 
   int (*Main)(int, const char**) =
     (int(*)(int,const char**)) uintptr_t(MainAddress);

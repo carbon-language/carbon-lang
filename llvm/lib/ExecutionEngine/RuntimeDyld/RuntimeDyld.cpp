@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
-#include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -35,12 +34,12 @@ class RuntimeDyldImpl {
   unsigned CPUType;
   unsigned CPUSubtype;
 
-  // The JITMemoryManager to load objects into.
-  JITMemoryManager *JMM;
+  // The MemoryManager to load objects into.
+  RTDyldMemoryManager *MemMgr;
 
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here.
-  StringMap<void*> SymbolTable;
+  StringMap<uint64_t> SymbolTable;
 
   // FIXME: Should have multiple data blocks, one for each loaded chunk of
   //        compiled code.
@@ -72,11 +71,11 @@ class RuntimeDyldImpl {
                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
 
 public:
-  RuntimeDyldImpl(JITMemoryManager *jmm) : JMM(jmm), HasError(false) {}
+  RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
 
   bool loadObject(MemoryBuffer *InputBuffer);
 
-  void *getSymbolAddress(StringRef Name) {
+  uint64_t getSymbolAddress(StringRef Name) {
     // Use lookup() rather than [] because we don't want to add an entry
     // if there isn't one already, which the [] operator does.
     return SymbolTable.lookup(Name);
@@ -314,7 +313,7 @@ loadSegment32(const MachOObject *Obj,
     void *SectionBase = SectionBases[Index];
 
     // Get the symbol address.
-    void *Address = (char*) SectionBase + STE->Value;
+    uint64_t Address = (uint64_t)SectionBase + STE->Value;
 
     // FIXME: Check the symbol type and flags.
     if (STE->Type != 0xF)
@@ -335,7 +334,7 @@ loadSegment32(const MachOObject *Obj,
   }
 
   // We've loaded the section; now mark the functions in it as executable.
-  // FIXME: We really should use the JITMemoryManager for this.
+  // FIXME: We really should use the MemoryManager for this.
   sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
   return false;
@@ -414,7 +413,7 @@ loadSegment64(const MachOObject *Obj,
     void *SectionBase = SectionBases[Index];
 
     // Get the symbol address.
-    void *Address = (char*) SectionBase + STE->Value;
+    uint64_t Address = (uint64_t) SectionBase + STE->Value;
 
     // FIXME: Check the symbol type and flags.
     if (STE->Type != 0xF)
@@ -434,7 +433,7 @@ loadSegment64(const MachOObject *Obj,
   }
 
   // We've loaded the section; now mark the functions in it as executable.
-  // FIXME: We really should use the JITMemoryManager for this.
+  // FIXME: We really should use the MemoryManager for this.
   sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
   return false;
@@ -530,8 +529,8 @@ bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
 
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation
-RuntimeDyld::RuntimeDyld(JITMemoryManager *JMM) {
-  Dyld = new RuntimeDyldImpl(JMM);
+RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *MM) {
+  Dyld = new RuntimeDyldImpl(MM);
 }
 
 RuntimeDyld::~RuntimeDyld() {
@@ -542,7 +541,7 @@ bool RuntimeDyld::loadObject(MemoryBuffer *InputBuffer) {
   return Dyld->loadObject(InputBuffer);
 }
 
-void *RuntimeDyld::getSymbolAddress(StringRef Name) {
+uint64_t RuntimeDyld::getSymbolAddress(StringRef Name) {
   return Dyld->getSymbolAddress(Name);
 }
 

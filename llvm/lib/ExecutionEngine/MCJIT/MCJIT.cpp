@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCJIT.h"
+#include "MCJITMemoryManager.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -57,7 +58,8 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, TM, *TJ, JMM, OptLevel, GVsWithCode);
+    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM), OptLevel,
+                     GVsWithCode);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";
@@ -65,9 +67,9 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 }
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
-             JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
+             RTDyldMemoryManager *MM, CodeGenOpt::Level OptLevel,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), M(m), OS(Buffer), Dyld(JMM) {
+  : ExecutionEngine(m), TM(tm), MemMgr(MM), M(m), OS(Buffer), Dyld(MM) {
 
   PM.add(new TargetData(*TM->getTargetData()));
 
@@ -94,6 +96,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
 }
 
 MCJIT::~MCJIT() {
+  delete MemMgr;
 }
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
@@ -110,7 +113,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   }
 
   Twine Name = TM->getMCAsmInfo()->getGlobalPrefix() + F->getName();
-  return Dyld.getSymbolAddress(Name.str());
+  return (void*)Dyld.getSymbolAddress(Name.str());
 }
 
 void *MCJIT::recompileAndRelinkFunction(Function *F) {

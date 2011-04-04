@@ -21,7 +21,29 @@ namespace llvm {
 
 class RuntimeDyldImpl;
 class MemoryBuffer;
-class JITMemoryManager;
+
+// RuntimeDyld clients often want to handle the memory management of
+// what gets placed where. For JIT clients, this is an abstraction layer
+// over the JITMemoryManager, which references objects by their source
+// representations in LLVM IR.
+// FIXME: As the RuntimeDyld fills out, additional routines will be needed
+//        for the varying types of objects to be allocated.
+class RTDyldMemoryManager {
+  RTDyldMemoryManager(const RTDyldMemoryManager&);  // DO NOT IMPLEMENT
+  void operator=(const RTDyldMemoryManager&);       // DO NOT IMPLEMENT
+public:
+  RTDyldMemoryManager() {}
+
+  // Allocate ActualSize bytes, or more, for the named function. Return
+  // a pointer to the allocated memory and update Size to reflect how much
+  // memory was acutally allocated.
+  virtual uint64_t startFunctionBody(const char *Name, uintptr_t &Size) = 0;
+
+  // Mark the end of the function, including how much of the allocated
+  // memory was actually used.
+  virtual void endFunctionBody(const char *Name, uint64_t FunctionStart,
+                               uint64_t FunctionEnd) = 0;
+};
 
 class RuntimeDyld {
   RuntimeDyld(const RuntimeDyld &);     // DO NOT IMPLEMENT
@@ -31,11 +53,12 @@ class RuntimeDyld {
   // interface.
   RuntimeDyldImpl *Dyld;
 public:
-  RuntimeDyld(JITMemoryManager*);
+  RuntimeDyld(RTDyldMemoryManager*);
   ~RuntimeDyld();
 
   bool loadObject(MemoryBuffer *InputBuffer);
-  void *getSymbolAddress(StringRef Name);
+  uint64_t getSymbolAddress(StringRef Name);
+  void reassignSymbolAddress(StringRef Name, uint64_t Addr);
   // FIXME: Should be parameterized to get the memory block associated with
   // a particular loaded object.
   sys::MemoryBlock getMemoryBlock();

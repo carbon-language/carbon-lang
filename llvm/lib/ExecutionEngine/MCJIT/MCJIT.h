@@ -24,11 +24,12 @@ namespace llvm {
 
 class MCJIT : public ExecutionEngine {
   MCJIT(Module *M, TargetMachine *tm, TargetJITInfo &tji,
-        JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
+        RTDyldMemoryManager *MemMgr, CodeGenOpt::Level OptLevel,
         bool AllocateGVsWithCode);
 
   TargetMachine *TM;
   MCContext *Ctx;
+  RTDyldMemoryManager *MemMgr;
 
   // FIXME: These may need moved to a separate 'jitstate' member like the
   // non-MC JIT does for multithreading and such. Just keep them here for now.
