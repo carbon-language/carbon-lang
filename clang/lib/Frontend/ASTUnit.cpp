@@ -1632,20 +1632,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     Diags = CompilerInstance::createDiagnostics(DiagOpts, ArgEnd - ArgBegin, 
                                                 ArgBegin);
   }
-  
-  llvm::OwningPtr<std::vector<const char *> >
-    Args(new std::vector<const char*>);
-  
-  // Recover resources if we crash before exiting this function.
-  llvm::CrashRecoveryContextCleanupRegistrar<
-    std::vector<const char *> > CleanupArgs(Args.get());
-
-  Args->push_back("<clang>"); // FIXME: Remove dummy argument.
-  Args->insert(Args->end(), ArgBegin, ArgEnd);
-
-  // FIXME: Find a cleaner way to force the driver into restricted modes. We
-  // also want to force it to use clang.
-  Args->push_back("-fsyntax-only");
 
   llvm::SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
   
@@ -1655,45 +1641,11 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     CaptureDroppedDiagnostics Capture(CaptureDiagnostics, *Diags, 
                                       StoredDiagnostics);
 
-    // FIXME: We shouldn't have to pass in the path info.
-    driver::Driver TheDriver("clang", llvm::sys::getHostTriple(),
-                             "a.out", false, false, *Diags);
-
-    // Don't check that inputs exist, they have been remapped.
-    TheDriver.setCheckInputsExist(false);
-
-    llvm::OwningPtr<driver::Compilation> C(TheDriver.BuildCompilation(*Args));
-
-    // Just print the cc1 options if -### was present.
-    if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
-      C->PrintJob(llvm::errs(), C->getJobs(), "\n", true);
+    CI = driver::Driver::createInvocationFromArgs(
+                        llvm::ArrayRef<const char *>(ArgBegin, ArgEnd-ArgBegin),
+                        Diags);
+    if (!CI)
       return 0;
-    }
-
-    // We expect to get back exactly one command job, if we didn't something
-    // failed.
-    const driver::JobList &Jobs = C->getJobs();
-    if (Jobs.size() != 1 || !isa<driver::Command>(Jobs.begin())) {
-      llvm::SmallString<256> Msg;
-      llvm::raw_svector_ostream OS(Msg);
-      C->PrintJob(OS, C->getJobs(), "; ", true);
-      Diags->Report(diag::err_fe_expected_compiler_job) << OS.str();
-      return 0;
-    }
-
-    const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
-    if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
-      Diags->Report(diag::err_fe_expected_clang_command);
-      return 0;
-    }
-
-    const driver::ArgStringList &CCArgs = Cmd->getArguments();
-    CI = new CompilerInvocation();
-    CompilerInvocation::CreateFromArgs(*CI,
-                                     const_cast<const char **>(CCArgs.data()),
-                                     const_cast<const char **>(CCArgs.data()) +
-                                       CCArgs.size(),
-                                       *Diags);
   }
 
   // Override any files that need remapping
