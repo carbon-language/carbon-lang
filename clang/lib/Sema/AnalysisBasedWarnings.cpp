@@ -453,6 +453,10 @@ public:
           continue;
       
         fixitIssued = true;
+        
+        // Don't issue a fixit if there is already an initializer.
+        if (vd->getInit())
+          continue;
 
         // Suggest possible initialization (if any).
         const char *initialization = 0;
