@@ -1237,19 +1237,22 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
          "Expect 1 reg operand followed by 1 imm operand");
 
   ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;
+  unsigned IndexMode =
+                  (TID.TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift;
   if (getAM3IBit(insn) == 1) {
     MI.addOperand(MCOperand::CreateReg(0));
 
     // Disassemble the 8-bit immediate offset.
     unsigned Imm4H = (insn >> ARMII::ImmHiShift) & 0xF;
     unsigned Imm4L = insn & 0xF;
-    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, (Imm4H << 4) | Imm4L);
+    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, (Imm4H << 4) | Imm4L,
+                                        IndexMode);
     MI.addOperand(MCOperand::CreateImm(Offset));
   } else {
     // Disassemble the offset reg (Rm).
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
-    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0);
+    unsigned Offset = ARM_AM::getAM3Opc(AddrOpcode, 0, IndexMode);
     MI.addOperand(MCOperand::CreateImm(Offset));
   }
   OpIdx += 2;

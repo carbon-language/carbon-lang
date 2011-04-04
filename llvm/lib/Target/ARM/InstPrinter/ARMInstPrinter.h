@@ -49,9 +49,14 @@ public:
                                   raw_ostream &O);
   void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
+
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printAM3PostIndexOp(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O);
   void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
+
   void printLdStmModeOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);

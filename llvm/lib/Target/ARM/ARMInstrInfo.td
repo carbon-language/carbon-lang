@@ -475,6 +475,17 @@ def width_imm : Operand<i32>, PatLeaf<(imm), [{
 
 // Define ARM specific addressing modes.
 
+def MemMode2AsmOperand : AsmOperandClass {
+  let Name = "MemMode2";
+  let SuperClasses = [];
+  let ParserMethod = "tryParseMemMode2Operand";
+}
+
+def MemMode3AsmOperand : AsmOperandClass {
+  let Name = "MemMode3";
+  let SuperClasses = [];
+  let ParserMethod = "tryParseMemMode3Operand";
+}
 
 // addrmode_imm12 := reg +/- imm12
 //
@@ -496,12 +507,6 @@ def ldst_so_reg : Operand<i32>,
   // FIXME: Simplify the printer
   let PrintMethod = "printAddrMode2Operand";
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
-}
-
-def MemMode2AsmOperand : AsmOperandClass {
-  let Name = "MemMode2";
-  let SuperClasses = [];
-  let ParserMethod = "tryParseMemMode2Operand";
 }
 
 // addrmode2 := reg +/- imm12
@@ -530,6 +535,7 @@ def addrmode3 : Operand<i32>,
                 ComplexPattern<i32, 3, "SelectAddrMode3", []> {
   let EncoderMethod = "getAddrMode3OpValue";
   let PrintMethod = "printAddrMode3Operand";
+  let ParserMatchClass = MemMode3AsmOperand;
   let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
@@ -1763,22 +1769,19 @@ def LDRBT : AI2ldstidx<1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
   let Inst{11-0} = addr{11-0};
   let AsmMatchConverter = "CvtLdWriteBackRegAddrMode2";
 }
-def LDRSBT : AI3ldstidx<0b1101, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base, am3offset:$offset), IndexModePost,
-                 LdMiscFrm, IIC_iLoad_bh_ru,
-                 "ldrsbt", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+def LDRSBT : AI3ldstidxT<0b1101, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
+             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
+             "ldrsbt", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-def LDRHT : AI3ldstidx<0b1011, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base, am3offset:$offset), IndexModePost,
-                 LdMiscFrm, IIC_iLoad_bh_ru,
-                 "ldrht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+def LDRHT  : AI3ldstidxT<0b1011, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
+             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
+             "ldrht", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
-def LDRSHT : AI3ldstidx<0b1111, 1, 1, 0, (outs GPR:$dst, GPR:$base_wb),
-                 (ins GPR:$base, am3offset:$offset), IndexModePost,
-                 LdMiscFrm, IIC_iLoad_bh_ru,
-                 "ldrsht", "\t$dst, [$base], $offset", "$base = $base_wb", []> {
+def LDRSHT : AI3ldstidxT<0b1111, 1, 1, 0, (outs GPR:$Rt, GPR:$base_wb),
+             (ins addrmode3:$addr), IndexModePost, LdMiscFrm, IIC_iLoad_bh_ru,
+             "ldrsht", "\t$Rt, $addr", "$addr.base = $base_wb", []> {
   let Inst{21} = 1; // overwrite
 }
 }
@@ -1870,12 +1873,12 @@ def STRBT : AI2stridxT<1, 0, (outs GPR:$Rn_wb), (ins GPR:$Rt, addrmode2:$addr),
   let AsmMatchConverter = "CvtStWriteBackRegAddrMode2";
 }
 
-def STRHT: AI3sthpo<(outs GPR:$base_wb),
-                    (ins GPR:$src, GPR:$base,am3offset:$offset),
+def STRHT: AI3sthpo<(outs GPR:$base_wb), (ins GPR:$Rt, addrmode3:$addr),
                     StMiscFrm, IIC_iStore_bh_ru,
-                    "strht", "\t$src, [$base], $offset", "$base = $base_wb",
+                    "strht", "\t$Rt, $addr", "$addr.base = $base_wb",
                     [/* For disassembly only; pattern left blank */]> {
   let Inst{21} = 1; // overwrite
+  let AsmMatchConverter = "CvtStWriteBackRegAddrMode3";
 }
 
 //===----------------------------------------------------------------------===//

@@ -181,6 +181,10 @@ void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum,
   }
 }
 
+//===--------------------------------------------------------------------===//
+// Addressing Mode #2
+//===--------------------------------------------------------------------===//
+
 void ARMInstPrinter::printAM2PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
                                                 raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(Op);
@@ -276,11 +280,35 @@ void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
     << " #" << ShImm;
 }
 
-void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned OpNum,
-                                           raw_ostream &O) {
-  const MCOperand &MO1 = MI->getOperand(OpNum);
-  const MCOperand &MO2 = MI->getOperand(OpNum+1);
-  const MCOperand &MO3 = MI->getOperand(OpNum+2);
+//===--------------------------------------------------------------------===//
+// Addressing Mode #3
+//===--------------------------------------------------------------------===//
+
+void ARMInstPrinter::printAM3PostIndexOp(const MCInst *MI, unsigned Op,
+                                         raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op+1);
+  const MCOperand &MO3 = MI->getOperand(Op+2);
+
+  O << "[" << getRegisterName(MO1.getReg()) << "], ";
+
+  if (MO2.getReg()) {
+    O << (char)ARM_AM::getAM3Op(MO3.getImm())
+    << getRegisterName(MO2.getReg());
+    return;
+  }
+
+  unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm());
+  O << '#'
+    << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()))
+    << ImmOffs;
+}
+
+void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
+                                                raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op+1);
+  const MCOperand &MO3 = MI->getOperand(Op+2);
 
   O << '[' << getRegisterName(MO1.getReg());
 
@@ -295,6 +323,18 @@ void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned OpNum,
       << ARM_AM::getAddrOpcStr(ARM_AM::getAM3Op(MO3.getImm()))
       << ImmOffs;
   O << ']';
+}
+
+void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
+                                           raw_ostream &O) {
+  const MCOperand &MO3 = MI->getOperand(Op+2);
+  unsigned IdxMode = ARM_AM::getAM3IdxMode(MO3.getImm());
+
+  if (IdxMode == ARMII::IndexModePost) {
+    printAM3PostIndexOp(MI, Op, O);
+    return;
+  }
+  printAM3PreOrOffsetIndexOp(MI, Op, O);
 }
 
 void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,

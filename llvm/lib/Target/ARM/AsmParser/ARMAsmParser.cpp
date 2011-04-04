@@ -98,11 +98,17 @@ class ARMAsmParser : public TargetAsmParser {
     SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy tryParseMemMode2Operand(
     SmallVectorImpl<MCParsedAsmOperand*>&);
+  OperandMatchResultTy tryParseMemMode3Operand(
+    SmallVectorImpl<MCParsedAsmOperand*>&);
 
   // Asm Match Converter Methods
   bool CvtLdWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
   bool CvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
+                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool CvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                                  const SmallVectorImpl<MCParsedAsmOperand*> &);
+  bool CvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
@@ -371,6 +377,30 @@ public:
 
     return true;
   }
+  bool isMemMode3() const {
+    if (getMemAddrMode() != ARMII::AddrMode3)
+      return false;
+
+    if (getMemOffsetIsReg()) {
+      if (getMemOffsetRegShifted())
+        return false; // No shift with offset reg allowed
+      return true;
+    }
+
+    if (getMemNegative() &&
+        !(getMemPostindexed() || getMemPreindexed()))
+      return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+
+    // The offset must be in the range 0-255 (imm8).
+    if (Value > 255 || Value < -255)
+      return false;
+
+    return true;
+  }
   bool isMemMode5() const {
     if (!isMemory() || getMemOffsetIsReg() || getMemWriteback() ||
         getMemNegative())
@@ -537,6 +567,37 @@ public:
     else
       Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM2Opc(ARM_AM::sub,
                                           -Offset, ARM_AM::no_shift, IdxMode)));
+  }
+
+  void addMemMode3Operands(MCInst &Inst, unsigned N) const {
+    assert(isMemMode3() && "Invalid mode or number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getMemBaseRegNum()));
+    unsigned IdxMode = (getMemPreindexed() | getMemPostindexed() << 1);
+
+    if (getMemOffsetIsReg()) {
+      Inst.addOperand(MCOperand::CreateReg(getMemOffsetRegNum()));
+
+      ARM_AM::AddrOpc AMOpc = getMemNegative() ? ARM_AM::sub : ARM_AM::add;
+      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(AMOpc, 0,
+                                                             IdxMode)));
+      return;
+    }
+
+    // Create a operand placeholder to always yield the same number of operands.
+    Inst.addOperand(MCOperand::CreateReg(0));
+
+    // FIXME: #-0 is encoded differently than #0. Does the parser preserve
+    // the difference?
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemOffset());
+    assert(CE && "Non-constant mode 3 offset operand!");
+    int64_t Offset = CE->getValue();
+
+    if (Offset >= 0)
+      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(ARM_AM::add,
+                                           Offset, IdxMode)));
+    else
+      Inst.addOperand(MCOperand::CreateImm(ARM_AM::getAM3Opc(ARM_AM::sub,
+                                           -Offset, IdxMode)));
   }
 
   void addMemMode5Operands(MCInst &Inst, unsigned N) const {
@@ -1219,6 +1280,17 @@ tryParseMemMode2Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return MatchOperand_Success;
 }
 
+/// tryParseMemMode3Operand - Try to parse memory addressing mode 3 operand.
+ARMAsmParser::OperandMatchResultTy ARMAsmParser::
+tryParseMemMode3Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  assert(Parser.getTok().is(AsmToken::LBrac) && "Token is not a \"[\"");
+
+  if (ParseMemory(Operands, ARMII::AddrMode3))
+    return MatchOperand_NoMatch;
+
+  return MatchOperand_Success;
+}
+
 /// CvtLdWriteBackRegAddrMode2 - Convert parsed operands to MCInst.
 /// Needed here because the Asm Gen Matcher can't handle properly tied operands
 /// when they refer multiple MIOperands inside a single one.
@@ -1245,6 +1317,36 @@ CvtStWriteBackRegAddrMode2(MCInst &Inst, unsigned Opcode,
   Inst.addOperand(MCOperand::CreateImm(0));
   ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
   ((ARMOperand*)Operands[3])->addMemMode2Operands(Inst, 3);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+/// CvtLdWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+CvtLdWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+
+  ((ARMOperand*)Operands[3])->addMemMode3Operands(Inst, 3);
+  ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
+  return true;
+}
+
+/// CvtStWriteBackRegAddrMode3 - Convert parsed operands to MCInst.
+/// Needed here because the Asm Gen Matcher can't handle properly tied operands
+/// when they refer multiple MIOperands inside a single one.
+bool ARMAsmParser::
+CvtStWriteBackRegAddrMode3(MCInst &Inst, unsigned Opcode,
+                         const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Create a writeback register dummy placeholder.
+  Inst.addOperand(MCOperand::CreateImm(0));
+  ((ARMOperand*)Operands[2])->addRegOperands(Inst, 1);
+  ((ARMOperand*)Operands[3])->addMemMode3Operands(Inst, 3);
   ((ARMOperand*)Operands[1])->addCondCodeOperands(Inst, 2);
   return true;
 }
@@ -1310,6 +1412,10 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
     const AsmToken &ExclaimTok = Parser.getTok();
     if (ExclaimTok.is(AsmToken::Exclaim)) {
+      // None of addrmode3 instruction uses "!"
+      if (AddrMode == ARMII::AddrMode3)
+        return true;
+
       WBOp = ARMOperand::CreateToken(ExclaimTok.getString(),
                                      ExclaimTok.getLoc());
       Writeback = true;
@@ -1350,6 +1456,11 @@ ParseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   if (!OffsetIsReg) {
     if (!Offset)
       Offset = MCConstantExpr::Create(0, getContext());
+  } else {
+    if (AddrMode == ARMII::AddrMode3 && OffsetRegShifted) {
+      Error(E, "shift amount not supported");
+      return true;
+    }
   }
 
   Operands.push_back(ARMOperand::CreateMem(AddrMode, BaseRegNum, OffsetIsReg,
