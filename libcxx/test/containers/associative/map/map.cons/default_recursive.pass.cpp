@@ -14,11 +14,12 @@
 // map();
 
 #include <map>
-#include <cassert>
+
+struct X
+{
+    std::multimap<int, X> m;
+};
 
 int main()
 {
-    std::map<std::map<int,double>, std::map<int, double> > m;
-    assert(m.empty());
-    assert(m.begin() == m.end());
 }
