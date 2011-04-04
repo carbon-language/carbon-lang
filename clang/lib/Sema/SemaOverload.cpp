@@ -8934,7 +8934,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall,
                           Method))
           return ExprError();
-  return Owned(TheCall);
+
+  return MaybeBindToTemporary(TheCall);
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to
