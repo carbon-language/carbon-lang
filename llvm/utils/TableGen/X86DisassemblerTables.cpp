@@ -267,7 +267,7 @@ static const char* stringForModifierType(ModifierType mt)
 DisassemblerTables::DisassemblerTables() {
   unsigned i;
   
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < sizeof(Tables) / sizeof(Tables[0]); i++) {
     Tables[i] = new ContextDecision;
     memset(Tables[i], 0, sizeof(ContextDecision));
   }
@@ -278,7 +278,7 @@ DisassemblerTables::DisassemblerTables() {
 DisassemblerTables::~DisassemblerTables() {
   unsigned i;
   
-  for (i = 0; i < 4; i++)
+  for (i = 0; i < sizeof(Tables) / sizeof(Tables[0]); i++)
     delete Tables[i];
 }
   
