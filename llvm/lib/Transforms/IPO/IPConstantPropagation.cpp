@@ -186,7 +186,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
         // Find the returned value
         Value *V;
         if (!STy)
-          V = RI->getOperand(i);
+          V = RI->getOperand(0);
         else
           V = FindInsertedValue(RI->getOperand(0), i);
 

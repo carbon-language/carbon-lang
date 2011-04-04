@@ -2440,24 +2440,6 @@ void CWriter::visitReturnInst(ReturnInst &I) {
     return;
   }
 
-  if (I.getNumOperands() > 1) {
-    Out << "  {\n";
-    Out << "    ";
-    printType(Out, I.getParent()->getParent()->getReturnType());
-    Out << "   llvm_cbe_mrv_temp = {\n";
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-      Out << "      ";
-      writeOperand(I.getOperand(i));
-      if (i != e - 1)
-        Out << ",";
-      Out << "\n";
-    }
-    Out << "    };\n";
-    Out << "    return llvm_cbe_mrv_temp;\n";
-    Out << "  }\n";
-    return;
-  }
-
   Out << "  return";
   if (I.getNumOperands()) {
     Out << ' ';
