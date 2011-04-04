@@ -2167,7 +2167,7 @@ static unsigned decodeN3VImm(uint32_t insn) {
 // Correctly set VLD*/VST*'s TIED_TO GPR, as the asm printer needs it.
 static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, bool Store, bool DblSpaced,
-    BO B) {
+    unsigned alignment, BO B) {
 
   const TargetInstrDesc &TID = ARMInsts[Opcode];
   const TargetOperandInfo *OpInfo = TID.OpInfo;
@@ -2211,9 +2211,10 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     assert((OpIdx+1) < NumOps && OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            OpInfo[OpIdx + 1].RegClass < 0 && "Addrmode #6 Operands expected");
+    // addrmode6 := (ops GPR:$addr, i32imm)
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        Rn)));
-    MI.addOperand(MCOperand::CreateImm(0)); // Alignment ignored?
+    MI.addOperand(MCOperand::CreateImm(alignment)); // Alignment
     OpIdx += 2;
 
     if (WB) {
@@ -2261,9 +2262,10 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     assert((OpIdx+1) < NumOps && OpInfo[OpIdx].RegClass == ARM::GPRRegClassID &&
            OpInfo[OpIdx + 1].RegClass < 0 && "Addrmode #6 Operands expected");
+    // addrmode6 := (ops GPR:$addr, i32imm)
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        Rn)));
-    MI.addOperand(MCOperand::CreateImm(0)); // Alignment ignored?
+    MI.addOperand(MCOperand::CreateImm(alignment)); // Alignment
     OpIdx += 2;
 
     if (WB) {
@@ -2294,6 +2296,92 @@ static bool DisassembleNLdSt0(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
+// A8.6.308, A8.6.311, A8.6.314, A8.6.317.
+static bool Align4OneLaneInst(unsigned elem, unsigned size,
+    unsigned index_align, unsigned & alignment) {
+  unsigned bits = 0;
+  switch (elem) {
+  default:
+    return false;
+  case 1:
+    // A8.6.308
+    if (size == 0)
+      return slice(index_align, 0, 0) == 0;
+    else if (size == 1) {
+      bits = slice(index_align, 1, 0);
+      if (bits != 0 && bits != 1)
+        return false;
+      if (bits == 1)
+        alignment = 16;
+      return true;
+    } else if (size == 2) {
+      bits = slice(index_align, 2, 0);
+      if (bits != 0 && bits != 3)
+        return false;
+      if (bits == 3)
+        alignment = 32;
+      return true;;
+    }
+    return true;
+  case 2:
+    // A8.6.311
+    if (size == 0) {
+      if (slice(index_align, 0, 0) == 1)
+        alignment = 16;
+      return true;
+    } if (size == 1) {
+      if (slice(index_align, 0, 0) == 1)
+        alignment = 32;
+      return true;
+    } else if (size == 2) {
+      if (slice(index_align, 1, 1) != 0)
+        return false;
+      if (slice(index_align, 0, 0) == 1)
+        alignment = 64;
+      return true;;
+    }
+    return true;
+  case 3:
+    // A8.6.314
+    if (size == 0) {
+      if (slice(index_align, 0, 0) != 0)
+        return false;
+      return true;
+    } if (size == 1) {
+      if (slice(index_align, 0, 0) != 0)
+        return false;
+      return true;
+      return true;
+    } else if (size == 2) {
+      if (slice(index_align, 1, 0) != 0)
+        return false;
+      return true;;
+    }
+    return true;
+  case 4:
+    // A8.6.317
+    if (size == 0) {
+      if (slice(index_align, 0, 0) == 1)
+        alignment = 32;
+      return true;
+    } if (size == 1) {
+      if (slice(index_align, 0, 0) == 1)
+        alignment = 64;
+      return true;
+    } else if (size == 2) {
+      bits = slice(index_align, 1, 0);
+      if (bits == 3)
+        return false;
+      if (bits == 1)
+        alignment = 64;
+      else if (bits == 2)
+        alignment = 128;
+      return true;;
+    }
+    return true;
+  }
+}
+
 // A7.7
 // If L (Inst{21}) == 0, store instructions.
 // Find out about double-spaced-ness of the Opcode and pass it on to
@@ -2303,10 +2391,32 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   const StringRef Name = ARMInsts[Opcode].Name;
   bool DblSpaced = false;
+  // 0 represents standard alignment, i.e., unaligned data access.
+  unsigned alignment = 0;
 
   if (Name.find("LN") != std::string::npos) {
     // To one lane instructions.
     // See, for example, 8.6.317 VLD4 (single 4-element structure to one lane).
+
+    unsigned elem = 0; // legal values: {1, 2, 3, 4}
+    if (Name.startswith("VST1") || Name.startswith("VLD1"))
+      elem = 1;
+
+    if (Name.startswith("VST2") || Name.startswith("VLD2"))
+      elem = 2;
+
+    if (Name.startswith("VST3") || Name.startswith("VLD3"))
+      elem = 3;
+
+    if (Name.startswith("VST4") || Name.startswith("VLD4"))
+      elem = 4;
+
+    // Utility function takes number of elements, size, and index_align.
+    if (!Align4OneLaneInst(elem,
+                           slice(insn, 11, 10),
+                           slice(insn, 7, 4),
+                           alignment))
+      return false;
 
     // <size> == 16 && Inst{5} == 1 --> DblSpaced = true
     if (Name.endswith("16") || Name.endswith("16_UPD"))
@@ -2315,26 +2425,41 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
     // <size> == 32 && Inst{6} == 1 --> DblSpaced = true
     if (Name.endswith("32") || Name.endswith("32_UPD"))
       DblSpaced = slice(insn, 6, 6) == 1;
-
   } else {
     // Multiple n-element structures with type encoded as Inst{11-8}.
     // See, for example, A8.6.316 VLD4 (multiple 4-element structures).
+
+    // Inst{5-4} encodes alignment.
+    switch (slice(insn, 5, 4)) {
+    default:
+      break;
+    case 1:
+      alignment = 64; break;
+    case 2:
+      alignment = 128; break;
+    case 3:
+      alignment = 256; break;
+    }
 
     // n == 2 && type == 0b1001 -> DblSpaced = true
     if (Name.startswith("VST2") || Name.startswith("VLD2"))
       DblSpaced = slice(insn, 11, 8) == 9;
 
     // n == 3 && type == 0b0101 -> DblSpaced = true
-    if (Name.startswith("VST3") || Name.startswith("VLD3"))
+    if (Name.startswith("VST3") || Name.startswith("VLD3")) {
+      // A8.6.313 & A8.6.395
+      if (slice(insn, 7, 6) == 3 && slice(insn, 5, 5) == 1)
+        return false;
+
       DblSpaced = slice(insn, 11, 8) == 5;
+    }
 
     // n == 4 && type == 0b0001 -> DblSpaced = true
     if (Name.startswith("VST4") || Name.startswith("VLD4"))
       DblSpaced = slice(insn, 11, 8) == 1;
-
   }
   return DisassembleNLdSt0(MI, Opcode, insn, NumOps, NumOpsAdded,
-                           slice(insn, 21, 21) == 0, DblSpaced, B);
+                           slice(insn, 21, 21) == 0, DblSpaced, alignment/8, B);
 }
 
 // VMOV (immediate)
