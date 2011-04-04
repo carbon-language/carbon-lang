@@ -618,7 +618,7 @@ static inline unsigned GetCopOpc(uint32_t insn) {
 static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  assert(NumOps >= 5 && "Num of operands >= 5 for coprocessor instr");
+  assert(NumOps >= 4 && "Num of operands >= 4 for coprocessor instr");
 
   unsigned &OpIdx = NumOpsAdded;
   bool OneCopOpc = (Opcode == ARM::MCRR || Opcode == ARM::MCRR2 ||
@@ -1296,8 +1296,10 @@ static bool DisassembleLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   MI.addOperand(MCOperand::CreateReg(Base));
 
   // Handling the two predicate operands before the reglist.
-  int64_t CondVal = insn >> ARMII::CondShift;
-  MI.addOperand(MCOperand::CreateImm(CondVal == 0xF ? 0xE : CondVal));
+  int64_t CondVal = getCondField(insn);
+  if (CondVal == 0xF)
+    return false;
+  MI.addOperand(MCOperand::CreateImm(CondVal));
   MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
 
   NumOpsAdded += 3;
@@ -1863,8 +1865,10 @@ static bool DisassembleVFPLdStMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   MI.addOperand(MCOperand::CreateReg(Base));
 
   // Handling the two predicate operands before the reglist.
-  int64_t CondVal = insn >> ARMII::CondShift;
-  MI.addOperand(MCOperand::CreateImm(CondVal == 0xF ? 0xE : CondVal));
+  int64_t CondVal = getCondField(insn);
+  if (CondVal == 0xF)
+    return false;
+  MI.addOperand(MCOperand::CreateImm(CondVal));
   MI.addOperand(MCOperand::CreateReg(ARM::CPSR));
 
   OpIdx += 3;
@@ -3357,6 +3361,7 @@ bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
   const std::string &Name = ARMInsts[Opcode].Name;
   unsigned Idx = MI.getNumOperands();
+  uint64_t TSFlags = ARMInsts[Opcode].TSFlags;
 
   // First, we check whether this instr specifies the PredicateOperand through
   // a pair of TargetOperandInfos with isPredicate() property.
@@ -3384,6 +3389,9 @@ bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
           MI.addOperand(MCOperand::CreateImm(ARMCC::AL));
       } else {
         // ARM instructions get their condition field from Inst{31-28}.
+        // We should reject Inst{31-28} = 0b1111 as invalid encoding.
+        if (!isNEONDomain(TSFlags) && getCondField(insn) == 0xF)
+          return false;
         MI.addOperand(MCOperand::CreateImm(CondCode(getCondField(insn))));
       }
     }

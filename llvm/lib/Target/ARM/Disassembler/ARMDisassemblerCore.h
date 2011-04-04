@@ -141,6 +141,12 @@ static inline bool isUnaryDP(uint64_t TSFlags) {
   return (TSFlags & ARMII::UnaryDP);
 }
 
+/// A NEON Domain instruction has cond field (Inst{31-28}) as 0b1111.
+static inline bool isNEONDomain(uint64_t TSFlags) {
+  return (TSFlags & ARMII::DomainNEON) ||
+         (TSFlags & ARMII::DomainNEONA8);
+}
+
 /// This four-bit field describes the addressing mode used.
 /// See also ARMBaseInstrInfo.h.
 static inline unsigned getAddrMode(uint64_t TSFlags) {

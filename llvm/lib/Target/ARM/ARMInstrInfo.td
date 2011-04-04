@@ -1604,6 +1604,7 @@ def RFEW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b011; // W = 1
+  let Inst{15-0} = 0x0a00;
 }
 
 def RFE  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
@@ -1611,6 +1612,7 @@ def RFE  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, GPR:$base),
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b001; // W = 0
+  let Inst{15-0} = 0x0a00;
 }
 } // isCodeGenOnly = 1
 
@@ -3434,16 +3436,16 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, i32imm:$opc1,
 
 class ACI<dag oops, dag iops, string opc, string asm,
           IndexMode im = IndexModeNone>
-  : I<oops, iops, AddrModeNone, Size4Bytes, im, BrFrm, NoItinerary,
-      opc, asm, "", [/* For disassembly only; pattern left blank */]> {
+  : InoP<oops, iops, AddrModeNone, Size4Bytes, im, BrFrm, NoItinerary,
+         opc, asm, "", [/* For disassembly only; pattern left blank */]> {
   let Inst{27-25} = 0b110;
 }
 
-multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
+multiclass LdStCop<bits<4> op31_28, bit load, dag ops, string opc, string cond>{
 
   def _OFFSET : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      opc, "\tp$cop, cr$CRd, $addr"> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 0; // W = 0
@@ -3452,8 +3454,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def _PRE : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      opc, "\tp$cop, cr$CRd, $addr!", IndexModePre> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr!", IndexModePre> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 1; // W = 1
@@ -3462,8 +3464,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def _POST : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      opc, "\tp$cop, cr$CRd, $addr", IndexModePost> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(opc, cond), "\tp$cop, cr$CRd, $addr", IndexModePost> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{21} = 1; // W = 1
@@ -3472,8 +3474,9 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def _OPTION : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, nohash_imm:$option),
-      opc, "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+      !con((ins nohash_imm:$cop,nohash_imm:$CRd,GPR:$base, nohash_imm:$option),
+            ops),
+      !strconcat(opc, cond), "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
@@ -3483,8 +3486,8 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def L_OFFSET : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr"> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 0; // W = 0
@@ -3493,8 +3496,9 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def L_PRE : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr!", IndexModePre> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr!",
+      IndexModePre> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 1; // P = 1
     let Inst{21} = 1; // W = 1
@@ -3503,8 +3507,9 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def L_POST : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr),
-      !strconcat(opc, "l"), "\tp$cop, cr$CRd, $addr", IndexModePost> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd, addrmode2:$addr), ops),
+      !strconcat(!strconcat(opc, "l"), cond), "\tp$cop, cr$CRd, $addr",
+      IndexModePost> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{21} = 1; // W = 1
@@ -3513,8 +3518,10 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 
   def L_OPTION : ACI<(outs),
-      (ins nohash_imm:$cop, nohash_imm:$CRd, GPR:$base, nohash_imm:$option),
-      !strconcat(opc, "l"), "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
+      !con((ins nohash_imm:$cop, nohash_imm:$CRd,GPR:$base,nohash_imm:$option),
+            ops),
+      !strconcat(!strconcat(opc, "l"), cond),
+      "\tp$cop, cr$CRd, [$base], \\{$option\\}"> {
     let Inst{31-28} = op31_28;
     let Inst{24} = 0; // P = 0
     let Inst{23} = 1; // U = 1
@@ -3524,10 +3531,10 @@ multiclass LdStCop<bits<4> op31_28, bit load, string opc> {
   }
 }
 
-defm LDC  : LdStCop<{?,?,?,?}, 1, "ldc">;
-defm LDC2 : LdStCop<0b1111,    1, "ldc2">;
-defm STC  : LdStCop<{?,?,?,?}, 0, "stc">;
-defm STC2 : LdStCop<0b1111,    0, "stc2">;
+defm LDC  : LdStCop<{?,?,?,?}, 1, (ins pred:$p), "ldc",  "${p}">;
+defm LDC2 : LdStCop<0b1111,    1, (ins),         "ldc2", "">;
+defm STC  : LdStCop<{?,?,?,?}, 0, (ins pred:$p), "stc",  "${p}">;
+defm STC2 : LdStCop<0b1111,    0, (ins),         "stc2", "">;
 
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register -- for disassembly only
