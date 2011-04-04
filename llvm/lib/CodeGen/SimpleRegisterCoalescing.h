@@ -138,6 +138,9 @@ namespace llvm {
                                  unsigned DstReg, unsigned DstSubIdx,
                                  MachineInstr *CopyMI);
 
+    /// shouldJoinPhys - Return true if a physreg copy should be joined.
+    bool shouldJoinPhys(CoalescerPair &CP);
+
     /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
     /// two virtual registers from different register classes.
     bool isWinToJoinCrossClass(unsigned SrcReg,

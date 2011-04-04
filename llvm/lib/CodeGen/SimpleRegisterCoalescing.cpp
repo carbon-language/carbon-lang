@@ -913,6 +913,50 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   return removeIntervalIfEmpty(li, li_, tri_);
 }
 
+/// shouldJoinPhys - Return true if a copy involving a physreg should be joined.
+/// We need to be careful about coalescing a source physical register with a
+/// virtual register. Once the coalescing is done, it cannot be broken and these
+/// are not spillable! If the destination interval uses are far away, think
+/// twice about coalescing them!
+bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
+  if (DisablePhysicalJoin) {
+    DEBUG(dbgs() << "\tPhysreg joins disabled.\n");
+    return false;
+  }
+
+  // Only coalesce to allocatable physreg.
+  if (!li_->isAllocatable(CP.getDstReg())) {
+    DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
+    return false;  // Not coalescable.
+  }
+
+  // Don't join with physregs that have a ridiculous number of live
+  // ranges. The data structure performance is really bad when that
+  // happens.
+  if (li_->hasInterval(CP.getDstReg()) &&
+      li_->getInterval(CP.getDstReg()).ranges.size() > 1000) {
+    ++numAborts;
+    DEBUG(dbgs()
+          << "\tPhysical register live interval too complicated, abort!\n");
+    return false;
+  }
+
+  // FIXME: Why are we skipping this test for partial copies?
+  //        CodeGen/X86/phys_subreg_coalesce-3.ll needs it.
+  if (!CP.isPartial()) {
+    LiveInterval &JoinVInt = li_->getInterval(CP.getSrcReg());
+
+    const TargetRegisterClass *RC = mri_->getRegClass(CP.getSrcReg());
+    unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
+    unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
+    if (Length > Threshold) {
+      ++numAborts;
+      DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");
+      return false;
+    }
+  }
+  return true;
+}
 
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
@@ -985,27 +1029,25 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     return false;  // Not coalescable.
   }
 
-  if (DisablePhysicalJoin && CP.isPhys()) {
-    DEBUG(dbgs() << "\tPhysical joins disabled.\n");
-    return false;
-  }
-
-  DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), tri_));
+  DEBUG(dbgs() << "\tConsidering merging " << PrintReg(CP.getSrcReg(), tri_)
+               << " with " << PrintReg(CP.getDstReg(), tri_, CP.getSubIdx())
+               << "\n");
 
   // Enforce policies.
   if (CP.isPhys()) {
-    DEBUG(dbgs() <<" with physreg " << PrintReg(CP.getDstReg(), tri_) << "\n");
-    // Only coalesce to allocatable physreg.
-    if (!li_->isAllocatable(CP.getDstReg())) {
-      DEBUG(dbgs() << "\tRegister is an unallocatable physreg.\n");
-      return false;  // Not coalescable.
+    if (!shouldJoinPhys(CP)) {
+      // Before giving up coalescing, if definition of source is defined by
+      // trivial computation, try rematerializing it.
+      if (!CP.isFlipped() &&
+          ReMaterializeTrivialDef(li_->getInterval(CP.getSrcReg()), true,
+                                  CP.getDstReg(), 0, CopyMI))
+        return true;
+      return false;
     }
   } else {
-    DEBUG(dbgs() << " with " << PrintReg(CP.getDstReg(), tri_, CP.getSubIdx())
-                 << " to " << CP.getNewRC()->getName() << "\n");
-
     // Avoid constraining virtual register regclass too much.
     if (CP.isCrossClass()) {
+      DEBUG(dbgs() << "\tCross-class to " << CP.getNewRC()->getName() << ".\n");
       if (DisableCrossClassJoin) {
         DEBUG(dbgs() << "\tCross-class joins disabled.\n");
         return false;
@@ -1014,8 +1056,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
                                  mri_->getRegClass(CP.getSrcReg()),
                                  mri_->getRegClass(CP.getDstReg()),
                                  CP.getNewRC())) {
-        DEBUG(dbgs() << "\tAvoid coalescing to constrained register class: "
-                     << CP.getNewRC()->getName() << ".\n");
+        DEBUG(dbgs() << "\tAvoid coalescing to constrained register class.\n");
         Again = true;  // May be possible to coalesce later.
         return false;
       }
@@ -1025,43 +1066,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (!CP.getSubIdx() && li_->getInterval(CP.getSrcReg()).ranges.size() >
                            li_->getInterval(CP.getDstReg()).ranges.size())
       CP.flip();
-  }
-
-  // We need to be careful about coalescing a source physical register with a
-  // virtual register. Once the coalescing is done, it cannot be broken and
-  // these are not spillable! If the destination interval uses are far away,
-  // think twice about coalescing them!
-  // FIXME: Why are we skipping this test for partial copies?
-  //        CodeGen/X86/phys_subreg_coalesce-3.ll needs it.
-  if (!CP.isPartial() && CP.isPhys()) {
-    LiveInterval &JoinVInt = li_->getInterval(CP.getSrcReg());
-
-    // Don't join with physregs that have a ridiculous number of live
-    // ranges. The data structure performance is really bad when that
-    // happens.
-    if (li_->hasInterval(CP.getDstReg()) &&
-        li_->getInterval(CP.getDstReg()).ranges.size() > 1000) {
-      ++numAborts;
-      DEBUG(dbgs()
-           << "\tPhysical register live interval too complicated, abort!\n");
-      return false;
-    }
-
-    const TargetRegisterClass *RC = mri_->getRegClass(CP.getSrcReg());
-    unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-    unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
-    if (Length > Threshold) {
-      // Before giving up coalescing, if definition of source is defined by
-      // trivial computation, try rematerializing it.
-      if (!CP.isFlipped() &&
-          ReMaterializeTrivialDef(JoinVInt, true, CP.getDstReg(), 0, CopyMI))
-        return true;
-
-      ++numAborts;
-      DEBUG(dbgs() << "\tMay tie down a physical register, abort!\n");
-      Again = true;  // May be possible to coalesce later.
-      return false;
-    }
   }
 
   // Okay, attempt to join these two intervals.  On failure, this returns false.
