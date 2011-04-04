@@ -67,8 +67,8 @@ td {
     <ul>
     <li><a href="#target_os_darwin">Darwin (Mac OS/X)</a></li>
     <li>Linux, etc.</li>
+    <li><a href="#target_os_win32">Windows</a></li>
     </ul>
-  
   </li>
   </ul>
 </li>
@@ -948,6 +948,8 @@ definition.</li>
 (Mac OS/X), Linux, FreeBSD, and Dragonfly BSD: it has been tested to correctly
 compile many large C, C++, Objective-C, and Objective-C++ codebases.</p>
 
+<p>On x86_64-mingw32, passing i128(by value) is incompatible to Microsoft x64 calling conversion.</p> You might need to tweak WinX86_64ABIInfo::classify() in lib/CodeGen/TargetInfo.cpp.</p>
+
 <!-- ======================== -->
 <h4 id="target_arch_arm">ARM</h4>
 <!-- ======================== -->
@@ -984,6 +986,44 @@ Generating assembly requires a suitable LLVM backend.
 <!-- ======================================= -->
 
 <p>No __thread support, 64-bit ObjC support requires SL tools.</p>
+
+<!-- ======================================= -->
+<h4 id="target_os_win32">Windows</h4>
+<!-- ======================================= -->
+
+<p>Experimental supports are on Cygming.</p>
+
+<h5>Cygwin</h5>
+
+<p>Clang works on Cygwin-1.7.</p>
+
+<h5>MinGW32</h5>
+
+<p>Clang works on some mingw32 distributions.
+Clang assumes directories as below;</p>
+
+<ul>
+<li><tt>C:/mingw/include</tt></li>
+<li><tt>C:/mingw/lib</tt></li>
+<li><tt>C:/mingw/lib/gcc/mingw32/4.[3-5].0/include/c++</tt></li>
+</ul>
+
+<p>On MSYS, a few tests might fail. It is due to <a href="http://llvm.org/bugs/show_bug.cgi?id=8520">Bug 8520</a> and is fixed in <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20110314/118106.html">LLVM's r127724</a>.</p>
+
+<h5>MinGW-w64</h5>
+
+<p>For x32(i686-w64-mingw32), it is not supported yet.</p>
+
+<p>For x64(x86_64-w64-mingw32), <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20110321/118499.html">an essential patch(LLVM's r128206)</a> would be needed. It is incompatible to <a href="http://tdm-gcc.tdragon.net/development">TDM-GCC</a> due to the definiton of symbol &quot;<code>___chkstk</code>&quot;. Clang assumes as below;<p>
+
+<ul>
+<li><tt>C:/mingw/x86_64-w64-mingw32/include</tt></li>
+<li><tt>C:/mingw/x86_64-w64-mingw32/include/c++/4.5.[23]</tt></li>
+<li>GCC driver &quot;gcc.exe&quot; to build x86_64-w64-mingw32 binary.</li>
+</ul>
+
+<p><a href="http://llvm.org/bugs/show_bug.cgi?id=8833">Some tests might fail</a>
+on x64.</p>
 
 </div>
 </body>
