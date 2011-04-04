@@ -18,6 +18,7 @@
 #include "X86DisassemblerTables.h"
 
 #include "TableGenBackend.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 
@@ -267,7 +268,7 @@ static const char* stringForModifierType(ModifierType mt)
 DisassemblerTables::DisassemblerTables() {
   unsigned i;
   
-  for (i = 0; i < sizeof(Tables) / sizeof(Tables[0]); i++) {
+  for (i = 0; i < array_lengthof(Tables); i++) {
     Tables[i] = new ContextDecision;
     memset(Tables[i], 0, sizeof(ContextDecision));
   }
@@ -278,7 +279,7 @@ DisassemblerTables::DisassemblerTables() {
 DisassemblerTables::~DisassemblerTables() {
   unsigned i;
   
-  for (i = 0; i < sizeof(Tables) / sizeof(Tables[0]); i++)
+  for (i = 0; i < array_lengthof(Tables); i++)
     delete Tables[i];
 }
   
