@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/Signals.h"
@@ -342,28 +343,43 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
 char BasicBlockPassPrinter::ID = 0;
 
-struct BreakpointPrinter : public FunctionPass {
+struct BreakpointPrinter : public ModulePass {
   raw_ostream &Out;
   static char ID;
 
   BreakpointPrinter(raw_ostream &out)
-    : FunctionPass(ID), Out(out) {
+    : ModulePass(ID), Out(out) {
     }
 
-  virtual bool runOnFunction(Function &F) {
-    BasicBlock &EntryBB = F.getEntryBlock();
-    BasicBlock::const_iterator BI = EntryBB.end();
-    --BI;
-    do {
-      const Instruction *In = BI;
-      const DebugLoc DL = In->getDebugLoc();
-      if (!DL.isUnknown()) {
-        DIScope S(DL.getScope(getGlobalContext()));
-        Out << S.getFilename() << " " << DL.getLine() << "\n";
-        break;
+  void getContextName(DIDescriptor Context, std::string &N) {
+    if (Context.isNameSpace()) {
+      DINameSpace NS(Context);
+      if (!NS.getName().empty()) {
+        getContextName(NS.getContext(), N);
+        N = N + NS.getName().str() + "::";
       }
-      --BI;
-    } while (BI != EntryBB.begin());
+    } else if (Context.isType()) {
+      DIType TY(Context);
+      if (!TY.getName().empty()) {
+        getContextName(TY.getContext(), N);
+        N = N + TY.getName().str() + "::";
+      }
+    }
+  }
+
+  virtual bool runOnModule(Module &M) {
+    StringSet<> Processed;
+    if (NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.sp"))
+      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+        std::string Name;
+        DISubprogram SP(NMD->getOperand(i));
+        if (SP.Verify())
+          getContextName(SP.getContext(), Name);
+        Name = Name + SP.getDisplayName().str();
+        if (!Name.empty() && Processed.insert(Name)) {
+          Out << Name << "\n";
+        }
+      }
     return false;
   }
 
