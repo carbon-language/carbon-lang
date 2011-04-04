@@ -652,6 +652,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   case X86II::TB:  // Two-byte opcode prefix
   case X86II::T8:  // 0F 38
   case X86II::TA:  // 0F 3A
+  case X86II::A6:  // 0F A6
+  case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
   case X86II::TF: // F2 0F 38
@@ -694,6 +696,12 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     break;
   case X86II::TA:    // 0F 3A
     MCE.emitByte(0x3A);
+    break;
+  case X86II::A6:    // 0F A6
+    MCE.emitByte(0xA6);
+    break;
+  case X86II::A7:    // 0F A7
+    MCE.emitByte(0xA7);
     break;
   }
 

@@ -68,7 +68,7 @@ namespace X86Local {
     DC = 7, DD = 8, DE = 9, DF = 10,
     XD = 11,  XS = 12,
     T8 = 13,  P_TA = 14,
-    P_0F_AE = 16, P_0F_01 = 17
+    A6 = 15,  A7 = 16
   };
 }
 
@@ -790,6 +790,22 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
     break;
   case X86Local::P_TA:
     opcodeType = THREEBYTE_3A;
+    if (needsModRMForDecode(Form))
+      filter = new ModFilter(isRegFormat(Form));
+    else
+      filter = new DumbFilter();
+    opcodeToSet = Opcode;
+    break;
+  case X86Local::A6:
+    opcodeType = THREEBYTE_A6;
+    if (needsModRMForDecode(Form))
+      filter = new ModFilter(isRegFormat(Form));
+    else
+      filter = new DumbFilter();
+    opcodeToSet = Opcode;
+    break;
+  case X86Local::A7:
+    opcodeType = THREEBYTE_A7;
     if (needsModRMForDecode(Form))
       filter = new ModFilter(isRegFormat(Form));
     else

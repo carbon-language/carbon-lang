@@ -75,6 +75,12 @@ static int modRMRequired(OpcodeType type,
   case THREEBYTE_3A:
     decision = &THREEBYTE3A_SYM;
     break;
+  case THREEBYTE_A6:
+    decision = &THREEBYTEA6_SYM;
+    break;
+  case THREEBYTE_A7:
+    decision = &THREEBYTEA7_SYM;
+    break;
   }
   
   return decision->opcodeDecisions[insnContext].modRMDecisions[opcode].
@@ -114,6 +120,12 @@ static InstrUID decode(OpcodeType type,
     break;
   case THREEBYTE_3A:
     dec = &THREEBYTE3A_SYM.opcodeDecisions[insnContext].modRMDecisions[opcode];
+    break;
+  case THREEBYTE_A6:
+    dec = &THREEBYTEA6_SYM.opcodeDecisions[insnContext].modRMDecisions[opcode];
+    break;
+  case THREEBYTE_A7:
+    dec = &THREEBYTEA7_SYM.opcodeDecisions[insnContext].modRMDecisions[opcode];
     break;
   }
   
@@ -580,6 +592,24 @@ static int readOpcode(struct InternalInstruction* insn) {
         return -1;
       
       insn->opcodeType = THREEBYTE_3A;
+    } else if (current == 0xa6) {
+      dbgprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
+      
+      insn->threeByteEscape = current;
+      
+      if (consumeByte(insn, &current))
+        return -1;
+      
+      insn->opcodeType = THREEBYTE_A6;
+    } else if (current == 0xa7) {
+      dbgprintf(insn, "Found a three-byte escape prefix (0x%hhx)", current);
+      
+      insn->threeByteEscape = current;
+      
+      if (consumeByte(insn, &current))
+        return -1;
+      
+      insn->opcodeType = THREEBYTE_A7;
     } else {
       dbgprintf(insn, "Didn't find a three-byte escape prefix");
       

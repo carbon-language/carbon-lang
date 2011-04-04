@@ -566,6 +566,8 @@ void DisassemblerTables::emitContextDecisions(raw_ostream &o1,
   emitContextDecision(o1, o2, i1, i2, *Tables[1], TWOBYTE_STR);
   emitContextDecision(o1, o2, i1, i2, *Tables[2], THREEBYTE38_STR);
   emitContextDecision(o1, o2, i1, i2, *Tables[3], THREEBYTE3A_STR);
+  emitContextDecision(o1, o2, i1, i2, *Tables[4], THREEBYTEA6_STR);
+  emitContextDecision(o1, o2, i1, i2, *Tables[5], THREEBYTEA7_STR);
 }
 
 void DisassemblerTables::emit(raw_ostream &o) const {

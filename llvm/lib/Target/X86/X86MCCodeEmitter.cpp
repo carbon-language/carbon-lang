@@ -470,6 +470,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::XD:  // F2 0F
     VEX_PP = 0x3;
     break;
+  case X86II::A6:  // Bypass: Not used by VEX
+  case X86II::A7:  // Bypass: Not used by VEX
   case X86II::TB:  // Bypass: Not used by VEX
   case 0:
     break;  // No prefix!
@@ -742,6 +744,8 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::TB:  // Two-byte opcode prefix
   case X86II::T8:  // 0F 38
   case X86II::TA:  // 0F 3A
+  case X86II::A6:  // 0F A6
+  case X86II::A7:  // 0F A7
     Need0FPrefix = true;
     break;
   case X86II::TF: // F2 0F 38
@@ -785,6 +789,12 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     break;
   case X86II::TA:    // 0F 3A
     EmitByte(0x3A, CurByte, OS);
+    break;
+  case X86II::A6:    // 0F A6
+    EmitByte(0xA6, CurByte, OS);
+    break;
+  case X86II::A7:    // 0F A7
+    EmitByte(0xA7, CurByte, OS);
     break;
   }
 }

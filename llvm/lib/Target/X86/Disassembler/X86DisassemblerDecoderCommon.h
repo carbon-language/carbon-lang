@@ -30,6 +30,8 @@
 #define TWOBYTE_SYM       x86DisassemblerTwoByteOpcodes
 #define THREEBYTE38_SYM   x86DisassemblerThreeByte38Opcodes
 #define THREEBYTE3A_SYM   x86DisassemblerThreeByte3AOpcodes
+#define THREEBYTEA6_SYM   x86DisassemblerThreeByteA6Opcodes
+#define THREEBYTEA7_SYM   x86DisassemblerThreeByteA7Opcodes
 
 #define INSTRUCTIONS_STR  "x86DisassemblerInstrSpecifiers"
 #define CONTEXTS_STR      "x86DisassemblerContexts"
@@ -37,6 +39,8 @@
 #define TWOBYTE_STR       "x86DisassemblerTwoByteOpcodes"
 #define THREEBYTE38_STR   "x86DisassemblerThreeByte38Opcodes"
 #define THREEBYTE3A_STR   "x86DisassemblerThreeByte3AOpcodes"
+#define THREEBYTEA6_STR   "x86DisassemblerThreeByteA6Opcodes"
+#define THREEBYTEA7_STR   "x86DisassemblerThreeByteA7Opcodes"
 
 /*
  * Attributes of an instruction that must be known before the opcode can be
@@ -119,7 +123,9 @@ typedef enum {
   ONEBYTE       = 0,
   TWOBYTE       = 1,
   THREEBYTE_38  = 2,
-  THREEBYTE_3A  = 3
+  THREEBYTE_3A  = 3,
+  THREEBYTE_A6  = 4,
+  THREEBYTE_A7  = 5
 } OpcodeType;
 
 /*

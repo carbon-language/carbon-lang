@@ -398,3 +398,23 @@ let Defs = [RDX, RAX], Uses = [RCX] in
 
 let Uses = [RDX, RAX, RCX] in
   def XSETBV : I<0x01, MRM_D1, (outs), (ins), "xsetbv", []>, TB;
+
+//===----------------------------------------------------------------------===//
+// VIA PadLock crypto instructions
+let Defs = [RAX, RDI], Uses = [RDX, RDI] in
+  def XSTORE : I<0xc0, RawFrm, (outs), (ins), "xstore", []>, A7;
+
+let Defs = [RSI, RDI], Uses = [RBX, RDX, RSI, RDI] in {
+  def XCRYPTECB : I<0xc8, RawFrm, (outs), (ins), "xcryptecb", []>, A7;
+  def XCRYPTCBC : I<0xd0, RawFrm, (outs), (ins), "xcryptcbc", []>, A7;
+  def XCRYPTCTR : I<0xd8, RawFrm, (outs), (ins), "xcryptctr", []>, A7;
+  def XCRYPTCFB : I<0xe0, RawFrm, (outs), (ins), "xcryptcfb", []>, A7;
+  def XCRYPTOFB : I<0xe8, RawFrm, (outs), (ins), "xcryptofb", []>, A7;
+}
+
+let Defs = [RAX, RSI, RDI], Uses = [RAX, RSI, RDI] in {
+  def XSHA1 : I<0xc8, RawFrm, (outs), (ins), "xsha1", []>, A6;
+  def XSHA256 : I<0xd0, RawFrm, (outs), (ins), "xsha256", []>, A6;
+}
+let Defs = [RAX, RDX, RSI], Uses = [RAX, RSI] in
+  def MONTMUL : I<0xc0, RawFrm, (outs), (ins), "montmul", []>, A6;
