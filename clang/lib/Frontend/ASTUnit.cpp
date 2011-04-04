@@ -1641,7 +1641,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     CaptureDroppedDiagnostics Capture(CaptureDiagnostics, *Diags, 
                                       StoredDiagnostics);
 
-    CI = driver::Driver::createInvocationFromArgs(
+    CI = clang::createInvocationFromCommandLine(
                         llvm::ArrayRef<const char *>(ArgBegin, ArgEnd-ArgBegin),
                         Diags);
     if (!CI)

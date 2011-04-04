@@ -28,7 +28,6 @@ namespace llvm {
   template<typename T> class ArrayRef;
 }
 namespace clang {
-  class CompilerInvocation;
 namespace driver {
   class Action;
   class ArgList;
@@ -351,17 +350,6 @@ public:
                               const llvm::Triple &ArchName) const;
 
   /// @}
-
-
-  /// createInvocationFromArgs - Construct a compiler invocation object for a
-  /// command line argument vector.
-  ///
-  /// \return A CompilerInvocation, or 0 if none was built for the given
-  /// argument vector.
-  static CompilerInvocation *
-    createInvocationFromArgs(llvm::ArrayRef<const char *> Args,
-                             llvm::IntrusiveRefCntPtr<Diagnostic> Diags =
-                                 llvm::IntrusiveRefCntPtr<Diagnostic>());
 
   /// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
   /// return the grouped values as integers. Numbers which are not
