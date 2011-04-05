@@ -849,22 +849,23 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         GetElementPtrInst::Create(Src->getOperand(0), Indices.begin(),
                                   Indices.end(), GEP.getName());
   }
-  
+
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
   Value *StrippedPtr = PtrOp->stripPointerCasts();
-  if (StrippedPtr != PtrOp) {
-    const PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
+  const PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
+  if (StrippedPtr != PtrOp &&
+    StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
 
     bool HasZeroPointerIndex = false;
     if (ConstantInt *C = dyn_cast<ConstantInt>(GEP.getOperand(1)))
       HasZeroPointerIndex = C->isZero();
-    
+
     // Transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
     // into     : GEP [10 x i8]* X, i32 0, ...
     //
     // Likewise, transform: GEP (bitcast i8* X to [0 x i8]*), i32 0, ...
     //           into     : GEP i8* X, ...
-    // 
+    //
     // This occurs when the program declares an array extern like "int X[];"
     if (HasZeroPointerIndex) {
       const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
@@ -975,7 +976,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
     }
   }
-  
+
   /// See if we can simplify:
   ///   X = bitcast A* to B*
   ///   Y = gep X, <...constant indices...>
@@ -983,12 +984,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
     if (TD &&
-        !isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices()) {
+        !isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices() &&
+        StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
+
       // Determine how much the GEP moves the pointer.  We are guaranteed to get
       // a constant back from EmitGEPOffset.
       ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(&GEP));
       int64_t Offset = OffsetV->getSExtValue();
-      
+
       // If this GEP instruction doesn't move the pointer, just replace the GEP
       // with a bitcast of the real input to the dest type.
       if (Offset == 0) {
