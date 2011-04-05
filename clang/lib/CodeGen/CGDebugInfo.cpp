@@ -655,9 +655,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   if (!Method->isStatic())
   {
         // "this" pointer is always first argument.
-        ASTContext &Context = CGM.getContext();
-        QualType ThisPtr =
-          Context.getPointerType(Context.getTagDeclType(Method->getParent()));
+        QualType ThisPtr = Method->getThisType(CGM.getContext());
         llvm::DIType ThisPtrType =
           DBuilder.createArtificialType(getOrCreateType(ThisPtr, Unit));
 
