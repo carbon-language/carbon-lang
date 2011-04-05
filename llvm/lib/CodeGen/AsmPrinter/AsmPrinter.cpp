@@ -253,21 +253,23 @@ void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
 
 /// EmitGlobalVariable - Emit the specified global variable to the .s file.
 void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
-  if (!GV->hasInitializer())   // External globals require no code.
-    return;
+  if (GV->hasInitializer()) {
+    // Check to see if this is a special global used by LLVM, if so, emit it.
+    if (EmitSpecialLLVMGlobal(GV))
+      return;
 
-  // Check to see if this is a special global used by LLVM, if so, emit it.
-  if (EmitSpecialLLVMGlobal(GV))
-    return;
-
-  if (isVerbose()) {
-    WriteAsOperand(OutStreamer.GetCommentOS(), GV,
-                   /*PrintType=*/false, GV->getParent());
-    OutStreamer.GetCommentOS() << '\n';
+    if (isVerbose()) {
+      WriteAsOperand(OutStreamer.GetCommentOS(), GV,
+                     /*PrintType=*/false, GV->getParent());
+      OutStreamer.GetCommentOS() << '\n';
+    }
   }
 
   MCSymbol *GVSym = Mang->getSymbol(GV);
   EmitVisibility(GVSym, GV->getVisibility());
+
+  if (!GV->hasInitializer())   // External globals require no extra code.
+    return;
 
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
