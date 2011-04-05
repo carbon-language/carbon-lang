@@ -445,7 +445,7 @@ float RAGreedy::calcSplitConstraints(unsigned PhysReg) {
 
     // Interference for the live-out value.
     if (BI.LiveOut) {
-      if (Intf.last() >= BI.LastSplitPoint)
+      if (Intf.last() >= SA->getLastSplitPoint(BC.Number))
         BC.Exit = SpillPlacement::MustSpill, Ins += BI.Uses;
       else if (!BI.Uses)
         BC.Exit = SpillPlacement::PrefSpill;
@@ -530,9 +530,9 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     Intf.moveToBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " -> EB#"
                  << Bundles->getBundle(BI.MBB->getNumber(), 1)
-                 << " [" << Start << ';' << BI.LastSplitPoint << '-'
-                 << Stop << ") intf [" << Intf.first() << ';' << Intf.last()
-                 << ')');
+                 << " [" << Start << ';'
+                 << SA->getLastSplitPoint(BI.MBB->getNumber()) << '-' << Stop
+                 << ") intf [" << Intf.first() << ';' << Intf.last() << ')');
 
     // The interference interval should either be invalid or overlap MBB.
     assert((!Intf.hasInterference() || Intf.first() < Stop)
@@ -588,6 +588,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       continue;
     }
 
+    SlotIndex LastSplitPoint = SA->getLastSplitPoint(BI.MBB->getNumber());
     if (Intf.last().getBoundaryIndex() < BI.LastUse) {
       // There are interference-free uses at the end of the block.
       // Find the first use that can get the live-out register.
@@ -598,11 +599,11 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
       SlotIndex Use = *UI;
       assert(Use <= BI.LastUse && "Couldn't find last use");
       // Only attempt a split befroe the last split point.
-      if (Use.getBaseIndex() <= BI.LastSplitPoint) {
+      if (Use.getBaseIndex() <= LastSplitPoint) {
         DEBUG(dbgs() << ", free use at " << Use << ".\n");
         SlotIndex SegStart = SE->enterIntvBefore(Use);
         assert(SegStart >= Intf.last() && "Couldn't avoid interference");
-        assert(SegStart < BI.LastSplitPoint && "Impossible split point");
+        assert(SegStart < LastSplitPoint && "Impossible split point");
         SE->useIntv(SegStart, Stop);
         continue;
       }
@@ -630,7 +631,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     Intf.moveToBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << "EB#" << Bundles->getBundle(BI.MBB->getNumber(), 0)
                  << " -> BB#" << BI.MBB->getNumber() << " [" << Start << ';'
-                 << BI.LastSplitPoint << '-' << Stop << ')');
+                 << SA->getLastSplitPoint(BI.MBB->getNumber()) << '-' << Stop
+                 << ')');
 
     // Check interference entering the block.
     if (!Intf.hasInterference()) {
@@ -654,9 +656,10 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         continue;
       }
       if (!RegOut) {
+        SlotIndex LastSplitPoint = SA->getLastSplitPoint(BI.MBB->getNumber());
         // Block is live-through, but exit bundle is on the stack.
         // Spill immediately after the last use.
-        if (BI.LastUse < BI.LastSplitPoint) {
+        if (BI.LastUse < LastSplitPoint) {
           DEBUG(dbgs() << ", uses, stack-out.\n");
           SE->useIntv(Start, SE->leaveIntvAfter(BI.LastUse));
           continue;
@@ -664,8 +667,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
         // The last use is after the last split point, it is probably an
         // indirect jump.
         DEBUG(dbgs() << ", uses at " << BI.LastUse << " after split point "
-                     << BI.LastSplitPoint << ", stack-out.\n");
-        SlotIndex SegEnd = SE->leaveIntvBefore(BI.LastSplitPoint);
+                     << LastSplitPoint << ", stack-out.\n");
+        SlotIndex SegEnd = SE->leaveIntvBefore(LastSplitPoint);
         SE->useIntv(Start, SegEnd);
         // Run a double interval from the split to the last use.
         // This makes it possible to spill the complement without affecting the

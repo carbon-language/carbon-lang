@@ -151,12 +151,6 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     SlotIndex Start, Stop;
     tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
-    // The last split point is the latest possible insertion point that dominates
-    // all successor blocks. If interference reaches LastSplitPoint, it is not
-    // possible to insert a split or reload that makes CurLI live in the
-    // outgoing bundle.
-    BI.LastSplitPoint = getLastSplitPoint(BI.MBB->getNumber());
-
     // LVI is the first live segment overlapping MBB.
     BI.LiveIn = LVI->start <= Start;
     if (!BI.LiveIn)
@@ -947,13 +941,14 @@ void SplitEditor::splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks) {
       continue;
 
     openIntv();
+    SlotIndex LastSplitPoint = SA.getLastSplitPoint(BI.MBB->getNumber());
     SlotIndex SegStart = enterIntvBefore(std::min(BI.FirstUse,
-                                                  BI.LastSplitPoint));
-    if (!BI.LiveOut || BI.LastUse < BI.LastSplitPoint) {
+                                                  LastSplitPoint));
+    if (!BI.LiveOut || BI.LastUse < LastSplitPoint) {
       useIntv(SegStart, leaveIntvAfter(BI.LastUse));
     } else {
       // The last use is after the last valid split point.
-      SlotIndex SegStop = leaveIntvBefore(BI.LastSplitPoint);
+      SlotIndex SegStop = leaveIntvBefore(LastSplitPoint);
       useIntv(SegStart, SegStop);
       overlapIntv(SegStop, BI.LastUse);
     }

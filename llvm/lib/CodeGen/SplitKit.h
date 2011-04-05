@@ -77,8 +77,6 @@ public:
     SlotIndex LastUse;    ///< Last instr using current reg.
     SlotIndex Kill;       ///< Interval end point inside block.
     SlotIndex Def;        ///< Interval start point inside block.
-    /// Last possible point for splitting live ranges.
-    SlotIndex LastSplitPoint;
     bool Uses;            ///< Current reg has uses or defs in block.
     bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
     bool LiveIn;          ///< Current reg is live in.
