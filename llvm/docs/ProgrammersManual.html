@@ -86,6 +86,7 @@ option</a></li>
       <li><a href="#dss_valuemap">"llvm/ADT/ValueMap.h"</a></li>
       <li><a href="#dss_intervalmap">"llvm/ADT/IntervalMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
+      <li><a href="#dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
     <li><a href="#ds_string">String-like containers</a>
@@ -1542,6 +1543,26 @@ pair in the map, etc.</p>
 to iterate over the collection in sorted order, or if you need stable iterators
 into the map (i.e. they don't get invalidated if an insertion or deletion of
 another element takes place).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>IntEqClasses provides a compact representation of equivalence classes of
+small integers. Initially, each integer in the range 0..n-1 has its own
+equivalence class. Classes can be joined by passing two class representatives to
+the join(a, b) method. Two integers are in the same class when findLeader()
+returns the same representative.</p>
+
+<p>Once all equivalence classes are formed, the map can be compressed so each
+integer 0..n-1 maps to an equivalence class number in the range 0..m-1, where m
+is the total number of equivalence classes. The map must be uncompressed before
+it can be edited again.</p>
 
 </div>
 
