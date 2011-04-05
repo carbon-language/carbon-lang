@@ -404,6 +404,11 @@ href="GCCFEBuildInstrs.html">try to compile it</a> on your platform.</p>
       <td>Subversion access to LLVM<sup><a href="#sf2">2</a></sup></td>
     </tr>
 
+    <!-- FIXME:
+    Do we support dg?
+    Are DejaGnu and expect obsolete?
+    Shall we mention Python? -->
+
     <tr>
       <td><a href="http://savannah.gnu.org/projects/dejagnu">DejaGnu</a></td>
       <td>1.4.2</td>
@@ -1335,6 +1340,10 @@ different <a href="#tools">tools</a>.</p>
   <dd> This directory contains the major parts of the code generator: Instruction 
   Selector, Instruction Scheduling, and Register Allocation.</dd>
 
+  <dt><tt><b>llvm/lib/MC/</b></tt></dt>
+  <dd>(FIXME: T.B.D.)</dd>
+
+  <!--FIXME: obsoleted -->
   <dt><tt><b>llvm/lib/Debugger/</b></tt></dt>
   <dd> This directory contains the source level debugger library that makes 
   it possible to instrument LLVM programs so that a debugger could identify 
@@ -1348,6 +1357,7 @@ different <a href="#tools">tools</a>.</p>
   <dd> This directory contains the source code that corresponds to the header 
   files located in <tt>llvm/include/Support/</tt>.</dd>
 
+  <!--FIXME: obsoleted -->
   <dt><tt><b>llvm/lib/System/</b></tt></dt>
   <dd>This directory contains the operating system abstraction layer that
   shields LLVM from platform-specific coding.</dd>
