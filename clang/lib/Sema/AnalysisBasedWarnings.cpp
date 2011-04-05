@@ -379,40 +379,43 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 //===----------------------------------------------------------------------===//
 
 namespace {
+/// ContainsReference - A visitor class to search for references to
+/// a particular declaration (the needle) within any evaluated component of an
+/// expression (recursively).
 class ContainsReference : public EvaluatedExprVisitor<ContainsReference> {
-  bool containsReference;
-  const DeclRefExpr *dr;  
+  bool FoundReference;
+  const DeclRefExpr *Needle;
+
 public:
-  ContainsReference(ASTContext &context,
-                    const DeclRefExpr *dr) :
-    EvaluatedExprVisitor<ContainsReference>(context),
-    containsReference(false), dr(dr) {}
-  
-  void VisitExpr(Expr *e) {
+  ContainsReference(ASTContext &Context, const DeclRefExpr *Needle)
+    : EvaluatedExprVisitor<ContainsReference>(Context),
+      FoundReference(false), Needle(Needle) {}
+
+  void VisitExpr(Expr *E) {
     // Stop evaluating if we already have a reference.
-    if (containsReference)
+    if (FoundReference)
       return;
-    
-    EvaluatedExprVisitor<ContainsReference>::VisitExpr(e);
+
+    EvaluatedExprVisitor<ContainsReference>::VisitExpr(E);
   }
-  
-  void VisitDeclRefExpr(DeclRefExpr *e) {
-    if (e == dr)
-      containsReference = true;
-    else 
-      EvaluatedExprVisitor<ContainsReference>::VisitDeclRefExpr(e);
+
+  void VisitDeclRefExpr(DeclRefExpr *E) {
+    if (E == Needle)
+      FoundReference = true;
+    else
+      EvaluatedExprVisitor<ContainsReference>::VisitDeclRefExpr(E);
   }
-  
-  bool doesContainReference() const { return containsReference; }
+
+  bool doesContainReference() const { return FoundReference; }
 };
 }
 
-static bool isSelfInit(ASTContext &context,
-                       const VarDecl *vd, const DeclRefExpr *dr) {
-  if (const Expr *exp = vd->getInit()) {
-    ContainsReference contains(context, dr);
-    contains.Visit(const_cast<Expr*>(exp));
-    return contains.doesContainReference();
+static bool isSelfInit(ASTContext &Context,
+                       const VarDecl *VD, const DeclRefExpr *DR) {
+  if (const Expr *E = VD->getInit()) {
+    ContainsReference CR(Context, DR);
+    CR.Visit(const_cast<Expr*>(E));
+    return CR.doesContainReference();
   }
   return false;
 }
