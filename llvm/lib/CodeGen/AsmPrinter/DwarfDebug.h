@@ -39,7 +39,7 @@ class DIEAbbrev;
 class DIE;
 class DIEBlock;
 class DIEEntry;
-
+class DIArray;
 class DIEnumerator;
 class DIDescriptor;
 class DIVariable;
@@ -319,6 +319,9 @@ private:
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
   bool addConstantFPValue(DIE *Die, const MachineOperand &MO);
+
+  /// addTemplateParams - Add template parameters in buffer.
+  void addTemplateParams(DIE &Buffer, DIArray TParams);
 
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable

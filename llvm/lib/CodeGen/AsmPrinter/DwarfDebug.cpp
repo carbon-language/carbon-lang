@@ -930,6 +930,20 @@ bool DwarfDebug::addConstantValue(DIE *Die, ConstantInt *CI,
   return true;
 }
 
+/// addTemplateParams - Add template parameters in buffer.
+void DwarfDebug::addTemplateParams(DIE &Buffer, DIArray TParams) {
+  // Add template parameters.
+  for (unsigned i = 0, e = TParams.getNumElements(); i != e; ++i) {
+    DIDescriptor Element = TParams.getElement(i);
+    if (Element.isTemplateTypeParameter())
+      Buffer.addChild(getOrCreateTemplateTypeParameterDIE(
+                        DITemplateTypeParameter(Element)));
+    else if (Element.isTemplateValueParameter())
+      Buffer.addChild(getOrCreateTemplateValueParameterDIE(
+                        DITemplateValueParameter(Element)));
+  }
+
+}
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void DwarfDebug::addToContextOwner(DIE *Die, DIDescriptor Context) {
   if (Context.isType()) {
@@ -1155,20 +1169,9 @@ void DwarfDebug::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addToContextOwner(&Buffer, Context);
     }
 
-    if (Tag == dwarf::DW_TAG_class_type) {
-      DIArray TParams = CTy.getTemplateParams();
-      unsigned N = TParams.getNumElements();
-      // Add template parameters.
-      for (unsigned i = 0; i < N; ++i) {
-        DIDescriptor Element = TParams.getElement(i);
-        if (Element.isTemplateTypeParameter())
-          Buffer.addChild(getOrCreateTemplateTypeParameterDIE(
-                            DITemplateTypeParameter(Element)));
-        else if (Element.isTemplateValueParameter())
-          Buffer.addChild(getOrCreateTemplateValueParameterDIE(
-                            DITemplateValueParameter(Element)));
-      }
-    }
+    if (Tag == dwarf::DW_TAG_class_type) 
+      addTemplateParams(Buffer, CTy.getTemplateParams());
+
     break;
   }
   default:
