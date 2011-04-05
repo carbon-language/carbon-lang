@@ -1474,6 +1474,12 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   bool ThreeReg = NumOps > 2 && OpInfo[2].RegClass == ARM::GPRRegClassID;
 
+  // Sanity check the registers, which should not be 15.
+  if (decodeRd(insn) == 15 || decodeRm(insn) == 15)
+    return false;
+  if (ThreeReg && decodeRn(insn) == 15)
+    return false;
+
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      decodeRd(insn))));
   ++OpIdx;
@@ -1498,7 +1504,7 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     ARM_AM::ShiftOpc Opc = ARM_AM::no_shift;
     if (Opcode == ARM::PKHBT)
       Opc = ARM_AM::lsl;
-    else if (Opcode == ARM::PKHBT)
+    else if (Opcode == ARM::PKHTB)
       Opc = ARM_AM::asr;
     getImmShiftSE(Opc, ShiftAmt);
     MI.addOperand(MCOperand::CreateImm(ARM_AM::getSORegOpc(Opc, ShiftAmt)));
