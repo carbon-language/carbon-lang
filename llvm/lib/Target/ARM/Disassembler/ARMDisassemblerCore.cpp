@@ -1068,6 +1068,10 @@ static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                      decodeRm(insn))));
   if (Rs) {
+    // If Inst{7} != 0, we should reject this insn as an invalid encoding.
+    if (slice(insn, 7, 7))
+      return false;
+
     // Register-controlled shifts: [Rm, Rs, shift].
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRs(insn))));
