@@ -410,16 +410,6 @@ public:
 };
 }
 
-static bool isSelfInit(ASTContext &Context,
-                       const VarDecl *VD, const DeclRefExpr *DR) {
-  if (const Expr *E = VD->getInit()) {
-    ContainsReference CR(Context, DR);
-    CR.Visit(const_cast<Expr*>(E));
-    return CR.doesContainReference();
-  }
-  return false;
-}
-
 typedef std::pair<const Expr*, bool> UninitUse;
 
 namespace {
@@ -473,17 +463,37 @@ public:
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
       {
         const bool isAlwaysUninit = vi->second;
-        bool showDefinition = true;
+        bool isSelfInit = false;
 
         if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(vi->first)) {
           if (isAlwaysUninit) {
-            if (isSelfInit(S.Context, vd, dr)) {
+            // Inspect the initializer of the variable declaration which is
+            // being referenced prior to its initialization. We emit
+            // specialized diagnostics for self-initialization, and we
+            // specifically avoid warning about self references which take the
+            // form of:
+            //
+            //   int x = x;
+            //
+            // This is used to indicate to GCC that 'x' is intentionally left
+            // uninitialized. Proven code paths which access 'x' in
+            // an uninitialized state after this will still warn.
+            //
+            // TODO: Should we suppress maybe-uninitialized warnings for
+            // variables initialized in this way?
+            if (const Expr *E = vd->getInit()) {
+              if (dr == E->IgnoreParenImpCasts())
+                continue;
+
+              ContainsReference CR(S.Context, dr);
+              CR.Visit(const_cast<Expr*>(E));
+              isSelfInit = CR.doesContainReference();
+            }
+            if (isSelfInit) {
               S.Diag(dr->getLocStart(), 
                      diag::warn_uninit_self_reference_in_init)
               << vd->getDeclName() << vd->getLocation() << dr->getSourceRange();             
-              showDefinition = false;
-            }
-            else {
+            } else {
               S.Diag(dr->getLocStart(), diag::warn_uninit_var)
                 << vd->getDeclName() << dr->getSourceRange();          
             }
@@ -501,8 +511,9 @@ public:
             << vd->getDeclName();
         }
         
-        // Report where the variable was declared.
-        if (showDefinition)
+        // Report where the variable was declared when the use wasn't within
+        // the initializer of that declaration.
+        if (!isSelfInit)
           S.Diag(vd->getLocStart(), diag::note_uninit_var_def)
             << vd->getDeclName();
 
