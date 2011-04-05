@@ -454,6 +454,25 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   unsigned PRegNum = PMO.isUndef() ? UINT_MAX
     : getARMRegisterNumbering(PReg);
   unsigned Count = 1;
+  unsigned Limit = ~0U;
+
+  // vldm / vstm limit are 32 for S variants, 16 for D variants.
+
+  switch (Opcode) {
+  default: break;
+  case ARM::VSTRS:
+    Limit = 32;
+    break;
+  case ARM::VSTRD:
+    Limit = 16;
+    break;
+  case ARM::VLDRD:
+    Limit = 16;
+    break;
+  case ARM::VLDRS:
+    Limit = 32;
+    break;
+  }
 
   for (unsigned i = SIndex+1, e = MemOps.size(); i != e; ++i) {
     int NewOffset = MemOps[i].Offset;
@@ -461,13 +480,13 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     unsigned Reg = MO.getReg();
     unsigned RegNum = MO.isUndef() ? UINT_MAX
       : getARMRegisterNumbering(Reg);
-    // Register numbers must be in ascending order.  For VFP, the registers
-    // must also be consecutive and there is a limit of 16 double-word
-    // registers per instruction.
+    // Register numbers must be in ascending order. For VFP / NEON load and
+    // store multiples, the registers must also be consecutive and within the
+    // limit on the number of registers per instruction.
     if (Reg != ARM::SP &&
         NewOffset == Offset + (int)Size &&
-        ((isNotVFP && RegNum > PRegNum)
-         || ((Size < 8 || Count < 16) && RegNum == PRegNum+1))) {
+        ((isNotVFP && RegNum > PRegNum) ||
+         ((Count < Limit) && RegNum == PRegNum+1))) {
       Offset += Size;
       PRegNum = RegNum;
       ++Count;
