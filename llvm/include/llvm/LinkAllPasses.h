@@ -134,7 +134,6 @@ namespace {
       (void) llvm::createMemCpyOptPass();
       (void) llvm::createLoopDeletionPass();
       (void) llvm::createPostDomTree();
-      (void) llvm::createPostDomFrontier();
       (void) llvm::createInstructionNamerPass();
       (void) llvm::createFunctionAttrsPass();
       (void) llvm::createMergeFunctionsPass();

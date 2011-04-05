@@ -28,9 +28,10 @@
 #define LLVM_ANALYSIS_REGION_INFO_H
 
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/Allocator.h"
+#include <map>
 
 namespace llvm {
 
