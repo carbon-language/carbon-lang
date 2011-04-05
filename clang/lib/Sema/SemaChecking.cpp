@@ -2744,17 +2744,16 @@ void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
 }
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
-void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
-                     unsigned diag) {
-  S.Diag(E->getExprLoc(), diag)
-    << E->getType() << T << E->getSourceRange() << SourceRange(CContext);
-}
-
-/// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
 void DiagnoseImpCast(Sema &S, Expr *E, QualType SourceType, QualType T, 
                      SourceLocation CContext, unsigned diag) {
   S.Diag(E->getExprLoc(), diag)
     << SourceType << T << E->getSourceRange() << SourceRange(CContext);
+}
+
+/// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
+void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
+                     unsigned diag) {
+  DiagnoseImpCast(S, E, E->getType(), T, CContext, diag);
 }
 
 std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
