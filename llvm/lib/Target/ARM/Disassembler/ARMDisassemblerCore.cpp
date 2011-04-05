@@ -497,14 +497,57 @@ static bool DisassemblePseudo(MCInst &MI, unsigned Opcode, uint32_t insn,
   return false;
 }
 
+// A8.6.94 MLA
+// if d == 15 || n == 15 || m == 15 || a == 15 then UNPREDICTABLE;
+//
+// A8.6.105 MUL
+// if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+//
+// A8.6.246 UMULL
+// if dLo == 15 || dHi == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+// if dHi == dLo then UNPREDICTABLE;
+static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
+  unsigned R19_16 = slice(insn, 19, 16);
+  unsigned R15_12 = slice(insn, 15, 12);
+  unsigned R11_8  = slice(insn, 11, 8);
+  unsigned R3_0   = slice(insn, 3, 0);
+  switch (Opcode) {
+  default:
+    // Did we miss an opcode?
+    assert(0 && "Unexpected opcode!");
+    return false;
+  case ARM::MLA:     case ARM::MLS:     case ARM::SMLABB:  case ARM::SMLABT:
+  case ARM::SMLATB:  case ARM::SMLATT:  case ARM::SMLAWB:  case ARM::SMLAWT:
+  case ARM::SMMLA:   case ARM::SMMLS:   case ARM::SMLSD:   case ARM::SMLSDX:
+    if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
+      return true;
+    return false;
+  case ARM::MUL:     case ARM::SMMUL:   case ARM::SMULBB:  case ARM::SMULBT:
+  case ARM::SMULTB:  case ARM::SMULTT:  case ARM::SMULWB:  case ARM::SMULWT:
+    if (R19_16 == 15 || R11_8 == 15 || R3_0 == 15)
+      return true;
+    return false;
+  case ARM::SMLAL:   case ARM::SMULL:   case ARM::UMAAL:   case ARM::UMLAL:
+  case ARM::UMULL:   case ARM::SMLALBB: case ARM::SMLALBT: case ARM::SMLALTB:
+  case ARM::SMLALTT: case ARM::SMLSLD:
+    if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
+      return true;
+    if (R19_16 == R15_12)
+      return true;
+    return false;;
+  }
+}
+
 // Multiply Instructions.
-// MLA, MLS, SMLABB, SMLABT, SMLATB, SMLATT, SMLAWB, SMLAWT, SMMLA, SMMLS:
+// MLA, MLS, SMLABB, SMLABT, SMLATB, SMLATT, SMLAWB, SMLAWT, SMMLA, SMMLS,
+// SMLSD, SMLSDX:
 //     Rd{19-16} Rn{3-0} Rm{11-8} Ra{15-12}
 //
 // MUL, SMMUL, SMULBB, SMULBT, SMULTB, SMULTT, SMULWB, SMULWT:
 //     Rd{19-16} Rn{3-0} Rm{11-8}
 //
-// SMLAL, SMULL, UMAAL, UMLAL, UMULL, SMLALBB, SMLALBT, SMLALTB, SMLALTT:
+// SMLAL, SMULL, UMAAL, UMLAL, UMULL, SMLALBB, SMLALBT, SMLALTB, SMLALTT,
+// SMLSLD
 //     RdLo{15-12} RdHi{19-16} Rn{3-0} Rm{11-8}
 //
 // The mapping of the multiply registers to the "regular" ARM registers, where
@@ -530,6 +573,10 @@ static bool DisassembleMulFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
          && OpInfo[1].RegClass == ARM::GPRRegClassID
          && OpInfo[2].RegClass == ARM::GPRRegClassID
          && "Expect three register operands");
+
+  // Sanity check for the register encodings.
+  if (BadRegsMulFrm(Opcode, insn))
+    return false;
 
   // Instructions with two destination registers have RdLo{15-12} first.
   if (NumDefs == 2) {
