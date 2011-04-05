@@ -365,7 +365,7 @@ public:
   virtual bool compare(const GenericOptionValue &V) const {
     const OptionValueCopy<DataType> &VC =
       static_cast< const OptionValueCopy<DataType>& >(V);
-    if (!VC.hasValue) return false;
+    if (!VC.hasValue()) return false;
     return compare(VC.getValue());
   }
 };
