@@ -262,6 +262,22 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
         CGM.getObjCRuntime().GetGetStructFunction()) {
       GenerateObjCGetterBody(Ivar, true, false);
     }
+    else if (IsAtomic &&
+             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
+             Triple.getArch() == llvm::Triple::x86 &&
+             (getContext().getTypeSizeInChars(IVART) 
+              > CharUnits::fromQuantity(4)) &&
+             CGM.getObjCRuntime().GetGetStructFunction()) {
+      GenerateObjCGetterBody(Ivar, true, false);
+    }
+    else if (IsAtomic &&
+             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
+             Triple.getArch() == llvm::Triple::x86_64 &&
+             (getContext().getTypeSizeInChars(IVART) 
+              > CharUnits::fromQuantity(8)) &&
+             CGM.getObjCRuntime().GetGetStructFunction()) {
+      GenerateObjCGetterBody(Ivar, true, false);
+    }
     else if (IVART->isAnyComplexType()) {
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
                                     Ivar, 0);
@@ -283,6 +299,21 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                           PID->getGetterCXXConstructor(),
                                           0);
           EmitReturnStmt(*Stmt);
+        } else if (IsAtomic &&
+                   !IVART->isAnyComplexType() &&
+                   Triple.getArch() == llvm::Triple::x86 &&
+                   (getContext().getTypeSizeInChars(IVART) 
+                    > CharUnits::fromQuantity(4)) &&
+                   CGM.getObjCRuntime().GetGetStructFunction()) {
+          GenerateObjCGetterBody(Ivar, true, false);
+        }
+        else if (IsAtomic &&
+                 !IVART->isAnyComplexType() &&
+                 Triple.getArch() == llvm::Triple::x86_64 &&
+                 (getContext().getTypeSizeInChars(IVART) 
+                  > CharUnits::fromQuantity(8)) &&
+                 CGM.getObjCRuntime().GetGetStructFunction()) {
+          GenerateObjCGetterBody(Ivar, true, false);
         }
         else {
           LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
@@ -358,7 +389,8 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface());
-
+  const llvm::Triple &Triple = getContext().Target.getTriple();
+  QualType IVART = Ivar->getType();
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
   bool IsAtomic =
     !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
@@ -414,18 +446,21 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                    FunctionType::ExtInfo()),
              SetPropertyFn,
              ReturnValueSlot(), Args);
-  } else if (IsAtomic && hasAggregateLLVMType(Ivar->getType()) &&
-             !Ivar->getType()->isAnyComplexType() &&
-             IndirectObjCSetterArg(*CurFnInfo)
+  } else if (IsAtomic && hasAggregateLLVMType(IVART) &&
+             !IVART->isAnyComplexType() &&
+             ((Triple.getArch() == llvm::Triple::x86 &&
+              (getContext().getTypeSizeInChars(IVART)
+               > CharUnits::fromQuantity(4))) ||
+              (Triple.getArch() == llvm::Triple::x86_64 &&
+              (getContext().getTypeSizeInChars(IVART)
+               > CharUnits::fromQuantity(8))))
              && CGM.getObjCRuntime().GetSetStructFunction()) {
-    // objc_copyStruct (&structIvar, &Arg, 
-    //                  sizeof (struct something), true, false);
+          // objc_copyStruct (&structIvar, &Arg, 
+          //                  sizeof (struct something), true, false);
     GenerateObjCAtomicSetterBody(OMD, Ivar);
   } else if (PID->getSetterCXXAssignment()) {
     EmitIgnoredExpr(PID->getSetterCXXAssignment());
   } else {
-    const llvm::Triple &Triple = getContext().Target.getTriple();
-    QualType IVART = Ivar->getType();
     if (IsAtomic &&
         IVART->isScalarType() &&
         (Triple.getArch() == llvm::Triple::arm ||
@@ -433,6 +468,22 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
         (getContext().getTypeSizeInChars(IVART)
           > CharUnits::fromQuantity(4)) &&
         CGM.getObjCRuntime().GetGetStructFunction()) {
+      GenerateObjCAtomicSetterBody(OMD, Ivar);
+    }
+    else if (IsAtomic &&
+             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
+             Triple.getArch() == llvm::Triple::x86 &&
+             (getContext().getTypeSizeInChars(IVART)
+              > CharUnits::fromQuantity(4)) &&
+             CGM.getObjCRuntime().GetGetStructFunction()) {
+      GenerateObjCAtomicSetterBody(OMD, Ivar);
+    }
+    else if (IsAtomic &&
+             (IVART->isScalarType() && !IVART->isRealFloatingType()) &&
+             Triple.getArch() == llvm::Triple::x86_64 &&
+             (getContext().getTypeSizeInChars(IVART)
+              > CharUnits::fromQuantity(8)) &&
+             CGM.getObjCRuntime().GetGetStructFunction()) {
       GenerateObjCAtomicSetterBody(OMD, Ivar);
     }
     else {
