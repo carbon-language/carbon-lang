@@ -840,21 +840,28 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
 llvm::DIArray CGDebugInfo::
 CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TSpecial,
                          llvm::DIFile Unit) {
-  llvm::SmallVector<llvm::Value *, 16> TemplateParams;
-  const TemplateArgumentList &TAL = TSpecial->getTemplateArgs();
-  for (unsigned i = 0, e = TAL.size(); i != e; ++i) {
-    const TemplateArgument &TA = TAL[i];
+  llvm::PointerUnion<ClassTemplateDecl *,
+                     ClassTemplatePartialSpecializationDecl *>
+    PU = TSpecial->getSpecializedTemplateOrPartial();
+  
+  TemplateParameterList *TPList = PU.is<ClassTemplateDecl *>() ?
+    PU.get<ClassTemplateDecl *>()->getTemplateParameters() :
+    PU.get<ClassTemplatePartialSpecializationDecl *>()->getTemplateParameters();
+  const TemplateArgumentList &TAList = TSpecial->getTemplateInstantiationArgs();
+  llvm::SmallVector<llvm::Value *, 16> TemplateParams;  
+  for (unsigned i = 0, e = TAList.size(); i != e; ++i) {
+    const TemplateArgument &TA = TAList[i];
+    NamedDecl *ND = TPList->getParam(i);
     if (TA.getKind() == TemplateArgument::Type) {
       llvm::DIType TTy = getOrCreateType(TA.getAsType(), Unit);
       llvm::DITemplateTypeParameter TTP =
-        DBuilder.createTemplateTypeParameter(TheCU, TTy.getName(), TTy);
+        DBuilder.createTemplateTypeParameter(TheCU, ND->getName(), TTy);
       TemplateParams.push_back(TTP);
     } else if (TA.getKind() == TemplateArgument::Integral) {
       llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
-      // FIXME: Get parameter name, instead of parameter type name.
       llvm::DITemplateValueParameter TVP =
-        DBuilder.createTemplateValueParameter(TheCU, TTy.getName(), TTy,
-                                              TA.getAsIntegral()->getZExtValue());
+        DBuilder.createTemplateValueParameter(TheCU, ND->getName(), TTy,
+                                          TA.getAsIntegral()->getZExtValue());
       TemplateParams.push_back(TVP);          
     }
   }
