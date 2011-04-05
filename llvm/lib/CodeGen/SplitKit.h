@@ -50,16 +50,8 @@ public:
   const MachineLoopInfo &Loops;
   const TargetInstrInfo &TII;
 
-  // Instructions using the the current register.
-  typedef SmallPtrSet<const MachineInstr*, 16> InstrPtrSet;
-  InstrPtrSet UsingInstrs;
-
   // Sorted slot indexes of using instructions.
   SmallVector<SlotIndex, 8> UseSlots;
-
-  // The number of instructions using CurLI in each basic block.
-  typedef DenseMap<const MachineBasicBlock*, unsigned> BlockCountMap;
-  BlockCountMap UsingBlocks;
 
   /// Additional information about basic blocks where the current variable is
   /// live. Such a block will look like one of these templates:
@@ -130,11 +122,6 @@ public:
     return computeLastSplitPoint(Num);
   }
 
-  /// hasUses - Return true if MBB has any uses of CurLI.
-  bool hasUses(const MachineBasicBlock *MBB) const {
-    return UsingBlocks.lookup(MBB);
-  }
-
   /// isOriginalEndpoint - Return true if the original live range was killed or
   /// (re-)defined at Idx. Idx should be the 'def' slot for a normal kill/def,
   /// and 'use' for an early-clobber def.
@@ -143,9 +130,6 @@ public:
   bool isOriginalEndpoint(SlotIndex Idx) const;
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
-
-  // Print a set of blocks with use counts.
-  void print(const BlockPtrSet&, raw_ostream&) const;
 
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
   /// having CurLI split to a new live interval. Return true if Blocks can be

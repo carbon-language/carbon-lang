@@ -178,6 +178,11 @@ namespace llvm {
       return getIndex() >= other.getIndex();
     }
 
+    /// isSameInstr - Return true if A and B refer to the same instruction.
+    static bool isSameInstr(SlotIndex A, SlotIndex B) {
+      return A.lie.getPointer() == B.lie.getPointer();
+    }
+
     /// Return the distance from this index to the given one.
     int distance(SlotIndex other) const {
       return other.getIndex() - getIndex();

@@ -21,17 +21,12 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
-
-static cl::opt<bool>
-AllowSplit("spiller-splits-edges",
-           cl::desc("Allow critical edge splitting during spilling"));
 
 STATISTIC(NumFinished, "Number of splits finished");
 STATISTIC(NumSimple,   "Number of splits that were simple");
@@ -53,8 +48,6 @@ SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm,
 
 void SplitAnalysis::clear() {
   UseSlots.clear();
-  UsingInstrs.clear();
-  UsingBlocks.clear();
   LiveBlocks.clear();
   CurLI = 0;
 }
@@ -96,20 +89,30 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
 
 /// analyzeUses - Count instructions, basic blocks, and loops using CurLI.
 void SplitAnalysis::analyzeUses() {
+  assert(UseSlots.empty() && "Call clear first");
+
+  // First get all the defs from the interval values. This provides the correct
+  // slots for early clobbers.
+  for (LiveInterval::const_vni_iterator I = CurLI->vni_begin(),
+       E = CurLI->vni_end(); I != E; ++I)
+    if (!(*I)->isPHIDef() && !(*I)->isUnused())
+      UseSlots.push_back((*I)->def);
+
+  // Get use slots form the use-def chain.
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-  for (MachineRegisterInfo::reg_iterator I = MRI.reg_begin(CurLI->reg),
-       E = MRI.reg_end(); I != E; ++I) {
-    MachineOperand &MO = I.getOperand();
-    if (MO.isUse() && MO.isUndef())
-      continue;
-    MachineInstr *MI = MO.getParent();
-    if (MI->isDebugValue() || !UsingInstrs.insert(MI))
-      continue;
-    UseSlots.push_back(LIS.getInstructionIndex(MI).getDefIndex());
-    MachineBasicBlock *MBB = MI->getParent();
-    UsingBlocks[MBB]++;
-  }
+  for (MachineRegisterInfo::use_nodbg_iterator
+       I = MRI.use_nodbg_begin(CurLI->reg), E = MRI.use_nodbg_end(); I != E;
+       ++I)
+    if (!I.getOperand().isUndef())
+      UseSlots.push_back(LIS.getInstructionIndex(&*I).getDefIndex());
+
   array_pod_sort(UseSlots.begin(), UseSlots.end());
+
+  // Remove duplicates, keeping the smaller slot for each instruction.
+  // That is what we want for early clobbers.
+  UseSlots.erase(std::unique(UseSlots.begin(), UseSlots.end(),
+                             SlotIndex::isSameInstr),
+                 UseSlots.end());
 
   // Compute per-live block info.
   if (!calcLiveBlockInfo()) {
@@ -125,8 +128,7 @@ void SplitAnalysis::analyzeUses() {
   }
 
   DEBUG(dbgs() << "Analyze counted "
-               << UsingInstrs.size() << " instrs, "
-               << UsingBlocks.size() << " blocks, "
+               << UseSlots.size() << " instrs, "
                << LiveBlocks.size() << " spanned.\n");
 }
 
@@ -157,8 +159,8 @@ bool SplitAnalysis::calcLiveBlockInfo() {
       BI.Def = LVI->start;
 
     // Find the first and last uses in the block.
-    BI.Uses = hasUses(MFI);
-    if (BI.Uses && UseI != UseE) {
+    BI.Uses = UseI != UseE && *UseI < Stop;
+    if (BI.Uses) {
       BI.FirstUse = *UseI;
       assert(BI.FirstUse >= Start);
       do ++UseI;
@@ -222,15 +224,6 @@ bool SplitAnalysis::isOriginalEndpoint(SlotIndex Idx) const {
 
   // Range does not contain Idx, previous must end at Idx.
   return I != Orig.begin() && (--I)->end == Idx;
-}
-
-void SplitAnalysis::print(const BlockPtrSet &B, raw_ostream &OS) const {
-  for (BlockPtrSet::const_iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    unsigned count = UsingBlocks.lookup(*I);
-    OS << " BB#" << (*I)->getNumber();
-    if (count)
-      OS << '(' << count << ')';
-  }
 }
 
 void SplitAnalysis::analyze(const LiveInterval *li) {
@@ -918,12 +911,7 @@ bool SplitAnalysis::getMultiUseBlocks(BlockPtrSet &Blocks) {
   // Add blocks with multiple uses.
   for (unsigned i = 0, e = LiveBlocks.size(); i != e; ++i) {
     const BlockInfo &BI = LiveBlocks[i];
-    if (!BI.Uses)
-      continue;
-    unsigned Instrs = UsingBlocks.lookup(BI.MBB);
-    if (Instrs <= 1)
-      continue;
-    if (Instrs == 2 && BI.LiveIn && BI.LiveOut && !BI.LiveThrough)
+    if (!BI.Uses || BI.FirstUse == BI.LastUse)
       continue;
     Blocks.insert(BI.MBB);
   }
