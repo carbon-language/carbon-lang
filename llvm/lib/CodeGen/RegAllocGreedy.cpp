@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "regalloc"
 #include "AllocationOrder.h"
 #include "InterferenceCache.h"
+#include "LiveDebugVariables.h"
 #include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
 #include "Spiller.h"
@@ -196,6 +197,7 @@ FunctionPass* llvm::createGreedyRegisterAllocator() {
 }
 
 RAGreedy::RAGreedy(): MachineFunctionPass(ID), LRStage(RS_New) {
+  initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
@@ -218,6 +220,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveIntervals>();
   AU.addRequired<SlotIndexes>();
   AU.addPreserved<SlotIndexes>();
+  AU.addRequired<LiveDebugVariables>();
+  AU.addPreserved<LiveDebugVariables>();
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
   AU.addRequiredTransitive<RegisterCoalescer>();
@@ -1182,6 +1186,9 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
     NamedRegionTimer T("Rewriter", TimerGroupName, TimePassesIsEnabled);
     VRM->rewrite(Indexes);
   }
+
+  // Write out new DBG_VALUE instructions.
+  getAnalysis<LiveDebugVariables>().emitDebugValues(VRM);
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "LiveDebugVariables.h"
 #include "LiveIntervalUnion.h"
 #include "LiveRangeEdit.h"
 #include "RegAllocBase.h"
@@ -137,6 +138,7 @@ char RABasic::ID = 0;
 } // end anonymous namespace
 
 RABasic::RABasic(): MachineFunctionPass(ID) {
+  initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
@@ -155,6 +157,8 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<SlotIndexes>();
+  AU.addRequired<LiveDebugVariables>();
+  AU.addPreserved<LiveDebugVariables>();
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
   AU.addRequiredTransitive<RegisterCoalescer>();
@@ -542,6 +546,9 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
 
   // Run rewriter
   VRM->rewrite(LIS->getSlotIndexes());
+
+  // Write out new DBG_VALUE instructions.
+  getAnalysis<LiveDebugVariables>().emitDebugValues(VRM);
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();

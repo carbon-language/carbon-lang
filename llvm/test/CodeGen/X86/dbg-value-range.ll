@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic < %s | FileCheck %s
 
 %struct.a = type { i32 }
 

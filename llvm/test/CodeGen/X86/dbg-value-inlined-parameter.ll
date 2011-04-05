@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic < %s | FileCheck %s
 
 ;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin
