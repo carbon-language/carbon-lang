@@ -681,10 +681,17 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
   // CDP/CDP2 has no GPR operand; the opc1 operand is also wider (Inst{23-20}).
   bool NoGPR = (Opcode == ARM::CDP || Opcode == ARM::CDP2);
   bool LdStCop = LdStCopOpcode(Opcode);
+  bool RtOut = (Opcode == ARM::MRC || Opcode == ARM::MRC2);
 
   OpIdx = 0;
 
+  if (RtOut) {
+    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+                                                       decodeRd(insn))));
+    ++OpIdx;
+  }
   MI.addOperand(MCOperand::CreateImm(GetCoprocessor(insn)));
+  ++OpIdx;
 
   if (LdStCop) {
     // Unindex if P:W = 0b00 --> _OPTION variant
@@ -694,6 +701,7 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRn(insn))));
+    OpIdx += 2;
 
     if (PW) {
       MI.addOperand(MCOperand::CreateReg(0));
@@ -704,19 +712,23 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
       unsigned Offset = ARM_AM::getAM2Opc(AddrOpcode, slice(insn, 7, 0) << 2,
                                           ARM_AM::no_shift, IndexMode);
       MI.addOperand(MCOperand::CreateImm(Offset));
-      OpIdx = 5;
+      OpIdx += 2;
     } else {
       MI.addOperand(MCOperand::CreateImm(slice(insn, 7, 0)));
-      OpIdx = 4;
+      ++OpIdx;
     }
   } else {
     MI.addOperand(MCOperand::CreateImm(OneCopOpc ? GetCopOpc(insn)
                                                  : GetCopOpc1(insn, NoGPR)));
+    ++OpIdx;
 
-    MI.addOperand(NoGPR ? MCOperand::CreateImm(decodeRd(insn))
-                        : MCOperand::CreateReg(
-                            getRegisterEnum(B, ARM::GPRRegClassID,
-                                            decodeRd(insn))));
+    if (!RtOut) {
+      MI.addOperand(NoGPR ? MCOperand::CreateImm(decodeRd(insn))
+                          : MCOperand::CreateReg(
+                                getRegisterEnum(B, ARM::GPRRegClassID,
+                                                decodeRd(insn))));
+      ++OpIdx;
+    }
 
     MI.addOperand(OneCopOpc ? MCOperand::CreateReg(
                                 getRegisterEnum(B, ARM::GPRRegClassID,
@@ -725,7 +737,7 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     MI.addOperand(MCOperand::CreateImm(decodeRm(insn)));
 
-    OpIdx = 5;
+    OpIdx += 2;
 
     if (!OneCopOpc) {
       MI.addOperand(MCOperand::CreateImm(GetCopOpc2(insn)));
