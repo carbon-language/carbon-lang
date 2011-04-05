@@ -908,8 +908,6 @@ void alias::printOptionInfo(size_t GlobalWidth) const {
   errs().indent(GlobalWidth-L-6) << " - " << HelpStr << "\n";
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // Parser Implementation code...
 //
@@ -939,7 +937,11 @@ void basic_parser_impl::printOptionInfo(const Option &O,
   outs().indent(GlobalWidth-getOptionWidth(O)) << " - " << O.HelpStr << '\n';
 }
 
-
+void basic_parser_impl::printOptionName(const Option &O,
+                                        size_t GlobalWidth) const {
+  outs() << "  -" << O.ArgStr;
+  outs().indent(GlobalWidth-std::strlen(O.ArgStr));
+}
 
 
 // parser<bool> implementation
@@ -1083,6 +1085,89 @@ void generic_parser_base::printOptionInfo(const Option &O,
   }
 }
 
+static const size_t MaxOptWidth = 8; // arbitrary spacing for printOptionDiff
+
+// printGenericOptionDiff - Print the value of this option and it's default.
+//
+// "Generic" options have each value mapped to a name.
+void generic_parser_base::
+printGenericOptionDiff(const Option &O, const GenericOptionValue &Value,
+                       const GenericOptionValue &Default,
+                       size_t GlobalWidth) const {
+  outs() << "  -" << O.ArgStr;
+  outs().indent(GlobalWidth-std::strlen(O.ArgStr));
+
+  unsigned NumOpts = getNumOptions();
+  for (unsigned i = 0; i != NumOpts; ++i) {
+    if (Value.compare(getOptionValue(i)))
+      continue;
+
+    outs() << "= " << getOption(i);
+    size_t L = std::strlen(getOption(i));
+    size_t NumSpaces = MaxOptWidth > L ? MaxOptWidth - L : 0;
+    outs().indent(NumSpaces) << " (default: ";
+    for (unsigned j = 0; j != NumOpts; ++j) {
+      if (Default.compare(getOptionValue(j)))
+        continue;
+      outs() << getOption(j);
+      break;
+    }
+    outs() << ")\n";
+    return;
+  }
+  outs() << "= *unknown option value*\n";
+}
+
+// printOptionDiff - Specializations for printing basic value types.
+//
+#define PRINT_OPT_DIFF(T)                                               \
+  void parser<T>::                                                      \
+  printOptionDiff(const Option &O, T V, OptionValue<T> D,               \
+                  size_t GlobalWidth) const {                           \
+    printOptionName(O, GlobalWidth);                                    \
+    std::string Str;                                                    \
+    {                                                                   \
+      raw_string_ostream SS(Str);                                       \
+      SS << V;                                                          \
+    }                                                                   \
+    outs() << "= " << Str;                                              \
+    size_t NumSpaces = MaxOptWidth > Str.size() ? MaxOptWidth - Str.size() : 0;\
+    outs().indent(NumSpaces) << " (default: ";                          \
+    if (D.hasValue())                                                   \
+      outs() << D.getValue();                                           \
+    else                                                                \
+      outs() << "*no default*";                                         \
+    outs() << ")\n";                                                    \
+  }                                                                     \
+
+PRINT_OPT_DIFF(bool);
+PRINT_OPT_DIFF(boolOrDefault);
+PRINT_OPT_DIFF(int);
+PRINT_OPT_DIFF(unsigned);
+PRINT_OPT_DIFF(double);
+PRINT_OPT_DIFF(float);
+PRINT_OPT_DIFF(char);
+
+void parser<std::string>::
+printOptionDiff(const Option &O, StringRef V, OptionValue<std::string> D,
+                size_t GlobalWidth) const {
+  printOptionName(O, GlobalWidth);
+  outs() << "= " << V;
+  size_t NumSpaces = MaxOptWidth > V.size() ? MaxOptWidth - V.size() : 0;
+  outs().indent(NumSpaces) << " (default: ";
+  if (D.hasValue())
+    outs() << D.getValue();
+  else
+    outs() << "*no default*";
+  outs() << ")\n";
+}
+
+// Print a placeholder for options that don't yet support printOptionDiff().
+void basic_parser_impl::
+printOptionNoValue(const Option &O, size_t GlobalWidth) const {
+  printOptionName(O, GlobalWidth);
+  outs() << "= *cannot print option value*\n";
+}
 
 //===----------------------------------------------------------------------===//
 // -help and -help-hidden option implementation
@@ -1092,6 +1177,35 @@ static int OptNameCompare(const void *LHS, const void *RHS) {
   typedef std::pair<const char *, Option*> pair_ty;
 
   return strcmp(((pair_ty*)LHS)->first, ((pair_ty*)RHS)->first);
+}
+
+// Copy Options into a vector so we can sort them as we like.
+static void
+sortOpts(StringMap<Option*> &OptMap,
+         SmallVectorImpl< std::pair<const char *, Option*> > &Opts,
+         bool ShowHidden) {
+  SmallPtrSet<Option*, 128> OptionSet;  // Duplicate option detection.
+
+  for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
+       I != E; ++I) {
+    // Ignore really-hidden options.
+    if (I->second->getOptionHiddenFlag() == ReallyHidden)
+      continue;
+
+    // Unless showhidden is set, ignore hidden flags.
+    if (I->second->getOptionHiddenFlag() == Hidden && !ShowHidden)
+      continue;
+
+    // If we've already seen this option, don't add it to the list again.
+    if (!OptionSet.insert(I->second))
+      continue;
+
+    Opts.push_back(std::pair<const char *, Option*>(I->getKey().data(),
+                                                    I->second));
+  }
+
+  // Sort the options list alphabetically.
+  qsort(Opts.data(), Opts.size(), sizeof(Opts[0]), OptNameCompare);
 }
 
 namespace {
@@ -1115,30 +1229,8 @@ public:
     StringMap<Option*> OptMap;
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
 
-    // Copy Options into a vector so we can sort them as we like.
     SmallVector<std::pair<const char *, Option*>, 128> Opts;
-    SmallPtrSet<Option*, 128> OptionSet;  // Duplicate option detection.
-
-    for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
-         I != E; ++I) {
-      // Ignore really-hidden options.
-      if (I->second->getOptionHiddenFlag() == ReallyHidden)
-        continue;
-
-      // Unless showhidden is set, ignore hidden flags.
-      if (I->second->getOptionHiddenFlag() == Hidden && !ShowHidden)
-        continue;
-
-      // If we've already seen this option, don't add it to the list again.
-      if (!OptionSet.insert(I->second))
-        continue;
-
-      Opts.push_back(std::pair<const char *, Option*>(I->getKey().data(),
-                                                      I->second));
-    }
-
-    // Sort the options list alphabetically.
-    qsort(Opts.data(), Opts.size(), sizeof(Opts[0]), OptNameCompare);
+    sortOpts(OptMap, Opts, ShowHidden);
 
     if (ProgramOverview)
       outs() << "OVERVIEW: " << ProgramOverview << "\n";
@@ -1196,6 +1288,38 @@ HOp("help", cl::desc("Display available options (-help-hidden for more)"),
 static cl::opt<HelpPrinter, true, parser<bool> >
 HHOp("help-hidden", cl::desc("Display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
+
+static cl::opt<bool>
+PrintOptions("print-options",
+             cl::desc("Print non-default options after command line parsing"),
+             cl::Hidden, cl::init(false));
+
+static cl::opt<bool>
+PrintAllOptions("print-all-options",
+                cl::desc("Print all option values after command line parsing"),
+                cl::Hidden, cl::init(false));
+
+// Print the value of each option.
+void cl::PrintOptionValues() {
+  if (!PrintOptions && !PrintAllOptions) return;
+
+  // Get all the options.
+  SmallVector<Option*, 4> PositionalOpts;
+  SmallVector<Option*, 4> SinkOpts;
+  StringMap<Option*> OptMap;
+  GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
+
+  SmallVector<std::pair<const char *, Option*>, 128> Opts;
+  sortOpts(OptMap, Opts, /*ShowHidden*/true);
+
+  // Compute the maximum argument length...
+  size_t MaxArgLen = 0;
+  for (size_t i = 0, e = Opts.size(); i != e; ++i)
+    MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
+
+  for (size_t i = 0, e = Opts.size(); i != e; ++i)
+    Opts[i].second->printOptionValue(MaxArgLen, PrintAllOptions);
+}
 
 static void (*OverrideVersionPrinter)() = 0;
 

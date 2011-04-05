@@ -701,6 +701,9 @@ int main(int argc, char **argv) {
       Passes.add(createBitcodeWriterPass(Out->os()));
   }
 
+  // Before executing passes, print the final values of the LLVM options.
+  cl::PrintOptionValues();
+
   // Now that we have all of the passes ready, run them.
   Passes.run(*M.get());
 

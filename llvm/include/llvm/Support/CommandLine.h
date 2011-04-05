@@ -60,6 +60,12 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 void SetVersionPrinter(void (*func)());
 
 
+// PrintOptionValues - Print option values.
+// With -print-options print the difference between option values and defaults.
+// With -print-all-options print all option values.
+// (Currently not perfect, but best-effort.)
+void PrintOptionValues();
+
 // MarkOptionsChanged - Internal helper function.
 void MarkOptionsChanged();
 
@@ -230,6 +236,8 @@ public:
   //
   virtual void printOptionInfo(size_t GlobalWidth) const = 0;
 
+  virtual void printOptionValue(size_t GlobalWidth, bool Force) const = 0;
+
   virtual void getExtraOptionNames(SmallVectorImpl<const char*> &) {}
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags.
@@ -303,6 +311,120 @@ LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 
 
 //===----------------------------------------------------------------------===//
+// OptionValue class
+
+// Support value comparison outside the template.
+struct GenericOptionValue {
+  virtual ~GenericOptionValue() {}
+  virtual bool compare(const GenericOptionValue &V) const = 0;
+};
+
+template<class DataType> struct OptionValue;
+
+// The default value safely does nothing. Option value printing is only
+// best-effort.
+template<class DataType, bool isClass>
+struct OptionValueBase : public GenericOptionValue {
+  // Temporary storage for argument passing.
+  typedef OptionValue<DataType> WrapperType;
+
+  bool hasValue() const { return false; }
+
+  const DataType &getValue() const { assert(false && "no default value"); }
+
+  // Some options may take their value from a different data type.
+  template<class DT>
+  void setValue(const DT& V) {}
+
+  bool compare(const DataType &V) const { return false; }
+
+  virtual bool compare(const GenericOptionValue& V) const { return false; }
+};
+
+// Simple copy of the option value.
+template<class DataType>
+class OptionValueCopy : public GenericOptionValue {
+  DataType Value;
+  bool Valid;
+public:
+  OptionValueCopy() : Valid(false) {}
+
+  bool hasValue() const { return Valid; }
+
+  const DataType &getValue() const {
+    assert(Valid && "invalid option value");
+    return Value;
+  }
+
+  void setValue(const DataType &V) { Valid = true; Value = V; }
+
+  bool compare(const DataType &V) const {
+    return Valid && (Value != V);
+  }
+
+  virtual bool compare(const GenericOptionValue &V) const {
+    const OptionValueCopy<DataType> &VC =
+      static_cast< const OptionValueCopy<DataType>& >(V);
+    if (!VC.hasValue) return false;
+    return compare(VC.getValue());
+  }
+};
+
+// Non-class option values.
+template<class DataType>
+struct OptionValueBase<DataType, false> : OptionValueCopy<DataType> {
+  typedef DataType WrapperType;
+};
+
+// Top-level option class.
+template<class DataType>
+struct OptionValue : OptionValueBase<DataType, is_class<DataType>::value> {
+  OptionValue() {}
+
+  OptionValue(const DataType& V) {
+    this->setValue(V);
+  }
+  // Some options may take their value from a different data type.
+  template<class DT>
+  OptionValue<DataType> &operator=(const DT& V) {
+    this->setValue(V);
+    return *this;
+  }
+};
+
+// Other safe-to-copy-by-value common option types.
+enum boolOrDefault { BOU_UNSET, BOU_TRUE, BOU_FALSE };
+template<>
+struct OptionValue<cl::boolOrDefault> : OptionValueCopy<cl::boolOrDefault> {
+  typedef cl::boolOrDefault WrapperType;
+
+  OptionValue() {}
+
+  OptionValue(const cl::boolOrDefault& V) {
+    this->setValue(V);
+  }
+  OptionValue<cl::boolOrDefault> &operator=(const cl::boolOrDefault& V) {
+    setValue(V);
+    return *this;
+  }
+};
+
+template<>
+struct OptionValue<std::string> : OptionValueCopy<std::string> {
+  typedef StringRef WrapperType;
+
+  OptionValue() {}
+
+  OptionValue(const std::string& V) {
+    this->setValue(V);
+  }
+  OptionValue<std::string> &operator=(const std::string& V) {
+    setValue(V);
+    return *this;
+  }
+};
+
+//===----------------------------------------------------------------------===//
 // Enum valued command line option
 //
 #define clEnumVal(ENUMVAL, DESC) #ENUMVAL, int(ENUMVAL), DESC
@@ -355,7 +477,6 @@ ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val,
     return Vals;
 }
 
-
 //===----------------------------------------------------------------------===//
 // parser class - Parameterizable parser for different data types.  By default,
 // known data types (string, int, bool) have specialized parsers, that do what
@@ -368,7 +489,16 @@ ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val,
 // not need replicated for every instance of the generic parser.  This also
 // allows us to put stuff into CommandLine.cpp
 //
-struct generic_parser_base {
+class generic_parser_base {
+protected:
+  class GenericOptionInfo {
+  public:
+    GenericOptionInfo(const char *name, const char *helpStr) :
+      Name(name), HelpStr(helpStr) {}
+    const char *Name;
+    const char *HelpStr;
+  };
+public:
   virtual ~generic_parser_base() {}  // Base class should have virtual-dtor
 
   // getNumOptions - Virtual function implemented by generic subclass to
@@ -385,10 +515,27 @@ struct generic_parser_base {
   // Return the width of the option tag for printing...
   virtual size_t getOptionWidth(const Option &O) const;
 
+  virtual const GenericOptionValue &getOptionValue(unsigned N) const = 0;
+
   // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
   virtual void printOptionInfo(const Option &O, size_t GlobalWidth) const;
+
+  void printGenericOptionDiff(const Option &O, const GenericOptionValue &V,
+                              const GenericOptionValue &Default,
+                              size_t GlobalWidth) const;
+
+  // printOptionDiff - print the value of an option and it's default.
+  //
+  // Template definition ensures that the option and default have the same
+  // DataType (via the same AnyOptionValue).
+  template<class AnyOptionValue>
+  void printOptionDiff(const Option &O, const AnyOptionValue &V,
+                       const AnyOptionValue &Default,
+                       size_t GlobalWidth) const {
+    printGenericOptionDiff(O, V, Default, GlobalWidth);
+  }
 
   void initialize(Option &O) {
     // All of the modifiers for the option have been processed by now, so the
@@ -443,13 +590,11 @@ protected:
 template <class DataType>
 class parser : public generic_parser_base {
 protected:
-  class OptionInfo {
+  class OptionInfo : public GenericOptionInfo {
   public:
     OptionInfo(const char *name, DataType v, const char *helpStr) :
-      Name(name), V(v), HelpStr(helpStr) {}
-    const char *Name;
-    DataType V;
-    const char *HelpStr;
+      GenericOptionInfo(name, helpStr), V(v) {}
+    OptionValue<DataType> V;
   };
   SmallVector<OptionInfo, 8> Values;
 public:
@@ -460,6 +605,11 @@ public:
   const char *getOption(unsigned N) const { return Values[N].Name; }
   const char *getDescription(unsigned N) const {
     return Values[N].HelpStr;
+  }
+
+  // getOptionValue - Return the value of option name N.
+  virtual const GenericOptionValue &getOptionValue(unsigned N) const {
+    return Values[N].V;
   }
 
   // parse - Return true on error.
@@ -473,7 +623,7 @@ public:
     for (unsigned i = 0, e = static_cast<unsigned>(Values.size());
          i != e; ++i)
       if (Values[i].Name == ArgVal) {
-        V = Values[i].V;
+        V = Values[i].V.getValue();
         return false;
       }
 
@@ -522,11 +672,19 @@ public:
   //
   void printOptionInfo(const Option &O, size_t GlobalWidth) const;
 
+  // printOptionNoValue - Print a placeholder for options that don't yet support
+  // printOptionDiff().
+  void printOptionNoValue(const Option &O, size_t GlobalWidth) const;
+
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "value"; }
 
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
+
+protected:
+  // A helper for basic_parser::printOptionDiff.
+  void printOptionName(const Option &O, size_t GlobalWidth) const;
 };
 
 // basic_parser - The real basic parser is just a template wrapper that provides
@@ -536,6 +694,7 @@ template<class DataType>
 class basic_parser : public basic_parser_impl {
 public:
   typedef DataType parser_data_type;
+  typedef OptionValue<DataType> OptVal;
 };
 
 //--------------------------------------------------
@@ -561,6 +720,9 @@ public:
   // getValueName - Do not print =<value> at all.
   virtual const char *getValueName() const { return 0; }
 
+  void printOptionDiff(const Option &O, bool V, OptVal Default,
+                       size_t GlobalWidth) const;
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -569,7 +731,6 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 //--------------------------------------------------
 // parser<boolOrDefault>
-enum boolOrDefault { BOU_UNSET, BOU_TRUE, BOU_FALSE };
 template<>
 class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
@@ -582,6 +743,9 @@ public:
 
   // getValueName - Do not print =<value> at all.
   virtual const char *getValueName() const { return 0; }
+
+  void printOptionDiff(const Option &O, boolOrDefault V, OptVal Default,
+                       size_t GlobalWidth) const;
 
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
@@ -600,6 +764,9 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "int"; }
+
+  void printOptionDiff(const Option &O, int V, OptVal Default,
+                       size_t GlobalWidth) const;
 
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
@@ -620,6 +787,9 @@ public:
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "uint"; }
 
+  void printOptionDiff(const Option &O, unsigned V, OptVal Default,
+                       size_t GlobalWidth) const;
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -638,6 +808,9 @@ public:
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "number"; }
 
+  void printOptionDiff(const Option &O, double V, OptVal Default,
+                       size_t GlobalWidth) const;
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -655,6 +828,9 @@ public:
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "number"; }
+
+  void printOptionDiff(const Option &O, float V, OptVal Default,
+                       size_t GlobalWidth) const;
 
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
@@ -677,6 +853,9 @@ public:
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "string"; }
 
+  void printOptionDiff(const Option &O, StringRef V, OptVal Default,
+                       size_t GlobalWidth) const;
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -698,11 +877,62 @@ public:
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "char"; }
 
+  void printOptionDiff(const Option &O, char V, OptVal Default,
+                       size_t GlobalWidth) const;
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
 
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<char>);
+
+//--------------------------------------------------
+// PrintOptionDiff
+//
+// This collection of wrappers is the intermediary between class opt and class
+// parser to handle all the template nastiness.
+
+// This overloaded function is selected by the generic parser.
+template<class ParserClass, class DT>
+void printOptionDiff(const Option &O, const generic_parser_base &P, const DT &V,
+                     const OptionValue<DT> &Default, size_t GlobalWidth) {
+  OptionValue<DT> OV = V;
+  P.printOptionDiff(O, OV, Default, GlobalWidth);
+}
+
+// This is instantiated for basic parsers when the parsed value has a different
+// type than the option value. e.g. HelpPrinter.
+template<class ParserDT, class ValDT>
+struct OptionDiffPrinter {
+  void print(const Option &O, const parser<ParserDT> P, const ValDT &V,
+             const OptionValue<ValDT> &Default, size_t GlobalWidth) {
+    P.printOptionNoValue(O, GlobalWidth);
+  }
+};
+
+// This is instantiated for basic parsers when the parsed value has the same
+// type as the option value.
+template<class DT>
+struct OptionDiffPrinter<DT, DT> {
+  void print(const Option &O, const parser<DT> P, const DT &V,
+             const OptionValue<DT> &Default, size_t GlobalWidth) {
+    P.printOptionDiff(O, V, Default, GlobalWidth);
+  }
+};
+
+// This overloaded function is selected by the basic parser, which may parse a
+// different type than the option type.
+template<class ParserClass, class ValDT>
+void printOptionDiff(
+  const Option &O,
+  const basic_parser<typename ParserClass::parser_data_type> &P,
+  const ValDT &V, const OptionValue<ValDT> &Default,
+  size_t GlobalWidth) {
+
+  OptionDiffPrinter<typename ParserClass::parser_data_type, ValDT> printer;
+  printer.print(O, static_cast<const ParserClass&>(P), V, Default,
+                GlobalWidth);
+}
 
 //===----------------------------------------------------------------------===//
 // applicator class - This class is used because we must use partial
@@ -753,7 +983,6 @@ void apply(const Mod &M, Opt *O) {
   applicator<Mod>::opt(M, *O);
 }
 
-
 //===----------------------------------------------------------------------===//
 // opt_storage class
 
@@ -764,6 +993,7 @@ void apply(const Mod &M, Opt *O) {
 template<class DataType, bool ExternalStorage, bool isClass>
 class opt_storage {
   DataType *Location;   // Where to store the object...
+  OptionValue<DataType> Default;
 
   void check() const {
     assert(Location != 0 && "cl::location(...) not specified for a command "
@@ -777,21 +1007,25 @@ public:
     if (Location)
       return O.error("cl::location(x) specified more than once!");
     Location = &L;
+    Default = L;
     return false;
   }
 
   template<class T>
-  void setValue(const T &V) {
+  void setValue(const T &V, bool initial = false) {
     check();
     *Location = V;
+    if (initial)
+      Default = V;
   }
 
   DataType &getValue() { check(); return *Location; }
   const DataType &getValue() const { check(); return *Location; }
 
   operator DataType() const { return this->getValue(); }
-};
 
+  const OptionValue<DataType> &getDefault() const { return Default; }
+};
 
 // Define how to hold a class type object, such as a string.  Since we can
 // inherit from a class, we do so.  This makes us exactly compatible with the
@@ -800,11 +1034,19 @@ public:
 template<class DataType>
 class opt_storage<DataType,false,true> : public DataType {
 public:
+  OptionValue<DataType> Default;
+
   template<class T>
-  void setValue(const T &V) { DataType::operator=(V); }
+  void setValue(const T &V, bool initial = false) {
+    DataType::operator=(V);
+    if (initial)
+      Default = V;
+  }
 
   DataType &getValue() { return *this; }
   const DataType &getValue() const { return *this; }
+
+  const OptionValue<DataType> &getDefault() const { return Default; }
 };
 
 // Define a partial specialization to handle things we cannot inherit from.  In
@@ -815,15 +1057,22 @@ template<class DataType>
 class opt_storage<DataType, false, false> {
 public:
   DataType Value;
+  OptionValue<DataType> Default;
 
   // Make sure we initialize the value with the default constructor for the
   // type.
   opt_storage() : Value(DataType()) {}
 
   template<class T>
-  void setValue(const T &V) { Value = V; }
+  void setValue(const T &V, bool initial = false) {
+    Value = V;
+    if (initial)
+      Default = V;
+  }
   DataType &getValue() { return Value; }
   DataType getValue() const { return Value; }
+
+  const OptionValue<DataType> &getDefault() const { return Default; }
 
   operator DataType() const { return getValue(); }
 
@@ -866,13 +1115,20 @@ class opt : public Option,
     Parser.printOptionInfo(*this, GlobalWidth);
   }
 
+  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {
+    if (Force || this->getDefault().compare(this->getValue())) {
+      cl::printOptionDiff<ParserClass>(
+        *this, Parser, this->getValue(), this->getDefault(), GlobalWidth);
+    }
+  }
+
   void done() {
     addArgument();
     Parser.initialize(*this);
   }
 public:
   // setInitialValue - Used by the cl::init modifier...
-  void setInitialValue(const DataType &V) { this->setValue(V); }
+  void setInitialValue(const DataType &V) { this->setValue(V, true); }
 
   ParserClass &getParser() { return Parser; }
 
@@ -1029,6 +1285,9 @@ class list : public Option, public list_storage<DataType, Storage> {
   virtual void printOptionInfo(size_t GlobalWidth) const {
     Parser.printOptionInfo(*this, GlobalWidth);
   }
+
+  // Unimplemented: list options don't currently store their default value.
+  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
 
   void done() {
     addArgument();
@@ -1229,6 +1488,9 @@ class bits : public Option, public bits_storage<DataType, Storage> {
     Parser.printOptionInfo(*this, GlobalWidth);
   }
 
+  // Unimplemented: bits options don't currently store their default values.
+  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
+
   void done() {
     addArgument();
     Parser.initialize(*this);
@@ -1319,6 +1581,9 @@ class alias : public Option {
   // Handle printing stuff...
   virtual size_t getOptionWidth() const;
   virtual void printOptionInfo(size_t GlobalWidth) const;
+
+  // Aliases do not need to print their values.
+  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
 
   void done() {
     if (!hasArgStr())
