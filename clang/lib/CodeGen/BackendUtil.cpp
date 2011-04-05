@@ -323,6 +323,9 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
       return;
   }
 
+  // Before executing passes, print the final values of the LLVM options.
+  cl::PrintOptionValues();
+
   // Run passes. For now we do all passes at once, but eventually we
   // would like to have the option of streaming code generation.
 
