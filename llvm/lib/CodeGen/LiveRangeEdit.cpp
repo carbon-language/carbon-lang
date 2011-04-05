@@ -149,6 +149,54 @@ void LiveRangeEdit::eraseVirtReg(unsigned Reg, LiveIntervals &LIS) {
     LIS.removeInterval(Reg);
 }
 
+bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
+                               SmallVectorImpl<MachineInstr*> &Dead,
+                               MachineRegisterInfo &MRI,
+                               LiveIntervals &LIS,
+                               const TargetInstrInfo &TII) {
+  MachineInstr *DefMI = 0, *UseMI = 0;
+
+  // Check that there is a single def and a single use.
+  for (MachineRegisterInfo::reg_nodbg_iterator I = MRI.reg_nodbg_begin(LI->reg),
+       E = MRI.reg_nodbg_end(); I != E; ++I) {
+    MachineOperand &MO = I.getOperand();
+    MachineInstr *MI = MO.getParent();
+    if (MO.isDef()) {
+      if (DefMI && DefMI != MI)
+        return false;
+      if (!MI->getDesc().canFoldAsLoad())
+        return false;
+      DefMI = MI;
+    } else if (!MO.isUndef()) {
+      if (UseMI && UseMI != MI)
+        return false;
+      // FIXME: Targets don't know how to fold subreg uses.
+      if (MO.getSubReg())
+        return false;
+      UseMI = MI;
+    }
+  }
+  if (!DefMI || !UseMI)
+    return false;
+
+  DEBUG(dbgs() << "Try to fold single def: " << *DefMI
+               << "       into single use: " << *UseMI);
+
+  SmallVector<unsigned, 8> Ops;
+  if (UseMI->readsWritesVirtualRegister(LI->reg, &Ops).second)
+    return false;
+
+  MachineInstr *FoldMI = TII.foldMemoryOperand(UseMI, Ops, DefMI);
+  if (!FoldMI)
+    return false;
+  DEBUG(dbgs() << "                folded: " << *FoldMI);
+  LIS.ReplaceMachineInstrInMaps(UseMI, FoldMI);
+  UseMI->eraseFromParent();
+  DefMI->addRegisterDead(LI->reg, 0);
+  Dead.push_back(DefMI);
+  return true;
+}
+
 void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
                                       LiveIntervals &LIS, VirtRegMap &VRM,
                                       const TargetInstrInfo &TII) {
@@ -218,6 +266,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     // Shrink just one live interval. Then delete new dead defs.
     LiveInterval *LI = ToShrink.back();
     ToShrink.pop_back();
+    if (foldAsLoad(LI, Dead, VRM.getRegInfo(), LIS, TII))
+      continue;
     if (delegate_)
       delegate_->LRE_WillShrinkVirtReg(LI->reg);
     if (!LIS.shrinkToUses(LI, &Dead))

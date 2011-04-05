@@ -80,6 +80,11 @@ private:
   bool allUsesAvailableAt(const MachineInstr *OrigMI, SlotIndex OrigIdx,
                           SlotIndex UseIdx, LiveIntervals &lis);
 
+  /// foldAsLoad - If LI has a single use and a single def that can be folded as
+  /// a load, eliminate the register by folding the def into the use.
+  bool foldAsLoad(LiveInterval *LI, SmallVectorImpl<MachineInstr*> &Dead,
+                  MachineRegisterInfo&, LiveIntervals&, const TargetInstrInfo&);
+
 public:
   /// Create a LiveRangeEdit for breaking down parent into smaller pieces.
   /// @param parent The register being spilled or split.

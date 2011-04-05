@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-linux   | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -regalloc=greedy | FileCheck %s
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 ; CHECK:     LCPI
 ; CHECK:     LCPI
