@@ -97,7 +97,7 @@ public:
   /// will generally be the actual host platform, but not always.
   const HostInfo *Host;
 
-  /// Information about the host which can be overriden by the user.
+  /// Information about the host which can be overridden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
   /// The file to log CC_PRINT_OPTIONS output to, if enabled.
