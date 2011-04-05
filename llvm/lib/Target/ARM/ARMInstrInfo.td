@@ -938,50 +938,18 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 let isCodeGenOnly = 1, Defs = [CPSR] in {
 multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                              bit Commutable = 0> {
-  def Sri : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-                DPFrm, IIC_iALUi, !strconcat(opc, "\t$Rd, $Rn, $imm"),
+  def Sri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                Size4Bytes, IIC_iALUi,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
-               Requires<[IsARM]> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> imm;
-    let Inst{31-27} = 0b1110; // non-predicated
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
-    let Inst{11-0} = imm;
-    let Inst{20} = 1;
-    let Inst{25} = 1;
-  }
-  def Srr : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-                DPFrm, IIC_iALUr, !strconcat(opc, "\t$Rd, $Rn, $Rm"),
+               Requires<[IsARM]>;
+  def Srr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                Size4Bytes, IIC_iALUr,
                [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
-               Requires<[IsARM]> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<4> Rm;
-    let Inst{31-27} = 0b1110; // non-predicated
-    let Inst{11-4} = 0b00000000;
-    let isCommutable = Commutable;
-    let Inst{3-0} = Rm;
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
-    let Inst{20} = 1;
-    let Inst{25} = 0;
-  }
-  def Srs : AXI1<opcod, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                DPSoRegFrm, IIC_iALUsr, !strconcat(opc, "\t$Rd, $Rn, $shift"),
+               Requires<[IsARM]>;
+  def Srs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                Size4Bytes, IIC_iALUsr,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>,
-               Requires<[IsARM]> {
-    bits<4> Rd;
-    bits<4> Rn;
-    bits<12> shift;
-    let Inst{31-27} = 0b1110; // non-predicated
-    let Inst{11-0} = shift;
-    let Inst{15-12} = Rd;
-    let Inst{19-16} = Rn;
-    let Inst{20} = 1;
-    let Inst{25} = 0;
-  }
+               Requires<[IsARM]>;
 }
 }
 }
