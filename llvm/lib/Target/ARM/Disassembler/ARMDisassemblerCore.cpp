@@ -1072,6 +1072,12 @@ static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     if (slice(insn, 7, 7))
       return false;
 
+    // A8.6.3 ADC (register-shifted register)
+    // if d == 15 || n == 15 || m == 15 || s == 15 then UNPREDICTABLE;
+    if (decodeRd(insn) == 15 || decodeRn(insn) == 15 ||
+        decodeRm(insn) == 15 || decodeRs(insn) == 15)
+      return false;
+    
     // Register-controlled shifts: [Rm, Rs, shift].
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRs(insn))));
