@@ -31,18 +31,19 @@ entry:
         ret void
 }
 
+; CHECK: ti64
 define void @ti64(double %a, double %b) nounwind {
 entry:
         %tmp1 = bitcast double %a to <1 x i64>
         %tmp2 = bitcast double %b to <1 x i64>
         %tmp3 = add <1 x i64> %tmp1, %tmp2
-; CHECK:  addq  %rax, %rcx
+; CHECK:  addq
         store <1 x i64> %tmp3, <1 x i64>* null
         ret void
 }
 
 ; MMX intrinsics calls get us MMX instructions.
-
+; CHECK: ti8a
 define void @ti8a(double %a, double %b) nounwind {
 entry:
         %tmp1 = bitcast double %a to x86_mmx

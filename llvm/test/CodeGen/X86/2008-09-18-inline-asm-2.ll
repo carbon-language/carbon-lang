@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=x86 | grep "#%ebp %edi %ebx 8(%esi) %eax %dl"
-; RUN: llc < %s -march=x86 -regalloc=fast  | grep "#%ebx %esi %edi 8(%ebp) %eax %dl"
+; RUN: llc < %s -march=x86 -regalloc=linearscan | grep "#%ebp %edi %ebx 8(%esi) %eax %dl"
+; RUN: llc < %s -march=x86 -regalloc=fast       | grep "#%ebx %esi %edi 8(%ebp) %eax %dl"
+; RUN: llc < %s -march=x86 -regalloc=basic      | grep "#%ebp %esi %edx 8(%edi) %eax %bl"
+; RUN: llc < %s -march=x86 -regalloc=greedy     | grep "#%edx %edi %ebp 8(%esi) %eax %bl"
 
 ; The 1st, 2nd, 3rd and 5th registers above must all be different.  The registers
 ; referenced in the 4th and 6th operands must not be the same as the 1st or 5th

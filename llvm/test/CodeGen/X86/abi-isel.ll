@@ -12,6 +12,17 @@
 ; RUN: llc < %s -asm-verbose=0 -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=dynamic-no-pic -code-model=small | FileCheck %s -check-prefix=DARWIN-64-DYNAMIC
 ; RUN: llc < %s -asm-verbose=0 -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=pic -code-model=small | FileCheck %s -check-prefix=DARWIN-64-PIC
 
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=i686-unknown-linux-gnu -march=x86 -relocation-model=static -code-model=small | FileCheck %s -check-prefix=LINUX-32-STATIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=i686-unknown-linux-gnu -march=x86 -relocation-model=static -code-model=small | FileCheck %s -check-prefix=LINUX-32-PIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=x86_64-unknown-linux-gnu -march=x86-64 -relocation-model=static -code-model=small | FileCheck %s -check-prefix=LINUX-64-STATIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=x86_64-unknown-linux-gnu -march=x86-64 -relocation-model=pic -code-model=small | FileCheck %s -check-prefix=LINUX-64-PIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=i686-apple-darwin -march=x86 -relocation-model=static -code-model=small | FileCheck %s -check-prefix=DARWIN-32-STATIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=i686-apple-darwin -march=x86 -relocation-model=dynamic-no-pic -code-model=small | FileCheck %s -check-prefix=DARWIN-32-DYNAMIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=i686-apple-darwin -march=x86 -relocation-model=pic -code-model=small | FileCheck %s -check-prefix=DARWIN-32-PIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=static -code-model=small | FileCheck %s -check-prefix=DARWIN-64-STATIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=dynamic-no-pic -code-model=small | FileCheck %s -check-prefix=DARWIN-64-DYNAMIC
+; RUN: llc < %s -asm-verbose=0 -regalloc=basic -mtriple=x86_64-apple-darwin -march=x86-64 -relocation-model=pic -code-model=small | FileCheck %s -check-prefix=DARWIN-64-PIC
+
 @src = external global [131072 x i32]
 @dst = external global [131072 x i32]
 @xsrc = external global [32 x i32]
@@ -38,68 +49,68 @@ entry:
 	ret void
 
 ; LINUX-64-STATIC: foo00:
-; LINUX-64-STATIC: movl	src(%rip), %eax
-; LINUX-64-STATIC: movl	%eax, dst
+; LINUX-64-STATIC: movl	src(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl	[[EAX]], dst
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo00:
-; LINUX-32-STATIC: 	movl	src, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dst
+; LINUX-32-STATIC: 	movl	src, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo00:
-; LINUX-32-PIC: 	movl	src, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dst
+; LINUX-32-PIC: 	movl	src, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r..]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e..]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r..]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo00:
-; DARWIN-32-STATIC: 	movl	_src, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dst
+; DARWIN-32-STATIC: 	movl	_src, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dst
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo00:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e..]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e..]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e..]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo00:
 ; DARWIN-32-PIC: 	calll	L0$pb
 ; DARWIN-32-PIC-NEXT: L0$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L0$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L0$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L0$pb([[EAX]]), [[ECX:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	([[ECX]]), [[ECX:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L0$pb([[EAX]]), [[EAX:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r..]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]]), [[EAX:%e..]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r..]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r..]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]]), [[EAX:%e..]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r..]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r..]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e..]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r..]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -110,68 +121,68 @@ entry:
 	ret void
 
 ; LINUX-64-STATIC: fxo00:
-; LINUX-64-STATIC: movl	xsrc(%rip), %eax
-; LINUX-64-STATIC: movl	%eax, xdst
+; LINUX-64-STATIC: movl	xsrc(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl	[[EAX]], xdst
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: fxo00:
-; LINUX-32-STATIC: 	movl	xsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, xdst
+; LINUX-32-STATIC: 	movl	xsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], xdst
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: fxo00:
-; LINUX-32-PIC: 	movl	xsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, xdst
+; LINUX-32-PIC: 	movl	xsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], xdst
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: fxo00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _fxo00:
-; DARWIN-32-STATIC: 	movl	_xsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _xdst
+; DARWIN-32-STATIC: 	movl	_xsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _xdst
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _fxo00:
-; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo00:
 ; DARWIN-32-PIC: 	calll	L1$pb
 ; DARWIN-32-PIC-NEXT: L1$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L1$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L1$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L1$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L1$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _fxo00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _fxo00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _fxo00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -192,9 +203,9 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo01:
@@ -202,36 +213,36 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo01:
-; DARWIN-32-DYNAMIC: 	movl	L_dst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_dst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo01:
 ; DARWIN-32-PIC: 	calll	L2$pb
 ; DARWIN-32-PIC-NEXT: L2$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L2$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L2$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L2$pb(
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L2$pb(
+; DARWIN-32-PIC-NEXT: 	movl
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -252,9 +263,9 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: fxo01:
-; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _fxo01:
@@ -262,36 +273,36 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _fxo01:
-; DARWIN-32-DYNAMIC: 	movl	L_xdst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xdst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo01:
 ; DARWIN-32-PIC: 	calll	L3$pb
 ; DARWIN-32-PIC-NEXT: L3$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L3$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L3$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[R0:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L3$pb([[R0]]), [[R1:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L3$pb([[R0]]), [[R2:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	[[R1:%e..]], ([[R2]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _fxo01:
-; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _fxo01:
-; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _fxo01:
-; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -308,72 +319,72 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo02:
-; LINUX-32-STATIC: 	movl	src, %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-STATIC: 	movl	src, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo02:
-; LINUX-32-PIC: 	movl	src, %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-PIC: 	movl	src, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo02:
-; DARWIN-32-STATIC: 	movl	_src, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-STATIC: 	movl	_src, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo02:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo02:
 ; DARWIN-32-PIC: 	calll	L4$pb
 ; DARWIN-32-PIC-NEXT: L4$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L4$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L4$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[R0:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L4$pb([[R0]]), [[R1:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	([[R1]]), [[R2:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L4$pb([[R0]]), [[R3:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	([[R3]]), [[R4:%e..]]
+; DARWIN-32-PIC-NEXT: 	movl	[[R2]], ([[R4]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -389,73 +400,73 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: fxo02:
-; LINUX-32-STATIC: 	movl	xsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-STATIC: 	movl	xsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
 ; LINUX-32-PIC: fxo02:
-; LINUX-32-PIC: 	movl	xsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-PIC: 	movl	xsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: fxo02:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _fxo02:
-; DARWIN-32-STATIC: 	movl	_xsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-STATIC: 	movl	_xsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _fxo02:
-; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _fxo02:
 ; DARWIN-32-PIC: 	calll	L5$pb
 ; DARWIN-32-PIC-NEXT: L5$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L5$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L5$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L5$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L5$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _fxo02:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _fxo02:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _fxo02:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -465,58 +476,58 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 0), align 32
 	ret void
 ; LINUX-64-STATIC: foo03:
-; LINUX-64-STATIC: movl    dsrc(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ddst
+; LINUX-64-STATIC: movl    dsrc(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo03:
-; LINUX-32-STATIC: 	movl	dsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ddst
+; LINUX-32-STATIC: 	movl	dsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo03:
-; LINUX-32-PIC: 	movl	dsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ddst
+; LINUX-32-PIC: 	movl	dsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo03:
-; DARWIN-32-STATIC: 	movl	_dsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ddst
+; DARWIN-32-STATIC: 	movl	_dsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ddst
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo03:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ddst
+; DARWIN-32-DYNAMIC: 	movl	_dsrc, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo03:
 ; DARWIN-32-PIC: 	calll	L6$pb
 ; DARWIN-32-PIC-NEXT: L6$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L6$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ddst-L6$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L6$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _ddst-L6$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo03:
-; DARWIN-64-STATIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ddst(%rip)
+; DARWIN-64-STATIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ddst(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo03:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ddst(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo03:
-; DARWIN-64-PIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ddst(%rip)
+; DARWIN-64-PIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -537,9 +548,9 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo04:
@@ -553,24 +564,24 @@ entry:
 ; DARWIN-32-PIC: _foo04:
 ; DARWIN-32-PIC: 	calll	L7$pb
 ; DARWIN-32-PIC-NEXT: L7$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L7$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L7$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L7$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L7$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -587,62 +598,62 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo05:
-; LINUX-32-STATIC: 	movl	dsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-STATIC: 	movl	dsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo05:
-; LINUX-32-PIC: 	movl	dsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-PIC: 	movl	dsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo05:
-; DARWIN-32-STATIC: 	movl	_dsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-STATIC: 	movl	_dsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo05:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_dsrc, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo05:
 ; DARWIN-32-PIC: 	calll	L8$pb
 ; DARWIN-32-PIC-NEXT: L8$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L8$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L8$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L8$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L8$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo05:
-; DARWIN-64-STATIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo05:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo05:
-; DARWIN-64-PIC: 	movl	_dsrc(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -652,56 +663,56 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 0), align 4
 	ret void
 ; LINUX-64-STATIC: foo06:
-; LINUX-64-STATIC: movl    lsrc(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ldst(%rip)
+; LINUX-64-STATIC: movl    lsrc(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo06:
-; LINUX-32-STATIC: 	movl	lsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ldst
+; LINUX-32-STATIC: 	movl	lsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo06:
-; LINUX-32-PIC: 	movl	lsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ldst
+; LINUX-32-PIC: 	movl	lsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo06:
-; LINUX-64-PIC: 	movl	lsrc(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movl	%eax, ldst(%rip)
+; LINUX-64-PIC: 	movl	lsrc(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo06:
-; DARWIN-32-STATIC: 	movl	_lsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ldst
+; DARWIN-32-STATIC: 	movl	_lsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ldst
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo06:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ldst
+; DARWIN-32-DYNAMIC: 	movl	_lsrc, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo06:
 ; DARWIN-32-PIC: 	calll	L9$pb
 ; DARWIN-32-PIC-NEXT: L9$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L9$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _ldst-L9$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L9$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _ldst-L9$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo06:
-; DARWIN-64-STATIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ldst(%rip)
+; DARWIN-64-STATIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ldst(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo06:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ldst(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo06:
-; DARWIN-64-PIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ldst(%rip)
+; DARWIN-64-PIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -722,8 +733,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo07:
@@ -737,24 +748,24 @@ entry:
 ; DARWIN-32-PIC: _foo07:
 ; DARWIN-32-PIC: 	calll	L10$pb
 ; DARWIN-32-PIC-NEXT: L10$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L10$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L10$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L10$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L10$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -771,60 +782,60 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: foo08:
-; LINUX-32-STATIC: 	movl	lsrc, %eax
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-STATIC: 	movl	lsrc, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: foo08:
-; LINUX-32-PIC: 	movl	lsrc, %eax
-; LINUX-32-PIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, (%ecx)
+; LINUX-32-PIC: 	movl	lsrc, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: foo08:
-; LINUX-64-PIC: 	movl	lsrc(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; LINUX-64-PIC: 	movl	lsrc(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _foo08:
-; DARWIN-32-STATIC: 	movl	_lsrc, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-STATIC: 	movl	_lsrc, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _foo08:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_lsrc, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _foo08:
 ; DARWIN-32-PIC: 	calll	L11$pb
 ; DARWIN-32-PIC-NEXT: L11$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L11$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L11$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L11$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L11$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _foo08:
-; DARWIN-64-STATIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-STATIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _foo08:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _foo08:
-; DARWIN-64-PIC: 	movl	_lsrc(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx)
+; DARWIN-64-PIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -834,68 +845,68 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qux00:
-; LINUX-64-STATIC: movl    src+64(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, dst+64(%rip)
+; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], dst+64(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux00:
-; LINUX-32-STATIC: 	movl	src+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dst+64
+; LINUX-32-STATIC: 	movl	src+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: qux00:
-; LINUX-32-PIC: 	movl	src+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dst+64
+; LINUX-32-PIC: 	movl	src+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux00:
-; DARWIN-32-STATIC: 	movl	_src+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dst+64
+; DARWIN-32-STATIC: 	movl	_src+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dst+64
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux00:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux00:
 ; DARWIN-32-PIC: 	calll	L12$pb
 ; DARWIN-32-PIC-NEXT: L12$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L12$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L12$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L12$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L12$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -905,68 +916,68 @@ entry:
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qxx00:
-; LINUX-64-STATIC: movl    xsrc+64(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, xdst+64(%rip)
+; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], xdst+64(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qxx00:
-; LINUX-32-STATIC: 	movl	xsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, xdst+64
+; LINUX-32-STATIC: 	movl	xsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], xdst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: qxx00:
-; LINUX-32-PIC: 	movl	xsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, xdst+64
+; LINUX-32-PIC: 	movl	xsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], xdst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qxx00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qxx00:
-; DARWIN-32-STATIC: 	movl	_xsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _xdst+64
+; DARWIN-32-STATIC: 	movl	_xsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _xdst+64
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qxx00:
-; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx00:
 ; DARWIN-32-PIC: 	calll	L13$pb
 ; DARWIN-32-PIC-NEXT: L13$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L13$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L13$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L13$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L13$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qxx00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qxx00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qxx00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -987,10 +998,10 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	addq	$64, %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux01:
@@ -998,41 +1009,41 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux01:
-; DARWIN-32-DYNAMIC: 	movl	L_dst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	$64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_dst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	addl	$64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux01:
 ; DARWIN-32-PIC: 	calll	L14$pb
 ; DARWIN-32-PIC-NEXT: L14$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L14$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	addl	$64, %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L14$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L14$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	addl	$64, [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L14$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1053,10 +1064,10 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qxx01:
-; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	addq	$64, %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qxx01:
@@ -1064,41 +1075,41 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qxx01:
-; DARWIN-32-DYNAMIC: 	movl	L_xdst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	$64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xdst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	addl	$64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx01:
 ; DARWIN-32-PIC: 	calll	L15$pb
 ; DARWIN-32-PIC-NEXT: L15$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L15$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	addl	$64, %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L15$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L15$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	addl	$64, [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L15$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qxx01:
-; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qxx01:
-; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qxx01:
-; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1109,79 +1120,79 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux02:
-; LINUX-64-STATIC: movl    src+64(%rip), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx)
+; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux02:
-; LINUX-32-STATIC: 	movl	src+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-STATIC: 	movl	src+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
 ; LINUX-32-PIC: qux02:
-; LINUX-32-PIC: 	movl	src+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-PIC: 	movl	src+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux02:
-; DARWIN-32-STATIC: 	movl	_src+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-STATIC: 	movl	_src+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux02:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux02:
 ; DARWIN-32-PIC: 	calll	L16$pb
 ; DARWIN-32-PIC-NEXT: L16$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L16$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L16$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L16$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L16$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1192,79 +1203,79 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qxx02:
-; LINUX-64-STATIC: movl    xsrc+64(%rip), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx)
+; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qxx02:
-; LINUX-32-STATIC: 	movl	xsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-STATIC: 	movl	xsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
 ; LINUX-32-PIC: qxx02:
-; LINUX-32-PIC: 	movl	xsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-PIC: 	movl	xsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qxx02:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qxx02:
-; DARWIN-32-STATIC: 	movl	_xsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-STATIC: 	movl	_xsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qxx02:
-; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_xsrc$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qxx02:
 ; DARWIN-32-PIC: 	calll	L17$pb
 ; DARWIN-32-PIC-NEXT: L17$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L17$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	64(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L17$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L17$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L17$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qxx02:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qxx02:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qxx02:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1274,58 +1285,58 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), align 32
 	ret void
 ; LINUX-64-STATIC: qux03:
-; LINUX-64-STATIC: movl    dsrc+64(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ddst+64(%rip)
+; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst+64(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux03:
-; LINUX-32-STATIC: 	movl	dsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ddst+64
+; LINUX-32-STATIC: 	movl	dsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: qux03:
-; LINUX-32-PIC: 	movl	dsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ddst+64
+; LINUX-32-PIC: 	movl	dsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux03:
-; DARWIN-32-STATIC: 	movl	_dsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ddst+64
+; DARWIN-32-STATIC: 	movl	_dsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ddst+64
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux03:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc+64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ddst+64
+; DARWIN-32-DYNAMIC: 	movl	_dsrc+64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst+64
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux03:
 ; DARWIN-32-PIC: 	calll	L18$pb
 ; DARWIN-32-PIC-NEXT: L18$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L18$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L18$pb)+64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L18$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], (_ddst-L18$pb)+64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux03:
-; DARWIN-64-STATIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ddst+64(%rip)
+; DARWIN-64-STATIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ddst+64(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux03:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ddst+64(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst+64(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux03:
-; DARWIN-64-PIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ddst+64(%rip)
+; DARWIN-64-PIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst+64(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1346,10 +1357,10 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	addq	$64, %rax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux04:
@@ -1363,24 +1374,24 @@ entry:
 ; DARWIN-32-PIC: _qux04:
 ; DARWIN-32-PIC: 	calll	L19$pb
 ; DARWIN-32-PIC-NEXT: L19$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L19$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L19$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L19$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L19$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux04:
-; DARWIN-64-STATIC: 	leaq	_ddst+64(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst+64(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux04:
-; DARWIN-64-PIC: 	leaq	_ddst+64(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1391,69 +1402,69 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux05:
-; LINUX-64-STATIC: movl    dsrc+64(%rip), %eax
-; LINUX-64-STATIC: movq    dptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx)
+; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux05:
-; LINUX-32-STATIC: 	movl	dsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-STATIC: 	movl	dsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
 ; LINUX-32-PIC: qux05:
-; LINUX-32-PIC: 	movl	dsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-PIC: 	movl	dsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux05:
-; DARWIN-32-STATIC: 	movl	_dsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-STATIC: 	movl	_dsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux05:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc+64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_dsrc+64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux05:
 ; DARWIN-32-PIC: 	calll	L20$pb
 ; DARWIN-32-PIC-NEXT: L20$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L20$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L20$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L20$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L20$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux05:
-; DARWIN-64-STATIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux05:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux05:
-; DARWIN-64-PIC: 	movl	_dsrc+64(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1463,56 +1474,56 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC: qux06:
-; LINUX-64-STATIC: movl    lsrc+64(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ldst+64
+; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst+64
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux06:
-; LINUX-32-STATIC: 	movl	lsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ldst+64
+; LINUX-32-STATIC: 	movl	lsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: qux06:
-; LINUX-32-PIC: 	movl	lsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ldst+64
+; LINUX-32-PIC: 	movl	lsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux06:
-; LINUX-64-PIC: 	movl	lsrc+64(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movl	%eax, ldst+64(%rip)
+; LINUX-64-PIC: 	movl	lsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst+64(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux06:
-; DARWIN-32-STATIC: 	movl	_lsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ldst+64
+; DARWIN-32-STATIC: 	movl	_lsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ldst+64
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux06:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc+64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ldst+64
+; DARWIN-32-DYNAMIC: 	movl	_lsrc+64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst+64
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux06:
 ; DARWIN-32-PIC: 	calll	L21$pb
 ; DARWIN-32-PIC-NEXT: L21$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L21$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L21$pb)+64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L21$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], (_ldst-L21$pb)+64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux06:
-; DARWIN-64-STATIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ldst+64(%rip)
+; DARWIN-64-STATIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ldst+64(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux06:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ldst+64(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst+64(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux06:
-; DARWIN-64-PIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ldst+64(%rip)
+; DARWIN-64-PIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst+64(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1533,8 +1544,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux07:
-; LINUX-64-PIC: 	leaq	ldst+64(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst+64(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux07:
@@ -1548,24 +1559,24 @@ entry:
 ; DARWIN-32-PIC: _qux07:
 ; DARWIN-32-PIC: 	calll	L22$pb
 ; DARWIN-32-PIC-NEXT: L22$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L22$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L22$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L22$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L22$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux07:
-; DARWIN-64-STATIC: 	leaq	_ldst+64(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst+64(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux07:
-; DARWIN-64-PIC: 	leaq	_ldst+64(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst+64(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1576,67 +1587,67 @@ entry:
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC: qux08:
-; LINUX-64-STATIC: movl    lsrc+64(%rip), %eax
-; LINUX-64-STATIC: movq    lptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx)
+; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: qux08:
-; LINUX-32-STATIC: 	movl	lsrc+64, %eax
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-STATIC: 	movl	lsrc+64, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
 ; LINUX-32-PIC: qux08:
-; LINUX-32-PIC: 	movl	lsrc+64, %eax
-; LINUX-32-PIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 64(%ecx)
+; LINUX-32-PIC: 	movl	lsrc+64, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: qux08:
-; LINUX-64-PIC: 	movl	lsrc+64(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; LINUX-64-PIC: 	movl	lsrc+64(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _qux08:
-; DARWIN-32-STATIC: 	movl	_lsrc+64, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-STATIC: 	movl	_lsrc+64, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _qux08:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc+64, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 64(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_lsrc+64, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _qux08:
 ; DARWIN-32-PIC: 	calll	L23$pb
 ; DARWIN-32-PIC-NEXT: L23$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L23$pb)+64(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L23$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 64(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L23$pb)+64([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L23$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 64([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _qux08:
-; DARWIN-64-STATIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-STATIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _qux08:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _qux08:
-; DARWIN-64-PIC: 	movl	_lsrc+64(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx)
+; DARWIN-64-PIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1648,73 +1659,73 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: ind00:
-; LINUX-64-STATIC: movl    src(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, dst(,%rdi,4)
+; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], dst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, dst(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, dst(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _dst(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _dst(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind00:
 ; DARWIN-32-PIC: 	calll	L24$pb
 ; DARWIN-32-PIC-NEXT: L24$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L24$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L24$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L24$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L24$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1726,73 +1737,73 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: ixd00:
-; LINUX-64-STATIC: movl    xsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, xdst(,%rdi,4)
+; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], xdst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ixd00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	xsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, xdst(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], xdst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ixd00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	xsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, xdst(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], xdst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ixd00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ixd00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_xsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _xdst(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _xdst(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ixd00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd00:
 ; DARWIN-32-PIC: 	calll	L25$pb
 ; DARWIN-32-PIC-NEXT: L25$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L25$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L25$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L25$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L25$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ixd00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ixd00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ixd00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1802,73 +1813,73 @@ entry:
 	store i32* %0, i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: ind01:
-; LINUX-64-STATIC: leaq    dst(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr
+; LINUX-64-STATIC: leaq    dst(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dst(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dst(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind01:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), %rdi
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rdi, (%rax)
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dst(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	shll	$2, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	L_dst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	shll	$2, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	addl	L_dst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind01:
 ; DARWIN-32-PIC: 	calll	L26$pb
 ; DARWIN-32-PIC-NEXT: L26$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	shll	$2, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L26$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L26$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	shll	$2, [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L26$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L26$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind01:
 ; DARWIN-64-STATIC: 	shlq	$2, %rdi
 ; DARWIN-64-STATIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rdi
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind01:
 ; DARWIN-64-DYNAMIC: 	shlq	$2, %rdi
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rdi
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind01:
 ; DARWIN-64-PIC: 	shlq	$2, %rdi
 ; DARWIN-64-PIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rdi
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1878,73 +1889,73 @@ entry:
 	store i32* %0, i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: ixd01:
-; LINUX-64-STATIC: leaq    xdst(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr
+; LINUX-64-STATIC: leaq    xdst(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ixd01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xdst(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	xdst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ixd01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xdst(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xdst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ixd01:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	xdst@GOTPCREL(%rip), %rdi
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rdi, (%rax)
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ixd01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xdst(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xdst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ixd01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	shll	$2, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	L_xdst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	shll	$2, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	addl	L_xdst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd01:
 ; DARWIN-32-PIC: 	calll	L27$pb
 ; DARWIN-32-PIC-NEXT: L27$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	shll	$2, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L27$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L27$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	shll	$2, [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L27$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L27$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ixd01:
 ; DARWIN-64-STATIC: 	shlq	$2, %rdi
 ; DARWIN-64-STATIC-NEXT: 	addq	_xdst@GOTPCREL(%rip), %rdi
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ixd01:
 ; DARWIN-64-DYNAMIC: 	shlq	$2, %rdi
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	_xdst@GOTPCREL(%rip), %rdi
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ixd01:
 ; DARWIN-64-PIC: 	shlq	$2, %rdi
 ; DARWIN-64-PIC-NEXT: 	addq	_xdst@GOTPCREL(%rip), %rdi
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rdi, (%rax)
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -1957,83 +1968,83 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: ind02:
-; LINUX-64-STATIC: movl    src(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind02:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%edx), %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EDX]]), [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind02:
 ; DARWIN-32-PIC: 	calll	L28$pb
 ; DARWIN-32-PIC-NEXT: L28$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L28$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L28$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L28$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L28$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2046,83 +2057,83 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: ixd02:
-; LINUX-64-STATIC: movl    xsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ixd02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	xsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ixd02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	xsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ixd02:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ixd02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_xsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_xsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ixd02:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%edx), %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EDX]]), [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ixd02:
 ; DARWIN-32-PIC: 	calll	L29$pb
 ; DARWIN-32-PIC-NEXT: L29$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L29$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L29$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L29$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L29$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ixd02:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ixd02:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ixd02:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2134,69 +2145,69 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: ind03:
-; LINUX-64-STATIC: movl    dsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ddst(,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind03:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ddst(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind03:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ddst(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind03:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ddst(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ddst(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind03:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ddst(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ddst(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind03:
 ; DARWIN-32-PIC: 	calll	L30$pb
 ; DARWIN-32-PIC-NEXT: L30$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L30$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, _ddst-L30$pb(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L30$pb([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], _ddst-L30$pb([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind03:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind03:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind03:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2206,66 +2217,66 @@ entry:
 	store i32* %0, i32** @dptr, align 8
 	ret void
 ; LINUX-64-STATIC: ind04:
-; LINUX-64-STATIC: leaq    ddst(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, dptr
+; LINUX-64-STATIC: leaq    ddst(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind04:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ddst(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ddst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind04:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ddst(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ddst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind04:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), %rdi
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rdi, (%rax)
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind04:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ddst(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ddst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind04:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind04:
 ; DARWIN-32-PIC: 	calll	L31$pb
 ; DARWIN-32-PIC-NEXT: L31$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L31$pb(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L31$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L31$pb([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L31$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2278,76 +2289,76 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: ind05:
-; LINUX-64-STATIC: movl    dsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind05:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind05:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind05:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind05:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind05:
 ; DARWIN-32-PIC: 	calll	L32$pb
 ; DARWIN-32-PIC-NEXT: L32$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L32$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L32$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dsrc-L32$pb([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L32$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind05:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind05:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind05:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2359,69 +2370,69 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: ind06:
-; LINUX-64-STATIC: movl    lsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ldst(,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind06:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ldst(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind06:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ldst(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind06:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind06:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ldst(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ldst(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind06:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ldst(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ldst(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind06:
 ; DARWIN-32-PIC: 	calll	L33$pb
 ; DARWIN-32-PIC-NEXT: L33$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L33$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, _ldst-L33$pb(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L33$pb([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], _ldst-L33$pb([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind06:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind06:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind06:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2431,65 +2442,65 @@ entry:
 	store i32* %0, i32** @lptr, align 8
 	ret void
 ; LINUX-64-STATIC: ind07:
-; LINUX-64-STATIC: leaq    ldst(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, lptr
+; LINUX-64-STATIC: leaq    ldst(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind07:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ldst(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ldst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind07:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ldst(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ldst(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind07:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ldst(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ldst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind07:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind07:
 ; DARWIN-32-PIC: 	calll	L34$pb
 ; DARWIN-32-PIC-NEXT: L34$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L34$pb(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L34$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L34$pb([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L34$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2502,75 +2513,75 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: ind08:
-; LINUX-64-STATIC: movl    lsrc(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, (%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: ind08:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: ind08:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: ind08:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _ind08:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _ind08:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, (%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _ind08:
 ; DARWIN-32-PIC: 	calll	L35$pb
 ; DARWIN-32-PIC-NEXT: L35$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L35$pb(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L35$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lsrc-L35$pb([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L35$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], ([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _ind08:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _ind08:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _ind08:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, (%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2583,73 +2594,73 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: off00:
-; LINUX-64-STATIC: movl    src+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, dst+64(,%rdi,4)
+; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], dst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, dst+64(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, dst+64(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _dst+64(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _dst+64(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off00:
 ; DARWIN-32-PIC: 	calll	L36$pb
 ; DARWIN-32-PIC-NEXT: L36$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L36$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L36$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L36$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L36$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2662,73 +2673,73 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: oxf00:
-; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, xdst+64(,%rdi,4)
+; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], xdst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: oxf00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, xdst+64(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], xdst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: oxf00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, xdst+64(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], xdst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: oxf00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _oxf00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_xsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _xdst+64(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _xdst+64(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _oxf00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf00:
 ; DARWIN-32-PIC: 	calll	L37$pb
 ; DARWIN-32-PIC-NEXT: L37$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L37$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L37$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L37$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L37$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _oxf00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _oxf00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _oxf00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2739,73 +2750,73 @@ entry:
 	store i32* %0, i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: off01:
-; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr
+; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dst+64(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dst+64(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dst+64(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off01:
 ; DARWIN-32-PIC: 	calll	L38$pb
 ; DARWIN-32-PIC-NEXT: L38$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L38$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	leal	64(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L38$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L38$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EDX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L38$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2816,73 +2827,73 @@ entry:
 	store i32* %0, i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: oxf01:
-; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr
+; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: oxf01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: oxf01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xdst+64(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xdst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: oxf01:
-; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _oxf01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xdst+64(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xdst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _oxf01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf01:
 ; DARWIN-32-PIC: 	calll	L39$pb
 ; DARWIN-32-PIC-NEXT: L39$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L39$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	leal	64(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L39$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L39$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EDX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L39$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _oxf01:
-; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _oxf01:
-; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _oxf01:
-; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2896,83 +2907,83 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: off02:
-; LINUX-64-STATIC: movl    src+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off02:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%edx), %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EDX]]), [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off02:
 ; DARWIN-32-PIC: 	calll	L40$pb
 ; DARWIN-32-PIC-NEXT: L40$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L40$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L40$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L40$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L40$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -2986,83 +2997,83 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: oxf02:
-; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: oxf02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: oxf02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: oxf02:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _oxf02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_xsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _oxf02:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	64(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%edx), %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	64([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EDX]]), [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _oxf02:
 ; DARWIN-32-PIC: 	calll	L41$pb
 ; DARWIN-32-PIC-NEXT: L41$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L41$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	64(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L41$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L41$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	64([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L41$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _oxf02:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _oxf02:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _oxf02:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3075,69 +3086,69 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: off03:
-; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ddst+64(,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off03:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ddst+64(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off03:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ddst+64(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off03:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ddst+64(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ddst+64(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off03:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+64(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ddst+64(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ddst+64(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off03:
 ; DARWIN-32-PIC: 	calll	L42$pb
 ; DARWIN-32-PIC-NEXT: L42$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L42$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L42$pb)+64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L42$pb)+64([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], (_ddst-L42$pb)+64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off03:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off03:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off03:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3148,66 +3159,66 @@ entry:
 	store i32* %0, i32** @dptr, align 8
 	ret void
 ; LINUX-64-STATIC: off04:
-; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, dptr
+; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off04:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off04:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ddst+64(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ddst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off04:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ddst+64(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ddst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off04:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+64(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off04:
 ; DARWIN-32-PIC: 	calll	L43$pb
 ; DARWIN-32-PIC-NEXT: L43$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L43$pb)+64(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L43$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L43$pb)+64([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L43$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3221,76 +3232,76 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: off05:
-; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off05:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off05:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off05:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off05:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+64(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off05:
 ; DARWIN-32-PIC: 	calll	L44$pb
 ; DARWIN-32-PIC-NEXT: L44$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L44$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L44$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L44$pb)+64([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L44$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off05:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off05:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off05:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3303,69 +3314,69 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: off06:
-; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ldst+64(,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off06:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ldst+64(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off06:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ldst+64(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off06:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off06:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ldst+64(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ldst+64(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off06:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+64(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ldst+64(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ldst+64(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off06:
 ; DARWIN-32-PIC: 	calll	L45$pb
 ; DARWIN-32-PIC-NEXT: L45$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L45$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L45$pb)+64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L45$pb)+64([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], (_ldst-L45$pb)+64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off06:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off06:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off06:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3376,65 +3387,65 @@ entry:
 	store i32* %0, i32** @lptr, align 8
 	ret void
 ; LINUX-64-STATIC: off07:
-; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, lptr
+; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off07:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off07:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ldst+64(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ldst+64(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off07:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ldst+64(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ldst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off07:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+64(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+64(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off07:
 ; DARWIN-32-PIC: 	calll	L46$pb
 ; DARWIN-32-PIC-NEXT: L46$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L46$pb)+64(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L46$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L46$pb)+64([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L46$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3448,75 +3459,75 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: off08:
-; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 64(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: off08:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: off08:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: off08:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _off08:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+64(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _off08:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+64(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 64(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _off08:
 ; DARWIN-32-PIC: 	calll	L47$pb
 ; DARWIN-32-PIC-NEXT: L47$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L47$pb)+64(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L47$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 64(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L47$pb)+64([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L47$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 64([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _off08:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _off08:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _off08:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	64(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 64(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3526,68 +3537,68 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC: moo00:
-; LINUX-64-STATIC: movl    src+262144(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, dst+262144(%rip)
+; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], dst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo00:
-; LINUX-32-STATIC: 	movl	src+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dst+262144
+; LINUX-32-STATIC: 	movl	src+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo00:
-; LINUX-32-PIC: 	movl	src+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dst+262144
+; LINUX-32-PIC: 	movl	src+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo00:
-; DARWIN-32-STATIC: 	movl	_src+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dst+262144
+; DARWIN-32-STATIC: 	movl	_src+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dst+262144
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo00:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	262144(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	262144([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo00:
 ; DARWIN-32-PIC: 	calll	L48$pb
 ; DARWIN-32-PIC-NEXT: L48$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L48$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	262144(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L48$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L48$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	262144([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L48$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3608,10 +3619,10 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo01:
-; LINUX-64-PIC: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movl	$262144, [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo01:
@@ -3619,41 +3630,41 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo01:
-; DARWIN-32-DYNAMIC: 	movl	$262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	L_dst$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	$262144, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	addl	L_dst$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo01:
 ; DARWIN-32-PIC: 	calll	L49$pb
 ; DARWIN-32-PIC-NEXT: L49$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	$262144, %ecx
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L49$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L49$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	$262144, [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L49$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L49$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo01:
-; DARWIN-64-STATIC: 	movl	$262144, %eax
-; DARWIN-64-STATIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movl	$262144, [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	addq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo01:
-; DARWIN-64-DYNAMIC: 	movl	$262144, %eax
-; DARWIN-64-DYNAMIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movl	$262144, [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	addq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo01:
-; DARWIN-64-PIC: 	movl	$262144, %eax
-; DARWIN-64-PIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movl	$262144, [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	addq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3665,78 +3676,78 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo02:
-; LINUX-64-STATIC: movl    src+262144(%rip), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
+; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo02:
-; LINUX-32-STATIC: 	movl	src+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-STATIC: 	movl	src+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo02:
-; LINUX-32-PIC: 	movl	src+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-PIC: 	movl	src+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo02:
-; DARWIN-32-STATIC: 	movl	_src+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-STATIC: 	movl	_src+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo02:
-; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	262144(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%ecx), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	L_src$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	262144([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo02:
 ; DARWIN-32-PIC: 	calll	L50$pb
 ; DARWIN-32-PIC-NEXT: L50$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L50$pb(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	262144(%ecx), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L50$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L50$pb([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	262144([[ECX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L50$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3746,58 +3757,58 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536), align 32
 	ret void
 ; LINUX-64-STATIC: moo03:
-; LINUX-64-STATIC: movl    dsrc+262144(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ddst+262144(%rip)
+; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo03:
-; LINUX-32-STATIC: 	movl	dsrc+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ddst+262144
+; LINUX-32-STATIC: 	movl	dsrc+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo03:
-; LINUX-32-PIC: 	movl	dsrc+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ddst+262144
+; LINUX-32-PIC: 	movl	dsrc+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo03:
-; DARWIN-32-STATIC: 	movl	_dsrc+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ddst+262144
+; DARWIN-32-STATIC: 	movl	_dsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ddst+262144
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo03:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc+262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ddst+262144
+; DARWIN-32-DYNAMIC: 	movl	_dsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst+262144
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo03:
 ; DARWIN-32-PIC: 	calll	L51$pb
 ; DARWIN-32-PIC-NEXT: L51$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L51$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ddst-L51$pb)+262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L51$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], (_ddst-L51$pb)+262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo03:
-; DARWIN-64-STATIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ddst+262144(%rip)
+; DARWIN-64-STATIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ddst+262144(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo03:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ddst+262144(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ddst+262144(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo03:
-; DARWIN-64-PIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ddst+262144(%rip)
+; DARWIN-64-PIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst+262144(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3818,10 +3829,10 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo04:
-; LINUX-64-PIC: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movl	$262144, [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo04:
@@ -3835,24 +3846,24 @@ entry:
 ; DARWIN-32-PIC: _moo04:
 ; DARWIN-32-PIC: 	calll	L52$pb
 ; DARWIN-32-PIC-NEXT: L52$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L52$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L52$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L52$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L52$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo04:
-; DARWIN-64-STATIC: 	leaq	_ddst+262144(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst+262144(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo04:
-; DARWIN-64-PIC: 	leaq	_ddst+262144(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3864,68 +3875,68 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo05:
-; LINUX-64-STATIC: movl    dsrc+262144(%rip), %eax
-; LINUX-64-STATIC: movq    dptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
+; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo05:
-; LINUX-32-STATIC: 	movl	dsrc+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-STATIC: 	movl	dsrc+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo05:
-; LINUX-32-PIC: 	movl	dsrc+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-PIC: 	movl	dsrc+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo05:
-; DARWIN-32-STATIC: 	movl	_dsrc+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-STATIC: 	movl	_dsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo05:
-; DARWIN-32-DYNAMIC: 	movl	_dsrc+262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_dsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo05:
 ; DARWIN-32-PIC: 	calll	L53$pb
 ; DARWIN-32-PIC-NEXT: L53$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L53$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L53$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L53$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L53$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo05:
-; DARWIN-64-STATIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-STATIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo05:
-; DARWIN-64-DYNAMIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo05:
-; DARWIN-64-PIC: 	movl	_dsrc+262144(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-PIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -3935,56 +3946,56 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC: moo06:
-; LINUX-64-STATIC: movl    lsrc+262144(%rip), %eax
-; LINUX-64-STATIC: movl    %eax, ldst+262144(%rip)
+; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo06:
-; LINUX-32-STATIC: 	movl	lsrc+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ldst+262144
+; LINUX-32-STATIC: 	movl	lsrc+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo06:
-; LINUX-32-PIC: 	movl	lsrc+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ldst+262144
+; LINUX-32-PIC: 	movl	lsrc+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo06:
-; LINUX-64-PIC: 	movl	lsrc+262144(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movl	%eax, ldst+262144(%rip)
+; LINUX-64-PIC: 	movl	lsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst+262144(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo06:
-; DARWIN-32-STATIC: 	movl	_lsrc+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ldst+262144
+; DARWIN-32-STATIC: 	movl	_lsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ldst+262144
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo06:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc+262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _ldst+262144
+; DARWIN-32-DYNAMIC: 	movl	_lsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst+262144
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo06:
 ; DARWIN-32-PIC: 	calll	L54$pb
 ; DARWIN-32-PIC-NEXT: L54$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L54$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (_ldst-L54$pb)+262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L54$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], (_ldst-L54$pb)+262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo06:
-; DARWIN-64-STATIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, _ldst+262144(%rip)
+; DARWIN-64-STATIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], _ldst+262144(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo06:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, _ldst+262144(%rip)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], _ldst+262144(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo06:
-; DARWIN-64-PIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movl	%eax, _ldst+262144(%rip)
+; DARWIN-64-PIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst+262144(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4005,8 +4016,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo07:
-; LINUX-64-PIC: 	leaq	ldst+262144(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst+262144(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo07:
@@ -4020,24 +4031,24 @@ entry:
 ; DARWIN-32-PIC: _moo07:
 ; DARWIN-32-PIC: 	calll	L55$pb
 ; DARWIN-32-PIC-NEXT: L55$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L55$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L55$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L55$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L55$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo07:
-; DARWIN-64-STATIC: 	leaq	_ldst+262144(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst+262144(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo07:
-; DARWIN-64-PIC: 	leaq	_ldst+262144(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst+262144(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4049,66 +4060,66 @@ entry:
 	store i32 %1, i32* %2, align 4
 	ret void
 ; LINUX-64-STATIC: moo08:
-; LINUX-64-STATIC: movl    lsrc+262144(%rip), %eax
-; LINUX-64-STATIC: movq    lptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx)
+; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: moo08:
-; LINUX-32-STATIC: 	movl	lsrc+262144, %eax
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-STATIC: 	movl	lsrc+262144, [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: moo08:
-; LINUX-32-PIC: 	movl	lsrc+262144, %eax
-; LINUX-32-PIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-PIC-NEXT: 	movl	%eax, 262144(%ecx)
+; LINUX-32-PIC: 	movl	lsrc+262144, [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: moo08:
-; LINUX-64-PIC: 	movl	lsrc+262144(%rip), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; LINUX-64-PIC: 	movl	lsrc+262144(%rip), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _moo08:
-; DARWIN-32-STATIC: 	movl	_lsrc+262144, %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-STATIC: 	movl	_lsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _moo08:
-; DARWIN-32-DYNAMIC: 	movl	_lsrc+262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, 262144(%ecx)
+; DARWIN-32-DYNAMIC: 	movl	_lsrc+262144, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _moo08:
 ; DARWIN-32-PIC: 	calll	L56$pb
 ; DARWIN-32-PIC-NEXT: L56$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L56$pb)+262144(%eax), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L56$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, 262144(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L56$pb)+262144([[EAX]]), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L56$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _moo08:
-; DARWIN-64-STATIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-STATIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _moo08:
-; DARWIN-64-DYNAMIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-DYNAMIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _moo08:
-; DARWIN-64-PIC: 	movl	_lsrc+262144(%rip), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx)
+; DARWIN-64-PIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4121,73 +4132,73 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: big00:
-; LINUX-64-STATIC: movl    src+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, dst+262144(,%rdi,4)
+; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], dst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, dst+262144(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, dst+262144(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _dst+262144(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _dst+262144(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	262144(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	262144([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big00:
 ; DARWIN-32-PIC: 	calll	L57$pb
 ; DARWIN-32-PIC-NEXT: L57$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L57$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	262144(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L57$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L57$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	262144([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L57$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4198,73 +4209,73 @@ entry:
 	store i32* %0, i32** @ptr, align 8
 	ret void
 ; LINUX-64-STATIC: big01:
-; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, ptr(%rip)
+; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], ptr(%rip)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dst+262144(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, ptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dst+262144(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _ptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _ptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, (%ecx)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big01:
 ; DARWIN-32-PIC: 	calll	L58$pb
 ; DARWIN-32-PIC-NEXT: L58$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L58$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	leal	262144(%edx,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L58$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, (%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L58$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EDX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L58$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], ([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4278,83 +4289,83 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: big02:
-; LINUX-64-STATIC: movl    src+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    ptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	src+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	src+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	ptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big02:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_src+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_src+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big02:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	262144(%ecx,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%edx), %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	262144([[ECX]],[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_ptr$non_lazy_ptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EDX]]), [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big02:
 ; DARWIN-32-PIC: 	calll	L59$pb
 ; DARWIN-32-PIC-NEXT: L59$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L59$pb(%eax), %edx
-; DARWIN-32-PIC-NEXT: 	movl	262144(%edx,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L59$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L59$pb([[EAX]]), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	262144([[EDX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L59$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big02:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big02:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big02:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4367,69 +4378,69 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: big03:
-; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ddst+262144(,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big03:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ddst+262144(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big03:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ddst+262144(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big03:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ddst+262144(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ddst+262144(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big03:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+262144(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ddst+262144(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ddst+262144(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big03:
 ; DARWIN-32-PIC: 	calll	L60$pb
 ; DARWIN-32-PIC-NEXT: L60$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L60$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ddst-L60$pb)+262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L60$pb)+262144([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], (_ddst-L60$pb)+262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big03:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big03:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big03:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4440,66 +4451,66 @@ entry:
 	store i32* %0, i32** @dptr, align 8
 	ret void
 ; LINUX-64-STATIC: big04:
-; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, dptr
+; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big04:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big04:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, dptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	%rax, (%rcx)
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big04:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ddst+262144(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big04:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+262144(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _dptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _dptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big04:
 ; DARWIN-32-PIC: 	calll	L61$pb
 ; DARWIN-32-PIC-NEXT: L61$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L61$pb)+262144(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _dptr-L61$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L61$pb)+262144([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _dptr-L61$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _dptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4513,76 +4524,76 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: big05:
-; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    dptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big05:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big05:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	dptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big05:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movq	(%rcx), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big05:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big05:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+262144(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big05:
 ; DARWIN-32-PIC: 	calll	L62$pb
 ; DARWIN-32-PIC-NEXT: L62$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L62$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L62$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_dsrc-L62$pb)+262144([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L62$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big05:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big05:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big05:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4595,69 +4606,69 @@ entry:
 	store i32 %2, i32* %3, align 4
 	ret void
 ; LINUX-64-STATIC: big06:
-; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movl    %eax, ldst+262144(,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big06:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, ldst+262144(,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big06:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, ldst+262144(,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big06:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big06:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, _ldst+262144(,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], _ldst+262144(,[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big06:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+262144(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, _ldst+262144(,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], _ldst+262144(,[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big06:
 ; DARWIN-32-PIC: 	calll	L63$pb
 ; DARWIN-32-PIC-NEXT: L63$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L63$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	%edx, (_ldst-L63$pb)+262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L63$pb)+262144([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], (_ldst-L63$pb)+262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big06:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big06:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big06:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4668,65 +4679,65 @@ entry:
 	store i32* %0, i32** @lptr, align 8
 	ret void
 ; LINUX-64-STATIC: big07:
-; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), %rax
-; LINUX-64-STATIC: movq    %rax, lptr
+; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), [[RAX:%r.x]]
+; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big07:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,%eax,4), %eax
-; LINUX-32-STATIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big07:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,%eax,4), %eax
-; LINUX-32-PIC-NEXT: 	movl	%eax, lptr
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; LINUX-64-PIC-NEXT: 	movq	%rax, lptr(%rip)
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big07:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ldst+262144(,%eax,4), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big07:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+262144(,%eax,4), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%eax, _lptr
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[EAX]], _lptr
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big07:
 ; DARWIN-32-PIC: 	calll	L64$pb
 ; DARWIN-32-PIC-NEXT: L64$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L64$pb)+262144(%eax,%ecx,4), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	%ecx, _lptr-L64$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L64$pb)+262144([[EAX]],[[ECX]],4), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[ECX]], _lptr-L64$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
-; DARWIN-64-PIC-NEXT: 	movq	%rax, _lptr(%rip)
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4740,75 +4751,75 @@ entry:
 	store i32 %3, i32* %4, align 4
 	ret void
 ; LINUX-64-STATIC: big08:
-; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), %eax
-; LINUX-64-STATIC: movq    lptr(%rip), %rcx
-; LINUX-64-STATIC: movl    %eax, 262144(%rcx,%rdi,4)
+; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
+; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: big08:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,%eax,4), %ecx
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: big08:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,%eax,4), %ecx
-; LINUX-32-PIC-NEXT: 	movl	lptr, %edx
-; LINUX-32-PIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: big08:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), %rcx
-; LINUX-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _big08:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+262144(,%eax,4), %ecx
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-STATIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _big08:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+262144(,%eax,4), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %edx
-; DARWIN-32-DYNAMIC-NEXT: 	movl	%ecx, 262144(%edx,%eax,4)
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[EDX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _big08:
 ; DARWIN-32-PIC: 	calll	L65$pb
 ; DARWIN-32-PIC-NEXT: L65$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L65$pb)+262144(%eax,%ecx,4), %edx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L65$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	%edx, 262144(%eax,%ecx,4)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	(_lsrc-L65$pb)+262144([[EAX]],[[ECX]],4), [[EDX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L65$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	[[EDX]], 262144([[EAX]],[[ECX]],4)
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _big08:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-STATIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _big08:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-DYNAMIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _big08:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movl	262144(%rax,%rdi,4), %eax
-; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), %rcx
-; DARWIN-64-PIC-NEXT: 	movl	%eax, 262144(%rcx,%rdi,4)
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -4842,8 +4853,8 @@ entry:
 ; DARWIN-32-PIC: _bar00:
 ; DARWIN-32-PIC: 	calll	L66$pb
 ; DARWIN-32-PIC-NEXT: L66$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L66$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L66$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar00:
@@ -4889,8 +4900,8 @@ entry:
 ; DARWIN-32-PIC: _bxr00:
 ; DARWIN-32-PIC: 	calll	L67$pb
 ; DARWIN-32-PIC-NEXT: L67$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L67$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L67$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxr00:
@@ -4936,8 +4947,8 @@ entry:
 ; DARWIN-32-PIC: _bar01:
 ; DARWIN-32-PIC: 	calll	L68$pb
 ; DARWIN-32-PIC-NEXT: L68$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L68$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L68$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar01:
@@ -4983,8 +4994,8 @@ entry:
 ; DARWIN-32-PIC: _bxr01:
 ; DARWIN-32-PIC: 	calll	L69$pb
 ; DARWIN-32-PIC-NEXT: L69$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L69$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L69$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxr01:
@@ -5030,8 +5041,8 @@ entry:
 ; DARWIN-32-PIC: _bar02:
 ; DARWIN-32-PIC: 	calll	L70$pb
 ; DARWIN-32-PIC-NEXT: L70$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L70$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L70$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar02:
@@ -5077,8 +5088,8 @@ entry:
 ; DARWIN-32-PIC: _bar03:
 ; DARWIN-32-PIC: 	calll	L71$pb
 ; DARWIN-32-PIC-NEXT: L71$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L71$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L71$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar03:
@@ -5124,8 +5135,8 @@ entry:
 ; DARWIN-32-PIC: _bar04:
 ; DARWIN-32-PIC: 	calll	L72$pb
 ; DARWIN-32-PIC-NEXT: L72$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L72$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L72$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar04:
@@ -5171,8 +5182,8 @@ entry:
 ; DARWIN-32-PIC: _bar05:
 ; DARWIN-32-PIC: 	calll	L73$pb
 ; DARWIN-32-PIC-NEXT: L73$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dptr-L73$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_dptr-L73$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar05:
@@ -5218,8 +5229,8 @@ entry:
 ; DARWIN-32-PIC: _bar06:
 ; DARWIN-32-PIC: 	calll	L74$pb
 ; DARWIN-32-PIC-NEXT: L74$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L74$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L74$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar06:
@@ -5265,8 +5276,8 @@ entry:
 ; DARWIN-32-PIC: _bar07:
 ; DARWIN-32-PIC: 	calll	L75$pb
 ; DARWIN-32-PIC-NEXT: L75$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L75$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L75$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar07:
@@ -5312,8 +5323,8 @@ entry:
 ; DARWIN-32-PIC: _bar08:
 ; DARWIN-32-PIC: 	calll	L76$pb
 ; DARWIN-32-PIC-NEXT: L76$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lptr-L76$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_lptr-L76$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bar08:
@@ -5359,8 +5370,8 @@ entry:
 ; DARWIN-32-PIC: _har00:
 ; DARWIN-32-PIC: 	calll	L77$pb
 ; DARWIN-32-PIC-NEXT: L77$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L77$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L77$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har00:
@@ -5406,8 +5417,8 @@ entry:
 ; DARWIN-32-PIC: _hxr00:
 ; DARWIN-32-PIC: 	calll	L78$pb
 ; DARWIN-32-PIC-NEXT: L78$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L78$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L78$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _hxr00:
@@ -5453,8 +5464,8 @@ entry:
 ; DARWIN-32-PIC: _har01:
 ; DARWIN-32-PIC: 	calll	L79$pb
 ; DARWIN-32-PIC-NEXT: L79$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L79$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L79$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har01:
@@ -5500,8 +5511,8 @@ entry:
 ; DARWIN-32-PIC: _hxr01:
 ; DARWIN-32-PIC: 	calll	L80$pb
 ; DARWIN-32-PIC-NEXT: L80$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L80$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L80$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _hxr01:
@@ -5535,8 +5546,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: har02:
-; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _har02:
@@ -5544,31 +5555,31 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _har02:
-; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
+; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _har02:
 ; DARWIN-32-PIC: 	calll	L81$pb
 ; DARWIN-32-PIC-NEXT: L81$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L81$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L81$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har02:
-; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _har02:
-; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _har02:
-; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -5602,8 +5613,8 @@ entry:
 ; DARWIN-32-PIC: _har03:
 ; DARWIN-32-PIC: 	calll	L82$pb
 ; DARWIN-32-PIC-NEXT: L82$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L82$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_dsrc-L82$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har03:
@@ -5649,8 +5660,8 @@ entry:
 ; DARWIN-32-PIC: _har04:
 ; DARWIN-32-PIC: 	calll	L83$pb
 ; DARWIN-32-PIC-NEXT: L83$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ddst-L83$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ddst-L83$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har04:
@@ -5684,8 +5695,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: har05:
-; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _har05:
@@ -5699,8 +5710,8 @@ entry:
 ; DARWIN-32-PIC: _har05:
 ; DARWIN-32-PIC: 	calll	L84$pb
 ; DARWIN-32-PIC-NEXT: L84$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L84$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L84$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har05:
@@ -5746,8 +5757,8 @@ entry:
 ; DARWIN-32-PIC: _har06:
 ; DARWIN-32-PIC: 	calll	L85$pb
 ; DARWIN-32-PIC-NEXT: L85$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L85$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_lsrc-L85$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har06:
@@ -5793,8 +5804,8 @@ entry:
 ; DARWIN-32-PIC: _har07:
 ; DARWIN-32-PIC: 	calll	L86$pb
 ; DARWIN-32-PIC-NEXT: L86$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_ldst-L86$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_ldst-L86$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har07:
@@ -5842,8 +5853,8 @@ entry:
 ; DARWIN-32-PIC: _har08:
 ; DARWIN-32-PIC: 	calll	L87$pb
 ; DARWIN-32-PIC-NEXT: L87$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L87$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L87$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _har08:
@@ -5891,8 +5902,8 @@ entry:
 ; DARWIN-32-PIC: _bat00:
 ; DARWIN-32-PIC: 	calll	L88$pb
 ; DARWIN-32-PIC-NEXT: L88$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L88$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L88$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -5944,8 +5955,8 @@ entry:
 ; DARWIN-32-PIC: _bxt00:
 ; DARWIN-32-PIC: 	calll	L89$pb
 ; DARWIN-32-PIC-NEXT: L89$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L89$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L89$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -5997,8 +6008,8 @@ entry:
 ; DARWIN-32-PIC: _bat01:
 ; DARWIN-32-PIC: 	calll	L90$pb
 ; DARWIN-32-PIC-NEXT: L90$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L90$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L90$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6050,8 +6061,8 @@ entry:
 ; DARWIN-32-PIC: _bxt01:
 ; DARWIN-32-PIC: 	calll	L91$pb
 ; DARWIN-32-PIC-NEXT: L91$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L91$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L91$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6093,8 +6104,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bat02:
-; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6104,35 +6115,35 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _bat02:
-; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
+; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
 ; DARWIN-32-DYNAMIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bat02:
 ; DARWIN-32-PIC: 	calll	L92$pb
 ; DARWIN-32-PIC-NEXT: L92$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L92$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L92$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat02:
-; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-STATIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _bat02:
-; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; DARWIN-64-DYNAMIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _bat02:
-; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	(%rax), %rax
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
@@ -6168,8 +6179,8 @@ entry:
 ; DARWIN-32-PIC: _bat03:
 ; DARWIN-32-PIC: 	calll	L93$pb
 ; DARWIN-32-PIC-NEXT: L93$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L93$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L93$pb)+64([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat03:
@@ -6216,8 +6227,8 @@ entry:
 ; DARWIN-32-PIC: _bat04:
 ; DARWIN-32-PIC: 	calll	L94$pb
 ; DARWIN-32-PIC-NEXT: L94$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L94$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L94$pb)+64([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat04:
@@ -6255,8 +6266,8 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bat05:
-; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6273,8 +6284,8 @@ entry:
 ; DARWIN-32-PIC: _bat05:
 ; DARWIN-32-PIC: 	calll	L95$pb
 ; DARWIN-32-PIC-NEXT: L95$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L95$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L95$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6324,8 +6335,8 @@ entry:
 ; DARWIN-32-PIC: _bat06:
 ; DARWIN-32-PIC: 	calll	L96$pb
 ; DARWIN-32-PIC-NEXT: L96$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L96$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L96$pb)+64([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat06:
@@ -6371,8 +6382,8 @@ entry:
 ; DARWIN-32-PIC: _bat07:
 ; DARWIN-32-PIC: 	calll	L97$pb
 ; DARWIN-32-PIC-NEXT: L97$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L97$pb)+64(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L97$pb)+64([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bat07:
@@ -6427,8 +6438,8 @@ entry:
 ; DARWIN-32-PIC: _bat08:
 ; DARWIN-32-PIC: 	calll	L98$pb
 ; DARWIN-32-PIC-NEXT: L98$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L98$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L98$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	addl	$64, %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -6480,9 +6491,9 @@ entry:
 ; DARWIN-32-PIC: _bam00:
 ; DARWIN-32-PIC: 	calll	L99$pb
 ; DARWIN-32-PIC-NEXT: L99$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_src$non_lazy_ptr-L99$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_src$non_lazy_ptr-L99$pb([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam00:
@@ -6533,9 +6544,9 @@ entry:
 ; DARWIN-32-PIC: _bam01:
 ; DARWIN-32-PIC: 	calll	L100$pb
 ; DARWIN-32-PIC-NEXT: L100$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L100$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_dst$non_lazy_ptr-L100$pb([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam01:
@@ -6586,9 +6597,9 @@ entry:
 ; DARWIN-32-PIC: _bxm01:
 ; DARWIN-32-PIC: 	calll	L101$pb
 ; DARWIN-32-PIC-NEXT: L101$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L101$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	L_xdst$non_lazy_ptr-L101$pb([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bxm01:
@@ -6629,9 +6640,9 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bam02:
-; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rcx
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	addq	(%rcx), %rax
+; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _bam02:
@@ -6640,36 +6651,36 @@ entry:
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _bam02:
-; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, %ecx
+; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, [[ECX:%e.x]]
 ; DARWIN-32-DYNAMIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	addl	(%ecx), %eax
+; DARWIN-32-DYNAMIC-NEXT: 	addl	([[ECX]]), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _bam02:
 ; DARWIN-32-PIC: 	calll	L102$pb
 ; DARWIN-32-PIC-NEXT: L102$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L102$pb(%eax), %ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L102$pb([[EAX]]), [[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam02:
-; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), %rcx
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-STATIC-NEXT: 	movl	$262144, %eax
-; DARWIN-64-STATIC-NEXT: 	addq	(%rcx), %rax
+; DARWIN-64-STATIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _bam02:
-; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), %rcx
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-DYNAMIC-NEXT: 	movl	$262144, %eax
-; DARWIN-64-DYNAMIC-NEXT: 	addq	(%rcx), %rax
+; DARWIN-64-DYNAMIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _bam02:
-; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rcx
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-64-PIC-NEXT: 	addq	(%rcx), %rax
+; DARWIN-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -6704,8 +6715,8 @@ entry:
 ; DARWIN-32-PIC: _bam03:
 ; DARWIN-32-PIC: 	calll	L103$pb
 ; DARWIN-32-PIC-NEXT: L103$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L103$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L103$pb)+262144([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam03:
@@ -6752,8 +6763,8 @@ entry:
 ; DARWIN-32-PIC: _bam04:
 ; DARWIN-32-PIC: 	calll	L104$pb
 ; DARWIN-32-PIC-NEXT: L104$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L104$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L104$pb)+262144([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam04:
@@ -6791,9 +6802,9 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: bam05:
-; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rcx
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	$262144, %eax
-; LINUX-64-PIC-NEXT: 	addq	(%rcx), %rax
+; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _bam05:
@@ -6809,9 +6820,9 @@ entry:
 ; DARWIN-32-PIC: _bam05:
 ; DARWIN-32-PIC: 	calll	L105$pb
 ; DARWIN-32-PIC-NEXT: L105$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	_dptr-L105$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	_dptr-L105$pb([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam05:
@@ -6860,8 +6871,8 @@ entry:
 ; DARWIN-32-PIC: _bam06:
 ; DARWIN-32-PIC: 	calll	L106$pb
 ; DARWIN-32-PIC-NEXT: L106$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L106$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L106$pb)+262144([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam06:
@@ -6908,7 +6919,7 @@ entry:
 ; DARWIN-32-PIC: 	calll	L107$pb
 ; DARWIN-32-PIC-NEXT: L107$pb:
 ; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L107$pb)+262144(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L107$pb)+262144([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam07:
@@ -6963,9 +6974,9 @@ entry:
 ; DARWIN-32-PIC: _bam08:
 ; DARWIN-32-PIC: 	calll	L108$pb
 ; DARWIN-32-PIC-NEXT: L108$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%ecx
+; DARWIN-32-PIC-NEXT: 	popl	[[ECX:%e.x]]
 ; DARWIN-32-PIC-NEXT: 	movl	$262144, %eax
-; DARWIN-32-PIC-NEXT: 	addl	_lptr-L108$pb(%ecx), %eax
+; DARWIN-32-PIC-NEXT: 	addl	_lptr-L108$pb([[ECX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _bam08:
@@ -6995,53 +7006,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	src+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	src+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	src+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	src+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_src+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_src+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat00:
 ; DARWIN-32-PIC: 	calll	L109$pb
 ; DARWIN-32-PIC-NEXT: L109$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L109$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L109$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7056,53 +7067,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cxt00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xsrc+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	xsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cxt00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xsrc+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cxt00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cxt00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xsrc+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xsrc+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cxt00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxt00:
 ; DARWIN-32-PIC: 	calll	L110$pb
 ; DARWIN-32-PIC-NEXT: L110$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L110$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L110$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cxt00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cxt00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cxt00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7117,53 +7128,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dst+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dst+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dst+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dst+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat01:
 ; DARWIN-32-PIC: 	calll	L111$pb
 ; DARWIN-32-PIC-NEXT: L111$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L111$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L111$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7178,53 +7189,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cxt01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cxt01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xdst+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xdst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cxt01:
-; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cxt01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xdst+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xdst+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cxt01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxt01:
 ; DARWIN-32-PIC: 	calll	L112$pb
 ; DARWIN-32-PIC-NEXT: L112$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L112$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L112$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cxt01:
-; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cxt01:
-; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cxt01:
-; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7236,67 +7247,67 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat02:
-; LINUX-64-STATIC: movq    ptr(%rip), %rax
-; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat02:
-; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat02:
-; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat02:
 ; DARWIN-32-PIC: 	calll	L113$pb
 ; DARWIN-32-PIC-NEXT: L113$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L113$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L113$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat02:
-; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat02:
-; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat02:
-; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7311,51 +7322,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat03:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dsrc+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat03:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dsrc+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat03:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dsrc+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dsrc+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat03:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_dsrc+64(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_dsrc+64(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat03:
 ; DARWIN-32-PIC: 	calll	L114$pb
 ; DARWIN-32-PIC-NEXT: L114$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L114$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L114$pb)+64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat03:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat03:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat03:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7370,51 +7381,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat04:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat04:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ddst+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ddst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat04:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ddst+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ddst+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat04:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+64(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+64(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat04:
 ; DARWIN-32-PIC: 	calll	L115$pb
 ; DARWIN-32-PIC-NEXT: L115$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L115$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L115$pb)+64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7426,62 +7437,62 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat05:
-; LINUX-64-STATIC: movq    dptr(%rip), %rax
-; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat05:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat05:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat05:
-; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat05:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat05:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat05:
 ; DARWIN-32-PIC: 	calll	L116$pb
 ; DARWIN-32-PIC-NEXT: L116$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L116$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L116$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat05:
-; DARWIN-64-STATIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat05:
-; DARWIN-64-DYNAMIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat05:
-; DARWIN-64-PIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7496,51 +7507,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat06:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	lsrc+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	lsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat06:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	lsrc+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	lsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat06:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat06:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_lsrc+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_lsrc+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat06:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_lsrc+64(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_lsrc+64(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat06:
 ; DARWIN-32-PIC: 	calll	L117$pb
 ; DARWIN-32-PIC-NEXT: L117$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L117$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L117$pb)+64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat06:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat06:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat06:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7555,51 +7566,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat07:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat07:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ldst+64(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ldst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat07:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ldst+64(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ldst+64(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat07:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+64(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+64(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat07:
 ; DARWIN-32-PIC: 	calll	L118$pb
 ; DARWIN-32-PIC-NEXT: L118$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L118$pb)+64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L118$pb)+64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7611,61 +7622,61 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cat08:
-; LINUX-64-STATIC: movq    lptr(%rip), %rax
-; LINUX-64-STATIC: leaq    64(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cat08:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cat08:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cat08:
-; LINUX-64-PIC: 	movq	lptr(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	lptr(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cat08:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cat08:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	64(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cat08:
 ; DARWIN-32-PIC: 	calll	L119$pb
 ; DARWIN-32-PIC-NEXT: L119$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L119$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	64(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L119$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	64([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cat08:
-; DARWIN-64-STATIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cat08:
-; DARWIN-64-DYNAMIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cat08:
-; DARWIN-64-PIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	64(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7680,53 +7691,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	src+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	src+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	src+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	src+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam00:
-; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_src+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_src+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_src$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam00:
 ; DARWIN-32-PIC: 	calll	L120$pb
 ; DARWIN-32-PIC-NEXT: L120$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L120$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_src$non_lazy_ptr-L120$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam00:
-; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam00:
-; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam00:
-; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7741,53 +7752,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cxm00:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xsrc+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	xsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cxm00:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xsrc+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cxm00:
-; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cxm00:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xsrc+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xsrc+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cxm00:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xsrc$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxm00:
 ; DARWIN-32-PIC: 	calll	L121$pb
 ; DARWIN-32-PIC-NEXT: L121$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L121$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xsrc$non_lazy_ptr-L121$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cxm00:
-; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cxm00:
-; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cxm00:
-; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7802,53 +7813,53 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam01:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dst+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam01:
-; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dst+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_dst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam01:
 ; DARWIN-32-PIC: 	calll	L122$pb
 ; DARWIN-32-PIC-NEXT: L122$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L122$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_dst$non_lazy_ptr-L122$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam01:
-; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam01:
-; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam01:
-; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7864,52 +7875,52 @@ entry:
 
 ; LINUX-32-STATIC: cxm01:
 ; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	xdst+262144(,%eax,4), %eax
+; LINUX-32-STATIC-NEXT: 	leal	xdst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cxm01:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	xdst+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	xdst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cxm01:
-; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cxm01:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_xdst+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_xdst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cxm01:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	L_xdst$non_lazy_ptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cxm01:
 ; DARWIN-32-PIC: 	calll	L123$pb
 ; DARWIN-32-PIC-NEXT: L123$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L123$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_xdst$non_lazy_ptr-L123$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cxm01:
-; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cxm01:
-; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cxm01:
-; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7921,67 +7932,67 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam02:
-; LINUX-64-STATIC: movq    ptr(%rip), %rax
-; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam02:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam02:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	ptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam02:
-; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam02:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_ptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_ptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam02:
-; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	L_ptr$non_lazy_ptr, [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam02:
 ; DARWIN-32-PIC: 	calll	L124$pb
 ; DARWIN-32-PIC-NEXT: L124$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L124$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ptr$non_lazy_ptr-L124$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam02:
-; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam02:
-; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam02:
-; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	movq	(%rax), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -7996,51 +8007,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam03:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	dsrc+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	dsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam03:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	dsrc+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	dsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam03:
-; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam03:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_dsrc+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_dsrc+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam03:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_dsrc+262144(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_dsrc+262144(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam03:
 ; DARWIN-32-PIC: 	calll	L125$pb
 ; DARWIN-32-PIC-NEXT: L125$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L125$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_dsrc-L125$pb)+262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam03:
-; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam03:
-; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam03:
-; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8055,51 +8066,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam04:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam04:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam04:
-; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam04:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ddst+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ddst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam04:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+262144(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ddst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam04:
 ; DARWIN-32-PIC: 	calll	L126$pb
 ; DARWIN-32-PIC-NEXT: L126$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L126$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ddst-L126$pb)+262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam04:
-; DARWIN-64-STATIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam04:
-; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam04:
-; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8111,62 +8122,62 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam05:
-; LINUX-64-STATIC: movq    dptr(%rip), %rax
-; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam05:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam05:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	dptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam05:
-; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	movq	(%rax), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam05:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam05:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_dptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam05:
 ; DARWIN-32-PIC: 	calll	L127$pb
 ; DARWIN-32-PIC-NEXT: L127$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_dptr-L127$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_dptr-L127$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam05:
-; DARWIN-64-STATIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam05:
-; DARWIN-64-DYNAMIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam05:
-; DARWIN-64-PIC: 	movq	_dptr(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8181,51 +8192,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam06:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	lsrc+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	lsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam06:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	lsrc+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	lsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam06:
-; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam06:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_lsrc+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_lsrc+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam06:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_lsrc+262144(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_lsrc+262144(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam06:
 ; DARWIN-32-PIC: 	calll	L128$pb
 ; DARWIN-32-PIC-NEXT: L128$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L128$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_lsrc-L128$pb)+262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam06:
-; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam06:
-; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam06:
-; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8240,51 +8251,51 @@ entry:
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam07:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam07:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam07:
-; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam07:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	leal	_ldst+262144(,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	_ldst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam07:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+262144(,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	_ldst+262144(,[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam07:
 ; DARWIN-32-PIC: 	calll	L129$pb
 ; DARWIN-32-PIC-NEXT: L129$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L129$pb)+262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	(_ldst-L129$pb)+262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam07:
-; DARWIN-64-STATIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam07:
-; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam07:
-; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8296,61 +8307,61 @@ entry:
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
 ; LINUX-64-STATIC: cam08:
-; LINUX-64-STATIC: movq    lptr(%rip), %rax
-; LINUX-64-STATIC: leaq    262144(%rax,%rdi,4), %rax
+; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
+; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
 ; LINUX-32-STATIC: cam08:
-; LINUX-32-STATIC: 	movl	4(%esp), %eax
-; LINUX-32-STATIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
 ; LINUX-32-PIC: cam08:
-; LINUX-32-PIC: 	movl	4(%esp), %eax
-; LINUX-32-PIC-NEXT: 	movl	lptr, %ecx
-; LINUX-32-PIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
+; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
+; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: cam08:
-; LINUX-64-PIC: 	movq	lptr(%rip), %rax
-; LINUX-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; LINUX-64-PIC: 	movq	lptr(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _cam08:
-; DARWIN-32-STATIC: 	movl	4(%esp), %eax
-; DARWIN-32-STATIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-STATIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-STATIC-NEXT: 	ret
 
 ; DARWIN-32-DYNAMIC: _cam08:
-; DARWIN-32-DYNAMIC: 	movl	4(%esp), %eax
-; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, %ecx
-; DARWIN-32-DYNAMIC-NEXT: 	leal	262144(%ecx,%eax,4), %eax
+; DARWIN-32-DYNAMIC: 	movl	4(%esp), [[EAX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	movl	_lptr, [[ECX:%e.x]]
+; DARWIN-32-DYNAMIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; DARWIN-32-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-32-PIC: _cam08:
 ; DARWIN-32-PIC: 	calll	L130$pb
 ; DARWIN-32-PIC-NEXT: L130$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	4(%esp), %ecx
-; DARWIN-32-PIC-NEXT: 	movl	_lptr-L130$pb(%eax), %eax
-; DARWIN-32-PIC-NEXT: 	leal	262144(%eax,%ecx,4), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	4(%esp), [[ECX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	_lptr-L130$pb([[EAX]]), [[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	262144([[EAX]],[[ECX]],4), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _cam08:
-; DARWIN-64-STATIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-STATIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-STATIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _cam08:
-; DARWIN-64-DYNAMIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-DYNAMIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _cam08:
-; DARWIN-64-PIC: 	movq	_lptr(%rip), %rax
-; DARWIN-64-PIC-NEXT: 	leaq	262144(%rax,%rdi,4), %rax
+; DARWIN-64-PIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -8648,8 +8659,8 @@ entry:
 ; DARWIN-32-PIC: _address:
 ; DARWIN-32-PIC: 	calll	L133$pb
 ; DARWIN-32-PIC-NEXT: L133$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_callee$non_lazy_ptr-L133$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_callee$non_lazy_ptr-L133$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _address:
@@ -8697,8 +8708,8 @@ entry:
 ; DARWIN-32-PIC: _laddress:
 ; DARWIN-32-PIC: 	calll	L134$pb
 ; DARWIN-32-PIC-NEXT: L134$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_lcallee-L134$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_lcallee-L134$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _laddress:
@@ -8744,8 +8755,8 @@ entry:
 ; DARWIN-32-PIC: _daddress:
 ; DARWIN-32-PIC: 	calll	L135$pb
 ; DARWIN-32-PIC-NEXT: L135$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	leal	_dcallee-L135$pb(%eax), %eax
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	leal	_dcallee-L135$pb([[EAX]]), %eax
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _daddress:
@@ -9206,11 +9217,11 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: icaller:
-; LINUX-64-PIC: 	pushq	%rbx
-; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	popq	%rbx
+; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _icaller:
@@ -9235,8 +9246,8 @@ entry:
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
 ; DARWIN-32-PIC-NEXT: 	calll	L142$pb
 ; DARWIN-32-PIC-NEXT: L142$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L142$pb(%eax), %esi
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L142$pb([[EAX]]), %esi
 ; DARWIN-32-PIC-NEXT: 	calll	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	calll	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
@@ -9244,27 +9255,27 @@ entry:
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _icaller:
-; DARWIN-64-STATIC: 	pushq	%rbx
-; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	popq	%rbx
+; DARWIN-64-STATIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-STATIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-STATIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _icaller:
-; DARWIN-64-DYNAMIC: 	pushq	%rbx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	popq	%rbx
+; DARWIN-64-DYNAMIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-DYNAMIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _icaller:
-; DARWIN-64-PIC: 	pushq	%rbx
-; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	popq	%rbx
+; DARWIN-64-PIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -9296,11 +9307,11 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: dicaller:
-; LINUX-64-PIC: 	pushq	%rbx
-; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	popq	%rbx
+; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _dicaller:
@@ -9461,11 +9472,11 @@ entry:
 ; LINUX-32-PIC-NEXT: 	ret
 
 ; LINUX-64-PIC: itailcaller:
-; LINUX-64-PIC: 	pushq	%rbx
-; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), %rbx
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	callq	*(%rbx)
-; LINUX-64-PIC-NEXT: 	popq	%rbx
+; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
+; LINUX-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	ret
 
 ; DARWIN-32-STATIC: _itailcaller:
@@ -9490,8 +9501,8 @@ entry:
 ; DARWIN-32-PIC-NEXT: 	subl	$8, %esp
 ; DARWIN-32-PIC-NEXT: 	calll	L145$pb
 ; DARWIN-32-PIC-NEXT: L145$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L145$pb(%eax), %esi
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	movl	L_ifunc$non_lazy_ptr-L145$pb([[EAX]]), %esi
 ; DARWIN-32-PIC-NEXT: 	calll	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	calll	*(%esi)
 ; DARWIN-32-PIC-NEXT: 	addl	$8, %esp
@@ -9499,27 +9510,27 @@ entry:
 ; DARWIN-32-PIC-NEXT: 	ret
 
 ; DARWIN-64-STATIC: _itailcaller:
-; DARWIN-64-STATIC: 	pushq	%rbx
-; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-STATIC-NEXT: 	popq	%rbx
+; DARWIN-64-STATIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-STATIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-STATIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-STATIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-STATIC-NEXT: 	ret
 
 ; DARWIN-64-DYNAMIC: _itailcaller:
-; DARWIN-64-DYNAMIC: 	pushq	%rbx
-; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-DYNAMIC-NEXT: 	popq	%rbx
+; DARWIN-64-DYNAMIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-DYNAMIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-DYNAMIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-DYNAMIC-NEXT: 	ret
 
 ; DARWIN-64-PIC: _itailcaller:
-; DARWIN-64-PIC: 	pushq	%rbx
-; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), %rbx
-; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	callq	*(%rbx)
-; DARWIN-64-PIC-NEXT: 	popq	%rbx
+; DARWIN-64-PIC: 	pushq	[[RBX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	movq	_ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
+; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
+; DARWIN-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	ret
 }
 
@@ -9547,8 +9558,8 @@ entry:
 
 ; LINUX-64-PIC: ditailcaller:
 ; LINUX-64-PIC: 	pushq
-; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), %rax
-; LINUX-64-PIC-NEXT: 	callq	*(%rax)
+; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), [[RAX:%r.x]]
+; LINUX-64-PIC-NEXT: 	callq	*([[RAX]])
 ; LINUX-64-PIC-NEXT: 	popq
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -9568,8 +9579,8 @@ entry:
 ; DARWIN-32-PIC: 	subl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	calll	L146$pb
 ; DARWIN-32-PIC-NEXT: L146$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	calll	*_difunc-L146$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	calll	*_difunc-L146$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	addl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	ret
 
@@ -9635,8 +9646,8 @@ entry:
 ; DARWIN-32-PIC: 	subl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	calll	L147$pb
 ; DARWIN-32-PIC-NEXT: L147$pb:
-; DARWIN-32-PIC-NEXT: 	popl	%eax
-; DARWIN-32-PIC-NEXT: 	calll	*_lifunc-L147$pb(%eax)
+; DARWIN-32-PIC-NEXT: 	popl	[[EAX:%e.x]]
+; DARWIN-32-PIC-NEXT: 	calll	*_lifunc-L147$pb([[EAX]])
 ; DARWIN-32-PIC-NEXT: 	addl	$12, %esp
 ; DARWIN-32-PIC-NEXT: 	ret
 

@@ -19,8 +19,8 @@ entry:
 }
 
 ; CHECK: movq	___stack_chk_guard@GOTPCREL(%rip), %rax
-; CHECK: movb   38(%rsp), %bl
-; CHECK: movb   8(%rsp), %dl
-; CHECK: movb   %dl, 8(%rsp)
-; CHECK: movb   %bl, 38(%rsp)
+; CHECK: movb   38(%rsp), [[R0:%.+]]
+; CHECK: movb   8(%rsp), [[R1:%.+]]
+; CHECK: movb   [[R1]], 8(%rsp)
+; CHECK: movb   [[R0]], 38(%rsp)
 ; CHECK: callq	___stack_chk_fail

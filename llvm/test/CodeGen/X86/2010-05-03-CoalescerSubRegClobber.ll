@@ -22,8 +22,8 @@ while.end:                                        ; preds = %while.cond, %entry
   %conv = zext i32 %v to i64                      ; <i64> [#uses=1]
   %conv14 = zext i32 %div11 to i64                ; <i64> [#uses=1]
 ; Verify that we don't clobber %eax after putting the imulq result in %rax
-; CHECK: imulq	%r{{.}}x, %r[[RES:.]]x
-; CHECK-NOT: movl	{{.*}}, %e[[RES]]x
+; CHECK: imulq	%r{{.}}x, %r[[RES:..]]
+; CHECK-NOT: movl	{{.*}}, %e[[RES]]
 ; CHECK: div
   %mul = mul i64 %conv14, %conv                   ; <i64> [#uses=1]
   %conv16 = zext i32 %div to i64                  ; <i64> [#uses=1]

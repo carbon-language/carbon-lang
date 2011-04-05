@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim | grep movss | count 1
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim -stats |& grep {Number of re-materialization} | grep 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim -regalloc=linearscan | grep movss | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim -regalloc=linearscan -stats |& grep {Number of re-materialization} | grep 1
 
 	%struct..0objc_object = type opaque
 	%struct.OhBoy = type {  }
