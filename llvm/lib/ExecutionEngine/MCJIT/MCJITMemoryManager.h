@@ -47,8 +47,7 @@ public:
     // the address space/sizes we're compiling on are the same as what we're
     // compiling for, so it uses pointer types for its addresses. Explicit
     // casts between them to deal with that.
-    return JMM->endFunctionBody(F, (uint8_t*)FunctionStart,
-                                (uint8_t*)FunctionEnd);
+    JMM->endFunctionBody(F, (uint8_t*)FunctionStart, (uint8_t*)FunctionEnd);
   }
 
 };
