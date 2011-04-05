@@ -16,6 +16,7 @@
 #include "ABIInfo.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Triple.h"
@@ -2814,13 +2815,16 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    // FIXME: We want to know the float calling convention as well.
-    if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
-      return *(TheTargetCodeGenInfo =
-               new ARMTargetCodeGenInfo(Types, ARMABIInfo::APCS));
+    {
+      ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
 
-    return *(TheTargetCodeGenInfo =
-             new ARMTargetCodeGenInfo(Types, ARMABIInfo::AAPCS));
+      if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
+        Kind = ARMABIInfo::APCS;
+      else if (CodeGenOpts.FloatABI == "hard")
+        Kind = ARMABIInfo::AAPCS_VFP;
+
+      return *(TheTargetCodeGenInfo = new ARMTargetCodeGenInfo(Types, Kind));
+    }
 
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));

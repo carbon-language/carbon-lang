@@ -190,7 +190,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   }
 
   // Set float ABI type.
-  if (CodeGenOpts.FloatABI == "soft")
+  if (CodeGenOpts.FloatABI == "soft" || CodeGenOpts.FloatABI == "softfp")
     llvm::FloatABIType = llvm::FloatABI::Soft;
   else if (CodeGenOpts.FloatABI == "hard")
     llvm::FloatABIType = llvm::FloatABI::Hard;
