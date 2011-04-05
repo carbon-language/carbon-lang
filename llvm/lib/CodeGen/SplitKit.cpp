@@ -673,7 +673,8 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
          "Range cannot span basic blocks");
 
   // The complement interval will be extended as needed by extendRange().
-  markComplexMapped(0, ParentVNI);
+  if (ParentVNI)
+    markComplexMapped(0, ParentVNI);
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
