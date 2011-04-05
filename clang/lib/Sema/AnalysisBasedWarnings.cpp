@@ -411,8 +411,7 @@ public:
 }
 
 static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
-                                     const Expr *E, bool &fixitIssued,
-                                     bool isAlwaysUninit) {
+                                     const Expr *E, bool isAlwaysUninit) {
   bool isSelfInit = false;
 
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
@@ -465,6 +464,10 @@ static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
     S.Diag(VD->getLocStart(), diag::note_uninit_var_def)
       << VD->getDeclName();
 
+}
+
+static void SuggestInitializationFixit(Sema &S, const VarDecl *VD,
+                                       bool &fixitIssued) {
   // Only report the fixit once.
   if (fixitIssued)
     return;
@@ -552,9 +555,12 @@ public:
       // a stable ordering.
       std::sort(vec->begin(), vec->end(), SLocSort());
       
-      for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
-        DiagnoseUninitializedUse(S, vd, vi->first, fixitIssued,
+      for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
+           ++vi) {
+        DiagnoseUninitializedUse(S, vd, vi->first,
                                  /*isAlwaysUninit=*/vi->second);
+        SuggestInitializationFixit(S, vd, fixitIssued);
+      }
 
       delete vec;
     }
