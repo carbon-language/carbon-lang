@@ -94,6 +94,16 @@ getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister) {
   }
 
   // See also decodeNEONRd(), decodeNEONRn(), decodeNEONRm().
+  // A7.3 register encoding
+  //     Qd -> bit[12] == 0
+  //     Qn -> bit[16] == 0
+  //     Qm -> bit[0]  == 0
+  //
+  // If one of these bits is 1, the instruction is UNDEFINED.
+  if (RegClassID == ARM::QPRRegClassID && slice(RawRegister, 0, 0) == 1) {
+    B->SetErr(-1);
+    return 0;
+  }
   unsigned RegNum =
     RegClassID == ARM::QPRRegClassID ? RawRegister >> 1 : RawRegister;
 
