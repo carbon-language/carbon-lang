@@ -52,21 +52,22 @@ public:
   void VisitChildren(Stmt *S);
 
   // Helpers.
-  IdentifierInfo *GetIdentifier(IdentifierInfo *& II, const char *str);
+  IdentifierInfo *getIdentifier(IdentifierInfo *& II, const char *str);
+  bool checkCall_strCommon(const CallExpr *CE, const FunctionDecl *FD);
 
   typedef void (WalkAST::*FnCheck)(const CallExpr *,
 				   const FunctionDecl *);
 
   // Checker-specific methods.
-  void CheckLoopConditionForFloat(const ForStmt *FS);
-  void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_strcat(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckCall_random(const CallExpr *CE, const FunctionDecl *FD);
-  void CheckUncheckedReturnValue(CallExpr *CE);
+  void checkLoopConditionForFloat(const ForStmt *FS);
+  void checkCall_gets(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_rand(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_random(const CallExpr *CE, const FunctionDecl *FD);
+  void checkUncheckedReturnValue(CallExpr *CE);
 };
 } // end anonymous namespace
 
@@ -74,7 +75,7 @@ public:
 // Helper methods.
 //===----------------------------------------------------------------------===//
 
-IdentifierInfo *WalkAST::GetIdentifier(IdentifierInfo *& II, const char *str) {
+IdentifierInfo *WalkAST::getIdentifier(IdentifierInfo *& II, const char *str) {
   if (!II)
     II = &BR.getContext().Idents.get(str);
 
@@ -108,20 +109,21 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
 
   // Set the evaluation function by switching on the callee name.
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
-    .Case("gets", &WalkAST::CheckCall_gets)
-    .Case("getpw", &WalkAST::CheckCall_getpw)
-    .Case("mktemp", &WalkAST::CheckCall_mktemp)
-    .Cases("strcpy", "__strcpy_chk", &WalkAST::CheckCall_strcpy)
-    .Case("drand48", &WalkAST::CheckCall_rand)
-    .Case("erand48", &WalkAST::CheckCall_rand)
-    .Case("jrand48", &WalkAST::CheckCall_rand)
-    .Case("lrand48", &WalkAST::CheckCall_rand)
-    .Case("mrand48", &WalkAST::CheckCall_rand)
-    .Case("nrand48", &WalkAST::CheckCall_rand)
-    .Case("lcong48", &WalkAST::CheckCall_rand)
-    .Case("rand", &WalkAST::CheckCall_rand)
-    .Case("rand_r", &WalkAST::CheckCall_rand)
-    .Case("random", &WalkAST::CheckCall_random)
+    .Case("gets", &WalkAST::checkCall_gets)
+    .Case("getpw", &WalkAST::checkCall_getpw)
+    .Case("mktemp", &WalkAST::checkCall_mktemp)
+    .Cases("strcpy", "__strcpy_chk", &WalkAST::checkCall_strcpy)
+    .Cases("strcat", "__strcat_chk", &WalkAST::checkCall_strcat)
+    .Case("drand48", &WalkAST::checkCall_rand)
+    .Case("erand48", &WalkAST::checkCall_rand)
+    .Case("jrand48", &WalkAST::checkCall_rand)
+    .Case("lrand48", &WalkAST::checkCall_rand)
+    .Case("mrand48", &WalkAST::checkCall_rand)
+    .Case("nrand48", &WalkAST::checkCall_rand)
+    .Case("lcong48", &WalkAST::checkCall_rand)
+    .Case("rand", &WalkAST::checkCall_rand)
+    .Case("rand_r", &WalkAST::checkCall_rand)
+    .Case("random", &WalkAST::checkCall_random)
     .Default(NULL);
 
   // If the callee isn't defined, it is not of security concern.
@@ -137,13 +139,13 @@ void WalkAST::VisitCompoundStmt(CompoundStmt *S) {
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Stmt *child = *I) {
       if (CallExpr *CE = dyn_cast<CallExpr>(child))
-        CheckUncheckedReturnValue(CE);
+        checkUncheckedReturnValue(CE);
       Visit(child);
     }
 }
 
 void WalkAST::VisitForStmt(ForStmt *FS) {
-  CheckLoopConditionForFloat(FS);
+  checkLoopConditionForFloat(FS);
 
   // Recurse and check children.
   VisitChildren(FS);
@@ -156,7 +158,7 @@ void WalkAST::VisitForStmt(ForStmt *FS) {
 //===----------------------------------------------------------------------===//
 
 static const DeclRefExpr*
-GetIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
+getIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
   expr = expr->IgnoreParenCasts();
 
   if (const BinaryOperator *B = dyn_cast<BinaryOperator>(expr)) {
@@ -164,10 +166,10 @@ GetIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
           B->getOpcode() == BO_Comma))
       return NULL;
 
-    if (const DeclRefExpr *lhs = GetIncrementedVar(B->getLHS(), x, y))
+    if (const DeclRefExpr *lhs = getIncrementedVar(B->getLHS(), x, y))
       return lhs;
 
-    if (const DeclRefExpr *rhs = GetIncrementedVar(B->getRHS(), x, y))
+    if (const DeclRefExpr *rhs = getIncrementedVar(B->getRHS(), x, y))
       return rhs;
 
     return NULL;
@@ -180,7 +182,7 @@ GetIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
 
   if (const UnaryOperator *U = dyn_cast<UnaryOperator>(expr))
     return U->isIncrementDecrementOp()
-      ? GetIncrementedVar(U->getSubExpr(), x, y) : NULL;
+      ? getIncrementedVar(U->getSubExpr(), x, y) : NULL;
 
   return NULL;
 }
@@ -189,7 +191,7 @@ GetIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
 ///  use a floating point variable as a loop counter.
 ///  CERT: FLP30-C, FLP30-CPP.
 ///
-void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
+void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
   // Does the loop have a condition?
   const Expr *condition = FS->getCond();
 
@@ -236,7 +238,7 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
     return;
 
   // Does either variable appear in increment?
-  const DeclRefExpr *drInc = GetIncrementedVar(increment, vdLHS, vdRHS);
+  const DeclRefExpr *drInc = getIncrementedVar(increment, vdLHS, vdRHS);
 
   if (!drInc)
     return;
@@ -268,7 +270,7 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
 // CWE-242: Use of Inherently Dangerous Function
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
+void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -300,7 +302,7 @@ void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 // CWE-477: Use of Obsolete Functions
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
+void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -336,7 +338,7 @@ void WalkAST::CheckCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 // CWE-377: Insecure Temporary File
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
+void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if(!FPT)
@@ -370,39 +372,71 @@ void WalkAST::CheckCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
 // CWE-119: Improper Restriction of Operations within 
 // the Bounds of a Memory Buffer 
 //===----------------------------------------------------------------------===//
-void WalkAST::CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
-  const FunctionProtoType *FPT
-    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
-  if (!FPT)
+void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!checkCall_strCommon(CE, FD))
     return;
 
-  // Verify the function takes two arguments
-  int numArgs = FPT->getNumArgs();
-  if (numArgs != 2 && numArgs != 3)
-    return;
-
-  // Verify the type for both arguments
-  for (int i = 0; i < 2; i++) {
-    // Verify that the arguments are pointers
-    const PointerType *PT = dyn_cast<PointerType>(FPT->getArgType(i));
-    if (!PT)
-      return;
-
-    // Verify that the argument is a 'char*'.
-    if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
-      return;
-  }
-
-  // Issue a warning
+  // Issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
   BR.EmitBasicReport("Potential insecure memory buffer bounds restriction in "
-		     "call 'strcpy'",
-		     "Security",
-		     "Call to function 'strcpy' is insecure as it does not "
+                     "call 'strcpy'",
+                     "Security",
+                     "Call to function 'strcpy' is insecure as it does not "
 		     "provide bounding of the memory buffer. Replace "
 		     "unbounded copy functions with analogous functions that "
 		     "support length arguments such as 'strncpy'. CWE-119.",
                      CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Check: Any use of 'strcat' is insecure.
+//
+// CWE-119: Improper Restriction of Operations within 
+// the Bounds of a Memory Buffer 
+//===----------------------------------------------------------------------===//
+void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!checkCall_strCommon(CE, FD))
+    return;
+
+  // Issue a warning.
+  SourceRange R = CE->getCallee()->getSourceRange();
+  BR.EmitBasicReport("Potential insecure memory buffer bounds restriction in "
+		     "call 'strcat'",
+		     "Security",
+		     "Call to function 'strcat' is insecure as it does not "
+		     "provide bounding of the memory buffer. Replace "
+		     "unbounded copy functions with analogous functions that "
+		     "support length arguments such as 'strncat'. CWE-119.",
+                     CE->getLocStart(), &R, 1);
+}
+
+//===----------------------------------------------------------------------===//
+// Common check for str* functions with no bounds parameters.
+//===----------------------------------------------------------------------===//
+bool WalkAST::checkCall_strCommon(const CallExpr *CE, const FunctionDecl *FD) {
+  const FunctionProtoType *FPT
+    = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
+  if (!FPT)
+    return false;
+
+  // Verify the function takes two arguments, three in the _chk version.
+  int numArgs = FPT->getNumArgs();
+  if (numArgs != 2 && numArgs != 3)
+    return false;
+
+  // Verify the type for both arguments.
+  for (int i = 0; i < 2; i++) {
+    // Verify that the arguments are pointers.
+    const PointerType *PT = dyn_cast<PointerType>(FPT->getArgType(i));
+    if (!PT)
+      return false;
+
+    // Verify that the argument is a 'char*'.
+    if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
+      return false;
+  }
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//
@@ -411,7 +445,7 @@ void WalkAST::CheckCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
 // CWE-338: Use of cryptographically weak prng
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
+void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
   if (!CheckRand)
     return;
 
@@ -453,7 +487,7 @@ void WalkAST::CheckCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
 // Originally: <rdar://problem/63371000>
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckCall_random(const CallExpr *CE, const FunctionDecl *FD) {
+void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
   if (!CheckRand)
     return;
 
@@ -480,7 +514,7 @@ void WalkAST::CheckCall_random(const CallExpr *CE, const FunctionDecl *FD) {
 // Originally: <rdar://problem/6337132>
 //===----------------------------------------------------------------------===//
 
-void WalkAST::CheckUncheckedReturnValue(CallExpr *CE) {
+void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
   const FunctionDecl *FD = CE->getDirectCallee();
   if (!FD)
     return;

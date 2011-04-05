@@ -140,3 +140,27 @@ void test_strcpy() {
 
   strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncpy'. CWE-119.}}
 }
+
+//===----------------------------------------------------------------------===
+// strcat()
+//===----------------------------------------------------------------------===
+#ifdef VARIANT
+
+#define __strcat_chk BUILTIN(__strcat_chk)
+char *__strcat_chk(char *restrict s1, const char *restrict s2, size_t destlen);
+
+#define strcat(a,b) __strcat_chk(a,b,(size_t)-1)
+
+#else /* VARIANT */
+
+#define strcat BUILTIN(strcat)
+char *strcat(char *restrict s1, const char *restrict s2);
+
+#endif /* VARIANT */
+
+void test_strcat() {
+  char x[4];
+  char *y;
+
+  strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncat'. CWE-119.}}
+}
