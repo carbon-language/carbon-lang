@@ -81,7 +81,7 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
 
   // If CurLI is live into a landing pad successor, move the last split point
   // back to the call that may throw.
-  if (LPad && LSP.second.isValid() && !LIS.isLiveInToMBB(*CurLI, LPad))
+  if (LPad && LSP.second.isValid() && LIS.isLiveInToMBB(*CurLI, LPad))
     return LSP.second;
   else
     return LSP.first;
