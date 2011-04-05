@@ -835,6 +835,32 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
   }
 }
 
+/// CollectCXXTemplateParams - A helper function to collect debug info for
+/// template parameters.
+llvm::DIArray CGDebugInfo::
+CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TSpecial,
+                         llvm::DIFile Unit) {
+  llvm::SmallVector<llvm::Value *, 16> TemplateParams;
+  const TemplateArgumentList &TAL = TSpecial->getTemplateArgs();
+  for (unsigned i = 0, e = TAL.size(); i != e; ++i) {
+    const TemplateArgument &TA = TAL[i];
+    if (TA.getKind() == TemplateArgument::Type) {
+      llvm::DIType TTy = getOrCreateType(TA.getAsType(), Unit);
+      llvm::DITemplateTypeParameter TTP =
+        DBuilder.createTemplateTypeParameter(TheCU, TTy.getName(), TTy);
+      TemplateParams.push_back(TTP);
+    } else if (TA.getKind() == TemplateArgument::Integral) {
+      llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
+      // FIXME: Get parameter name, instead of parameter type name.
+      llvm::DITemplateValueParameter TVP =
+        DBuilder.createTemplateValueParameter(TheCU, TTy.getName(), TTy,
+                                              TA.getAsIntegral()->getZExtValue());
+      TemplateParams.push_back(TVP);          
+    }
+  }
+  return DBuilder.getOrCreateArray(TemplateParams.data(), TemplateParams.size());
+}
+
 /// getOrCreateVTablePtrType - Return debug info descriptor for vtable.
 llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
   if (VTablePtrType.isValid())
@@ -971,30 +997,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     }
 
   CollectRecordFields(RD, Unit, EltTys);
-  llvm::SmallVector<llvm::Value *, 16> TemplateParams;
+  llvm::DIArray TParamsArray;
   if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
     CollectCXXFriends(CXXDecl, Unit, EltTys, FwdDecl);
-    if (ClassTemplateSpecializationDecl *TSpecial
-        = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
-      const TemplateArgumentList &TAL = TSpecial->getTemplateArgs();
-      for (unsigned i = 0, e = TAL.size(); i != e; ++i) {
-        const TemplateArgument &TA = TAL[i];
-        if (TA.getKind() == TemplateArgument::Type) {
-          llvm::DIType TTy = getOrCreateType(TA.getAsType(), Unit);
-          llvm::DITemplateTypeParameter TTP =
-            DBuilder.createTemplateTypeParameter(TheCU, TTy.getName(), TTy);
-          TemplateParams.push_back(TTP);
-        } else if (TA.getKind() == TemplateArgument::Integral) {
-          llvm::DIType TTy = getOrCreateType(TA.getIntegralType(), Unit);
-          // FIXME: Get parameter name, instead of parameter type name.
-          llvm::DITemplateValueParameter TVP =
-            DBuilder.createTemplateValueParameter(TheCU, TTy.getName(), TTy,
-                                                  TA.getAsIntegral()->getZExtValue());
-          TemplateParams.push_back(TVP);          
-        }
-      }
-    }
+    if (const ClassTemplateSpecializationDecl *TSpecial
+        = dyn_cast<ClassTemplateSpecializationDecl>(RD))
+      TParamsArray = CollectCXXTemplateParams(TSpecial, Unit);
   }
 
   RegionStack.pop_back();
@@ -1035,8 +1044,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     }
     else if (CXXDecl->isDynamicClass()) 
       ContainingType = FwdDecl;
-    llvm::DIArray TParamsArray = 
-      DBuilder.getOrCreateArray(TemplateParams.data(), TemplateParams.size());
+
    RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
                                        Size, Align, 0, 0, llvm::DIType(),
                                        Elements, ContainingType,
