@@ -142,7 +142,7 @@ install(FILES ${LLVM_CONFIG}
 
 # Regeneration of library dependencies.
 
-# See the comments at the end of cmake/modules/LLVMConfig.cmake for
+# See the comments at the end of cmake/modules/LLVM-Config.cmake for
 # notes and guidelines.
 
 set(LLVMLibDeps ${LLVM_MAIN_SRC_DIR}/cmake/modules/LLVMLibDeps.cmake)

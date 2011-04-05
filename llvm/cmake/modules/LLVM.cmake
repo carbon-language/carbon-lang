@@ -28,13 +28,13 @@ set(LLVM_ON_WIN32 @LLVM_ON_WIN32@)
 # We try to include using the current setting of CMAKE_MODULE_PATH,
 # which suppossedly was filled by the user with the directory where
 # this file was installed:
-include( LLVMConfig OPTIONAL RESULT_VARIABLE LLVMCONFIG_INCLUDED )
+include( LLVM-Config OPTIONAL RESULT_VARIABLE LLVMCONFIG_INCLUDED )
 
 # If failed, we assume that this is an un-installed build:
 if( NOT LLVMCONFIG_INCLUDED )
   set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     "@LLVM_SOURCE_DIR@/cmake/modules")
-  include( LLVMConfig )
+  include( LLVM-Config )
 endif()
 

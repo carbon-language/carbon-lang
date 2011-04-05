@@ -9,7 +9,7 @@ configure_file(
 
 install(FILES
   ${llvm_cmake_builddir}/LLVM.cmake
-  LLVMConfig.cmake
+  LLVM-Config.cmake
   LLVMLibDeps.cmake
   DESTINATION share/llvm/cmake)
 
@@ -18,7 +18,7 @@ install(DIRECTORY .
   FILES_MATCHING PATTERN *.cmake
   PATTERN .svn EXCLUDE
   PATTERN LLVM.cmake EXCLUDE
-  PATTERN LLVMConfig.cmake EXCLUDE
+  PATTERN LLVM-Config.cmake EXCLUDE
   PATTERN LLVMLibDeps.cmake EXCLUDE
   PATTERN FindBison.cmake EXCLUDE
   PATTERN GetTargetTriple.cmake EXCLUDE
@@ -27,6 +27,6 @@ install(DIRECTORY .
 
 install(FILES
   ${llvm_cmake_builddir}/LLVM.cmake
-  LLVMConfig.cmake
+  LLVM-Config.cmake
   LLVMLibDeps.cmake
   DESTINATION share/llvm/cmake)

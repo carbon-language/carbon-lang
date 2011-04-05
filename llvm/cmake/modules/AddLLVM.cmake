@@ -1,5 +1,5 @@
 include(LLVMProcessSources)
-include(LLVMConfig)
+include(LLVM-Config)
 
 macro(add_llvm_library name)
   llvm_process_sources( ALL_FILES ${ARGN} )
