@@ -368,6 +368,7 @@ namespace llvm {
     ///                      This flags are used to emit dwarf attributes.
     /// @param isOptimized   True if optimization is ON.
     /// @param Fn            llvm::Function pointer.
+    /// @param TParam        Function template parameters.
     DISubprogram createFunction(DIDescriptor Scope, StringRef Name,
                                 StringRef LinkageName,
                                 DIFile File, unsigned LineNo,
@@ -375,7 +376,8 @@ namespace llvm {
                                 bool isDefinition,
                                 unsigned Flags = 0,
                                 bool isOptimized = false,
-                                Function *Fn = 0);
+                                Function *Fn = 0,
+                                MDNode *TParam = 0);
 
     /// createMethod - Create a new descriptor for the specified C++ method.
     /// See comments in DISubprogram for descriptions of these fields.
@@ -395,6 +397,7 @@ namespace llvm {
     ///                      This flags are used to emit dwarf attributes.
     /// @param isOptimized   True if optimization is ON.
     /// @param Fn            llvm::Function pointer.
+    /// @param TParam        Function template parameters.
     DISubprogram createMethod(DIDescriptor Scope, StringRef Name,
                               StringRef LinkageName,
                               DIFile File, unsigned LineNo,
@@ -404,7 +407,8 @@ namespace llvm {
                               MDNode *VTableHolder = 0,
                               unsigned Flags = 0,
                               bool isOptimized = false,
-                              Function *Fn = 0);
+                              Function *Fn = 0,
+                              MDNode *TParam = 0);
 
     /// createNameSpace - This creates new descriptor for a namespace
     /// with the specified parent scope.

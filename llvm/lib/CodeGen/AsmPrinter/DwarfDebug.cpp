@@ -1455,6 +1455,9 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
     addUInt(SPDie, dwarf::DW_AT_APPLE_isa, dwarf::DW_FORM_flag, isa);
   }
 
+  // Add function template parameters.
+  addTemplateParams(*SPDie, SP.getTemplateParams());
+
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPCU->insertDIE(SP, SPDie);
 

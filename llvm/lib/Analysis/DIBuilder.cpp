@@ -642,7 +642,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        DIType Ty,
                                        bool isLocalToUnit, bool isDefinition,
                                        unsigned Flags, bool isOptimized,
-                                       Function *Fn) {
+                                       Function *Fn,
+                                       MDNode *TParams) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -660,7 +661,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
-    Fn
+    Fn,
+    TParams
   };
   MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
 
@@ -682,7 +684,8 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
                                      MDNode *VTableHolder,
                                      unsigned Flags,
                                      bool isOptimized,
-                                     Function *Fn) {
+                                     Function *Fn,
+                                     MDNode *TParam) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -700,7 +703,8 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context,
     VTableHolder,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
-    Fn
+    Fn,
+    TParam,
   };
   MDNode *Node = MDNode::get(VMContext, &Elts[0], array_lengthof(Elts));
 

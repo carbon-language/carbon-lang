@@ -441,6 +441,7 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
   i1        ;; isArtificial
   i1        ;; isOptimized
   Function *;; Pointer to LLVM function
+  metadata  ;; Lists function template parameters
 }
 </pre>
 </div>
@@ -1200,7 +1201,14 @@ int main(int argc, char *argv[]) {
   i32 1,             ;; Line number
   metadata !4,       ;; Type
   i1 false,          ;; Is local 
-  i1 true            ;; Is definition
+  i1 true,           ;; Is definition
+  i32 0,             ;; Virtuality attribute, e.g. pure virtual function
+  i32 0,             ;; Index into virtual table for C++ methods
+  i32 0,             ;; Type that holds virtual table.
+  i32 0,             ;; Flags
+  i1 false,          ;; True if this function is optimized
+  Function *,        ;; Pointer to llvm::Function
+  null               ;; Function template parameters
 }
 ;;
 ;; Define the subprogram itself.
