@@ -55,7 +55,6 @@ namespace {
     void ExpandVLD(MachineBasicBlock::iterator &MBBI);
     void ExpandVST(MachineBasicBlock::iterator &MBBI);
     void ExpandLaneOp(MachineBasicBlock::iterator &MBBI);
-    void ExpandSBitOp(MachineBasicBlock::iterator &MBBI);
     void ExpandVTBL(MachineBasicBlock::iterator &MBBI,
                     unsigned Opc, bool IsExt, unsigned NumRegs);
     void ExpandMOV32BitImm(MachineBasicBlock &MBB,
@@ -630,43 +629,6 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MI.eraseFromParent();
 }
 
-void ARMExpandPseudo::ExpandSBitOp(MachineBasicBlock::iterator &MBBI) {
-  MachineInstr &MI = *MBBI;
-  MachineBasicBlock &MBB = *MI.getParent();
-  unsigned OldOpc = MI.getOpcode();
-  unsigned Opc = 0;
-  switch (OldOpc) {
-    case ARM::ADCSSrr:
-      Opc = ARM::ADCrr;
-      break;
-    case ARM::ADCSSri:
-      Opc = ARM::ADCri;
-      break;
-    case ARM::ADCSSrs:
-      Opc = ARM::ADCrs;
-      break;
-    case ARM::SBCSSrr:
-      Opc = ARM::SBCrr;
-      break;
-    case ARM::SBCSSri:
-      Opc = ARM::SBCri;
-      break;
-    case ARM::SBCSSrs:
-      Opc = ARM::SBCrs;
-      break;
-    default:
-      llvm_unreachable("Unknown opcode?");
-  }
-
-  MachineInstrBuilder MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc));
-  MIB.addOperand(MachineOperand::CreateImm(0)); // Predicate
-  MIB.addOperand(MachineOperand::CreateImm(0)); // S bit
-  for (unsigned i = 0; i < MI.getNumOperands(); ++i)
-    MIB.addOperand(MI.getOperand(i));
-  TransferImpOps(MI, MIB, MIB);
-  MI.eraseFromParent();
-}
-
 void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator &MBBI) {
   MachineInstr &MI = *MBBI;
@@ -977,15 +939,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::t2MOVi32imm:
     case ARM::t2MOVCCi32imm:
       ExpandMOV32BitImm(MBB, MBBI);
-      return true;
-
-    case ARM::ADCSSri:
-    case ARM::ADCSSrr:
-    case ARM::ADCSSrs:
-    case ARM::SBCSSri:
-    case ARM::SBCSSrr:
-    case ARM::SBCSSrs:
-      ExpandSBitOp(MBBI);
       return true;
 
     case ARM::VMOVQQ: {

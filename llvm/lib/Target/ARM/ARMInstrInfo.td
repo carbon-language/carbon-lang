@@ -936,8 +936,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 }
 // Carry setting variants
 let isCodeGenOnly = 1, Defs = [CPSR] in {
-multiclass AI1_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
-                             bit Commutable = 0> {
+multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
   def Sri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 Size4Bytes, IIC_iALUi,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
@@ -2197,10 +2196,12 @@ defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
                           BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
 
 // ADC and SUBC with 's' bit set.
-defm ADCS : AI1_adde_sube_s_irs<0b0101, "adcs",
-                          BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
-defm SBCS : AI1_adde_sube_s_irs<0b0110, "sbcs",
-                          BinOpFrag<(sube_live_carry node:$LHS, node:$RHS) >>;
+let usesCustomInserter = 1 in {
+defm ADCS : AI1_adde_sube_s_irs<
+              BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
+defm SBCS : AI1_adde_sube_s_irs<
+              BinOpFrag<(sube_live_carry node:$LHS, node:$RHS) >>;
+}
 
 def RSBri : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
                  IIC_iALUi, "rsb", "\t$Rd, $Rn, $imm",
