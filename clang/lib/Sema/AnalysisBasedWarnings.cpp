@@ -410,7 +410,12 @@ public:
 };
 }
 
-static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
+/// DiagnoseUninitializedUse -- Helper function for diagnosing uses of an
+/// uninitialized variable. This manages the different forms of diagnostic
+/// emitted for particular types of uses. Returns true if the use was diagnosed
+/// as a warning. If a pariticular use is one we omit warnings for, returns
+/// false.
+static bool DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
                                      const Expr *E, bool isAlwaysUninit) {
   bool isSelfInit = false;
 
@@ -432,7 +437,7 @@ static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
       // variables initialized in this way?
       if (const Expr *Initializer = VD->getInit()) {
         if (DRE == Initializer->IgnoreParenImpCasts())
-          return;
+          return false;
 
         ContainsReference CR(S.Context, DRE);
         CR.Visit(const_cast<Expr*>(Initializer));
@@ -464,16 +469,10 @@ static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
     S.Diag(VD->getLocStart(), diag::note_uninit_var_def)
       << VD->getDeclName();
 
+  return true;
 }
 
-static void SuggestInitializationFixit(Sema &S, const VarDecl *VD,
-                                       bool &fixitIssued) {
-  // Only report the fixit once.
-  if (fixitIssued)
-    return;
-
-  fixitIssued = true;
-
+static void SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   // Don't issue a fixit if there is already an initializer.
   if (VD->getInit())
     return;
@@ -557,9 +556,15 @@ public:
       
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
            ++vi) {
-        DiagnoseUninitializedUse(S, vd, vi->first,
-                                 /*isAlwaysUninit=*/vi->second);
-        SuggestInitializationFixit(S, vd, fixitIssued);
+        if (!DiagnoseUninitializedUse(S, vd, vi->first,
+                                      /*isAlwaysUninit=*/vi->second))
+          continue;
+
+        // Suggest a fixit hint the first time we diagnose a use of a variable.
+        if (!fixitIssued) {
+          SuggestInitializationFixit(S, vd);
+          fixitIssued = true;
+        }
       }
 
       delete vec;
