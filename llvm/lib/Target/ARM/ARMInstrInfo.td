@@ -1589,6 +1589,8 @@ def SRSW : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b110; // W = 1
+  let Inst{19-8} = 0xd05;
+  let Inst{7-5} = 0b000;
 }
 
 def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
@@ -1596,6 +1598,8 @@ def SRS  : ABXI<{1,0,0,?}, (outs), (ins ldstm_mode:$amode, i32imm:$mode),
                 [/* For disassembly only; pattern left blank */]> {
   let Inst{31-28} = 0b1111;
   let Inst{22-20} = 0b100; // W = 0
+  let Inst{19-8} = 0xd05;
+  let Inst{7-5} = 0b000;
 }
 
 // Return From Exception is a system instruction -- for disassembly only
