@@ -10,11 +10,18 @@
 #include "lldb/API/SBInstruction.h"
 
 #include "lldb/API/SBAddress.h"
+#include "lldb/API/SBFrame.h"
 #include "lldb/API/SBInstruction.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBTarget.h"
 
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -107,3 +114,41 @@ SBInstruction::Print (FILE *out)
         m_opaque_sp->Dump (&out_stream, 0, true, false, NULL, false);
     }
 }
+
+bool
+SBInstruction::EmulateWithFrame (lldb::SBFrame &frame)
+{
+    if (m_opaque_sp && frame.get())
+    {
+        lldb_private::ExecutionContext exe_ctx;
+        frame->CalculateExecutionContext (exe_ctx);
+        lldb_private::Target *target = exe_ctx.target;
+        lldb_private::ArchSpec arch = target->GetArchitecture();
+        
+        return m_opaque_sp->Emulate (arch, 
+                                     (void *) frame.get(), 
+                                     &lldb_private::EmulateInstruction::ReadMemoryFrame,
+                                     &lldb_private::EmulateInstruction::WriteMemoryFrame,
+                                     &lldb_private::EmulateInstruction::ReadRegisterFrame,
+                                     &lldb_private::EmulateInstruction::WriteRegisterFrame);
+    }
+    return false;
+}
+
+bool
+SBInstruction::DumpEmulation (const char *triple)
+{
+    if (m_opaque_sp && triple)
+    {
+        lldb_private::ArchSpec arch (triple);
+        
+        return m_opaque_sp->Emulate (arch, 
+                                     NULL,
+                                     &lldb_private::EmulateInstruction::ReadMemoryDefault,
+                                     &lldb_private::EmulateInstruction::WriteMemoryDefault,
+                                     &lldb_private::EmulateInstruction::ReadRegisterDefault,
+                                     &lldb_private::EmulateInstruction::WriteRegisterDefault);
+    }
+    return false;
+}
+

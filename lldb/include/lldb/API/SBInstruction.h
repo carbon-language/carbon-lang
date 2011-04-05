@@ -52,6 +52,12 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    bool
+    EmulateWithFrame (lldb::SBFrame &frame);
+
+    bool
+    DumpEmulation (const char * triple); // triple is to specify the architecture, e.g. 'armv6' or 'arm-apple-darwin'
+
 protected:
     friend class SBInstructionList;
 

@@ -489,6 +489,39 @@ Instruction::GetAddressClass ()
     return m_address_class;
 }
 
+bool
+Instruction::DumpEmulation (const ArchSpec &arch)
+{
+	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+	if (insn_emulator_ap.get())
+	{
+        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress());
+        return insn_emulator_ap->EvaluateInstruction ();
+	}
+
+    return false;
+}
+
+bool
+Instruction::Emulate (const ArchSpec &arch,
+                      void *baton,
+                      EmulateInstruction::ReadMemory read_mem_callback,
+                      EmulateInstruction::WriteMemory write_mem_callback,
+                      EmulateInstruction::ReadRegister read_reg_callback,
+                      EmulateInstruction::WriteRegister write_reg_callback)
+{
+	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+	if (insn_emulator_ap.get())
+	{
+		insn_emulator_ap->SetBaton (baton);
+		insn_emulator_ap->SetCallbacks (read_mem_callback, write_mem_callback, read_reg_callback, write_reg_callback);
+        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress());
+        return insn_emulator_ap->EvaluateInstruction ();
+	}
+
+    return false;
+}
+
 InstructionList::InstructionList() :
     m_instructions()
 {

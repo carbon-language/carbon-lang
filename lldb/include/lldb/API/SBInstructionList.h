@@ -48,6 +48,9 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    bool
+    DumpEmulationForAllInstructions (const char *triple);
 
 protected:
     friend class SBFunction;

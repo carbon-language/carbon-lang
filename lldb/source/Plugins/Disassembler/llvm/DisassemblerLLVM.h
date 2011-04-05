@@ -16,40 +16,41 @@
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Host/Mutex.h"
 
+class InstructionLLVM : public lldb_private::Instruction
+{
+public:
+    InstructionLLVM (const lldb_private::Address &addr,
+                     lldb_private::AddressClass addr_class,
+                     EDDisassemblerRef disassembler);
+    
+    virtual
+    ~InstructionLLVM();
+    
+    virtual void
+    Dump (lldb_private::Stream *s,
+          uint32_t max_opcode_byte_size,
+          bool show_address,
+          bool show_bytes,
+          const lldb_private::ExecutionContext* exe_ctx,
+          bool raw);
+    
+    virtual bool
+    DoesBranch () const;
+    
+    virtual size_t
+    Decode (const lldb_private::Disassembler &disassembler,
+            const lldb_private::DataExtractor &data,
+            uint32_t data_offset);
+    
+protected:
+    EDDisassemblerRef m_disassembler;
+    EDInstRef m_inst;
+};
+
+
 class DisassemblerLLVM : public lldb_private::Disassembler
 {
 public:
-    class InstructionLLVM : public lldb_private::Instruction
-    {
-    public:
-        InstructionLLVM (const lldb_private::Address &addr,
-                         lldb_private::AddressClass addr_class,
-                         EDDisassemblerRef disassembler);
-
-        virtual
-        ~InstructionLLVM();
-
-        virtual void
-        Dump (lldb_private::Stream *s,
-              uint32_t max_opcode_byte_size,
-              bool show_address,
-              bool show_bytes,
-              const lldb_private::ExecutionContext* exe_ctx,
-              bool raw);
-
-        virtual bool
-        DoesBranch () const;
-
-        virtual size_t
-        Decode (const Disassembler &disassembler,
-                const lldb_private::DataExtractor &data,
-                uint32_t data_offset);
-
-    protected:
-        EDDisassemblerRef m_disassembler;
-        EDInstRef m_inst;
-    };
-
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

@@ -13056,7 +13056,8 @@ EmulateInstructionARM::EvaluateInstruction ()
     }
     
     // Just for now, for testing purposes.
-    //fprintf (stdout, "\nEvaluateInstruction, opcode (0x%x), found = '%s'\n", m_opcode.GetOpcode32(), opcode_data->name);
+    if (m_baton == NULL)
+        fprintf (stdout, "\nEvaluateInstruction, opcode (0x%x), found = '%s'\n", m_opcode.GetOpcode32(), opcode_data->name);
     
     return (this->*opcode_data->callback) (m_opcode.GetOpcode32(), opcode_data->encoding);  // Call the Emulate... function.
 }

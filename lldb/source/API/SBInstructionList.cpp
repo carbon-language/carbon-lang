@@ -109,3 +109,18 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
 }
 
 
+bool
+SBInstructionList::DumpEmulationForAllInstructions (const char *triple)
+{
+    if (m_opaque_sp)
+    {
+        size_t len = GetSize();
+        for (size_t i = 0; i < len; ++i)
+        {
+            if (!GetInstructionAtIndex((uint32_t) i).DumpEmulation (triple))
+                return false;
+        }
+    }
+    return true;
+}
+

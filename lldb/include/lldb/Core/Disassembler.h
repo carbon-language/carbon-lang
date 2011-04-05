@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Opcode.h"
 #include "lldb/Core/PluginInterface.h"
 
@@ -66,7 +67,18 @@ public:
     Decode (const Disassembler &disassembler, 
             const DataExtractor& data, 
             uint32_t data_offset) = 0;
-
+            
+    bool
+    DumpEmulation (const ArchSpec &arch);
+    
+    bool
+    Emulate (const ArchSpec &arch,
+             void *baton,
+             EmulateInstruction::ReadMemory read_mem_callback,
+             EmulateInstruction::WriteMemory write_mem_calback,
+             EmulateInstruction::ReadRegister read_reg_callback,
+             EmulateInstruction::WriteRegister write_reg_callback);
+                      
     const Opcode &
     GetOpcode () const
     {

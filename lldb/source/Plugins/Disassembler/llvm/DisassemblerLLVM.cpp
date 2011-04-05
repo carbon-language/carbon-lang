@@ -74,15 +74,15 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
     return -1;
 }
 
-DisassemblerLLVM::InstructionLLVM::InstructionLLVM (const Address &addr, 
-                                                    AddressClass addr_class,
-                                                    EDDisassemblerRef disassembler) :
+InstructionLLVM::InstructionLLVM (const Address &addr, 
+                                  AddressClass addr_class,
+                                  EDDisassemblerRef disassembler) :
     Instruction (addr, addr_class),
     m_disassembler (disassembler)
 {
 }
 
-DisassemblerLLVM::InstructionLLVM::~InstructionLLVM()
+InstructionLLVM::~InstructionLLVM()
 {
 }
 
@@ -98,7 +98,7 @@ PadString(Stream *s, const std::string &str, size_t width)
 }
 
 void
-DisassemblerLLVM::InstructionLLVM::Dump
+InstructionLLVM::Dump
 (
     Stream *s,
     uint32_t max_opcode_byte_size,
@@ -332,15 +332,15 @@ DisassemblerLLVM::InstructionLLVM::Dump
 }
 
 bool
-DisassemblerLLVM::InstructionLLVM::DoesBranch() const
+InstructionLLVM::DoesBranch() const
 {
     return EDInstIsBranch(m_inst);
 }
 
 size_t
-DisassemblerLLVM::InstructionLLVM::Decode (const Disassembler &disassembler, 
-                                           const lldb_private::DataExtractor &data,
-                                           uint32_t data_offset)
+InstructionLLVM::Decode (const Disassembler &disassembler, 
+                         const lldb_private::DataExtractor &data,
+                         uint32_t data_offset)
 {
     if (EDCreateInsts(&m_inst, 1, m_disassembler, DataExtractorByteReader, data_offset, (void*)(&data)))
     {
