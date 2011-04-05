@@ -136,9 +136,10 @@ static void printSOImm(raw_ostream &O, int64_t V, raw_ostream *CommentStream,
   unsigned Rot = ARM_AM::getSOImmValRot(V);
 
   // Print low-level immediate formation info, per
-  // A5.1.3: "Data-processing operands - Immediate".
+  // A5.2.3: Data-processing (immediate), and
+  // A5.2.4: Modified immediate constants in ARM instructions
   if (Rot) {
-    O << "#" << Imm << ", " << Rot;
+    O << "#" << Imm << ", #" << Rot;
     // Pretty printed version.
     if (CommentStream)
       *CommentStream << (int)ARM_AM::rotr32(Imm, Rot) << "\n";
