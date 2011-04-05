@@ -297,9 +297,12 @@ in this section.
 <p>LLVM 2.9 includes several major new capabilities:</p>
 
 <ul>
+<li><pre>
   last release for llvm-gcc
 TBAA
 Triple::normalize is new, llvm triples are always stored in normalized form internally.
+
+Triple x86_64--mingw64 is obsoleted. Use x86_64--mingw32 instead.
 
 MC Assembler: X86 now generates much better diagnostics for common errors,
     is much faster at matching instructions, is much more bug-compatible with
@@ -348,9 +351,9 @@ MC assembler support for 3dNow! and 3DNowA instructions.
 LoopIndexSplit pass was removed, unmaintained.
   
  
-COFF support in the MC assembler has made a lot of progress in the 2.9
+Win32 PE-COFF support in the MC assembler has made a lot of progress in the 2.9
   timeframe, but is still not generally useful.  Please see 
-  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs"?
+  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs?
 
 New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
   for region-based optimizations.
@@ -358,6 +361,7 @@ New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
 MicroBlaze: major updates for aggressive delay slot filler, MC-based assembly
    printing, assembly instruction parsing, ELF .o file emission, and MC
    instruction disassembler.
+</pre></li>
 </ul>
   
 Still todo: [101025-110228]
@@ -431,8 +435,7 @@ href="http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html">Intro to the
 LLVM MC Project Blog Post</a>.
 </p>
 
-</div>	
-
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -461,6 +464,7 @@ FastISel for ARM.
 </p>
 
 <ul>
+  <li>Several bugs have been fixed for Windows x64 code generator.</li>
 </ul>
 
 </div>
@@ -569,13 +573,23 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     all <a href="http://llvm.org/PR879">inline assembly that uses the X86
     floating point stack</a>.  It supports the 'f' and 't' constraints, but not
     'u'.</li>
-  <li>Win64 code generation wasn't widely tested. Everything should work, but we
-    expect small issues to happen. Also, llvm-gcc cannot build the mingw64
-    runtime currently due to lack of support for the 'u' inline assembly
-    constraint and for X87 floating point inline assembly.</li>
   <li>The X86-64 backend does not yet support the LLVM IR instruction
       <tt>va_arg</tt>. Currently, front-ends support variadic
       argument constructs on X86-64 by lowering them manually.</li>
+  <li>Windows x64 (aka Win64) code generator has a few issues.
+    <ul>
+      <li>llvm-gcc cannot build the mingw-w64 runtime currently
+       due to lack of support for the 'u' inline assembly
+       constraint and for X87 floating point inline assembly.</li>
+      <li>On mingw-w64, you will see unresolved symbol <tt>__chkstk</tt>
+       due to <a href="http://llvm.org/bugs/show_bug.cgi?id=8919">Bug 8919</a>.
+       It is fixed in <a href="http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20110321/118499.html">r128206</a>.</li>
+      <li>Miss-aligned MOVDQA might crash your program. It is due to
+       <a href="http://llvm.org/bugs/show_bug.cgi?id=9483">Bug 9483</a>,
+       lack of handling aligned internal globals.</li>
+      </ul>
+  </li>
+
 </ul>
 
 </div>
