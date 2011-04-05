@@ -5029,7 +5029,12 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case ARM::ADCSSrs:
   case ARM::SBCSSri:
   case ARM::SBCSSrr:
-  case ARM::SBCSSrs: {
+  case ARM::SBCSSrs:
+  case ARM::RSBSri:
+  case ARM::RSBSrr:
+  case ARM::RSBSrs:
+  case ARM::RSCSri:
+  case ARM::RSCSrs: {
     unsigned OldOpc = MI->getOpcode();
     unsigned Opc = 0;
     switch (OldOpc) {
@@ -5050,6 +5055,21 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
         break;
       case ARM::SBCSSrs:
         Opc = ARM::SBCrs;
+        break;
+      case ARM::RSBSri:
+        Opc = ARM::RSBri;
+        break;
+      case ARM::RSBSrr:
+        Opc = ARM::RSBrr;
+        break;
+      case ARM::RSBSrs:
+        Opc = ARM::RSBrs;
+        break;
+      case ARM::RSCSri:
+        Opc = ARM::RSCri;
+        break;
+      case ARM::RSCSrs:
+        Opc = ARM::RSCrs;
         break;
       default:
         llvm_unreachable("Unknown opcode?");

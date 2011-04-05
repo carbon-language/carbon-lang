@@ -935,7 +935,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   }
 }
 // Carry setting variants
-let isCodeGenOnly = 1, Defs = [CPSR] in {
+// NOTE: CPSR def omitted because it will be handled by the custom inserter.
+let usesCustomInserter = 1 in {
 multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
   def Sri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 Size4Bytes, IIC_iALUi,
@@ -2243,44 +2244,17 @@ def RSBrs : AsI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 }
 
 // RSB with 's' bit set.
-let isCodeGenOnly = 1, Defs = [CPSR] in {
-def RSBSri : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm), DPFrm,
-                 IIC_iALUi, "rsbs", "\t$Rd, $Rn, $imm",
-                 [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]> {
-  bits<4> Rd;
-  bits<4> Rn;
-  bits<12> imm;
-  let Inst{25} = 1;
-  let Inst{20} = 1;
-  let Inst{15-12} = Rd;
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = imm;
-}
-def RSBSrr : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm,
-                 IIC_iALUr, "rsbs", "\t$Rd, $Rn, $Rm",
-                 [/* For disassembly only; pattern left blank */]> {
-  bits<4> Rd;
-  bits<4> Rn;
-  bits<4> Rm;
-  let Inst{11-4} = 0b00000000;
-  let Inst{25} = 0;
-  let Inst{20} = 1;
-  let Inst{3-0} = Rm;
-  let Inst{15-12} = Rd;
-  let Inst{19-16} = Rn;
-}
-def RSBSrs : AI1<0b0011, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                 DPSoRegFrm, IIC_iALUsr, "rsbs", "\t$Rd, $Rn, $shift",
-                 [(set GPR:$Rd, (subc so_reg:$shift, GPR:$Rn))]> {
-  bits<4> Rd;
-  bits<4> Rn;
-  bits<12> shift;
-  let Inst{25} = 0;
-  let Inst{20} = 1;
-  let Inst{11-0} = shift;
-  let Inst{15-12} = Rd;
-  let Inst{19-16} = Rn;
-}
+// NOTE: CPSR def omitted because it will be handled by the custom inserter.
+let usesCustomInserter = 1 in {
+def RSBSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                 Size4Bytes, IIC_iALUi,
+                 [(set GPR:$Rd, (subc so_imm:$imm, GPR:$Rn))]>;
+def RSBSrr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+                 Size4Bytes, IIC_iALUr,
+                 [/* For disassembly only; pattern left blank */]>;
+def RSBSrs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                 Size4Bytes, IIC_iALUsr,
+                 [(set GPR:$Rd, (subc so_reg:$shift, GPR:$Rn))]>;
 }
 
 let Uses = [CPSR] in {
@@ -2325,33 +2299,16 @@ def RSCrs : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 }
 
 // FIXME: Allow these to be predicated.
-let isCodeGenOnly = 1, Defs = [CPSR], Uses = [CPSR] in {
-def RSCSri : AXI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-                  DPFrm, IIC_iALUi, "rscs\t$Rd, $Rn, $imm",
+// NOTE: CPSR def omitted because it will be handled by the custom inserter.
+let usesCustomInserter = 1, Uses = [CPSR] in {
+def RSCSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+                  Size4Bytes, IIC_iALUi,
                   [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>,
-                  Requires<[IsARM]> {
-  bits<4> Rd;
-  bits<4> Rn;
-  bits<12> imm;
-  let Inst{25} = 1;
-  let Inst{20} = 1;
-  let Inst{15-12} = Rd;
-  let Inst{19-16} = Rn;
-  let Inst{11-0} = imm;
-}
-def RSCSrs : AXI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                  DPSoRegFrm, IIC_iALUsr, "rscs\t$Rd, $Rn, $shift",
+                  Requires<[IsARM]>;
+def RSCSrs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+                  Size4Bytes, IIC_iALUsr,
                   [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>,
-                  Requires<[IsARM]> {
-  bits<4> Rd;
-  bits<4> Rn;
-  bits<12> shift;
-  let Inst{25} = 0;
-  let Inst{20} = 1;
-  let Inst{11-0} = shift;
-  let Inst{15-12} = Rd;
-  let Inst{19-16} = Rn;
-}
+                  Requires<[IsARM]>;
 }
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
