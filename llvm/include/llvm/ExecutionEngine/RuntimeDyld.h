@@ -33,6 +33,7 @@ class RTDyldMemoryManager {
   void operator=(const RTDyldMemoryManager&);       // DO NOT IMPLEMENT
 public:
   RTDyldMemoryManager() {}
+  virtual ~RTDyldMemoryManager() {}
 
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
