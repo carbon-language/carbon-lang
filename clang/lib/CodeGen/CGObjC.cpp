@@ -287,7 +287,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     }
     else if (hasAggregateLLVMType(IVART)) {
       bool IsStrong = false;
-      if ((IsAtomic || (IsStrong = IvarTypeWithAggrGCObjects(IVART)))
+      if ((IsStrong = IvarTypeWithAggrGCObjects(IVART))
           && CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect
           && CGM.getObjCRuntime().GetGetStructFunction()) {
         GenerateObjCGetterBody(Ivar, IsAtomic, IsStrong);
@@ -448,6 +448,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
              ReturnValueSlot(), Args);
   } else if (IsAtomic && hasAggregateLLVMType(IVART) &&
              !IVART->isAnyComplexType() &&
+             !PID->getGetterCXXConstructor() &&
              ((Triple.getArch() == llvm::Triple::x86 &&
               (getContext().getTypeSizeInChars(IVART)
                > CharUnits::fromQuantity(4))) ||
