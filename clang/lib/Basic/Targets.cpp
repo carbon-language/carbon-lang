@@ -1084,8 +1084,11 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
   else if (CPU == "corei7") {
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
-  }
-  else if (CPU == "k6" || CPU == "winchip-c6")
+  } else if (CPU == "sandybridge") {
+    setFeatureEnabled(Features, "sse4", true);
+    setFeatureEnabled(Features, "aes", true);
+//    setFeatureEnabled(Features, "avx", true);
+  } else if (CPU == "k6" || CPU == "winchip-c6")
     setFeatureEnabled(Features, "mmx", true);
   else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" ||
            CPU == "athlon-tbird" || CPU == "winchip2" || CPU == "c3") {
