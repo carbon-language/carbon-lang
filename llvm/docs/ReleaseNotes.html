@@ -61,8 +61,6 @@ current one.  To see the release notes for a specific release, please see the
 
 </div>
 
-<!-- NOTE: last release for llvm-gcc --> 
-
 <!--
 Almost dead code.
   lib/Transforms/IPO/MergeFunctions.cpp => consider for 3.0.
@@ -73,7 +71,6 @@ Almost dead code.
   combiner-aa?
   strong phi elim
   loop dependence analysis
-  TBAA
   CorrelatedValuePropagation
  -->
  
@@ -111,29 +108,21 @@ integrating with other development tools. Clang is considered a
 production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 (32- and 64-bit), and for darwin-arm targets.</p>
 
-<p>In the LLVM 2.9 time-frame, the Clang team has made many improvements:</p>
+<p>In the LLVM 2.9 time-frame, the Clang team has made many improvements in C,
+C++ and Objective-C support.  C++ support is now generally rock solid, has
+been exercised on a broad variety of code, and has several new C++'0x features
+implemented (such as rvalue references and variadic templates).  LLVM 2.9 has
+also brought in a large range of bug fixes and minor features (e.g. __label__
+support), and is much more compatible with the Linux Kernel.</p>  
+  
+<p>If Clang rejects your code that is built with another compiler, please take a
+look at the <a href="http://clang.llvm.org/compatibility.html">language
+compatibility</a> guide to make sure the issue isn't intentional or a known
+issue.
+</p>
 
 <ul>
 </ul>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="clangsa">Clang Static Analyzer</a>
-</div>
-
-<div class="doc_text">
-
-<p>The <a href="http://clang-analyzer.llvm.org/">Clang Static Analyzer</a>
-   project is an effort to use static source code analysis techniques to
-   automatically find bugs in C and Objective-C programs (and hopefully <a
-   href="http://clang-analyzer.llvm.org/dev_cxx.html">C++ in the
-   future</a>!).  The tool is very good at finding bugs that occur on specific
-   paths through code, such as on error conditions.</p>
-
-<p>The LLVM 2.9 release... 
-</p>
-
 </div>
 
 <!--=========================================================================-->
@@ -170,21 +159,6 @@ work yet.</li>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="vmkit">VMKit: JVM Virtual Machine Implementation</a>
-</div>
-
-<div class="doc_text">
-<p>
-The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
-a Java Virtual Machine (Java VM or JVM) that uses LLVM for static and
-just-in-time compilation.
-
-UPDATE.
-</p>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
 <a name="compiler-rt">compiler-rt: Compiler Runtime Library</a>
 </div>
 
@@ -203,7 +177,9 @@ libgcc routines).</p>
 All of the code in the compiler-rt project is available under the standard LLVM
 License, a "BSD-style" license.  
 
-NEW: MIT License as well.
+compiler_rt is now dual licensed under MIT and UIUC license
+  
+Several minor changes for better ARM support.
 
 New in LLVM 2.9,  UPDATE</p>
 
@@ -224,8 +200,9 @@ LLVM disassembler and the LLVM JIT.</p>
 
 <p>
 LLDB is in early development and not included as part of the LLVM 2.9 release,
-UPDATE!
 
+  
+  
 <!--
 but is mature enough to support basic debugging scenarios on Mac OS X in C,
 Objective-C and C++.  We'd really like help extending and expanding LLDB to 
@@ -249,6 +226,8 @@ delivering great performance.</p>
 <p>
 As of the LLVM 2.9 release, UPDATE!
 
+libc++ is now dual licensed under MIT and UIUC license
+  
 <!--libc++ is virtually feature complete, but would
 benefit from more testing and better integration with Clang++.  It is also
 looking forward to the C++ committee finalizing the C++'0x standard.-->
@@ -318,7 +297,70 @@ in this section.
 <p>LLVM 2.9 includes several major new capabilities:</p>
 
 <ul>
+  last release for llvm-gcc
+TBAA
+Triple::normalize is new, llvm triples are always stored in normalized form internally.
+
+MC Assembler: X86 now generates much better diagnostics for common errors,
+    is much faster at matching instructions, is much more bug-compatible with
+    the GAS assembler, and is now generally useful for a broad range of X86
+    assembly.
+  
+New Nvidia PTX backend, not generally useful in 2.9 though.
+
+Much better debug info generated, particularly in optimized code situations.
+
+ARM Fast ISel
+
+ELF MC support
+
+X86: Reimplemented all of MMX to introduce a new LLVM IR x86_mmx type.  Now
+  random types like &lt;2 x i32&gt; are not iseld to mmx without emms.
+
+Some basic <a href="CodeGenerator.html#mc">internals documentation</a> for MC. 
+  
+MC Assembler support for .file and .loc.
+  
+  
+inline asm multiple alternative constraint support.
+  
+LoopIdiom: memset/memcpy formation
+  
+  
+X86 support for FS/GS relative loads and stores using address space 256/257 are
+  reliable now.
+  
+ARM: New code placement pass.
+  
+  
+PointerTracking has been removed from mainline, moved to ClamAV.
+  
+EarlyCSE pass.
+
+
+ARM: Improved code generation for Cortex-A8 and Cortex-A9 CPUs.
+  
+Scheduler now models operand latency and pipeline forwarding.
+  
+Major regalloc rewrite, not on by default for 2.9.
+MC assembler support for 3dNow! and 3DNowA instructions.
+  
+LoopIndexSplit pass was removed, unmaintained.
+  
+ 
+COFF support in the MC assembler has made a lot of progress in the 2.9
+  timeframe, but is still not generally useful.  Please see 
+  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs"?
+
+New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
+  for region-based optimizations.
+  
+MicroBlaze: major updates for aggressive delay slot filler, MC-based assembly
+   printing, assembly instruction parsing, ELF .o file emission, and MC
+   instruction disassembler.
 </ul>
+  
+Still todo: [101025-110228]
 
 </div>
 
