@@ -1232,8 +1232,6 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     ++OpIdx;
   }
 
-  bool DualReg = HasDualReg(Opcode);
-
   // Disassemble the dst/src operand.
   if (OpIdx >= NumOps)
     return false;
@@ -1244,9 +1242,8 @@ static bool DisassembleLdStMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                      decodeRd(insn))));
   ++OpIdx;
 
-  // Fill in LDRD and STRD's second operand, but only if it's offset mode OR we
-  // have a pre-or-post-indexed store operation.
-  if (DualReg && (!isPrePost || isStore)) {
+  // Fill in LDRD and STRD's second operand Rt operand.
+  if (HasDualReg(Opcode)) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRd(insn) + 1)));
     ++OpIdx;

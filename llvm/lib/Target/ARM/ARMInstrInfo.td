@@ -1632,7 +1632,7 @@ def LDRSB : AI3ld<0b1101, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
-let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1 in {
 // Load doubleword
 def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
                  (ins addrmode3:$addr), LdMiscFrm,
@@ -1707,8 +1707,31 @@ let mayLoad = 1, neverHasSideEffects = 1 in {
 defm LDRH  : AI3_ldridx<0b1011, 1, "ldrh", IIC_iLoad_bh_ru>;
 defm LDRSH : AI3_ldridx<0b1111, 1, "ldrsh", IIC_iLoad_bh_ru>;
 defm LDRSB : AI3_ldridx<0b1101, 1, "ldrsb", IIC_iLoad_bh_ru>;
-let hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-defm LDRD :  AI3_ldridx<0b1101, 0, "ldrd", IIC_iLoad_d_ru>;
+def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
+                          (ins addrmode3:$addr), IndexModePre,
+                          LdMiscFrm, IIC_iLoad_d_ru,
+                          "ldrd", "\t$Rt, $Rt2, $addr!",
+                          "$addr.base = $Rn_wb", []> {
+  bits<14> addr;
+  let Inst{23}    = addr{8};      // U bit
+  let Inst{22}    = addr{13};     // 1 == imm8, 0 == Rm
+  let Inst{19-16} = addr{12-9};   // Rn
+  let Inst{11-8}  = addr{7-4};    // imm7_4/zero
+  let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
+}
+def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
+                          (ins GPR:$Rn, am3offset:$offset), IndexModePost,
+                          LdMiscFrm, IIC_iLoad_d_ru,
+                          "ldrd", "\t$Rt, $Rt2, [$Rn], $offset",
+                          "$Rn = $Rn_wb", []> {
+  bits<10> offset;
+  bits<4> Rn;
+  let Inst{23}    = offset{8};      // U bit
+  let Inst{22}    = offset{9};      // 1 == imm8, 0 == Rm
+  let Inst{19-16} = Rn;
+  let Inst{11-8}  = offset{7-4};    // imm7_4/zero
+  let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
+}
 } // mayLoad = 1, neverHasSideEffects = 1
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
