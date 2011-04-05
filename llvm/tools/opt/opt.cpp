@@ -133,11 +133,11 @@ static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 
 static cl::opt<bool>
-PrintBreakpoints("print-breakpoints-for-testing", 
+PrintBreakpoints("print-breakpoints-for-testing",
                  cl::desc("Print select breakpoints location for testing"));
 
 static cl::opt<std::string>
-DefaultDataLayout("default-data-layout", 
+DefaultDataLayout("default-data-layout",
           cl::desc("data layout string to use if not specified by module"),
           cl::value_desc("layout-string"), cl::init(""));
 
@@ -328,7 +328,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
           << "': Pass " << PassToPrint->getPassName() << ":\n";
 
     // Get and print pass...
-    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out, 
+    getAnalysisID<Pass>(PassToPrint->getTypeInfo()).print(Out,
             BB.getParent()->getParent());
     return false;
   }
@@ -479,7 +479,7 @@ int main(int argc, char **argv) {
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   LLVMContext &Context = getGlobalContext();
-  
+
   // Initialize passes
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
   initializeCore(Registry);
@@ -491,7 +491,7 @@ int main(int argc, char **argv) {
   initializeInstCombine(Registry);
   initializeInstrumentation(Registry);
   initializeTarget(Registry);
-  
+
   cl::ParseCommandLineOptions(argc, argv,
     "llvm .bc -> .bc modular optimizer and analysis printer\n");
 
@@ -549,12 +549,12 @@ int main(int argc, char **argv) {
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
   TargetLibraryInfo *TLI = new TargetLibraryInfo(Triple(M->getTargetTriple()));
-  
+
   // The -disable-simplify-libcalls flag actually disables all builtin optzns.
   if (DisableSimplifyLibCalls)
     TLI->disableAllFunctions();
   Passes.add(TLI);
-  
+
   // Add an appropriate TargetData instance for this module.
   TargetData *TD = 0;
   const std::string &ModuleDataLayout = M.get()->getDataLayout();
@@ -578,7 +578,7 @@ int main(int argc, char **argv) {
     if (!Out) {
       if (OutputFilename.empty())
         OutputFilename = "-";
-      
+
       std::string ErrorInfo;
       Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
                                      raw_fd_ostream::F_Binary));
