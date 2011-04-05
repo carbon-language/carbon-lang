@@ -6,7 +6,7 @@ define i32 @t1(i32 %c) nounwind readnone {
 entry:
 ; ARM: t1:
 ; ARM: mov r1, #101
-; ARM: orr r1, r1, #1, 24
+; ARM: orr r1, r1, #1, #24
 ; ARM: movgt r0, #123
 
 ; ARMT2: t1:
@@ -27,7 +27,7 @@ entry:
 ; ARM: t2:
 ; ARM: mov r0, #123
 ; ARM: movgt r0, #101
-; ARM: orrgt r0, r0, #1, 24
+; ARM: orrgt r0, r0, #1, #24
 
 ; ARMT2: t2:
 ; ARMT2: mov r0, #123

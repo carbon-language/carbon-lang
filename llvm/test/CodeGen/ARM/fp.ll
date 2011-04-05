@@ -51,7 +51,7 @@ entry:
 
 define float @h2() {
 ;CHECK: h2:
-;CHECK: mov r0, #254, 10
+;CHECK: mov r0, #254, #10
 entry:
         ret float 1.000000e+00
 }
