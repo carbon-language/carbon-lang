@@ -238,6 +238,7 @@ looking forward to the C++ committee finalizing the C++'0x standard.-->
 
 
 <!--=========================================================================-->
+<!--
 <div class="doc_subsection">
 <a name="klee">KLEE: A Symbolic Execution Virtual Machine</a>
 </div>
@@ -252,8 +253,7 @@ be used to verify some algorithms.
 </p>
 
 <p>UPDATE!</p>
-
-</div>
+</div>-->
 
 
 <!-- *********************************************************************** -->
@@ -299,7 +299,9 @@ in this section.
 <ul>
 <li><pre>
   last release for llvm-gcc
-TBAA
+TBAA: On by default in clang.  Disable it with -fno-strict-aliasing.
+  Could be more aggressive for structs.
+  
 Triple::normalize is new, llvm triples are always stored in normalized form internally.
 
 Triple x86_64--mingw64 is obsoleted. Use x86_64--mingw32 instead.
@@ -315,7 +317,8 @@ Much better debug info generated, particularly in optimized code situations.
 
 ARM Fast ISel
 
-ELF MC support
+ELF MC support: on by default in clang.  There are still known missing features
+  for human written assembly.
 
 X86: Reimplemented all of MMX to introduce a new LLVM IR x86_mmx type.  Now
   random types like &lt;2 x i32&gt; are not iseld to mmx without emms.
@@ -340,16 +343,57 @@ PointerTracking has been removed from mainline, moved to ClamAV.
   
 EarlyCSE pass.
 
+- DIBuilder provides simpler interface for front ends like Clang to encode debug info in LLVM IR.
+  - This interface hides implementation details (e.g. DIDerivedType, existence of compile unit etc..) that any front end should not know about.
+  For example,
+  Ty = DebugFactory.CreateDerivedType(DW_TAG_volatile_type,
+  findRegion(TYPE_CONTEXT(type)),
+  StringRef(),
+  getOrCreateFile(main_input_filename),
+  0 /*line no*/,
+  NodeSizeInBits(type),
+  NodeAlignInBits(type),
+  0 /*offset */,
+  0 /* flags */,
+  MainTy);
+  can be replaced by
+  DbgTy = DBuilder.createQualifiedType(DW_TAG_volatile_type, MainTy); 
+  
+PPC: Switched to MCInstPrinter, and MCCodeEmitter.  Ready to implement support
+  for directly writing out mach-o object files, but noone seems interested.
 
 ARM: Improved code generation for Cortex-A8 and Cortex-A9 CPUs.
   
 Scheduler now models operand latency and pipeline forwarding.
   
-Major regalloc rewrite, not on by default for 2.9.
+error_code + libsystem + PathV2 changes
+
+new macho-dump tool
+
+Major regalloc rewrite, not on by default for 2.9 and not advised to use it.
+ * New basic register allocator that can be used as a safe fallback when
+   debugging. Enable with -regalloc=basic.
+ * New infrastructure for live range splitting. SplitKit can break a live
+   interval into smaller pieces while preserving SSA form, and SpillPlacement
+   can help find the best split points. This is a work in progress so the API
+   is changing quickly.
+ * The inline spiller has learned to clean up after live range splitting. It
+   can hoist spills out of loops, and it can eliminate redundant spills.
+   Rematerialization works with live range splitting.
+ * New greedy register allocator using live range splitting. This will be the
+   default register allocator in the next LLVM release, but it is not turned on
+   by default in 2.9.
+
+ARM: __builtin_prefetch turns into prefetch instructions.
+  
 MC assembler support for 3dNow! and 3DNowA instructions.
+  
+tblgen support for assembler aliases: <a 
+  href="CodeGenerator.html#na_instparsing">MnemonicAlias and InstAlias</a>
   
 LoopIndexSplit pass was removed, unmaintained.
   
+include/llvm/System merged into include/llvm/Support.
  
 Win32 PE-COFF support in the MC assembler has made a lot of progress in the 2.9
   timeframe, but is still not generally useful.  Please see 
@@ -361,10 +405,19 @@ New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
 MicroBlaze: major updates for aggressive delay slot filler, MC-based assembly
    printing, assembly instruction parsing, ELF .o file emission, and MC
    instruction disassembler.
+  
+Countless ARM microoptimizations.
+
+Speedups to various mid-level passes:
+  GVN is much faster on functions with deep dominator trees / lots of BBs.
+  DomTree and DominatorFrontier are much faster to compute.
+  
+  
+new 'hotpatch' attribute: LangRef.html#fnattrs
 </pre></li>
 </ul>
   
-Still todo: [101025-110228]
+Still todo: [101129-110228]
 
 </div>
 
