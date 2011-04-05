@@ -410,6 +410,98 @@ public:
 };
 }
 
+static void DiagnoseUninitializedUse(Sema &S, const VarDecl *VD,
+                                     const Expr *E, bool &fixitIssued,
+                                     bool isAlwaysUninit) {
+  bool isSelfInit = false;
+
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (isAlwaysUninit) {
+      // Inspect the initializer of the variable declaration which is
+      // being referenced prior to its initialization. We emit
+      // specialized diagnostics for self-initialization, and we
+      // specifically avoid warning about self references which take the
+      // form of:
+      //
+      //   int x = x;
+      //
+      // This is used to indicate to GCC that 'x' is intentionally left
+      // uninitialized. Proven code paths which access 'x' in
+      // an uninitialized state after this will still warn.
+      //
+      // TODO: Should we suppress maybe-uninitialized warnings for
+      // variables initialized in this way?
+      if (const Expr *Initializer = VD->getInit()) {
+        if (DRE == Initializer->IgnoreParenImpCasts())
+          return;
+
+        ContainsReference CR(S.Context, DRE);
+        CR.Visit(const_cast<Expr*>(Initializer));
+        isSelfInit = CR.doesContainReference();
+      }
+      if (isSelfInit) {
+        S.Diag(DRE->getLocStart(),
+               diag::warn_uninit_self_reference_in_init)
+        << VD->getDeclName() << VD->getLocation() << DRE->getSourceRange();
+      } else {
+        S.Diag(DRE->getLocStart(), diag::warn_uninit_var)
+          << VD->getDeclName() << DRE->getSourceRange();
+      }
+    } else {
+      S.Diag(DRE->getLocStart(), diag::warn_maybe_uninit_var)
+        << VD->getDeclName() << DRE->getSourceRange();
+    }
+  } else {
+    const BlockExpr *BE = cast<BlockExpr>(E);
+    S.Diag(BE->getLocStart(),
+           isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
+                          : diag::warn_maybe_uninit_var_captured_by_block)
+      << VD->getDeclName();
+  }
+
+  // Report where the variable was declared when the use wasn't within
+  // the initializer of that declaration.
+  if (!isSelfInit)
+    S.Diag(VD->getLocStart(), diag::note_uninit_var_def)
+      << VD->getDeclName();
+
+  // Only report the fixit once.
+  if (fixitIssued)
+    return;
+
+  fixitIssued = true;
+
+  // Don't issue a fixit if there is already an initializer.
+  if (VD->getInit())
+    return;
+
+  // Suggest possible initialization (if any).
+  const char *initialization = 0;
+  QualType VariableTy = VD->getType().getCanonicalType();
+
+  if (VariableTy->getAs<ObjCObjectPointerType>()) {
+    // Check if 'nil' is defined.
+    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
+      initialization = " = nil";
+    else
+      initialization = " = 0";
+  }
+  else if (VariableTy->isRealFloatingType())
+    initialization = " = 0.0";
+  else if (VariableTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
+    initialization = " = false";
+  else if (VariableTy->isEnumeralType())
+    return;
+  else if (VariableTy->isScalarType())
+    initialization = " = 0";
+
+  if (initialization) {
+    SourceLocation loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
+    S.Diag(loc, diag::note_var_fixit_add_initialization)
+      << FixItHint::CreateInsertion(loc, initialization);
+  }
+}
+
 typedef std::pair<const Expr*, bool> UninitUse;
 
 namespace {
@@ -461,98 +553,9 @@ public:
       std::sort(vec->begin(), vec->end(), SLocSort());
       
       for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve; ++vi)
-      {
-        const bool isAlwaysUninit = vi->second;
-        bool isSelfInit = false;
+        DiagnoseUninitializedUse(S, vd, vi->first, fixitIssued,
+                                 /*isAlwaysUninit=*/vi->second);
 
-        if (const DeclRefExpr *dr = dyn_cast<DeclRefExpr>(vi->first)) {
-          if (isAlwaysUninit) {
-            // Inspect the initializer of the variable declaration which is
-            // being referenced prior to its initialization. We emit
-            // specialized diagnostics for self-initialization, and we
-            // specifically avoid warning about self references which take the
-            // form of:
-            //
-            //   int x = x;
-            //
-            // This is used to indicate to GCC that 'x' is intentionally left
-            // uninitialized. Proven code paths which access 'x' in
-            // an uninitialized state after this will still warn.
-            //
-            // TODO: Should we suppress maybe-uninitialized warnings for
-            // variables initialized in this way?
-            if (const Expr *E = vd->getInit()) {
-              if (dr == E->IgnoreParenImpCasts())
-                continue;
-
-              ContainsReference CR(S.Context, dr);
-              CR.Visit(const_cast<Expr*>(E));
-              isSelfInit = CR.doesContainReference();
-            }
-            if (isSelfInit) {
-              S.Diag(dr->getLocStart(), 
-                     diag::warn_uninit_self_reference_in_init)
-              << vd->getDeclName() << vd->getLocation() << dr->getSourceRange();             
-            } else {
-              S.Diag(dr->getLocStart(), diag::warn_uninit_var)
-                << vd->getDeclName() << dr->getSourceRange();          
-            }
-          }
-          else {
-            S.Diag(dr->getLocStart(), diag::warn_maybe_uninit_var)
-              << vd->getDeclName() << dr->getSourceRange();          
-          }          
-        }
-        else {
-          const BlockExpr *be = cast<BlockExpr>(vi->first);
-          S.Diag(be->getLocStart(),
-                 isAlwaysUninit ? diag::warn_uninit_var_captured_by_block
-                                : diag::warn_maybe_uninit_var_captured_by_block)
-            << vd->getDeclName();
-        }
-        
-        // Report where the variable was declared when the use wasn't within
-        // the initializer of that declaration.
-        if (!isSelfInit)
-          S.Diag(vd->getLocStart(), diag::note_uninit_var_def)
-            << vd->getDeclName();
-
-        // Only report the fixit once.
-        if (fixitIssued)
-          continue;
-      
-        fixitIssued = true;
-        
-        // Don't issue a fixit if there is already an initializer.
-        if (vd->getInit())
-          continue;
-
-        // Suggest possible initialization (if any).
-        const char *initialization = 0;
-        QualType vdTy = vd->getType().getCanonicalType();
-
-        if (vdTy->getAs<ObjCObjectPointerType>()) {
-          // Check if 'nil' is defined.
-          if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
-            initialization = " = nil";
-          else
-            initialization = " = 0";
-        }
-        else if (vdTy->isRealFloatingType())
-          initialization = " = 0.0";
-        else if (vdTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
-          initialization = " = false";
-        else if (vdTy->isEnumeralType())
-          continue;
-        else if (vdTy->isScalarType())
-          initialization = " = 0";
-      
-        if (initialization) {
-          SourceLocation loc = S.PP.getLocForEndOfToken(vd->getLocEnd());
-          S.Diag(loc, diag::note_var_fixit_add_initialization)
-            << FixItHint::CreateInsertion(loc, initialization);
-        }
-      }
       delete vec;
     }
     delete uses;
