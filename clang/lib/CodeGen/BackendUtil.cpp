@@ -108,9 +108,9 @@ void EmitAssemblyHelper::CreatePasses() {
     OptLevel = 0;
     Inlining = CodeGenOpts.NoInlining;
   }
-  
+
   FunctionPassManager *FPM = getPerFunctionPasses();
-  
+
   TargetLibraryInfo *TLI =
     new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
   if (!CodeGenOpts.SimplifyLibCalls)
@@ -146,7 +146,7 @@ void EmitAssemblyHelper::CreatePasses() {
   }
 
   PassManager *MPM = getPerModulePasses();
-  
+
   TLI = new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
