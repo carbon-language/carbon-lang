@@ -305,6 +305,10 @@ public:
   /// it returns end()
   iterator getFirstTerminator();
 
+  const_iterator getFirstTerminator() const {
+    return const_cast<MachineBasicBlock*>(this)->getFirstTerminator();
+  }
+
   /// getLastNonDebugInstr - returns an iterator to the last non-debug
   /// instruction in the basic block, or end()
   iterator getLastNonDebugInstr();

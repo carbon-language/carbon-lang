@@ -93,15 +93,19 @@ private:
   // Current live interval.
   const LiveInterval *CurLI;
 
+  /// LastSplitPoint - Last legal split point in each basic block in the current
+  /// function. The first entry is the first terminator, the second entry is the
+  /// last valid split point for a variable that is live in to a landing pad
+  /// successor.
+  SmallVector<std::pair<SlotIndex, SlotIndex>, 8> LastSplitPoint;
+
+  SlotIndex computeLastSplitPoint(unsigned Num);
+
   // Sumarize statistics by counting instructions using CurLI.
   void analyzeUses();
 
   /// calcLiveBlockInfo - Compute per-block information about CurLI.
   bool calcLiveBlockInfo();
-
-  /// canAnalyzeBranch - Return true if MBB ends in a branch that can be
-  /// analyzed.
-  bool canAnalyzeBranch(const MachineBasicBlock *MBB);
 
 public:
   SplitAnalysis(const VirtRegMap &vrm, const LiveIntervals &lis,
@@ -117,6 +121,16 @@ public:
 
   /// getParent - Return the last analyzed interval.
   const LiveInterval &getParent() const { return *CurLI; }
+
+  /// getLastSplitPoint - Return that base index of the last valid split point
+  /// in the basic block numbered Num.
+  SlotIndex getLastSplitPoint(unsigned Num) {
+    // Inline the common simple case.
+    if (LastSplitPoint[Num].first.isValid() &&
+        !LastSplitPoint[Num].second.isValid())
+      return LastSplitPoint[Num].first;
+    return computeLastSplitPoint(Num);
+  }
 
   /// hasUses - Return true if MBB has any uses of CurLI.
   bool hasUses(const MachineBasicBlock *MBB) const {

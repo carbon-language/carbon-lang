@@ -48,7 +48,8 @@ SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm,
     LIS(lis),
     Loops(mli),
     TII(*MF.getTarget().getInstrInfo()),
-    CurLI(0) {}
+    CurLI(0),
+    LastSplitPoint(MF.getNumBlockIDs()) {}
 
 void SplitAnalysis::clear() {
   UseSlots.clear();
@@ -58,10 +59,39 @@ void SplitAnalysis::clear() {
   CurLI = 0;
 }
 
-bool SplitAnalysis::canAnalyzeBranch(const MachineBasicBlock *MBB) {
-  MachineBasicBlock *T, *F;
-  SmallVector<MachineOperand, 4> Cond;
-  return !TII.AnalyzeBranch(const_cast<MachineBasicBlock&>(*MBB), T, F, Cond);
+SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
+  const MachineBasicBlock *MBB = MF.getBlockNumbered(Num);
+  const MachineBasicBlock *LPad = MBB->getLandingPadSuccessor();
+  std::pair<SlotIndex, SlotIndex> &LSP = LastSplitPoint[Num];
+
+  // Compute split points on the first call. The pair is independent of the
+  // current live interval.
+  if (!LSP.first.isValid()) {
+    MachineBasicBlock::const_iterator FirstTerm = MBB->getFirstTerminator();
+    if (FirstTerm == MBB->end())
+      LSP.first = LIS.getMBBEndIdx(MBB);
+    else
+      LSP.first = LIS.getInstructionIndex(FirstTerm);
+
+    // If there is a landing pad successor, also find the call instruction.
+    if (!LPad)
+      return LSP.first;
+    // There may not be a call instruction (?) in which case we ignore LPad.
+    LSP.second = LSP.first;
+    for (MachineBasicBlock::const_iterator I = FirstTerm, E = MBB->begin();
+         I != E; --I)
+      if (I->getDesc().isCall()) {
+        LSP.second = LIS.getInstructionIndex(I);
+        break;
+      }
+  }
+
+  // If CurLI is live into a landing pad successor, move the last split point
+  // back to the call that may throw.
+  if (LPad && LSP.second.isValid() && !LIS.isLiveInToMBB(*CurLI, LPad))
+    return LSP.second;
+  else
+    return LSP.first;
 }
 
 /// analyzeUses - Count instructions, basic blocks, and loops using CurLI.
@@ -125,11 +155,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     // all successor blocks. If interference reaches LastSplitPoint, it is not
     // possible to insert a split or reload that makes CurLI live in the
     // outgoing bundle.
-    MachineBasicBlock::iterator LSP = LIS.getLastSplitPoint(*CurLI, BI.MBB);
-    if (LSP == BI.MBB->end())
-      BI.LastSplitPoint = Stop;
-    else
-      BI.LastSplitPoint = LIS.getInstructionIndex(LSP);
+    BI.LastSplitPoint = getLastSplitPoint(BI.MBB->getNumber());
 
     // LVI is the first live segment overlapping MBB.
     BI.LiveIn = LVI->start <= Start;
