@@ -120,14 +120,14 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
   NumEdgesInserted = 0;
 
   std::vector<Constant*> Initializer(NumEdges);
-  Constant* Zero = ConstantInt::get(Int32, 0);
-  Constant* Uncounted = ConstantInt::get(Int32, ProfileInfoLoader::Uncounted);
+  Constant *Zero = ConstantInt::get(Int32, 0);
+  Constant *Uncounted = ConstantInt::get(Int32, ProfileInfoLoader::Uncounted);
 
   // Instrument all of the edges not in MST...
   unsigned i = 0;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration()) continue;
-    DEBUG(dbgs()<<"Working on "<<F->getNameStr()<<"\n");
+    DEBUG(dbgs() << "Working on " << F->getNameStr() << "\n");
 
     // Calculate a Maximum Spanning Tree with the edge weights determined by
     // ProfileEstimator. ProfileEstimator also assign weights to the virtual
@@ -139,17 +139,17 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     ProfileInfo::EdgeWeights ECs =
       getAnalysis<ProfileInfo>(*F).getEdgeWeights(F);
     std::vector<ProfileInfo::EdgeWeight> EdgeVector(ECs.begin(), ECs.end());
-    MaximumSpanningTree<BasicBlock> MST (EdgeVector);
-    std::stable_sort(MST.begin(),MST.end());
+    MaximumSpanningTree<BasicBlock> MST(EdgeVector);
+    std::stable_sort(MST.begin(), MST.end());
 
     // Check if (0,entry) not in the MST. If not, instrument edge
     // (IncrementCounterInBlock()) and set the counter initially to zero, if
     // the edge is in the MST the counter is initialised to -1.
 
     BasicBlock *entry = &(F->getEntryBlock());
-    ProfileInfo::Edge edge = ProfileInfo::getEdge(0,entry);
+    ProfileInfo::Edge edge = ProfileInfo::getEdge(0, entry);
     if (!std::binary_search(MST.begin(), MST.end(), edge)) {
-      printEdgeCounter(edge,entry,i);
+      printEdgeCounter(edge, entry, i);
       IncrementCounterInBlock(entry, i, Counters); ++NumEdgesInserted;
       Initializer[i++] = (Zero);
     } else{
@@ -170,9 +170,9 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
       // has no successors, the virtual edge (BB,0) is processed.
       TerminatorInst *TI = BB->getTerminator();
       if (TI->getNumSuccessors() == 0) {
-        ProfileInfo::Edge edge = ProfileInfo::getEdge(BB,0);
+        ProfileInfo::Edge edge = ProfileInfo::getEdge(BB, 0);
         if (!std::binary_search(MST.begin(), MST.end(), edge)) {
-          printEdgeCounter(edge,BB,i);
+          printEdgeCounter(edge, BB, i);
           IncrementCounterInBlock(BB, i, Counters); ++NumEdgesInserted;
           Initializer[i++] = (Zero);
         } else{
@@ -195,11 +195,11 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
           // otherwise insert it in the successor block.
           if (TI->getNumSuccessors() == 1) {
             // Insert counter at the start of the block
-            printEdgeCounter(edge,BB,i);
+            printEdgeCounter(edge, BB, i);
             IncrementCounterInBlock(BB, i, Counters); ++NumEdgesInserted;
           } else {
             // Insert counter at the start of the block
-            printEdgeCounter(edge,Succ,i);
+            printEdgeCounter(edge, Succ, i);
             IncrementCounterInBlock(Succ, i, Counters); ++NumEdgesInserted;
           }
           Initializer[i++] = (Zero);
@@ -212,9 +212,9 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
 
   // Check if the number of edges counted at first was the number of edges we
   // considered for instrumentation.
-  assert(i==NumEdges && "the number of edges in counting array is wrong");
+  assert(i == NumEdges && "the number of edges in counting array is wrong");
 
-  // Assing the now completely defined initialiser to the array.
+  // Assign the now completely defined initialiser to the array.
   Constant *init = ConstantArray::get(ATy, Initializer);
   Counters->setInitializer(init);
 

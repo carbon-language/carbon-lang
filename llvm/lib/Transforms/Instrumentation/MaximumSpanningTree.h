@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This module privides means for calculating a maximum spanning tree for a
+// This module provides means for calculating a maximum spanning tree for a
 // given set of weighted edges. The type parameter T is the type of a node.
 //
 //===----------------------------------------------------------------------===//
