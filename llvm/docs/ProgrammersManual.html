@@ -56,6 +56,7 @@ option</a></li>
     <ul>
     <li><a href="#ds_sequential">Sequential Containers (std::vector, std::list, etc)</a>
     <ul>
+      <li><a href="#dss_arrayref">llvm/ADT/ArrayRef.h</a></li>
       <li><a href="#dss_fixedarrays">Fixed Size Arrays</a></li>
       <li><a href="#dss_heaparrays">Heap Allocated Arrays</a></li>
       <li><a href="#dss_smallvector">"llvm/ADT/SmallVector.h"</a></li>
@@ -889,6 +890,21 @@ There are a variety of sequential containers available for you, based on your
 needs.  Pick the first in this section that will do what you want.
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_arrayref">llvm/ADT/ArrayRef.h</a>
+</div>
+
+<div class="doc_text">
+<p>The llvm::ArrayRef class is the preferred class to use in an interface that
+   accepts a sequential list of elements in memory and just reads from them.  By
+   taking an ArrayRef, the API can be passed a fixed size array, an std::vector,
+   an llvm::SmallVector and anything else that is contiguous in memory.
+</p>
+</div>
+
+
+  
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
   <a name="dss_fixedarrays">Fixed Size Arrays</a>
