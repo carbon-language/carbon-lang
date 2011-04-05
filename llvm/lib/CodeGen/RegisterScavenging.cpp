@@ -126,9 +126,10 @@ void RegScavenger::forward() {
     MBBI = MBB->begin();
     Tracking = true;
   } else {
-    assert(MBBI != MBB->end() && "Already at the end of the basic block!");
+    assert(MBBI != MBB->end() && "Already past the end of the basic block!");
     MBBI = llvm::next(MBBI);
   }
+  assert(MBBI != MBB->end() && "Already at the end of the basic block!");
 
   MachineInstr *MI = MBBI;
 
