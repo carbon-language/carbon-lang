@@ -206,21 +206,23 @@ EmulateInstruction::SetWriteRegCallback (WriteRegister write_reg_callback)
 //
 
 size_t 
-EmulateInstruction::ReadMemoryProcess (void *baton,
-                                       const Context &context, 
-                                       lldb::addr_t addr, 
-                                       void *dst,
-                                       size_t length)
+EmulateInstruction::ReadMemoryFrame (void *baton,
+                                     const Context &context, 
+                                     lldb::addr_t addr, 
+                                     void *dst,
+                                     size_t length)
 {
-    Process *process = (Process *) baton;
-    
-    if (!process)
+    if (!baton)
         return 0;
     
+    
+    StackFrame *frame = (StackFrame *) baton;
+
     DataBufferSP data_sp (new DataBufferHeap (length, '\0'));
     Error error;
     
-    size_t bytes_read = process->ReadMemory (addr, data_sp->GetBytes(), data_sp->GetByteSize(), error);
+    size_t bytes_read = frame->GetThread().GetProcess().ReadMemory (addr, data_sp->GetBytes(), data_sp->GetByteSize(),
+                                                                    error);
     
     if (bytes_read > 0)
         ((DataBufferHeap *) data_sp.get())->CopyData (dst, length);
@@ -229,17 +231,17 @@ EmulateInstruction::ReadMemoryProcess (void *baton,
 }
 
 size_t 
-EmulateInstruction::WriteMemoryProcess (void *baton,
-                                        const Context &context, 
-                                        lldb::addr_t addr, 
-                                        const void *dst,
-                                        size_t length)
+EmulateInstruction::WriteMemoryFrame (void *baton,
+                                      const Context &context, 
+                                      lldb::addr_t addr, 
+                                      const void *dst,
+                                      size_t length)
 {
-    Process *process = (Process *) baton;
-    
-    if (!process)
+    if (!baton)
         return 0;
     
+    StackFrame *frame = (StackFrame *) baton;
+
     lldb::DataBufferSP data_sp (new DataBufferHeap (dst, length));
     if (data_sp)
     {
@@ -247,7 +249,8 @@ EmulateInstruction::WriteMemoryProcess (void *baton,
         if (length > 0)
         {
             Error error;
-            size_t bytes_written = process->WriteMemory (addr, data_sp->GetBytes(), length, error);
+            size_t bytes_written = frame->GetThread().GetProcess().WriteMemory (addr, data_sp->GetBytes(), length, 
+                                                                                error);
             
             return bytes_written;
         }
@@ -257,17 +260,16 @@ EmulateInstruction::WriteMemoryProcess (void *baton,
 }
 
 bool   
-EmulateInstruction::ReadRegisterProcess  (void *baton,
-                                          uint32_t reg_kind, 
-                                          uint32_t reg_num,
-                                          uint64_t &reg_value)
+EmulateInstruction::ReadRegisterFrame  (void *baton,
+                                        uint32_t reg_kind, 
+                                        uint32_t reg_num,
+                                        uint64_t &reg_value)
 {
-    Process *process = (Process *) baton;
-    if (!process)
+    if (!baton)
         return false;
         
-    Thread *thread = process->CalculateThread ();
-    RegisterContext *reg_context = thread->GetRegisterContext().get();
+    StackFrame *frame = (StackFrame *) baton;
+    RegisterContext *reg_context = frame->GetRegisterContext().get();
     Scalar value;
     
     
@@ -281,15 +283,17 @@ EmulateInstruction::ReadRegisterProcess  (void *baton,
 }
 
 bool   
-EmulateInstruction::WriteRegisterProcess (void *baton,
-                                          const Context &context, 
-                                          uint32_t reg_kind, 
-                                          uint32_t reg_num,
-                                          uint64_t reg_value)
+EmulateInstruction::WriteRegisterFrame (void *baton,
+                                        const Context &context, 
+                                        uint32_t reg_kind, 
+                                        uint32_t reg_num,
+                                        uint64_t reg_value)
 {
-    Process *process = (Process *) baton;
-    Thread *thread = process->CalculateThread ();
-    RegisterContext *reg_context = thread->GetRegisterContext().get();
+    if (!baton)
+        return false;
+        
+    StackFrame *frame = (StackFrame *) baton;
+    RegisterContext *reg_context = frame->GetRegisterContext().get();
     Scalar value (reg_value);
     
     return reg_context->WriteRegisterValue (reg_num, value);

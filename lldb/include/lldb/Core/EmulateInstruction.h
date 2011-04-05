@@ -460,32 +460,32 @@ public:
 
 
     static size_t 
-    ReadMemoryProcess (void *baton,
-                       const Context &context, 
-                       lldb::addr_t addr, 
-                       void *dst,
-                       size_t length);
+    ReadMemoryFrame (void *baton,
+                     const Context &context, 
+                     lldb::addr_t addr, 
+                     void *dst,
+                     size_t length);
     
     static size_t 
-    WriteMemoryProcess (void *baton,
+    WriteMemoryFrame (void *baton,
+                      const Context &context, 
+                      lldb::addr_t addr, 
+                      const void *dst,
+                      size_t length);
+    
+    static bool   
+    ReadRegisterFrame  (void *baton,
+                        uint32_t reg_kind, 
+                        uint32_t reg_num,
+                        uint64_t &reg_value);
+    
+    
+    static bool   
+    WriteRegisterFrame (void *baton,
                         const Context &context, 
-                        lldb::addr_t addr, 
-                        const void *dst,
-                        size_t length);
-    
-    static bool   
-    ReadRegisterProcess  (void *baton,
-                          uint32_t reg_kind, 
-                          uint32_t reg_num,
-                          uint64_t &reg_value);
-    
-    
-    static bool   
-    WriteRegisterProcess (void *baton,
-                          const Context &context, 
-                          uint32_t reg_kind, 
-                          uint32_t reg_num,
-                          uint64_t reg_value);
+                        uint32_t reg_kind, 
+                        uint32_t reg_num,
+                        uint64_t reg_value);
                           
     static size_t 
     ReadMemoryDefault (void *baton,
