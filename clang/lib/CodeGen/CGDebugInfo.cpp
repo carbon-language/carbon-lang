@@ -1534,9 +1534,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(RegionStack.size());
 
   const Decl *D = GD.getDecl();
-  if (const ClassTemplateSpecializationDecl *TSpecial
-      = dyn_cast<ClassTemplateSpecializationDecl>(D))
-    assert (0 && "Got one!");
 
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(CurLoc);
