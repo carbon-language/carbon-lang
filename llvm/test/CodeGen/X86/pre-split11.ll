@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+sse2 -pre-alloc-split | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+sse2 -pre-alloc-split -regalloc=linearscan | FileCheck %s
 
 @.str = private constant [28 x i8] c"\0A\0ADOUBLE            D = %f\0A\00", align 1 ; <[28 x i8]*> [#uses=1]
 @.str1 = private constant [37 x i8] c"double to long    l1 = %ld\09\09(0x%lx)\0A\00", align 8 ; <[37 x i8]*> [#uses=1]

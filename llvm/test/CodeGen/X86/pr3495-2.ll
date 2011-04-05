@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of loads added} | grep 1
+; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats -regalloc=linearscan |& grep {Number of loads added} | grep 1
 ; PR3495
 ;
 ; This test may not be testing what it was supposed to test.

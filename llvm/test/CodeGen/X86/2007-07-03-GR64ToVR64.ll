@@ -1,6 +1,8 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rsi, %mm0}
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rdi, %mm1}
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {paddusw	%mm0, %mm1}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | FileCheck %s
+
+; CHECK: movd %rsi, [[MM0:%mm[0-9]+]]
+; CHECK: movd %rdi, [[MM1:%mm[0-9]+]]
+; CHECK: paddusw [[MM0]], [[MM1]]
 
 @R = external global x86_mmx		; <x86_mmx*> [#uses=1]
 

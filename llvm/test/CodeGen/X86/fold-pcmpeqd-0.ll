@@ -1,10 +1,20 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah  | grep orps | grep CPI0_2  | count 2
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -regalloc=linearscan | FileCheck --check-prefix=I386 %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck --check-prefix=X86-64 %s
 
 ; This testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.
 ; For i386, cp load of -1 are folded.
+
+; With -regalloc=greedy, the live range is split before spilling, so the first
+; pcmpeq doesn't get folded as a constant pool load.
+
+; I386-NOT: pcmpeqd
+; I386: orps LCPI0_2, %xmm
+; I386-NOT: pcmpeqd
+; I386: orps LCPI0_2, %xmm
+
+; X86-64: pcmpeqd
+; X86-64-NOT: pcmpeqd
 
 	%struct.__ImageExecInfo = type <{ <4 x i32>, <4 x float>, <2 x i64>, i8*, i8*, i8*, i32, i32, i32, i32, i32 }>
 	%struct._cl_image_format_t = type <{ i32, i32, i32 }>

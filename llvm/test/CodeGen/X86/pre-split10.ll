@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -regalloc=linearscan
 
 define i32 @main(i32 %argc, i8** %argv) nounwind {
 entry:

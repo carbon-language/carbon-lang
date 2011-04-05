@@ -4,10 +4,10 @@
 ; By starting the IV at -64 instead of 0, a cmp is eliminated,
 ; as the flags from the add can be used directly.
 
-; STATIC: movl    $-64, %ecx
+; STATIC: movl    $-64, [[ECX:%e..]]
 
-; STATIC: movl    %eax, _state+76(%ecx)
-; STATIC: addl    $16, %ecx
+; STATIC: movl    [[EAX:%e..]], _state+76([[ECX]])
+; STATIC: addl    $16, [[ECX]]
 ; STATIC: jne
 
 ; In PIC mode the symbol can't be folded, so the change-compare-stride

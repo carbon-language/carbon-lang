@@ -168,12 +168,12 @@ define internal void @t10() nounwind {
         store <4 x i16> %6, <4 x i16>* @g2, align 8
         ret void
 ; X64: 	t10:
-; X64: 		pextrw	$4, %xmm0, %eax
-; X64: 		unpcklpd %xmm1, %xmm1
-; X64: 		pshuflw	$8, %xmm1, %xmm1
-; X64: 		pinsrw	$2, %eax, %xmm1
-; X64: 		pextrw	$6, %xmm0, %eax
-; X64: 		pinsrw	$3, %eax, %xmm1
+; X64: 		pextrw	$4, [[X0:%xmm[0-9]+]], %eax
+; X64: 		unpcklpd [[X1:%xmm[0-9]+]]
+; X64: 		pshuflw	$8, [[X1]], [[X1]]
+; X64: 		pinsrw	$2, %eax, [[X1]]
+; X64: 		pextrw	$6, [[X0]], %eax
+; X64: 		pinsrw	$3, %eax, [[X1]]
 }
 
 

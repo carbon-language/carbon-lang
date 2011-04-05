@@ -40,10 +40,10 @@ entry:
 ; W64: subq  %rax, %rsp
 ; W64: movq  %rsp, %rax
 
-; EFI: leaq  15(%rcx), %rax
-; EFI: andq  $-16, %rax
+; EFI: leaq  15(%rcx), [[R1:%r..]]
+; EFI: andq  $-16, [[R1]]
 ; EFI: movq  %rsp, [[R64:%r..]]
-; EFI: subq  %rax, [[R64]]
+; EFI: subq  [[R1]], [[R64]]
 ; EFI: movq  [[R64]], %rsp
 
   %r = call i64 @bar(i64 %n, i64 %x, i64 %n, i8* %buf0, i8* %buf1) nounwind

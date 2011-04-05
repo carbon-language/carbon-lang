@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -relocation-model=pic -disable-fp-elim | FileCheck %s -check-prefix=X86-64
 
 ; MachineLICM should be able to hoist loop invariant reload out of the loop.
+; Only linear scan needs this, -regalloc=greedy sinks the spill instead.
 ; rdar://7233099
 
 %struct.FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
@@ -68,10 +69,12 @@ bb26.preheader:                                   ; preds = %imix_test.exit
 
 bb23:                                             ; preds = %imix_test.exit
   unreachable
+; Verify that there are no loads inside the loop.
 ; X86-32: %bb26.preheader
-; X86-32: movl -16(%ebp),
-; X86-32-NEXT: .align 4
-; X86-32-NEXT: %bb28
+; X86-32: .align 4
+; X86-32-NOT: (%esp),
+; X86-32-NOT: (%ebp),
+; X86-32: jmp
 
 bb28:                                             ; preds = %bb28, %bb26.preheader
   %counter.035 = phi i32 [ %3, %bb28 ], [ 0, %bb26.preheader ] ; <i32> [#uses=2]

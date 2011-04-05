@@ -6,15 +6,15 @@
 
 ; Check that lowered arguments on the stack do not overwrite each other.
 ; Add %in1 %p1 to a different temporary register (%eax).
-; CHECK: movl  [[A1:32|144]](%rsp), %eax
+; CHECK: movl  [[A1:32|144]](%rsp), [[R1:%e..]]
 ; Move param %in1 to temp register (%r10d).
-; CHECK: movl  [[A2:40|152]](%rsp), %r10d
+; CHECK: movl  [[A2:40|152]](%rsp), [[R2:%[a-z0-9]+]]
 ; Add %in1 %p1 to a different temporary register (%eax).
-; CHECK: addl {{%edi|%ecx}}, %eax
+; CHECK: addl {{%edi|%ecx}}, [[R1]]
 ; Move param %in2 to stack.
-; CHECK: movl  %r10d, [[A1]](%rsp)
+; CHECK: movl  [[R2]], [[A1]](%rsp)
 ; Move result of addition to stack.
-; CHECK: movl  %eax, [[A2]](%rsp)
+; CHECK: movl  [[R1]], [[A2]](%rsp)
 ; Eventually, do a TAILCALL
 ; CHECK: TAILCALL
 

@@ -45,8 +45,8 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-NEXT:         align
 ; CHECK-NEXT: BB1_2:
 ; CHECK-NEXT:         callq
-; CHECK-NEXT:         incl    [[BX:%ebx|%esi]]
-; CHECK-NEXT:         cmpl    [[R14:%r14d|%edi]], [[BX]]
+; CHECK-NEXT:         incl    [[BX:%[a-z0-9]+]]
+; CHECK-NEXT:         cmpl    [[R14:%[a-z0-9]+]], [[BX]]
 ; CHECK-NEXT:         movq    %rax, %r{{di|cx}}
 ; CHECK-NEXT:         jl
 

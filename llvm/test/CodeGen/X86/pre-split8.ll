@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -regalloc=linearscan -stats |& \
 ; RUN:   grep {pre-alloc-split} | grep {Number of intervals split} | grep 1
 
 @current_surfaces.b = external global i1		; <i1*> [#uses=1]

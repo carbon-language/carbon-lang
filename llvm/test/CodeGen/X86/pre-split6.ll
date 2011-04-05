@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -pre-alloc-split | grep {divsd	24} | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -pre-alloc-split -regalloc=linearscan | grep {divsd	24} | count 1
 
 @current_surfaces.b = external global i1		; <i1*> [#uses=1]
 

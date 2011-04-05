@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah -regalloc=linearscan | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -regalloc=linearscan | FileCheck %s
 
 ; This testcase should need to spill the -1 value on both x86-32 and x86-64,
 ; so it shouldn't use pcmpeqd to materialize an all-ones vector; it

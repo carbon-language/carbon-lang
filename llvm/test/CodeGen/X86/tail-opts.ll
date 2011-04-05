@@ -153,16 +153,20 @@ bb30:
 ; an unconditional jump to complete a two-way conditional branch.
 
 ; CHECK: c_expand_expr_stmt:
-; CHECK:        jmp .LBB3_11
-; CHECK-NEXT: .LBB3_9:
-; CHECK-NEXT:   movq 8(%rax), %rax
-; CHECK-NEXT:   xorb %dl, %dl
-; CHECK-NEXT:   movb 16(%rax), %al
-; CHECK-NEXT:   cmpb $16, %al
-; CHECK-NEXT:   je .LBB3_11
-; CHECK-NEXT:   cmpb $23, %al
-; CHECK-NEXT:   jne .LBB3_14
-; CHECK-NEXT: .LBB3_11:
+;
+; This test only works when register allocation happens to use %rax for both
+; load addresses.
+;
+; CHE:        jmp .LBB3_11
+; CHE-NEXT: .LBB3_9:
+; CHE-NEXT:   movq 8(%rax), %rax
+; CHE-NEXT:   xorb %dl, %dl
+; CHE-NEXT:   movb 16(%rax), %al
+; CHE-NEXT:   cmpb $16, %al
+; CHE-NEXT:   je .LBB3_11
+; CHE-NEXT:   cmpb $23, %al
+; CHE-NEXT:   jne .LBB3_14
+; CHE-NEXT: .LBB3_11:
 
 %0 = type { %struct.rtx_def* }
 %struct.lang_decl = type opaque

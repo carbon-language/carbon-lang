@@ -4,8 +4,9 @@
 ; Full strength reduction wouldn't reduce register pressure, so LSR should
 ; stick with indexing here.
 
-; CHECK: movaps        (%{{rsi|rdx}},%rax,4), %xmm3
-; CHECK: movaps        %xmm3, (%{{rdi|rcx}},%rax,4)
+; CHECK: movaps        (%{{rsi|rdx}},%rax,4), [[X3:%xmm[0-9]+]]
+; CHECK: movaps
+; CHECK:        [[X3]], (%{{rdi|rcx}},%rax,4)
 ; CHECK: addq  $4, %rax
 ; CHECK: cmpl  %eax, (%{{rdx|r8}})
 ; CHECK-NEXT: jg

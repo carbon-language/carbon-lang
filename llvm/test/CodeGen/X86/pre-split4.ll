@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -regalloc=linearscan -stats |& \
 ; RUN:   grep {pre-alloc-split} | grep {Number of intervals split} | grep 2
 
 define i32 @main(i32 %argc, i8** %argv) nounwind {
