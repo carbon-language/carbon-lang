@@ -29,6 +29,9 @@
 using namespace llvm;
 using namespace llvm::object;
 
+// Empty out-of-line virtual destructor as the key function.
+RTDyldMemoryManager::~RTDyldMemoryManager() {}
+
 namespace llvm {
 class RuntimeDyldImpl {
   unsigned CPUType;
