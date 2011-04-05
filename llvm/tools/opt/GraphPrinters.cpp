@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/ToolOutputFile.h"
 using namespace llvm;
 
@@ -103,13 +103,11 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<DominanceFrontier>();
 
     }
 
     virtual bool runOnFunction(Function &F) {
       getAnalysis<DominatorTree>().dump();
-      getAnalysis<DominanceFrontier>().dump();
       return false;
     }
   };

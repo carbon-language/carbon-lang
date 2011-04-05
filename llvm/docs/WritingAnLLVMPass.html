@@ -1207,17 +1207,6 @@ the fact that it hacks on the CFG.
 <div class="doc_text">
 
 <div class="doc_code"><pre>
-  <i>// This is an example implementation from an analysis, which does not modify
-  // the program at all, yet has a prerequisite.</i>
-  <b>void</b> <a href="http://llvm.org/doxygen/classllvm_1_1PostDominanceFrontier.html">PostDominanceFrontier</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
-    AU.setPreservesAll();
-    AU.addRequired&lt;<a href="http://llvm.org/doxygen/classllvm_1_1PostDominatorTree.html">PostDominatorTree</a>&gt;();
-  }
-</pre></div>
-
-<p>and:</p>
-
-<div class="doc_code"><pre>
   <i>// This example modifies the program, but does not modify the CFG</i>
   <b>void</b> <a href="http://llvm.org/doxygen/structLICM.html">LICM</a>::getAnalysisUsage(AnalysisUsage &amp;AU) <b>const</b> {
     AU.setPreservesCFG();

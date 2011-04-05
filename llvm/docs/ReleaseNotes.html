@@ -427,6 +427,7 @@ Speedups to various mid-level passes:
   GVN is much faster on functions with deep dominator trees / lots of BBs.
   DomTree and DominatorFrontier are much faster to compute, and preserved by
     more passes (so they are computed less often)
+  SRoA is also much faster and doesn't use DominanceFrontier.
   
   
 new 'hotpatch' attribute: LangRef.html#fnattrs
@@ -455,6 +456,9 @@ X86: Much better codegen for several cases using adc/sbb instead of cmovs for
 MVT::Flag renamed to MVT::Glue
   
 Removed the PartialSpecialization pass, it was unmaintained and buggy.
+  
+SPARC: Many improvements, including using the Y registers for multiplications
+  and addition of a simple delay slot filler.
   
 </pre></li>
 </ul>
