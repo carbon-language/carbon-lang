@@ -404,7 +404,7 @@ DisassemblerLLVM::CreateInstance(const ArchSpec &arch)
 {
     std::auto_ptr<DisassemblerLLVM> disasm_ap (new DisassemblerLLVM(arch));
  
-    if (disasm_ap->IsValid())
+    if (disasm_ap.get() && disasm_ap->IsValid())
         return disasm_ap.release();
 
     return NULL;

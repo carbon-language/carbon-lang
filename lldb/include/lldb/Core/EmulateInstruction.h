@@ -10,7 +10,10 @@
 #ifndef lldb_EmulateInstruction_h_
 #define lldb_EmulateInstruction_h_
 
+#include <string>
+
 #include "lldb/lldb-public.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/Opcode.h"
 
@@ -354,6 +357,9 @@ public:
         
     };
 
+    static void
+    PrintContext (const char *context_type, const Context &context);
+    
     typedef size_t (*ReadMemory) (void *baton,
                                   const Context &context, 
                                   lldb::addr_t addr, 
@@ -379,11 +385,16 @@ public:
 
     EmulateInstruction (lldb::ByteOrder byte_order,
                         uint32_t addr_byte_size,
+                        const ArchSpec &arch,
                         void *baton,
                         ReadMemory read_mem_callback,
                         WriteMemory write_mem_callback,
                         ReadRegister read_reg_callback,
                         WriteRegister write_reg_callback);
+                        
+    EmulateInstruction (lldb::ByteOrder byte_order,
+                        uint32_t addr_byte_size,
+                        const ArchSpec &arch);
 
     virtual ~EmulateInstruction()
     {
@@ -396,7 +407,13 @@ public:
     ReadInstruction () = 0;
 
     virtual bool
+    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr) = 0;
+
+    virtual bool
     EvaluateInstruction () = 0;
+    
+    static void
+    TranslateRegister (uint32_t reg_kind, uint32_t reg_num, std::string &reg_name);
     
     uint64_t
     ReadRegisterUnsigned (uint32_t reg_kind, 
@@ -441,9 +458,89 @@ public:
         return m_opcode;
     }
 
+
+    static size_t 
+    ReadMemoryProcess (void *baton,
+                       const Context &context, 
+                       lldb::addr_t addr, 
+                       void *dst,
+                       size_t length);
+    
+    static size_t 
+    WriteMemoryProcess (void *baton,
+                        const Context &context, 
+                        lldb::addr_t addr, 
+                        const void *dst,
+                        size_t length);
+    
+    static bool   
+    ReadRegisterProcess  (void *baton,
+                          uint32_t reg_kind, 
+                          uint32_t reg_num,
+                          uint64_t &reg_value);
+    
+    
+    static bool   
+    WriteRegisterProcess (void *baton,
+                          const Context &context, 
+                          uint32_t reg_kind, 
+                          uint32_t reg_num,
+                          uint64_t reg_value);
+                          
+    static size_t 
+    ReadMemoryDefault (void *baton,
+                       const Context &context, 
+                       lldb::addr_t addr, 
+                       void *dst,
+                       size_t length);
+    
+    static size_t 
+    WriteMemoryDefault (void *baton,
+                        const Context &context, 
+                        lldb::addr_t addr, 
+                        const void *dst,
+                        size_t length);
+    
+    static bool   
+    ReadRegisterDefault  (void *baton,
+                          uint32_t reg_kind, 
+                          uint32_t reg_num,
+                          uint64_t &reg_value);
+    
+    
+    static bool   
+    WriteRegisterDefault (void *baton,
+                          const Context &context, 
+                          uint32_t reg_kind, 
+                          uint32_t reg_num,
+                          uint64_t reg_value);
+   
+    void
+    SetBaton (void *baton);
+    
+    void
+    SetCallbacks (ReadMemory read_mem_callback,
+                  WriteMemory write_mem_callback,
+                  ReadRegister read_reg_callback,
+                  WriteRegister write_reg_callback);
+                  
+    void
+    SetReadMemCallback (ReadMemory read_mem_callback);
+    
+    void
+    SetWriteMemCallback (WriteMemory write_mem_callback);
+    
+    void
+    SetReadRegCallback (ReadRegister read_reg_callback);
+    
+    void
+    SetWriteRegCallback (WriteRegister write_reg_callback);
+    
+
 protected:
     lldb::ByteOrder     m_byte_order;
     uint32_t            m_addr_byte_size;
+    ArchSpec            m_arch;
     void *              m_baton;
     ReadMemory          m_read_mem_callback;
     WriteMemory         m_write_mem_callback;

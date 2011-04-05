@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringRef.h"
 
 #include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
+#include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
@@ -85,6 +86,7 @@ lldb_private::Initialize ()
         ArchDefaultUnwindPlan_x86_64::Initialize();
         ArchDefaultUnwindPlan_i386::Initialize();
         ArchVolatileRegs_x86::Initialize();
+        EmulateInstructionARM::Initialize ();
 
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
@@ -152,6 +154,7 @@ lldb_private::Terminate ()
     ArchDefaultUnwindPlan_i386::Terminate();
     ArchDefaultUnwindPlan_x86_64::Terminate();
     ArchVolatileRegs_x86::Terminate();
+    EmulateInstructionARM::Terminate ();
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();

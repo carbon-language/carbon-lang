@@ -67,6 +67,15 @@ public:
     static void
     Terminate ();
 
+    static const char *
+    GetPluginNameStatic ();
+    
+    static const char *
+    GetPluginDescriptionStatic ();
+    
+    static lldb_private::EmulateInstruction *
+    CreateInstance (const lldb_private::ArchSpec &arch);
+    
     virtual const char *
     GetPluginName()
     {
@@ -76,7 +85,7 @@ public:
     virtual const char *
     GetShortPluginName()
     {
-        return "lldb.emulate-instruction.arm";
+        return GetPluginNameStatic();
     }
 
     virtual uint32_t
@@ -85,20 +94,36 @@ public:
         return 1;
     }
 
+    bool
+    SetTargetTriple (const ArchSpec &arch);
+    
     enum Mode
     {
         eModeInvalid,
         eModeARM,
         eModeThumb
     };
+    
+    EmulateInstructionARM (const ArchSpec &arch) :
+        EmulateInstruction (lldb::eByteOrderLittle,
+                            4,
+                            arch),
+        m_arm_isa (0),
+        m_opcode_mode (eModeInvalid),
+        m_opcode_cpsr (0),
+        m_it_session ()
+    {
+    }
 
-    EmulateInstructionARM (void *baton,
+    EmulateInstructionARM (const ArchSpec &arch,
+                           void *baton,
                            ReadMemory read_mem_callback,
                            WriteMemory write_mem_callback,
                            ReadRegister read_reg_callback,
                            WriteRegister write_reg_callback) :
         EmulateInstruction (lldb::eByteOrderLittle, // Byte order for ARM
                             4,                      // Address size in byte
+                            arch,
                             baton,
                             read_mem_callback,
                             write_mem_callback,
@@ -117,6 +142,9 @@ public:
 
     virtual bool 
     ReadInstruction ();
+    
+    virtual bool
+    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr);
 
     virtual bool
     EvaluateInstruction ();

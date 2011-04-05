@@ -70,6 +70,8 @@ UniqueDWARFASTTypeList::Find
                                 break;
                             }
                         }
+                        parent_arg_die = parent_arg_die->GetParent();
+                        parend_pos_die = parend_pos_die->GetParent();
                     }
 
                     if (match)
