@@ -91,8 +91,10 @@ void test14() {
   for (;;) {}
 }
 
-void test15() {
-  int x = x; // no-warning: signals intended lack of initialization.
+int test15() {
+  int x = x; // no-warning: signals intended lack of initialization. \
+             // expected-note{{variable 'x' is declared here}}
+  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
 }
 
 // Don't warn in the following example; shows dataflow confluence.

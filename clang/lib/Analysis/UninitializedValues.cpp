@@ -472,12 +472,24 @@ void TransferFunctions::VisitDeclStmt(DeclStmt *ds) {
        DI != DE; ++DI) {
     if (VarDecl *vd = dyn_cast<VarDecl>(*DI)) {
       if (isTrackedVar(vd)) {
-        if (Stmt *init = vd->getInit()) {
+        if (Expr *init = vd->getInit()) {
           Visit(init);
-          vals[vd] = Initialized;
+
+          // If the initializer consists solely of a reference to itself, we
+          // explicitly mark the variable as uninitialized. This allows code
+          // like the following:
+          //
+          //   int x = x;
+          //
+          // to deliberately leave a variable uninitialized. Different analysis
+          // clients can detect this pattern and adjust their reporting
+          // appropriately, but we need to continue to analyze subsequent uses
+          // of the variable.
+          DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(init->IgnoreParenImpCasts());
+          vals[vd] = (DRE && DRE->getDecl() == vd) ? Uninitialized
+                                                   : Initialized;
         }
-      }
-      else if (Stmt *init = vd->getInit()) {
+      } else if (Stmt *init = vd->getInit()) {
         Visit(init);
       }
     }
