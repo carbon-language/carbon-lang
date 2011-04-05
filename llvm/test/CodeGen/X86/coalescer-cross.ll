@@ -1,5 +1,9 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin10 | not grep movaps
+; RUN: llc < %s -mtriple=i386-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -regalloc=basic | FileCheck %s
 ; rdar://6509240
+
+; CHECK: os_clock
+; CHECK-NOT: movaps
 
 	type { %struct.TValue }		; type %0
 	type { %struct.L_Umaxalign, i32, %struct.Node* }		; type %1

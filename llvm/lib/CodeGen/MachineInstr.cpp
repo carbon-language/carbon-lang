@@ -1543,13 +1543,8 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
       continue;
 
     if (Reg == IncomingReg) {
-      if (!Found) {
-        if (MO.isDead())
-          // The register is already marked dead.
-          return true;
-        MO.setIsDead();
-        Found = true;
-      }
+      MO.setIsDead();
+      Found = true;
     } else if (hasAliases && MO.isDead() &&
                TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // There exists a super-register that's marked dead.
