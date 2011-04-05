@@ -32,7 +32,7 @@ td {
 </li>
 <li><a href="#general_features">Language and Target-Independent Features</a>
  <ul>
-  <li><a href="#diagnostics">Controlling Errors and Warnings</a></li>
+  <li><a href="#diagnostics">Controlling Errors and Warnings</a>
    <ul>
    <li><a href="#diagnostics_display">Controlling How Clang Displays Diagnostics</a></li>
    <li><a href="#diagnostics_mappings">Diagnostic Mappings</a></li>
@@ -41,9 +41,10 @@ td {
    <li><a href="#diagnostics_pragmas">Controlling Diagnostics via Pragmas</a></li>
    <li><a href="#analyzer_diagnositics">Controlling Static Analyzer Diagnostics</a></li>
    </ul>
+  </li>
   <li><a href="#precompiledheaders">Precompiled Headers</a></li>
   <li><a href="#codegen">Controlling Code Generation</a></li>
-  </ul>
+ </ul>
 </li>
 <li><a href="#c">C Language Features</a>
   <ul>
@@ -205,7 +206,7 @@ diagnostics that it generates.</p>
 diagnostic.</dt>
 <dd>This option, which defaults to on, controls whether or not Clang prints the
 column number of a diagnostic.  For example, when this is enabled, Clang will
-print something like:</p>
+print something like:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -223,7 +224,7 @@ column number.</p>
 source file/line/column information in diagnostic.</dt>
 <dd>This option, which defaults to on, controls whether or not Clang prints the
 filename, line number and column number of a diagnostic.  For example,
-when this is enabled, Clang will print something like:</p>
+when this is enabled, Clang will print something like:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -240,7 +241,7 @@ when this is enabled, Clang will print something like:</p>
 line and ranges from source code in diagnostic.</dt>
 <dd>This option, which defaults to on, controls whether or not Clang prints the
 source line, source ranges, and caret when emitting a diagnostic.  For example,
-when this is enabled, Clang will print something like:</p>
+when this is enabled, Clang will print something like:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -277,7 +278,7 @@ Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>
 <dd>This option, which defaults to on,
 controls whether or not Clang prints the associated <A
 href="#cl_diag_warning_groups">warning group</a> option name when outputting
-a warning diagnostic.  For example, in this output:</p>
+a warning diagnostic.  For example, in this output:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -299,7 +300,7 @@ Enable printing category information in diagnostic line.</dt>
 controls whether or not Clang prints the category associated with a diagnostic
 when emitting it.  Each diagnostic may or many not have an associated category,
 if it has one, it is listed in the diagnostic categorization field of the
-diagnostic line (in the []'s).</p>
+diagnostic line (in the []'s).
 
 <p>For example, a format string warning will produce these three renditions
 based on the setting of this option:</p>
@@ -322,7 +323,7 @@ hundreds or thousands of them.</p>
 Enable "FixIt" information in the diagnostics output.</dt>
 <dd>This option, which defaults to on, controls whether or not Clang prints the
 information on how to fix a specific diagnostic underneath it when it knows.
-For example, in this output:</p>
+For example, in this output:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -345,7 +346,7 @@ Print machine parsable information about source ranges.</dt>
 information about source ranges in a machine parsable format after the
 file/line/column number information.  The information is a simple sequence of
 brace enclosed ranges, where each range lists the start and end line/column
-locations.  For example, in this output:</p>
+locations.  For example, in this output:
 
 <pre>
 exprs.c:47:15:{47:8-47:14}{47:17-47:24}: error: invalid operands to binary expression ('int *' and '_Complex float')
@@ -395,7 +396,7 @@ quotes(as &quot;\&quot;&quot;) and non-printable characters (as octal
 <dt id="opt_Wextra-tokens"><b>-Wextra-tokens</b>: Warn about excess tokens at
     the end of a preprocessor directive.</dt>
 <dd>This option, which defaults to on, enables warnings about extra tokens at
-the end of preprocessor directives.  For example:</p>
+the end of preprocessor directives.  For example:
 
 <pre>
   test.c:28:8: warning: extra tokens at end of #endif directive [-Wextra-tokens]
@@ -415,7 +416,7 @@ by commenting them out.</p>
 Warn about unqualified uses of a member template whose name resolves
 to another template at the location of the use.</dt>
 <dd>This option, which defaults to on, enables a warning in the
-following code:</p>
+following code:
 
 <pre>
 template&lt;typename T> struct set{};
@@ -439,7 +440,7 @@ an extension.</p>
 an unusable copy constructor when binding a reference to a temporary.</dt>
 <dd>This option, which defaults to on, enables warnings about binding a
 reference to a temporary when the temporary doesn't have a usable copy
-constructor.  For example:</p>
+constructor.  For example:
 
 <pre>
   struct NonCopyable {
@@ -491,7 +492,6 @@ and gives you fine-grain control over which information is printed.  Clang has
 the ability to print this information, and these are the options that control
 it:</p>
 
-<p>
 <ol>
 <li>A file/line/column indicator that shows exactly where the diagnostic occurs
     in your code [<a href="#opt_fshow-column">-fshow-column</a>, <a
@@ -515,7 +515,7 @@ it:</p>
 <li>A machine-parsable representation of the ranges involved (off by
     default) [<a
       href="opt_fdiagnostics-print-source-range-info">-fdiagnostics-print-source-range-info</a>].</li>
-</ol></p>
+</ol>
 
 <p>For more information please see <a href="#cl_diag_formatting">Formatting of
 Diagnostics</a>.</p>
@@ -525,14 +525,13 @@ Diagnostics</a>.</p>
 
 <p>All diagnostics are mapped into one of these 5 classes:</p>
 
-<p>
 <ul>
 <li>Ignored</li>
 <li>Note</li>
 <li>Warning</li>
 <li>Error</li>
 <li>Fatal</li>
-</ul></p>
+</ul>
 
 <h4 id="diagnostics_categories">Diagnostic Categories</h4>
 
@@ -742,6 +741,7 @@ likely to affect PCH files that reference a large number of headers.</p>
 <p>Clang provides a number of ways to control code generation.  The options are listed below.</p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dl>
 <dt id="opt_fcatch-undefined-behavior"><b>-fcatch-undefined-behavior</b>: Turn
 on runtime code generation to check for undefined behavior.</dt>
 
@@ -749,7 +749,7 @@ on runtime code generation to check for undefined behavior.</dt>
 adds runtime checks for undefined runtime behavior.  If a check fails,
 <tt>__builtin_trap()</tt> is used to indicate failure.
 The checks are:
-<p>
+<ul>
 <li>Subscripting where the static type of one operand is a variable
     which is decayed from an array type and the other operand is
     greater than the size of the array or less than zero.</li>
@@ -759,7 +759,7 @@ The checks are:
 <li>When llvm implements more __builtin_object_size support, reads and
     writes for objects that __builtin_object_size indicates we aren't
     accessing valid memory.  Bit-fields and vectors are not yet checked.
-</p>
+</ul>
 </dd>
 
 <dt id="opt_fno-assume-sane-operator-new"><b>-fno-assume-sane-operator-new</b>:
@@ -767,6 +767,7 @@ Don't assume that the C++'s new operator is sane.</dt>
 <dd>This option tells the compiler to do not assume that C++'s global new
 operator will always return a pointer that does not
 alias any other pointer when the function returns.</dd>
+</dl>
 
 <!-- ======================================================================= -->
 <h2 id="c">C Language Features</h2>
@@ -924,6 +925,7 @@ support is incomplete; enabling Microsoft extensions will silently drop
 certain constructs (including __declspec and Microsoft-style asm statements).
 </p>
 
+<ul>
 <li>clang allows setting _MSC_VER with -fmsc-version=. It defaults to 1300 which
 is the same as Visual C/C++ 2003. Any number is supported and can greatly affect
 what Windows SDK and c++stdlib headers clang can compile. This option will be
@@ -937,6 +939,7 @@ record members can be declared using user defined typedefs.</li>
 controlling record layout. GCC also contains support for this feature,
 however where MSVC and GCC are incompatible clang follows the MSVC
 definition.</li>
+</ul>
 
 <!-- ======================================================================= -->
 <h2 id="target_features">Target-Specific Features and Limitations</h2>
@@ -955,7 +958,9 @@ definition.</li>
 (Mac OS/X), Linux, FreeBSD, and Dragonfly BSD: it has been tested to correctly
 compile many large C, C++, Objective-C, and Objective-C++ codebases.</p>
 
-<p>On x86_64-mingw32, passing i128(by value) is incompatible to Microsoft x64 calling conversion.</p> You might need to tweak WinX86_64ABIInfo::classify() in lib/CodeGen/TargetInfo.cpp.</p>
+<p>On x86_64-mingw32, passing i128(by value) is incompatible to Microsoft x64
+calling conversion. You might need to tweak WinX86_64ABIInfo::classify()
+in lib/CodeGen/TargetInfo.cpp.</p>
 
 <!-- ======================== -->
 <h4 id="target_arch_arm">ARM</h4>
