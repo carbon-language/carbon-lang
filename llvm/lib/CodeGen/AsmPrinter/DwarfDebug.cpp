@@ -1225,7 +1225,8 @@ DwarfDebug::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV) {
 
   ParamDIE = new DIE(dwarf::DW_TAG_template_value_parameter);
   addType(ParamDIE, TPV.getType());
-  addString(ParamDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string, TPV.getName());
+  if (!TPV.getName().empty())
+    addString(ParamDIE, dwarf::DW_AT_name, dwarf::DW_FORM_string, TPV.getName());
   addUInt(ParamDIE, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata, 
           TPV.getValue());
   return ParamDIE;
