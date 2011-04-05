@@ -82,8 +82,16 @@ const char *ARMUtils::OpcodeName(unsigned Opcode) {
 // FIXME: Auto-gened?
 static unsigned
 getRegisterEnum(BO B, unsigned RegClassID, unsigned RawRegister) {
-  // For this purpose, we can treat rGPR as if it were GPR.
-  if (RegClassID == ARM::rGPRRegClassID) RegClassID = ARM::GPRRegClassID;
+  if (RegClassID == ARM::rGPRRegClassID) {
+    // Check for The register numbers 13 and 15 that are not permitted for many
+    // Thumb register specifiers.
+    if (RawRegister == 13 || RawRegister == 15) {
+      B->SetErr(-1);
+      return 0;
+    }
+    // For this purpose, we can treat rGPR as if it were GPR.
+    RegClassID = ARM::GPRRegClassID;
+  }
 
   // See also decodeNEONRd(), decodeNEONRn(), decodeNEONRm().
   unsigned RegNum =
