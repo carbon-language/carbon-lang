@@ -254,9 +254,11 @@ EDInst *EDDisassembler::createInst(EDByteReaderCallback byteReader,
     delete inst;
     return NULL;
   } else {
-    const llvm::EDInstInfo *thisInstInfo;
+    const llvm::EDInstInfo *thisInstInfo = NULL;
 
-    thisInstInfo = &InstInfos[inst->getOpcode()];
+    if (InstInfos) {
+      thisInstInfo = &InstInfos[inst->getOpcode()];
+    }
     
     EDInst* sdInst = new EDInst(inst, byteSize, *this, thisInstInfo);
     return sdInst;
