@@ -1690,17 +1690,9 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
 
 unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
 
-  // Depend our opcode for thumb on whether or not we're targeting an
-  // externally callable function. For libcalls we'll just pass a NULL GV
-  // in here.
-  bool isExternal = false;
-  if (!GV || GV->hasExternalLinkage()) isExternal = true;
-  
   // Darwin needs the r9 versions of the opcodes.
   bool isDarwin = Subtarget->isTargetDarwin();
-  if (isThumb && isExternal) {
-    return isDarwin ? ARM::tBLXi_r9 : ARM::tBLXi;
-  } else if (isThumb) {
+  if (isThumb) {
     return isDarwin ? ARM::tBLr9 : ARM::tBL;
   } else  {
     return isDarwin ? ARM::BLr9 : ARM::BL;
