@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_UTILS_H
 #define LLVM_CLANG_FRONTEND_UTILS_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
