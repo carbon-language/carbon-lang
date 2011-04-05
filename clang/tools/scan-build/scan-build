@@ -1053,7 +1053,7 @@ else {
   print("\nAVAILABLE CHECKERS:\n\n");
   my $skip = 0;
   while(<FROM_CHILD>) {
-    if (/core\.experimental/ or /debug\./ or /unix.experimental/ or /cocoa.experimental/) {
+    if (/experimental/) {
       $skip = 1;
       next;
     }
