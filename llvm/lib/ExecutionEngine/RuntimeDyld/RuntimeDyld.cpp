@@ -104,7 +104,7 @@ public:
 };
 
 void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
-                                       uint8_t *EndAddress) {
+                                      uint8_t *EndAddress) {
   // Allocate memory for the function via the memory manager.
   uintptr_t Size = EndAddress - StartAddress + 1;
   uint8_t *Mem = MemMgr->startFunctionBody(Name.data(), Size);
