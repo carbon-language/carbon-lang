@@ -157,6 +157,13 @@ Visual Studio:</p>
     <li>If you are using Visual Studio 2005:  <tt>cmake -G "Visual Studio 8 2005" ..\llvm</tt></li>
     <li>Or if you are using Visual Studio 2008:  <tt>cmake -G "Visual Studio 9 2008" ..\llvm</tt></li>
     <li>Or if you are using Visual Studio 2010:  <tt>cmake -G "Visual Studio 10" ..\llvm</tt></li>
+    <li>By default, cmake will target LLVM to X86.  If you want all targets
+        (needed if you want to run the LLVM tests), add the <tt>-DLLVM_TARGETS_TO_BUILD=all</tt> option to the
+        cmake command line.  Or specify a target from the LLVM_TARGETS_TO_BUILD
+        definition in CMakeLists.txt.</li>
+    <li>See the <a href="http://www.llvm.org/docs/CMake.html">LLVM CMake guide</a> for
+        more information on other configuration options for cmake.</li>
+</li>
     <li>The above, if successful, will have created an LLVM.sln file in the
        llvm directory.
   </ul>
