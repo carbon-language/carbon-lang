@@ -63,3 +63,12 @@ int func(void) {
 // CHECK: @_Z4foo9Dv4_f
 typedef __attribute__(( vector_size(16) )) float float4;
 void __attribute__((__overloadable__)) foo9(float4 f) {}
+
+// Intrinsic calls.
+extern int llvm_cas(volatile int*, int, int)
+  __asm__("llvm.atomic.cmp.swap.i32.p0i32");
+
+int foo10(volatile int* add, int from, int to) {
+  // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p0i32
+  return llvm_cas(add, from, to);
+}

@@ -334,10 +334,11 @@ void CXXNameMangler::mangle(const NamedDecl *D, llvm::StringRef Prefix) {
     // another has a "\01foo". That is known to happen on ELF with the
     // tricks normally used for producing aliases (PR9177). Fortunately the
     // llvm mangler on ELF is a nop, so we can just avoid adding the \01
-    // marker.
+    // marker.  We also avoid adding the marker if this is an alias for an
+    // LLVM intrinsic.
     llvm::StringRef UserLabelPrefix =
       getASTContext().Target.getUserLabelPrefix();
-    if (!UserLabelPrefix.empty())
+    if (!UserLabelPrefix.empty() && !ALA->getLabel().startswith("llvm."))
       Out << '\01';  // LLVM IR Marker for __asm("foo")
 
     Out << ALA->getLabel();
