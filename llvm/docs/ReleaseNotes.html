@@ -106,7 +106,8 @@ production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
 
 <p>In the LLVM 2.9 time-frame, the Clang team has made many improvements in C,
 C++ and Objective-C support.  C++ support is now generally rock solid, has
-been exercised on a broad variety of code, and has several new C++'0x features
+been exercised on a broad variety of code, and has several new <a 
+href="http://clang.llvm.org/cxx_status.html#cxx0x">C++'0x features</a>
 implemented (such as rvalue references and variadic templates).  LLVM 2.9 has
 also brought in a large range of bug fixes and minor features (e.g. __label__
 support), and is much more compatible with the Linux Kernel.</p>  
@@ -143,8 +144,8 @@ not known whether the compiled code actually works or not!
 The 2.9 release has the following notable changes:
 <ul>
 <li>The plugin is much more stable when compiling Fortran.</li>
-<li>Inline asm where an asm output is tied to an input of a different size is
-now supported in many more cases.</li>
+<li>Inline assembly where an asm output is tied to an input of a different size
+is now supported in many more cases.</li>
 <li>Basic support for the __float128 type was added.  It is now possible to
 generate LLVM IR from programs using __float128 but code generation does not
 work yet.</li>
@@ -169,15 +170,13 @@ function. The compiler-rt library provides highly optimized implementations of
 this and other low-level routines (some are 3x faster than the equivalent
 libgcc routines).</p>
 
-<p>
-All of the code in the compiler-rt project is available under the standard LLVM
-License, a "BSD-style" license.  
-
-compiler_rt is now dual licensed under MIT and UIUC license
-  
-Several minor changes for better ARM support.
-
-New in LLVM 2.9,  UPDATE</p>
+<p>In the LLVM 2.9 timeframe, compiler_rt has had several minor changes for
+  better ARM support, and a fairly major license change.  All of the code in the
+  compiler-rt project is now <a href="DeveloperPolicy.html#license">dual
+  licensed</a> under MIT and UIUC license, which allows you to use compiler-rt
+  in applications without the binary copyright reproduction clause.  If you
+  prefer the LLVM/UIUC license, you are free to continue using it under that
+  license as well.</p>
 
 </div>
 
@@ -195,15 +194,11 @@ libraries in the larger LLVM Project, such as the Clang expression parser, the
 LLVM disassembler and the LLVM JIT.</p>
 
 <p>
-LLDB is in early development and not included as part of the LLVM 2.9 release,
-
-  
-  
-<!--
-but is mature enough to support basic debugging scenarios on Mac OS X in C,
-Objective-C and C++.  We'd really like help extending and expanding LLDB to 
-support new platforms, new languages, new architectures, and new features.-->
-</p>
+LLDB is has advanced by leaps and bounds in the 2.9 timeframe.  It is
+dramatically more stable and useful, and includes both a new <a 
+href="http://lldb.llvm.org/tutorial.html">tutorial</a> and a <a
+href="http://lldb.llvm.org/lldb-gdb.html">side-by-side comparison with 
+GDB</a>.</p>
 
 </div>
 
