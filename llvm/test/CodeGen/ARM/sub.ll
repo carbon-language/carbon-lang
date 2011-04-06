@@ -27,3 +27,12 @@ define i64 @f3(i64 %a) {
    ret i64 %tmp
 }
 
+define i32 @f4(i32 %x) {
+entry:
+; CHECK: f4
+; CHECK: rsbs
+  %sub = sub i32 1, %x
+  %cmp = icmp ugt i32 %sub, 0
+  %sel = select i1 %cmp, i32 1, i32 %sub
+  ret i32 %sel
+}

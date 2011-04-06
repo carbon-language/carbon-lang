@@ -1618,10 +1618,17 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   // Set the "zero" bit in CPSR.
   switch (MI->getOpcode()) {
   default: break;
+  case ARM::RSBri:
+  case ARM::RSCri:
   case ARM::ADDri:
+  case ARM::ADCri:
   case ARM::SUBri:
+  case ARM::SBCri:
+  case ARM::t2RSBri:
   case ARM::t2ADDri:
-  case ARM::t2SUBri: {
+  case ARM::t2ADCri:
+  case ARM::t2SUBri:
+  case ARM::t2SBCri: {
     // Scan forward for the use of CPSR, if it's a conditional code requires
     // checking of V bit, then this is not safe to do. If we can't find the
     // CPSR use (i.e. used in another block), then it's not safe to perform
