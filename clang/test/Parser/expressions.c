@@ -51,3 +51,9 @@ int test6(void) {
                test5(1)
                  ; // expected-error {{expected ')'}}
 }
+
+// PR8394
+void test7() {
+    ({} // expected-note {{to match}}
+    ;   // expected-error {{expected ')'}}
+}

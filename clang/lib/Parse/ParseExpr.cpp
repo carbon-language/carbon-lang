@@ -1631,6 +1631,9 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     ConsumeCodeCompletionToken();
     return ExprError();
   }
+
+  // None of these cases should fall through with an invalid Result
+  // unless they've already reported an error.
   
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
@@ -1639,7 +1642,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     ExprType = CompoundStmt;
 
     // If the substmt parsed correctly, build the AST node.
-    if (!Stmt.isInvalid() && Tok.is(tok::r_paren))
+    if (!Stmt.isInvalid())
       Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.take(), Tok.getLocation());
 
   } else if (ExprType >= CompoundLiteral &&
@@ -1737,6 +1740,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     
     Result = ParseExpression();
     ExprType = SimpleExpr;
+
+    // Don't build a paren expression unless we actually match a ')'.
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
       Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), Result.take());
   }
