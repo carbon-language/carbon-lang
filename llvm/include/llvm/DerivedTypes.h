@@ -19,6 +19,7 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -147,7 +148,7 @@ class FunctionType : public DerivedType {
 
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
-  FunctionType(const Type *Result, const std::vector<const Type*> &Params,
+  FunctionType(const Type *Result, ArrayRef<const Type*> Params,
                bool IsVarArgs);
 
 public:
@@ -156,7 +157,7 @@ public:
   ///
   static FunctionType *get(
     const Type *Result, ///< The result type
-    const std::vector<const Type*> &Params, ///< The types of the parameters
+    ArrayRef<const Type*> Params, ///< The types of the parameters
     bool isVarArg  ///< Whether this is a variable argument length function
   );
 
@@ -237,14 +238,13 @@ class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
-  StructType(LLVMContext &C,
-             const std::vector<const Type*> &Types, bool isPacked);
+  StructType(LLVMContext &C, ArrayRef<const Type*> Types, bool isPacked);
 public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
   static StructType *get(LLVMContext &Context, 
-                         const std::vector<const Type*> &Params,
+                         ArrayRef<const Type*> Params,
                          bool isPacked=false);
 
   /// StructType::get - Create an empty structure type.

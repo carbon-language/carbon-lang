@@ -15,6 +15,7 @@
 #ifndef LLVM_TYPESCONTEXT_H
 #define LLVM_TYPESCONTEXT_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
 
@@ -157,8 +158,8 @@ class StructValType {
   std::vector<const Type*> ElTypes;
   bool packed;
 public:
-  StructValType(const std::vector<const Type*> &args, bool isPacked)
-    : ElTypes(args), packed(isPacked) {}
+  StructValType(ArrayRef<const Type*> args, bool isPacked)
+    : ElTypes(args.vec()), packed(isPacked) {}
 
   static StructValType get(const StructType *ST) {
     std::vector<const Type *> ElTypes;
@@ -187,8 +188,8 @@ class FunctionValType {
   std::vector<const Type*> ArgTypes;
   bool isVarArg;
 public:
-  FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-                  bool isVA) : RetTy(ret), ArgTypes(args), isVarArg(isVA) {}
+  FunctionValType(const Type *ret, ArrayRef<const Type*> args, bool isVA)
+    : RetTy(ret), ArgTypes(args.vec()), isVarArg(isVA) {}
 
   static FunctionValType get(const FunctionType *FT);
 
