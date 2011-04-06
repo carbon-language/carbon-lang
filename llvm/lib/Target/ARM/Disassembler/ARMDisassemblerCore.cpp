@@ -686,8 +686,21 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
   assert(NumOps >= 4 && "Num of operands >= 4 for coprocessor instr");
 
   unsigned &OpIdx = NumOpsAdded;
+  // A8.6.92
+  // if coproc == '101x' then SEE "Advanced SIMD and VFP"
+  // But since the special instructions have more explicit encoding bits
+  // specified, if coproc == 10 or 11, we should reject it as invalid.
+  unsigned coproc = GetCoprocessor(insn);
+  if ((Opcode == ARM::MCR || Opcode == ARM::MCRR ||
+       Opcode == ARM::MRC || Opcode == ARM::MRRC) &&
+      (coproc == 10 || coproc == 11)) {
+    DEBUG(errs() << "Encoding error: coproc == 10 or 11 for MCR[R]/MR[R]C\n");
+    return false;
+  }
+
   bool OneCopOpc = (Opcode == ARM::MCRR || Opcode == ARM::MCRR2 ||
                     Opcode == ARM::MRRC || Opcode == ARM::MRRC2);
+
   // CDP/CDP2 has no GPR operand; the opc1 operand is also wider (Inst{23-20}).
   bool NoGPR = (Opcode == ARM::CDP || Opcode == ARM::CDP2);
   bool LdStCop = LdStCopOpcode(Opcode);
@@ -700,7 +713,7 @@ static bool DisassembleCoprocessor(MCInst &MI, unsigned Opcode, uint32_t insn,
                                                        decodeRd(insn))));
     ++OpIdx;
   }
-  MI.addOperand(MCOperand::CreateImm(GetCoprocessor(insn)));
+  MI.addOperand(MCOperand::CreateImm(coproc));
   ++OpIdx;
 
   if (LdStCop) {
