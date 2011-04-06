@@ -86,8 +86,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
   : LLVMTargetMachine(T, TT),
     Subtarget(TT, FS, isThumb),
     JITInfo(),
-    InstrItins(Subtarget.getInstrItineraryData())
-{
+    InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
 }
 
