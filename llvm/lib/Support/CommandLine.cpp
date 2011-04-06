@@ -1140,13 +1140,13 @@ printGenericOptionDiff(const Option &O, const GenericOptionValue &Value,
     outs() << ")\n";                                                    \
   }                                                                     \
 
-PRINT_OPT_DIFF(bool);
-PRINT_OPT_DIFF(boolOrDefault);
-PRINT_OPT_DIFF(int);
-PRINT_OPT_DIFF(unsigned);
-PRINT_OPT_DIFF(double);
-PRINT_OPT_DIFF(float);
-PRINT_OPT_DIFF(char);
+PRINT_OPT_DIFF(bool)
+PRINT_OPT_DIFF(boolOrDefault)
+PRINT_OPT_DIFF(int)
+PRINT_OPT_DIFF(unsigned)
+PRINT_OPT_DIFF(double)
+PRINT_OPT_DIFF(float)
+PRINT_OPT_DIFF(char)
 
 void parser<std::string>::
 printOptionDiff(const Option &O, StringRef V, OptionValue<std::string> D,
