@@ -31,23 +31,19 @@ public:
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.
-  uint64_t startFunctionBody(const char *Name, uintptr_t &Size) {
+  uint8_t *startFunctionBody(const char *Name, uintptr_t &Size) {
     Function *F = M->getFunction(Name);
     assert(F && "No matching function in JIT IR Module!");
-    return (uint64_t)JMM->startFunctionBody(F, Size);
+    return JMM->startFunctionBody(F, Size);
   }
 
   // Mark the end of the function, including how much of the allocated
   // memory was actually used.
-  void endFunctionBody(const char *Name, uint64_t FunctionStart,
-                       uint64_t FunctionEnd) {
+  void endFunctionBody(const char *Name, uint8_t *FunctionStart,
+                       uint8_t *FunctionEnd) {
     Function *F = M->getFunction(Name);
     assert(F && "No matching function in JIT IR Module!");
-    // The JITMemoryManager interface makes the unfortunate assumption that
-    // the address space/sizes we're compiling on are the same as what we're
-    // compiling for, so it uses pointer types for its addresses. Explicit
-    // casts between them to deal with that.
-    JMM->endFunctionBody(F, (uint8_t*)FunctionStart, (uint8_t*)FunctionEnd);
+    JMM->endFunctionBody(F, FunctionStart, FunctionEnd);
   }
 
 };

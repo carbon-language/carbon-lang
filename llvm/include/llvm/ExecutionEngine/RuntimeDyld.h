@@ -38,12 +38,12 @@ public:
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.
-  virtual uint64_t startFunctionBody(const char *Name, uintptr_t &Size) = 0;
+  virtual uint8_t *startFunctionBody(const char *Name, uintptr_t &Size) = 0;
 
   // Mark the end of the function, including how much of the allocated
   // memory was actually used.
-  virtual void endFunctionBody(const char *Name, uint64_t FunctionStart,
-                               uint64_t FunctionEnd) = 0;
+  virtual void endFunctionBody(const char *Name, uint8_t *FunctionStart,
+                               uint8_t *FunctionEnd) = 0;
 };
 
 class RuntimeDyld {

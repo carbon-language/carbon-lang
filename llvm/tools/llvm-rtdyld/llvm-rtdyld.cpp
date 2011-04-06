@@ -44,14 +44,14 @@ Action(cl::desc("Action to perform:"),
 // support library allocation routines directly.
 class TrivialMemoryManager : public RTDyldMemoryManager {
 public:
-  uint64_t startFunctionBody(const char *Name, uintptr_t &Size);
-  void endFunctionBody(const char *Name, uint64_t FunctionStart,
-                       uint64_t FunctionEnd) {}
+  uint8_t *startFunctionBody(const char *Name, uintptr_t &Size);
+  void endFunctionBody(const char *Name, uint8_t *FunctionStart,
+                       uint8_t *FunctionEnd) {}
 };
 
-uint64_t TrivialMemoryManager::startFunctionBody(const char *Name,
+uint8_t *TrivialMemoryManager::startFunctionBody(const char *Name,
                                                  uintptr_t &Size) {
-  return (uint64_t)sys::Memory::AllocateRWX(Size, 0, 0).base();
+  return (uint8_t*)sys::Memory::AllocateRWX(Size, 0, 0).base();
 }
 
 static const char *ProgramName;

@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
@@ -40,6 +41,10 @@ class RuntimeDyldImpl {
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;
 
+
+  // For each function, we have a MemoryBlock of it's instruction data.
+  StringMap<sys::MemoryBlock> Functions;
+
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here.
   StringMap<uint64_t> SymbolTable;
@@ -58,6 +63,8 @@ class RuntimeDyldImpl {
     return true;
   }
 
+  void extractFunction(StringRef Name, uint8_t *StartAddress,
+                       uint8_t *EndAddress);
   bool resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
                          SmallVectorImpl<void *> &SectionBases,
                          SmallVectorImpl<StringRef> &SymbolNames);
@@ -79,9 +86,9 @@ public:
   bool loadObject(MemoryBuffer *InputBuffer);
 
   uint64_t getSymbolAddress(StringRef Name) {
-    // Use lookup() rather than [] because we don't want to add an entry
-    // if there isn't one already, which the [] operator does.
-    return SymbolTable.lookup(Name);
+    // FIXME: Just look up as a function for now. Overly simple of course.
+    // Work in progress.
+    return (uint64_t)Functions.lookup(Name).base();
   }
 
   sys::MemoryBlock getMemoryBlock() { return Data; }
@@ -96,7 +103,21 @@ public:
   StringRef getErrorString() { return ErrorStr; }
 };
 
-// FIXME: Relocations for targets other than x86_64.
+void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
+                                       uint8_t *EndAddress) {
+  // Allocate memory for the function via the memory manager.
+  uintptr_t Size = EndAddress - StartAddress + 1;
+  uint8_t *Mem = MemMgr->startFunctionBody(Name.data(), Size);
+  assert(Size >= (uint64_t)(EndAddress - StartAddress + 1) &&
+         "Memory manager failed to allocate enough memory!");
+  // Copy the function payload into the memory block.
+  memcpy(Mem, StartAddress, EndAddress - StartAddress + 1);
+  MemMgr->endFunctionBody(Name.data(), Mem, Mem + Size);
+  // Remember where we put it.
+  Functions[Name] = sys::MemoryBlock(Mem, Size);
+  DEBUG(dbgs() << "    allocated to " << Mem << "\n");
+}
+
 bool RuntimeDyldImpl::
 resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
                   SmallVectorImpl<void *> &SectionBases,
@@ -273,7 +294,7 @@ loadSegment32(const MachOObject *Obj,
   for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
     InMemoryStruct<macho::Section> Sect;
     Obj->ReadSection(*SegmentLCI, i, Sect);
-    if (!Sect)
+   if (!Sect)
       return Error("unable to load section: '" + Twine(i) + "'");
 
     // Remember any relocations the section has so we can resolve them later.
@@ -353,91 +374,71 @@ loadSegment64(const MachOObject *Obj,
   if (!Segment64LC)
     return Error("unable to load segment load command");
 
-  // Map the segment into memory.
-  std::string ErrorStr;
-  Data = sys::Memory::AllocateRWX(Segment64LC->VMSize, 0, &ErrorStr);
-  if (!Data.base())
-    return Error("unable to allocate memory block: '" + ErrorStr + "'");
-  memcpy(Data.base(), Obj->getData(Segment64LC->FileOffset,
-                                   Segment64LC->FileSize).data(),
-         Segment64LC->FileSize);
-  memset((char*)Data.base() + Segment64LC->FileSize, 0,
-         Segment64LC->VMSize - Segment64LC->FileSize);
-
-  // Bind the section indices to addresses and record the relocations we
-  // need to resolve.
-  typedef std::pair<uint32_t, macho::RelocationEntry> RelocationMap;
-  SmallVector<RelocationMap, 64> Relocations;
-
-  SmallVector<void *, 16> SectionBases;
-  for (unsigned i = 0; i != Segment64LC->NumSections; ++i) {
+  for (unsigned SectNum = 0; SectNum != Segment64LC->NumSections; ++SectNum) {
     InMemoryStruct<macho::Section64> Sect;
-    Obj->ReadSection64(*SegmentLCI, i, Sect);
+    Obj->ReadSection64(*SegmentLCI, SectNum, Sect);
     if (!Sect)
-      return Error("unable to load section: '" + Twine(i) + "'");
-
-    // Remember any relocations the section has so we can resolve them later.
-    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
-      InMemoryStruct<macho::RelocationEntry> RE;
-      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
-      Relocations.push_back(RelocationMap(j, *RE));
-    }
+      return Error("unable to load section: '" + Twine(SectNum) + "'");
 
     // FIXME: Improve check.
     if (Sect->Flags != 0x80000400)
       return Error("unsupported section type!");
 
-    SectionBases.push_back((char*) Data.base() + Sect->Address);
+    // Address and names of symbols in the section.
+    typedef std::pair<uint64_t, StringRef> SymbolEntry;
+    SmallVector<SymbolEntry, 64> Symbols;
+    for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
+      InMemoryStruct<macho::Symbol64TableEntry> STE;
+      Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
+      if (!STE)
+        return Error("unable to read symbol: '" + Twine(i) + "'");
+      if (STE->SectionIndex > Segment64LC->NumSections)
+        return Error("invalid section index for symbol: '" + Twine() + "'");
+
+      // Just skip symbols not defined in this section.
+      if (STE->SectionIndex - 1 != SectNum)
+        continue;
+
+      // Get the symbol name.
+      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+
+      // FIXME: Check the symbol type and flags.
+      if (STE->Type != 0xF)  // external, defined in this section.
+        return Error("unexpected symbol type!");
+      if (STE->Flags != 0x0)
+        return Error("unexpected symbol type!");
+
+      uint64_t BaseAddress = Sect->Address;
+      uint64_t Address = BaseAddress + STE->Value;
+
+      // Remember the symbol.
+      Symbols.push_back(SymbolEntry(Address, Name));
+
+      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " << Address << "\n");
+    }
+    // Sort the symbols by address, just in case they didn't come in that
+    // way.
+    array_pod_sort(Symbols.begin(), Symbols.end());
+
+    // Extract the function data.
+    uint8_t *Base = (uint8_t*)Obj->getData(Segment64LC->FileOffset,
+                                           Segment64LC->FileSize).data();
+    for (unsigned i = 0, e = Symbols.size() - 1; i != e; ++i) {
+      uint64_t StartOffset = Symbols[i].first;
+      uint64_t EndOffset = Symbols[i + 1].first - 1;
+      DEBUG(dbgs() << "Extracting function: " << Symbols[i].second
+                   << " from [" << StartOffset << ", " << EndOffset << "]\n");
+      extractFunction(Symbols[i].second, Base + StartOffset, Base + EndOffset);
+    }
+    // The last symbol we do after since the end address is calculated
+    // differently because there is no next symbol to reference.
+    uint64_t StartOffset = Symbols[Symbols.size() - 1].first;
+    uint64_t EndOffset = Sect->Size - 1;
+    DEBUG(dbgs() << "Extracting function: " << Symbols[Symbols.size()-1].second
+                 << " from [" << StartOffset << ", " << EndOffset << "]\n");
+    extractFunction(Symbols[Symbols.size()-1].second,
+                    Base + StartOffset, Base + EndOffset);
   }
-
-  // Bind all the symbols to address. Keep a record of the names for use
-  // by relocation resolution.
-  SmallVector<StringRef, 64> SymbolNames;
-  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-    InMemoryStruct<macho::Symbol64TableEntry> STE;
-    Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
-    if (!STE)
-      return Error("unable to read symbol: '" + Twine(i) + "'");
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-    SymbolNames.push_back(Name);
-
-    // Just skip undefined symbols. They'll be loaded from whatever
-    // module they come from (or system dylib) when we resolve relocations
-    // involving them.
-    if (STE->SectionIndex == 0)
-      continue;
-
-    unsigned Index = STE->SectionIndex - 1;
-    if (Index >= Segment64LC->NumSections)
-      return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the section base address.
-    void *SectionBase = SectionBases[Index];
-
-    // Get the symbol address.
-    uint64_t Address = (uint64_t) SectionBase + STE->Value;
-
-    // FIXME: Check the symbol type and flags.
-    if (STE->Type != 0xF)
-      return Error("unexpected symbol type!");
-    if (STE->Flags != 0x0)
-      return Error("unexpected symbol type!");
-
-    DEBUG(dbgs() << "Symbol: '" << Name << "' @ " << Address << "\n");
-    SymbolTable[Name] = Address;
-  }
-
-  // Now resolve any relocations.
-  for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
-    if (resolveRelocation(Relocations[i].first, Relocations[i].second,
-                          SectionBases, SymbolNames))
-      return true;
-  }
-
-  // We've loaded the section; now mark the functions in it as executable.
-  // FIXME: We really should use the MemoryManager for this.
-  sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
   return false;
 }
