@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValueEnumerator.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -21,20 +23,8 @@
 #include <algorithm>
 using namespace llvm;
 
-static bool isSingleValueType(const std::pair<const llvm::Type*,
-                              unsigned int> &P) {
-  return P.first->isSingleValueType();
-}
-
 static bool isIntegerValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntegerTy();
-}
-
-static bool CompareByFrequency(const std::pair<const llvm::Type*,
-                               unsigned int> &P1,
-                               const std::pair<const llvm::Type*,
-                               unsigned int> &P2) {
-  return P1.second > P2.second;
 }
 
 /// ValueEnumerator - Enumerate module-level information.
@@ -120,18 +110,72 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Optimize constant ordering.
   OptimizeConstants(FirstConstant, Values.size());
 
-  // Sort the type table by frequency so that most commonly used types are early
-  // in the table (have low bit-width).
-  std::stable_sort(Types.begin(), Types.end(), CompareByFrequency);
-
-  // Partition the Type ID's so that the single-value types occur before the
-  // aggregate types.  This allows the aggregate types to be dropped from the
-  // type table after parsing the global variable initializers.
-  std::partition(Types.begin(), Types.end(), isSingleValueType);
+  OptimizeTypes();
 
   // Now that we rearranged the type table, rebuild TypeMap.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    TypeMap[Types[i].first] = i+1;
+    TypeMap[Types[i]] = i+1;
+}
+
+struct TypeAndDeps {
+  const Type *Ty;
+  unsigned NumDeps;
+};
+
+static int CompareByDeps(const void *a, const void *b) {
+  const TypeAndDeps &ta = *(const TypeAndDeps*) a;
+  const TypeAndDeps &tb = *(const TypeAndDeps*) b;
+  return ta.NumDeps - tb.NumDeps;
+}
+
+static void VisitType(const Type *Ty, SmallPtrSet<const Type*, 16> &Visited,
+                      std::vector<const Type*> &Out) {
+  if (Visited.count(Ty))
+    return;
+
+  Visited.insert(Ty);
+
+  for (Type::subtype_iterator I2 = Ty->subtype_begin(),
+         E2 = Ty->subtype_end(); I2 != E2; ++I2) {
+    const Type *InnerType = I2->get();
+    VisitType(InnerType, Visited, Out);
+  }
+
+  Out.push_back(Ty);
+}
+
+void ValueEnumerator::OptimizeTypes(void) {
+  // If the types form a DAG, this will compute a topological sort and
+  // no forward references will be needed when reading them in.
+  // If there are cycles, this is a simple but reasonable heuristic for
+  // the minimum feedback arc set problem.
+  const unsigned NumTypes = Types.size();
+  std::vector<TypeAndDeps> TypeDeps;
+  TypeDeps.resize(NumTypes);
+
+  for (unsigned I = 0; I < NumTypes; ++I) {
+    const Type *Ty = Types[I];
+    TypeDeps[I].Ty = Ty;
+    TypeDeps[I].NumDeps = 0;
+  }
+
+  for (unsigned I = 0; I < NumTypes; ++I) {
+    const Type *Ty = TypeDeps[I].Ty;
+    for (Type::subtype_iterator I2 = Ty->subtype_begin(),
+           E2 = Ty->subtype_end(); I2 != E2; ++I2) {
+      const Type *InnerType = I2->get();
+      unsigned InnerIndex = TypeMap.lookup(InnerType) - 1;
+      TypeDeps[InnerIndex].NumDeps++;
+    }
+  }
+  array_pod_sort(TypeDeps.begin(), TypeDeps.end(), CompareByDeps);
+
+  SmallPtrSet<const Type*, 16> Visited;
+  Types.clear();
+  Types.reserve(NumTypes);
+  for (unsigned I = 0; I < NumTypes; ++I) {
+    VisitType(TypeDeps[I].Ty, Visited, Types);
+  }
 }
 
 unsigned ValueEnumerator::getInstructionID(const Instruction *Inst) const {
@@ -352,14 +396,12 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
 void ValueEnumerator::EnumerateType(const Type *Ty) {
   unsigned &TypeID = TypeMap[Ty];
 
-  if (TypeID) {
-    // If we've already seen this type, just increase its occurrence count.
-    Types[TypeID-1].second++;
+  // We've already seen this type.
+  if (TypeID)
     return;
-  }
 
   // First time we saw this type, add it.
-  Types.push_back(std::make_pair(Ty, 1U));
+  Types.push_back(Ty);
   TypeID = Types.size();
 
   // Enumerate subtypes.

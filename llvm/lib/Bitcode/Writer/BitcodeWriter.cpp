@@ -197,7 +197,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
   // Loop over all of the types, emitting each in turn.
   for (unsigned i = 0, e = TypeList.size(); i != e; ++i) {
-    const Type *T = TypeList[i].first;
+    const Type *T = TypeList[i];
     int AbbrevToUse = 0;
     unsigned Code = 0;
 

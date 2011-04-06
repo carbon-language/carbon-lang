@@ -36,8 +36,7 @@ class MDSymbolTable;
 
 class ValueEnumerator {
 public:
-  // For each type, we remember its Type* and occurrence frequency.
-  typedef std::vector<std::pair<const Type*, unsigned> > TypeList;
+  typedef std::vector<const Type*> TypeList;
 
   // For each value, we remember its Value* and occurrence frequency.
   typedef std::vector<std::pair<const Value*, unsigned> > ValueList;
@@ -136,6 +135,7 @@ public:
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
+  void OptimizeTypes();
     
   void EnumerateMDNodeOperands(const MDNode *N);
   void EnumerateMetadata(const Value *MD);
