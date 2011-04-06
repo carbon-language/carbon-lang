@@ -170,7 +170,7 @@ private:
   void LRE_DidCloneVirtReg(unsigned, unsigned);
 
   bool addSplitConstraints(unsigned, float&);
-  float calcGlobalSplitCost(const BitVector&);
+  float calcGlobalSplitCost(unsigned, const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
@@ -520,7 +520,8 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
 /// pattern in LiveBundles. This cost should be added to the local cost of the
 /// interference pattern in SplitConstraints.
 ///
-float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
+float RAGreedy::calcGlobalSplitCost(unsigned PhysReg,
+                                    const BitVector &LiveBundles) {
   float GlobalCost = 0;
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
@@ -538,14 +539,24 @@ float RAGreedy::calcGlobalSplitCost(const BitVector &LiveBundles) {
       GlobalCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
   }
 
+  InterferenceCache::Cursor Intf(IntfCache, PhysReg);
   ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
   SplitConstraints.resize(UseBlocks.size() + ThroughBlocks.size());
   for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
     unsigned Number = ThroughBlocks[i];
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
-    if (RegIn != RegOut)
-      GlobalCost += SpillPlacer->getBlockFrequency(Number);
+    if (!RegIn && !RegOut)
+      continue;
+    if (RegIn && RegOut) {
+      // We need double spill code if this block has interference.
+      Intf.moveToBlock(Number);
+      if (Intf.hasInterference())
+        GlobalCost += 2*SpillPlacer->getBlockFrequency(Number);
+      continue;
+    }
+    // live-in / stack-out or stack-in live-out.
+    GlobalCost += SpillPlacer->getBlockFrequency(Number);
   }
   return GlobalCost;
 }
@@ -811,7 +822,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       continue;
     }
 
-    Cost += calcGlobalSplitCost(LiveBundles);
+    Cost += calcGlobalSplitCost(PhysReg, LiveBundles);
     DEBUG({
       dbgs() << ", total = " << Cost << " with bundles";
       for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
