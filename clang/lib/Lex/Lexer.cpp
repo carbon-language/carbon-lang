@@ -674,7 +674,7 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
   else
     return Loc;
   
-  return AdvanceToTokenCharacter(Loc, Len, SM, Features);
+  return Loc.getFileLocWithOffset(Len);
 }
 
 //===----------------------------------------------------------------------===//
