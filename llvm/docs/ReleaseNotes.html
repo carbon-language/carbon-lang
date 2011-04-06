@@ -102,7 +102,7 @@ standards, fast compilation, and low memory use. Like LLVM, Clang provides a
 modular, library-based architecture that makes it suitable for creating or
 integrating with other development tools. Clang is considered a
 production-quality compiler for C, Objective-C, C++ and Objective-C++ on x86
-(32- and 64-bit), and for darwin-arm targets.</p>
+(32- and 64-bit), and for darwin/arm targets.</p>
 
 <p>In the LLVM 2.9 time-frame, the Clang team has made many improvements in C,
 C++ and Objective-C support.  C++ support is now generally rock solid, has
@@ -293,196 +293,26 @@ in this section.
 <p>LLVM 2.9 includes several major new capabilities:</p>
 
 <ul>
-<li><pre>
-  last release for llvm-gcc
-TBAA: On by default in clang.  Disable it with -fno-strict-aliasing.
+  
+<li>
+  TBAA: On by default in clang.  Disable it with -fno-strict-aliasing.
   Could be more aggressive for structs.
+</li>
+
+<li>New Nvidia PTX backend, not generally useful in 2.9 though.</li>
   
-Triple::normalize is new, llvm triples are always stored in normalized form internally.
-
-Triple x86_64--mingw64 is obsoleted. Use x86_64--mingw32 instead.
-
-MC Assembler: X86 now generates much better diagnostics for common errors,
-    is much faster at matching instructions, is much more bug-compatible with
-    the GAS assembler, and is now generally useful for a broad range of X86
-    assembly.
-  
-New Nvidia PTX backend, not generally useful in 2.9 though.
-
+<li>
 Much better debug info generated, particularly in optimized code situations.
+</li>
 
-ARM Fast ISel
-
-ELF MC support: on by default in clang.  There are still known missing features
-  for human written assembly.
-
-X86: Reimplemented all of MMX to introduce a new LLVM IR x86_mmx type.  Now
-  random types like &lt;2 x i32&gt; are not iseld to mmx without emms.  The
-  -disable-mmx flag is gone now.
-
-Some basic <a href="CodeGenerator.html#mc">internals documentation</a> for MC. 
-  
-MC Assembler support for .file and .loc.
-  
-  
+<li>
 inline asm multiple alternative constraint support.
+</li>  
   
-LoopIdiom: memset/memcpy formation and memset_pattern on darwin.  Build with
-  -ffreestanding or -fno-builtin if your memcpy is being compiled into infinite
-  recursion.
-  
+<li>
+  New naming rules in coding standards: CodingStandards.html#ll_naming
+</li>
 
-TargetLibraryInfo
-  
-X86 support for FS/GS relative loads and stores using address space 256/257 are
-  reliable now.
-  
-ARM: New code placement pass.
-  
-unnamed_addr + PR8927
-  
-PointerTracking has been removed from mainline, moved to ClamAV.
-  
-EarlyCSE pass.
-LoopInstSimplify pass.
-
-- DIBuilder provides simpler interface for front ends like Clang to encode debug info in LLVM IR.
-  - This interface hides implementation details (e.g. DIDerivedType, existence of compile unit etc..) that any front end should not know about.
-  For example, DIFactory DebugFactory;
-  Ty = DebugFactory.CreateDerivedType(DW_TAG_volatile_type,
-  findRegion(TYPE_CONTEXT(type)),
-  StringRef(),
-  getOrCreateFile(main_input_filename),
-  0 /*line no*/,
-  NodeSizeInBits(type),
-  NodeAlignInBits(type),
-  0 /*offset */,
-  0 /* flags */,
-  MainTy);
-  can be replaced by
-  DbgTy = DBuilder.createQualifiedType(DW_TAG_volatile_type, MainTy); 
-DIFactory is gone now.
-  
-PPC: Switched to MCInstPrinter, and MCCodeEmitter.  Ready to implement support
-  for directly writing out mach-o object files, but noone seems interested.
-
-ARM: Improved code generation for Cortex-A8 and Cortex-A9 CPUs.
-  
-Scheduler now models operand latency and pipeline forwarding.
-  
-Can optimize printf to iprintf when no floating point is used, for embedded
-  targets with smaller iprintf implementation.
-  
-error_code + libsystem + PathV2 changes
-  The system_error header from C++0x was added.
-  * Use if (error_code ec = function()) to check for error conditions
-  from functions which return it.
-  * error_code::message returns a human readable description of the error.
-  
-  PathV1 has been deprecated in favor of PathV2 (sorry I didn't finish
-  this before the release).
-  * No Path class, use a r-value convertible to a twine instead.
-  * Assumes all paths are UTF-8.
-  
-new macho-dump tool
-
-Major regalloc rewrite, not on by default for 2.9 and not advised to use it.
- * New basic register allocator that can be used as a safe fallback when
-   debugging. Enable with -regalloc=basic.
- * New infrastructure for live range splitting. SplitKit can break a live
-   interval into smaller pieces while preserving SSA form, and SpillPlacement
-   can help find the best split points. This is a work in progress so the API
-   is changing quickly.
- * The inline spiller has learned to clean up after live range splitting. It
-   can hoist spills out of loops, and it can eliminate redundant spills.
-   Rematerialization works with live range splitting.
- * New greedy register allocator using live range splitting. This will be the
-   default register allocator in the next LLVM release, but it is not turned on
-   by default in 2.9.
-
-ARM: __builtin_prefetch turns into prefetch instructions.
-  
-MC assembler support for 3dNow! and 3DNowA instructions.
-  
-tblgen support for assembler aliases: <a 
-  href="CodeGenerator.html#na_instparsing">MnemonicAlias and InstAlias</a>
-  
-LoopIndexSplit pass was removed, unmaintained.
-LiveValues, SimplifyHalfPowrLibCalls, and GEPSplitter were removed.
-  
-include/llvm/System merged into include/llvm/Support.
- 
-Win32 PE-COFF support in the MC assembler has made a lot of progress in the 2.9
-  timeframe, but is still not generally useful.  Please see 
-  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs?
-
-New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
-  for region-based optimizations.
-  
-MicroBlaze: major updates for aggressive delay slot filler, MC-based assembly
-   printing, assembly instruction parsing, ELF .o file emission, and MC
-   instruction disassembler.
-  
-Countless ARM microoptimizations.
-
-Speedups to various mid-level passes:
-  GVN is much faster on functions with deep dominator trees / lots of BBs.
-  DomTree and DominatorFrontier are much faster to compute, and preserved by
-    more passes (so they are computed less often)
-  SRoA is also much faster and doesn't use DominanceFrontier.
-  
-  
-new 'hotpatch' attribute: LangRef.html#fnattrs
-
-APInt API changes, see PR5207.
-
-DSE is more aggressive with stores of different types: e.g. a large store 
-  following a small one to the same address.
-  
-New naming rules in coding standards: CodingStandards.html#ll_naming
-  
-LiveDebugVariables is a new pass that keeps track of debugging information for
-  user variables that are kept in registers in optimized builds.
-  
-We now optimize various idioms for overflow detection into check of the flag
-  register on various CPUs, e.g.:
-   unsigned long t = a+b;
-   if (t &lt; a) ...
-  into:
-  	addq	%rdi, %rbx
-  	jno	LBB0_2
-
-X86: Much better codegen for several cases using adc/sbb instead of cmovs for
-  conditional increment and other idioms.
-  
-MVT::Flag renamed to MVT::Glue
-  
-Removed the PartialSpecialization pass, it was unmaintained and buggy.
-  
-SPARC: Many improvements, including using the Y registers for multiplications
-  and addition of a simple delay slot filler.
-  
-  
-udiv, ashr, lshr, shl now have exact and nuw/nsw bits: PR8862 / LangRef.html
-  
-lib/Object and llvm-objdump
-
-  
-  Target Independent Code Gen:
-  The pre-register-allocation (preRA) instruction scheduler models register pressure
-  much more accurately in some cases. This allows the adoption of more
-  aggressive scheduling heuristics.
-  
-  The X86 backend has adopted a new preRA scheduling
-  mode, "list-ilp", to shorten the height of instruction schedules
-  without inducing register spills.
-  
-  The ARM backend preRA scheduler now models machine resources at cycle
-  granularity. This allows the scheduler to both accurately model
-  instruction latency and avoid overcommitting functional units.
-
-  
-</pre></li>
 </ul>
   
 </div>
@@ -497,6 +327,13 @@ lib/Object and llvm-objdump
 expose new optimization opportunities:</p>
 
 <ul>
+<li>udiv, ashr, lshr, shl now have exact and nuw/nsw bits:
+  PR8862 / LangRef.html</li>
+  
+  unnamed_addr + PR8927
+
+  new 'hotpatch' attribute: LangRef.html#fnattrs
+
 </ul>
 
 </div>
@@ -512,9 +349,44 @@ expose new optimization opportunities:</p>
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
-  <li>TBAA.</li>
   <li>LTO has been improved to use MC for parsing inline asm and now
   can build large programs like Firefox 4 on both OS X and Linux.</li>
+  
+  
+ LoopIdiom: memset/memcpy formation and memset_pattern on darwin.  Build with
+  -ffreestanding or -fno-builtin if your memcpy is being compiled into infinite
+  recursion.
+  
+  TargetLibraryInfo
+    
+  EarlyCSE pass.
+  LoopInstSimplify pass.
+    
+New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
+  for region-based optimizations.
+  
+  Can optimize printf to iprintf when no floating point is used, for embedded
+  targets with smaller iprintf implementation.
+
+Speedups to various mid-level passes:
+  GVN is much faster on functions with deep dominator trees / lots of BBs.
+  DomTree and DominatorFrontier are much faster to compute, and preserved by
+    more passes (so they are computed less often)
+  SRoA is also much faster and doesn't use DominanceFrontier.
+  
+DSE is more aggressive with stores of different types: e.g. a large store 
+  following a small one to the same address.
+  
+  
+We now optimize various idioms for overflow detection into check of the flag
+  register on various CPUs, e.g.:
+   unsigned long t = a+b;
+   if (t &lt; a) ...
+  into:
+  	addq	%rdi, %rbx
+  	jno	LBB0_2
+
+  
 </ul>
 
 <!--
@@ -547,6 +419,39 @@ in.</p>
   <li>MC supports the <tt>.cfi_*</tt> directives for producing DWARF
   frame information, but it is still not used by CodeGen by default.</li>
   <li>COFF support?</li>
+  
+  
+  MC Assembler: X86 now generates much better diagnostics for common errors,
+  is much faster at matching instructions, is much more bug-compatible with
+  the GAS assembler, and is now generally useful for a broad range of X86
+  assembly.
+  
+  
+  ELF MC support: on by default in clang.  There are still known missing features
+  for human written assembly.
+  
+  
+  Some basic <a href="CodeGenerator.html#mc">internals documentation</a> for MC. 
+  
+  MC Assembler support for .file and .loc.
+  
+  tblgen support for assembler aliases: <a 
+    href="CodeGenerator.html#na_instparsing">MnemonicAlias and InstAlias</a>
+  
+  Win32 PE-COFF support in the MC assembler has made a lot of progress in the 2.9
+  timeframe, but is still not generally useful.  Please see 
+  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs?
+  
+  
+  lib/Object and llvm-objdump
+  Experimental format independent object file manipulation library.
+  * Supports PE/COFF and ELF.
+  * llvm-nm extended to work with object files. Exactly matches
+  binutils-nm for the files I've tested.
+  * llvm-objdump added with support for disassembly (no relocations displayed).
+  
+
+
 </ul>
 
 <p>For more information, please see the <a
@@ -569,7 +474,34 @@ it run faster:</p>
 
 <ul>
 <!-- SplitKit -->
-FastISel for ARM.
+  
+<li>The pre-register-allocation (preRA) instruction scheduler models register
+  pressure much more accurately in some cases. This allows the adoption of more
+    aggressive scheduling heuristics.
+</li>
+  
+  LiveDebugVariables is a new pass that keeps track of debugging information for
+  user variables that are kept in registers in optimized builds.
+  
+
+Scheduler now models operand latency and pipeline forwarding.
+  
+Major regalloc rewrite, not on by default for 2.9 and not advised to use it.
+ * New basic register allocator that can be used as a safe fallback when
+   debugging. Enable with -regalloc=basic.
+ * New infrastructure for live range splitting. SplitKit can break a live
+   interval into smaller pieces while preserving SSA form, and SpillPlacement
+   can help find the best split points. This is a work in progress so the API
+   is changing quickly.
+ * The inline spiller has learned to clean up after live range splitting. It
+   can hoist spills out of loops, and it can eliminate redundant spills.
+   Rematerialization works with live range splitting.
+ * New greedy register allocator using live range splitting. This will be the
+   default register allocator in the next LLVM release, but it is not turned on
+   by default in 2.9.
+
+
+
 </ul>
 </div>
 
@@ -583,6 +515,30 @@ FastISel for ARM.
 </p>
 
 <ul>
+<li>
+X86: Reimplemented all of MMX to introduce a new LLVM IR x86_mmx type.  Now
+  random types like &lt;2 x i32&gt; are not iseld to mmx without emms.  The
+  -disable-mmx flag is gone now.
+</li>
+  
+  <li>
+X86 support for FS/GS relative loads and stores using address space 256/257 are
+  reliable now.
+  </li>
+  
+    <li>
+X86: Much better codegen for several cases using adc/sbb instead of cmovs for
+  conditional increment and other idioms.
+    </li>
+
+  <li>
+  The X86 backend has adopted a new preRA scheduling
+  mode, "list-ilp", to shorten the height of instruction schedules
+  without inducing register spills.
+  </li>
+
+  MC assembler support for 3dNow! and 3DNowA instructions.
+  
   <li>Several bugs have been fixed for Windows x64 code generator.</li>
 </ul>
 
@@ -598,9 +554,39 @@ FastISel for ARM.
 </p>
 
 <ul>
+<li>ARM Fast ISel</li>
+<li>ARM: New code placement pass.</li>
+<li>ARM: Improved code generation for Cortex-A8 and Cortex-A9 CPUs.</li>
+<li>ARM: __builtin_prefetch turns into prefetch instructions.</li>
+<li>Countless ARM microoptimizations.</li>
+
+<li>  The ARM backend preRA scheduler now models machine resources at cycle
+  granularity. This allows the scheduler to both accurately model
+  instruction latency and avoid overcommitting functional units.</li>
+
+
 </ul>
 </div>
+  
+<!--=========================================================================-->
+<h2>
+<a name="OtherTS">Other Target Specific Improvements</a>
+</h2>
 
+<div class="doc_text">
+<ul>
+  PPC: Switched to MCInstPrinter, and MCCodeEmitter.  Ready to implement support
+  for directly writing out mach-o object files, but noone seems interested.
+  
+  MicroBlaze: major updates for aggressive delay slot filler, MC-based assembly
+  printing, assembly instruction parsing, ELF .o file emission, and MC
+  instruction disassembler.
+  
+  SPARC: Many improvements, including using the Y registers for multiplications
+  and addition of a simple delay slot filler.
+  
+</ul>
+</div>
 
 <!--=========================================================================-->
 <h2>
@@ -614,30 +600,78 @@ on LLVM 2.8, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
-</ul>
+  last release for llvm-gcc
+
+- DIBuilder provides simpler interface for front ends like Clang to encode debug info in LLVM IR.
+  - This interface hides implementation details (e.g. DIDerivedType, existence of compile unit etc..) that any front end should not know about.
+  For example, DIFactory DebugFactory;
+  Ty = DebugFactory.CreateDerivedType(DW_TAG_volatile_type,
+  findRegion(TYPE_CONTEXT(type)),
+  StringRef(),
+  getOrCreateFile(main_input_filename),
+  0 /*line no*/,
+  NodeSizeInBits(type),
+  NodeAlignInBits(type),
+  0 /*offset */,
+  0 /* flags */,
+  MainTy);
+  can be replaced by
+  DbgTy = DBuilder.createQualifiedType(DW_TAG_volatile_type, MainTy); 
+DIFactory is gone now.
+  
+    
 
 
 
-<p>In addition, many APIs have changed in this release.  Some of the major LLVM
-API changes are:</p>
-<ul>
+  
+  LoopIndexSplit pass was removed, unmaintained.
+  LiveValues, SimplifyHalfPowrLibCalls, and GEPSplitter were removed.
+  Removed the PartialSpecialization pass, it was unmaintained and buggy.
+  
+  DIFactory removed, use DIBuilder instead.
+  
+  Triple::normalize is new, llvm triples are always stored in normalized form internally.
+  
+  Triple x86_64--mingw64 is obsoleted. Use x86_64--mingw32 instead.
+
+  PointerTracking has been removed from mainline, moved to ClamAV.
+
 </ul>
 
 </div>
 
 <!--=========================================================================-->
 <h2>
-<a name="devtree_changes">Development Infrastructure Changes</a>
+<a name="api_changes">Internal API Changes</a>
 </h2>
 
 <div class="doc_text">
 
-<p>This section lists changes to the LLVM development infrastructure. This
-mostly impacts users who actively work on LLVM or follow development on
-mainline, but may also impact users who leverage the LLVM build infrastructure
-or are interested in LLVM qualification.</p>
+<p>In addition, many APIs have changed in this release.  Some of the major
+  LLVM API changes are:</p>
 
 <ul>
+  
+  include/llvm/System merged into include/llvm/Support.
+  
+  
+  APInt API changes, see PR5207.
+  
+  MVT::Flag renamed to MVT::Glue
+  
+  
+  error_code + libsystem + PathV2 changes
+  The system_error header from C++0x was added.
+  * Use if (error_code ec = function()) to check for error conditions
+  from functions which return it.
+  * error_code::message returns a human readable description of the error.
+  
+  PathV1 has been deprecated in favor of PathV2 (sorry I didn't finish
+  this before the release).
+  * No Path class, use a r-value convertible to a twine instead.
+  * Assumes all paths are UTF-8.
+  
+
 </ul>
 </div>
 
