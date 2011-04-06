@@ -134,10 +134,14 @@ struct SpillPlacement::Node {
   }
 
   /// addBias - Bias this node from an ingoing[0] or outgoing[1] link.
-  void addBias(float w, bool out) {
+  /// Return the change to the total number of positive biases.
+  int addBias(float w, bool out) {
     // Normalize w relative to all connected blocks from that direction.
     w /= Frequency[out];
+    int Before = Bias > 0;
     Bias += w;
+    int After = Bias > 0;
+    return After - Before;
   }
 
   /// update - Recompute Value from Bias and Links. Return true when node
@@ -237,14 +241,14 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
     if (I->Entry != DontCare) {
       unsigned ib = bundles->getBundle(I->Number, 0);
       activate(ib);
-      nodes[ib].addBias(Freq * Bias[I->Entry], 1);
+      PositiveNodes += nodes[ib].addBias(Freq * Bias[I->Entry], 1);
     }
 
     // Live-out from block?
     if (I->Exit != DontCare) {
       unsigned ob = bundles->getBundle(I->Number, 1);
       activate(ob);
-      nodes[ob].addBias(Freq * Bias[I->Exit], 0);
+      PositiveNodes += nodes[ob].addBias(Freq * Bias[I->Exit], 0);
     }
   }
 }
@@ -292,6 +296,7 @@ void SpillPlacement::prepare(BitVector &RegBundles) {
   ActiveNodes = &RegBundles;
   ActiveNodes->clear();
   ActiveNodes->resize(bundles->getNumBundles());
+  PositiveNodes = 0;
 }
 
 bool

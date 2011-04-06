@@ -49,6 +49,9 @@ class SpillPlacement  : public MachineFunctionPass {
   // caller.
   BitVector *ActiveNodes;
 
+  // The number of active nodes with a positive bias.
+  unsigned PositiveNodes;
+
   // Block frequencies are computed once. Indexed by block number.
   SmallVector<float, 4> BlockFrequency;
 
@@ -90,6 +93,10 @@ public:
   ///                   through the block. DontCare/X means the variable is live
   ///                   out, but not live in.
   void addConstraints(ArrayRef<BlockConstraint> LiveBlocks);
+
+  /// getPositiveNodes - Return the total number of graph nodes with a positive
+  /// bias after adding constraints.
+  unsigned getPositiveNodes() const { return PositiveNodes; }
 
   /// finish - Compute the optimal spill code placement given the
   /// constraints. No MustSpill constraints will be violated, and the smallest
