@@ -463,7 +463,7 @@ float RAGreedy::calcSplitConstraints(unsigned PhysReg) {
   ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
   SplitConstraints.resize(UseBlocks.size() + ThroughBlocks.size());
   for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
-    SpillPlacement::BlockConstraint BC = SplitConstraints[UseBlocks.size() + i];
+    SpillPlacement::BlockConstraint &BC = SplitConstraints[UseBlocks.size()+i];
     BC.Number = ThroughBlocks[i];
     BC.Entry = SpillPlacement::DontCare;
     BC.Exit = SpillPlacement::DontCare;
