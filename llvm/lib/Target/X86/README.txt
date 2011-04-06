@@ -1681,6 +1681,36 @@ Missed optimization: should be movl+andl.
 
 //===---------------------------------------------------------------------===//
 
+The x86_64 abi says:
+
+Booleans, when stored in a memory object, are stored as single byte objects the
+value of which is always 0 (false) or 1 (true).
+
+We are not using this fact:
+
+int bar(_Bool *a) { return *a; }
+
+define i32 @bar(i8* nocapture %a) nounwind readonly optsize {
+  %1 = load i8* %a, align 1, !tbaa !0
+  %tmp = and i8 %1, 1
+  %2 = zext i8 %tmp to i32
+  ret i32 %2
+}
+
+bar:
+        movb    (%rdi), %al
+        andb    $1, %al
+        movzbl  %al, %eax
+        ret
+
+GCC produces
+
+bar:
+        movzbl  (%rdi), %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
 Consider the following two functions compiled with clang:
 _Bool foo(int *x) { return !(*x & 4); }
 unsigned bar(int *x) { return !(*x & 4); }
