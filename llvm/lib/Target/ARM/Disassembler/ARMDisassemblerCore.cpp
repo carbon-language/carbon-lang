@@ -547,7 +547,7 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
     return false;
   case ARM::SMLAL:   case ARM::SMULL:   case ARM::UMAAL:   case ARM::UMLAL:
   case ARM::UMULL:   case ARM::SMLALBB: case ARM::SMLALBT: case ARM::SMLALTB:
-  case ARM::SMLALTT: case ARM::SMLSLD:
+  case ARM::SMLALTT: case ARM::SMLSLD:  case ARM::SMLSLDX:
     if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     if (R19_16 == R15_12)
@@ -1201,12 +1201,8 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     }
     OpIdx += 1;
   } else {
-    // The opcode ARM::LDRT actually corresponds to both Encoding A1 and A2 of
-    // A8.6.86 LDRT.  So if Inst{4} != 0 while Inst{25} (getIBit(insn)) == 1,
-    // we should reject this insn as invalid.
-    //
-    // Ditto for LDRBT.
-    if ((Opcode == ARM::LDRT || Opcode == ARM::LDRBT) && (slice(insn,4,4) == 1))
+    // If Inst{25} = 1 and Inst{4} != 0, we should reject this as invalid.
+    if (slice(insn,4,4) == 1)
       return false;
 
     // Disassemble the offset reg (Rm), shift type, and immediate shift length.
