@@ -556,8 +556,9 @@ public:
 
   /// setUseMCJIT - Set whether the MC-JIT implementation should be used
   /// (experimental).
-  void setUseMCJIT(bool Value) {
+  EngineBuilder &setUseMCJIT(bool Value) {
     UseMCJIT = Value;
+    return *this;
   }
 
   /// setMAttrs - Set cpu-specific attributes.
