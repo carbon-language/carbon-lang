@@ -311,7 +311,7 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
   // it.
   if (!GV || GV->isDeclaration() || GV->hasLocalLinkage()) return;
 
-  // Should be an array of '{ int, void ()* }' structs.  The first value is
+  // Should be an array of '{ i32, void ()* }' structs.  The first value is
   // the init priority, which we ignore.
   ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
   if (!InitList) return;
