@@ -114,10 +114,9 @@ implemented (such as rvalue references and variadic templates).  LLVM 2.9 has
 also brought in a large range of bug fixes and minor features (e.g. __label__
 support), and is much more compatible with the Linux Kernel.</p>  
   
-<p>If Clang rejects your code that is built with another compiler, please take a
+<p>If Clang rejects your code but another compiler accepts it, please take a
 look at the <a href="http://clang.llvm.org/compatibility.html">language
-compatibility</a> guide to make sure the issue isn't intentional or a known
-issue.
+compatibility</a> guide to make sure this is not intentional or a known issue.
 </p>
 
 <ul>
@@ -626,7 +625,7 @@ it run faster:</p>
   The reimplementation uses a new LLVM IR <a 
   href="LangRef.html#t_x86mmx">x86_mmx</a> type to ensure that MMX operations
   are <em>only</em> generated from source that uses MMX builtin operations. With
-  this, random types like &lt;2 x i32&gt; are not turned into to MMX operations
+  this, random types like &lt;2 x i32&gt; are not turned into MMX operations
   (which can be catastrophic without proper "emms" insertion).  Because the X86
   code generator always generates reliable code, the -disable-mmx flag is now
   removed.
@@ -690,7 +689,7 @@ it run faster:</p>
   multiplications and addition of a simple delay slot filler.</li>
 
 <li>PowerPC: The backend has been largely MC'ized and is ready to support
-  directly writing out mach-o object files.  Noone seems interested in finishing
+  directly writing out mach-o object files.  No one seems interested in finishing
   this final step though.</li>
   
 </ul>
@@ -727,7 +726,7 @@ from the previous release.</p>
     
 <li>The LoopIndexSplit, LiveValues, SimplifyHalfPowrLibCalls, GEPSplitter, and
   PartialSpecialization passes were removed.  They were unmaintained,
-  buggy, or decided to be a bad idea.</li>
+  buggy, or deemed to be a bad idea.</li>
 </ul>
 
 </div>
