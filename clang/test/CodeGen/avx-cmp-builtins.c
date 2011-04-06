@@ -1,4 +1,4 @@
-// RUN: %clang -mavx -c -emit-llvm %s -o - | llvm-dis | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -target-feature +avx -emit-llvm %s -o - | FileCheck %s
 #include <immintrin.h>
 
 //
