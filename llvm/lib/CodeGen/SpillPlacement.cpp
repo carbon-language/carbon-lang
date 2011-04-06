@@ -203,11 +203,10 @@ void SpillPlacement::activate(unsigned n) {
 }
 
 
-/// prepareNodes - Compute node biases and weights from a set of constraints.
+/// addConstraints - Compute node biases and weights from a set of constraints.
 /// Set a bit in NodeMask for each active node.
-void SpillPlacement::
-prepareNodes(const SmallVectorImpl<BlockConstraint> &LiveBlocks) {
-  for (SmallVectorImpl<BlockConstraint>::const_iterator I = LiveBlocks.begin(),
+void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
+  for (ArrayRef<BlockConstraint>::iterator I = LiveBlocks.begin(),
        E = LiveBlocks.end(); I != E; ++I) {
     float Freq = getBlockFrequency(I->Number);
 
@@ -288,21 +287,20 @@ void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
   }
 }
 
-bool
-SpillPlacement::placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
-                            BitVector &RegBundles) {
+void SpillPlacement::prepare(BitVector &RegBundles) {
   // Reuse RegBundles as our ActiveNodes vector.
   ActiveNodes = &RegBundles;
   ActiveNodes->clear();
   ActiveNodes->resize(bundles->getNumBundles());
+}
 
-  // Compute active nodes, links and biases.
-  prepareNodes(LiveBlocks);
-
+bool
+SpillPlacement::finish() {
+  assert(ActiveNodes && "Call prepare() first");
   // Update all active nodes, and find the ones that are actually linked to
   // something so their value may change when iterating.
   SmallVector<unsigned, 8> Linked;
-  for (int n = RegBundles.find_first(); n>=0; n = RegBundles.find_next(n)) {
+  for (int n = ActiveNodes->find_first(); n>=0; n = ActiveNodes->find_next(n)) {
     nodes[n].update(nodes);
     // A node that must spill, or a node without any links is not going to
     // change its value ever again, so exclude it from iterations.
@@ -313,12 +311,13 @@ SpillPlacement::placeSpills(const SmallVectorImpl<BlockConstraint> &LiveBlocks,
   // Iterate the network to convergence.
   iterate(Linked);
 
-  // Write preferences back to RegBundles.
+  // Write preferences back to ActiveNodes.
   bool Perfect = true;
-  for (int n = RegBundles.find_first(); n>=0; n = RegBundles.find_next(n))
+  for (int n = ActiveNodes->find_first(); n>=0; n = ActiveNodes->find_next(n))
     if (!nodes[n].preferReg()) {
-      RegBundles.reset(n);
+      ActiveNodes->reset(n);
       Perfect = false;
     }
+  ActiveNodes = 0;
   return Perfect;
 }

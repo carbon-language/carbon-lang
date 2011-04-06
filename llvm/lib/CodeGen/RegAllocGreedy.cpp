@@ -770,7 +770,10 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       continue;
     }
 
-    SpillPlacer->placeSpills(SplitConstraints, LiveBundles);
+    SpillPlacer->prepare(LiveBundles);
+    SpillPlacer->addConstraints(SplitConstraints);
+    SpillPlacer->finish();
+
     // No live bundles, defer to splitSingleBlocks().
     if (!LiveBundles.any()) {
       DEBUG(dbgs() << " no bundles.\n");
