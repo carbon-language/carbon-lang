@@ -27,11 +27,19 @@ namespace llvm {
   class DebugLoc {
     friend struct DenseMapInfo<DebugLoc>;
 
-    /// getTombstoneKey() - A private constructor that returns an unknown that
-    /// is distinguishable from the usual one.
-    static DebugLoc getTombstoneKey() {
+    /// getEmptyKey() - A private constructor that returns an unknown that is
+    /// not equal to the tombstone key or DebugLoc().
+    static DebugLoc getEmptyKey() {
       DebugLoc DL;
       DL.LineCol = -1;
+      return DL;
+    }
+
+    /// getTombstoneKey() - A private constructor that returns an unknown that
+    /// is not equal to the empty key or DebugLoc().
+    static DebugLoc getTombstoneKey() {
+      DebugLoc DL;
+      DL.LineCol = -2;
       return DL;
     }
 

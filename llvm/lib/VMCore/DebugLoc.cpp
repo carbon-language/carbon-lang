@@ -133,7 +133,7 @@ DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
 //===----------------------------------------------------------------------===//
 
 DebugLoc DenseMapInfo<DebugLoc>::getEmptyKey() {
-  return DebugLoc();
+  return DebugLoc::getEmptyKey();
 }
 
 DebugLoc DenseMapInfo<DebugLoc>::getTombstoneKey() {
