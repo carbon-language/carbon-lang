@@ -385,41 +385,23 @@ _mm256_dp_ps(__m256 a, __m256 b, const int c)
 #define _CMP_GT_OQ    0x1e /* Greater-than (ordered, non-signaling)  */
 #define _CMP_TRUE_US  0x1f /* True (unordered, signaling)  */
 
-static __inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_cmp_pd(__m128d a, __m128d b, const int c)
-{
-  return (__m128d)__builtin_ia32_cmppd((__v2df)a, (__v2df)b, c);
-}
+#define _mm_cmp_pd(a, b, c) \
+  (__m128d)__builtin_ia32_cmppd((__v2df)(a), (__v2df)(b), (c))
 
-static __inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_cmp_ps(__m128 a, __m128 b, const int c)
-{
-  return (__m128)__builtin_ia32_cmpps((__v4sf)a, (__v4sf)b, c);
-}
+#define _mm_cmp_ps(a, b, c) \
+  (__m128)__builtin_ia32_cmpps((__v4sf)(a), (__v4sf)(b), (c))
 
-static __inline __m256d __attribute__((__always_inline__, __nodebug__))
-_mm256_cmp_pd(__m256d a, __m256d b, const int c)
-{
-  return (__m256d)__builtin_ia32_cmppd256((__v4df)a, (__v4df)b, c);
-}
+#define _mm256_cmp_pd(a, b, c) \
+  (__m256d)__builtin_ia32_cmppd256((__v4df)(a), (__v4df)(b), (c))
 
-static __inline __m256 __attribute__((__always_inline__, __nodebug__))
-_mm256_cmp_ps(__m256 a, __m256 b, const int c)
-{
-  return (__m256)__builtin_ia32_cmpps256((__v8sf)a, (__v8sf)b, c);
-}
+#define _mm256_cmp_ps(a, b, c) \
+  (__m256)__builtin_ia32_cmpps256((__v8sf)(a), (__v8sf)(b), (c))
 
-static __inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_cmp_sd(__m128d a, __m128d b, const int c)
-{
-  return (__m128d)__builtin_ia32_cmpsd((__v2df)a, (__v2df)b, c);
-}
+#define _mm_cmp_sd(a, b, c) \
+  (__m128d)__builtin_ia32_cmpsd((__v2df)(a), (__v2df)(b), (c))
 
-static __inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_cmp_ss(__m128 a, __m128 b, const int c)
-{
-  return (__m128)__builtin_ia32_cmpss((__v4sf)a, (__v4sf)b, c);
-}
+#define _mm_cmp_ss(a, b, c) \
+  (__m128)__builtin_ia32_cmpss((__v4sf)(a), (__v4sf)(b), (c))
 
 /* Vector extract */
 static __inline __m128d __attribute__((__always_inline__, __nodebug__))
