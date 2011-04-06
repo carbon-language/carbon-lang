@@ -940,16 +940,13 @@ let usesCustomInserter = 1 in {
 multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
   def Sri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                 Size4Bytes, IIC_iALUi,
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>,
-               Requires<[IsARM]>;
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>;
   def Srr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 Size4Bytes, IIC_iALUr,
-               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>,
-               Requires<[IsARM]>;
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>;
   def Srs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
                 Size4Bytes, IIC_iALUsr,
-               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>,
-               Requires<[IsARM]>;
+               [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>;
 }
 }
 }
@@ -2298,17 +2295,14 @@ def RSCrs : AsI1<0b0111, (outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
 }
 }
 
-// FIXME: Allow these to be predicated.
 // NOTE: CPSR def omitted because it will be handled by the custom inserter.
 let usesCustomInserter = 1, Uses = [CPSR] in {
 def RSCSri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
                   Size4Bytes, IIC_iALUi,
-                  [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>,
-                  Requires<[IsARM]>;
+                  [(set GPR:$Rd, (sube_dead_carry so_imm:$imm, GPR:$Rn))]>;
 def RSCSrs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
                   Size4Bytes, IIC_iALUsr,
-                  [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>,
-                  Requires<[IsARM]>;
+                  [(set GPR:$Rd, (sube_dead_carry so_reg:$shift, GPR:$Rn))]>;
 }
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
