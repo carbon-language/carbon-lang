@@ -399,25 +399,21 @@ in this section.
 
 <ul>
   
-<li>
-  TBAA: On by default in clang.  Disable it with -fno-strict-aliasing.
-  Could be more aggressive for structs.
+<li>Type Based Alias Analysis (TBAA) is now implemented and turned on by default
+  in Clang.  This allows substantially better load/store optimization in some
+  cases.  TBAA can be disabled by passing -fno-strict-aliasing.
 </li>
 
-<li>New Nvidia PTX backend, not generally useful in 2.9 though.</li>
+<li>This release has seen a continued focus on quality of debug information. 
+  LLVM now generates much higher fidelity debug information, particularly when
+  debugging optimized code.</li>
+
+<li>Inline assembly now supports multiple alternative constraints.</li>  
+
+<li>A new backend for the NVIDIA PTX virtual ISA (used to target its GPUs) is
+  under rapid development.  It is not generally useful in 2.9, but is making
+  rapid progress.</li>
   
-<li>
-Much better debug info generated, particularly in optimized code situations.
-</li>
-
-<li>
-inline asm multiple alternative constraint support.
-</li>  
-  
-<li>
-  New naming rules in coding standards: CodingStandards.html#ll_naming
-</li>
-
 </ul>
   
 </div>
@@ -432,13 +428,19 @@ inline asm multiple alternative constraint support.
 expose new optimization opportunities:</p>
 
 <ul>
-<li>udiv, ashr, lshr, shl now have exact and nuw/nsw bits:
-  PR8862 / LangRef.html</li>
+<li>The <a href="LangRef.html#bitwiseops">udiv, ashr, lshr, and shl</a>
+  instructions now have support exact and nuw/nsw bits to indicate that they
+  don't overflow or shift out bits.  This is useful for optimization of <a
+    href="http://llvm.org/PR8862">pointer differences</a> and other cases.</li>
   
-  unnamed_addr + PR8927
-
-  new 'hotpatch' attribute: LangRef.html#fnattrs
-
+<li>LLVM IR now supports the <a href="LangRef.html#globalvars">unnamed_addr</a>
+  attribute to indicate that constant global variables with identical
+  initializers can be merged.  This fixed <a href="http://llvm.org/PR8927">an
+  issue</a> where LLVM would incorrectly merge two globals which were supposed
+  to have distinct addresses.</li>
+  
+<li>The new <a href="LangRef.html#fnattrs">hotpatch attribute</a> has been added
+  to allow runtime patching of functions.</li> 
 </ul>
 
 </div>
@@ -454,52 +456,60 @@ expose new optimization opportunities:</p>
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
-  <li>LTO has been improved to use MC for parsing inline asm and now
-  can build large programs like Firefox 4 on both OS X and Linux.</li>
+<li>Link Time Optimization (LTO) has been improved to use MC for parsing inline
+  assembly and now can build large programs like Firefox 4 on both Mac OS X and
+  Linux.</li>
   
+<li>The new -loop-idiom pass recognizes memset/memcpy loops (and memset_pattern
+  on darwin), turning them into library calls, which are typically better
+  optimized than inline code.  If you are building a libc and notice that your
+  memcpy and memset functions are compiled into infinite recursion, please build
+  with -ffreestanding or -fno-builtin to disable this pass.</li>
   
- LoopIdiom: memset/memcpy formation and memset_pattern on darwin.  Build with
-  -ffreestanding or -fno-builtin if your memcpy is being compiled into infinite
-  recursion.
-  
-  TargetLibraryInfo
-    
-  EarlyCSE pass.
-  LoopInstSimplify pass.
-    
-New <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a> infrastructure
-  for region-based optimizations.
-  
-  Can optimize printf to iprintf when no floating point is used, for embedded
-  targets with smaller iprintf implementation.
+<li>A new -early-cse pass does a fast pass over functions to fold constants,
+  simplify expressions, perform simple dead store elimination, and perform
+  common subexpression elimination.  It does a good job at catching some of the
+  trivial redundancies that exist in unoptimized code, making later passes more
+  effective.<,/li>
 
-Speedups to various mid-level passes:
-  GVN is much faster on functions with deep dominator trees / lots of BBs.
-  DomTree and DominatorFrontier are much faster to compute, and preserved by
-    more passes (so they are computed less often)
-  SRoA is also much faster and doesn't use DominanceFrontier.
+<li>A new -loop-instsimplify pass is used to clean up loop bodies in the loop
+  optimizer.</li>
   
-DSE is more aggressive with stores of different types: e.g. a large store 
-  following a small one to the same address.
+<li>The new TargetLibraryInfo interface allows mid-level optimizations to know
+  whether the current target's runtime library has certain functions.  For
+  example, the optimizer can now transform integer-only printf calls to call
+  iprintf, allowing reduced code size for embedded C libraries (e.g. newlib).
+</li>
+    
+<li>LLVM has a new <a href="WritingAnLLVMPass.html#RegionPass">RegionPass</a>
+  infrastructure for region-based optimizations.</li>
+
+<li>Several optimizer passes have been substantially sped up:
+  GVN is much faster on functions with deep dominator trees and lots of basic
+  blocks.  The dominator tree and dominance frontier passes are much faster to
+  compute, and preserved by more passes (so they are computed less often).  The
+  -scalar-repl pass is also much faster and doesn't use DominanceFrontier.
+</li>
+
+<li>The Dead Store Elimination pass is more aggressive optimizing stores of
+  different types: e.g. a large store following a small one to the same address.
+  The MemCpyOptimizer pass handles several new forms of memcpy elimination.</li>
   
+<li>LLVM now optimizes various idioms for overflow detection into check of the
+  flag register on various CPUs.  For example, we now compile:
   
-We now optimize various idioms for overflow detection into check of the flag
-  register on various CPUs, e.g.:
+  <pre>
    unsigned long t = a+b;
    if (t &lt; a) ...
+  </pre>
   into:
-  	addq	%rdi, %rbx
-  	jno	LBB0_2
-
+  <pre>
+   addq %rdi, %rbx
+   jno  LBB0_2
+  </pre>
+</li>
   
 </ul>
-
-<!--
-<p>In addition to these features that are done in 2.8, there is preliminary
-   support in the release for Type Based Alias Analysis 
-  Preliminary work on TBAA but not usable in 2.8.
-  New CorrelatedValuePropagation pass, not on by default in 2.8 yet.
--->
 
 </div>
 
@@ -516,46 +526,37 @@ and a number of other related areas that CPU instruction-set level tools work
 in.</p>
 
 <ul>
-  <li>MC is now used by default for ELF systems on x86 and
-  x86-64.</li>
-  <li>MC supports and CodeGen uses the <tt>.loc</tt> directives for
-  producing line number debug info. This produces more compact line
-  tables.</li>
-  <li>MC supports the <tt>.cfi_*</tt> directives for producing DWARF
+<li>ELF MC support has matured enough for the integrated assembler to be turned
+  on by default in Clang on X86-32 and X86-64 ELF systems.</li>
+  
+<li>MC supports and CodeGen uses the <tt>.file</tt> and <tt>.loc</tt> directives
+  for producing line number debug info. This produces more compact line
+  tables and easier to read .s files.</li>
+  
+<li>MC supports the <tt>.cfi_*</tt> directives for producing DWARF
   frame information, but it is still not used by CodeGen by default.</li>
-  <li>COFF support?</li>
+
   
-  
-  MC Assembler: X86 now generates much better diagnostics for common errors,
+<li>The MC assembler now generates much better diagnostics for common errors,
   is much faster at matching instructions, is much more bug-compatible with
   the GAS assembler, and is now generally useful for a broad range of X86
-  assembly.
+  assembly.</li>
   
+<li>We now have some basic <a href="CodeGenerator.html#mc">internals
+  documentation</a> for MC.</li>
   
-  ELF MC support: on by default in clang.  There are still known missing features
-  for human written assembly.
+<li>.td files can now specify assembler aliases directly with the <a 
+   href="CodeGenerator.html#na_instparsing">MnemonicAlias and InstAlias</a>
+   tblgen classes.</li>
   
+<li>LLVM now has an experimental format-independent object file manipulation
+  library (lib/Object).  It supports both PE/COFF and ELF.  The llvm-nm tool has
+  been extended to work with native object files, and the new llvm-objdump tool
+  supports disassembly of object files (but no relocations are displayed yet).
+</li>
   
-  Some basic <a href="CodeGenerator.html#mc">internals documentation</a> for MC. 
-  
-  MC Assembler support for .file and .loc.
-  
-  tblgen support for assembler aliases: <a 
-    href="CodeGenerator.html#na_instparsing">MnemonicAlias and InstAlias</a>
-  
-  Win32 PE-COFF support in the MC assembler has made a lot of progress in the 2.9
-  timeframe, but is still not generally useful.  Please see 
-  "http://llvm.org/bugs/showdependencytree.cgi?id=9100&amp;hide_resolved=1" for open bugs?
-  
-  
-  lib/Object and llvm-objdump
-  Experimental format independent object file manipulation library.
-  * Supports PE/COFF and ELF.
-  * llvm-nm extended to work with object files. Exactly matches
-  binutils-nm for the files I've tested.
-  * llvm-objdump added with support for disassembly (no relocations displayed).
-  
-
+<li>Win32 PE-COFF support in the MC assembler has made a lot of progress in the
+  2.9 timeframe, but is still not generally useful.</li>
 
 </ul>
 
@@ -707,6 +708,12 @@ from the previous release.</p>
 <ul>
   last release for llvm-gcc
 
+  <li>
+    New naming rules in coding standards: CodingStandards.html#ll_naming
+  </li>
+  
+
+  
 - DIBuilder provides simpler interface for front ends like Clang to encode debug info in LLVM IR.
   - This interface hides implementation details (e.g. DIDerivedType, existence of compile unit etc..) that any front end should not know about.
   For example, DIFactory DebugFactory;
