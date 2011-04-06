@@ -1141,6 +1141,8 @@ enum LinuxDistro {
   Exherbo,
   Fedora13,
   Fedora14,
+  Fedora15,
+  FedoraRawhide,
   OpenSuse11_3,
   UbuntuHardy,
   UbuntuIntrepid,
@@ -1153,7 +1155,8 @@ enum LinuxDistro {
 };
 
 static bool IsFedora(enum LinuxDistro Distro) {
-  return Distro == Fedora13 || Distro == Fedora14;
+  return Distro == Fedora13 || Distro == Fedora14 ||
+         Distro == Fedora15 || Distro == FedoraRawhide;
 }
 
 static bool IsOpenSuse(enum LinuxDistro Distro) {
@@ -1218,10 +1221,15 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
 
   if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
     llvm::StringRef Data = File.get()->getBuffer();
-    if (Data.startswith("Fedora release 14 (Laughlin)"))
+    if (Data.startswith("Fedora release 15"))
+      return Fedora15;
+    else if (Data.startswith("Fedora release 14"))
       return Fedora14;
-    else if (Data.startswith("Fedora release 13 (Goddard)"))
+    else if (Data.startswith("Fedora release 13"))
       return Fedora13;
+    else if (Data.startswith("Fedora release") &&
+             Data.find("Rawhide") != llvm::StringRef::npos)
+      return FedoraRawhide;
     return UnknownDistro;
   }
 
@@ -1327,10 +1335,11 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       GccTriple = "powerpc64-unknown-linux-gnu";
   }
 
-  const char* GccVersions[] = {"4.5.2", "4.5.1", "4.5", "4.4.5", "4.4.4",
-                               "4.4.3", "4.4", "4.3.4", "4.3.3", "4.3.2",
-                               "4.3", "4.2.4", "4.2.3", "4.2.2", "4.2.1",
-                               "4.2"};
+  const char* GccVersions[] = {"4.6.0",
+                               "4.5.2", "4.5.1", "4.5",
+                               "4.4.5", "4.4.4", "4.4.3", "4.4",
+                               "4.3.4", "4.3.3", "4.3.2", "4.3",
+                               "4.2.4", "4.2.3", "4.2.2", "4.2.1", "4.2"};
   std::string Base = "";
   for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
     std::string Suffix = GccTriple + "/" + GccVersions[i];
