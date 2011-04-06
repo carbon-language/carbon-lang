@@ -272,8 +272,12 @@ EmulateInstruction::ReadRegisterFrame  (void *baton,
     RegisterContext *reg_context = frame->GetRegisterContext().get();
     Scalar value;
     
+    uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
     
-    if (reg_context->ReadRegisterValue (reg_num, value))
+    if (internal_reg_num == LLDB_INVALID_REGNUM)
+        return false;
+    
+    if (reg_context->ReadRegisterValue (internal_reg_num, value))
     {
         reg_value = value.GetRawBits64 (0);
         return true;
@@ -296,7 +300,11 @@ EmulateInstruction::WriteRegisterFrame (void *baton,
     RegisterContext *reg_context = frame->GetRegisterContext().get();
     Scalar value (reg_value);
     
-    return reg_context->WriteRegisterValue (reg_num, value);
+    uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
+    if (internal_reg_num != LLDB_INVALID_REGNUM)
+        return reg_context->WriteRegisterValue (internal_reg_num, value);
+    else
+        return false;
 }
 
 size_t 
