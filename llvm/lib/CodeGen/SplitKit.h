@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
@@ -69,15 +70,10 @@ public:
     SlotIndex LastUse;    ///< Last instr using current reg.
     SlotIndex Kill;       ///< Interval end point inside block.
     SlotIndex Def;        ///< Interval start point inside block.
-    bool Uses;            ///< Current reg has uses or defs in block.
     bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
   };
-
-  /// Basic blocks where var is live. This array is parallel to
-  /// SpillConstraints.
-  SmallVector<BlockInfo, 8> LiveBlocks;
 
 private:
   // Current live interval.
@@ -88,6 +84,12 @@ private:
   /// last valid split point for a variable that is live in to a landing pad
   /// successor.
   SmallVector<std::pair<SlotIndex, SlotIndex>, 8> LastSplitPoint;
+
+  /// UseBlocks - Blocks where CurLI has uses.
+  SmallVector<BlockInfo, 8> UseBlocks;
+
+  /// ThroughBlocks - Block numbers where CurLI is live through without uses.
+  SmallVector<unsigned, 8> ThroughBlocks;
 
   SlotIndex computeLastSplitPoint(unsigned Num);
 
@@ -128,6 +130,14 @@ public:
   /// This can be used to recognize code inserted by earlier live range
   /// splitting.
   bool isOriginalEndpoint(SlotIndex Idx) const;
+
+  /// getUseBlocks - Return an array of BlockInfo objects for the basic blocks
+  /// where CurLI has uses.
+  ArrayRef<BlockInfo> getUseBlocks() { return UseBlocks; }
+
+  /// getThroughBlocks - Return an array of block numbers where CurLI is live
+  /// through without uses.
+  ArrayRef<unsigned> getThroughBlocks() { return ThroughBlocks; }
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 
