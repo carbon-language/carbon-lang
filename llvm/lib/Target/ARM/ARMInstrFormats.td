@@ -1850,6 +1850,8 @@ class NVLaneOp<bits<8> opcod1, bits<4> opcod2, bits<2> opcod3,
   let Inst{11-8}  = opcod2;
   let Inst{6-5}   = opcod3;
   let Inst{4}     = 1;
+  // A8.6.303, A8.6.328, A8.6.329
+  let Inst{3-0}   = 0b0000;
 
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ins pred:$p));

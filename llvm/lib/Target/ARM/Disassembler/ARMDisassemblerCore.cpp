@@ -3037,7 +3037,7 @@ static bool DisassembleNGetLnFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   ElemSize esize =
     Opcode == ARM::VGETLNi32 ? ESize32
       : ((Opcode == ARM::VGETLNs16 || Opcode == ARM::VGETLNu16) ? ESize16
-                                                                : ESize32);
+                                                                : ESize8);
 
   // Rt = Inst{15-12} => ARM Rd
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
