@@ -85,9 +85,8 @@ namespace lldb_private {
                  const UUID* uuid, FileSpec &local_file);
 
         virtual uint32_t
-        FindProcessesByName (const char *name_match, 
-                             NameMatchType name_match_type,
-                             ProcessInfoList &process_infos);
+        FindProcesseses (const ProcessInfoMatch &match_info,
+                         ProcessInfoList &process_infos);
 
         virtual bool
         GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);

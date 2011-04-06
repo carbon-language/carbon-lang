@@ -192,11 +192,10 @@ PlatformLinux::~PlatformLinux()
 }
 
 uint32_t
-PlatformLinux::FindProcessesByName (const char *name_match, 
-                                    NameMatchType name_match_type,
-                                    ProcessInfoList &process_infos)
+PlatformLinux:: FindProcesses const ProcessInfoMatch &match_info,
+                               ProcessInfoList &process_infos()
 {
-    return Host::FindProcessesByName (name_match, name_match_type, process_infos);
+    return Host:: FindProcesses (match_info, process_infos);
 }
 
 bool
