@@ -1403,14 +1403,17 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   if (Cond == 0 || (!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
     Cond->getParent() != BB || !Cond->hasOneUse())
   return false;
-  
+
+  SmallVector<DbgInfoIntrinsic *, 8> DbgValues;
   // Only allow this if the condition is a simple instruction that can be
   // executed unconditionally.  It must be in the same block as the branch, and
   // must be at the front of the block.
   BasicBlock::iterator FrontIt = BB->front();
   // Ignore dbg intrinsics.
-  while (isa<DbgInfoIntrinsic>(FrontIt))
+  while (DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(FrontIt)) {
+    DbgValues.push_back(DBI);
     ++FrontIt;
+  }
     
   // Allow a single instruction to be hoisted in addition to the compare
   // that feeds the branch.  We later ensure that any values that _it_ uses
@@ -1431,8 +1434,10 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
   // Ingore dbg intrinsics.
-  while(isa<DbgInfoIntrinsic>(CondIt))
+  while(DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(CondIt)) {
+    DbgValues.push_back(DBI);
     ++CondIt;
+  }
   if (&*CondIt != BI) {
     assert (!isa<DbgInfoIntrinsic>(CondIt) && "Hey do not forget debug info!");
     return false;
@@ -1453,7 +1458,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *FalseDest = BI->getSuccessor(1);
   if (TrueDest == BB || FalseDest == BB)
     return false;
-  
+
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     BasicBlock *PredBlock = *PI;
     BranchInst *PBI = dyn_cast<BranchInst>(PredBlock->getTerminator());
@@ -1565,6 +1570,14 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     if (PBI->getSuccessor(1) == BB) {
       AddPredecessorToBlock(FalseDest, PredBlock, BB);
       PBI->setSuccessor(1, FalseDest);
+    }
+
+    // Move dbg value intrinsics in PredBlock.
+    for (SmallVector<DbgInfoIntrinsic *, 8>::iterator DBI = DbgValues.begin(),
+           DBE = DbgValues.end(); DBI != DBE; ++DBI) {
+      DbgInfoIntrinsic *DB = *DBI;
+      DB->removeFromParent();
+      DB->insertBefore(PBI);
     }
     return true;
   }
