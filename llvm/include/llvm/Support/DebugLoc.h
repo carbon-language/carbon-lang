@@ -15,6 +15,8 @@
 #ifndef LLVM_SUPPORT_DEBUGLOC_H
 #define LLVM_SUPPORT_DEBUGLOC_H
 
+#include "llvm/ADT/DenseMapInfo.h"
+
 namespace llvm {
   class MDNode;
   class LLVMContext;
@@ -23,6 +25,16 @@ namespace llvm {
   /// and MachineInstr to compactly encode file/line/scope information for an
   /// operation.
   class DebugLoc {
+    friend struct DenseMapInfo<DebugLoc>;
+
+    /// getTombstoneKey() - A private constructor that returns an unknown that
+    /// is distinguishable from the usual one.
+    static DebugLoc getTombstoneKey() {
+      DebugLoc DL;
+      DL.LineCol = -1;
+      return DL;
+    }
+
     /// LineCol - This 32-bit value encodes the line and column number for the
     /// location, encoded as 24-bits for line and 8 bits for col.  A value of 0
     /// for either means unknown.
@@ -74,6 +86,14 @@ namespace llvm {
       return LineCol == DL.LineCol && ScopeIdx == DL.ScopeIdx;
     }
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
+  };
+
+  template <>
+  struct DenseMapInfo<DebugLoc> {
+    static DebugLoc getEmptyKey();
+    static DebugLoc getTombstoneKey();
+    static unsigned getHashValue(const DebugLoc &Key);
+    static bool isEqual(const DebugLoc &LHS, const DebugLoc &RHS);
   };
 } // end namespace llvm
 

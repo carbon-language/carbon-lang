@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/DebugLoc.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "LLVMContextImpl.h"
 using namespace llvm;
 
@@ -125,6 +126,29 @@ DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
     ColNo = Col->getZExtValue();
   
   return get(LineNo, ColNo, Scope, dyn_cast_or_null<MDNode>(N->getOperand(3)));
+}
+
+//===----------------------------------------------------------------------===//
+// DenseMap specialization
+//===----------------------------------------------------------------------===//
+
+DebugLoc DenseMapInfo<DebugLoc>::getEmptyKey() {
+  return DebugLoc();
+}
+
+DebugLoc DenseMapInfo<DebugLoc>::getTombstoneKey() {
+  return DebugLoc::getTombstoneKey();
+}
+
+unsigned DenseMapInfo<DebugLoc>::getHashValue(const DebugLoc &Key) {
+  FoldingSetNodeID ID;
+  ID.AddInteger(Key.LineCol);
+  ID.AddInteger(Key.ScopeIdx);
+  return ID.ComputeHash();
+}
+
+bool DenseMapInfo<DebugLoc>::isEqual(const DebugLoc &LHS, const DebugLoc &RHS) {
+  return LHS == RHS;
 }
 
 //===----------------------------------------------------------------------===//
