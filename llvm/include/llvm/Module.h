@@ -308,7 +308,7 @@ public:
   ///   1. If it does not exist, add a declaration of the global and return it.
   ///   2. Else, the global exists but has the wrong type: return the function
   ///      with a constantexpr cast to the right type.
-  ///   3. Finally, if the existing global is the correct delclaration, return
+  ///   3. Finally, if the existing global is the correct declaration, return
   ///      the existing global.
   Constant *getOrInsertGlobal(StringRef Name, const Type *Ty);
 
