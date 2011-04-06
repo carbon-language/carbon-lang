@@ -1327,6 +1327,7 @@ public:
   // for object declared using an interface.
   const ObjCObjectPointerType *getAsObjCInterfacePointerType() const;
   const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
+  const ObjCObjectPointerType *getAsObjCQualifiedClassType() const;
   const ObjCObjectType *getAsObjCQualifiedInterfaceType() const;
   const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
 

@@ -1059,39 +1059,53 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
       // Handle messages to Class.
-      if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
-        if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
-          // First check the public methods in the class interface.
-          Method = ClassDecl->lookupClassMethod(Sel);
-
-          if (!Method)
-            Method = LookupPrivateClassMethod(Sel, ClassDecl);
-
-          // FIXME: if we still haven't found a method, we need to look in
-          // protocols (if we have qualifiers).
+      // We allow sending a message to a qualified Class ("Class<foo>"), which 
+      // is ok as long as one of the protocols implements the selector (if not, warn).
+      if (const ObjCObjectPointerType *QClassTy 
+            = ReceiverType->getAsObjCQualifiedClassType()) {
+        // Search protocols for class methods.
+        Method = LookupMethodInQualifiedType(Sel, QClassTy, false);
+        if (!Method) {
+          Method = LookupMethodInQualifiedType(Sel, QClassTy, true);
+          // warn if instance method found for a Class message.
+          if (Method) {
+            Diag(Loc, diag::warn_instance_method_on_class_found)
+              << Method->getSelector() << Sel;
+            Diag(Method->getLocation(), diag::note_method_declared_at);
+          }
         }
-        if (Method && DiagnoseUseOfDecl(Method, Loc))
-          return ExprError();
-      }
-      if (!Method) {
-        // If not messaging 'self', look for any factory method named 'Sel'.
-        if (!Receiver || !isSelfExpr(Receiver)) {
-          Method = LookupFactoryMethodInGlobalPool(Sel, 
+      } else {
+        if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
+          if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
+            // First check the public methods in the class interface.
+            Method = ClassDecl->lookupClassMethod(Sel);
+
+            if (!Method)
+              Method = LookupPrivateClassMethod(Sel, ClassDecl);
+          }
+          if (Method && DiagnoseUseOfDecl(Method, Loc))
+            return ExprError();
+        }
+        if (!Method) {
+          // If not messaging 'self', look for any factory method named 'Sel'.
+          if (!Receiver || !isSelfExpr(Receiver)) {
+            Method = LookupFactoryMethodInGlobalPool(Sel, 
+                                                SourceRange(LBracLoc, RBracLoc),
+                                                     true);
+            if (!Method) {
+              // If no class (factory) method was found, check if an _instance_
+              // method of the same name exists in the root class only.
+              Method = LookupInstanceMethodInGlobalPool(Sel,
                                                SourceRange(LBracLoc, RBracLoc),
-                                                   true);
-          if (!Method) {
-            // If no class (factory) method was found, check if an _instance_
-            // method of the same name exists in the root class only.
-            Method = LookupInstanceMethodInGlobalPool(Sel,
-                                               SourceRange(LBracLoc, RBracLoc),
-                                                      true);
-            if (Method)
-                if (const ObjCInterfaceDecl *ID =
-                  dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
-                if (ID->getSuperClass())
-                  Diag(Loc, diag::warn_root_inst_method_not_found)
-                    << Sel << SourceRange(LBracLoc, RBracLoc);
-              }
+                                                        true);
+              if (Method)
+                  if (const ObjCInterfaceDecl *ID =
+                      dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext())) {
+                    if (ID->getSuperClass())
+                      Diag(Loc, diag::warn_root_inst_method_not_found)
+                      << Sel << SourceRange(LBracLoc, RBracLoc);
+                  }
+            }
           }
         }
       }

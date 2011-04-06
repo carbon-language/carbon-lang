@@ -2724,6 +2724,8 @@ def warn_root_inst_method_not_found : Warning<
   "instance method %0 is being used on 'Class' which is not in the root class">;
 def warn_class_method_not_found : Warning<
   "class method %objcclass0 not found (return type defaults to 'id')">;
+def warn_instance_method_on_class_found : Warning<
+  "instance method %0 found instead of class method %1">;
 def warn_inst_method_not_found : Warning<
   "instance method %objcinstance0 not found (return type defaults to 'id')">;
 def error_no_super_class_message : Error<

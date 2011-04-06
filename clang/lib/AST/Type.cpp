@@ -408,6 +408,16 @@ const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
   return 0;
 }
 
+const ObjCObjectPointerType *Type::getAsObjCQualifiedClassType() const {
+  // There is no sugar for ObjCQualifiedClassType's, just return the canonical
+  // type pointer if it is the right class.
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>()) {
+    if (OPT->isObjCQualifiedClassType())
+      return OPT;
+  }
+  return 0;
+}
+
 const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
   if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>()) {
     if (OPT->getInterfaceType())
