@@ -744,8 +744,10 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
     StringTokLocs.push_back(StringToks[i].getLocation());
 
   QualType StrTy = Context.CharTy;
-  if (Literal.AnyWide) StrTy = Context.getWCharType();
-  if (Literal.Pascal) StrTy = Context.UnsignedCharTy;
+  if (Literal.AnyWide) 
+    StrTy = Context.getWCharType();
+  else if (Literal.Pascal)
+    StrTy = Context.UnsignedCharTy;
 
   // A C++ string literal has a const-qualified element type (C++ 2.13.4p1).
   if (getLangOptions().CPlusPlus || getLangOptions().ConstStrings)
