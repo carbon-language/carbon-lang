@@ -505,6 +505,13 @@ void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
 void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
                                           llvm::Function *F,
                                           bool IsIncompleteFunction) {
+  if (unsigned IID = F->getIntrinsicID()) {
+    // If this is an intrinsic function, set the function's attributes
+    // to the intrinsic's attributes.
+    F->setAttributes(llvm::Intrinsic::getAttributes((llvm::Intrinsic::ID)IID));
+    return;
+  }
+
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
 
   if (!IsIncompleteFunction)
