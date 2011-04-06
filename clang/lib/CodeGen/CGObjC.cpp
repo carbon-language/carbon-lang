@@ -293,7 +293,10 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
         GenerateObjCGetterBody(Ivar, IsAtomic, IsStrong);
       }
       else {
-        if (PID->getGetterCXXConstructor()) {
+        const CXXRecordDecl *classDecl = IVART->getAsCXXRecordDecl();
+        
+        if (PID->getGetterCXXConstructor() &&
+            classDecl && !classDecl->hasTrivialConstructor()) {
           ReturnStmt *Stmt = 
             new (getContext()) ReturnStmt(SourceLocation(), 
                                           PID->getGetterCXXConstructor(),
@@ -379,6 +382,18 @@ void CodeGenFunction::GenerateObjCAtomicSetterBody(ObjCMethodDecl *OMD,
            GetCopyStructFn, ReturnValueSlot(), Args);
 }
 
+static bool
+IvarAssignHasTrvialAssignment(const ObjCPropertyImplDecl *PID,
+                              QualType IvarT) {
+  bool HasTrvialAssignment = true;
+  if (PID->getSetterCXXAssignment()) {
+    const CXXRecordDecl *classDecl = IvarT->getAsCXXRecordDecl();
+    HasTrvialAssignment = 
+      (!classDecl || classDecl->hasTrivialCopyAssignment());
+  }
+  return HasTrvialAssignment;
+}
+
 /// GenerateObjCSetter - Generate an Objective-C property setter
 /// function. The given Decl must be an ObjCImplementationDecl. @synthesize
 /// is illegal within a category.
@@ -448,7 +463,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
              ReturnValueSlot(), Args);
   } else if (IsAtomic && hasAggregateLLVMType(IVART) &&
              !IVART->isAnyComplexType() &&
-             !PID->getGetterCXXConstructor() &&
+             IvarAssignHasTrvialAssignment(PID, IVART) &&
              ((Triple.getArch() == llvm::Triple::x86 &&
               (getContext().getTypeSizeInChars(IVART)
                > CharUnits::fromQuantity(4))) ||
