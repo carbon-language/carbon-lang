@@ -1656,23 +1656,26 @@ information to add the "lock" prefix.
 
 //===---------------------------------------------------------------------===//
 
-_Bool bar(int *x) { return *x & 1; }
+struct B {
+  unsigned char y0 : 1;
+};
 
-define zeroext i1 @bar(i32* nocapture %x) nounwind readonly {
-entry:
-  %tmp1 = load i32* %x                            ; <i32> [#uses=1]
-  %and = and i32 %tmp1, 1                         ; <i32> [#uses=1]
-  %tobool = icmp ne i32 %and, 0                   ; <i1> [#uses=1]
-  ret i1 %tobool
+int bar(struct B* a) { return a->y0; }
+
+define i32 @bar(%struct.B* nocapture %a) nounwind readonly optsize {
+  %1 = getelementptr inbounds %struct.B* %a, i64 0, i32 0
+  %2 = load i8* %1, align 1
+  %3 = and i8 %2, 1
+  %4 = zext i8 %3 to i32
+  ret i32 %4
 }
 
-bar:                                                        # @bar
-# BB#0:                                                     # %entry
-	movl	4(%esp), %eax
-	movb	(%eax), %al
-	andb	$1, %al
-	movzbl	%al, %eax
-	ret
+bar:                                    # @bar
+# BB#0:
+        movb    (%rdi), %al
+        andb    $1, %al
+        movzbl  %al, %eax
+        ret
 
 Missed optimization: should be movl+andl.
 
