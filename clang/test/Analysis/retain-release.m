@@ -1453,3 +1453,10 @@ static void rdar_8724287(CFErrorRef error)
     }
 }
 
+// <rdar://problem/9234108> - Make sure the model applies cf_consumed
+// correctly in argument positions besides the first.
+extern void *CFStringCreate(void);
+extern void rdar_9234108_helper(void *key, void * CF_CONSUMED value);
+void rdar_9234108() {
+  rdar_9234108_helper(0, CFStringCreate());
+}

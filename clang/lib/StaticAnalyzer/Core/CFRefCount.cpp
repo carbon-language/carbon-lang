@@ -1201,7 +1201,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   // Effects on the parameters.
   unsigned parm_idx = 0;
   for (FunctionDecl::param_const_iterator pi = FD->param_begin(), 
-       pe = FD->param_end(); pi != pe; ++pi) {
+         pe = FD->param_end(); pi != pe; ++pi, ++parm_idx) {
     const ParmVarDecl *pd = *pi;
     if (pd->getAttr<NSConsumedAttr>()) {
       if (!GCEnabled)
