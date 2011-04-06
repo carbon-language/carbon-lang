@@ -99,8 +99,8 @@ void DebugInfoProbeImpl::initialize(StringRef PName, Function &F) {
         Addr = DVI->getValue();
         Node = DVI->getVariable();
       }
-      if (Addr) continue;
-      DbgVariables.insert(Node);
+      if (Addr)
+        DbgVariables.insert(Node);
     }
 }
 
@@ -154,8 +154,8 @@ void DebugInfoProbeImpl::finalize(Function &F) {
         Addr = DVI->getValue();
         Node = DVI->getVariable();
       }
-      if (Addr) continue;
-      DbgVariables2.insert(Node);
+      if (Addr)
+        DbgVariables2.insert(Node);
     }
 
   for (std::set<MDNode *>::iterator I = DbgVariables.begin(), 
