@@ -2497,22 +2497,22 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
   // 0 represents standard alignment, i.e., unaligned data access.
   unsigned alignment = 0;
 
+  unsigned elem = 0; // legal values: {1, 2, 3, 4}
+  if (Name.startswith("VST1") || Name.startswith("VLD1"))
+    elem = 1;
+
+  if (Name.startswith("VST2") || Name.startswith("VLD2"))
+    elem = 2;
+
+  if (Name.startswith("VST3") || Name.startswith("VLD3"))
+    elem = 3;
+
+  if (Name.startswith("VST4") || Name.startswith("VLD4"))
+    elem = 4;
+
   if (Name.find("LN") != std::string::npos) {
     // To one lane instructions.
     // See, for example, 8.6.317 VLD4 (single 4-element structure to one lane).
-
-    unsigned elem = 0; // legal values: {1, 2, 3, 4}
-    if (Name.startswith("VST1") || Name.startswith("VLD1"))
-      elem = 1;
-
-    if (Name.startswith("VST2") || Name.startswith("VLD2"))
-      elem = 2;
-
-    if (Name.startswith("VST3") || Name.startswith("VLD3"))
-      elem = 3;
-
-    if (Name.startswith("VST4") || Name.startswith("VLD4"))
-      elem = 4;
 
     // Utility function takes number of elements, size, and index_align.
     if (!Align4OneLaneInst(elem,
@@ -2533,7 +2533,8 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
     // See, for example, A8.6.316 VLD4 (multiple 4-element structures).
 
     // Inst{5-4} encodes alignment.
-    switch (slice(insn, 5, 4)) {
+    unsigned align = slice(insn, 5, 4);
+    switch (align) {
     default:
       break;
     case 1:
@@ -2544,22 +2545,42 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
       alignment = 256; break;
     }
 
-    // n == 2 && type == 0b1001 -> DblSpaced = true
-    if (Name.startswith("VST2") || Name.startswith("VLD2"))
-      DblSpaced = slice(insn, 11, 8) == 9;
-
-    // n == 3 && type == 0b0101 -> DblSpaced = true
-    if (Name.startswith("VST3") || Name.startswith("VLD3")) {
-      // A8.6.313 & A8.6.395
-      if (slice(insn, 7, 6) == 3 && slice(insn, 5, 5) == 1)
+    unsigned type = slice(insn, 11, 8);
+    // Reject UNDEFINED instructions based on type and align.
+    // Plus set DblSpaced flag where appropriate.
+    switch (elem) {
+    default:
+      break;
+    case 1:
+      // n == 1
+      // A8.6.307 & A8.6.391
+      if ((type == 7  && slice(align, 1, 1) == 1) ||
+          (type == 10 && align == 3) ||
+          (type == 6  && slice(align, 1, 1) == 1))
         return false;
-
-      DblSpaced = slice(insn, 11, 8) == 5;
+      break;
+    case 2:
+      // n == 2 && type == 0b1001 -> DblSpaced = true
+      // A8.6.310 & A8.6.393
+      if ((type == 8 || type == 9) && align == 3)
+        return false;
+      DblSpaced = (type == 9);
+      break;
+    case 3:
+      // n == 3 && type == 0b0101 -> DblSpaced = true
+      // A8.6.313 & A8.6.395
+      if (slice(insn, 7, 6) == 3 || slice(align, 1, 1) == 1)
+        return false;
+      DblSpaced = (type == 5);
+      break;
+    case 4:
+      // n == 4 && type == 0b0001 -> DblSpaced = true
+      // A8.6.316 & A8.6.397
+      if (slice(insn, 7, 6) == 3)
+        return false;
+      DblSpaced = (type == 1);
+      break;
     }
-
-    // n == 4 && type == 0b0001 -> DblSpaced = true
-    if (Name.startswith("VST4") || Name.startswith("VLD4"))
-      DblSpaced = slice(insn, 11, 8) == 1;
   }
   return DisassembleNLdSt0(MI, Opcode, insn, NumOps, NumOpsAdded,
                            slice(insn, 21, 21) == 0, DblSpaced, alignment/8, B);
