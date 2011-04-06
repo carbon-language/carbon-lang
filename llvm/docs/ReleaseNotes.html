@@ -261,6 +261,116 @@ be used to verify some algorithms.
 </div>
 
 
+<!--=========================================================================-->
+<h2>Crack Programming Language</h2>
+
+<div class="doc_text">
+<p>
+<a href="http://code.google.com/p/crack-language/">Crack</a> aims to provide the
+ease of development of a scripting language with the performance of a compiled
+language. The language derives concepts from C++, Java and Python, incorporating
+object-oriented programming, operator overloading and strong typing.</p>
+</div>
+  
+  
+<!--=========================================================================-->
+<h2>TTA-based Codesign Environment (TCE)</h2>
+  
+<div class="doc_text">
+<p>TCE is a toolset for designing application-specific processors (ASP) based on
+the Transport triggered architecture (TTA). The toolset provides a complete
+co-design flow from C/C++ programs down to synthesizable VHDL and parallel
+program binaries. Processor customization points include the register files,
+function units, supported operations, and the interconnection network.</p>
+  
+<p>TCE uses Clang and LLVM for C/C++ language support, target independent
+optimizations and also for parts of code generation. It generates new LLVM-based
+code generators "on the fly" for the designed TTA processors and loads them in
+to the compiler backend as runtime libraries to avoid per-target recompilation
+of larger parts of the compiler chain.</p>
+</div>
+
+
+  
+<!--=========================================================================-->
+<h2>PinaVM</h2>
+  
+<div class="doc_text">
+<p><a href="http://gitorious.org/pinavm/pages/Home">PinaVM</a> is an open
+source, <a href="http://www.systemc.org/">SystemC</a> front-end. Unlike many
+other front-ends, PinaVM actually executes the elaboration of the
+program analyzed using LLVM's JIT infrastructure. It later enriches the
+bitcode with SystemC-specific information.</p>
+</div>
+
+<!--=========================================================================-->
+<h2>Pure</h2>
+  
+<div class="doc_text">
+<p><a href="http://pure-lang.googlecode.com/">Pure</a> is an
+  algebraic/functional
+  programming language based on term rewriting. Programs are collections
+  of equations which are used to evaluate expressions in a symbolic
+  fashion. The interpreter uses LLVM as a backend to JIT-compile Pure
+  programs to fast native code. Pure offers dynamic typing, eager and lazy
+  evaluation, lexical closures, a hygienic macro system (also based on
+  term rewriting), built-in list and matrix support (including list and
+  matrix comprehensions) and an easy-to-use interface to C and other
+  programming languages (including the ability to load LLVM bitcode
+  modules, and inline C, C++, Fortran and Faust code in Pure programs if
+  the corresponding LLVM-enabled compilers are installed).</p>
+  
+<p>Pure version 0.47 has been tested and is known to work with LLVM 2.9
+  (and continues to work with older LLVM releases &gt;= 2.5).</p>
+</div>
+
+<!--=========================================================================-->
+<h2 id="icedtea">IcedTea Java Virtual Machine Implementation</h2>
+
+<div class="doc_text">
+<p>
+<a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea</a> provides a
+harness to build OpenJDK using only free software build tools and to provide
+replacements for the not-yet free parts of OpenJDK.  One of the extensions that
+IcedTea provides is a new JIT compiler named <a
+href="http://icedtea.classpath.org/wiki/ZeroSharkFaq">Shark</a> which uses LLVM
+to provide native code generation without introducing processor-dependent
+code.
+</p>
+
+<p> OpenJDK 7 b112, IcedTea6 1.9 and IcedTea7 1.13 and later have been tested
+and are known to work with LLVM 2.9 (and continue to work with older LLVM
+releases &gt;= 2.6 as well).</p>
+</div>
+
+<!--=========================================================================-->
+<h2>Glasgow Haskell Compiler (GHC)</h2>
+  
+<div class="doc_text">
+<p>GHC is an open source, state-of-the-art programming suite for Haskell,
+a standard lazy functional programming language. It includes an
+optimizing static compiler generating good code for a variety of
+platforms, together with an interactive system for convenient, quick
+development.</p>
+
+<p>In addition to the existing C and native code generators, GHC 7.0 now
+supports an LLVM code generator. GHC supports LLVM 2.7 and later.</p>
+</div>
+
+<!--=========================================================================-->
+<h2>Polly - Polyhedral optimizations for LLVM</h2>
+  
+<div class="doc_text">
+<p>Polly is a project that aims to provide advanced memory access optimizations
+to better take advantage of SIMD units, cache hierarchies, multiple cores or
+even vector accelerators for LLVM. Built around an abstract mathematical
+description based on Z-polyhedra, it provides the infrastructure to develop
+advanced optimizations in LLVM and to connect complex external optimizers. In
+its first year of existence Polly already provides an exact value-based
+dependency analysis as well as basic SIMD and OpenMP code generation support.
+Furthermore, Polly can use PoCC(Pluto) an advanced optimizer for data-locality
+and parallelism.</p>
+</div>
 
 
 <!-- *********************************************************************** -->
