@@ -30,6 +30,7 @@ Value *IRBuilderBase::CreateGlobalString(const char *Str, const Twine &Name) {
                                           true, GlobalValue::InternalLinkage,
                                           StrConstant, "", 0, false);
   GV->setName(Name);
+  GV->setUnnamedAddr(true);
   return GV;
 }
 
