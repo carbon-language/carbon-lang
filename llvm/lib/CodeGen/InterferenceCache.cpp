@@ -99,13 +99,15 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
   tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
 
   // Use advanceTo only when possible.
-  if (!PrevPos.isValid() || Start < PrevPos)
-    for (unsigned i = 0, e = Iters.size(); i != e; ++i)
-      Iters[i].find(Start);
-  else
-    for (unsigned i = 0, e = Iters.size(); i != e; ++i)
-      Iters[i].advanceTo(Start);
-  PrevPos = Start;
+  if (PrevPos != Start) {
+    if (!PrevPos.isValid() || Start < PrevPos)
+      for (unsigned i = 0, e = Iters.size(); i != e; ++i)
+        Iters[i].find(Start);
+    else
+      for (unsigned i = 0, e = Iters.size(); i != e; ++i)
+        Iters[i].advanceTo(Start);
+    PrevPos = Start;
+  }
 
   // Check for first interference.
   for (unsigned i = 0, e = Iters.size(); i != e; ++i) {
@@ -129,11 +131,14 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     if (!I.valid() || I.start() >= Stop)
       continue;
     I.advanceTo(Stop);
-    if (!I.valid() || I.start() >= Stop)
+    bool Backup = !I.valid() || I.start() >= Stop;
+    if (Backup)
       --I;
     SlotIndex StopI = I.stop();
     if (!BI->Last.isValid() || StopI > BI->Last)
       BI->Last = StopI;
+    if (Backup)
+      ++I;
   }
   PrevPos = Stop;
 }
