@@ -191,13 +191,6 @@ PlatformLinux::~PlatformLinux()
 {
 }
 
-uint32_t
-PlatformLinux:: FindProcesses const ProcessInfoMatch &match_info,
-                               ProcessInfoList &process_infos()
-{
-    return Host:: FindProcesses (match_info, process_infos);
-}
-
 bool
 PlatformLinux::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 {
