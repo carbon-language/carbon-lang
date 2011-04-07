@@ -2173,13 +2173,13 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     // We store the virtual base class names and their offsets in a map to get
     // a stable order.
 
-    std::map<std::string, int64_t> ClassNamesAndOffsets;
+    std::map<std::string, CharUnits> ClassNamesAndOffsets;
     for (VBaseOffsetOffsetsMapTy::const_iterator I = VBaseOffsetOffsets.begin(),
          E = VBaseOffsetOffsets.end(); I != E; ++I) {
       std::string ClassName = I->first->getQualifiedNameAsString();
       CharUnits OffsetOffset = I->second;
       ClassNamesAndOffsets.insert(
-          std::make_pair(ClassName, OffsetOffset.getQuantity()));
+          std::make_pair(ClassName, OffsetOffset));
     }
     
     Out << "Virtual base offset offsets for '";
@@ -2187,10 +2187,10 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
     Out << ClassNamesAndOffsets.size();
     Out << (ClassNamesAndOffsets.size() == 1 ? " entry" : " entries") << ").\n";
 
-    for (std::map<std::string, int64_t>::const_iterator I =
+    for (std::map<std::string, CharUnits>::const_iterator I =
          ClassNamesAndOffsets.begin(), E = ClassNamesAndOffsets.end(); 
          I != E; ++I)
-      Out << "   " << I->first << " | " << I->second << '\n';
+      Out << "   " << I->first << " | " << I->second.getQuantity() << '\n';
 
     Out << "\n";
   }
