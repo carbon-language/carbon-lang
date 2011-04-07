@@ -89,10 +89,11 @@ public:
   /// addConstraints - Add constraints and biases. This method may be called
   /// more than once to accumulate constraints.
   /// @param LiveBlocks Constraints for blocks that have the variable live in or
-  ///                   live out. DontCare/DontCare means the variable is live
-  ///                   through the block. DontCare/X means the variable is live
-  ///                   out, but not live in.
+  ///                   live out.
   void addConstraints(ArrayRef<BlockConstraint> LiveBlocks);
+
+  /// addLinks - Add transparent blocks with the given numbers.
+  void addLinks(ArrayRef<unsigned> Links);
 
   /// getPositiveNodes - Return the total number of graph nodes with a positive
   /// bias after adding constraints.

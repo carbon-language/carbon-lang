@@ -213,23 +213,6 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
   for (ArrayRef<BlockConstraint>::iterator I = LiveBlocks.begin(),
        E = LiveBlocks.end(); I != E; ++I) {
     float Freq = getBlockFrequency(I->Number);
-
-    // Is this a transparent block? Link ingoing and outgoing bundles.
-    if (I->Entry == DontCare && I->Exit == DontCare) {
-      unsigned ib = bundles->getBundle(I->Number, 0);
-      unsigned ob = bundles->getBundle(I->Number, 1);
-
-      // Ignore self-loops.
-      if (ib == ob)
-        continue;
-      activate(ib);
-      activate(ob);
-      nodes[ib].addLink(ob, Freq, 1);
-      nodes[ob].addLink(ib, Freq, 0);
-      continue;
-    }
-
-    // This block is not transparent, but it can still add bias.
     const float Bias[] = {
       0,           // DontCare,
       1,           // PrefReg,
@@ -250,6 +233,24 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
       activate(ob);
       PositiveNodes += nodes[ob].addBias(Freq * Bias[I->Exit], 0);
     }
+  }
+}
+
+void SpillPlacement::addLinks(ArrayRef<unsigned> Links) {
+  for (ArrayRef<unsigned>::iterator I = Links.begin(), E = Links.end(); I != E;
+       ++I) {
+    unsigned Number = *I;
+    unsigned ib = bundles->getBundle(Number, 0);
+    unsigned ob = bundles->getBundle(Number, 1);
+
+    // Ignore self-loops.
+    if (ib == ob)
+      continue;
+    activate(ib);
+    activate(ob);
+    float Freq = getBlockFrequency(Number);
+    nodes[ib].addLink(ob, Freq, 1);
+    nodes[ob].addLink(ib, Freq, 0);
   }
 }
 

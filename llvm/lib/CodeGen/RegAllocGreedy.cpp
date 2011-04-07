@@ -123,8 +123,12 @@ class RAGreedy : public MachineFunctionPass,
   /// Cached per-block interference maps
   InterferenceCache IntfCache;
 
-  /// All basic blocks where the current register is live.
+  /// All basic blocks where the current register has uses.
   SmallVector<SpillPlacement::BlockConstraint, 8> SplitConstraints;
+
+  /// All basic blocks where the current register is live-through and
+  /// interference free.
+  SmallVector<unsigned, 8> TransparentBlocks;
 
   /// Global live range splitting candidate info.
   struct GlobalSplitCandidate {
@@ -475,6 +479,7 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
   const unsigned GroupSize = 8;
   SpillPlacement::BlockConstraint BCS[GroupSize];
   unsigned B = 0;
+  TransparentBlocks.clear();
 
   ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
   for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
@@ -483,22 +488,22 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
     BCS[B].Number = Number;
     Intf.moveToBlock(Number);
 
-    if (Intf.hasInterference()) {
-      // Interference for the live-in value.
-      if (Intf.first() <= Indexes->getMBBStartIdx(Number))
-        BCS[B].Entry = SpillPlacement::MustSpill;
-      else
-        BCS[B].Entry = SpillPlacement::PrefSpill;
-
-      // Interference for the live-out value.
-      if (Intf.last() >= SA->getLastSplitPoint(Number))
-        BCS[B].Exit = SpillPlacement::MustSpill;
-      else
-        BCS[B].Exit = SpillPlacement::PrefSpill;
-    } else {
-      // No interference, transparent block.
-      BCS[B].Entry = BCS[B].Exit = SpillPlacement::DontCare;
+    if (!Intf.hasInterference()) {
+      TransparentBlocks.push_back(Number);
+      continue;
     }
+
+    // Interference for the live-in value.
+    if (Intf.first() <= Indexes->getMBBStartIdx(Number))
+      BCS[B].Entry = SpillPlacement::MustSpill;
+    else
+      BCS[B].Entry = SpillPlacement::PrefSpill;
+
+    // Interference for the live-out value.
+    if (Intf.last() >= SA->getLastSplitPoint(Number))
+      BCS[B].Exit = SpillPlacement::MustSpill;
+    else
+      BCS[B].Exit = SpillPlacement::PrefSpill;
 
     if (++B == GroupSize) {
       ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
@@ -512,7 +517,12 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
 
   ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
   SpillPlacer->addConstraints(Array);
-  return SpillPlacer->getPositiveNodes() != 0;
+  if (SpillPlacer->getPositiveNodes() == 0)
+    return false;
+
+  // There is still some positive bias. Add all the links.
+  SpillPlacer->addLinks(TransparentBlocks);
+  return true;
 }
 
 
