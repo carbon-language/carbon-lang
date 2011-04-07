@@ -544,6 +544,9 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
   StringMap<uint64_t> StringIndexMap;
   StringTable += '\x00';
 
+  // FIXME: We could optimize suffixes in strtab in the same way we
+  // optimize them in shstrtab.
+
   // Add the data for the symbols.
   for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
          ie = Asm.symbol_end(); it != ie; ++it) {
@@ -748,6 +751,24 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
   }
 }
 
+static int compareBySuffix(const void *a, const void *b) {
+  const MCSectionELF *secA = *static_cast<const MCSectionELF* const *>(a);
+  const MCSectionELF *secB = *static_cast<const MCSectionELF* const *>(b);
+  const StringRef &NameA = secA->getSectionName();
+  const StringRef &NameB = secB->getSectionName();
+  const unsigned sizeA = NameA.size();
+  const unsigned sizeB = NameB.size();
+  const unsigned len = std::min(sizeA, sizeB);
+  for (unsigned int i = 0; i < len; ++i) {
+    char ca = NameA[sizeA - i - 1];
+    char cb = NameB[sizeB - i - 1];
+    if (ca != cb)
+      return cb - ca;
+  }
+
+  return sizeB - sizeA;
+}
+
 void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
                                              MCAsmLayout &Layout,
                                              SectionIndexMapTy &SectionIndexMap,
@@ -806,6 +827,15 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
 
   F = new MCDataFragment(&ShstrtabSD);
 
+  std::vector<const MCSectionELF*> Sections;
+  for (MCAssembler::const_iterator it = Asm.begin(),
+         ie = Asm.end(); it != ie; ++it) {
+    const MCSectionELF &Section =
+      static_cast<const MCSectionELF&>(it->getSection());
+    Sections.push_back(&Section);
+  }
+  array_pod_sort(Sections.begin(), Sections.end(), compareBySuffix);
+
   // Section header string table.
   //
   // The first entry of a string table holds a null character so skip
@@ -813,22 +843,20 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
   uint64_t Index = 1;
   F->getContents() += '\x00';
 
-  StringMap<uint64_t> SecStringMap;
-  for (MCAssembler::const_iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSectionELF &Section =
-      static_cast<const MCSectionELF&>(it->getSection());
-    // FIXME: We could merge suffixes like in .text and .rela.text.
+  for (unsigned int I = 0, E = Sections.size(); I != E; ++I) {
+    const MCSectionELF &Section = *Sections[I];
 
     StringRef Name = Section.getSectionName();
-    if (SecStringMap.count(Name)) {
-      SectionStringTableIndex[&Section] =  SecStringMap[Name];
-      continue;
+    if (I != 0) {
+      StringRef PreviousName = Sections[I - 1]->getSectionName();
+      if (PreviousName.endswith(Name)) {
+        SectionStringTableIndex[&Section] = Index - Name.size() - 1;
+        continue;
+      }
     }
     // Remember the index into the string table so we can write it
     // into the sh_name field of the section header table.
     SectionStringTableIndex[&Section] = Index;
-    SecStringMap[Name] = Index;
 
     Index += Name.size() + 1;
     F->getContents() += Name;
