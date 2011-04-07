@@ -626,26 +626,30 @@ public:
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
 
   void print(raw_ostream &O) {
-    unsigned Indent = 8;
+    if (Conds.empty() && ReqFeatures.empty()) {
+      O.indent(6) << "return true;\n";
+      return;
+    }
 
-    if (!Conds.empty())
-      O << "if (";
+    O << "if (";
 
     for (std::vector<std::string>::iterator
            I = Conds.begin(), E = Conds.end(); I != E; ++I) {
       if (I != Conds.begin()) {
         O << " &&\n";
-        O.indent(Indent);
+        O.indent(8);
       }
 
       O << *I;
     }
 
     if (!ReqFeatures.empty()) {
-      if (Conds.begin() != Conds.end())
+      if (Conds.begin() != Conds.end()) {
         O << " &&\n";
-      else
+        O.indent(8);
+      } else {
         O << "if (";
+      }
 
       std::string Req;
       raw_string_ostream ReqO(Req);
@@ -656,28 +660,21 @@ public:
         ReqO << AWI.getFeatureInfo(*I)->getEnumName();
       }
 
-      if (Conds.begin() != Conds.end()) O.indent(Indent);
       O << "(AvailableFeatures & (" << ReqO.str() << ")) == ("
         << ReqO.str() << ')';
     }
 
-    if (!Conds.empty() || !ReqFeatures.empty()) {
-      O << ") {\n";
-      Indent = 6;
-    } else {
-      Indent = 4;
-    }
-
-    O.indent(Indent) << "// " << Result << "\n";
-    O.indent(Indent) << "AsmString = \"" << AsmString << "\";\n";
+    O << ") {\n";
+    O.indent(6) << "// " << Result << "\n";
+    O.indent(6) << "AsmString = \"" << AsmString << "\";\n";
 
     for (std::map<StringRef, unsigned>::iterator
            I = OpMap.begin(), E = OpMap.end(); I != E; ++I)
-      O.indent(Indent) << "OpMap[\"" << I->first << "\"] = "
-                       << I->second << ";\n";
+      O.indent(6) << "OpMap[\"" << I->first << "\"] = "
+                  << I->second << ";\n";
 
-    if (!Conds.empty() || !ReqFeatures.empty())
-      O.indent(4) << '}';
+    O.indent(6) << "break;\n";
+    O.indent(4) << '}';
   }
 
   bool operator==(const IAPrinter &RHS) {
@@ -727,7 +724,7 @@ static void EmitSubtargetFeatureFlagEnumeration(AsmWriterInfo &Info,
 
   O << "  Feature_None = 0\n";
   O << "};\n\n";
-  O << "} // end anonymous namespace\n";
+  O << "} // end anonymous namespace\n\n";
 }
 
 /// EmitComputeAvailableFeatures - Emit the function to compute the list of
@@ -928,156 +925,72 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
       if (CantHandle) continue;
       IAPrinterMap[I->first].push_back(IAP);
-
-#if 0
-      O.indent(4) << "// " << I->first << '\n';
-      O.indent(4);
-      IAP->print(O);
-#endif
     }
   }
 
-  O << "#if 0\n";
   EmitSubtargetFeatureFlagEnumeration(AWI, O);
   EmitComputeAvailableFeatures(AWI, AsmWriter, Target, O);
-  O << "#endif\n\n";
 
   O << "bool " << Target.getName() << ClassName
     << "::printAliasInstr(const " << MachineInstrClassName
     << " *MI, raw_ostream &OS) {\n";
 
-  if (AliasMap.empty() || !isMC) {
-    // FIXME: Support MachineInstr InstAliases?
+  std::string Cases;
+  raw_string_ostream CasesO(Cases);
+
+  for (std::map<std::string, std::vector<IAPrinter*> >::iterator
+         I = IAPrinterMap.begin(), E = IAPrinterMap.end(); I != E; ++I) {
+    std::vector<IAPrinter*> &IAPs = I->second;
+    std::vector<IAPrinter*> UniqueIAPs;
+
+    for (std::vector<IAPrinter*>::iterator
+           II = IAPs.begin(), IE = IAPs.end(); II != IE; ++II) {
+      IAPrinter *LHS = *II;
+      bool IsDup = false;
+      for (std::vector<IAPrinter*>::iterator
+             III = IAPs.begin(), IIE = IAPs.end(); III != IIE; ++III) {
+        IAPrinter *RHS = *III;
+        if (LHS != RHS && *LHS == *RHS) {
+          IsDup = true;
+          break;
+        }
+      }
+
+      if (!IsDup) UniqueIAPs.push_back(LHS);
+    }
+
+    if (UniqueIAPs.empty()) continue;
+
+    CasesO.indent(2) << "case " << I->first << ":\n";
+
+    for (std::vector<IAPrinter*>::iterator
+           II = UniqueIAPs.begin(), IE = UniqueIAPs.end(); II != IE; ++II) {
+      IAPrinter *IAP = *II;
+      CasesO.indent(4);
+      IAP->print(CasesO);
+      CasesO << '\n';
+    }
+
+    CasesO.indent(4) << "return true;\n";
+  }
+
+  if (CasesO.str().empty() || !isMC) {
     O << "  return true;\n";
     O << "}\n\n";
     O << "#endif // PRINT_ALIAS_INSTR\n";
     return;
   }
 
-  O << "  StringRef AsmString;\n";
-  O << "  std::map<StringRef, unsigned> OpMap;\n";
-  O << "  switch (MI->getOpcode()) {\n";
-  O << "  default: return true;\n";
-
-  for (std::map<std::string, std::vector<CodeGenInstAlias*> >::iterator
-         I = AliasMap.begin(), E = AliasMap.end(); I != E; ++I) {
-    std::vector<CodeGenInstAlias*> &Aliases = I->second;
-
-    std::map<std::string, unsigned> CondCount;
-    std::map<std::string, std::string> BodyMap;
-
-    std::string AsmString = "";
-
-    for (std::vector<CodeGenInstAlias*>::iterator
-           II = Aliases.begin(), IE = Aliases.end(); II != IE; ++II) {
-      const CodeGenInstAlias *CGA = *II;
-      AsmString = CGA->AsmString;
-      unsigned Indent = 8;
-      unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
-
-      std::string Cond;
-      raw_string_ostream CondO(Cond);
-
-      CondO << "if (MI->getNumOperands() == " << LastOpNo;
-
-      std::map<StringRef, unsigned> OpMap;
-      bool CantHandle = false;
-
-      for (unsigned i = 0, e = LastOpNo; i != e; ++i) {
-        const CodeGenInstAlias::ResultOperand &RO = CGA->ResultOperands[i];
-
-        switch (RO.Kind) {
-        default: assert(0 && "unexpected InstAlias operand kind");
-        case CodeGenInstAlias::ResultOperand::K_Record: {
-          const Record *Rec = RO.getRecord();
-          StringRef ROName = RO.getName();
-
-          if (Rec->isSubClassOf("RegisterClass")) {
-            CondO << " &&\n";
-            CondO.indent(Indent) << "MI->getOperand(" << i << ").isReg() &&\n";
-            if (OpMap.find(ROName) == OpMap.end()) {
-              OpMap[ROName] = i;
-              CondO.indent(Indent)
-                << "regIsInRegisterClass(RC_"
-                << CGA->ResultOperands[i].getRecord()->getName()
-                << ", MI->getOperand(" << i << ").getReg())";
-            } else {
-              CondO.indent(Indent)
-                << "MI->getOperand(" << i
-                << ").getReg() == MI->getOperand("
-                << OpMap[ROName] << ").getReg()";
-            }
-          } else {
-            assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
-            // FIXME: We need to handle these situations.
-            CantHandle = true;
-            break;
-          }
-
-          break;
-        }
-        case CodeGenInstAlias::ResultOperand::K_Imm:
-          CondO << " &&\n";
-          CondO.indent(Indent) << "MI->getOperand(" << i << ").getImm() == ";
-          CondO << CGA->ResultOperands[i].getImm();
-          break;
-        case CodeGenInstAlias::ResultOperand::K_Reg:
-          CondO << " &&\n";
-          CondO.indent(Indent) << "MI->getOperand(" << i << ").getReg() == ";
-          CondO << Target.getName() << "::"
-                << CGA->ResultOperands[i].getRegister()->getName();
-          break;
-        }
-
-        if (CantHandle) break;
-      }
-
-      if (CantHandle) continue;
-
-      CondO << ")";
-
-      std::string Body;
-      raw_string_ostream BodyO(Body);
-
-      BodyO << "      // " << CGA->Result->getAsString() << "\n";
-      BodyO << "      AsmString = \"" << AsmString << "\";\n";
-
-      for (std::map<StringRef, unsigned>::iterator
-             III = OpMap.begin(), IIE = OpMap.end(); III != IIE; ++III)
-        BodyO << "      OpMap[\"" << III->first << "\"] = "
-              << III->second << ";\n";
-
-      ++CondCount[CondO.str()];
-      BodyMap[CondO.str()] = BodyO.str();
-    }
-
-    std::string Code;
-    raw_string_ostream CodeO(Code);
-
-    bool EmitElse = false;
-    for (std::map<std::string, unsigned>::iterator
-           II = CondCount.begin(), IE = CondCount.end(); II != IE; ++II) {
-      if (II->second != 1) continue;
-      CodeO << "    ";
-      if (EmitElse) CodeO << "} else ";
-      CodeO << II->first << " {\n";
-      CodeO << BodyMap[II->first];
-      EmitElse = true;
-    }
-
-    if (CodeO.str().empty()) continue;
-
-    O << "  case " << I->first << ":\n";
-    O << CodeO.str();
-    O << "    }\n";
-    O << "    break;\n";
-  }
-
-  O << "  }\n\n";
+  O.indent(2) << "StringRef AsmString;\n";
+  O.indent(2) << "std::map<StringRef, unsigned> OpMap;\n";
+  O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+  O.indent(2) << "switch (MI->getOpcode()) {\n";
+  O.indent(2) << "default: return true;\n";
+  O << CasesO.str();
+  O.indent(2) << "}\n\n";
 
   // Code that prints the alias, replacing the operands with the ones from the
   // MCInst.
-  O << "  if (AsmString.empty()) return true;\n";
   O << "  std::pair<StringRef, StringRef> ASM = AsmString.split(' ');\n";
   O << "  OS << '\\t' << ASM.first;\n";
 

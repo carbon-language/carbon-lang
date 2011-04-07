@@ -25,9 +25,12 @@ protected:
   /// assembly emission is disable.
   raw_ostream *CommentStream;
   const MCAsmInfo &MAI;
+
+  /// The current set of available features.
+  unsigned AvailableFeatures;
 public:
   MCInstPrinter(const MCAsmInfo &mai)
-    : CommentStream(0), MAI(mai) {}
+    : CommentStream(0), MAI(mai), AvailableFeatures(0) {}
 
   virtual ~MCInstPrinter();
 
@@ -44,6 +47,9 @@ public:
 
   /// getRegName - Return the assembler register name.
   virtual StringRef getRegName(unsigned RegNo) const;
+
+  unsigned getAvailableFeatures() const { return AvailableFeatures; }
+  void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }
 };
 
 } // namespace llvm
