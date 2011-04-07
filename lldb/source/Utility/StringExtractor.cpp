@@ -10,6 +10,8 @@
 #include "Utility/StringExtractor.h"
 
 // C Includes
+#include <stdlib.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
