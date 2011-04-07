@@ -1110,6 +1110,11 @@ static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
     // A8.6.3 ADC (register-shifted register)
     // if d == 15 || n == 15 || m == 15 || s == 15 then UNPREDICTABLE;
+    // 
+    // This also accounts for shift instructions (register) where, fortunately,
+    // Inst{19-16} = 0b0000.
+    // A8.6.89 LSL (register)
+    // if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
     if (decodeRd(insn) == 15 || decodeRn(insn) == 15 ||
         decodeRm(insn) == 15 || decodeRs(insn) == 15)
       return false;
