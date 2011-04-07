@@ -22,6 +22,7 @@
 #include "clang/Frontend/ChainedDiagnosticClient.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Frontend/LogDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Frontend/Utils.h"
@@ -106,6 +107,33 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
   Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
 
+static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
+                               Diagnostic &Diags) {
+  std::string ErrorInfo;
+  bool OwnsStream = false;
+  llvm::raw_ostream *OS = &llvm::errs();
+  if (DiagOpts.DiagnosticLogFile != "-") {
+    // Create the output stream.
+    llvm::raw_fd_ostream *FileOS(
+      new llvm::raw_fd_ostream(DiagOpts.DiagnosticLogFile.c_str(),
+                               ErrorInfo));
+    if (!ErrorInfo.empty()) {
+      Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
+        << DiagOpts.DumpBuildInformation << ErrorInfo;
+    } else {
+      FileOS->SetUnbuffered();
+      FileOS->SetUseAtomicWrites(true);
+      OS = FileOS;
+      OwnsStream = true;
+    }
+  }
+
+  // Chain in the diagnostic client which will log the diagnostics.
+  DiagnosticClient *Logger = new LogDiagnosticPrinter(*OS, DiagOpts,
+                                                      OwnsStream);
+  Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
+}
+
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                          DiagnosticClient *Client) {
   Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client);
@@ -129,6 +157,10 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
   if (Opts.VerifyDiagnostics)
     Diags->setClient(new VerifyDiagnosticsClient(*Diags, Diags->takeClient()));
 
+  // Chain in -diagnostic-log-file dumper, if requested.
+  if (!Opts.DiagnosticLogFile.empty())
+    SetUpDiagnosticLog(Opts, *Diags);
+  
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
 
