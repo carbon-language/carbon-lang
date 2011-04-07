@@ -470,11 +470,15 @@ public:
   /// attached to (and, then, owned by) the returned Diagnostic
   /// object.
   ///
+  /// \param CodeGenOpts If non-NULL, the code gen options in use, which may be
+  /// used by some diagnostics printers (for logging purposes only).
+  ///
   /// \return The new object on success, or null on failure.
   static llvm::IntrusiveRefCntPtr<Diagnostic> 
   createDiagnostics(const DiagnosticOptions &Opts, int Argc,
                     const char* const *Argv,
-                    DiagnosticClient *Client = 0);
+                    DiagnosticClient *Client = 0,
+                    const CodeGenOptions *CodeGenOpts = 0);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();

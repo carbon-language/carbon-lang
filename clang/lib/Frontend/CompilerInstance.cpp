@@ -108,6 +108,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
 }
 
 static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
+                               const CodeGenOptions *CodeGenOpts,
                                Diagnostic &Diags) {
   std::string ErrorInfo;
   bool OwnsStream = false;
@@ -129,20 +130,24 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
   }
 
   // Chain in the diagnostic client which will log the diagnostics.
-  DiagnosticClient *Logger = new LogDiagnosticPrinter(*OS, DiagOpts,
-                                                      OwnsStream);
+  LogDiagnosticPrinter *Logger = new LogDiagnosticPrinter(*OS, DiagOpts,
+                                                          OwnsStream);
+  if (CodeGenOpts)
+    Logger->setDwarfDebugFlags(CodeGenOpts->DwarfDebugFlags);
   Diags.setClient(new ChainedDiagnosticClient(Diags.takeClient(), Logger));
 }
 
 void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                          DiagnosticClient *Client) {
-  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client);
+  Diagnostics = createDiagnostics(getDiagnosticOpts(), Argc, Argv, Client,
+                                  &getCodeGenOpts());
 }
 
 llvm::IntrusiveRefCntPtr<Diagnostic> 
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
-                                    DiagnosticClient *Client) {
+                                    DiagnosticClient *Client,
+                                    const CodeGenOptions *CodeGenOpts) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<Diagnostic> Diags(new Diagnostic(DiagID));
 
@@ -159,7 +164,7 @@ CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
 
   // Chain in -diagnostic-log-file dumper, if requested.
   if (!Opts.DiagnosticLogFile.empty())
-    SetUpDiagnosticLog(Opts, *Diags);
+    SetUpDiagnosticLog(Opts, CodeGenOpts, *Diags);
   
   if (!Opts.DumpBuildInformation.empty())
     SetUpBuildDumpLog(Opts, Argc, Argv, *Diags);
