@@ -277,7 +277,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Adjust stack : addi sp, sp, (-imm)
   ATUsed = expandRegLargeImmPair(Mips::SP, -StackSize, NewReg, NewImm, MBB,
-                                              MBBI);
+                                 MBBI);
   BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
     .addReg(NewReg).addImm(NewImm);
 
@@ -351,7 +351,7 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
 
     // lw  $fp,stack_loc($sp)
     ATUsed = expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB,
-                                                MBBI);
+                                   MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::FP)
       .addImm(NewImm).addReg(NewReg);
 
