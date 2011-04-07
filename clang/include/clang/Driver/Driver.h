@@ -106,6 +106,9 @@ public:
   /// The file to log CC_PRINT_HEADERS output to, if enabled.
   const char *CCPrintHeadersFilename;
 
+  /// The file to log CC_LOG_DIAGNOSTICS output to, if enabled.
+  const char *CCLogDiagnosticsFilename;
+
   /// Whether the driver should follow g++ like behavior.
   unsigned CCCIsCXX : 1;
 
@@ -125,6 +128,11 @@ public:
   /// Set CC_PRINT_HEADERS mode, which causes the frontend to log header include
   /// information to CCPrintHeadersFilename or to stderr.
   unsigned CCPrintHeaders : 1;
+
+  /// Set CC_LOG_DIAGNOSTICS mode, which causes the frontend to log diagnostics
+  /// to CCLogDiagnosticsFilename or to stderr, in a stable machine readable
+  /// format.
+  unsigned CCLogDiagnostics : 1;
 
 private:
   /// Name to use when calling the generic gcc.

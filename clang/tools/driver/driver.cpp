@@ -423,6 +423,11 @@ int main(int argc_, const char **argv_) {
   if (TheDriver.CCPrintHeaders)
     TheDriver.CCPrintHeadersFilename = ::getenv("CC_PRINT_HEADERS_FILE");
 
+  // Handle CC_LOG_DIAGNOSTICS and CC_LOG_DIAGNOSTICS_FILE.
+  TheDriver.CCLogDiagnostics = !!::getenv("CC_LOG_DIAGNOSTICS");
+  if (TheDriver.CCLogDiagnostics)
+    TheDriver.CCLogDiagnosticsFilename = ::getenv("CC_LOG_DIAGNOSTICS_FILE");
+
   // Handle QA_OVERRIDE_GCC3_OPTIONS and CCC_ADD_ARGS, used for editing a
   // command line behind the scenes.
   if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {

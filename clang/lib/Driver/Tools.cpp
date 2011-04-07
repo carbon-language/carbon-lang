@@ -1246,6 +1246,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);
 
+  if (D.CCLogDiagnostics) {
+    CmdArgs.push_back("-diagnostic-log-file");
+    CmdArgs.push_back(D.CCLogDiagnosticsFilename ?
+                      D.CCLogDiagnosticsFilename : "-");
+  }
+
   // Special case debug options to only pass -g to clang. This is
   // wrong.
   Args.ClaimAllArgs(options::OPT_g_Group);
