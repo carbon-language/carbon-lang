@@ -1052,7 +1052,7 @@ bool AsmParser::ParseStatement() {
 
     if (IDVal == ".fill")
       return ParseDirectiveFill();
-    if (IDVal == ".space")
+    if (IDVal == ".space" || IDVal == ".skip")
       return ParseDirectiveSpace();
     if (IDVal == ".zero")
       return ParseDirectiveZero();

@@ -9,3 +9,8 @@ TEST0:
 # CHECK: .space	2,3
 TEST1:  
         .space 2, 3
+
+# CHECK: TEST2:
+# CHECK: .space 1
+TEST2:
+        .skip 1
