@@ -78,3 +78,17 @@ void PR9625() {
     (void)static_cast<float>(x); // no-warning
   }
 }
+
+// Don't warn about variables declared in "catch"
+void RDar9251392_bar(const char *msg);
+
+void RDar9251392() {
+  try {
+    throw "hi";
+  }
+  catch (const char* msg) {
+    RDar9251392_bar(msg); // no-warning
+  }
+}
+
+
