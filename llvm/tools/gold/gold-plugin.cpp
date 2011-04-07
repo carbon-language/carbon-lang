@@ -50,6 +50,7 @@ namespace {
   ld_plugin_add_input_file add_input_file = NULL;
   ld_plugin_add_input_library add_input_library = NULL;
   ld_plugin_set_extra_library_path set_extra_library_path = NULL;
+  ld_plugin_get_view get_view = NULL;
   ld_plugin_message message = discard_message;
 
   int api_version = 0;
@@ -205,6 +206,9 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
       case LDPT_SET_EXTRA_LIBRARY_PATH:
         set_extra_library_path = tv->tv_u.tv_set_extra_library_path;
         break;
+      case LDPT_GET_VIEW:
+        get_view = tv->tv_u.tv_get_view;
+        break;
       case LDPT_MESSAGE:
         message = tv->tv_u.tv_message;
         break;
@@ -232,7 +236,14 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
                                         int *claimed) {
   lto_module_t M;
 
-  if (file->offset) {
+  if (get_view) {
+    const void *view;
+    if (get_view(file->handle, &view) != LDPS_OK) {
+      (*message)(LDPL_ERROR, "Failed to get a view of %s", file->name);
+      return LDPS_ERR;
+    }
+    M = lto_module_create_from_memory(view, file->filesize);
+  } else if (file->offset) {
     // Gold has found what might be IR part-way inside of a file, such as
     // an .a archive.
     M = lto_module_create_from_fd_at_offset(file->fd, file->name, -1,
