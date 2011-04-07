@@ -1589,6 +1589,11 @@ static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleExtFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
+  // A8.6.220 SXTAB
+  // if d == 15 || m == 15 then UNPREDICTABLE;
+  if (decodeRd(insn) == 15 || decodeRm(insn) == 15)
+    return false;
+
   const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
   unsigned &OpIdx = NumOpsAdded;
 
