@@ -165,6 +165,9 @@ int EDInst::getOperand(EDOperand *&operand, unsigned int index) {
 int EDInst::tokenize() {
   if (TokenizeResult.valid())
     return TokenizeResult.result();
+    
+  if (ThisInstInfo == NULL)
+    return TokenizeResult.setResult(-1);
   
   if (stringify())
     return TokenizeResult.setResult(-1);
