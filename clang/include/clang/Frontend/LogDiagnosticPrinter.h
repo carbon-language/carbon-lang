@@ -12,12 +12,33 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 class DiagnosticOptions;
 class LangOptions;
 
 class LogDiagnosticPrinter : public DiagnosticClient {
+  struct DiagEntry {
+    /// The primary message line of the diagnostic.
+    std::string Message;
+  
+    /// The source file name, if available.
+    std::string Filename;
+  
+    /// The source file line number, if available.
+    unsigned Line;
+  
+    /// The source file column number, if available.
+    unsigned Column;
+  
+    /// The ID of the diagnostic.
+    unsigned DiagnosticID;
+  
+    /// The level of the diagnostic.
+    Diagnostic::Level DiagnosticLevel;
+  };
+  
   llvm::raw_ostream &OS;
   const LangOptions *LangOpts;
   const DiagnosticOptions *DiagOpts;
@@ -25,6 +46,8 @@ class LogDiagnosticPrinter : public DiagnosticClient {
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;
   unsigned OwnsOutputStream : 1;
+
+  llvm::SmallVector<DiagEntry, 8> Entries;
 
 public:
   LogDiagnosticPrinter(llvm::raw_ostream &OS, const DiagnosticOptions &Diags,
@@ -35,9 +58,7 @@ public:
     LangOpts = &LO;
   }
 
-  void EndSourceFile() {
-    LangOpts = 0;
-  }
+  void EndSourceFile();
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
