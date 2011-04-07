@@ -117,7 +117,7 @@ static void SetUpDiagnosticLog(const DiagnosticOptions &DiagOpts,
     // Create the output stream.
     llvm::raw_fd_ostream *FileOS(
       new llvm::raw_fd_ostream(DiagOpts.DiagnosticLogFile.c_str(),
-                               ErrorInfo));
+                               ErrorInfo, llvm::raw_fd_ostream::F_Append));
     if (!ErrorInfo.empty()) {
       Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
         << DiagOpts.DumpBuildInformation << ErrorInfo;
