@@ -67,11 +67,11 @@ void SpillPlacement::getAnalysisUsage(AnalysisUsage &AU) const {
 /// because all weights are positive.
 ///
 struct SpillPlacement::Node {
-  /// Frequency - Total block frequency feeding into[0] or out of[1] the bundle.
+  /// Scale - Inverse block frequency feeding into[0] or out of[1] the bundle.
   /// Ideally, these two numbers should be identical, but inaccuracies in the
   /// block frequency estimates means that we need to normalize ingoing and
   /// outgoing frequencies separately so they are commensurate.
-  float Frequency[2];
+  float Scale[2];
 
   /// Bias - Normalized contributions from non-transparent blocks.
   /// A bundle connected to a MustSpill block has a huge negative bias,
@@ -107,7 +107,7 @@ struct SpillPlacement::Node {
 
   /// Node - Create a blank Node.
   Node() {
-    Frequency[0] = Frequency[1] = 0;
+    Scale[0] = Scale[1] = 0;
   }
 
   /// clear - Reset per-query data, but preserve frequencies that only depend on
@@ -121,7 +121,7 @@ struct SpillPlacement::Node {
   /// out=0 for an ingoing link, and 1 for an outgoing link.
   void addLink(unsigned b, float w, bool out) {
     // Normalize w relative to all connected blocks from that direction.
-    w /= Frequency[out];
+    w *= Scale[out];
 
     // There can be multiple links to the same bundle, add them up.
     for (LinkVector::iterator I = Links.begin(), E = Links.end(); I != E; ++I)
@@ -137,7 +137,7 @@ struct SpillPlacement::Node {
   /// Return the change to the total number of positive biases.
   int addBias(float w, bool out) {
     // Normalize w relative to all connected blocks from that direction.
-    w /= Frequency[out];
+    w *= Scale[out];
     int Before = Bias > 0;
     Bias += w;
     int After = Bias > 0;
@@ -185,9 +185,15 @@ bool SpillPlacement::runOnMachineFunction(MachineFunction &mf) {
                                                loops->getLoopDepth(I));
     unsigned Num = I->getNumber();
     BlockFrequency[Num] = Freq;
-    nodes[bundles->getBundle(Num, 1)].Frequency[0] += Freq;
-    nodes[bundles->getBundle(Num, 0)].Frequency[1] += Freq;
+    nodes[bundles->getBundle(Num, 1)].Scale[0] += Freq;
+    nodes[bundles->getBundle(Num, 0)].Scale[1] += Freq;
   }
+
+  // Scales are reciprocal frequencies.
+  for (unsigned i = 0, e = bundles->getNumBundles(); i != e; ++i)
+    for (unsigned d = 0; d != 2; ++d)
+      if (nodes[i].Scale[d] > 0)
+        nodes[i].Scale[d] = 1 / nodes[i].Scale[d];
 
   // We never change the function.
   return false;
