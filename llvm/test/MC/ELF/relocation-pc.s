@@ -6,7 +6,7 @@
 	jmp	-256              # R_X86_64_PC32
 
 // CHECK:      # Section 0x00000002
-// CHECK-NEXT: (('sh_name', 0x00000012) # '.rela.text'
+// CHECK-NEXT: (('sh_name', 0x00000001) # '.rela.text'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)

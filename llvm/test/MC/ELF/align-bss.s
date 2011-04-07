@@ -5,7 +5,7 @@
 	.local	foo
 	.comm	foo,2048,16
 
-// CHECK:        ('sh_name', 0x0000000d) # '.bss'
+// CHECK:        ('sh_name', 0x00000007) # '.bss'
 // CHECK-NEXT:   ('sh_type', 0x00000008)
 // CHECK-NEXT:   ('sh_flags', 0x00000003)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)

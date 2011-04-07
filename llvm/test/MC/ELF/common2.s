@@ -9,7 +9,7 @@
         .zero 1
 	.align	8
 
-// CHECK:      (('sh_name', 0x0000000d) # '.bss'
+// CHECK:      (('sh_name', 0x00000007) # '.bss'
 // CHECK-NEXT:  ('sh_type',
 // CHECK-NEXT:  ('sh_flags'
 // CHECK-NEXT:  ('sh_addr',

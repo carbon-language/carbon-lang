@@ -1,6 +1,6 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | elf-dump  --dump-section-data | FileCheck %s
 
-// CHECK:       (('sh_name', 0x00000012) # '.comment'
+// CHECK:       (('sh_name', 0x00000007) # '.comment'
 // CHECK-NEXT:   ('sh_type', 0x00000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000030)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)

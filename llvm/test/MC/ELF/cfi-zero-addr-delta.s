@@ -14,7 +14,7 @@ f:
         nop
 	.cfi_endproc
 
-// CHECK:      (('sh_name', 0x00000012) # '.eh_frame'
+// CHECK:      (('sh_name', 0x00000011) # '.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -27,11 +27,11 @@ f:
 // CHECK-NEXT:  ('_section_data', '14000000 00000000 017a5200 01781001 1b0c0708 90010000 1c000000 1c000000 00000000 04000000 00410e10 410a0e08 410b0000 00000000')
 // CHECK-NEXT: ),
 
-// CHECK:      (('sh_name', 0x0000001c) # '.rela.eh_frame'
+// CHECK:      (('sh_name', 0x0000000c) # '.rela.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x000003a0)
+// CHECK-NEXT:  ('sh_offset', 0x00000398)
 // CHECK-NEXT:  ('sh_size', 0x00000018)
 // CHECK-NEXT:  ('sh_link', 0x00000007)
 // CHECK-NEXT:  ('sh_info', 0x00000004)

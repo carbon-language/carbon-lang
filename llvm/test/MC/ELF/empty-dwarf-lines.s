@@ -8,7 +8,7 @@ c:
         .asciz   "hi\n"
 
 // CHECK:      # Section 0x00000004
-// CHECK-NEXT: (('sh_name', 0x00000012) # '.debug_line'
+// CHECK-NEXT: (('sh_name', 0x0000000c) # '.debug_line'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)

@@ -7,10 +7,10 @@
 .section	.note.GNU-,"",@progbits
 .section	-.note.GNU,"",@progbits
 
-// CHECK: ('sh_name', 0x00000012) # '.note.GNU-stack'
-// CHECK: ('sh_name', 0x00000022) # '.note.GNU-stack2'
-// CHECK: ('sh_name', 0x00000033) # '.note.GNU-'
-// CHECK: ('sh_name', 0x0000003e) # '-.note.GNU'
+// CHECK: ('sh_name', 0x00000038) # '.note.GNU-stack'
+// CHECK: ('sh_name', 0x0000008f) # '.note.GNU-stack2'
+// CHECK: ('sh_name', 0x000000a0) # '.note.GNU-'
+// CHECK: ('sh_name', 0x00000084) # '-.note.GNU'
 
 // Test that the defaults are used
 
@@ -19,7 +19,7 @@
 .section	.rodata
 .section	zed, ""
 
-// CHECK:      (('sh_name', 0x00000049) # '.init'
+// CHECK:      (('sh_name', 0x00000012) # '.init'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000006)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -31,7 +31,7 @@
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 0x0000000b
-// CHECK-NEXT: (('sh_name', 0x0000004f) # '.fini'
+// CHECK-NEXT: (('sh_name', 0x00000048) # '.fini'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000006)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -43,7 +43,7 @@
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 0x0000000c
-// CHECK-NEXT: (('sh_name', 0x00000055) # '.rodata'
+// CHECK-NEXT: (('sh_name', 0x00000076) # '.rodata'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -55,7 +55,7 @@
 // CHECK-NEXT:  ('sh_entsize', 0x00000000)
 // CHECK-NEXT: ),
 // CHECK-NEXT: # Section 0x0000000d
-// CHECK-NEXT: (('sh_name', 0x0000005d) # 'zed'
+// CHECK-NEXT: (('sh_name', 0x00000058) # 'zed'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -68,7 +68,7 @@
 // CHECK-NEXT: ),
 
 .section	.note.test,"",@note
-// CHECK:       (('sh_name', 0x00000061) # '.note.test'
+// CHECK:       (('sh_name', 0x00000007) # '.note.test'
 // CHECK-NEXT:   ('sh_type', 0x00000007)
 // CHECK-NEXT:   ('sh_flags', 0x00000000)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -90,7 +90,7 @@ bar:
 
 .section .eh_frame,"a",@unwind
 
-// CHECK:       (('sh_name', 0x00000080) # '.eh_frame'
+// CHECK:       (('sh_name', 0x0000004e) # '.eh_frame'
 // CHECK-NEXT:   ('sh_type', 0x70000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000002)
 // CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -106,5 +106,5 @@ bar:
 .section bar-"foo"
 .section "foo"
 
-// CHECK: ('sh_name', 0x0000008a) # 'bar-"foo"'
-// CHECK: ('sh_name', 0x00000094) # 'foo'
+// CHECK: ('sh_name', 0x000000ab) # 'bar-"foo"'
+// CHECK: ('sh_name', 0x00000034) # 'foo'

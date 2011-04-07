@@ -156,7 +156,7 @@
 
 // Section 4 is bss
 // CHECK:      # Section 0x00000004
-// CHECK-NEXT: (('sh_name', 0x0000000d) # '.bss'
+// CHECK-NEXT: (('sh_name', 0x0000000b) # '.bss'
 
 // CHECK:      # Symbol 0x00000001
 // CHECK-NEXT: (('st_name', 0x00000005) # '.Lfoo'

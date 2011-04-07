@@ -213,7 +213,7 @@ f36:
         .cfi_endproc
 
 // CHECK:      # Section 0x00000004
-// CHECK-NEXT: (('sh_name', 0x00000012) # '.eh_frame'
+// CHECK-NEXT: (('sh_name', 0x00000011) # '.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000001)
 // CHECK-NEXT:  ('sh_flags', 0x00000002)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
@@ -227,11 +227,11 @@ f36:
 // CHECK-NEXT: ),
 
 // CHECK:        # Section 0x00000005
-// CHECK-NEXT: (('sh_name', 0x0000001c) # '.rela.eh_frame'
+// CHECK-NEXT: (('sh_name', 0x0000000c) # '.rela.eh_frame'
 // CHECK-NEXT:  ('sh_type', 0x00000004)
 // CHECK-NEXT:  ('sh_flags', 0x00000000)
 // CHECK-NEXT:  ('sh_addr', 0x00000000)
-// CHECK-NEXT:  ('sh_offset', 0x00000e38)
+// CHECK-NEXT:  ('sh_offset', 0x00000e30)
 // CHECK-NEXT:  ('sh_size', 0x000006c0)
 // CHECK-NEXT:  ('sh_link', 0x00000007)
 // CHECK-NEXT:  ('sh_info', 0x00000004)

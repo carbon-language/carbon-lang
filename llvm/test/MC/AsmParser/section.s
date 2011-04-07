@@ -45,7 +45,7 @@
 .previous
 .byte 1
 .previous
-# CHECK:       (('sh_name', 0x00000012) # 'test1'
+# CHECK:       (('sh_name', 0x00000044) # 'test1'
 # CHECK-NEXT:   ('sh_type', 0x00000001)
 # CHECK-NEXT:   ('sh_flags', 0x00000000)
 # CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -57,7 +57,7 @@
 # CHECK-NEXT:   ('sh_entsize', 0x00000000)
 # CHECK-NEXT:   ('_section_data', '01010101 010101')
 # CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x00000018) # 'test2'
+# CHECK:       (('sh_name', 0x0000003e) # 'test2'
 # CHECK-NEXT:   ('sh_type', 0x00000001)
 # CHECK-NEXT:   ('sh_flags', 0x00000000)
 # CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -69,7 +69,7 @@
 # CHECK-NEXT:   ('sh_entsize', 0x00000000)
 # CHECK-NEXT:   ('_section_data', '02020202 0202')
 # CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x0000001e) # 'test3'
+# CHECK:       (('sh_name', 0x00000038) # 'test3'
 # CHECK-NEXT:   ('sh_type', 0x00000001)
 # CHECK-NEXT:   ('sh_flags', 0x00000000)
 # CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -81,7 +81,7 @@
 # CHECK-NEXT:   ('sh_entsize', 0x00000000)
 # CHECK-NEXT:   ('_section_data', '03030303 03')
 # CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x00000024) # 'test4'
+# CHECK:       (('sh_name', 0x00000032) # 'test4'
 # CHECK-NEXT:   ('sh_type', 0x00000001)
 # CHECK-NEXT:   ('sh_flags', 0x00000000)
 # CHECK-NEXT:   ('sh_addr', 0x00000000)
@@ -93,7 +93,7 @@
 # CHECK-NEXT:   ('sh_entsize', 0x00000000)
 # CHECK-NEXT:   ('_section_data', '040404')
 # CHECK-NEXT:  ),
-# CHECK:       (('sh_name', 0x0000002a) # 'test5'
+# CHECK:       (('sh_name', 0x0000002c) # 'test5'
 # CHECK-NEXT:   ('sh_type', 0x00000001)
 # CHECK-NEXT:   ('sh_flags', 0x00000000)
 # CHECK-NEXT:   ('sh_addr', 0x00000000)

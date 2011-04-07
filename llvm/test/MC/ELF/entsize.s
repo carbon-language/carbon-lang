@@ -33,7 +33,7 @@
     .quad 42
 
 // CHECK: # Section 0x00000004
-// CHECK-NEXT:   ('sh_name', 0x00000012) # '.rodata.str1.1'
+// CHECK-NEXT:   ('sh_name', 0x00000048) # '.rodata.str1.1'
 // CHECK-NEXT:   ('sh_type', 0x00000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000032)
 // CHECK-NEXT:   ('sh_addr',
@@ -45,7 +45,7 @@
 // CHECK-NEXT:   ('sh_entsize', 0x00000001)
 
 // CHECK: # Section 0x00000005
-// CHECK-NEXT:   ('sh_name', 0x00000021) # '.rodata.str2.1'
+// CHECK-NEXT:   ('sh_name', 0x00000039) # '.rodata.str2.1'
 // CHECK-NEXT:   ('sh_type', 0x00000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000032)
 // CHECK-NEXT:   ('sh_addr',
@@ -57,7 +57,7 @@
 // CHECK-NEXT:   ('sh_entsize', 0x00000002)
 
 // CHECK: # Section 0x00000006
-// CHECK-NEXT:   ('sh_name', 0x00000030) # '.rodata.cst8
+// CHECK-NEXT:   ('sh_name', 0x0000002c) # '.rodata.cst8
 // CHECK-NEXT:   ('sh_type', 0x00000001)
 // CHECK-NEXT:   ('sh_flags', 0x00000012)
 // CHECK-NEXT:   ('sh_addr',

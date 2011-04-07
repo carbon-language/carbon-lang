@@ -20,7 +20,7 @@ bar:
 
 
 // CHECK:  # Section 0x00000001
-// CHECK: (('sh_name', 0x00000001) # '.text'
+// CHECK: (('sh_name', 0x00000006) # '.text'
 
 // CHECK: # Relocation 0x00000000
 // CHECK-NEXT:  (('r_offset', 0x00000001)

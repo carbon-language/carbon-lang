@@ -14,7 +14,7 @@
 // CHECK-NEXT: ('sh_addralign', 0x00000004)
 // CHECK-NEXT: ('sh_entsize', 0x00000000)
 
-// CHECK:      ('sh_name', 0x00000007) # '.data'
+// CHECK:      ('sh_name', 0x00000026) # '.data'
 // CHECK-NEXT: ('sh_type', 0x00000001)
 // CHECK-NEXT: ('sh_flags', 0x00000003)
 // CHECK-NEXT: ('sh_addr', 0x00000000)
@@ -25,7 +25,7 @@
 // CHECK-NEXT: ('sh_addralign', 0x00000004)
 // CHECK-NEXT: ('sh_entsize', 0x00000000)
 
-// CHECK:      ('sh_name', 0x0000000d) # '.bss'
+// CHECK:      ('sh_name', 0x00000007) # '.bss'
 // CHECK-NEXT: ('sh_type', 0x00000008)
 // CHECK-NEXT: ('sh_flags', 0x00000003)
 // CHECK-NEXT: ('sh_addr', 0x00000000)
@@ -36,7 +36,7 @@
 // CHECK-NEXT: ('sh_addralign', 0x00000004)
 // CHECK-NEXT: ('sh_entsize', 0x00000000)
 
-// CHECK:      ('sh_name', 0x00000012) # '.shstrtab'
+// CHECK:      ('sh_name', 0x0000000c) # '.shstrtab'
 // CHECK-NEXT: ('sh_type', 0x00000003)
 // CHECK-NEXT:    ('sh_flags', 0x00000000)
 // CHECK-NEXT:    ('sh_addr', 0x00000000)
@@ -47,7 +47,7 @@
 // CHECK-NEXT:    ('sh_addralign', 0x00000001)
 // CHECK-NEXT:    ('sh_entsize', 0x00000000)
 
-// CHECK: ('sh_name', 0x0000001c) # '.symtab'
+// CHECK: ('sh_name', 0x0000001e) # '.symtab'
 // CHECK-NEXT:    ('sh_type', 0x00000002)
 // CHECK-NEXT:    ('sh_flags', 0x00000000)
 // CHECK-NEXT:    ('sh_addr', 0x00000000)
@@ -58,7 +58,7 @@
 // CHECK-NEXT:    ('sh_addralign', 0x00000008)
 // CHECK-NEXT:    ('sh_entsize', 0x00000018)
 
-// CHECK: ('sh_name', 0x00000024) # '.strtab'
+// CHECK: ('sh_name', 0x00000016) # '.strtab'
 // CHECK-NEXT:    ('sh_type', 0x00000003)
 // CHECK-NEXT:    ('sh_flags', 0x00000000)
 // CHECK-NEXT:    ('sh_addr', 0x00000000)

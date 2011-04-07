@@ -5,7 +5,7 @@
 
         addl    $_GLOBAL_OFFSET_TABLE_, %ebx
 
-// CHECK:      ('sh_name', 0x00000001) # '.text'
+// CHECK:      ('sh_name', 0x00000005) # '.text'
 // CHECK-NEXT: ('sh_type',
 // CHECK-NEXT: ('sh_flags',
 // CHECK-NEXT: ('sh_addr',
