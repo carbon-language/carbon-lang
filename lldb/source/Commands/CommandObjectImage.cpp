@@ -603,7 +603,8 @@ public:
         CommandObjectImageDumpModuleList (interpreter,
                                           "image dump symtab",
                                           "Dump the symbol table from one or more executable images.",
-                                           NULL)
+                                           NULL),
+        m_options (interpreter)
     {
     }
 
@@ -719,8 +720,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options(),
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(m_interpreter),
             m_sort_order (eSortOrderNone)
         {
         }
@@ -1140,8 +1141,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options(),
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(m_interpreter),
             m_format_array()
         {
         }
@@ -1188,7 +1189,8 @@ public:
         CommandObject (interpreter,
                        "image list",
                        "List current executable and dependent shared library images.",
-                       "image list [<cmd-options>]")
+                       "image list [<cmd-options>]"),
+        m_options (interpreter)
     {
     }
 
@@ -1346,8 +1348,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(m_interpreter)
         {
             ResetOptionValues();
         }
@@ -1463,7 +1465,8 @@ public:
         CommandObject (interpreter,
                        "image lookup",
                        "Look up information within executable and dependent shared library images.",
-                       NULL)
+                       NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;
@@ -1572,7 +1575,7 @@ public:
             break;
 
         default:
-            m_options.GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
+            m_options.GenerateOptionUsage (result.GetErrorStream(), this);
             syntax_error = true;
             break;
         }

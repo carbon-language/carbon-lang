@@ -113,7 +113,7 @@ public:
     /// Triple.
     //------------------------------------------------------------------
     ArchSpec (const llvm::Triple &triple);
-    ArchSpec (const char *triple_cstr);
+    ArchSpec (const char *triple_cstr, Platform *platform);
     //------------------------------------------------------------------
     /// Constructor over architecture name.
     ///
@@ -320,7 +320,7 @@ public:
     SetTriple (const llvm::Triple &triple);
 
     bool
-    SetTriple (const char *triple_cstr);
+    SetTriple (const char *triple_cstr, Platform *platform);
     
     //------------------------------------------------------------------
     /// Returns the default endianness of the architecture.

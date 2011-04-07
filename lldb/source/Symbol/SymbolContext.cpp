@@ -10,6 +10,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 
 #include "lldb/Core/Module.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symbol.h"

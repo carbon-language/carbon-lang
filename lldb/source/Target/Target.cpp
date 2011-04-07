@@ -23,6 +23,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -1330,7 +1331,7 @@ Target::SettingsController::SetGlobalVariable (const ConstString &var_name,
 {
     if (var_name == GetSettingNameForDefaultArch())
     {
-        m_default_architecture.SetTriple (value);
+        m_default_architecture.SetTriple (value, NULL);
         if (!m_default_architecture.IsValid())
             err.SetErrorStringWithFormat ("'%s' is not a valid architecture or triple.", value);
     }

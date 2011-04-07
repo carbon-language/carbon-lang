@@ -11,7 +11,6 @@
 #define liblldb_STLUtils_h_
 #if defined(__cplusplus)
 
-#include "llvm/ADT/StringExtras.h"
 #include <string.h>
 
 #include <map>
@@ -61,15 +60,6 @@ public:
         return elem.second == second_value;
     }
 };
-
-struct StdStringHash
-{
-    size_t operator()( const std::string& x ) const
-    {
-        return llvm::HashString(x);
-    }
-};
-
 
 template <class T>
 inline void PrintAllCollectionElements (std::ostream &s, const T& coll, const char* header_cstr=NULL, const char* separator_cstr=" ")

@@ -249,8 +249,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             // Keep default values of all options in one place: ResetOptionValues ()
             ResetOptionValues ();
@@ -325,7 +325,7 @@ public:
                        "Show the stack for one or more threads.  If no threads are specified, show the currently selected thread.  Use the thread-index \"all\" to see all threads.",
                        NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
-        m_options()
+        m_options(interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData thread_idx_arg;
@@ -487,8 +487,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
         {
             // Keep default values of all options in one place: ResetOptionValues ()
             ResetOptionValues ();
@@ -575,7 +575,7 @@ public:
         CommandObject (interpreter, name, help, syntax, flags),
         m_step_type (step_type),
         m_step_scope (step_scope),
-        m_options ()
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData thread_id_arg;
@@ -976,8 +976,8 @@ public:
         uint32_t m_thread_idx;
         uint32_t m_frame_idx;
 
-        CommandOptions () :
-            Options(),
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
             m_thread_idx(LLDB_INVALID_THREAD_ID),
             m_frame_idx(LLDB_INVALID_FRAME_ID)
         {
@@ -1069,7 +1069,7 @@ public:
                        "Run the current or specified thread until it reaches a given line number or leaves the current function.",
                        NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
-        m_options ()
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData line_num_arg;

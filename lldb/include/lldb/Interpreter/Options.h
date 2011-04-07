@@ -73,7 +73,7 @@ namespace lldb_private {
 ///             return error;
 ///         }
 ///
-///         CommandOptions () : debug (true), verbose (false), log_file (), log_flags (0)
+///         CommandOptions (CommandInterpreter &interpreter) : debug (true), verbose (false), log_file (), log_flags (0)
 ///         {}
 ///
 ///         bool debug;
@@ -112,7 +112,7 @@ class Options
 {
 public:
 
-    Options ();
+    Options (CommandInterpreter &interpreter);
 
     virtual
     ~Options ();
@@ -157,8 +157,7 @@ public:
                               uint32_t output_max_columns);
 
     void
-    GenerateOptionUsage (CommandInterpreter &interpreter,
-                         Stream &strm,
+    GenerateOptionUsage (Stream &strm,
                          CommandObject *cmd);
 
     // The following two pure virtual functions must be defined by every class that inherits from
@@ -227,8 +226,7 @@ public:
     ///     \btrue if we were in an option, \bfalse otherwise.
     //------------------------------------------------------------------
     bool
-    HandleOptionCompletion (CommandInterpreter &interpreter,
-                            Args &input,
+    HandleOptionCompletion (Args &input,
                             OptionElementVector &option_map,
                             int cursor_index,
                             int char_pos,
@@ -277,8 +275,7 @@ public:
     ///     \btrue if we were in an option, \bfalse otherwise.
     //------------------------------------------------------------------
     virtual bool
-    HandleOptionArgumentCompletion (CommandInterpreter &interpreter,
-                                    Args &input,
+    HandleOptionArgumentCompletion (Args &input,
                                     int cursor_index,
                                     int char_pos,
                                     OptionElementVector &opt_element_vector,
@@ -293,6 +290,7 @@ protected:
     typedef std::set<char> OptionSet;
     typedef std::vector<OptionSet> OptionSetVector;
 
+    CommandInterpreter &m_interpreter;
     std::vector<struct option> m_getopt_table;
     OptionSet m_seen_options;
     OptionSetVector m_required_options;

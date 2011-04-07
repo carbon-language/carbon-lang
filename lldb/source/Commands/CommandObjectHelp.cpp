@@ -140,7 +140,7 @@ CommandObjectHelp::Execute (Args& command, CommandReturnObject &result)
                     else
                         m_interpreter.OutputFormattedHelpText (output_strm, "", "", sub_cmd_obj->GetHelp(), 1);
                     output_strm.Printf ("\nSyntax: %s\n", sub_cmd_obj->GetSyntax());
-                    sub_cmd_obj->GetOptions()->GenerateOptionUsage (m_interpreter, output_strm, sub_cmd_obj);
+                    sub_cmd_obj->GetOptions()->GenerateOptionUsage (output_strm, sub_cmd_obj);
                     const char *long_help = sub_cmd_obj->GetHelpLong();
                     if ((long_help != NULL)
                         && (strlen (long_help) > 0))

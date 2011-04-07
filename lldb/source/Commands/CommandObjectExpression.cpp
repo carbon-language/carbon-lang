@@ -37,8 +37,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CommandObjectExpression::CommandOptions::CommandOptions () :
-    Options()
+CommandObjectExpression::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
+    Options(m_interpreter)
 {
     // Keep only one place to reset the values to their defaults
     ResetOptionValues();
@@ -115,6 +115,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
                    "expression",
                    "Evaluate a C/ObjC/C++ expression in the current program context, using variables currently in scope.",
                    NULL),
+    m_options (interpreter),
     m_expr_line_count (0),
     m_expr_lines ()
 {

@@ -140,7 +140,7 @@ SBInstruction::DumpEmulation (const char *triple)
 {
     if (m_opaque_sp && triple)
     {
-        lldb_private::ArchSpec arch (triple);
+        lldb_private::ArchSpec arch (triple, NULL);
         
         return m_opaque_sp->Emulate (arch, 
                                      NULL,

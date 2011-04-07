@@ -37,8 +37,8 @@ class CommandObjectSourceInfo : public CommandObject
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
         }
 
@@ -98,7 +98,8 @@ public:
         CommandObject (interpreter,
                        "source info",
                        "Display information about the source lines from the current executable's debug info.",
-                       "source info [<cmd-options>]")
+                       "source info [<cmd-options>]"),
+        m_options (interpreter)
     {
     }
 
@@ -148,8 +149,8 @@ class CommandObjectSourceList : public CommandObject
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
         }
 
@@ -227,7 +228,8 @@ public:
         CommandObject (interpreter,
                        "source list",
                        "Display source code (as specified) based on the current executable's debug info.",
-                        NULL)
+                        NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;

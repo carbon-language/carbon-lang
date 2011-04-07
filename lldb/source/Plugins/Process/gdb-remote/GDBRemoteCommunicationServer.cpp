@@ -357,7 +357,7 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
             }
             else if (key.compare("triple") == 0)
             {
-                match_info.GetProcessInfo().GetArchitecture().SetTriple(value.c_str());
+                match_info.GetProcessInfo().GetArchitecture().SetTriple (value.c_str(), NULL);
             }
             else
             {

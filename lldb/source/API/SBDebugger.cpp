@@ -358,7 +358,7 @@ SBDebugger::SetDefaultArchitecture (const char *arch_name)
 {
     if (arch_name)
     {
-        ArchSpec arch (arch_name);
+        ArchSpec arch (arch_name, NULL);
         if (arch.IsValid())
         {
             lldb_private::Target::SetDefaultArchitecture (arch);
@@ -425,7 +425,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
     {
         ArchSpec arch;
         FileSpec file_spec (filename, true);
-        arch.SetTriple (target_triple);
+        arch.SetTriple (target_triple, m_opaque_sp->GetPlatformList().GetSelectedPlatform().get());
         TargetSP target_sp;
         Error error (m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file_spec, arch, true, target_sp));
         target.reset (target_sp);
@@ -455,7 +455,7 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_
         Error error;
 
         if (arch_cstr)
-            arch.SetTriple (arch_cstr);
+            arch.SetTriple (arch_cstr, m_opaque_sp->GetPlatformList().GetSelectedPlatform().get());
 
         error = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, file, arch, true, target_sp);
 
@@ -534,7 +534,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
     if (m_opaque_sp && filename && filename[0])
     {
         // No need to lock, the target list is thread safe
-        ArchSpec arch (arch_name);
+        ArchSpec arch (arch_name, m_opaque_sp->GetPlatformList().GetSelectedPlatform().get());
         TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename, false), arch_name ? &arch : NULL));
         sb_target.reset(target_sp);
     }

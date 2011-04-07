@@ -13,7 +13,8 @@ use File::Basename;
 use File::Glob ':glob';
 use List::Util qw[min max];
 
-our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_0};
+our $llvm_srcroot = $ENV{SCRIPT_INPUT_FILE_0};
+our $llvm_dstroot = $ENV{SCRIPT_INPUT_FILE_1};
 
 our $libedis_outfile = $ENV{SCRIPT_OUTPUT_FILE_0};
 our ($libedis_basename, $libedis_dirname) = fileparse ($libedis_outfile);
@@ -27,8 +28,6 @@ our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
 our $llvm_revision = "128303";
 our $llvm_source_dir = "$ENV{SRCROOT}";
-our $cc = "$ENV{DEVELOPER_BIN_DIR}/gcc-4.2";
-our $cxx = "$ENV{DEVELOPER_BIN_DIR}/g++-4.2";
 our @archs = split (/\s+/, $ENV{ARCHS});
 
 our @archive_files = (  
@@ -84,7 +83,7 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMX86Utils.a",
 );
 
-if (-l $llvm_dstroot)
+if (-e "$llvm_srcroot/lib")
 {
 	print "Using standard LLVM build directory...\n";
 	# LLVM in the "lldb" root is a symlink which indicates we are using a 
@@ -230,7 +229,7 @@ sub build_llvm
 	        print "Configuring clang ($arch) in '$llvm_dstroot_arch'...\n";
 			my $lldb_configuration_options = '';
 			$llvm_configuration eq 'Release' and $lldb_configuration_options .= '--enable-optimized --disable-assertions';
-	        do_command ("cd '$llvm_dstroot_arch' && '$llvm_source_dir/llvm/configure' $lldb_configuration_options --enable-targets=x86_64,arm --build=$arch-apple-darwin10 CC=\"$cc -arch $arch\" CXX=\"$cxx -arch $arch\"",
+	        do_command ("cd '$llvm_dstroot_arch' && '$llvm_source_dir/llvm/configure' $lldb_configuration_options --enable-targets=x86_64,arm --build=$arch-apple-darwin10",
 	                    "configuring llvm build", 1);			
 		}
 

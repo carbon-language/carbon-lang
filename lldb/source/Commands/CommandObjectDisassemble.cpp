@@ -32,8 +32,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CommandObjectDisassemble::CommandOptions::CommandOptions () :
-    Options(),
+CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
+    Options(m_interpreter),
     num_lines_context(0),
     num_instructions (0),
     func_name(),
@@ -128,7 +128,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const 
         break;
 
     case 'a':
-        arch.SetTriple (option_arg);
+        arch.SetTriple (option_arg, m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform().get());
         break;
 
     default:
@@ -195,7 +195,8 @@ CommandObjectDisassemble::CommandObjectDisassemble (CommandInterpreter &interpre
     CommandObject (interpreter,
                    "disassemble",
                    "Disassemble bytes in the current function, or elsewhere in the executable program as specified by the user.",
-                   "disassemble [<cmd-options>]")
+                   "disassemble [<cmd-options>]"),
+    m_options (interpreter)
 {
 }
 
@@ -248,10 +249,7 @@ CommandObjectDisassemble::Execute
     if (command.GetArgumentCount() != 0)
     {
         result.AppendErrorWithFormat ("\"disassemble\" arguments are specified as options.\n");
-        GetOptions()->GenerateOptionUsage (m_interpreter,
-                                           result.GetErrorStream(), 
-                                           this);
-
+        GetOptions()->GenerateOptionUsage (result.GetErrorStream(), this);
         result.SetStatus (eReturnStatusFailed);
         return false;
     }

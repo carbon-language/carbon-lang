@@ -142,6 +142,7 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
 {
     const uint8_t *trap_opcode = NULL;
     uint32_t trap_opcode_size = 0;
+    bool bp_is_thumb = false;
         
     llvm::Triple::ArchType machine = target.GetArchitecture().GetMachine();
     switch (machine)
@@ -154,22 +155,26 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
             trap_opcode_size = sizeof(g_i386_breakpoint_opcode);
         }
         break;
-        
+
+    case llvm::Triple::thumb:
+        bp_is_thumb = true; // Fall through...
     case llvm::Triple::arm:
         {
             static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
             static const uint8_t g_thumb_breakpooint_opcode[] = { 0xFE, 0xDE };
 
-            lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
-            if (bp_loc_sp)
+            // Auto detect arm/thumb if it wasn't explicitly specified
+            if (!bp_is_thumb)
             {
-                const AddressClass addr_class = bp_loc_sp->GetAddress().GetAddressClass ();
-                if (addr_class == eAddressClassCodeAlternateISA)
-                {
-                    trap_opcode = g_thumb_breakpooint_opcode;
-                    trap_opcode_size = sizeof(g_thumb_breakpooint_opcode);
-                    break;
-                }
+                lldb::BreakpointLocationSP bp_loc_sp (bp_site->GetOwnerAtIndex (0));
+                if (bp_loc_sp)
+                    bp_is_thumb = bp_loc_sp->GetAddress().GetAddressClass () == eAddressClassCodeAlternateISA;
+            }
+            if (bp_is_thumb)
+            {
+                trap_opcode = g_thumb_breakpooint_opcode;
+                trap_opcode_size = sizeof(g_thumb_breakpooint_opcode);
+                break;
             }
             trap_opcode = g_arm_breakpoint_opcode;
             trap_opcode_size = sizeof(g_arm_breakpoint_opcode);
@@ -186,7 +191,7 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
         break;
         
     default:
-        assert(!"Unhandled architecture in ProcessMacOSX::GetSoftwareBreakpointTrapOpcode()");
+        assert(!"Unhandled architecture in PlatformDarwin::GetSoftwareBreakpointTrapOpcode()");
         break;
     }
     

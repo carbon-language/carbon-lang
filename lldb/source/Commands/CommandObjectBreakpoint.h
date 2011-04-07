@@ -76,7 +76,7 @@ public:
     {
     public:
 
-        CommandOptions ();
+        CommandOptions (CommandInterpreter &interpreter);
 
         virtual
         ~CommandOptions ();
@@ -142,7 +142,7 @@ public:
     {
     public:
 
-        CommandOptions ();
+        CommandOptions (CommandInterpreter &interpreter);
 
         virtual
         ~CommandOptions ();
@@ -243,7 +243,7 @@ public:
     {
     public:
 
-        CommandOptions ();
+        CommandOptions (CommandInterpreter &interpreter);
 
         virtual
         ~CommandOptions ();
@@ -303,7 +303,7 @@ public:
     {
     public:
 
-        CommandOptions ();
+        CommandOptions (CommandInterpreter &interpreter);
 
         virtual
         ~CommandOptions ();

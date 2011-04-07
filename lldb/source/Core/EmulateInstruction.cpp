@@ -315,7 +315,7 @@ EmulateInstruction::ReadMemoryDefault (void *baton,
                                        size_t length)
 {
     PrintContext ("Read from memory", context);
-    fprintf (stdout, "    Read from Memory (address = %p, length = %d)\n",(void *) addr, (uint) length);
+    fprintf (stdout, "    Read from Memory (address = %p, length = %d)\n",(void *) addr, (uint32_t) length);
     
     *((uint64_t *) dst) = 0xdeadbeef;
     return length;
@@ -329,7 +329,7 @@ EmulateInstruction::WriteMemoryDefault (void *baton,
                                         size_t length)
 {
     PrintContext ("Write to memory", context);
-    fprintf (stdout, "    Write to Memory (address = %p, length = %d)\n",  (void *) addr, (uint) length);
+    fprintf (stdout, "    Write to Memory (address = %p, length = %d)\n",  (void *) addr, (uint32_t) length);
     return length;
 }
 

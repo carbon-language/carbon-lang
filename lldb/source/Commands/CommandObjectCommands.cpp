@@ -34,7 +34,10 @@ private:
     {
     public:
 
-        CommandOptions (){}
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
+        {
+        }
 
         virtual
         ~CommandOptions (){}
@@ -106,7 +109,8 @@ public:
         CommandObject (interpreter,
                        "commands source",
                        "Read in debugger commands from the file <filename> and execute them.",
-                       NULL)
+                       NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;

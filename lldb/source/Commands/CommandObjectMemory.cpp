@@ -36,8 +36,8 @@ public:
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             ResetOptionValues();
         }
@@ -198,7 +198,8 @@ public:
                        "memory read",
                        "Read from the memory of the process being debugged.",
                        NULL,
-                       eFlagProcessMustBeLaunched)
+                       eFlagProcessMustBeLaunched),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -434,8 +435,8 @@ public:
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             ResetOptionValues();
         }
@@ -521,7 +522,8 @@ public:
                        "Write to the memory of the process being debugged.",
                        //"memory write [<cmd-options>] <addr> [value1 value2 ...]",
                        NULL,
-                       eFlagProcessMustBeLaunched)
+                       eFlagProcessMustBeLaunched),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;

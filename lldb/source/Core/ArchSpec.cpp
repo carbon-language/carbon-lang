@@ -18,6 +18,7 @@
 #include "llvm/Support/MachO.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Platform.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -273,13 +274,13 @@ ArchSpec::ArchSpec() :
 {
 }
 
-ArchSpec::ArchSpec (const char *triple_cstr) :
+ArchSpec::ArchSpec (const char *triple_cstr, Platform *platform) :
     m_triple (),
     m_core (kCore_invalid),
     m_byte_order (eByteOrderInvalid)
 {
     if (triple_cstr)
-        SetTriple(triple_cstr);
+        SetTriple(triple_cstr, platform);
 }
 
 ArchSpec::ArchSpec(const llvm::Triple &triple) :
@@ -417,18 +418,10 @@ ArchSpec::SetTriple (const llvm::Triple &triple)
     if (core_def)
     {
         m_core = core_def->core;
-        m_byte_order = core_def->default_byte_order;
-
-        if (m_triple.getVendor() == llvm::Triple::UnknownVendor &&
-            m_triple.getOS() == llvm::Triple::UnknownOS &&
-            m_triple.getEnvironment() == llvm::Triple::UnknownEnvironment)
-        {
-            llvm::Triple host_triple(llvm::sys::getHostTriple());
-
-            m_triple.setVendor(host_triple.getVendor());
-            m_triple.setOS(host_triple.getOS());
-            m_triple.setEnvironment(host_triple.getEnvironment());
-        }
+        // Set the byte order to the default byte order for an architecture.
+        // This can be modified if needed for cases when cores handle both
+        // big and little endian
+        m_byte_order = core_def->default_byte_order; 
     }
     else
     {
@@ -440,7 +433,7 @@ ArchSpec::SetTriple (const llvm::Triple &triple)
 }
 
 bool
-ArchSpec::SetTriple (const char *triple_cstr)
+ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
 {
     if (triple_cstr || triple_cstr[0])
     {
@@ -459,7 +452,46 @@ ArchSpec::SetTriple (const char *triple_cstr)
         {
             std::string normalized_triple_sstr (llvm::Triple::normalize(triple_stref));
             triple_stref = normalized_triple_sstr;
-            SetTriple (llvm::Triple (triple_stref));
+            llvm::Triple normalized_triple (triple_stref);
+            
+            const bool os_specified = normalized_triple.getOSName().size() > 0;
+            const bool vendor_specified = normalized_triple.getVendorName().size() > 0;
+            const bool env_specified = normalized_triple.getEnvironmentName().size() > 0;
+            
+            // If we got an arch only, then default the vendor, os, environment 
+            // to match the platform if one is supplied
+            if (!(os_specified || vendor_specified || env_specified))
+            {
+                if (platform)
+                {
+                    // If we were given a platform, use the platform's system
+                    // architecture. If this is not available (might not be
+                    // connected) use the first supported architecture.
+                    ArchSpec platform_arch (platform->GetSystemArchitecture());
+                    if (!platform_arch.IsValid())
+                    {
+                        if (!platform->GetSupportedArchitectureAtIndex (0, platform_arch))
+                            platform_arch.Clear();
+                    }
+
+                    if (platform_arch.IsValid())
+                    {
+                        normalized_triple.setVendor(platform_arch.GetTriple().getVendor());
+                        normalized_triple.setOS(platform_arch.GetTriple().getOS());
+                        normalized_triple.setEnvironment(platform_arch.GetTriple().getEnvironment());
+                    }
+                }
+                else
+                {
+                    // No platform specified, fall back to the host system for
+                    // the default vendor, os, and environment.
+                    llvm::Triple host_triple(llvm::sys::getHostTriple());
+                    normalized_triple.setVendor(host_triple.getVendor());
+                    normalized_triple.setOS(host_triple.getOS());
+                    normalized_triple.setEnvironment(host_triple.getEnvironment());
+                }
+            }
+            SetTriple (normalized_triple);
         }
     }
     else

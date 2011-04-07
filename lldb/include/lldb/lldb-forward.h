@@ -51,6 +51,7 @@ class   ClangExpressionVariableList;
 class   ClangExpressionVariableList;
 class   ClangExpressionVariables;
 class   ClangPersistentVariables;
+class   ClangUserExpression;
 class   CommandInterpreter;
 class   CommandObject;
 class   CommandReturnObject;

@@ -19,8 +19,10 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
+#include "lldb/Target/Process.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -36,7 +38,8 @@ public:
                        "platform create",
                        "Create a platform instance by name and select it as the current platform.",
                        "platform create <platform-name>",
-                       0)
+                       0),
+        m_options (interpreter)
     {
     }
 
@@ -86,7 +89,8 @@ protected:
     {
     public:
 
-        CommandOptions () :
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
             os_version_major (UINT32_MAX),
             os_version_minor (UINT32_MAX),
             os_version_update (UINT32_MAX)
@@ -418,11 +422,12 @@ class CommandObjectPlatformProcessList : public CommandObject
 {
 public:
     CommandObjectPlatformProcessList (CommandInterpreter &interpreter) :
-    CommandObject (interpreter, 
-                   "platform process list",
-                   "List processes on a remote platform by name, pid, or many other matching attributes.",
-                   "platform process list",
-                   0)
+        CommandObject (interpreter, 
+                       "platform process list",
+                       "List processes on a remote platform by name, pid, or many other matching attributes.",
+                       "platform process list",
+                       0),
+        m_options (interpreter)
     {
     }
     
@@ -529,7 +534,8 @@ protected:
     {
     public:
         
-        CommandOptions () :
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
             match_info ()
         {
         }
@@ -585,7 +591,7 @@ protected:
                     break;
 
                 case 'a':
-                    match_info.GetProcessInfo().GetArchitecture().SetTriple (option_arg);
+                    match_info.GetProcessInfo().GetArchitecture().SetTriple (option_arg, m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform().get());
                     break;
 
                 case 'n':

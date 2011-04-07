@@ -25,8 +25,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CommandObjectFile::CommandOptions::CommandOptions() :
-    Options (),
+CommandObjectFile::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_arch ()  // Breakpoint info defaults to brief descriptions
 {
 }
@@ -58,7 +58,8 @@ CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *o
     {
         case 'a':
             {
-                ArchSpec option_arch (option_arg);
+                PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+                ArchSpec option_arch (option_arg, platform_sp.get());
                 if (option_arch.IsValid())
                     m_arch = option_arch;
                 else
@@ -88,7 +89,8 @@ CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
     CommandObject (interpreter,
                    "file",
                    "Set the file to be used as the main executable by the debugger.",
-                   NULL)
+                   NULL),
+    m_options (interpreter)
 {
     CommandArgumentEntry arg;
     CommandArgumentData file_arg;

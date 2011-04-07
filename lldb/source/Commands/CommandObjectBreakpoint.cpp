@@ -47,8 +47,8 @@ AddBreakpointDescription (Stream *s, Breakpoint *bp, lldb::DescriptionLevel leve
 //-------------------------------------------------------------------------
 #pragma mark Set::CommandOptions
 
-CommandObjectBreakpointSet::CommandOptions::CommandOptions() :
-    Options (),
+CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_filename (),
     m_line_num (0),
     m_column (0),
@@ -259,7 +259,8 @@ CommandObjectBreakpointSet::CommandObjectBreakpointSet (CommandInterpreter &inte
     CommandObject (interpreter,
                    "breakpoint set", 
                    "Sets a breakpoint or set of breakpoints in the executable.", 
-                   "breakpoint set <cmd-options>")
+                   "breakpoint set <cmd-options>"),
+    m_options (interpreter)
 {
 }
 
@@ -637,8 +638,8 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
 //-------------------------------------------------------------------------
 #pragma mark List::CommandOptions
 
-CommandObjectBreakpointList::CommandOptions::CommandOptions() :
-    Options (),
+CommandObjectBreakpointList::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_level (lldb::eDescriptionLevelBrief)  // Breakpoint List defaults to brief descriptions
 {
 }
@@ -717,7 +718,8 @@ CommandObjectBreakpointList::CommandObjectBreakpointList (CommandInterpreter &in
     CommandObject (interpreter, 
                    "breakpoint list",
                    "List some or all breakpoints at configurable levels of detail.",
-                   NULL)
+                   NULL),
+    m_options (interpreter)
 {
     CommandArgumentEntry arg;
     CommandArgumentData bp_id_arg;
@@ -1045,8 +1047,8 @@ CommandObjectBreakpointDisable::Execute
 //-------------------------------------------------------------------------
 #pragma mark Clear::CommandOptions
 
-CommandObjectBreakpointClear::CommandOptions::CommandOptions() :
-    Options (),
+CommandObjectBreakpointClear::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_filename (),
     m_line_num (0)
 {
@@ -1114,7 +1116,8 @@ CommandObjectBreakpointClear::CommandObjectBreakpointClear (CommandInterpreter &
     CommandObject (interpreter,
                    "breakpoint clear", 
                    "Clears a breakpoint or set of breakpoints in the executable.", 
-                   "breakpoint clear <cmd-options>")
+                   "breakpoint clear <cmd-options>"),
+    m_options (interpreter)
 {
 }
 
@@ -1348,8 +1351,8 @@ CommandObjectBreakpointDelete::Execute
 //-------------------------------------------------------------------------
 #pragma mark Modify::CommandOptions
 
-CommandObjectBreakpointModify::CommandOptions::CommandOptions() :
-    Options (),
+CommandObjectBreakpointModify::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_ignore_count (0),
     m_thread_id(LLDB_INVALID_THREAD_ID),
     m_thread_id_passed(false),
@@ -1504,7 +1507,8 @@ CommandObjectBreakpointModify::CommandObjectBreakpointModify (CommandInterpreter
                    "Modify the options on a breakpoint or set of breakpoints in the executable.  "
                    "If no breakpoint is specified, acts on the last created breakpoint.  "
                    "With the exception of -e, -d and -i, passing an empty argument clears the modification.", 
-                   NULL)
+                   NULL),
+    m_options (interpreter)
 {
     CommandArgumentEntry arg;
     CommandArgumentData bp_id_arg;

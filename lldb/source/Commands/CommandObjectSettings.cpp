@@ -66,7 +66,7 @@ CommandObjectSettingsSet::CommandObjectSettingsSet (CommandInterpreter &interpre
                    "settings set",
                    "Set or change the value of a single debugger setting variable.",
                    NULL),
-    m_options ()
+    m_options (interpreter)
 {
     CommandArgumentEntry arg1;
     CommandArgumentEntry arg2;
@@ -237,8 +237,8 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
 // CommandObjectSettingsSet::CommandOptions
 //-------------------------------------------------------------------------
 
-CommandObjectSettingsSet::CommandOptions::CommandOptions () :
-    Options (),
+CommandObjectSettingsSet::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_override (true),
     m_reset (false)
 {

@@ -198,7 +198,7 @@ CommandObject::ParseOptions
             else
             {
                 // No error string, output the usage information into result
-                options->GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
+                options->GenerateOptionUsage (result.GetErrorStream(), this);
             }
             // Set the return status to failed (this was an error).
             result.SetStatus (eReturnStatusFailed);
@@ -356,8 +356,7 @@ CommandObject::HandleCompletion
             input.DeleteArgumentAtIndex(input.GetArgumentCount() - 1);
 
             bool handled_by_options;
-            handled_by_options = cur_options->HandleOptionCompletion (m_interpreter, 
-                                                                      input,
+            handled_by_options = cur_options->HandleOptionCompletion (input,
                                                                       opt_element_vector,
                                                                       cursor_index,
                                                                       cursor_char_position,
@@ -407,7 +406,7 @@ CommandObject::HelpTextContainsWord (const char *search_word)
         && GetOptions() != NULL)
     {
         StreamString usage_help;
-        GetOptions()->GenerateOptionUsage (m_interpreter, usage_help, this);
+        GetOptions()->GenerateOptionUsage (usage_help, this);
         if (usage_help.GetSize() > 0)
         {
             const char *usage_text = usage_help.GetData();

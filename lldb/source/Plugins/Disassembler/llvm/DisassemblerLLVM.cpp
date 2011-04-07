@@ -150,27 +150,26 @@ InstructionLLVM::Dump
         }
     }
 
-    int numTokens = EDNumTokens(m_inst);
+    int numTokens = -1;
+    
+    if (!raw)
+        numTokens = EDNumTokens(m_inst);
 
     int currentOpIndex = -1;
 
-    std::auto_ptr<RegisterReaderArg> rra;
-    
-    if (!raw)
+    bool printTokenized = false;
+
+    if (numTokens != -1 && !raw)
     {
         addr_t base_addr = LLDB_INVALID_ADDRESS;
+        
+        RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
+        
         if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
             base_addr = GetAddress().GetLoadAddress (exe_ctx->target);
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = GetAddress().GetFileAddress ();
-        
-        rra.reset(new RegisterReaderArg(base_addr + EDInstByteSize(m_inst), m_disassembler));
-    }
-
-    bool printTokenized = false;
-
-    if (numTokens != -1)
-    {
+                    
         printTokenized = true;
 
         // Handle the opcode column.
@@ -246,7 +245,7 @@ InstructionLLVM::Dump
                                 {
                                     uint64_t operand_value;
 
-                                    if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, rra.get()))
+                                    if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
                                     {
                                         if (EDInstIsBranch(m_inst))
                                         {
@@ -327,7 +326,7 @@ InstructionLLVM::Dump
         if (EDGetInstString(&str, m_inst))
             return;
         else
-            s->PutCString(str);
+            s->Write(str, strlen(str) - 1);
     }
 }
 

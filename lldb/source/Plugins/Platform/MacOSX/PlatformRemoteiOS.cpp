@@ -473,14 +473,14 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     default:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7-apple-darwin");  return true;
-        case 1: arch.SetTriple ("armv7f-apple-darwin"); return true;
-        case 2: arch.SetTriple ("armv7k-apple-darwin"); return true;
-        case 3: arch.SetTriple ("armv7s-apple-darwin"); return true;
-        case 4: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 5: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 6: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 7: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
+        case 2: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
+        case 3: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
+        case 4: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 6: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 7: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -488,12 +488,12 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv7f:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7f-apple-darwin"); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin");  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -501,12 +501,12 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv7k:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7k-apple-darwin"); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin");  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -514,12 +514,12 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv7s:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7s-apple-darwin"); return true;
-        case 1: arch.SetTriple ("armv7-apple-darwin");  return true;
-        case 2: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 3: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 4: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 5: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -527,11 +527,11 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv7:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv7-apple-darwin");  return true;
-        case 1: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 2: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 3: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 4: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -539,10 +539,10 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv6:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv6-apple-darwin");  return true;
-        case 1: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 2: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 3: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -550,9 +550,9 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv5:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv5-apple-darwin");  return true;
-        case 1: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 2: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;
@@ -560,8 +560,8 @@ PlatformRemoteiOS::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     case ArchSpec::eCore_arm_armv4:
         switch (idx)
         {
-        case 0: arch.SetTriple ("armv4-apple-darwin");  return true;
-        case 1: arch.SetTriple ("arm-apple-darwin");    return true;
+        case 0: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
         default: break;
         }
         break;

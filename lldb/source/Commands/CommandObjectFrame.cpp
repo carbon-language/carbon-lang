@@ -99,8 +99,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(m_interpreter)
         {
             ResetOptionValues ();
         }
@@ -155,7 +155,8 @@ public:
                        "frame select",
                        "Select a frame by index from within the current thread and make it the current frame.",
                        NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData index_arg;
@@ -224,7 +225,7 @@ public:
                 else
                 {
                     result.AppendError ("invalid arguments.\n");
-                    m_options.GenerateOptionUsage (m_interpreter, result.GetErrorStream(), this);
+                    m_options.GenerateOptionUsage (result.GetErrorStream(), this);
                 }
             }
                 
@@ -289,8 +290,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(m_interpreter)
         {
             ResetOptionValues ();
         }
@@ -407,7 +408,8 @@ public:
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'.",
                        NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData var_name_arg;

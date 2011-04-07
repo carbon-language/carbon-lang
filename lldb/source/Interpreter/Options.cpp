@@ -29,7 +29,8 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 // Options
 //-------------------------------------------------------------------------
-Options::Options () :
+Options::Options (CommandInterpreter &interpreter) :
+    m_interpreter (interpreter),
     m_getopt_table ()
 {
     BuildValidOptionSets();
@@ -362,12 +363,11 @@ Options::OutputFormattedUsageText
 void
 Options::GenerateOptionUsage
 (
-    CommandInterpreter &interpreter,
     Stream &strm,
     CommandObject *cmd
 )
 {
-    const uint32_t screen_width = interpreter.GetDebugger().GetTerminalWidth();
+    const uint32_t screen_width = m_interpreter.GetDebugger().GetTerminalWidth();
 
     const OptionDefinition *full_options_table = GetDefinitions();
     const uint32_t save_indent_level = strm.GetIndentLevel();
@@ -656,7 +656,6 @@ Options::VerifyPartialOptions (CommandReturnObject &result)
 bool
 Options::HandleOptionCompletion
 (
-    CommandInterpreter &interpreter,
     Args &input,
     OptionElementVector &opt_element_vector,
     int cursor_index,
@@ -778,8 +777,7 @@ Options::HandleOptionCompletion
 
             if (opt_defs_index != -1)
             {
-                HandleOptionArgumentCompletion (interpreter, 
-                                                input,
+                HandleOptionArgumentCompletion (input,
                                                 cursor_index,
                                                 strlen (input.GetArgumentAtIndex(cursor_index)),
                                                 opt_element_vector,
@@ -809,7 +807,6 @@ Options::HandleOptionCompletion
 bool
 Options::HandleOptionArgumentCompletion
 (
-    CommandInterpreter &interpreter,
     Args &input,
     int cursor_index,
     int char_pos,
@@ -868,7 +865,7 @@ Options::HandleOptionArgumentCompletion
                 if (module_name)
                 {
                     FileSpec module_spec(module_name, false);
-                    lldb::TargetSP target_sp = interpreter.GetDebugger().GetSelectedTarget();
+                    lldb::TargetSP target_sp = m_interpreter.GetDebugger().GetSelectedTarget();
                     // Search filters require a target...
                     if (target_sp != NULL)
                         filter_ap.reset (new SearchFilterByModule (target_sp, module_spec));
@@ -878,7 +875,7 @@ Options::HandleOptionArgumentCompletion
         }
     }
 
-    return CommandCompletions::InvokeCommonCompletionCallbacks (interpreter,
+    return CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                                 completion_mask,
                                                                 input.GetArgumentAtIndex (opt_arg_pos),
                                                                 match_start_point,

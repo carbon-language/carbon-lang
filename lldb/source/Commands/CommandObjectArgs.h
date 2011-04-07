@@ -28,7 +28,7 @@ namespace lldb_private {
         {
         public:
             
-            CommandOptions ();
+            CommandOptions (CommandInterpreter &interpreter);
             
             virtual
             ~CommandOptions ();

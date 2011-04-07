@@ -2716,8 +2716,8 @@
 			files = (
 			);
 			inputPaths = (
+				"$(LLVM_SOURCE_DIR)",
 				"$(LLVM_BUILD_DIR)",
-				"$(SRCROOT)/scripts/build-llvm.pl",
 			);
 			name = "Build llvm and clang";
 			outputPaths = (
@@ -3170,10 +3170,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3192,6 +3189,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
+				LLVM_BUILD_DIR_ARCH = "";
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				VALID_ARCHS = "x86_64 i386";
@@ -3202,10 +3203,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
@@ -3223,6 +3221,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
+				LLVM_BUILD_DIR_ARCH = "";
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				PREBINDING = NO;
 				VALID_ARCHS = "x86_64 i386";
 			};
@@ -3235,11 +3237,9 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = /Developer/usr/bin;
 				ONLY_ACTIVE_ARCH = NO;
-				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
 			name = Debug;
@@ -3251,12 +3251,9 @@
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /Developer/usr/bin;
 				ONLY_ACTIVE_ARCH = NO;
-				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -3266,10 +3263,8 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /Developer/usr/bin;
 				ONLY_ACTIVE_ARCH = NO;
-				PREBINDING = NO;
 				PRODUCT_NAME = "darwin-debug";
 			};
 			name = BuildAndIntegration;
@@ -3305,8 +3300,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3319,9 +3312,8 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -3357,8 +3349,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3371,18 +3361,15 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		2689FFD513353D7A00698AC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 46;
 				DYLIB_CURRENT_VERSION = 46;
@@ -3403,8 +3390,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3416,7 +3401,7 @@
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -3424,7 +3409,6 @@
 		2689FFD613353D7A00698AC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -3446,8 +3430,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3459,7 +3441,7 @@
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -3467,7 +3449,6 @@
 		2689FFD713353D7A00698AC0 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -3489,8 +3470,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(DERIVED_FILE_DIR)/llvm.build";
-				LLVM_CONFIGURATION = Release;
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3502,7 +3481,7 @@
 				OTHER_LDFLAGS = "-lllvmclang";
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -3511,10 +3490,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = (
-					x86_64,
-					i386,
-				);
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
@@ -3532,6 +3508,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
+				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				PREBINDING = NO;
 				VALID_ARCHS = "x86_64 i386";
 			};
@@ -3549,7 +3529,6 @@
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
@@ -3563,11 +3542,9 @@
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
 					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
-				ZERO_LINK = NO;
 			};
 			name = BuildAndIntegration;
 		};
@@ -3602,8 +3579,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(DERIVED_FILE_DIR)/llvm.build";
-				LLVM_CONFIGURATION = Release;
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3616,11 +3591,9 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = LLDB;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/source $(SRCROOT)/source/Plugins/Process/Utility $(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
-				ZERO_LINK = NO;
 			};
 			name = BuildAndIntegration;
 		};
@@ -3636,7 +3609,6 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
@@ -3646,9 +3618,8 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = "lldb-platform";
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include $(SRCROOT)/source/Plugins/Process/gdb-remote $(SRCROOT)/source";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = Debug;
 		};
@@ -3664,7 +3635,6 @@
 				);
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
@@ -3673,10 +3643,8 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = "lldb-platform";
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include $(SRCROOT)/source/Plugins/Process/gdb-remote $(SRCROOT)/source";
-				ZERO_LINK = NO;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = Release;
 		};
@@ -3690,7 +3658,6 @@
 				);
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INSTALL_PATH = /usr/local/bin;
 				OTHER_LDFLAGS = (
@@ -3699,9 +3666,8 @@
 					"-framework",
 					AppKit,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = "lldb-platform";
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include $(SRCROOT)/source/Plugins/Process/gdb-remote $(SRCROOT)/source";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = BuildAndIntegration;
 		};
@@ -3718,7 +3684,6 @@
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
@@ -3733,9 +3698,8 @@
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
 					"-Wl,-rpath,@loader_path/",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -3743,10 +3707,6 @@
 		26F5C26D10F3D9A5009D5894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					x86_64,
-					i386,
-				);
 				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 46;
@@ -3757,7 +3717,6 @@
 				);
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_MODEL_TUNING = G5;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
@@ -3771,11 +3730,9 @@
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
 					"-Wl,-rpath,@loader_path/",
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source/Host/macosx/cfcpp $(SRCROOT)/llvm/include $(SRCROOT)/llvm/tools/clang/include $(LLVM_BUILD_DIR)/llvm/include $(LLVM_BUILD_DIR)/llvm/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};

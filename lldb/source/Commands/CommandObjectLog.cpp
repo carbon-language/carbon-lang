@@ -62,7 +62,8 @@ public:
         CommandObject (interpreter,
                        "log enable",
                        "Enable logging for a single log channel.",
-                        NULL)
+                        NULL),
+        m_options (interpreter)
     {
 
         CommandArgumentEntry arg1;
@@ -168,8 +169,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options (),
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
             log_file (),
             log_options (0)
         {

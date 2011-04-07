@@ -40,8 +40,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             // Keep default values of all options in one place: ResetOptionValues ()
             ResetOptionValues ();
@@ -121,7 +121,8 @@ public:
         CommandObject (interpreter,
                        "process launch",
                        "Launch the executable in the debugger.",
-                       NULL)
+                       NULL),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData run_args_arg;
@@ -433,8 +434,8 @@ public:
     {
     public:
 
-        CommandOptions () :
-            Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             // Keep default values of all options in one place: ResetOptionValues ()
             ResetOptionValues ();
@@ -494,8 +495,7 @@ public:
         }
 
         virtual bool
-        HandleOptionArgumentCompletion (CommandInterpreter &interpeter, 
-                                        Args &input,
+        HandleOptionArgumentCompletion (Args &input,
                                         int cursor_index,
                                         int char_pos,
                                         OptionElementVector &opt_element_vector,
@@ -521,7 +521,7 @@ public:
                 const char *partial_name = NULL;
                 partial_name = input.GetArgumentAtIndex(opt_arg_pos);
 
-                PlatformSP platform_sp (interpeter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
+                PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
                 if (platform_sp)
                 {
                     ProcessInfoList process_infos;
@@ -563,7 +563,8 @@ public:
         CommandObject (interpreter,
                        "process attach",
                        "Attach to a process.",
-                       "process attach <cmd-options>")
+                       "process attach <cmd-options>"),
+        m_options (interpreter)
     {
     }
 
@@ -983,8 +984,8 @@ public:
     {
     public:
         
-        CommandOptions () :
-        Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             // Keep default values of all options in one place: ResetOptionValues ()
             ResetOptionValues ();
@@ -1035,11 +1036,12 @@ public:
     };
 
     CommandObjectProcessConnect (CommandInterpreter &interpreter) :
-    CommandObject (interpreter,
-                   "process connect",
-                   "Connect to a remote debug service.",
-                   "process connect <remote-url>",
-                   0)
+        CommandObject (interpreter,
+                       "process connect",
+                       "Connect to a remote debug service.",
+                       "process connect <remote-url>",
+                       0),
+        m_options (interpreter)
     {
     }
     
@@ -1568,8 +1570,8 @@ public:
     {
     public:
         
-        CommandOptions () :
-            Options ()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
         {
             ResetOptionValues ();
         }
@@ -1632,7 +1634,8 @@ public:
         CommandObject (interpreter,
                        "process handle",
                        "Show or update what the process and debugger should do with various signals received from the OS.",
-                       NULL)
+                       NULL),
+        m_options (interpreter)
     {
         SetHelpLong ("If no signals are specified, update them all.  If no update option is specified, list the current values.\n");
         CommandArgumentEntry arg;

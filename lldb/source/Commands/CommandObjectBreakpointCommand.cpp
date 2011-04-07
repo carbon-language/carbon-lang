@@ -31,8 +31,8 @@ using namespace lldb_private;
 // CommandObjectBreakpointCommandAdd::CommandOptions
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommandAdd::CommandOptions::CommandOptions () :
-    Options (),
+CommandObjectBreakpointCommandAdd::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
+    Options (interpreter),
     m_use_commands (false),
     m_use_script_language (false),
     m_script_language (eScriptLanguageNone),
@@ -153,7 +153,8 @@ CommandObjectBreakpointCommandAdd::CommandObjectBreakpointCommandAdd (CommandInt
     CommandObject (interpreter,
                    "add",
                    "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
-                   NULL)
+                   NULL),
+    m_options (interpreter)
 {
     SetHelpLong (
 "\nGeneral information about entering breakpoint commands \n\

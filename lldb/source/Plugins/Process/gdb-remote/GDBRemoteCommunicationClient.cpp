@@ -919,7 +919,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                             triple += "unknown";
                         else
                             triple += os_name;
-                        m_host_arch.SetTriple (triple.c_str());
+                        m_host_arch.SetTriple (triple.c_str(), NULL);
                         if (pointer_byte_size)
                         {
                             assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -933,7 +933,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                 }
                 else
                 {
-                    m_host_arch.SetTriple (triple.c_str());
+                    m_host_arch.SetTriple (triple.c_str(), NULL);
                     if (pointer_byte_size)
                     {
                         assert (pointer_byte_size == m_host_arch.GetAddressByteSize());
@@ -1159,7 +1159,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
                 extractor.GetStringRef().swap(value);
                 extractor.SetFilePos(0);
                 extractor.GetHexByteString (value);
-                process_info.GetArchitecture ().SetTriple (value.c_str());
+                process_info.GetArchitecture ().SetTriple (value.c_str(), NULL);
             }
             else if (name.compare("name") == 0)
             {

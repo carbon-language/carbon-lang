@@ -36,8 +36,8 @@ using namespace lldb_private;
 // calling functions.
 //
 
-CommandObjectArgs::CommandOptions::CommandOptions () :
-    Options()
+CommandObjectArgs::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
+    Options(m_interpreter)
 {
     // Keep only one place to reset the values to their defaults
     ResetOptionValues();
@@ -80,7 +80,8 @@ CommandObjectArgs::CommandObjectArgs (CommandInterpreter &interpreter) :
     CommandObject (interpreter, 
                    "args",
                    "When stopped at the start of a function, reads function arguments of type (u?)int(8|16|32|64)_t, (void|char)*",
-                   "args")
+                   "args"),
+    m_options (interpreter)
 {
 }
 

@@ -489,8 +489,8 @@ public:
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-            Options(),
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter),
             m_line_start(0),
             m_line_end (UINT_MAX),
             m_func_name_type_mask (eFunctionNameTypeAuto),
@@ -634,7 +634,8 @@ public:
         CommandObject (interpreter,
                        "target stop-hook add ",
                        "Add a hook to be executed when the target stops.",
-                       "target stop-hook add")
+                       "target stop-hook add"),
+        m_options (interpreter)
     {
     }
 

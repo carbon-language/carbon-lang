@@ -18,7 +18,6 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/Baton.h"
 #include "lldb/Core/StringList.h"
-#include "lldb/Expression/ClangUserExpression.h"
 
 namespace lldb_private {
 

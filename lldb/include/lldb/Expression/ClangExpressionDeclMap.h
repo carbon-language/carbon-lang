@@ -19,6 +19,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"

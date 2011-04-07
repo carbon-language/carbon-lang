@@ -19,6 +19,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/RegisterContext.h"
 
@@ -37,7 +38,8 @@ public:
                        "Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.",
                        //"register read [<reg-name1> [<reg-name2> [...]]]",
                        NULL,
-                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                       eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+        m_options (interpreter)
     {
         CommandArgumentEntry arg;
         CommandArgumentData register_arg;
@@ -154,8 +156,8 @@ protected:
     class CommandOptions : public Options
     {
     public:
-        CommandOptions () :
-        Options()
+        CommandOptions (CommandInterpreter &interpreter) :
+            Options(interpreter)
         {
             ResetOptionValues();
         }

@@ -22,6 +22,7 @@
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
