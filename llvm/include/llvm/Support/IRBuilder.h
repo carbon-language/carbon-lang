@@ -17,6 +17,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ConstantFolder.h"
 
@@ -1100,6 +1101,11 @@ public:
                         Value *Arg4, Value *Arg5, const Twine &Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4, Arg5 };
     return Insert(CallInst::Create(Callee, Args, Args+5), Name);
+  }
+
+  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Arg,
+                       const Twine &Name = "") {
+    return Insert(CallInst::Create(Callee, Arg.begin(), Arg.end(), Name));
   }
 
   template<typename RandomAccessIterator>
