@@ -1546,6 +1546,11 @@ static bool DisassembleArithMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleSatFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
+  // A8.6.183 SSAT
+  // if d == 15 || n == 15 then UNPREDICTABLE;
+  if (decodeRd(insn) == 15 || decodeRm(insn) == 15)
+    return false;
+
   const TargetInstrDesc &TID = ARMInsts[Opcode];
   NumOpsAdded = TID.getNumOperands() - 2; // ignore predicate operands
 
