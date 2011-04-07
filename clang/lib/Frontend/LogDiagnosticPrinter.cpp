@@ -52,23 +52,37 @@ void LogDiagnosticPrinter::EndSourceFile() {
   llvm::SmallString<512> Msg;
   llvm::raw_svector_ostream OS(Msg);
 
-  OS << "{\n";
+  OS << "<dict>\n";
   // FIXME: Output main translation unit file name.
   // FIXME: Include the invocation, if dwarf-debug-flags is available.
-  OS << "  \"diagnostics\" : [\n";
+  OS << "  <key>diagnostics</key>\n";
+  OS << "  <array>\n";
   for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
     DiagEntry &DE = Entries[i];
 
-    OS << "    {\n";
-    OS << "      \"filename\" : \"" << DE.Filename << "\",\n";
-    OS << "      \"line\" : " << DE.Line << ",\n";
-    OS << "      \"column\" : " << DE.Column << ",\n";
-    OS << "      \"message\" : \"" << DE.Message << "\",\n";
-    OS << "      \"level\" : \"" << getLevelName(DE.DiagnosticLevel) << "\"\n";
-    OS << "    }" << ((i + 1 != e) ? "," : "") << '\n';
+    OS << "    <dict>\n";
+    OS << "      <key>level</key>\n"
+       << "      <string>" << getLevelName(DE.DiagnosticLevel) << "</string>\n";
+    if (!DE.Filename.empty()) {
+      OS << "      <key>filename</key>\n"
+         << "      <string>" << DE.Filename << "</string>\n";
+    }
+    if (DE.Line != 0) {
+      OS << "      <key>line</key>\n"
+         << "      <integer>" << DE.Line << "</integer>\n";
+    }
+    if (DE.Column != 0) {
+      OS << "      <key>column</key>\n"
+         << "      <integer>" << DE.Column << "</integer>\n";
+    }
+    if (!DE.Message.empty()) {
+      OS << "      <key>message</key>\n"
+         << "      <string>" << DE.Message << "</string>\n";
+    }
+    OS << "    </dict>\n";
   }
-  OS << "  ]\n";
-  OS << "},\n";
+  OS << "  </array>\n";
+  OS << "</dict>\n";
 
   this->OS << OS.str();
 }
