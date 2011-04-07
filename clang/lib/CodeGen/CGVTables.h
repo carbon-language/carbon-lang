@@ -235,13 +235,13 @@ public:
   /// stored.
   uint64_t getMethodVTableIndex(GlobalDecl GD);
 
-  /// getVirtualBaseOffsetOffset - Return the offset in bytes (relative to the
+  /// getVirtualBaseOffsetOffset - Return the offset in chars (relative to the
   /// vtable address point) where the offset of the virtual base that contains 
   /// the given base is stored, otherwise, if no virtual base contains the given
   /// class, return 0.  Base must be a virtual base class or an unambigious
   /// base.
-  int64_t getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
-                                     const CXXRecordDecl *VBase);
+  CharUnits getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
+                                       const CXXRecordDecl *VBase);
 
   /// getAddressPoint - Get the address point of the given subobject in the
   /// class decl.

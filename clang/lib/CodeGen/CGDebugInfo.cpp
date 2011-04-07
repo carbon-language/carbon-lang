@@ -814,10 +814,13 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
     if (BI->isVirtual()) {
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
-      BaseOffset = 0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base);
+      BaseOffset = 
+        0 - CGM.getVTables().getVirtualBaseOffsetOffset(RD, Base).getQuantity();
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
       BaseOffset = RL.getBaseClassOffsetInBits(Base);
+    // FIXME: Inconsistent units for BaseOffset. It is in bytes when
+    // BI->isVirtual() and bits when not.
     
     AccessSpecifier Access = BI->getAccessSpecifier();
     if (Access == clang::AS_private)

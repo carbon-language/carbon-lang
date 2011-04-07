@@ -1317,11 +1317,12 @@ CodeGenFunction::GetVirtualBaseClassOffset(llvm::Value *This,
                                            const CXXRecordDecl *ClassDecl,
                                            const CXXRecordDecl *BaseClassDecl) {
   llvm::Value *VTablePtr = GetVTablePtr(This, Int8PtrTy);
-  int64_t VBaseOffsetOffset = 
+  CharUnits VBaseOffsetOffset = 
     CGM.getVTables().getVirtualBaseOffsetOffset(ClassDecl, BaseClassDecl);
   
   llvm::Value *VBaseOffsetPtr = 
-    Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset, "vbase.offset.ptr");
+    Builder.CreateConstGEP1_64(VTablePtr, VBaseOffsetOffset.getQuantity(), 
+                               "vbase.offset.ptr");
   const llvm::Type *PtrDiffTy = 
     ConvertType(getContext().getPointerDiffType());
   
