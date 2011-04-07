@@ -751,7 +751,7 @@ loop nest order such that outer most loop is processed last. </p>
 
 <p> <tt>LoopPass</tt> subclasses are allowed to update loop nest using
 <tt>LPPassManager</tt> interface. Implementing a loop pass is usually
-straightforward. <tt>Looppass</tt>'s may overload three virtual methods to
+straightforward. <tt>LoopPass</tt>'s may overload three virtual methods to
 do their work. All these methods should return true if they modified the 
 program, or false if they didn't. </p>
 </div>
@@ -829,7 +829,7 @@ region is processed last.  </p>
 
 <p> <tt>RegionPass</tt> subclasses are allowed to update the region tree by using
 the <tt>RGPassManager</tt> interface. You may overload three virtual methods of
-<tt>RegionPass</tt> to implementing your own region pass is usually. All these
+<tt>RegionPass</tt> to implement your own region pass. All these
 methods should return true if they modified the program, or false if they didn not.
 </p>
 </div>
