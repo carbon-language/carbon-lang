@@ -807,10 +807,15 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
   BasicBlock::iterator BB2_Itr = BB2->begin();
 
   Instruction *I1 = BB1_Itr++, *I2 = BB2_Itr++;
-  while (isa<DbgInfoIntrinsic>(I1))
-    I1 = BB1_Itr++;
-  while (isa<DbgInfoIntrinsic>(I2))
-    I2 = BB2_Itr++;
+  // Skip debug info if it is not identical.
+  DbgInfoIntrinsic *DBI1 = dyn_cast<DbgInfoIntrinsic>(I1);
+  DbgInfoIntrinsic *DBI2 = dyn_cast<DbgInfoIntrinsic>(I2);
+  if (!DBI1 || !DBI2 || !DBI1->isIdenticalToWhenDefined(DBI2)) {
+    while (isa<DbgInfoIntrinsic>(I1))
+      I1 = BB1_Itr++;
+    while (isa<DbgInfoIntrinsic>(I2))
+      I2 = BB2_Itr++;
+  }
   if (isa<PHINode>(I1) || !I1->isIdenticalToWhenDefined(I2) ||
       (isa<InvokeInst>(I1) && !isSafeToHoistInvoke(BB1, BB2, I1, I2)))
     return false;
@@ -834,11 +839,16 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     I2->eraseFromParent();
 
     I1 = BB1_Itr++;
-    while (isa<DbgInfoIntrinsic>(I1))
-      I1 = BB1_Itr++;
     I2 = BB2_Itr++;
-    while (isa<DbgInfoIntrinsic>(I2))
-      I2 = BB2_Itr++;
+    // Skip debug info if it is not identical.
+    DbgInfoIntrinsic *DBI1 = dyn_cast<DbgInfoIntrinsic>(I1);
+    DbgInfoIntrinsic *DBI2 = dyn_cast<DbgInfoIntrinsic>(I2);
+    if (!DBI1 || !DBI2 || !DBI1->isIdenticalToWhenDefined(DBI2)) {
+      while (isa<DbgInfoIntrinsic>(I1))
+        I1 = BB1_Itr++;
+      while (isa<DbgInfoIntrinsic>(I2))
+        I2 = BB2_Itr++;
+    }
   } while (I1->isIdenticalToWhenDefined(I2));
 
   return true;
