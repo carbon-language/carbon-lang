@@ -52,6 +52,9 @@ void LLVMAddLICMPass(LLVMPassManagerRef PM);
 /** See llvm::createLoopDeletionPass function. */
 void LLVMAddLoopDeletionPass(LLVMPassManagerRef PM);
 
+/** See llvm::createLoopIdiomPass function */
+void LLVMAddLoopIdiomPass(LLVMPassManagerRef PM);
+
 /** See llvm::createLoopRotatePass function. */
 void LLVMAddLoopRotatePass(LLVMPassManagerRef PM);
 
@@ -77,6 +80,9 @@ void LLVMAddSCCPPass(LLVMPassManagerRef PM);
 void LLVMAddScalarReplAggregatesPass(LLVMPassManagerRef PM);
 
 /** See llvm::createScalarReplAggregatesPass function. */
+void LLVMAddScalarReplAggregatesPassSSA(LLVMPassManagerRef PM);
+
+/** See llvm::createScalarReplAggregatesPass function. */
 void LLVMAddScalarReplAggregatesPassWithThreshold(LLVMPassManagerRef PM,
                                                   int Threshold);
 
@@ -94,6 +100,12 @@ void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
 
 /** See llvm::createVerifierPass function. */
 void LLVMAddVerifierPass(LLVMPassManagerRef PM);
+
+/** See llvm::createCorrelatedValuePropagationPass function */
+void LLVMAddCorrelatedValuePropagationPass(LLVMPassManagerRef PM);
+
+/** See llvm::createEarlyCSEPass function */
+void LLVMAddEarlyCSEPass(LLVMPassManagerRef PM);
 
 #ifdef __cplusplus
 }
