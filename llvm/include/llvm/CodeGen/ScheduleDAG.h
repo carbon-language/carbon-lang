@@ -250,6 +250,7 @@ namespace llvm {
     unsigned NumSuccsLeft;              // # of succs not scheduled.
     unsigned short NumRegDefsLeft;      // # of reg defs with no scheduled use.
     unsigned short Latency;             // Node latency.
+    bool isVRegCycle      : 1;          // May use and def the same vreg.
     bool isCall           : 1;          // Is a function call.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
@@ -278,8 +279,8 @@ namespace llvm {
       : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isCall(false), isTwoAddress(false), isCommutable(false),
-        hasPhysRegDefs(false), hasPhysRegClobbers(false),
+        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         SchedulingPref(Sched::None),
@@ -292,8 +293,8 @@ namespace llvm {
       : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isCall(false), isTwoAddress(false), isCommutable(false),
-        hasPhysRegDefs(false), hasPhysRegClobbers(false),
+        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         SchedulingPref(Sched::None),
@@ -305,8 +306,8 @@ namespace llvm {
       : Node(0), Instr(0), OrigNode(0), NodeNum(~0u),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isCall(false), isTwoAddress(false), isCommutable(false),
-        hasPhysRegDefs(false), hasPhysRegClobbers(false),
+        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isCloned(false),
         SchedulingPref(Sched::None),

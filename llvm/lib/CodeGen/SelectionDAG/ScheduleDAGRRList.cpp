@@ -77,6 +77,9 @@ static cl::opt<bool> DisableSchedRegPressure(
 static cl::opt<bool> DisableSchedLiveUses(
   "disable-sched-live-uses", cl::Hidden, cl::init(true),
   cl::desc("Disable live use priority in sched=list-ilp"));
+static cl::opt<bool> DisableSchedVRegCycle(
+  "disable-sched-vrcycle", cl::Hidden, cl::init(false),
+  cl::desc("Disable virtual register cycle interference checks"));
 static cl::opt<bool> DisableSchedStalls(
   "disable-sched-stalls", cl::Hidden, cl::init(true),
   cl::desc("Disable no-stall priority in sched=list-ilp"));
@@ -2045,6 +2048,44 @@ static bool UnitsSharePred(const SUnit *left, const SUnit *right) {
   return false;
 }
 
+// Return true if the virtual register defined by VRCycleSU may interfere with
+// VRUseSU.
+//
+// Note: We may consider two SU's that use the same value live into a loop as
+// interferng even though the value is not an induction variable. This is an
+// unfortunate consequence of scheduling on the selection DAG.
+static bool checkVRegCycleInterference(const SUnit *VRCycleSU,
+                                       const SUnit *VRUseSU) {
+  for (SUnit::const_pred_iterator I = VRCycleSU->Preds.begin(),
+         E = VRCycleSU->Preds.end(); I != E; ++I) {
+    if (I->isCtrl()) continue;  // ignore chain preds
+    SDNode *InNode = I->getSUnit()->getNode();
+    if (!InNode || InNode->getOpcode() != ISD::CopyFromReg)
+      continue;
+    for (SUnit::const_pred_iterator II = VRUseSU->Preds.begin(),
+           EE = VRUseSU->Preds.end(); II != EE; ++II) {
+      if (II->getSUnit() == I->getSUnit())
+        return true;
+    }
+  }
+  return false;
+}
+
+// Compare the VRegCycle properties of the nodes.
+// Return -1 if left has higher priority, 1 if right has higher priority.
+// Return 0 if priority is equivalent.
+static int BUCompareVRegCycle(const SUnit *left, const SUnit *right) {
+  if (left->isVRegCycle && !right->isVRegCycle) {
+    if (checkVRegCycleInterference(left, right))
+      return -1;
+  }
+  else if (!left->isVRegCycle && right->isVRegCycle) {
+    if (checkVRegCycleInterference(right, left))
+      return 1;
+  }
+  return 0;
+}
+
 // Check for either a dependence (latency) or resource (hazard) stall.
 //
 // Note: The ScheduleHazardRecognizer interface requires a non-const SU.
@@ -2232,11 +2273,15 @@ bool hybrid_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
           << left->NodeNum << ")\n");
     return false;
   }
-  else if (!LHigh && !RHigh) {
-    int result = BUCompareLatency(left, right, true /*checkPref*/, SPQ);
-    if (result != 0)
-      return result > 0;
+  int result = 0;
+  if (!DisableSchedVRegCycle) {
+    result = BUCompareVRegCycle(left, right);
   }
+  if (result == 0 && !LHigh && !RHigh) {
+    result = BUCompareLatency(left, right, true /*checkPref*/, SPQ);
+  }
+  if (result != 0)
+    return result > 0;
   return BURRSort(left, right, SPQ);
 }
 
@@ -2300,6 +2345,12 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     DEBUG(if (LReduce != RReduce) ++FactorCount[FactPressureDiff]);
     if (LReduce && !RReduce) return false;
     if (RReduce && !LReduce) return true;
+  }
+
+  if (!DisableSchedVRegCycle) {
+    int result = BUCompareVRegCycle(left, right);
+    if (result != 0)
+      return result > 0;
   }
 
   if (!DisableSchedLiveUses && (LLiveUses != RLiveUses)) {
