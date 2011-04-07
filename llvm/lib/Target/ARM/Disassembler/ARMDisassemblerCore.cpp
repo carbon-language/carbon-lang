@@ -536,7 +536,7 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
     return false;
   case ARM::MLA:     case ARM::MLS:     case ARM::SMLABB:  case ARM::SMLABT:
   case ARM::SMLATB:  case ARM::SMLATT:  case ARM::SMLAWB:  case ARM::SMLAWT:
-  case ARM::SMMLA:   case ARM::SMMLS:
+  case ARM::SMMLA:   case ARM::SMMLS:   case ARM::USADA8:
     if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     return false;
@@ -545,6 +545,7 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
   case ARM::SMUAD:   case ARM::SMUADX:
   // A8.6.167 SMLAD & A8.6.172 SMLSD
   case ARM::SMLAD:   case ARM::SMLADX:  case ARM::SMLSD:   case ARM::SMLSDX:
+  case ARM::USAD8:
     if (R19_16 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     return false;
@@ -562,12 +563,13 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
 
 // Multiply Instructions.
 // MLA, MLS, SMLABB, SMLABT, SMLATB, SMLATT, SMLAWB, SMLAWT, SMMLA, SMMLS,
-// SMLAD, SMLADX, SMLSD, SMLSDX:
+// SMLAD, SMLADX, SMLSD, SMLSDX, USADA8 (for convenience):
 //     Rd{19-16} Rn{3-0} Rm{11-8} Ra{15-12}
 // But note that register checking for {SMLAD, SMLADX, SMLSD, SMLSDX} is
 // only for {d, n, m}.
 //
-// MUL, SMMUL, SMULBB, SMULBT, SMULTB, SMULTT, SMULWB, SMULWT, SMUAD, SMUADX:
+// MUL, SMMUL, SMULBB, SMULBT, SMULTB, SMULTT, SMULWB, SMULWT, SMUAD, SMUADX,
+// USAD8 (for convenience):
 //     Rd{19-16} Rn{3-0} Rm{11-8}
 //
 // SMLAL, SMULL, UMAAL, UMLAL, UMULL, SMLALBB, SMLALBT, SMLALTB, SMLALTT,
