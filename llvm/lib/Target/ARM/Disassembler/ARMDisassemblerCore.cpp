@@ -836,6 +836,11 @@ static bool DisassembleBrFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // MSRi take a mask, followed by one so_imm operand. The mask contains the
   // R Bit in bit 4, and the special register fields in bits 3-0.
   if (Opcode == ARM::MSRi) {
+    // A5.2.11 MSR (immediate), and hints & B6.1.6 MSR (immediate)
+    // The hints instructions have more specific encodings, so if mask == 0,
+    // we should reject this as an invalid instruction.
+    if (slice(insn, 19, 16) == 0)
+      return false;
     MI.addOperand(MCOperand::CreateImm(slice(insn, 22, 22) << 4 /* R Bit */ |
                                        slice(insn, 19, 16) /* Special Reg */ ));
     // SOImm is 4-bit rotate amount in bits 11-8 with 8-bit imm in bits 7-0.
