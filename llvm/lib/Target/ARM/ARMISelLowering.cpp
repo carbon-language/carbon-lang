@@ -72,6 +72,11 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
+static cl::opt<std::string>
+TrapFuncName("arm-trap-func", cl::Hidden,
+  cl::desc("Emit a call to trap function rather than a trap instruction"),
+  cl::init(""));
+
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -557,7 +562,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::BlockAddress, MVT::i32, Custom);
 
-  setOperationAction(ISD::TRAP, MVT::Other, Legal);
+  if (TrapFuncName.size())
+    setOperationAction(ISD::TRAP, MVT::Other, Custom);
+  else
+    setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
   // Use the default implementation.
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
@@ -4690,6 +4698,19 @@ static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG) {
   return N0;
 }
 
+static SDValue LowerTrap(SDValue Op, SelectionDAG &DAG) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  TargetLowering::ArgListTy Args;
+  std::pair<SDValue, SDValue> CallResult =
+    TLI.LowerCallTo(Op.getOperand(0), Type::getVoidTy(*DAG.getContext()),
+                false, false, false, false, 0, CallingConv::C,
+                /*isTailCall=*/false,
+                /*isReturnValueUsed=*/true,
+                DAG.getExternalSymbol(TrapFuncName.c_str(), TLI.getPointerTy()),
+                Args, DAG, Op.getDebugLoc());
+  return CallResult.second;
+}
+
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Don't know how to custom lower this!");
@@ -4736,6 +4757,7 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::MUL:           return LowerMUL(Op, DAG);
   case ISD::SDIV:          return LowerSDIV(Op, DAG);
   case ISD::UDIV:          return LowerUDIV(Op, DAG);
+  case ISD::TRAP:          return LowerTrap(Op, DAG);
   }
   return SDValue();
 }
