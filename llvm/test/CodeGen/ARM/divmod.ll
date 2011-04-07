@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -arm-divmod-libcall | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-darwin -use-divmod-libcall | FileCheck %s
 
 define void @foo(i32 %x, i32 %y, i32* nocapture %P) nounwind ssp {
 entry:

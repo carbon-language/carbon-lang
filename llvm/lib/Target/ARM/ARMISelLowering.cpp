@@ -72,11 +72,6 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
-static cl::opt<bool>
-UseDivMod("arm-divmod-libcall", cl::Hidden,
-  cl::desc("Use __{u}divmod libcalls for div / rem pairs"),
-  cl::init(false));
-
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -398,7 +393,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::ARM_AAPCS);
   }
 
-  if (UseDivMod) {
+  if (HasDivModLibcall) {
     setLibcallName(RTLIB::SDIVREM_I32, "__divmodsi4");
     setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");
   }
