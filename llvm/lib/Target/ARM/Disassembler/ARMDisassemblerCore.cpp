@@ -536,18 +536,22 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
     return false;
   case ARM::MLA:     case ARM::MLS:     case ARM::SMLABB:  case ARM::SMLABT:
   case ARM::SMLATB:  case ARM::SMLATT:  case ARM::SMLAWB:  case ARM::SMLAWT:
-  case ARM::SMMLA:   case ARM::SMMLS:   case ARM::SMLSD:   case ARM::SMLSDX:
+  case ARM::SMMLA:   case ARM::SMMLS:
     if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     return false;
   case ARM::MUL:     case ARM::SMMUL:   case ARM::SMULBB:  case ARM::SMULBT:
   case ARM::SMULTB:  case ARM::SMULTT:  case ARM::SMULWB:  case ARM::SMULWT:
+  case ARM::SMUAD:   case ARM::SMUADX:
+  // A8.6.167 SMLAD & A8.6.172 SMLSD
+  case ARM::SMLAD:   case ARM::SMLADX:  case ARM::SMLSD:   case ARM::SMLSDX:
     if (R19_16 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     return false;
   case ARM::SMLAL:   case ARM::SMULL:   case ARM::UMAAL:   case ARM::UMLAL:
-  case ARM::UMULL:   case ARM::SMLALBB: case ARM::SMLALBT: case ARM::SMLALTB:
-  case ARM::SMLALTT: case ARM::SMLSLD:  case ARM::SMLSLDX:
+  case ARM::UMULL:
+  case ARM::SMLALBB: case ARM::SMLALBT: case ARM::SMLALTB: case ARM::SMLALTT:
+  case ARM::SMLALD:  case ARM::SMLALDX: case ARM::SMLSLD:  case ARM::SMLSLDX:
     if (R19_16 == 15 || R15_12 == 15 || R11_8 == 15 || R3_0 == 15)
       return true;
     if (R19_16 == R15_12)
@@ -558,14 +562,16 @@ static bool BadRegsMulFrm(unsigned Opcode, uint32_t insn) {
 
 // Multiply Instructions.
 // MLA, MLS, SMLABB, SMLABT, SMLATB, SMLATT, SMLAWB, SMLAWT, SMMLA, SMMLS,
-// SMLSD, SMLSDX:
+// SMLAD, SMLADX, SMLSD, SMLSDX:
 //     Rd{19-16} Rn{3-0} Rm{11-8} Ra{15-12}
+// But note that register checking for {SMLAD, SMLADX, SMLSD, SMLSDX} is
+// only for {d, n, m}.
 //
-// MUL, SMMUL, SMULBB, SMULBT, SMULTB, SMULTT, SMULWB, SMULWT:
+// MUL, SMMUL, SMULBB, SMULBT, SMULTB, SMULTT, SMULWB, SMULWT, SMUAD, SMUADX:
 //     Rd{19-16} Rn{3-0} Rm{11-8}
 //
 // SMLAL, SMULL, UMAAL, UMLAL, UMULL, SMLALBB, SMLALBT, SMLALTB, SMLALTT,
-// SMLSLD
+// SMLALD, SMLADLX, SMLSLD, SMLSLDX:
 //     RdLo{15-12} RdHi{19-16} Rn{3-0} Rm{11-8}
 //
 // The mapping of the multiply registers to the "regular" ARM registers, where
