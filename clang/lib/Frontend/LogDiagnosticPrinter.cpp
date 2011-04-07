@@ -53,8 +53,14 @@ void LogDiagnosticPrinter::EndSourceFile() {
   llvm::raw_svector_ostream OS(Msg);
 
   OS << "<dict>\n";
-  // FIXME: Output main translation unit file name.
-  // FIXME: Include the invocation, if dwarf-debug-flags is available.
+  if (!MainFilename.empty()) {
+    OS << "  <key>main-file</key>\n"
+       << "  <string>" << MainFilename << "</string>\n";
+  }
+  if (!DwarfDebugFlags.empty()) {
+    OS << "  <key>dwarf-debug-flags</key>\n"
+       << "  <string>" << DwarfDebugFlags << "</string>\n";
+  }
   OS << "  <key>diagnostics</key>\n";
   OS << "  <array>\n";
   for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
@@ -91,6 +97,17 @@ void LogDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                                             const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
   DiagnosticClient::HandleDiagnostic(Level, Info);
+
+  // Initialize the main file name, if we haven't already fetched it.
+  if (MainFilename.empty()) {
+    const SourceManager &SM = Info.getSourceManager();
+    FileID FID = SM.getMainFileID();
+    if (!FID.isInvalid()) {
+      const FileEntry *FE = SM.getFileEntryForID(FID);
+      if (FE && FE->getName())
+        MainFilename = FE->getName();
+    }
+  }
 
   // Create the diag entry.
   DiagEntry DE;

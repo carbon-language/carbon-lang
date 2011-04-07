@@ -12,6 +12,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
@@ -49,10 +50,17 @@ class LogDiagnosticPrinter : public DiagnosticClient {
 
   llvm::SmallVector<DiagEntry, 8> Entries;
 
+  std::string MainFilename;
+  std::string DwarfDebugFlags;
+
 public:
   LogDiagnosticPrinter(llvm::raw_ostream &OS, const DiagnosticOptions &Diags,
                        bool OwnsOutputStream = false);
   virtual ~LogDiagnosticPrinter();
+
+  void setDwarfDebugFlags(llvm::StringRef Value) {
+    DwarfDebugFlags = Value;
+  }
 
   void BeginSourceFile(const LangOptions &LO, const Preprocessor *PP) {
     LangOpts = &LO;
