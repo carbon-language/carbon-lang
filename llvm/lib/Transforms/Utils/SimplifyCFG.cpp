@@ -1435,6 +1435,12 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     ++FrontIt;
   }
   
+  // Ignore dbg intrinsics.
+  while (DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(FrontIt)) {
+    DbgValues.push_back(DBI);
+    ++FrontIt;
+  }
+
   // Only a single bonus inst is allowed.
   if (&*FrontIt != Cond)
     return false;
