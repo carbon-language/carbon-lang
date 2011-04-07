@@ -273,6 +273,10 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-ferror-limit");
     Res.push_back(llvm::utostr(Opts.ErrorLimit));
   }
+  if (!Opts.DiagnosticLogFile.empty()) {
+    Res.push_back("-diagnostic-log-file");
+    Res.push_back(Opts.DiagnosticLogFile);
+  }
   if (Opts.MacroBacktraceLimit
                         != DiagnosticOptions::DefaultMacroBacktraceLimit) {
     Res.push_back("-fmacro-backtrace-limit");
@@ -981,6 +985,7 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
 static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
                                 Diagnostic &Diags) {
   using namespace cc1options;
+  Opts.DiagnosticLogFile = Args.getLastArgValue(OPT_diagnostic_log_file);
   Opts.IgnoreWarnings = Args.hasArg(OPT_w);
   Opts.NoRewriteMacros = Args.hasArg(OPT_Wno_rewrite_macros);
   Opts.Pedantic = Args.hasArg(OPT_pedantic);

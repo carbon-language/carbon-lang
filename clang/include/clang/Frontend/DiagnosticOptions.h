@@ -61,6 +61,9 @@ public:
   /// testing and analysis.
   std::string DumpBuildInformation;
 
+  /// The file to log diagnostic output to.
+  std::string DiagnosticLogFile;
+
   /// The list of -W... options used to alter the diagnostic mappings, with the
   /// prefixes removed.
   std::vector<std::string> Warnings;

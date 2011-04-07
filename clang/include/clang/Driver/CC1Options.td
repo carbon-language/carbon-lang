@@ -201,6 +201,8 @@ def MP : Flag<"-MP">,
 def dump_build_information : Separate<"-dump-build-information">,
   MetaVarName<"<filename>">,
   HelpText<"output a dump of some build information to a file">;
+def diagnostic_log_file : Separate<"-diagnostic-log-file">,
+  HelpText<"Filename (or -) to log diagnostics to">;
 def fno_show_column : Flag<"-fno-show-column">,
   HelpText<"Do not include column number on diagnostics">;
 def fno_show_source_location : Flag<"-fno-show-source-location">,

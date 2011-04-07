@@ -79,7 +79,7 @@ def warn_fe_macro_contains_embedded_newline : Warning<
     "macro '%0' contains embedded newline, text after the newline is ignored.">;
 def warn_fe_cc_print_header_failure : Warning<
     "unable to open CC_PRINT_HEADERS file: %0 (using stderr)">;
-def warn_fe_cc_log_diagnositcs_failure : Warning<
+def warn_fe_cc_log_diagnostics_failure : Warning<
     "unable to open CC_LOG_DIAGNOSTICS file: %0 (using stderr)">;
 
 def err_verify_missing_start : Error<
