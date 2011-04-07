@@ -103,9 +103,9 @@ class CodeGenVTables {
                     const CXXRecordDecl *> ClassPairTy;
 
   /// VirtualBaseClassOffsetOffsets - Contains the vtable offset (relative to 
-  /// the address point) in bytes where the offsets for virtual bases of a class
+  /// the address point) in chars where the offsets for virtual bases of a class
   /// are stored.
-  typedef llvm::DenseMap<ClassPairTy, int64_t> 
+  typedef llvm::DenseMap<ClassPairTy, CharUnits> 
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
