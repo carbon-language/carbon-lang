@@ -235,6 +235,21 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   Expr = ImplicitCastExpr::Create(Context, Ty, Kind, Expr, BasePath, VK);
 }
 
+/// ScalarTypeToBooleanCastKind - Returns the cast kind corresponding
+/// to the conversion from scalar type ScalarTy to the Boolean type.
+CastKind Sema::ScalarTypeToBooleanCastKind(QualType ScalarTy) {
+  switch (ScalarTy->getScalarTypeKind()) {
+  case Type::STK_Bool: return CK_NoOp;
+  case Type::STK_Pointer: return CK_PointerToBoolean;
+  case Type::STK_MemberPointer: return CK_MemberPointerToBoolean;
+  case Type::STK_Integral: return CK_IntegralToBoolean;
+  case Type::STK_Floating: return CK_FloatingToBoolean;
+  case Type::STK_IntegralComplex: return CK_IntegralComplexToBoolean;
+  case Type::STK_FloatingComplex: return CK_FloatingComplexToBoolean;
+  }
+  return CK_Invalid;
+}
+
 ExprValueKind Sema::CastCategory(Expr *E) {
   Expr::Classification Classification = E->Classify(Context);
   return Classification.isRValue() ? VK_RValue :

@@ -8633,8 +8633,14 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = Input->getType();
     if (resultType->isDependentType())
       break;
-    if (resultType->isScalarType()) { // C99 6.5.3.3p1
-      // ok, fallthrough
+    if (resultType->isScalarType()) {
+      // C99 6.5.3.3p1: ok, fallthrough;
+      if (Context.getLangOptions().CPlusPlus) {
+        // C++03 [expr.unary.op]p8, C++0x [expr.unary.op]p9:
+        // operand contextually converted to bool.
+        ImpCastExprToType(Input, Context.BoolTy,
+                          ScalarTypeToBooleanCastKind(resultType));
+      }
     } else if (resultType->isPlaceholderType()) {
       ExprResult PR = CheckPlaceholderExpr(Input, OpLoc);
       if (PR.isInvalid()) return ExprError();

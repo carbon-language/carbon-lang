@@ -2183,21 +2183,11 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath);
     break;
   }
-  case ICK_Boolean_Conversion: {
-    CastKind Kind = CK_Invalid;
-    switch (FromType->getScalarTypeKind()) {
-    case Type::STK_Pointer: Kind = CK_PointerToBoolean; break;
-    case Type::STK_MemberPointer: Kind = CK_MemberPointerToBoolean; break;
-    case Type::STK_Bool: llvm_unreachable("bool -> bool conversion?");
-    case Type::STK_Integral: Kind = CK_IntegralToBoolean; break;
-    case Type::STK_Floating: Kind = CK_FloatingToBoolean; break;
-    case Type::STK_IntegralComplex: Kind = CK_IntegralComplexToBoolean; break;
-    case Type::STK_FloatingComplex: Kind = CK_FloatingComplexToBoolean; break;
-    }
 
-    ImpCastExprToType(From, Context.BoolTy, Kind);
+  case ICK_Boolean_Conversion:
+    ImpCastExprToType(From, Context.BoolTy,
+                      ScalarTypeToBooleanCastKind(FromType));
     break;
-  }
 
   case ICK_Derived_To_Base: {
     CXXCastPath BasePath;

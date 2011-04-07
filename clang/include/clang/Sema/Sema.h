@@ -4749,6 +4749,10 @@ public:
                          ExprValueKind VK = VK_RValue,
                          const CXXCastPath *BasePath = 0);
 
+  /// ScalarTypeToBooleanCastKind - Returns the cast kind corresponding
+  /// to the conversion from scalar type ScalarTy to the Boolean type.
+  static CastKind ScalarTypeToBooleanCastKind(QualType ScalarTy);
+
   /// IgnoredValueConversions - Given that an expression's result is
   /// syntactically ignored, perform any conversions that are
   /// required.
