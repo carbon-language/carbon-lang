@@ -787,6 +787,8 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
     VNInfo *VNI = *I;
     if (VNI->isUnused())
       continue;
+    // We may eliminate PHI values, so recompute PHIKill flags.
+    VNI->setHasPHIKill(false);
     NewLI.addRange(LiveRange(VNI->def, VNI->def.getNextSlot(), VNI));
 
     // A use tied to an early-clobber def ends at the load slot and isn't caught
@@ -822,7 +824,7 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
         VNInfo *PVNI = li->getVNInfoAt(Stop);
         // A predecessor is not required to have a live-out value for a PHI.
         if (PVNI) {
-          assert(PVNI->hasPHIKill() && "Missing hasPHIKill flag");
+          PVNI->setHasPHIKill(true);
           WorkList.push_back(std::make_pair(Stop, PVNI));
         }
       }
