@@ -2263,6 +2263,9 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   } else
     Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
 
+  // Claim Clang only -f options, they aren't worth warning about.
+  Args.ClaimAllArgs(options::OPT_f_clang_Group);
+
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
   if (Args.hasArg(options::OPT_Qn))
     CmdArgs.push_back("-fno-ident");
@@ -2319,6 +2322,9 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
   // The driver treats -fsyntax-only specially.
   Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
+
+  // Claim Clang only -f options, they aren't worth warning about.
+  Args.ClaimAllArgs(options::OPT_f_clang_Group);
 
   if (Args.hasArg(options::OPT_g_Group) && !Args.hasArg(options::OPT_g0) &&
       !Args.hasArg(options::OPT_fno_working_directory))
