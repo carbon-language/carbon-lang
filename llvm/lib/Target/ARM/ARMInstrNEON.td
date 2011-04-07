@@ -4699,8 +4699,8 @@ def VEXTq32 : VEXTq<"vext", "32", v4i32> {
   let Inst{9-8}    = 0b00;
 }
 def VEXTqf  : VEXTq<"vext", "32", v4f32> {
-  let Inst{11}    = index{0};
-  let Inst{10-8}  = 0b000;
+  let Inst{11-10} = index{1-0};
+  let Inst{9-8}   = 0b00;
 }
 
 //   VTRN     : Vector Transpose
