@@ -288,7 +288,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Save the return address only if the function isnt a leaf one.
   // sw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
-    expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB, MBBI);
+    ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,
+                                   MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
       .addReg(Mips::RA).addImm(NewImm).addReg(NewReg);
 
@@ -301,7 +302,8 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // to point to the stack pointer
   if (hasFP(MF)) {
     // sw  $fp,stack_loc($sp)
-    expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB, MBBI);
+    ATUsed = expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB,
+                                   MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
       .addReg(Mips::FP).addImm(NewImm).addReg(NewReg);
 
@@ -361,7 +363,8 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   // Restore the return address only if the function isnt a leaf one.
   // lw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
-    expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB, MBBI);
+    ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,
+                                   MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::RA)
       .addImm(NewImm).addReg(NewReg);
 
@@ -372,7 +375,8 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // adjust stack  : insert addi sp, sp, (imm)
   if (NumBytes) {
-    expandRegLargeImmPair(Mips::SP, NumBytes, NewReg, NewImm, MBB, MBBI);
+    ATUsed = expandRegLargeImmPair(Mips::SP, NumBytes, NewReg, NewImm, MBB,
+                                   MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
       .addReg(NewReg).addImm(NewImm);
 
