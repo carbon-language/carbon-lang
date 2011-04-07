@@ -48,6 +48,9 @@ public:
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info) {
+    // Default implementation (Warnings/errors count).
+    DiagnosticClient::HandleDiagnostic(DiagLevel, Info);
+
     Primary->HandleDiagnostic(DiagLevel, Info);
     Secondary->HandleDiagnostic(DiagLevel, Info);
   }
