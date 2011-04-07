@@ -282,11 +282,6 @@ void AsmPrinter::EmitFrameMoves(const std::vector<MachineMove> &Moves,
 void AsmPrinter::EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
 
-  int stackGrowth = TM.getTargetData()->getPointerSize();
-  if (TM.getFrameLowering()->getStackGrowthDirection() !=
-      TargetFrameLowering::StackGrowsUp)
-    stackGrowth *= -1;
-
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
     MCSymbol *Label = Move.getLabel();
