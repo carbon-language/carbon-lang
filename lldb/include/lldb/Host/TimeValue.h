@@ -29,6 +29,8 @@ namespace lldb_private {
 class TimeValue
 {
 public:
+    static const uint32_t NanoSecondPerSecond = 1000000000U;
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
