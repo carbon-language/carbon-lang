@@ -26,7 +26,23 @@ llvm::raw_ostream &RewriteBuffer::write(llvm::raw_ostream &os) const {
   return os;
 }
 
-void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
+/// \brief Return true if this character is non-new-line whitespace:
+/// ' ', '\t', '\f', '\v', '\r'.
+static inline bool isWhitespace(unsigned char c) {
+  switch (c) {
+  case ' ':
+  case '\t':
+  case '\f':
+  case '\v':
+  case '\r':
+    return true;
+  default:
+    return false;
+  }
+}
+
+void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size,
+                               bool removeLineIfEmpty) {
   // Nothing to remove, exit early.
   if (Size == 0) return;
 
@@ -38,6 +54,34 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
 
   // Add a delta so that future changes are offset correctly.
   AddReplaceDelta(OrigOffset, -Size);
+
+  if (removeLineIfEmpty) {
+    // Find the line that the remove occurred and if it is completely empty
+    // remove the line as well.
+
+    iterator curLineStart = begin();
+    unsigned curLineStartOffs = 0;
+    iterator posI = begin();
+    for (unsigned i = 0; i != RealOffset; ++i) {
+      if (*posI == '\n') {
+        curLineStart = posI;
+        ++curLineStart;
+        curLineStartOffs = i + 1;
+      }
+      ++posI;
+    }
+  
+    unsigned lineSize = 0;
+    posI = curLineStart;
+    while (posI != end() && isWhitespace(*posI)) {
+      ++posI;
+      ++lineSize;
+    }
+    if (posI != end() && *posI == '\n') {
+      Buffer.erase(curLineStartOffs, lineSize + 1/* + '\n'*/);
+      AddReplaceDelta(curLineStartOffs, -(lineSize + 1/* + '\n'*/));
+    }
+  }
 }
 
 void RewriteBuffer::InsertText(unsigned OrigOffset, llvm::StringRef Str,
@@ -72,7 +116,8 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 
 /// getRangeSize - Return the size in bytes of the specified range if they
 /// are in the same file.  If not, this returns -1.
-int Rewriter::getRangeSize(const CharSourceRange &Range) const {
+int Rewriter::getRangeSize(const CharSourceRange &Range,
+                           bool AfterInserts) const {
   if (!isRewritable(Range.getBegin()) ||
       !isRewritable(Range.getEnd())) return -1;
 
@@ -92,7 +137,7 @@ int Rewriter::getRangeSize(const CharSourceRange &Range) const {
   if (I != RewriteBuffers.end()) {
     const RewriteBuffer &RB = I->second;
     EndOff = RB.getMappedOffset(EndOff, true);
-    StartOff = RB.getMappedOffset(StartOff);
+    StartOff = RB.getMappedOffset(StartOff, AfterInserts);
   }
 
 
@@ -104,8 +149,8 @@ int Rewriter::getRangeSize(const CharSourceRange &Range) const {
   return EndOff-StartOff;
 }
 
-int Rewriter::getRangeSize(SourceRange Range) const {
-  return getRangeSize(CharSourceRange::getTokenRange(Range));
+int Rewriter::getRangeSize(SourceRange Range, bool AfterInserts) const {
+  return getRangeSize(CharSourceRange::getTokenRange(Range), AfterInserts);
 }
 
 
@@ -194,12 +239,22 @@ bool Rewriter::InsertText(SourceLocation Loc, llvm::StringRef Str,
   return false;
 }
 
+bool Rewriter::InsertTextAfterToken(SourceLocation Loc, llvm::StringRef Str) {
+  if (!isRewritable(Loc)) return true;
+  FileID FID;
+  unsigned StartOffs = getLocationOffsetAndFileID(Loc, FID);
+  StartOffs += getRangeSize(SourceRange(Loc, Loc), /*AfterInserts*/true);
+  getEditBuffer(FID).InsertText(StartOffs, Str, /*InsertAfter*/true);
+  return false;
+}
+
 /// RemoveText - Remove the specified text region.
-bool Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
+bool Rewriter::RemoveText(SourceLocation Start, unsigned Length,
+                          bool removeLineIfEmpty) {
   if (!isRewritable(Start)) return true;
   FileID FID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, FID);
-  getEditBuffer(FID).RemoveText(StartOffs, Length);
+  getEditBuffer(FID).RemoveText(StartOffs, Length, removeLineIfEmpty);
   return false;
 }
 
@@ -214,6 +269,20 @@ bool Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
 
   getEditBuffer(StartFileID).ReplaceText(StartOffs, OrigLength, NewStr);
   return false;
+}
+
+bool Rewriter::ReplaceText(SourceRange range, SourceRange replacementRange) {
+  if (!isRewritable(range.getBegin())) return true;
+  if (!isRewritable(range.getEnd())) return true;
+  if (replacementRange.isInvalid()) return true;
+  SourceLocation start = range.getBegin();
+  unsigned origLength = getRangeSize(range);
+  unsigned newLength = getRangeSize(replacementRange);
+  FileID FID;
+  unsigned newOffs = getLocationOffsetAndFileID(replacementRange.getBegin(),
+                                                FID);
+  llvm::StringRef MB = SourceMgr->getBufferData(FID);
+  return ReplaceText(start, origLength, MB.substr(newOffs, newLength));
 }
 
 /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty

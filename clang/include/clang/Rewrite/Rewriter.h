@@ -58,7 +58,8 @@ public:
   llvm::raw_ostream &write(llvm::raw_ostream &) const;
 
   /// RemoveText - Remove the specified text.
-  void RemoveText(unsigned OrigOffset, unsigned Size);
+  void RemoveText(unsigned OrigOffset, unsigned Size,
+                  bool removeLineIfEmpty = false);
 
   /// InsertText - Insert some text at the specified point, where the offset in
   /// the buffer is specified relative to the original SourceBuffer.  The
@@ -150,8 +151,11 @@ public:
 
   /// getRangeSize - Return the size in bytes of the specified range if they
   /// are in the same file.  If not, this returns -1.
-  int getRangeSize(SourceRange Range) const;
-  int getRangeSize(const CharSourceRange &Range) const;
+  /// If AfterInserts is true and if the beginning of range indicates a position
+  /// where text is inserted, the beginning of range will be after any inserted
+  /// text at the position.
+  int getRangeSize(SourceRange Range, bool AfterInserts = false) const;
+  int getRangeSize(const CharSourceRange &Range, bool AfterInserts=false) const;
 
   /// getRewrittenText - Return the rewritten form of the text in the specified
   /// range.  If the start or end of the range was unrewritable or if they are
@@ -176,6 +180,10 @@ public:
     return InsertText(Loc, Str);
   }
 
+  /// \brief Insert the specified string after the token in the
+  /// specified location.
+  bool InsertTextAfterToken(SourceLocation Loc, llvm::StringRef Str);
+
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input
   /// location was not rewritable, false otherwise.  Text is
@@ -186,13 +194,52 @@ public:
   }
 
   /// RemoveText - Remove the specified text region.
-  bool RemoveText(SourceLocation Start, unsigned Length);
+  bool RemoveText(SourceLocation Start, unsigned Length,
+                  bool removeLineIfEmpty = false);
+
+  /// \brief Remove the specified text region.
+  ///
+  /// \param afterInserts if true the beginning of removal will be after any
+  /// inserted text at the position.
+  ///
+  /// \param removeLineIfEmpty if true and removing the text leaves a blank line
+  /// also remove the empty line.
+  bool RemoveText(CharSourceRange range, bool afterInserts = false,
+                  bool removeLineIfEmpty = false) {
+    return RemoveText(range.getBegin(), getRangeSize(range, afterInserts),
+                      removeLineIfEmpty);
+  }
+
+  /// \brief Remove the specified text region.
+  ///
+  /// \param afterInserts if true the beginning of removal will be after any
+  /// inserted text at the position.
+  ///
+  /// \param removeLineIfEmpty if true and removing the text leaves a blank line
+  /// also remove the empty line.
+  bool RemoveText(SourceRange range, bool afterInserts = false,
+                  bool removeLineIfEmpty = false) {
+    return RemoveText(range.getBegin(), getRangeSize(range, afterInserts),
+                      removeLineIfEmpty);
+  }
 
   /// ReplaceText - This method replaces a range of characters in the input
   /// buffer with a new string.  This is effectively a combined "remove/insert"
   /// operation.
   bool ReplaceText(SourceLocation Start, unsigned OrigLength,
                    llvm::StringRef NewStr);
+
+  /// ReplaceText - This method replaces a range of characters in the input
+  /// buffer with a new string.  This is effectively a combined "remove/insert"
+  /// operation.
+  bool ReplaceText(SourceRange range, llvm::StringRef NewStr) {
+    return ReplaceText(range.getBegin(), getRangeSize(range), NewStr);
+  }
+
+  /// ReplaceText - This method replaces a range of characters in the input
+  /// buffer with a new string.  This is effectively a combined "remove/insert"
+  /// operation.
+  bool ReplaceText(SourceRange range, SourceRange replacementRange);
 
   /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
   /// printer to generate the replacement code.  This returns true if the input
