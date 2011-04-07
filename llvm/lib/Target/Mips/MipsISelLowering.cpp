@@ -784,7 +784,8 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
                                   false, false, 0);
     // On functions and global targets not internal linked only
     // a load from got/GP is necessary for PIC to work.
-    if (!GV->hasLocalLinkage() || isa<Function>(GV))
+    if (!GV->hasInternalLinkage() &&
+        (!GV->hasLocalLinkage() || isa<Function>(GV)))
       return ResNode;
     SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
                                               MipsII::MO_ABS_LO);
@@ -1202,10 +1203,19 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // node so that legalize doesn't hack it.
   unsigned char OpFlag = IsPIC ? MipsII::MO_GOT_CALL : MipsII::MO_NO_FLAG;
   bool LoadSymAddr = false;
+  SDValue CalleeLo;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
-                                        getPointerTy(), 0, OpFlag);
+    if (IsPIC && G->getGlobal()->hasInternalLinkage()) {
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
+                                          getPointerTy(), 0,MipsII:: MO_GOT);
+      CalleeLo = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(),
+                                            0, MipsII::MO_ABS_LO);
+    } else {
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl,
+                                          getPointerTy(), 0, OpFlag);
+    }
+
     LoadSymAddr = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
@@ -1217,11 +1227,20 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Create nodes that load address of callee and copy it to T9
   if (IsPIC) {
     if (LoadSymAddr) {
-      // load callee address
-      Callee = DAG.getLoad(MVT::i32, dl, Chain, Callee,
-                           MachinePointerInfo::getGOT(),
-                           false, false, 0);
-      Chain = Callee.getValue(1);
+      // Load callee address
+      SDValue LoadValue = DAG.getLoad(MVT::i32, dl, Chain, Callee,
+                                      MachinePointerInfo::getGOT(),
+                                      false, false, 0);
+
+      // Use GOT+LO if callee has internal linkage.
+      if (CalleeLo.getNode()) {
+        SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CalleeLo);
+        Callee = DAG.getNode(ISD::ADD, dl, MVT::i32, LoadValue, Lo);
+      } else
+        Callee = LoadValue;
+
+      // Use chain output from LoadValue 
+      Chain = LoadValue.getValue(1);
     }
 
     // copy to T9
