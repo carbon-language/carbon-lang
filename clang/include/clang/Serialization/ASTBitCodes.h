@@ -490,7 +490,9 @@ namespace clang {
       /// \brief The ObjC 'Class' type.
       PREDEF_TYPE_OBJC_CLASS    = 27,
       /// \brief The ObjC 'SEL' type.
-      PREDEF_TYPE_OBJC_SEL    = 28
+      PREDEF_TYPE_OBJC_SEL      = 28,
+      /// \brief The 'unknown any' type.
+      PREDEF_TYPE_UNKNOWN_ANY   = 29
     };
 
     /// \brief The number of predefined type IDs that are reserved for

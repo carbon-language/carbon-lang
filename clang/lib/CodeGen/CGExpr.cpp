@@ -1930,6 +1930,12 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                                            ConvertType(ToType));
     return MakeAddrLValue(V, E->getType());
   }
+  case CK_ResolveUnknownAnyType: {
+    const DeclRefExpr *declRef = cast<DeclRefExpr>(E->getSubExpr());
+    llvm::Constant *addr = CGM.getAddrOfUnknownAnyDecl(declRef->getDecl(),
+                                                       E->getType());
+    return MakeAddrLValue(addr, E->getType());
+  }
   }
   
   llvm_unreachable("Unhandled lvalue cast kind?");

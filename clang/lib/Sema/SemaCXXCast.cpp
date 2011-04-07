@@ -1590,3 +1590,4 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
 
   return tcr != TC_Success;
 }
+

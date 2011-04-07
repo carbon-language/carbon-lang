@@ -1126,6 +1126,9 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     RValue RV = CGF.EmitLoadOfLValue(CGF.EmitLValue(E), E->getType());
     return RV.getScalarVal();
   }
+
+  case CK_ResolveUnknownAnyType:
+    return EmitLoadOfLValue(CE);
       
   case CK_LValueToRValue:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));

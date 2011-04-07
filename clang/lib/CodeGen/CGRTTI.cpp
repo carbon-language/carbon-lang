@@ -196,6 +196,7 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
       
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
+    case BuiltinType::UnknownAny:
       assert(false && "Should not see this type here!");
       
     case BuiltinType::ObjCId:

@@ -51,6 +51,7 @@ serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
   case BuiltinType::Char32:     ID = PREDEF_TYPE_CHAR32_ID;     break;
   case BuiltinType::Overload:   ID = PREDEF_TYPE_OVERLOAD_ID;   break;
   case BuiltinType::Dependent:  ID = PREDEF_TYPE_DEPENDENT_ID;  break;
+  case BuiltinType::UnknownAny: ID = PREDEF_TYPE_UNKNOWN_ANY;   break;
   case BuiltinType::ObjCId:     ID = PREDEF_TYPE_OBJC_ID;       break;
   case BuiltinType::ObjCClass:  ID = PREDEF_TYPE_OBJC_CLASS;    break;
   case BuiltinType::ObjCSel:    ID = PREDEF_TYPE_OBJC_SEL;      break;

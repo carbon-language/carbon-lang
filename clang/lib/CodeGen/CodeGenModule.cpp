@@ -1072,12 +1072,60 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
   return GetOrCreateLLVMGlobal(MangledName, PTy, D);
 }
 
+/// getAddrOfUnknownAnyDecl - Return an llvm::Constant for the address
+/// of a global which was declared with unknown type.  It is possible
+/// for a VarDecl to end up getting resolved to have function type,
+/// which complicates this substantially; on the other hand, these are
+/// always external references, which does simplify the logic a lot.
+llvm::Constant *
+CodeGenModule::getAddrOfUnknownAnyDecl(const NamedDecl *decl, QualType type) {
+  GlobalDecl global;
+
+  // FunctionDecls will always end up with function types, but
+  // VarDecls can end up with them too.
+  if (isa<FunctionDecl>(decl))
+    global = GlobalDecl(cast<FunctionDecl>(decl));
+  else
+    global = GlobalDecl(cast<VarDecl>(decl));
+  llvm::StringRef mangledName = getMangledName(global);
+
+  const llvm::Type *ty = getTypes().ConvertTypeForMem(type);
+  const llvm::PointerType *pty =
+    llvm::PointerType::get(ty, getContext().getTargetAddressSpace(type));
+
+
+  // Check for an existing global value with this name.
+  llvm::GlobalValue *entry = GetGlobalValue(mangledName);
+  if (entry)
+    return llvm::ConstantExpr::getBitCast(entry, pty);
+
+  // If we're creating something with function type, go ahead and
+  // create a function.
+  if (const llvm::FunctionType *fnty = dyn_cast<llvm::FunctionType>(ty)) {
+    llvm::Function *fn = llvm::Function::Create(fnty,
+                                                llvm::Function::ExternalLinkage,
+                                                mangledName, &getModule());
+    return fn;
+
+  // Otherwise, make a global variable.
+  } else {
+    llvm::GlobalVariable *var
+      = new llvm::GlobalVariable(getModule(), ty, false,
+                                 llvm::GlobalValue::ExternalLinkage,
+                                 0, mangledName, 0,
+                                 false, pty->getAddressSpace());
+    if (isa<VarDecl>(decl) && cast<VarDecl>(decl)->isThreadSpecified())
+      var->setThreadLocal(true);
+    return var;
+  }
+}
+
 /// CreateRuntimeVariable - Create a new runtime global variable with the
 /// specified type and name.
 llvm::Constant *
 CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
                                      llvm::StringRef Name) {
-  return GetOrCreateLLVMGlobal(Name,  llvm::PointerType::getUnqual(Ty), 0,
+  return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0,
                                true);
 }
 

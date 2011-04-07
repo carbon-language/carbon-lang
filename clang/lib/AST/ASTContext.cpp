@@ -402,6 +402,9 @@ void ASTContext::InitBuiltinTypes() {
   // Placeholder type for functions.
   InitBuiltinType(OverloadTy,          BuiltinType::Overload);
 
+  // "any" type; useful for debugger-like clients.
+  InitBuiltinType(UnknownAnyTy,        BuiltinType::UnknownAny);
+
   // C99 6.2.5p11.
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);

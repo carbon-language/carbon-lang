@@ -1360,6 +1360,7 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     
   case BuiltinType::Overload: return Importer.getToContext().OverloadTy;
   case BuiltinType::Dependent: return Importer.getToContext().DependentTy;
+  case BuiltinType::UnknownAny: return Importer.getToContext().UnknownAnyTy;
 
   case BuiltinType::ObjCId:
     // FIXME: Make sure that the "to" context supports Objective-C!

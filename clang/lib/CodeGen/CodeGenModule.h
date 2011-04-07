@@ -358,6 +358,8 @@ public:
   llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D,
                                      const llvm::Type *Ty = 0);
 
+  llvm::Constant *getAddrOfUnknownAnyDecl(const NamedDecl *D, QualType type);
+
   /// GetAddrOfFunction - Return the address of the given function.  If Ty is
   /// non-null, then this function will use the specified type if it has to
   /// create it.

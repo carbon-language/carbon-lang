@@ -552,6 +552,7 @@ public:
     case CK_GetObjCProperty:
     case CK_ToVoid:
     case CK_Dynamic:
+    case CK_ResolveUnknownAnyType:
       return 0;
 
     // These might need to be supported for constexpr.

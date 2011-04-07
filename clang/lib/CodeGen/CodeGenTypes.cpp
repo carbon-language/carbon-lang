@@ -253,10 +253,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
-      assert(0 && "Unexpected builtin type!");
+    case BuiltinType::UnknownAny:
+      llvm_unreachable("Unexpected builtin type!");
       break;
     }
-    assert(0 && "Unknown builtin type!");
+    llvm_unreachable("Unknown builtin type!");
     break;
   }
   case Type::Complex: {

@@ -5024,6 +5024,10 @@ public:
                       CastKind &Kind, ExprValueKind &VK, CXXCastPath &BasePath,
                       bool FunctionalStyle = false);
 
+  bool checkUnknownAnyCast(SourceRange TyRange, QualType castType,
+                           Expr *&castExpr, CastKind &castKind,
+                           ExprValueKind &valueKind, CXXCastPath &BasePath);
+
   // CheckVectorCast - check type constraints for vectors.
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.

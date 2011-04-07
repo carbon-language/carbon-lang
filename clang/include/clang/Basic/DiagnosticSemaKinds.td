@@ -3849,6 +3849,9 @@ def err_sizeof_pack_no_pack_name_suggest : Error<
   "%0 does not refer to the name of a parameter pack; did you mean %1?">;
 def note_parameter_pack_here : Note<"parameter pack %0 declared here">;
 
+def err_bad_use_of_unknown_any : Error<
+  "no known type for %0; must explicitly cast this expression to use it">;
+
 } // end of sema category
 
 } // end of sema component.

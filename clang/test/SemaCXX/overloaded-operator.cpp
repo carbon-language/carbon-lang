@@ -387,8 +387,8 @@ void test_lookup_through_using() {
 
 namespace rdar9136502 {
   struct X {
-    int i();
-    int i(int);
+    int i(); // expected-note {{candidate function}}
+    int i(int); // expected-note {{candidate function}}
   };
 
   struct Y {
@@ -396,7 +396,6 @@ namespace rdar9136502 {
   };
 
   void f(X x, Y y) {
-    // FIXME: This diagnostic is non-awesome.
-    y << x.i; // expected-error{{invalid operands to binary expression ('rdar9136502::Y' and '<overloaded function type>')}}
+    y << x.i; // expected-error{{cannot resolve overloaded function 'i' from context}}
   }
 }

@@ -4658,6 +4658,47 @@ Sema::ActOnCUDAExecConfigExpr(Scope *S, SourceLocation LLLLoc,
   return ActOnCallExpr(S, ConfigDR, LLLLoc, execConfig, GGGLoc, 0);
 }
 
+/// Given a function expression of unknown-any type, rebuild it to
+/// have a type appropriate for being called with the given arguments,
+/// yielding a value of unknown-any type.
+static ExprResult rebuildUnknownAnyFunction(Sema &S, Expr *fn,
+                                            Expr **args, unsigned numArgs) {
+  // Build a simple function type exactly matching the arguments.
+  llvm::SmallVector<QualType, 8> argTypes;
+  argTypes.reserve(numArgs);
+  for (unsigned i = 0; i != numArgs; ++i) {
+    // Require all the sub-expression to not be placeholders.
+    ExprResult result = S.CheckPlaceholderExpr(args[i], SourceLocation());
+    if (result.isInvalid()) return ExprError();
+    args[i] = result.take();
+
+    // Do l2r conversions on all the arguments.
+    S.DefaultLvalueConversion(args[i]);
+
+    argTypes.push_back(args[i]->getType());
+  }
+
+  // Resolve the symbol to a function type that returns an unknown-any
+  // type.  In the fully resolved expression, this cast will surround
+  // the DeclRefExpr.
+  FunctionProtoType::ExtProtoInfo extInfo;
+  QualType fnType = S.Context.getFunctionType(S.Context.UnknownAnyTy,
+                                              argTypes.data(), numArgs,
+                                              extInfo);
+  fn = ImplicitCastExpr::Create(S.Context, fnType,
+                                CK_ResolveUnknownAnyType,
+                                fn, /*path*/ 0,
+                     (S.getLangOptions().CPlusPlus ? VK_LValue : VK_RValue));
+
+  // Decay that to a pointer.
+  fnType = S.Context.getPointerType(fnType);
+  fn = ImplicitCastExpr::Create(S.Context, fnType,
+                                CK_FunctionToPointerDecay,
+                                fn, /*path*/ 0, VK_RValue);
+
+  return S.Owned(fn);
+}
+
 /// BuildResolvedCallExpr - Build a call to a resolved expression,
 /// i.e. an expression not of \p OverloadTy.  The expression should
 /// unary-convert to an expression of function-pointer or
@@ -4699,6 +4740,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   if (BuiltinID && Context.BuiltinInfo.hasCustomTypechecking(BuiltinID))
     return CheckBuiltinFunctionCall(BuiltinID, TheCall);
 
+ retry:
   const FunctionType *FuncT;
   if (const PointerType *PT = Fn->getType()->getAs<PointerType>()) {
     // C99 6.5.2.2p1 - "The expression that denotes the called function shall
@@ -4711,6 +4753,15 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
                Fn->getType()->getAs<BlockPointerType>()) {
     FuncT = BPT->getPointeeType()->castAs<FunctionType>();
   } else {
+    // Handle calls to expressions of unknown-any type.
+    if (Fn->getType() == Context.UnknownAnyTy) {
+      ExprResult rewrite = rebuildUnknownAnyFunction(*this, Fn, Args, NumArgs);
+      if (rewrite.isInvalid()) return ExprError();
+      Fn = rewrite.take();
+      NDecl = FDecl = 0;
+      goto retry;
+    }
+
     return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
       << Fn->getType() << Fn->getSourceRange());
   }
@@ -5038,6 +5089,9 @@ static CastKind PrepareScalarCast(Sema &S, Expr *&Src, QualType DestTy) {
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType,
                           Expr *&castExpr, CastKind& Kind, ExprValueKind &VK,
                           CXXCastPath &BasePath, bool FunctionalStyle) {
+  if (castExpr->getType() == Context.UnknownAnyTy)
+    return checkUnknownAnyCast(TyR, castType, castExpr, Kind, VK, BasePath);
+
   if (getLangOptions().CPlusPlus)
     return CXXCheckCStyleCast(SourceRange(TyR.getBegin(),
                                           castExpr->getLocEnd()), 
@@ -5398,19 +5452,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
                                         SourceLocation QuestionLoc) {
 
   // If either LHS or RHS are overloaded functions, try to resolve them.
-  if (LHS->getType() == Context.OverloadTy || 
-      RHS->getType() == Context.OverloadTy) {
-    ExprResult LHSResult = CheckPlaceholderExpr(LHS, QuestionLoc);
-    if (LHSResult.isInvalid())
-      return QualType();
+  ExprResult lhsResult = CheckPlaceholderExpr(LHS, QuestionLoc);
+  if (!lhsResult.isUsable()) return QualType();
+  LHS = lhsResult.take();
 
-    ExprResult RHSResult = CheckPlaceholderExpr(RHS, QuestionLoc);
-    if (RHSResult.isInvalid())
-      return QualType();
-
-    LHS = LHSResult.take();
-    RHS = RHSResult.take();
-  }
+  ExprResult rhsResult = CheckPlaceholderExpr(RHS, QuestionLoc);
+  if (!rhsResult.isUsable()) return QualType();
+  RHS = rhsResult.take();
 
   // C++ is sufficiently different to merit its own checker.
   if (getLangOptions().CPlusPlus)
@@ -8161,16 +8209,13 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   // f<int> == 0;  // resolve f<int> blindly
   // void (*p)(int); p = f<int>;  // resolve f<int> using target
   if (Opc != BO_Assign) { 
-    if (lhs->getType() == Context.OverloadTy) {
-      ExprResult resolvedLHS = 
-        ResolveAndFixSingleFunctionTemplateSpecialization(lhs);
-      if (resolvedLHS.isUsable()) lhs = resolvedLHS.release(); 
-    }
-    if (rhs->getType() == Context.OverloadTy) {
-      ExprResult resolvedRHS = 
-        ResolveAndFixSingleFunctionTemplateSpecialization(rhs);
-      if (resolvedRHS.isUsable()) rhs = resolvedRHS.release(); 
-    }
+    ExprResult resolvedLHS = CheckPlaceholderExpr(lhs, OpLoc);
+    if (!resolvedLHS.isUsable()) return ExprError();
+    lhs = resolvedLHS.take();
+
+    ExprResult resolvedRHS = CheckPlaceholderExpr(rhs, OpLoc);
+    if (!resolvedRHS.isUsable()) return ExprError();
+    rhs = resolvedRHS.take();
   }
 
   switch (Opc) {
@@ -8529,15 +8574,14 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   case UO_AddrOf:
     resultType = CheckAddressOfOperand(*this, Input, OpLoc);
     break;
-  case UO_Deref:
-    if (Input->getType() == Context.OverloadTy ) {
-      ExprResult er = ResolveAndFixSingleFunctionTemplateSpecialization(Input);
-      if (er.isUsable())
-        Input = er.release();
-    }
+  case UO_Deref: {
+    ExprResult resolved = CheckPlaceholderExpr(Input, OpLoc);
+    if (!resolved.isUsable()) return ExprError();
+    Input = resolved.take();
     DefaultFunctionArrayLvalueConversion(Input);
     resultType = CheckIndirectionOperand(*this, Input, VK, OpLoc);
     break;
+  }
   case UO_Plus:
   case UO_Minus:
     UsualUnaryConversions(Input);
@@ -9904,16 +9948,122 @@ ExprResult Sema::ActOnBooleanCondition(Scope *S, SourceLocation Loc,
   return Owned(Sub);
 }
 
+namespace {
+  struct RebuildUnknownAnyExpr
+    : StmtVisitor<RebuildUnknownAnyExpr, Expr*> {
+
+    Sema &S;
+
+    /// The current destination type.
+    QualType DestType;
+
+    RebuildUnknownAnyExpr(Sema &S, QualType castType)
+      : S(S), DestType(castType) {}
+
+    Expr *VisitStmt(Stmt *S) {
+      llvm_unreachable("unexpected expression kind!");
+      return 0;
+    }
+
+    Expr *VisitCallExpr(CallExpr *call) {
+      call->setCallee(Visit(call->getCallee()));
+      return call;
+    }
+
+    Expr *VisitParenExpr(ParenExpr *paren) {
+      paren->setSubExpr(Visit(paren->getSubExpr()));
+      return paren;
+    }
+
+    Expr *VisitUnaryExtension(UnaryOperator *op) {
+      op->setSubExpr(Visit(op->getSubExpr()));
+      return op;
+    }
+
+    Expr *VisitImplicitCastExpr(ImplicitCastExpr *ice) {
+      // If this isn't an inner resolution, just recurse down.
+      if (ice->getCastKind() != CK_ResolveUnknownAnyType) {
+        assert(ice->getCastKind() == CK_FunctionToPointerDecay);
+        ice->setSubExpr(Visit(ice->getSubExpr()));
+        return ice;
+      }
+
+      QualType type = ice->getType();
+      assert(type.getUnqualifiedType() == type);
+
+      // The only time it should be possible for this to appear
+      // internally to an unknown-any expression is when handling a call.
+      const FunctionProtoType *proto = type->castAs<FunctionProtoType>();
+      DestType = S.Context.getFunctionType(DestType,
+                                           proto->arg_type_begin(),
+                                           proto->getNumArgs(),
+                                           proto->getExtProtoInfo());
+
+      // Strip the resolve cast when recursively rebuilding.
+      return Visit(ice->getSubExpr());
+    }
+
+    Expr *VisitDeclRefExpr(DeclRefExpr *ref) {
+      ExprValueKind valueKind = VK_LValue;
+      if (!S.getLangOptions().CPlusPlus && DestType->isFunctionType())
+        valueKind = VK_RValue;
+
+      return ImplicitCastExpr::Create(S.Context, DestType,
+                                      CK_ResolveUnknownAnyType,
+                                      ref, 0, valueKind);
+    }
+  };
+}
+
+/// Check a cast of an unknown-any type.  We intentionally only
+/// trigger this for C-style casts.
+bool Sema::checkUnknownAnyCast(SourceRange typeRange, QualType castType,
+                               Expr *&castExpr, CastKind &castKind,
+                               ExprValueKind &VK, CXXCastPath &path) {
+  VK = Expr::getValueKindForType(castType);
+
+  // Rewrite the casted expression from scratch.
+  castExpr = RebuildUnknownAnyExpr(*this, castType).Visit(castExpr);
+
+  return CheckCastTypes(typeRange, castType, castExpr, castKind, VK, path);
+}
+
+static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *e) {
+  Expr *orig = e;
+  while (true) {
+    e = e->IgnoreParenImpCasts();
+    if (CallExpr *call = dyn_cast<CallExpr>(e))
+      e = call->getCallee();
+    else
+      break;
+  }
+
+  assert(isa<DeclRefExpr>(e) && "unexpected form of unknown-any expression");
+  DeclRefExpr *ref = cast<DeclRefExpr>(e);
+  S.Diag(ref->getLocation(), diag::err_bad_use_of_unknown_any)
+    << ref->getDecl() << orig->getSourceRange();
+
+  // Never recoverable.
+  return ExprError();
+}
+
 /// Check for operands with placeholder types and complain if found.
 /// Returns true if there was an error and no recovery was possible.
 ExprResult Sema::CheckPlaceholderExpr(Expr *E, SourceLocation Loc) {
-  const BuiltinType *BT = E->getType()->getAs<BuiltinType>();
-  if (!BT || !BT->isPlaceholderType()) return Owned(E);
+  // Placeholder types are always *exactly* the appropriate builtin type.
+  QualType type = E->getType();
 
-  // If this is overload, check for a single overload.
-  assert(BT->getKind() == BuiltinType::Overload);
-  return ResolveAndFixSingleFunctionTemplateSpecialization(E, false, true,
+  // Overloaded expressions.
+  if (type == Context.OverloadTy)
+    return ResolveAndFixSingleFunctionTemplateSpecialization(E, false, true,
                                                            E->getSourceRange(),
-                                                           QualType(),
-                                                    diag::err_ovl_unresolvable);
+                                                             QualType(),
+                                                   diag::err_ovl_unresolvable);
+
+  // Expressions of unknown type.
+  if (type == Context.UnknownAnyTy)
+    return diagnoseUnknownAnyExpr(*this, E);
+
+  assert(!type->isPlaceholderType());
+  return Owned(E);
 }

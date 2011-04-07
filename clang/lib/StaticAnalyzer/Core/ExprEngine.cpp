@@ -2170,7 +2170,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         continue;
       }
       // Various C++ casts that are not handled yet.
-      case CK_Dynamic:  
+      case CK_ResolveUnknownAnyType:
+      case CK_Dynamic:
       case CK_ToUnion:
       case CK_BaseToDerived:
       case CK_NullToMemberPointer:

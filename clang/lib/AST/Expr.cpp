@@ -1055,6 +1055,8 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralComplexCast";
   case CK_IntegralComplexToFloatingComplex:
     return "IntegralComplexToFloatingComplex";
+  case CK_ResolveUnknownAnyType:
+    return "ResolveUnknownAnyType";
   }
 
   llvm_unreachable("Unhandled cast kind!");
