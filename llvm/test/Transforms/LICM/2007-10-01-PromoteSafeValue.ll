@@ -1,4 +1,4 @@
-; RUN: opt < %s -licm -S | grep promoted
+; RUN: opt < %s -licm -S | FileCheck %s
 ; Promote value if at least one use is safe
 
 
@@ -15,6 +15,8 @@ cond.true:              ; preds = %loop.head
         store i32 40, i32* %p
         br label %loop.head
 
+; CHECK: exit:
+; CHECK: store i32 20, i32* %p
 exit:           ; preds = %loop.head
         ret i32 0
 }
