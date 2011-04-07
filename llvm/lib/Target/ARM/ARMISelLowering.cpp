@@ -5390,6 +5390,9 @@ static SDValue PerformANDCombine(SDNode *N,
   EVT VT = N->getValueType(0);
   SelectionDAG &DAG = DCI.DAG;
 
+  if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+  
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
   bool HasAnyUndefs;
@@ -5423,6 +5426,9 @@ static SDValue PerformORCombine(SDNode *N,
   EVT VT = N->getValueType(0);
   SelectionDAG &DAG = DCI.DAG;
 
+  if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+  
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
   bool HasAnyUndefs;

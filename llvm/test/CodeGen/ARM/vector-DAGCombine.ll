@@ -105,3 +105,21 @@ define void @i64_extractelement(i64* %ptr, <2 x i64>* %vp) nounwind {
   store i64 %t1, i64* %ptr
   ret void
 }
+
+; Test trying to do a AND Combine on illegal types.
+define void @andVec(<3 x i8>* %A) nounwind {
+  %tmp = load <3 x i8>* %A, align 4
+  %and = and <3 x i8> %tmp, <i8 7, i8 7, i8 7>
+  store <3 x i8> %and, <3 x i8>* %A
+  ret void
+}
+
+
+; Test trying to do an OR Combine on illegal types.
+define void @orVec(<3 x i8>* %A) nounwind {
+  %tmp = load <3 x i8>* %A, align 4
+  %or = or <3 x i8> %tmp, <i8 7, i8 7, i8 7>
+  store <3 x i8> %or, <3 x i8>* %A
+  ret void
+}
+
