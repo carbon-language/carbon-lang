@@ -144,6 +144,8 @@ public:
         eContextAddition,
         
         eContextSubtraction,
+        
+        eContextAdvancePC,
 
         eContextReturnFromException
     };
@@ -412,6 +414,12 @@ public:
     virtual bool
     EvaluateInstruction () = 0;
     
+    bool
+    GetAdvancePC () { return m_advance_pc; }
+    
+    void
+    SetAdvancePC (bool value) { m_advance_pc = value; }
+    
     static void
     TranslateRegister (uint32_t reg_kind, uint32_t reg_num, std::string &reg_name);
     
@@ -548,6 +556,7 @@ protected:
     WriteRegister       m_write_reg_callback;
     lldb::addr_t        m_opcode_pc;
     Opcode              m_opcode;
+    bool                m_advance_pc;
     //------------------------------------------------------------------
     // For EmulateInstruction only
     //------------------------------------------------------------------

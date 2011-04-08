@@ -504,6 +504,7 @@ Instruction::DumpEmulation (const ArchSpec &arch)
 
 bool
 Instruction::Emulate (const ArchSpec &arch,
+                      bool auto_advance_pc,
                       void *baton,
                       EmulateInstruction::ReadMemory read_mem_callback,
                       EmulateInstruction::WriteMemory write_mem_callback,
@@ -516,6 +517,7 @@ Instruction::Emulate (const ArchSpec &arch,
 		insn_emulator_ap->SetBaton (baton);
 		insn_emulator_ap->SetCallbacks (read_mem_callback, write_mem_callback, read_reg_callback, write_reg_callback);
         insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress());
+        insn_emulator_ap->SetAdvancePC (auto_advance_pc);
         return insn_emulator_ap->EvaluateInstruction ();
 	}
 

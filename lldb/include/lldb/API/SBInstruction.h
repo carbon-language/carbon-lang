@@ -53,7 +53,7 @@ public:
     GetDescription (lldb::SBStream &description);
 
     bool
-    EmulateWithFrame (lldb::SBFrame &frame);
+    EmulateWithFrame (lldb::SBFrame &frame, bool auto_advance_pc);
 
     bool
     DumpEmulation (const char * triple); // triple is to specify the architecture, e.g. 'armv6' or 'arm-apple-darwin'

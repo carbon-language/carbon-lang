@@ -70,7 +70,8 @@ EmulateInstruction::EmulateInstruction
     m_read_reg_callback (read_reg_callback),
     m_write_reg_callback (write_reg_callback),
     m_opcode (),
-    m_opcode_pc (LLDB_INVALID_ADDRESS)
+    m_opcode_pc (LLDB_INVALID_ADDRESS),
+    m_advance_pc (false)
 {
 }
 
@@ -88,7 +89,8 @@ EmulateInstruction::EmulateInstruction
     m_write_mem_callback (&WriteMemoryDefault),
     m_read_reg_callback (&ReadRegisterDefault),
     m_write_reg_callback (&WriteRegisterDefault),
-    m_opcode_pc (LLDB_INVALID_ADDRESS)
+    m_opcode_pc (LLDB_INVALID_ADDRESS),
+    m_advance_pc (false)
 {
     ::memset (&m_opcode, 0, sizeof (m_opcode));
 }

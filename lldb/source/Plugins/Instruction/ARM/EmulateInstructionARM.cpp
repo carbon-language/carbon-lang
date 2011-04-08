@@ -11937,7 +11937,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         // add (register)
         { 0x0fe00010, 0x00800000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDReg, "add{s}<c> <Rd>, <Rn>, <Rm> {,<shift>}"},
         // add (register-shifted register)
-        { 0x0fe00090, 0x00800010, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDRegShift, "add{s}<c> <Rd>, <Rn>m, <Rm>, <type> <RS>"},
+        { 0x0fe00090, 0x00800010, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADDRegShift, "add{s}<c> <Rd>, <Rn>, <Rm>, <type> <RS>"},
         // adr
         { 0x0fff0000, 0x028f0000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "add<c> <Rd>, PC, #<const>"},
         { 0x0fff0000, 0x024f0000, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateADR, "sub<c> <Rd>, PC, #<const>"},
@@ -12063,7 +12063,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0ff00ff0, 0x01800f90, ARMV6_ABOVE,   eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTREX, "strex<c> <Rd>, <Rt>, [<Rn>]"},
         { 0x0e500000, 0x04400000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRBImmARM, "strb<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
         { 0x0e500000, 0x04000000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRImmARM, "str<c> <Rt>,[<Rn>,#+/-<imm12>]!"},
-        { 0x0e5000f0, 0x004000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strc<c> <Rt>, <Rt2>, [<Rn> #+/-<imm8>]!"},
+        { 0x0e5000f0, 0x004000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDImm, "strd<c> <Rt>, <Rt2>, [<Rn> #+/-<imm8>]!"},
         { 0x0e500ff0, 0x000000f0, ARMV5TE_ABOVE, eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSTRDReg, "strd<c> <Rt>, <Rt2>, [<Rn>, +/-<Rm>]{!}"},
         { 0x0e100f00, 0x0c000b00, ARMvAll,       eEncodingA1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!} <list>"},
         { 0x0e100f00, 0x0c000a00, ARMvAll,       eEncodingA2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVSTM, "vstm{mode}<c> <Rn>{!} <list>"},
@@ -12331,7 +12331,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xfff00fc0, 0xf8500000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRRegister, "ldr<c>.w <Rt>, [<Rn>,<Rm>{,LSL #<imm2>}]" },
         { 0xfffff800, 0x00007800, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[<Rn>{,#<imm5>}]" },
         { 0xfff00000, 0xf8900000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c>.w <Rt>,[<Rn>{,#<imm12>}]" },
-        { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[>Rn>, #+/-<imm8>]{!}" },
+        { 0xfff00800, 0xf8100800, ARMV6T2_ABOVE, eEncodingT3, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBImmediate, "ldrb<c> <Rt>,[<Rn>, #+/-<imm8>]{!}" },
         { 0xff7f0000, 0xf81f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBLiteral, "ldrb<c> <Rt>,[...]" },
         { 0xfffffe00, 0x00005c00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c> <Rt>,[<Rn>,<Rm>]" },
         { 0xfff00fc0, 0xf8100000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRBRegister, "ldrb<c>.w <Rt>,[<Rn>,<Rm>{,LSL #imm2>}]" },
@@ -12351,7 +12351,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xff7f0000, 0xf93f0000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHLiteral, "ldrsh<c> <Rt>,<label>" },
         { 0xfffffe00, 0x00005e00, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c> <Rt>,[<Rn>,<Rm>]" },
         { 0xfff00fc0, 0xf9300000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRSHRegister, "ldrsh<c>.w <Rt>,[<Rn>,<Rm>{,LSL #<imm2>}]" },
-        { 0xfe500000, 0xe8500000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt?, <Rt2>, [<Rn>,#+/-<imm>]!"},
+        { 0xfe500000, 0xe8500000, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateLDRDImmediate, "ldrd<c> <Rt>, <Rt2>, [<Rn>,#+/-<imm>]!"},
         { 0xfe100f00, 0xec100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>"},
         { 0xfe100f00, 0xec100a00, ARMvAll,       eEncodingT2, VFPv2v3,      eSize32, &EmulateInstructionARM::EmulateVLDM, "vldm{mode}<c> <Rn>{!}, <list>" },
         { 0xffe00f00, 0xed100b00, ARMvAll,       eEncodingT1, VFPv2_ABOVE,  eSize32, &EmulateInstructionARM::EmulateVLDR, "vldr<c> <Dd>, [<Rn>{,#+/-<imm>}]"},
@@ -12832,8 +12832,13 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
     int64_t signed_sum = (int32_t)x + (int32_t)y + (int32_t)carry_in;
     
     result = UnsignedBits(unsigned_sum, 31, 0);
-    carry_out = (result == unsigned_sum ? 0 : 1);
+//    carry_out = (result == unsigned_sum ? 0 : 1);
     overflow = ((int32_t)result == signed_sum ? 0 : 1);
+
+    if (carry_in)
+        carry_out = ((int32_t) x >= (int32_t) y) ? 1 : 0;
+    else
+        carry_out = ((int32_t) x > (int32_t) y) ? 1 : 0;
     
     AddWithCarryResult res = { result, carry_out, overflow };
     return res;
@@ -13057,7 +13062,43 @@ EmulateInstructionARM::EvaluateInstruction ()
     
     // Just for now, for testing purposes.
     if (m_baton == NULL)
-        fprintf (stdout, "\nEvaluateInstruction, opcode (0x%x), found = '%s'\n", m_opcode.GetOpcode32(), opcode_data->name);
+        fprintf (stdout, "\nEvaluateInstruction, opcode (0x%x), found = '%s'\n", m_opcode.GetOpcode32(), 
+                 opcode_data->name);
+                 
+    bool success;
+    if (m_baton)
+    {
+        uint32_t cpsr_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_cpsr, 0, &success);
+        if (success)
+            m_opcode_cpsr = cpsr_value;
+    }
     
-    return (this->*opcode_data->callback) (m_opcode.GetOpcode32(), opcode_data->encoding);  // Call the Emulate... function.
+    uint32_t orig_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
+    if (!success)
+        return false;
+    
+    success = (this->*opcode_data->callback) (m_opcode.GetOpcode32(), opcode_data->encoding);  // Call the Emulate... function.
+    if (!success)
+        return false;
+        
+    uint32_t after_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
+    if (!success)
+        return false;
+        
+    if (m_advance_pc && (after_pc_value == orig_pc_value))
+    {
+        if (opcode_data->size == eSize32)
+            after_pc_value += 4;
+        else if (opcode_data->size == eSize16)
+            after_pc_value += 2;
+            
+        EmulateInstruction::Context context;
+        context.type = eContextAdvancePC;
+        context.SetNoArgs();
+        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc, after_pc_value))
+            return false;
+            
+    }
+
+    return true;
 }

@@ -116,7 +116,7 @@ SBInstruction::Print (FILE *out)
 }
 
 bool
-SBInstruction::EmulateWithFrame (lldb::SBFrame &frame)
+SBInstruction::EmulateWithFrame (lldb::SBFrame &frame, bool auto_advance_pc)
 {
     if (m_opaque_sp && frame.get())
     {
@@ -126,6 +126,7 @@ SBInstruction::EmulateWithFrame (lldb::SBFrame &frame)
         lldb_private::ArchSpec arch = target->GetArchitecture();
         
         return m_opaque_sp->Emulate (arch, 
+                                     auto_advance_pc,
                                      (void *) frame.get(), 
                                      &lldb_private::EmulateInstruction::ReadMemoryFrame,
                                      &lldb_private::EmulateInstruction::WriteMemoryFrame,
@@ -142,12 +143,8 @@ SBInstruction::DumpEmulation (const char *triple)
     {
         lldb_private::ArchSpec arch (triple, NULL);
         
-        return m_opaque_sp->Emulate (arch, 
-                                     NULL,
-                                     &lldb_private::EmulateInstruction::ReadMemoryDefault,
-                                     &lldb_private::EmulateInstruction::WriteMemoryDefault,
-                                     &lldb_private::EmulateInstruction::ReadRegisterDefault,
-                                     &lldb_private::EmulateInstruction::WriteRegisterDefault);
+        return m_opaque_sp->DumpEmulation (arch);
+                                     
     }
     return false;
 }
