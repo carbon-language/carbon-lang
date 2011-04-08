@@ -18,9 +18,10 @@
 #define PROFILINGUTILS_H
 
 namespace llvm {
+  class BasicBlock;
   class Function;
   class GlobalValue;
-  class BasicBlock;
+  class Module;
   class PointerType;
 
   void InsertProfilingInitCall(Function *MainFn, const char *FnName,
@@ -29,6 +30,7 @@ namespace llvm {
   void IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                GlobalValue *CounterArray,
                                bool beginning = true);
+  void InsertProfilingShutdownCall(Function *Callee, Module *Mod);
 }
 
 #endif

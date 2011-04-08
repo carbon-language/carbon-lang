@@ -121,8 +121,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   Indices[0] = Constant::getNullValue(Type::getInt32Ty(Context));
   Indices[1] = ConstantInt::get(Type::getInt32Ty(Context), CounterNum);
   Constant *ElementPtr =
-    ConstantExpr::getGetElementPtr(CounterArray, &Indices[0],
-                                          Indices.size());
+    ConstantExpr::getGetElementPtr(CounterArray, &Indices[0], Indices.size());
 
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldFuncCounter", InsertPos);
@@ -130,4 +129,40 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                  ConstantInt::get(Type::getInt32Ty(Context), 1),
                                          "NewFuncCounter", InsertPos);
   new StoreInst(NewVal, ElementPtr, InsertPos);
+}
+
+void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
+  // llvm.global_dtors is an array of type { i32, void ()* }. Prepare those
+  // types.
+  const Type *GlobalDtorElems[2] = {
+    Type::getInt32Ty(Mod->getContext()),
+    FunctionType::get(Type::getVoidTy(Mod->getContext()), false)->getPointerTo()
+  };
+  const StructType *GlobalDtorElemTy =
+      StructType::get(Mod->getContext(), GlobalDtorElems, false);
+
+  // Construct the new element we'll be adding.
+  Constant *Elem[2] = {
+    ConstantInt::get(Type::getInt32Ty(Mod->getContext()), 65535),
+    ConstantExpr::getBitCast(Callee, GlobalDtorElems[1])
+  };
+
+  // If llvm.global_dtors exists, make a copy of the things in its list and
+  // delete it, to replace it with one that has a larger array type.
+  std::vector<Constant *> dtors;
+  if (GlobalVariable *GlobalDtors = Mod->getNamedGlobal("llvm.global_dtors")) {
+    ConstantArray *InitList =
+        cast<ConstantArray>(GlobalDtors->getInitializer());
+    for (unsigned i = 0, e = InitList->getType()->getNumElements(); i != e; ++i)
+      dtors.push_back(cast<Constant>(InitList->getOperand(i)));
+    GlobalDtors->eraseFromParent();
+  }
+
+  // Build up llvm.global_dtors with our new item in it.
+  GlobalVariable *GlobalDtors = new GlobalVariable(
+      *Mod, ArrayType::get(GlobalDtorElemTy, 1), false,
+      GlobalValue::AppendingLinkage, NULL, "llvm.global_dtors");
+  dtors.push_back(ConstantStruct::get(Mod->getContext(), Elem, 2, false));
+  GlobalDtors->setInitializer(ConstantArray::get(
+      cast<ArrayType>(GlobalDtors->getType()->getElementType()), dtors));
 }
