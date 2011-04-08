@@ -38,7 +38,7 @@ unsigned test3_c() {
   if (flag && (x = test3_aux()) == 0) {
     x = 1;
   }
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 enum test4_A {
@@ -46,7 +46,7 @@ enum test4_A {
 };
 test4_A test4() {
  test4_A a; // expected-note{{variable 'a' is declared here}}
- return a; // expected-warning{{variable 'a' is possibly uninitialized when used here}}
+ return a; // expected-warning{{variable 'a' is uninitialized when used here}}
 }
 
 // This test previously crashed Sema.

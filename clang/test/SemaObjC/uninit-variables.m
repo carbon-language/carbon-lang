@@ -4,7 +4,7 @@
 // Test just to ensure the analysis is working.
 int test1() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization}}
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 // Test ObjC fast enumeration.

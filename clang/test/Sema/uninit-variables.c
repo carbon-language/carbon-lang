@@ -2,7 +2,7 @@
 
 int test1() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 int test2() {
@@ -18,19 +18,19 @@ int test3() {
 
 int test4() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  ++x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  ++x; // expected-warning{{variable 'x' is uninitialized when used here}}
   return x; 
 }
 
 int test5() {
   int x, y; // expected-note{{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
-  x = y; // expected-warning{{variable 'y' is possibly uninitialized when used here}}
+  x = y; // expected-warning{{variable 'y' is uninitialized when used here}}
   return x;
 }
 
 int test6() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  x += 2; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  x += 2; // expected-warning{{variable 'x' is uninitialized when used here}}
   return x;
 }
 
@@ -94,7 +94,7 @@ void test14() {
 int test15() {
   int x = x; // no-warning: signals intended lack of initialization. \
              // expected-note{{variable 'x' is declared here}}
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 // Don't warn in the following example; shows dataflow confluence.
@@ -109,7 +109,7 @@ void test17() {
   // Don't warn multiple times about the same uninitialized variable
   // along the same path.
   int *x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  *x = 1; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  *x = 1; // expected-warning{{variable 'x' is uninitialized when used here}}
   *x = 1; // no-warning
 }
 
@@ -174,13 +174,13 @@ int test24(int flag) {
 
 float test25() {
   float x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 typedef int MyInt;
 MyInt test26() {
   MyInt x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 // Test handling of sizeof().
@@ -191,12 +191,12 @@ int test27() {
 
 int test28() {
   int len; // expected-note{{variable 'len' is declared here}} expected-note{{add initialization to silence this warning}}
-  return sizeof(int[len]); // expected-warning{{variable 'len' is possibly uninitialized when used here}}
+  return sizeof(int[len]); // expected-warning{{variable 'len' is uninitialized when used here}}
 }
 
 void test29() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
-  (void) ^{ (void) x; }; // expected-warning{{variable 'x' is possibly uninitialized when captured by block}}
+  (void) ^{ (void) x; }; // expected-warning{{variable 'x' is uninitialized when captured by block}}
 }
 
 void test30() {
@@ -222,7 +222,7 @@ void test_33() {
 int test_34() {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
   (void) x;
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' is uninitialized when used here}}
 }
 
 // Test that this case doesn't crash.
@@ -264,14 +264,14 @@ int test38(int r, int x, int y)
 
 int test39(int x) {
   int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
-  int z = x + y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+  int z = x + y; // expected-warning {{variable 'y' is uninitialized when used here}}
   return z;
 }
 
 
 int test40(int x) {
   int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
-  return x ? 1 : y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+  return x ? 1 : y; // expected-warning {{variable 'y' is uninitialized when used here}}
 }
 
 int test41(int x) {
@@ -311,7 +311,7 @@ int test45(int j) {
 void test46()
 {
   int i; // expected-note {{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
-  int j = i ? : 1; // expected-warning {{variable 'i' is possibly uninitialized when used here}}
+  int j = i ? : 1; // expected-warning {{variable 'i' is uninitialized when used here}}
 }
 
 void *test47(int *i)
