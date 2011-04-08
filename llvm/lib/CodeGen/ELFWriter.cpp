@@ -660,19 +660,17 @@ bool ELFWriter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 /// EmitXXStructorList - Emit the ctor or dtor list.  This just emits out the 
 /// function pointers, ignoring the init priority.
 void ELFWriter::EmitXXStructorList(Constant *List, ELFSection &Xtor) {
-  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // Should be an array of '{ i32, void ()* }' structs.  The first value is the
   // init priority, which we ignore.
-  if (!isa<ConstantArray>(List)) return;
   ConstantArray *InitList = cast<ConstantArray>(List);
-  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
-      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    ConstantStruct *CS = cast<ConstantStruct>(InitList->getOperand(i));
 
-      if (CS->getOperand(1)->isNullValue())
-        return;  // Found a null terminator, exit printing.
-      // Emit the function pointer.
-      EmitGlobalConstant(CS->getOperand(1), Xtor);
-    }
+    if (CS->getOperand(1)->isNullValue())
+      return;  // Found a null terminator, exit printing.
+    // Emit the function pointer.
+    EmitGlobalConstant(CS->getOperand(1), Xtor);
+  }
 }
 
 bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {

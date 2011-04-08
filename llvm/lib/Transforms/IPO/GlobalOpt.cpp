@@ -1944,35 +1944,20 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
   return Changed;
 }
 
-/// FindGlobalCtors - Find the llvm.globalctors list, verifying that all
+/// FindGlobalCtors - Find the llvm.global_ctors list, verifying that all
 /// initializers have an init priority of 65535.
 GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
   GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
   if (GV == 0) return 0;
   
-  // Found it, verify it's an array of { int, void()* }.
-  const ArrayType *ATy =dyn_cast<ArrayType>(GV->getType()->getElementType());
-  if (!ATy) return 0;
-  const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
-  if (!STy || STy->getNumElements() != 2 ||
-      !STy->getElementType(0)->isIntegerTy(32)) return 0;
-  const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
-  if (!PFTy) return 0;
-  const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());
-  if (!FTy || !FTy->getReturnType()->isVoidTy() ||
-      FTy->isVarArg() || FTy->getNumParams() != 0)
-    return 0;
-
   // Verify that the initializer is simple enough for us to handle. We are
   // only allowed to optimize the initializer if it is unique.
   if (!GV->hasUniqueInitializer()) return 0;
   
-  ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (!CA) return 0;
+  ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
   
   for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i) {
-    ConstantStruct *CS = dyn_cast<ConstantStruct>(*i);
-    if (CS == 0) return 0;
+    ConstantStruct *CS = cast<ConstantStruct>(*i);
     
     if (isa<ConstantPointerNull>(CS->getOperand(1)))
       continue;
@@ -1982,8 +1967,8 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       return 0;
 
     // Init priority must be standard.
-    ConstantInt *CI = dyn_cast<ConstantInt>(CS->getOperand(0));
-    if (!CI || CI->getZExtValue() != 65535)
+    ConstantInt *CI = cast<ConstantInt>(CS->getOperand(0));
+    if (CI->getZExtValue() != 65535)
       return 0;
   }
 

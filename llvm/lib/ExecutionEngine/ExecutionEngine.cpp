@@ -313,13 +313,9 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 
   // Should be an array of '{ i32, void ()* }' structs.  The first value is
   // the init priority, which we ignore.
-  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (!InitList) return;
+  ConstantArray *InitList = cast<ConstantArray>(GV->getInitializer());
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-    ConstantStruct *CS =
-      dyn_cast<ConstantStruct>(InitList->getOperand(i));
-    if (!CS) continue;
-    if (CS->getNumOperands() != 2) return; // Not array of 2-element structs.
+    ConstantStruct *CS = cast<ConstantStruct>(InitList->getOperand(i));
 
     Constant *FP = CS->getOperand(1);
     if (FP->isNullValue())

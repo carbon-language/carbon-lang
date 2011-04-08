@@ -471,6 +471,23 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
             "invalid linkage type for global declaration", &GV);
   }
 
+  if (GV.hasName() && (GV.getName() == "llvm.global_ctors" ||
+                       GV.getName() == "llvm.global_dtors")) {
+    Assert1(!GV.hasInitializer() || GV.hasAppendingLinkage(),
+            "invalid linkage for intrinsic global variable", &GV);
+    // Don't worry about emitting an error for it not being an array,
+    // visitGlobalValue will complain on appending non-array.
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(GV.getType())) {
+      const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
+      const PointerType *FuncPtrTy =
+          FunctionType::get(Type::getVoidTy(*Context), false)->getPointerTo();
+      Assert1(STy && STy->getNumElements() == 2 &&
+              STy->getTypeAtIndex(0u)->isIntegerTy(32) &&
+              STy->getTypeAtIndex(1) == FuncPtrTy,
+              "wrong type for intrinsic global variable", &GV);
+    }
+  }
+
   visitGlobalValue(GV);
 }
 
