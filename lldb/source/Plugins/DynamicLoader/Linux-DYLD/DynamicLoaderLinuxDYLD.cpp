@@ -278,7 +278,8 @@ DynamicLoaderLinuxDYLD::RefreshModules()
         for (I = m_rendezvous.unloaded_begin(); I != E; ++I)
         {
             FileSpec file(I->path.c_str(), true);
-            ModuleSP module_sp = loaded_modules.FindFirstModuleForFileSpec(file);
+            ModuleSP module_sp = 
+                loaded_modules.FindFirstModuleForFileSpec(file, NULL, NULL);
             if (!module_sp.empty())
                 old_modules.Append(module_sp);
         }
@@ -368,7 +369,7 @@ DynamicLoaderLinuxDYLD::LoadModuleAtAddress(const FileSpec &file, addr_t base_ad
     ModuleList &modules = target.GetImages();
     ModuleSP module_sp;
 
-    if ((module_sp = modules.FindFirstModuleForFileSpec(file))) 
+    if ((module_sp = modules.FindFirstModuleForFileSpec(file, NULL, NULL))) 
     {
         UpdateLoadedSections(module_sp, base_addr);
     }
