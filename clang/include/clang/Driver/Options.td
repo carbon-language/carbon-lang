@@ -435,6 +435,8 @@ def fthreadsafe_statics : Flag<"-fthreadsafe-statics">, Group<f_Group>;
 def ftime_report : Flag<"-ftime-report">, Group<f_Group>;
 def ftrapv : Flag<"-ftrapv">, Group<f_Group>;
 def ftrapv_handler_EQ : Joined<"-ftrapv-handler=">, Group<f_Group>;
+def ftrap_function_EQ : Joined<"-ftrap-function=">, Group<f_Group>,
+  HelpText<"Issue call to specified function rather than a trap instruction">;
 def funit_at_a_time : Flag<"-funit-at-a-time">, Group<f_Group>;
 def funroll_loops : Flag<"-funroll-loops">, Group<f_Group>;
 def funsigned_bitfields : Flag<"-funsigned-bitfields">, Group<f_Group>;
@@ -542,8 +544,6 @@ def mssse3 : Flag<"-mssse3">, Group<m_x86_Features_Group>;
 def maes : Flag<"-maes">, Group<m_x86_Features_Group>;
 def mavx : Flag<"-mavx">, Group<m_x86_Features_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;
-def mtrap_function_EQ : Joined<"-mtrap-function=">, Group<m_Group>,
-  HelpText<"Issue call to specified function rather than a trap instruction">;
 def mtune_EQ : Joined<"-mtune=">, Group<m_Group>;
 def multi__module : Flag<"-multi_module">;
 def multiply__defined__unused : Separate<"-multiply_defined_unused">;

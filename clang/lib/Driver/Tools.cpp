@@ -605,17 +605,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-neon");
   }
 
-  // Forward -mtrap_function= options to the backend.
-  for (arg_iterator it = Args.filtered_begin(options::OPT_mtrap_function_EQ),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
-    A->claim();
-    assert(A->getNumValues() == 1 && "-mtrap_function= expects one argument.");
-    llvm::StringRef FuncName = A->getValue(Args, 0);
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back(Args.MakeArgString("-arm-trap-func=" + FuncName));
-  }
-
   // Kernel code has more strict alignment requirements.
   if (KernelOrKext) {
     CmdArgs.push_back("-backend-option");
@@ -1460,6 +1449,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_ftrapv_handler_EQ)) {
     CmdArgs.push_back("-ftrapv-handler");
     CmdArgs.push_back(A->getValue(Args));
+  }
+
+  // Forward -ftrap_function= options to the backend.
+  if (Arg *A = Args.getLastArg(options::OPT_ftrap_function_EQ)) {
+    llvm::StringRef FuncName = A->getValue(Args);
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back(Args.MakeArgString("-trap-func=" + FuncName));
   }
 
   // -fno-strict-overflow implies -fwrapv if it isn't disabled, but
