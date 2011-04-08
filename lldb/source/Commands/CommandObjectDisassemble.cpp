@@ -33,7 +33,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
-    Options(m_interpreter),
+    Options(interpreter),
     num_lines_context(0),
     num_instructions (0),
     func_name(),
