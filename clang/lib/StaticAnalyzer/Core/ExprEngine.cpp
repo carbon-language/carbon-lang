@@ -422,7 +422,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     // C++ stuff we don't support yet.
     case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXCatchStmtClass:
-    case Stmt::CXXDefaultArgExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
@@ -448,7 +447,14 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       Engine.addAbortedBlock(node, Builder->getBlock());
       break;
     }
-      
+    
+    // We don't handle default arguments either yet, but we can fake it
+    // for now by just skipping them.
+    case Stmt::CXXDefaultArgExprClass: {
+      Dst.Add(Pred);
+      break;
+    }
+
     case Stmt::ParenExprClass:
       llvm_unreachable("ParenExprs already handled.");
     // Cases that should never be evaluated simply because they shouldn't

@@ -124,53 +124,121 @@ void ExprEngine::CreateCXXTemporaryObject(const Expr *Ex, ExplodedNode *Pred,
 }
 
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
-                                         const MemRegion *Dest,
-                                         ExplodedNode *Pred,
-                                         ExplodedNodeSet &Dst) {
-  if (!Dest)
-    Dest = svalBuilder.getRegionManager().getCXXTempObjectRegion(E,
-                                                    Pred->getLocationContext());
-
-  if (E->isElidable()) {
-    VisitAggExpr(E->getArg(0), Dest, Pred, Dst);
-    // FIXME: this is here to force propogation if VisitAggExpr doesn't
-    if (Dst.empty())
-      Dst.Add(Pred);
-    return;
-  }
+                                       const MemRegion *Dest,
+                                       ExplodedNode *Pred,
+                                       ExplodedNodeSet &destNodes) {
 
   const CXXConstructorDecl *CD = E->getConstructor();
   assert(CD);
-
+  
+#if 0
   if (!(CD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
     // FIXME: invalidate the object.
     return;
-
+#endif
   
   // Evaluate other arguments.
   ExplodedNodeSet argsEvaluated;
   const FunctionProtoType *FnType = CD->getType()->getAs<FunctionProtoType>();
   evalArguments(E->arg_begin(), E->arg_end(), FnType, Pred, argsEvaluated);
-  // The callee stack frame context used to create the 'this' parameter region.
-  const StackFrameContext *SFC = AMgr.getStackFrame(CD, 
-                                                    Pred->getLocationContext(),
-                                                    E, Builder->getBlock(),
-                                                    Builder->getIndex());
 
-  const CXXThisRegion *ThisR =getCXXThisRegion(E->getConstructor()->getParent(),
-                                               SFC);
-
-  CallEnter Loc(E, SFC, Pred->getLocationContext());
-  for (ExplodedNodeSet::iterator NI = argsEvaluated.begin(),
-                                 NE = argsEvaluated.end(); NI != NE; ++NI) {
-    const GRState *state = GetState(*NI);
-    // Setup 'this' region, so that the ctor is evaluated on the object pointed
-    // by 'Dest'.
-    state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
-    ExplodedNode *N = Builder->generateNode(Loc, state, Pred);
-    if (N)
-      Dst.Add(N);
+#if 0
+  // Is the constructor elidable?
+  if (E->isElidable()) {
+    VisitAggExpr(E->getArg(0), destNodes, Pred, Dst);
+    // FIXME: this is here to force propogation if VisitAggExpr doesn't
+    if (destNodes.empty())
+      destNodes.Add(Pred);
+    return;
   }
+#endif
+  
+  // Perform the previsit of the constructor.
+  ExplodedNodeSet destPreVisit;
+  getCheckerManager().runCheckersForPreStmt(destPreVisit, argsEvaluated, E, 
+                                            *this);
+  
+  // Evaluate the constructor.  Currently we don't now allow checker-specific
+  // implementations of specific constructors (as we do with ordinary
+  // function calls.  We can re-evaluate this in the future.
+  
+#if 0
+  // Inlining currently isn't fully implemented.
+
+  if (AMgr.shouldInlineCall()) {
+    if (!Dest)
+      Dest =
+        svalBuilder.getRegionManager().getCXXTempObjectRegion(E,
+                                                  Pred->getLocationContext());
+
+    // The callee stack frame context used to create the 'this'
+    // parameter region.
+    const StackFrameContext *SFC = 
+      AMgr.getStackFrame(CD, Pred->getLocationContext(),
+                         E, Builder->getBlock(), Builder->getIndex());
+
+    // Create the 'this' region.
+    const CXXThisRegion *ThisR =
+      getCXXThisRegion(E->getConstructor()->getParent(), SFC);
+
+    CallEnter Loc(E, SFC, Pred->getLocationContext());
+
+
+    for (ExplodedNodeSet::iterator NI = argsEvaluated.begin(),
+                                  NE = argsEvaluated.end(); NI != NE; ++NI) {
+      const GRState *state = GetState(*NI);
+      // Setup 'this' region, so that the ctor is evaluated on the object pointed
+      // by 'Dest'.
+      state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
+      if (ExplodedNode *N = Builder->generateNode(Loc, state, *NI))
+        destNodes.Add(N);
+    }
+  }
+#endif
+  
+  // Default semantics: invalidate all regions passed as arguments.
+  llvm::SmallVector<const MemRegion*, 10> regionsToInvalidate;
+
+  // FIXME: We can have collisions on the conjured symbol if the
+  //  expression *I also creates conjured symbols.  We probably want
+  //  to identify conjured symbols by an expression pair: the enclosing
+  //  expression (the context) and the expression itself.  This should
+  //  disambiguate conjured symbols.
+  unsigned blockCount = Builder->getCurrentBlockCount();
+  
+  // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
+  //  global variables.
+  ExplodedNodeSet destCall;
+
+  for (ExplodedNodeSet::iterator
+        i = destPreVisit.begin(), e = destPreVisit.end();
+       i != e; ++i)
+  {
+    ExplodedNode *Pred = *i;
+    const GRState *state = GetState(Pred);
+
+    // Accumulate list of regions that are invalidated.
+    for (CXXConstructExpr::const_arg_iterator
+          ai = E->arg_begin(), ae = E->arg_end();
+          ai != ae; ++ai)
+    {
+      SVal val = state->getSVal(*ai);
+      if (const MemRegion *region = val.getAsRegion())
+        regionsToInvalidate.push_back(region);
+    }
+    
+    // Invalidate the regions.    
+    state = state->invalidateRegions(regionsToInvalidate.data(),
+                                     regionsToInvalidate.data() +
+                                     regionsToInvalidate.size(),
+                                     E, blockCount, 0,
+                                     /* invalidateGlobals = */ true);
+    
+    Builder->MakeNode(destCall, E, Pred, state);
+  }
+  
+  // Do the post visit.
+  getCheckerManager().runCheckersForPostStmt(destNodes, destCall, E, *this);  
 }
 
 void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,

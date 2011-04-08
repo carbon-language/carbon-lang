@@ -278,3 +278,28 @@ const Rdar9212495_A& rdar9212495(const Rdar9212495_C* ptr) {
   return val;
 }
 
+// Test constructors invalidating arguments.  Previously this raised
+// an uninitialized value warning.
+extern "C" void __attribute__((noreturn)) PR9645_exit(int i);
+
+class PR9645_SideEffect
+{
+public:
+  PR9645_SideEffect(int *pi); // caches pi in i_
+  void Read(int *pi); // copies *pi into *i_
+private:
+  int *i_;
+};
+
+void PR9645() {
+  int i;
+
+  PR9645_SideEffect se(&i);
+  int j = 1;
+  se.Read(&j); // this has a side-effect of initializing i.
+
+  PR9645_exit(i); // no-warning
+}
+
+PR9645_SideEffect::PR9645_SideEffect(int *pi) : i_(pi) {}
+void PR9645_SideEffect::Read(int *pi) { *i_ = *pi; }
