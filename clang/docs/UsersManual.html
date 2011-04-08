@@ -767,6 +767,18 @@ Don't assume that the C++'s new operator is sane.</dt>
 <dd>This option tells the compiler to do not assume that C++'s global new
 operator will always return a pointer that does not
 alias any other pointer when the function returns.</dd>
+
+<dt id="opt_ftrap-function=<name>"><b>-ftrap-function=<name></b>: Instruct code
+generator to emit a function call to the specified function name for
+<tt>__builtin_trap()</tt>.</dt>
+
+<dd>LLVM code generator translates <tt>__builtin_trap()</tt> to a trap
+instruction if it is supported by the target ISA. Otherwise, the builtin is
+translated into a call to <tt>abort</tt>. If this option is set, then the code
+generator will always lower the builtin to a call to the specified function
+regardless of whether the target ISA has a trap instruction. This option is
+useful for environements (e.g. deeply embedded) where a trap cannot be properly
+handled.
 </dl>
 
 <!-- ======================================================================= -->
