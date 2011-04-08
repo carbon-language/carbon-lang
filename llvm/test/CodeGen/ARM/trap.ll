@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=INSTR
-; RUN: llc < %s -mtriple=arm-apple-darwin -arm-trap-func=_trap | FileCheck %s -check-prefix=FUNC
+; RUN: llc < %s -mtriple=arm-apple-darwin -trap-func=_trap | FileCheck %s -check-prefix=FUNC
 ; rdar://7961298
 ; rdar://9249183
 

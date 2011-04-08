@@ -4672,9 +4672,22 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::flt_rounds:
     setValue(&I, DAG.getNode(ISD::FLT_ROUNDS_, dl, MVT::i32));
     return 0;
-  case Intrinsic::trap:
-    DAG.setRoot(DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot()));
+  case Intrinsic::trap: {
+    StringRef TrapFuncName = getTrapFunctionName();
+    if (TrapFuncName.empty()) {
+      DAG.setRoot(DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot()));
+      return 0;
+    }
+    TargetLowering::ArgListTy Args;
+    std::pair<SDValue, SDValue> Result =
+      TLI.LowerCallTo(getRoot(), I.getType(),
+                 false, false, false, false, 0, CallingConv::C,
+                 /*isTailCall=*/false, /*isReturnValueUsed=*/true,
+                 DAG.getExternalSymbol(TrapFuncName.data(), TLI.getPointerTy()),
+                 Args, DAG, getCurDebugLoc());
+    DAG.setRoot(Result.second);
     return 0;
+  }
   case Intrinsic::uadd_with_overflow:
     return implVisitAluOverflow(I, ISD::UADDO);
   case Intrinsic::sadd_with_overflow:
