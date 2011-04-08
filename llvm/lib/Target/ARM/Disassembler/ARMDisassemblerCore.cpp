@@ -956,7 +956,7 @@ static bool BadRegsDPFrm(unsigned Opcode, uint32_t insn) {
   switch (Opcode) {
   default:
     // Did we miss an opcode?
-    if (decodeRd(insn) == 15 | decodeRn(insn) == 15 || decodeRm(insn) == 15) {
+    if (decodeRd(insn) == 15 || decodeRn(insn) == 15 || decodeRm(insn) == 15) {
       DEBUG(errs() << "DPFrm with bad reg specifier(s)\n");
       return true;
     }
