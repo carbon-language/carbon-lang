@@ -1242,19 +1242,16 @@ void DwarfDebug::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
   int64_t L = SR.getLo();
   int64_t H = SR.getHi();
 
-  // The L value defines the lower bounds typically zero for C/C++.  The H
-  // value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
-  // of the array. If L > H the array will be unbounded. If the L is 
-  // non zero and same is H then also the array will be unbounded. If L is
-  // zero and H is zero then the array has one element and in such case do
-  // not emit lower bound.
+  // The L value defines the lower bounds which is typically zero for C/C++. The
+  // H value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
+  // of the array. If L > H then do not emit DW_AT_lower_bound and 
+  // DW_AT_upper_bound attributes. If L is zero and H is also zero then the
+  // array has one element and in such case do not emit lower bound.
 
-  if (L > H || (L == H && L != 0)) {
-    // This is an unbounded subrange.
+  if (L > H) {
     Buffer.addChild(DW_Subrange);
     return;
   }
-
   if (L)
     addSInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
   addSInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
