@@ -32,6 +32,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginABISysV_x86_64.a \
 	lldbPluginDisassemblerLLVM.a \
 	lldbPluginDynamicLoaderStatic.a \
+	lldbPluginEmulateInstructionARM.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginPlatformGDBServer.a \
@@ -108,5 +109,5 @@ ifeq ($(HOST_OS), Linux)
     # Don't allow unresolved symbols.
     LLVMLibsOptions += -Wl,--no-undefined
     # Link in python
-    LD.Flags += $(PYTHON_BUILD_FLAGS)
+    LD.Flags += $(PYTHON_BUILD_FLAGS) -lrt
 endif
