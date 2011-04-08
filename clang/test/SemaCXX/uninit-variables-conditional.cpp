@@ -19,5 +19,5 @@ double test() {
   if (bar() || baz() || Foo() || init(&x))
     return 1.0;
 
-  return x; // expected-warning {{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning {{variable 'x' may be uninitialized when used here}}
 }

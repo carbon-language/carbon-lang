@@ -38,7 +38,7 @@ int test7(int y) {
   int x; // expected-note{{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
   if (y)
     x = 1;
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
 int test8(int y) {
@@ -57,7 +57,7 @@ int test9(int n) {
       break;
     x = 1;
   }
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
 int test10(unsigned n) {
@@ -65,7 +65,7 @@ int test10(unsigned n) {
   for (unsigned i = 0 ; i < n; ++i) {
     x = 1;
   }
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
 int test11(unsigned n) {
@@ -73,11 +73,11 @@ int test11(unsigned n) {
   for (unsigned i = 0 ; i <= n; ++i) {
     x = 1;
   }
-  return x; // expected-warning{{variable 'x' is possibly uninitialized when used here}}
+  return x; // expected-warning{{variable 'x' may be uninitialized when used here}}
 }
 
 void test12(unsigned n) {
-  for (unsigned i ; n ; ++i) ; // expected-warning{{variable 'i' is possibly uninitialized when used here}} expected-note{{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
+  for (unsigned i ; n ; ++i) ; // expected-warning{{variable 'i' may be uninitialized when used here}} expected-note{{variable 'i' is declared here}} expected-note{{add initialization to silence this warning}}
 }
 
 int test13() {
@@ -134,14 +134,14 @@ int test19() {
 int test20() {
   int z; // expected-note{{variable 'z' is declared here}} expected-note{{add initialization to silence this warning}}
   if ((test19_aux1() + test19_aux2() && test19_aux1()) || test19_aux3(&z))
-    return z; // expected-warning{{variable 'z' is possibly uninitialized when used here}}
+    return z; // expected-warning{{variable 'z' may be uninitialized when used here}}
   return 0;
 }
 
 int test21(int x, int y) {
   int z; // expected-note{{variable 'z' is declared here}} expected-note{{add initialization to silence this warning}}
   if ((x && y) || test19_aux3(&z) || test19_aux2())
-    return z; // expected-warning{{variable 'z' is possibly uninitialized when used here}}
+    return z; // expected-warning{{variable 'z' may be uninitialized when used here}}
   return 0;
 }
 
@@ -169,7 +169,7 @@ int test24(int flag) {
     val = 1;
   if (!flag)
     val = 1;
-  return val; // expected-warning{{variable 'val' is possibly uninitialized when used here}}
+  return val; // expected-warning{{variable 'val' may be uninitialized when used here}}
 }
 
 float test25() {
@@ -237,7 +237,7 @@ void test36()
   void **pc; // expected-note{{variable 'pc' is declared here}} expected-note{{add initialization to silence this warning}}
   void *dummy[] = { &&L1, &&L2 };
  L1:
-    goto *pc; // expected-warning{{variable 'pc' is possibly uninitialized when used here}}
+    goto *pc; // expected-warning{{variable 'pc' may be uninitialized when used here}}
  L2:
     goto *pc;
 }
@@ -277,7 +277,7 @@ int test40(int x) {
 int test41(int x) {
   int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
   if (x) y = 1; // no-warning
-  return y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+  return y; // expected-warning {{variable 'y' may be uninitialized when used here}}
 }
 
 void test42() {
@@ -289,7 +289,7 @@ void test43_aux(int x);
 void test43(int i) {
   int x; // expected-note {{variable 'x' is declared here}} expected-note{{add initialization to silence this warning}}
   for (i = 0 ; i < 10; i++)
-    test43_aux(x++); // expected-warning {{variable 'x' is possibly uninitialized when used here}}
+    test43_aux(x++); // expected-warning {{variable 'x' may be uninitialized when used here}}
 }
 
 void test44(int i) {
@@ -297,7 +297,7 @@ void test44(int i) {
   int y; // expected-note {{variable 'y' is declared here}} expected-note{{add initialization to silence this warning}}
   for (i = 0; i < 10; i++ ) {
     test43_aux(x++); // no-warning
-    x += y; // expected-warning {{variable 'y' is possibly uninitialized when used here}}
+    x += y; // expected-warning {{variable 'y' may be uninitialized when used here}}
   }
 }
 
