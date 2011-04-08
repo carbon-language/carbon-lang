@@ -1629,7 +1629,7 @@ def LDRSB : AI3ld<0b1101, 1, (outs GPR:$Rt), (ins addrmode3:$addr), LdMiscFrm,
                    IIC_iLoad_bh_r, "ldrsb", "\t$Rt, $addr",
                    [(set GPR:$Rt, (sextloadi8 addrmode3:$addr))]>;
 
-let mayLoad = 1, neverHasSideEffects = 1 in {
+let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def LDRD : AI3ld<0b1101, 0, (outs GPR:$Rd, GPR:$dst2),
                  (ins addrmode3:$addr), LdMiscFrm,
@@ -1704,6 +1704,7 @@ let mayLoad = 1, neverHasSideEffects = 1 in {
 defm LDRH  : AI3_ldridx<0b1011, 1, "ldrh", IIC_iLoad_bh_ru>;
 defm LDRSH : AI3_ldridx<0b1111, 1, "ldrsh", IIC_iLoad_bh_ru>;
 defm LDRSB : AI3_ldridx<0b1101, 1, "ldrsb", IIC_iLoad_bh_ru>;
+let hasExtraDefRegAllocReq = 1 in {
 def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
                           (ins addrmode3:$addr), IndexModePre,
                           LdMiscFrm, IIC_iLoad_d_ru,
@@ -1729,6 +1730,7 @@ def LDRD_POST: AI3ldstidx<0b1101, 0, 1, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let Inst{11-8}  = offset{7-4};    // imm7_4/zero
   let Inst{3-0}   = offset{3-0};    // imm3_0/Rm
 }
+} // hasExtraDefRegAllocReq = 1
 } // mayLoad = 1, neverHasSideEffects = 1
 
 // LDRT, LDRBT, LDRSBT, LDRHT, LDRSHT are for disassembly only.
@@ -1836,6 +1838,7 @@ def STRH_POST: AI3stridx<0b1011, 0, 0, (outs GPR:$Rn_wb),
                                         GPR:$Rn, am3offset:$offset))]>;
 
 // For disassembly only
+let mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1 in {
 def STRD_PRE : AI3stdpr<(outs GPR:$base_wb),
                      (ins GPR:$src1, GPR:$src2, GPR:$base, am3offset:$offset),
                      StMiscFrm, IIC_iStore_d_ru,
@@ -1848,6 +1851,7 @@ def STRD_POST: AI3stdpo<(outs GPR:$base_wb),
                      StMiscFrm, IIC_iStore_d_ru,
                      "strd", "\t$src1, $src2, [$base], $offset",
                      "$base = $base_wb", []>;
+} // mayStore = 1, neverHasSideEffects = 1, hasExtraSrcRegAllocReq = 1
 
 // STRT, STRBT, and STRHT are for disassembly only.
 
