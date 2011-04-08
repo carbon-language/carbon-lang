@@ -1,6 +1,6 @@
 ; RUN: llc -O0 < %s | FileCheck %s
 ; Do not emit AT_upper_bound for an unbounded array.
-
+; radar 9241695
 define i32 @main() nounwind ssp {
 entry:
   %retval = alloca i32, align 4
