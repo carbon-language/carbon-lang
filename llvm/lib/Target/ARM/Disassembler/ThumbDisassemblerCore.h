@@ -1616,8 +1616,7 @@ static inline bool t2MiscCtrlInstr(uint32_t insn) {
 // A8.6.26
 // t2BXJ -> Rn
 //
-// Miscellaneous control: t2DMBsy (and its t2DMB variants),
-// t2DSBsy (and its t2DSB varianst), t2ISBsy, t2CLREX
+// Miscellaneous control:
 //   -> no operand (except pred-imm pred-ccr for CLREX, memory barrier variants)
 //
 // Hint: t2NOP, t2YIELD, t2WFE, t2WFI, t2SEV
@@ -1633,6 +1632,22 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
 
   if (NumOps == 0)
     return true;
+
+  if (Opcode == ARM::t2DMB || Opcode == ARM::t2DSB) {
+    // Inst{3-0} encodes the memory barrier option for the variants.
+    unsigned opt = slice(insn, 3, 0);
+    switch (opt) {
+    case ARM_MB::SY:  case ARM_MB::ST:
+    case ARM_MB::ISH: case ARM_MB::ISHST:
+    case ARM_MB::NSH: case ARM_MB::NSHST:
+    case ARM_MB::OSH: case ARM_MB::OSHST:
+      MI.addOperand(MCOperand::CreateImm(opt));
+      NumOpsAdded = 1;
+      return true;
+    default:
+      return false;
+    }
+  }
 
   if (t2MiscCtrlInstr(insn))
     return true;

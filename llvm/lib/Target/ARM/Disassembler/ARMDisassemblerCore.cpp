@@ -3286,13 +3286,19 @@ static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
   if (MemBarrierInstr(insn)) {
-    // DMBsy, DSBsy, and ISBsy instructions have zero operand and are taken care
-    // of within the generic ARMBasicMCBuilder::BuildIt() method.
-    //
     // Inst{3-0} encodes the memory barrier option for the variants.
-    MI.addOperand(MCOperand::CreateImm(slice(insn, 3, 0)));
-    NumOpsAdded = 1;
-    return true;
+    unsigned opt = slice(insn, 3, 0);
+    switch (opt) {
+    case ARM_MB::SY:  case ARM_MB::ST:
+    case ARM_MB::ISH: case ARM_MB::ISHST:
+    case ARM_MB::NSH: case ARM_MB::NSHST:
+    case ARM_MB::OSH: case ARM_MB::OSHST:
+      MI.addOperand(MCOperand::CreateImm(opt));
+      NumOpsAdded = 1;
+      return true;
+    default:
+      return false;
+    }
   }
 
   switch (Opcode) {
