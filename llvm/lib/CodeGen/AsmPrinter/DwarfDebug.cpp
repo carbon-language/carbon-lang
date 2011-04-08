@@ -1237,15 +1237,27 @@ DwarfDebug::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV) {
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void DwarfDebug::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy){
+  DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
+  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
   int64_t L = SR.getLo();
   int64_t H = SR.getHi();
-  DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
 
-  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
+  // The L value defines the lower bounds typically zero for C/C++.  The H
+  // value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
+  // of the array. If L > H the array will be unbounded. If the L is 
+  // non zero and same is H then also the array will be unbounded. If L is
+  // zero and H is zero then the array has one element and in such case do
+  // not emit lower bound.
+
+  if (L > H || (L == H && L != 0)) {
+    // This is an unbounded subrange.
+    Buffer.addChild(DW_Subrange);
+    return;
+  }
+
   if (L)
     addSInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
   addSInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
-
   Buffer.addChild(DW_Subrange);
 }
 
