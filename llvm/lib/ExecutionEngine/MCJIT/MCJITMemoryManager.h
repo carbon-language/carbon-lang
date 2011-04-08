@@ -32,6 +32,9 @@ public:
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.
   uint8_t *startFunctionBody(const char *Name, uintptr_t &Size) {
+    // FIXME: This should really reference the MCAsmInfo to get the global
+    //        prefix.
+    if (Name[0] == '_') ++Name;
     Function *F = M->getFunction(Name);
     assert(F && "No matching function in JIT IR Module!");
     return JMM->startFunctionBody(F, Size);
@@ -41,6 +44,9 @@ public:
   // memory was actually used.
   void endFunctionBody(const char *Name, uint8_t *FunctionStart,
                        uint8_t *FunctionEnd) {
+    // FIXME: This should really reference the MCAsmInfo to get the global
+    //        prefix.
+    if (Name[0] == '_') ++Name;
     Function *F = M->getFunction(Name);
     assert(F && "No matching function in JIT IR Module!");
     JMM->endFunctionBody(F, FunctionStart, FunctionEnd);

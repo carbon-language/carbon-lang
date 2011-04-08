@@ -58,7 +58,10 @@ public:
   ~RuntimeDyld();
 
   bool loadObject(MemoryBuffer *InputBuffer);
-  uint64_t getSymbolAddress(StringRef Name);
+  // Get the address of our local copy of the symbol. This may or may not
+  // be the address used for relocation (clients can copy the data around
+  // and resolve relocatons based on where they put it).
+  void *getSymbolAddress(StringRef Name);
   void reassignSymbolAddress(StringRef Name, uint64_t Addr);
   // FIXME: Should be parameterized to get the memory block associated with
   // a particular loaded object.

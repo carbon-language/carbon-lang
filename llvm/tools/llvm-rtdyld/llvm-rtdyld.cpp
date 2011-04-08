@@ -82,7 +82,7 @@ static int executeInput() {
   }
 
   // Get the address of "_main".
-  uint64_t MainAddress = Dyld.getSymbolAddress("_main");
+  void *MainAddress = Dyld.getSymbolAddress("_main");
   if (MainAddress == 0)
     return Error("no definition for '_main'");
 

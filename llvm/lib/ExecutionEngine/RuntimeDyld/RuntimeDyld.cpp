@@ -85,10 +85,10 @@ public:
 
   bool loadObject(MemoryBuffer *InputBuffer);
 
-  uint64_t getSymbolAddress(StringRef Name) {
+  void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
-    return (uint64_t)Functions.lookup(Name).base();
+    return Functions.lookup(Name).base();
   }
 
   sys::MemoryBlock getMemoryBlock() { return Data; }
@@ -274,92 +274,71 @@ loadSegment32(const MachOObject *Obj,
   if (!Segment32LC)
     return Error("unable to load segment load command");
 
-  // Map the segment into memory.
-  std::string ErrorStr;
-  Data = sys::Memory::AllocateRWX(Segment32LC->VMSize, 0, &ErrorStr);
-  if (!Data.base())
-    return Error("unable to allocate memory block: '" + ErrorStr + "'");
-  memcpy(Data.base(), Obj->getData(Segment32LC->FileOffset,
-                                   Segment32LC->FileSize).data(),
-         Segment32LC->FileSize);
-  memset((char*)Data.base() + Segment32LC->FileSize, 0,
-         Segment32LC->VMSize - Segment32LC->FileSize);
-
-  // Bind the section indices to addresses and record the relocations we
-  // need to resolve.
-  typedef std::pair<uint32_t, macho::RelocationEntry> RelocationMap;
-  SmallVector<RelocationMap, 64> Relocations;
-
-  SmallVector<void *, 16> SectionBases;
-  for (unsigned i = 0; i != Segment32LC->NumSections; ++i) {
+  for (unsigned SectNum = 0; SectNum != Segment32LC->NumSections; ++SectNum) {
     InMemoryStruct<macho::Section> Sect;
-    Obj->ReadSection(*SegmentLCI, i, Sect);
-   if (!Sect)
-      return Error("unable to load section: '" + Twine(i) + "'");
-
-    // Remember any relocations the section has so we can resolve them later.
-    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
-      InMemoryStruct<macho::RelocationEntry> RE;
-      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
-      Relocations.push_back(RelocationMap(j, *RE));
-    }
+    Obj->ReadSection(*SegmentLCI, SectNum, Sect);
+    if (!Sect)
+      return Error("unable to load section: '" + Twine(SectNum) + "'");
 
     // FIXME: Improve check.
-//    if (Sect->Flags != 0x80000400)
-//      return Error("unsupported section type!");
+    if (Sect->Flags != 0x80000400)
+      return Error("unsupported section type!");
 
-    SectionBases.push_back((char*) Data.base() + Sect->Address);
+    // Address and names of symbols in the section.
+    typedef std::pair<uint64_t, StringRef> SymbolEntry;
+    SmallVector<SymbolEntry, 32> Symbols;
+    for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
+      InMemoryStruct<macho::SymbolTableEntry> STE;
+      Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
+      if (!STE)
+        return Error("unable to read symbol: '" + Twine(i) + "'");
+      if (STE->SectionIndex > Segment32LC->NumSections)
+        return Error("invalid section index for symbol: '" + Twine() + "'");
+
+      // Just skip symbols not defined in this section.
+      if (STE->SectionIndex - 1 != SectNum)
+        continue;
+
+      // Get the symbol name.
+      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+
+      // FIXME: Check the symbol type and flags.
+      if (STE->Type != 0xF)  // external, defined in this section.
+        return Error("unexpected symbol type!");
+      if (STE->Flags != 0x0)
+        return Error("unexpected symbol type!");
+
+      uint64_t BaseAddress = Sect->Address;
+      uint64_t Address = BaseAddress + STE->Value;
+
+      // Remember the symbol.
+      Symbols.push_back(SymbolEntry(Address, Name));
+
+      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " << Address << "\n");
+    }
+    // Sort the symbols by address, just in case they didn't come in that
+    // way.
+    array_pod_sort(Symbols.begin(), Symbols.end());
+
+    // Extract the function data.
+    uint8_t *Base = (uint8_t*)Obj->getData(Segment32LC->FileOffset,
+                                           Segment32LC->FileSize).data();
+    for (unsigned i = 0, e = Symbols.size() - 1; i != e; ++i) {
+      uint64_t StartOffset = Symbols[i].first;
+      uint64_t EndOffset = Symbols[i + 1].first - 1;
+      DEBUG(dbgs() << "Extracting function: " << Symbols[i].second
+                   << " from [" << StartOffset << ", " << EndOffset << "]\n");
+      extractFunction(Symbols[i].second, Base + StartOffset, Base + EndOffset);
+    }
+    // The last symbol we do after since the end address is calculated
+    // differently because there is no next symbol to reference.
+    uint64_t StartOffset = Symbols[Symbols.size() - 1].first;
+    uint64_t EndOffset = Sect->Size - 1;
+    DEBUG(dbgs() << "Extracting function: " << Symbols[Symbols.size()-1].second
+                 << " from [" << StartOffset << ", " << EndOffset << "]\n");
+    extractFunction(Symbols[Symbols.size()-1].second,
+                    Base + StartOffset, Base + EndOffset);
   }
-
-  // Bind all the symbols to address. Keep a record of the names for use
-  // by relocation resolution.
-  SmallVector<StringRef, 64> SymbolNames;
-  for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
-    InMemoryStruct<macho::SymbolTableEntry> STE;
-    Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
-    if (!STE)
-      return Error("unable to read symbol: '" + Twine(i) + "'");
-    // Get the symbol name.
-    StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-    SymbolNames.push_back(Name);
-
-    // Just skip undefined symbols. They'll be loaded from whatever
-    // module they come from (or system dylib) when we resolve relocations
-    // involving them.
-    if (STE->SectionIndex == 0)
-      continue;
-
-    unsigned Index = STE->SectionIndex - 1;
-    if (Index >= Segment32LC->NumSections)
-      return Error("invalid section index for symbol: '" + Twine() + "'");
-
-    // Get the section base address.
-    void *SectionBase = SectionBases[Index];
-
-    // Get the symbol address.
-    uint64_t Address = (uint64_t)SectionBase + STE->Value;
-
-    // FIXME: Check the symbol type and flags.
-    if (STE->Type != 0xF)
-      return Error("unexpected symbol type!");
-    if (STE->Flags != 0x0)
-      return Error("unexpected symbol type!");
-
-    DEBUG(dbgs() << "Symbol: '" << Name << "' @ " << Address << "\n");
-
-    SymbolTable[Name] = Address;
-  }
-
-  // Now resolve any relocations.
-  for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
-    if (resolveRelocation(Relocations[i].first, Relocations[i].second,
-                          SectionBases, SymbolNames))
-      return true;
-  }
-
-  // We've loaded the section; now mark the functions in it as executable.
-  // FIXME: We really should use the MemoryManager for this.
-  sys::Memory::setRangeExecutable(Data.base(), Data.size());
 
   return false;
 }
@@ -545,7 +524,7 @@ bool RuntimeDyld::loadObject(MemoryBuffer *InputBuffer) {
   return Dyld->loadObject(InputBuffer);
 }
 
-uint64_t RuntimeDyld::getSymbolAddress(StringRef Name) {
+void *RuntimeDyld::getSymbolAddress(StringRef Name) {
   return Dyld->getSymbolAddress(Name);
 }
 
