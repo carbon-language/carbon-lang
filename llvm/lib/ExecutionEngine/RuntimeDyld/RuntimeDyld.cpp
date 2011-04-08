@@ -296,7 +296,7 @@ loadSegment32(const MachOObject *Obj,
         return Error("invalid section index for symbol: '" + Twine() + "'");
 
       // Just skip symbols not defined in this section.
-      if (STE->SectionIndex - 1 != SectNum)
+      if ((unsigned)STE->SectionIndex - 1 != SectNum)
         continue;
 
       // Get the symbol name.
@@ -375,7 +375,7 @@ loadSegment64(const MachOObject *Obj,
         return Error("invalid section index for symbol: '" + Twine() + "'");
 
       // Just skip symbols not defined in this section.
-      if (STE->SectionIndex - 1 != SectNum)
+      if ((unsigned)STE->SectionIndex - 1 != SectNum)
         continue;
 
       // Get the symbol name.
