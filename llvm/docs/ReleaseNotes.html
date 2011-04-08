@@ -748,7 +748,11 @@ it run faster:</p>
 <li>PowerPC: The backend has been largely MC'ized and is ready to support
   directly writing out mach-o object files.  No one seems interested in finishing
   this final step though.</li>
-  
+
+<li>Mips: Improved o32 ABI support, including better varags handling.
+More instructions supported in codegen: madd, msub, rotr, rotrv and clo.
+It also now supports lowering block addresses.</li>
+
 </ul>
 </div>
 
