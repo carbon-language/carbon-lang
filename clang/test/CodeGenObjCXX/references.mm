@@ -30,7 +30,7 @@ void f(B* b) {
 @protocol P2 @end
 @protocol P3 @end
 @interface foo<P1> {} @end
-@interface bar : foo <P1, P2> {} @end
+@interface bar : foo <P1, P2, P3> {} @end
 typedef bar baz;
 void f5(foo&);
 void f5b(foo<P1>&);

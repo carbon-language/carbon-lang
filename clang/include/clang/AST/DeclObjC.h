@@ -629,6 +629,27 @@ public:
     return false;
   }
 
+  /// getImmSubClassOf - Returns Immediate sub-class of the specified interface class
+  /// if 'Super' is a superclass of this class. null if no such super class.
+  /// So in this example if 'this' is 'BClass' and 'Super' is 'AClass' then 'BClass'
+  /// is returned.
+  /// \code
+  /// @interface BClass : AClass <SubFooable>
+  /// @end
+  /// \endcode
+  
+  ObjCInterfaceDecl *getImmSubClassOf(const ObjCInterfaceDecl *Super) {
+    ObjCInterfaceDecl *ImmSubClass = this;
+    ObjCInterfaceDecl *I = this->getSuperClass();
+    while (I != NULL) {
+      if (Super == I)
+        return ImmSubClass;
+      ImmSubClass = I;
+      I = I->getSuperClass();
+    }
+    return NULL;
+  }
+
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
                                        ObjCInterfaceDecl *&ClassDeclared);
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName) {

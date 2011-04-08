@@ -4981,10 +4981,47 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
   if (LHS->getNumProtocols() == 0)
     return true;
 
-  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, then it
-  // isn't a superset.
-  if (RHS->getNumProtocols() == 0)
-    return true;  // FIXME: should return false!
+  // Okay, we know the LHS has protocol qualifiers.  If the RHS doesn't, 
+  // more detailed analysis is required.
+  if (RHS->getNumProtocols() == 0) {
+    // OK, if LHS is a superclass of RHS *and*
+    // this superclass is assignment compatible with LHS.
+    // false otherwise.
+    ObjCInterfaceDecl *SuperClass = 
+      RHS->getInterface()->getImmSubClassOf(LHS->getInterface());
+    if (SuperClass) {
+      // OK if conversion of LHS to SuperClass results in narrowing of types
+      // ; i.e., SuperClass may implement at least one of the protocols
+      // in LHS's protocol list. Example, SuperObj<P1> = lhs<P1,P2> is ok.
+      // But not SuperObj<P1,P2,P3> = lhs<P1,P2>.
+      llvm::SmallPtrSet<ObjCProtocolDecl *, 8> SuperClassInheritedProtocols;
+      CollectInheritedProtocols(SuperClass, SuperClassInheritedProtocols);
+      // If super class has no protocols, it is not a match.
+      if (SuperClassInheritedProtocols.empty())
+        return false;
+      
+      for (ObjCObjectType::qual_iterator LHSPI = LHS->qual_begin(),
+           LHSPE = LHS->qual_end();
+           LHSPI != LHSPE; LHSPI++) {
+        bool SuperImplementsProtocol = false;
+        ObjCProtocolDecl *LHSProto = (*LHSPI);
+        
+        for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I =
+             SuperClassInheritedProtocols.begin(),
+             E = SuperClassInheritedProtocols.end(); I != E; ++I) {
+          ObjCProtocolDecl *SuperClassProto = (*I);
+          if (SuperClassProto->lookupProtocolNamed(LHSProto->getIdentifier())) {
+            SuperImplementsProtocol = true;
+            break;
+          }
+        }
+        if (!SuperImplementsProtocol)
+          return false;
+      }
+      return true;
+    }
+    return false;
+  }
 
   for (ObjCObjectType::qual_iterator LHSPI = LHS->qual_begin(),
                                      LHSPE = LHS->qual_end();
