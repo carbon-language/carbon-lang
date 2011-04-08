@@ -196,6 +196,7 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYOPENCL  - This is a keyword in OpenCL
 //   KEYALTIVEC - This is a keyword in AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
+//   BOOLSUPPORT - This is a keyword if 'bool' is a built-in type
 //
 KEYWORD(auto                        , KEYALL)
 KEYWORD(break                       , KEYALL)
