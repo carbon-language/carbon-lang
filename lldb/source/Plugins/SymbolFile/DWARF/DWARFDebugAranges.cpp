@@ -10,6 +10,7 @@
 #include "DWARFDebugAranges.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 #include <algorithm>
 

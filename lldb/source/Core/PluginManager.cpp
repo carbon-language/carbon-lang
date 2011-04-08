@@ -9,6 +9,8 @@
 
 #include "lldb/Core/PluginManager.h"
 
+#include <limits.h>
+
 #include <string>
 #include <vector>
 

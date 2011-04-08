@@ -10,6 +10,8 @@
 #ifndef liblldb_StreamTee_h_
 #define liblldb_StreamTee_h_
 
+#include <limits.h>
+
 #include "lldb/Core/Stream.h"
 #include "lldb/Host/Mutex.h"
 

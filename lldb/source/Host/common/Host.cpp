@@ -25,6 +25,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <grp.h>
+#include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <sys/types.h>

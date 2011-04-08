@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <limits.h>
+
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Host/FileSpec.h"

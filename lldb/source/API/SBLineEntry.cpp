@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <limits.h>
+
 #include "lldb/API/SBLineEntry.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/StreamString.h"

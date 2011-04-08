@@ -10,6 +10,7 @@
 #ifndef liblldb_StringList_h_
 #define liblldb_StringList_h_
 
+#include <stdint.h>
 
 #include "lldb/Core/STLUtils.h"
 #include "lldb/lldb-forward.h"

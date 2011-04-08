@@ -11,6 +11,7 @@
 #include "lldb/Host/File.h"
 
 #include <fcntl.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 
