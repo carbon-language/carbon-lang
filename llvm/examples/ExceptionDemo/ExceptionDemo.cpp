@@ -1637,6 +1637,8 @@ void runExceptionThrow(llvm::ExecutionEngine* engine,
 // End test functions
 //
 
+typedef llvm::ArrayRef<const llvm::Type*> TypeArray;
+
 /// This initialization routine creates type info globals and 
 /// adds external function declarations to module.
 /// @param numTypeInfos number of linear type info associated type info types
@@ -1660,23 +1662,21 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
                     llvm::ConstantInt::get(llvm::Type::getInt8Ty(context), 2),
 
 
+  
     // Create our type info type
     ourTypeInfoType = llvm::StructType::get(context, 
-                                            builder.getInt32Ty(), 
-                                            NULL);
+                                            TypeArray(builder.getInt32Ty()));
 
     // Create OurException type
     ourExceptionType = llvm::StructType::get(context, 
-                                             ourTypeInfoType,
-                                             NULL);
+                                             TypeArray(ourTypeInfoType));
 
     // Create portion of _Unwind_Exception type
     //
     // Note: Declaring only a portion of the _Unwind_Exception struct.
     //       Does this cause problems?
     ourUnwindExceptionType = llvm::StructType::get(context, 
-                                                   builder.getInt64Ty(),
-                                                   NULL);
+                                               TypeArray(builder.getInt64Ty()));
     struct OurBaseException_t dummyException;
 
     // Calculate offset of OurException::unwindException member.
