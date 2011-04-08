@@ -1172,9 +1172,17 @@ DEF_TRAVERSE_DECL(ObjCProtocolDecl, {
   })
 
 DEF_TRAVERSE_DECL(ObjCMethodDecl, {
-    // We don't traverse nodes in param_begin()/param_end(), as they
-    // appear in decls_begin()/decls_end() and thus are handled.
-    TRY_TO(TraverseStmt(D->getBody()));
+    if (D->getResultTypeSourceInfo()) {
+      TRY_TO(TraverseTypeLoc(D->getResultTypeSourceInfo()->getTypeLoc()));
+    }
+    for (ObjCMethodDecl::param_iterator
+           I = D->param_begin(), E = D->param_end(); I != E; ++I) {
+      TRY_TO(TraverseDecl(*I));
+    }
+    if (D->isThisDeclarationADefinition()) {
+      TRY_TO(TraverseStmt(D->getBody()));
+    }
+    return true;
   })
 
 DEF_TRAVERSE_DECL(ObjCPropertyDecl, {
