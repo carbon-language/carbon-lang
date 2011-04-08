@@ -5558,6 +5558,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     // Rewrite the block body in place.
     Stmt *SaveCurrentBody = CurrentBody;
     CurrentBody = BE->getBody();
+    CollectPropertySetters(CurrentBody);
     PropParentMap = 0;
     RewriteFunctionBodyOrGlobalInitializer(BE->getBody());
     CurrentBody = SaveCurrentBody;
