@@ -3212,17 +3212,6 @@ static bool DisassembleNDupFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
-// A8.6.41 DMB
-// A8.6.42 DSB
-// A8.6.49 ISB
-static inline bool MemBarrierInstr(uint32_t insn) {
-  unsigned op7_4 = slice(insn, 7, 4);
-  if (slice(insn, 31, 8) == 0xf57ff0 && (op7_4 >= 4 && op7_4 <= 6))
-    return true;
-
-  return false;
-}
-
 static inline bool PreLoadOpcode(unsigned Opcode) {
   switch(Opcode) {
   case ARM::PLDi12:  case ARM::PLDrs:
@@ -3286,7 +3275,7 @@ static bool DisassemblePreLoadFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleMiscFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  if (MemBarrierInstr(insn)) {
+  if (Opcode == ARM::DMB || Opcode == ARM::DSB) {
     // Inst{3-0} encodes the memory barrier option for the variants.
     unsigned opt = slice(insn, 3, 0);
     switch (opt) {
