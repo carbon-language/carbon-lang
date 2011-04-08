@@ -100,7 +100,7 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(m_interpreter)
+            Options(interpreter)
         {
             ResetOptionValues ();
         }
@@ -291,7 +291,7 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(m_interpreter)
+            Options(interpreter)
         {
             ResetOptionValues ();
         }

@@ -721,7 +721,7 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(m_interpreter),
+            Options(interpreter),
             m_sort_order (eSortOrderNone)
         {
         }
@@ -1142,7 +1142,7 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(m_interpreter),
+            Options(interpreter),
             m_format_array()
         {
         }
@@ -1349,7 +1349,7 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(m_interpreter)
+            Options(interpreter)
         {
             ResetOptionValues();
         }

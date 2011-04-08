@@ -37,7 +37,7 @@ using namespace lldb_private;
 //
 
 CommandObjectArgs::CommandOptions::CommandOptions (CommandInterpreter &interpreter) :
-    Options(m_interpreter)
+    Options(interpreter)
 {
     // Keep only one place to reset the values to their defaults
     ResetOptionValues();
