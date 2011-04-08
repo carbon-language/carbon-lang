@@ -625,10 +625,10 @@ public:
   unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
 
-  void print(raw_ostream &O) {
+  bool print(raw_ostream &O) {
     if (Conds.empty() && ReqFeatures.empty()) {
       O.indent(6) << "return true;\n";
-      return;
+      return false;
     }
 
     O << "if (";
@@ -675,6 +675,7 @@ public:
 
     O.indent(6) << "break;\n";
     O.indent(4) << '}';
+    return !ReqFeatures.empty();
   }
 
   bool operator==(const IAPrinter &RHS) {
@@ -937,6 +938,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   std::string Cases;
   raw_string_ostream CasesO(Cases);
+  bool NeedAvailableFeatures = false;
 
   for (std::map<std::string, std::vector<IAPrinter*> >::iterator
          I = IAPrinterMap.begin(), E = IAPrinterMap.end(); I != E; ++I) {
@@ -967,7 +969,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
            II = UniqueIAPs.begin(), IE = UniqueIAPs.end(); II != IE; ++II) {
       IAPrinter *IAP = *II;
       CasesO.indent(4);
-      IAP->print(CasesO);
+      NeedAvailableFeatures |= IAP->print(CasesO);
       CasesO << '\n';
     }
 
@@ -983,7 +985,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   O.indent(2) << "StringRef AsmString;\n";
   O.indent(2) << "std::map<StringRef, unsigned> OpMap;\n";
-  O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+  if (NeedAvailableFeatures)
+    O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
   O.indent(2) << "default: return true;\n";
   O << CasesO.str();
