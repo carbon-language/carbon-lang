@@ -597,6 +597,8 @@ public:
     FK_ReferenceInitFailed,
     /// \brief Implicit conversion failed.
     FK_ConversionFailed,
+    /// \brief Implicit conversion failed.
+    FK_ConversionFromPropertyFailed,
     /// \brief Too many initializers for scalar
     FK_TooManyInitsForScalar,
     /// \brief Reference initialization from an initializer list

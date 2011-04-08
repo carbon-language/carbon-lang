@@ -1373,11 +1373,13 @@ public:
       assert(Member->getType()->isRecordType() &&
              "unnamed member not of record type?");
 
-      if (getSema().PerformObjectMemberConversion(Base, 
-                                        QualifierLoc.getNestedNameSpecifier(),
-                                                  FoundDecl, Member))
+      ExprResult BaseResult =
+        getSema().PerformObjectMemberConversion(Base, 
+                                                QualifierLoc.getNestedNameSpecifier(),
+                                                FoundDecl, Member);
+      if (BaseResult.isInvalid())
         return ExprError();
-
+      Base = BaseResult.take();
       ExprValueKind VK = isArrow ? VK_LValue : Base->getValueKind();
       MemberExpr *ME =
         new (getSema().Context) MemberExpr(Base, isArrow,
@@ -1390,7 +1392,10 @@ public:
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
 
-    getSema().DefaultFunctionArrayConversion(Base);
+    ExprResult BaseResult = getSema().DefaultFunctionArrayConversion(Base);
+    if (BaseResult.isInvalid())
+      return ExprError();
+    Base = BaseResult.take();
     QualType BaseType = Base->getType();
 
     // FIXME: this involves duplicating earlier analysis in a lot of
@@ -2060,20 +2065,20 @@ public:
                                           bool IsArrow, bool IsFreeIvar) {
     // FIXME: We lose track of the IsFreeIvar bit.
     CXXScopeSpec SS;
-    Expr *Base = BaseArg;
+    ExprResult Base = getSema().Owned(BaseArg);
     LookupResult R(getSema(), Ivar->getDeclName(), IvarLoc,
                    Sema::LookupMemberName);
     ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IvarLoc,
                                                          SS, 0,
                                                          false);
-    if (Result.isInvalid())
+    if (Result.isInvalid() || Base.isInvalid())
       return ExprError();
     
     if (Result.get())
       return move(Result);
     
-    return getSema().BuildMemberReferenceExpr(Base, Base->getType(),
+    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/IvarLoc, IsArrow, SS, 
                                               /*FirstQualifierInScope=*/0,
                                               R, 
@@ -2088,20 +2093,20 @@ public:
                                               ObjCPropertyDecl *Property,
                                               SourceLocation PropertyLoc) {
     CXXScopeSpec SS;
-    Expr *Base = BaseArg;
+    ExprResult Base = getSema().Owned(BaseArg);
     LookupResult R(getSema(), Property->getDeclName(), PropertyLoc,
                    Sema::LookupMemberName);
     bool IsArrow = false;
     ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/PropertyLoc,
                                                          SS, 0, false);
-    if (Result.isInvalid())
+    if (Result.isInvalid() || Base.isInvalid())
       return ExprError();
     
     if (Result.get())
       return move(Result);
     
-    return getSema().BuildMemberReferenceExpr(Base, Base->getType(),
+    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/PropertyLoc, IsArrow, 
                                               SS, 
                                               /*FirstQualifierInScope=*/0,
@@ -2132,19 +2137,19 @@ public:
   ExprResult RebuildObjCIsaExpr(Expr *BaseArg, SourceLocation IsaLoc,
                                       bool IsArrow) {
     CXXScopeSpec SS;
-    Expr *Base = BaseArg;
+    ExprResult Base = getSema().Owned(BaseArg);
     LookupResult R(getSema(), &getSema().Context.Idents.get("isa"), IsaLoc,
                    Sema::LookupMemberName);
     ExprResult Result = getSema().LookupMemberExpr(R, Base, IsArrow,
                                                          /*FIME:*/IsaLoc,
                                                          SS, 0, false);
-    if (Result.isInvalid())
+    if (Result.isInvalid() || Base.isInvalid())
       return ExprError();
     
     if (Result.get())
       return move(Result);
     
-    return getSema().BuildMemberReferenceExpr(Base, Base->getType(),
+    return getSema().BuildMemberReferenceExpr(Base.get(), Base.get()->getType(),
                                               /*FIXME:*/IsaLoc, IsArrow, SS, 
                                               /*FirstQualifierInScope=*/0,
                                               R, 
@@ -2167,28 +2172,25 @@ public:
 
     // Build a reference to the __builtin_shufflevector builtin
     FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
-    Expr *Callee
-      = new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
-                                          VK_LValue, BuiltinLoc);
-    SemaRef.UsualUnaryConversions(Callee);
+    ExprResult Callee
+      = SemaRef.Owned(new (SemaRef.Context) DeclRefExpr(Builtin, Builtin->getType(),
+                                                        VK_LValue, BuiltinLoc));
+    Callee = SemaRef.UsualUnaryConversions(Callee.take());
+    if (Callee.isInvalid())
+      return ExprError();
 
     // Build the CallExpr
     unsigned NumSubExprs = SubExprs.size();
     Expr **Subs = (Expr **)SubExprs.release();
-    CallExpr *TheCall = new (SemaRef.Context) CallExpr(SemaRef.Context, Callee,
+    ExprResult TheCall = SemaRef.Owned(
+      new (SemaRef.Context) CallExpr(SemaRef.Context, Callee.take(),
                                                        Subs, NumSubExprs,
                                                    Builtin->getCallResultType(),
                             Expr::getValueKindForType(Builtin->getResultType()),
-                                                       RParenLoc);
-    ExprResult OwnedCall(SemaRef.Owned(TheCall));
+                                     RParenLoc));
 
     // Type-check the __builtin_shufflevector expression.
-    ExprResult Result = SemaRef.SemaBuiltinShuffleVector(TheCall);
-    if (Result.isInvalid())
-      return ExprError();
-
-    OwnedCall.release();
-    return move(Result);
+    return SemaRef.SemaBuiltinShuffleVector(cast<CallExpr>(TheCall.take()));
   }
 
   /// \brief Build a new template argument pack expansion.

@@ -492,14 +492,14 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // deduce the types of the rest of the arguments accordingly.  Walk
   // the remaining arguments, converting them to the deduced value type.
   for (unsigned i = 0; i != NumFixed; ++i) {
-    Expr *Arg = TheCall->getArg(i+1);
+    ExprResult Arg = TheCall->getArg(i+1);
 
     // If the argument is an implicit cast, then there was a promotion due to
     // "...", just remove it now.
-    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg.get())) {
       Arg = ICE->getSubExpr();
       ICE->setSubExpr(0);
-      TheCall->setArg(i+1, Arg);
+      TheCall->setArg(i+1, Arg.get());
     }
 
     // GCC does an implicit conversion to the pointer or integer ValType.  This
@@ -507,7 +507,8 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     CastKind Kind = CK_Invalid;
     ExprValueKind VK = VK_RValue;
     CXXCastPath BasePath;
-    if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind, VK, BasePath))
+    Arg = CheckCastTypes(Arg.get()->getSourceRange(), ValType, Arg.take(), Kind, VK, BasePath);
+    if (Arg.isInvalid())
       return ExprError();
 
     // Okay, we have something that *can* be converted to the right type.  Check
@@ -516,8 +517,8 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
     // FIXME: Do this check.
-    ImpCastExprToType(Arg, ValType, Kind, VK, &BasePath);
-    TheCall->setArg(i+1, Arg);
+    Arg = ImpCastExprToType(Arg.take(), ValType, Kind, VK, &BasePath);
+    TheCall->setArg(i+1, Arg.get());
   }
 
   // Switch the DeclRefExpr to refer to the new decl.
@@ -526,9 +527,10 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
   // Set the callee in the CallExpr.
   // FIXME: This leaks the original parens and implicit casts.
-  Expr *PromotedCall = DRE;
-  UsualUnaryConversions(PromotedCall);
-  TheCall->setCallee(PromotedCall);
+  ExprResult PromotedCall = UsualUnaryConversions(DRE);
+  if (PromotedCall.isInvalid())
+    return ExprError();
+  TheCall->setCallee(PromotedCall.take());
 
   // Change the result type of the call to match the original value type. This
   // is arbitrary, but the codegen for these builtins ins design to handle it
@@ -645,29 +647,31 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
       << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
 
-  Expr *OrigArg0 = TheCall->getArg(0);
-  Expr *OrigArg1 = TheCall->getArg(1);
+  ExprResult OrigArg0 = TheCall->getArg(0);
+  ExprResult OrigArg1 = TheCall->getArg(1);
 
   // Do standard promotions between the two arguments, returning their common
   // type.
   QualType Res = UsualArithmeticConversions(OrigArg0, OrigArg1, false);
+  if (OrigArg0.isInvalid() || OrigArg1.isInvalid())
+    return true;
 
   // Make sure any conversions are pushed back into the call; this is
   // type safe since unordered compare builtins are declared as "_Bool
   // foo(...)".
-  TheCall->setArg(0, OrigArg0);
-  TheCall->setArg(1, OrigArg1);
+  TheCall->setArg(0, OrigArg0.get());
+  TheCall->setArg(1, OrigArg1.get());
 
-  if (OrigArg0->isTypeDependent() || OrigArg1->isTypeDependent())
+  if (OrigArg0.get()->isTypeDependent() || OrigArg1.get()->isTypeDependent())
     return false;
 
   // If the common type isn't a real floating type, then the arguments were
   // invalid for this operation.
   if (!Res->isRealFloatingType())
-    return Diag(OrigArg0->getLocStart(),
+    return Diag(OrigArg0.get()->getLocStart(),
                 diag::err_typecheck_call_invalid_ordered_compare)
-      << OrigArg0->getType() << OrigArg1->getType()
-      << SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd());
+      << OrigArg0.get()->getType() << OrigArg1.get()->getType()
+      << SourceRange(OrigArg0.get()->getLocStart(), OrigArg1.get()->getLocEnd());
 
   return false;
 }

@@ -7783,7 +7783,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
               << (EnumVal.isUnsigned() || EnumVal.isNonNegative());
           else if (!Context.hasSameType(Val->getType(), Context.IntTy)) {
             // Force the type of the expression to 'int'.
-            ImpCastExprToType(Val, Context.IntTy, CK_IntegralCast);
+            Val = ImpCastExprToType(Val, Context.IntTy, CK_IntegralCast).take();
           }
         }
         
@@ -7796,12 +7796,12 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
           if (!isRepresentableIntegerValue(Context, EnumVal, EltTy)) {
             if (getLangOptions().Microsoft) {
               Diag(IdLoc, diag::ext_enumerator_too_large) << EltTy;
-              ImpCastExprToType(Val, EltTy, CK_IntegralCast);
+              Val = ImpCastExprToType(Val, EltTy, CK_IntegralCast).take();
             } else 
               Diag(IdLoc, diag::err_enumerator_too_large)
                 << EltTy;
           } else
-            ImpCastExprToType(Val, EltTy, CK_IntegralCast);
+            Val = ImpCastExprToType(Val, EltTy, CK_IntegralCast).take();
         }
         else {
           // C++0x [dcl.enum]p5:

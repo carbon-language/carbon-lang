@@ -1154,8 +1154,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   }
 
   // Do lvalue-to-rvalue conversions on the array size expression.
-  if (ArraySize && !ArraySize->isRValue())
-    DefaultLvalueConversion(ArraySize);
+  if (ArraySize && !ArraySize->isRValue()) {
+    ExprResult Result = DefaultLvalueConversion(ArraySize);
+    if (Result.isInvalid())
+      return QualType();
+
+    ArraySize = Result.take();
+  }
 
   // C99 6.7.5.2p1: The size expression shall have integer type.
   // TODO: in theory, if we were insane, we could allow contextual

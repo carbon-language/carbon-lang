@@ -1161,13 +1161,13 @@ public:
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                        SourceLocation EqualLoc,
                                        ExprResult Init);
-  bool PerformObjectArgumentInitialization(Expr *&From,
-                                           NestedNameSpecifier *Qualifier,
-                                           NamedDecl *FoundDecl,
-                                           CXXMethodDecl *Method);
+  ExprResult PerformObjectArgumentInitialization(Expr *From,
+                                                 NestedNameSpecifier *Qualifier,
+                                                 NamedDecl *FoundDecl,
+                                                 CXXMethodDecl *Method);
 
-  bool PerformContextuallyConvertToBool(Expr *&From);
-  bool PerformContextuallyConvertToObjCId(Expr *&From);
+  ExprResult PerformContextuallyConvertToBool(Expr *From);
+  ExprResult PerformContextuallyConvertToObjCId(Expr *From);
 
   ExprResult 
   ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,
@@ -1179,10 +1179,10 @@ public:
                                      const PartialDiagnostic &AmbigNote,
                                      const PartialDiagnostic &ConvDiag);
   
-  bool PerformObjectMemberConversion(Expr *&From,
-                                     NestedNameSpecifier *Qualifier,
-                                     NamedDecl *FoundDecl,
-                                     NamedDecl *Member);
+  ExprResult PerformObjectMemberConversion(Expr *From,
+                                           NestedNameSpecifier *Qualifier,
+                                           NamedDecl *FoundDecl,
+                                           NamedDecl *Member);
 
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
   // TODO: make this is a typesafe union.
@@ -2049,7 +2049,7 @@ public:
                                  const TemplateArgumentListInfo *TemplateArgs,
                                       bool SuppressQualifierCheck = false);
 
-  ExprResult LookupMemberExpr(LookupResult &R, Expr *&Base,
+  ExprResult LookupMemberExpr(LookupResult &R, ExprResult &Base,
                               bool &IsArrow, SourceLocation OpLoc,
                               CXXScopeSpec &SS,
                               Decl *ObjCImpDecl,
@@ -2474,7 +2474,7 @@ public:
 
   //// ActOnCXXThrow -  Parse throw expressions.
   ExprResult ActOnCXXThrow(SourceLocation OpLoc, Expr *expr);
-  bool CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E);
+  ExprResult CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E);
 
   /// ActOnCXXTypeConstructExpr - Parse construction of a specified type.
   /// Can be interpreted either as function-style casting ("int(x)")
@@ -3387,10 +3387,10 @@ public:
                              TypeSourceInfo *Arg);
   bool CheckTemplateArgumentPointerToMember(Expr *Arg,
                                             TemplateArgument &Converted);
-  bool CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
-                             QualType InstantiatedParamType, Expr *&Arg,
-                             TemplateArgument &Converted,
-                             CheckTemplateArgumentKind CTAK = CTAK_Specified);
+  ExprResult CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
+                                   QualType InstantiatedParamType, Expr *Arg,
+                                   TemplateArgument &Converted,
+                                   CheckTemplateArgumentKind CTAK = CTAK_Specified);
   bool CheckTemplateArgument(TemplateTemplateParmDecl *Param,
                              const TemplateArgumentLoc &Arg);
 
@@ -4745,9 +4745,9 @@ public:
   /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit
   /// cast.  If there is already an implicit cast, merge into the existing one.
   /// If isLvalue, the result of the cast is an lvalue.
-  void ImpCastExprToType(Expr *&Expr, QualType Type, CastKind CK,
-                         ExprValueKind VK = VK_RValue,
-                         const CXXCastPath *BasePath = 0);
+  ExprResult ImpCastExprToType(Expr *E, QualType Type, CastKind CK,
+                               ExprValueKind VK = VK_RValue,
+                               const CXXCastPath *BasePath = 0);
 
   /// ScalarTypeToBooleanCastKind - Returns the cast kind corresponding
   /// to the conversion from scalar type ScalarTy to the Boolean type.
@@ -4756,31 +4756,31 @@ public:
   /// IgnoredValueConversions - Given that an expression's result is
   /// syntactically ignored, perform any conversions that are
   /// required.
-  void IgnoredValueConversions(Expr *&expr);
+  ExprResult IgnoredValueConversions(Expr *E);
 
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
-  Expr *UsualUnaryConversions(Expr *&expr);
+  ExprResult UsualUnaryConversions(Expr *E);
 
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1).
-  void DefaultFunctionArrayConversion(Expr *&expr);
+  ExprResult DefaultFunctionArrayConversion(Expr *E);
 
   // DefaultFunctionArrayLvalueConversion - converts functions and
   // arrays to their respective pointers and performs the
   // lvalue-to-rvalue conversion.
-  void DefaultFunctionArrayLvalueConversion(Expr *&expr);
+  ExprResult DefaultFunctionArrayLvalueConversion(Expr *E);
 
   // DefaultLvalueConversion - performs lvalue-to-rvalue conversion on
   // the operand.  This is DefaultFunctionArrayLvalueConversion,
   // except that it assumes the operand isn't of function or array
   // type.
-  void DefaultLvalueConversion(Expr *&expr);
+  ExprResult DefaultLvalueConversion(Expr *E);
 
   // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
   // do not have a prototype. Integer promotions are performed on each
   // argument, and arguments that have type float are promoted to double.
-  void DefaultArgumentPromotion(Expr *&Expr);
+  ExprResult DefaultArgumentPromotion(Expr *E);
 
   // Used for emitting the right warning by DefaultVariadicArgumentPromotion
   enum VariadicCallType {
@@ -4803,15 +4803,15 @@ public:
 
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
   // will warn if the resulting type is not a POD type.
-  bool DefaultVariadicArgumentPromotion(Expr *&Expr, VariadicCallType CT,
-                                        FunctionDecl *FDecl);
+  ExprResult DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
+                                              FunctionDecl *FDecl);
 
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is
   // responsible for emitting appropriate error diagnostics.
-  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
+  QualType UsualArithmeticConversions(ExprResult &lExpr, ExprResult &rExpr,
                                       bool isCompAssign = false);
 
   /// AssignConvertType - All of the 'assignment' semantic checks return this
@@ -4899,94 +4899,102 @@ public:
 
   /// Check assignment constraints and prepare for a conversion of the
   /// RHS to the LHS type.
-  AssignConvertType CheckAssignmentConstraints(QualType lhs, Expr *&rhs,
+  AssignConvertType CheckAssignmentConstraints(QualType lhs, ExprResult &rhs,
                                                CastKind &Kind);
 
   // CheckSingleAssignmentConstraints - Currently used by
   // CheckAssignmentOperands, and ActOnReturnStmt. Prior to type checking,
   // this routine performs the default function/array converions.
   AssignConvertType CheckSingleAssignmentConstraints(QualType lhs,
-                                                     Expr *&rExpr);
+                                                     ExprResult &rExprRes);
 
   // \brief If the lhs type is a transparent union, check whether we
   // can initialize the transparent union with the given expression.
   AssignConvertType CheckTransparentUnionArgumentConstraints(QualType lhs,
-                                                             Expr *&rExpr);
+                                                             ExprResult &rExpr);
 
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
   bool CheckExceptionSpecCompatibility(Expr *From, QualType ToType);
 
-  bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 AssignmentAction Action,
-                                 bool AllowExplicit = false);
-  bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 AssignmentAction Action,
-                                 bool AllowExplicit,
-                                 ImplicitConversionSequence& ICS);
-  bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 const ImplicitConversionSequence& ICS,
-                                 AssignmentAction Action,
-                                 bool CStyle = false);
-  bool PerformImplicitConversion(Expr *&From, QualType ToType,
-                                 const StandardConversionSequence& SCS,
-                                 AssignmentAction Action,
-                                 bool CStyle);
+  ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
+                                       AssignmentAction Action,
+                                       bool AllowExplicit = false);
+  ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
+                                       AssignmentAction Action,
+                                       bool AllowExplicit,
+                                       ImplicitConversionSequence& ICS);
+  ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
+                                       const ImplicitConversionSequence& ICS,
+                                       AssignmentAction Action,
+                                       bool CStyle = false);
+  ExprResult PerformImplicitConversion(Expr *From, QualType ToType,
+                                       const StandardConversionSequence& SCS,
+                                       AssignmentAction Action,
+                                       bool CStyle);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).
 
   /// type checking binary operators (subroutines of CreateBuiltinBinOp).
-  QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  QualType InvalidOperands(SourceLocation l, ExprResult &lex, ExprResult &rex);
   QualType CheckPointerToMemberOperands( // C++ 5.5
-    Expr *&lex, Expr *&rex, ExprValueKind &VK,
+    ExprResult &lex, ExprResult &rex, ExprValueKind &VK,
     SourceLocation OpLoc, bool isIndirect);
   QualType CheckMultiplyDivideOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign,
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, bool isCompAssign,
                                        bool isDivide);
   QualType CheckRemainderOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckAdditionOperands( // C99 6.5.6
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, QualType* CompLHSTy = 0);
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, QualType* CompLHSTy = 0);
   QualType CheckSubtractionOperands( // C99 6.5.6
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, QualType* CompLHSTy = 0);
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, QualType* CompLHSTy = 0);
   QualType CheckShiftOperands( // C99 6.5.7
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc,
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, unsigned Opc,
     bool isCompAssign = false);
   QualType CheckCompareOperands( // C99 6.5.8/9
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc,
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, unsigned Opc,
                                 bool isRelational);
   QualType CheckBitwiseOperands( // C99 6.5.[10...12]
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, bool isCompAssign = false);
   QualType CheckLogicalOperands( // C99 6.5.[13,14]
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc, unsigned Opc);
+    ExprResult &lex, ExprResult &rex, SourceLocation OpLoc, unsigned Opc);
   // CheckAssignmentOperands is used for both simple and compound assignment.
   // For simple assignment, pass both expressions and a null converted type.
   // For compound assignment, pass both expressions and the converted type.
   QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
-    Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
+    Expr *lex, ExprResult &rex, SourceLocation OpLoc, QualType convertedType);
   
-  void ConvertPropertyForRValue(Expr *&E);
-  void ConvertPropertyForLValue(Expr *&LHS, Expr *&RHS, QualType& LHSTy);
+  void ConvertPropertyForLValue(ExprResult &LHS, ExprResult &RHS, QualType& LHSTy);
+  ExprResult ConvertPropertyForRValue(Expr *E);
                                    
   QualType CheckConditionalOperands( // C99 6.5.15
-    Expr *&cond, Expr *&lhs, Expr *&rhs,
+    ExprResult &cond, ExprResult &lhs, ExprResult &rhs,
     ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType CXXCheckConditionalOperands( // C++ 5.16
-    Expr *&cond, Expr *&lhs, Expr *&rhs,
+    ExprResult &cond, ExprResult &lhs, ExprResult &rhs,
     ExprValueKind &VK, ExprObjectKind &OK, SourceLocation questionLoc);
   QualType FindCompositePointerType(SourceLocation Loc, Expr *&E1, Expr *&E2,
                                     bool *NonStandardCompositeType = 0);
+  QualType FindCompositePointerType(SourceLocation Loc, ExprResult &E1, ExprResult &E2,
+                                    bool *NonStandardCompositeType = 0) {
+    Expr *E1Tmp = E1.take(), *E2Tmp = E2.take();
+    QualType Composite = FindCompositePointerType(Loc, E1Tmp, E2Tmp, NonStandardCompositeType);
+    E1 = Owned(E1Tmp);
+    E2 = Owned(E2Tmp);
+    return Composite;
+  }
 
-  QualType FindCompositeObjCPointerType(Expr *&LHS, Expr *&RHS,
+  QualType FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
                                         SourceLocation questionLoc);
 
   bool DiagnoseConditionalForNull(Expr *LHS, Expr *RHS,
                                   SourceLocation QuestionLoc);
 
   /// type checking for vector binary operators.
-  QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
-  QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
+  QualType CheckVectorOperands(SourceLocation l, ExprResult &lex, ExprResult &rex);
+  QualType CheckVectorCompareOperands(ExprResult &lex, ExprResult &rx,
                                       SourceLocation l, bool isRel);
 
   /// type checking declaration initializers (C99 6.7.8)
@@ -5024,13 +5032,13 @@ public:
 
   /// CheckCastTypes - Check type constraints for casting between types under
   /// C semantics, or forward to CXXCheckCStyleCast in C++.
-  bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
-                      CastKind &Kind, ExprValueKind &VK, CXXCastPath &BasePath,
-                      bool FunctionalStyle = false);
+  ExprResult CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *CastExpr,
+                            CastKind &Kind, ExprValueKind &VK, CXXCastPath &BasePath,
+                            bool FunctionalStyle = false);
 
-  bool checkUnknownAnyCast(SourceRange TyRange, QualType castType,
-                           Expr *&castExpr, CastKind &castKind,
-                           ExprValueKind &valueKind, CXXCastPath &BasePath);
+  ExprResult checkUnknownAnyCast(SourceRange TyRange, QualType castType,
+                                 Expr *castExpr, CastKind &castKind,
+                                 ExprValueKind &valueKind, CXXCastPath &BasePath);
 
   // CheckVectorCast - check type constraints for vectors.
   // Since vectors are an extension, there are no C standard reference for this.
@@ -5043,15 +5051,15 @@ public:
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size,
   // or vectors and the element type of that vector.
-  // returns true if the cast is invalid
-  bool CheckExtVectorCast(SourceRange R, QualType VectorTy, Expr *&CastExpr,
-                          CastKind &Kind);
+  // returns the cast expr
+  ExprResult CheckExtVectorCast(SourceRange R, QualType VectorTy, Expr *CastExpr,
+                                CastKind &Kind);
 
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
-  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
-                          Expr *&CastExpr, CastKind &Kind,
-                          CXXCastPath &BasePath, bool FunctionalStyle);
+  ExprResult CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
+                                Expr *CastExpr, CastKind &Kind,
+                                CXXCastPath &BasePath, bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send.
   /// \param Method - May be null.
@@ -5070,7 +5078,7 @@ public:
   /// \param Loc - A location associated with the condition, e.g. the
   /// 'if' keyword.
   /// \return true iff there were any errors
-  bool CheckBooleanCondition(Expr *&CondExpr, SourceLocation Loc);
+  ExprResult CheckBooleanCondition(Expr *CondExpr, SourceLocation Loc);
 
   ExprResult ActOnBooleanCondition(Scope *S, SourceLocation Loc,
                                            Expr *SubExpr);
@@ -5084,7 +5092,7 @@ public:
   void DiagnoseEqualityWithExtraParens(ParenExpr *parenE);
 
   /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
-  bool CheckCXXBooleanCondition(Expr *&CondExpr);
+  ExprResult CheckCXXBooleanCondition(Expr *CondExpr);
 
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit

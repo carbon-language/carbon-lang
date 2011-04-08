@@ -4816,8 +4816,12 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   
   // If necessary, apply function/array conversion to the receiver.
   // C99 6.7.5.3p[7,8].
-  if (RecExpr)
-    DefaultFunctionArrayLvalueConversion(RecExpr);
+  if (RecExpr) {
+    ExprResult Conv = DefaultFunctionArrayLvalueConversion(RecExpr);
+    if (Conv.isInvalid()) // conversion failed. bail.
+      return;
+    RecExpr = Conv.take();
+  }
   QualType ReceiverType = RecExpr? RecExpr->getType() 
                           : Super? Context.getObjCObjectPointerType(
                                             Context.getObjCInterfaceType(Super))

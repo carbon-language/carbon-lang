@@ -1765,9 +1765,9 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
 
     CXXCastPath BasePath;
     BasePath.push_back(BaseSpec);
-    SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
-                              CK_UncheckedDerivedToBase,
-                              VK_LValue, &BasePath);
+    CopyCtorArg = SemaRef.ImpCastExprToType(CopyCtorArg, ArgTy,
+                                            CK_UncheckedDerivedToBase,
+                                            VK_LValue, &BasePath).take();
 
     InitializationKind InitKind
       = InitializationKind::CreateDirect(Constructor->getLocation(),
@@ -5603,21 +5603,19 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // Construct the "from" expression, which is an implicit cast to the
     // appropriately-qualified base type.
     Expr *From = OtherRef;
-    ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
-                      CK_UncheckedDerivedToBase,
-                      VK_LValue, &BasePath);
+    From = ImpCastExprToType(From, Context.getQualifiedType(BaseType, OtherQuals),
+                             CK_UncheckedDerivedToBase,
+                             VK_LValue, &BasePath).take();
 
     // Dereference "this".
     ExprResult To = CreateBuiltinUnaryOp(Loc, UO_Deref, This);
     
     // Implicitly cast "this" to the appropriately-qualified base type.
-    Expr *ToE = To.takeAs<Expr>();
-    ImpCastExprToType(ToE, 
-                      Context.getCVRQualifiedType(BaseType,
-                                      CopyAssignOperator->getTypeQualifiers()),
-                      CK_UncheckedDerivedToBase, 
-                      VK_LValue, &BasePath);
-    To = Owned(ToE);
+    To = ImpCastExprToType(To.take(), 
+                           Context.getCVRQualifiedType(BaseType,
+                                     CopyAssignOperator->getTypeQualifiers()),
+                           CK_UncheckedDerivedToBase, 
+                           VK_LValue, &BasePath);
 
     // Build the copy.
     StmtResult Copy = BuildSingleCopyAssign(*this, Loc, BaseType,

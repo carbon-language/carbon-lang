@@ -713,15 +713,23 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     //   compatible structure or union type. In the latter case, the
     //   initial value of the object, including unnamed members, is
     //   that of the expression.
+    ExprResult ExprRes = SemaRef.Owned(expr);
     if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
-        SemaRef.CheckSingleAssignmentConstraints(ElemType, expr)
+        SemaRef.CheckSingleAssignmentConstraints(ElemType, ExprRes)
           == Sema::Compatible) {
-      SemaRef.DefaultFunctionArrayLvalueConversion(expr);
-      UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
+      if (ExprRes.isInvalid())
+        hadError = true;
+      else {
+        ExprRes = SemaRef.DefaultFunctionArrayLvalueConversion(ExprRes.take());
+	      if (ExprRes.isInvalid())
+	        hadError = true;
+      }
+      UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                  ExprRes.takeAs<Expr>());
       ++Index;
       return;
     }
-
+    ExprRes.release();
     // Fall through for subaggregate initialization
   }
 
@@ -2104,6 +2112,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ReferenceInitDropsQualifiers:
   case FK_ReferenceInitFailed:
   case FK_ConversionFailed:
+  case FK_ConversionFromPropertyFailed:
   case FK_TooManyInitsForScalar:
   case FK_ReferenceBindingToInitList:
   case FK_InitListBadDestinationType:
@@ -3129,8 +3138,14 @@ InitializationSequence::InitializationSequence(Sema &S,
   }
 
   for (unsigned I = 0; I != NumArgs; ++I)
-    if (Args[I]->getObjectKind() == OK_ObjCProperty)
-      S.ConvertPropertyForRValue(Args[I]);
+    if (Args[I]->getObjectKind() == OK_ObjCProperty) {
+      ExprResult Result = S.ConvertPropertyForRValue(Args[I]);
+      if (Result.isInvalid()) {
+        SetFailed(FK_ConversionFromPropertyFailed);
+        return;
+      }
+      Args[I] = Result.take();
+    }
 
   QualType SourceType;
   Expr *Initializer = 0;
@@ -3693,14 +3708,15 @@ InitializationSequence::Perform(Sema &S,
   case SK_ObjCObjectConversion:
   case SK_ArrayInit: {
     assert(Args.size() == 1);
-    Expr *CurInitExpr = Args.get()[0];
-    if (!CurInitExpr) return ExprError();
+    CurInit = Args.get()[0];
+    if (!CurInit.get()) return ExprError();
 
     // Read from a property when initializing something with it.
-    if (CurInitExpr->getObjectKind() == OK_ObjCProperty)
-      S.ConvertPropertyForRValue(CurInitExpr);
-
-    CurInit = ExprResult(CurInitExpr);
+    if (CurInit.get()->getObjectKind() == OK_ObjCProperty) {
+      CurInit = S.ConvertPropertyForRValue(CurInit.take());
+      if (CurInit.isInvalid())
+        return ExprError();
+    }
     break;
   }
 
@@ -3717,14 +3733,13 @@ InitializationSequence::Perform(Sema &S,
     if (CurInit.isInvalid())
       return ExprError();
 
-    Expr *CurInitExpr = CurInit.get();
-    QualType SourceType = CurInitExpr? CurInitExpr->getType() : QualType();
+    QualType SourceType = CurInit.get() ? CurInit.get()->getType() : QualType();
 
     switch (Step->Kind) {
     case SK_ResolveAddressOfOverloadedFunction:
       // Overload resolution determined which function invoke; update the
       // initializer to reflect that choice.
-      S.CheckAddressOfMemberAccess(CurInitExpr, Step->Function.FoundDecl);
+      S.CheckAddressOfMemberAccess(CurInit.get(), Step->Function.FoundDecl);
       S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Kind.getLocation());
       CurInit = S.FixOverloadedFunctionReference(move(CurInit),
                                                  Step->Function.FoundDecl,
@@ -3742,8 +3757,8 @@ InitializationSequence::Perform(Sema &S,
       // Casts to inaccessible base classes are allowed with C-style casts.
       bool IgnoreBaseAccess = Kind.isCStyleOrFunctionalCast();
       if (S.CheckDerivedToBaseConversion(SourceType, Step->Type,
-                                         CurInitExpr->getLocStart(),
-                                         CurInitExpr->getSourceRange(),
+                                         CurInit.get()->getLocStart(),
+                                         CurInit.get()->getSourceRange(),
                                          &BasePath, IgnoreBaseAccess))
         return ExprError();
 
@@ -3752,7 +3767,7 @@ InitializationSequence::Perform(Sema &S,
         if (const PointerType *Pointer = T->getAs<PointerType>())
           T = Pointer->getPointeeType();
         if (const RecordType *RecordTy = T->getAs<RecordType>())
-          S.MarkVTableUsed(CurInitExpr->getLocStart(),
+          S.MarkVTableUsed(CurInit.get()->getLocStart(),
                            cast<CXXRecordDecl>(RecordTy->getDecl()));
       }
 
@@ -3771,21 +3786,21 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_BindReference:
-      if (FieldDecl *BitField = CurInitExpr->getBitField()) {
+      if (FieldDecl *BitField = CurInit.get()->getBitField()) {
         // References cannot bind to bit fields (C++ [dcl.init.ref]p5).
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_bitfield)
           << Entity.getType().isVolatileQualified()
           << BitField->getDeclName()
-          << CurInitExpr->getSourceRange();
+          << CurInit.get()->getSourceRange();
         S.Diag(BitField->getLocation(), diag::note_bitfield_decl);
         return ExprError();
       }
 
-      if (CurInitExpr->refersToVectorElement()) {
+      if (CurInit.get()->refersToVectorElement()) {
         // References cannot bind to vector elements.
         S.Diag(Kind.getLocation(), diag::err_reference_bind_to_vector_element)
           << Entity.getType().isVolatileQualified()
-          << CurInitExpr->getSourceRange();
+          << CurInit.get()->getSourceRange();
         PrintInitLocationNote(S, Entity);
         return ExprError();
       }
@@ -3793,7 +3808,7 @@ InitializationSequence::Perform(Sema &S,
       // Reference binding does not have any corresponding ASTs.
 
       // Check exception specifications
-      if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
+      if (S.CheckExceptionSpecCompatibility(CurInit.get(), DestType))
         return ExprError();
 
       break;
@@ -3802,7 +3817,7 @@ InitializationSequence::Perform(Sema &S,
       // Reference binding does not have any corresponding ASTs.
 
       // Check exception specifications
-      if (S.CheckExceptionSpecCompatibility(CurInitExpr, DestType))
+      if (S.CheckExceptionSpecCompatibility(CurInit.get(), DestType))
         return ExprError();
 
       break;
@@ -3824,13 +3839,14 @@ InitializationSequence::Perform(Sema &S,
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Fn)) {
         // Build a call to the selected constructor.
         ASTOwningVector<Expr*> ConstructorArgs(S);
-        SourceLocation Loc = CurInitExpr->getLocStart();
+        SourceLocation Loc = CurInit.get()->getLocStart();
         CurInit.release(); // Ownership transferred into MultiExprArg, below.
 
         // Determine the arguments required to actually perform the constructor
         // call.
+        Expr *Arg = CurInit.get();
         if (S.CompleteConstructorCall(Constructor,
-                                      MultiExprArg(&CurInitExpr, 1),
+                                      MultiExprArg(&Arg, 1),
                                       Loc, ConstructorArgs))
           return ExprError();
 
@@ -3858,23 +3874,22 @@ InitializationSequence::Perform(Sema &S,
         // Build a call to the conversion function.
         CXXConversionDecl *Conversion = cast<CXXConversionDecl>(Fn);
         IsLvalue = Conversion->getResultType()->isLValueReferenceType();
-        S.CheckMemberOperatorAccess(Kind.getLocation(), CurInitExpr, 0,
+        S.CheckMemberOperatorAccess(Kind.getLocation(), CurInit.get(), 0,
                                     FoundFn);
         S.DiagnoseUseOfDecl(FoundFn, Kind.getLocation());
 
         // FIXME: Should we move this initialization into a separate
         // derived-to-base conversion? I believe the answer is "no", because
         // we don't want to turn off access control here for c-style casts.
-        if (S.PerformObjectArgumentInitialization(CurInitExpr, /*Qualifier=*/0,
-                                                  FoundFn, Conversion))
+        ExprResult CurInitExprRes =
+          S.PerformObjectArgumentInitialization(CurInit.take(), /*Qualifier=*/0,
+                                                FoundFn, Conversion);
+        if(CurInitExprRes.isInvalid())
           return ExprError();
-
-        // Do a little dance to make sure that CurInit has the proper
-        // pointer.
-        CurInit.release();
+        CurInit = move(CurInitExprRes);
 
         // Build the actual call to the conversion function.
-        CurInit = S.BuildCXXMemberCallExpr(CurInitExpr, FoundFn, Conversion);
+        CurInit = S.BuildCXXMemberCallExpr(CurInit.get(), FoundFn, Conversion);
         if (CurInit.isInvalid() || !CurInit.get())
           return ExprError();
 
@@ -3888,23 +3903,21 @@ InitializationSequence::Perform(Sema &S,
       if (RequiresCopy || shouldBindAsTemporary(Entity))
         CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
       else if (CreatedObject && shouldDestroyTemporary(Entity)) {
-        CurInitExpr = static_cast<Expr *>(CurInit.get());
-        QualType T = CurInitExpr->getType();
+        QualType T = CurInit.get()->getType();
         if (const RecordType *Record = T->getAs<RecordType>()) {
           CXXDestructorDecl *Destructor
             = S.LookupDestructor(cast<CXXRecordDecl>(Record->getDecl()));
-          S.CheckDestructorAccess(CurInitExpr->getLocStart(), Destructor,
+          S.CheckDestructorAccess(CurInit.get()->getLocStart(), Destructor,
                                   S.PDiag(diag::err_access_dtor_temp) << T);
-          S.MarkDeclarationReferenced(CurInitExpr->getLocStart(), Destructor);
-          S.DiagnoseUseOfDecl(Destructor, CurInitExpr->getLocStart());
+          S.MarkDeclarationReferenced(CurInit.get()->getLocStart(), Destructor);
+          S.DiagnoseUseOfDecl(Destructor, CurInit.get()->getLocStart());
         }
       }
 
-      CurInitExpr = CurInit.takeAs<Expr>();
       // FIXME: xvalues
       CurInit = S.Owned(ImplicitCastExpr::Create(S.Context,
-                                                 CurInitExpr->getType(),
-                                                 CastKind, CurInitExpr, 0,
+                                                 CurInit.get()->getType(),
+                                                 CastKind, CurInit.get(), 0,
                                            IsLvalue ? VK_LValue : VK_RValue));
 
       if (RequiresCopy)
@@ -3924,25 +3937,23 @@ InitializationSequence::Perform(Sema &S,
               (Step->Kind == SK_QualificationConversionXValue ?
                    VK_XValue :
                    VK_RValue);
-      S.ImpCastExprToType(CurInitExpr, Step->Type, CK_NoOp, VK);
-      CurInit.release();
-      CurInit = S.Owned(CurInitExpr);
+      CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type, CK_NoOp, VK);
       break;
     }
 
     case SK_ConversionSequence: {
-      if (S.PerformImplicitConversion(CurInitExpr, Step->Type, *Step->ICS,
-                                      getAssignmentAction(Entity),
-                                      Kind.isCStyleOrFunctionalCast()))
+      ExprResult CurInitExprRes =
+        S.PerformImplicitConversion(CurInit.get(), Step->Type, *Step->ICS,
+                                    getAssignmentAction(Entity),
+                                    Kind.isCStyleOrFunctionalCast());
+      if (CurInitExprRes.isInvalid())
         return ExprError();
-
-      CurInit.release();
-      CurInit = S.Owned(CurInitExpr);
+      CurInit = move(CurInitExprRes);
       break;
     }
 
     case SK_ListInitialization: {
-      InitListExpr *InitList = cast<InitListExpr>(CurInitExpr);
+      InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
       QualType Ty = Step->Type;
       if (S.CheckInitList(Entity, InitList, ResultType? *ResultType : Ty))
         return ExprError();
@@ -4075,54 +4086,57 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_CAssignment: {
-      QualType SourceType = CurInitExpr->getType();
+      QualType SourceType = CurInit.get()->getType();
+      ExprResult Result = move(CurInit);
       Sema::AssignConvertType ConvTy =
-        S.CheckSingleAssignmentConstraints(Step->Type, CurInitExpr);
+        S.CheckSingleAssignmentConstraints(Step->Type, Result);
+      if (Result.isInvalid())
+        return ExprError();
+      CurInit = move(Result);
 
       // If this is a call, allow conversion to a transparent union.
+      ExprResult CurInitExprRes = move(CurInit);
       if (ConvTy != Sema::Compatible &&
           Entity.getKind() == InitializedEntity::EK_Parameter &&
-          S.CheckTransparentUnionArgumentConstraints(Step->Type, CurInitExpr)
+          S.CheckTransparentUnionArgumentConstraints(Step->Type, CurInitExprRes)
             == Sema::Compatible)
         ConvTy = Sema::Compatible;
+      if (CurInitExprRes.isInvalid())
+        return ExprError();
+      CurInit = move(CurInitExprRes);
 
       bool Complained;
       if (S.DiagnoseAssignmentResult(ConvTy, Kind.getLocation(),
                                      Step->Type, SourceType,
-                                     CurInitExpr,
+                                     CurInit.get(),
                                      getAssignmentAction(Entity),
                                      &Complained)) {
         PrintInitLocationNote(S, Entity);
         return ExprError();
       } else if (Complained)
         PrintInitLocationNote(S, Entity);
-
-      CurInit.release();
-      CurInit = S.Owned(CurInitExpr);
       break;
     }
 
     case SK_StringInit: {
       QualType Ty = Step->Type;
-      CheckStringInit(CurInitExpr, ResultType ? *ResultType : Ty,
+      CheckStringInit(CurInit.get(), ResultType ? *ResultType : Ty,
                       S.Context.getAsArrayType(Ty), S);
       break;
     }
 
     case SK_ObjCObjectConversion:
-      S.ImpCastExprToType(CurInitExpr, Step->Type,
+      CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type,
                           CK_ObjCObjectLValueCast,
-                          S.CastCategory(CurInitExpr));
-      CurInit.release();
-      CurInit = S.Owned(CurInitExpr);
+                          S.CastCategory(CurInit.get()));
       break;
 
     case SK_ArrayInit:
       // Okay: we checked everything before creating this step. Note that
       // this is a GNU extension.
       S.Diag(Kind.getLocation(), diag::ext_array_init_copy)
-        << Step->Type << CurInitExpr->getType()
-        << CurInitExpr->getSourceRange();
+        << Step->Type << CurInit.get()->getType()
+        << CurInit.get()->getSourceRange();
 
       // If the destination type is an incomplete array type, update the
       // type accordingly.
@@ -4130,7 +4144,7 @@ InitializationSequence::Perform(Sema &S,
         if (const IncompleteArrayType *IncompleteDest
                            = S.Context.getAsIncompleteArrayType(Step->Type)) {
           if (const ConstantArrayType *ConstantSource
-                 = S.Context.getAsConstantArrayType(CurInitExpr->getType())) {
+                 = S.Context.getAsConstantArrayType(CurInit.get()->getType())) {
             *ResultType = S.Context.getConstantArrayType(
                                              IncompleteDest->getElementType(),
                                              ConstantSource->getSize(),
@@ -4290,6 +4304,11 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->getSourceRange();
     break;
   }
+
+  case FK_ConversionFromPropertyFailed:
+    // No-op. This error has already been reported.
+    break;
+
   case FK_TooManyInitsForScalar: {
     SourceRange R;
 
@@ -4487,6 +4506,10 @@ void InitializationSequence::dump(llvm::raw_ostream &OS) const {
 
     case FK_ConversionFailed:
       OS << "conversion failed";
+      break;
+
+    case FK_ConversionFromPropertyFailed:
+      OS << "conversion from property failed";
       break;
 
     case FK_TooManyInitsForScalar:

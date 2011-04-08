@@ -469,7 +469,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       GetTypeBeforeIntegralPromotion(CondExpr);
 
   // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
-  UsualUnaryConversions(CondExpr);
+  ExprResult CondResult = UsualUnaryConversions(CondExpr);
+  if (CondResult.isInvalid())
+    return StmtError();
+  CondExpr = CondResult.take();
   QualType CondType = CondExpr->getType();
   SS->setCond(CondExpr);
 
@@ -555,7 +558,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       // If the LHS is not the same type as the condition, insert an implicit
       // cast.
-      ImpCastExprToType(Lo, CondType, CK_IntegralCast);
+      Lo = ImpCastExprToType(Lo, CondType, CK_IntegralCast).take();
       CS->setLHS(Lo);
 
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
@@ -634,7 +637,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         // If the LHS is not the same type as the condition, insert an implicit
         // cast.
-        ImpCastExprToType(Hi, CondType, CK_IntegralCast);
+        Hi = ImpCastExprToType(Hi, CondType, CK_IntegralCast).take();
         CR->setRHS(Hi);
 
         // If the low value is bigger than the high value, the case is empty.
@@ -868,11 +871,13 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
                   Expr *Cond, SourceLocation CondRParen) {
   assert(Cond && "ActOnDoStmt(): missing expression");
 
-  if (CheckBooleanCondition(Cond, DoLoc))
+  ExprResult CondResult = CheckBooleanCondition(Cond, DoLoc);
+  if (CondResult.isInvalid() || CondResult.isInvalid())
     return StmtError();
+  Cond = CondResult.take();
 
   CheckImplicitConversions(Cond, DoLoc);
-  ExprResult CondResult = MaybeCreateExprWithCleanups(Cond);
+  CondResult = MaybeCreateExprWithCleanups(Cond);
   if (CondResult.isInvalid())
     return StmtError();
   Cond = CondResult.take();
@@ -973,7 +978,10 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
           << FirstType << First->getSourceRange();
   }
   if (Second && !Second->isTypeDependent()) {
-    DefaultFunctionArrayLvalueConversion(Second);
+    ExprResult Result = DefaultFunctionArrayLvalueConversion(Second);
+    if (Result.isInvalid())
+      return StmtError();
+    Second = Result.take();
     QualType SecondType = Second->getType();
     if (!SecondType->isObjCObjectPointerType())
       Diag(ForLoc, diag::err_collection_expr_type)
@@ -1020,8 +1028,12 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
   if (!E->isTypeDependent()) {
     QualType ETy = E->getType();
     QualType DestTy = Context.getPointerType(Context.VoidTy.withConst());
+    ExprResult ExprRes = Owned(E);
     AssignConvertType ConvTy =
-      CheckSingleAssignmentConstraints(DestTy, E);
+      CheckSingleAssignmentConstraints(DestTy, ExprRes);
+    if (ExprRes.isInvalid())
+      return StmtError();
+    E = ExprRes.take();
     if (DiagnoseAssignmentResult(ConvTy, StarLoc, DestTy, ETy, E, AA_Passing))
       return StmtError();
   }
@@ -1188,7 +1200,10 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (RetValExp) {
       // Don't call UsualUnaryConversions(), since we don't want to do
       // integer promotions here.
-      DefaultFunctionArrayLvalueConversion(RetValExp);
+      ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
+      if (Result.isInvalid())
+        return StmtError();
+      RetValExp = Result.take();
       CurBlock->ReturnType = RetValExp->getType();
       if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
         // We have to remove a 'const' added to copied-in variable which was
@@ -1290,8 +1305,12 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       if (RetValExp->getType()->isVoidType())
         D = diag::ext_return_has_void_expr;
       else {
-        IgnoredValueConversions(RetValExp);
-        ImpCastExprToType(RetValExp, Context.VoidTy, CK_ToVoid);
+        ExprResult Result = Owned(RetValExp);
+        Result = IgnoredValueConversions(Result.take());
+        if (Result.isInvalid())
+          return StmtError();
+        RetValExp = Result.take();
+        RetValExp = ImpCastExprToType(RetValExp, Context.VoidTy, CK_ToVoid).take();
       }
 
       // return (some void expression); is legal in C++.
@@ -1498,8 +1517,11 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       }
     }
 
-    DefaultFunctionArrayLvalueConversion(Exprs[i]);
+    ExprResult Result = DefaultFunctionArrayLvalueConversion(Exprs[i]);
+    if (Result.isInvalid())
+      return StmtError();
 
+    Exprs[i] = Result.take();
     InputConstraintInfos.push_back(Info);
   }
 
@@ -1614,7 +1636,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (InputDomain == AD_Int && OutputDomain == AD_Int &&
         !isOperandMentioned(InputOpNo, Pieces) &&
         InputExpr->isEvaluatable(Context)) {
-      ImpCastExprToType(InputExpr, OutTy, CK_IntegralCast);
+      InputExpr = ImpCastExprToType(InputExpr, OutTy, CK_IntegralCast).take();
       Exprs[InputOpNo] = InputExpr;
       NS->setInputExpr(i, InputExpr);
       continue;
@@ -1663,8 +1685,11 @@ Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, Stmt *Try,
 StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc,
                                                   Expr *Throw) {
   if (Throw) {
-    DefaultLvalueConversion(Throw);
+    ExprResult Result = DefaultLvalueConversion(Throw);
+    if (Result.isInvalid())
+      return StmtError();
 
+    Throw = Result.take();
     QualType ThrowType = Throw->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!ThrowType->isDependentType() &&
@@ -1703,8 +1728,11 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, Expr *SyncExpr,
                                   Stmt *SyncBody) {
   getCurFunction()->setHasBranchProtectedScope();
 
-  DefaultLvalueConversion(SyncExpr);
+  ExprResult Result = DefaultLvalueConversion(SyncExpr);
+  if (Result.isInvalid())
+    return StmtError();
 
+  SyncExpr = Result.take();
   // Make sure the expression type is an ObjC pointer or "void *".
   if (!SyncExpr->getType()->isDependentType() &&
       !SyncExpr->getType()->isObjCObjectPointerType()) {
