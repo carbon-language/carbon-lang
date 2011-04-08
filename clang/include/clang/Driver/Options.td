@@ -542,6 +542,8 @@ def mssse3 : Flag<"-mssse3">, Group<m_x86_Features_Group>;
 def maes : Flag<"-maes">, Group<m_x86_Features_Group>;
 def mavx : Flag<"-mavx">, Group<m_x86_Features_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;
+def mtrap_function_EQ : Joined<"-mtrap-function=">, Group<m_Group>,
+  HelpText<"Issue call to specified function rather than a trap instruction">;
 def mtune_EQ : Joined<"-mtune=">, Group<m_Group>;
 def multi__module : Flag<"-multi_module">;
 def multiply__defined__unused : Separate<"-multiply_defined_unused">;
