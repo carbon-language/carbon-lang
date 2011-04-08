@@ -949,6 +949,24 @@ static inline bool getBFCInvMask(uint32_t insn, uint32_t &mask) {
   return true;
 }
 
+// Standard data-processing instructions allow PC as a register specifier,
+// but we should reject other DPFrm instructions with PC as registers.
+static bool BadRegsDPFrm(unsigned Opcode, uint32_t insn) {
+  switch (Opcode) {
+  default:
+    // Did we miss an opcode?
+    if (decodeRd(insn) == 15 | decodeRn(insn) == 15 || decodeRm(insn) == 15) {
+      DEBUG(errs() << "DPFrm with bad reg specifier(s)\n");
+      return true;
+    }
+  case ARM::ADCrr:  case ARM::ADDSrr: case ARM::ADDrr:  case ARM::ANDrr:
+  case ARM::BICrr:  case ARM::CMNzrr: case ARM::CMPrr:  case ARM::EORrr:
+  case ARM::ORRrr:  case ARM::RSBrr:  case ARM::RSCrr:  case ARM::SBCrr:
+  case ARM::SUBSrr: case ARM::SUBrr:  case ARM::TEQrr:  case ARM::TSTrr:
+    return false;
+  }
+}
+
 // A major complication is the fact that some of the saturating add/subtract
 // operations have Rd Rm Rn, instead of the "normal" Rd Rn Rm.
 // They are QADD, QDADD, QDSUB, and QSUB.
@@ -976,6 +994,10 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   // Special-case handling of BFC/BFI/SBFX/UBFX.
   if (Opcode == ARM::BFC || Opcode == ARM::BFI) {
+    // A8.6.17 BFC & A8.6.18 BFI
+    // Sanity check Rd.
+    if (decodeRd(insn) == 15)
+      return false;
     MI.addOperand(MCOperand::CreateReg(0));
     if (Opcode == ARM::BFI) {
       MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
@@ -991,6 +1013,9 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
   }
   if (Opcode == ARM::SBFX || Opcode == ARM::UBFX) {
+    // Sanity check Rd and Rm.
+    if (decodeRd(insn) == 15 || decodeRm(insn) == 15)
+      return false;
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        decodeRm(insn))));
     MI.addOperand(MCOperand::CreateImm(slice(insn, 11, 7)));
@@ -1027,11 +1052,16 @@ static bool DisassembleDPFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     // Assert disabled because saturating operations, e.g., A8.6.127 QASX, are
     // routed here as well.
     // assert(getIBit(insn) == 0 && "I_Bit != '0' reg/reg form");
+    if (BadRegsDPFrm(Opcode, insn))
+      return false;
     MI.addOperand(MCOperand::CreateReg(
                     getRegisterEnum(B, ARM::GPRRegClassID,
                                     RmRn? decodeRn(insn) : decodeRm(insn))));
     ++OpIdx;
   } else if (Opcode == ARM::MOVi16 || Opcode == ARM::MOVTi16) {
+    // These two instructions don't allow d as 15.
+    if (decodeRd(insn) == 15)
+      return false;
     // We have an imm16 = imm4:imm12 (imm4=Inst{19:16}, imm12 = Inst{11:0}).
     assert(getIBit(insn) == 1 && "I_Bit != '1' reg/imm form");
     unsigned Imm16 = slice(insn, 19, 16) << 12 | slice(insn, 11, 0);
