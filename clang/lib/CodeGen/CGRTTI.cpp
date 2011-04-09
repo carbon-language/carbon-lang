@@ -877,15 +877,16 @@ void RTTIBuilder::BuildVMIClassTypeInfo(const CXXRecordDecl *RD) {
     // For a non-virtual base, this is the offset in the object of the base
     // subobject. For a virtual base, this is the offset in the virtual table of
     // the virtual base offset for the virtual base referenced (negative).
+    CharUnits Offset;
     if (Base->isVirtual())
-      OffsetFlags = 
-        CGM.getVTables().getVirtualBaseOffsetOffset(RD, BaseDecl).getQuantity();
+      Offset = 
+        CGM.getVTables().getVirtualBaseOffsetOffset(RD, BaseDecl);
     else {
       const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
-      OffsetFlags = Layout.getBaseClassOffsetInBits(BaseDecl) / 8;
+      Offset = Layout.getBaseClassOffset(BaseDecl);
     };
     
-    OffsetFlags <<= 8;
+    OffsetFlags = Offset.getQuantity() << 8;
     
     // The low-order byte of __offset_flags contains flags, as given by the 
     // masks from the enumeration __offset_flags_masks.
