@@ -85,12 +85,11 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   StringMapEntry<bool> *NameEntry = &UsedNames.GetOrCreateValue(Name);
   if (NameEntry->getValue()) {
     assert(isTemporary && "Cannot rename non temporary symbols");
-    SmallString<128> NewName;
+    SmallString<128> NewName = Name;
     do {
-      Twine T = Name + Twine(NextUniqueID++);
-      T.toVector(NewName);
-      StringRef foo = NewName;
-      NameEntry = &UsedNames.GetOrCreateValue(foo);
+      NewName.resize(Name.size());
+      raw_svector_ostream(NewName) << NextUniqueID++;
+      NameEntry = &UsedNames.GetOrCreateValue(NewName);
     } while (NameEntry->getValue());
   }
   NameEntry->setValue(true);
@@ -110,9 +109,8 @@ MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
 
 MCSymbol *MCContext::CreateTempSymbol() {
   SmallString<128> NameSV;
-  Twine Name = Twine(MAI.getPrivateGlobalPrefix()) + "tmp" +
-    Twine(NextUniqueID++);
-  Name.toVector(NameSV);
+  raw_svector_ostream(NameSV)
+    << MAI.getPrivateGlobalPrefix() << "tmp" << NextUniqueID++;
   return CreateSymbol(NameSV);
 }
 
