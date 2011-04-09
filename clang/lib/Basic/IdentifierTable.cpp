@@ -162,7 +162,12 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 #define OBJC2_AT_KEYWORD(NAME) \
   if (LangOpts.ObjC2)          \
     AddObjCKeyword(llvm::StringRef(#NAME), tok::objc_##NAME, *this);
+#define TESTING_KEYWORD(NAME, FLAGS)
 #include "clang/Basic/TokenKinds.def"
+
+  if (LangOpts.ParseUnknownAnytype)
+    AddKeyword("__unknown_anytype", tok::kw___unknown_anytype, KEYALL,
+               LangOpts, *this);
 }
 
 tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {

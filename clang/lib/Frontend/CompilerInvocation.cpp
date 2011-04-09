@@ -684,6 +684,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.FakeAddressSpaceMap)
     Res.push_back("-ffake-address-space-map");
+  if (Opts.ParseUnknownAnytype)
+    Res.push_back("-funknown-anytype");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -1507,6 +1509,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.OptimizeSize = 0;
   Opts.MRTD = Args.hasArg(OPT_mrtd);
   Opts.FakeAddressSpaceMap = Args.hasArg(OPT_ffake_address_space_map);
+  Opts.ParseUnknownAnytype = Args.hasArg(OPT_funknown_anytype);
 
   // FIXME: Eliminate this dependency.
   unsigned Opt = getOptimizationLevel(Args, IK, Diags);

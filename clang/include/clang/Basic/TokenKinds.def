@@ -38,6 +38,9 @@
 #ifndef OBJC2_AT_KEYWORD
 #define OBJC2_AT_KEYWORD(X)
 #endif
+#ifndef TESTING_KEYWORD
+#define TESTING_KEYWORD(X, L) KEYWORD(X, L)
+#endif
 #ifndef ANNOTATION
 #define ANNOTATION(X) TOK(annot_ ## X)
 #endif
@@ -416,6 +419,9 @@ ALIAS("_pascal"      , __pascal   , KEYBORLAND)
 ALIAS("__char16_t"   , char16_t   , KEYCXX)
 ALIAS("__char32_t"   , char32_t   , KEYCXX)
 
+// Clang-specific keywords enabled only in testing.
+TESTING_KEYWORD(__unknown_anytype , KEYALL)
+
 
 //===----------------------------------------------------------------------===//
 // Objective-C @-preceeded keywords.
@@ -467,6 +473,7 @@ ANNOTATION(template_id)  // annotation for a C++ template-id that names a
 ANNOTATION(pragma_unused)
 
 #undef ANNOTATION
+#undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD
 #undef OBJC1_AT_KEYWORD
 #undef CXX_KEYWORD_OPERATOR

@@ -250,6 +250,7 @@ public:
   static const TST TST_typeofExpr = clang::TST_typeofExpr;
   static const TST TST_decltype = clang::TST_decltype;
   static const TST TST_auto = clang::TST_auto;
+  static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
   static const TST TST_error = clang::TST_error;
 
   // type-qualifiers

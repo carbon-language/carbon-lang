@@ -841,6 +841,10 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
     break;
   }
 
+  case DeclSpec::TST_unknown_anytype:
+    Result = Context.UnknownAnyTy;
+    break;
+
   case DeclSpec::TST_error:
     Result = Context.IntTy;
     declarator.setInvalidType(true);

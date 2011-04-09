@@ -113,6 +113,7 @@ public:
   unsigned NoConstantCFStrings : 1;  // Do not do CF strings
   unsigned InlineVisibilityHidden : 1; // Whether inline C++ methods have
                                        // hidden visibility by default.
+  unsigned ParseUnknownAnytype: 1; /// Let the user write __unknown_anytype.
 
   unsigned SpellChecking : 1; // Whether to perform spell-checking for error
                               // recovery.
@@ -223,6 +224,7 @@ public:
     NoBitFieldTypeAlign = 0;
     FakeAddressSpaceMap = 0;
     MRTD = 0;
+    ParseUnknownAnytype = 0;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }

@@ -1720,6 +1720,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___pixel:
       isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
       break;
+    case tok::kw___unknown_anytype:
+      isInvalid = DS.SetTypeSpecType(TST_unknown_anytype, Loc,
+                                     PrevSpec, DiagID);
+      break;
 
     // class-specifier:
     case tok::kw_class:
