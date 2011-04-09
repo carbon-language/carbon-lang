@@ -117,7 +117,8 @@ namespace test3 {
     // CHECK: [[N:%.*]] = load i32*
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 4)
     // CHECK: @llvm.uadd.with.overflow.i32(i32 {{.*}}, i32 8)
-    // CHECK: [[SZ:%.*]] = select
+    // CHECK: [[OR:%.*]] = or i1
+    // CHECK: [[SZ:%.*]] = select i1 [[OR]]
     // CHECK: call noalias i8* @_Znam(i32 [[SZ]])
     // CHECK: store i32 4
     // CHECK: store i32 [[N]]

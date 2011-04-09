@@ -595,7 +595,7 @@ static llvm::Value *EmitCXXNewAllocSize(ASTContext &Context,
       Size = CGF.Builder.CreateExtractValue(AddRes, 0);
 
       llvm::Value *AddDidOverflow = CGF.Builder.CreateExtractValue(AddRes, 1);
-      DidOverflow = CGF.Builder.CreateAnd(DidOverflow, AddDidOverflow);
+      DidOverflow = CGF.Builder.CreateOr(DidOverflow, AddDidOverflow);
     }
 
     Size = CGF.Builder.CreateSelect(DidOverflow,
