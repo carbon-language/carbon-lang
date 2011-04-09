@@ -1986,7 +1986,8 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
       Context.hasSameUnqualifiedType(From->getType(), Context.BoolTy) &&
       From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
     DiagRuntimeBehavior(From->getExprLoc(), From,
-                        PDiag(diag::warn_init_pointer_from_false) << ToType);
+                        PDiag(diag::warn_impcast_bool_to_null_pointer)
+                          << ToType << From->getSourceRange());
 
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
     if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
