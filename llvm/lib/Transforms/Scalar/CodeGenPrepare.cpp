@@ -889,11 +889,26 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
   MemoryInst->replaceUsesOfWith(Repl, SunkAddr);
 
+  // If we have no uses, recursively delete the value and all dead instructions
+  // using it.
   if (Repl->use_empty()) {
+    // This can cause recursive deletion, which can invalidate our iterator.
+    // Use a WeakVH to hold onto it in case this happens.
+    WeakVH IterHandle(CurInstIterator);
+    BasicBlock *BB = CurInstIterator->getParent();
+    
     RecursivelyDeleteTriviallyDeadInstructions(Repl);
-    // This address is now available for reassignment, so erase the table entry;
-    // we don't want to match some completely different instruction.
-    SunkAddrs[Addr] = 0;
+
+    if (IterHandle != CurInstIterator) {
+      // If the iterator instruction was recursively deleted, start over at the
+      // start of the block.
+      CurInstIterator = BB->begin();
+      SunkAddrs.clear();
+    } else {
+      // This address is now available for reassignment, so erase the table
+      // entry; we don't want to match some completely different instruction.
+      SunkAddrs[Addr] = 0;
+    }    
   }
   ++NumMemoryInsts;
   return true;
