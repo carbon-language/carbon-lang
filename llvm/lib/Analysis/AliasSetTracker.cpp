@@ -602,6 +602,10 @@ void AliasSetTracker::ASTCallbackVH::deleted() {
   // this now dangles!
 }
 
+void AliasSetTracker::ASTCallbackVH::allUsesReplacedWith(Value *V) {
+  AST->copyValue(getValPtr(), V);
+}
+
 AliasSetTracker::ASTCallbackVH::ASTCallbackVH(Value *V, AliasSetTracker *ast)
   : CallbackVH(V), AST(ast) {}
 

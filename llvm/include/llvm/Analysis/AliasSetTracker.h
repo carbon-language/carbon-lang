@@ -284,6 +284,7 @@ class AliasSetTracker {
   class ASTCallbackVH : public CallbackVH {
     AliasSetTracker *AST;
     virtual void deleted();
+    virtual void allUsesReplacedWith(Value *);
   public:
     ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
     ASTCallbackVH &operator=(Value *V);
