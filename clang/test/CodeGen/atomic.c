@@ -44,6 +44,11 @@ int atomic(void) {
   // CHECK: call i32 @llvm.atomic.swap.i32.p0i32(i32* %val, i32 7)
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
   
+  old = __sync_swap(&val, 8);
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  // CHECK: call i32 @llvm.atomic.swap.i32.p0i32(i32* %val, i32 8)
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
+  
   old = __sync_val_compare_and_swap(&val, 4, 1976);
   // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true)
   // CHECK: call i32 @llvm.atomic.cmp.swap.i32.p0i32(i32* %val, i32 4, i32 1976)

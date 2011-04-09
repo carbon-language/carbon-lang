@@ -577,6 +577,13 @@ BUILTIN(__sync_lock_release_4, "viD*.", "n")
 BUILTIN(__sync_lock_release_8, "vLLiD*.", "n")
 BUILTIN(__sync_lock_release_16, "vLLLiD*.", "n")
 
+BUILTIN(__sync_swap, "v.", "")
+BUILTIN(__sync_swap_1, "ccD*c.", "n")
+BUILTIN(__sync_swap_2, "ssD*s.", "n")
+BUILTIN(__sync_swap_4, "iiD*i.", "n")
+BUILTIN(__sync_swap_8, "LLiLLiD*LLi.", "n")
+BUILTIN(__sync_swap_16, "LLLiLLLiD*LLLi.", "n")
+
 
 
 // Non-overloaded atomic builtins.

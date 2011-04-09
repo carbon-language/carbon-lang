@@ -180,6 +180,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Builtin::BI__sync_bool_compare_and_swap:
   case Builtin::BI__sync_lock_test_and_set:
   case Builtin::BI__sync_lock_release:
+  case Builtin::BI__sync_swap:
     return SemaBuiltinAtomicOverloaded(move(TheCallResult));
   }
   
@@ -415,7 +416,8 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     BUILTIN_ROW(__sync_val_compare_and_swap),
     BUILTIN_ROW(__sync_bool_compare_and_swap),
     BUILTIN_ROW(__sync_lock_test_and_set),
-    BUILTIN_ROW(__sync_lock_release)
+    BUILTIN_ROW(__sync_lock_release),
+    BUILTIN_ROW(__sync_swap)
   };
 #undef BUILTIN_ROW
 
@@ -468,6 +470,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     NumFixed = 0;
     ResultType = Context.VoidTy;
     break;
+  case Builtin::BI__sync_swap: BuiltinIndex = 14; break;
   }
 
   // Now that we know how many fixed arguments we expect, first check that we

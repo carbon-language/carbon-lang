@@ -56,6 +56,7 @@ td {
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
   <li><a href="#__builtin_unreachable">__builtin_unreachable</a></li>
+  <li><a href="#__sync_swap">__sync_swap</a></li>
  </ul>
 </li>
 <li><a href="#targetspecific">Target-Specific Extensions</a>
@@ -710,6 +711,36 @@ no arguments and produces a void result.
 </p>
 
 <p>Query for this feature with __has_builtin(__builtin_unreachable).</p>
+
+<!-- ======================================================================= -->
+<h3 id="__sync_swap">__sync_swap</h3>
+<!-- ======================================================================= -->
+
+<p><tt>__sync_swap</tt> is used to atomically swap integers or pointers in
+memory.
+</p>
+
+<p><b>Syntax:</b></p>
+
+<pre>
+<i>type</i> __sync_swap(<i>type</i> *ptr, <i>type</i> value, ...)
+</pre>
+
+<p><b>Example of Use:</b></p>
+
+<pre>
+int old_value = __sync_swap(&value, new_value);
+</pre>
+
+<p><b>Description:</b></p>
+
+<p>The __sync_swap() builtin extends the existing __sync_*() family of atomic
+intrinsics to allow code to atomically swap the current value with the new
+value.  More importantly, it helps developers write more efficient and correct
+code by avoiding expensive loops around __sync_bool_compare_and_swap() or
+relying on the platform specific implementation details of
+__sync_lock_test_and_set(). The __sync_swap() builtin is a full barrier.
+</p>
 
 
 <!-- ======================================================================= -->

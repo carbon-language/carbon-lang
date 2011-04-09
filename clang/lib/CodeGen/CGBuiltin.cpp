@@ -721,6 +721,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_bool_compare_and_swap:
   case Builtin::BI__sync_lock_test_and_set:
   case Builtin::BI__sync_lock_release:
+  case Builtin::BI__sync_swap:
     assert(0 && "Shouldn't make it through sema");
   case Builtin::BI__sync_fetch_and_add_1:
   case Builtin::BI__sync_fetch_and_add_2:
@@ -859,6 +860,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Result = Builder.CreateZExt(Result, ConvertType(E->getType()));
     return RValue::get(Result);
   }
+
+  case Builtin::BI__sync_swap_1:
+  case Builtin::BI__sync_swap_2:
+  case Builtin::BI__sync_swap_4:
+  case Builtin::BI__sync_swap_8:
+  case Builtin::BI__sync_swap_16:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
 
   case Builtin::BI__sync_lock_test_and_set_1:
   case Builtin::BI__sync_lock_test_and_set_2:
