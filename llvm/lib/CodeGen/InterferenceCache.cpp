@@ -26,7 +26,7 @@ void InterferenceCache::init(MachineFunction *mf,
   TRI = tri;
   PhysRegEntries.assign(TRI->getNumRegs(), 0);
   for (unsigned i = 0; i != CacheEntries; ++i)
-    Entries[i].clear(indexes);
+    Entries[i].clear(mf, indexes);
 }
 
 InterferenceCache::Entry *InterferenceCache::get(unsigned PhysReg) {
@@ -91,10 +91,6 @@ bool InterferenceCache::Entry::valid(LiveIntervalUnion *LIUArray,
 }
 
 void InterferenceCache::Entry::update(unsigned MBBNum) {
-  BlockInterference *BI = &Blocks[MBBNum];
-  BI->Tag = Tag;
-  BI->First = BI->Last = SlotIndex();
-
   SlotIndex Start, Stop;
   tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
 
@@ -109,23 +105,39 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     PrevPos = Start;
   }
 
-  // Check for first interference.
-  for (unsigned i = 0, e = Iters.size(); i != e; ++i) {
-    Iter &I = Iters[i];
-    if (!I.valid())
-      continue;
-    SlotIndex StartI = I.start();
-    if (StartI >= Stop)
-      continue;
-    if (!BI->First.isValid() || StartI < BI->First)
-      BI->First = StartI;
+  MachineFunction::const_iterator MFI = MF->getBlockNumbered(MBBNum);
+  BlockInterference *BI = &Blocks[MBBNum];
+  for (;;) {
+    BI->Tag = Tag;
+    BI->First = BI->Last = SlotIndex();
+
+    // Check for first interference.
+    for (unsigned i = 0, e = Iters.size(); i != e; ++i) {
+      Iter &I = Iters[i];
+      if (!I.valid())
+        continue;
+      SlotIndex StartI = I.start();
+      if (StartI >= Stop)
+        continue;
+      if (!BI->First.isValid() || StartI < BI->First)
+        BI->First = StartI;
+    }
+
+    PrevPos = Stop;
+    if (BI->First.isValid())
+      break;
+
+    // No interference in this block? Go ahead and precompute the next block.
+    if (++MFI == MF->end())
+      return;
+    MBBNum = MFI->getNumber();
+    BI = &Blocks[MBBNum];
+    if (BI->Tag == Tag)
+      return;
+    tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
   }
 
-  // No interference in block.
-  if (!BI->First.isValid())
-    return;
-
-  // Check for last interference.
+  // Check for last interference in block.
   for (unsigned i = 0, e = Iters.size(); i != e; ++i) {
     Iter &I = Iters[i];
     if (!I.valid() || I.start() >= Stop)
@@ -140,5 +152,4 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     if (Backup)
       ++I;
   }
-  PrevPos = Stop;
 }

@@ -43,6 +43,9 @@ class InterferenceCache {
     /// change.
     unsigned Tag;
 
+    /// MF - The current function.
+    MachineFunction *MF;
+
     /// Indexes - Mapping block numbers to SlotIndex ranges.
     SlotIndexes *Indexes;
 
@@ -67,8 +70,9 @@ class InterferenceCache {
   public:
     Entry() : PhysReg(0), Tag(0), Indexes(0) {}
 
-    void clear(SlotIndexes *indexes) {
+    void clear(MachineFunction *mf, SlotIndexes *indexes) {
       PhysReg = 0;
+      MF = mf;
       Indexes = indexes;
     }
 
