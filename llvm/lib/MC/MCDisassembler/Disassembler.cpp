@@ -128,9 +128,9 @@ public:
 } // namespace
 
 //
-// LLVMDisasmInstruction() disassmbles a single instruction using the
+// LLVMDisasmInstruction() disassembles a single instruction using the
 // disassembler context specified in the parameter DC.  The bytes of the
-// instuction are specified in the parameter Bytes, and contains at least
+// instruction are specified in the parameter Bytes, and contains at least
 // BytesSize number of bytes.  The instruction is at the address specified by
 // the PC parameter.  If a valid instruction can be disassembled its string is
 // returned indirectly in OutString which whos size is specified in the
@@ -155,16 +155,13 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
 
   std::string InsnStr;
   raw_string_ostream OS(InsnStr);
-  raw_ostream &Out = OS;
-  IP->printInst(&Inst, Out);
+  IP->printInst(&Inst, OS);
+  OS.flush();
 
-  std::string p;
-  p = OS.str();
-#ifdef LLVM_ON_WIN32
-  sprintf(OutString, "%s", p.c_str());
-#else
-  snprintf(OutString, OutStringSize, "%s", p.c_str());
-#endif
+  size_t OutputSize = std::min(OutStringSize-1, InsnStr.size());
+  std::memcpy(OutString, InsnStr.data(), OutputSize);
+  OutString[OutputSize] = '\0'; // Terminate string.
+
   return Size;
 }
 
