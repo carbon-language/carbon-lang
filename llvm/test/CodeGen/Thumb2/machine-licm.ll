@@ -88,10 +88,10 @@ define zeroext i16 @t3(i8 zeroext %data, i16 zeroext %crc) nounwind readnone {
 bb.nph:
 ; CHECK: bb.nph
 ; CHECK: movw {{(r[0-9])|(lr)}}, #32768
-; CHECK: movs {{(r[0-9])|(lr)}}, #8
+; CHECK: movs {{(r[0-9]+)|(lr)}}, #0
 ; CHECK: movw [[REGISTER:(r[0-9])|(lr)]], #16386
-; CHECK: movw {{(r[0-9])|(lr)}}, #65534
-; CHECK: movt {{(r[0-9])|(lr)}}, #65535
+; CHECK: movw {{(r[0-9]+)|(lr)}}, #65534
+; CHECK: movt {{(r[0-9]+)|(lr)}}, #65535
   br label %bb
 
 bb:                                               ; preds = %bb, %bb.nph
