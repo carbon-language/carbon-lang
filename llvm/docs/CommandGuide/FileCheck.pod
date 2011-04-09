@@ -240,6 +240,6 @@ define two separate CHECK lines that match on the same line.
 
 =head1 AUTHORS
 
-Maintained by The LLVM Team (L<http://llvm.org>).
+Maintained by The LLVM Team (L<http://llvm.org/>).
 
 =cut

@@ -401,6 +401,6 @@ L<llvm-ranlib|llvm-ranlib>, ar(1)
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut

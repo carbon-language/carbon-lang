@@ -349,6 +349,6 @@ L<valgrind(1)>
 
 =head1 AUTHOR
 
-Written by Daniel Dunbar and maintained by the LLVM Team (L<http://llvm.org>).
+Written by Daniel Dunbar and maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut

@@ -110,6 +110,6 @@ occurs, it will exit with a non-zero value.
 
 =head1 AUTHORS
 
-Maintained by The LLVM Team (L<http://llvm.org>).
+Maintained by The LLVM Team (L<http://llvm.org/>).
 
 =cut

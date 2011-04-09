@@ -196,6 +196,6 @@ L<lli|lli>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut

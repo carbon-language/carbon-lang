@@ -70,7 +70,7 @@ L<llvm-g++|llvmgxx>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut
 

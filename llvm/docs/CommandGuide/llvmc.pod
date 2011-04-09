@@ -185,6 +185,6 @@ L<llvm-dis|llvm-dis>, L<llc|llc>, L<llvm-link|llvm-link>
 
 =head1 AUTHORS
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut

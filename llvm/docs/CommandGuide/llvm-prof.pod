@@ -52,6 +52,6 @@ information. Otherwise, it exits with zero.
 
 =head1 AUTHOR
 
-B<llvm-prof> is maintained by the LLVM Team (L<http://llvm.org>).
+B<llvm-prof> is maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut

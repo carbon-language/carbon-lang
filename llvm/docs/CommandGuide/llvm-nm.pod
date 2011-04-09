@@ -117,6 +117,6 @@ L<llvm-dis|llvm-dis>, ar(1), nm(1)
 
 =head1 AUTHOR
 
-Maintained by the LLVM Team (L<http://llvm.org>).
+Maintained by the LLVM Team (L<http://llvm.org/>).
 
 =cut
