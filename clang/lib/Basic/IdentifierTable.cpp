@@ -81,17 +81,17 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
 // Constants for TokenKinds.def
 namespace {
   enum {
-    KEYALL = 1,
-    KEYC99 = 2,
-    KEYCXX = 4,
-    KEYCXX0X = 8,
-    KEYGNU = 16,
-    KEYMS = 32,
-    BOOLSUPPORT = 64,
-    KEYALTIVEC = 128,
-    KEYNOCXX = 256,
-    KEYBORLAND = 512,
-    KEYOPENCL = 1024
+    KEYC99 = 0x1,
+    KEYCXX = 0x2,
+    KEYCXX0X = 0x4,
+    KEYGNU = 0x8,
+    KEYMS = 0x10,
+    BOOLSUPPORT = 0x20,
+    KEYALTIVEC = 0x40,
+    KEYNOCXX = 0x80,
+    KEYBORLAND = 0x100,
+    KEYOPENCL = 0x200,
+    KEYALL = 0x3ff
   };
 }
 
@@ -107,7 +107,7 @@ static void AddKeyword(llvm::StringRef Keyword,
                        tok::TokenKind TokenCode, unsigned Flags,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
   unsigned AddResult = 0;
-  if (Flags & KEYALL) AddResult = 2;
+  if (Flags == KEYALL) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX)) AddResult = 2;
   else if (LangOpts.CPlusPlus0x && (Flags & KEYCXX0X)) AddResult = 2;
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
