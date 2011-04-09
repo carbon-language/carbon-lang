@@ -185,7 +185,7 @@ source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
   <tt>lib/Transforms/Hello</tt>.  Finally, you must set up a build script 
   (Makefile) that will compile the source code for the new pass.  To do this, 
   copy the following into <tt>Makefile</tt>:</p>
-  <hr/>
+  <hr>
 
 <div class="doc_code"><pre>
 # Makefile for hello pass
@@ -301,7 +301,7 @@ function.</p>
 initialization value is not important.</p>
 
 <div class="doc_code"><pre>
-  static RegisterPass<Hello> X("<i>hello</i>", "<i>Hello World Pass</i>",
+  static RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>",
                         false /* Only looks at CFG */,
                         false /* Analysis Pass */);
 }  <i>// end of anonymous namespace</i>
@@ -337,7 +337,7 @@ is supplied as fourth argument. </p>
   };
   
   char Hello::ID = 0;
-  static RegisterPass<Hello> X("hello", "Hello World Pass", false, false);
+  static RegisterPass&lt;Hello&gt; X("hello", "Hello World Pass", false, false);
 }
 
 </pre></div>

@@ -116,7 +116,7 @@ and performance.
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
   <li>Install the llvm-gcc-4.2 front end if you intend to compile C or C++
-      (see <a href="#installcf">Install the GCC Front End</a> for details):</li>
+      (see <a href="#installcf">Install the GCC Front End</a> for details):
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
       <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf -</tt></li>
@@ -344,9 +344,9 @@ up</a></li>
     ActivePerl, as these have Windows-specifics that will cause the
     build to fail.</a></li>
 <li><a name="pf_11">To use LLVM modules on Win32-based system,
-    you may configure LLVM with <i>&quot;--enable-shared&quot;</i>.</li>
+    you may configure LLVM with <i>&quot;--enable-shared&quot;</i>.</a></li>
 <li><a name="pf_12">To compile SPU backend, you need to add
-    <tt>&quot;LDFLAGS=-Wl,--stack,16777216&quot;</tt> to configure.</li>
+    <tt>&quot;LDFLAGS=-Wl,--stack,16777216&quot;</tt> to configure.</a></li>
 </ol>
 </div>
 
@@ -801,11 +801,11 @@ instructions</a> to successfully get and build the LLVM GCC front-end.</p>
   sync automatically with each Subversion commit and contain all necessary
   git-svn marks (so, you can recreate git-svn metadata locally). Note that right
   now mirrors reflect only <tt>trunk</tt> for each project. You can do the
-  read-only GIT clone of LLVM via: 
+  read-only GIT clone of LLVM via:</p>
+
 <pre>
 % git clone http://llvm.org/git/llvm.git
 </pre>
-</p>
 
 </div>
 
@@ -1238,7 +1238,7 @@ $ ./hello.bc
 
 <p>
 This allows you to execute LLVM bitcode files directly.  On Debian, you 
-can also use this command instead of the 'echo' command above:</p>
+can also use this command instead of the 'echo' command above:
 </p>
 
 <div class="doc_code">

@@ -567,7 +567,7 @@ which are intended to allow a pass to keep an AliasAnalysis consistent,
 however there's no way for a pass to declare in its
 <tt>getAnalysisUsage</tt> that it does so. Some passes attempt to use
 <tt>AU.addPreserved&lt;AliasAnalysis&gt;</tt>, however this doesn't
-actually have any effect.</tt>
+actually have any effect.</p>
 
 <p><tt>AliasAnalysisCounter</tt> (<tt>-count-aa</tt>) and <tt>AliasDebugger</tt>
 (<tt>-debug-aa</tt>) are implemented as <tt>ModulePass</tt> classes, so if your

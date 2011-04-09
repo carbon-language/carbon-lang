@@ -151,14 +151,14 @@ collector models. For instance, the intrinsics permit:</p>
 support a broad class of garbage collected languages including Scheme, ML, Java,
 C#, Perl, Python, Lua, Ruby, other scripting languages, and more.</p>
 
-<p>However, LLVM does not itself provide a garbage collector&#151;this should
+<p>However, LLVM does not itself provide a garbage collector&mdash;this should
 be part of your language's runtime library. LLVM provides a framework for
 compile time <a href="#plugin">code generation plugins</a>. The role of these
 plugins is to generate code and data structures which conforms to the <em>binary
 interface</em> specified by the <em>runtime library</em>. This is similar to the
 relationship between LLVM and DWARF debugging info, for example. The
 difference primarily lies in the lack of an established standard in the domain
-of garbage collection&#151;thus the plugins.</p>
+of garbage collection&mdash;thus the plugins.</p>
 
 <p>The aspects of the binary interface with which LLVM's GC support is
 concerned are:</p>
