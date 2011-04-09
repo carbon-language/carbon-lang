@@ -334,6 +334,15 @@ int EDDisassembler::printInst(std::string &str, MCInst &inst) {
   return 0;
 }
 
+static void diag_handler(const SMDiagnostic &diag,
+                         void *context)
+{
+  if (context) {
+    EDDisassembler *disassembler = static_cast<EDDisassembler*>(context);
+    diag.Print("", disassembler->ErrorStream);
+  }
+}
+
 int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
                               SmallVectorImpl<AsmToken> &tokens,
                               const std::string &str) {
@@ -356,6 +365,7 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
   SMLoc instLoc;
   
   SourceMgr sourceMgr;
+  sourceMgr.setDiagHandler(diag_handler, static_cast<void*>(this));
   sourceMgr.AddNewSourceBuffer(buf, SMLoc()); // ownership of buf handed over
   MCContext context(*AsmInfo, NULL);
   OwningPtr<MCStreamer> streamer(createNullStreamer(context));
