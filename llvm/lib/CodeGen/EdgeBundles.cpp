@@ -53,6 +53,19 @@ bool EdgeBundles::runOnMachineFunction(MachineFunction &mf) {
   EC.compress();
   if (ViewEdgeBundles)
     view();
+
+  // Compute the reverse mapping.
+  Blocks.clear();
+  Blocks.resize(getNumBundles());
+
+  for (unsigned i = 0, e = MF->getNumBlockIDs(); i != e; ++i) {
+    unsigned b0 = getBundle(i, 0);
+    unsigned b1 = getBundle(i, 1);
+    Blocks[b0].push_back(i);
+    if (b1 != b0)
+      Blocks[b1].push_back(i);
+  }
+
   return false;
 }
 
@@ -82,5 +95,3 @@ raw_ostream &llvm::WriteGraph(raw_ostream &O, const EdgeBundles &G,
   O << "}\n";
   return O;
 }
-
-

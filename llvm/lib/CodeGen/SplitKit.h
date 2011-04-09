@@ -89,7 +89,10 @@ private:
   SmallVector<BlockInfo, 8> UseBlocks;
 
   /// ThroughBlocks - Block numbers where CurLI is live through without uses.
-  SmallVector<unsigned, 8> ThroughBlocks;
+  BitVector ThroughBlocks;
+
+  /// NumThroughBlocks - Number of live-through blocks.
+  unsigned NumThroughBlocks;
 
   SlotIndex computeLastSplitPoint(unsigned Num);
 
@@ -135,9 +138,11 @@ public:
   /// where CurLI has uses.
   ArrayRef<BlockInfo> getUseBlocks() { return UseBlocks; }
 
-  /// getThroughBlocks - Return an array of block numbers where CurLI is live
-  /// through without uses.
-  ArrayRef<unsigned> getThroughBlocks() { return ThroughBlocks; }
+  /// getNumThroughBlocks - Return the number of through blocks.
+  unsigned getNumThroughBlocks() const { return NumThroughBlocks; }
+
+  /// isThroughBlock - Return true if CurLI is live through MBB without uses.
+  bool isThroughBlock(unsigned MBB) const { return ThroughBlocks.test(MBB); }
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 

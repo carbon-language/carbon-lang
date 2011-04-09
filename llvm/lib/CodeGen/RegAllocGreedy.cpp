@@ -22,6 +22,7 @@
 #include "SpillPlacement.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
@@ -126,9 +127,8 @@ class RAGreedy : public MachineFunctionPass,
   /// All basic blocks where the current register has uses.
   SmallVector<SpillPlacement::BlockConstraint, 8> SplitConstraints;
 
-  /// All basic blocks where the current register is live-through and
-  /// interference free.
-  SmallVector<unsigned, 8> TransparentBlocks;
+  /// Live-through blocks that have already been added to SpillPlacer.
+  SparseBitVector<> ActiveThroughBlocks;
 
   /// Global live range splitting candidate info.
   struct GlobalSplitCandidate {
@@ -173,7 +173,9 @@ private:
   void LRE_WillShrinkVirtReg(unsigned);
   void LRE_DidCloneVirtReg(unsigned, unsigned);
 
-  bool addSplitConstraints(unsigned, float&);
+  bool addSplitConstraints(InterferenceCache::Cursor, float&);
+  void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
+  void growRegion(InterferenceCache::Cursor);
   float calcGlobalSplitCost(unsigned, const BitVector&);
   void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
                          SmallVectorImpl<LiveInterval*>&);
@@ -417,9 +419,9 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 /// interference pattern in Physreg and its aliases. Add the constraints to
 /// SpillPlacement and return the static cost of this split in Cost, assuming
 /// that all preferences in SplitConstraints are met.
-/// If it is evident that no bundles will be live, abort early and return false.
-bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
-  InterferenceCache::Cursor Intf(IntfCache, PhysReg);
+/// Return false if there are no bundles with positive bias.
+bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
+                                   float &Cost) {
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
 
   // Reset interference dependent info.
@@ -464,34 +466,40 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
     if (Ins)
       StaticCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
   }
+  Cost = StaticCost;
 
   // Add constraints for use-blocks. Note that these are the only constraints
   // that may add a positive bias, it is downhill from here.
   SpillPlacer->addConstraints(SplitConstraints);
-  if (SpillPlacer->getPositiveNodes() == 0)
-    return false;
+  return SpillPlacer->scanActiveBundles();
+}
 
-  Cost = StaticCost;
 
-  // Now handle the live-through blocks without uses. These can only add
-  // negative bias, so we can abort whenever there are no more positive nodes.
-  // Compute constraints for a group of 8 blocks at a time.
+/// addThroughConstraints - Add constraints and links to SpillPlacer from the
+/// live-through blocks in Blocks.
+void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
+                                     ArrayRef<unsigned> Blocks) {
   const unsigned GroupSize = 8;
   SpillPlacement::BlockConstraint BCS[GroupSize];
-  unsigned B = 0;
-  TransparentBlocks.clear();
+  unsigned TBS[GroupSize];
+  unsigned B = 0, T = 0;
 
-  ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
-  for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
-    unsigned Number = ThroughBlocks[i];
-    assert(B < GroupSize && "Array overflow");
-    BCS[B].Number = Number;
+  for (unsigned i = 0; i != Blocks.size(); ++i) {
+    unsigned Number = Blocks[i];
     Intf.moveToBlock(Number);
 
     if (!Intf.hasInterference()) {
-      TransparentBlocks.push_back(Number);
+      assert(T < GroupSize && "Array overflow");
+      TBS[T] = Number;
+      if (++T == GroupSize) {
+        SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
+        T = 0;
+      }
       continue;
     }
+
+    assert(B < GroupSize && "Array overflow");
+    BCS[B].Number = Number;
 
     // Interference for the live-in value.
     if (Intf.first() <= Indexes->getMBBStartIdx(Number))
@@ -509,22 +517,55 @@ bool RAGreedy::addSplitConstraints(unsigned PhysReg, float &Cost) {
       ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
       SpillPlacer->addConstraints(Array);
       B = 0;
-      // Abort early when all hope is lost.
-      if (SpillPlacer->getPositiveNodes() == 0)
-        return false;
     }
   }
 
   ArrayRef<SpillPlacement::BlockConstraint> Array(BCS, B);
   SpillPlacer->addConstraints(Array);
-  if (SpillPlacer->getPositiveNodes() == 0)
-    return false;
-
-  // There is still some positive bias. Add all the links.
-  SpillPlacer->addLinks(TransparentBlocks);
-  return true;
+  SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
 }
 
+void RAGreedy::growRegion(InterferenceCache::Cursor Intf) {
+  // Keep track of through blocks that have already been added to SpillPlacer.
+  SparseBitVector<> Added;
+  SmallVector<unsigned, 16> ThroughBlocks;
+#ifndef NDEBUG
+  unsigned Visited = 0;
+#endif
+  for (;;) {
+    ArrayRef<unsigned> NewBundles = SpillPlacer->getRecentPositive();
+    if (NewBundles.empty())
+      break;
+    // Find new through blocks in the periphery of PrefRegBundles.
+    for (int i = 0, e = NewBundles.size(); i != e; ++i) {
+      unsigned Bundle = NewBundles[i];
+      // Look at all blocks connected to Bundle in the full graph.
+      ArrayRef<unsigned> Blocks = Bundles->getBlocks(Bundle);
+      for (ArrayRef<unsigned>::iterator I = Blocks.begin(), E = Blocks.end();
+           I != E; ++I) {
+        unsigned Block = *I;
+        if (!SA->isThroughBlock(Block) || !Added.test_and_set(Block))
+          continue;
+        // This is a new through block. Add it to SpillPlacer later.
+        ThroughBlocks.push_back(Block);
+#ifndef NDEBUG
+        ++Visited;
+#endif
+      }
+    }
+    // Any new blocks to add?
+    if (!ThroughBlocks.empty()) {
+      addThroughConstraints(Intf, ThroughBlocks);
+      ThroughBlocks.clear();
+    }
+    // Perhaps iterating can enable more bundles?
+    SpillPlacer->iterate();
+  }
+
+  // Rememeber the relevant set of through blocks for splitAroundRegion().
+  ActiveThroughBlocks |= Added;
+  DEBUG(dbgs() << ", v=" << Visited);
+}
 
 /// calcGlobalSplitCost - Return the global split cost of following the split
 /// pattern in LiveBundles. This cost should be added to the local cost of the
@@ -550,10 +591,9 @@ float RAGreedy::calcGlobalSplitCost(unsigned PhysReg,
   }
 
   InterferenceCache::Cursor Intf(IntfCache, PhysReg);
-  ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
-  SplitConstraints.resize(UseBlocks.size() + ThroughBlocks.size());
-  for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
-    unsigned Number = ThroughBlocks[i];
+  for (SparseBitVector<>::iterator I = ActiveThroughBlocks.begin(),
+       E = ActiveThroughBlocks.end(); I != E; ++I) {
+    unsigned Number = *I;
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
     if (!RegIn && !RegOut)
@@ -766,9 +806,9 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   }
 
   // Handle live-through blocks.
-  ArrayRef<unsigned> ThroughBlocks = SA->getThroughBlocks();
-  for (unsigned i = 0; i != ThroughBlocks.size(); ++i) {
-    unsigned Number = ThroughBlocks[i];
+  for (SparseBitVector<>::iterator I = ActiveThroughBlocks.begin(),
+       E = ActiveThroughBlocks.end(); I != E; ++I) {
+    unsigned Number = *I;
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
     DEBUG(dbgs() << "Live through BB#" << Number << '\n');
@@ -804,6 +844,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   BitVector LiveBundles, BestBundles;
   float BestCost = 0;
   unsigned BestReg = 0;
+  ActiveThroughBlocks.clear();
 
   Order.rewind();
   for (unsigned Cand = 0; unsigned PhysReg = Order.next(); ++Cand) {
@@ -813,16 +854,17 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
     SpillPlacer->prepare(LiveBundles);
     float Cost;
-    if (!addSplitConstraints(PhysReg, Cost)) {
-      DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bias\n");
+    InterferenceCache::Cursor Intf(IntfCache, PhysReg);
+    if (!addSplitConstraints(Intf, Cost)) {
+      DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bundles\n");
       continue;
     }
-    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tbiased = "
-                 << SpillPlacer->getPositiveNodes() << ", static = " << Cost);
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = " << Cost);
     if (BestReg && Cost >= BestCost) {
       DEBUG(dbgs() << " worse than " << PrintReg(BestReg, TRI) << '\n');
       continue;
     }
+    growRegion(Intf);
 
     SpillPlacer->finish();
 

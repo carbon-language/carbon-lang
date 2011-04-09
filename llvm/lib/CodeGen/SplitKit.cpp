@@ -132,12 +132,14 @@ void SplitAnalysis::analyzeUses() {
   DEBUG(dbgs() << "Analyze counted "
                << UseSlots.size() << " instrs in "
                << UseBlocks.size() << " blocks, through "
-               << ThroughBlocks.size() << " blocks.\n");
+               << NumThroughBlocks << " blocks.\n");
 }
 
 /// calcLiveBlockInfo - Fill the LiveBlocks array with information about blocks
 /// where CurLI is live.
 bool SplitAnalysis::calcLiveBlockInfo() {
+  ThroughBlocks.resize(MF.getNumBlockIDs());
+  NumThroughBlocks = 0;
   if (CurLI->empty())
     return true;
 
@@ -193,9 +195,10 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     BI.LiveThrough = !hasGap && BI.LiveIn && BI.LiveOut;
     if (Uses)
       UseBlocks.push_back(BI);
-    else
-      ThroughBlocks.push_back(BI.MBB->getNumber());
-
+    else {
+      ++NumThroughBlocks;
+      ThroughBlocks.set(BI.MBB->getNumber());
+    }
     // FIXME: This should never happen. The live range stops or starts without a
     // corresponding use. An earlier pass did something wrong.
     if (!BI.LiveThrough && !Uses)

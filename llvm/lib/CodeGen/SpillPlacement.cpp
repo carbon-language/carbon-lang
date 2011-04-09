@@ -135,13 +135,10 @@ struct SpillPlacement::Node {
 
   /// addBias - Bias this node from an ingoing[0] or outgoing[1] link.
   /// Return the change to the total number of positive biases.
-  int addBias(float w, bool out) {
+  void addBias(float w, bool out) {
     // Normalize w relative to all connected blocks from that direction.
     w *= Scale[out];
-    int Before = Bias > 0;
     Bias += w;
-    int After = Bias > 0;
-    return After - Before;
   }
 
   /// update - Recompute Value from Bias and Links. Return true when node
@@ -230,14 +227,14 @@ void SpillPlacement::addConstraints(ArrayRef<BlockConstraint> LiveBlocks) {
     if (I->Entry != DontCare) {
       unsigned ib = bundles->getBundle(I->Number, 0);
       activate(ib);
-      PositiveNodes += nodes[ib].addBias(Freq * Bias[I->Entry], 1);
+      nodes[ib].addBias(Freq * Bias[I->Entry], 1);
     }
 
     // Live-out from block?
     if (I->Exit != DontCare) {
       unsigned ob = bundles->getBundle(I->Number, 1);
       activate(ob);
-      PositiveNodes += nodes[ob].addBias(Freq * Bias[I->Exit], 0);
+      nodes[ob].addBias(Freq * Bias[I->Exit], 0);
     }
   }
 }
@@ -254,16 +251,42 @@ void SpillPlacement::addLinks(ArrayRef<unsigned> Links) {
       continue;
     activate(ib);
     activate(ob);
+    if (nodes[ib].Links.empty() && !nodes[ib].mustSpill())
+      Linked.push_back(ib);
+    if (nodes[ob].Links.empty() && !nodes[ob].mustSpill())
+      Linked.push_back(ob);
     float Freq = getBlockFrequency(Number);
     nodes[ib].addLink(ob, Freq, 1);
     nodes[ob].addLink(ib, Freq, 0);
   }
 }
 
+bool SpillPlacement::scanActiveBundles() {
+  Linked.clear();
+  RecentPositive.clear();
+  for (int n = ActiveNodes->find_first(); n>=0; n = ActiveNodes->find_next(n)) {
+    nodes[n].update(nodes);
+    // A node that must spill, or a node without any links is not going to
+    // change its value ever again, so exclude it from iterations.
+    if (nodes[n].mustSpill())
+      continue;
+    if (!nodes[n].Links.empty())
+      Linked.push_back(n);
+    if (nodes[n].preferReg())
+      RecentPositive.push_back(n);
+  }
+  return !RecentPositive.empty();
+}
+
 /// iterate - Repeatedly update the Hopfield nodes until stability or the
 /// maximum number of iterations is reached.
 /// @param Linked - Numbers of linked nodes that need updating.
-void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
+void SpillPlacement::iterate() {
+  // First update the recently positive nodes. They have likely received new
+  // negative bias that will turn them off.
+  while (!RecentPositive.empty())
+    nodes[RecentPositive.pop_back_val()].update(nodes);
+
   if (Linked.empty())
     return;
 
@@ -279,10 +302,13 @@ void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
     for (SmallVectorImpl<unsigned>::const_reverse_iterator I =
            llvm::next(Linked.rbegin()), E = Linked.rend(); I != E; ++I) {
       unsigned n = *I;
-      bool C = nodes[n].update(nodes);
-      Changed |= C;
+      if (nodes[n].update(nodes)) {
+        Changed = true;
+        if (nodes[n].preferReg())
+          RecentPositive.push_back(n);
+      }
     }
-    if (!Changed)
+    if (!Changed || !RecentPositive.empty())
       return;
 
     // Scan forwards, skipping the first node which was just updated.
@@ -290,38 +316,29 @@ void SpillPlacement::iterate(const SmallVectorImpl<unsigned> &Linked) {
     for (SmallVectorImpl<unsigned>::const_iterator I =
            llvm::next(Linked.begin()), E = Linked.end(); I != E; ++I) {
       unsigned n = *I;
-      bool C = nodes[n].update(nodes);
-      Changed |= C;
+      if (nodes[n].update(nodes)) {
+        Changed = true;
+        if (nodes[n].preferReg())
+          RecentPositive.push_back(n);
+      }
     }
-    if (!Changed)
+    if (!Changed || !RecentPositive.empty())
       return;
   }
 }
 
 void SpillPlacement::prepare(BitVector &RegBundles) {
+  Linked.clear();
+  RecentPositive.clear();
   // Reuse RegBundles as our ActiveNodes vector.
   ActiveNodes = &RegBundles;
   ActiveNodes->clear();
   ActiveNodes->resize(bundles->getNumBundles());
-  PositiveNodes = 0;
 }
 
 bool
 SpillPlacement::finish() {
   assert(ActiveNodes && "Call prepare() first");
-  // Update all active nodes, and find the ones that are actually linked to
-  // something so their value may change when iterating.
-  SmallVector<unsigned, 8> Linked;
-  for (int n = ActiveNodes->find_first(); n>=0; n = ActiveNodes->find_next(n)) {
-    nodes[n].update(nodes);
-    // A node that must spill, or a node without any links is not going to
-    // change its value ever again, so exclude it from iterations.
-    if (!nodes[n].Links.empty() && !nodes[n].mustSpill())
-      Linked.push_back(n);
-  }
-
-  // Iterate the network to convergence.
-  iterate(Linked);
 
   // Write preferences back to ActiveNodes.
   bool Perfect = true;

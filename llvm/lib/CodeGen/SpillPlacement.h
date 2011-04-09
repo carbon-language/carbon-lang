@@ -49,8 +49,12 @@ class SpillPlacement  : public MachineFunctionPass {
   // caller.
   BitVector *ActiveNodes;
 
-  // The number of active nodes with a positive bias.
-  unsigned PositiveNodes;
+  // Nodes with active links. Populated by scanActiveBundles.
+  SmallVector<unsigned, 8> Linked;
+
+  // Nodes that went positive during the last call to scanActiveBundles or
+  // iterate.
+  SmallVector<unsigned, 8> RecentPositive;
 
   // Block frequencies are computed once. Indexed by block number.
   SmallVector<float, 4> BlockFrequency;
@@ -95,9 +99,20 @@ public:
   /// addLinks - Add transparent blocks with the given numbers.
   void addLinks(ArrayRef<unsigned> Links);
 
-  /// getPositiveNodes - Return the total number of graph nodes with a positive
-  /// bias after adding constraints.
-  unsigned getPositiveNodes() const { return PositiveNodes; }
+  /// scanActiveBundles - Perform an initial scan of all bundles activated by
+  /// addConstraints and addLinks, updating their state. Add all the bundles
+  /// that now prefer a register to RecentPositive.
+  /// Prepare internal data structures for iterate.
+  /// Return true is there are any positive nodes.
+  bool scanActiveBundles();
+
+  /// iterate - Update the network iteratively until convergence, or new bundles
+  /// are found.
+  void iterate();
+
+  /// getRecentPositive - Return an array of bundles that became positive during
+  /// the previous call to scanActiveBundles or iterate.
+  ArrayRef<unsigned> getRecentPositive() { return RecentPositive; }
 
   /// finish - Compute the optimal spill code placement given the
   /// constraints. No MustSpill constraints will be violated, and the smallest
@@ -120,7 +135,6 @@ private:
   virtual void releaseMemory();
 
   void activate(unsigned);
-  void iterate(const SmallVectorImpl<unsigned>&);
 };
 
 } // end namespace llvm
