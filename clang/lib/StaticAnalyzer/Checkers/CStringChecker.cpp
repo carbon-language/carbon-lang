@@ -69,7 +69,10 @@ public:
   void evalStrncpy(CheckerContext &C, const CallExpr *CE) const;
   void evalStpcpy(CheckerContext &C, const CallExpr *CE) const;
   void evalStrcpyCommon(CheckerContext &C, const CallExpr *CE, bool returnEnd,
-                        bool isStrncpy) const;
+                        bool isBounded, bool isAppending) const;
+
+  void evalStrcat(CheckerContext &C, const CallExpr *CE) const;
+  void evalStrncat(CheckerContext &C, const CallExpr *CE) const;
 
   // Utility methods
   std::pair<const GRState*, const GRState*>
@@ -912,24 +915,50 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
 
 void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) const {
   // char *strcpy(char *restrict dst, const char *restrict src);
-  evalStrcpyCommon(C, CE, /* returnEnd = */ false, /* isStrncpy = */ false);
+  evalStrcpyCommon(C, CE, 
+                   /* returnEnd = */ false, 
+                   /* isBounded = */ false,
+                   /* isAppending = */ false);
 }
 
 void CStringChecker::evalStrncpy(CheckerContext &C, const CallExpr *CE) const {
   // char *strcpy(char *restrict dst, const char *restrict src);
-  evalStrcpyCommon(C, CE, /* returnEnd = */ false, /* isStrncpy = */ true);
+  evalStrcpyCommon(C, CE, 
+                   /* returnEnd = */ false, 
+                   /* isBounded = */ true,
+                   /* isAppending = */ false);
 }
 
 void CStringChecker::evalStpcpy(CheckerContext &C, const CallExpr *CE) const {
   // char *stpcpy(char *restrict dst, const char *restrict src);
-  evalStrcpyCommon(C, CE, /* returnEnd = */ true, /* isStrncpy = */ false);
+  evalStrcpyCommon(C, CE, 
+                   /* returnEnd = */ true, 
+                   /* isBounded = */ false,
+                   /* isAppending = */ false);
+}
+
+void CStringChecker::evalStrcat(CheckerContext &C, const CallExpr *CE) const {
+  //char *strcat(char *restrict s1, const char *restrict s2);
+  evalStrcpyCommon(C, CE, 
+                   /* returnEnd = */ false, 
+                   /* isBounded = */ false,
+                   /* isAppending = */ true);
+}
+
+void CStringChecker::evalStrncat(CheckerContext &C, const CallExpr *CE) const {
+  //char *strncat(char *restrict s1, const char *restrict s2, size_t n);
+  evalStrcpyCommon(C, CE, 
+                   /* returnEnd = */ false, 
+                   /* isBounded = */ true,
+                   /* isAppending = */ true);
 }
 
 void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
-                                      bool returnEnd, bool isStrncpy) const {
+                                      bool returnEnd, bool isBounded,
+                                      bool isAppending) const {
   const GRState *state = C.getState();
 
-  // Check that the destination is non-null
+  // Check that the destination is non-null.
   const Expr *Dst = CE->getArg(0);
   SVal DstVal = state->getSVal(Dst);
 
@@ -951,8 +980,9 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   if (strLength.isUndef())
     return;
 
-  if (isStrncpy) {
-    // Get the max number of characters to copy
+  // If the function is strncpy, strncat, etc... it is bounded.
+  if (isBounded) {
+    // Get the max number of characters to copy.
     const Expr *lenExpr = CE->getArg(2);
     SVal lenVal = state->getSVal(lenExpr);
 
@@ -962,7 +992,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     QualType cmpTy = C.getSValBuilder().getContext().IntTy;
     const GRState *stateTrue, *stateFalse;
     
-    // Check if the max number to copy is less than the length of the src
+    // Check if the max number to copy is less than the length of the src.
     llvm::tie(stateTrue, stateFalse) =
       state->assume(cast<DefinedOrUnknownSVal>
                     (C.getSValBuilder().evalBinOpNN(state, BO_GT, 
@@ -974,6 +1004,29 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
       // strLength copied is the max number arg.
       strLength = lenVal;
     }    
+  }
+
+  // If this is an appending function (strcat, strncat...) then set the
+  // string length to strlen(src) + strlen(dst) since the buffer will
+  // ultimately contain both.
+  if (isAppending) {
+    // Get the string length of the destination, or give up.
+    SVal dstStrLength = getCStringLength(C, state, Dst, DstVal);
+    if (dstStrLength.isUndef())
+      return;
+
+    NonLoc *srcStrLengthNL = dyn_cast<NonLoc>(&strLength);
+    NonLoc *dstStrLengthNL = dyn_cast<NonLoc>(&dstStrLength);
+    
+    // If src or dst cast to NonLoc is NULL, give up.
+    if ((!srcStrLengthNL) || (!dstStrLengthNL))
+      return;
+
+    QualType addTy = C.getSValBuilder().getContext().getSizeType();
+
+    strLength = C.getSValBuilder().evalBinOpNN(state, BO_Add, 
+                                               *srcStrLengthNL, *dstStrLengthNL,
+                                               addTy);
   }
 
   SVal Result = (returnEnd ? UnknownVal() : DstVal);
@@ -1051,6 +1104,8 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
     .Cases("strncpy", "__strncpy_chk", &CStringChecker::evalStrncpy)
     .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::evalStpcpy)
+    .Cases("strcat", "__strcat_chk", &CStringChecker::evalStrcat)
+    .Cases("strncat", "__strncat_chk", &CStringChecker::evalStrncat)
     .Case("strlen", &CStringChecker::evalstrLength)
     .Case("strnlen", &CStringChecker::evalstrnLength)
     .Case("bcopy", &CStringChecker::evalBcopy)
