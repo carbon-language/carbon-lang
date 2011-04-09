@@ -157,7 +157,10 @@ struct DenseMapInfo<std::pair<T, U> > {
     key ^= (key >> 31);
     return (unsigned)key;
   }
-  static bool isEqual(const Pair& LHS, const Pair& RHS) { return LHS == RHS; }
+  static bool isEqual(const Pair &LHS, const Pair &RHS) {
+    return FirstInfo::isEqual(LHS.first, RHS.first) && 
+           SecondInfo::isEqual(LHS.second, RHS.second);
+  }
 };
 
 } // end namespace llvm
