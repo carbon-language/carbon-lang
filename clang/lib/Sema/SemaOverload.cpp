@@ -1982,11 +1982,11 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
 
   Kind = CK_BitCast;
 
-  if (CXXBoolLiteralExpr* LitBool
-                          = dyn_cast<CXXBoolLiteralExpr>(From->IgnoreParens()))
-    if (!IsCStyleOrFunctionalCast && LitBool->getValue() == false)
-      DiagRuntimeBehavior(LitBool->getExprLoc(), From,
-                          PDiag(diag::warn_init_pointer_from_false) << ToType);
+  if (!IsCStyleOrFunctionalCast &&
+      Context.hasSameUnqualifiedType(From->getType(), Context.BoolTy) &&
+      From->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull))
+    DiagRuntimeBehavior(From->getExprLoc(), From,
+                        PDiag(diag::warn_init_pointer_from_false) << ToType);
 
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
     if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
