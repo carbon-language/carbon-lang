@@ -240,12 +240,12 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     OwningPtr<EDInst>
       inst(disassembler->createInst(byteArrayReader, 0, &ByteArray));
   
-    ByteArray.erase (ByteArray.begin(), ByteArray.begin() + inst->byteSize());
-                               
     if (inst == 0) {
       errs() << "error: Didn't get an instruction\n";
       return -1;
     }
+
+    ByteArray.erase (ByteArray.begin(), ByteArray.begin() + inst->byteSize());
     
     unsigned numTokens = inst->numTokens();
     if ((int)numTokens < 0) {
