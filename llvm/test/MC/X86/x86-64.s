@@ -190,6 +190,10 @@ fadd %st(7)
 // CHECK: int3
 INT3
 
+// rdar://8735979 - int $3 -> int3
+// CHECK: int3
+int	$3
+
 
 // Allow scale factor without index register.
 // CHECK: movaps	%xmm3, (%esi)

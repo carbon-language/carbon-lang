@@ -34,8 +34,15 @@ let Uses = [EFLAGS] in
   def INTO : I<0xce, RawFrm, (outs), (ins), "into", []>;
 def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
               [(int_x86_int (i8 3))]>;
+
+// The long form of "int $3" turns into int3 as a size optimization.
+// FIXME: This doesn't work because InstAlias can't match immediate constants.
+//def : InstAlias<"int\t$3", (INT3)>;
+
+
 def INT : Ii8<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap",
               [(int_x86_int imm:$trap)]>;
+
 
 def SYSCALL  : I<0x05, RawFrm, (outs), (ins), "syscall", []>, TB;
 def SYSRETL  : I<0x07, RawFrm, (outs), (ins), "sysretl", []>, TB;

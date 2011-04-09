@@ -928,6 +928,18 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
       Operands.erase(Operands.begin() + 1);
     }
   }
+  
+  // Transforms "int $3" into "int3" as a size optimization.  We can't write an
+  // instalias with an immediate operand yet.
+  if (Name == "int" && Operands.size() == 2) {
+    X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
+    if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
+        cast<MCConstantExpr>(Op1->getImm())->getValue() == 3) {
+      delete Operands[1];
+      Operands.erase(Operands.begin() + 1);
+      static_cast<X86Operand*>(Operands[0])->setTokenValue("int3");
+    }
+  }
 
   return false;
 }
