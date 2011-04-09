@@ -184,7 +184,11 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // Now, this loop is suitable for rotation.
   BasicBlock *OrigPreheader = L->getLoopPreheader();
   BasicBlock *OrigLatch = L->getLoopLatch();
-  assert(OrigPreheader && OrigLatch && "Loop not in canonical form?");
+  
+  // If the loop could not be converted to canonical form, it must have an
+  // indirectbr in it, just give up.
+  if (OrigPreheader == 0 || OrigLatch == 0)
+    return false;
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes
   // in its header will soon be invalidated.
