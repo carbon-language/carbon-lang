@@ -148,8 +148,16 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
         return true;
       }
 
+      // Enclose {{}} patterns in parens just like [[]] even though we're not
+      // capturing the result for any purpose.  This is required in case the
+      // expression contains an alternation like: CHECK:  abc{{x|z}}def.  We
+      // want this to turn into: "abc(x|z)def" not "abcx|zdef".
+      RegExStr += '(';
+      ++CurParen;
+
       if (AddRegExToRegEx(PatternStr.substr(2, End-2), CurParen, SM))
         return true;
+      RegExStr += ')';
 
       PatternStr = PatternStr.substr(End+2);
       continue;
