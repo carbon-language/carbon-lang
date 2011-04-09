@@ -131,26 +131,26 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
   }
 
   // Paren value #0 is for the fully matched string.  Any new parenthesized
-  // values add from their.
+  // values add from there.
   unsigned CurParen = 1;
 
   // Otherwise, there is at least one regex piece.  Build up the regex pattern
   // by escaping scary characters in fixed strings, building up one big regex.
   while (!PatternStr.empty()) {
     // RegEx matches.
-    if (PatternStr.size() >= 2 &&
-        PatternStr[0] == '{' && PatternStr[1] == '{') {
+    if (PatternStr.startswith("{{")) {
 
       // Otherwise, this is the start of a regex match.  Scan for the }}.
       size_t End = PatternStr.find("}}");
       if (End == StringRef::npos) {
         SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
-                        "found start of regex string with no end '}}'", "error");
+                        "found start of regex string with no end '}}'","error");
         return true;
       }
 
       if (AddRegExToRegEx(PatternStr.substr(2, End-2), CurParen, SM))
         return true;
+
       PatternStr = PatternStr.substr(End+2);
       continue;
     }
@@ -160,8 +160,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
     // second form is [[foo]] which is a reference to foo.  The variable name
     // itself must be of the form "[a-zA-Z_][0-9a-zA-Z_]*", otherwise we reject
     // it.  This is to catch some common errors.
-    if (PatternStr.size() >= 2 &&
-        PatternStr[0] == '[' && PatternStr[1] == '[') {
+    if (PatternStr.startswith("[[")) {
       // Verify that it is terminated properly.
       size_t End = PatternStr.find("]]");
       if (End == StringRef::npos) {
@@ -185,10 +184,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
 
       // Verify that the name is well formed.
       for (unsigned i = 0, e = Name.size(); i != e; ++i)
-        if (Name[i] != '_' &&
-            (Name[i] < 'a' || Name[i] > 'z') &&
-            (Name[i] < 'A' || Name[i] > 'Z') &&
-            (Name[i] < '0' || Name[i] > '9')) {
+        if (Name[i] != '_' && !isalnum(Name[i])) {
           SM.PrintMessage(SMLoc::getFromPointer(Name.data()+i),
                           "invalid name in named regex", "error");
           return true;
