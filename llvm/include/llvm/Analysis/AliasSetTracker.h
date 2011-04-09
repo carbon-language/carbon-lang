@@ -259,6 +259,7 @@ private:
       if (CallSites[i] == CS.getInstruction()) {
         CallSites[i] = CallSites.back();
         CallSites.pop_back();
+        --i; --e;  // Revisit the moved entry.
       }
   }
   void setVolatile() { Volatile = true; }
