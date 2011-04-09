@@ -1288,10 +1288,10 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
     while ((Ty = dyn_cast<ArrayType>(EltTy))) {
       int64_t UpperBound = 0;
       int64_t LowerBound = 0;
-      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty))
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Ty)) {
         if (CAT->getSize().getZExtValue())
           UpperBound = CAT->getSize().getZExtValue() - 1;
-      else
+      } else
         // This is an unbounded array. Use Low = 1, Hi = 0 to express such 
         // arrays.
         LowerBound = 1;
