@@ -33,6 +33,7 @@ define %vec @test_mul(%vec %param)
  ret %vec %1
 }
 
+; CHECK: test_splat:
 define %vec @test_splat(float %param ) {
 ;CHECK: lqa
 ;CHECK: shufb
@@ -43,16 +44,17 @@ define %vec @test_splat(float %param ) {
 }
 
 define void @test_store(%vec %val, %vec* %ptr){
-
+; CHECK: test_store:
 ;CHECK: stqd 
-  store %vec undef, %vec* null
+  store %vec zeroinitializer, %vec* null
 
-;CHECK: stqd $3, 0(${{.}})
+;CHECK: stqd $3, 0(${{.*}})
 ;CHECK: bi $lr
   store %vec %val, %vec* %ptr
   ret void
 }
 
+; CHECK: test_insert:
 define %vec @test_insert(){
 ;CHECK: cwd
 ;CHECK: shufb $3
@@ -61,6 +63,8 @@ define %vec @test_insert(){
   ret %vec %rv
 }
 
+; CHECK: test_unaligned_store:
+
 define void @test_unaligned_store()  {
 ;CHECK:	cdd
 ;CHECK:	shufb
@@ -68,7 +72,7 @@ define void @test_unaligned_store()  {
   %data = alloca [4 x float], align 16         ; <[4 x float]*> [#uses=1]
   %ptr = getelementptr [4 x float]* %data, i32 0, i32 2 ; <float*> [#uses=1]
   %vptr = bitcast float* %ptr to  <2 x float>* ; <[1 x <2 x float>]*> [#uses=1]
-  store <2 x float> undef, <2 x float>* %vptr
+  store <2 x float> zeroinitializer, <2 x float>* %vptr
   ret void
 }
 

@@ -7,13 +7,13 @@
 define zeroext i8 @t(%struct.foo* %this) noreturn optsize {
 entry:
 ; ARM:       t:
-; ARM:       str r0, [r1], r0
+; ARM:       str r2, [r1], r0
 
 ; THUMB:     t:
 ; THUMB-NOT: str r0, [r1], r0
-; THUMB:     str r0, [r1]
+; THUMB:     str r2, [r1]
   %0 = getelementptr inbounds %struct.foo* %this, i32 0, i32 1 ; <i64*> [#uses=1]
-  store i32 undef, i32* inttoptr (i32 8 to i32*), align 8
+  store i32 0, i32* inttoptr (i32 8 to i32*), align 8
   br i1 undef, label %bb.nph96, label %bb3
 
 bb3:                                              ; preds = %entry
