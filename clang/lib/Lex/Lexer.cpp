@@ -71,9 +71,22 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
          "We assume that the input buffer has a null character at the end"
          " to simplify lexing!");
 
+  // Check whether we have a BOM in the beginning of the buffer. If yes - act
+  // accordingly. Right now we support only UTF-8 with and without BOM, so, just
+  // skip the UTF-8 BOM if it's present.
+  if (BufferStart == BufferPtr) {
+    // Determine the size of the BOM.
+    size_t BOMLength = llvm::StringSwitch<size_t>(BufferStart)
+      .StartsWith("\xEF\xBB\xBF", 3) // UTF-8 BOM
+      .Default(0);
+
+    // Skip the BOM.
+    BufferPtr += BOMLength;
+  }
+
   Is_PragmaLexer = false;
   IsInConflictMarker = false;
-  
+
   // Start of the file is a start of line.
   IsAtStartOfLine = true;
 

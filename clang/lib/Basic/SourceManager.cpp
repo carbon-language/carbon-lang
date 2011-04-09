@@ -126,13 +126,12 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     if (Invalid) *Invalid = true;
     return Buffer.getPointer();
   }
-  
+
   // If the buffer is valid, check to see if it has a UTF Byte Order Mark
-  // (BOM).  We only support UTF-8 without a BOM right now.  See
+  // (BOM).  We only support UTF-8 with and without a BOM right now.  See
   // http://en.wikipedia.org/wiki/Byte_order_mark for more information.
   llvm::StringRef BufStr = Buffer.getPointer()->getBuffer();
-  const char *BOM = llvm::StringSwitch<const char *>(BufStr)
-    .StartsWith("\xEF\xBB\xBF", "UTF-8")
+  const char *InvalidBOM = llvm::StringSwitch<const char *>(BufStr)
     .StartsWith("\xFE\xFF", "UTF-16 (BE)")
     .StartsWith("\xFF\xFE", "UTF-16 (LE)")
     .StartsWith("\x00\x00\xFE\xFF", "UTF-32 (BE)")
@@ -145,9 +144,9 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
     .StartsWith("\x84\x31\x95\x33", "GB-18030")
     .Default(0);
 
-  if (BOM) {
+  if (InvalidBOM) {
     Diag.Report(Loc, diag::err_unsupported_bom)
-      << BOM << ContentsEntry->getName();
+      << InvalidBOM << ContentsEntry->getName();
     Buffer.setInt(Buffer.getInt() | InvalidFlag);
   }
   
