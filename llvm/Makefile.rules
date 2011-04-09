@@ -1528,31 +1528,31 @@ BC_DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.bc.d.tmp" "$(ObjDir)/$*.bc.d"; 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
-			$< -o $(ObjDir)/$*.ll -S -$(LLVMCC_EMITIR_FLAG) ; \
+			$< -o $(ObjDir)/$*.ll -S $(LLVMCC_EMITIR_FLAG) ; \
 	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
-			$< -o $(ObjDir)/$*.ll -S -$(LLVMCC_EMITIR_FLAG) ; \
+			$< -o $(ObjDir)/$*.ll -S $(LLVMCC_EMITIR_FLAG) ; \
 	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.CXX) $(BC_DEPEND_OPTIONS) \
-			$< -o $(ObjDir)/$*.ll -S -$(LLVMCC_EMITIR_FLAG) ; \
+			$< -o $(ObjDir)/$*.ll -S $(LLVMCC_EMITIR_FLAG) ; \
 	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) $(BC_DEPEND_OPTIONS) \
-			$< -o $(ObjDir)/$*.ll -S -$(LLVMCC_EMITIR_FLAG) ; \
+			$< -o $(ObjDir)/$*.ll -S $(LLVMCC_EMITIR_FLAG) ; \
 	        $(BC_DEPEND_MOVEFILE)
 
 $(ObjDir)/%.ll: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.m for $(BuildMode) build (bytecode)"
 	$(Verb) if $(BCCompile.C) $(BC_DEPEND_OPTIONS) \
-			$< -o $(ObjDir)/$*.ll -S -$(LLVMCC_EMITIR_FLAG) ; \
+			$< -o $(ObjDir)/$*.ll -S $(LLVMCC_EMITIR_FLAG) ; \
 	        $(BC_DEPEND_MOVEFILE)
 
 # Provide alternate rule sets if dependencies are disabled
@@ -1580,23 +1580,23 @@ $(ObjDir)/%.o: %.m $(ObjDir)/.dir $(BUILT_SOURCES)
 
 $(ObjDir)/%.ll: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build (bytecode)"
-	$(BCCompile.CXX) $< -o $@ -S -$(LLVMCC_EMITIR_FLAG)
+	$(BCCompile.CXX) $< -o $@ -S $(LLVMCC_EMITIR_FLAG)
 
 $(ObjDir)/%.ll: %.mm $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.mm for $(BuildMode) build (bytecode)"
-	$(BCCompile.CXX) $< -o $@ -S -$(LLVMCC_EMITIR_FLAG)
+	$(BCCompile.CXX) $< -o $@ -S $(LLVMCC_EMITIR_FLAG)
 
 $(ObjDir)/%.ll: %.cc $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCXX)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build (bytecode)"
-	$(BCCompile.CXX) $< -o $@ -S -$(LLVMCC_EMITIR_FLAG)
+	$(BCCompile.CXX) $< -o $@ -S $(LLVMCC_EMITIR_FLAG)
 
 $(ObjDir)/%.ll: %.c $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.c for $(BuildMode) build (bytecode)"
-	$(BCCompile.C) $< -o $@ -S -$(LLVMCC_EMITIR_FLAG)
+	$(BCCompile.C) $< -o $@ -S $(LLVMCC_EMITIR_FLAG)
 
 $(ObjDir)/%.ll: %.m $(ObjDir)/.dir $(BUILT_SOURCES) $(LLVMCC)
 	$(Echo) "Compiling $*.m for $(BuildMode) build (bytecode)"
-	$(BCCompile.C) $< -o $@ -S -$(LLVMCC_EMITIR_FLAG)
+	$(BCCompile.C) $< -o $@ -S $(LLVMCC_EMITIR_FLAG)
 
 endif
 
