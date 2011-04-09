@@ -2976,7 +2976,7 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     }
 
     // Also diagnose fastcall with regparm.
-    if (fn->getRegParmType()) {
+    if (fn->getHasRegParm()) {
       S.Diag(attr.getLoc(), diag::err_attributes_are_not_compatible)
         << "regparm"
         << FunctionType::getNameForCallConv(CC);

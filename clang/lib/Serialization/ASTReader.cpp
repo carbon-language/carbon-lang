@@ -3092,12 +3092,12 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_FUNCTION_NO_PROTO: {
-    if (Record.size() != 4) {
+    if (Record.size() != 5) {
       Error("incorrect encoding of no-proto function type");
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
-    FunctionType::ExtInfo Info(Record[1], Record[2], (CallingConv)Record[3]);
+    FunctionType::ExtInfo Info(Record[1], Record[2], Record[3], (CallingConv)Record[4]);
     return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
@@ -3106,10 +3106,11 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
 
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.ExtInfo = FunctionType::ExtInfo(/*noreturn*/ Record[1],
-                                        /*regparm*/ Record[2],
-                                        static_cast<CallingConv>(Record[3]));
+                                        /*hasregparm*/ Record[2],
+                                        /*regparm*/ Record[3],
+                                        static_cast<CallingConv>(Record[4]));
 
-    unsigned Idx = 4;
+    unsigned Idx = 5;
     unsigned NumParams = Record[Idx++];
     llvm::SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)

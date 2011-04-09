@@ -9367,7 +9367,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   // If we don't have a function type, just build one from nothing.
   } else {
     FunctionProtoType::ExtProtoInfo EPI;
-    EPI.ExtInfo = FunctionType::ExtInfo(NoReturn, 0, CC_Default);
+    EPI.ExtInfo = FunctionType::ExtInfo(NoReturn, false, 0, CC_Default);
     BlockTy = Context.getFunctionType(RetTy, 0, 0, EPI);
   }
 

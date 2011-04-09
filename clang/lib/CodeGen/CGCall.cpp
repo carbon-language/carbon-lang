@@ -188,6 +188,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
                          ArgTys,
                          FunctionType::ExtInfo(
                              /*NoReturn*/ false,
+                             /*HasRegParm*/ false,
                              /*RegParm*/ 0,
                              getCallingConventionForDecl(MD)));
 }
@@ -255,7 +256,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
     return *FI;
 
   // Construct the function info.
-  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getRegParm(), ResTy,
+  FI = new CGFunctionInfo(CC, Info.getNoReturn(), Info.getHasRegParm(), Info.getRegParm(), ResTy,
                           ArgTys.data(), ArgTys.size());
   FunctionInfos.InsertNode(FI, InsertPos);
 
@@ -284,13 +285,13 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(CanQualType ResTy,
 }
 
 CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
-                               bool _NoReturn, unsigned _RegParm,
+                               bool _NoReturn, bool _HasRegParm, unsigned _RegParm,
                                CanQualType ResTy,
                                const CanQualType *ArgTys,
                                unsigned NumArgTys)
   : CallingConvention(_CallingConvention),
     EffectiveCallingConvention(_CallingConvention),
-    NoReturn(_NoReturn), RegParm(_RegParm)
+    NoReturn(_NoReturn), HasRegParm(_HasRegParm), RegParm(_RegParm)
 {
   NumArgs = NumArgTys;
 
@@ -762,8 +763,10 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     PAL.push_back(llvm::AttributeWithIndex::get(0, RetAttrs));
 
   // FIXME: RegParm should be reduced in case of global register variable.
-  signed RegParm = FI.getRegParm();
-  if (!RegParm)
+  signed RegParm;
+  if (FI.getHasRegParm())
+    RegParm = FI.getRegParm();
+  else
     RegParm = CodeGenOpts.NumRegisterParameters;
 
   unsigned PointerWidth = getContext().Target.getPointerWidth(0);

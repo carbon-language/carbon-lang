@@ -2271,12 +2271,13 @@ class FunctionType : public Type {
     // you'll need to adjust both the Bits field below and
     // Type::FunctionTypeBitfields.
 
-    //   |  CC  |noreturn|regparm
-    //   |0 .. 2|   3    |4 ..  6
+    //   |  CC  |noreturn|hasregparm|regparm
+    //   |0 .. 2|   3    |    4     |5 ..  7
     enum { CallConvMask = 0x7 };
     enum { NoReturnMask = 0x8 };
+    enum { HasRegParmMask = 0x10 };
     enum { RegParmMask = ~(CallConvMask | NoReturnMask),
-           RegParmOffset = 4 };
+           RegParmOffset = 5 };
 
     unsigned char Bits;
 
@@ -2287,9 +2288,10 @@ class FunctionType : public Type {
    public:
     // Constructor with no defaults. Use this when you know that you
     // have all the elements (when reading an AST file for example).
-    ExtInfo(bool noReturn, unsigned regParm, CallingConv cc) {
+    ExtInfo(bool noReturn, bool hasRegParm, unsigned regParm, CallingConv cc) {
       Bits = ((unsigned) cc) |
              (noReturn ? NoReturnMask : 0) |
+             (hasRegParm ? HasRegParmMask : 0) |
              (regParm << RegParmOffset);
     }
 
@@ -2298,6 +2300,7 @@ class FunctionType : public Type {
     ExtInfo() : Bits(0) {}
 
     bool getNoReturn() const { return Bits & NoReturnMask; }
+    bool getHasRegParm() const { return Bits & HasRegParmMask; }
     unsigned getRegParm() const { return Bits >> RegParmOffset; }
     CallingConv getCC() const { return CallingConv(Bits & CallConvMask); }
 
@@ -2319,7 +2322,7 @@ class FunctionType : public Type {
     }
 
     ExtInfo withRegParm(unsigned RegParm) const {
-      return ExtInfo((Bits & ~RegParmMask) | (RegParm << RegParmOffset));
+      return ExtInfo(HasRegParmMask | (Bits & ~RegParmMask) | (RegParm << RegParmOffset));
     }
 
     ExtInfo withCallingConv(CallingConv cc) const {
@@ -2355,7 +2358,8 @@ protected:
 public:
 
   QualType getResultType() const { return ResultType; }
-  
+
+  bool getHasRegParm() const { return getExtInfo().getHasRegParm(); }
   unsigned getRegParmType() const { return getExtInfo().getRegParm(); }
   bool getNoReturnAttr() const { return getExtInfo().getNoReturn(); }
   CallingConv getCallConv() const { return getExtInfo().getCC(); }

@@ -1270,8 +1270,9 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   }
 
   // Merge regparm attribute.
-  if (OldTypeInfo.getRegParm() != NewTypeInfo.getRegParm()) {
-    if (NewTypeInfo.getRegParm()) {
+  if (OldTypeInfo.getHasRegParm() != NewTypeInfo.getHasRegParm() ||
+      OldTypeInfo.getRegParm() != NewTypeInfo.getRegParm()) {
+    if (NewTypeInfo.getHasRegParm()) {
       Diag(New->getLocation(), diag::err_regparm_mismatch)
         << NewType->getRegParmType()
         << OldType->getRegParmType();

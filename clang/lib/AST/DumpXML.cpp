@@ -955,7 +955,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   void visitFunctionTypeAttrs(FunctionType *T) {
     setFlag("noreturn", T->getNoReturnAttr());
     setCallingConv(T->getCallConv());
-    if (T->getRegParmType()) setInteger("regparm", T->getRegParmType());
+    if (T->getHasRegParm()) setInteger("regparm", T->getRegParmType());
   }
   void visitFunctionTypeChildren(FunctionType *T) {
     dispatch(T->getResultType());
