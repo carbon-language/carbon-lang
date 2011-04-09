@@ -117,10 +117,10 @@ These essential documents must be read before reading this document:
 </p>
 
 <ul>
-<li><i><a href="http://www.llvm.org/docs/LangRef.html">LLVM Language Reference
+<li><i><a href="LangRef.html">LLVM Language Reference
     Manual</a></i> &mdash; a reference manual for the LLVM assembly language.</li>
 
-<li><i><a href="http://www.llvm.org/docs/CodeGenerator.html">The LLVM
+<li><i><a href="CodeGenerator.html">The LLVM
     Target-Independent Code Generator</a></i> &mdash; a guide to the components
     (classes and code generation algorithms) for translating the LLVM internal
     representation into machine code for a specified target.  Pay particular
@@ -129,14 +129,14 @@ These essential documents must be read before reading this document:
     Allocation, Prolog/Epilog Code Insertion, Late Machine Code Optimizations,
     and Code Emission.</li>
 
-<li><i><a href="http://www.llvm.org/docs/TableGenFundamentals.html">TableGen
+<li><i><a href="TableGenFundamentals.html">TableGen
     Fundamentals</a></i> &mdash;a document that describes the TableGen
     (<tt>tblgen</tt>) application that manages domain-specific information to
     support LLVM code generation. TableGen processes input from a target
     description file (<tt>.td</tt> suffix) and generates C++ code that can be
     used for code generation.</li>
 
-<li><i><a href="http://www.llvm.org/docs/WritingAnLLVMPass.html">Writing an LLVM
+<li><i><a href="WritingAnLLVMPass.html">Writing an LLVM
     Pass</a></i> &mdash; The assembly printer is a <tt>FunctionPass</tt>, as are
     several SelectionDAG processing steps.</li>
 </ul>
@@ -230,7 +230,7 @@ that the class will need and which components will need to be subclassed.
 To actually create your compiler backend, you need to create and modify a few
 files. The absolute minimum is discussed here. But to actually use the LLVM
 target-independent code generator, you must perform the steps described in
-the <a href="http://www.llvm.org/docs/CodeGenerator.html">LLVM
+the <a href="CodeGenerator.html">LLVM
 Target-Independent Code Generator</a> document.
 </p>
 
@@ -896,7 +896,7 @@ namespace SP {   // Register class instances
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="implementRegister">Implement a subclass of</a> 
-  <a href="http://www.llvm.org/docs/CodeGenerator.html#targetregisterinfo">TargetRegisterInfo</a>
+  <a href="CodeGenerator.html#targetregisterinfo">TargetRegisterInfo</a>
 </div>
 
 <div class="doc_text">
@@ -1103,7 +1103,7 @@ The fifth parameter is a string that is used by the assembly printer and can be
 left as an empty string until the assembly printer interface is implemented. The
 sixth and final parameter is the pattern used to match the instruction during
 the SelectionDAG Select Phase described in
-(<a href="http://www.llvm.org/docs/CodeGenerator.html">The LLVM
+(<a href="CodeGenerator.html">The LLVM
 Target-Independent Code Generator</a>).  This parameter is detailed in the next
 section, <a href="#InstructionSelector">Instruction Selector</a>.
 </p>
@@ -1285,7 +1285,7 @@ the <tt>rd</tt>, <tt>rs1</tt>, and <tt>rs2</tt> fields respectively.
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="implementInstr">Implement a subclass of </a>
-  <a href="http://www.llvm.org/docs/CodeGenerator.html#targetinstrinfo">TargetInstrInfo</a>
+  <a href="CodeGenerator.html#targetinstrinfo">TargetInstrInfo</a>
 </div>
 
 <div class="doc_text">
@@ -1533,7 +1533,7 @@ selection pass into the queue of passes to run.
 The LLVM static compiler (<tt>llc</tt>) is an excellent tool for visualizing the
 contents of DAGs. To display the <tt>SelectionDAG</tt> before or after specific
 processing phases, use the command line options for <tt>llc</tt>, described
-at <a href="http://llvm.org/docs/CodeGenerator.html#selectiondag_process">
+at <a href="CodeGenerator.html#selectiondag_process">
 SelectionDAG Instruction Selection Process</a>.
 </p>
 

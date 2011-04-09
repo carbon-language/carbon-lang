@@ -33,7 +33,7 @@ project.</p>
   <p>The LLVM gold plugin implements the
 <a href="http://gcc.gnu.org/wiki/whopr/driver">gold plugin interface</a>
 on top of
-<a href="http://llvm.org/docs/LinkTimeOptimization.html#lto">libLTO</a>.
+<a href="LinkTimeOptimization.html#lto">libLTO</a>.
 The same plugin can also be used by other tools such as <tt>ar</tt> and
 <tt>nm</tt>.
 </div>
@@ -145,7 +145,7 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
 </pre>
   <p>Gold informs the plugin that foo3 is never referenced outside the IR,
   leading LLVM to delete that function. However, unlike in the
-  <a href="http://llvm.org/docs/LinkTimeOptimization.html#example1">libLTO
+  <a href="LinkTimeOptimization.html#example1">libLTO
   example</a> gold does not currently eliminate foo4.</p>
 </div>
 
