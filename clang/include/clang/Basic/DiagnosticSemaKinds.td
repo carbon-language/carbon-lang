@@ -3141,11 +3141,6 @@ def err_typecheck_incompatible_address_space : Error<
   " changes address space of pointer">;
 def err_typecheck_convert_ambiguous : Error<
   "ambiguity in initializing value of type %0 with initializer of type %1">;
-def err_cannot_initialize_decl_noname : Error<
-  "cannot initialize a value of type %0 with an %select{rvalue|lvalue}1 "
-  "of type %2">;
-def err_cannot_initialize_decl : Error<
-  "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2">;
 def err_typecheck_comparison_of_distinct_blocks : Error<
   "comparison of distinct block types (%0 and %1)">;
 
