@@ -43,13 +43,6 @@
 
 #include <map>
 
-#ifdef __CYGWIN__
-#include <cygwin/version.h>
-#if defined(CYGWIN_VERSION_DLL_MAJOR) && CYGWIN_VERSION_DLL_MAJOR<1007
-#define IS_CYGWIN15 1
-#endif
-#endif
-
 using namespace clang::driver;
 using namespace clang;
 
@@ -67,7 +60,7 @@ Driver::Driver(llvm::StringRef _ClangExecutable,
     CCLogDiagnosticsFilename(0), CCCIsCXX(false),
     CCCIsCPP(false),CCCEcho(false), CCCPrintBindings(false),
     CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
-    CCCGenericGCCName("gcc"), CheckInputsExist(true), CCCUseClang(true),
+    CCCGenericGCCName(""), CheckInputsExist(true), CCCUseClang(true),
     CCCUseClangCXX(true), CCCUseClangCPP(true), CCCUsePCH(true),
     SuppressMissingInputWarning(false) {
   if (IsProduction) {
@@ -238,13 +231,6 @@ Compilation *Driver::BuildCompilation(llvm::ArrayRef<const char *> ArgList) {
   CCCPrintActions = Args->hasArg(options::OPT_ccc_print_phases);
   CCCPrintBindings = Args->hasArg(options::OPT_ccc_print_bindings);
   CCCIsCXX = Args->hasArg(options::OPT_ccc_cxx) || CCCIsCXX;
-  if (CCCIsCXX) {
-#ifdef IS_CYGWIN15
-    CCCGenericGCCName = "g++-4";
-#else
-    CCCGenericGCCName = "g++";
-#endif
-  }
   CCCEcho = Args->hasArg(options::OPT_ccc_echo);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_gcc_name))
     CCCGenericGCCName = A->getValue(*Args);

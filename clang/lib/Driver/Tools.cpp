@@ -34,6 +34,13 @@
 #include "InputInfo.h"
 #include "ToolChains.h"
 
+#ifdef __CYGWIN__
+#include <cygwin/version.h>
+#if defined(CYGWIN_VERSION_DLL_MAJOR) && CYGWIN_VERSION_DLL_MAJOR<1007
+#define IS_CYGWIN15 1
+#endif
+#endif
+
 using namespace clang::driver;
 using namespace clang::driver::tools;
 
@@ -2065,7 +2072,20 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
-  const char *GCCName = getToolChain().getDriver().getCCCGenericGCCName().c_str();
+  const std::string customGCCName = D.getCCCGenericGCCName();
+  const char *GCCName;
+  if (!customGCCName.empty())
+    GCCName = customGCCName.c_str();
+  else if (D.CCCIsCXX) {
+#ifdef IS_CYGWIN15
+    // FIXME: Detect the version of Cygwin at runtime?
+    GCCName = "g++-4";
+#else
+    GCCName = "g++";
+#endif
+  } else
+    GCCName = "gcc";
+
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));

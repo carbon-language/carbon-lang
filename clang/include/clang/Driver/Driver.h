@@ -135,7 +135,7 @@ public:
   unsigned CCLogDiagnostics : 1;
 
 private:
-  /// Name to use when calling the generic gcc.
+  /// Name to use when invoking gcc/g++.
   std::string CCCGenericGCCName;
 
   /// Whether to check that input files exist when constructing compilation
@@ -183,7 +183,7 @@ public:
   /// @name Accessors
   /// @{
 
-  /// Name to use when calling the generic gcc.
+  /// Name to use when invoking gcc/g++.
   const std::string &getCCCGenericGCCName() const { return CCCGenericGCCName; }
 
 
