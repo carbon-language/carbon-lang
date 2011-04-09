@@ -34,6 +34,7 @@ declare i32 @f(%struct.decode_t*)
 ; CHECK: _test2:
 ; CHECK-NOT: 8(%esp)
 ; CHECK: 4(%esp)
+; CHECK-NOT: 8(%esp)
 ; CHECK: calll 
 declare i32 @foo(i32, i32, i32)
 
