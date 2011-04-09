@@ -514,10 +514,10 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
   if (MD->isVirtual()) {
     uint64_t Index = CGM.getVTables().getMethodVTableIndex(MD);
 
-    // FIXME: We shouldn't use / 8 here.
-    uint64_t PointerWidthInBytes =
-      getContext().Target.getPointerWidth(0) / 8;
-    uint64_t VTableOffset = (Index * PointerWidthInBytes);
+    const ASTContext &Context = getContext();
+    CharUnits PointerWidth =
+      Context.toCharUnitsFromBits(Context.Target.getPointerWidth(0));
+    uint64_t VTableOffset = (Index * PointerWidth.getQuantity());
 
     if (IsARM) {
       // ARM C++ ABI 3.2.1:
