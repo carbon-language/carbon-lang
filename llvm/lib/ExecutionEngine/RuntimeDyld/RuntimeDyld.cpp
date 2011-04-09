@@ -293,7 +293,7 @@ loadSegment32(const MachOObject *Obj,
       if (!STE)
         return Error("unable to read symbol: '" + Twine(i) + "'");
       if (STE->SectionIndex > Segment32LC->NumSections)
-        return Error("invalid section index for symbol: '" + Twine() + "'");
+        return Error("invalid section index for symbol: '" + Twine(i) + "'");
 
       // Just skip symbols not defined in this section.
       if ((unsigned)STE->SectionIndex - 1 != SectNum)
@@ -372,7 +372,7 @@ loadSegment64(const MachOObject *Obj,
       if (!STE)
         return Error("unable to read symbol: '" + Twine(i) + "'");
       if (STE->SectionIndex > Segment64LC->NumSections)
-        return Error("invalid section index for symbol: '" + Twine() + "'");
+        return Error("invalid section index for symbol: '" + Twine(i) + "'");
 
       // Just skip symbols not defined in this section.
       if ((unsigned)STE->SectionIndex - 1 != SectNum)
