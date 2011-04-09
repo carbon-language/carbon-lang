@@ -1954,11 +1954,13 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
   // only allowed to optimize the initializer if it is unique.
   if (!GV->hasUniqueInitializer()) return 0;
   
-  ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
-  
+  ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!CA) return 0;
+
   for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i) {
-    ConstantStruct *CS = cast<ConstantStruct>(*i);
-    
+    ConstantStruct *CS = dyn_cast<ConstantStruct>(*i);
+    if (!CS) return 0;
+
     if (isa<ConstantPointerNull>(CS->getOperand(1)))
       continue;
 
