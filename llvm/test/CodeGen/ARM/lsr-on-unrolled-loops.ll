@@ -4,11 +4,6 @@
 ; constant offset addressing, so that each of the following stores
 ; uses the same register.
 
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-128]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-96]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-64]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #-32]
-; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}]
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #32]
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #64]
 ; CHECK: vstr.32 s{{.*}}, [{{(r[0-9]+)|(lr)}}, #96]
