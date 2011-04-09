@@ -444,11 +444,11 @@ endif
 # LLVM Capable Compiler
 #--------------------------------------------------------------------
 
-ifeq ($(LLVMCC_OPTION),llvm-gcc)
+ifneq ($(findstring llvm-gcc,$(LLVMCC_OPTION)),)
   LLVMCC := $(LLVMGCC)
   LLVMCXX := $(LLVMGXX)
 else
-  ifeq ($(LLVMCC_OPTION),clang)
+  ifneq ($(findstring clang,$(LLVMCC_OPTION)),)
     ifneq ($(CLANGPATH),)
       LLVMCC := $(CLANGPATH)
       LLVMCXX := $(CLANGXXPATH)
