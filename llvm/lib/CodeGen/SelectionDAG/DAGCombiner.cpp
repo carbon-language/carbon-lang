@@ -6264,6 +6264,10 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                           Ptr, ST->getPointerInfo(), ST->isVolatile(),
                           ST->isNonTemporal(), OrigAlign);
   }
+  
+  // Turn 'store undef, Ptr' -> nothing.
+  if (Value.getOpcode() == ISD::UNDEF && ST->isUnindexed())
+    return Chain;
 
   // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Value)) {
@@ -6298,8 +6302,10 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           return DAG.getStore(Chain, N->getDebugLoc(), Tmp,
                               Ptr, ST->getPointerInfo(), ST->isVolatile(),
                               ST->isNonTemporal(), ST->getAlignment());
-        } else if (!ST->isVolatile() &&
-                   TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
+        }
+          
+        if (!ST->isVolatile() &&
+            TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
           // Many FP stores are not made apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.

@@ -27,3 +27,18 @@ UnifiedReturnBlock:             ; preds = %entry
 }
 
 declare i32 @f(%struct.decode_t*)
+
+
+; There should be no store for the undef operand.
+
+; CHECK: _test2:
+; CHECK-NOT: 8(%esp)
+; CHECK: 4(%esp)
+; CHECK: calll 
+declare i32 @foo(i32, i32, i32)
+
+define void @test2() nounwind {
+entry:
+  %call = call i32 @foo(i32 8, i32 6, i32 undef)
+  ret void
+}
