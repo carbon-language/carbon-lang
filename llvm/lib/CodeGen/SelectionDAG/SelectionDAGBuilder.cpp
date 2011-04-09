@@ -2019,9 +2019,13 @@ bool SelectionDAGBuilder::handleBTSplitSwitchCase(CaseRec& CR,
     APInt Range = ComputeRange(LEnd, RBegin);
     assert((Range - 2ULL).isNonNegative() &&
            "Invalid case distance");
-    double LDensity = (double)LSize.roundToDouble() /
+    // Use volatile double here to avoid excess precision issues on some hosts,
+    // e.g. that use 80-bit X87 registers.
+    volatile double LDensity =
+       (double)LSize.roundToDouble() /
                            (LEnd - First + 1ULL).roundToDouble();
-    double RDensity = (double)RSize.roundToDouble() /
+    volatile double RDensity =
+      (double)RSize.roundToDouble() /
                            (Last - RBegin + 1ULL).roundToDouble();
     double Metric = Range.logBase2()*(LDensity+RDensity);
     // Should always split in some non-trivial place
