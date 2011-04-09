@@ -82,7 +82,7 @@ bool Regex::match(StringRef String, SmallVectorImpl<StringRef> *Matches){
         Matches->push_back(StringRef());
         continue;
       }
-      assert(pm[i].rm_eo > pm[i].rm_so);
+      assert(pm[i].rm_eo >= pm[i].rm_so);
       Matches->push_back(StringRef(String.data()+pm[i].rm_so,
                                    pm[i].rm_eo-pm[i].rm_so));
     }
