@@ -2117,13 +2117,12 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::ObjCInterface:
     break;
   
-    case Decl::ObjCCategory: {
-      ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
-      if (CD->IsClassExtension() && CD->hasSynthBitfield())
-        Context.ResetObjCLayout(CD->getClassInterface());
-      break;
-    }
-      
+  case Decl::ObjCCategory: {
+    ObjCCategoryDecl *CD = cast<ObjCCategoryDecl>(D);
+    if (CD->IsClassExtension() && CD->hasSynthBitfield())
+      Context.ResetObjCLayout(CD->getClassInterface());
+    break;
+  }
 
   case Decl::ObjCProtocol:
     Runtime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
