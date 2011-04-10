@@ -1734,7 +1734,7 @@ Value *ScalarExprEmitter::EmitRem(const BinOpInfo &Ops) {
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, false);
   }
 
-  if (Ops.Ty->isUnsignedIntegerType())
+  if (Ops.Ty->hasUnsignedIntegerRepresentation())
     return Builder.CreateURem(Ops.LHS, Ops.RHS, "rem");
   else
     return Builder.CreateSRem(Ops.LHS, Ops.RHS, "rem");
