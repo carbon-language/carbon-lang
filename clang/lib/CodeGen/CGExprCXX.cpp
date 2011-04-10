@@ -77,6 +77,31 @@ static const CXXRecordDecl *getMostDerivedClassDecl(const Expr *Base) {
   return cast<CXXRecordDecl>(DerivedType->castAs<RecordType>()->getDecl());
 }
 
+// FIXME: Ideally Expr::IgnoreParenNoopCasts should do this, but it doesn't do
+// quite what we want.
+static const Expr *skipNoOpCastsAndParens(const Expr *E) {
+  while (true) {
+    if (const ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+      E = PE->getSubExpr();
+      continue;
+    }
+
+    if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
+      if (CE->getCastKind() == CK_NoOp) {
+        E = CE->getSubExpr();
+        continue;
+      }
+    }
+    if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+      if (UO->getOpcode() == UO_Extension) {
+        E = UO->getSubExpr();
+        continue;
+      }
+    }
+    return E;
+  }
+}
+
 /// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
 /// expr can be devirtualized.
 static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
@@ -112,6 +137,7 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
   if (MD->getParent()->hasAttr<FinalAttr>())
     return true;
 
+  Base = skipNoOpCastsAndParens(Base);
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
       // This is a record decl. We know the type and can devirtualize it.

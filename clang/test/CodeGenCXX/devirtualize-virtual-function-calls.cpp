@@ -2,7 +2,8 @@
 
 struct A {
   virtual void f();
-  
+  virtual void f_const() const;
+
   A h();
 };
 
@@ -28,6 +29,12 @@ void f(A a, A *ap, A& ar) {
   
   // CHECK: call void @_ZN1A1fEv
   a.h().f();
+
+  // CHECK: call void @_ZNK1A7f_constEv
+  a.f_const();
+
+  // CHECK: call void @_ZN1A1fEv
+  (a).f();
 }
 
 struct B {
@@ -45,3 +52,4 @@ void f() {
   // CHECK: call void @_ZN1B1fEv
   B().h().f();
 }
+
