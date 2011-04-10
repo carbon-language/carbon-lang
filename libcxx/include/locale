@@ -2346,6 +2346,12 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
         }
         break;
+    case 'F':
+        {
+        const char_type __fmt[] = {'%', 'Y', '-', '%', 'm', '-', '%', 'd'};
+        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        }
+        break;
     case 'H':
         __get_hour(__tm->tm_hour, __b, __e, __err, __ct);
         break;
