@@ -1526,37 +1526,26 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
   if (CastTy->isVoidType()) {
+    Kind = CK_ToVoid;
+
     ExprResult CastExprRes = IgnoredValueConversions(CastExpr);    
     if (CastExprRes.isInvalid())
       return ExprError();
     CastExpr = CastExprRes.take();
-    bool ret = false; // false is 'able to convert'
+
     if (CastExpr->getType() == Context.OverloadTy) {
       ExprResult SingleFunctionExpr = 
         ResolveAndFixSingleFunctionTemplateSpecialization(
                   CastExpr, /* Decay Function to ptr */ false, 
                   /* Complain */ true, R, CastTy, 
                   diag::err_bad_cstyle_cast_overload);
-
-      if (SingleFunctionExpr.isUsable()) {
-        CastExpr = SingleFunctionExpr.take();
-        Kind = CK_ToVoid;
-      }
-      else
-        ret = true;  
+      if (SingleFunctionExpr.isInvalid())
+        return ExprError();
+      CastExpr = SingleFunctionExpr.take();
     }
-    else
-      Kind = CK_ToVoid;
-    return ret ? ExprError() : Owned(CastExpr);
-  }
 
-  // Case of AltiVec vector initialization with a single literal
-  if (CastTy->isVectorType()
-      && CastTy->getAs<VectorType>()->getVectorKind() ==
-         VectorType::AltiVecVector
-      && (CastExpr->getType()->isIntegerType()
-          || CastExpr->getType()->isFloatingType())) {
-    Kind = CK_VectorSplat;
+    assert(!CastExpr->getType()->isPlaceholderType());
+
     return Owned(CastExpr);
   }
 
@@ -1576,6 +1565,15 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
       return ExprError();
     CastExpr = CastExprRes.take();
   }
+
+  // AltiVec vector initialization with a single literal.
+  if (const VectorType *vecTy = CastTy->getAs<VectorType>())
+    if (vecTy->getVectorKind() == VectorType::AltiVecVector
+        && (CastExpr->getType()->isIntegerType()
+            || CastExpr->getType()->isFloatingType())) {
+      Kind = CK_VectorSplat;
+      return Owned(CastExpr);
+    }
 
   // C++ [expr.cast]p5: The conversions performed by
   //   - a const_cast,

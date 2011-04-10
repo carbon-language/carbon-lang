@@ -35,18 +35,18 @@ namespace DontAllowUnresolvedOverloadedExpressionInAnUnusedExpression
   void check()
   {
     one; // expected-warning {{expression result unused}}
-    two; // expected-error{{address of overloaded function}}
+    two; // expected-error{{cannot resolve overloaded function 'two' from context}}
     oneT<int>; // expected-warning {{expression result unused}}
-    twoT<int>; // expected-error {{address of overloaded function}}
+    twoT<int>; // expected-error {{cannot resolve overloaded function 'twoT' from context}}
   }
 
   // check the template function case
   template<class T> void check()
   {
     one; // expected-warning {{expression result unused}}
-    two; // expected-error{{address of overloaded function}}
+    two; // expected-error{{cannot resolve overloaded function 'two' from context}}
     oneT<int>; // expected-warning {{expression result unused}}
-    twoT<int>; // expected-error {{address of overloaded function}}
+    twoT<int>; // expected-error {{cannot resolve overloaded function 'twoT' from context}}
  
   }
 
@@ -81,8 +81,8 @@ int main()
   { static_cast<void>(oneT<int>); }
   { (void)(oneT<int>); }
 
-  { static_cast<void>(two); } // expected-error {{address of overloaded}}
-  { (void)(two); } // expected-error {{address of overloaded}}
+  { static_cast<void>(two); } // expected-error {{address of overloaded function 'two' cannot be static_cast to type 'void'}}
+  { (void)(two); } // expected-error {{address of overloaded function 'two' cannot be cast to type 'void'}}
   { static_cast<void>(twoT<int>); } 
   { (void)(twoT<int>); } 
 

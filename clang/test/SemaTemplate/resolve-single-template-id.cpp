@@ -29,9 +29,9 @@ template<void (*p)(int)> struct test { };
 int main()
 {
    one;         // expected-warning {{expression result unused}}
-   two;         // expected-error {{address of overloaded}}
+   two;         // expected-error {{cannot resolve overloaded function 'two' from context}}
    oneT<int>;  // expected-warning {{expression result unused}}
-   twoT<int>;  // expected-error {{address of overloaded}}
+   twoT<int>;  // expected-error {{cannot resolve overloaded function 'twoT' from context}}
    typeid(oneT<int>); // expected-warning{{expression result unused}}
   sizeof(oneT<int>); // expected-warning {{expression result unused}}
   sizeof(twoT<int>); //expected-error {{cannot resolve overloaded function 'twoT' from context}}

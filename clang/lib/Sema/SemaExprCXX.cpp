@@ -3987,30 +3987,9 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE) {
   if (DiagnoseUnexpandedParameterPack(FullExpr.get()))
     return ExprError();
 
-  // 13.4.1 ... An overloaded function name shall not be used without arguments 
-  //         in contexts other than those listed [i.e list of targets].
-  //  
-  //  void foo(); void foo(int);
-  //  template<class T> void fooT(); template<class T> void fooT(int);
-  
-  //  Therefore these should error:
-  //  foo; 
-  //  fooT<int>;
-  
-  if (FullExpr.get()->getType() == Context.OverloadTy) {
-    ExprResult Fixed
-      = ResolveAndFixSingleFunctionTemplateSpecialization(FullExpr.get(),
-                                        /*DoFunctionPointerConversion=*/false,
-                                                          /*Complain=*/true,
-                                                    FullExpr.get()->getSourceRange(),
-                                                          QualType(),
-                                                 diag::err_addr_ovl_ambiguous);
-    if (Fixed.isInvalid())
-      return ExprError();
-    
-    FullExpr = Fixed.get();
-  }
-
+  FullExpr = CheckPlaceholderExpr(FullExpr.take());
+  if (FullExpr.isInvalid())
+    return ExprError();
 
   FullExpr = IgnoredValueConversions(FullExpr.take());
   if (FullExpr.isInvalid())

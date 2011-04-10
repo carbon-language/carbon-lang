@@ -2015,7 +2015,7 @@ public:
                                   bool isType, void *TyOrEx,
                                   const SourceRange &ArgRange);
 
-  ExprResult CheckPlaceholderExpr(Expr *E, SourceLocation Loc);
+  ExprResult CheckPlaceholderExpr(Expr *E);
   bool CheckVecStepExpr(Expr *E, SourceLocation OpLoc, SourceRange R);
 
   bool CheckUnaryExprOrTypeTraitOperand(QualType type, SourceLocation OpLoc,

@@ -3332,7 +3332,7 @@ QualType Sema::getElaboratedType(ElaboratedTypeKeyword Keyword,
 }
 
 QualType Sema::BuildTypeofExprType(Expr *E, SourceLocation Loc) {
-  ExprResult ER = CheckPlaceholderExpr(E, Loc);
+  ExprResult ER = CheckPlaceholderExpr(E);
   if (ER.isInvalid()) return QualType();
   E = ER.take();
 
@@ -3345,7 +3345,7 @@ QualType Sema::BuildTypeofExprType(Expr *E, SourceLocation Loc) {
 }
 
 QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc) {
-  ExprResult ER = CheckPlaceholderExpr(E, Loc);
+  ExprResult ER = CheckPlaceholderExpr(E);
   if (ER.isInvalid()) return QualType();
   E = ER.take();
   

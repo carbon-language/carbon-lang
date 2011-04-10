@@ -2915,7 +2915,7 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
     Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
   } else if (E->getType()->isPlaceholderType()) {
-    ExprResult PE = CheckPlaceholderExpr(E, OpLoc);
+    ExprResult PE = CheckPlaceholderExpr(E);
     if (PE.isInvalid()) return ExprError();
     return CreateUnaryExprOrTypeTraitExpr(PE.take(), OpLoc, ExprKind, R);
   } else {
@@ -2977,7 +2977,7 @@ static QualType CheckRealImagOperand(Sema &S, ExprResult &V, SourceLocation Loc,
     return V.get()->getType();
 
   // Test for placeholders.
-  ExprResult PR = S.CheckPlaceholderExpr(V.get(), Loc);
+  ExprResult PR = S.CheckPlaceholderExpr(V.get());
   if (PR.isInvalid()) return QualType();
   if (PR.get() != V.get()) {
     V = move(PR);
@@ -4730,7 +4730,7 @@ static ExprResult rebuildUnknownAnyFunction(Sema &S, Expr *fn,
   argTypes.reserve(numArgs);
   for (unsigned i = 0; i != numArgs; ++i) {
     // Require all the sub-expression to not be placeholders.
-    ExprResult result = S.CheckPlaceholderExpr(args[i], SourceLocation());
+    ExprResult result = S.CheckPlaceholderExpr(args[i]);
     if (result.isInvalid()) return ExprError();
     args[i] = result.take();
 
@@ -5169,6 +5169,8 @@ ExprResult Sema::CheckCastTypes(SourceRange TyR, QualType castType,
                               castType, VK, castExpr, Kind, BasePath,
                               FunctionalStyle);
 
+  assert(!castExpr->getType()->isPlaceholderType());
+
   // We only support r-value casts in C.
   VK = VK_RValue;
 
@@ -5555,11 +5557,11 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, ExprR
                                         ExprValueKind &VK, ExprObjectKind &OK,
                                         SourceLocation QuestionLoc) {
 
-  ExprResult lhsResult = CheckPlaceholderExpr(LHS.get(), QuestionLoc);
+  ExprResult lhsResult = CheckPlaceholderExpr(LHS.get());
   if (!lhsResult.isUsable()) return QualType();
   LHS = move(lhsResult);
 
-  ExprResult rhsResult = CheckPlaceholderExpr(RHS.get(), QuestionLoc);
+  ExprResult rhsResult = CheckPlaceholderExpr(RHS.get());
   if (!rhsResult.isUsable()) return QualType();
   RHS = move(rhsResult);
 
@@ -7841,8 +7843,8 @@ static QualType CheckCommaOperands(Sema &S, ExprResult &LHS, ExprResult &RHS,
                                    SourceLocation Loc) {
   S.DiagnoseUnusedExprResult(LHS.get());
 
-  LHS = S.CheckPlaceholderExpr(LHS.take(), Loc);
-  RHS = S.CheckPlaceholderExpr(RHS.take(), Loc);
+  LHS = S.CheckPlaceholderExpr(LHS.take());
+  RHS = S.CheckPlaceholderExpr(RHS.take());
   if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
@@ -7927,7 +7929,7 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
     S.Diag(OpLoc, diag::ext_integer_increment_complex)
       << ResType << Op->getSourceRange();
   } else if (ResType->isPlaceholderType()) {
-    ExprResult PR = S.CheckPlaceholderExpr(Op, OpLoc);
+    ExprResult PR = S.CheckPlaceholderExpr(Op);
     if (PR.isInvalid()) return QualType();
     return CheckIncrementDecrementOperand(S, PR.take(), VK, OpLoc,
                                           isInc, isPrefix);
@@ -8088,7 +8090,7 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
   if (OrigOp->getType() == S.Context.OverloadTy)
     return S.Context.OverloadTy;
 
-  ExprResult PR = S.CheckPlaceholderExpr(OrigOp, OpLoc);
+  ExprResult PR = S.CheckPlaceholderExpr(OrigOp);
   if (PR.isInvalid()) return QualType();
   OrigOp = PR.take();
 
@@ -8242,7 +8244,7 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
              OpTy->getAs<ObjCObjectPointerType>())
     Result = OPT->getPointeeType();
   else {
-    ExprResult PR = S.CheckPlaceholderExpr(Op, OpLoc);
+    ExprResult PR = S.CheckPlaceholderExpr(Op);
     if (PR.isInvalid()) return QualType();
     if (PR.take() != Op)
       return CheckIndirectionOperand(S, PR.take(), VK, OpLoc);
@@ -8382,11 +8384,11 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
   // f<int> == 0;  // resolve f<int> blindly
   // void (*p)(int); p = f<int>;  // resolve f<int> using target
   if (Opc != BO_Assign) { 
-    ExprResult resolvedLHS = CheckPlaceholderExpr(lhs.get(), OpLoc);
+    ExprResult resolvedLHS = CheckPlaceholderExpr(lhs.get());
     if (!resolvedLHS.isUsable()) return ExprError();
     lhs = move(resolvedLHS);
 
-    ExprResult resolvedRHS = CheckPlaceholderExpr(rhs.get(), OpLoc);
+    ExprResult resolvedRHS = CheckPlaceholderExpr(rhs.get());
     if (!resolvedRHS.isUsable()) return ExprError();
     rhs = move(resolvedRHS);
   }
@@ -8748,7 +8750,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     resultType = CheckAddressOfOperand(*this, Input.get(), OpLoc);
     break;
   case UO_Deref: {
-    ExprResult resolved = CheckPlaceholderExpr(Input.get(), OpLoc);
+    ExprResult resolved = CheckPlaceholderExpr(Input.get());
     if (!resolved.isUsable()) return ExprError();
     Input = move(resolved);
     Input = DefaultFunctionArrayLvalueConversion(Input.take());
@@ -8773,7 +8775,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
              resultType->isPointerType())
       break;
     else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take(), OpLoc);
+      Input = CheckPlaceholderExpr(Input.take());
       if (Input.isInvalid()) return ExprError();
       return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
     }
@@ -8795,7 +8797,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     else if (resultType->hasIntegerRepresentation())
       break;
     else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take(), OpLoc);
+      Input = CheckPlaceholderExpr(Input.take());
       if (Input.isInvalid()) return ExprError();
       return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
     } else {
@@ -8820,7 +8822,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                   ScalarTypeToBooleanCastKind(resultType));
       }
     } else if (resultType->isPlaceholderType()) {
-      Input = CheckPlaceholderExpr(Input.take(), OpLoc);
+      Input = CheckPlaceholderExpr(Input.take());
       if (Input.isInvalid()) return ExprError();
       return CreateBuiltinUnaryOp(OpLoc, Opc, Input.take());
     } else {
@@ -10312,7 +10314,7 @@ static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *e) {
 
 /// Check for operands with placeholder types and complain if found.
 /// Returns true if there was an error and no recovery was possible.
-ExprResult Sema::CheckPlaceholderExpr(Expr *E, SourceLocation Loc) {
+ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   // Placeholder types are always *exactly* the appropriate builtin type.
   QualType type = E->getType();
 
