@@ -74,7 +74,6 @@ public:
 private:
   InstListType InstList;
   Function *Parent;
-  bool IsLandingPad;
 
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
@@ -138,11 +137,6 @@ public:
   const Instruction* getFirstNonPHIOrDbg() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbg();
   }
-
-  /// isLandingPad - True if this basic block is a landing pad for exception
-  /// handling.
-  bool isLandingPad() const { return IsLandingPad; }
-  void setIsLandingPad(bool Val = true) { IsLandingPad = Val; }
 
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.

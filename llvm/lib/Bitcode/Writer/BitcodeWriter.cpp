@@ -40,7 +40,6 @@ enum {
   VST_ENTRY_7_ABBREV,
   VST_ENTRY_6_ABBREV,
   VST_BBENTRY_6_ABBREV,
-  VST_LPADENTRY_6_ABBREV,
 
   // CONSTANTS_BLOCK abbrev id's.
   CONSTANTS_SETTYPE_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
@@ -1180,20 +1179,13 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
 
     unsigned AbbrevToUse = VST_ENTRY_8_ABBREV;
 
-    // VST_ENTRY:     [valueid, namechar x N]
-    // VST_BBENTRY:   [bbid, namechar x N]
-    // VST_LPADENTRY: [lpadid, namechar x N]
+    // VST_ENTRY:   [valueid, namechar x N]
+    // VST_BBENTRY: [bbid, namechar x N]
     unsigned Code;
-    if (const BasicBlock *BB = dyn_cast<BasicBlock>(SI->getValue())) {
-      if (BB->isLandingPad()) {
-        Code = bitc::VST_CODE_LPADENTRY;
-        if (isChar6)
-          AbbrevToUse = VST_LPADENTRY_6_ABBREV;
-      } else {
-        Code = bitc::VST_CODE_BBENTRY;
-        if (isChar6)
-          AbbrevToUse = VST_BBENTRY_6_ABBREV;
-      }
+    if (isa<BasicBlock>(SI->getValue())) {
+      Code = bitc::VST_CODE_BBENTRY;
+      if (isChar6)
+        AbbrevToUse = VST_BBENTRY_6_ABBREV;
     } else {
       Code = bitc::VST_CODE_ENTRY;
       if (isChar6)
@@ -1374,16 +1366,8 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                                    Abbv) != VST_BBENTRY_6_ABBREV)
       llvm_unreachable("Unexpected abbrev ordering!");
   }
-  { // 6-bit char6 VST_LPADENTRY strings.
-    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_LPADENTRY));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
-    if (Stream.EmitBlockInfoAbbrev(bitc::VALUE_SYMTAB_BLOCK_ID,
-                                   Abbv) != VST_LPADENTRY_6_ABBREV)
-      llvm_unreachable("Unexpected abbrev ordering!");
-  }
+
+
 
   { // SETTYPE abbrev for CONSTANTS_BLOCK.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();

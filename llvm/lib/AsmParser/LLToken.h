@@ -125,9 +125,6 @@ namespace lltok {
     kw_extractelement, kw_insertelement, kw_shufflevector, kw_getresult,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,
 
-    // Basic block attribute.
-    kw_landingpad,
-
     // Unsigned Valued tokens (UIntVal).
     GlobalID,          // @42
     LocalVarID,        // %42

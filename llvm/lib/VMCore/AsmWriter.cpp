@@ -1687,13 +1687,8 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     Out << "\n";
     PrintLLVMName(Out, BB->getName(), LabelPrefix);
     Out << ':';
-    if (BB->isLandingPad())
-      Out << " landingpad";
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
-    Out << '\n';
-    if (BB->isLandingPad())
-      Out << "landingpad ";
-    Out << "; <label>:";
+    Out << "\n; <label>:";
     int Slot = Machine.getLocalSlot(BB);
     if (Slot != -1)
       Out << Slot;

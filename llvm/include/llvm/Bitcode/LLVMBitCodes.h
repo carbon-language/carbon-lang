@@ -106,9 +106,8 @@ namespace bitc {
 
   // The value symbol table only has one code (VST_ENTRY_CODE).
   enum ValueSymtabCodes {
-    VST_CODE_ENTRY     = 1,  // VST_ENTRY:     [valid, namechar x N]
-    VST_CODE_BBENTRY   = 2,  // VST_BBENTRY:   [bbid, namechar x N]
-    VST_CODE_LPADENTRY = 3   // VST_LPADENTRY: [lpadid, namechar x N]
+    VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namechar x N]
+    VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namechar x N]
   };
 
   enum MetadataCodes {

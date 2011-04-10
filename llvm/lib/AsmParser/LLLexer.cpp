@@ -587,8 +587,6 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   KEYWORD(x);
   KEYWORD(blockaddress);
-
-  KEYWORD(landingpad);
 #undef KEYWORD
 
   // Keywords for types.
