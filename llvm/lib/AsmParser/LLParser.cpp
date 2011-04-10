@@ -2918,6 +2918,11 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
   BasicBlock *BB = PFS.DefineBB(Name, NameLoc);
   if (BB == 0) return true;
 
+  if (Lex.getKind() == lltok::kw_landingpad) {
+    BB->setIsLandingPad();
+    Lex.Lex();
+  }
+
   std::string NameStr;
 
   // Parse the instructions in this block until we get a terminator.

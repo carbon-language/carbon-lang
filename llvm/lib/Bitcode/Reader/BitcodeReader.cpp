@@ -714,7 +714,8 @@ bool BitcodeReader::ParseValueSymbolTable() {
 
     // Read a record.
     Record.clear();
-    switch (Stream.ReadRecord(Code, Record)) {
+    unsigned VSTCode = Stream.ReadRecord(Code, Record);
+    switch (VSTCode) {
     default:  // Default behavior: unknown type.
       break;
     case bitc::VST_CODE_ENTRY: {  // VST_ENTRY: [valueid, namechar x N]
@@ -729,12 +730,16 @@ bool BitcodeReader::ParseValueSymbolTable() {
       ValueName.clear();
       break;
     }
-    case bitc::VST_CODE_BBENTRY: {
+    case bitc::VST_CODE_BBENTRY:
+    case bitc::VST_CODE_LPADENTRY: {
       if (ConvertToString(Record, 1, ValueName))
         return Error("Invalid VST_BBENTRY record");
       BasicBlock *BB = getBasicBlock(Record[0]);
       if (BB == 0)
         return Error("Invalid BB ID in VST_BBENTRY record");
+
+      if (VSTCode == bitc::VST_CODE_LPADENTRY)
+        BB->setIsLandingPad(true);
 
       BB->setName(StringRef(ValueName.data(), ValueName.size()));
       ValueName.clear();

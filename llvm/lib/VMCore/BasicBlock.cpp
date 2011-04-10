@@ -38,10 +38,10 @@ LLVMContext &BasicBlock::getContext() const {
 // are not in the public header file...
 template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
 
-
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
-  : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0) {
+  : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0),
+    IsLandingPad(false) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -56,7 +56,6 @@ BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
   
   setName(Name);
 }
-
 
 BasicBlock::~BasicBlock() {
   // If the address of the block is taken and it is being deleted (e.g. because
