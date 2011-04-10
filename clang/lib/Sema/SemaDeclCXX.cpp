@@ -293,12 +293,24 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       // for NewParam to find the last source location in the type... but it
       // isn't worth the effort right now. This is the kind of test case that
       // is hard to get right:
+      unsigned DiagDefaultParamID =
+        diag::err_param_default_argument_redefinition;
+
+      // MSVC accepts that default parameters be redefined for member functions
+      // of template class. The new default parameter's value is ignored.
+      Invalid = true;
+      if (getLangOptions().Microsoft) {
+        CXXMethodDecl* MD = dyn_cast<CXXMethodDecl>(New);
+        if (MD && MD->getParent()->getDescribedClassTemplate()) {
+          DiagDefaultParamID = diag::war_param_default_argument_redefinition;
+          Invalid = false;
+        }
+      }
       
       //   int f(int);
       //   void g(int (*fp)(int) = f);
       //   void g(int (*fp)(int) = &f);
-      Diag(NewParam->getLocation(),
-           diag::err_param_default_argument_redefinition)
+      Diag(NewParam->getLocation(), DiagDefaultParamID)
         << NewParam->getDefaultArgRange();
       
       // Look for the function declaration where the default argument was
@@ -313,7 +325,6 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       
       Diag(OldParam->getLocation(), diag::note_previous_definition)
         << OldParam->getDefaultArgRange();
-      Invalid = true;
     } else if (OldParam->hasDefaultArg()) {
       // Merge the old default argument into the new parameter.
       // It's important to use getInit() here;  getDefaultArg()

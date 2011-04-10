@@ -1301,6 +1301,8 @@ def err_param_default_argument : Error<
   "C does not support default arguments">;
 def err_param_default_argument_redefinition : Error<
   "redefinition of default argument">;
+def war_param_default_argument_redefinition : ExtWarn<
+  "redefinition of default argument">;
 def err_param_default_argument_missing : Error<
   "missing default argument on parameter">;
 def err_param_default_argument_missing_name : Error<

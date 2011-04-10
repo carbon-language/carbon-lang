@@ -127,3 +127,12 @@ __declspec(dllimport) void AAA::f2(void) { // expected-error {{dllimport attribu
 
 
 
+template <class T>
+class BB {
+public:
+   void f(int g = 10 ); // expected-note {{previous definition is here}}
+};
+
+template <class T>
+void BB<T>::f(int g = 0) { } // expected-warning {{redefinition of default argument}}
+
