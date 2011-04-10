@@ -33,7 +33,7 @@ if( LLVM_ENABLE_PIC )
 
   set_target_properties(libclang
     PROPERTIES
-    OUTPUT_NAME "clang"
+    OUTPUT_NAME "libclang"
     VERSION ${LIBCLANG_LIBRARY_VERSION}
     DEFINE_SYMBOL _CINDEX_LIB_)
 
@@ -64,5 +64,5 @@ if( NOT BUILD_SHARED_LIBS AND NOT WIN32 )
 
   set_target_properties(${LIBCLANG_STATIC_TARGET_NAME}
     PROPERTIES
-    OUTPUT_NAME "clang")
+    OUTPUT_NAME "libclang")
 endif()
