@@ -30,25 +30,43 @@ Macros:
 
 #if !defined(EOWNERDEAD) || !defined(ENOTRECOVERABLE)
 
+#ifdef ELAST
+
 const int __elast1 = ELAST+1;
 const int __elast2 = ELAST+2;
-#undef ELAST
+
+#else
+
+const int __elast1 = 104;
+const int __elast2 = 105;
+
+#endif
 
 #ifdef ENOTRECOVERABLE
 
 #define EOWNERDEAD __elast1
+
+#ifdef ELAST
+#undef ELAST
 #define ELAST EOWNERDEAD
+#endif
 
 #elif defined(EOWNERDEAD)
 
 #define ENOTRECOVERABLE __elast1
+#ifdef ELAST
+#undef ELAST
 #define ELAST ENOTRECOVERABLE
+#endif
 
 #else  // defined(EOWNERDEAD)
 
 #define EOWNERDEAD __elast1
 #define ENOTRECOVERABLE __elast2
+#ifdef ELAST
+#undef ELAST
 #define ELAST ENOTRECOVERABLE
+#endif
 
 #endif  // defined(EOWNERDEAD)
 
