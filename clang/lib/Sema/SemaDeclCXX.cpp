@@ -288,11 +288,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     ParmVarDecl *NewParam = New->getParamDecl(p);
 
     if (OldParam->hasDefaultArg() && NewParam->hasDefaultArg()) {
-      // FIXME: If we knew where the '=' was, we could easily provide a fix-it 
-      // hint here. Alternatively, we could walk the type-source information
-      // for NewParam to find the last source location in the type... but it
-      // isn't worth the effort right now. This is the kind of test case that
-      // is hard to get right:
+
       unsigned DiagDefaultParamID =
         diag::err_param_default_argument_redefinition;
 
@@ -302,11 +298,23 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       if (getLangOptions().Microsoft) {
         CXXMethodDecl* MD = dyn_cast<CXXMethodDecl>(New);
         if (MD && MD->getParent()->getDescribedClassTemplate()) {
+          // Merge the old default argument into the new parameter.
+          NewParam->setHasInheritedDefaultArg();
+          if (OldParam->hasUninstantiatedDefaultArg())
+            NewParam->setUninstantiatedDefaultArg(
+                                      OldParam->getUninstantiatedDefaultArg());
+          else
+            NewParam->setDefaultArg(OldParam->getInit());
           DiagDefaultParamID = diag::war_param_default_argument_redefinition;
           Invalid = false;
         }
       }
       
+      // FIXME: If we knew where the '=' was, we could easily provide a fix-it 
+      // hint here. Alternatively, we could walk the type-source information
+      // for NewParam to find the last source location in the type... but it
+      // isn't worth the effort right now. This is the kind of test case that
+      // is hard to get right:
       //   int f(int);
       //   void g(int (*fp)(int) = f);
       //   void g(int (*fp)(int) = &f);
