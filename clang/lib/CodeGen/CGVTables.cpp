@@ -2306,14 +2306,16 @@ void VTableBuilder::dumpLayout(llvm::raw_ostream& Out) {
 static void 
 CollectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
                     VTableBuilder::PrimaryBasesSetVectorTy &PrimaryBases) {
-  while (RD) {
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
-    const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
-    if (PrimaryBase)
-      PrimaryBases.insert(PrimaryBase);
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+  const CXXRecordDecl *PrimaryBase = Layout.getPrimaryBase();
 
-    RD = PrimaryBase;
-  }
+  if (!PrimaryBase)
+    return;
+
+  CollectPrimaryBases(PrimaryBase, Context, PrimaryBases);
+
+  if (!PrimaryBases.insert(PrimaryBase))
+    assert(false && "Found a duplicate primary base!");
 }
 
 void CodeGenVTables::ComputeMethodVTableIndices(const CXXRecordDecl *RD) {

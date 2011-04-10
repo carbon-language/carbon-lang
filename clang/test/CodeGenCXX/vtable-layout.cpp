@@ -41,6 +41,7 @@
 // RUN: FileCheck --check-prefix=CHECK-40 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-41 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-42 %s < %t
+// RUN: FileCheck --check-prefix=CHECK-43 %s < %t
 
 // For now, just verify this doesn't crash.
 namespace test0 {
@@ -1677,5 +1678,26 @@ struct D : virtual B, C {
  virtual void g();
 };
 void D::g() { }
+
+}
+
+namespace Test37 {
+
+// Test that we give C::f the right vtable index. (PR9660).
+struct A {
+	virtual A* f() = 0; 
+};
+
+struct B : virtual A {
+  virtual B* f();
+};
+
+// CHECK-43:      VTable indices for 'Test37::C' (1 entries).
+// CHECK-43-NEXT:    1 | Test37::C *Test37::C::f()
+struct C : B {
+  virtual C* f();
+};
+
+C* C::f() { return 0; }
 
 }
