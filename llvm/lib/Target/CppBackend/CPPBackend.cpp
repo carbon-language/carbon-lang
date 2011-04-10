@@ -1348,7 +1348,7 @@ void CppWriter::printInstruction(const Instruction *I,
     const PHINode* phi = cast<PHINode>(I);
 
     Out << "PHINode* " << iName << " = PHINode::Create("
-        << getCppName(phi->getType()) << ", \""
+        << getCppName(phi->getType()) << ", "
         << phi->getNumIncomingValues() << ", \"";
     printEscapedString(phi->getName());
     Out << "\", " << bbname << ");";
