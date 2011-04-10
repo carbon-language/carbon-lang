@@ -8,13 +8,18 @@ void test0() {
   int y0 = 1.2222F; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
   int y1 = (1.2222F); // expected-warning {{implicit conversion turns literal floating-point number into integer}}
   int y2 = (((1.2222F))); // expected-warning {{implicit conversion turns literal floating-point number into integer}}
-  int y3 = 12E1F; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
-  int y4 = 1.2E1F; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
+  int y3 = 12E1F; // expected-warning {{implicit conversion turns literal floating-point number into integer}} \
+                  // expected-note {{this can be rewritten as an integer literal with the exact same value}}
+  int y4 = 1.2E1F; // expected-warning {{implicit conversion turns literal floating-point number into integer}} \
+                   // expected-note {{this can be rewritten as an integer literal with the exact same value}}
   // Double
   int y5 = 1.2222; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
-  int y6 = 12E1; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
-  int y7 = 1.2E1; // expected-warning {{implicit conversion turns literal floating-point number into integer}}
-  int y8 = (1.2E1); // expected-warning {{implicit conversion turns literal floating-point number into integer}}
+  int y6 = 12E1; // expected-warning {{implicit conversion turns literal floating-point number into integer}} \
+                 // expected-note {{this can be rewritten as an integer literal with the exact same value}}
+  int y7 = 1.2E1; // expected-warning {{implicit conversion turns literal floating-point number into integer}} \
+                  // expected-note {{this can be rewritten as an integer literal with the exact same value}}
+  int y8 = (1.2E1); // expected-warning {{implicit conversion turns literal floating-point number into integer}} \
+                    // expected-note {{this can be rewritten as an integer literal with the exact same value}}
 
   // Test assignment to an existing variable.
   y8 = 2.22F; // expected-warning {{implicit conversion turns literal floating-point number into integer}}

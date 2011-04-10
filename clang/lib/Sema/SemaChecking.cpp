@@ -2763,6 +2763,38 @@ void DiagnoseImpCast(Sema &S, Expr *E, QualType T, SourceLocation CContext,
   DiagnoseImpCast(S, E, E->getType(), T, CContext, diag);
 }
 
+/// Diagnose an implicit cast from a literal expression. Also attemps to supply
+/// fixit hints when the cast wouldn't lose information to simply write the
+/// expression with the expected type.
+void DiagnoseFloatingLiteralImpCast(Sema &S, FloatingLiteral *FL, QualType T,
+                                    SourceLocation CContext) {
+  // Emit the primary warning first, then try to emit a fixit hint note if
+  // reasonable.
+  S.Diag(FL->getExprLoc(), diag::warn_impcast_literal_float_to_integer)
+    << FL->getType() << T << FL->getSourceRange() << SourceRange(CContext);
+
+  const llvm::APFloat &Value = FL->getValue();
+
+  // Don't attempt to fix PPC double double literals.
+  if (&Value.getSemantics() == &llvm::APFloat::PPCDoubleDouble)
+    return;
+
+  // Try to convert this exactly to an 64-bit integer. FIXME: It would be
+  // nice to support arbitrarily large integers here.
+  bool isExact = false;
+  uint64_t IntegerPart;
+  if (Value.convertToInteger(&IntegerPart, 64, /*isSigned=*/true,
+                             llvm::APFloat::rmTowardZero, &isExact)
+      != llvm::APFloat::opOK || !isExact)
+    return;
+
+  llvm::APInt IntegerValue(64, IntegerPart, /*isSigned=*/true);
+
+  std::string LiteralValue = IntegerValue.toString(10, /*isSigned=*/true);
+  S.Diag(FL->getExprLoc(), diag::note_fix_integral_float_as_integer)
+    << FixItHint::CreateReplacement(FL->getSourceRange(), LiteralValue);
+}
+
 std::string PrettyPrintInRange(const llvm::APSInt &Value, IntRange Range) {
   if (!Range.Width) return "0";
 
@@ -2776,7 +2808,7 @@ static bool isFromSystemMacro(Sema &S, SourceLocation loc) {
   SourceManager &smgr = S.Context.getSourceManager();
   return loc.isMacroID() && smgr.isInSystemHeader(smgr.getSpellingLoc(loc));
 }
-  
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = 0) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -2859,9 +2891,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         return;
       
       Expr *InnerE = E->IgnoreParenImpCasts();
-      if (FloatingLiteral *LiteralExpr = dyn_cast<FloatingLiteral>(InnerE)) {
-        DiagnoseImpCast(S, LiteralExpr, T, CC,
-                        diag::warn_impcast_literal_float_to_integer);
+      if (FloatingLiteral *FL = dyn_cast<FloatingLiteral>(InnerE)) {
+        DiagnoseFloatingLiteralImpCast(S, FL, T, CC);
       } else {
         DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_float_integer);
       }
