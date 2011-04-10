@@ -255,7 +255,10 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
 
   switch (E->getCastKind()) {
-  case CK_Dynamic: {
+  case CK_Dynamic:
+  case CK_DynamicToNull: {
+
+    // FIXME: Actually handle DynamicToNull here.
     assert(isa<CXXDynamicCastExpr>(E) && "CK_Dynamic without a dynamic_cast?");
     LValue LV = CGF.EmitCheckedLValue(E->getSubExpr());
     // FIXME: Do we also need to handle property references here?

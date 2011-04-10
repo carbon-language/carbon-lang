@@ -1867,7 +1867,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return MakeAddrLValue(V, E->getType());
   }
 
-  case CK_Dynamic: {
+  case CK_Dynamic:
+  case CK_DynamicToNull: {
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *V = LV.getAddress();
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(E);

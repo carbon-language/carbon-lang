@@ -1053,7 +1053,8 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
                                      CE->path_begin(), CE->path_end(),
                                      ShouldNullCheckClassCastValue(CE));
   }
-  case CK_Dynamic: {
+  case CK_Dynamic:
+  case CK_DynamicToNull: {
     Value *V = Visit(const_cast<Expr*>(E));
     const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(CE);
     return CGF.EmitDynamicCast(V, DCE);

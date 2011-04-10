@@ -2183,6 +2183,7 @@ private:
     // These should not have an inheritance path.
     case CK_BitCast:
     case CK_Dynamic:
+    case CK_DynamicToNull:
     case CK_ToUnion:
     case CK_ArrayToPointerDecay:
     case CK_FunctionToPointerDecay:
