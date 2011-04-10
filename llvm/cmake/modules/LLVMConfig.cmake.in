@@ -1,6 +1,6 @@
 # This file provides information and services to the final user.
 
-set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@)
+set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@) #remove this?
 
 set(LLVM_COMMON_DEPENDS @LLVM_COMMON_DEPENDS@)
 
@@ -24,6 +24,11 @@ set(HAVE_LIBDL @HAVE_LIBDL@)
 set(HAVE_LIBPTHREAD @HAVE_LIBPTHREAD@)
 set(LLVM_ON_UNIX @LLVM_ON_UNIX@)
 set(LLVM_ON_WIN32 @LLVM_ON_WIN32@)
+
+set(LLVM_INSTALL_PREFIX @LLVM_INSTALL_PREFIX@)
+set(LLVM_INCLUDE_DIRS ${LLVM_INSTALL_PREFIX}/include)
+set(LLVM_LIBRARY_DIRS ${LLVM_INSTALL_PREFIX}/lib)
+set(LLVM_DEFINITIONS "-D__STDC_LIMIT_MACROS" "-D__STDC_CONSTANT_MACROS")
 
 # We try to include using the current setting of CMAKE_MODULE_PATH,
 # which suppossedly was filled by the user with the directory where
