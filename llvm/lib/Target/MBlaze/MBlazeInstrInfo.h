@@ -261,7 +261,6 @@ public:
   virtual bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
     const;
 
-
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,

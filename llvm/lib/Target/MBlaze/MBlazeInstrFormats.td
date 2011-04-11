@@ -81,7 +81,7 @@ class MBlazeInst<bits<6> op, Format form, dag outs, dag ins, string asmstr,
 // Pseudo instruction class
 //===----------------------------------------------------------------------===//
 class MBlazePseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-      MBlazeInst<0x0, FPseudo, outs, ins, asmstr, pattern, IIPseudo>;
+      MBlazeInst<0x0, FPseudo, outs, ins, asmstr, pattern, IIC_Pseudo>;
 
 //===----------------------------------------------------------------------===//
 // Type A instruction class in MBlaze : <|opcode|rd|ra|rb|flags|>

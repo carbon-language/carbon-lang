@@ -47,22 +47,22 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MBCallSeqEnd,
 //===----------------------------------------------------------------------===//
 // MBlaze Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasPipe3     : Predicate<"Subtarget.hasPipe3()">;
+// def HasPipe3     : Predicate<"Subtarget.hasPipe3()">;
 def HasBarrel    : Predicate<"Subtarget.hasBarrel()">;
-def NoBarrel     : Predicate<"!Subtarget.hasBarrel()">;
+// def NoBarrel     : Predicate<"!Subtarget.hasBarrel()">;
 def HasDiv       : Predicate<"Subtarget.hasDiv()">;
 def HasMul       : Predicate<"Subtarget.hasMul()">;
-def HasFSL       : Predicate<"Subtarget.hasFSL()">;
-def HasEFSL      : Predicate<"Subtarget.hasEFSL()">;
-def HasMSRSet    : Predicate<"Subtarget.hasMSRSet()">;
-def HasException : Predicate<"Subtarget.hasException()">;
+// def HasFSL       : Predicate<"Subtarget.hasFSL()">;
+// def HasEFSL      : Predicate<"Subtarget.hasEFSL()">;
+// def HasMSRSet    : Predicate<"Subtarget.hasMSRSet()">;
+// def HasException : Predicate<"Subtarget.hasException()">;
 def HasPatCmp    : Predicate<"Subtarget.hasPatCmp()">;
 def HasFPU       : Predicate<"Subtarget.hasFPU()">;
-def HasESR       : Predicate<"Subtarget.hasESR()">;
-def HasPVR       : Predicate<"Subtarget.hasPVR()">;
+// def HasESR       : Predicate<"Subtarget.hasESR()">;
+// def HasPVR       : Predicate<"Subtarget.hasPVR()">;
 def HasMul64     : Predicate<"Subtarget.hasMul64()">;
 def HasSqrt      : Predicate<"Subtarget.hasSqrt()">;
-def HasMMU       : Predicate<"Subtarget.hasMMU()">;
+// def HasMMU       : Predicate<"Subtarget.hasMMU()">;
 
 //===----------------------------------------------------------------------===//
 // MBlaze Operand, Complex Patterns and Transformations Definitions.
@@ -170,18 +170,18 @@ class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
              TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
+                [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIC_ALU>;
 
 class ArithI32<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
                TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                   !strconcat(instr_asm, "   $dst, $b, $c"),
-                  [], IIAlu>;
+                  [], IIC_ALU>;
 
 class ShiftI<bits<6> op, bits<2> flags, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
              SHT<op, flags, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                  !strconcat(instr_asm, "   $dst, $b, $c"),
-                 [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIAlu>;
+                 [(set GPR:$dst, (OpNode GPR:$b, imm_type:$c))], IIC_SHT>;
 
 class ArithR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
             InstrItinClass itin> :
@@ -193,7 +193,7 @@ class ArithRI<bits<6> op, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
              TBR<op, (outs GPR:$dst), (ins Od:$b, GPR:$c),
                  !strconcat(instr_asm, "   $dst, $c, $b"),
-                 [(set GPR:$dst, (OpNode imm_type:$b, GPR:$c))], IIAlu>;
+                 [(set GPR:$dst, (OpNode imm_type:$b, GPR:$c))], IIC_ALU>;
 
 class ArithN<bits<6> op, bits<11> flags, string instr_asm,
             InstrItinClass itin> :
@@ -204,7 +204,7 @@ class ArithN<bits<6> op, bits<11> flags, string instr_asm,
 class ArithNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
              TB<op, (outs GPR:$dst), (ins GPR:$b, Od:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
+                [], IIC_ALU>;
 
 class ArithRN<bits<6> op, bits<11> flags, string instr_asm,
             InstrItinClass itin> :
@@ -215,7 +215,7 @@ class ArithRN<bits<6> op, bits<11> flags, string instr_asm,
 class ArithRNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
              TBR<op, (outs GPR:$dst), (ins Od:$c, GPR:$b),
                  !strconcat(instr_asm, "   $dst, $b, $c"),
-                 [], IIAlu>;
+                 [], IIC_ALU>;
 
 //===----------------------------------------------------------------------===//
 // Misc Arithmetic Instructions
@@ -224,23 +224,23 @@ class ArithRNI<bits<6> op, string instr_asm,Operand Od, PatLeaf imm_type> :
 class Logic<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode> :
             TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                !strconcat(instr_asm, "   $dst, $b, $c"),
-               [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], IIAlu>;
+               [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], IIC_ALU>;
 
 class LogicI<bits<6> op, string instr_asm, SDNode OpNode> :
              TB<op, (outs GPR:$dst), (ins GPR:$b, uimm16:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
                 [(set GPR:$dst, (OpNode GPR:$b, immZExt16:$c))],
-                IIAlu>;
+                IIC_ALU>;
 
 class LogicI32<bits<6> op, string instr_asm> :
                TB<op, (outs GPR:$dst), (ins GPR:$b, uimm16:$c),
                   !strconcat(instr_asm, "   $dst, $b, $c"),
-                  [], IIAlu>;
+                  [], IIC_ALU>;
 
 class PatCmp<bits<6> op, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                 [], IIAlu>;
+                 [], IIC_ALU>;
 
 //===----------------------------------------------------------------------===//
 // Memory Access Instructions
@@ -248,22 +248,22 @@ class PatCmp<bits<6> op, bits<11> flags, string instr_asm> :
 class LoadM<bits<6> op, bits<11> flags, string instr_asm> :
             TA<op, flags, (outs GPR:$dst), (ins memrr:$addr),
                !strconcat(instr_asm, "   $dst, $addr"),
-               [], IILoad>;
+               [], IIC_MEMl>;
 
 class LoadMI<bits<6> op, string instr_asm, PatFrag OpNode> :
              TB<op, (outs GPR:$dst), (ins memri:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
-                [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IILoad>;
+                [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IIC_MEMl>;
 
 class StoreM<bits<6> op, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs), (ins GPR:$dst, memrr:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
-                [], IIStore>;
+                [], IIC_MEMs>;
 
 class StoreMI<bits<6> op, string instr_asm, PatFrag OpNode> :
               TB<op, (outs), (ins GPR:$dst, memri:$addr),
                  !strconcat(instr_asm, "   $dst, $addr"),
-                 [(OpNode (i32 GPR:$dst), iaddr:$addr)], IIStore>;
+                 [(OpNode (i32 GPR:$dst), iaddr:$addr)], IIC_MEMs>;
 
 //===----------------------------------------------------------------------===//
 // Branch Instructions
@@ -271,7 +271,7 @@ class StoreMI<bits<6> op, string instr_asm, PatFrag OpNode> :
 class Branch<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs), (ins GPR:$target),
                 !strconcat(instr_asm, "   $target"),
-                [], IIBranch> {
+                [], IIC_BR> {
   let rd = 0x0;
   let ra = br;
   let Form = FCCR;
@@ -280,7 +280,7 @@ class Branch<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
 class BranchI<bits<6> op, bits<5> br, string instr_asm> :
               TB<op, (outs), (ins brtarget:$target),
                  !strconcat(instr_asm, "   $target"),
-                 [], IIBranch> {
+                 [], IIC_BR> {
   let rd = 0;
   let ra = br;
   let Form = FCCI;
@@ -292,7 +292,7 @@ class BranchI<bits<6> op, bits<5> br, string instr_asm> :
 class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
               TA<op, flags, (outs), (ins GPR:$link, GPR:$target, variable_ops),
                  !strconcat(instr_asm, "   $link, $target"),
-                 [], IIBranch> {
+                 [], IIC_BRl> {
   let ra = br;
   let Form = FRCR;
 }
@@ -300,7 +300,7 @@ class BranchL<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
 class BranchLI<bits<6> op, bits<5> br, string instr_asm> :
                TB<op, (outs), (ins GPR:$link, calltarget:$target, variable_ops),
                   !strconcat(instr_asm, "   $link, $target"),
-                  [], IIBranch> {
+                  [], IIC_BRl> {
   let ra = br;
   let Form = FRCI;
 }
@@ -312,7 +312,7 @@ class BranchC<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
               TA<op, flags, (outs),
                  (ins GPR:$a, GPR:$b),
                  !strconcat(instr_asm, "   $a, $b"),
-                 [], IIBranch> {
+                 [], IIC_BRc> {
   let rd = br;
   let Form = FCRR;
 }
@@ -320,7 +320,7 @@ class BranchC<bits<6> op, bits<5> br, bits<11> flags, string instr_asm> :
 class BranchCI<bits<6> op, bits<5> br, string instr_asm> :
                TB<op, (outs), (ins GPR:$a, brtarget:$offset),
                   !strconcat(instr_asm, "   $a, $offset"),
-                  [], IIBranch> {
+                  [], IIC_BRc> {
   let rd = br;
   let Form = FCRI;
 }
@@ -330,71 +330,74 @@ class BranchCI<bits<6> op, bits<5> br, string instr_asm> :
 //===----------------------------------------------------------------------===//
 
 let isCommutable = 1, isAsCheapAsAMove = 1 in {
-  def ADDK   :  Arith<0x04, 0x000, "addk   ", add,  IIAlu>;
+  def ADDK   :  Arith<0x04, 0x000, "addk   ", add,  IIC_ALU>;
   def AND    :  Logic<0x21, 0x000, "and    ", and>;
   def OR     :  Logic<0x20, 0x000, "or     ", or>;
   def XOR    :  Logic<0x22, 0x000, "xor    ", xor>;
-  def PCMPBF : PatCmp<0x20, 0x400, "pcmpbf ">;
-  def PCMPEQ : PatCmp<0x22, 0x400, "pcmpeq ">;
-  def PCMPNE : PatCmp<0x23, 0x400, "pcmpne ">;
+
+  let Predicates=[HasPatCmp] in {
+    def PCMPBF : PatCmp<0x20, 0x400, "pcmpbf ">;
+    def PCMPEQ : PatCmp<0x22, 0x400, "pcmpeq ">;
+    def PCMPNE : PatCmp<0x23, 0x400, "pcmpne ">;
+  }
 
   let Defs = [CARRY] in {
-    def ADD    :  Arith<0x00, 0x000, "add    ", addc, IIAlu>;
+    def ADD    :  Arith<0x00, 0x000, "add    ", addc, IIC_ALU>;
 
     let Uses = [CARRY] in {
-      def ADDC   :  Arith<0x02, 0x000, "addc   ", adde, IIAlu>;
+      def ADDC   :  Arith<0x02, 0x000, "addc   ", adde, IIC_ALU>;
     }
   }
 
   let Uses = [CARRY] in {
-    def ADDKC  : ArithN<0x06, 0x000, "addkc  ", IIAlu>;
+    def ADDKC  : ArithN<0x06, 0x000, "addkc  ", IIC_ALU>;
   }
 }
 
 let isAsCheapAsAMove = 1 in {
-  def ANDN   :  ArithN<0x23, 0x000, "andn   ", IIAlu>;
-  def CMP    :  ArithN<0x05, 0x001, "cmp    ", IIAlu>;
-  def CMPU   :  ArithN<0x05, 0x003, "cmpu   ", IIAlu>;
-  def RSUBK  :  ArithR<0x05, 0x000, "rsubk  ", sub,  IIAlu>;
+  def ANDN   :  ArithN<0x23, 0x000, "andn   ", IIC_ALU>;
+  def CMP    :  ArithN<0x05, 0x001, "cmp    ", IIC_ALU>;
+  def CMPU   :  ArithN<0x05, 0x003, "cmpu   ", IIC_ALU>;
+  def RSUBK  :  ArithR<0x05, 0x000, "rsubk  ", sub,  IIC_ALU>;
 
   let Defs = [CARRY] in {
-    def RSUB   :  ArithR<0x01, 0x000, "rsub   ", subc, IIAlu>;
+    def RSUB   :  ArithR<0x01, 0x000, "rsub   ", subc, IIC_ALU>;
 
     let Uses = [CARRY] in {
-      def RSUBC  :  ArithR<0x03, 0x000, "rsubc  ", sube, IIAlu>;
+      def RSUBC  :  ArithR<0x03, 0x000, "rsubc  ", sube, IIC_ALU>;
     }
   }
 
   let Uses = [CARRY] in {
-    def RSUBKC : ArithRN<0x07, 0x000, "rsubkc ", IIAlu>;
+    def RSUBKC : ArithRN<0x07, 0x000, "rsubkc ", IIC_ALU>;
   }
 }
 
 let isCommutable = 1, Predicates=[HasMul] in {
-  def MUL    : Arith<0x10, 0x000, "mul    ", mul,   IIAlu>;
+  def MUL    : Arith<0x10, 0x000, "mul    ", mul,   IIC_ALUm>;
 }
 
 let isCommutable = 1, Predicates=[HasMul,HasMul64] in {
-  def MULH   : Arith<0x10, 0x001, "mulh   ", mulhs, IIAlu>;
-  def MULHU  : Arith<0x10, 0x003, "mulhu  ", mulhu, IIAlu>;
+  def MULH   : Arith<0x10, 0x001, "mulh   ", mulhs, IIC_ALUm>;
+  def MULHU  : Arith<0x10, 0x003, "mulhu  ", mulhu, IIC_ALUm>;
 }
 
 let Predicates=[HasMul,HasMul64] in {
-  def MULHSU : ArithN<0x10, 0x002, "mulhsu ", IIAlu>;
+  def MULHSU : ArithN<0x10, 0x002, "mulhsu ", IIC_ALUm>;
 }
 
 let Predicates=[HasBarrel] in {
-  def BSRL   :   Arith<0x11, 0x000, "bsrl   ", srl, IIAlu>;
-  def BSRA   :   Arith<0x11, 0x200, "bsra   ", sra, IIAlu>;
-  def BSLL   :   Arith<0x11, 0x400, "bsll   ", shl, IIAlu>;
+  def BSRL   :   Arith<0x11, 0x000, "bsrl   ", srl, IIC_SHT>;
+  def BSRA   :   Arith<0x11, 0x200, "bsra   ", sra, IIC_SHT>;
+  def BSLL   :   Arith<0x11, 0x400, "bsll   ", shl, IIC_SHT>;
   def BSRLI  :  ShiftI<0x19, 0x0, "bsrli  ", srl, uimm5, immZExt5>;
   def BSRAI  :  ShiftI<0x19, 0x1, "bsrai  ", sra, uimm5, immZExt5>;
   def BSLLI  :  ShiftI<0x19, 0x2, "bslli  ", shl, uimm5, immZExt5>;
 }
 
 let Predicates=[HasDiv] in {
-  def IDIV   :  ArithR<0x12, 0x000, "idiv   ", sdiv, IIAlu>;
-  def IDIVU  :  ArithR<0x12, 0x002, "idivu  ", udiv, IIAlu>;
+  def IDIV   :  ArithR<0x12, 0x000, "idiv   ", sdiv, IIC_ALUd>;
+  def IDIVU  :  ArithR<0x12, 0x002, "idivu  ", udiv, IIC_ALUd>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -552,7 +555,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
   def RTSD   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtsd      $target, $imm",
                   [],
-                  IIBranch>;
+                  IIC_BR>;
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
@@ -560,7 +563,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
   def RTID   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtid      $target, $imm",
                   [],
-                  IIBranch>;
+                  IIC_BR>;
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
@@ -568,7 +571,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
   def RTBD   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rtbd      $target, $imm",
                   [],
-                  IIBranch>;
+                  IIC_BR>;
 }
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
@@ -576,7 +579,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
   def RTED   : TB<0x2D, (outs), (ins GPR:$target, simm16:$imm),
                   "rted      $target, $imm",
                   [],
-                  IIBranch>;
+                  IIC_BR>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -584,7 +587,7 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1,
 //===----------------------------------------------------------------------===//
 
 let neverHasSideEffects = 1 in {
-  def NOP :  MBlazeInst< 0x20, FC, (outs), (ins), "nop    ", [], IIAlu>;
+  def NOP :  MBlazeInst< 0x20, FC, (outs), (ins), "nop    ", [], IIC_ALU>;
 }
 
 let usesCustomInserter = 1 in {
@@ -611,17 +614,17 @@ let usesCustomInserter = 1 in {
 
 let rb = 0 in {
   def SEXT16 : TA<0x24, 0x061, (outs GPR:$dst), (ins GPR:$src),
-                  "sext16    $dst, $src", [], IIAlu>;
+                  "sext16    $dst, $src", [], IIC_ALU>;
   def SEXT8  : TA<0x24, 0x060, (outs GPR:$dst), (ins GPR:$src),
-                  "sext8     $dst, $src", [], IIAlu>;
+                  "sext8     $dst, $src", [], IIC_ALU>;
   let Defs = [CARRY] in {
     def SRL    : TA<0x24, 0x041, (outs GPR:$dst), (ins GPR:$src),
-                    "srl       $dst, $src", [], IIAlu>;
+                    "srl       $dst, $src", [], IIC_ALU>;
     def SRA    : TA<0x24, 0x001, (outs GPR:$dst), (ins GPR:$src),
-                    "sra       $dst, $src", [], IIAlu>;
+                    "sra       $dst, $src", [], IIC_ALU>;
     let Uses = [CARRY] in {
       def SRC    : TA<0x24, 0x021, (outs GPR:$dst), (ins GPR:$src),
-                      "src       $dst, $src", [], IIAlu>;
+                      "src       $dst, $src", [], IIC_ALU>;
     }
   }
 }
@@ -637,36 +640,36 @@ let isCodeGenOnly=1 in {
 //===----------------------------------------------------------------------===//
 let Form=FRCS in {
   def MFS : SPC<0x25, 0x2, (outs GPR:$dst), (ins SPR:$src),
-                "mfs       $dst, $src", [], IIAlu>;
+                "mfs       $dst, $src", [], IIC_ALU>;
 }
 
 let Form=FCRCS in {
   def MTS : SPC<0x25, 0x3, (outs SPR:$dst), (ins GPR:$src),
-                "mts       $dst, $src", [], IIAlu>;
+                "mts       $dst, $src", [], IIC_ALU>;
 }
 
 def MSRSET : MSR<0x25, 0x20, (outs GPR:$dst), (ins uimm15:$set),
-                 "msrset    $dst, $set", [], IIAlu>;
+                 "msrset    $dst, $set", [], IIC_ALU>;
 
 def MSRCLR : MSR<0x25, 0x22, (outs GPR:$dst), (ins uimm15:$clr),
-                 "msrclr    $dst, $clr", [], IIAlu>;
+                 "msrclr    $dst, $clr", [], IIC_ALU>;
 
 let rd=0x0, Form=FCRR in {
   def WDC  : TA<0x24, 0x64, (outs), (ins GPR:$a, GPR:$b),
-                "wdc       $a, $b", [], IIAlu>;
+                "wdc       $a, $b", [], IIC_WDC>;
   def WDCF : TA<0x24, 0x74, (outs), (ins GPR:$a, GPR:$b),
-                "wdc.flush $a, $b", [], IIAlu>;
+                "wdc.flush $a, $b", [], IIC_WDC>;
   def WDCC : TA<0x24, 0x66, (outs), (ins GPR:$a, GPR:$b),
-                "wdc.clear $a, $b", [], IIAlu>;
+                "wdc.clear $a, $b", [], IIC_WDC>;
   def WIC  : TA<0x24, 0x68, (outs), (ins GPR:$a, GPR:$b),
-                "wic       $a, $b", [], IIAlu>;
+                "wic       $a, $b", [], IIC_WDC>;
 }
 
 def BRK  :  BranchL<0x26, 0x0C, 0x000, "brk    ">;
 def BRKI : BranchLI<0x2E, 0x0C, "brki   ">;
 
 def IMM : MBlazeInst<0x2C, FCCI, (outs), (ins simm16:$imm),
-                     "imm       $imm", [], IIAlu>;
+                     "imm       $imm", [], IIC_ALU>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo instructions for atomic operations
@@ -847,11 +850,6 @@ def : Pat<(MBWrapper tconstpool:$in),  (ORI (i32 R0), tconstpool:$in)>;
 
 // Misc instructions
 def : Pat<(and (i32 GPR:$lh), (not (i32 GPR:$rh))),(ANDN GPR:$lh, GPR:$rh)>;
-
-// Arithmetic with immediates
-def : Pat<(add (i32 GPR:$in), imm:$imm),(ADDIK GPR:$in, imm:$imm)>;
-def : Pat<(or (i32 GPR:$in), imm:$imm),(ORI GPR:$in, imm:$imm)>;
-def : Pat<(xor (i32 GPR:$in), imm:$imm),(XORI GPR:$in, imm:$imm)>;
 
 // Convert any extend loads into zero extend loads
 def : Pat<(extloadi8  iaddr:$src), (i32 (LBUI iaddr:$src))>;

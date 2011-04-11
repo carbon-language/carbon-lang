@@ -3,7 +3,7 @@
 ; dynamic version of the instructions and that constant values use the
 ; constant version of the instructions.
 ;
-; RUN: llc < %s -march=mblaze | FileCheck %s
+; RUN: llc -O3 < %s -march=mblaze | FileCheck %s
 
 declare i32 @llvm.mblaze.fsl.get(i32 %port)
 declare i32 @llvm.mblaze.fsl.aget(i32 %port)
@@ -55,8 +55,7 @@ declare void @llvm.mblaze.fsl.tnaput(i32 %port)
 declare void @llvm.mblaze.fsl.tncput(i32 %port)
 declare void @llvm.mblaze.fsl.tncaput(i32 %port)
 
-define i32 @fsl_get(i32 %port)
-{
+define void @fsl_get(i32 %port) {
     ; CHECK:        fsl_get:
     %v0  = call i32 @llvm.mblaze.fsl.get(i32 %port)
     ; CHECK:        getd
@@ -122,12 +121,11 @@ define i32 @fsl_get(i32 %port)
     ; CHECK-NEXT:   tnecgetd
     %v31 = call i32 @llvm.mblaze.fsl.tnecaget(i32 %port)
     ; CHECK-NEXT:   tnecagetd
-    ret i32 1
+    ret void
     ; CHECK:        rtsd
 }
 
-define i32 @fslc_get()
-{
+define void @fslc_get() {
     ; CHECK:        fslc_get:
     %v0  = call i32 @llvm.mblaze.fsl.get(i32 1)
     ; CHECK:        get
@@ -224,12 +222,11 @@ define i32 @fslc_get()
     %v31 = call i32 @llvm.mblaze.fsl.tnecaget(i32 1)
     ; CHECK-NOT:    tnecagetd
     ; CHECK:        tnecaget
-    ret i32 1
+    ret void
     ; CHECK:        rtsd
 }
 
-define void @putfsl(i32 %value, i32 %port)
-{
+define void @putfsl(i32 %value, i32 %port) {
     ; CHECK:        putfsl:
     call void @llvm.mblaze.fsl.put(i32 %value, i32 %port)
     ; CHECK:        putd
@@ -267,8 +264,7 @@ define void @putfsl(i32 %value, i32 %port)
     ; CHECK:        rtsd
 }
 
-define void @putfsl_const(i32 %value)
-{
+define void @putfsl_const(i32 %value) {
     ; CHECK:        putfsl_const:
     call void @llvm.mblaze.fsl.put(i32 %value, i32 1)
     ; CHECK-NOT:    putd

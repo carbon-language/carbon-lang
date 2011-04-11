@@ -38,12 +38,17 @@ namespace llvm {
     MBlazeSelectionDAGInfo TSInfo;
     MBlazeIntrinsicInfo    IntrinsicInfo;
     MBlazeELFWriterInfo    ELFWriterInfo;
+    InstrItineraryData     InstrItins;
+
   public:
     MBlazeTargetMachine(const Target &T, const std::string &TT,
-                      const std::string &FS);
+                        const std::string &FS);
 
     virtual const MBlazeInstrInfo *getInstrInfo() const
     { return &InstrInfo; }
+
+    virtual const InstrItineraryData *getInstrItineraryData() const
+    {  return &InstrItins; }
 
     virtual const TargetFrameLowering *getFrameLowering() const
     { return &FrameLowering; }

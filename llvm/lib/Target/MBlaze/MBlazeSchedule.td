@@ -8,57 +8,48 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Functional units across MBlaze chips sets. Based on GCC/MBlaze backend files.
+// MBlaze functional units.
 //===----------------------------------------------------------------------===//
-def ALU     : FuncUnit;
-def IMULDIV : FuncUnit;
+def IF : FuncUnit;
+def ID : FuncUnit;
+def EX : FuncUnit;
+def MA : FuncUnit;
+def WB : FuncUnit;
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for MBlaze
 //===----------------------------------------------------------------------===//
-def IIAlu              : InstrItinClass;
-def IILoad             : InstrItinClass;
-def IIStore            : InstrItinClass;
-def IIXfer             : InstrItinClass;
-def IIBranch           : InstrItinClass;
-def IIHiLo             : InstrItinClass;
-def IIImul             : InstrItinClass;
-def IIIdiv             : InstrItinClass;
-def IIFcvt             : InstrItinClass;
-def IIFmove            : InstrItinClass;
-def IIFcmp             : InstrItinClass;
-def IIFadd             : InstrItinClass;
-def IIFmulSingle       : InstrItinClass;
-def IIFmulDouble       : InstrItinClass;
-def IIFdivSingle       : InstrItinClass;
-def IIFdivDouble       : InstrItinClass;
-def IIFsqrtSingle      : InstrItinClass;
-def IIFsqrtDouble      : InstrItinClass;
-def IIFrecipFsqrtStep  : InstrItinClass;
-def IIPseudo           : InstrItinClass;
+def IIC_ALU    : InstrItinClass;
+def IIC_ALUm   : InstrItinClass;
+def IIC_ALUd   : InstrItinClass;
+def IIC_SHT    : InstrItinClass;
+def IIC_FSLg   : InstrItinClass;
+def IIC_FSLp   : InstrItinClass;
+def IIC_MEMs   : InstrItinClass;
+def IIC_MEMl   : InstrItinClass;
+def IIC_FPU    : InstrItinClass;
+def IIC_FPUd   : InstrItinClass;
+def IIC_FPUf   : InstrItinClass;
+def IIC_FPUi   : InstrItinClass;
+def IIC_FPUs   : InstrItinClass;
+def IIC_FPUc   : InstrItinClass;
+def IIC_BR     : InstrItinClass;
+def IIC_BRc    : InstrItinClass;
+def IIC_BRl    : InstrItinClass;
+def IIC_WDC    : InstrItinClass;
+def IIC_Pseudo : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
-// MBlaze Generic instruction itineraries.
+// MBlaze generic instruction itineraries.
 //===----------------------------------------------------------------------===//
-def MBlazeGenericItineraries : ProcessorItineraries<
-  [ALU, IMULDIV], [], [
-  InstrItinData<IIAlu              , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,
-  InstrItinData<IIStore            , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIXfer             , [InstrStage<2,  [ALU]>]>,
-  InstrItinData<IIBranch           , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIHiLo             , [InstrStage<1,  [IMULDIV]>]>,
-  InstrItinData<IIImul             , [InstrStage<17, [IMULDIV]>]>,
-  InstrItinData<IIIdiv             , [InstrStage<38, [IMULDIV]>]>,
-  InstrItinData<IIFcvt             , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<IIFmove            , [InstrStage<2,  [ALU]>]>,
-  InstrItinData<IIFcmp             , [InstrStage<3,  [ALU]>]>,
-  InstrItinData<IIFadd             , [InstrStage<4,  [ALU]>]>,
-  InstrItinData<IIFmulSingle       , [InstrStage<7,  [ALU]>]>,
-  InstrItinData<IIFmulDouble       , [InstrStage<8,  [ALU]>]>,
-  InstrItinData<IIFdivSingle       , [InstrStage<23, [ALU]>]>,
-  InstrItinData<IIFdivDouble       , [InstrStage<36, [ALU]>]>,
-  InstrItinData<IIFsqrtSingle      , [InstrStage<54, [ALU]>]>,
-  InstrItinData<IIFsqrtDouble      , [InstrStage<12, [ALU]>]>,
-  InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>
-]>;
+def MBlazeGenericItineraries : ProcessorItineraries<[], [], []>;
+
+//===----------------------------------------------------------------------===//
+// MBlaze instruction itineraries for three stage pipeline.
+//===----------------------------------------------------------------------===//
+include "MBlazeSchedule3.td"
+
+//===----------------------------------------------------------------------===//
+// MBlaze instruction itineraries for five stage pipeline.
+//===----------------------------------------------------------------------===//
+include "MBlazeSchedule5.td"

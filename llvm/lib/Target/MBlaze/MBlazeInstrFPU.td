@@ -21,22 +21,22 @@
 class LoadFM<bits<6> op, string instr_asm, PatFrag OpNode> :
              TA<op, 0x000, (outs GPR:$dst), (ins memrr:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
-                [(set (f32 GPR:$dst), (OpNode xaddr:$addr))], IILoad>;
+                [(set (f32 GPR:$dst), (OpNode xaddr:$addr))], IIC_MEMl>;
 
 class LoadFMI<bits<6> op, string instr_asm, PatFrag OpNode> :
               TB<op, (outs GPR:$dst), (ins memri:$addr),
                  !strconcat(instr_asm, "   $dst, $addr"),
-                 [(set (f32 GPR:$dst), (OpNode iaddr:$addr))], IILoad>;
+                 [(set (f32 GPR:$dst), (OpNode iaddr:$addr))], IIC_MEMl>;
 
 class StoreFM<bits<6> op, string instr_asm, PatFrag OpNode> :
               TA<op, 0x000, (outs), (ins GPR:$dst, memrr:$addr),
                  !strconcat(instr_asm, "   $dst, $addr"),
-                 [(OpNode (f32 GPR:$dst), xaddr:$addr)], IIStore>;
+                 [(OpNode (f32 GPR:$dst), xaddr:$addr)], IIC_MEMs>;
 
 class StoreFMI<bits<6> op, string instr_asm, PatFrag OpNode> :
                TB<op, (outs), (ins GPR:$dst, memrr:$addr),
                   !strconcat(instr_asm, "   $dst, $addr"),
-                  [(OpNode (f32 GPR:$dst), iaddr:$addr)], IIStore>;
+                  [(OpNode (f32 GPR:$dst), iaddr:$addr)], IIC_MEMs>;
 
 class ArithF<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
              InstrItinClass itin> :
@@ -56,15 +56,10 @@ class ArithFR<bits<6> op, bits<11> flags, string instr_asm, SDNode OpNode,
                  !strconcat(instr_asm, "   $dst, $c, $b"),
                  [(set GPR:$dst, (OpNode GPR:$b, GPR:$c))], itin>;
 
-class LogicF<bits<6> op, string instr_asm> :
-             TB<op, (outs GPR:$dst), (ins GPR:$b, GPR:$c),
-                !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
-
 class LogicFI<bits<6> op, string instr_asm> :
              TB<op, (outs GPR:$dst), (ins GPR:$b, fimm:$c),
                 !strconcat(instr_asm, "   $dst, $b, $c"),
-                [], IIAlu>;
+                [], IIC_ALU>;
 
 let rb=0 in {
   class ArithF2<bits<6> op, bits<11> flags, string instr_asm,
@@ -95,10 +90,10 @@ let rb=0 in {
 //===----------------------------------------------------------------------===//
 let Predicates=[HasFPU] in {
   def FORI   : LogicFI<0x28, "ori    ">;
-  def FADD   :  ArithF<0x16, 0x000, "fadd   ", fadd, IIAlu>;
-  def FRSUB  : ArithFR<0x16, 0x080, "frsub  ", fsub, IIAlu>;
-  def FMUL   :  ArithF<0x16, 0x100, "fmul   ", fmul, IIAlu>;
-  def FDIV   :  ArithF<0x16, 0x180, "fdiv   ", fdiv, IIAlu>;
+  def FADD   :  ArithF<0x16, 0x000, "fadd   ", fadd, IIC_FPU>;
+  def FRSUB  : ArithFR<0x16, 0x080, "frsub  ", fsub, IIC_FPU>;
+  def FMUL   :  ArithF<0x16, 0x100, "fmul   ", fmul, IIC_FPU>;
+  def FDIV   :  ArithF<0x16, 0x180, "fdiv   ", fdiv, IIC_FPUd>;
 }
 
 let Predicates=[HasFPU], isCodeGenOnly=1 in {
@@ -110,19 +105,19 @@ let Predicates=[HasFPU], isCodeGenOnly=1 in {
 }
 
 let Predicates=[HasFPU,HasSqrt] in {
-  def FLT    : ArithIF<0x16, 0x280, "flt    ", IIAlu>;
-  def FINT   : ArithFI<0x16, 0x300, "fint   ", IIAlu>;
-  def FSQRT  : ArithF2<0x16, 0x380, "fsqrt  ", IIAlu>;
+  def FLT    : ArithIF<0x16, 0x280, "flt    ", IIC_FPUf>;
+  def FINT   : ArithFI<0x16, 0x300, "fint   ", IIC_FPUi>;
+  def FSQRT  : ArithF2<0x16, 0x380, "fsqrt  ", IIC_FPUs>;
 }
 
 let isAsCheapAsAMove = 1 in {
-  def FCMP_UN : CmpFN<0x16, 0x200, "fcmp.un", IIAlu>;
-  def FCMP_LT : CmpFN<0x16, 0x210, "fcmp.lt", IIAlu>;
-  def FCMP_EQ : CmpFN<0x16, 0x220, "fcmp.eq", IIAlu>;
-  def FCMP_LE : CmpFN<0x16, 0x230, "fcmp.le", IIAlu>;
-  def FCMP_GT : CmpFN<0x16, 0x240, "fcmp.gt", IIAlu>;
-  def FCMP_NE : CmpFN<0x16, 0x250, "fcmp.ne", IIAlu>;
-  def FCMP_GE : CmpFN<0x16, 0x260, "fcmp.ge", IIAlu>;
+  def FCMP_UN : CmpFN<0x16, 0x200, "fcmp.un", IIC_FPUc>;
+  def FCMP_LT : CmpFN<0x16, 0x210, "fcmp.lt", IIC_FPUc>;
+  def FCMP_EQ : CmpFN<0x16, 0x220, "fcmp.eq", IIC_FPUc>;
+  def FCMP_LE : CmpFN<0x16, 0x230, "fcmp.le", IIC_FPUc>;
+  def FCMP_GT : CmpFN<0x16, 0x240, "fcmp.gt", IIC_FPUc>;
+  def FCMP_NE : CmpFN<0x16, 0x250, "fcmp.ne", IIC_FPUc>;
+  def FCMP_GE : CmpFN<0x16, 0x260, "fcmp.ge", IIC_FPUc>;
 }
 
 

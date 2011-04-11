@@ -24,29 +24,14 @@ namespace llvm {
 class MBlazeSubtarget : public TargetSubtarget {
 
 protected:
-
-  enum MBlazeArchEnum {
-    V400, V500, V600, V700, V710
-  };
-
-  // MBlaze architecture version
-  MBlazeArchEnum MBlazeArchVersion;
-
-  bool HasPipe3;
   bool HasBarrel;
   bool HasDiv;
   bool HasMul;
-  bool HasFSL;
-  bool HasEFSL;
-  bool HasMSRSet;
-  bool HasException;
   bool HasPatCmp;
   bool HasFPU;
-  bool HasESR;
-  bool HasPVR;
   bool HasMul64;
   bool HasSqrt;
-  bool HasMMU;
+  bool HasItin;
 
   InstrItineraryData InstrItins;
 
@@ -61,18 +46,26 @@ public:
   std::string ParseSubtargetFeatures(const std::string &FS,
                                      const std::string &CPU);
 
+  /// Compute the number of maximum number of issues per cycle for the
+  /// MBlaze scheduling itineraries.
+  void computeIssueWidth();
+
+  /// enablePostRAScheduler - True at 'More' optimization.
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                             TargetSubtarget::AntiDepBreakMode& Mode,
+                             RegClassVector& CriticalPathRCs) const;
+
+  /// getInstrItins - Return the instruction itineraies based on subtarget.
+  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
+
+  bool hasItin()   const { return HasItin; }
+  bool hasPCMP()   const { return HasPatCmp; }
   bool hasFPU()    const { return HasFPU; }
   bool hasSqrt()   const { return HasSqrt; }
   bool hasMul()    const { return HasMul; }
   bool hasMul64()  const { return HasMul64; }
   bool hasDiv()    const { return HasDiv; }
   bool hasBarrel() const { return HasBarrel; }
-
-  bool isV400() const { return MBlazeArchVersion == V400; }
-  bool isV500() const { return MBlazeArchVersion == V500; }
-  bool isV600() const { return MBlazeArchVersion == V600; }
-  bool isV700() const { return MBlazeArchVersion == V700; }
-  bool isV710() const { return MBlazeArchVersion == V710; }
 };
 } // End llvm namespace
 

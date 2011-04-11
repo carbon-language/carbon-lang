@@ -85,18 +85,19 @@ let Namespace = "MBlaze" in {
   def RTLBX  : MBlazeSPRReg<0x1002, "rtlbx">,  DwarfRegNum<[41]>;
   def RTLBLO : MBlazeSPRReg<0x1003, "rtlblo">, DwarfRegNum<[42]>;
   def RTLBHI : MBlazeSPRReg<0x1004, "rtlbhi">, DwarfRegNum<[43]>;
-  def RPVR0  : MBlazeSPRReg<0x2000, "rpvr0">,  DwarfRegNum<[44]>;
-  def RPVR1  : MBlazeSPRReg<0x2001, "rpvr1">,  DwarfRegNum<[45]>;
-  def RPVR2  : MBlazeSPRReg<0x2002, "rpvr2">,  DwarfRegNum<[46]>;
-  def RPVR3  : MBlazeSPRReg<0x2003, "rpvr3">,  DwarfRegNum<[47]>;
-  def RPVR4  : MBlazeSPRReg<0x2004, "rpvr4">,  DwarfRegNum<[48]>;
-  def RPVR5  : MBlazeSPRReg<0x2005, "rpvr5">,  DwarfRegNum<[49]>;
-  def RPVR6  : MBlazeSPRReg<0x2006, "rpvr6">,  DwarfRegNum<[50]>;
-  def RPVR7  : MBlazeSPRReg<0x2007, "rpvr7">,  DwarfRegNum<[51]>;
-  def RPVR8  : MBlazeSPRReg<0x2008, "rpvr8">,  DwarfRegNum<[52]>;
-  def RPVR9  : MBlazeSPRReg<0x2009, "rpvr9">,  DwarfRegNum<[53]>;
-  def RPVR10 : MBlazeSPRReg<0x200A, "rpvr10">, DwarfRegNum<[54]>;
-  def RPVR11 : MBlazeSPRReg<0x200B, "rpvr11">, DwarfRegNum<[55]>;
+  def RTLBSX : MBlazeSPRReg<0x1004, "rtlbsx">, DwarfRegNum<[44]>;
+  def RPVR0  : MBlazeSPRReg<0x2000, "rpvr0">,  DwarfRegNum<[45]>;
+  def RPVR1  : MBlazeSPRReg<0x2001, "rpvr1">,  DwarfRegNum<[46]>;
+  def RPVR2  : MBlazeSPRReg<0x2002, "rpvr2">,  DwarfRegNum<[47]>;
+  def RPVR3  : MBlazeSPRReg<0x2003, "rpvr3">,  DwarfRegNum<[48]>;
+  def RPVR4  : MBlazeSPRReg<0x2004, "rpvr4">,  DwarfRegNum<[49]>;
+  def RPVR5  : MBlazeSPRReg<0x2005, "rpvr5">,  DwarfRegNum<[50]>;
+  def RPVR6  : MBlazeSPRReg<0x2006, "rpvr6">,  DwarfRegNum<[51]>;
+  def RPVR7  : MBlazeSPRReg<0x2007, "rpvr7">,  DwarfRegNum<[52]>;
+  def RPVR8  : MBlazeSPRReg<0x2008, "rpvr8">,  DwarfRegNum<[53]>;
+  def RPVR9  : MBlazeSPRReg<0x2009, "rpvr9">,  DwarfRegNum<[54]>;
+  def RPVR10 : MBlazeSPRReg<0x200A, "rpvr10">, DwarfRegNum<[55]>;
+  def RPVR11 : MBlazeSPRReg<0x200B, "rpvr11">, DwarfRegNum<[56]>;
 
   // The carry bit. In the Microblaze this is really bit 29 of the
   // MSR register but this is the only bit of that register that we
