@@ -2529,6 +2529,14 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
       RegionsToInvalidate.push_back(region);
   }
   
+  // Invalidate all instance variables for the callee of a C++ method call.
+  // FIXME: We should be able to do better with inter-procedural analysis.
+  // FIXME: we can probably do better for const versus non-const methods.
+  if (callOrMsg.isCXXCall()) {
+    if (const MemRegion *callee = callOrMsg.getCXXCallee().getAsRegion())
+      RegionsToInvalidate.push_back(callee);
+  }
+  
   for (unsigned idx = 0, e = callOrMsg.getNumArgs(); idx != e; ++idx) {
     SVal V = callOrMsg.getArgSValAsScalarOrLoc(idx);
     SymbolRef Sym = V.getAsLocSymbol();

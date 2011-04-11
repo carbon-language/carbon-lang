@@ -111,7 +111,7 @@ const Expr *ObjCMessage::getArgExpr(unsigned i) const {
 QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
   QualType resultTy;
   bool isLVal = false;
-  
+
   if (CallE) {
     isLVal = CallE->isLValue();
     const Expr *Callee = CallE->getCallee();
@@ -139,4 +139,11 @@ SVal CallOrObjCMessage::getArgSValAsScalarOrLoc(unsigned i) const {
   if (Loc::isLocType(argT) || argT->isIntegerType())
     return Msg.getArgSVal(i, State);
   return UnknownVal();
+}
+
+SVal CallOrObjCMessage::getCXXCallee() const {
+  assert(isCXXCall());
+  const Expr *callee =
+    cast<CXXMemberCallExpr>(CallE)->getImplicitObjectArgument();
+  return State->getSVal(callee);  
 }

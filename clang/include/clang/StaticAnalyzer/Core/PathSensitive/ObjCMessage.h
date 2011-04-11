@@ -171,14 +171,23 @@ class CallOrObjCMessage {
   const CallExpr *CallE;
   ObjCMessage Msg;
   const GRState *State;
-  
 public:
   CallOrObjCMessage(const CallExpr *callE, const GRState *state)
-    : CallE(callE), State(state) { }
+    : CallE(callE), State(state) {}
   CallOrObjCMessage(const ObjCMessage &msg, const GRState *state)
-    : CallE(0), Msg(msg), State(state) { }
+    : CallE(0), Msg(msg), State(state) {}
 
   QualType getResultType(ASTContext &ctx) const;
+  
+  bool isFunctionCall() const {
+    return (bool) CallE;
+  }
+  
+  bool isCXXCall() const {
+    return CallE && isa<CXXMemberCallExpr>(CallE);
+  }
+  
+  SVal getCXXCallee() const;
 
   unsigned getNumArgs() const {
     if (CallE) return CallE->getNumArgs();
@@ -187,7 +196,8 @@ public:
 
   SVal getArgSVal(unsigned i) const {
     assert(i < getNumArgs());
-    if (CallE) return State->getSVal(CallE->getArg(i));
+    if (CallE) 
+      return State->getSVal(CallE->getArg(i));
     return Msg.getArgSVal(i, State);
   }
 
@@ -195,13 +205,15 @@ public:
 
   const Expr *getArg(unsigned i) const {
     assert(i < getNumArgs());
-    if (CallE) return CallE->getArg(i);
+    if (CallE)
+      return CallE->getArg(i);
     return Msg.getArgExpr(i);
   }
 
   SourceRange getArgSourceRange(unsigned i) const {
     assert(i < getNumArgs());
-    if (CallE) return CallE->getArg(i)->getSourceRange();
+    if (CallE)
+      return CallE->getArg(i)->getSourceRange();
     return Msg.getArgSourceRange(i);
   }
 };

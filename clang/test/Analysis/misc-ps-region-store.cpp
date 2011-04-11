@@ -303,3 +303,36 @@ void PR9645() {
 
 PR9645_SideEffect::PR9645_SideEffect(int *pi) : i_(pi) {}
 void PR9645_SideEffect::Read(int *pi) { *i_ = *pi; }
+
+// Invalidate fields during C++ method calls.
+class RDar9267815 {
+  int x;
+  void test();
+  void test_pos();
+  void test2();
+  void invalidate();
+};
+
+void RDar9267815::test_pos() {
+  int *p = 0;
+  if (x == 42)
+    return;
+  *p = 0xDEADBEEF; // expected-warning {{null}}
+}
+void RDar9267815::test() {
+  int *p = 0;
+  if (x == 42)
+    return;
+  if (x == 42)
+    *p = 0xDEADBEEF; // no-warning
+}
+
+void RDar9267815::test2() {
+  int *p = 0;
+  if (x == 42)
+    return;
+  invalidate();
+  if (x == 42)
+    *p = 0xDEADBEEF; // expected-warning {{null}}
+}
+
