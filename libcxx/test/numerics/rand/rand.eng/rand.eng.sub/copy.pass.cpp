@@ -38,7 +38,7 @@ test2()
     typedef std::ranlux48_base E;
     E e1;
     e1();
-    E e2 = e1;
+    E e2(e1);
     assert(e1 == e2);
     assert(e1() == e2());
     E::result_type k = e1();
