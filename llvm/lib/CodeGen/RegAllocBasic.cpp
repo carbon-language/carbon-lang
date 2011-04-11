@@ -258,6 +258,7 @@ void RegAllocBase::releaseMemory() {
 // register, unify them with the corresponding LiveIntervalUnion, otherwise push
 // them on the priority queue for later assignment.
 void RegAllocBase::seedLiveRegs() {
+  NamedRegionTimer T("Seed Live Regs", TimerGroupName, TimePassesIsEnabled);
   for (LiveIntervals::iterator I = LIS->begin(), E = LIS->end(); I != E; ++I) {
     unsigned RegNum = I->first;
     LiveInterval &VirtReg = *I->second;
