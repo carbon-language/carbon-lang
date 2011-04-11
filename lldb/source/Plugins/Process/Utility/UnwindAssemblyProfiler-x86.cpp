@@ -167,10 +167,10 @@ private:
 };
 
 AssemblyParse_x86::AssemblyParse_x86 (Target& target, Thread* thread, int cpu, AddressRange func) :
-                         m_target (target), m_thread (thread), m_cpu(cpu), m_func_bounds(func),
+                         m_target (target), m_thread (thread), m_func_bounds(func), m_cur_insn (),
                          m_machine_ip_regnum (-1), m_machine_sp_regnum (-1), m_machine_fp_regnum (-1),
                          m_lldb_ip_regnum (-1), m_lldb_sp_regnum (-1), m_lldb_fp_regnum (-1),
-                         m_wordsize (-1), m_cur_insn ()
+                         m_wordsize (-1), m_cpu(cpu)
 {
     int *initialized_flag = NULL;
     m_lldb_ip_regnum = m_lldb_sp_regnum = m_lldb_fp_regnum = -1;

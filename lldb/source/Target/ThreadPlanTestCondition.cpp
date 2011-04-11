@@ -43,8 +43,8 @@ ThreadPlanTestCondition::ThreadPlanTestCondition (
         lldb::BreakpointLocationSP break_loc_sp, 
         bool stop_others) :
     ThreadPlan (ThreadPlan::eKindTestCondition, "test condition", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_exe_ctx (exe_ctx),
     m_expression (expression),
+    m_exe_ctx (exe_ctx),
     m_break_loc_sp (break_loc_sp),
     m_did_stop (false),
     m_stop_others (stop_others)

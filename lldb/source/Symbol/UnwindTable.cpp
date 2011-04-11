@@ -33,8 +33,8 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_object_file (objfile), 
     m_unwinds (),
     m_initialized (false),
-    m_eh_frame (NULL),
-    m_assembly_profiler (NULL)
+    m_assembly_profiler (NULL),
+    m_eh_frame (NULL)
 {
 }
 

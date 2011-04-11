@@ -1174,10 +1174,10 @@ Target::RunStopHooks ()
 Target::StopHook::StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid) :
         UserID (uid),
         m_target_sp (target_sp),
-        m_active (true),
         m_commands (),
         m_specifier_sp (),
-        m_thread_spec_ap(NULL)
+        m_thread_spec_ap(NULL),
+        m_active (true)
 {
 }
 
@@ -1186,8 +1186,8 @@ Target::StopHook::StopHook (const StopHook &rhs) :
         m_target_sp (rhs.m_target_sp),
         m_commands (rhs.m_commands),
         m_specifier_sp (rhs.m_specifier_sp),
-        m_active (rhs.m_active),
-        m_thread_spec_ap (NULL)
+        m_thread_spec_ap (NULL),
+        m_active (rhs.m_active)
 {
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));

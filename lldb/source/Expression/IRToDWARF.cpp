@@ -31,10 +31,10 @@ IRToDWARF::IRToDWARF(lldb_private::ClangExpressionVariableList &local_vars,
                      lldb_private::StreamString &strm,
                      const char *func_name) :
     ModulePass(ID),
+    m_func_name(func_name),
     m_local_vars(local_vars),
     m_decl_map(decl_map),
-    m_strm(strm),
-    m_func_name(func_name)
+    m_strm(strm)
 {
 }
 

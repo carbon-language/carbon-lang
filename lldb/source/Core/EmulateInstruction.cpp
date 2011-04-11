@@ -69,8 +69,8 @@ EmulateInstruction::EmulateInstruction
     m_write_mem_callback (write_mem_callback),
     m_read_reg_callback (read_reg_callback),
     m_write_reg_callback (write_reg_callback),
-    m_opcode (),
     m_opcode_pc (LLDB_INVALID_ADDRESS),
+    m_opcode (),
     m_advance_pc (false)
 {
 }

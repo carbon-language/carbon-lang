@@ -342,8 +342,8 @@ Driver::OptionData::OptionData () :
     m_debug_mode (false),
     m_print_version (false),
     m_print_help (false),
-    m_seen_options(),
-    m_use_external_editor(false)
+    m_use_external_editor(false),
+    m_seen_options()
 {
 }
 

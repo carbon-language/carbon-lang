@@ -48,6 +48,7 @@ static lldb::user_id_t g_value_obj_uid = 0;
 ValueObject::ValueObject (ValueObject &parent) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
     m_parent (&parent),
+    m_update_point (parent.GetUpdatePoint ()),
     m_name (),
     m_data (),
     m_value (),
@@ -66,8 +67,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_children_count_valid (false),
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
-    m_is_deref_of_parent (false),
-    m_update_point (parent.GetUpdatePoint ())
+    m_is_deref_of_parent (false)
 {
 }
 
@@ -77,6 +77,7 @@ ValueObject::ValueObject (ValueObject &parent) :
 ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     UserID (++g_value_obj_uid), // Unique identifier for every value object
     m_parent (NULL),
+    m_update_point (exe_scope),
     m_name (),
     m_data (),
     m_value (),
@@ -95,8 +96,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_children_count_valid (false),
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
-    m_is_deref_of_parent (false),
-    m_update_point (exe_scope)
+    m_is_deref_of_parent (false)
 {
 }
 
@@ -1410,16 +1410,17 @@ ValueObject::AddressOf (Error &error)
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint () :
-    m_stop_id (0),
-    m_thread_id (LLDB_INVALID_UID)  
+    m_thread_id (LLDB_INVALID_UID),
+    m_stop_id (0)
 {
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected):
-    m_stop_id (0),
-    m_thread_id (LLDB_INVALID_UID),
     m_needs_update (true),
-    m_first_update (true)
+    m_first_update (true),
+    m_thread_id (LLDB_INVALID_UID),
+    m_stop_id (0)
+    
 {
     ExecutionContext exe_ctx;
     ExecutionContextScope *computed_exe_scope = exe_scope;  // If use_selected is true, we may find a better scope,
@@ -1477,12 +1478,12 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
 
 ValueObject::EvaluationPoint::EvaluationPoint (const ValueObject::EvaluationPoint &rhs) :
     m_exe_scope (rhs.m_exe_scope),
+    m_needs_update(true),
+    m_first_update(true),
     m_target_sp (rhs.m_target_sp),
     m_process_sp (rhs.m_process_sp),
     m_thread_id (rhs.m_thread_id),
     m_stack_id (rhs.m_stack_id),
-    m_needs_update(true),
-    m_first_update(true),
     m_stop_id (0)
 {
 }

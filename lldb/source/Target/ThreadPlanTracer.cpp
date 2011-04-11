@@ -33,17 +33,17 @@ using namespace lldb_private;
 #pragma mark ThreadPlanTracer
 
 ThreadPlanTracer::ThreadPlanTracer (Thread &thread, lldb::StreamSP &stream_sp) :
+    m_thread (thread),
     m_single_step(true),
     m_enabled (false),
-    m_thread (thread),
     m_stream_sp (stream_sp)
 {
 }
 
 ThreadPlanTracer::ThreadPlanTracer (Thread &thread) :
+    m_thread (thread),
     m_single_step(true),
     m_enabled (false),
-    m_thread (thread),
     m_stream_sp ()
 {
 }

@@ -38,10 +38,10 @@ StackFrameList::StackFrameList
 ) :
     m_thread (thread),
     m_prev_frames_sp (prev_frames_sp),
-    m_show_inlined_frames (show_inline_frames),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_frames (),
-    m_selected_frame_idx (0)
+    m_selected_frame_idx (0),
+    m_show_inlined_frames (show_inline_frames)
 {
 }
 

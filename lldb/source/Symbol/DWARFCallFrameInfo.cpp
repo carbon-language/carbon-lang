@@ -30,13 +30,13 @@ DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, 
     m_objfile (objfile),
     m_section (section),
     m_reg_kind (reg_kind),  // The flavor of registers that the CFI data uses (enum RegisterKind)
+    m_flags (),
     m_cie_map (),
     m_cfi_data (),
     m_cfi_data_initialized (false),
     m_fde_index (),
     m_fde_index_initialized (false),
-    m_is_eh_frame (is_eh_frame),
-    m_flags ()
+    m_is_eh_frame (is_eh_frame)
 {
 }
 

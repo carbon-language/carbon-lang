@@ -40,20 +40,20 @@ RegisterContextLLDB::RegisterContextLLDB
 ) :
     RegisterContext (thread, frame_number), 
     m_thread(thread), 
-    m_next_frame(next_frame), 
-    m_sym_ctx(sym_ctx), 
-    m_all_registers_available(false), 
-    m_registers(),
-    m_cfa (LLDB_INVALID_ADDRESS), 
+    m_next_frame(next_frame),
+    m_fast_unwind_plan_sp (),
+    m_full_unwind_plan_sp (),
+    m_all_registers_available(false),
+    m_frame_type (-1),
+    m_cfa (LLDB_INVALID_ADDRESS),
     m_start_pc (), 
     m_current_pc (), 
-    m_frame_number (frame_number),
-    m_full_unwind_plan_sp (), 
-    m_fast_unwind_plan_sp (), 
-    m_frame_type (-1), 
     m_current_offset (0), 
-    m_current_offset_backed_up_one (0), 
-    m_sym_ctx_valid (false)
+    m_current_offset_backed_up_one (0),
+    m_sym_ctx(sym_ctx),
+    m_sym_ctx_valid (false),
+    m_frame_number (frame_number),
+    m_registers()
 {
     m_sym_ctx.Clear();
     m_sym_ctx_valid = false;

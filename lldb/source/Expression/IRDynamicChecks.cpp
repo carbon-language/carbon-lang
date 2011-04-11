@@ -462,8 +462,8 @@ private:
 IRDynamicChecks::IRDynamicChecks(DynamicCheckerFunctions &checker_functions,
                                  const char *func_name) :
     ModulePass(ID),
-    m_checker_functions(checker_functions),
-    m_func_name(func_name)
+    m_func_name(func_name),
+    m_checker_functions(checker_functions)
 {
 }
 

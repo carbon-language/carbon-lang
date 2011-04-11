@@ -34,8 +34,8 @@ ASTStructExtractor::ASTStructExtractor(ASTConsumer *passthrough,
     m_passthrough_sema (NULL),
     m_sema (NULL),
     m_action (NULL),
-    m_struct_name (struct_name),
-    m_function (function)
+    m_function (function),
+    m_struct_name (struct_name)
 {
     if (!m_passthrough)
         return;

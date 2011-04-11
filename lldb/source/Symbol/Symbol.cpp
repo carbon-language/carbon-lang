@@ -20,8 +20,8 @@ using namespace lldb_private;
 
 
 Symbol::Symbol() :
-    SymbolContextScope (),
     UserID (),
+    SymbolContextScope (),
     m_mangled (),
     m_type (eSymbolTypeInvalid),
     m_type_data (0),
@@ -53,8 +53,8 @@ Symbol::Symbol
     uint32_t size,
     uint32_t flags
 ) :
-    SymbolContextScope (),
     UserID (symID),
+    SymbolContextScope (),
     m_mangled (name, name_is_mangled),
     m_type (type),
     m_type_data (0),
@@ -84,8 +84,8 @@ Symbol::Symbol
     const AddressRange &range,
     uint32_t flags
 ) :
-    SymbolContextScope (),
     UserID (symID),
+    SymbolContextScope (),
     m_mangled (name, name_is_mangled),
     m_type (type),
     m_type_data (0),
@@ -103,8 +103,8 @@ Symbol::Symbol
 }
 
 Symbol::Symbol(const Symbol& rhs):
-    SymbolContextScope (rhs),
     UserID (rhs),
+    SymbolContextScope (rhs),
     m_mangled (rhs.m_mangled),
     m_type (rhs.m_type),
     m_type_data (rhs.m_type_data),

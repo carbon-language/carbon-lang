@@ -80,8 +80,8 @@ public:
     //----------------------------------------------------------------------
     CleanUp (value_type value, value_type invalid, CallbackType callback) : 
         m_current_value (value),
-        m_callback (callback),
         m_invalid_value (invalid),
+        m_callback (callback),
         m_callback_called (false),
         m_invalid_value_is_valid (true)
     {

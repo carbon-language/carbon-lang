@@ -70,9 +70,9 @@ private:
         uint8_t     ptr_encoding;
         lldb_private::UnwindPlan::Row initial_row;
 
-        CIE(dw_offset_t offset) : cie_offset(offset), initial_row(), version (-1),
-                                  code_align (0), data_align (0), return_addr_reg_num (-1),
-                                  inst_offset (0), inst_length (0), ptr_encoding (0) {}
+        CIE(dw_offset_t offset) : cie_offset(offset), version (-1), code_align (0),
+                                  data_align (0), return_addr_reg_num (-1), inst_offset (0),
+                                  inst_length (0), ptr_encoding (0), initial_row() {}
     };
 
     typedef lldb::SharedPtr<CIE>::Type CIESP;
@@ -82,7 +82,7 @@ private:
         AddressRange bounds;   // function bounds
         dw_offset_t offset;    // offset to this FDE within the Section
 
-        FDEEntry () : offset (0), bounds () { }
+        FDEEntry () : bounds (), offset (0) { }
 
         inline bool
         operator<(const DWARFCallFrameInfo::FDEEntry& b) const

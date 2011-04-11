@@ -50,9 +50,9 @@ using namespace clang;
 ClangExpressionDeclMap::ClangExpressionDeclMap (bool keep_result_in_memory) :
     m_found_entities (),
     m_struct_members (),
+    m_keep_result_in_memory (keep_result_in_memory),
     m_parser_vars (),
-    m_struct_vars (),
-    m_keep_result_in_memory (keep_result_in_memory)
+    m_struct_vars ()
 {
     EnableStructVars();
 }

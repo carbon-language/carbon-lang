@@ -38,15 +38,15 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
                           lldb_private::Stream *error_stream,
                           const char *func_name) :
     ModulePass(ID),
+    m_resolve_vars(resolve_vars),
+    m_func_name(func_name),
     m_decl_map(decl_map),
     m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
-    m_func_name(func_name),
-    m_resolve_vars(resolve_vars),
     m_const_result(const_result),
+    m_error_stream(error_stream),
     m_has_side_effects(false),
-    m_result_is_pointer(false),
-    m_error_stream(error_stream)
+    m_result_is_pointer(false)
 {
 }
 
