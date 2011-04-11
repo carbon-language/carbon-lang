@@ -3705,7 +3705,7 @@ ARMBasicMCBuilder *llvm::CreateMCBuilder(unsigned Opcode, ARMFormat Format) {
 /// function was set as part of the setupBuilderForSymbolicDisassembly() call
 /// then that function is called to get any symbolic information at the
 /// builder's Address for this instrution.  If that returns non-zero then the
-/// symbolic information is returns is used to create an MCExpr and that is
+/// symbolic information it returns is used to create an MCExpr and that is
 /// added as an operand to the MCInst.  This function returns true if it adds
 /// an operand to the MCInst and false otherwise.
 bool ARMBasicMCBuilder::tryAddingSymbolicOperand(uint64_t Value,
