@@ -55,3 +55,22 @@ Test7 test7() {
   // CHECK: call void @test7_any({{%.*}}* sret {{%.*}}, i32 5)
   return (Test7) test7_any(5);
 }
+
+struct Test8 {
+  __unknown_anytype foo();
+  __unknown_anytype foo(int);
+
+  void test();
+};
+void Test8::test() {
+  (int) foo();
+  (int) foo(5);
+  (float) this->foo();
+  (float) this->foo(5);
+}
+void test8(Test8 *p) {
+  (double) p->foo();
+  (double) p->foo(5);
+  (bool) (*p).foo();
+  (bool) (*p).foo(5);
+}

@@ -167,10 +167,12 @@ static bool canDevirtualizeMemberFunctionCalls(ASTContext &Context,
 // extensions allowing explicit constructor function call.
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
                                               ReturnValueSlot ReturnValue) {
-  if (isa<BinaryOperator>(CE->getCallee()->IgnoreParens())) 
+  const Expr *callee = CE->getCallee()->IgnoreParens();
+
+  if (isa<BinaryOperator>(callee))
     return EmitCXXMemberPointerCallExpr(CE, ReturnValue);
-      
-  const MemberExpr *ME = cast<MemberExpr>(CE->getCallee()->IgnoreParens());
+
+  const MemberExpr *ME = cast<MemberExpr>(callee);
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
 
   CGDebugInfo *DI = getDebugInfo();

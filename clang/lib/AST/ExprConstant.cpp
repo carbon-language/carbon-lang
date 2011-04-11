@@ -1799,6 +1799,7 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   case CK_LValueBitCast:
   case CK_UserDefinedConversion:
   case CK_ResolveUnknownAnyType:
+  case CK_ResolveUnknownAnyTypeToReference:
     return false;
 
   case CK_LValueToRValue:
@@ -2353,6 +2354,7 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
   case CK_LValueBitCast:
   case CK_UserDefinedConversion:
   case CK_ResolveUnknownAnyType:
+  case CK_ResolveUnknownAnyTypeToReference:
     return false;
 
   case CK_FloatingRealToComplex: {

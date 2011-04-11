@@ -119,7 +119,12 @@ public:
   virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 
   /// Create a member pointer for the given method.
-  virtual llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
+  ///
+  /// \param unknownType - if non-null, use this type as the operand
+  ///   to CodeGenModule::getAddrOfUnknownAnyDecl instead of
+  ///   fetching the method's address in the normal way
+  virtual llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD,
+                                            QualType unknownType = QualType());
 
   /// Create a member pointer for the given field.
   virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,

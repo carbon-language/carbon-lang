@@ -15,7 +15,14 @@ namespace test1 {
     // properly.
 
     int x = foo; // expected-error {{cannot initialize}}
-    int y = 0 + foo; // expected-error {{no known type for 'foo'; must explicitly cast this expression to use it}}
+    int y = 0 + foo; // expected-error {{'foo' has unknown type}}
     return foo; // expected-error {{cannot initialize}}
+  }
+}
+
+namespace test2 {
+  extern __unknown_anytype foo();
+  void test() {
+    foo(); // expected-error {{'foo' has unknown return type}}
   }
 }

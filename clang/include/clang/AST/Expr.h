@@ -2222,6 +2222,7 @@ private:
     case CK_FloatingComplexToBoolean:
     case CK_IntegralComplexToBoolean:
     case CK_ResolveUnknownAnyType:
+    case CK_ResolveUnknownAnyTypeToReference:
     case CK_LValueBitCast:            // -> bool&
     case CK_UserDefinedConversion:    // operator bool()
       assert(path_empty() && "Cast kind should not have a base path!");

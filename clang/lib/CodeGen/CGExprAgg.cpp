@@ -311,6 +311,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
 
   case CK_ResolveUnknownAnyType:
+  case CK_ResolveUnknownAnyTypeToReference:
     EmitAggLoadOfLValue(E);
     break;
       

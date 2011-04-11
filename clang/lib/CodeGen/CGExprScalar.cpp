@@ -1128,6 +1128,19 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
   }
 
   case CK_ResolveUnknownAnyType:
+    // Special case: resolving a member pointer constant.
+    if (const UnaryOperator *uo = dyn_cast<UnaryOperator>(E)) {
+      DeclRefExpr *declRef = cast<DeclRefExpr>(uo->getSubExpr());
+      const CXXMethodDecl *method = cast<CXXMethodDecl>(declRef->getDecl());
+
+      const MemberPointerType *mpt = CE->getType()->castAs<MemberPointerType>();
+      QualType resolvedType = mpt->getPointeeType();
+
+      return CGF.CGM.getCXXABI().EmitMemberPointer(method, resolvedType);
+    }
+    // fallthrough
+
+  case CK_ResolveUnknownAnyTypeToReference:
     return EmitLoadOfLValue(CE);
       
   case CK_LValueToRValue:

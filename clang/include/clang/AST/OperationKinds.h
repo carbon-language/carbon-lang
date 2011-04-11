@@ -248,7 +248,10 @@ enum CastKind {
   CK_IntegralComplexToFloatingComplex,
 
   /// \brief Assign an unknown-any declaration a type.
-  CK_ResolveUnknownAnyType
+  CK_ResolveUnknownAnyType,
+
+  /// \brief Assign an unknown-any declaration a reference type.
+  CK_ResolveUnknownAnyTypeToReference
 };
 
 #define CK_Invalid ((CastKind) -1)

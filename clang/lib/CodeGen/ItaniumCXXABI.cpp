@@ -78,7 +78,8 @@ public:
 
   llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 
-  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
+  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD,
+                                    QualType unknownType);
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
                                         CharUnits offset);
 
@@ -502,7 +503,8 @@ ItaniumCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
   return llvm::ConstantInt::get(getPtrDiffTy(), offset.getQuantity());
 }
 
-llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
+llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD,
+                                                 QualType unknownType) {
   assert(MD->isInstance() && "Member function must not be static!");
   MD = MD->getCanonicalDecl();
 
@@ -537,20 +539,27 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
       MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
     }
   } else {
-    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-    const llvm::Type *Ty;
-    // Check whether the function has a computable LLVM signature.
-    if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
-      // The function has a computable LLVM signature; use the correct type.
-      Ty = Types.GetFunctionType(Types.getFunctionInfo(MD), FPT->isVariadic());
+    llvm::Constant *addr;
+    if (!unknownType.isNull()) {
+      addr = CGM.getAddrOfUnknownAnyDecl(MD, unknownType);
     } else {
-      // Use an arbitrary non-function type to tell GetAddrOfFunction that the
-      // function type is incomplete.
-      Ty = ptrdiff_t;
+      QualType fnType = MD->getType();
+      const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
+      const llvm::Type *Ty;
+      // Check whether the function has a computable LLVM signature.
+      if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
+        // The function has a computable LLVM signature; use the correct type.
+        Ty = Types.GetFunctionType(Types.getFunctionInfo(MD),
+                                   FPT->isVariadic());
+      } else {
+        // Use an arbitrary non-function type to tell GetAddrOfFunction that the
+        // function type is incomplete.
+        Ty = ptrdiff_t;
+      }
+      addr = CGM.GetAddrOfFunction(MD, Ty);
     }
 
-    llvm::Constant *Addr = CGM.GetAddrOfFunction(MD, Ty);
-    MemPtr[0] = llvm::ConstantExpr::getPtrToInt(Addr, ptrdiff_t);
+    MemPtr[0] = llvm::ConstantExpr::getPtrToInt(addr, ptrdiff_t);
     MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
   }
   
