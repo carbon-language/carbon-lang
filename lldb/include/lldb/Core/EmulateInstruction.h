@@ -111,6 +111,7 @@ public:
         // Add or subtract a value from a base address register (other than SP)
         eContextAdjustBaseRegister,
 
+        eContextAdjustPC,
         // Used in WriteRegister callbacks to indicate where the 
         eContextRegisterPlusOffset,
 

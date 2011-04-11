@@ -935,6 +935,9 @@ protected:
     bool
     EmulateVSTR (const uint32_t opcode, const ARMEncoding encoding);
     
+    // B6.2.13 SUBS PC, LR and related instructions
+    bool
+    EmulateSUBSPcLrEtc (const uint32_t opcode, const ARMEncoding encoding);
     
     uint32_t m_arm_isa;
     Mode m_opcode_mode;

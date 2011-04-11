@@ -686,10 +686,10 @@ EmulateInstructionARM::EmulateMOVRdRm (const uint32_t opcode, const ARMEncoding 
             Rd = Bits32(opcode, 15, 12);
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -777,11 +777,14 @@ EmulateInstructionARM::EmulateMOVRdImm (const uint32_t opcode, const ARMEncoding
                 break;
                   
             case eEncodingA1:
-                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
                 // d = UInt(Rd); setflags = (S == ‘1’); (imm32, carry) = ARMExpandImm_C(imm12, APSR.C);
                 Rd = Bits32 (opcode, 15, 12);
                 setflags = BitIsSet (opcode, 20);
                 imm32 = ARMExpandImm_C (opcode, APSR_C, carry);
+
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                if ((Rd == 15) && setflags)
+                    return EmulateSUBSPcLrEtc (opcode, encoding);
                   
                 break;
                   
@@ -986,10 +989,10 @@ EmulateInstructionARM::EmulateMVNImm (const uint32_t opcode, const ARMEncoding e
             Rd = Bits32(opcode, 15, 12);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry);
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -1749,10 +1752,10 @@ EmulateInstructionARM::EmulateSUBSPImm (const uint32_t opcode, const ARMEncoding
             Rd = Bits32(opcode, 15, 12);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5130,9 +5133,9 @@ EmulateInstructionARM::EmulateADCImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
-            // TODO: Emulate SUBS PC, LR and related instructions.
+
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5210,9 +5213,9 @@ EmulateInstructionARM::EmulateADCReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
-            // TODO: Emulate SUBS PC, LR and related instructions.
+
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5352,9 +5355,9 @@ EmulateInstructionARM::EmulateANDImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
-            // TODO: Emulate SUBS PC, LR and related instructions.
+ 
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5436,9 +5439,9 @@ EmulateInstructionARM::EmulateANDReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
-            // TODO: Emulate SUBS PC, LR and related instructions.
+
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5512,10 +5515,10 @@ EmulateInstructionARM::EmulateBICImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -5594,10 +5597,10 @@ EmulateInstructionARM::EmulateBICReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -8125,10 +8128,10 @@ EmulateInstructionARM::EmulateEORImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -8210,10 +8213,10 @@ EmulateInstructionARM::EmulateEORReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
+
             // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-            // TODO: Emulate SUBS PC, LR and related instructions.
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -8290,9 +8293,9 @@ EmulateInstructionARM::EmulateORRImm (const uint32_t opcode, const ARMEncoding e
             Rn = Bits32(opcode, 19, 16);
             setflags = BitIsSet(opcode, 20);
             imm32 = ARMExpandImm_C(opcode, APSR_C, carry); // (imm32, carry) = ARMExpandImm(imm12, APSR.C)
-            // TODO: Emulate SUBS PC, LR and related instructions.
+
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -8374,9 +8377,9 @@ EmulateInstructionARM::EmulateORRReg (const uint32_t opcode, const ARMEncoding e
             Rm = Bits32(opcode, 3, 0);
             setflags = BitIsSet(opcode, 20);
             shift_n = DecodeImmShiftARM(opcode, shift_t);
-            // TODO: Emulate SUBS PC, LR and related instructions.
+
             if (Rd == 15 && setflags)
-                return false;
+                return EmulateSUBSPcLrEtc (opcode, encoding);
             break;
         default:
             return false;
@@ -8452,10 +8455,10 @@ EmulateInstructionARM::EmulateRSBImm (const uint32_t opcode, const ARMEncoding e
         Rn = Bits32(opcode, 19, 16);
         setflags = BitIsSet(opcode, 20);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -8524,10 +8527,10 @@ EmulateInstructionARM::EmulateRSBReg (const uint32_t opcode, const ARMEncoding e
         Rm = Bits32(opcode, 3, 0);
         setflags = BitIsSet(opcode, 20);
         shift_n = DecodeImmShiftARM(opcode, shift_t);
+
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -8588,10 +8591,10 @@ EmulateInstructionARM::EmulateRSCImm (const uint32_t opcode, const ARMEncoding e
         Rn = Bits32(opcode, 19, 16);
         setflags = BitIsSet(opcode, 20);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc  (opcode, encoding);
         break;
     default:
         return false;
@@ -8651,10 +8654,10 @@ EmulateInstructionARM::EmulateRSCReg (const uint32_t opcode, const ARMEncoding e
         Rm = Bits32(opcode, 3, 0);
         setflags = BitIsSet(opcode, 20);
         shift_n = DecodeImmShiftARM(opcode, shift_t);
+
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -8723,10 +8726,10 @@ EmulateInstructionARM::EmulateSBCImm (const uint32_t opcode, const ARMEncoding e
         Rn = Bits32(opcode, 19, 16);
         setflags = BitIsSet(opcode, 20);
         imm32 = ARMExpandImm(opcode); // imm32 = ARMExpandImm(imm12)
+
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -8802,10 +8805,10 @@ EmulateInstructionARM::EmulateSBCReg (const uint32_t opcode, const ARMEncoding e
         Rm = Bits32(opcode, 3, 0);
         setflags = BitIsSet(opcode, 20);
         shift_n = DecodeImmShiftARM(opcode, shift_t);
+                
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -8966,9 +8969,8 @@ EmulateInstructionARM::EmulateSUBImmARM (const uint32_t opcode, const ARMEncodin
             return EmulateSUBSPImm (opcode, eEncodingA1);
 
         // if Rd == '1111' && S == '1' then SEE SUBS PC, LR and related instructions;
-        // TODO: Emulate SUBS PC, LR and related instructions.
         if (Rd == 15 && setflags)
-            return false;
+            return EmulateSUBSPcLrEtc (opcode, encoding);
         break;
     default:
         return false;
@@ -9292,11 +9294,14 @@ EmulateInstructionARM::EmulateSUBSPReg (const uint32_t opcode, const ARMEncoding
                 break;
 
             case eEncodingA1:
-                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
                 // d = UInt(Rd); m = UInt(Rm); setflags = (S == ‘1’);
                 d = Bits32 (opcode, 15, 12);
                 m = Bits32 (opcode, 3, 0);
                 setflags = BitIsSet (opcode, 20);
+                
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                if (d == 15 && setflags)
+                    EmulateSUBSPcLrEtc (opcode, encoding);
 
                 // (shift_t, shift_n) = DecodeImmShift(type, imm5);
                 shift_n = DecodeImmShiftARM (opcode, shift_t);
@@ -9496,13 +9501,16 @@ EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding e
                 break;
                   
             case eEncodingA1:
-                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
                 // if Rn == ‘1101’ then SEE SUB (SP minus register);
                 // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == ‘1’);
                 d = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                 setflags = BitIsSet (opcode, 20);
+                
+                // if Rd == ‘1111’ && S == ‘1’ then SEE SUBS PC, LR and related instructions;
+                if ((d == 15) && setflags)
+                    EmulateSUBSPcLrEtc (opcode, encoding);
                   
                 // (shift_t, shift_n) = DecodeImmShift(type, imm5);
                 shift_n = DecodeImmShiftARM (opcode, shift_t);
@@ -11864,6 +11872,195 @@ EmulateInstructionARM::EmulateVLD1SingleAll (const uint32_t opcode, const ARMEnc
     return true;
 }
 
+// B6.2.13 SUBS PC, LR and related instructions
+//The SUBS PC, LR, #<const? instruction provides an exception return without the use of the stack.  It subtracts the
+// immediate constant from the LR, branches to the resulting address, and also copies the SPSR to the CPSR.
+bool
+EmulateInstructionARM::EmulateSUBSPcLrEtc (const uint32_t opcode, const ARMEncoding encoding)
+{
+#if 0
+    if ConditionPassed() then
+        EncodingSpecificOperations();
+        if CurrentInstrSet() == InstrSet_ThumbEE then
+            UNPREDICTABLE;
+        operand2 = if register_form then Shift(R[m], shift_t, shift_n, APSR.C) else imm32;
+        case opcode of
+            when ‘0000’ result = R[n] AND operand2; // AND
+            when ‘0001’ result = R[n] EOR operand2; // EOR
+            when ‘0010’ (result, -, -) = AddWithCarry(R[n], NOT(operand2), ‘1’); // SUB
+            when ‘0011’ (result, -, -) = AddWithCarry(NOT(R[n]), operand2, ‘1’); // RSB
+            when ‘0100’ (result, -, -) = AddWithCarry(R[n], operand2, ‘0’); // ADD
+            when ‘0101’ (result, -, -) = AddWithCarry(R[n], operand2, APSR.c); // ADC
+            when ‘0110’ (result, -, -) = AddWithCarry(R[n], NOT(operand2), APSR.C); // SBC
+            when ‘0111’ (result, -, -) = AddWithCarry(NOT(R[n]), operand2, APSR.C); // RSC
+            when ‘1100’ result = R[n] OR operand2; // ORR
+            when ‘1101’ result = operand2; // MOV
+            when ‘1110’ result = R[n] AND NOT(operand2); // BIC
+            when ‘1111’ result = NOT(operand2); // MVN
+        CPSRWriteByInstr(SPSR[], ‘1111’, TRUE);
+        BranchWritePC(result);
+#endif
+
+    bool success = false;
+
+    if (ConditionPassed (opcode))
+    {
+        uint32_t n;
+        uint32_t m;
+        uint32_t imm32;
+        bool register_form;
+        ARM_ShifterType shift_t;
+        uint32_t shift_n;
+        uint32_t code;
+
+        switch (encoding)
+        {
+            case eEncodingT1:
+                // if CurrentInstrSet() == InstrSet_ThumbEE then UNPREDICTABLE
+                // n = 14; imm32 = ZeroExtend(imm8, 32); register_form = FALSE; opcode = ‘0010’; // = SUB
+                n = 14;
+                imm32 = Bits32 (opcode, 7, 0);
+                register_form = false;
+                code = 2;
+                
+                // if InITBlock() && !LastInITBlock() then UNPREDICTABLE;
+                if (InITBlock() && !LastInITBlock())
+                    return false;
+                    
+                break;
+
+            case eEncodingA1:
+                // n = UInt(Rn); imm32 = ARMExpandImm(imm12); register_form = FALSE;
+                n = Bits32 (opcode, 19, 16);
+                imm32 = ARMExpandImm (opcode);
+                register_form = false;
+                code = Bits32 (opcode, 24, 21);
+                
+                break;
+
+            case eEncodingA2:
+                // n = UInt(Rn); m = UInt(Rm); register_form = TRUE;
+                n = Bits32 (opcode, 19, 16);
+                m = Bits32 (opcode, 3, 0);
+                register_form = true;
+                
+                // (shift_t, shift_n) = DecodeImmShift(type, imm5);
+                shift_n = DecodeImmShiftARM (opcode, shift_t);
+                
+                break;
+
+            default:
+                return false;
+        }
+
+        // operand2 = if register_form then Shift(R[m], shift_t, shift_n, APSR.C) else imm32;
+        uint32_t operand2;
+        if (register_form)
+        {
+            uint32_t Rm = ReadCoreReg (m, &success);
+            if (!success)
+                return false;
+                
+            operand2 = Shift (Rm, shift_t, shift_n, APSR_C);
+                
+        }
+        else
+        {
+            operand2 = imm32;
+        }
+        
+        uint32_t Rn = ReadCoreReg (n, &success);
+        if (!success)
+            return false;
+        
+        AddWithCarryResult result;
+        
+        // case opcode of
+        switch (code)
+        {
+            case 0: // when ‘0000’ 
+                // result = R[n] AND operand2; // AND
+                result.result = Rn & operand2;
+                break;
+
+            case 1: // when ‘0001’ 
+                // result = R[n] EOR operand2; // EOR
+                result.result = Rn ^ operand2;
+                break;
+                
+            case 2: // when ‘0010’ 
+                // (result, -, -) = AddWithCarry(R[n], NOT(operand2), ‘1’); // SUB
+                result = AddWithCarry (Rn, ~(operand2), 1);
+                break;
+                
+            case 3: // when ‘0011’ 
+                // (result, -, -) = AddWithCarry(NOT(R[n]), operand2, ‘1’); // RSB
+                result = AddWithCarry (~(Rn), operand2, 1);
+                break;
+                
+            case 4: // when ‘0100’ 
+                // (result, -, -) = AddWithCarry(R[n], operand2, ‘0’); // ADD
+                result = AddWithCarry (Rn, operand2, 0);
+                break;
+                
+            case 5: // when ‘0101’ 
+                // (result, -, -) = AddWithCarry(R[n], operand2, APSR.c); // ADC
+                result = AddWithCarry (Rn, operand2, APSR_C);
+                break;
+                
+            case 6: // when ‘0110’ 
+                // (result, -, -) = AddWithCarry(R[n], NOT(operand2), APSR.C); // SBC
+                result = AddWithCarry (Rn, ~(operand2), APSR_C);
+                break;
+                
+            case 7: // when ‘0111’ 
+                // (result, -, -) = AddWithCarry(NOT(R[n]), operand2, APSR.C); // RSC
+                result = AddWithCarry (~(Rn), operand2, APSR_C);
+                break;
+                
+            case 10: // when ‘1100’ 
+                // result = R[n] OR operand2; // ORR
+                result.result = Rn | operand2;
+                break;
+                
+            case 11: // when ‘1101’ 
+                // result = operand2; // MOV
+                result.result = operand2;
+                break;
+                
+            case 12: // when ‘1110’ 
+                // result = R[n] AND NOT(operand2); // BIC
+                result.result = Rn & ~(operand2);
+                break;
+                
+            case 15: // when ‘1111’ 
+                // result = NOT(operand2); // MVN
+                result.result = ~(operand2);
+                break;
+                
+            default:
+                return false;
+        }
+        // CPSRWriteByInstr(SPSR[], ‘1111’, TRUE);
+        
+        // For now, in emulation mode, we don't have access to the SPSR, so we will use the CPSR instead, and hope for
+        // the best.
+        uint32_t spsr = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_cpsr, 0, &success);
+        if (!success)
+            return false;
+        
+        CPSRWriteByInstr (spsr, 15, true);
+        
+        // BranchWritePC(result);
+        EmulateInstruction::Context context;
+        context.type = eContextAdjustPC;
+        context.SetImmediate (result.result);
+        
+        BranchWritePC (context, result.result);
+    }
+    return true;
+}
+    
 EmulateInstructionARM::ARMOpcode*
 EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 {
@@ -12021,6 +12218,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
         // mul
         { 0x0fe000f0, 0x00000090, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul{s}<c> <Rd>,<R>,<Rm>" },
+        { 0x0e10f000, 0x0210f000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "<opc>S<c> PC,#<const> | <Rn>,#<const>" }, 
+        { 0x0e10f010, 0x0010f000, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "<opc>S<c> PC,<Rn>,<Rm{,<shift>}" },
 
         //----------------------------------------------------------------------
         // Load instructions
@@ -12305,6 +12504,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
         // mul
         { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
+        { 0xffffff00, 0xf3de8f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "SUBS<c> PC, LR, #<imm8>" },
                    
 
         //----------------------------------------------------------------------
