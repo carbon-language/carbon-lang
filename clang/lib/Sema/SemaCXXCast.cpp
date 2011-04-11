@@ -522,14 +522,6 @@ CheckDynamicCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
     return;
   }
 
-  // If the source class is marked 'final', and the destination class does not
-  // derive from the source class, then we know that the result is always null.
-  if (SrcRecord->getDecl()->hasAttr<FinalAttr>() &&
-      !Self.IsDerivedFrom(DestPointee, SrcPointee)) {
-    Kind = CK_DynamicToNull;
-    return;
-  }
-
   // C++ 5.2.7p5
   // Upcasts are resolved statically.
   if (DestRecord && Self.IsDerivedFrom(SrcPointee, DestPointee)) {

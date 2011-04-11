@@ -552,7 +552,6 @@ public:
     case CK_GetObjCProperty:
     case CK_ToVoid:
     case CK_Dynamic:
-    case CK_DynamicToNull:
     case CK_ResolveUnknownAnyType:
       return 0;
 

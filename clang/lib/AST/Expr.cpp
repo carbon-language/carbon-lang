@@ -987,8 +987,6 @@ const char *CastExpr::getCastKindName() const {
     return "UncheckedDerivedToBase";
   case CK_Dynamic:
     return "Dynamic";
-  case CK_DynamicToNull:
-    return "DynamicToNull";
   case CK_ToUnion:
     return "ToUnion";
   case CK_ArrayToPointerDecay:

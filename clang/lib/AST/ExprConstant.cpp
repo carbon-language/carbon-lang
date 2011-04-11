@@ -1768,7 +1768,6 @@ bool IntExprEvaluator::VisitCastExpr(CastExpr *E) {
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
   case CK_Dynamic:
-  case CK_DynamicToNull:
   case CK_ToUnion:
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:
@@ -2316,7 +2315,6 @@ bool ComplexExprEvaluator::VisitCastExpr(CastExpr *E) {
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
   case CK_Dynamic:
-  case CK_DynamicToNull:
   case CK_ToUnion:
   case CK_ArrayToPointerDecay:
   case CK_FunctionToPointerDecay:

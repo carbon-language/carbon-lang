@@ -82,10 +82,6 @@ enum CastKind {
   /// CK_Dynamic - A C++ dynamic_cast.
   CK_Dynamic,
 
-  /// CK_DynamicToNull - A C++ dynamic_cast that can be proven to
-  /// always yield a null result.
-  CK_DynamicToNull,
-
   /// CK_ToUnion - The GCC cast-to-union extension.
   ///   int   -> union { int x; float y; }
   ///   float -> union { int x; float y; }
