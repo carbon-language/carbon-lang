@@ -1401,10 +1401,9 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   return true;
 }
 
-/// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
-/// and if a predecessor branches to us and one of our successors, fold the
-/// setcc into the predecessor and use logical operations to pick the right
-/// destination.
+/// FoldBranchToCommonDest - If this basic block is simple enough, and if a
+/// predecessor branches to us and one of our successors, fold the block into
+/// the predecessor and use logical operations to pick the right destination.
 bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
@@ -1588,11 +1587,8 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 
     // Move dbg value intrinsics in PredBlock.
     for (SmallVector<DbgInfoIntrinsic *, 8>::iterator DBI = DbgValues.begin(),
-           DBE = DbgValues.end(); DBI != DBE; ++DBI) {
-      DbgInfoIntrinsic *DB = *DBI;
-      DB->removeFromParent();
-      DB->insertBefore(PBI);
-    }
+           DBE = DbgValues.end(); DBI != DBE; ++DBI)
+      (*DBI)->moveBefore(PBI);
     return true;
   }
   return false;
