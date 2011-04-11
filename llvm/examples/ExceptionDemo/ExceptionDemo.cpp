@@ -62,6 +62,11 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Dwarf.h"
 
+// Note: Some systems seem to have a problem finding
+//       the symbols like stderr, and fprintf when this
+//       header file is not included
+#include <cstdio>
+
 #include <sstream>
 #include <stdexcept>
 
