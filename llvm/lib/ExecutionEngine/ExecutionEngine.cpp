@@ -313,13 +313,17 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 
   // Should be an array of '{ i32, void ()* }' structs.  The first value is
   // the init priority, which we ignore.
+  if (isa<ConstantAggregateZero>(GV->getInitializer()))
+    return;
   ConstantArray *InitList = cast<ConstantArray>(GV->getInitializer());
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    if (isa<ConstantAggregateZero>(InitList->getOperand(i)))
+      continue;
     ConstantStruct *CS = cast<ConstantStruct>(InitList->getOperand(i));
 
     Constant *FP = CS->getOperand(1);
     if (FP->isNullValue())
-      break;  // Found a null terminator, exit.
+      continue;  // Found a sentinal value, ignore.
 
     // Strip off constant expression casts.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(FP))

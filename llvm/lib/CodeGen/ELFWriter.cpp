@@ -662,12 +662,16 @@ bool ELFWriter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 void ELFWriter::EmitXXStructorList(Constant *List, ELFSection &Xtor) {
   // Should be an array of '{ i32, void ()* }' structs.  The first value is the
   // init priority, which we ignore.
+  if (List->isNullValue()) return;
   ConstantArray *InitList = cast<ConstantArray>(List);
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+    if (InitList->getOperand(i)->isNullValue())
+      continue;
     ConstantStruct *CS = cast<ConstantStruct>(InitList->getOperand(i));
 
     if (CS->getOperand(1)->isNullValue())
-      return;  // Found a null terminator, exit printing.
+      continue;
+
     // Emit the function pointer.
     EmitGlobalConstant(CS->getOperand(1), Xtor);
   }
