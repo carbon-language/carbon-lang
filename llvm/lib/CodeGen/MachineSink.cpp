@@ -265,8 +265,11 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
     if (MI->isDebugValue())
       continue;
 
-    if (PerformTrivialForwardCoalescing(MI, &MBB))
+    bool Joined = PerformTrivialForwardCoalescing(MI, &MBB);
+    if (Joined) {
+      MadeChange = true;
       continue;
+    }
 
     if (SinkInstruction(MI, SawStore))
       ++NumSunk, MadeChange = true;
