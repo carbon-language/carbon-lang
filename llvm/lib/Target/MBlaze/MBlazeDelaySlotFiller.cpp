@@ -77,7 +77,7 @@ static bool hasImmInstruction(MachineBasicBlock::iterator &candidate) {
 
         // We must assume that unknown immediate values require more than
         // 16-bits to represent.
-        if (mop.isGlobal() || mop.isSymbol())
+        if (mop.isGlobal() || mop.isSymbol() || mop.isJTI() || mop.isCPI())
           return true;
 
         // FIXME: we could probably check to see if the FP value happens
