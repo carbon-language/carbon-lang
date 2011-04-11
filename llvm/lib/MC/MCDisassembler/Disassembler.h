@@ -69,7 +69,7 @@ private:
 
 public:
   LLVMDisasmContext(std::string tripleName, void *disInfo, int tagType,
-	  LLVMOpInfoCallback getOpInfo,
+                    LLVMOpInfoCallback getOpInfo,
                     LLVMSymbolLookupCallback symbolLookUp,
                     const Target *theTarget, const MCAsmInfo *mAI,
                     llvm::TargetMachine *tM, const TargetAsmInfo *tai,

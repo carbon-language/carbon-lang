@@ -77,8 +77,9 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   assert(Ctx && "Unable to create MCContext!");
 
   // Set up disassembler.
-  const MCDisassembler *DisAsm = TheTarget->createMCDisassembler();
+  MCDisassembler *DisAsm = TheTarget->createMCDisassembler();
   assert(DisAsm && "Unable to create disassembler!");
+  DisAsm->setupForSymbolicDisassembly(GetOpInfo, DisInfo, Ctx);
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();

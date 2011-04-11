@@ -22,12 +22,17 @@
 #define ARMDISASSEMBLERCORE_H
 
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm-c/Disassembler.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMRegisterInfo.h"
 #include "ARMDisassembler.h"
 
 namespace llvm {
+class MCContext;
 
 class ARMUtils {
 public:
@@ -202,7 +207,7 @@ private:
 public:
   ARMBasicMCBuilder(ARMBasicMCBuilder &B)
     : Opcode(B.Opcode), Format(B.Format), NumOps(B.NumOps), Disasm(B.Disasm),
-      SP(B.SP) {
+      SP(B.SP), GetOpInfo(0), DisInfo(0), Ctx(0) {
     Err = 0;
   }
 
@@ -261,6 +266,44 @@ private:
     assert(SP);
     return slice(SP->ITState, 7, 4);
   }
+
+private:
+  //
+  // Hooks for symbolic disassembly via the public 'C' interface.
+  //
+  // The function to get the symbolic information for operands.
+  LLVMOpInfoCallback GetOpInfo;
+  // The pointer to the block of symbolic information for above call back.
+  void *DisInfo;
+  // The assembly context for creating symbols and MCExprs in place of
+  // immediate operands when there is symbolic information.
+  MCContext *Ctx;
+  // The address of the instruction being disassembled.
+  uint64_t Address;
+
+public:
+  void setupBuilderForSymbolicDisassembly(LLVMOpInfoCallback getOpInfo,
+                                          void *disInfo, MCContext *ctx,
+                                          uint64_t address) {
+    GetOpInfo = getOpInfo;
+    DisInfo = disInfo;
+    Ctx = ctx;
+    Address = address;
+  }
+
+  uint64_t getBuilderAddress() const { return Address; }
+
+  /// tryAddingSymbolicOperand - tryAddingSymbolicOperand trys to add a symbolic
+  /// operand in place of the immediate Value in the MCInst.  The immediate
+  /// Value has had any PC adjustment made by the caller.  If the getOpInfo()
+  /// function was set as part of the setupBuilderForSymbolicDisassembly() call
+  /// then that function is called to get any symbolic information at the
+  /// builder's Address for this instrution.  If that returns non-zero then the
+  /// symbolic information is returns is used to create an MCExpr and that is
+  /// added as an operand to the MCInst.  This function returns true if it adds
+  /// an operand to the MCInst and false otherwise.
+  bool tryAddingSymbolicOperand(uint64_t Value, uint64_t InstSize, MCInst &MI);
+
 };
 
 } // namespace llvm

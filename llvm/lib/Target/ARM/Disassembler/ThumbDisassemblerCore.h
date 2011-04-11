@@ -1570,9 +1570,10 @@ static bool DisassembleThumb2DPBinImm(MCInst &MI, unsigned Opcode,
   if (Opcode == ARM::t2ADDri12 || Opcode == ARM::t2SUBri12
       || Opcode == ARM::t2LEApcrel)
     MI.addOperand(MCOperand::CreateImm(getIImm3Imm8(insn)));
-  else if (Opcode == ARM::t2MOVi16 || Opcode == ARM::t2MOVTi16)
-    MI.addOperand(MCOperand::CreateImm(getImm16(insn)));
-  else if (Opcode == ARM::t2BFC || Opcode == ARM::t2BFI) {
+  else if (Opcode == ARM::t2MOVi16 || Opcode == ARM::t2MOVTi16) {
+    if (!B->tryAddingSymbolicOperand(getImm16(insn), 4, MI))
+      MI.addOperand(MCOperand::CreateImm(getImm16(insn)));
+  } else if (Opcode == ARM::t2BFC || Opcode == ARM::t2BFI) {
     uint32_t mask = 0;
     if (getBitfieldInvMask(insn, mask))
       MI.addOperand(MCOperand::CreateImm(mask));
@@ -1756,7 +1757,9 @@ static bool DisassembleThumb2BrMiscCtrl(MCInst &MI, unsigned Opcode,
     Offset = decodeImm32_BLX(insn);
     break;
   }
-  MI.addOperand(MCOperand::CreateImm(Offset));
+
+  if (!B->tryAddingSymbolicOperand(Offset + B->getBuilderAddress() + 4, 4, MI))
+    MI.addOperand(MCOperand::CreateImm(Offset));
 
   // This is an increment as some predicate operands may have been added first.
   NumOpsAdded += 1;

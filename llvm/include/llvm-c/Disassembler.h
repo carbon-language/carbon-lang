@@ -48,6 +48,49 @@ typedef int (*LLVMOpInfoCallback)(void *DisInfo,
                                   void *TagBuf);
 
 /**
+ * The initial support in LLVM MC for the most general form of a relocatable
+ * expression is "AddSymbol - SubtractSymbol + Offset".  For some Darwin targets
+ * this full form is encoded in the relocation information so that AddSymbol and
+ * SubtractSymbol can be link edited independent of each other.  Many other
+ * platforms only allow a relocatable expression of the form AddSymbol + Offset
+ * to be encoded.
+ * 
+ * The LLVMOpInfoCallback() for the TagType value of 1 uses the struct
+ * LLVMOpInfo1.  The value of the relocatable expression for the operand,
+ * including any PC adjustment, is passed in to the call back in the Value
+ * field.  The symbolic information about the operand is returned using all
+ * the fields of the structure with the Offset of the relocatable expression
+ * returned in the Value field.  It is possible that some symbols in the
+ * relocatable expression were assembly temporary symbols, for example
+ * "Ldata - LpicBase + constant", and only the Values of the symbols without
+ * symbol names are present in the relocation information.  The VariantKind
+ * type is one of the Target specific #defines below and is used to print
+ * operands like "_foo@GOT", ":lower16:_foo", etc.
+ */
+struct LLVMOpInfoSymbol1 {
+  uint64_t Present; /* 1 if this symbol is present */
+  char *Name;     /* symbol name if not NULL */
+  uint64_t Value; /* symbol value if name is NULL */
+};
+struct LLVMOpInfo1 {
+  struct LLVMOpInfoSymbol1 AddSymbol;
+  struct LLVMOpInfoSymbol1 SubtractSymbol;
+  uint64_t Value;
+  uint64_t VariantKind;
+};
+
+/**
+ * The operand VariantKinds for symbolic disassembly.
+ */
+#define LLVMDisassembler_VariantKind_None 0 /* all targets */
+
+/**
+ * The ARM target VariantKinds.
+ */
+#define LLVMDisassembler_VariantKind_ARM_HI16 1 /* :upper16: */
+#define LLVMDisassembler_VariantKind_ARM_LO16 2 /* :lower16: */
+
+/**
  * The type for the symbol lookup function.  This may be called by the
  * disassembler for such things like adding a comment for a PC plus a constant
  * offset load instruction to use a symbol name instead of a load address value.

@@ -422,6 +422,10 @@ bool ARMDisassembler::getInstruction(MCInst &MI,
   if (!Builder)
     return false;
 
+  Builder->setupBuilderForSymbolicDisassembly(getLLVMOpInfoCallback(),
+                                              getDisInfoBlock(), getMCContext(),
+                                              Address);
+
   if (!Builder->Build(MI, insn))
     return false;
 
@@ -503,6 +507,10 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
     return false;
 
   Builder->SetSession(const_cast<Session *>(&SO));
+
+  Builder->setupBuilderForSymbolicDisassembly(getLLVMOpInfoCallback(),
+                                              getDisInfoBlock(), getMCContext(),
+                                              Address);
 
   if (!Builder->Build(MI, insn))
     return false;
