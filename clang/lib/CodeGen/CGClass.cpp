@@ -172,9 +172,7 @@ CodeGenFunction::GetAddressOfBaseClass(llvm::Value *Value,
     CastNotNull = createBasicBlock("cast.notnull");
     CastEnd = createBasicBlock("cast.end");
     
-    llvm::Value *IsNull = 
-      Builder.CreateICmpEQ(Value,
-                           llvm::Constant::getNullValue(Value->getType()));
+    llvm::Value *IsNull = Builder.CreateIsNull(Value);
     Builder.CreateCondBr(IsNull, CastNull, CastNotNull);
     EmitBlock(CastNotNull);
   }
@@ -246,9 +244,7 @@ CodeGenFunction::GetAddressOfDerivedClass(llvm::Value *Value,
     CastNotNull = createBasicBlock("cast.notnull");
     CastEnd = createBasicBlock("cast.end");
     
-    llvm::Value *IsNull = 
-    Builder.CreateICmpEQ(Value,
-                         llvm::Constant::getNullValue(Value->getType()));
+    llvm::Value *IsNull = Builder.CreateIsNull(Value);
     Builder.CreateCondBr(IsNull, CastNull, CastNotNull);
     EmitBlock(CastNotNull);
   }
