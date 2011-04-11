@@ -155,10 +155,13 @@ void ClangDeclContextEmitter::run(raw_ostream &OS) {
     }
   }
 
-  for (RecordSet::iterator i = DeclContexts.begin(), e = DeclContexts.end();
-       i != e; ++i) {
-    OS << "DECL_CONTEXT(" << (*i)->getName() << ")\n";
-  }
+  // To keep identical order, RecordVector may be used
+  // instead of RecordSet.
+  for (RecordVector::iterator
+         i = DeclContextsVector.begin(), e = DeclContextsVector.end();
+       i != e; ++i)
+    if (DeclContexts.find(*i) != DeclContexts.end())
+      OS << "DECL_CONTEXT(" << (*i)->getName() << ")\n";
 
   OS << "#undef DECL_CONTEXT\n";
   OS << "#undef DECL_CONTEXT_BASE\n";
