@@ -934,6 +934,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Inst{19-16} = Rn;
   }
 }
+}
+
 // Carry setting variants
 // NOTE: CPSR def omitted because it will be handled by the custom inserter.
 let usesCustomInserter = 1 in {
@@ -943,11 +945,12 @@ multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>;
   def Srr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                 Size4Bytes, IIC_iALUr,
-               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]>;
+               [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
+    let isCommutable = Commutable;
+  }
   def Srs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
                 Size4Bytes, IIC_iALUsr,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>;
-}
 }
 }
 
