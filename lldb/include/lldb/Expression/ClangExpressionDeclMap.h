@@ -509,7 +509,7 @@ private:
     EnableParserVars()
     {
         if (!m_parser_vars.get())
-            m_parser_vars.reset(new struct ParserVars);
+            m_parser_vars.reset(new ParserVars);
     }
     
     //----------------------------------------------------------------------
