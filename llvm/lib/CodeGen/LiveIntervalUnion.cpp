@@ -35,12 +35,20 @@ void LiveIntervalUnion::unify(LiveInterval &VirtReg) {
   LiveInterval::iterator RegEnd = VirtReg.end();
   SegmentIter SegPos = Segments.find(RegPos->start);
 
-  for (;;) {
+  while (SegPos.valid()) {
     SegPos.insert(RegPos->start, RegPos->end, &VirtReg);
     if (++RegPos == RegEnd)
       return;
     SegPos.advanceTo(RegPos->start);
   }
+
+  // We have reached the end of Segments, so it is no longer necessary to search
+  // for the insertion position.
+  // It is faster to insert the end first.
+  --RegEnd;
+  SegPos.insert(RegEnd->start, RegEnd->end, &VirtReg);
+  for (; RegPos != RegEnd; ++RegPos, ++SegPos)
+    SegPos.insert(RegPos->start, RegPos->end, &VirtReg);
 }
 
 // Remove a live virtual register's segments from this union.
