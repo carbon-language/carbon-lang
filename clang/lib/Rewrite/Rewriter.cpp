@@ -303,3 +303,10 @@ bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
   ReplaceText(From->getLocStart(), Size, Str);
   return false;
 }
+
+std::string Rewriter::ConvertToString(Stmt *From) {
+  std::string SStr;
+  llvm::raw_string_ostream S(SStr);
+  From->printPretty(S, 0, PrintingPolicy(*LangOpts));
+  return SStr;
+}

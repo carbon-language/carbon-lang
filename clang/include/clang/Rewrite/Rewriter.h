@@ -245,6 +245,10 @@ public:
   /// printer to generate the replacement code.  This returns true if the input
   /// could not be rewritten, or false if successful.
   bool ReplaceStmt(Stmt *From, Stmt *To);
+  
+  /// ConvertToString converts statement 'From' to a string using the
+  /// pretty pronter.
+  std::string ConvertToString(Stmt *From);
 
   /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
   /// buffer, and allows you to write on it directly.  This is useful if you

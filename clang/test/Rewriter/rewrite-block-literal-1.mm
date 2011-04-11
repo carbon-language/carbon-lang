@@ -16,9 +16,14 @@ typedef void (^BLOCK_TYPE)(void);
 @implementation CoreDAVTaskGroup
 - (void)_finishInitialSync {
                     CoreDAVTaskGroup *folderPost;
-                    [folderPost setCompletionBlock : (^{
-			self.IVAR = 0;
-                    })];
+  folderPost.completionBlock = ^{
+    self.IVAR = 0;
+    [self _finishInitialSync];
+  };
+
+  [folderPost setCompletionBlock : (^{
+    self.IVAR = 0;
+  })];
 }
 @dynamic IVAR;
 - (void) setCompletionBlock : (BLOCK_TYPE) arg {}

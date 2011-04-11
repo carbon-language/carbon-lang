@@ -5519,27 +5519,34 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
       Stmt *newStmt;
-      Stmt *S = (*CI);
-      if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S)) {
+      Stmt *ChildStmt = (*CI);
+      if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(ChildStmt)) {
         Expr *OldBase = IvarRefExpr->getBase();
         bool replaced = false;
-        newStmt = RewriteObjCNestedIvarRefExpr(S, replaced);
+        newStmt = RewriteObjCNestedIvarRefExpr(ChildStmt, replaced);
         if (replaced) {
           if (ObjCIvarRefExpr *IRE = dyn_cast<ObjCIvarRefExpr>(newStmt))
             ReplaceStmt(OldBase, IRE->getBase());
           else
-            ReplaceStmt(S, newStmt);
+            ReplaceStmt(ChildStmt, newStmt);
         }
       }
       else
-        newStmt = RewriteFunctionBodyOrGlobalInitializer(S);
-      if (newStmt)
-        *CI = newStmt;
+        newStmt = RewriteFunctionBodyOrGlobalInitializer(ChildStmt);
+      if (newStmt) {
+          if (Expr *PropOrImplicitRefExpr = dyn_cast<Expr>(ChildStmt))
+            if (PropSetters[PropOrImplicitRefExpr] == S) {
+              S = newStmt;
+              newStmt = 0;
+            }
+        if (newStmt)
+          *CI = newStmt;
+      }
       // If dealing with an assignment with LHS being a property reference
       // expression, the entire assignment tree is rewritten into a property
       // setter messaging. This involvs the RHS too. Do not attempt to rewrite
       // RHS again.
-      if (Expr *Exp = dyn_cast<Expr>(S))
+      if (Expr *Exp = dyn_cast<Expr>(ChildStmt))
         if (isa<ObjCPropertyRefExpr>(Exp)) {
           if (PropSetters[Exp]) {
             ++CI;
@@ -5565,7 +5572,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     PropParentMap = 0;
     ImportedLocalExternalDecls.clear();
     // Now we snarf the rewritten text and stash it away for later use.
-    std::string Str = Rewrite.getRewrittenText(BE->getSourceRange());
+    std::string Str = Rewrite.ConvertToString(BE->getBody());
     RewrittenBlockExprs[BE] = Str;
 
     Stmt *blockTranscribed = SynthBlockInitExpr(BE, InnerBlockDeclRefs);
