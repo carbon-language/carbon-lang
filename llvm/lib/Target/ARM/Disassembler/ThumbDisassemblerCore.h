@@ -398,9 +398,17 @@ static bool DisassembleThumb1General(MCInst &MI, unsigned Opcode, uint32_t insn,
     assert(OpInfo[OpIdx].RegClass < 0 &&
            !OpInfo[OpIdx].isPredicate() && !OpInfo[OpIdx].isOptionalDef()
            && "Pure imm operand expected");
-    MI.addOperand(MCOperand::CreateImm(UseRt ? getT1Imm8(insn)
-                                             : (Imm3 ? getT1Imm3(insn)
-                                                     : getT1Imm5(insn))));
+    unsigned Imm = 0;
+    if (UseRt)
+      Imm = getT1Imm8(insn);
+    else if (Imm3)
+      Imm = getT1Imm3(insn);
+    else {
+      Imm = getT1Imm5(insn);
+      ARM_AM::ShiftOpc ShOp = getShiftOpcForBits(slice(insn, 12, 11));
+      getImmShiftSE(ShOp, Imm);
+    }
+    MI.addOperand(MCOperand::CreateImm(Imm));
   }
   ++OpIdx;
 
@@ -1385,9 +1393,12 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
       && !OpInfo[OpIdx].isOptionalDef()) {
 
-    if (Thumb2ShiftOpcode(Opcode))
-      MI.addOperand(MCOperand::CreateImm(getShiftAmtBits(insn)));
-    else {
+    if (Thumb2ShiftOpcode(Opcode)) {
+      unsigned Imm = getShiftAmtBits(insn);
+      ARM_AM::ShiftOpc ShOp = getShiftOpcForBits(slice(insn, 5, 4));
+      getImmShiftSE(ShOp, Imm);
+      MI.addOperand(MCOperand::CreateImm(Imm));
+    } else {
       // Build the constant shift specifier operand.
       unsigned bits2 = getShiftTypeBits(insn);
       unsigned imm5 = getShiftAmtBits(insn);
