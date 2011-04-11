@@ -49,7 +49,6 @@ namespace {
       (void) llvm::createAliasAnalysisCounterPass();
       (void) llvm::createAliasDebugger();
       (void) llvm::createArgumentPromotionPass();
-      (void) llvm::createStructRetPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
       (void) llvm::createLibCallAliasAnalysisPass(0);
       (void) llvm::createScalarEvolutionAliasAnalysisPass();

@@ -152,7 +152,6 @@ ModulePass *createDeadArgHackingPass();
 /// equal to maxElements (maxElements == 0 means always promote).
 ///
 Pass *createArgumentPromotionPass(unsigned maxElements = 3);
-Pass *createStructRetPromotionPass();
 
 //===----------------------------------------------------------------------===//
 /// createIPConstantPropagationPass - This pass propagates constants from call

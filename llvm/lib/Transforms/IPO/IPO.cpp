@@ -45,7 +45,6 @@ void llvm::initializeIPO(PassRegistry &Registry) {
   initializeStripDebugDeclarePass(Registry);
   initializeStripDeadDebugInfoPass(Registry);
   initializeStripNonDebugSymbolsPass(Registry);
-  initializeSRETPromotionPass(Registry);
 }
 
 void LLVMInitializeIPO(LLVMPassRegistryRef R) {

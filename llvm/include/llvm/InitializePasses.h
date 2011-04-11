@@ -193,7 +193,6 @@ void initializeRegionViewerPass(PassRegistry&);
 void initializeRegisterCoalescerAnalysisGroup(PassRegistry&);
 void initializeRenderMachineFunctionPass(PassRegistry&);
 void initializeSCCPPass(PassRegistry&);
-void initializeSRETPromotionPass(PassRegistry&);
 void initializeSROA_DTPass(PassRegistry&);
 void initializeSROA_SSAUpPass(PassRegistry&);
 void initializeScalarEvolutionAliasAnalysisPass(PassRegistry&);
