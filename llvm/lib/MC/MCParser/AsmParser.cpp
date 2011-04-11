@@ -80,6 +80,10 @@ private:
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
   MCAsmParserExtension *PlatformParser;
+
+  // FIXME: This is not the best place to store this. To handle a (for example)
+  // .cfi_rel_offset before a .cfi_def_cfa_offset we need to know the initial
+  // frame state.
   int64_t LastOffset;
 
   /// This is the current buffer index we're lexing from as managed by the
@@ -143,6 +147,9 @@ public:
 
   int64_t adjustLastOffset(int64_t Adjustment) {
     LastOffset += Adjustment;
+    return LastOffset;
+  }
+  int64_t getLastOffset() {
     return LastOffset;
   }
   void setLastOffset(int64_t Offset) {
@@ -266,6 +273,8 @@ public:
                                                        ".cfi_def_cfa_register");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIOffset>(
                                                                  ".cfi_offset");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIRelOffset>(
+                                                             ".cfi_rel_offset");
     AddDirectiveHandler<
      &GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda>(".cfi_personality");
     AddDirectiveHandler<
@@ -301,6 +310,7 @@ public:
   bool ParseDirectiveCFIAdjustCfaOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfaRegister(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIRelOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIPersonalityOrLsda(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIRememberState(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIRestoreState(StringRef, SMLoc DirectiveLoc);
@@ -2351,7 +2361,7 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
 }
 
 /// ParseDirectiveCFIOffset
-/// ::= .cfi_off register, offset
+/// ::= .cfi_offset register, offset
 bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
   int64_t Register = 0;
   int64_t Offset = 0;
@@ -2365,6 +2375,28 @@ bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
 
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
+
+  return getStreamer().EmitCFIOffset(Register, Offset);
+}
+
+/// ParseDirectiveCFIRelOffset
+/// ::= .cfi_rel_offset register, offset
+bool GenericAsmParser::ParseDirectiveCFIRelOffset(StringRef,
+                                                  SMLoc DirectiveLoc) {
+  int64_t Register = 0;
+
+  if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
+    return true;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("unexpected token in directive");
+  Lex();
+
+  int64_t Offset = 0;
+  if (getParser().ParseAbsoluteExpression(Offset))
+    return true;
+
+  Offset -= getParser().getLastOffset();
 
   return getStreamer().EmitCFIOffset(Register, Offset);
 }
