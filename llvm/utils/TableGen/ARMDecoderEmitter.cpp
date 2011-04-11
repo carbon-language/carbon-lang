@@ -1624,6 +1624,10 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (Name == "tBL" || Name == "tBLXi" || Name == "tBLXr")
       return false;
 
+    // A8.6.25 BX.  Use the generic tBX_Rm, ignore tBX_RET and tBX_RET_vararg.
+    if (Name == "tBX_RET" || Name == "tBX_RET_vararg")
+      return false;
+
     // Ignore the TPsoft (TLS) instructions, which conflict with tBLr9.
     if (Name == "tTPsoft" || Name == "t2TPsoft")
       return false;

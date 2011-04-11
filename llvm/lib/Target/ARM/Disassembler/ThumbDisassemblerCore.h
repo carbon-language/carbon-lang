@@ -485,10 +485,13 @@ static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
 
   // BX/BLX has 1 reg operand: Rm.
-  if (NumOps == 1) {
+  if (Opcode == ARM::tBLXr_r9 || Opcode == ARM::tBX_Rm) {
+    // Handling the two predicate operands before the reg operand.
+    if (!B->DoPredicateOperands(MI, Opcode, insn, NumOps))
+      return false;
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        getT1Rm(insn))));
-    NumOpsAdded = 1;
+    NumOpsAdded = 3;
     return true;
   }
 
