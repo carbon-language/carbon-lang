@@ -208,15 +208,14 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   if (ValLR+1 != BLR) return false;
 
   // If a live interval is a physical register, conservatively check if any
-  // of its sub-registers is overlapping the live interval of the virtual
-  // register. If so, do not coalesce.
-  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg) &&
-      *tri_->getSubRegisters(IntB.reg)) {
-    for (const unsigned* SR = tri_->getSubRegisters(IntB.reg); *SR; ++SR)
-      if (li_->hasInterval(*SR) && IntA.overlaps(li_->getInterval(*SR))) {
+  // of its aliases is overlapping the live interval of the virtual register.
+  // If so, do not coalesce.
+  if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
+    for (const unsigned *AS = tri_->getAliasSet(IntB.reg); *AS; ++AS)
+      if (li_->hasInterval(*AS) && IntA.overlaps(li_->getInterval(*AS))) {
         DEBUG({
-            dbgs() << "\t\tInterfere with sub-register ";
-            li_->getInterval(*SR).print(dbgs(), tri_);
+            dbgs() << "\t\tInterfere with alias ";
+            li_->getInterval(*AS).print(dbgs(), tri_);
           });
         return false;
       }

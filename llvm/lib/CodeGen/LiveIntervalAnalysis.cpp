@@ -578,13 +578,6 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
       CopyMI = MI;
     handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
                               getOrCreateInterval(MO.getReg()), CopyMI);
-    // Def of a register also defines its sub-registers.
-    for (const unsigned* AS = tri_->getSubRegisters(MO.getReg()); *AS; ++AS)
-      // If MI also modifies the sub-register explicitly, avoid processing it
-      // more than once. Do not pass in TRI here so it checks for exact match.
-      if (!MI->definesRegister(*AS))
-        handlePhysicalRegisterDef(MBB, MI, MIIdx, MO,
-                                  getOrCreateInterval(*AS), 0);
   }
 }
 
