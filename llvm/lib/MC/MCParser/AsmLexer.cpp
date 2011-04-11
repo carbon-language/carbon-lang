@@ -251,7 +251,7 @@ AsmToken AsmLexer::LexDigit() {
   }
 
   // Must be an octal number, it starts with 0.
-  while (*CurPtr >= '0' && *CurPtr <= '7')
+  while (*CurPtr >= '0' && *CurPtr <= '9')
     ++CurPtr;
 
   StringRef Result(TokStart, CurPtr - TokStart);
