@@ -646,25 +646,41 @@ CPP.Flags     += $(sort -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	         $(LLVM_OBJ_ROOT) $(LLVM_SRC_ROOT))) \
 	         $(CPP.BaseFlags)
 
+# SHOW_DIAGNOSTICS support.
+ifeq ($(SHOW_DIAGNOSTICS),1)
+  Compile.Wrapper := env CC_LOG_DIAGNOSTICS=1 \
+	                  CC_LOG_DIAGNOSTICS_FILE="$(LLVM_OBJ_ROOT)/$(BuildMode)/diags"
+else
+  Compile.Wrapper :=
+endif
+
 ifeq ($(BUILD_COMPONENT), 1)
-  Compile.C     = $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
+  Compile.C     = $(Compile.Wrapper) \
+	          $(BUILD_CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
+  Compile.CXX   = $(Compile.Wrapper) \
+	          $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
 		  $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
+  Preprocess.CXX= $(Compile.Wrapper) \
+	          $(BUILD_CXX) $(CPP.Flags) $(CPPFLAGS) $(TargetCommonOpts) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
+  Link          = $(Compile.Wrapper) \
+	          $(BUILD_CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) \
 		  $(LD.Flags) $(LDFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) $(Strip)
 else
-  Compile.C     = $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
+  Compile.C     = $(Compile.Wrapper) \
+	          $(CC) $(CPP.Flags) $(C.Flags) $(CFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Compile.CXX   = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
+  Compile.CXX   = $(Compile.Wrapper) \
+	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(CPPFLAGS) \
                   $(TargetCommonOpts) $(CompileCommonOpts) -c
-  Preprocess.CXX= $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
+  Preprocess.CXX= $(Compile.Wrapper) \
+	          $(CXX) $(CPP.Flags) $(TargetCommonOpts) $(CPPFLAGS) \
                   $(CompileCommonOpts) $(CXX.Flags) -E
-  Link          = $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
+  Link          = $(Compile.Wrapper) \
+	          $(CXX) $(CPP.Flags) $(CXX.Flags) $(CXXFLAGS) $(LD.Flags) \
                   $(LDFLAGS) $(TargetCommonOpts)  $(CompileCommonOpts) $(Strip)
 endif
 
