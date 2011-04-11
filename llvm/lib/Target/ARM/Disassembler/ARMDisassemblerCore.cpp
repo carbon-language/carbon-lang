@@ -1175,6 +1175,71 @@ static bool DisassembleDPSoRegFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
+static bool BadRegsLdStFrm(unsigned Opcode, uint32_t insn, bool Store, bool WBack,
+                           bool Imm) {
+  const StringRef Name = ARMInsts[Opcode].Name;
+  unsigned Rt = decodeRd(insn);
+  unsigned Rn = decodeRn(insn);
+  unsigned Rm = decodeRm(insn);
+  unsigned P  = getPBit(insn);
+  unsigned W  = getWBit(insn);
+
+  if (Store) {
+    // Only STR (immediate, register) allows PC as the source.
+    if (Name.startswith("STRB") && Rt == 15) {
+      DEBUG(errs() << "if t == 15 then UNPREDICTABLE\n");
+      return true;
+    }
+    if (WBack && (Rn == 15 || Rn == Rt)) {
+      DEBUG(errs() << "if wback && (n == 15 || n == t) then UNPREDICTABLE\n");
+      return true;
+    }
+    if (!Imm && Rm == 15) {
+      DEBUG(errs() << "if m == 15 then UNPREDICTABLE\n");
+      return true;
+    }
+  } else {
+    // Only LDR (immediate, register) allows PC as the destination.
+    if (Name.startswith("LDRB") && Rt == 15) {
+      DEBUG(errs() << "if t == 15 then UNPREDICTABLE\n");
+      return true;
+    }
+    if (Imm) {
+      // Immediate
+      if (Rn == 15) {
+        // The literal form must be in offset mode; it's an encoding error
+        // otherwise.
+        if (!(P == 1 && W == 0)) {
+          DEBUG(errs() << "Ld literal form with !(P == 1 && W == 0)\n");
+          return true;
+        }
+        // LDRB (literal) does not allow PC as the destination.
+        if (Opcode != ARM::LDRi12 && Rt == 15) {
+          DEBUG(errs() << "if t == 15 then UNPREDICTABLE\n");
+          return true;
+        }
+      } else {
+        // Write back while Rn == Rt does not make sense.
+        if (WBack && (Rn == Rt)) {
+          DEBUG(errs() << "if wback && n == t then UNPREDICTABLE\n");
+          return true;
+        }
+      }
+    } else {
+      // Register
+      if (Rm == 15) {
+        DEBUG(errs() << "if m == 15 then UNPREDICTABLE\n");
+        return true;
+      }
+      if (WBack && (Rn == 15 || Rn == Rt)) {
+        DEBUG(errs() << "if wback && (n == 15 || n == t) then UNPREDICTABLE\n");
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, bool isStore, BO B) {
 
@@ -1235,6 +1300,9 @@ static bool DisassembleLdStFrm(MCInst &MI, unsigned Opcode, uint32_t insn,
   // For immediate form, it is followed by +/- imm12.
   // See also ARMAddressingModes.h (Addressing Mode #2).
   if (OpIdx + 1 >= NumOps)
+    return false;
+
+  if (BadRegsLdStFrm(Opcode, insn, isStore, isPrePost, getIBit(insn)==0))
     return false;
 
   ARM_AM::AddrOpc AddrOpcode = getUBit(insn) ? ARM_AM::add : ARM_AM::sub;

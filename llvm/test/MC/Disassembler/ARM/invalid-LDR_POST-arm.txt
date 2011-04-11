@@ -1,0 +1,4 @@
+# RUN: llvm-mc --disassemble %s -triple=arm-apple-darwin9 |& grep {invalid instruction encoding}
+
+# LDR_PRE/POST has encoding Inst{4} = 0.
+0xde 0x69 0x18 0x46
