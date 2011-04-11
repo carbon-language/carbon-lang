@@ -32,11 +32,3 @@ install(DIRECTORY .
   PATTERN GetTargetTriple.cmake EXCLUDE
   PATTERN VersionFromVCS.cmake EXCLUDE
   PATTERN CheckAtomic.cmake EXCLUDE)
-
-#remove this?
-install(FILES
-  ${llvm_cmake_builddir}/LLVMConfig.cmake
-  ${llvm_cmake_builddir}/LLVMConfigVersion.cmake
-  LLVM-Config.cmake
-  LLVMLibDeps.cmake
-  DESTINATION share/llvm/cmake)

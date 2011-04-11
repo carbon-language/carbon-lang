@@ -1,6 +1,6 @@
 # This file provides information and services to the final user.
 
-set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@) #remove this?
+set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@)
 
 set(LLVM_COMMON_DEPENDS @LLVM_COMMON_DEPENDS@)
 
