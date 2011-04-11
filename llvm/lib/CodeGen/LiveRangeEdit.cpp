@@ -203,6 +203,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
   SetVector<LiveInterval*,
             SmallVector<LiveInterval*, 8>,
             SmallPtrSet<LiveInterval*, 8> > ToShrink;
+  MachineRegisterInfo &MRI = VRM.getRegInfo();
 
   for (;;) {
     // Erase all dead defs.
@@ -236,8 +237,13 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
           continue;
         LiveInterval &LI = LIS.getInterval(Reg);
 
-        // Shrink read registers.
-        if (MI->readsVirtualRegister(Reg))
+        // Shrink read registers, unless it is likely to be expensive and
+        // unlikely to change anything. We typically don't want to shrink the
+        // PIC base register that has lots of uses everywhere.
+        // Always shrink COPY uses that probably come from live range splitting.
+        if (MI->readsVirtualRegister(Reg) &&
+            (MI->isCopy() || MOI->isDef() || MRI.hasOneNonDBGUse(Reg) ||
+             LI.killedAt(Idx)))
           ToShrink.insert(&LI);
 
         // Remove defined value.
@@ -266,7 +272,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     // Shrink just one live interval. Then delete new dead defs.
     LiveInterval *LI = ToShrink.back();
     ToShrink.pop_back();
-    if (foldAsLoad(LI, Dead, VRM.getRegInfo(), LIS, TII))
+    if (foldAsLoad(LI, Dead, MRI, LIS, TII))
       continue;
     if (delegate_)
       delegate_->LRE_WillShrinkVirtReg(LI->reg);
@@ -286,7 +292,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       if (delegate_)
         delegate_->LRE_DidCloneVirtReg(Dups.back()->reg, LI->reg);
     }
-    ConEQ.Distribute(&Dups[0], VRM.getRegInfo());
+    ConEQ.Distribute(&Dups[0], MRI);
   }
 }
 
