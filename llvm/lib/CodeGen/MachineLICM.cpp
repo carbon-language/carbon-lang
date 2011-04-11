@@ -39,7 +39,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-
 using namespace llvm;
 
 STATISTIC(NumHoisted,
@@ -168,6 +167,10 @@ namespace {
     /// and the instruction is hoistable.
     /// 
     bool IsLoopInvariantInst(MachineInstr &I);
+
+    /// HasAnyPHIUse - Return true if the specified register is used by any
+    /// phi node.
+    bool HasAnyPHIUse(unsigned Reg) const;
 
     /// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
     /// and an use in the current loop, return true if the target considered
@@ -758,17 +761,24 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 }
 
 
-/// HasPHIUses - Return true if the specified register has any PHI use.
-static bool HasPHIUses(unsigned Reg, MachineRegisterInfo *MRI) {
+/// HasAnyPHIUse - Return true if the specified register is used by any
+/// phi node.
+bool MachineLICM::HasAnyPHIUse(unsigned Reg) const {
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
     if (UseMI->isPHI())
       return true;
+    // Look pass copies as well.
+    if (UseMI->isCopy()) {
+      unsigned Def = UseMI->getOperand(0).getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Def) &&
+          HasAnyPHIUse(Def))
+        return true;
+    }
   }
   return false;
 }
-
 
 /// HasHighOperandLatency - Compute operand latency between a def of 'Reg'
 /// and an use in the current loop, return true if the target considered
@@ -976,14 +986,13 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       return false;
   }
 
-  // If result(s) of this instruction is used by PHIs, then don't hoist it.
-  // The presence of joins makes it difficult for current register allocator
-  // implementation to perform remat.
+  // If result(s) of this instruction is used by PHIs outside of the loop, then
+  // don't hoist it if the instruction because it will introduce an extra copy.
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isDef())
       continue;
-    if (HasPHIUses(MO.getReg(), MRI))
+    if (HasAnyPHIUse(MO.getReg()))
       return false;
   }
 
