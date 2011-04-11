@@ -176,6 +176,7 @@ LiveIntervalUnion::Query::firstInterference() {
     return FirstInterference;
   CheckedFirstInterference = true;
   InterferenceResult &IR = FirstInterference;
+  IR.LiveUnionI.setMap(LiveUnion->getMap());
 
   // Quickly skip interference check for empty sets.
   if (VirtReg->empty() || LiveUnion->empty()) {
@@ -184,10 +185,10 @@ LiveIntervalUnion::Query::firstInterference() {
     // VirtReg starts first, perform double binary search.
     IR.VirtRegI = VirtReg->find(LiveUnion->startIndex());
     if (IR.VirtRegI != VirtReg->end())
-      IR.LiveUnionI = LiveUnion->find(IR.VirtRegI->start);
+      IR.LiveUnionI.find(IR.VirtRegI->start);
   } else {
     // LiveUnion starts first, perform double binary search.
-    IR.LiveUnionI = LiveUnion->find(VirtReg->beginIndex());
+    IR.LiveUnionI.find(VirtReg->beginIndex());
     if (IR.LiveUnionI.valid())
       IR.VirtRegI = VirtReg->find(IR.LiveUnionI.start());
     else
@@ -243,7 +244,7 @@ bool LiveIntervalUnion::Query::isSeenInterference(LiveInterval *VirtReg) const {
 //
 // For comments on how to speed it up, see Query::findIntersection().
 unsigned LiveIntervalUnion::Query::
-collectInterferingVRegs(unsigned MaxInterferingRegs) {
+collectInterferingVRegs(unsigned MaxInterferingRegs, float MaxWeight) {
   InterferenceResult IR = firstInterference();
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
   LiveInterval *RecentInterferingVReg = NULL;
@@ -285,6 +286,11 @@ collectInterferingVRegs(unsigned MaxInterferingRegs) {
       // Cache the most recent interfering vreg to bypass isSeenInterference.
       RecentInterferingVReg = IR.LiveUnionI.value();
       ++IR.LiveUnionI;
+
+      // Stop collecting when the max weight is exceeded.
+      if (RecentInterferingVReg->weight >= MaxWeight)
+        return InterferingVRegs.size();
+
       continue;
     }
     // VirtRegI may have advanced far beyond LiveUnionI,

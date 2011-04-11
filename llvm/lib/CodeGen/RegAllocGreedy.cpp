@@ -336,22 +336,24 @@ LiveInterval *RAGreedy::dequeue() {
 //===----------------------------------------------------------------------===//
 
 /// canEvict - Return true if all interferences between VirtReg and PhysReg can
-/// be evicted. Set maxWeight to the maximal spill weight of an interference.
+/// be evicted.
+/// Return false if any interference is heavier than MaxWeight.
+/// On return, set MaxWeight to the maximal spill weight of an interference.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
                                     float &MaxWeight) {
   float Weight = 0;
   for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
-    // If there is 10 or more interferences, chances are one is smaller.
-    if (Q.collectInterferingVRegs(10) >= 10)
+    // If there is 10 or more interferences, chances are one is heavier.
+    if (Q.collectInterferingVRegs(10, MaxWeight) >= 10)
       return false;
 
-    // Check if any interfering live range is heavier than VirtReg.
-    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
-      LiveInterval *Intf = Q.interferingVRegs()[i];
+    // Check if any interfering live range is heavier than MaxWeight.
+    for (unsigned i = Q.interferingVRegs().size(); i; --i) {
+      LiveInterval *Intf = Q.interferingVRegs()[i - 1];
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
-      if (Intf->weight >= VirtReg.weight)
+      if (Intf->weight >= MaxWeight)
         return false;
       Weight = std::max(Weight, Intf->weight);
     }
@@ -370,17 +372,17 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
   // Keep track of the lightest single interference seen so far.
-  float BestWeight = 0;
+  float BestWeight = VirtReg.weight;
   unsigned BestPhys = 0;
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
-    float Weight = 0;
+    float Weight = BestWeight;
     if (!canEvictInterference(VirtReg, PhysReg, Weight))
       continue;
 
     // This is an eviction candidate.
-    DEBUG(dbgs() << "max " << PrintReg(PhysReg, TRI) << " interference = "
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " interference = "
                  << Weight << '\n');
     if (BestPhys && Weight >= BestWeight)
       continue;
