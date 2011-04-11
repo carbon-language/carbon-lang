@@ -247,7 +247,7 @@ public:
   bool ReplaceStmt(Stmt *From, Stmt *To);
   
   /// ConvertToString converts statement 'From' to a string using the
-  /// pretty pronter.
+  /// pretty printer.
   std::string ConvertToString(Stmt *From);
 
   /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
