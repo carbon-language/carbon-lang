@@ -137,7 +137,8 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
 ///
 void PHINode::growOperands() {
   unsigned e = getNumOperands();
-  unsigned NumOps = e*3/2;
+  // Multiply by 1.5 and round down so the result is still even.
+  unsigned NumOps = e + e / 4 * 2;
   if (NumOps < 4) NumOps = 4;      // 4 op PHI nodes are VERY common.
 
   ReservedSpace = NumOps;
