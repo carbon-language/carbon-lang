@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "correlated-value-propagation"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"

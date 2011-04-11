@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"

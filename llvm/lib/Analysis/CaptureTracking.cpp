@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/AliasAnalysis.h"

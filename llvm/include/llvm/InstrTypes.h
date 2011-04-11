@@ -18,7 +18,6 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/OperandTraits.h"
-#include "llvm/Operator.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Twine.h"
 

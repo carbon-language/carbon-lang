@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "insert-optimal-edge-profiling"
 #include "ProfilingUtils.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"

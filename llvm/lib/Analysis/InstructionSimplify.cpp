@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "instsimplify"
+#include "llvm/Operator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ConstantFolding.h"
