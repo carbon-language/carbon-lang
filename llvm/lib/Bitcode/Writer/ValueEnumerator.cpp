@@ -423,7 +423,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
     // This constant may have operands, make sure to enumerate the types in
     // them.
     for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
-      const User *Op = C->getOperand(i);
+      const Value *Op = C->getOperand(i);
       
       // Don't enumerate basic blocks here, this happens as operands to
       // blockaddress.
