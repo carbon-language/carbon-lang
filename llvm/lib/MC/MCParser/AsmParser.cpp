@@ -80,6 +80,7 @@ private:
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
   MCAsmParserExtension *PlatformParser;
+  int64_t LastOffset;
 
   /// This is the current buffer index we're lexing from as managed by the
   /// SourceMgr object.
@@ -139,6 +140,14 @@ public:
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
   /// }
+
+  int64_t adjustLastOffset(int64_t Adjustment) {
+    LastOffset += Adjustment;
+    return LastOffset;
+  }
+  void setLastOffset(int64_t Offset) {
+    LastOffset = Offset;
+  }
 
 private:
   void CheckForValidSection();
@@ -251,6 +260,8 @@ public:
                                                          ".cfi_def_cfa");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaOffset>(
                                                          ".cfi_def_cfa_offset");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIAdjustCfaOffset>(
+                                                      ".cfi_adjust_cfa_offset");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIDefCfaRegister>(
                                                        ".cfi_def_cfa_register");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIOffset>(
@@ -287,6 +298,7 @@ public:
   bool ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfa(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfaOffset(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFIAdjustCfaOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfaRegister(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIPersonalityOrLsda(StringRef, SMLoc DirectiveLoc);
@@ -315,7 +327,7 @@ enum { DEFAULT_ADDRSPACE = 0 };
 AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
-    GenericParser(new GenericAsmParser), PlatformParser(0),
+    GenericParser(new GenericAsmParser), PlatformParser(0), LastOffset(0),
     CurBuffer(0), MacrosEnabled(true) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
 
@@ -2308,6 +2320,21 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaOffset(StringRef,
   int64_t Offset = 0;
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
+
+  getParser().setLastOffset(Offset);
+
+  return getStreamer().EmitCFIDefCfaOffset(Offset);
+}
+
+/// ParseDirectiveCFIAdjustCfaOffset
+/// ::= .cfi_adjust_cfa_offset adjustment
+bool GenericAsmParser::ParseDirectiveCFIAdjustCfaOffset(StringRef,
+                                                        SMLoc DirectiveLoc) {
+  int64_t Adjustment = 0;
+  if (getParser().ParseAbsoluteExpression(Adjustment))
+    return true;
+
+  int64_t Offset = getParser().adjustLastOffset(Adjustment);
 
   return getStreamer().EmitCFIDefCfaOffset(Offset);
 }
