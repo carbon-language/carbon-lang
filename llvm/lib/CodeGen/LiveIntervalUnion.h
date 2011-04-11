@@ -95,6 +95,9 @@ public:
   // Remove a live virtual register's segments from this union.
   void extract(LiveInterval &VirtReg);
 
+  // Remove all inserted virtual registers.
+  void clear() { Segments.clear(); ++Tag; }
+
   // Print union, using TRI to translate register names
   void print(raw_ostream &OS, const TargetRegisterInfo *TRI) const;
 

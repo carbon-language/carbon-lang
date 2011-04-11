@@ -235,9 +235,12 @@ void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
   MRI = &vrm.getRegInfo();
   VRM = &vrm;
   LIS = &lis;
-  PhysReg2LiveUnion.init(UnionAllocator, TRI->getNumRegs());
-  // Cache an interferece query for each physical reg
-  Queries.reset(new LiveIntervalUnion::Query[PhysReg2LiveUnion.numRegs()]);
+  const unsigned NumRegs = TRI->getNumRegs();
+  if (NumRegs != PhysReg2LiveUnion.numRegs()) {
+    PhysReg2LiveUnion.init(UnionAllocator, NumRegs);
+    // Cache an interferece query for each physical reg
+    Queries.reset(new LiveIntervalUnion::Query[PhysReg2LiveUnion.numRegs()]);
+  }
 }
 
 void RegAllocBase::LiveUnionArray::clear() {
@@ -251,7 +254,8 @@ void RegAllocBase::LiveUnionArray::clear() {
 }
 
 void RegAllocBase::releaseMemory() {
-  PhysReg2LiveUnion.clear();
+  for (unsigned r = 0, e = PhysReg2LiveUnion.numRegs(); r != e; ++r)
+    PhysReg2LiveUnion[r].clear();
 }
 
 // Visit all the live registers. If they are already assigned to a physical
