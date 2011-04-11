@@ -53,8 +53,8 @@ namespace test3 {
 
 namespace test4 {
   char a[] = "hello";
-  char b[5] = "hello";
-  char c[][5] = { "hello" };
+  char b[6] = "hello";
+  char c[][6] = { "hello" };
 }
 
 namespace test5 {

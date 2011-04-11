@@ -2208,6 +2208,8 @@ def err_excess_initializers_in_char_array_initializer : Error<
   "excess elements in char array initializer">;
 def warn_excess_initializers_in_char_array_initializer : ExtWarn<
   "excess elements in char array initializer">;
+def err_initializer_string_for_char_array_too_long : Error<
+  "initializer-string for char array is too long">;
 def warn_initializer_string_for_char_array_too_long : ExtWarn<
   "initializer-string for char array is too long">;
 def warn_missing_field_initializers : Warning<

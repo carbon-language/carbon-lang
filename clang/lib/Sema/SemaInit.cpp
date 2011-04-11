@@ -92,13 +92,22 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
 
   const ConstantArrayType *CAT = cast<ConstantArrayType>(AT);
 
-  // C99 6.7.8p14. We have an array of character type with known size.  However,
+  // We have an array of character type with known size.  However,
   // the size may be smaller or larger than the string we are initializing.
   // FIXME: Avoid truncation for 64-bit length strings.
-  if (StrLength-1 > CAT->getSize().getZExtValue())
-    S.Diag(Str->getSourceRange().getBegin(),
-           diag::warn_initializer_string_for_char_array_too_long)
-      << Str->getSourceRange();
+  if (S.getLangOptions().CPlusPlus) {
+    // [dcl.init.string]p2
+    if (StrLength > CAT->getSize().getZExtValue())
+      S.Diag(Str->getSourceRange().getBegin(),
+             diag::err_initializer_string_for_char_array_too_long)
+        << Str->getSourceRange();
+  } else {
+    // C99 6.7.8p14.
+    if (StrLength-1 > CAT->getSize().getZExtValue())
+      S.Diag(Str->getSourceRange().getBegin(),
+             diag::warn_initializer_string_for_char_array_too_long)
+        << Str->getSourceRange();
+  }
 
   // Set the type to the actual size that we are initializing.  If we have
   // something like:
