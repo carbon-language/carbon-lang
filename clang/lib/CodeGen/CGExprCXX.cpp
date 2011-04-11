@@ -1416,6 +1416,18 @@ static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_cast");
 }
 
+static void EmitBadCastCall(CodeGenFunction &CGF) {
+  llvm::Value *F = getBadCastFn(CGF);
+  if (llvm::BasicBlock *InvokeDest = CGF.getInvokeDest()) {
+    llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
+    CGF.Builder.CreateInvoke(F, Cont, InvokeDest)->setDoesNotReturn();
+    CGF.EmitBlock(Cont);
+  } else
+    CGF.Builder.CreateCall(F)->setDoesNotReturn();
+  
+  CGF.Builder.CreateUnreachable();
+}
+
 static llvm::Value *
 EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
                     QualType SrcTy, QualType DestTy,
@@ -1484,24 +1496,34 @@ EmitDynamicCastCall(CodeGenFunction &CGF, llvm::Value *Value,
     CGF.Builder.CreateCondBr(IsNull, BadCastBlock, CastEnd);
 
     CGF.EmitBlock(BadCastBlock);
-    llvm::Value *F = getBadCastFn(CGF);
-    if (llvm::BasicBlock *InvokeDest = CGF.getInvokeDest()) {
-      llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-      CGF.Builder.CreateInvoke(F, Cont, InvokeDest)->setDoesNotReturn();
-      CGF.EmitBlock(Cont);
-    } else
-      CGF.Builder.CreateCall(F)->setDoesNotReturn();
-
-    CGF.Builder.CreateUnreachable();
+    EmitBadCastCall(CGF);
   }
 
   return Value;
 }
 
+static llvm::Value *EmitDynamicCastToNull(CodeGenFunction &CGF,
+                                          QualType DestTy) {
+  const llvm::Type *DestLTy = CGF.ConvertType(DestTy);
+  if (DestTy->isPointerType())
+    return llvm::Constant::getNullValue(DestLTy);
+
+  /// C++ [expr.dynamic.cast]p9:
+  ///   A failed cast to reference type throws std::bad_cast
+  EmitBadCastCall(CGF);
+
+  CGF.EmitBlock(CGF.createBasicBlock("dynamic_cast.end"));
+  return llvm::UndefValue::get(DestLTy);
+}
+
 llvm::Value *CodeGenFunction::EmitDynamicCast(llvm::Value *Value,
                                               const CXXDynamicCastExpr *DCE) {
-  QualType SrcTy = DCE->getSubExpr()->getType();
   QualType DestTy = DCE->getTypeAsWritten();
+
+  if (DCE->isAlwaysNull())
+    return EmitDynamicCastToNull(*this, DestTy);
+
+  QualType SrcTy = DCE->getSubExpr()->getType();
 
   // C++ [expr.dynamic.cast]p4: 
   //   If the value of v is a null pointer value in the pointer case, the result
