@@ -545,6 +545,8 @@ namespace llvm {
 
     /// Returns the basic block which the given index falls in.
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {
+      if (MachineInstr *MI = getInstructionFromIndex(index))
+        return MI->getParent();
       SmallVectorImpl<IdxMBBPair>::const_iterator I =
         std::lower_bound(idx2MBBMap.begin(), idx2MBBMap.end(), index);
       // Take the pair containing the index
