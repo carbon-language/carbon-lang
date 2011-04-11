@@ -3724,9 +3724,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
              ToolChain.getArch() == llvm::Triple::thumb)
       CmdArgs.push_back("/lib/ld-linux.so.3");
     else if (ToolChain.getArch() == llvm::Triple::ppc)
-      CmdArgs.push_back("/lib/ld.so");
+      CmdArgs.push_back("/lib/ld.so.1");
     else if (ToolChain.getArch() == llvm::Triple::ppc64)
-      CmdArgs.push_back("/lib64/ld64.so");
+      CmdArgs.push_back("/lib64/ld64.so.1");
     else
       CmdArgs.push_back("/lib64/ld-linux-x86-64.so.2");
   }
