@@ -22,6 +22,9 @@
   <li><a href="#testing">Executing the test suite</a>
   <li><a href="#cross">Cross compiling</a>
   <li><a href="#embedding">Embedding LLVM in your project</a>
+    <ul>
+    <li><a href="#passdev">Developing LLVM pass out of source</a></li>
+  </ul></li>
   <li><a href="#specifics">Compiler/Platform specific topics</a>
     <ul>
     <li><a href="#msvc">Microsoft Visual C++</a></li>
@@ -458,6 +461,61 @@
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="passdev">Developing LLVM pass out of source</a>
+</div>
+
+<div class="doc_text">
+
+  <p>It is possible to develop LLVM passes against installed LLVM.
+     An example of project layout provided below:</p>
+
+  <div class="doc_code">
+    <pre>
+      &lt;project dir&gt;/
+          |
+          CMakeLists.txt
+          &lt;pass name&gt;/
+              |
+              CMakeLists.txt
+              Pass.cpp
+              ...
+    </pre>
+  </div>
+
+  <p>Contents of &lt;project dir&gt;/CMakeLists.txt:</p>
+
+  <div class="doc_code">
+    <pre>
+    find_package(LLVM)
+
+    <b># Define add_llvm_* macro's.</b>
+    include(AddLLVM)
+
+    add_definitions(${LLVM_DEFINITIONS})
+    include_directories(${LLVM_INCLUDE_DIRS})
+    link_directories(${LLVM_LIBRARY_DIRS})
+
+    add_subdirectory(&lt;pass name&gt;)
+    </pre>
+  </div>
+
+  <p>Contents of &lt;project dir&gt;/&lt;pass name&gt;/CMakeLists.txt:</p>
+
+  <div class="doc_code">
+    <pre>
+    add_llvm_loadable_module(LLVMPassname
+      Pass.cpp
+      )
+    </pre>
+  </div>
+
+  <p>When you are done developing your pass, you may wish to integrate it
+     into LLVM source tree. You can achieve it in two easy steps:<br>
+     1. Copying &lt;pass name&gt; folder into &lt;LLVM root&gt;/lib/Transform directory.<br>
+     2. Adding "add_subdirectory(&lt;pass name&gt;)" line into &lt;LLVM root&gt;/lib/Transform/CMakeLists.txt</p>
+</div>
 <!-- *********************************************************************** -->
 
 <!-- *********************************************************************** -->
