@@ -44,14 +44,23 @@ Action(cl::desc("Action to perform:"),
 // support library allocation routines directly.
 class TrivialMemoryManager : public RTDyldMemoryManager {
 public:
+  SmallVector<sys::MemoryBlock, 16> FunctionMemory;
+
   uint8_t *startFunctionBody(const char *Name, uintptr_t &Size);
   void endFunctionBody(const char *Name, uint8_t *FunctionStart,
-                       uint8_t *FunctionEnd) {}
+                       uint8_t *FunctionEnd);
 };
 
 uint8_t *TrivialMemoryManager::startFunctionBody(const char *Name,
                                                  uintptr_t &Size) {
   return (uint8_t*)sys::Memory::AllocateRWX(Size, 0, 0).base();
+}
+
+void TrivialMemoryManager::endFunctionBody(const char *Name,
+                                           uint8_t *FunctionStart,
+                                           uint8_t *FunctionEnd) {
+  uintptr_t Size = FunctionEnd - FunctionStart + 1;
+  FunctionMemory.push_back(sys::MemoryBlock(FunctionStart, Size));
 }
 
 static const char *ProgramName;
@@ -74,7 +83,8 @@ static int executeInput() {
     return Error("unable to read input: '" + ec.message() + "'");
 
   // Instantiate a dynamic linker.
-  RuntimeDyld Dyld(new TrivialMemoryManager);
+  TrivialMemoryManager *MemMgr = new TrivialMemoryManager;
+  RuntimeDyld Dyld(MemMgr);
 
   // Load the object file into it.
   if (Dyld.loadObject(InputBuffer.take())) {
@@ -86,14 +96,16 @@ static int executeInput() {
   if (MainAddress == 0)
     return Error("no definition for '_main'");
 
-  // Invalidate the instruction cache.
-  sys::MemoryBlock Data = Dyld.getMemoryBlock();
-  sys::Memory::InvalidateInstructionCache(Data.base(), Data.size());
+  // Invalidate the instruction cache for each loaded function.
+  for (unsigned i = 0, e = MemMgr->FunctionMemory.size(); i != e; ++i) {
+    sys::MemoryBlock &Data = MemMgr->FunctionMemory[i];
+    // Make sure the memory is executable.
+    std::string ErrorStr;
+    sys::Memory::InvalidateInstructionCache(Data.base(), Data.size());
+    if (!sys::Memory::setExecutable(Data, &ErrorStr))
+      return Error("unable to mark function executable: '" + ErrorStr + "'");
+  }
 
-  // Make sure the memory is executable.
-  std::string ErrorStr;
-  if (!sys::Memory::setExecutable(Data, &ErrorStr))
-    return Error("unable to mark function executable: '" + ErrorStr + "'");
 
   // Dispatch to _main().
   errs() << "loaded '_main' at: " << (void*)MainAddress << "\n";

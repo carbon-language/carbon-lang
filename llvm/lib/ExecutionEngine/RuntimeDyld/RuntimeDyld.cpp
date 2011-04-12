@@ -51,7 +51,7 @@ class RuntimeDyldImpl {
 
   // FIXME: Should have multiple data blocks, one for each loaded chunk of
   //        compiled code.
-  sys::MemoryBlock Data;
+//  sys::MemoryBlock Data;
 
   bool HasError;
   std::string ErrorStr;
@@ -90,8 +90,6 @@ public:
     // Work in progress.
     return Functions.lookup(Name).base();
   }
-
-  sys::MemoryBlock getMemoryBlock() { return Data; }
 
   // Is the linker in an error state?
   bool hasError() { return HasError; }
@@ -526,10 +524,6 @@ bool RuntimeDyld::loadObject(MemoryBuffer *InputBuffer) {
 
 void *RuntimeDyld::getSymbolAddress(StringRef Name) {
   return Dyld->getSymbolAddress(Name);
-}
-
-sys::MemoryBlock RuntimeDyld::getMemoryBlock() {
-  return Dyld->getMemoryBlock();
 }
 
 StringRef RuntimeDyld::getErrorString() {

@@ -63,9 +63,6 @@ public:
   // and resolve relocatons based on where they put it).
   void *getSymbolAddress(StringRef Name);
   void reassignSymbolAddress(StringRef Name, uint64_t Addr);
-  // FIXME: Should be parameterized to get the memory block associated with
-  // a particular loaded object.
-  sys::MemoryBlock getMemoryBlock();
   StringRef getErrorString();
 };
 
