@@ -329,6 +329,15 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 
 // Intrinsic forms of MOVUPS/D load and store
 let isAsmParserOnly = 0 in {
+  let canFoldAsLoad = 1, isReMaterializable = 1 in
+  def VMOVUPSrm_Int : VPSI<0x10, MRMSrcMem, (outs VR128:$dst),
+             (ins f128mem:$src),
+             "movups\t{$src, $dst|$dst, $src}",
+             [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>, VEX;
+  def VMOVUPDrm_Int : VPDI<0x10, MRMSrcMem, (outs VR128:$dst),
+             (ins f128mem:$src),
+             "movupd\t{$src, $dst|$dst, $src}",
+             [(set VR128:$dst, (int_x86_sse2_loadu_pd addr:$src))]>, VEX;
   def VMOVUPSmr_Int : VPSI<0x11, MRMDestMem, (outs),
              (ins f128mem:$dst, VR128:$src),
              "movups\t{$src, $dst|$dst, $src}",
@@ -338,6 +347,13 @@ let isAsmParserOnly = 0 in {
              "movupd\t{$src, $dst|$dst, $src}",
              [(int_x86_sse2_storeu_pd addr:$dst, VR128:$src)]>, VEX;
 }
+let canFoldAsLoad = 1, isReMaterializable = 1 in
+def MOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                       "movups\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
+def MOVUPDrm_Int : PDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                       "movupd\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_loadu_pd addr:$src))]>;
 
 def MOVUPSmr_Int : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                        "movups\t{$src, $dst|$dst, $src}",
@@ -2213,12 +2229,22 @@ def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
 
 // Intrinsic forms of MOVDQU load and store
 let isAsmParserOnly = 0 in {
+let canFoldAsLoad = 1 in
+def VMOVDQUrm_Int : I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                       "vmovdqu\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_loadu_dq addr:$src))]>,
+                     XS, VEX, Requires<[HasAVX]>;
 def VMOVDQUmr_Int : I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                        "vmovdqu\t{$src, $dst|$dst, $src}",
                        [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,
                      XS, VEX, Requires<[HasAVX]>;
 }
 
+let canFoldAsLoad = 1 in
+def MOVDQUrm_Int :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                       "movdqu\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst, (int_x86_sse2_loadu_dq addr:$src))]>,
+                 XS, Requires<[HasSSE2]>;
 def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                        "movdqu\t{$src, $dst|$dst, $src}",
                        [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)]>,

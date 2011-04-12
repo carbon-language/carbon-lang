@@ -247,7 +247,7 @@ declare <2 x double> @llvm.x86.sse2.div.sd(<2 x double>, <2 x double>) nounwind 
 
 define <16 x i8> @test_x86_sse2_loadu_dq(i8* %a0) {
   ; CHECK: movl
-  ; CHECK: vmovups
+  ; CHECK: vmovdqu
   %res = call <16 x i8> @llvm.x86.sse2.loadu.dq(i8* %a0) ; <<16 x i8>> [#uses=1]
   ret <16 x i8> %res
 }
@@ -256,7 +256,7 @@ declare <16 x i8> @llvm.x86.sse2.loadu.dq(i8*) nounwind readonly
 
 define <2 x double> @test_x86_sse2_loadu_pd(i8* %a0) {
   ; CHECK: movl
-  ; CHECK: vmovups
+  ; CHECK: vmovupd
   %res = call <2 x double> @llvm.x86.sse2.loadu.pd(i8* %a0) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }

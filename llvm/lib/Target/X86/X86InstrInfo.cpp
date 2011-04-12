@@ -916,6 +916,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
     case X86::MOVSDrm:
     case X86::MOVAPSrm:
     case X86::MOVUPSrm:
+    case X86::MOVUPSrm_Int:
     case X86::MOVAPDrm:
     case X86::MOVDQArm:
     case X86::MMX_MOVD64rm:
@@ -2844,9 +2845,11 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::FsMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
+  case X86::MOVUPSrm_Int:
   case X86::MOVAPDrm:
   case X86::MOVDQArm:
   case X86::MOVDQUrm:
+  case X86::MOVDQUrm_Int:
     break;
   }
   switch (Opc2) {
@@ -2866,9 +2869,11 @@ X86InstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case X86::FsMOVAPDrm:
   case X86::MOVAPSrm:
   case X86::MOVUPSrm:
+  case X86::MOVUPSrm_Int:
   case X86::MOVAPDrm:
   case X86::MOVDQArm:
   case X86::MOVDQUrm:
+  case X86::MOVDQUrm_Int:
     break;
   }
 

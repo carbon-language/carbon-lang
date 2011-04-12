@@ -537,7 +537,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   case Intrinsic::ppc_altivec_lvx:
   case Intrinsic::ppc_altivec_lvxl:
-    // Turn PPC lvx -> load if the pointer is known aligned.
+  case Intrinsic::x86_sse_loadu_ps:
+  case Intrinsic::x86_sse2_loadu_pd:
+  case Intrinsic::x86_sse2_loadu_dq:
+    // Turn PPC lvx     -> load if the pointer is known aligned.
+    // Turn X86 loadups -> load if the pointer is known aligned.
     if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, TD) >= 16) {
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0),
                                          PointerType::getUnqual(II->getType()));
