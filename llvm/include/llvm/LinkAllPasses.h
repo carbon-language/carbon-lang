@@ -70,6 +70,7 @@ namespace {
       (void) llvm::createEdgeProfilerPass();
       (void) llvm::createOptimalEdgeProfilerPass();
       (void) llvm::createPathProfilerPass();
+      (void) llvm::createLineProfilerPass();
       (void) llvm::createFunctionInliningPass();
       (void) llvm::createAlwaysInlinerPass();
       (void) llvm::createGlobalDCEPass();

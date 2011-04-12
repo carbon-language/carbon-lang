@@ -5,3 +5,6 @@ llvm_start_basic_block_tracing
 llvm_trace_basic_block
 llvm_increment_path_count
 llvm_decrement_path_count
+llvm_prof_linectr_start_file
+llvm_prof_linectr_emit_counter
+llvm_prof_linectr_end_file
