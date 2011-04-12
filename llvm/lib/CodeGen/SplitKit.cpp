@@ -557,7 +557,7 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 }
 
 /// Create a new virtual register and live interval.
-void SplitEditor::openIntv() {
+unsigned SplitEditor::openIntv() {
   assert(!OpenIdx && "Previous LI not closed before openIntv");
 
   // Create the complement as index 0.
@@ -567,6 +567,13 @@ void SplitEditor::openIntv() {
   // Create the open interval.
   OpenIdx = Edit->size();
   Edit->create(LIS, VRM);
+  return OpenIdx;
+}
+
+void SplitEditor::selectIntv(unsigned Idx) {
+  assert(Idx != 0 && "Cannot select the complement interval");
+  assert(Idx < Edit->size() && "Can only select previously opened interval");
+  OpenIdx = Idx;
 }
 
 SlotIndex SplitEditor::enterIntvBefore(SlotIndex Idx) {

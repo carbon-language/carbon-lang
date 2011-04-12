@@ -283,7 +283,15 @@ public:
   void reset(LiveRangeEdit&);
 
   /// Create a new virtual register and live interval.
-  void openIntv();
+  /// Return the interval index, starting from 1. Interval index 0 is the
+  /// implicit complement interval.
+  unsigned openIntv();
+
+  /// currentIntv - Return the current interval index.
+  unsigned currentIntv() const { return OpenIdx; }
+
+  /// selectIntv - Select a previously opened interval index.
+  void selectIntv(unsigned Idx);
 
   /// enterIntvBefore - Enter the open interval before the instruction at Idx.
   /// If the parent interval is not live before Idx, a COPY is not inserted.
