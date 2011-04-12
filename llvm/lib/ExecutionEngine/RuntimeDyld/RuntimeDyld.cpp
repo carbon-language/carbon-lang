@@ -41,17 +41,38 @@ class RuntimeDyldImpl {
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;
 
+  // FIXME: This all assumes we're dealing with external symbols for anything
+  //        explicitly referenced. I.e., we can index by name and things
+  //        will work out. In practice, this may not be the case, so we
+  //        should find a way to effectively generalize.
 
   // For each function, we have a MemoryBlock of it's instruction data.
   StringMap<sys::MemoryBlock> Functions;
 
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here.
-  StringMap<uint64_t> SymbolTable;
+  StringMap<uint8_t*> SymbolTable;
 
-  // FIXME: Should have multiple data blocks, one for each loaded chunk of
-  //        compiled code.
-//  sys::MemoryBlock Data;
+  // For each symbol, keep a list of relocations based on it. Anytime
+  // its address is reassigned (the JIT re-compiled the function, e.g.),
+  // the relocations get re-resolved.
+  struct RelocationEntry {
+    std::string Target;     // Object this relocation is contained in.
+    uint64_t    Offset;     // Offset into the object for the relocation.
+    uint32_t    Data;       // Second word of the raw macho relocation entry.
+    int64_t     Addend;     // Addend encoded in the instruction itself, if any.
+    bool        isResolved; // Has this relocation been resolved previously?
+
+    RelocationEntry(StringRef t, uint64_t offset, uint32_t data, int64_t addend)
+      : Target(t), Offset(offset), Data(data), Addend(addend),
+        isResolved(false) {}
+  };
+  typedef SmallVector<RelocationEntry, 4> RelocationList;
+  StringMap<RelocationList> Relocations;
+
+  // FIXME: Also keep a map of all the relocations contained in an object. Use
+  // this to dynamically answer whether all of the relocations in it have
+  // been resolved or not.
 
   bool HasError;
   std::string ErrorStr;
@@ -65,12 +86,11 @@ class RuntimeDyldImpl {
 
   void extractFunction(StringRef Name, uint8_t *StartAddress,
                        uint8_t *EndAddress);
-  bool resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
-                         SmallVectorImpl<void *> &SectionBases,
-                         SmallVectorImpl<StringRef> &SymbolNames);
-  bool resolveX86_64Relocation(intptr_t Address, intptr_t Value, bool isPCRel,
+  bool resolveRelocation(uint8_t *Address, uint8_t *Value, bool isPCRel,
+                         unsigned Type, unsigned Size);
+  bool resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
                                unsigned Type, unsigned Size);
-  bool resolveARMRelocation(intptr_t Address, intptr_t Value, bool isPCRel,
+  bool resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
                             unsigned Type, unsigned Size);
 
   bool loadSegment32(const MachOObject *Obj,
@@ -88,8 +108,12 @@ public:
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
     // Work in progress.
-    return Functions.lookup(Name).base();
+    return SymbolTable.lookup(Name);
   }
+
+  void resolveRelocations();
+
+  void reassignSymbolAddress(StringRef Name, uint8_t *Addr);
 
   // Is the linker in an error state?
   bool hasError() { return HasError; }
@@ -113,67 +137,32 @@ void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
   MemMgr->endFunctionBody(Name.data(), Mem, Mem + Size);
   // Remember where we put it.
   Functions[Name] = sys::MemoryBlock(Mem, Size);
+  // Default the assigned address for this symbol to wherever this
+  // allocated it.
+  SymbolTable[Name] = Mem;
   DEBUG(dbgs() << "    allocated to " << Mem << "\n");
 }
 
 bool RuntimeDyldImpl::
-resolveRelocation(uint32_t BaseSection, macho::RelocationEntry RE,
-                  SmallVectorImpl<void *> &SectionBases,
-                  SmallVectorImpl<StringRef> &SymbolNames) {
-  // struct relocation_info {
-  //   int32_t r_address;
-  //   uint32_t r_symbolnum:24,
-  //            r_pcrel:1,
-  //            r_length:2,
-  //            r_extern:1,
-  //            r_type:4;
-  // };
-  uint32_t SymbolNum = RE.Word1 & 0xffffff; // 24-bit value
-  bool isPCRel = (RE.Word1 >> 24) & 1;
-  unsigned Log2Size = (RE.Word1 >> 25) & 3;
-  bool isExtern = (RE.Word1 >> 27) & 1;
-  unsigned Type = (RE.Word1 >> 28) & 0xf;
-  if (RE.Word0 & macho::RF_Scattered)
-    return Error("NOT YET IMPLEMENTED: scattered relocations.");
-
-  // The address requiring a relocation.
-  intptr_t Address = (intptr_t)SectionBases[BaseSection] + RE.Word0;
-
-  // Figure out the target address of the relocation. If isExtern is true,
-  // this relocation references the symbol table, otherwise it references
-  // a section in the same object, numbered from 1 through NumSections
-  // (SectionBases is [0, NumSections-1]).
-  intptr_t Value;
-  if (isExtern) {
-    StringRef Name = SymbolNames[SymbolNum];
-    if (SymbolTable.lookup(Name)) {
-      // The symbol is in our symbol table, so we can resolve it directly.
-      Value = (intptr_t)SymbolTable[Name];
-    } else {
-      return Error("NOT YET IMPLEMENTED: relocations to pre-compiled code.");
-    }
-    DEBUG(dbgs() << "Resolve relocation(" << Type << ") from '" << Name
-                 << "' to " << format("0x%x", Address) << ".\n");
-  } else {
-    // For non-external relocations, the SymbolNum is actual a section number
-    // as described above.
-    Value = (intptr_t)SectionBases[SymbolNum - 1];
-  }
-
-  unsigned Size = 1 << Log2Size;
+resolveRelocation(uint8_t *Address, uint8_t *Value, bool isPCRel,
+                  unsigned Type, unsigned Size) {
+  // This just dispatches to the proper target specific routine.
   switch (CPUType) {
   default: assert(0 && "Unsupported CPU type!");
   case mach::CTM_x86_64:
-    return resolveX86_64Relocation(Address, Value, isPCRel, Type, Size);
+    return resolveX86_64Relocation((uintptr_t)Address, (uintptr_t)Value,
+                                   isPCRel, Type, Size);
   case mach::CTM_ARM:
-    return resolveARMRelocation(Address, Value, isPCRel, Type, Size);
+    return resolveARMRelocation((uintptr_t)Address, (uintptr_t)Value,
+                                isPCRel, Type, Size);
   }
   llvm_unreachable("");
 }
 
-bool RuntimeDyldImpl::resolveX86_64Relocation(intptr_t Address, intptr_t Value,
-                                              bool isPCRel, unsigned Type,
-                                              unsigned Size) {
+bool RuntimeDyldImpl::
+resolveX86_64Relocation(uintptr_t Address, uintptr_t Value,
+                        bool isPCRel, unsigned Type,
+                        unsigned Size) {
   // If the relocation is PC-relative, the value to be encoded is the
   // pointer difference.
   if (isPCRel)
@@ -208,7 +197,7 @@ bool RuntimeDyldImpl::resolveX86_64Relocation(intptr_t Address, intptr_t Value,
   return false;
 }
 
-bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
+bool RuntimeDyldImpl::resolveARMRelocation(uintptr_t Address, uintptr_t Value,
                                            bool isPCRel, unsigned Type,
                                            unsigned Size) {
   // If the relocation is PC-relative, the value to be encoded is the
@@ -223,6 +212,7 @@ bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
 
   switch(Type) {
   default:
+    llvm_unreachable("Invalid relocation type!");
   case macho::RIT_Vanilla: {
     llvm_unreachable("Invalid relocation type!");
     // Mask in the target value a byte at a time (we don't have an alignment
@@ -234,10 +224,6 @@ bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
     }
     break;
   }
-  case macho::RIT_Pair:
-  case macho::RIT_Difference:
-  case macho::RIT_ARM_LocalDifference:
-  case macho::RIT_ARM_PreboundLazyPointer:
   case macho::RIT_ARM_Branch24Bit: {
     // Mask the value into the target address. We know instructions are
     // 32-bit aligned, so we can do it all at once.
@@ -258,6 +244,10 @@ bool RuntimeDyldImpl::resolveARMRelocation(intptr_t Address, intptr_t Value,
   case macho::RIT_ARM_ThumbBranch32Bit:
   case macho::RIT_ARM_Half:
   case macho::RIT_ARM_HalfDifference:
+  case macho::RIT_Pair:
+  case macho::RIT_Difference:
+  case macho::RIT_ARM_LocalDifference:
+  case macho::RIT_ARM_PreboundLazyPointer:
     return Error("Relocation type not implemented yet!");
   }
   return false;
@@ -267,12 +257,12 @@ bool RuntimeDyldImpl::
 loadSegment32(const MachOObject *Obj,
               const MachOObject::LoadCommandInfo *SegmentLCI,
               const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC) {
-  InMemoryStruct<macho::SegmentLoadCommand> Segment32LC;
-  Obj->ReadSegmentLoadCommand(*SegmentLCI, Segment32LC);
-  if (!Segment32LC)
+  InMemoryStruct<macho::SegmentLoadCommand> SegmentLC;
+  Obj->ReadSegmentLoadCommand(*SegmentLCI, SegmentLC);
+  if (!SegmentLC)
     return Error("unable to load segment load command");
 
-  for (unsigned SectNum = 0; SectNum != Segment32LC->NumSections; ++SectNum) {
+  for (unsigned SectNum = 0; SectNum != SegmentLC->NumSections; ++SectNum) {
     InMemoryStruct<macho::Section> Sect;
     Obj->ReadSection(*SegmentLCI, SectNum, Sect);
     if (!Sect)
@@ -284,45 +274,47 @@ loadSegment32(const MachOObject *Obj,
 
     // Address and names of symbols in the section.
     typedef std::pair<uint64_t, StringRef> SymbolEntry;
-    SmallVector<SymbolEntry, 32> Symbols;
+    SmallVector<SymbolEntry, 64> Symbols;
+    // Index of all the names, in this section or not. Used when we're
+    // dealing with relocation entries.
+    SmallVector<StringRef, 64> SymbolNames;
     for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
       InMemoryStruct<macho::SymbolTableEntry> STE;
       Obj->ReadSymbolTableEntry(SymtabLC->SymbolTableOffset, i, STE);
       if (!STE)
         return Error("unable to read symbol: '" + Twine(i) + "'");
-      if (STE->SectionIndex > Segment32LC->NumSections)
+      if (STE->SectionIndex > SegmentLC->NumSections)
         return Error("invalid section index for symbol: '" + Twine(i) + "'");
+      // Get the symbol name.
+      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+      SymbolNames.push_back(Name);
 
       // Just skip symbols not defined in this section.
       if ((unsigned)STE->SectionIndex - 1 != SectNum)
         continue;
 
-      // Get the symbol name.
-      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
-
       // FIXME: Check the symbol type and flags.
       if (STE->Type != 0xF)  // external, defined in this section.
         return Error("unexpected symbol type!");
-      if (STE->Flags != 0x0)
+      // Flags == 0x8 marks a thumb function for ARM, which is fine as it
+      // doesn't require any special handling here.
+      if (STE->Flags != 0x0 && STE->Flags != 0x8)
         return Error("unexpected symbol type!");
 
-      uint64_t BaseAddress = Sect->Address;
-      uint64_t Address = BaseAddress + STE->Value;
-
       // Remember the symbol.
-      Symbols.push_back(SymbolEntry(Address, Name));
+      Symbols.push_back(SymbolEntry(STE->Value, Name));
 
-      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " << Address << "\n");
+      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " <<
+            (Sect->Address + STE->Value) << "\n");
     }
-    // Sort the symbols by address, just in case they didn't come in that
-    // way.
+    // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
 
     // Extract the function data.
-    uint8_t *Base = (uint8_t*)Obj->getData(Segment32LC->FileOffset,
-                                           Segment32LC->FileSize).data();
+    uint8_t *Base = (uint8_t*)Obj->getData(SegmentLC->FileOffset,
+                                           SegmentLC->FileSize).data();
     for (unsigned i = 0, e = Symbols.size() - 1; i != e; ++i) {
-      uint64_t StartOffset = Symbols[i].first;
+      uint64_t StartOffset = Sect->Address + Symbols[i].first;
       uint64_t EndOffset = Symbols[i + 1].first - 1;
       DEBUG(dbgs() << "Extracting function: " << Symbols[i].second
                    << " from [" << StartOffset << ", " << EndOffset << "]\n");
@@ -336,8 +328,62 @@ loadSegment32(const MachOObject *Obj,
                  << " from [" << StartOffset << ", " << EndOffset << "]\n");
     extractFunction(Symbols[Symbols.size()-1].second,
                     Base + StartOffset, Base + EndOffset);
-  }
 
+    // Now extract the relocation information for each function and process it.
+    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
+      InMemoryStruct<macho::RelocationEntry> RE;
+      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
+      if (RE->Word0 & macho::RF_Scattered)
+        return Error("NOT YET IMPLEMENTED: scattered relocations.");
+      // Word0 of the relocation is the offset into the section where the
+      // relocation should be applied. We need to translate that into an
+      // offset into a function since that's our atom.
+      uint32_t Offset = RE->Word0;
+      // Look for the function containing the address. This is used for JIT
+      // code, so the number of functions in section is almost always going
+      // to be very small (usually just one), so until we have use cases
+      // where that's not true, just use a trivial linear search.
+      unsigned SymbolNum;
+      unsigned NumSymbols = Symbols.size();
+      assert(NumSymbols > 0 && Symbols[0].first <= Offset &&
+             "No symbol containing relocation!");
+      for (SymbolNum = 0; SymbolNum < NumSymbols - 1; ++SymbolNum)
+        if (Symbols[SymbolNum + 1].first > Offset)
+          break;
+      // Adjust the offset to be relative to the symbol.
+      Offset -= Symbols[SymbolNum].first;
+      // Get the name of the symbol containing the relocation.
+      StringRef TargetName = SymbolNames[SymbolNum];
+
+      bool isExtern = (RE->Word1 >> 27) & 1;
+      // Figure out the source symbol of the relocation. If isExtern is true,
+      // this relocation references the symbol table, otherwise it references
+      // a section in the same object, numbered from 1 through NumSections
+      // (SectionBases is [0, NumSections-1]).
+      // FIXME: Some targets (ARM) use internal relocations even for
+      // externally visible symbols, if the definition is in the same
+      // file as the reference. We need to convert those back to by-name
+      // references. We can resolve the address based on the section
+      // offset and see if we have a symbol at that address. If we do,
+      // use that; otherwise, puke.
+      if (!isExtern)
+        return Error("Internal relocations not supported.");
+      uint32_t SourceNum = RE->Word1 & 0xffffff; // 24-bit value
+      StringRef SourceName = SymbolNames[SourceNum];
+
+      // FIXME: Get the relocation addend from the target address.
+
+      // Now store the relocation information. Associate it with the source
+      // symbol.
+      Relocations[SourceName].push_back(RelocationEntry(TargetName,
+                                                        Offset,
+                                                        RE->Word1,
+                                                        0 /*Addend*/));
+      DEBUG(dbgs() << "Relocation at '" << TargetName << "' + " << Offset
+                   << " from '" << SourceName << "(Word1: "
+                   << format("0x%x", RE->Word1) << ")\n");
+    }
+  }
   return false;
 }
 
@@ -364,6 +410,9 @@ loadSegment64(const MachOObject *Obj,
     // Address and names of symbols in the section.
     typedef std::pair<uint64_t, StringRef> SymbolEntry;
     SmallVector<SymbolEntry, 64> Symbols;
+    // Index of all the names, in this section or not. Used when we're
+    // dealing with relocation entries.
+    SmallVector<StringRef, 64> SymbolNames;
     for (unsigned i = 0; i != SymtabLC->NumSymbolTableEntries; ++i) {
       InMemoryStruct<macho::Symbol64TableEntry> STE;
       Obj->ReadSymbol64TableEntry(SymtabLC->SymbolTableOffset, i, STE);
@@ -371,13 +420,13 @@ loadSegment64(const MachOObject *Obj,
         return Error("unable to read symbol: '" + Twine(i) + "'");
       if (STE->SectionIndex > Segment64LC->NumSections)
         return Error("invalid section index for symbol: '" + Twine(i) + "'");
+      // Get the symbol name.
+      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
+      SymbolNames.push_back(Name);
 
       // Just skip symbols not defined in this section.
       if ((unsigned)STE->SectionIndex - 1 != SectNum)
         continue;
-
-      // Get the symbol name.
-      StringRef Name = Obj->getStringAtIndex(STE->StringIndex);
 
       // FIXME: Check the symbol type and flags.
       if (STE->Type != 0xF)  // external, defined in this section.
@@ -385,23 +434,20 @@ loadSegment64(const MachOObject *Obj,
       if (STE->Flags != 0x0)
         return Error("unexpected symbol type!");
 
-      uint64_t BaseAddress = Sect->Address;
-      uint64_t Address = BaseAddress + STE->Value;
-
       // Remember the symbol.
-      Symbols.push_back(SymbolEntry(Address, Name));
+      Symbols.push_back(SymbolEntry(STE->Value, Name));
 
-      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " << Address << "\n");
+      DEBUG(dbgs() << "Function sym: '" << Name << "' @ " <<
+            (Sect->Address + STE->Value) << "\n");
     }
-    // Sort the symbols by address, just in case they didn't come in that
-    // way.
+    // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
 
     // Extract the function data.
     uint8_t *Base = (uint8_t*)Obj->getData(Segment64LC->FileOffset,
                                            Segment64LC->FileSize).data();
     for (unsigned i = 0, e = Symbols.size() - 1; i != e; ++i) {
-      uint64_t StartOffset = Symbols[i].first;
+      uint64_t StartOffset = Sect->Address + Symbols[i].first;
       uint64_t EndOffset = Symbols[i + 1].first - 1;
       DEBUG(dbgs() << "Extracting function: " << Symbols[i].second
                    << " from [" << StartOffset << ", " << EndOffset << "]\n");
@@ -415,8 +461,56 @@ loadSegment64(const MachOObject *Obj,
                  << " from [" << StartOffset << ", " << EndOffset << "]\n");
     extractFunction(Symbols[Symbols.size()-1].second,
                     Base + StartOffset, Base + EndOffset);
-  }
 
+    // Now extract the relocation information for each function and process it.
+    for (unsigned j = 0; j != Sect->NumRelocationTableEntries; ++j) {
+      InMemoryStruct<macho::RelocationEntry> RE;
+      Obj->ReadRelocationEntry(Sect->RelocationTableOffset, j, RE);
+      if (RE->Word0 & macho::RF_Scattered)
+        return Error("NOT YET IMPLEMENTED: scattered relocations.");
+      // Word0 of the relocation is the offset into the section where the
+      // relocation should be applied. We need to translate that into an
+      // offset into a function since that's our atom.
+      uint32_t Offset = RE->Word0;
+      // Look for the function containing the address. This is used for JIT
+      // code, so the number of functions in section is almost always going
+      // to be very small (usually just one), so until we have use cases
+      // where that's not true, just use a trivial linear search.
+      unsigned SymbolNum;
+      unsigned NumSymbols = Symbols.size();
+      assert(NumSymbols > 0 && Symbols[0].first <= Offset &&
+             "No symbol containing relocation!");
+      for (SymbolNum = 0; SymbolNum < NumSymbols - 1; ++SymbolNum)
+        if (Symbols[SymbolNum + 1].first > Offset)
+          break;
+      // Adjust the offset to be relative to the symbol.
+      Offset -= Symbols[SymbolNum].first;
+      // Get the name of the symbol containing the relocation.
+      StringRef TargetName = SymbolNames[SymbolNum];
+
+      bool isExtern = (RE->Word1 >> 27) & 1;
+      // Figure out the source symbol of the relocation. If isExtern is true,
+      // this relocation references the symbol table, otherwise it references
+      // a section in the same object, numbered from 1 through NumSections
+      // (SectionBases is [0, NumSections-1]).
+      if (!isExtern)
+        return Error("Internal relocations not supported.");
+      uint32_t SourceNum = RE->Word1 & 0xffffff; // 24-bit value
+      StringRef SourceName = SymbolNames[SourceNum];
+
+      // FIXME: Get the relocation addend from the target address.
+
+      // Now store the relocation information. Associate it with the source
+      // symbol.
+      Relocations[SourceName].push_back(RelocationEntry(TargetName,
+                                                        Offset,
+                                                        RE->Word1,
+                                                        0 /*Addend*/));
+      DEBUG(dbgs() << "Relocation at '" << TargetName << "' + " << Offset
+                   << " from '" << SourceName << "(Word1: "
+                   << format("0x%x", RE->Word1) << ")\n");
+    }
+  }
   return false;
 }
 
@@ -507,6 +601,40 @@ bool RuntimeDyldImpl::loadObject(MemoryBuffer *InputBuffer) {
   return false;
 }
 
+// Resolve the relocations for all symbols we currently know about.
+void RuntimeDyldImpl::resolveRelocations() {
+  // Just iterate over the symbols in our symbol table and assign their
+  // addresses.
+  StringMap<uint8_t*>::iterator i = SymbolTable.begin();
+  StringMap<uint8_t*>::iterator e = SymbolTable.end();
+  for (;i != e; ++i)
+    reassignSymbolAddress(i->getKey(), i->getValue());
+}
+
+// Assign an address to a symbol name and resolve all the relocations
+// associated with it.
+void RuntimeDyldImpl::reassignSymbolAddress(StringRef Name, uint8_t *Addr) {
+  // Assign the address in our symbol table.
+  SymbolTable[Name] = Addr;
+
+  RelocationList &Relocs = Relocations[Name];
+  for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
+    RelocationEntry &RE = Relocs[i];
+    uint8_t *Target = SymbolTable[RE.Target] + RE.Offset;
+    bool isPCRel = (RE.Data >> 24) & 1;
+    unsigned Type = (RE.Data >> 28) & 0xf;
+    unsigned Size = 1 << ((RE.Data >> 25) & 3);
+
+    DEBUG(dbgs() << "Resolving relocation at '" << RE.Target
+          << "' + " << RE.Offset << " (" << format("%p", Target) << ")"
+          << " from '" << Name << " (" << format("%p", Addr) << ")"
+          << "(" << (isPCRel ? "pcrel" : "absolute")
+          << ", type: " << Type << ", Size: " << Size << ").\n");
+
+    resolveRelocation(Target, Addr, isPCRel, Type, Size);
+    RE.isResolved = true;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation
@@ -524,6 +652,14 @@ bool RuntimeDyld::loadObject(MemoryBuffer *InputBuffer) {
 
 void *RuntimeDyld::getSymbolAddress(StringRef Name) {
   return Dyld->getSymbolAddress(Name);
+}
+
+void RuntimeDyld::resolveRelocations() {
+  Dyld->resolveRelocations();
+}
+
+void RuntimeDyld::reassignSymbolAddress(StringRef Name, uint8_t *Addr) {
+  Dyld->reassignSymbolAddress(Name, Addr);
 }
 
 StringRef RuntimeDyld::getErrorString() {

@@ -62,7 +62,11 @@ public:
   // be the address used for relocation (clients can copy the data around
   // and resolve relocatons based on where they put it).
   void *getSymbolAddress(StringRef Name);
-  void reassignSymbolAddress(StringRef Name, uint64_t Addr);
+  // Resolve the relocations for all symbols we currently know about.
+  void resolveRelocations();
+  // Change the address associated with a symbol when resolving relocations.
+  // Any relocations already associated with the symbol will be re-resolved.
+  void reassignSymbolAddress(StringRef Name, uint8_t *Addr);
   StringRef getErrorString();
 };
 

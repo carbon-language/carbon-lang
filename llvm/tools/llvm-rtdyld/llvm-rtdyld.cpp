@@ -90,6 +90,8 @@ static int executeInput() {
   if (Dyld.loadObject(InputBuffer.take())) {
     return Error(Dyld.getErrorString());
   }
+  // Resolve all the relocations we can.
+  Dyld.resolveRelocations();
 
   // Get the address of "_main".
   void *MainAddress = Dyld.getSymbolAddress("_main");
