@@ -539,6 +539,9 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   switch (Lexer.getKind()) {
   default:
     return TokError("unknown token in expression");
+  // If we have an error assume that we've already handled it.
+  case AsmToken::Error:
+    return true;
   case AsmToken::Exclaim:
     Lex(); // Eat the operator.
     if (ParsePrimaryExpr(Res, EndLoc))
