@@ -68,7 +68,7 @@ class CompileUnit {
   std::vector<DIEBlock *> DIEBlocks;
 
 public:
-  CompileUnit(unsigned I, DIE *D, AsmPrinter *A, DwarfDebug *D);
+  CompileUnit(unsigned I, DIE *D, AsmPrinter *A, DwarfDebug *DW);
   ~CompileUnit();
 
   // Accessors.
