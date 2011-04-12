@@ -596,3 +596,89 @@ void strncat_no_overflow_2(char *y) {
   if (strlen(y) == 4)
     strncat(x, y, 1); // no-warning
 }
+
+//===----------------------------------------------------------------------===
+// strcmp()
+//===----------------------------------------------------------------------===
+
+#define strcmp BUILTIN(strcmp)
+int strcmp(const char *restrict s1, const char *restrict s2);
+
+void strcmp_constant0() {
+  if (strcmp("123", "123") != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_constant_and_var_0() {
+  char *x = "123";
+  if (strcmp(x, "123") != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_constant_and_var_1() {
+  char *x = "123";
+    if (strcmp("123", x) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_0() {
+  char *x = "123";
+  char *y = "123";
+  if (strcmp(x, y) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_1() {
+  char *x = "234";
+  char *y = "123";
+  if (strcmp(x, y) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_2() {
+  char *x = "123";
+  char *y = "234";
+  if (strcmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_null_0() {
+  char *x = NULL;
+  char *y = "123";
+  strcmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcmp_null_1() {
+  char *x = "123";
+  char *y = NULL;
+  strcmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcmp_diff_length_0() {
+  char *x = "12345";
+  char *y = "234";
+  if (strcmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_diff_length_1() {
+  char *x = "123";
+  char *y = "23456";
+  if (strcmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_diff_length_2() {
+  char *x = "12345";
+  char *y = "123";
+  if (strcmp(x, y) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcmp_diff_length_3() {
+  char *x = "123";
+  char *y = "12345";
+  if (strcmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+

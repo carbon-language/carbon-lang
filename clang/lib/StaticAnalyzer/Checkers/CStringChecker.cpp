@@ -74,6 +74,8 @@ public:
   void evalStrcat(CheckerContext &C, const CallExpr *CE) const;
   void evalStrncat(CheckerContext &C, const CallExpr *CE) const;
 
+  void evalStrcmp(CheckerContext &C, const CallExpr *CE) const;
+
   // Utility methods
   std::pair<const GRState*, const GRState*>
   static assumeZero(CheckerContext &C,
@@ -86,6 +88,11 @@ public:
                                         const Expr *Ex, const MemRegion *MR);
   SVal getCStringLength(CheckerContext &C, const GRState *&state,
                         const Expr *Ex, SVal Buf) const;
+
+  const StringLiteral *getCStringLiteral(CheckerContext &C, 
+                                         const GRState *&state,
+                                         const Expr *expr,  
+                                         SVal val) const;
 
   static const GRState *InvalidateBuffer(CheckerContext &C,
                                          const GRState *state,
@@ -587,6 +594,26 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, const GRState *&state,
   }
 }
 
+const StringLiteral *CStringChecker::getCStringLiteral(CheckerContext &C,
+  const GRState *&state, const Expr *expr, SVal val) const {
+
+  // Get the memory region pointed to by the val.
+  const MemRegion *bufRegion = val.getAsRegion();
+  if (!bufRegion)
+    return NULL; 
+
+  // Strip casts off the memory region.
+  bufRegion = bufRegion->StripCasts();
+
+  // Cast the memory region to a string region.
+  const StringRegion *strRegion= dyn_cast<StringRegion>(bufRegion);
+  if (!strRegion)
+    return NULL; 
+
+  // Return the actual string in the string region.
+  return strRegion->getStringLiteral();
+}
+
 const GRState *CStringChecker::InvalidateBuffer(CheckerContext &C,
                                                 const GRState *state,
                                                 const Expr *E, SVal V) {
@@ -1074,6 +1101,61 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   C.addTransition(state);
 }
 
+void CStringChecker::evalStrcmp(CheckerContext &C, const CallExpr *CE) const {
+  //int strcmp(const char *restrict s1, const char *restrict s2);
+
+  const GRState *state = C.getState();
+
+  // Check that the first string is non-null
+  const Expr *s1 = CE->getArg(0);
+  SVal s1Val = state->getSVal(s1);
+  state = checkNonNull(C, state, s1, s1Val);
+  if (!state)
+    return;
+
+  // Check that the second string is non-null.
+  const Expr *s2 = CE->getArg(1);
+  SVal s2Val = state->getSVal(s2);
+  state = checkNonNull(C, state, s2, s2Val);
+  if (!state)
+    return;
+
+  // Get the string length of the first string or give up.
+  SVal s1Length = getCStringLength(C, state, s1, s1Val);
+  if (s1Length.isUndef())
+    return;
+
+  // Get the string length of the second string or give up.
+  SVal s2Length = getCStringLength(C, state, s2, s2Val);
+  if (s2Length.isUndef())
+    return;
+
+  // Get the string literal of the first string.
+  const StringLiteral *s1StrLiteral = getCStringLiteral(C, state, s1, s1Val);
+  if (!s1StrLiteral)
+    return;
+  llvm::StringRef s1StrRef = s1StrLiteral->getString();
+
+  // Get the string literal of the second string.
+  const StringLiteral *s2StrLiteral = getCStringLiteral(C, state, s2, s2Val);
+  if (!s2StrLiteral)
+    return;
+  llvm::StringRef s2StrRef = s2StrLiteral->getString();
+
+  // Compare string 1 to string 2 the same way strcmp() does.
+  int result = s1StrRef.compare(s2StrRef);
+  
+  // Build the SVal of the comparison to bind the return value.
+  SValBuilder &svalBuilder = C.getSValBuilder();
+  QualType intTy = svalBuilder.getContext().IntTy;
+  SVal resultVal = svalBuilder.makeIntVal(result, intTy);
+
+  // Bind the return value of the expression.
+  // Set the return value.
+  state = state->BindExpr(CE, resultVal);
+  C.addTransition(state);
+}
+
 //===----------------------------------------------------------------------===//
 // The driver method, and other Checker callbacks.
 //===----------------------------------------------------------------------===//
@@ -1108,6 +1190,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     .Cases("strncat", "__strncat_chk", &CStringChecker::evalStrncat)
     .Case("strlen", &CStringChecker::evalstrLength)
     .Case("strnlen", &CStringChecker::evalstrnLength)
+    .Case("strcmp", &CStringChecker::evalStrcmp)
     .Case("bcopy", &CStringChecker::evalBcopy)
     .Default(NULL);
 
