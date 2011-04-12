@@ -588,7 +588,7 @@ IdempotentOperationChecker::pathWasCompletelyAnalyzed(AnalysisContext *AC,
       if (!B)
         return true;
       
-      return CRA.isReachable(B, TargetBlock);
+      return B == TargetBlock || CRA.isReachable(B, TargetBlock);
     }
   };
   VisitWL visitWL(AC->getCFGStmtMap(), CB, *CRA);
