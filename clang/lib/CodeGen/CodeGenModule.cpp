@@ -1316,9 +1316,7 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D,
       return llvm::GlobalVariable::WeakAnyLinkage;
   } else if (Linkage == GVA_TemplateInstantiation ||
              Linkage == GVA_ExplicitTemplateInstantiation)
-    // FIXME: It seems like we can provide more specific linkage here
-    // (LinkOnceODR, WeakODR).
-    return llvm::GlobalVariable::WeakAnyLinkage;
+    return llvm::GlobalVariable::WeakODRLinkage;
   else if (!getLangOptions().CPlusPlus && 
            ((!CodeGenOpts.NoCommon && !D->getAttr<NoCommonAttr>()) ||
              D->getAttr<CommonAttr>()) &&

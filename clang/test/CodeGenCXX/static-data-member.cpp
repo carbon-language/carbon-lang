@@ -2,8 +2,8 @@
 
 // CHECK: @_ZN5test11A1aE = constant i32 10, align 4
 // CHECK: @_ZN5test212_GLOBAL__N_11AIiE1xE = internal global i32 0, align 4
-// CHECK: @_ZN5test31AIiE1xE = weak global i32 0, align 4
-// CHECK: @_ZGVN5test31AIiE1xE = weak global i64 0
+// CHECK: @_ZN5test31AIiE1xE = weak_odr global i32 0, align 4
+// CHECK: @_ZGVN5test31AIiE1xE = weak_odr global i64 0
 
 // PR5564.
 namespace test1 {

@@ -97,6 +97,16 @@ namespace test5 {
   };
 }
 
+namespace test6 {
+  struct A {
+    A();
+  };
+  extern int foo();
+
+  // This needs an initialization function but not guard variables.
+  __attribute__((weak)) int x = foo();
+}
+
 // At the end of the file, we check that y is initialized before z.
 
 // CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {

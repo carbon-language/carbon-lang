@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fvisibility hidden -emit-llvm -o - %s | FileCheck %s
 
 // Verify that symbols are hidden.
-// CHECK: @_ZN1CIiE5Inner6Inner26StaticE = weak hidden global
+// CHECK: @_ZN1CIiE5Inner6Inner26StaticE = weak_odr hidden global
 // CHECK: define weak_odr hidden void @_ZN1CIiE5Inner1fEv
 // CHECK: define weak_odr hidden void @_ZN1CIiE5Inner6Inner21gEv
 

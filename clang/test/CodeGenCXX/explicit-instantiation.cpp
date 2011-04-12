@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -triple i686-pc-linux-gnu -o - %s | FileCheck %s
 
 // This check logically is attached to 'template int S<int>::i;' below.
-// CHECK: @_ZN1SIiE1iE = weak global i32
+// CHECK: @_ZN1SIiE1iE = weak_odr global i32
 
 template<typename T, typename U, typename Result>
 struct plus {
