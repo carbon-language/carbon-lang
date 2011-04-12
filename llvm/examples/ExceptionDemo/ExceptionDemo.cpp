@@ -62,7 +62,16 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Dwarf.h"
 
+// FIXME: Although all systems tested with (Linux, OS X), do not need this 
+//        header file included. A user on ubuntu reported, undefined symbols 
+//        for stderr, and fprintf, and the addition of this include fixed the
+//        issue for them. Given that LLVM's best practices include the goal 
+//        of reducing the number of redundant header files included, the 
+//        correct solution would be to find out why these symbols are not 
+//        defined for the system in question, and fix the issue by finding out
+//        which LLVM header file, if any, would include these symbols.
 #include <cstdio>
+
 #include <sstream>
 #include <stdexcept>
 
