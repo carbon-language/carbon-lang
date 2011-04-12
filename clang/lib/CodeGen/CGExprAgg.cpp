@@ -249,11 +249,6 @@ void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
 }
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
-  if (Dest.isIgnored() && E->getCastKind() != CK_Dynamic) {
-    Visit(E->getSubExpr());
-    return;
-  }
-
   switch (E->getCastKind()) {
   case CK_Dynamic: {
     assert(isa<CXXDynamicCastExpr>(E) && "CK_Dynamic without a dynamic_cast?");
@@ -270,6 +265,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   }
       
   case CK_ToUnion: {
+    if (Dest.isIgnored()) break;
+
     // GCC union extension
     QualType Ty = E->getSubExpr()->getType();
     QualType PtrTy = CGF.getContext().getPointerType(Ty);

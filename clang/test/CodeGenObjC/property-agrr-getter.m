@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
+// RUN: %clang_cc1 -emit-llvm-only %s
 
 typedef struct {
   unsigned f0;
@@ -35,4 +35,10 @@ float f ()
 {
   AnObject* obj;
   return (obj.size).width;
+}
+
+// rdar://problem/9272392
+void test3(AnObject *obj) {
+  obj.size;
+  (void) obj.size;
 }
