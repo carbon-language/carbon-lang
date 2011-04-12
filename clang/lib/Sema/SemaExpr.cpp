@@ -1915,6 +1915,17 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
         return ExprError();
 
       MarkDeclarationReferenced(Loc, IV);
+      Expr *base = SelfExpr.take();
+      base = base->IgnoreParenImpCasts();
+      if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(base)) {
+        const NamedDecl *ND = DE->getDecl();
+        if (!isa<ImplicitParamDecl>(ND)) {
+            Diag(Loc, diag::error_implicit_ivar_access)
+            << IV->getDeclName();
+            Diag(ND->getLocation(), diag::note_declared_at);
+            return ExprError();
+          }
+      }
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
                                    SelfExpr.take(), true, true));
