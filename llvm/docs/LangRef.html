@@ -2371,6 +2371,11 @@ b: unreachable
     is always executed when control transfers to one of the successors, and
     may not be executed when control is transfered to another.</li>
 
+<li>Additionally, an instruction also <i>control-depends</i> on a terminator
+    instruction if the set of instructions it otherwise depends on would be
+    different if the terminator had transfered control to a different
+    successor.</li>
+
 <li>Dependence is transitive.</li>
 
 </ul>
@@ -2413,8 +2418,23 @@ end:
                                      ; control-dependent on %cmp, so this
                                      ; always results in a trap value.
 
-  volatile store i32 0, i32* @g      ; %end is control-equivalent to %entry
-                                     ; so this is defined (ignoring earlier
+  volatile store i32 0, i32* @g      ; This would depend on the store in %true
+                                     ; if %cmp is true, or the store in %entry
+                                     ; otherwise, so this is undefined behavior.
+
+  %br i1 %cmp, %second_true, %second_end
+                                     ; The same branch again, but this time the
+                                     ; true block doesn't have side effects.
+
+second_true:
+  ; No side effects!
+  br label %end
+
+second_end:
+  volatile store i32 0, i32* @g      ; This time, the instruction always depends
+                                     ; on the store in %end. Also, it is
+                                     ; control-equivalent to %end, so this is
+                                     ; well- defined (again, ignoring earlier
                                      ; undefined behavior in this example).
 </pre>
 
