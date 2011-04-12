@@ -75,6 +75,7 @@ namespace {
   class Reassociate : public FunctionPass {
     DenseMap<BasicBlock*, unsigned> RankMap;
     DenseMap<AssertingVH<>, unsigned> ValueRankMap;
+    SmallVector<WeakVH, 8> RedoInsts;
     SmallVector<WeakVH, 8> DeadInsts;
     bool MadeChange;
   public:
@@ -100,7 +101,7 @@ namespace {
     void LinearizeExprTree(BinaryOperator *I, SmallVectorImpl<ValueEntry> &Ops);
     void LinearizeExpr(BinaryOperator *I);
     Value *RemoveFactorFromExpression(Value *V, Value *Factor);
-    void ReassociateBB(BasicBlock *BB);
+    void ReassociateInst(BasicBlock::iterator &BBI);
     
     void RemoveDeadBinaryOp(Value *V);
   };
@@ -734,7 +735,7 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
       // Now that we have inserted a multiply, optimize it. This allows us to
       // handle cases that require multiple factoring steps, such as this:
       // (X*2) + (X*2) + (X*2) -> (X*2)*3 -> X*6
-      Mul = ReassociateExpression(cast<BinaryOperator>(Mul));
+      RedoInsts.push_back(Mul);
       
       // If every add operand was a duplicate, return the multiply.
       if (Ops.empty())
@@ -962,71 +963,69 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
 }
 
 
-/// ReassociateBB - Inspect all of the instructions in this basic block,
-/// reassociating them as we go.
-void Reassociate::ReassociateBB(BasicBlock *BB) {
-  for (BasicBlock::iterator BBI = BB->begin(); BBI != BB->end(); ) {
-    Instruction *BI = BBI++;
-    if (BI->getOpcode() == Instruction::Shl &&
-        isa<ConstantInt>(BI->getOperand(1)))
-      if (Instruction *NI = ConvertShiftToMul(BI, ValueRankMap)) {
-        MadeChange = true;
-        BI = NI;
-      }
-
-    // Reject cases where it is pointless to do this.
-    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPointTy() || 
-        BI->getType()->isVectorTy())
-      continue;  // Floating point ops are not associative.
-
-    // Do not reassociate boolean (i1) expressions.  We want to preserve the
-    // original order of evaluation for short-circuited comparisons that
-    // SimplifyCFG has folded to AND/OR expressions.  If the expression
-    // is not further optimized, it is likely to be transformed back to a
-    // short-circuited form for code gen, and the source order may have been
-    // optimized for the most likely conditions.
-    if (BI->getType()->isIntegerTy(1))
-      continue;
-
-    // If this is a subtract instruction which is not already in negate form,
-    // see if we can convert it to X+-Y.
-    if (BI->getOpcode() == Instruction::Sub) {
-      if (ShouldBreakUpSubtract(BI)) {
-        BI = BreakUpSubtract(BI, ValueRankMap);
-        // Reset the BBI iterator in case BreakUpSubtract changed the
-        // instruction it points to.
-        BBI = BI;
-        ++BBI;
-        MadeChange = true;
-      } else if (BinaryOperator::isNeg(BI)) {
-        // Otherwise, this is a negation.  See if the operand is a multiply tree
-        // and if this is not an inner node of a multiply tree.
-        if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
-            (!BI->hasOneUse() ||
-             !isReassociableOp(BI->use_back(), Instruction::Mul))) {
-          BI = LowerNegateToMultiply(BI, ValueRankMap);
-          MadeChange = true;
-        }
-      }
+/// ReassociateInst - Inspect and reassociate the instruction at the
+/// given position, post-incrementing the position.
+void Reassociate::ReassociateInst(BasicBlock::iterator &BBI) {
+  Instruction *BI = BBI++;
+  if (BI->getOpcode() == Instruction::Shl &&
+      isa<ConstantInt>(BI->getOperand(1)))
+    if (Instruction *NI = ConvertShiftToMul(BI, ValueRankMap)) {
+      MadeChange = true;
+      BI = NI;
     }
 
-    // If this instruction is a commutative binary operator, process it.
-    if (!BI->isAssociative()) continue;
-    BinaryOperator *I = cast<BinaryOperator>(BI);
+  // Reject cases where it is pointless to do this.
+  if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPointTy() || 
+      BI->getType()->isVectorTy())
+    return;  // Floating point ops are not associative.
 
-    // If this is an interior node of a reassociable tree, ignore it until we
-    // get to the root of the tree, to avoid N^2 analysis.
-    if (I->hasOneUse() && isReassociableOp(I->use_back(), I->getOpcode()))
-      continue;
+  // Do not reassociate boolean (i1) expressions.  We want to preserve the
+  // original order of evaluation for short-circuited comparisons that
+  // SimplifyCFG has folded to AND/OR expressions.  If the expression
+  // is not further optimized, it is likely to be transformed back to a
+  // short-circuited form for code gen, and the source order may have been
+  // optimized for the most likely conditions.
+  if (BI->getType()->isIntegerTy(1))
+    return;
 
-    // If this is an add tree that is used by a sub instruction, ignore it 
-    // until we process the subtract.
-    if (I->hasOneUse() && I->getOpcode() == Instruction::Add &&
-        cast<Instruction>(I->use_back())->getOpcode() == Instruction::Sub)
-      continue;
-
-    ReassociateExpression(I);
+  // If this is a subtract instruction which is not already in negate form,
+  // see if we can convert it to X+-Y.
+  if (BI->getOpcode() == Instruction::Sub) {
+    if (ShouldBreakUpSubtract(BI)) {
+      BI = BreakUpSubtract(BI, ValueRankMap);
+      // Reset the BBI iterator in case BreakUpSubtract changed the
+      // instruction it points to.
+      BBI = BI;
+      ++BBI;
+      MadeChange = true;
+    } else if (BinaryOperator::isNeg(BI)) {
+      // Otherwise, this is a negation.  See if the operand is a multiply tree
+      // and if this is not an inner node of a multiply tree.
+      if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
+          (!BI->hasOneUse() ||
+           !isReassociableOp(BI->use_back(), Instruction::Mul))) {
+        BI = LowerNegateToMultiply(BI, ValueRankMap);
+        MadeChange = true;
+      }
+    }
   }
+
+  // If this instruction is a commutative binary operator, process it.
+  if (!BI->isAssociative()) return;
+  BinaryOperator *I = cast<BinaryOperator>(BI);
+
+  // If this is an interior node of a reassociable tree, ignore it until we
+  // get to the root of the tree, to avoid N^2 analysis.
+  if (I->hasOneUse() && isReassociableOp(I->use_back(), I->getOpcode()))
+    return;
+
+  // If this is an add tree that is used by a sub instruction, ignore it 
+  // until we process the subtract.
+  if (I->hasOneUse() && I->getOpcode() == Instruction::Add &&
+      cast<Instruction>(I->use_back())->getOpcode() == Instruction::Sub)
+    return;
+
+  ReassociateExpression(I);
 }
 
 Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
@@ -1093,7 +1092,16 @@ bool Reassociate::runOnFunction(Function &F) {
 
   MadeChange = false;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-    ReassociateBB(FI);
+    for (BasicBlock::iterator BBI = FI->begin(); BBI != FI->end(); )
+      ReassociateInst(BBI);
+
+  // Now that we're done, revisit any instructions which are likely to
+  // have secondary reassociation opportunities.
+  while (!RedoInsts.empty())
+    if (Value *V = RedoInsts.pop_back_val()) {
+      BasicBlock::iterator BBI = cast<Instruction>(V);
+      ReassociateInst(BBI);
+    }
 
   // Now that we're done, delete any instructions which are no longer used.
   while (!DeadInsts.empty())
