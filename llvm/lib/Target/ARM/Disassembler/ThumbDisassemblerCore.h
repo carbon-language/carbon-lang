@@ -951,6 +951,11 @@ static bool DisassembleThumb1CondBr(MCInst &MI, unsigned Opcode, uint32_t insn,
                                       : (int)Imm8));
 
   // Predicate operands by ARMBasicMCBuilder::TryPredicateAndSBitModifier().
+  // But note that for tBcc, if cond = '1110' then UNDEFINED.
+  if (Opcode == ARM::tBcc && slice(insn, 11, 8) == 14) {
+    DEBUG(errs() << "if cond = '1110' then UNDEFINED\n");
+    return false;
+  }
   NumOpsAdded = 1;
 
   return true;
