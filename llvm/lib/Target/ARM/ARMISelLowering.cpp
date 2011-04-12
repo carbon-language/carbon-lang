@@ -5684,8 +5684,28 @@ static SDValue PerformSTORECombine(SDNode *N,
   // Otherwise, the i64 value will be legalized to a pair of i32 values.
   StoreSDNode *St = cast<StoreSDNode>(N);
   SDValue StVal = St->getValue();
-  if (!ISD::isNormalStore(St) || St->isVolatile() ||
-      StVal.getValueType() != MVT::i64 ||
+  if (!ISD::isNormalStore(St) || St->isVolatile())
+    return SDValue();
+
+  if (StVal.getNode()->getOpcode() == ARMISD::VMOVDRR &&
+      StVal.getNode()->hasOneUse() && !St->isVolatile()) {
+    SelectionDAG  &DAG = DCI.DAG;
+    DebugLoc DL = St->getDebugLoc();
+    SDValue BasePtr = St->getBasePtr();
+    SDValue NewST1 = DAG.getStore(St->getChain(), DL,
+                                  StVal.getNode()->getOperand(0), BasePtr,
+                                  St->getPointerInfo(), St->isVolatile(),
+                                  St->isNonTemporal(), St->getAlignment());
+
+    SDValue OffsetPtr = DAG.getNode(ISD::ADD, DL, MVT::i32, BasePtr,
+                                    DAG.getConstant(4, MVT::i32));
+    return DAG.getStore(NewST1.getValue(0), DL, StVal.getNode()->getOperand(1),
+                        OffsetPtr, St->getPointerInfo(), St->isVolatile(),
+                        St->isNonTemporal(),
+                        std::min(4U, St->getAlignment() / 2));
+  }
+
+  if (StVal.getValueType() != MVT::i64 ||
       StVal.getNode()->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
     return SDValue();
 
