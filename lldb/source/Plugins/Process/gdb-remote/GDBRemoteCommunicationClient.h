@@ -18,13 +18,22 @@
 
 #include "GDBRemoteCommunication.h"
 
+typedef enum 
+{
+    eBreakpointSoftware = 0,
+    eBreakpointHardware,
+    eWatchpointWrite,
+    eWatchpointRead,
+    eWatchpointReadWrite
+} GDBStoppointType;
+
 class GDBRemoteCommunicationClient : public GDBRemoteCommunication
 {
 public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunicationClient();
+    GDBRemoteCommunicationClient(bool is_platform);
 
     virtual
     ~GDBRemoteCommunicationClient();
@@ -73,6 +82,9 @@ public:
 
     bool
     GetLaunchSuccess (std::string &error_str);
+
+    uint16_t
+    LaunchGDBserverAndGetPort ();
 
     //------------------------------------------------------------------
     /// Sends a GDB remote protocol 'A' packet that delivers program
@@ -214,11 +226,11 @@ public:
 
     bool
     GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInfo &process_info);
+                    lldb_private::ProcessInstanceInfo &process_info);
 
     uint32_t
-    FindProcesses (const lldb_private::ProcessInfoMatch &process_match_info,
-                   lldb_private::ProcessInfoList &process_infos);
+    FindProcesses (const lldb_private::ProcessInstanceInfoMatch &process_match_info,
+                   lldb_private::ProcessInstanceInfoList &process_infos);
 
     bool
     GetUserName (uint32_t uid, std::string &name);
@@ -246,6 +258,33 @@ public:
         return old_packet_timeout;
     }
 
+    bool
+    GetStopReply (StringExtractorGDBRemote &response);
+
+    bool
+    GetThreadStopInfo (uint32_t tid, 
+                       StringExtractorGDBRemote &response);
+
+    bool
+    SupportsGDBStoppointPacket (GDBStoppointType type)
+    {
+        switch (type)
+        {
+        case eBreakpointSoftware:   return m_supports_z0;
+        case eBreakpointHardware:   return m_supports_z1;
+        case eWatchpointWrite:      return m_supports_z2;
+        case eWatchpointRead:       return m_supports_z3;
+        case eWatchpointReadWrite:  return m_supports_z4;
+        default:                    break;
+        }
+        return false;
+    }
+    uint8_t
+    SendGDBStoppointTypePacket (GDBStoppointType type,   // Type of breakpoint or watchpoint
+                                bool insert,              // Insert or remove?
+                                lldb::addr_t addr,        // Address of breakpoint or watchpoint
+                                uint32_t length);         // Byte Size of breakpoint or watchpoint
+
     void
     TestPacketSpeed (const uint32_t num_packets);
 
@@ -257,6 +296,13 @@ public:
     bool
     SendSpeedTestPacket (uint32_t send_size, 
                          uint32_t recv_size);
+    
+    bool
+    SetCurrentThread (int tid);
+    
+    bool
+    SetCurrentThreadForRun (int tid);
+
 protected:
 
     //------------------------------------------------------------------
@@ -271,10 +317,21 @@ protected:
     lldb_private::LazyBool m_supports_vCont_s;
     lldb_private::LazyBool m_supports_vCont_S;
     lldb_private::LazyBool m_qHostInfo_is_valid;
-    bool m_supports_qProcessInfoPID;
-    bool m_supports_qfProcessInfo;
-    bool m_supports_qUserName;
-    bool m_supports_qGroupName;
+    bool
+        m_supports_qProcessInfoPID:1,
+        m_supports_qfProcessInfo:1,
+        m_supports_qUserName:1,
+        m_supports_qGroupName:1,
+        m_supports_qThreadStopInfo:1,
+        m_supports_z0:1,
+        m_supports_z1:1,
+        m_supports_z2:1,
+        m_supports_z3:1,
+        m_supports_z4:1;
+
+    lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations
+    lldb::tid_t m_curr_tid_run;     // Current gdb remote protocol thread index for continue, step, etc
+
 
     // If we need to send a packet while the target is running, the m_async_XXX
     // member variables take care of making this happen.
@@ -294,7 +351,7 @@ protected:
     
     bool
     DecodeProcessInfoResponse (StringExtractorGDBRemote &response, 
-                               lldb_private::ProcessInfo &process_info);
+                               lldb_private::ProcessInstanceInfo &process_info);
 private:
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationClient only

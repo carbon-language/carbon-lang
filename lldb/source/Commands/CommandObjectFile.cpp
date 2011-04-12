@@ -58,7 +58,7 @@ CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *o
     {
         case 'a':
             {
-                PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+                PlatformSP platform_sp (m_interpreter.GetPlatform (false));
                 ArchSpec option_arch (option_arg, platform_sp.get());
                 if (option_arch.IsValid())
                     m_arch = option_arch;

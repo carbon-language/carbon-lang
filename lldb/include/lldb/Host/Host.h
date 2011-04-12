@@ -343,23 +343,17 @@ public:
     SetCrashDescription (const char *description);
 
     static uint32_t
-    FindProcesses (const ProcessInfoMatch &match_info,
-                   ProcessInfoList &proc_infos);
+    FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                   ProcessInstanceInfoList &proc_infos);
     
     static bool
-    GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
+    GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
     
     static lldb::pid_t
     LaunchApplication (const FileSpec &app_file_spec);
 
-    static lldb::pid_t
-    LaunchInNewTerminal (const char *tty_name,  // Optional partial or full tty name ("/dev/ttys000" or "ttys000")
-                         const char **argv,     // argv[0] is executable, argv[1] and on are the arguments
-                         const char **envp,     
-                         const char *working_dir,
-                         const ArchSpec *arch_spec,
-                         bool stop_at_entry,
-                         bool disable_aslr);
+    static Error
+    LaunchProcess (ProcessLaunchInfo &launch_info);
     
     static bool
     OpenFileInExternalEditor (const FileSpec &file_spec, 

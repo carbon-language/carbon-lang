@@ -413,6 +413,134 @@ public:
         return result.Succeeded();
     }
 };
+//----------------------------------------------------------------------
+// "platform process launch"
+//----------------------------------------------------------------------
+class CommandObjectPlatformProcessLaunch : public CommandObject
+{
+public:
+    CommandObjectPlatformProcessLaunch (CommandInterpreter &interpreter) :
+        CommandObject (interpreter, 
+                       "platform process launch",
+                       "Launch a new process on a remote platform.",
+                       "platform process launch program",
+                       0),
+        m_options (interpreter)
+    {
+    }
+    
+    virtual
+    ~CommandObjectPlatformProcessLaunch ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+        
+        if (platform_sp)
+        {
+            Error error;
+            const uint32_t argc = args.GetArgumentCount();
+            Target *target = m_interpreter.GetExecutionContext().target;
+            ModuleSP exe_module_sp;
+            if (target)
+            {
+                exe_module_sp = target->GetExecutableModule();
+                if (exe_module_sp)
+                {
+                    m_options.launch_info.GetExecutableFile () = exe_module_sp->GetFileSpec();
+                    char exe_path[PATH_MAX];
+                    if (m_options.launch_info.GetExecutableFile ().GetPath (exe_path, sizeof(exe_path)))
+                        m_options.launch_info.GetArguments().AppendArgument (exe_path);
+                    m_options.launch_info.GetArchitecture() = exe_module_sp->GetArchitecture();
+                }
+            }
+
+            if (argc > 0)
+            {
+                if (m_options.launch_info.GetExecutableFile ())
+                {
+                    // We already have an executable file, so we will use this
+                    // and all arguments to this function are extra arguments
+                    m_options.launch_info.GetArguments().AppendArguments (args);
+                }
+                else
+                {
+                    // We don't have any file yet, so the first argument is our
+                    // executable, and the rest are program arguments
+                    const bool first_arg_is_executable = true;
+                    m_options.launch_info.SetArgumentsFromArgs (args, 
+                                                                first_arg_is_executable, 
+                                                                first_arg_is_executable);
+                }
+            }
+            
+            if (m_options.launch_info.GetExecutableFile ())
+            {
+                Debugger &debugger = m_interpreter.GetDebugger();
+
+                if (argc == 0)
+                {
+                    lldb::UserSettingsControllerSP process_usc_sp (Process::GetSettingsController ());
+                    if (process_usc_sp)
+                    {
+                        SettableVariableType type;
+                        StringList settings_args (process_usc_sp->GetVariable ("process.run-args", 
+                                                                               type,
+                                                                               m_interpreter.GetDebugger().GetInstanceName().GetCString(),
+                                                                               error));
+                        if (error.Success())
+                        {
+                            const size_t num_settings_args = settings_args.GetSize();
+                            for (size_t i=0; i<num_settings_args; ++i)
+                                m_options.launch_info.GetArguments().AppendArgument (settings_args.GetStringAtIndex(i));
+                        }
+                    }
+                }
+
+                ProcessSP process_sp (platform_sp->DebugProcess (m_options.launch_info, 
+                                                                 debugger,
+                                                                 target,
+                                                                 debugger.GetListener(),
+                                                                 error));
+                if (process_sp && process_sp->IsAlive())
+                {
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                    return true;
+                }
+                
+                if (error.Success())
+                    result.AppendError ("process launch failed");
+                else
+                    result.AppendError (error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else
+            {
+                result.AppendError ("'platform process launch' uses the current target file and arguments, or the executable and its arguments can be specified in this command");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            result.AppendError ("no platform is selected\n");
+        }
+        return result.Succeeded();
+    }
+    
+    virtual Options *
+    GetOptions ()
+    {
+        return &m_options;
+    }
+    
+protected:
+    ProcessLaunchCommandOptions m_options;
+};
+
 
 
 //----------------------------------------------------------------------
@@ -454,11 +582,11 @@ public:
                     lldb::pid_t pid = m_options.match_info.GetProcessInfo().GetProcessID();
                     if (pid != LLDB_INVALID_PROCESS_ID)
                     {
-                        ProcessInfo proc_info;
+                        ProcessInstanceInfo proc_info;
                         if (platform_sp->GetProcessInfo (pid, proc_info))
                         {
-                            ProcessInfo::DumpTableHeader (ostrm, platform_sp.get());
-                            proc_info.DumpAsTableRow(ostrm, platform_sp.get());
+                            ProcessInstanceInfo::DumpTableHeader (ostrm, platform_sp.get(), m_options.show_args, m_options.verbose);
+                            proc_info.DumpAsTableRow(ostrm, platform_sp.get(), m_options.show_args, m_options.verbose);
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -469,24 +597,25 @@ public:
                     }
                     else
                     {
-                        ProcessInfoList proc_infos;
+                        ProcessInstanceInfoList proc_infos;
                         const uint32_t matches = platform_sp->FindProcesses (m_options.match_info, proc_infos);
+                        const char *match_desc = NULL;
+                        const char *match_name = m_options.match_info.GetProcessInfo().GetName();
+                        if (match_name && match_name[0])
+                        {
+                            switch (m_options.match_info.GetNameMatchType())
+                            {
+                                case eNameMatchIgnore: break;
+                                case eNameMatchEquals: match_desc = "matched"; break;
+                                case eNameMatchContains: match_desc = "contained"; break;
+                                case eNameMatchStartsWith: match_desc = "started with"; break;
+                                case eNameMatchEndsWith: match_desc = "ended with"; break;
+                                case eNameMatchRegularExpression: match_desc = "matched the regular expression"; break;
+                            }
+                        }
+
                         if (matches == 0)
                         {
-                            const char *match_desc = NULL;
-                            const char *match_name = m_options.match_info.GetProcessInfo().GetName();
-                            if (match_name && match_name[0])
-                            {
-                                switch (m_options.match_info.GetNameMatchType())
-                                {
-                                    case eNameMatchIgnore: break;
-                                    case eNameMatchEquals: match_desc = "match"; break;
-                                    case eNameMatchContains: match_desc = "contains"; break;
-                                    case eNameMatchStartsWith: match_desc = "starts with"; break;
-                                    case eNameMatchEndsWith: match_desc = "end with"; break;
-                                    case eNameMatchRegularExpression: match_desc = "match the regular expression"; break;
-                                }
-                            }
                             if (match_desc)
                                 result.AppendErrorWithFormat ("no processes were found that %s \"%s\" on the \"%s\" platform\n", 
                                                               match_desc,
@@ -498,11 +627,19 @@ public:
                         }
                         else
                         {
-
-                            ProcessInfo::DumpTableHeader (ostrm, platform_sp.get());
+                            result.AppendMessageWithFormat ("%u matching process%s found on \"%s\"", 
+                                                            matches,
+                                                            matches > 1 ? "es were" : " was",
+                                                            platform_sp->GetName());
+                            if (match_desc)
+                                result.AppendMessageWithFormat (" whose name %s \"%s\"", 
+                                                                match_desc,
+                                                                match_name);
+                            result.AppendMessageWithFormat ("\n");
+                            ProcessInstanceInfo::DumpTableHeader (ostrm, platform_sp.get(), m_options.show_args, m_options.verbose);
                             for (uint32_t i=0; i<matches; ++i)
                             {
-                                proc_infos.GetProcessInfoAtIndex(i).DumpAsTableRow(ostrm, platform_sp.get());
+                                proc_infos.GetProcessInfoAtIndex(i).DumpAsTableRow(ostrm, platform_sp.get(), m_options.show_args, m_options.verbose);
                             }
                         }
                     }
@@ -567,7 +704,7 @@ protected:
                     break;
 
                 case 'u':
-                    match_info.GetProcessInfo().SetRealUserID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    match_info.GetProcessInfo().SetUserID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
                     if (!success)
                         error.SetErrorStringWithFormat("invalid user ID string: '%s'", option_arg);
                     break;
@@ -579,7 +716,7 @@ protected:
                     break;
 
                 case 'g':
-                    match_info.GetProcessInfo().SetRealGroupID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
+                    match_info.GetProcessInfo().SetGroupID (Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success));
                     if (!success)
                         error.SetErrorStringWithFormat("invalid group ID string: '%s'", option_arg);
                     break;
@@ -596,24 +733,35 @@ protected:
 
                 case 'n':
                     match_info.GetProcessInfo().SetName (option_arg);
-                    if (match_info.GetNameMatchType() == eNameMatchIgnore)
-                        match_info.SetNameMatchType (eNameMatchEquals);
+                    match_info.SetNameMatchType (eNameMatchEquals);
                     break;
 
                 case 'e':
+                    match_info.GetProcessInfo().SetName (option_arg);
                     match_info.SetNameMatchType (eNameMatchEndsWith);
                     break;
 
                 case 's':
+                    match_info.GetProcessInfo().SetName (option_arg);
                     match_info.SetNameMatchType (eNameMatchStartsWith);
                     break;
                     
                 case 'c':
+                    match_info.GetProcessInfo().SetName (option_arg);
                     match_info.SetNameMatchType (eNameMatchContains);
                     break;
                     
                 case 'r':
+                    match_info.GetProcessInfo().SetName (option_arg);
                     match_info.SetNameMatchType (eNameMatchRegularExpression);
+                    break;
+
+                case 'A':
+                    show_args = true;
+                    break;
+
+                case 'v':
+                    verbose = true;
                     break;
 
                 default:
@@ -628,6 +776,8 @@ protected:
         ResetOptionValues ()
         {
             match_info.Clear();
+            show_args = false;
+            verbose = false;
         }
         
         const OptionDefinition*
@@ -642,7 +792,9 @@ protected:
         
         // Instance variables to hold the values for command options.
         
-        ProcessInfoMatch match_info;
+        ProcessInstanceInfoMatch match_info;
+        bool show_args;
+        bool verbose;
     };
     CommandOptions m_options;
 };
@@ -650,48 +802,22 @@ protected:
 OptionDefinition
 CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "pid"              , 'p', required_argument, NULL, 0, eArgTypePid          , "List the process info for a specific process ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5, true , "name"             , 'n', required_argument, NULL, 0, eArgTypeProcessName  , "Find processes that match the supplied name." },
-{ LLDB_OPT_SET_2, false, "ends-with"        , 'e', no_argument      , NULL, 0, eArgTypeNone         , "Process names must end with the name supplied with the --name option." },
-{ LLDB_OPT_SET_3, false, "starts-with"      , 's', no_argument      , NULL, 0, eArgTypeNone         , "Process names must start with the name supplied with the --name option." },
-{ LLDB_OPT_SET_4, false, "contains"         , 'c', no_argument      , NULL, 0, eArgTypeNone         , "Process names must contain the name supplied with the --name option." },
-{ LLDB_OPT_SET_5, false, "regex"            , 'r', no_argument      , NULL, 0, eArgTypeNone         , "Process names must match name supplied with the --name option as a regular expression." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "parent"           , 'P', required_argument, NULL, 0, eArgTypePid          , "Find processes that have a matching parent process ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "uid"              , 'u', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching user ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "euid"             , 'U', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching effective user ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "gid"              , 'g', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching group ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "egid"             , 'G', required_argument, NULL, 0, eArgTypeNone          , "Find processes that have a matching effective group ID." },
-{ LLDB_OPT_SET_2|
-  LLDB_OPT_SET_3|
-  LLDB_OPT_SET_4|
-  LLDB_OPT_SET_5|
-  LLDB_OPT_SET_6, false, "arch"             , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Find processes that have a matching architecture." },
-{ 0             , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
+{   LLDB_OPT_SET_1, false, "pid"              , 'p', required_argument, NULL, 0, eArgTypePid          , "List the process info for a specific process ID." },
+{   LLDB_OPT_SET_2, true , "name"             , 'n', required_argument, NULL, 0, eArgTypeProcessName  , "Find processes with executable basenames that match a string." },
+{   LLDB_OPT_SET_3, true , "ends-with"        , 'e', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that end with a string." },
+{   LLDB_OPT_SET_4, true , "starts-with"      , 's', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that start with a string." },
+{   LLDB_OPT_SET_5, true , "contains"         , 'c', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that contain a string." },
+{   LLDB_OPT_SET_6, true , "regex"            , 'r', required_argument, NULL, 0, eArgTypeNone         , "Find processes with executable basenames that match a regular expression." },
+{  ~LLDB_OPT_SET_1, false, "parent"           , 'P', required_argument, NULL, 0, eArgTypePid          , "Find processes that have a matching parent process ID." },
+{  ~LLDB_OPT_SET_1, false, "uid"              , 'u', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching user ID." },
+{  ~LLDB_OPT_SET_1, false, "euid"             , 'U', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching effective user ID." },
+{  ~LLDB_OPT_SET_1, false, "gid"              , 'g', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching group ID." },
+{  ~LLDB_OPT_SET_1, false, "egid"             , 'G', required_argument, NULL, 0, eArgTypeNone         , "Find processes that have a matching effective group ID." },
+{  ~LLDB_OPT_SET_1, false, "arch"             , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Find processes that have a matching architecture." },
+{ LLDB_OPT_SET_ALL, false, "show-args"        , 'A', no_argument      , NULL, 0, eArgTypeNone         , "Show process arguments instead of the process executable basename." },
+{ LLDB_OPT_SET_ALL, false, "verbose"          , 'v', no_argument      , NULL, 0, eArgTypeNone         , "Enable verbose output." },
+{  0              , false, NULL               ,  0 , 0                , NULL, 0, eArgTypeNone         , NULL }
 };
-
 
 //----------------------------------------------------------------------
 // "platform process info"
@@ -746,7 +872,7 @@ public:
                         lldb::pid_t pid = Args::StringToUInt32 (arg, LLDB_INVALID_PROCESS_ID, 0, &success);
                         if (success)
                         {
-                            ProcessInfo proc_info;
+                            ProcessInstanceInfo proc_info;
                             if (platform_sp->GetProcessInfo (pid, proc_info))
                             {
                                 ostrm.Printf ("Process information for process %i:\n", pid);
@@ -805,7 +931,7 @@ public:
                                 "platform process [attach|launch|list] ...")
     {
 //        LoadSubCommand ("attach", CommandObjectSP (new CommandObjectPlatformProcessAttach (interpreter)));
-//        LoadSubCommand ("launch", CommandObjectSP (new CommandObjectPlatformProcessLaunch (interpreter)));
+        LoadSubCommand ("launch", CommandObjectSP (new CommandObjectPlatformProcessLaunch (interpreter)));
         LoadSubCommand ("info"  , CommandObjectSP (new CommandObjectPlatformProcessInfo (interpreter)));
         LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformProcessList (interpreter)));
 

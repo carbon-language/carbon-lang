@@ -128,7 +128,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const 
         break;
 
     case 'a':
-        arch.SetTriple (option_arg, m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform().get());
+            arch.SetTriple (option_arg, m_interpreter.GetPlatform (true).get());
         break;
 
     default:
@@ -257,7 +257,7 @@ CommandObjectDisassemble::Execute
     if (m_options.show_mixed && m_options.num_lines_context == 0)
         m_options.num_lines_context = 1;
 
-    ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
 
     if (!m_options.func_name.empty())
     {

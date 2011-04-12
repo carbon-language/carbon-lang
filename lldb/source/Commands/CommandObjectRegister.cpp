@@ -75,7 +75,7 @@ public:
     {
         Stream &output_stream = result.GetOutputStream();
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)
@@ -274,7 +274,7 @@ public:
     )
     {
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
 
         if (reg_context)

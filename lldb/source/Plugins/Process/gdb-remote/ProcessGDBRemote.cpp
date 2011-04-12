@@ -114,16 +114,13 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
     m_flags (0),
     m_stdio_mutex (Mutex::eMutexTypeRecursive),
-    m_gdb_comm(),
+    m_gdb_comm(false),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_debugserver_thread (LLDB_INVALID_HOST_THREAD),
     m_last_stop_packet (),
     m_register_info (),
     m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
-    m_curr_tid (LLDB_INVALID_THREAD_ID),
-    m_curr_tid_run (LLDB_INVALID_THREAD_ID),
-    m_z0_supported (1),
     m_continue_c_tids (),
     m_continue_C_tids (),
     m_continue_s_tids (),
@@ -430,7 +427,6 @@ ProcessGDBRemote::DoLaunch
     ObjectFile * object_file = module->GetObjectFile();
     if (object_file)
     {
-        ArchSpec inferior_arch(module->GetArchitecture());
         char host_port[128];
         snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
         char connect_url[128];
@@ -439,13 +435,7 @@ ProcessGDBRemote::DoLaunch
         // Make sure we aren't already connected?
         if (!m_gdb_comm.IsConnected())
         {
-            error = StartDebugserverProcess (host_port,
-                                             NULL,
-                                             NULL,
-                                             LLDB_INVALID_PROCESS_ID,
-                                             NULL, 
-                                             false,
-                                             inferior_arch);
+            error = StartDebugserverProcess (host_port);
             if (error.Fail())
                 return error;
 
@@ -700,8 +690,6 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
     Error error;
     // Clear out and clean up from any current state
     Clear();
-    const ArchSpec &arch_spec = GetTarget().GetArchitecture();
-
     if (attach_pid != LLDB_INVALID_PROCESS_ID)
     {
         // Make sure we aren't already connected?
@@ -712,13 +700,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
             char connect_url[128];
             snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-            error = StartDebugserverProcess (host_port,                 // debugserver_url
-                                             NULL,                      // inferior_argv
-                                             NULL,                      // inferior_envp
-                                             LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
-                                             NULL,                      // Don't send any attach by process name option to debugserver
-                                             false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                             arch_spec);
+            error = StartDebugserverProcess (host_port);
             
             if (error.Fail())
             {
@@ -778,21 +760,12 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
         // Make sure we aren't already connected?
         if (!m_gdb_comm.IsConnected())
         {
-
-            const ArchSpec &arch_spec = GetTarget().GetArchitecture();
-
             char host_port[128];
             snprintf (host_port, sizeof(host_port), "localhost:%u", get_random_port ());
             char connect_url[128];
             snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-            error = StartDebugserverProcess (host_port,                 // debugserver_url
-                                             NULL,                      // inferior_argv
-                                             NULL,                      // inferior_envp
-                                             LLDB_INVALID_PROCESS_ID,   // Don't send any attach to pid options to debugserver
-                                             NULL,                      // Don't send any attach by process name option to debugserver
-                                             false,                     // Don't send any attach wait_for_launch flag as an option to debugserver
-                                             arch_spec);
+            error = StartDebugserverProcess (host_port);
             if (error.Fail())
             {
                 const char *error_string = error.AsCString();
@@ -925,7 +898,7 @@ ProcessGDBRemote::DoResume ()
                 if (num_continue_c_tids == num_threads)
                 {
                     // All threads are resuming...
-                    SetCurrentGDBRemoteThreadForRun (-1);
+                    m_gdb_comm.SetCurrentThreadForRun (-1);
                     continue_packet.PutChar ('c');                
                 }
                 else if (num_continue_c_tids == 1 &&
@@ -934,7 +907,7 @@ ProcessGDBRemote::DoResume ()
                          num_continue_S_tids == 0 )
                 {
                     // Only one thread is continuing
-                    SetCurrentGDBRemoteThreadForRun (m_continue_c_tids.front());
+                    m_gdb_comm.SetCurrentThreadForRun (m_continue_c_tids.front());
                     continue_packet.PutChar ('c');                
                 }
                 else
@@ -960,7 +933,7 @@ ProcessGDBRemote::DoResume ()
                     if (!continue_packet_error)
                     {
                         // Add threads continuing with the same signo...
-                        SetCurrentGDBRemoteThreadForRun (-1);
+                        m_gdb_comm.SetCurrentThreadForRun (-1);
                         continue_packet.Printf("C%2.2x", continue_signo);
                     }
                 }
@@ -970,7 +943,7 @@ ProcessGDBRemote::DoResume ()
                          num_continue_S_tids == 0 )
                 {
                     // Only one thread is continuing with signal
-                    SetCurrentGDBRemoteThreadForRun (m_continue_C_tids.front().first);
+                    m_gdb_comm.SetCurrentThreadForRun (m_continue_C_tids.front().first);
                     continue_packet.Printf("C%2.2x", m_continue_C_tids.front().second);
                 }
                 else
@@ -985,7 +958,7 @@ ProcessGDBRemote::DoResume ()
                 if (num_continue_s_tids == num_threads)
                 {
                     // All threads are resuming...
-                    SetCurrentGDBRemoteThreadForRun (-1);
+                    m_gdb_comm.SetCurrentThreadForRun (-1);
                     continue_packet.PutChar ('s');                
                 }
                 else if (num_continue_c_tids == 0 &&
@@ -994,7 +967,7 @@ ProcessGDBRemote::DoResume ()
                          num_continue_S_tids == 0 )
                 {
                     // Only one thread is stepping
-                    SetCurrentGDBRemoteThreadForRun (m_continue_s_tids.front());
+                    m_gdb_comm.SetCurrentThreadForRun (m_continue_s_tids.front());
                     continue_packet.PutChar ('s');                
                 }
                 else
@@ -1021,7 +994,7 @@ ProcessGDBRemote::DoResume ()
                     if (!continue_packet_error)
                     {
                         // Add threads stepping with the same signo...
-                        SetCurrentGDBRemoteThreadForRun (-1);
+                        m_gdb_comm.SetCurrentThreadForRun (-1);
                         continue_packet.Printf("S%2.2x", step_signo);
                     }
                 }
@@ -1031,7 +1004,7 @@ ProcessGDBRemote::DoResume ()
                          num_continue_S_tids == 1 )
                 {
                     // Only one thread is stepping with signal
-                    SetCurrentGDBRemoteThreadForRun (m_continue_S_tids.front().first);
+                    m_gdb_comm.SetCurrentThreadForRun (m_continue_S_tids.front().first);
                     continue_packet.Printf("S%2.2x", m_continue_S_tids.front().second);
                 }
                 else
@@ -1667,40 +1640,28 @@ ProcessGDBRemote::EnableBreakpoint (BreakpointSite *bp_site)
         {
             // Try and set hardware breakpoint, and if that fails, fall through
             // and set a software breakpoint?
-        }
-
-        if (m_z0_supported)
-        {
-            char packet[64];
-            const int packet_len = ::snprintf (packet, sizeof(packet), "Z0,%llx,%zx", addr, bp_op_size);
-            assert (packet_len + 1 < sizeof(packet));
-            StringExtractorGDBRemote response;
-            if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
+            if (m_gdb_comm.SupportsGDBStoppointPacket (eBreakpointHardware))
             {
-                if (response.IsUnsupportedResponse())
-                {
-                    // Disable z packet support and try again
-                    m_z0_supported = 0;
-                    return EnableBreakpoint (bp_site);
-                }
-                else if (response.IsOKResponse())
+                if (m_gdb_comm.SendGDBStoppointTypePacket(eBreakpointHardware, true, addr, bp_op_size) == 0)
                 {
                     bp_site->SetEnabled(true);
-                    bp_site->SetType (BreakpointSite::eExternal);
+                    bp_site->SetType (BreakpointSite::eHardware);
                     return error;
-                }
-                else
-                {
-                    uint8_t error_byte = response.GetError();
-                    if (error_byte)
-                        error.SetErrorStringWithFormat("%x packet failed with error: %i (0x%2.2x).\n", packet, error_byte, error_byte);
                 }
             }
         }
-        else
+
+        if (m_gdb_comm.SupportsGDBStoppointPacket (eBreakpointSoftware))
         {
-            return EnableSoftwareBreakpoint (bp_site);
+            if (m_gdb_comm.SendGDBStoppointTypePacket(eBreakpointSoftware, true, addr, bp_op_size) == 0)
+            {
+                bp_site->SetEnabled(true);
+                bp_site->SetType (BreakpointSite::eExternal);
+                return error;
+            }
         }
+
+        return EnableSoftwareBreakpoint (bp_site);
     }
 
     if (log)
@@ -1731,44 +1692,25 @@ ProcessGDBRemote::DisableBreakpoint (BreakpointSite *bp_site)
     {
         const size_t bp_op_size = GetSoftwareBreakpointTrapOpcode (bp_site);
 
-        if (bp_site->IsHardware())
+        BreakpointSite::Type bp_type = bp_site->GetType();
+        switch (bp_type)
         {
-            // TODO: disable hardware breakpoint...
+        case BreakpointSite::eSoftware:
+            error = DisableSoftwareBreakpoint (bp_site);
+            break;
+
+        case BreakpointSite::eHardware:
+            if (m_gdb_comm.SendGDBStoppointTypePacket(eBreakpointSoftware, false, addr, bp_op_size))
+                error.SetErrorToGenericError();
+            break;
+
+        case BreakpointSite::eExternal:
+            if (m_gdb_comm.SendGDBStoppointTypePacket(eBreakpointSoftware, false, addr, bp_op_size))
+                error.SetErrorToGenericError();
+            break;
         }
-        else
-        {
-            if (m_z0_supported)
-            {
-                char packet[64];
-                const int packet_len = ::snprintf (packet, sizeof(packet), "z0,%llx,%zx", addr, bp_op_size);
-                assert (packet_len + 1 < sizeof(packet));
-                StringExtractorGDBRemote response;
-                if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true))
-                {
-                    if (response.IsUnsupportedResponse())
-                    {
-                        error.SetErrorString("Breakpoint site was set with Z packet, yet remote debugserver states z packets are not supported.");
-                    }
-                    else if (response.IsOKResponse())
-                    {
-                        if (log)
-                            log->Printf ("ProcessGDBRemote::DisableBreakpoint (site_id = %d) addr = 0x%8.8llx -- SUCCESS", site_id, (uint64_t)addr);
-                        bp_site->SetEnabled(false);
-                        return error;
-                    }
-                    else
-                    {
-                        uint8_t error_byte = response.GetError();
-                        if (error_byte)
-                            error.SetErrorStringWithFormat("%x packet failed with error: %i (0x%2.2x).\n", packet, error_byte, error_byte);
-                    }
-                }
-            }
-            else
-            {
-                return DisableSoftwareBreakpoint (bp_site);
-            }
-        }
+        if (error.Success())
+            bp_site->SetEnabled(false);
     }
     else
     {
@@ -1869,16 +1811,7 @@ ProcessGDBRemote::DoSignal (int signo)
 }
 
 Error
-ProcessGDBRemote::StartDebugserverProcess
-(
-    const char *debugserver_url,    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
-    char const *inferior_argv[],    // Arguments for the inferior program including the path to the inferior itself as the first argument
-    char const *inferior_envp[],    // Environment to pass along to the inferior program
-    lldb::pid_t attach_pid,         // If inferior inferior_argv == NULL, and attach_pid != LLDB_INVALID_PROCESS_ID send this pid as an argument to debugserver
-    const char *attach_name,        // Wait for the next process to launch whose basename matches "attach_name"
-    bool wait_for_launch,           // Wait for the process named "attach_name" to launch
-    const ArchSpec& inferior_arch   // The arch of the inferior that we will launch
-)
+ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
 {
     Error error;
     if (m_debugserver_pid == LLDB_INVALID_PROCESS_ID)
@@ -1886,8 +1819,9 @@ ProcessGDBRemote::StartDebugserverProcess
         // If we locate debugserver, keep that located version around
         static FileSpec g_debugserver_file_spec;
 
-        FileSpec debugserver_file_spec;
+        ProcessLaunchInfo launch_info;
         char debugserver_path[PATH_MAX];
+        FileSpec &debugserver_file_spec = launch_info.GetExecutableFile();
 
         // Always check to see if we have an environment override for the path
         // to the debugserver to use and use it if we do.
@@ -1922,25 +1856,10 @@ ProcessGDBRemote::StartDebugserverProcess
             debugserver_file_spec.GetPath (debugserver_path, sizeof(debugserver_path));
 
             m_stdio_communication.Clear();
-            posix_spawnattr_t attr;
 
             LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
-            Error local_err;    // Errors that don't affect the spawning.
-            if (log)
-                log->Printf ("%s ( path='%s', argv=%p, envp=%p, arch=%s )", 
-                             __FUNCTION__, 
-                             debugserver_path, 
-                             inferior_argv, 
-                             inferior_envp, 
-                             inferior_arch.GetArchitectureName());
-            error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
-            if (error.Fail() || log)
-                error.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
-            if (error.Fail())
-                return error;
-
-            Args debugserver_args;
+            Args &debugserver_args = launch_info.GetArguments();
             char arg_cstr[PATH_MAX];
 
             // Start args with "debugserver /file/path -r --"
@@ -1968,6 +1887,12 @@ ProcessGDBRemote::StartDebugserverProcess
 //            debugserver_args.AppendArgument("--log-file=/tmp/debugserver.txt");
 //            debugserver_args.AppendArgument("--log-flags=0x802e0e");
 
+            // We currently send down all arguments, attach pids, or attach 
+            // process names in dedicated GDB server packets, so we don't need
+            // to pass them as arguments. This is currently because of all the
+            // things we need to setup prior to launching: the environment,
+            // current working dir, file actions, etc.
+#if 0
             // Now append the program arguments
             if (inferior_argv)
             {
@@ -1990,20 +1915,18 @@ ProcessGDBRemote::StartDebugserverProcess
                     debugserver_args.AppendArgument ("--attach");
                 debugserver_args.AppendArgument (attach_name);
             }
-
-            Error file_actions_err;
-            posix_spawn_file_actions_t file_actions;
-#if DONT_CLOSE_DEBUGSERVER_STDIO
-            file_actions_err.SetErrorString ("Remove this after uncommenting the code block below.");
-#else
-            file_actions_err.SetError( ::posix_spawn_file_actions_init (&file_actions), eErrorTypePOSIX);
-            if (file_actions_err.Success())
-            {
-                ::posix_spawn_file_actions_addclose (&file_actions, STDIN_FILENO);
-                ::posix_spawn_file_actions_addclose (&file_actions, STDOUT_FILENO);
-                ::posix_spawn_file_actions_addclose (&file_actions, STDERR_FILENO);
-            }
 #endif
+            
+            ProcessLaunchInfo::FileAction file_action;
+            
+            // Close STDIN, STDOUT and STDERR. We might need to redirect them
+            // to "/dev/null" if we run into any problems.
+            file_action.Close (STDIN_FILENO);
+            launch_info.AppendFileAction (file_action);
+            file_action.Close (STDOUT_FILENO);
+            launch_info.AppendFileAction (file_action);
+            file_action.Close (STDERR_FILENO);
+            launch_info.AppendFileAction (file_action);
 
             if (log)
             {
@@ -2012,28 +1935,15 @@ ProcessGDBRemote::StartDebugserverProcess
                 log->Printf("%s arguments:\n%s", debugserver_args.GetArgumentAtIndex(0), strm.GetData());
             }
 
-            error.SetError (::posix_spawnp (&m_debugserver_pid,
-                                            debugserver_path,
-                                            file_actions_err.Success() ? &file_actions : NULL,
-                                            &attr,
-                                            debugserver_args.GetArgumentVector(),
-                                            (char * const*)inferior_envp),
-                            eErrorTypePOSIX);
-            
+            error = Host::LaunchProcess(launch_info);
 
-            ::posix_spawnattr_destroy (&attr);
-
-            if (file_actions_err.Success())
-                ::posix_spawn_file_actions_destroy (&file_actions);
-
-            // We have seen some cases where posix_spawnp was returning a valid
-            // looking pid even when an error was returned, so clear it out
-            if (error.Fail())
+            if (error.Success ())
+                m_debugserver_pid = launch_info.GetProcessID();
+            else
                 m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
 
             if (error.Fail() || log)
-                error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", m_debugserver_pid, debugserver_path, NULL, &attr, inferior_argv, inferior_envp);
-
+                error.PutToLog(log.get(), "Host::LaunchProcess (launch_info) => pid=%i, path='%s'", m_debugserver_pid, debugserver_path);
         }
         else
         {
@@ -2143,71 +2053,8 @@ ProcessGDBRemote::Initialize()
 }
 
 bool
-ProcessGDBRemote::SetCurrentGDBRemoteThread (int tid)
-{
-    if (m_curr_tid == tid)
-        return true;
-
-    char packet[32];
-    int packet_len;
-    if (tid <= 0)
-        packet_len = ::snprintf (packet, sizeof(packet), "Hg%i", tid);
-    else
-        packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
-    assert (packet_len + 1 < sizeof(packet));
-    StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
-    {
-        if (response.IsOKResponse())
-        {
-            m_curr_tid = tid;
-            return true;
-        }
-    }
-    return false;
-}
-
-bool
-ProcessGDBRemote::SetCurrentGDBRemoteThreadForRun (int tid)
-{
-    if (m_curr_tid_run == tid)
-        return true;
-
-    char packet[32];
-    int packet_len;
-    if (tid <= 0)
-        packet_len = ::snprintf (packet, sizeof(packet), "Hc%i", tid);
-    else
-        packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
-
-    assert (packet_len + 1 < sizeof(packet));
-    StringExtractorGDBRemote response;
-    if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, false))
-    {
-        if (response.IsOKResponse())
-        {
-            m_curr_tid_run = tid;
-            return true;
-        }
-    }
-    return false;
-}
-
-void
-ProcessGDBRemote::ResetGDBRemoteState ()
-{
-    // Reset and GDB remote state
-    m_curr_tid = LLDB_INVALID_THREAD_ID;
-    m_curr_tid_run = LLDB_INVALID_THREAD_ID;
-    m_z0_supported = 1;
-}
-
-
-bool
 ProcessGDBRemote::StartAsyncThread ()
 {
-    ResetGDBRemoteState ();
-
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
 
     if (log)

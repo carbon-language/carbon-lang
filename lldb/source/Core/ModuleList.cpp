@@ -63,36 +63,46 @@ ModuleList::~ModuleList()
 void
 ModuleList::Append (ModuleSP &module_sp)
 {
-    Mutex::Locker locker(m_modules_mutex);
-    m_modules.push_back(module_sp);
+    if (module_sp)
+    {
+        Mutex::Locker locker(m_modules_mutex);
+        m_modules.push_back(module_sp);
+    }
 }
 
 bool
 ModuleList::AppendIfNeeded (ModuleSP &module_sp)
 {
-    Mutex::Locker locker(m_modules_mutex);
-    collection::iterator pos, end = m_modules.end();
-    for (pos = m_modules.begin(); pos != end; ++pos)
+    if (module_sp)
     {
-        if (pos->get() == module_sp.get())
-            return false; // Already in the list
+        Mutex::Locker locker(m_modules_mutex);
+        collection::iterator pos, end = m_modules.end();
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            if (pos->get() == module_sp.get())
+                return false; // Already in the list
+        }
+        // Only push module_sp on the list if it wasn't already in there.
+        m_modules.push_back(module_sp);
+        return true;
     }
-    // Only push module_sp on the list if it wasn't already in there.
-    m_modules.push_back(module_sp);
-    return true;
+    return false;
 }
 
 bool
 ModuleList::Remove (ModuleSP &module_sp)
 {
-    Mutex::Locker locker(m_modules_mutex);
-    collection::iterator pos, end = m_modules.end();
-    for (pos = m_modules.begin(); pos != end; ++pos)
+    if (module_sp)
     {
-        if (pos->get() == module_sp.get())
+        Mutex::Locker locker(m_modules_mutex);
+        collection::iterator pos, end = m_modules.end();
+        for (pos = m_modules.begin(); pos != end; ++pos)
         {
-            m_modules.erase (pos);
-            return true;
+            if (pos->get() == module_sp.get())
+            {
+                m_modules.erase (pos);
+                return true;
+            }
         }
     }
     return false;

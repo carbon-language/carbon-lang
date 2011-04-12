@@ -82,6 +82,11 @@ public:
 
     Args (const char *command, size_t len);
 
+    Args (const Args &rhs);
+    
+    const Args &
+    operator= (const Args &rhs);
+
     //------------------------------------------------------------------
     /// Destructor.
     //------------------------------------------------------------------

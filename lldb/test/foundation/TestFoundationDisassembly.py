@@ -70,7 +70,7 @@ class FoundationDisassembleTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Stop at +[NSString stringWithFormat:].
-        self.expect("regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
+        self.expect("_regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
             substrs = ["Breakpoint created: 1: name = '+[NSString stringWithFormat:]', locations = 1"])
 
         # Stop at -[MyString initWithNSString:].
@@ -82,7 +82,7 @@ class FoundationDisassembleTestCase(TestBase):
             startstr = "Breakpoint created: 3: name = 'description', locations = 1")
 
         # Stop at -[NSAutoreleasePool release].
-        self.expect("regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
+        self.expect("_regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
             substrs = ["Breakpoint created: 4: name = '-[NSAutoreleasePool release]', locations = 1"])
 
         self.runCmd("run", RUN_SUCCEEDED)

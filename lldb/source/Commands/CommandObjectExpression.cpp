@@ -295,7 +295,7 @@ CommandObjectExpression::ExecuteRawCommandString
     CommandReturnObject &result
 )
 {
-    m_exe_ctx = m_interpreter.GetDebugger().GetExecutionContext();
+    m_exe_ctx = m_interpreter.GetExecutionContext();
 
     m_options.Reset();
 

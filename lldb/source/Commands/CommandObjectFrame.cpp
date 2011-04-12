@@ -69,7 +69,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.frame)
         {
             exe_ctx.frame->DumpUsingSettingsFormat (&result.GetOutputStream());
@@ -188,7 +188,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
         if (exe_ctx.thread)
         {
             const uint32_t num_frames = exe_ctx.thread->GetStackFrameCount();
@@ -445,7 +445,7 @@ public:
         CommandReturnObject &result
     )
     {
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.frame == NULL)
         {
             result.AppendError ("you must be stopped in a valid stack frame to view frame variables.");

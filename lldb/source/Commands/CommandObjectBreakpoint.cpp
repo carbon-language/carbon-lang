@@ -322,7 +322,7 @@ CommandObjectBreakpointSet::Execute
                 FileSpec file;
                 if (m_options.m_filename.empty())
                 {
-                    StackFrame *cur_frame = m_interpreter.GetDebugger().GetExecutionContext().frame;
+                    StackFrame *cur_frame = m_interpreter.GetExecutionContext().frame;
                     if (cur_frame == NULL)
                     {
                         result.AppendError ("Attempting to set breakpoint by line number alone with no selected frame.");

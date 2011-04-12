@@ -272,7 +272,7 @@ public:
             result.SetStatus (eReturnStatusFailed);
         }
 
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         
         if (!m_options.symbol_name.empty())
         {

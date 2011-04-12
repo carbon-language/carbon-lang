@@ -180,7 +180,7 @@ main (int argc, char *argv[])
     argv += optind;
 
 
-    GDBRemoteCommunicationServer gdb_server;
+    GDBRemoteCommunicationServer gdb_server (true);
     if (!listen_host_post.empty())
     {
         std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());

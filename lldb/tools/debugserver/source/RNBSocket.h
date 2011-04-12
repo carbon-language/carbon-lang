@@ -23,10 +23,11 @@
 class RNBSocket
 {
 public:
+    typedef void (*PortBoundCallback) (const void *baton, in_port_t port);
 
     RNBSocket () :
-        m_conn_port (-1),
-        m_conn_port_from_lockdown (false),
+        m_fd (-1),
+        m_fd_from_lockdown (false),
         m_timer (true)      // Make a thread safe timer
     {
     }
@@ -35,7 +36,7 @@ public:
         Disconnect (false);
     }
 
-    rnb_err_t Listen (in_port_t listen_port_num);
+    rnb_err_t Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton);
     rnb_err_t Connect (const char *host, uint16_t port);
 
 #if defined (__arm__)
@@ -46,7 +47,7 @@ public:
     rnb_err_t Read (std::string &p);
     rnb_err_t Write (const void *buffer, size_t length);
 
-    bool IsConnected () const { return m_conn_port != -1; }
+    bool IsConnected () const { return m_fd != -1; }
     void SaveErrno (int curr_errno);
     DNBTimer& Timer() { return m_timer; }
 
@@ -58,8 +59,8 @@ private:
 protected:
     rnb_err_t ClosePort (int& fd, bool save_errno);
 
-    int m_conn_port;    // Socket we use to communicate once conn established
-    bool m_conn_port_from_lockdown;
+    int m_fd;    // Socket we use to communicate once conn established
+    bool m_fd_from_lockdown;
     DNBTimer m_timer;
 };
 

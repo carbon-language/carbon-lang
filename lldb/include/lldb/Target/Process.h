@@ -11,8 +11,11 @@
 #define liblldb_Process_h_
 
 // C Includes
+#include <spawn.h>
+
 // C++ Includes
 #include <list>
+#include <iosfwd>
 #include <vector>
 
 // Other libraries and framework includes
@@ -39,7 +42,9 @@
 
 namespace lldb_private {
 
-
+//----------------------------------------------------------------------
+// ProcessInstanceSettings
+//----------------------------------------------------------------------
 class ProcessInstanceSettings : public InstanceSettings
 {
 public:
@@ -224,35 +229,38 @@ private:
     bool m_got_host_env;
 };
 
-    
+//----------------------------------------------------------------------
+// ProcessInfo
+//
+// A base class for information for a process. This can be used to fill
+// out information for a process prior to launching it, or it can be 
+// used for an instance of a process and can be filled in with the 
+// existing values for that process.
+//----------------------------------------------------------------------
 class ProcessInfo
 {
 public:
     ProcessInfo () :
         m_executable (),
-        m_args (),
-        m_real_uid (UINT32_MAX),
-        m_real_gid (UINT32_MAX),
-        m_effective_uid (UINT32_MAX),
-        m_effective_gid (UINT32_MAX),
+        m_arguments (),
+        m_environment (),
+        m_uid (LLDB_INVALID_UID),
+        m_gid (LLDB_INVALID_UID),
         m_arch(),
-        m_pid (LLDB_INVALID_PROCESS_ID),
-        m_parent_pid (LLDB_INVALID_PROCESS_ID)
+        m_pid (LLDB_INVALID_PROCESS_ID)
     {
     }
-
+    
     ProcessInfo (const char *name,
                  const ArchSpec &arch,
                  lldb::pid_t pid) :
-        m_executable (),
-        m_args (),
-        m_real_uid (UINT32_MAX),
-        m_real_gid (UINT32_MAX),
-        m_effective_uid (UINT32_MAX),
-        m_effective_gid (UINT32_MAX),
+        m_executable (name, false),
+        m_arguments (),
+        m_environment(),
+        m_uid (LLDB_INVALID_UID),
+        m_gid (LLDB_INVALID_UID),
         m_arch (arch),
-        m_pid (pid),
-        m_parent_pid (LLDB_INVALID_PROCESS_ID)
+        m_pid (pid)
     {
     }
     
@@ -260,14 +268,12 @@ public:
     Clear ()
     {
         m_executable.Clear();
-        m_args.Clear();
-        m_real_uid = UINT32_MAX;
-        m_real_gid = UINT32_MAX;
-        m_effective_uid = UINT32_MAX;
-        m_effective_gid = UINT32_MAX;
+        m_arguments.Clear();
+        m_environment.Clear();
+        m_uid = LLDB_INVALID_UID;
+        m_gid = LLDB_INVALID_UID;
         m_arch.Clear();
         m_pid = LLDB_INVALID_PROCESS_ID;
-        m_parent_pid = LLDB_INVALID_PROCESS_ID;
     }
     
     const char *
@@ -275,7 +281,7 @@ public:
     {
         return m_executable.GetFilename().GetCString();
     }
-
+    
     size_t
     GetNameLength() const
     {
@@ -293,97 +299,61 @@ public:
     {
         return m_executable;
     }
-
+    
     const FileSpec &
     GetExecutableFile () const
     {
         return m_executable;
     }
-
+    
     uint32_t
-    GetRealUserID() const
+    GetUserID() const
     {
-        return m_real_uid;
+        return m_uid;
     }
     
     uint32_t
-    GetRealGroupID() const
+    GetGroupID() const
     {
-        return m_real_gid;
-    }
-
-    uint32_t
-    GetEffectiveUserID() const
-    {
-        return m_effective_uid;
-    }
-
-    uint32_t
-    GetEffectiveGroupID() const
-    {
-        return m_effective_gid;
+        return m_gid;
     }
     
     bool
-    RealUserIDIsValid () const
+    UserIDIsValid () const
     {
-        return m_real_uid != UINT32_MAX;
+        return m_uid != UINT32_MAX;
     }
     
     bool
-    RealGroupIDIsValid () const
+    GroupIDIsValid () const
     {
-        return m_real_gid != UINT32_MAX;
-    }
-    
-    bool
-    EffectiveUserIDIsValid () const
-    {
-        return m_effective_uid != UINT32_MAX;
-    }
-
-    bool
-    EffectiveGroupIDIsValid () const
-    {
-        return m_effective_gid != UINT32_MAX;
-    }
-
-    void
-    SetRealUserID (uint32_t uid)
-    {
-        m_real_uid = uid;
-    }
-
-    void
-    SetRealGroupID (uint32_t gid)
-    {
-        m_real_gid = gid;
-    }
-
-    void
-    SetEffectiveUserID (uint32_t uid)
-    {
-        m_effective_uid = uid;
+        return m_gid != UINT32_MAX;
     }
     
     void
-    SetEffectiveGroupID (uint32_t gid)
+    SetUserID (uint32_t uid)
     {
-        m_effective_gid = gid;
+        m_uid = uid;
     }
-
+    
+    void
+    SetGroupID (uint32_t gid)
+    {
+        m_gid = gid;
+    }
+    
     ArchSpec &
     GetArchitecture ()
     {
         return m_arch;
     }
-
+    
     const ArchSpec &
     GetArchitecture () const
     {
         return m_arch;
     }
-
+    
     lldb::pid_t
     GetProcessID () const
     {
@@ -400,6 +370,120 @@ public:
     ProcessIDIsValid() const
     {
         return m_pid != LLDB_INVALID_PROCESS_ID;
+    }
+    
+    void
+    Dump (Stream &s, Platform *platform) const;
+    
+    Args &
+    GetArguments ()
+    {
+        return m_arguments;
+    }
+    
+    const Args &
+    GetArguments () const
+    {
+        return m_arguments;
+    }
+    
+    void
+    SetArgumentsFromArgs (const Args& args, 
+                          bool first_arg_is_executable,
+                          bool first_arg_is_executable_and_argument);
+
+    Args &
+    GetEnvironmentEntries ()
+    {
+        return m_environment;
+    }
+    
+    const Args &
+    GetEnvironmentEntries () const
+    {
+        return m_environment;
+    }
+    
+protected:
+    FileSpec m_executable;
+    Args m_arguments;
+    Args m_environment;
+    uint32_t m_uid;
+    uint32_t m_gid;    
+    ArchSpec m_arch;
+    lldb::pid_t m_pid;
+};
+
+//----------------------------------------------------------------------
+// ProcessInstanceInfo
+//
+// Describes an existing process and any discoverable information that
+// pertains to that process.
+//----------------------------------------------------------------------
+class ProcessInstanceInfo : public ProcessInfo
+{
+public:
+    ProcessInstanceInfo () :
+        ProcessInfo (),
+        m_euid (UINT32_MAX),
+        m_egid (UINT32_MAX),
+        m_parent_pid (LLDB_INVALID_PROCESS_ID)
+    {
+    }
+
+    ProcessInstanceInfo (const char *name,
+                 const ArchSpec &arch,
+                 lldb::pid_t pid) :
+        ProcessInfo (name, arch, pid),
+        m_euid (UINT32_MAX),
+        m_egid (UINT32_MAX),
+        m_parent_pid (LLDB_INVALID_PROCESS_ID)
+    {
+    }
+    
+    void
+    Clear ()
+    {
+        ProcessInfo::Clear();
+        m_euid = UINT32_MAX;
+        m_egid = UINT32_MAX;
+        m_parent_pid = LLDB_INVALID_PROCESS_ID;
+    }
+    
+    uint32_t
+    GetEffectiveUserID() const
+    {
+        return m_euid;
+    }
+
+    uint32_t
+    GetEffectiveGroupID() const
+    {
+        return m_egid;
+    }
+    
+    bool
+    EffectiveUserIDIsValid () const
+    {
+        return m_euid != UINT32_MAX;
+    }
+
+    bool
+    EffectiveGroupIDIsValid () const
+    {
+        return m_egid != UINT32_MAX;
+    }
+
+    void
+    SetEffectiveUserID (uint32_t uid)
+    {
+        m_euid = uid;
+    }
+    
+    void
+    SetEffectiveGroupID (uint32_t gid)
+    {
+        m_egid = gid;
     }
 
     lldb::pid_t
@@ -424,46 +508,272 @@ public:
     Dump (Stream &s, Platform *platform) const;
 
     static void
-    DumpTableHeader (Stream &s, Platform *platform, bool verbose = false);
+    DumpTableHeader (Stream &s, Platform *platform, bool show_args, bool verbose);
 
     void
-    DumpAsTableRow (Stream &s, Platform *platform, bool verbose = false) const;
+    DumpAsTableRow (Stream &s, Platform *platform, bool show_args, bool verbose) const;
+    
+protected:
+    uint32_t m_euid;
+    uint32_t m_egid;    
+    lldb::pid_t m_parent_pid;
+};
+    
+    
+//----------------------------------------------------------------------
+// ProcessLaunchInfo
+//
+// Describes any information that is required to launch a process.
+//----------------------------------------------------------------------
 
-    StringList &
-    GetArguments()
+class ProcessLaunchInfo : public ProcessInfo
+{
+public:
+
+    class FileAction
     {
-        return m_args;
+    public:
+
+        FileAction () :
+            m_action (eFileActionNone),
+            m_fd (-1),
+            m_arg (-1),
+            m_path ()
+        {
+        }
+
+        void
+        Clear()
+        {
+            m_action = eFileActionNone;
+            m_fd = -1;
+            m_arg = -1;
+            m_path.clear();
+        }
+
+        bool
+        Close (int fd);
+
+        bool
+        Duplicate (int fd, int dup_fd);
+
+        bool
+        Open (int fd, const char *path, bool read, bool write);
+        
+        static bool
+        AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
+                                 const FileAction *info,
+                                 Log *log, 
+                                 Error& error);
+
+    protected:
+        enum Action
+        {
+            eFileActionNone,
+            eFileActionClose,
+            eFileActionDuplicate,
+            eFileActionOpen
+        };
+
+        Action m_action;    // The action for this file
+        int m_fd;           // An existing file descriptor
+        int m_arg;          // oflag for eFileActionOpen*, dup_fd for eFileActionDuplicate
+        std::string m_path; // A file path to use for opening after fork or posix_spawn
+    };
+    
+    ProcessLaunchInfo () :
+        ProcessInfo(),
+        m_flags (),
+        m_stdin_info (),
+        m_stdout_info (),
+        m_stderr_info ()
+    {
+    }
+
+    void
+    AppendFileAction (const FileAction &info)
+    {
+        m_file_actions.push_back(info);
+    }
+
+    void
+    AppendCloseFileAction (int fd)
+    {
+        FileAction file_action;
+        file_action.Close (fd);
+        AppendFileAction (file_action);
+    }
+
+    void
+    AppendDuplciateFileAction (int fd, int dup_fd)
+    {
+        FileAction file_action;
+        file_action.Duplicate (fd, dup_fd);
+        AppendFileAction (file_action);
+    }
+
+    void
+    AppendOpenFileAction (int fd, const char *path, bool read, bool write)
+    {
+        FileAction file_action;
+        file_action.Open (fd, path, read, write);
+        AppendFileAction (file_action);
+    }
+
+    void
+    AppendSuppressFileAction (int fd, bool read, bool write)
+    {
+        FileAction file_action;
+        file_action.Open (fd, "/dev/null", read, write);
+        AppendFileAction (file_action);
+    }
+
+    size_t
+    GetNumFileActions () const
+    {
+        return m_file_actions.size();
     }
     
-    const StringList &
-    GetArguments() const
+    const FileAction *
+    GetFileActionAtIndex (size_t idx) const
     {
-        return m_args;
+        if (idx < m_file_actions.size())
+            return &m_file_actions[idx];
+        return NULL;
+    }
+
+    Flags &
+    GetFlags ()
+    {
+        return m_flags;
+    }
+
+    const Flags &
+    GetFlags () const
+    {
+        return m_flags;
+    }
+    
+    const char *
+    GetWorkingDirectory () const
+    {
+        if (m_working_dir.empty())
+            return NULL;
+        return m_working_dir.c_str();
+    }
+
+    void
+    SetWorkingDirectory (const char *working_dir)
+    {
+        if (working_dir && working_dir[0])
+            m_working_dir.assign (working_dir);
+        else
+            m_working_dir.clear();
+    }
+
+    void
+    SwapWorkingDirectory (std::string &working_dir)
+    {
+        m_working_dir.swap (working_dir);
+    }
+
+
+    const char *
+    GetProcessPluginName () const
+    {
+        if (m_plugin_name.empty())
+            return NULL;
+        return m_plugin_name.c_str();
+    }
+
+    void
+    SetProcessPluginName (const char *plugin)
+    {
+        if (plugin && plugin[0])
+            m_plugin_name.assign (plugin);
+        else
+            m_plugin_name.clear();
+    }
+    
+    void
+    Clear ()
+    {
+        ProcessInfo::Clear();
+        m_working_dir.clear();
+        m_plugin_name.clear();
+        m_flags.Clear();
+        m_stdin_info.Clear();
+        m_stdout_info.Clear();
+        m_stderr_info.Clear();
+        m_file_actions.clear();
     }
 
 protected:
-    FileSpec m_executable;
-    StringList m_args;
-    uint32_t m_real_uid;
-    uint32_t m_real_gid;    
-    uint32_t m_effective_uid;
-    uint32_t m_effective_gid;    
-    ArchSpec m_arch;
-    lldb::pid_t m_pid;
-    lldb::pid_t m_parent_pid;
+    std::string m_working_dir;
+    std::string m_plugin_name;
+    Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags
+    FileAction m_stdin_info;      // File action for stdin
+    FileAction m_stdout_info;     // File action for stdout
+    FileAction m_stderr_info;     // File action for stderr
+    std::vector<FileAction> m_file_actions; // File actions for any other files
 };
 
-class ProcessInfoMatch
+class ProcessLaunchCommandOptions : public Options
 {
 public:
-    ProcessInfoMatch () :
+    
+    ProcessLaunchCommandOptions (CommandInterpreter &interpreter) :
+        Options(interpreter)
+    {
+        // Keep default values of all options in one place: ResetOptionValues ()
+        ResetOptionValues ();
+    }
+    
+    ~ProcessLaunchCommandOptions ()
+    {
+    }
+    
+    Error
+    SetOptionValue (int option_idx, const char *option_arg);
+    
+    void
+    ResetOptionValues ()
+    {
+        launch_info.Clear();
+    }
+    
+    const OptionDefinition*
+    GetDefinitions ()
+    {
+        return g_option_table;
+    }
+    
+    // Options table: Required for subclasses of Options.
+    
+    static OptionDefinition g_option_table[];
+    
+    // Instance variables to hold the values for command options.
+    
+    ProcessLaunchInfo launch_info;
+};
+
+//----------------------------------------------------------------------
+// ProcessInstanceInfoMatch
+//
+// A class to help matching one ProcessInstanceInfo to another.
+//----------------------------------------------------------------------
+
+class ProcessInstanceInfoMatch
+{
+public:
+    ProcessInstanceInfoMatch () :
         m_match_info (),
         m_name_match_type (lldb_private::eNameMatchIgnore),
         m_match_all_users (false)
     {
     }
 
-    ProcessInfoMatch (const char *process_name, 
+    ProcessInstanceInfoMatch (const char *process_name, 
                       lldb_private::NameMatchType process_name_match_type) :
         m_match_info (),
         m_name_match_type (process_name_match_type),
@@ -472,13 +782,13 @@ public:
         m_match_info.SetName (process_name);
     }
 
-    ProcessInfo &
+    ProcessInstanceInfo &
     GetProcessInfo ()
     {
         return m_match_info;
     }
 
-    const ProcessInfo &
+    const ProcessInstanceInfo &
     GetProcessInfo () const
     {
         return m_match_info;
@@ -512,7 +822,7 @@ public:
     NameMatches (const char *process_name) const;
 
     bool
-    Matches (const ProcessInfo &proc_info) const;
+    Matches (const ProcessInstanceInfo &proc_info) const;
 
     bool
     MatchAllProcesses () const;
@@ -520,15 +830,15 @@ public:
     Clear ();
 
 protected:
-    ProcessInfo m_match_info;
+    ProcessInstanceInfo m_match_info;
     lldb_private::NameMatchType m_name_match_type;
     bool m_match_all_users;
 };
 
-class ProcessInfoList
+class ProcessInstanceInfoList
 {
 public:
-    ProcessInfoList () :
+    ProcessInstanceInfoList () :
         m_infos()
     {
     }
@@ -546,7 +856,7 @@ public:
     }
     
     void
-    Append (const ProcessInfo &info)
+    Append (const ProcessInstanceInfo &info)
     {
         m_infos.push_back (info);
     }
@@ -576,7 +886,7 @@ public:
     }
 
     bool
-    GetInfoAtIndex (uint32_t idx, ProcessInfo &info)
+    GetInfoAtIndex (uint32_t idx, ProcessInstanceInfo &info)
     {
         if (idx < m_infos.size())
         {
@@ -587,7 +897,7 @@ public:
     }
     
     // You must ensure "idx" is valid before calling this function
-    const ProcessInfo &
+    const ProcessInstanceInfo &
     GetProcessInfoAtIndex (uint32_t idx) const
     {
         assert (idx < m_infos.size());
@@ -595,7 +905,7 @@ public:
     }
     
 protected:
-    typedef std::vector<ProcessInfo> collection;
+    typedef std::vector<ProcessInstanceInfo> collection;
     collection m_infos;
 };
 
@@ -1732,6 +2042,20 @@ public:
                 size_t size,
                 Error &error);
 
+    //------------------------------------------------------------------
+    /// Read a NULL terminated C string from memory
+    ///
+    /// This function will read a cache page at a time until the NULL
+    /// C stirng terminator is found. It will stop reading if the NULL
+    /// termination byte isn't found before reading \a cstr_max_len
+    /// bytes, and the results are always guaranteed to be NULL 
+    /// terminated (at most cstr_max_len - 1 bytes will be read).
+    //------------------------------------------------------------------
+    size_t
+    ReadCStringFromMemory (lldb::addr_t vm_addr, 
+                           char *cstr, 
+                           size_t cstr_max_len);
+
     size_t
     ReadMemoryFromInferior (lldb::addr_t vm_addr, 
                             void *buf, 
@@ -2292,6 +2616,11 @@ protected:
               size_t dst_len,
               Error &error);
         
+        uint32_t
+        GetMemoryCacheLineSize() const
+        {
+            return m_cache_line_byte_size ;
+        }
     protected:
         typedef std::map<lldb::addr_t, lldb::DataBufferSP> collection;
         //------------------------------------------------------------------

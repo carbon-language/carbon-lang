@@ -34,8 +34,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationClient constructor
 //----------------------------------------------------------------------
-GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
-    GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet"),
+GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
+    GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet", is_platform),
     m_supports_not_sending_acks (eLazyBoolCalculate),
     m_supports_thread_suffix (eLazyBoolCalculate),
     m_supports_vCont_all (eLazyBoolCalculate),
@@ -49,6 +49,14 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
     m_supports_qGroupName (true),
+    m_supports_qThreadStopInfo (true),
+    m_supports_z0 (true),
+    m_supports_z1 (true),
+    m_supports_z2 (true),
+    m_supports_z3 (true),
+    m_supports_z4 (true),
+    m_curr_tid (LLDB_INVALID_THREAD_ID),
+    m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_async_mutex (Mutex::eMutexTypeRecursive),
     m_async_packet_predicate (false),
     m_async_packet (),
@@ -126,6 +134,12 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_qfProcessInfo = true;
     m_supports_qUserName = true;
     m_supports_qGroupName = true;
+    m_supports_qThreadStopInfo = true;
+    m_supports_z0 = true;
+    m_supports_z1 = true;
+    m_supports_z2 = true;
+    m_supports_z3 = true;
+    m_supports_z4 = true;
     m_host_arch.Clear();
 }
 
@@ -1119,7 +1133,7 @@ GDBRemoteCommunicationClient::SetDisableASLR (bool enable)
 }
 
 bool
-GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemote &response, ProcessInfo &process_info)
+GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemote &response, ProcessInstanceInfo &process_info)
 {
     if (response.IsNormalResponse())
     {
@@ -1139,7 +1153,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
             }
             else if (name.compare("uid") == 0)
             {
-                process_info.SetRealUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("euid") == 0)
             {
@@ -1147,7 +1161,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
             }
             else if (name.compare("gid") == 0)
             {
-                process_info.SetRealGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("egid") == 0)
             {
@@ -1180,7 +1194,7 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
 }
 
 bool
-GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     process_info.Clear();
     
@@ -1205,8 +1219,8 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc
 }
 
 uint32_t
-GDBRemoteCommunicationClient::FindProcesses (const ProcessInfoMatch &match_info,
-                                             ProcessInfoList &process_infos)
+GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                                             ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();
     
@@ -1261,10 +1275,10 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInfoMatch &match_info,
                 packet.Printf("pid:%u;",match_info.GetProcessInfo().GetProcessID());
             if (match_info.GetProcessInfo().ParentProcessIDIsValid())
                 packet.Printf("parent_pid:%u;",match_info.GetProcessInfo().GetParentProcessID());
-            if (match_info.GetProcessInfo().RealUserIDIsValid())
-                packet.Printf("uid:%u;",match_info.GetProcessInfo().GetRealUserID());
-            if (match_info.GetProcessInfo().RealGroupIDIsValid())
-                packet.Printf("gid:%u;",match_info.GetProcessInfo().GetRealGroupID());
+            if (match_info.GetProcessInfo().UserIDIsValid())
+                packet.Printf("uid:%u;",match_info.GetProcessInfo().GetUserID());
+            if (match_info.GetProcessInfo().GroupIDIsValid())
+                packet.Printf("gid:%u;",match_info.GetProcessInfo().GetGroupID());
             if (match_info.GetProcessInfo().EffectiveUserIDIsValid())
                 packet.Printf("euid:%u;",match_info.GetProcessInfo().GetEffectiveUserID());
             if (match_info.GetProcessInfo().EffectiveGroupIDIsValid())
@@ -1291,7 +1305,7 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInfoMatch &match_info,
 
             do
             {
-                ProcessInfo process_info;
+                ProcessInstanceInfo process_info;
                 if (!DecodeProcessInfoResponse (response, process_info))
                     break;
                 process_infos.Append(process_info);
@@ -1446,4 +1460,155 @@ GDBRemoteCommunicationClient::SendSpeedTestPacket (uint32_t send_size, uint32_t 
         return true;
     }
     return false;
+}
+
+uint16_t
+GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort ()
+{
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse("qLaunchGDBServer", strlen("qLaunchGDBServer"), response, false))
+    {
+        std::string name;
+        std::string value;
+        uint16_t port = 0;
+        lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+        while (response.GetNameColonValue(name, value))
+        {
+            if (name.size() == 4 && name.compare("port") == 0)
+                port = Args::StringToUInt32(value.c_str(), 0, 0);
+            if (name.size() == 3 && name.compare("pid") == 0)
+                pid = Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0);
+        }
+        return port;
+    }
+    return 0;
+}
+
+bool
+GDBRemoteCommunicationClient::SetCurrentThread (int tid)
+{
+    if (m_curr_tid == tid)
+        return true;
+    
+    char packet[32];
+    int packet_len;
+    if (tid <= 0)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg%i", tid);
+    else
+        packet_len = ::snprintf (packet, sizeof(packet), "Hg%x", tid);
+    assert (packet_len + 1 < sizeof(packet));
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+    {
+        if (response.IsOKResponse())
+        {
+            m_curr_tid = tid;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::SetCurrentThreadForRun (int tid)
+{
+    if (m_curr_tid_run == tid)
+        return true;
+    
+    char packet[32];
+    int packet_len;
+    if (tid <= 0)
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc%i", tid);
+    else
+        packet_len = ::snprintf (packet, sizeof(packet), "Hc%x", tid);
+    
+    assert (packet_len + 1 < sizeof(packet));
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+    {
+        if (response.IsOKResponse())
+        {
+            m_curr_tid_run = tid;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetStopReply (StringExtractorGDBRemote &response)
+{
+    if (SendPacketAndWaitForResponse("?", 1, response, false))
+        return response.IsNormalResponse();
+    return false;
+}
+
+bool
+GDBRemoteCommunicationClient::GetThreadStopInfo (uint32_t tid, StringExtractorGDBRemote &response)
+{
+    if (m_supports_qThreadStopInfo)
+    {
+        char packet[256];
+        int packet_len = ::snprintf(packet, sizeof(packet), "qThreadStopInfo%x", tid);
+        assert (packet_len < sizeof(packet));
+        if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
+        {
+            if (response.IsUnsupportedResponse())
+                m_supports_qThreadStopInfo = false;
+            else if (response.IsNormalResponse())
+                return true;
+            else
+                return false;
+        }
+    }
+    if (SetCurrentThread (tid))
+        return GetStopReply (response);
+    return false;
+}
+
+
+uint8_t
+GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type, bool insert,  addr_t addr, uint32_t length)
+{
+    switch (type)
+    {
+    case eBreakpointSoftware:   if (!m_supports_z0) return UINT8_MAX; break;
+    case eBreakpointHardware:   if (!m_supports_z1) return UINT8_MAX; break;
+    case eWatchpointWrite:      if (!m_supports_z2) return UINT8_MAX; break;
+    case eWatchpointRead:       if (!m_supports_z3) return UINT8_MAX; break;
+    case eWatchpointReadWrite:  if (!m_supports_z4) return UINT8_MAX; break;
+    default:                    return UINT8_MAX;
+    }
+
+    char packet[64];
+    const int packet_len = ::snprintf (packet, 
+                                       sizeof(packet), 
+                                       "%c%i,%llx,%x", 
+                                       insert ? 'Z' : 'z', 
+                                       type, 
+                                       addr, 
+                                       length);
+
+    assert (packet_len + 1 < sizeof(packet));
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, true))
+    {
+        if (response.IsOKResponse())
+            return 0;
+        if (response.IsUnsupportedResponse())
+        {
+            switch (type)
+            {
+                case eBreakpointSoftware:   m_supports_z0 = false; break;
+                case eBreakpointHardware:   m_supports_z1 = false; break;
+                case eWatchpointWrite:      m_supports_z2 = false; break;
+                case eWatchpointRead:       m_supports_z3 = false; break;
+                case eWatchpointReadWrite:  m_supports_z4 = false; break;
+                default:                    break;
+            }
+        }
+        else if (response.IsErrorResponse())
+            return response.GetError();
+    }
+    return UINT8_MAX;
 }

@@ -53,48 +53,90 @@ StringExtractorGDBRemote::GetResponseType () const
 StringExtractorGDBRemote::ServerPacketType
 StringExtractorGDBRemote::GetServerPacketType () const
 {
+#define PACKET_MATCHES(s) ((packet_size == (sizeof(s)-1)) && (strcmp((packet_cstr),(s)) == 0))
+#define PACKET_STARTS_WITH(s) ((packet_size >= (sizeof(s)-1)) && ::strncmp(packet_cstr, s, (sizeof(s)-1))==0)
+    
     // Empty is not a supported packet...
     if (m_packet.empty())
         return eServerPacketType_invalid;
 
+    const size_t packet_size = m_packet.size();
     const char *packet_cstr = m_packet.c_str();
     switch (m_packet[0])
     {
     case '\x03':
-        if (m_packet.size() == 1)
-            return eServerPacketType_interrupt;
+        if (packet_size == 1) return eServerPacketType_interrupt;
         break;
 
     case '-':
-        if (m_packet.size() == 1)
-            return eServerPacketType_nack;
+        if (packet_size == 1) return eServerPacketType_nack;
         break;
 
     case '+':
-        if (m_packet.size() == 1)
-            return eServerPacketType_ack;
+        if (packet_size == 1) return eServerPacketType_ack;
         break;
 
+    case 'A':
+        return eServerPacketType_A;
+            
     case 'Q':
-        if (strcmp (packet_cstr, "QStartNoAckMode") == 0)
-            return eServerPacketType_QStartNoAckMode;
+        switch (packet_cstr[1])
+        {
+        case 'E':
+            if (PACKET_STARTS_WITH ("QEnvironment:"))           return eServerPacketType_QEnvironment; 
+            break;
+
+        case 'S':
+            if (PACKET_MATCHES ("QStartNoAckMode"))             return eServerPacketType_QStartNoAckMode;
+            else if (PACKET_STARTS_WITH ("QSetDisableASLR:"))   return eServerPacketType_QSetDisableASLR;
+            else if (PACKET_STARTS_WITH ("QSetSTDIN:"))         return eServerPacketType_QSetSTDIN;
+            else if (PACKET_STARTS_WITH ("QSetSTDOUT:"))        return eServerPacketType_QSetSTDOUT;
+            else if (PACKET_STARTS_WITH ("QSetSTDERR:"))        return eServerPacketType_QSetSTDERR;
+            else if (PACKET_STARTS_WITH ("QSetWorkingDir:"))    return eServerPacketType_QSetWorkingDir;
+            break;
+        }
         break;
             
     case 'q':
-             if (packet_cstr[1] == 'S' && 0 == ::strncmp(packet_cstr, "qSpeedTest:", strlen("qSpeedTest:")))
-            return eServerPacketType_qSpeedTest;
-        else if (packet_cstr[1] == 'H' && 0 == ::strcmp (packet_cstr, "qHostInfo"))
-            return eServerPacketType_qHostInfo;
-        else if (packet_cstr[1] == 'P' && 0 == ::strncmp(packet_cstr, "qProcessInfoPID:", strlen("qProcessInfoPID:")))
-            return eServerPacketType_qProcessInfoPID;
-        else if (packet_cstr[1] == 'f' && 0 == ::strncmp(packet_cstr, "qfProcessInfo", strlen("qfProcessInfo")))
-            return eServerPacketType_qfProcessInfo;
-        else if (packet_cstr[1] == 'U' && 0 == ::strncmp(packet_cstr, "qUserName:", strlen("qUserName:")))
-            return eServerPacketType_qUserName;
-        else if (packet_cstr[1] == 'G' && 0 == ::strncmp(packet_cstr, "qGroupName:", strlen("qGroupName:")))
-            return eServerPacketType_qGroupName;
-        else if (packet_cstr[1] == 's' && 0 == ::strcmp (packet_cstr, "qsProcessInfo"))
-            return eServerPacketType_qsProcessInfo;
+        switch (packet_cstr[1])
+        {
+        case 's':
+            if (PACKET_MATCHES ("qsProcessInfo"))               return eServerPacketType_qsProcessInfo;
+            break;
+
+        case 'f':
+            if (PACKET_STARTS_WITH ("qfProcessInfo"))           return eServerPacketType_qfProcessInfo;
+            break;
+
+        case 'C':
+            if (packet_size == 2)                               return eServerPacketType_qC;
+            break;
+
+        case 'G':
+            if (PACKET_STARTS_WITH ("qGroupName:"))             return eServerPacketType_qGroupName;
+            break;
+
+        case 'H':
+            if (PACKET_MATCHES ("qHostInfo"))                   return eServerPacketType_qHostInfo;
+            break;
+
+        case 'L':
+            if (PACKET_MATCHES ("qLaunchGDBServer"))            return eServerPacketType_qLaunchGDBServer;
+            if (PACKET_MATCHES ("qLaunchSuccess"))              return eServerPacketType_qLaunchSuccess;
+            break;
+            
+        case 'P':
+            if (PACKET_STARTS_WITH ("qProcessInfoPID:"))        return eServerPacketType_qProcessInfoPID;
+            break;
+
+        case 'S':
+            if (PACKET_STARTS_WITH ("qSpeedTest:"))             return eServerPacketType_qSpeedTest;
+            break;
+
+        case 'U':
+            if (PACKET_STARTS_WITH ("qUserName:"))              return eServerPacketType_qUserName;
+            break;
+        }
         break;
     }
     return eServerPacketType_unimplemented;

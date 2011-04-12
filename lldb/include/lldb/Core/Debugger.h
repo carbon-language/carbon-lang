@@ -388,15 +388,6 @@ public:
     bool
     PopInputReader (const lldb::InputReaderSP& reader_sp);
 
-    ExecutionContext &
-    GetExecutionContext()
-    {
-        return m_exe_ctx;
-    }
-
-    void
-    UpdateExecutionContext (ExecutionContext *override_context);
-
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
     
@@ -447,7 +438,6 @@ protected:
     Listener m_listener;
     SourceManager m_source_manager;
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
-    ExecutionContext m_exe_ctx;
 
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;

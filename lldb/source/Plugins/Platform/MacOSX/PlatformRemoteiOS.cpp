@@ -447,8 +447,8 @@ PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file,
 
 
 uint32_t
-PlatformRemoteiOS::FindProcesses (const ProcessInfoMatch &match_info,
-                                  ProcessInfoList &process_infos)
+PlatformRemoteiOS::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                                  ProcessInstanceInfoList &process_infos)
 {
     // TODO: if connected, send a packet to get the remote process infos by name
     process_infos.Clear();
@@ -456,7 +456,7 @@ PlatformRemoteiOS::FindProcesses (const ProcessInfoMatch &match_info,
 }
 
 bool
-PlatformRemoteiOS::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+PlatformRemoteiOS::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     // TODO: if connected, send a packet to get the remote process info
     process_info.Clear();

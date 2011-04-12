@@ -87,7 +87,7 @@ DumpCompileUnitLineTable
                 LineTable *line_table = sc.comp_unit->GetLineTable();
                 if (line_table)
                     line_table->GetDescription (&strm, 
-                                                interpreter.GetDebugger().GetExecutionContext().target, 
+                                                interpreter.GetExecutionContext().target, 
                                                 lldb::eDescriptionLevelBrief);
                 else
                     strm << "No line table";
@@ -165,7 +165,7 @@ DumpModuleSymtab (CommandInterpreter &interpreter, Stream &strm, Module *module,
         {
             Symtab *symtab = objfile->GetSymtab();
             if (symtab)
-                symtab->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, sort_order);
+                symtab->Dump(&strm, interpreter.GetExecutionContext().target, sort_order);
         }
     }
 }
@@ -183,9 +183,11 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
             {
                 strm.PutCString ("Sections for '");
                 strm << module->GetFileSpec();
+                if (module->GetObjectName())
+                    strm << '(' << module->GetObjectName() << ')';
                 strm.Printf ("' (%s):\n", module->GetArchitecture().GetArchitectureName());
                 strm.IndentMore();
-                section_list->Dump(&strm, interpreter.GetDebugger().GetExecutionContext().target, true, UINT32_MAX);
+                section_list->Dump(&strm, interpreter.GetExecutionContext().target, true, UINT32_MAX);
                 strm.IndentLess();
             }
         }
@@ -224,7 +226,7 @@ LookupAddressInModule
         lldb::addr_t addr = raw_addr - offset;
         Address so_addr;
         SymbolContext sc;
-        Target *target = interpreter.GetDebugger().GetExecutionContext().target;
+        Target *target = interpreter.GetExecutionContext().target;
         if (target && !target->GetSectionLoadList().IsEmpty())
         {
             if (!target->GetSectionLoadList().ResolveLoadAddress (addr, so_addr))
@@ -242,7 +244,7 @@ LookupAddressInModule
         if (offset)
             strm.Printf("File Address: 0x%llx\n", addr);
 
-        ExecutionContextScope *exe_scope = interpreter.GetDebugger().GetExecutionContext().GetBestExecutionContextScope();
+        ExecutionContextScope *exe_scope = interpreter.GetExecutionContext().GetBestExecutionContextScope();
         strm.IndentMore();
         strm.Indent ("    Address: ");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
@@ -309,7 +311,7 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
                         strm.Indent ();
-                        symbol->Dump (&strm, interpreter.GetDebugger().GetExecutionContext().target, i);
+                        symbol->Dump (&strm, interpreter.GetExecutionContext().target, i);
                     }
                     strm.IndentLess ();
                     return num_matches;
@@ -338,9 +340,9 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
             {
                 if (sc.line_entry.range.GetBaseAddress().IsValid())
                 {
-                    lldb::addr_t vm_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetDebugger().GetExecutionContext().target);
+                    lldb::addr_t vm_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetExecutionContext().target);
                     int addr_size = sizeof (addr_t);
-                    Process *process = interpreter.GetDebugger().GetExecutionContext().process;
+                    Process *process = interpreter.GetExecutionContext().process;
                     if (process)
                         addr_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
                     if (vm_addr != LLDB_INVALID_ADDRESS)
@@ -351,7 +353,7 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
                     strm.PutCString(" in ");
                 }
             }
-            sc.DumpStopContext(&strm, interpreter.GetDebugger().GetExecutionContext().process, sc.line_entry.range.GetBaseAddress(), true, true, false);
+            sc.DumpStopContext(&strm, interpreter.GetExecutionContext().process, sc.line_entry.range.GetBaseAddress(), true, true, false);
         }
     }
     strm.IndentLess ();
@@ -1050,7 +1052,7 @@ public:
         }
         else
         {
-            ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+            ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
             uint32_t total_num_dumped = 0;
 
             uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
@@ -1233,9 +1235,11 @@ public:
                     Module *module = target->GetImages().GetModulePointerAtIndex(image_idx);
                     strm.Printf("[%3u] ", image_idx);
 
+                    bool dump_object_name = false;
                     if (m_options.m_format_array.empty())
                     {
                         DumpFullpath(strm, &module->GetFileSpec(), 0);
+                        dump_object_name = true;
                     }
                     else
                     {
@@ -1254,6 +1258,7 @@ public:
 
                             case 'f':
                                 DumpFullpath (strm, &module->GetFileSpec(), width);
+                                dump_object_name = true;
                                 break;
 
                             case 'd':
@@ -1262,6 +1267,7 @@ public:
 
                             case 'b':
                                 DumpBasename (strm, &module->GetFileSpec(), width);
+                                dump_object_name = true;
                                 break;
 
                             case 's':
@@ -1277,6 +1283,7 @@ public:
                                                 DumpBasename(strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
                                             else
                                                 DumpFullpath (strm, &symbol_file->GetObjectFile()->GetFileSpec(), width);
+                                            dump_object_name = true;
                                             break;
                                         }
                                     }
@@ -1291,7 +1298,14 @@ public:
                             default:
                                 break;
                             }
+                            
                         }
+                    }
+                    if (dump_object_name)
+                    {
+                        const char *object_name = module->GetObjectName().GetCString();
+                        if (object_name)
+                            strm.Printf ("(%s)", object_name);
                     }
                     strm.EOL();
                 }
@@ -1682,16 +1696,16 @@ protected:
 OptionDefinition
 CommandObjectImageLookup::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddress,    "Lookup an address in one or more executable images."},
-{ LLDB_OPT_SET_1,   false, "offset",     'o', required_argument, NULL, 0, eArgTypeOffset,  "When looking up an address subtract <offset> from any addresses before doing the lookup."},
-{ LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, eArgTypeSymbol,    "Lookup a symbol by name in the symbol tables in one or more executable images."},
-{ LLDB_OPT_SET_2,   false, "regex",      'r', no_argument,       NULL, 0, eArgTypeNone,        "The <name> argument for name lookups are regular expressions."},
-{ LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, eArgTypeFilename,    "Lookup a file by fullpath or basename in one or more executable images."},
-{ LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "Lookup a line number in a file (must be used in conjunction with --file)."},
-{ LLDB_OPT_SET_3,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,        "Check inline line entries (must be used in conjunction with --file)."},
-{ LLDB_OPT_SET_4,   true,  "function",   'n', required_argument, NULL, 0, eArgTypeFunctionName,    "Lookup a function by name in the debug symbols in one or more executable images."},
-{ LLDB_OPT_SET_5,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,    "Lookup a type by name in the debug symbols in one or more executable images."},
-{ LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,        "Enable verbose lookup information."},
+{ LLDB_OPT_SET_1,   true,  "address",    'a', required_argument, NULL, 0, eArgTypeAddress,      "Lookup an address in one or more executable images."},
+{ LLDB_OPT_SET_1,   false, "offset",     'o', required_argument, NULL, 0, eArgTypeOffset,       "When looking up an address subtract <offset> from any addresses before doing the lookup."},
+{ LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, eArgTypeSymbol,       "Lookup a symbol by name in the symbol tables in one or more executable images."},
+{ LLDB_OPT_SET_2,   false, "regex",      'r', no_argument,       NULL, 0, eArgTypeNone,         "The <name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, eArgTypeFilename,     "Lookup a file by fullpath or basename in one or more executable images."},
+{ LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,      "Lookup a line number in a file (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_3,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Check inline line entries (must be used in conjunction with --file)."},
+{ LLDB_OPT_SET_4,   true,  "function",   'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function by name in the debug symbols in one or more executable images."},
+{ LLDB_OPT_SET_5,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more executable images."},
+{ LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,         "Enable verbose lookup information."},
 { 0, false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 

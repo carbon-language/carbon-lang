@@ -459,6 +459,41 @@ ConnectionFileDescriptor::NamedSocketAccept (const char *socket_name, Error *err
 }
 
 ConnectionStatus
+ConnectionFileDescriptor::NamedSocketConnect (const char *socket_name, Error *error_ptr)
+{
+    Close (m_fd, NULL);
+    m_is_socket = true;
+
+    // Open the socket that was passed in as an option
+    struct sockaddr_un saddr_un;
+    m_fd = ::socket (AF_UNIX, SOCK_STREAM, 0);
+    if (m_fd == -1)
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+        return eConnectionStatusError;
+    }
+
+    saddr_un.sun_family = AF_UNIX;
+    ::strncpy(saddr_un.sun_path, socket_name, sizeof(saddr_un.sun_path) - 1);
+    saddr_un.sun_path[sizeof(saddr_un.sun_path) - 1] = '\0';
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    saddr_un.sun_len = SUN_LEN (&saddr_un);
+#endif
+
+    if (::connect (m_fd, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) < 0) 
+    {
+        if (error_ptr)
+            error_ptr->SetErrorToErrno();
+        Close (m_fd, NULL);
+        return eConnectionStatusError;
+    }
+    if (error_ptr)
+        error_ptr->Clear();
+    return eConnectionStatusSuccess;
+}
+
+ConnectionStatus
 ConnectionFileDescriptor::SocketListen (uint16_t listen_port_num, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION,

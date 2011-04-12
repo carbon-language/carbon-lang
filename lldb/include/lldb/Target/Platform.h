@@ -123,6 +123,11 @@ namespace lldb_private {
         bool
         GetOSKernelDescription (std::string &s);
 
+        // Returns the the hostname if we are connected, else the short plugin
+        // name.
+        const char *
+        GetName ();
+
         virtual const char *
         GetHostname ();
 
@@ -252,83 +257,47 @@ namespace lldb_private {
                                          BreakpointSite *bp_site) = 0;
 
         //------------------------------------------------------------------
-        /// Launch a new process.
-        ///
-        /// Launch a new process by spawning a new process using the
-        /// target object's executable module's file as the file to launch.
-        /// Arguments are given in \a argv, and the environment variables
-        /// are in \a envp. Standard input and output files can be
-        /// optionally re-directed to \a stdin_path, \a stdout_path, and
-        /// \a stderr_path.
-        ///
-        /// This function is not meant to be overridden by Process
-        /// subclasses. It will first call Process::WillLaunch (Module *)
-        /// and if that returns \b true, Process::DoLaunch (Module*,
-        /// char const *[],char const *[],const char *,const char *,
-        /// const char *) will be called to actually do the launching. If
-        /// DoLaunch returns \b true, then Process::DidLaunch() will be
-        /// called.
-        ///
-        /// @param[in] argv
-        ///     The argument array.
-        ///
-        /// @param[in] envp
-        ///     The environment array.
-        ///
-        /// @param[in] launch_flags
-        ///     Flags to modify the launch (@see lldb::LaunchFlags)
-        ///
-        /// @param[in] stdin_path
-        ///     The path to use when re-directing the STDIN of the new
-        ///     process. If all stdXX_path arguments are NULL, a pseudo
-        ///     terminal will be used.
-        ///
-        /// @param[in] stdout_path
-        ///     The path to use when re-directing the STDOUT of the new
-        ///     process. If all stdXX_path arguments are NULL, a pseudo
-        ///     terminal will be used.
-        ///
-        /// @param[in] stderr_path
-        ///     The path to use when re-directing the STDERR of the new
-        ///     process. If all stdXX_path arguments are NULL, a pseudo
-        ///     terminal will be used.
-        ///
-        /// @param[in] working_directory
-        ///     The working directory to have the child process run in
-        ///
-        /// @return
-        ///     An error object. Call GetID() to get the process ID if
-        ///     the error object is success.
+        /// Launch a new process on a platform, not necessarily for 
+        /// debugging, it could be just for running the process.
         //------------------------------------------------------------------
-//        virtual lldb::ProcessSP
-//        Launch (char const *argv[],
-//                char const *envp[],
-//                uint32_t launch_flags,
-//                const char *stdin_path,
-//                const char *stdout_path,
-//                const char *stderr_path,
-//                const char *working_directory,
-//                Error &error) = 0;
+        virtual Error
+        LaunchProcess (ProcessLaunchInfo &launch_info);
+
+        //------------------------------------------------------------------
+        /// Subclasses should NOT need to implement this function as it uses
+        /// the Platform::LaunchProcess() followed by Platform::Attach ()
+        //------------------------------------------------------------------
+        lldb::ProcessSP
+        DebugProcess (ProcessLaunchInfo &launch_info,
+                      Debugger &debugger,
+                      Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                      Listener &listener,
+                      Error &error);
 
         //------------------------------------------------------------------
         /// Attach to an existing process using a process ID.
         ///
-        /// This function is not meant to be overridden by Process
-        /// subclasses. It will first call Process::WillAttach (lldb::pid_t)
-        /// and if that returns \b true, Process::DoAttach (lldb::pid_t) will
-        /// be called to actually do the attach. If DoAttach returns \b
-        /// true, then Process::DidAttach() will be called.
+        /// Each platform subclass needs to implement this function and 
+        /// attempt to attach to the process with the process ID of \a pid.
+        /// The platform subclass should return an appropriate ProcessSP 
+        /// subclass that is attached to the process, or an empty shared 
+        /// pointer with an appriopriate error.
         ///
         /// @param[in] pid
         ///     The process ID that we should attempt to attach to.
         ///
         /// @return
-        ///     Returns \a pid if attaching was successful, or
-        ///     LLDB_INVALID_PROCESS_ID if attaching fails.
+        ///     An appropriate ProcessSP containing a valid shared pointer
+        ///     to the default Process subclass for the platform that is 
+        ///     attached to the process, or an empty shared pointer with an
+        ///     appriopriate error fill into the \a error object.
         //------------------------------------------------------------------
-//        virtual lldb::ProcessSP
-//        Attach (lldb::pid_t pid, 
-//                Error &error) = 0;
+        virtual lldb::ProcessSP
+        Attach (lldb::pid_t pid, 
+                Debugger &debugger,
+                Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                Listener &listener,
+                Error &error) = 0;
 
         //------------------------------------------------------------------
         /// Attach to an existing process by process name.
@@ -357,11 +326,11 @@ namespace lldb_private {
         // Subclasses will need to fill in the remote case.
         //------------------------------------------------------------------
         virtual uint32_t
-        FindProcesses (const ProcessInfoMatch &match_info,
-                       ProcessInfoList &proc_infos);
+        FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                       ProcessInstanceInfoList &proc_infos);
 
         virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
+        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
 
         const std::string &
         GetRemoteURL () const
@@ -529,7 +498,8 @@ namespace lldb_private {
     public:
         PlatformList() :
             m_mutex (Mutex::eMutexTypeRecursive),
-            m_platforms ()
+            m_platforms (),
+            m_selected_platform_sp()
         {
         }
         

@@ -204,65 +204,65 @@ SBTarget::Launch
             }
         }
         
-        if ((launch_flags & eLaunchFlagLaunchInTTY) || g_launch_tty)
-        {
-            ArchSpec arch (m_opaque_sp->GetArchitecture ());
-            
-            Module *exe_module = m_opaque_sp->GetExecutableModule().get();
-            if (exe_module)
-            {
-                char exec_file_path[PATH_MAX];
-                exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
-                if (exe_module->GetFileSpec().Exists())
-                {
-                    // Make a new argument vector
-                    std::vector<const char *> exec_path_plus_argv;
-                    // Append the resolved executable path
-                    exec_path_plus_argv.push_back (exec_file_path);
-                        
-                    // Push all args if there are any
-                    if (argv)
-                    {
-                        for (int i = 0; argv[i]; ++i)
-                            exec_path_plus_argv.push_back(argv[i]);
-                    }
-                        
-                    // Push a NULL to terminate the args.
-                    exec_path_plus_argv.push_back(NULL);
-                        
-
-                    const char *tty_name = NULL;
-                    if (g_launch_tty && g_launch_tty[0] == '/')
-                        tty_name = g_launch_tty;
-                    
-                    lldb::pid_t pid = Host::LaunchInNewTerminal (tty_name,
-                                                                 &exec_path_plus_argv[0],
-                                                                 envp,
-                                                                 working_directory,
-                                                                 &arch,
-                                                                 true,
-                                                                 launch_flags & eLaunchFlagDisableASLR);
-
-                    if (pid != LLDB_INVALID_PROCESS_ID)
-                    {
-                        sb_process = AttachToProcessWithID(listener, pid, error);
-                    }
-                    else
-                    {
-                        error.SetErrorStringWithFormat("failed to launch process in terminal");
-                    }
-                }
-                else
-                {
-                    error.SetErrorStringWithFormat("executable doesn't exist: \"%s\"", exec_file_path);
-                }
-            }            
-            else
-            {
-                error.SetErrorStringWithFormat("invalid executable");
-            }
-        }
-        else
+//        if ((launch_flags & eLaunchFlagLaunchInTTY) || g_launch_tty)
+//        {
+//            ArchSpec arch (m_opaque_sp->GetArchitecture ());
+//            
+//            Module *exe_module = m_opaque_sp->GetExecutableModule().get();
+//            if (exe_module)
+//            {
+//                char exec_file_path[PATH_MAX];
+//                exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
+//                if (exe_module->GetFileSpec().Exists())
+//                {
+//                    // Make a new argument vector
+//                    std::vector<const char *> exec_path_plus_argv;
+//                    // Append the resolved executable path
+//                    exec_path_plus_argv.push_back (exec_file_path);
+//                        
+//                    // Push all args if there are any
+//                    if (argv)
+//                    {
+//                        for (int i = 0; argv[i]; ++i)
+//                            exec_path_plus_argv.push_back(argv[i]);
+//                    }
+//                        
+//                    // Push a NULL to terminate the args.
+//                    exec_path_plus_argv.push_back(NULL);
+//                        
+//
+//                    const char *tty_name = NULL;
+//                    if (g_launch_tty && g_launch_tty[0] == '/')
+//                        tty_name = g_launch_tty;
+//                    
+//                    lldb::pid_t pid = Host::LaunchInNewTerminal (tty_name,
+//                                                                 &exec_path_plus_argv[0],
+//                                                                 envp,
+//                                                                 working_directory,
+//                                                                 &arch,
+//                                                                 true,
+//                                                                 launch_flags & eLaunchFlagDisableASLR);
+//
+//                    if (pid != LLDB_INVALID_PROCESS_ID)
+//                    {
+//                        sb_process = AttachToProcessWithID(listener, pid, error);
+//                    }
+//                    else
+//                    {
+//                        error.SetErrorStringWithFormat("failed to launch process in terminal");
+//                    }
+//                }
+//                else
+//                {
+//                    error.SetErrorStringWithFormat("executable doesn't exist: \"%s\"", exec_file_path);
+//                }
+//            }            
+//            else
+//            {
+//                error.SetErrorStringWithFormat("invalid executable");
+//            }
+//        }
+//        else
         {
             if (listener.IsValid())
                 sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));

@@ -62,6 +62,7 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		266E8C6A13528ABC000C2042 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
 		2671A0CE134825F6003A87BB /* ConnectionMachPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 2671A0CD134825F6003A87BB /* ConnectionMachPort.h */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
@@ -445,6 +446,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
 			remoteInfo = LLDB;
+		};
+		266E8C6C13528AD2000C2042 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
+			remoteInfo = "lldb-platform";
 		};
 		2689011413353E9B00698AC0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -2579,6 +2587,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				266E8C6D13528AD2000C2042 /* PBXTargetDependency */,
 				2689011513353E9B00698AC0 /* PBXTargetDependency */,
 				262CFC7211A450CB00946C6C /* PBXTargetDependency */,
 				26368AF6126B95FA00E8659F /* PBXTargetDependency */,
@@ -2688,6 +2697,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				266E8C6A13528ABC000C2042 /* lldb-platform in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
 			);
@@ -3142,6 +3152,11 @@
 			isa = PBXTargetDependency;
 			target = 26680206115FD0ED008E1FE4 /* LLDB */;
 			targetProxy = 266803611160110D008E1FE4 /* PBXContainerItemProxy */;
+		};
+		266E8C6D13528AD2000C2042 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
+			targetProxy = 266E8C6C13528AD2000C2042 /* PBXContainerItemProxy */;
 		};
 		2689011513353E9B00698AC0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

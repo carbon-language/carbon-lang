@@ -215,12 +215,6 @@ protected:
     friend class GDBRemoteCommunicationClient;
     friend class GDBRemoteRegisterContext;
 
-    bool
-    SetCurrentGDBRemoteThread (int tid);
-
-    bool
-    SetCurrentGDBRemoteThreadForRun (int tid);
-
     //----------------------------------------------------------------------
     // Accessors
     //----------------------------------------------------------------------
@@ -275,13 +269,7 @@ protected:
     UpdateThreadListIfNeeded ();
 
     lldb_private::Error
-    StartDebugserverProcess (const char *debugserver_url,   // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
-                             char const *inferior_argv[],
-                             char const *inferior_envp[],
-                             lldb::pid_t attach_pid,        // If inferior inferior_argv == NULL, then attach to this pid
-                             const char *attach_pid_name,   // Wait for the next process to launch whose basename matches "attach_wait_name"
-                             bool wait_for_launch,          // Wait for the process named "attach_wait_name" to launch
-                             const lldb_private::ArchSpec& arch_spec);
+    StartDebugserverProcess (const char *debugserver_url);
 
     void
     KillDebugserverProcess ();
@@ -313,11 +301,6 @@ protected:
     GDBRemoteDynamicRegisterInfo m_register_info;
     lldb_private::Broadcaster m_async_broadcaster;
     lldb::thread_t m_async_thread;
-    // Current GDB remote state. Any members added here need to be reset to
-    // proper default values in ResetGDBRemoteState ().
-    lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations
-    lldb::tid_t m_curr_tid_run;     // Current gdb remote protocol thread index for continue, step, etc
-    uint32_t m_z0_supported:1;      // Set to non-zero if Z0 and z0 packets are supported
     typedef std::vector<lldb::tid_t> tid_collection;
     typedef std::vector< std::pair<lldb::tid_t,int> > tid_sig_collection;
     tid_collection m_continue_c_tids;                  // 'c' for continue
@@ -329,9 +312,6 @@ protected:
     bool m_waiting_for_attach;
     bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.
     std::vector<lldb::user_id_t>  m_thread_observation_bps;
-
-    void
-    ResetGDBRemoteState ();
 
     bool
     StartAsyncThread ();

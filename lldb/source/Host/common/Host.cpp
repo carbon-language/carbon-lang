@@ -1138,14 +1138,14 @@ Host::GetOSKernelDescription (std::string &s)
 }
 
 uint32_t
-Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &process_infos)
+Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();
     return process_infos.GetSize();
 }
 
 bool
-Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     process_info.Clear();
     return false;

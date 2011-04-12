@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Target.h"
@@ -50,17 +51,47 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
     Error error;
     // Nothing special to do here, just use the actual file and architecture
 
+    char exe_path[PATH_MAX];
     FileSpec resolved_exe_file (exe_file);
     
-    // If we have "ls" as the exe_file, resolve the executable loation based on
-    // the current path variables
-    if (!resolved_exe_file.Exists())
-        resolved_exe_file.ResolveExecutableLocation ();
+    if (IsHost())
+    {
+        // If we have "ls" as the exe_file, resolve the executable loation based on
+        // the current path variables
+        if (!resolved_exe_file.Exists())
+        {
+            exe_file.GetPath (exe_path, sizeof(exe_path));
+            resolved_exe_file.SetFile(exe_path, true);
+        }
 
-    // Resolve any executable within a bundle on MacOSX
-    Host::ResolveExecutableInBundle (resolved_exe_file);
+        if (!resolved_exe_file.Exists())
+            resolved_exe_file.ResolveExecutableLocation ();
 
-    if (resolved_exe_file.Exists())
+        // Resolve any executable within a bundle on MacOSX
+        Host::ResolveExecutableInBundle (resolved_exe_file);
+        
+        if (resolved_exe_file.Exists())
+            error.Clear();
+        else
+        {
+            exe_file.GetPath (exe_path, sizeof(exe_path));
+            error.SetErrorStringWithFormat ("enable to find executable for '%s'", exe_path);
+        }
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+        {
+            error = m_remote_platform_sp->ResolveExecutable (exe_file, 
+                                                             exe_arch,
+                                                             exe_module_sp);
+        }
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    
+
+    if (error.Success())
     {
         if (exe_arch.IsValid())
         {
@@ -321,7 +352,7 @@ PlatformDarwin::DisconnectRemote ()
 
 
 bool
-PlatformDarwin::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+PlatformDarwin::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     bool sucess = false;
     if (IsHost())
@@ -339,8 +370,8 @@ PlatformDarwin::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
 
 
 uint32_t
-PlatformDarwin::FindProcesses (const ProcessInfoMatch &match_info,
-                               ProcessInfoList &process_infos)
+PlatformDarwin::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                               ProcessInstanceInfoList &process_infos)
 {
     uint32_t match_count = 0;
     if (IsHost())
@@ -355,6 +386,71 @@ PlatformDarwin::FindProcesses (const ProcessInfoMatch &match_info,
             match_count = m_remote_platform_sp->FindProcesses (match_info, process_infos);
     }
     return match_count;    
+}
+
+Error
+PlatformDarwin::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    if (IsHost())
+    {
+        error = Platform::LaunchProcess (launch_info);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            error = m_remote_platform_sp->LaunchProcess (launch_info);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return error;
+}
+
+lldb::ProcessSP
+PlatformDarwin::Attach (lldb::pid_t pid, 
+                        Debugger &debugger,
+                        Target *target,
+                        Listener &listener, 
+                        Error &error)
+{
+    lldb::ProcessSP process_sp;
+    if (IsHost())
+    {
+        if (target == NULL)
+        {
+            TargetSP new_target_sp;
+            FileSpec emptyFileSpec;
+            ArchSpec emptyArchSpec;
+            
+            error = debugger.GetTargetList().CreateTarget (debugger,
+                                                           emptyFileSpec,
+                                                           emptyArchSpec, 
+                                                           false,
+                                                           new_target_sp);
+            target = new_target_sp.get();
+        }
+        else
+            error.Clear();
+    
+        if (target && error.Success())
+        {
+            debugger.GetTargetList().SetSelectedTarget(target);
+            // The darwin always currently uses the GDB remote debugger plug-in
+            // so even when debugging locally we are debugging remotely!
+            process_sp = target->CreateProcess (listener, "gdb-remote");
+            
+            if (process_sp)
+                error = process_sp->Attach (pid);
+        }
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            process_sp = m_remote_platform_sp->Attach (pid, debugger, target, listener, error);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return process_sp;
 }
 
 const char *

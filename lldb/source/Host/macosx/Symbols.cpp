@@ -25,8 +25,8 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Utility/CleanUp.h"
-
 #include "Host/macosx/cfcpp/CFCReleaser.h"
+#include "Host/macosx/cfcpp/CFCString.h"
 #include "mach/machine.h"
 
 using namespace lldb;
@@ -352,11 +352,18 @@ LocateMacOSXFilesUsingDebugSymbols
                         CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));;
                         if (dict.get())
                         {
-                            CFStringRef exec_cf_path = static_cast<CFStringRef>(::CFDictionaryGetValue (dict.get(), CFSTR("DBGSymbolRichExecutable")));
-                            if (exec_cf_path && ::CFStringGetFileSystemRepresentation (exec_cf_path, path, sizeof(path)))
+                            char uuid_cstr_buf[64];
+                            const char *uuid_cstr = uuid->GetAsCString (uuid_cstr_buf, sizeof(uuid_cstr_buf));
+                            CFCString uuid_cfstr (uuid_cstr);
+                            CFDictionaryRef uuid_dict = static_cast<CFDictionaryRef>(::CFDictionaryGetValue (dict.get(), uuid_cfstr.get()));
+                            if (uuid_dict)
                             {
-                                ++items_found;
-                                out_dsym_fspec->SetFile(path, false);
+                                CFStringRef exec_cf_path = static_cast<CFStringRef>(::CFDictionaryGetValue (uuid_dict, CFSTR("DBGSymbolRichExecutable")));
+                                if (exec_cf_path && ::CFStringGetFileSystemRepresentation (exec_cf_path, path, sizeof(path)))
+                                {
+                                    ++items_found;
+                                    out_exec_fspec->SetFile(path, path[0] == '~');
+                                }
                             }
                         }
                     }

@@ -175,7 +175,7 @@ public:
         exe_module->GetFileSpec().GetPath(filename, sizeof(filename));
 
         StateType state = eStateInvalid;
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process)
         {
             state = process->GetState();
@@ -266,7 +266,10 @@ public:
         
         if (process->GetDisableASLR())
             launch_flags |= eLaunchFlagDisableASLR;
-    
+
+        if (m_options.in_new_tty)
+            launch_flags |= eLaunchFlagLaunchInTTY; 
+
         if (m_options.no_stdio)
             launch_flags |= eLaunchFlagDisableSTDIO;
         else if (!m_options.in_new_tty
@@ -287,52 +290,35 @@ public:
         if (!m_options.working_dir.empty())
             working_dir = m_options.working_dir.c_str();
 
-        if (m_options.in_new_tty)
+        const char * stdin_path = NULL;
+        const char * stdout_path = NULL;
+        const char * stderr_path = NULL;
+
+        // Were any standard input/output/error paths given on the command line?
+        if (m_options.stdin_path.empty() &&
+            m_options.stdout_path.empty() &&
+            m_options.stderr_path.empty())
         {
-        
-            lldb::pid_t pid = Host::LaunchInNewTerminal (m_options.tty_name.c_str(),
-                                                         inferior_argv,
-                                                         inferior_envp,
-                                                         working_dir,
-                                                         &exe_module->GetArchitecture(),
-                                                         true,
-                                                         process->GetDisableASLR());
-            
-            if (pid != LLDB_INVALID_PROCESS_ID)
-                error = process->Attach (pid);
+            // No standard file handles were given on the command line, check
+            // with the process object in case they were give using "set settings"
+            stdin_path = process->GetStandardInputPath();
+            stdout_path = process->GetStandardOutputPath(); 
+            stderr_path = process->GetStandardErrorPath(); 
         }
         else
         {
-            const char * stdin_path = NULL;
-            const char * stdout_path = NULL;
-            const char * stderr_path = NULL;
-
-            // Were any standard input/output/error paths given on the command line?
-            if (m_options.stdin_path.empty() &&
-                m_options.stdout_path.empty() &&
-                m_options.stderr_path.empty())
-            {
-                // No standard file handles were given on the command line, check
-                // with the process object in case they were give using "set settings"
-                stdin_path = process->GetStandardInputPath();
-                stdout_path = process->GetStandardOutputPath(); 
-                stderr_path = process->GetStandardErrorPath(); 
-            }
-            else
-            {
-                stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
-                stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
-                stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
-            }
-
-            error = process->Launch (inferior_argv,
-                                     inferior_envp,
-                                     launch_flags,
-                                     stdin_path,
-                                     stdout_path,
-                                     stderr_path,
-                                     working_dir);
+            stdin_path = m_options.stdin_path.empty()  ? NULL : m_options.stdin_path.c_str();
+            stdout_path = m_options.stdout_path.empty() ? NULL : m_options.stdout_path.c_str();
+            stderr_path = m_options.stderr_path.empty() ? NULL : m_options.stderr_path.c_str();
         }
+
+        error = process->Launch (inferior_argv,
+                                 inferior_envp,
+                                 launch_flags,
+                                 stdin_path,
+                                 stdout_path,
+                                 stderr_path,
+                                 working_dir);
                      
         if (error.Success())
         {
@@ -521,11 +507,11 @@ public:
                 const char *partial_name = NULL;
                 partial_name = input.GetArgumentAtIndex(opt_arg_pos);
 
-                PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
+                PlatformSP platform_sp (m_interpreter.GetPlatform (true));
                 if (platform_sp)
                 {
-                    ProcessInfoList process_infos;
-                    ProcessInfoMatch match_info;
+                    ProcessInstanceInfoList process_infos;
+                    ProcessInstanceInfoMatch match_info;
                     if (partial_name)
                     {
                         match_info.GetProcessInfo().SetName(partial_name);
@@ -579,7 +565,7 @@ public:
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         bool synchronous_execution = m_interpreter.GetSynchronous ();
         
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         StateType state = eStateInvalid;
         if (process)
         {
@@ -707,11 +693,11 @@ public:
                     
                     if (attach_pid == LLDB_INVALID_PROCESS_ID && wait_name != NULL)
                     {
-                        ProcessInfoList process_infos;
-                        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform ());
+                        ProcessInstanceInfoList process_infos;
+                        PlatformSP platform_sp (m_interpreter.GetPlatform (true));
                         if (platform_sp)
                         {
-                            ProcessInfoMatch match_info (wait_name, eNameMatchEquals);
+                            ProcessInstanceInfoMatch match_info (wait_name, eNameMatchEquals);
                             platform_sp->FindProcesses (match_info, process_infos);
                         }
                         if (process_infos.GetSize() > 1)
@@ -860,7 +846,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         bool synchronous_execution = m_interpreter.GetSynchronous ();
 
         if (process == NULL)
@@ -947,7 +933,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to detach");
@@ -1057,7 +1043,7 @@ public:
         
         TargetSP target_sp (m_interpreter.GetDebugger().GetSelectedTarget());
         Error error;        
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process)
         {
             if (process->IsAlive())
@@ -1172,7 +1158,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to load a shared library");
@@ -1230,7 +1216,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("must have a valid process in order to load a shared library");
@@ -1307,7 +1293,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to signal");
@@ -1382,7 +1368,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to halt");
@@ -1444,7 +1430,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process to kill");
@@ -1507,7 +1493,7 @@ public:
     {
         Stream &output_stream = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.process)
         {
             const StateType state = exe_ctx.process->GetState();

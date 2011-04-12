@@ -14,6 +14,7 @@
 #include <grp.h>
 #include <libproc.h>
 #include <pwd.h>
+#include <spawn.h>
 #include <stdio.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
@@ -25,12 +26,15 @@
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Host/Endian.h"
-#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/Endian.h"
+#include "lldb/Host/FileSpec.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/CleanUp.h"
 
 #include "cfcpp/CFCBundle.h"
 #include "cfcpp/CFCMutableArray.h"
@@ -46,6 +50,10 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 #include <Foundation/Foundation.h>
+
+#ifndef _POSIX_SPAWN_DISABLE_ASLR
+#define _POSIX_SPAWN_DISABLE_ASLR       0x0100
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -414,57 +422,64 @@ tell application \"Terminal\"\n\
 	do script the_shell_script\n\
 end tell\n";
 
-lldb::pid_t
-LaunchInNewTerminalWithAppleScript
-(
-    const char *tty_name,
-    const char **argv, 
-    const char **envp,
-    const char *working_dir,
-    const ArchSpec *arch_spec,
-    bool stop_at_entry,
-    bool disable_aslr
-)
+static Error
+LaunchInNewTerminalWithAppleScript (const char *exe_path,
+                                    ProcessLaunchInfo &launch_info)
 {
-    if (!argv || !argv[0])
-        return LLDB_INVALID_PROCESS_ID;
+    Error error;
+    if (exe_path == NULL || exe_path[0] == '\0')
+    {
+        error.SetErrorString ("invalid executable path");
+        return error;
+    }
     
-    std::string unix_socket_name;
-
-    char temp_file_path[PATH_MAX] = "/tmp/XXXXXX";    
-    if (::mktemp (temp_file_path) == NULL)
-        return LLDB_INVALID_PROCESS_ID;
-
-    unix_socket_name.assign (temp_file_path);
+    char unix_socket_name[PATH_MAX] = "/tmp/XXXXXX";    
+    if (::mktemp (unix_socket_name) == NULL)
+    {
+        error.SetErrorString ("failed to make temporary path for a unix socket");
+        return error;
+    }
     
     StreamString command;
     FileSpec darwin_debug_file_spec;
     if (!Host::GetLLDBPath (ePathTypeSupportExecutableDir, darwin_debug_file_spec))
-        return LLDB_INVALID_PROCESS_ID;
+    {
+        error.SetErrorString ("can't locate the 'darwin-debug' executable");
+        return error;
+    }
+
     darwin_debug_file_spec.GetFilename().SetCString("darwin-debug");
         
     if (!darwin_debug_file_spec.Exists())
-        return LLDB_INVALID_PROCESS_ID;
+    {
+        error.SetErrorStringWithFormat ("the 'darwin-debug' executable doesn't exists at %s/%s", 
+                                        darwin_debug_file_spec.GetDirectory().GetCString(),
+                                        darwin_debug_file_spec.GetFilename().GetCString());
+        return error;
+    }
     
     char launcher_path[PATH_MAX];
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
 
-    if (arch_spec)
-        command.Printf("arch -arch %s ", arch_spec->GetArchitectureName());
+    const ArchSpec &arch_spec = launch_info.GetArchitecture();
+    if (arch_spec.IsValid())
+        command.Printf("arch -arch %s ", arch_spec.GetArchitectureName());
 
-    command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name.c_str());
+    command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name);
 
-    if (arch_spec && arch_spec->IsValid())
-        command.Printf(" --arch=%s", arch_spec->GetArchitectureName());
+    if (arch_spec.IsValid())
+        command.Printf(" --arch=%s", arch_spec.GetArchitectureName());
 
+    const char *working_dir = launch_info.GetWorkingDirectory();
     if (working_dir)
         command.Printf(" --working-dir '%s'", working_dir);
     
-    if (disable_aslr)
+    if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         command.PutCString(" --disable-aslr");
         
-    command.PutCString(" --");
+    command.Printf(" -- '%s'", exe_path);
 
+    const char **argv = launch_info.GetArguments().GetConstArgumentVector ();
     if (argv)
     {
         for (size_t i=0; argv[i] != NULL; ++i)
@@ -477,17 +492,17 @@ LaunchInNewTerminalWithAppleScript
     StreamString applescript_source;
 
     const char *tty_command = command.GetString().c_str();
-    if (tty_name && tty_name[0])
-    {
-        applescript_source.Printf (applscript_in_existing_tty, 
-                                   tty_command,
-                                   tty_name);
-    }
-    else
-    {
+//    if (tty_name && tty_name[0])
+//    {
+//        applescript_source.Printf (applscript_in_existing_tty, 
+//                                   tty_command,
+//                                   tty_name);
+//    }
+//    else
+//    {
         applescript_source.Printf (applscript_in_new_tty, 
                                    tty_command);
-    }
+//    }
 
     
 
@@ -501,11 +516,15 @@ LaunchInNewTerminalWithAppleScript
     // Sleep and wait a bit for debugserver to start to listen...
     ConnectionFileDescriptor file_conn;
     char connect_url[128];
-    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name.c_str());
+    ::snprintf (connect_url, sizeof(connect_url), "unix-accept://%s", unix_socket_name);
 
     // Spawn a new thread to accept incoming connection on the connect_url
-    // so we can grab the pid from the inferior
-    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name.c_str(),
+    // so we can grab the pid from the inferior. We have to do this because we
+    // are sending an AppleScript that will launch a process in Terminal.app,
+    // in a shell and the shell will fork/exec a couple of times before we get
+    // to the process that we wanted to launch. So when our process actually
+    // gets launched, we will handshake with it and get the process ID for it.
+    lldb::thread_t accept_thread = Host::ThreadCreate (unix_socket_name,
                                                        AcceptPIDFromInferior,
                                                        connect_url,
                                                        &lldb_error);
@@ -526,32 +545,13 @@ LaunchInNewTerminalWithAppleScript
             WaitForProcessToSIGSTOP (pid, 5);
         }
     }
-    ::unlink (unix_socket_name.c_str());
+    ::unlink (unix_socket_name);
     [applescript release];
-    return pid;
+    if (pid != LLDB_INVALID_PROCESS_ID)
+        launch_info.SetProcessID (pid);
+    return error;
 }
 
-
-#define LLDB_HOST_USE_APPLESCRIPT
-
-lldb::pid_t
-Host::LaunchInNewTerminal 
-(
-    const char *tty_name,
-    const char **argv, 
-    const char **envp,
-    const char *working_dir,
-    const ArchSpec *arch_spec,
-    bool stop_at_entry,
-    bool disable_aslr
-)
-{
-#if defined (LLDB_HOST_USE_APPLESCRIPT)
-    return LaunchInNewTerminalWithAppleScript (tty_name, argv, envp, working_dir, arch_spec, stop_at_entry, disable_aslr);
-#else
-    return LaunchInNewTerminalWithCommandFile (argv, envp, working_dir, arch_spec, stop_at_entry, disable_aslr);
-#endif
-}
 
 // On MacOSX CrashReporter will display a string for each shared library if
 // the shared library has an exported symbol named "__crashreporter_info__".
@@ -914,8 +914,8 @@ Host::GetOSVersion
 }
 
 static bool
-GetMacOSXProcessName (const ProcessInfoMatch *match_info_ptr,
-                      ProcessInfo &process_info)
+GetMacOSXProcessName (const ProcessInstanceInfoMatch *match_info_ptr,
+                      ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
     {
@@ -938,7 +938,7 @@ GetMacOSXProcessName (const ProcessInfoMatch *match_info_ptr,
 
 
 static bool
-GetMacOSXProcessCPUType (ProcessInfo &process_info)
+GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
     {
@@ -970,8 +970,8 @@ GetMacOSXProcessCPUType (ProcessInfo &process_info)
 }
 
 static bool
-GetMacOSXProcessArgs (const ProcessInfoMatch *match_info_ptr,
-                      ProcessInfo &process_info)
+GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
+                      ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
     {
@@ -1006,13 +1006,13 @@ GetMacOSXProcessArgs (const ProcessInfoMatch *match_info_ptr,
                         ++offset;
                     }
                     // Now extract all arguments
-                    StringList &proc_args = process_info.GetArguments();
+                    Args &proc_args = process_info.GetArguments();
                     for (int i=0; i<argc; ++i)
                     {
                         start_offset = offset;
                         cstr = data.GetCStr(&offset);
                         if (cstr)
-                            proc_args.AppendString (cstr, offset - start_offset);
+                            proc_args.AppendArgument(cstr);
                     }
                     return true;
                 }
@@ -1023,7 +1023,7 @@ GetMacOSXProcessArgs (const ProcessInfoMatch *match_info_ptr,
 }
 
 static bool
-GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
+GetMacOSXProcessUserAndGroup (ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
     {
@@ -1040,8 +1040,8 @@ GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
             if (proc_kinfo_size > 0)
             {
                 process_info.SetParentProcessID (proc_kinfo.kp_eproc.e_ppid);
-                process_info.SetRealUserID (proc_kinfo.kp_eproc.e_pcred.p_ruid);
-                process_info.SetRealGroupID (proc_kinfo.kp_eproc.e_pcred.p_rgid);
+                process_info.SetUserID (proc_kinfo.kp_eproc.e_pcred.p_ruid);
+                process_info.SetGroupID (proc_kinfo.kp_eproc.e_pcred.p_rgid);
                 process_info.SetEffectiveUserID (proc_kinfo.kp_eproc.e_ucred.cr_uid);
                 if (proc_kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
                     process_info.SetEffectiveGroupID (proc_kinfo.kp_eproc.e_ucred.cr_groups[0]);
@@ -1052,8 +1052,8 @@ GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
         }
     }
     process_info.SetParentProcessID (LLDB_INVALID_PROCESS_ID);
-    process_info.SetRealUserID (UINT32_MAX);
-    process_info.SetRealGroupID (UINT32_MAX);
+    process_info.SetUserID (UINT32_MAX);
+    process_info.SetGroupID (UINT32_MAX);
     process_info.SetEffectiveUserID (UINT32_MAX);
     process_info.SetEffectiveGroupID (UINT32_MAX);            
     return false;
@@ -1061,7 +1061,7 @@ GetMacOSXProcessUserAndGroup (ProcessInfo &process_info)
 
 
 uint32_t
-Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &process_infos)
+Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     std::vector<struct kinfo_proc> kinfos;
     
@@ -1104,11 +1104,11 @@ Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &proces
             kinfo.kp_proc.p_flag & P_TRANSLATED)   // Skip translated ppc (Rosetta)
             continue;
 
-        ProcessInfo process_info;
+        ProcessInstanceInfo process_info;
         process_info.SetProcessID (kinfo.kp_proc.p_pid);
         process_info.SetParentProcessID (kinfo.kp_eproc.e_ppid);
-        process_info.SetRealUserID (kinfo.kp_eproc.e_pcred.p_ruid);
-        process_info.SetRealGroupID (kinfo.kp_eproc.e_pcred.p_rgid);
+        process_info.SetUserID (kinfo.kp_eproc.e_pcred.p_ruid);
+        process_info.SetGroupID (kinfo.kp_eproc.e_pcred.p_rgid);
         process_info.SetEffectiveUserID (kinfo.kp_eproc.e_ucred.cr_uid);
         if (kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
             process_info.SetEffectiveGroupID (kinfo.kp_eproc.e_ucred.cr_groups[0]);
@@ -1130,7 +1130,7 @@ Host::FindProcesses (const ProcessInfoMatch &match_info, ProcessInfoList &proces
 }
 
 bool
-Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     process_info.SetProcessID(pid);
     if (GetMacOSXProcessArgs (NULL, process_info))
@@ -1141,6 +1141,197 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
     }    
     process_info.Clear();
     return false;
+}
+
+
+Error
+Host::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    char exe_path[PATH_MAX];
+    PlatformSP host_platform_sp (Platform::GetDefaultPlatform ());
+    
+    const ArchSpec &arch_spec = launch_info.GetArchitecture();
+
+    FileSpec exe_spec(launch_info.GetExecutableFile());
+
+    FileSpec::FileType file_type = exe_spec.GetFileType();
+    if (file_type != FileSpec::eFileTypeRegular)
+    {
+        lldb::ModuleSP exe_module_sp;
+        error = host_platform_sp->ResolveExecutable (exe_spec,
+                                                     arch_spec,
+                                                     exe_module_sp);
+    
+        if (error.Fail())
+            return error;
+    
+        if (exe_module_sp)
+            exe_spec = exe_module_sp->GetFileSpec();
+    }
+    
+    if (exe_spec.Exists())
+    {
+        exe_spec.GetPath (exe_path, sizeof(exe_path));
+    }
+    else
+    {
+        launch_info.GetExecutableFile().GetPath (exe_path, sizeof(exe_path));
+        error.SetErrorStringWithFormat ("executable doesn't exist: '%s'", exe_path);
+        return error;
+    }
+
+    
+    if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+    {
+#if !defined(__arm__)
+        return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
+#else
+        error.SetErrorString ("launching a processs in a new terminal is not supported on iOS devices");
+        return error;
+#endif
+    }
+    
+    Error local_err;    // Errors that don't affect the spawning.
+    posix_spawnattr_t attr;
+    error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
+    
+    if (error.Fail() || log)
+        error.PutToLog(log.get(), "::posix_spawnattr_init ( &attr )");
+    if (error.Fail())
+        return error;
+
+    // Make a quick class that will cleanup the posix spawn attributes in case
+    // we return in the middle of this function.
+    lldb_utility::CleanUp <posix_spawnattr_t *, int> posix_spawnattr_cleanup(&attr, posix_spawnattr_destroy);
+    
+    short flags = 0;
+    if (launch_info.GetFlags().Test (eLaunchFlagExec))
+        flags |= POSIX_SPAWN_SETEXEC;           // Darwin specific posix_spawn flag
+
+    if (launch_info.GetFlags().Test (eLaunchFlagDebug))
+        flags |= POSIX_SPAWN_START_SUSPENDED;   // Darwin specific posix_spawn flag
+
+    if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
+        flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
+    
+    error.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
+    if (error.Fail() || log)
+        error.PutToLog(log.get(), "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
+    if (error.Fail())
+        return error;
+    
+#if !defined(__arm__)
+    
+    // We don't need to do this for ARM, and we really shouldn't now that we
+    // have multiple CPU subtypes and no posix_spawnattr call that allows us
+    // to set which CPU subtype to launch...
+    cpu_type_t cpu = arch_spec.GetMachOCPUType();
+    if (cpu != 0 && 
+        cpu != UINT32_MAX && 
+        cpu != LLDB_INVALID_CPUTYPE)
+    {
+        size_t ocount = 0;
+        error.SetError( ::posix_spawnattr_setbinpref_np (&attr, 1, &cpu, &ocount), eErrorTypePOSIX);
+        if (error.Fail() || log)
+            error.PutToLog(log.get(), "::posix_spawnattr_setbinpref_np ( &attr, 1, cpu_type = 0x%8.8x, count => %zu )", cpu, ocount);
+        
+        if (error.Fail() || ocount != 1)
+            return error;
+    }
+    
+#endif
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    const char *tmp_argv[2];
+    char * const *argv = (char * const*)launch_info.GetArguments().GetConstArgumentVector();
+    char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+    if (argv == NULL)
+    {
+        // posix_spawn gets very unhappy if it doesn't have at least the program
+        // name in argv[0]. One of the side affects I have noticed is the environment
+        // variables don't make it into the child process if "argv == NULL"!!!
+        tmp_argv[0] = exe_path;
+        tmp_argv[1] = NULL;
+        argv = (char * const*)tmp_argv;
+    }
+
+
+    const size_t num_file_actions = launch_info.GetNumFileActions ();
+    if (num_file_actions > 0)
+    {
+        posix_spawn_file_actions_t file_actions;
+        error.SetError( ::posix_spawn_file_actions_init (&file_actions), eErrorTypePOSIX);
+        if (error.Fail() || log)
+            error.PutToLog(log.get(), "::posix_spawn_file_actions_init ( &file_actions )");
+        if (error.Fail())
+            return error;
+
+        // Make a quick class that will cleanup the posix spawn attributes in case
+        // we return in the middle of this function.
+        lldb_utility::CleanUp <posix_spawn_file_actions_t *, int> posix_spawn_file_actions_cleanup (&file_actions, posix_spawn_file_actions_destroy);
+
+        for (size_t i=0; i<num_file_actions; ++i)
+        {
+            const ProcessLaunchInfo::FileAction *launch_file_action = launch_info.GetFileActionAtIndex(i);
+            if (launch_file_action)
+            {
+                if (!ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (&file_actions,
+                                                                             launch_file_action,
+                                                                             log.get(),
+                                                                             error))
+                    return error;
+            }
+        }
+        
+        error.SetError (::posix_spawnp (&pid, 
+                                        exe_path, 
+                                        &file_actions, 
+                                        &attr, 
+                                        argv,
+                                        envp),
+                        eErrorTypePOSIX);
+
+        if (error.Fail() || log)
+            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )", 
+                           pid, 
+                           exe_path, 
+                           &file_actions, 
+                           &attr, 
+                           argv, 
+                           envp);
+    }
+    else
+    {
+        error.SetError (::posix_spawnp (&pid, 
+                                        exe_path, 
+                                        NULL, 
+                                        &attr, 
+                                        argv,
+                                        envp),
+                        eErrorTypePOSIX);
+
+        if (error.Fail() || log)
+            error.PutToLog(log.get(), "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )", 
+                           pid, 
+                           exe_path, 
+                           &attr, 
+                           argv, 
+                           envp);
+    }
+    
+    if (pid != LLDB_INVALID_PROCESS_ID)
+    {
+        // If all went well, then set the process ID into the launch info
+        launch_info.SetProcessID(pid);        
+    }
+    else
+    {
+        // Invalid process ID, something didn't go well
+        if (error.Success())
+            error.SetErrorString ("process launch failed for unknown reasons");
+    }
+    return error;
 }
 
 

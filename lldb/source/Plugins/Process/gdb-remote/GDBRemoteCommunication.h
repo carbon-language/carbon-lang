@@ -37,7 +37,9 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunication(const char *comm_name, const char *listener_name);
+    GDBRemoteCommunication(const char *comm_name, 
+                           const char *listener_name,
+                           bool is_platform);
 
     virtual
     ~GDBRemoteCommunication();
@@ -119,6 +121,15 @@ public:
         return old_packet_timeout;
     }
 
+    //------------------------------------------------------------------
+    // Start a debugserver instance on the current host using the
+    // supplied connection URL.
+    //------------------------------------------------------------------
+    lldb_private::Error
+    StartDebugserverProcess (const char *connect_url,
+                             const char *unix_socket_name,
+                             lldb_private::ProcessLaunchInfo &launch_info); 
+
 protected:
     typedef std::list<std::string> packet_collection;
 
@@ -142,8 +153,11 @@ protected:
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;
     bool m_send_acks;
-
+    bool m_is_platform; // Set to true if this class represents a platform,
+                        // false if this class represents a debug session for
+                        // a single process
     
+
 
 
 private:

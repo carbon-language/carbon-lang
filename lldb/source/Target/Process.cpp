@@ -40,7 +40,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 void
-ProcessInfo::Dump (Stream &s, Platform *platform) const
+ProcessInstanceInfo::Dump (Stream &s, Platform *platform) const
 {
     const char *cstr;
     if (m_pid != LLDB_INVALID_PROCESS_ID)       
@@ -56,59 +56,80 @@ ProcessInfo::Dump (Stream &s, Platform *platform) const
         m_executable.Dump(&s);
         s.EOL();
     }
-    const uint32_t argc = m_args.GetSize();
+    const uint32_t argc = m_arguments.GetArgumentCount();
     if (argc > 0)
     {
         for (uint32_t i=0; i<argc; i++)
         {
+            const char *arg = m_arguments.GetArgumentAtIndex(i);
             if (i < 10)
-                s.Printf (" arg[%u] = %s\n", i, m_args.GetStringAtIndex(i));
+                s.Printf (" arg[%u] = %s\n", i, arg);
             else
-                s.Printf ("arg[%u] = %s\n", i, m_args.GetStringAtIndex(i));
+                s.Printf ("arg[%u] = %s\n", i, arg);
         }
     }
+
+    const uint32_t envc = m_environment.GetArgumentCount();
+    if (envc > 0)
+    {
+        for (uint32_t i=0; i<envc; i++)
+        {
+            const char *env = m_environment.GetArgumentAtIndex(i);
+            if (i < 10)
+                s.Printf (" env[%u] = %s\n", i, env);
+            else
+                s.Printf ("env[%u] = %s\n", i, env);
+        }
+    }
+
     if (m_arch.IsValid())                       
         s.Printf ("   arch = %s\n", m_arch.GetTriple().str().c_str());
 
-    if (m_real_uid != UINT32_MAX)
+    if (m_uid != UINT32_MAX)
     {
-        cstr = platform->GetUserName (m_real_uid);
-        s.Printf ("    uid = %-5u (%s)\n", m_real_uid, cstr ? cstr : "");
+        cstr = platform->GetUserName (m_uid);
+        s.Printf ("    uid = %-5u (%s)\n", m_uid, cstr ? cstr : "");
     }
-    if (m_real_gid != UINT32_MAX)
+    if (m_gid != UINT32_MAX)
     {
-        cstr = platform->GetGroupName (m_real_gid);
-        s.Printf ("    gid = %-5u (%s)\n", m_real_gid, cstr ? cstr : "");
+        cstr = platform->GetGroupName (m_gid);
+        s.Printf ("    gid = %-5u (%s)\n", m_gid, cstr ? cstr : "");
     }
-    if (m_effective_uid != UINT32_MAX)
+    if (m_euid != UINT32_MAX)
     {
-        cstr = platform->GetUserName (m_effective_uid);
-        s.Printf ("   euid = %-5u (%s)\n", m_effective_uid, cstr ? cstr : "");
+        cstr = platform->GetUserName (m_euid);
+        s.Printf ("   euid = %-5u (%s)\n", m_euid, cstr ? cstr : "");
     }
-    if (m_effective_gid != UINT32_MAX)
+    if (m_egid != UINT32_MAX)
     {
-        cstr = platform->GetGroupName (m_effective_gid);
-        s.Printf ("   egid = %-5u (%s)\n", m_effective_gid, cstr ? cstr : "");
+        cstr = platform->GetGroupName (m_egid);
+        s.Printf ("   egid = %-5u (%s)\n", m_egid, cstr ? cstr : "");
     }
 }
 
 void
-ProcessInfo::DumpTableHeader (Stream &s, Platform *platform, bool verbose)
+ProcessInstanceInfo::DumpTableHeader (Stream &s, Platform *platform, bool show_args, bool verbose)
 {
+    const char *label;
+    if (show_args || verbose)
+        label = "ARGUMENTS";
+    else
+        label = "NAME";
+
     if (verbose)
     {
-        s.PutCString ("PID    PARENT USER       GROUP      EFF USER   EFF GROUP  TRIPLE                   NAME\n");
+        s.Printf     ("PID    PARENT USER       GROUP      EFF USER   EFF GROUP  TRIPLE                   %s\n", label);
         s.PutCString ("====== ====== ========== ========== ========== ========== ======================== ============================\n");
     }
     else
     {
-        s.PutCString ("PID    PARENT USER       ARCH    NAME\n");
+        s.Printf     ("PID    PARENT USER       ARCH    %s\n", label);
         s.PutCString ("====== ====== ========== ======= ============================\n");
     }
 }
 
 void
-ProcessInfo::DumpAsTableRow (Stream &s, Platform *platform, bool verbose) const
+ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_args, bool verbose) const
 {
     if (m_pid != LLDB_INVALID_PROCESS_ID)
     {
@@ -118,49 +139,49 @@ ProcessInfo::DumpAsTableRow (Stream &s, Platform *platform, bool verbose) const
     
         if (verbose)
         {
-            cstr = platform->GetUserName (m_real_uid);
+            cstr = platform->GetUserName (m_uid);
             if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
                 s.Printf ("%-10s ", cstr);
             else
-                s.Printf ("%-10u ", m_real_uid);
+                s.Printf ("%-10u ", m_uid);
 
-            cstr = platform->GetGroupName (m_real_gid);
+            cstr = platform->GetGroupName (m_gid);
             if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
                 s.Printf ("%-10s ", cstr);
             else
-                s.Printf ("%-10u ", m_real_gid);
+                s.Printf ("%-10u ", m_gid);
 
-            cstr = platform->GetUserName (m_effective_uid);
+            cstr = platform->GetUserName (m_euid);
             if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
                 s.Printf ("%-10s ", cstr);
             else
-                s.Printf ("%-10u ", m_effective_uid);
+                s.Printf ("%-10u ", m_euid);
             
-            cstr = platform->GetGroupName (m_effective_gid);
+            cstr = platform->GetGroupName (m_egid);
             if (cstr && cstr[0]) // Watch for empty string that indicates lookup failed
                 s.Printf ("%-10s ", cstr);
             else
-                s.Printf ("%-10u ", m_effective_gid);
+                s.Printf ("%-10u ", m_egid);
             s.Printf ("%-24s ", m_arch.IsValid() ? m_arch.GetTriple().str().c_str() : "");
         }
         else
         {
             s.Printf ("%-10s %.*-7s ", 
-                      platform->GetUserName (m_effective_uid),
+                      platform->GetUserName (m_euid),
                       (int)m_arch.GetTriple().getArchName().size(),
                       m_arch.GetTriple().getArchName().data());
         }
 
-        if (verbose)
+        if (verbose || show_args)
         {
-            const uint32_t argc = m_args.GetSize();
+            const uint32_t argc = m_arguments.GetArgumentCount();
             if (argc > 0)
             {
                 for (uint32_t i=0; i<argc; i++)
                 {
                     if (i > 0)
                         s.PutChar (' ');
-                    s.PutCString (m_args.GetStringAtIndex(i));
+                    s.PutCString (m_arguments.GetArgumentAtIndex(i));
                 }
             }
         }
@@ -173,8 +194,263 @@ ProcessInfo::DumpAsTableRow (Stream &s, Platform *platform, bool verbose) const
     }
 }
 
+
+void
+ProcessInfo::SetArgumentsFromArgs (const Args& args, 
+                                       bool first_arg_is_executable,
+                                       bool first_arg_is_executable_and_argument)
+{
+    // Copy all arguments
+    m_arguments = args;
+
+    // Is the first argument the executable?
+    if (first_arg_is_executable)
+    {
+        const char *first_arg = args.GetArgumentAtIndex (0);
+        if (first_arg)
+        {
+            // Yes the first argument is an executable, set it as the executable
+            // in the launch options. Don't resolve the file path as the path
+            // could be a remote platform path
+            const bool resolve = false;
+            m_executable.SetFile(first_arg, resolve); 
+    
+            // If argument zero is an executable and shouldn't be included
+            // in the arguments, remove it from the front of the arguments
+            if (first_arg_is_executable_and_argument == false)
+                m_arguments.DeleteArgumentAtIndex (0);
+        }
+    }
+}
+
 bool
-ProcessInfoMatch::NameMatches (const char *process_name) const
+ProcessLaunchInfo::FileAction::Open (int fd, const char *path, bool read, bool write)
+{
+    if ((read || write) && fd >= 0 && path && path[0])
+    {
+        m_action = eFileActionOpen;
+        m_fd = fd;
+        if (read && write)
+            m_arg = O_RDWR;
+        else if (read)
+            m_arg = O_RDONLY;
+        else
+            m_arg = O_WRONLY;
+        m_path.assign (path);
+        return true;
+    }
+    else
+    {
+        Clear();
+    }
+    return false;
+}
+
+bool
+ProcessLaunchInfo::FileAction::Close (int fd)
+{
+    Clear();
+    if (fd >= 0)
+    {
+        m_action = eFileActionClose;
+        m_fd = fd;
+    }
+    return m_fd >= 0;
+}
+
+
+bool
+ProcessLaunchInfo::FileAction::Duplicate (int fd, int dup_fd)
+{
+    Clear();
+    if (fd >= 0 && dup_fd >= 0)
+    {
+        m_action = eFileActionDuplicate;
+        m_fd = fd;
+        m_arg = dup_fd;
+    }
+    return m_fd >= 0;
+}
+
+
+
+bool
+ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions_t *file_actions,
+                                                        const FileAction *info,
+                                                        Log *log, 
+                                                        Error& error)
+{
+    if (info == NULL)
+        return false;
+
+    switch (info->m_action)
+    {
+        case eFileActionNone:
+            error.Clear();
+            break;
+
+        case eFileActionClose:
+            if (info->m_fd == -1)
+                error.SetErrorString ("invalid fd for posix_spawn_file_actions_addclose(...)");
+            else
+            {
+                error.SetError (::posix_spawn_file_actions_addclose (file_actions, info->m_fd), 
+                                eErrorTypePOSIX);
+                if (log && (error.Fail() || log))
+                    error.PutToLog(log, "posix_spawn_file_actions_addclose (action=%p, fd=%i)", 
+                                   file_actions, info->m_fd);
+            }
+            break;
+
+        case eFileActionDuplicate:
+            if (info->m_fd == -1)
+                error.SetErrorString ("invalid fd for posix_spawn_file_actions_adddup2(...)");
+            else if (info->m_arg == -1)
+                error.SetErrorString ("invalid duplicate fd for posix_spawn_file_actions_adddup2(...)");
+            else
+            {
+                error.SetError (::posix_spawn_file_actions_adddup2 (file_actions, info->m_fd, info->m_arg),
+                                eErrorTypePOSIX);
+                if (log && (error.Fail() || log))
+                    error.PutToLog(log, "posix_spawn_file_actions_adddup2 (action=%p, fd=%i, dup_fd=%i)", 
+                                   file_actions, info->m_fd, info->m_arg);
+            }
+            break;
+
+        case eFileActionOpen:
+            if (info->m_fd == -1)
+                error.SetErrorString ("invalid fd in posix_spawn_file_actions_addopen(...)");
+            else
+            {
+                int oflag = info->m_arg;
+                mode_t mode = 0;
+
+                error.SetError (::posix_spawn_file_actions_addopen (file_actions, 
+                                                                    info->m_fd,
+                                                                    info->m_path.c_str(), 
+                                                                    oflag,
+                                                                    mode), 
+                                eErrorTypePOSIX);
+                if (error.Fail() || log)
+                    error.PutToLog(log, 
+                                   "posix_spawn_file_actions_addopen (action=%p, fd=%i, path='%s', oflag=%i, mode=%i)", 
+                                   file_actions, info->m_fd, info->m_path.c_str(), oflag, mode);
+            }
+            break;
+        
+        default:
+            error.SetErrorStringWithFormat ("invalid file action: %i", info->m_action);
+            break;
+    }
+    return error.Success();
+}
+
+Error
+ProcessLaunchCommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+{
+    Error error;
+    char short_option = (char) m_getopt_table[option_idx].val;
+    
+    switch (short_option)
+    {
+        case 's':   // Stop at program entry point
+            launch_info.GetFlags().Set (eLaunchFlagStopAtEntry); 
+            break;
+            
+        case 'e':   // STDERR for read + write
+            {   
+                ProcessLaunchInfo::FileAction action;
+                if (action.Open(STDERR_FILENO, option_arg, true, true))
+                    launch_info.AppendFileAction (action);
+            }
+            break;
+            
+        case 'i':   // STDIN for read only
+            {   
+                ProcessLaunchInfo::FileAction action;
+                if (action.Open(STDIN_FILENO, option_arg, true, false))
+                    launch_info.AppendFileAction (action);
+            }
+            break;
+            
+        case 'o':   // Open STDOUT for write only
+            {   
+                ProcessLaunchInfo::FileAction action;
+                if (action.Open(STDOUT_FILENO, option_arg, false, true))
+                    launch_info.AppendFileAction (action);
+            }
+            break;
+            
+        case 'p':   // Process plug-in name
+            launch_info.SetProcessPluginName (option_arg);    
+            break;
+            
+        case 'n':   // Disable STDIO
+            {
+                ProcessLaunchInfo::FileAction action;
+                if (action.Open(STDERR_FILENO, "/dev/null", true, true))
+                    launch_info.AppendFileAction (action);
+                if (action.Open(STDOUT_FILENO, "/dev/null", false, true))
+                    launch_info.AppendFileAction (action);
+                if (action.Open(STDIN_FILENO, "/dev/null", true, false))
+                    launch_info.AppendFileAction (action);
+            }
+            break;
+            
+        case 'w': 
+            launch_info.SetWorkingDirectory (option_arg);    
+            break;
+            
+        case 't':   // Open process in new terminal window
+            launch_info.GetFlags().Set (eLaunchFlagLaunchInTTY); 
+            break;
+            
+        case 'a':
+            launch_info.GetArchitecture().SetTriple (option_arg, 
+                                                     m_interpreter.GetPlatform(true).get());
+            break;
+            
+        case 'A':   
+            launch_info.GetFlags().Set (eLaunchFlagDisableASLR); 
+            break;
+            
+        case 'v':
+            launch_info.GetEnvironmentEntries().AppendArgument(option_arg);
+            break;
+
+        default:
+            error.SetErrorStringWithFormat("Invalid short option character '%c'.\n", short_option);
+            break;
+            
+    }
+    return error;
+}
+
+OptionDefinition
+ProcessLaunchCommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_ALL, false, "stop-at-entry", 's', no_argument,       NULL, 0, eArgTypeNone,          "Stop at the entry point of the program when launching a process."},
+{ LLDB_OPT_SET_ALL, false, "disable-aslr",  'A', no_argument,       NULL, 0, eArgTypeNone,          "Disable address space layout randomization when launching a process."},
+{ LLDB_OPT_SET_ALL, false, "plugin",        'p', required_argument, NULL, 0, eArgTypePlugin,        "Name of the process plugin you want to use."},
+{ LLDB_OPT_SET_ALL, false, "working-dir",   'w', required_argument, NULL, 0, eArgTypePath,          "Set the current working directory to <path> when running the inferior."},
+{ LLDB_OPT_SET_ALL, false, "arch",          'a', required_argument, NULL, 0, eArgTypeArchitecture,  "Set the architecture for the process to launch when ambiguous."},
+{ LLDB_OPT_SET_ALL, false, "environment",   'v', required_argument, NULL, 0, eArgTypeNone,          "Specify an environment variable name/value stirng (--environement NAME=VALUE). Can be specified multiple times for subsequent environment entries."},
+
+{ LLDB_OPT_SET_1  , false, "stdin",         'i', required_argument, NULL, 0, eArgTypePath,    "Redirect stdin for the process to <path>."},
+{ LLDB_OPT_SET_1  , false, "stdout",        'o', required_argument, NULL, 0, eArgTypePath,    "Redirect stdout for the process to <path>."},
+{ LLDB_OPT_SET_1  , false, "stderr",        'e', required_argument, NULL, 0, eArgTypePath,    "Redirect stderr for the process to <path>."},
+
+{ LLDB_OPT_SET_2  , false, "tty",           't', no_argument,       NULL, 0, eArgTypeNone,    "Start the process in a terminal (not supported on all platforms)."},
+
+{ LLDB_OPT_SET_3  , false, "no-stdio",      'n', no_argument,       NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
+
+{ 0               , false, NULL,             0,  0,                 NULL, 0, eArgTypeNone,    NULL }
+};
+
+
+
+bool
+ProcessInstanceInfoMatch::NameMatches (const char *process_name) const
 {
     if (m_name_match_type == eNameMatchIgnore || process_name == NULL)
         return true;
@@ -186,7 +462,7 @@ ProcessInfoMatch::NameMatches (const char *process_name) const
 }
 
 bool
-ProcessInfoMatch::Matches (const ProcessInfo &proc_info) const
+ProcessInstanceInfoMatch::Matches (const ProcessInstanceInfo &proc_info) const
 {
     if (!NameMatches (proc_info.GetName()))
         return false;
@@ -199,12 +475,12 @@ ProcessInfoMatch::Matches (const ProcessInfo &proc_info) const
         m_match_info.GetParentProcessID() != proc_info.GetParentProcessID())
         return false;
 
-    if (m_match_info.RealUserIDIsValid () && 
-        m_match_info.GetRealUserID() != proc_info.GetRealUserID())
+    if (m_match_info.UserIDIsValid () && 
+        m_match_info.GetUserID() != proc_info.GetUserID())
         return false;
     
-    if (m_match_info.RealGroupIDIsValid () && 
-        m_match_info.GetRealGroupID() != proc_info.GetRealGroupID())
+    if (m_match_info.GroupIDIsValid () && 
+        m_match_info.GetGroupID() != proc_info.GetGroupID())
         return false;
     
     if (m_match_info.EffectiveUserIDIsValid () && 
@@ -222,7 +498,7 @@ ProcessInfoMatch::Matches (const ProcessInfo &proc_info) const
 }
 
 bool
-ProcessInfoMatch::MatchAllProcesses () const
+ProcessInstanceInfoMatch::MatchAllProcesses () const
 {
     if (m_name_match_type != eNameMatchIgnore)
         return false;
@@ -233,10 +509,10 @@ ProcessInfoMatch::MatchAllProcesses () const
     if (m_match_info.ParentProcessIDIsValid())
         return false;
     
-    if (m_match_info.RealUserIDIsValid ())
+    if (m_match_info.UserIDIsValid ())
         return false;
     
-    if (m_match_info.RealGroupIDIsValid ())
+    if (m_match_info.GroupIDIsValid ())
         return false;
     
     if (m_match_info.EffectiveUserIDIsValid ())
@@ -256,7 +532,7 @@ ProcessInfoMatch::MatchAllProcesses () const
 }
 
 void
-ProcessInfoMatch::Clear()
+ProcessInstanceInfoMatch::Clear()
 {
     m_match_info.Clear();
     m_name_match_type = eNameMatchIgnore;
@@ -1504,6 +1780,46 @@ Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 
 
 size_t
+Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len)
+{
+    size_t total_cstr_len = 0;
+    if (dst && dst_max_len)
+    {
+        // NULL out everything just to be safe
+        memset (dst, 0, dst_max_len);
+        Error error;
+        addr_t curr_addr = addr;
+        const size_t cache_line_size = m_memory_cache.GetMemoryCacheLineSize();
+        size_t bytes_left = dst_max_len - 1;
+        char *curr_dst = dst;
+        
+        while (bytes_left > 0)
+        {
+            addr_t cache_line_bytes_left = cache_line_size - (curr_addr % cache_line_size);
+            addr_t bytes_to_read = std::min<addr_t>(bytes_left, cache_line_bytes_left);
+            size_t bytes_read = ReadMemory (curr_addr, curr_dst, bytes_to_read, error);
+            
+            if (bytes_read == 0)
+            {
+                dst[total_cstr_len] = '\0';
+                break;
+            }
+            const size_t len = strlen(curr_dst);
+
+            total_cstr_len += len;
+
+            if (len < bytes_to_read)
+                break;
+
+            curr_dst += bytes_read;
+            curr_addr += bytes_read;
+            bytes_left -= bytes_read;
+        }
+    }
+    return total_cstr_len;
+}
+
+size_t
 Process::ReadMemoryFromInferior (addr_t addr, void *buf, size_t size, Error &error)
 {
     if (buf == NULL || size == 0)
@@ -1894,7 +2210,7 @@ Process::Attach (lldb::pid_t attach_pid)
     // Find the process and its architecture.  Make sure it matches the architecture
     // of the current Target, and if not adjust it.
     
-    ProcessInfo process_info;
+    ProcessInstanceInfo process_info;
     PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
     if (platform_sp)
     {
@@ -1947,11 +2263,11 @@ Process::Attach (const char *process_name, bool wait_for_launch)
     
     if (!wait_for_launch)
     {
-        ProcessInfoList process_infos;
+        ProcessInstanceInfoList process_infos;
         PlatformSP platform_sp (m_target.GetDebugger().GetPlatformList().GetSelectedPlatform ());
         if (platform_sp)
         {
-            ProcessInfoMatch match_info;
+            ProcessInstanceInfoMatch match_info;
             match_info.GetProcessInfo().SetName(process_name);
             match_info.SetNameMatchType (eNameMatchEquals);
             platform_sp->FindProcesses (match_info, process_infos);
@@ -1965,7 +2281,7 @@ Process::Attach (const char *process_name, bool wait_for_launch)
             }
             else 
             {
-                ProcessInfo process_info;
+                ProcessInstanceInfo process_info;
                 if (process_infos.GetInfoAtIndex (0, process_info))
                 {
                     const ArchSpec &process_arch = process_info.GetArchitecture();
@@ -2034,7 +2350,7 @@ Process::CompleteAttach ()
     for (int i = 0; i < num_modules; i++)
     {
         ModuleSP module_sp (modules.GetModuleAtIndex(i));
-        if (module_sp->IsExecutable())
+        if (module_sp && module_sp->IsExecutable())
         {
             ModuleSP target_exe_module_sp (m_target.GetExecutableModule());
             if (target_exe_module_sp != module_sp)
@@ -2391,8 +2707,12 @@ Process::StartPrivateStateThread ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EVENTS));
 
+    bool already_running = PrivateStateThreadIsValid ();
     if (log)
-        log->Printf ("Process::%s ( )", __FUNCTION__);
+        log->Printf ("Process::%s()%s ", __FUNCTION__, already_running ? " already running" : " starting private state thread");
+
+    if (already_running)
+        return true;
 
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
@@ -2417,7 +2737,8 @@ Process::ResumePrivateStateThread ()
 void
 Process::StopPrivateStateThread ()
 {
-    ControlPrivateStateThread (eBroadcastInternalStateControlStop);
+    if (PrivateStateThreadIsValid ())
+        ControlPrivateStateThread (eBroadcastInternalStateControlStop);
 }
 
 void
@@ -2702,7 +3023,7 @@ Process::ProcessEventData::Dump (Stream *s) const
     if (m_process_sp)
         s->Printf(" process = %p (pid = %u), ", m_process_sp.get(), m_process_sp->GetID());
 
-    s->Printf("state = %s", StateAsCString(GetState()));;
+    s->Printf("state = %s", StateAsCString(GetState()));
 }
 
 const Process::ProcessEventData *
@@ -3005,7 +3326,7 @@ Process::UpdateInstanceName ()
         sstr.Printf ("%s", module_sp->GetFileSpec().GetFilename().AsCString());
                     
         GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-                                                                  sstr.GetData());
+                                                         sstr.GetData());
     }
 }
 
@@ -3661,7 +3982,11 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
         UserSettingsController::UpdateStringArrayVariable (op, index_value, m_run_args, value, err);
     else if (var_name == EnvVarsVarName())
     {
-        GetHostEnvironmentIfNeeded ();
+        // This is nice for local debugging, but it is isn't correct for
+        // remote debugging. We need to stop process.env-vars from being 
+        // populated with the host environment and add this as a launch option
+        // and get the correct environment from the Target's platform.
+        // GetHostEnvironmentIfNeeded ();
         UserSettingsController::UpdateDictionaryVariable (op, index_value, m_env_vars, value, err);
     }
     else if (var_name == InputPathVarName())

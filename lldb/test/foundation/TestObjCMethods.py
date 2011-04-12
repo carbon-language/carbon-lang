@@ -14,12 +14,12 @@ class FoundationTestCase(TestBase):
     mydir = "foundation"
 
     def test_break_with_dsym(self):
-        """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
+        """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
         self.buildDsym()
         self.break_on_objc_methods()
 
     def test_break_with_dwarf(self):
-        """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
+        """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
         self.buildDwarf()
         self.break_on_objc_methods()
 
@@ -50,12 +50,12 @@ class FoundationTestCase(TestBase):
         self.print_ivars_correctly()
 
     def break_on_objc_methods(self):
-        """Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'."""
+        """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Stop at +[NSString stringWithFormat:].
-        self.expect("regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
+        self.expect("_regexp-break +[NSString stringWithFormat:]", BREAKPOINT_CREATED,
             substrs = ["Breakpoint created: 1: name = '+[NSString stringWithFormat:]', locations = 1"])
 
         # Stop at -[MyString initWithNSString:].
@@ -67,7 +67,7 @@ class FoundationTestCase(TestBase):
             startstr = "Breakpoint created: 3: name = 'description', locations = 1")
 
         # Stop at -[NSAutoreleasePool release].
-        self.expect("regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
+        self.expect("_regexp-break -[NSAutoreleasePool release]", BREAKPOINT_CREATED,
             substrs = ["Breakpoint created: 4: name = '-[NSAutoreleasePool release]', locations = 1"])
 
         self.runCmd("run", RUN_SUCCEEDED)

@@ -46,13 +46,23 @@ public:
         eServerPacketType_invalid,
         eServerPacketType_unimplemented,
         eServerPacketType_interrupt, // CTRL+c packet or "\x03"
-        eServerPacketType_qHostInfo,
-        eServerPacketType_qProcessInfoPID,
+        eServerPacketType_A, // Program arguments packet
         eServerPacketType_qfProcessInfo,
         eServerPacketType_qsProcessInfo,
-        eServerPacketType_qUserName,
+        eServerPacketType_qC,
         eServerPacketType_qGroupName,
+        eServerPacketType_qHostInfo,
+        eServerPacketType_qLaunchGDBServer,
+        eServerPacketType_qLaunchSuccess,
+        eServerPacketType_qProcessInfoPID,
         eServerPacketType_qSpeedTest,
+        eServerPacketType_qUserName,
+        eServerPacketType_QEnvironment,
+        eServerPacketType_QSetDisableASLR,
+        eServerPacketType_QSetSTDIN,
+        eServerPacketType_QSetSTDOUT,
+        eServerPacketType_QSetSTDERR,
+        eServerPacketType_QSetWorkingDir,
         eServerPacketType_QStartNoAckMode
     };
     

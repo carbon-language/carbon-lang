@@ -17,6 +17,7 @@
 // Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
@@ -112,7 +113,8 @@ PlatformRemoteGDBServer::GetFile (const FileSpec &platform_file,
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformRemoteGDBServer::PlatformRemoteGDBServer () :
-    Platform(false) // This is a remote platform
+    Platform(false), // This is a remote platform
+    m_gdb_client(true)
 {
 }
 
@@ -267,17 +269,139 @@ PlatformRemoteGDBServer::GetGroupName (uint32_t gid)
 }
 
 uint32_t
-PlatformRemoteGDBServer::FindProcesses (const ProcessInfoMatch &match_info,
-                                        ProcessInfoList &process_infos)
+PlatformRemoteGDBServer::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                                        ProcessInstanceInfoList &process_infos)
 {
     return m_gdb_client.FindProcesses (match_info, process_infos);
 }
 
 bool
-PlatformRemoteGDBServer::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+PlatformRemoteGDBServer::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     return m_gdb_client.GetProcessInfo (pid, process_info);
 }
 
+
+Error
+PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    
+    m_gdb_client.SetSTDIN ("/dev/null");
+    m_gdb_client.SetSTDOUT ("/dev/null");
+    m_gdb_client.SetSTDERR ("/dev/null");
+    m_gdb_client.SetDisableASLR (launch_info.GetFlags().Test (eLaunchFlagDisableASLR));
+    
+    const char *working_dir = launch_info.GetWorkingDirectory();
+    if (working_dir && working_dir[0])
+    {
+        m_gdb_client.SetWorkingDir (working_dir);
+    }
+    
+    // Send the environment and the program + arguments after we connect
+    const char **argv = launch_info.GetArguments().GetConstArgumentVector();
+    const char **envp = launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+
+    if (envp)
+    {
+        const char *env_entry;
+        for (int i=0; (env_entry = envp[i]); ++i)
+        {
+            if (m_gdb_client.SendEnvironmentPacket(env_entry) != 0)
+                break;
+        }
+    }
+    const uint32_t old_packet_timeout = m_gdb_client.SetPacketTimeout (3000); // TODO: lower this to 5 seconds prior to checkin!!!
+    int arg_packet_err = m_gdb_client.SendArgumentsPacket (argv);
+    m_gdb_client.SetPacketTimeout (old_packet_timeout);
+    if (arg_packet_err == 0)
+    {
+        std::string error_str;
+        if (m_gdb_client.GetLaunchSuccess (error_str))
+        {
+            pid = m_gdb_client.GetCurrentProcessID ();
+            if (pid != LLDB_INVALID_PROCESS_ID)
+                launch_info.SetProcessID (pid);
+        }
+        else
+        {
+            error.SetErrorString (error_str.c_str());
+        }
+    }
+    else
+    {
+        error.SetErrorStringWithFormat("'A' packet returned an error: %i.\n", arg_packet_err);
+    }
+    return error;
+}
+
+lldb::ProcessSP
+PlatformRemoteGDBServer::Attach (lldb::pid_t pid, 
+                                 Debugger &debugger,
+                                 Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                                 Listener &listener, 
+                                 Error &error)
+{
+    lldb::ProcessSP process_sp;
+    if (IsRemote())
+    {
+        if (IsConnected())
+        {
+            uint16_t port = m_gdb_client.LaunchGDBserverAndGetPort();
+            
+            if (port == 0)
+            {
+                error.SetErrorStringWithFormat ("unable to launch a GDB server on '%s'", GetHostname ());
+            }
+            else
+            {
+                if (target == NULL)
+                {
+                    TargetSP new_target_sp;
+                    FileSpec emptyFileSpec;
+                    ArchSpec emptyArchSpec;
+                    
+                    error = debugger.GetTargetList().CreateTarget (debugger,
+                                                                   emptyFileSpec,
+                                                                   emptyArchSpec, 
+                                                                   false,
+                                                                   new_target_sp);
+                    target = new_target_sp.get();
+                }
+                else
+                    error.Clear();
+                
+                if (target && error.Success())
+                {
+                    debugger.GetTargetList().SetSelectedTarget(target);
+                    
+                    // The darwin always currently uses the GDB remote debugger plug-in
+                    // so even when debugging locally we are debugging remotely!
+                    process_sp = target->CreateProcess (listener, "gdb-remote");
+                    
+                    if (process_sp)
+                    {
+                        char connect_url[256];
+                        const int connect_url_len = ::snprintf (connect_url, 
+                                                                sizeof(connect_url), 
+                                                                "connect://%s:%u", 
+                                                                GetHostname (), 
+                                                                port);
+                        assert (connect_url_len < sizeof(connect_url));
+                        error = process_sp->ConnectRemote (connect_url);
+                        if (error.Success())
+                            error = process_sp->Attach(pid);
+                    }
+                }
+            }
+        }
+        else
+        {
+            error.SetErrorString("not connected to remote gdb server");
+        }
+    }
+    return process_sp;
+}
 
 

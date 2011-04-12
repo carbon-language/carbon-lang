@@ -31,78 +31,90 @@
    This function blocks while waiting for that connection.  */
 
 rnb_err_t
-RNBSocket::Listen (in_port_t listen_port_num)
+RNBSocket::Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton)
 {
     //DNBLogThreadedIf(LOG_RNB_COMM, "%8u RNBSocket::%s called", (uint32_t)m_timer.ElapsedMicroSeconds(true), __FUNCTION__);
     // Disconnect without saving errno
     Disconnect (false);
 
     DNBError err;
-    int listen_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listen_port == -1)
+    int listen_fd = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listen_fd == -1)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::socket ( domain = AF_INET, type = SOCK_STREAM, protocol = IPPROTO_TCP ) => socket = %i", listen_port);
+        err.LogThreaded("::socket ( domain = AF_INET, type = SOCK_STREAM, protocol = IPPROTO_TCP ) => socket = %i", listen_fd);
 
     if (err.Fail())
         return rnb_err;
 
     // enable local address reuse
-    SetSocketOption (listen_port, SOL_SOCKET, SO_REUSEADDR, 1);
+    SetSocketOption (listen_fd, SOL_SOCKET, SO_REUSEADDR, 1);
 
     struct sockaddr_in sa;
     ::memset (&sa, 0, sizeof sa);
     sa.sin_len = sizeof sa;
     sa.sin_family = AF_INET;
-    sa.sin_port = htons (listen_port_num);
+    sa.sin_port = htons (port);
     sa.sin_addr.s_addr = htonl (INADDR_ANY);
 
-    int error = ::bind (listen_port, (struct sockaddr *) &sa, sizeof(sa));
+    int error = ::bind (listen_fd, (struct sockaddr *) &sa, sizeof(sa));
     if (error == -1)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::bind ( socket = %i, (struct sockaddr *) &sa, sizeof(sa)) )", listen_port);
+        err.LogThreaded("::bind ( socket = %i, (struct sockaddr *) &sa, sizeof(sa)) )", listen_fd);
 
     if (err.Fail())
     {
-        ClosePort (listen_port, false);
+        ClosePort (listen_fd, false);
         return rnb_err;
     }
 
-    error = ::listen (listen_port, 1);
+    if (callback && port == 0)
+    {
+        // We were asked to listen on port zero which means we
+        // must now read the actual port that was given to us 
+        // as port zero is a special code for "find an open port
+        // for me".
+        socklen_t sa_len = sizeof (sa);
+        if (getsockname(listen_fd, (struct sockaddr *)&sa, &sa_len) == 0)
+        {
+            port = ntohs (sa.sin_port);
+            callback (callback_baton, port);
+        }
+    }
+
+    error = ::listen (listen_fd, 1);
     if (error == -1)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::listen ( socket = %i, backlog = 1 )", listen_port);
+        err.LogThreaded("::listen ( socket = %i, backlog = 1 )", listen_fd);
 
     if (err.Fail())
     {
-        ClosePort (listen_port, false);
+        ClosePort (listen_fd, false);
         return rnb_err;
     }
 
-    m_conn_port = ::accept (listen_port, NULL, 0);
-    if (m_conn_port == -1)
+    m_fd = ::accept (listen_fd, NULL, 0);
+    if (m_fd == -1)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::accept ( socket = %i, address = NULL, address_len = 0 )", listen_port);
+        err.LogThreaded("::accept ( socket = %i, address = NULL, address_len = 0 )", listen_fd);
+
+    ClosePort (listen_fd, false);
 
     if (err.Fail())
     {
-        ClosePort (listen_port, false);
         return rnb_err;
     }
     else
     {
-        // We are done with the listen port
-        ClosePort (listen_port, false);
-
         // Keep our TCP packets coming without any delays.
-        SetSocketOption (m_conn_port, IPPROTO_TCP, TCP_NODELAY, 1);
+        SetSocketOption (m_fd, IPPROTO_TCP, TCP_NODELAY, 1);
     }
 
     return rnb_success;
@@ -114,12 +126,12 @@ RNBSocket::Connect (const char *host, uint16_t port)
     Disconnect (false);
 
     // Create the socket
-    m_conn_port = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (m_conn_port == -1)
+    m_fd = ::socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (m_fd == -1)
         return rnb_err;
     
     // Enable local address reuse
-    SetSocketOption (m_conn_port, SOL_SOCKET, SO_REUSEADDR, 1);
+    SetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, 1);
     
     struct sockaddr_in sa;
     ::memset (&sa, 0, sizeof (sa));
@@ -146,14 +158,14 @@ RNBSocket::Connect (const char *host, uint16_t port)
         }
     }
     
-    if (-1 == ::connect (m_conn_port, (const struct sockaddr *)&sa, sizeof(sa)))
+    if (-1 == ::connect (m_fd, (const struct sockaddr *)&sa, sizeof(sa)))
     {
         Disconnect (false);
         return rnb_err;
     }
     
     // Keep our TCP packets coming without any delays.
-    SetSocketOption (m_conn_port, IPPROTO_TCP, TCP_NODELAY, 1);
+    SetSocketOption (m_fd, IPPROTO_TCP, TCP_NODELAY, 1);
     return rnb_success;
 }
 
@@ -165,13 +177,13 @@ RNBSocket::ConnectToService()
     // Disconnect from any previous connections
     Disconnect(false);
 
-    m_conn_port = ::lockdown_checkin (NULL, NULL);
-    if (m_conn_port == -1)
+    m_fd = ::lockdown_checkin (NULL, NULL);
+    if (m_fd == -1)
     {
         DNBLogThreadedIf(LOG_RNB_COMM, "::lockdown_checkin(NULL, NULL) failed");
         return rnb_not_connected;
     }
-    m_conn_port_from_lockdown = true;
+    m_fd_from_lockdown = true;
     return rnb_success;
 }
 #endif
@@ -180,8 +192,8 @@ rnb_err_t
 RNBSocket::OpenFile (const char *path)
 {
     DNBError err;
-    m_conn_port = open (path, O_RDWR);
-    if (m_conn_port == -1)
+    m_fd = open (path, O_RDWR);
+    if (m_fd == -1)
     {
         err.SetError(errno, DNBError::POSIX);
         err.LogThreaded ("can't open file '%s'", path);
@@ -191,11 +203,11 @@ RNBSocket::OpenFile (const char *path)
     {
         struct termios stdin_termios;
 
-        if (::tcgetattr (m_conn_port, &stdin_termios) == 0)
+        if (::tcgetattr (m_fd, &stdin_termios) == 0)
         {
             stdin_termios.c_lflag &= ~ECHO;     // Turn off echoing
             stdin_termios.c_lflag &= ~ICANON;   // Get one char at a time
-            ::tcsetattr (m_conn_port, TCSANOW, &stdin_termios);
+            ::tcsetattr (m_fd, TCSANOW, &stdin_termios);
         }
     }
     return rnb_success;
@@ -210,9 +222,9 @@ RNBSocket::SetSocketOption(int fd, int level, int option_name, int option_value)
 rnb_err_t
 RNBSocket::Disconnect (bool save_errno)
 {
-    if (m_conn_port_from_lockdown)
-        m_conn_port_from_lockdown = false;
-    return ClosePort (m_conn_port, save_errno);
+    if (m_fd_from_lockdown)
+        m_fd_from_lockdown = false;
+    return ClosePort (m_fd, save_errno);
 }
 
 
@@ -225,29 +237,29 @@ RNBSocket::Read (std::string &p)
     // Note that BUF is on the stack so we must be careful to keep any
     // writes to BUF from overflowing or we'll have security issues.
 
-    if (m_conn_port == -1)
+    if (m_fd == -1)
         return rnb_err;
 
     //DNBLogThreadedIf(LOG_RNB_COMM, "%8u RNBSocket::%s calling read()", (uint32_t)m_timer.ElapsedMicroSeconds(true), __FUNCTION__);
     DNBError err;
-    int bytesread = read (m_conn_port, buf, sizeof (buf));
+    int bytesread = read (m_fd, buf, sizeof (buf));
     if (bytesread <= 0)
         err.SetError(errno, DNBError::POSIX);
     else
         p.append(buf, bytesread);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::read ( %i, %p, %zu ) => %i", m_conn_port, buf, sizeof (buf), bytesread);
+        err.LogThreaded("::read ( %i, %p, %zu ) => %i", m_fd, buf, sizeof (buf), bytesread);
 
     // Our port went away - we have to mark this so IsConnected will return the truth.
     if (bytesread == 0)
     {
-        m_conn_port = -1;
+        m_fd = -1;
         return rnb_not_connected;
     }
     else if (bytesread == -1)
     {
-        m_conn_port = -1;
+        m_fd = -1;
         return rnb_err;
     }
     // Strip spaces from the end of the buffer
@@ -262,16 +274,16 @@ RNBSocket::Read (std::string &p)
 rnb_err_t
 RNBSocket::Write (const void *buffer, size_t length)
 {
-    if (m_conn_port == -1)
+    if (m_fd == -1)
         return rnb_err;
 
     DNBError err;
-    int bytessent = send (m_conn_port, buffer, length, 0);
+    int bytessent = send (m_fd, buffer, length, 0);
     if (bytessent < 0)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::send ( socket = %i, buffer = %p, length = %zu, flags = 0 ) => %i", m_conn_port, buffer, length, bytessent);
+        err.LogThreaded("::send ( socket = %i, buffer = %p, length = %zu, flags = 0 ) => %i", m_fd, buffer, length, bytessent);
 
     if (bytessent < 0)
         return rnb_err;

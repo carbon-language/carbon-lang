@@ -246,7 +246,7 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
         printf ("argv[%u] = '%s'\n", i, argv[i]);
 #endif
 
-    // Open the socket that was passed in as an argument
+    // Open the socket that was passed in as an option
     struct sockaddr_un saddr_un;
     int s = ::socket (AF_UNIX, SOCK_STREAM, 0);
     if (s < 0)

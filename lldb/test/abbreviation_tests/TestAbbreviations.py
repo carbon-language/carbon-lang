@@ -74,7 +74,7 @@ class AbbreviationsTestCase(TestBase):
         self.expect("fil " + exe,
                     patterns = [ "Current executable set to .*a.out.*" ])
 
-        self.expect("regexp-b product",
+        self.expect("_regexp-b product",
                     substrs = [ "breakpoint set --name 'product'",
                                 "Breakpoint created: 1: name = 'product', locations = 1" ])
 

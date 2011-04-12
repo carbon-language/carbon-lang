@@ -14,9 +14,11 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -165,6 +167,9 @@ Platform::Platform (bool is_host) :
     m_max_uid_name_len (0),
     m_max_gid_name_len (0)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p Platform::Platform()", this);
 }
 
 //------------------------------------------------------------------
@@ -175,6 +180,9 @@ Platform::Platform (bool is_host) :
 //------------------------------------------------------------------
 Platform::~Platform()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p Platform::~Platform()", this);
 }
 
 void
@@ -297,6 +305,15 @@ Platform::GetOSKernelDescription (std::string &s)
         return Host::GetOSKernelDescription (s);
     else
         return GetRemoteOSKernelDescription (s);
+}
+
+const char *
+Platform::GetName ()
+{
+    const char *name = GetHostname();
+    if (name == NULL || name[0] == '\0')
+        name = GetShortPluginName();
+    return name;
 }
 
 const char *
@@ -498,21 +515,66 @@ Platform::DisconnectRemote ()
 }
 
 bool
-Platform::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+Platform::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     // Take care of the host case so that each subclass can just 
-    // call Platform::GetProcessInfo (pid, process_info)
+    // call this function to get the host functionality.
     if (IsHost())
         return Host::GetProcessInfo (pid, process_info);
     return false;
 }
 
 uint32_t
-Platform::FindProcesses (const ProcessInfoMatch &match_info,
-                         ProcessInfoList &process_infos)
+Platform::FindProcesses (const ProcessInstanceInfoMatch &match_info,
+                         ProcessInstanceInfoList &process_infos)
 {
+    // Take care of the host case so that each subclass can just 
+    // call this function to get the host functionality.
     uint32_t match_count = 0;
     if (IsHost())
         match_count = Host::FindProcesses (match_info, process_infos);
     return match_count;    
 }
+
+
+Error
+Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    // Take care of the host case so that each subclass can just 
+    // call this function to get the host functionality.
+    if (IsHost())
+        error = Host::LaunchProcess (launch_info);
+    else
+        error.SetErrorString ("base lldb_private::Platform class can't launch remote processes");
+    return error;
+}
+
+lldb::ProcessSP
+Platform::DebugProcess (ProcessLaunchInfo &launch_info, 
+                        Debugger &debugger,
+                        Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                        Listener &listener,
+                        Error &error)
+{
+    ProcessSP process_sp;
+    // Make sure we stop at the entry point
+    launch_info.GetFlags ().Set (eLaunchFlagDebug);
+    error = LaunchProcess (launch_info);
+    if (error.Success())
+    {
+        lldb::pid_t pid = launch_info.GetProcessID();
+        if (pid != LLDB_INVALID_PROCESS_ID)
+        {
+            process_sp = Attach (pid, debugger, target, listener, error);
+            
+//            if (process_sp)
+//            {
+//                if (launch_info.GetFlags().IsClear (eLaunchFlagStopAtEntry))
+//                    process_sp->Resume();
+//            }
+        }
+    }
+    return process_sp;
+}
+

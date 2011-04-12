@@ -103,12 +103,12 @@ public:
                      bool *did_create_ptr);
 
     virtual uint32_t
-    FindProcesses (const lldb_private::ProcessInfoMatch &match_info,
-                   lldb_private::ProcessInfoList &process_infos);
+    FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
+                   lldb_private::ProcessInstanceInfoList &process_infos);
 
     virtual bool
     GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInfo &proc_info);
+                    lldb_private::ProcessInstanceInfo &proc_info);
 
     virtual bool
     GetSupportedArchitectureAtIndex (uint32_t idx, 

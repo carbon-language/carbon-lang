@@ -24,7 +24,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
                         CFString (CFStringRef cf_str = NULL);
-                        CFString (const char *s, CFStringEncoding encoding);
+                        CFString (const char *s, CFStringEncoding encoding = kCFStringEncodingUTF8);
                         CFString (const CFString& rhs);
                         CFString& operator= (const CFString& rhs);
                         virtual ~CFString ();

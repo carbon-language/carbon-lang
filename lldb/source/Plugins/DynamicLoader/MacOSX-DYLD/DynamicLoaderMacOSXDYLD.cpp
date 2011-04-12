@@ -295,7 +295,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             // it again (since Target::SetExecutableModule() will clear the
             // images). So append the dyld module back to the list if it is
             /// unique!
-            if (m_process->GetTarget().GetImages().AppendIfNeeded (dyld_module_sp))
+            if (dyld_module_sp && m_process->GetTarget().GetImages().AppendIfNeeded (dyld_module_sp))
                 UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
 
             return true;
@@ -603,6 +603,7 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
         uint32_t idx;
         uint32_t i = 0;
+        // Since we can't downsize a vector, we must do this using the swap method
         DYLDImageInfo::collection old_dyld_all_image_infos;
         old_dyld_all_image_infos.swap(m_dyld_image_infos);
 
@@ -639,7 +640,10 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                         m_dyld_image_infos[i].mod_date = info_data_ref.GetPointer(&info_data_offset);
 
                         char raw_path[PATH_MAX];
-                        m_process->ReadMemory (path_addr, raw_path, sizeof(raw_path), error);
+                        m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path));
+                        char raw_path2[PATH_MAX];// TODO: remove after assertion doesn't assert
+                        m_process->ReadMemory (path_addr, raw_path2, sizeof(raw_path2), error);// TODO: remove after assertion doesn't assert
+                        assert (strcmp (raw_path, raw_path2) == 0);// TODO: remove after assertion doesn't assert
                         m_dyld_image_infos[i].file_spec.SetFile(raw_path, true);
                     }
                     assert(i == m_dyld_all_image_infos.dylib_info_count);
@@ -652,10 +656,6 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                     m_dyld_image_infos.clear();
                 }
             }
-        }
-        else
-        {
-            m_dyld_image_infos.clear();
         }
 
         // If our new list is smaller than our old list, we have unloaded
@@ -763,9 +763,9 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                             {
                                 commpage_image_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[idx].file_spec,
                                                                                                    arch,
-                                                                                                   &m_dyld_image_infos[idx].uuid,
+                                                                                                   NULL,
                                                                                                    &commpage_dbstr,
-                                                                                                   objfile->GetOffset() + commpage_section->GetOffset());
+                                                                                                   objfile->GetOffset() + commpage_section->GetFileOffset());
                             }
                             if (commpage_image_module_sp)
                                 UpdateCommPageLoadAddress (commpage_image_module_sp.get());

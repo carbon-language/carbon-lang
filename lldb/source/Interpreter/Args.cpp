@@ -28,7 +28,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 Args::Args (const char *command) :
     m_args(),
-    m_argv()
+    m_argv(),
+    m_args_quote_char()
 {
     if (command)
         SetCommandString (command);
@@ -37,10 +38,46 @@ Args::Args (const char *command) :
 
 Args::Args (const char *command, size_t len) :
     m_args(),
-    m_argv()
+    m_argv(),
+    m_args_quote_char()
 {
     if (command && len)
         SetCommandString (command, len);
+}
+
+//----------------------------------------------------------------------
+// We have to be very careful on the copy constructor of this class
+// to make sure we copy all of the string values, but we can't copy the
+// rhs.m_argv into m_argv since it will point to the "const char *" c 
+// strings in rhs.m_args. We need to copy the string list and update our
+// own m_argv appropriately. 
+//----------------------------------------------------------------------
+Args::Args (const Args &rhs) :
+    m_args (rhs.m_args),
+    m_argv (),
+    m_args_quote_char(rhs.m_args_quote_char)
+{
+    UpdateArgvFromArgs();
+}
+
+//----------------------------------------------------------------------
+// We have to be very careful on the copy constructor of this class
+// to make sure we copy all of the string values, but we can't copy the
+// rhs.m_argv into m_argv since it will point to the "const char *" c 
+// strings in rhs.m_args. We need to copy the string list and update our
+// own m_argv appropriately. 
+//----------------------------------------------------------------------
+const Args &
+Args::operator= (const Args &rhs)
+{
+    // Make sure we aren't assigning to self
+    if (this != &rhs)
+    {
+        m_args = rhs.m_args;
+        m_args_quote_char = rhs.m_args_quote_char;
+        UpdateArgvFromArgs();
+    }
+    return *this;
 }
 
 //----------------------------------------------------------------------

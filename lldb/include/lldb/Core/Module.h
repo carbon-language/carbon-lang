@@ -391,8 +391,11 @@ public:
     const ConstString &
     GetObjectName() const;
 
-    off_t
-    GetObjectOffset() const;
+    uint64_t
+    GetObjectOffset() const
+    {
+        return m_object_offset;
+    }
 
     //------------------------------------------------------------------
     /// Get the object file representation for the current architecture.
@@ -598,6 +601,7 @@ protected:
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
     FileSpec                    m_platform_file;///< The path to the module on the platform on which it is being debugged
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
+    uint64_t                    m_object_offset;
     std::auto_ptr<ObjectFile>   m_objfile_ap;   ///< A pointer to the object file parser for this module.
     std::auto_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.

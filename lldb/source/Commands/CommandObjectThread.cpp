@@ -362,7 +362,7 @@ public:
         
         if (command.GetArgumentCount() == 0)
         {
-            ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+            ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
             if (exe_ctx.thread)
             {
                 if (DisplayFramesForExecutionContext (exe_ctx.thread,
@@ -386,7 +386,7 @@ public:
         }
         else if (command.GetArgumentCount() == 1 && ::strcmp (command.GetArgumentAtIndex(0), "all") == 0)
         {
-            Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+            Process *process = m_interpreter.GetExecutionContext().process;
             uint32_t num_threads = process->GetThreadList().GetSize();
             for (uint32_t i = 0; i < num_threads; i++)
             {
@@ -412,7 +412,7 @@ public:
         else
         {
             uint32_t num_args = command.GetArgumentCount();
-            Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+            Process *process = m_interpreter.GetExecutionContext().process;
             std::vector<ThreadSP> thread_sps;
 
             for (uint32_t i = 0; i < num_args; i++)
@@ -610,7 +610,7 @@ public:
         CommandReturnObject &result
     )
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         bool synchronous_execution = m_interpreter.GetSynchronous();
 
         if (process == NULL)
@@ -851,7 +851,7 @@ public:
             return false;
         }
 
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process exists. Cannot continue");
@@ -1115,7 +1115,7 @@ public:
             return false;
         }
 
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("need a valid process to step");
@@ -1308,7 +1308,7 @@ public:
         CommandReturnObject &result
     )
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("no process");
@@ -1378,7 +1378,7 @@ public:
     {
         Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        ExecutionContext exe_ctx(m_interpreter.GetDebugger().GetExecutionContext());
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.process)
         {
             const StateType state = exe_ctx.process->GetState();

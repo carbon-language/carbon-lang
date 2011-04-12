@@ -100,22 +100,23 @@ CommandInterpreter::Initialize ()
     HandleCommand ("command alias continue process continue", false, result);
     HandleCommand ("command alias expr     expression", false, result);
     HandleCommand ("command alias exit     quit", false, result);
-    HandleCommand ("command alias b        regexp-break", false, result);
+    HandleCommand ("command alias b        _regexp-break", false, result);
     HandleCommand ("command alias bt       thread backtrace", false, result);
     HandleCommand ("command alias si       thread step-inst", false, result);
     HandleCommand ("command alias step     thread step-in", false, result);
     HandleCommand ("command alias s        thread step-in", false, result);
     HandleCommand ("command alias next     thread step-over", false, result);
     HandleCommand ("command alias n        thread step-over", false, result);
+    HandleCommand ("command alias f        thread step-out", false, result);
     HandleCommand ("command alias finish   thread step-out", false, result);
     HandleCommand ("command alias x        memory read", false, result);
     HandleCommand ("command alias l        source list", false, result);
     HandleCommand ("command alias list     source list", false, result);
-    HandleCommand ("command alias p        frame variable", false, result);
+    HandleCommand ("command alias p        expression --", false, result);
     HandleCommand ("command alias print    expression --", false, result);
     HandleCommand ("command alias po       expression -o --", false, result);
-    HandleCommand ("command alias up       regexp-up", false, result);
-    HandleCommand ("command alias down     regexp-down", false, result);
+    HandleCommand ("command alias up       _regexp-up", false, result);
+    HandleCommand ("command alias down     _regexp-down", false, result);
     
 }
 
@@ -183,15 +184,15 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     break_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                      "regexp-break",
+                                                      "_regexp-break",
                                                       "Set a breakpoint using a regular expression to specify the location.",
-                                                      "regexp-break [<filename>:<linenum>]\nregexp-break [<address>]\nregexp-break <...>", 2));
+                                                      "_regexp-break [<filename>:<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>", 2));
     if (break_regex_cmd_ap.get())
     {
         if (break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*:[[:space:]]*([[:digit:]]+)[[:space:]]*$", "breakpoint set --file '%1' --line %2") &&
             break_regex_cmd_ap->AddRegexCommand("^(0x[[:xdigit:]]+)[[:space:]]*$", "breakpoint set --address %1") &&
             break_regex_cmd_ap->AddRegexCommand("^[\"']?([-+]\\[.*\\])[\"']?[[:space:]]*$", "breakpoint set --name '%1'") &&
-            break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list") &&
+            break_regex_cmd_ap->AddRegexCommand("^$", "breakpoint list --full") &&
             break_regex_cmd_ap->AddRegexCommand("^(-.*)$", "breakpoint set %1") &&
             break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'") &&
             break_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"))
@@ -203,9 +204,9 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::auto_ptr<CommandObjectRegexCommand>
     down_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                      "regexp-down",
-                                                      "Go down \"n\" frames in the stack (1 frame by default).",
-                                                      "down [n]", 2));
+                                                     "_regexp-down",
+                                                     "Go down \"n\" frames in the stack (1 frame by default).",
+                                                     "_regexp-down [n]", 2));
     if (down_regex_cmd_ap.get())
     {
         if (down_regex_cmd_ap->AddRegexCommand("^$", "frame select -r -1") &&
@@ -218,9 +219,9 @@ CommandInterpreter::LoadCommandDictionary ()
     
     std::auto_ptr<CommandObjectRegexCommand>
     up_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                      "regexp-up",
-                                                      "Go up \"n\" frames in the stack (1 frame by default).",
-                                                      "up [n]", 2));
+                                                   "_regexp-up",
+                                                   "Go up \"n\" frames in the stack (1 frame by default).",
+                                                   "_regexp-up [n]", 2));
     if (up_regex_cmd_ap.get())
     {
         if (up_regex_cmd_ap->AddRegexCommand("^$", "frame select -r 1") &&
@@ -759,7 +760,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
 
     Timer scoped_timer (__PRETTY_FUNCTION__, "Handling command: %s.", command_line);
     
-    m_debugger.UpdateExecutionContext (override_context);
+    UpdateExecutionContext (override_context);
 
     bool empty_command = false;
     bool comment_command = false;
@@ -1542,6 +1543,18 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
     }
 }
 
+PlatformSP
+CommandInterpreter::GetPlatform (bool prefer_target_platform)
+{
+    PlatformSP platform_sp;
+    if (prefer_target_platform && m_exe_ctx.target)
+        platform_sp = m_exe_ctx.target->GetPlatform();
+
+    if (!platform_sp)
+        platform_sp = m_debugger.GetPlatformList().GetSelectedPlatform();
+    return platform_sp;
+}
+
 void
 CommandInterpreter::HandleCommands (const StringList &commands, 
                                     ExecutionContext *override_context, 
@@ -1562,7 +1575,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
     // cause series of commands that change the context, then do an operation that relies on that context to fail.
     
     if (override_context != NULL)
-            m_debugger.UpdateExecutionContext (override_context);
+        UpdateExecutionContext (override_context);
             
     if (!stop_on_continue)
     {
@@ -1842,3 +1855,50 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
       
     }
 }
+
+
+void
+CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
+{
+    m_exe_ctx.Clear();
+    
+    if (override_context != NULL)
+    {
+        m_exe_ctx.target = override_context->target;
+        m_exe_ctx.process = override_context->process;
+        m_exe_ctx.thread = override_context->thread;
+        m_exe_ctx.frame = override_context->frame;
+    }
+    else
+    {
+        TargetSP target_sp (m_debugger.GetSelectedTarget());
+        if (target_sp)
+        {
+            m_exe_ctx.target = target_sp.get();
+            m_exe_ctx.process = target_sp->GetProcessSP().get();
+            if (m_exe_ctx.process && m_exe_ctx.process->IsAlive() && !m_exe_ctx.process->IsRunning())
+            {
+                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
+                if (m_exe_ctx.thread == NULL)
+                {
+                    m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
+                    // If we didn't have a selected thread, select one here.
+                    if (m_exe_ctx.thread != NULL)
+                        m_exe_ctx.process->GetThreadList().SetSelectedThreadByID(m_exe_ctx.thread->GetID());
+                }
+                if (m_exe_ctx.thread)
+                {
+                    m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();
+                    if (m_exe_ctx.frame == NULL)
+                    {
+                        m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
+                        // If we didn't have a selected frame select one here.
+                        if (m_exe_ctx.frame != NULL)
+                            m_exe_ctx.thread->SetSelectedFrame(m_exe_ctx.frame);
+                    }
+                }
+            }
+        }
+    }
+}
+

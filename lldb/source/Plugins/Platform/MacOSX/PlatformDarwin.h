@@ -69,12 +69,22 @@ public:
 
     virtual bool
     GetProcessInfo (lldb::pid_t pid, 
-                    lldb_private::ProcessInfo &proc_info);
+                    lldb_private::ProcessInstanceInfo &proc_info);
     
     virtual uint32_t
-    FindProcesses (const lldb_private::ProcessInfoMatch &match_info,
-                   lldb_private::ProcessInfoList &process_infos);
+    FindProcesses (const lldb_private::ProcessInstanceInfoMatch &match_info,
+                   lldb_private::ProcessInstanceInfoList &process_infos);
     
+    virtual lldb_private::Error
+    LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
+
+    virtual lldb::ProcessSP
+    Attach (lldb::pid_t pid, 
+            lldb_private::Debugger &debugger,
+            lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+            lldb_private::Listener &listener, 
+            lldb_private::Error &error);
+
 protected:
     lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
 

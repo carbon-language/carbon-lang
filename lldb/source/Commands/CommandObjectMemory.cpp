@@ -240,7 +240,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -415,7 +415,7 @@ CommandObjectMemoryRead::CommandOptions::g_option_table[] =
 { SET1       , false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,       "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
 { SET1       , false, "size",         's', required_argument, NULL, 0, eArgTypeByteSize,     "The size in bytes to use when displaying with the selected format."},
 { SET1       , false, "num-per-line", 'l', required_argument, NULL, 0, eArgTypeNumberPerLine,"The number of items per line to display."},
-{ SET1       , false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
+{ SET1 | SET2, false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
 { SET1 | SET2, false, "outfile",      'o', required_argument, NULL, 0, eArgTypeFilename,     "Dump memory read results into a file."},
 { SET1 | SET2, false, "append",       'a', no_argument,       NULL, 0, eArgTypeNone,         "Append memory read results to 'outfile'."},
 {        SET2, false, "binary",       'b', no_argument,       NULL, 0, eArgTypeNone,         "If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
@@ -591,7 +591,7 @@ public:
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");

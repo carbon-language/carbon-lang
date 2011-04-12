@@ -39,7 +39,8 @@ public:
     };
 
     void
-    SourceInitFile (bool in_cwd, CommandReturnObject &result);
+    SourceInitFile (bool in_cwd, 
+                    CommandReturnObject &result);
 
     CommandInterpreter (Debugger &debugger,
                         lldb::ScriptLanguage script_language,
@@ -49,13 +50,16 @@ public:
     ~CommandInterpreter ();
 
     lldb::CommandObjectSP
-    GetCommandSPExact (const char *cmd, bool include_aliases);
+    GetCommandSPExact (const char *cmd, 
+                       bool include_aliases);
 
     CommandObject *
-    GetCommandObjectExact (const char *cmd_cstr, bool include_aliases);
+    GetCommandObjectExact (const char *cmd_cstr, 
+                           bool include_aliases);
 
     CommandObject *
-    GetCommandObject (const char *cmd, StringList *matches = NULL);
+    GetCommandObject (const char *cmd, 
+                      StringList *matches = NULL);
 
     bool
     CommandExists (const char *cmd);
@@ -67,7 +71,8 @@ public:
     UserCommandExists (const char *cmd);
 
     void
-    AddAlias (const char *alias_name, lldb::CommandObjectSP& command_obj_sp);
+    AddAlias (const char *alias_name, 
+              lldb::CommandObjectSP& command_obj_sp);
 
     bool
     RemoveAlias (const char *alias_name);
@@ -82,14 +87,19 @@ public:
     RemoveAliasOptions (const char *alias_name);
 
     void
-    AddOrReplaceAliasOptions (const char *alias_name, OptionArgVectorSP &option_arg_vector_sp);
+    AddOrReplaceAliasOptions (const char *alias_name, 
+                              OptionArgVectorSP &option_arg_vector_sp);
 
     bool
-    StripFirstWord (std::string &command_string, std::string &next_word);
+    StripFirstWord (std::string &command_string, 
+                    std::string &next_word);
 
     void
-    BuildAliasResult (const char *alias_name, std::string &raw_input_string, std::string &alias_result, 
-                      CommandObject *&alias_cmd_obj, CommandReturnObject &result);
+    BuildAliasResult (const char *alias_name, 
+                      std::string &raw_input_string, 
+                      std::string &alias_result, 
+                      CommandObject *&alias_cmd_obj, 
+                      CommandReturnObject &result);
 
     bool
     HandleCommand (const char *command_line, 
@@ -151,12 +161,12 @@ public:
     //------------------------------------------------------------------
     void
     HandleCommandsFromFile (FileSpec &file, 
-                    ExecutionContext *context, 
-                    bool stop_on_continue, 
-                    bool stop_on_error, 
-                    bool echo_commands,
-                    bool print_results, 
-                    CommandReturnObject &result);
+                            ExecutionContext *context, 
+                            bool stop_on_continue, 
+                            bool stop_on_error, 
+                            bool echo_commands,
+                            bool print_results, 
+                            CommandReturnObject &result);
 
     CommandObject *
     GetCommandObjectForCommand (std::string &command_line);
@@ -177,11 +187,11 @@ public:
 
     int
     HandleCompletion (const char *current_line,
-                                      const char *cursor,
-                                      const char *last_char,
-                                      int match_start_point,
-                                      int max_return_elements,
-                                      StringList &matches);
+                      const char *cursor,
+                      const char *last_char,
+                      int match_start_point,
+                      int max_return_elements,
+                      StringList &matches);
 
     // This version just returns matches, and doesn't compute the substring.  It is here so the
     // Help command can call it for the first argument.
@@ -190,22 +200,26 @@ public:
 
     int
     HandleCompletionMatches (Args &input,
-                      int &cursor_index,
-                      int &cursor_char_position,
-                      int match_start_point,
-                      int max_return_elements,
-                      bool &word_complete,
-                      StringList &matches);
+                             int &cursor_index,
+                             int &cursor_char_position,
+                             int match_start_point,
+                             int max_return_elements,
+                             bool &word_complete,
+                             StringList &matches);
 
 
     int
-    GetCommandNamesMatchingPartialString (const char *cmd_cstr, bool include_aliases, StringList &matches);
+    GetCommandNamesMatchingPartialString (const char *cmd_cstr, 
+                                          bool include_aliases, 
+                                          StringList &matches);
 
     void
     GetHelp (CommandReturnObject &result);
 
     void
-    GetAliasHelp (const char *alias_name, const char *command_name, StreamString &help_string);
+    GetAliasHelp (const char *alias_name, 
+                  const char *command_name, 
+                  StreamString &help_string);
 
     void
     OutputFormattedHelpText (Stream &stream,
@@ -219,6 +233,18 @@ public:
     {
         return m_debugger;
     }
+    
+    ExecutionContext &
+    GetExecutionContext()
+    {
+        return m_exe_ctx;
+    }
+    
+    void
+    UpdateExecutionContext (ExecutionContext *override_context);
+
+    lldb::PlatformSP
+    GetPlatform (bool prefer_target_platform);
 
     const char *
     ProcessEmbeddedScriptCommands (const char *arg);
@@ -245,7 +271,8 @@ public:
     Initialize ();
 
     void
-    CrossRegisterCommand (const char * dest_cmd, const char * object_type);
+    CrossRegisterCommand (const char *dest_cmd, 
+                          const char *object_type);
 
     void
     SetScriptLanguage (lldb::ScriptLanguage lang);
@@ -264,8 +291,11 @@ public:
     HasAliasOptions ();
 
     void
-    BuildAliasCommandArgs (CommandObject *alias_cmd_obj, const char *alias_name, Args &cmd_args, 
-                           std::string &raw_input_string, CommandReturnObject &result);
+    BuildAliasCommandArgs (CommandObject *alias_cmd_obj, 
+                           const char *alias_name, 
+                           Args &cmd_args, 
+                           std::string &raw_input_string, 
+                           CommandReturnObject &result);
 
     int
     GetOptionArgumentPosition (const char *in_string);
@@ -284,10 +314,12 @@ public:
 
 #ifndef SWIG
     void
-    AddLogChannel (const char *name, const Log::Callbacks &log_callbacks);
+    AddLogChannel (const char *name, 
+                   const Log::Callbacks &log_callbacks);
 
     bool
-    GetLogChannelCallbacks (const char *channel, Log::Callbacks &log_callbacks);
+    GetLogChannelCallbacks (const char *channel, 
+                            Log::Callbacks &log_callbacks);
 
     bool
     RemoveLogChannel (const char *name);
@@ -297,11 +329,16 @@ public:
     FindLongestCommandWord (CommandObject::CommandMap &dict);
 
     void
-    FindCommandsForApropos (const char *word, StringList &commands_found, StringList &commands_help);
+    FindCommandsForApropos (const char *word, 
+                            StringList &commands_found, 
+                            StringList &commands_help);
 
     void
-    AproposAllSubCommands (CommandObject *cmd_obj, const char *prefix, const char *search_word, 
-                           StringList &commands_found, StringList &commands_help);
+    AproposAllSubCommands (CommandObject *cmd_obj, 
+                           const char *prefix, 
+                           const char *search_word, 
+                           StringList &commands_found, 
+                           StringList &commands_help);
 
 protected:
     friend class Debugger;
@@ -314,15 +351,16 @@ protected:
 
 private:
 
-    Debugger &m_debugger;   // The debugger session that this interpreter is associated with
+    Debugger &m_debugger;                       // The debugger session that this interpreter is associated with
+    ExecutionContext m_exe_ctx;                 // The current execution context to use when handling commands
     bool m_synchronous_execution;
     bool m_skip_lldbinit_files;
-    CommandObject::CommandMap m_command_dict; // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
-    CommandObject::CommandMap m_alias_dict;   // Stores user aliases/abbreviations for commands
-    CommandObject::CommandMap m_user_dict;    // Stores user-defined commands
-    OptionArgMap m_alias_options; // Stores any options (with or without arguments) that go with any alias.
+    CommandObject::CommandMap m_command_dict;   // Stores basic built-in commands (they cannot be deleted, removed or overwritten).
+    CommandObject::CommandMap m_alias_dict;     // Stores user aliases/abbreviations for commands
+    CommandObject::CommandMap m_user_dict;      // Stores user-defined commands
+    OptionArgMap m_alias_options;               // Stores any options (with or without arguments) that go with any alias.
     std::vector<std::string> m_command_history;
-    std::string m_repeat_command;  // Stores the command that will be executed for an empty command string.
+    std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
     std::auto_ptr<ScriptInterpreter> m_script_interpreter_ap;
     char m_comment_char;
 };

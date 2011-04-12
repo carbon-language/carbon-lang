@@ -229,7 +229,6 @@ Debugger::Debugger () :
     m_listener ("lldb.Debugger"),
     m_source_manager (),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
-    m_exe_ctx (),
     m_input_readers (),
     m_input_reader_data ()
 {
@@ -552,51 +551,6 @@ Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
 
         default:
             break;
-        }
-    }
-}
-
-void
-Debugger::UpdateExecutionContext (ExecutionContext *override_context)
-{
-    m_exe_ctx.Clear();
-
-    if (override_context != NULL)
-    {
-        m_exe_ctx.target = override_context->target;
-        m_exe_ctx.process = override_context->process;
-        m_exe_ctx.thread = override_context->thread;
-        m_exe_ctx.frame = override_context->frame;
-    }
-    else
-    {
-        TargetSP target_sp (GetSelectedTarget());
-        if (target_sp)
-        {
-            m_exe_ctx.target = target_sp.get();
-            m_exe_ctx.process = target_sp->GetProcessSP().get();
-            if (m_exe_ctx.process && m_exe_ctx.process->IsAlive() && !m_exe_ctx.process->IsRunning())
-            {
-                m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetSelectedThread().get();
-                if (m_exe_ctx.thread == NULL)
-                {
-                    m_exe_ctx.thread = m_exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
-                    // If we didn't have a selected thread, select one here.
-                    if (m_exe_ctx.thread != NULL)
-                        m_exe_ctx.process->GetThreadList().SetSelectedThreadByID(m_exe_ctx.thread->GetID());
-                }
-                if (m_exe_ctx.thread)
-                {
-                    m_exe_ctx.frame = m_exe_ctx.thread->GetSelectedFrame().get();
-                    if (m_exe_ctx.frame == NULL)
-                    {
-                        m_exe_ctx.frame = m_exe_ctx.thread->GetStackFrameAtIndex (0).get();
-                        // If we didn't have a selected frame select one here.
-                        if (m_exe_ctx.frame != NULL)
-                            m_exe_ctx.thread->SetSelectedFrame(m_exe_ctx.frame);
-                    }
-                }
-            }
         }
     }
 }

@@ -219,7 +219,7 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
 
     if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
     {
-        Process *process = m_interpreter.GetDebugger().GetExecutionContext().process;
+        Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
             result.AppendError ("Process must exist.");

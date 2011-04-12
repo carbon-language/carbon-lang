@@ -216,9 +216,9 @@ $ ./dotest.py -v -p ObjC
 Collected 4 tests
 
 test_break_with_dsym (TestObjCMethods.FoundationTestCase)
-Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'. ... ok
+Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'. ... ok
 test_break_with_dwarf (TestObjCMethods.FoundationTestCase)
-Test setting objc breakpoints using 'regexp-break' and 'breakpoint set'. ... ok
+Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'. ... ok
 test_data_type_and_expr_with_dsym (TestObjCMethods.FoundationTestCase)
 Lookup objective-c data types and evaluate expressions. ... ok
 test_data_type_and_expr_with_dwarf (TestObjCMethods.FoundationTestCase)

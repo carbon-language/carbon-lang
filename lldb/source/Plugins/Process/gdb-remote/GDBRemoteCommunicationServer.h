@@ -31,7 +31,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunicationServer();
+    GDBRemoteCommunicationServer(bool is_platform);
 
     virtual
     ~GDBRemoteCommunicationServer();
@@ -53,10 +53,26 @@ public:
     bool
     HandshakeWithClient (lldb_private::Error *error_ptr);
 
+    // Set both ports to zero to let the platform automatically bind to 
+    // a port chosen by the OS.
+    void
+    SetPortRange (uint16_t lo_port_num, uint16_t hi_port_num)
+    {
+        m_lo_port_num = lo_port_num;
+        m_hi_port_num = hi_port_num;
+    }
+
 protected:
+    //typedef std::map<uint16_t, lldb::pid_t> PortToPIDMap;
+
     lldb::thread_t m_async_thread;
-    lldb_private::ProcessInfoList m_proc_infos;
+    lldb_private::ProcessLaunchInfo m_process_launch_info;
+    lldb_private::Error m_process_launch_error;
+    lldb_private::ProcessInstanceInfoList m_proc_infos;
     uint32_t m_proc_infos_index;
+    uint16_t m_lo_port_num;
+    uint16_t m_hi_port_num;
+    //PortToPIDMap m_port_to_pid_map;
 
     size_t
     SendUnimplementedResponse (const char *packet);
@@ -68,8 +84,17 @@ protected:
     SendOKResponse ();
 
     bool
+    Handle_A (StringExtractorGDBRemote &packet);
+
+    bool
+    Handle_qLaunchSuccess (StringExtractorGDBRemote &packet);
+
+    bool
     Handle_qHostInfo (StringExtractorGDBRemote &packet);
     
+    bool
+    Handle_qLaunchGDBServer (StringExtractorGDBRemote &packet);
+
     bool
     Handle_qProcessInfoPID (StringExtractorGDBRemote &packet);
     
@@ -78,6 +103,9 @@ protected:
     
     bool 
     Handle_qsProcessInfo (StringExtractorGDBRemote &packet);
+
+    bool
+    Handle_qC (StringExtractorGDBRemote &packet);
 
     bool 
     Handle_qUserName (StringExtractorGDBRemote &packet);
@@ -89,8 +117,26 @@ protected:
     Handle_qSpeedTest (StringExtractorGDBRemote &packet);
 
     bool
+    Handle_QEnvironment  (StringExtractorGDBRemote &packet);
+    
+    bool
+    Handle_QSetDisableASLR (StringExtractorGDBRemote &packet);
+
+    bool
+    Handle_QSetWorkingDir (StringExtractorGDBRemote &packet);
+
+    bool
     Handle_QStartNoAckMode (StringExtractorGDBRemote &packet);
 
+    bool
+    Handle_QSetSTDIN (StringExtractorGDBRemote &packet);
+
+    bool
+    Handle_QSetSTDOUT (StringExtractorGDBRemote &packet);
+
+    bool
+    Handle_QSetSTDERR (StringExtractorGDBRemote &packet);
+    
 private:
     //------------------------------------------------------------------
     // For GDBRemoteCommunicationServer only
