@@ -446,6 +446,7 @@ namespace llvm {
     virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
     virtual bool EmitCFIRememberState();
     virtual bool EmitCFIRestoreState();
+    void EmitCFISameValue(int64_t Register);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.

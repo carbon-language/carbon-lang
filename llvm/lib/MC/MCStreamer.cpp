@@ -259,6 +259,15 @@ bool MCStreamer::EmitCFIRestoreState() {
   return false;
 }
 
+void MCStreamer::EmitCFISameValue(int64_t Register) {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::SameValue, Label, Register);
+  CurFrame->Instructions.push_back(Instruction);
+}
+
 void MCStreamer::EmitFnStart() {
   errs() << "Not implemented yet\n";
   abort();

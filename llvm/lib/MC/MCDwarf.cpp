@@ -493,6 +493,12 @@ static void EmitCFIInstruction(MCStreamer &Streamer,
   case MCCFIInstruction::Restore:
     Streamer.EmitIntValue(dwarf::DW_CFA_restore_state, 1);
     return;
+  case MCCFIInstruction::SameValue: {
+    unsigned Reg = Instr.getDestination().getReg();
+    Streamer.EmitIntValue(dwarf::DW_CFA_same_value, 1);
+    Streamer.EmitULEB128IntValue(Reg, 1);
+    return;
+  }
   }
   llvm_unreachable("Unhandled case in switch");
 }
