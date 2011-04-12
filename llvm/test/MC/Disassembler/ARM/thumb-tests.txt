@@ -223,3 +223,6 @@
 
 # CHECK:	bx	pc
 0x78 0x47
+
+# CHECK:	svc	#230
+0xe6 0xdf
