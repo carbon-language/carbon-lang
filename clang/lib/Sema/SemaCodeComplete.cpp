@@ -1482,7 +1482,8 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Statement: {
     AddTypedefResult(Results);
 
-    if (SemaRef.getLangOptions().CPlusPlus && Results.includeCodePatterns()) {
+    if (SemaRef.getLangOptions().CPlusPlus && Results.includeCodePatterns() &&
+        SemaRef.getLangOptions().CXXExceptions) {
       Builder.AddTypedTextChunk("try");
       Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
       Builder.AddPlaceholderChunk("statements");
@@ -1655,15 +1656,17 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       Results.AddResult(Result("true"));
       Results.AddResult(Result("false"));
 
-      // dynamic_cast < type-id > ( expression )
-      Builder.AddTypedTextChunk("dynamic_cast");
-      Builder.AddChunk(CodeCompletionString::CK_LeftAngle);
-      Builder.AddPlaceholderChunk("type");
-      Builder.AddChunk(CodeCompletionString::CK_RightAngle);
-      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      Builder.AddPlaceholderChunk("expression");
-      Builder.AddChunk(CodeCompletionString::CK_RightParen);
-      Results.AddResult(Result(Builder.TakeString()));      
+      if (SemaRef.getLangOptions().RTTI) {
+        // dynamic_cast < type-id > ( expression )
+        Builder.AddTypedTextChunk("dynamic_cast");
+        Builder.AddChunk(CodeCompletionString::CK_LeftAngle);
+        Builder.AddPlaceholderChunk("type");
+        Builder.AddChunk(CodeCompletionString::CK_RightAngle);
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("expression");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Builder.TakeString()));      
+      }
       
       // static_cast < type-id > ( expression )
       Builder.AddTypedTextChunk("static_cast");
@@ -1695,13 +1698,15 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       Builder.AddChunk(CodeCompletionString::CK_RightParen);
       Results.AddResult(Result(Builder.TakeString()));      
 
-      // typeid ( expression-or-type )
-      Builder.AddTypedTextChunk("typeid");
-      Builder.AddChunk(CodeCompletionString::CK_LeftParen);
-      Builder.AddPlaceholderChunk("expression-or-type");
-      Builder.AddChunk(CodeCompletionString::CK_RightParen);
-      Results.AddResult(Result(Builder.TakeString()));      
-
+      if (SemaRef.getLangOptions().RTTI) {
+        // typeid ( expression-or-type )
+        Builder.AddTypedTextChunk("typeid");
+        Builder.AddChunk(CodeCompletionString::CK_LeftParen);
+        Builder.AddPlaceholderChunk("expression-or-type");
+        Builder.AddChunk(CodeCompletionString::CK_RightParen);
+        Results.AddResult(Result(Builder.TakeString()));      
+      }
+      
       // new T ( ... )
       Builder.AddTypedTextChunk("new");
       Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
@@ -1738,11 +1743,13 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
       Builder.AddPlaceholderChunk("expression");
       Results.AddResult(Result(Builder.TakeString()));
 
-      // throw expression
-      Builder.AddTypedTextChunk("throw");
-      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
-      Builder.AddPlaceholderChunk("expression");
-      Results.AddResult(Result(Builder.TakeString()));
+      if (SemaRef.getLangOptions().CXXExceptions) {
+        // throw expression
+        Builder.AddTypedTextChunk("throw");
+        Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+        Builder.AddPlaceholderChunk("expression");
+        Results.AddResult(Result(Builder.TakeString()));
+      }
       
       // FIXME: Rethrow?
     }
