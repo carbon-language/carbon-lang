@@ -149,9 +149,6 @@ public:
     LastOffset += Adjustment;
     return LastOffset;
   }
-  int64_t getLastOffset() {
-    return LastOffset;
-  }
   void setLastOffset(int64_t Offset) {
     LastOffset = Offset;
   }
@@ -2402,9 +2399,8 @@ bool GenericAsmParser::ParseDirectiveCFIRelOffset(StringRef,
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  Offset -= getParser().getLastOffset();
-
-  return getStreamer().EmitCFIOffset(Register, Offset);
+  getStreamer().EmitCFIRelOffset(Register, Offset);
+  return false;
 }
 
 static bool isValidEncoding(int64_t Encoding) {

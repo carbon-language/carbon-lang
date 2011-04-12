@@ -221,6 +221,17 @@ bool MCStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   return false;
 }
 
+void MCStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MachineLocation Dest(Register, Offset);
+  MachineLocation Source(Register, Offset);
+  MCCFIInstruction Instruction(MCCFIInstruction::RelMove, Label, Dest, Source);
+  CurFrame->Instructions.push_back(Instruction);
+}
+
 bool MCStreamer::EmitCFIPersonality(const MCSymbol *Sym,
                                     unsigned Encoding) {
   EnsureValidFrame();
