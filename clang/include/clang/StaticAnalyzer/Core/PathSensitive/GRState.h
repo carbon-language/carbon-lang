@@ -690,7 +690,7 @@ inline SVal GRState::getSVal(const Stmt* Ex) const {
 inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
   if (const Expr *Ex = dyn_cast<Expr>(S)) {
     QualType T = Ex->getType();
-    if (Loc::isLocType(T) || T->isIntegerType())
+    if (Ex->isLValue() || Loc::isLocType(T) || T->isIntegerType())
       return getSVal(S);
   }
 

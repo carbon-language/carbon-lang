@@ -336,3 +336,13 @@ void RDar9267815::test2() {
     *p = 0xDEADBEEF; // expected-warning {{null}}
 }
 
+// Test reference parameters.
+void test_ref_double_aux(double &Value);
+float test_ref_double() {
+  double dVal;
+  test_ref_double_aux(dVal);
+  // This previously warned because 'dVal' was thought to be uninitialized.
+  float Val = (float)dVal; // no-warning
+  return Val;
+}
+
