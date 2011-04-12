@@ -442,8 +442,6 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   unsigned Cost = 0;
   for (const unsigned *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
-    if (UsedInInstr.test(Alias))
-      return spillImpossible;
     switch (unsigned VirtReg = PhysRegState[Alias]) {
     case regDisabled:
       break;
