@@ -2206,17 +2206,15 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
 /// computeSizeAndOffsets - Compute the size and offset of all the DIEs.
 ///
 void DwarfDebug::computeSizeAndOffsets() {
-  unsigned PrevOffset = 0;
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     // Compute size of compile unit header.
-    static unsigned Offset = PrevOffset +
+    unsigned Offset = 
       sizeof(int32_t) + // Length of Compilation Unit Info
       sizeof(int16_t) + // DWARF version number
       sizeof(int32_t) + // Offset Into Abbrev. Section
       sizeof(int8_t);   // Pointer Size (in bytes)
     computeSizeAndOffset(I->second->getCUDie(), Offset, true);
-    PrevOffset = Offset;
   }
 }
 
