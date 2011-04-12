@@ -1,10 +1,8 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=linearscan -disable-post-ra | FileCheck %s
-; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=basic -disable-post-ra | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -regalloc=linearscan -disable-post-ra | FileCheck %s
 
 ; The ARM magic hinting works best with linear scan.
-; CHECK: ldmia
-; CHECK: stmia
-; CHECK: ldrh
+; CHECK: ldrd
+; CHECK: strd
 ; CHECK: ldrb
 
 %struct.x = type { i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8 }
