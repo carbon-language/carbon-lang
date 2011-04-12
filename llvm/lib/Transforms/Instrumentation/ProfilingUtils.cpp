@@ -110,7 +110,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                    GlobalValue *CounterArray, bool beginning) {
   // Insert the increment after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = beginning ? BB->getFirstNonPHI() :
-                BB->getTerminator();
+                                   BB->getTerminator();
   while (isa<AllocaInst>(InsertPos))
     ++InsertPos;
 
@@ -151,10 +151,12 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   // delete it, to replace it with one that has a larger array type.
   std::vector<Constant *> dtors;
   if (GlobalVariable *GlobalDtors = Mod->getNamedGlobal("llvm.global_dtors")) {
-    ConstantArray *InitList =
-        cast<ConstantArray>(GlobalDtors->getInitializer());
-    for (unsigned i = 0, e = InitList->getType()->getNumElements(); i != e; ++i)
-      dtors.push_back(cast<Constant>(InitList->getOperand(i)));
+    if (ConstantArray *InitList =
+        dyn_cast<ConstantArray>(GlobalDtors->getInitializer())) {
+      for (unsigned i = 0, e = InitList->getType()->getNumElements();
+           i != e; ++i)
+        dtors.push_back(cast<Constant>(InitList->getOperand(i)));
+    }
     GlobalDtors->eraseFromParent();
   }
 
