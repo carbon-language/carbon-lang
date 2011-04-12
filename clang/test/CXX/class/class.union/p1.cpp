@@ -7,30 +7,30 @@ class Okay {
 };
 
 class Virtual {
-  virtual void foo() { abort(); } // expected-note 3 {{because type 'Virtual' has a virtual member function}}
+  virtual void foo() { abort(); } // expected-note 4 {{because type 'Virtual' has a virtual member function}}
 };
 
-class VirtualBase : virtual Okay { // expected-note 3 {{because type 'VirtualBase' has a virtual base class}}
+class VirtualBase : virtual Okay { // expected-note 4 {{because type 'VirtualBase' has a virtual base class}}
 };
 
 class Ctor {
-  Ctor() { abort(); } // expected-note 3 {{because type 'Ctor' has a user-declared constructor}}
+  Ctor() { abort(); } // expected-note 4 {{because type 'Ctor' has a user-declared constructor}}
 };
 class Ctor2 {
   Ctor2(); // expected-note 3 {{because type 'Ctor2' has a user-declared constructor}}
 };
 
 class CopyCtor {
-  CopyCtor(CopyCtor &cc) { abort(); } // expected-note 3 {{because type 'CopyCtor' has a user-declared copy constructor}}
+  CopyCtor(CopyCtor &cc) { abort(); } // expected-note 4 {{because type 'CopyCtor' has a user-declared copy constructor}}
 };
 
 // FIXME: this should eventually trigger on the operator's declaration line
-class CopyAssign { // expected-note 3 {{because type 'CopyAssign' has a user-declared copy assignment operator}}
+class CopyAssign { // expected-note 4 {{because type 'CopyAssign' has a user-declared copy assignment operator}}
   CopyAssign& operator=(CopyAssign& CA) { abort(); }
 };
 
 class Dtor {
-  ~Dtor() { abort(); } // expected-note 3 {{because type 'Dtor' has a user-declared destructor}}
+  ~Dtor() { abort(); } // expected-note 4 {{because type 'Dtor' has a user-declared destructor}}
 };
 
 union U1 {
@@ -100,23 +100,21 @@ union U5 {
 
 template <class A, class B> struct Either {
   bool tag;
-  union {
+  union { // expected-note 6 {{in instantiation of member class}}
     A a;
-    B b;
+    B b; // expected-error 6 {{non-trivial}}
   };
 
-  Either(A& a) : tag(true), a(a) {}
-  Either(B& b) : tag(false), b(b) {}
+  Either(const A& a) : tag(true), a(a) {}
+  Either(const B& b) : tag(false), b(b) {}
 };
 
-/* FIXME: this should work, but crashes in template code.
 void fred() {
-  Either<int,Virtual> virt(0);
-  Either<int,VirtualBase> vbase(0);
-  Either<int,Ctor> ctor(0);
-  Either<int,CopyCtor> copyctor(0);
-  Either<int,CopyAssign> copyassign(0);
-  Either<int,Dtor> dtor(0);
+  Either<int,Virtual> virt(0); // expected-note {{in instantiation of template}}
+  Either<int,VirtualBase> vbase(0); // expected-note {{in instantiation of template}}
+  Either<int,Ctor> ctor(0); // expected-note {{in instantiation of template}}
+  Either<int,CopyCtor> copyctor(0); // expected-note {{in instantiation of template}}
+  Either<int,CopyAssign> copyassign(0); // expected-note {{in instantiation of template}}
+  Either<int,Dtor> dtor(0); // expected-note {{in instantiation of template}}
   Either<int,Okay> okay(0);
 }
- */
