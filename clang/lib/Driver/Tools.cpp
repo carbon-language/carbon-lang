@@ -2604,11 +2604,16 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unexpected number of inputs.");
   const InputInfo &Input = Inputs[0];
 
-  // Bit of a hack, this is only used for original inputs.
-  //
-  // FIXME: This is broken for preprocessed .s inputs.
-  if (Input.isFilename() &&
-      strcmp(Input.getFilename(), Input.getBaseInput()) == 0) {
+  // Determine the original source input.
+  const Action *SourceAction = &JA;
+  while (SourceAction->getKind() != Action::InputClass) {
+    assert(!SourceAction->getInputs().empty() && "unexpected root action!");
+    SourceAction = SourceAction->getInputs()[0];
+  }
+
+  // Forward -g, assuming we are dealing with an actual assembly file.
+  if (SourceAction->getType() == types::TY_Asm || 
+      SourceAction->getType() == types::TY_PP_Asm) {
     if (Args.hasArg(options::OPT_gstabs))
       CmdArgs.push_back("--gstabs");
     else if (Args.hasArg(options::OPT_g_Group))
