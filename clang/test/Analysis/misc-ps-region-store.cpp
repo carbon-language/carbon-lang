@@ -346,3 +346,17 @@ float test_ref_double() {
   return Val;
 }
 
+// Test invalidation of class fields.
+class TestInvalidateClass {
+public:
+  int x;
+};
+
+void test_invalidate_class_aux(TestInvalidateClass &x);
+
+int test_invalidate_class() {
+  TestInvalidateClass y;
+  test_invalidate_class_aux(y);
+  return y.x; // no-warning
+}
+

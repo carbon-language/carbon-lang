@@ -688,11 +688,11 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   QualType T = TR->getValueType();
 
     // Invalidate the binding.
-  if (T->isStructureType()) {
+  if (T->isStructureOrClassType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelavant.
-    DefinedOrUnknownSVal V = svalBuilder.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy,
-                                                         Count);
+    DefinedOrUnknownSVal V =
+      svalBuilder.getConjuredSymbolVal(baseR, Ex, Ctx.IntTy, Count);
     B = RM.addBinding(B, baseR, BindingKey::Default, V);
     return;
   }
