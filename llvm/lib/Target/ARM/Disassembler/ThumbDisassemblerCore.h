@@ -1275,6 +1275,35 @@ static bool DisassembleThumb2LdStDual(MCInst &MI, unsigned Opcode,
          && OpInfo[3].RegClass < 0
          && "Expect >= 4 operands and first 3 as reg operands");
 
+  // Thumnb allows for specifying Rt and Rt2, unlike ARM (which has Rt2==Rt+1).
+  unsigned Rt  = decodeRd(insn);
+  unsigned Rt2 = decodeRs(insn);
+  unsigned Rn  = decodeRn(insn);
+
+  // Some sanity checking first.
+
+  // A8.6.67 LDRD (literal) has its W bit as (0).
+  if (Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2LDRD_PRE || Opcode == ARM::t2LDRD_POST) {
+    if (Rn == 15 && slice(insn, 21, 21) != 0)
+      return false;
+  } else {
+    // For Dual Store, PC cannot be used as the base register.
+    if (Rn == 15) {
+      DEBUG(errs() << "if n == 15 then UNPREDICTABLE\n");
+      return false;
+    }
+  }
+  if (Rt == Rt2) {
+    DEBUG(errs() << "if t == t2 then UNPREDICTABLE\n");
+    return false;
+  }
+  if (Opcode != ARM::t2LDRDi8 && Opcode != ARM::t2STRDi8) {
+    if (Rn == Rt || Rn == Rt2) {
+      DEBUG(errs() << "if wback && (n == t || n == t2) then UNPREDICTABLE\n");
+      return false;
+    }
+  }
+
   // Add the <Rt> <Rt2> operands.
   unsigned RegClassPair = OpInfo[0].RegClass;
   unsigned RegClassBase = OpInfo[2].RegClass;
