@@ -433,7 +433,7 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
     return LiveVirtRegs.lookup(VirtReg).Dirty ? spillDirty : spillClean;
   }
 
-  // This is a disabled register, add up const of aliases.
+  // This is a disabled register, add up cost of aliases.
   unsigned Cost = 0;
   for (const unsigned *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
