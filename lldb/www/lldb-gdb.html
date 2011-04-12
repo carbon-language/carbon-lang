@@ -61,6 +61,23 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Launch a process for with arguments <b><code>a.out 1 2 3</code></b> without having to supply the args every time.</td></tr>
+                        <td class="content">
+                            <b>%</b> lldb a.out 1 2 3<br>
+                            <b>(lldb)</b> run<br>
+                            ...<br>
+                            <b>(lldb)</b> run<br>
+                            ...<br>
+                        </td>
+                        <td class="content">
+                            <b>%</b> gdb --args a.out 1 2 3<br>
+                            <b>(gdb)</b> run<br>
+                            ...<br>
+                            <b>(gdb)</b> run<br>
+                            ...<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Launch a process with arguments in new terminal window (Mac OS X only).</td></tr>
                         <td class="content">
                             <b>(lldb)</b> process launch --tty -- &lt;args&gt;<br>
@@ -310,10 +327,27 @@
                     <tr>
                         <td class="content">
                             <b>(lldb)</b> memory read --size 4 --format x --count 4 0xbffff3c0<br>
-                            <b>(lldb)</b> x --size 4 --format x --count 4 0xbffff3c0
+                            <b>(lldb)</b> memory read -s4 -fx -c4 0xbffff3c0<br>
+                            <b>(lldb)</b> x -s4 -fx -c4 0xbffff3c0
                         </td>
                         <td class="content">
                             <b>(gdb)</b> x/4xw 0xbffff3c0
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Read 512 bytes of memory from address 0xbffff3c0 and save results to a local file as <b>text</b>.</td></tr>
+                    <tr>
+                        <td class="content" colspan=2>
+                            <b>(lldb)</b> memory read --outfile /tmp/mem.txt --count 512 0xbffff3c0<br>
+                            <b>(lldb)</b> memory read -o/tmp/mem.txt -c512 0xbffff3c0<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Save binary memory data starting at 0x1000 and ending at 0x2000 to a file.</td></tr>
+                    <tr>
+                        <td class="content"colspan=2>
+                            <b>(lldb)</b> memory read --outfile /tmp/mem.bin --binary  0x1000 0x1200<br>
+                            <b>(lldb)</b> memory read -o /tmp/mem.bin -b 0x1000 0x1200<br>
                         </td>
                     </tr>
 
@@ -342,10 +376,11 @@
                     <tr><td class="header" colspan="2">Disassemble an address range.</td></tr>
                     <tr>
                         <td class="content">
-                            <b>(lldb)</b> disassemble --start-address  0x00001eb8 --end-address 0x00001ec3<br>
+                            <b>(lldb)</b> disassemble --start-address  0x1eb8 --end-address 0x1ec3<br>
+                            <b>(lldb)</b> disassemble -s 0x1eb8 -e 0x1ec3<br>
                         </td>
                         <td class="content">
-                            <b>(gdb)</b> disassemble 0x00001eb8 0x00001ec3
+                            <b>(gdb)</b> disassemble 0x1eb8 0x1ec3
                         </td>
                     </tr>
 
@@ -420,6 +455,27 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Lookup information for an address in <b>a.out</a> only.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> image lookup --address 0x1ec4 a.out<br>
+                            <b>(lldb)</b> image lookup -a 0x1ec4 a.out<br>
+                        </td>
+                        <td class="content">
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Lookup information for for a type <code>Point</code> by name.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> image lookup --type Point<br>
+                            <b>(lldb)</b> image lookup -t Point<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> ptype Point<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Dump all sections from the main executable and any shared libraries.</td></tr>
                     <tr>
                         <td class="content">
@@ -427,6 +483,33 @@
                         </td>
                         <td class="content">
                             <b>(gdb)</b> maintenance info sections<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Dump all sections in the <b>a.out</b> module.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> image dump sections a.out<br>
+                        </td>
+                        <td class="content">
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Dump all symbols from the main executable and any shared libraries.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> image dump symtab<br>
+                        </td>
+                        <td class="content">
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Dump all symbols in <b>a.out</b> and <b>liba.so</b>.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> image dump symtab a.out liba.so<br>
+                        </td>
+                        <td class="content">
                         </td>
                     </tr>
 
