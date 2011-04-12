@@ -873,7 +873,8 @@ SVal SimpleSValBuilder::evalBinOpLN(const GRState *state,
     QualType elementType;
 
     if (const ElementRegion *elemReg = dyn_cast<ElementRegion>(region)) {
-      index = evalBinOpNN(state, BO_Add, elemReg->getIndex(), rhs,
+      assert(op == BO_Add || op == BO_Sub);
+      index = evalBinOpNN(state, op, elemReg->getIndex(), rhs,
                           getArrayIndexType());
       superR = elemReg->getSuperRegion();
       elementType = elemReg->getElementType();

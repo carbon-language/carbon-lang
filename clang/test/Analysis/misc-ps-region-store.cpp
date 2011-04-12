@@ -360,3 +360,22 @@ int test_invalidate_class() {
   return y.x; // no-warning
 }
 
+// Test correct pointer arithmetic using 'p--'.  This is to warn that we
+// were loading beyond the written characters in buf.
+char *RDar9269695(char *dst, unsigned int n)
+{
+  char buff[40], *p;
+
+  p = buff;
+  do
+    *p++ = '0' + n % 10;
+  while (n /= 10);
+
+  do
+    *dst++ = *--p; // no-warning
+  while (p != buff);
+
+  return dst;
+}
+
+
