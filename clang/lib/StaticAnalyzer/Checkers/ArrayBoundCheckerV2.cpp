@@ -62,6 +62,22 @@ public:
 };
 }
 
+static SVal computeExtentBegin(SValBuilder &svalBuilder, 
+                               const MemRegion *region) {
+  while (true)
+    switch (region->getKind()) {
+      default:
+        return svalBuilder.makeZeroArrayIndex();        
+      case MemRegion::SymbolicRegionKind:
+        // FIXME: improve this later by tracking symbolic lower bounds
+        // for symbolic regions.
+        return UnknownVal();
+      case MemRegion::ElementRegionKind:
+        region = cast<SubRegion>(region)->getSuperRegion();
+        continue;
+    }
+}
+
 void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
                                         CheckerContext &checkerContext) const {
 
@@ -84,31 +100,36 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
   if (!rawOffset.getRegion())
     return;
 
-  // CHECK LOWER BOUND: Is byteOffset < 0?  If so, we are doing a load/store
+  // CHECK LOWER BOUND: Is byteOffset < extent begin?  
+  //  If so, we are doing a load/store
   //  before the first valid offset in the memory region.
 
-  SVal lowerBound
-    = svalBuilder.evalBinOpNN(state, BO_LT, rawOffset.getByteOffset(),
-                              svalBuilder.makeZeroArrayIndex(),
-                              svalBuilder.getConditionType());
+  SVal extentBegin = computeExtentBegin(svalBuilder, rawOffset.getRegion());
+  
+  if (isa<NonLoc>(extentBegin)) {
+    SVal lowerBound
+      = svalBuilder.evalBinOpNN(state, BO_LT, rawOffset.getByteOffset(),
+                                cast<NonLoc>(extentBegin),
+                                svalBuilder.getConditionType());
 
-  NonLoc *lowerBoundToCheck = dyn_cast<NonLoc>(&lowerBound);
-  if (!lowerBoundToCheck)
-    return;
+    NonLoc *lowerBoundToCheck = dyn_cast<NonLoc>(&lowerBound);
+    if (!lowerBoundToCheck)
+      return;
     
-  const GRState *state_precedesLowerBound, *state_withinLowerBound;
-  llvm::tie(state_precedesLowerBound, state_withinLowerBound) =
+    const GRState *state_precedesLowerBound, *state_withinLowerBound;
+    llvm::tie(state_precedesLowerBound, state_withinLowerBound) =
       state->assume(*lowerBoundToCheck);
 
-  // Are we constrained enough to definitely precede the lower bound?
-  if (state_precedesLowerBound && !state_withinLowerBound) {
-    reportOOB(checkerContext, state_precedesLowerBound, OOB_Precedes);
-    return;
-  }
+    // Are we constrained enough to definitely precede the lower bound?
+    if (state_precedesLowerBound && !state_withinLowerBound) {
+      reportOOB(checkerContext, state_precedesLowerBound, OOB_Precedes);
+      return;
+    }
   
-  // Otherwise, assume the constraint of the lower bound.
-  assert(state_withinLowerBound);
-  state = state_withinLowerBound;
+    // Otherwise, assume the constraint of the lower bound.
+    assert(state_withinLowerBound);
+    state = state_withinLowerBound;
+  }
   
   do {
     // CHECK UPPER BOUND: Is byteOffset >= extent(baseRegion)?  If so,
@@ -232,9 +253,11 @@ RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(const GRState *state,
   while (region) {
     switch (region->getKind()) {
       default: {
-        if (const SubRegion *subReg = dyn_cast<SubRegion>(region))
+        if (const SubRegion *subReg = dyn_cast<SubRegion>(region)) {
+          offset = getValue(offset, svalBuilder);
           if (!offset.isUnknownOrUndef())
             return RegionRawOffsetV2(subReg, offset);
+        }
         return RegionRawOffsetV2();
       }
       case MemRegion::ElementRegionKind: {
