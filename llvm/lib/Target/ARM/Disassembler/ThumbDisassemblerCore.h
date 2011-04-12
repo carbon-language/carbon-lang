@@ -1862,6 +1862,47 @@ static bool DisassembleThumb2PreLoad(MCInst &MI, unsigned Opcode, uint32_t insn,
   return true;
 }
 
+static bool BadRegsThumb2LdSt(unsigned Opcode, uint32_t insn, bool Load,
+      unsigned R0, unsigned R1, unsigned R2, bool UseRm, bool WB) {
+
+  // Inst{22-21} encodes the data item transferred for load/store.
+  // For single word, it is encoded as ob10.
+  bool Word = (slice(insn, 22, 21) == 2);
+
+  if (UseRm && BadReg(R2)) {
+    DEBUG(errs() << "if BadReg(m) then UNPREDICTABLE\n");
+    return true;
+  }
+
+  if (Load) {
+    if (!Word && R0 == 13) {
+      DEBUG(errs() << "if t == 13 then UNPREDICTABLE\n");
+      return true;
+    }
+  } else {
+    if (WB && R0 == R1) {
+      DEBUG(errs() << "if wback && n == t then UNPREDICTABLE\n");
+      return true;
+    }
+    if ((WB && R0 == 15) || (!WB && R1 == 15)) {
+      DEBUG(errs() << "if Rn == '1111' then UNDEFINED\n");
+      return true;
+    }
+    if (Word) {
+      if ((WB && R1 == 15) || (!WB && R0 == 15)) {
+        DEBUG(errs() << "if t == 15 then UNPREDICTABLE\n");
+        return true;
+      }
+    } else {
+      if ((WB && BadReg(R1)) || (!WB && BadReg(R0))) {
+        DEBUG(errs() << "if BadReg(t) then UNPREDICTABLE\n");
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // A6.3.10 Store single data item
 // A6.3.9 Load byte, memory hints
 // A6.3.8 Load halfword, memory hints
@@ -1960,6 +2001,10 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
                                                        R2)));
     ++OpIdx;
   }
+
+  if (BadRegsThumb2LdSt(Opcode, insn, Load, R0, R1, R2, ThreeReg & !TIED_TO,
+                        TIED_TO))
+    return false;
 
   assert(OpInfo[OpIdx].RegClass < 0 && !OpInfo[OpIdx].isPredicate()
          && !OpInfo[OpIdx].isOptionalDef()
