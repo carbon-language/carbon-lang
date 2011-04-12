@@ -92,7 +92,7 @@ namespace PR5974 {
 
 // PR9570: the indirect field shouldn't crash IR gen.
 namespace test5 {
-  union {
+  static union {
     unsigned bar[4096] __attribute__((aligned(128)));
   };
 }
