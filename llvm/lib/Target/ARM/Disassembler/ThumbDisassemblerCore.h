@@ -1142,8 +1142,12 @@ static bool DisassembleThumb2SRS(MCInst &MI, unsigned Opcode, uint32_t insn,
 // t2RFE[IA|DB]W/t2RFE[IA|DB]: Rn
 static bool DisassembleThumb2RFE(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
-                                                     decodeRn(insn))));
+  unsigned Rn = decodeRn(insn);
+  if (Rn == 15) {
+    DEBUG(errs() << "if n == 15 then UNPREDICTABLE\n");
+    return false;
+  }
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B,ARM::GPRRegClassID,Rn)));
   NumOpsAdded = 1;
   return true;
 }

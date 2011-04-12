@@ -3228,19 +3228,20 @@ class T2RFE<bits<12> op31_20, dag oops, dag iops, InstrItinClass itin,
 
   bits<4> Rn;
   let Inst{19-16} = Rn;
+  let Inst{15-0} = 0xc000;
 }
 
 def t2RFEDBW : T2RFE<0b111010000011,
-                   (outs), (ins rGPR:$Rn), NoItinerary, "rfedb", "\t$Rn!",
+                   (outs), (ins GPR:$Rn), NoItinerary, "rfedb", "\t$Rn!",
                    [/* For disassembly only; pattern left blank */]>;
 def t2RFEDB  : T2RFE<0b111010000001,
-                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeab", "\t$Rn",
+                   (outs), (ins GPR:$Rn), NoItinerary, "rfedb", "\t$Rn",
                    [/* For disassembly only; pattern left blank */]>;
 def t2RFEIAW : T2RFE<0b111010011011,
-                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn!",
+                   (outs), (ins GPR:$Rn), NoItinerary, "rfeia", "\t$Rn!",
                    [/* For disassembly only; pattern left blank */]>;
 def t2RFEIA  : T2RFE<0b111010011001,
-                   (outs), (ins rGPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
+                   (outs), (ins GPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
                    [/* For disassembly only; pattern left blank */]>;
 
 //===----------------------------------------------------------------------===//
