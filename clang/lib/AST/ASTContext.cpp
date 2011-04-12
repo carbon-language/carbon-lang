@@ -4987,15 +4987,15 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
     // OK, if LHS is a superclass of RHS *and*
     // this superclass is assignment compatible with LHS.
     // false otherwise.
-    ObjCInterfaceDecl *SuperClass = 
-      RHS->getInterface()->getImmSubClassOf(LHS->getInterface());
-    if (SuperClass) {
+    bool IsSuperClass = 
+      LHS->getInterface()->isSuperClassOf(RHS->getInterface());
+    if (IsSuperClass) {
       // OK if conversion of LHS to SuperClass results in narrowing of types
       // ; i.e., SuperClass may implement at least one of the protocols
       // in LHS's protocol list. Example, SuperObj<P1> = lhs<P1,P2> is ok.
       // But not SuperObj<P1,P2,P3> = lhs<P1,P2>.
       llvm::SmallPtrSet<ObjCProtocolDecl *, 8> SuperClassInheritedProtocols;
-      CollectInheritedProtocols(SuperClass, SuperClassInheritedProtocols);
+      CollectInheritedProtocols(RHS->getInterface(), SuperClassInheritedProtocols);
       // If super class has no protocols, it is not a match.
       if (SuperClassInheritedProtocols.empty())
         return false;

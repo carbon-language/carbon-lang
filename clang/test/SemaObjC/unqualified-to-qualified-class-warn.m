@@ -29,3 +29,44 @@ int main () {
     functionTakingAClassConformingToAProtocol(bobject); // Shouldn't warn -  does implement Fooable
     return 0;
 }
+
+// rdar://9267196
+@interface NSObject @end
+
+@protocol MyProtocol
+@end
+
+@interface MyClass : NSObject 
+{
+}
+@end
+
+@implementation MyClass
+@end
+
+@interface MySubclass : MyClass <MyProtocol> 
+{
+}
+@end
+
+@interface MyTestClass : NSObject
+{
+@private
+	NSObject <MyProtocol> *someObj;
+}
+
+@property (nonatomic, assign) NSObject <MyProtocol> *someObj;
+
+@end
+
+@implementation MyTestClass
+
+@synthesize someObj;
+
+- (void)someMethod
+{
+	MySubclass *foo;
+	[self setSomeObj:foo]; // no warning here!
+}
+
+@end
