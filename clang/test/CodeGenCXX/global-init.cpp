@@ -90,6 +90,13 @@ namespace PR5974 {
 // CHECK-NEXT:   sub
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
+// PR9570: the indirect field shouldn't crash IR gen.
+namespace test5 {
+  union {
+    unsigned bar[4096] __attribute__((aligned(128)));
+  };
+}
+
 // At the end of the file, we check that y is initialized before z.
 
 // CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {

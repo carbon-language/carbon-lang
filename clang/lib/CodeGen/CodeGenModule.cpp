@@ -2034,6 +2034,11 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     EmitGlobal(cast<VarDecl>(D));
     break;
 
+  // Indirect fields from global anonymous structs and unions can be
+  // ignored; only the actual variable requires IR gen support.
+  case Decl::IndirectField:
+    break;
+
   // C++ Decls
   case Decl::Namespace:
     EmitNamespace(cast<NamespaceDecl>(D));
