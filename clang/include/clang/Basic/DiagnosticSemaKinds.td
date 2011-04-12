@@ -3859,6 +3859,13 @@ def err_unsupported_unknown_any_decl : Error<
   "%0 has unknown type, which is unsupported for this kind of declaration">;
 def err_unsupported_unknown_any_expr : Error<
   "unsupported expression with unknown type">;
+def err_unsupported_unknown_any_call : Error<
+  "call to unsupported expression with unknown type">;
+def err_unknown_any_addrof : Error<
+  "the address of a declaration with unknown type "
+  "can only be cast to a pointer type">;
+def err_unknown_any_var_function_type : Error<
+  "variable %0 with unknown type cannot be given a function type">;
 
 } // end of sema category
 

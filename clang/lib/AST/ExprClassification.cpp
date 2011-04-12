@@ -170,6 +170,9 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     // C++ [expr.prim.general]p3: The result is an lvalue if the entity is a
     //   function or variable and a prvalue otherwise.
   case Expr::DeclRefExprClass:
+    if (E->getType() == Ctx.UnknownAnyTy)
+      return isa<FunctionDecl>(cast<DeclRefExpr>(E)->getDecl())
+               ? Cl::CL_PRValue : Cl::CL_LValue;
     return ClassifyDecl(Ctx, cast<DeclRefExpr>(E)->getDecl());
     // We deal with names referenced from blocks the same way.
   case Expr::BlockDeclRefExprClass:
@@ -375,6 +378,10 @@ static Cl::Kinds ClassifyUnnamed(ASTContext &Ctx, QualType T) {
 }
 
 static Cl::Kinds ClassifyMemberExpr(ASTContext &Ctx, const MemberExpr *E) {
+  if (E->getType() == Ctx.UnknownAnyTy)
+    return (isa<FunctionDecl>(E->getMemberDecl())
+              ? Cl::CL_PRValue : Cl::CL_LValue);
+
   // Handle C first, it's easier.
   if (!Ctx.getLangOptions().CPlusPlus) {
     // C99 6.5.2.3p3

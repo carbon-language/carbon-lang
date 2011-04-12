@@ -7,21 +7,28 @@ int test0() {
 }
 
 int test1() {
-  extern __unknown_anytype test1_any;
-  // CHECK: call i32 @test1_any()
+  extern __unknown_anytype test1_any();
+  // CHECK: call i32 @_Z9test1_anyv()
   return (int) test1_any();
 }
 
+extern "C" __unknown_anytype test2_any(...);
 float test2() {
-  extern __unknown_anytype test2_any;
-  // CHECK: call float @test2_any(float {{[^,]+}})
+  // CHECK: call float (...)* @test2_any(double {{[^,]+}})
   return (float) test2_any(0.5f);
+}
+
+extern "C" __unknown_anytype test2a_any(...);
+float test2a() {
+  // CHECK: call float (...)* @test2a_any(float {{[^,]+}})
+  return (float) test2a_any((float) 0.5f);
 }
 
 float test3() {
   extern __unknown_anytype test3_any;
-  // CHECK: call float @test3_any(i32 5)
-  return ((float(int)) test3_any)(5);
+  // CHECK: [[FN:%.*]] = load float (i32)** @test3_any,
+  // CHECK: call float [[FN]](i32 5)
+  return ((float(*)(int)) test3_any)(5);
 }
 
 namespace test4 {
@@ -30,28 +37,28 @@ namespace test4 {
 
   int test() {
     // CHECK: load i32* @_ZN5test410test4_any1E
-    // CHECK: call i32 @_ZN5test410test4_any2E
-    return (int) test4_any1 + (int) test4_any2();
+    // CHECK: load i8* @_ZN5test410test4_any2E
+    return (int) test4_any1 + (char) test4_any2;
   }
 }
 
+extern "C" __unknown_anytype test5_any();
 void test5() {
-  extern __unknown_anytype test5_any;
   // CHECK: call void @test5_any()
   return (void) test5_any();
 }
 
+extern "C" __unknown_anytype test6_any(float *);
 long test6() {
-  extern __unknown_anytype test6_any(float *);
-  // CHECK: call i64 @_Z9test6_anyPf(float* null)
+  // CHECK: call i64 @test6_any(float* null)
   return (long) test6_any(0);
 }
 
 struct Test7 {
   ~Test7();
 };
+extern "C" __unknown_anytype test7_any(int);
 Test7 test7() {
-  extern __unknown_anytype test7_any;
   // CHECK: call void @test7_any({{%.*}}* sret {{%.*}}, i32 5)
   return (Test7) test7_any(5);
 }
@@ -63,14 +70,30 @@ struct Test8 {
   void test();
 };
 void Test8::test() {
-  (int) foo();
-  (int) foo(5);
-  (float) this->foo();
-  (float) this->foo(5);
+  float f;
+  // CHECK: call i32 @_ZN5Test83fooEv(
+  f = (int) foo();
+  // CHECK: call i32 @_ZN5Test83fooEi(
+  f = (int) foo(5);
+  // CHECK: call i32 @_ZN5Test83fooEv(
+  f = (float) this->foo();
+  // CHECK: call i32 @_ZN5Test83fooEi(
+  f = (float) this->foo(5);
 }
 void test8(Test8 *p) {
-  (double) p->foo();
-  (double) p->foo(5);
-  (bool) (*p).foo();
-  (bool) (*p).foo(5);
+  double d;
+  // CHECK: call i32 @_ZN5Test83fooEv(
+  d = (double) p->foo();
+  // CHECK: call i32 @_ZN5Test83fooEi(
+  d = (double) p->foo(5);
+  // CHECK: call i32 @_ZN5Test83fooEv(
+  d = (bool) (*p).foo();
+  // CHECK: call i32 @_ZN5Test83fooEi(
+  d = (bool) (*p).foo(5);
+}
+
+extern "C" __unknown_anytype test9_foo;
+void *test9() {
+  // CHECK: ret i8* bitcast (i32* @test9_foo to i8*)
+  return (int*) &test9_foo;
 }

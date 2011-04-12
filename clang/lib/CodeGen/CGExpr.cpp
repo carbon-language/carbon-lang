@@ -1792,35 +1792,6 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
   return MakeAddrLValue(phi, expr->getType());
 }
 
-static LValue emitUnknownAnyLValue(CodeGenFunction &CGF,
-                                   const Expr *operand,
-                                   QualType resolvedType) {
-  const ValueDecl *decl;
-  if (const DeclRefExpr *ref = dyn_cast<DeclRefExpr>(operand)) {
-    decl = ref->getDecl();
-  } else if (const MemberExpr *mem = dyn_cast<MemberExpr>(operand)) {
-    decl = mem->getMemberDecl();
-
-    // Emit (and ignore) the base.
-    if (mem->isArrow())
-      CGF.EmitScalarExpr(mem->getBase());
-    else
-      CGF.EmitLValue(mem->getBase());
-  } else {
-    llvm_unreachable("unexpected operand of unknown-any resolution!");
-    decl = 0;
-  }
-  llvm::Value *addr = CGF.CGM.getAddrOfUnknownAnyDecl(decl, resolvedType);
-
-  QualType type = resolvedType;
-  if (const ReferenceType *ref = type->getAs<ReferenceType>()) {
-    addr = CGF.Builder.CreateLoad(addr, "ref.value");
-    type = ref->getPointeeType();
-  }
-
-  return CGF.MakeAddrLValue(addr, type);
-}
-
 /// EmitCastLValue - Casts are never lvalues unless that cast is a dynamic_cast.
 /// If the cast is a dynamic_cast, we can have the usual lvalue result,
 /// otherwise if a cast is needed by the code generator in an lvalue context,
@@ -1958,13 +1929,6 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     llvm::Value *V = Builder.CreateBitCast(LV.getAddress(), 
                                            ConvertType(ToType));
     return MakeAddrLValue(V, E->getType());
-  }
-  case CK_ResolveUnknownAnyType:
-    return emitUnknownAnyLValue(*this, E->getSubExpr(), E->getType());
-  case CK_ResolveUnknownAnyTypeToReference: {
-    // l-value vs. r-value reference type shouldn't matter here.
-    QualType type = getContext().getLValueReferenceType(E->getType());
-    return emitUnknownAnyLValue(*this, E->getSubExpr(), type);
   }
   }
   
