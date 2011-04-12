@@ -108,6 +108,8 @@ static inline bool IsGPR(unsigned RegClass) {
 
 // Utilities for 32-bit Thumb instructions.
 
+static inline bool BadReg(uint32_t n) { return n == 13 || n == 15; }
+
 // Extract imm4: Inst{19-16}.
 static inline unsigned getImm4(uint32_t insn) {
   return slice(insn, 19, 16);

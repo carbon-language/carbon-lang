@@ -845,6 +845,7 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let Inst{15-12} = Rt;
 
     bits<17> addr;
+    let addr{12}    = 1;           // add = TRUE
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm
@@ -925,6 +926,7 @@ multiclass T2I_st<bits<2> opcod, string opc,
     let Inst{15-12} = Rt;
 
     bits<17> addr;
+    let addr{12}    = 1;           // add = TRUE
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm
@@ -1522,6 +1524,7 @@ multiclass T2Ipl<bits<1> write, bits<1> instr, string opc> {
     let Inst{15-12} = 0b1111;
 
     bits<17> addr;
+    let addr{12}    = 1;           // add = TRUE
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{23}    = addr{12};    // U
     let Inst{11-0}  = addr{11-0};  // imm12
