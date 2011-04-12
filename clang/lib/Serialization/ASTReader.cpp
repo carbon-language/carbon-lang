@@ -3009,12 +3009,12 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_LVALUE_REFERENCE: {
-    if (Record.size() != 1) {
+    if (Record.size() != 2) {
       Error("Incorrect encoding of lvalue reference type");
       return QualType();
     }
     QualType PointeeType = GetType(Record[0]);
-    return Context->getLValueReferenceType(PointeeType);
+    return Context->getLValueReferenceType(PointeeType, Record[1]);
   }
 
   case TYPE_RVALUE_REFERENCE: {

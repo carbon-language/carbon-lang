@@ -105,12 +105,13 @@ void ASTTypeWriter::VisitBlockPointerType(const BlockPointerType *T) {
 }
 
 void ASTTypeWriter::VisitLValueReferenceType(const LValueReferenceType *T) {
-  Writer.AddTypeRef(T->getPointeeType(), Record);
+  Writer.AddTypeRef(T->getPointeeTypeAsWritten(), Record);
+  Record.push_back(T->isSpelledAsLValue());
   Code = TYPE_LVALUE_REFERENCE;
 }
 
 void ASTTypeWriter::VisitRValueReferenceType(const RValueReferenceType *T) {
-  Writer.AddTypeRef(T->getPointeeType(), Record);
+  Writer.AddTypeRef(T->getPointeeTypeAsWritten(), Record);
   Code = TYPE_RVALUE_REFERENCE;
 }
 
