@@ -1963,10 +1963,13 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     case Type::Complex:
       break;
 
-    // These are ignored by ADL.
+    // If T is an Objective-C object or interface type, or a pointer to an 
+    // object or interface type, the associated namespace is the global
+    // namespace.
     case Type::ObjCObject:
     case Type::ObjCInterface:
     case Type::ObjCObjectPointer:
+      Result.Namespaces.insert(Result.S.Context.getTranslationUnitDecl());
       break;
     }
 
