@@ -2269,13 +2269,15 @@ bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
 /// ::= .cfi_startproc
 bool GenericAsmParser::ParseDirectiveCFIStartProc(StringRef,
                                                   SMLoc DirectiveLoc) {
-  return getStreamer().EmitCFIStartProc();
+  getStreamer().EmitCFIStartProc();
+  return false;
 }
 
 /// ParseDirectiveCFIEndProc
 /// ::= .cfi_endproc
 bool GenericAsmParser::ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc) {
-  return getStreamer().EmitCFIEndProc();
+  getStreamer().EmitCFIEndProc();
+  return false;
 }
 
 /// ParseRegisterOrRegisterNumber - parse register name or number.
@@ -2310,7 +2312,8 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfa(StringRef,
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  return getStreamer().EmitCFIDefCfa(Register, Offset);
+  getStreamer().EmitCFIDefCfa(Register, Offset);
+  return false;
 }
 
 /// ParseDirectiveCFIDefCfaOffset
@@ -2321,7 +2324,8 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaOffset(StringRef,
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  return getStreamer().EmitCFIDefCfaOffset(Offset);
+  getStreamer().EmitCFIDefCfaOffset(Offset);
+  return false;
 }
 
 /// ParseDirectiveCFIAdjustCfaOffset
@@ -2344,7 +2348,8 @@ bool GenericAsmParser::ParseDirectiveCFIDefCfaRegister(StringRef,
   if (ParseRegisterOrRegisterNumber(Register, DirectiveLoc))
     return true;
 
-  return getStreamer().EmitCFIDefCfaRegister(Register);
+  getStreamer().EmitCFIDefCfaRegister(Register);
+  return false;
 }
 
 /// ParseDirectiveCFIOffset
@@ -2363,7 +2368,8 @@ bool GenericAsmParser::ParseDirectiveCFIOffset(StringRef, SMLoc DirectiveLoc) {
   if (getParser().ParseAbsoluteExpression(Offset))
     return true;
 
-  return getStreamer().EmitCFIOffset(Register, Offset);
+  getStreamer().EmitCFIOffset(Register, Offset);
+  return false;
 }
 
 /// ParseDirectiveCFIRelOffset
@@ -2434,25 +2440,28 @@ bool GenericAsmParser::ParseDirectiveCFIPersonalityOrLsda(StringRef IDVal,
   MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
 
   if (IDVal == ".cfi_personality")
-    return getStreamer().EmitCFIPersonality(Sym, Encoding);
+    getStreamer().EmitCFIPersonality(Sym, Encoding);
   else {
     assert(IDVal == ".cfi_lsda");
-    return getStreamer().EmitCFILsda(Sym, Encoding);
+    getStreamer().EmitCFILsda(Sym, Encoding);
   }
+  return false;
 }
 
 /// ParseDirectiveCFIRememberState
 /// ::= .cfi_remember_state
 bool GenericAsmParser::ParseDirectiveCFIRememberState(StringRef IDVal,
                                                       SMLoc DirectiveLoc) {
-  return getStreamer().EmitCFIRememberState();
+  getStreamer().EmitCFIRememberState();
+  return false;
 }
 
 /// ParseDirectiveCFIRestoreState
 /// ::= .cfi_remember_state
 bool GenericAsmParser::ParseDirectiveCFIRestoreState(StringRef IDVal,
                                                      SMLoc DirectiveLoc) {
-  return getStreamer().EmitCFIRestoreState();
+  getStreamer().EmitCFIRestoreState();
+  return false;
 }
 
 /// ParseDirectiveCFISameValue

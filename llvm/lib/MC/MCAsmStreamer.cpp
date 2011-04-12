@@ -184,13 +184,19 @@ public:
                                      unsigned Column, unsigned Flags,
                                      unsigned Isa, unsigned Discriminator);
 
-  virtual bool EmitCFIStartProc();
-  virtual bool EmitCFIEndProc();
-  virtual bool EmitCFIDefCfaOffset(int64_t Offset);
-  virtual bool EmitCFIDefCfaRegister(int64_t Register);
-  virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);
-  virtual bool EmitCFIPersonality(const MCSymbol *Sym, unsigned Encoding);
-  virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
+  virtual void EmitCFIStartProc();
+  virtual void EmitCFIEndProc();
+  virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
+  virtual void EmitCFIDefCfaOffset(int64_t Offset);
+  virtual void EmitCFIDefCfaRegister(int64_t Register);
+  virtual void EmitCFIOffset(int64_t Register, int64_t Offset);
+  virtual void EmitCFIPersonality(const MCSymbol *Sym, unsigned Encoding);
+  virtual void EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
+  virtual void EmitCFIRememberState();
+  virtual void EmitCFIRestoreState();
+  virtual void EmitCFISameValue(int64_t Register);
+  virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
+  virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
   virtual void EmitFnStart();
   virtual void EmitFnEnd();
@@ -714,75 +720,93 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
   EmitEOL();
 }
 
-bool MCAsmStreamer::EmitCFIStartProc() {
-  if (this->MCStreamer::EmitCFIStartProc())
-    return true;
+void MCAsmStreamer::EmitCFIStartProc() {
+  MCStreamer::EmitCFIStartProc();
 
   OS << "\t.cfi_startproc";
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFIEndProc() {
-  if (this->MCStreamer::EmitCFIEndProc())
-    return true;
+void MCAsmStreamer::EmitCFIEndProc() {
+  MCStreamer::EmitCFIEndProc();
 
   OS << "\t.cfi_endproc";
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
-  if (this->MCStreamer::EmitCFIDefCfaOffset(Offset))
-    return true;
+void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
+  abort();
+}
+
+void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
+  MCStreamer::EmitCFIDefCfaOffset(Offset);
 
   OS << "\t.cfi_def_cfa_offset " << Offset;
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
-  if (this->MCStreamer::EmitCFIDefCfaRegister(Register))
-    return true;
+void MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
+  MCStreamer::EmitCFIDefCfaRegister(Register);
 
   OS << "\t.cfi_def_cfa_register " << Register;
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
-  if (this->MCStreamer::EmitCFIOffset(Register, Offset))
-    return true;
+void MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
+  this->MCStreamer::EmitCFIOffset(Register, Offset);
 
   OS << "\t.cfi_offset " << Register << ", " << Offset;
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym,
+void MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym,
                                        unsigned Encoding) {
-  if (this->MCStreamer::EmitCFIPersonality(Sym, Encoding))
-    return true;
+  MCStreamer::EmitCFIPersonality(Sym, Encoding);
 
   OS << "\t.cfi_personality " << Encoding << ", " << *Sym;
   EmitEOL();
-
-  return false;
 }
 
-bool MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
-  if (this->MCStreamer::EmitCFILsda(Sym, Encoding))
-    return true;
+void MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
+  MCStreamer::EmitCFILsda(Sym, Encoding);
 
   OS << "\t.cfi_lsda " << Encoding << ", " << *Sym;
   EmitEOL();
+}
 
-  return false;
+void MCAsmStreamer::EmitCFIRememberState() {
+  MCStreamer::EmitCFIRememberState();
+
+  OS << "\t.cfi_remember_state";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIRestoreState() {
+  MCStreamer::EmitCFIRestoreState();
+
+  OS << "\t.cfi_restore_state";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
+  MCStreamer::EmitCFISameValue(Register);
+
+  OS << "\t.cfi_same_value " << Register;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
+  MCStreamer::EmitCFIRelOffset(Register, Offset);
+
+  OS << "\t.cfi_rel_offset " << Register << ", " << Offset;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
+  MCStreamer::EmitCFIAdjustCfaOffset(Adjustment);
+
+  OS << "\t.cfi_adjust_cfa_offset " << Adjustment;
+  EmitEOL();
 }
 
 void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {

@@ -435,20 +435,19 @@ namespace llvm {
     void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
                               int PointerSize);
 
-    virtual bool EmitCFIStartProc();
-    virtual bool EmitCFIEndProc();
-    virtual bool EmitCFIDefCfa(int64_t Register, int64_t Offset);
-    virtual bool EmitCFIDefCfaOffset(int64_t Offset);
-    virtual bool EmitCFIDefCfaRegister(int64_t Register);
-    virtual bool EmitCFIOffset(int64_t Register, int64_t Offset);
-    virtual bool EmitCFIPersonality(const MCSymbol *Sym,
-                                    unsigned Encoding);
-    virtual bool EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
-    virtual bool EmitCFIRememberState();
-    virtual bool EmitCFIRestoreState();
-    void EmitCFISameValue(int64_t Register);
-    void EmitCFIRelOffset(int64_t Register, int64_t Offset);
-    void EmitCFIAdjustCfaOffset(int64_t Adjustment);
+    virtual void EmitCFIStartProc();
+    virtual void EmitCFIEndProc();
+    virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
+    virtual void EmitCFIDefCfaOffset(int64_t Offset);
+    virtual void EmitCFIDefCfaRegister(int64_t Register);
+    virtual void EmitCFIOffset(int64_t Register, int64_t Offset);
+    virtual void EmitCFIPersonality(const MCSymbol *Sym, unsigned Encoding);
+    virtual void EmitCFILsda(const MCSymbol *Sym, unsigned Encoding);
+    virtual void EmitCFIRememberState();
+    virtual void EmitCFIRestoreState();
+    virtual void EmitCFISameValue(int64_t Register);
+    virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
+    virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
