@@ -619,9 +619,9 @@ if ($Action eq 'compile' or $Action eq 'link') {
       push @AnalyzeArgs, "-analyzer-constraints=$ConstraintsModel";
     }
     
-#    if (defined $Analyses) {
-#      push @AnalyzeArgs, split '\s+', $Analyses;
-#    }
+    if (defined $Analyses) {
+      push @AnalyzeArgs, split '\s+', $Analyses;
+    }
 
     if (defined $OutputFormat) {
       push @AnalyzeArgs, "-analyzer-output=" . $OutputFormat;

@@ -1001,8 +1001,16 @@ ADVANCED OPTIONS:
  -stats - Generates visitation statistics for the project being analyzed.
 
  -maxloop N - specifiy the number of times a block can be visited before giving
-              up. Default is 3. Increase for more comprehensive coverage at a
+              up. Default is 4. Increase for more comprehensive coverage at a
               cost of speed.
+
+CONTROLLING CHECKERS:
+
+ A default group of checkers are always run unless explicitly disabled.
+ Checkers may be enabled/disabled using the following options:
+
+ -enable-checker [checker name]
+ -disable-checker [checker name]
 ENDTEXT
 
 # Query clang for list of checkers that are enabled.
@@ -1303,6 +1311,16 @@ while (@ARGV) {
   if ($arg eq "-maxloop") {
     shift @ARGV;
     $MaxLoop = shift @ARGV;
+    next;
+  }
+  if ($arg eq "-enable-checker") {
+    shift @ARGV;
+    push @AnalysesToRun, "-analyzer-checker", shift @ARGV;
+    next;
+  }
+  if ($arg eq "-disable-checker") {
+    shift @ARGV;
+    push @AnalysesToRun, "-analyzer-disable-checker", shift @ARGV;
     next;
   }
 
