@@ -523,6 +523,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
   case MCCFIInstruction::RelMove: {
     const MachineLocation &Dst = Instr.getDestination();
     const MachineLocation &Src = Instr.getSource();
+    const bool IsRelative = Instr.getOperation() == MCCFIInstruction::RelMove;
 
     // If advancing cfa.
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
@@ -535,7 +536,11 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
         Streamer.EmitULEB128IntValue(Src.getReg());
       }
 
-      CFAOffset = -Src.getOffset();
+      if (IsRelative)
+        CFAOffset += Src.getOffset();
+      else
+        CFAOffset = -Src.getOffset();
+
       Streamer.EmitULEB128IntValue(CFAOffset, 1);
       return;
     }
@@ -549,7 +554,6 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
 
     unsigned Reg = Src.getReg();
 
-    const bool IsRelative = Instr.getOperation() == MCCFIInstruction::RelMove;
     int Offset = Dst.getOffset();
     if (IsRelative)
       Offset -= CFAOffset;

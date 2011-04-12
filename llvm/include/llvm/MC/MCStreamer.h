@@ -448,6 +448,7 @@ namespace llvm {
     virtual bool EmitCFIRestoreState();
     void EmitCFISameValue(int64_t Register);
     void EmitCFIRelOffset(int64_t Register, int64_t Offset);
+    void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
