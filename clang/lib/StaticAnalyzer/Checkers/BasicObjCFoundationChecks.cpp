@@ -503,7 +503,8 @@ public:
 bool
 VariadicMethodTypeChecker::isVariadicMessage(const ObjCMessage &msg) const {
   const ObjCMethodDecl *MD = msg.getMethodDecl();
-  if (!MD || !MD->isVariadic())
+  
+  if (!MD || !MD->isVariadic() || isa<ObjCProtocolDecl>(MD->getDeclContext()))
     return false;
   
   Selector S = msg.getSelector();

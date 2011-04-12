@@ -81,3 +81,12 @@ void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [[[NSSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 }
 
+// This previously crashed the variadic argument checker.
+@protocol RDar9273215
+- (void)rdar9273215:(id)x, ...;
+@end
+
+void test_rdar9273215(id<RDar9273215> y) {
+  return [y rdar9273215:y, y];
+}
+
