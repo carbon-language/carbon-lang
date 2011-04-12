@@ -22,7 +22,6 @@
 #include "SpillPlacement.h"
 #include "SplitKit.h"
 #include "VirtRegMap.h"
-#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
@@ -126,13 +125,17 @@ class RAGreedy : public MachineFunctionPass,
   /// All basic blocks where the current register has uses.
   SmallVector<SpillPlacement::BlockConstraint, 8> SplitConstraints;
 
-  /// Live-through blocks that have already been added to SpillPlacer.
-  SparseBitVector<> ActiveThroughBlocks;
-
   /// Global live range splitting candidate info.
   struct GlobalSplitCandidate {
     unsigned PhysReg;
     BitVector LiveBundles;
+    SmallVector<unsigned, 8> ActiveBlocks;
+
+    void reset(unsigned Reg) {
+      PhysReg = Reg;
+      LiveBundles.clear();
+      ActiveBlocks.clear();
+    }
   };
 
   /// Candidate info for for each PhysReg in AllocationOrder.
@@ -174,9 +177,9 @@ private:
 
   bool addSplitConstraints(InterferenceCache::Cursor, float&);
   void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
-  void growRegion(InterferenceCache::Cursor);
-  float calcGlobalSplitCost(unsigned, const BitVector&);
-  void splitAroundRegion(LiveInterval&, unsigned, const BitVector&,
+  void growRegion(GlobalSplitCandidate &Cand, InterferenceCache::Cursor);
+  float calcGlobalSplitCost(GlobalSplitCandidate&, InterferenceCache::Cursor);
+  void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
   SlotIndex getPrevMappedIndex(const MachineInstr*);
@@ -288,6 +291,7 @@ void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
   LRStage.clear();
+  GlobalCand.clear();
   RegAllocBase::releaseMemory();
 }
 
@@ -526,13 +530,16 @@ void RAGreedy::addThroughConstraints(InterferenceCache::Cursor Intf,
   SpillPlacer->addLinks(ArrayRef<unsigned>(TBS, T));
 }
 
-void RAGreedy::growRegion(InterferenceCache::Cursor Intf) {
-  // Keep track of through blocks that have already been added to SpillPlacer.
-  SparseBitVector<> Added;
-  SmallVector<unsigned, 16> ThroughBlocks;
+void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
+                          InterferenceCache::Cursor Intf) {
+  // Keep track of through blocks that have not been added to SpillPlacer.
+  BitVector Todo = SA->getThroughBlocks();
+  SmallVectorImpl<unsigned> &ActiveBlocks = Cand.ActiveBlocks;
+  unsigned AddedTo = 0;
 #ifndef NDEBUG
   unsigned Visited = 0;
 #endif
+
   for (;;) {
     ArrayRef<unsigned> NewBundles = SpillPlacer->getRecentPositive();
     if (NewBundles.empty())
@@ -545,26 +552,26 @@ void RAGreedy::growRegion(InterferenceCache::Cursor Intf) {
       for (ArrayRef<unsigned>::iterator I = Blocks.begin(), E = Blocks.end();
            I != E; ++I) {
         unsigned Block = *I;
-        if (!SA->isThroughBlock(Block) || !Added.test_and_set(Block))
+        if (!Todo.test(Block))
           continue;
+        Todo.reset(Block);
         // This is a new through block. Add it to SpillPlacer later.
-        ThroughBlocks.push_back(Block);
+        ActiveBlocks.push_back(Block);
 #ifndef NDEBUG
         ++Visited;
 #endif
       }
     }
     // Any new blocks to add?
-    if (!ThroughBlocks.empty()) {
-      addThroughConstraints(Intf, ThroughBlocks);
-      ThroughBlocks.clear();
+    if (ActiveBlocks.size() > AddedTo) {
+      ArrayRef<unsigned> Add(&ActiveBlocks[AddedTo],
+                             ActiveBlocks.size() - AddedTo);
+      addThroughConstraints(Intf, Add);
+      AddedTo = ActiveBlocks.size();
     }
     // Perhaps iterating can enable more bundles?
     SpillPlacer->iterate();
   }
-
-  // Rememeber the relevant set of through blocks for splitAroundRegion().
-  ActiveThroughBlocks |= Added;
   DEBUG(dbgs() << ", v=" << Visited);
 }
 
@@ -572,9 +579,10 @@ void RAGreedy::growRegion(InterferenceCache::Cursor Intf) {
 /// pattern in LiveBundles. This cost should be added to the local cost of the
 /// interference pattern in SplitConstraints.
 ///
-float RAGreedy::calcGlobalSplitCost(unsigned PhysReg,
-                                    const BitVector &LiveBundles) {
+float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand,
+                                    InterferenceCache::Cursor Intf) {
   float GlobalCost = 0;
+  const BitVector &LiveBundles = Cand.LiveBundles;
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
@@ -591,10 +599,8 @@ float RAGreedy::calcGlobalSplitCost(unsigned PhysReg,
       GlobalCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
   }
 
-  InterferenceCache::Cursor Intf(IntfCache, PhysReg);
-  for (SparseBitVector<>::iterator I = ActiveThroughBlocks.begin(),
-       E = ActiveThroughBlocks.end(); I != E; ++I) {
-    unsigned Number = *I;
+  for (unsigned i = 0, e = Cand.ActiveBlocks.size(); i != e; ++i) {
+    unsigned Number = Cand.ActiveBlocks[i];
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
     if (!RegIn && !RegOut)
@@ -619,18 +625,20 @@ float RAGreedy::calcGlobalSplitCost(unsigned PhysReg,
 /// avoiding interference. The 'stack' interval is the complement constructed by
 /// SplitEditor. It will contain the rest.
 ///
-void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
-                                 const BitVector &LiveBundles,
+void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
+                                 GlobalSplitCandidate &Cand,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  const BitVector &LiveBundles = Cand.LiveBundles;
+
   DEBUG({
-    dbgs() << "Splitting around region for " << PrintReg(PhysReg, TRI)
+    dbgs() << "Splitting around region for " << PrintReg(Cand.PhysReg, TRI)
            << " with bundles";
     for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
       dbgs() << " EB#" << i;
     dbgs() << ".\n";
   });
 
-  InterferenceCache::Cursor Intf(IntfCache, PhysReg);
+  InterferenceCache::Cursor Intf(IntfCache, Cand.PhysReg);
   LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
   SE->reset(LREdit);
 
@@ -815,9 +823,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   }
 
   // Handle live-through blocks.
-  for (SparseBitVector<>::iterator I = ActiveThroughBlocks.begin(),
-       E = ActiveThroughBlocks.end(); I != E; ++I) {
-    unsigned Number = *I;
+  for (unsigned i = 0, e = Cand.ActiveBlocks.size(); i != e; ++i) {
+    unsigned Number = Cand.ActiveBlocks[i];
     bool RegIn  = LiveBundles[Bundles->getBundle(Number, 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(Number, 1)];
     DEBUG(dbgs() << "Live through BB#" << Number << '\n');
@@ -850,18 +857,17 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
 
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                                   SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  BitVector LiveBundles, BestBundles;
   float BestCost = 0;
-  unsigned BestReg = 0;
-  ActiveThroughBlocks.clear();
+  const unsigned NoCand = ~0u;
+  unsigned BestCand = NoCand;
 
   Order.rewind();
   for (unsigned Cand = 0; unsigned PhysReg = Order.next(); ++Cand) {
     if (GlobalCand.size() <= Cand)
       GlobalCand.resize(Cand+1);
-    GlobalCand[Cand].PhysReg = PhysReg;
+    GlobalCand[Cand].reset(PhysReg);
 
-    SpillPlacer->prepare(LiveBundles);
+    SpillPlacer->prepare(GlobalCand[Cand].LiveBundles);
     float Cost;
     InterferenceCache::Cursor Intf(IntfCache, PhysReg);
     if (!addSplitConstraints(Intf, Cost)) {
@@ -869,38 +875,39 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       continue;
     }
     DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = " << Cost);
-    if (BestReg && Cost >= BestCost) {
-      DEBUG(dbgs() << " worse than " << PrintReg(BestReg, TRI) << '\n');
+    if (BestCand != NoCand && Cost >= BestCost) {
+      DEBUG(dbgs() << " worse than "
+                   << PrintReg(GlobalCand[BestCand].PhysReg, TRI) << '\n');
       continue;
     }
-    growRegion(Intf);
+    growRegion(GlobalCand[Cand], Intf);
 
     SpillPlacer->finish();
 
     // No live bundles, defer to splitSingleBlocks().
-    if (!LiveBundles.any()) {
+    if (!GlobalCand[Cand].LiveBundles.any()) {
       DEBUG(dbgs() << " no bundles.\n");
       continue;
     }
 
-    Cost += calcGlobalSplitCost(PhysReg, LiveBundles);
+    Cost += calcGlobalSplitCost(GlobalCand[Cand], Intf);
     DEBUG({
       dbgs() << ", total = " << Cost << " with bundles";
-      for (int i = LiveBundles.find_first(); i>=0; i = LiveBundles.find_next(i))
+      for (int i = GlobalCand[Cand].LiveBundles.find_first(); i>=0;
+           i = GlobalCand[Cand].LiveBundles.find_next(i))
         dbgs() << " EB#" << i;
       dbgs() << ".\n";
     });
-    if (!BestReg || Cost < BestCost) {
-      BestReg = PhysReg;
+    if (BestCand == NoCand || Cost < BestCost) {
+      BestCand = Cand;
       BestCost = 0.98f * Cost; // Prevent rounding effects.
-      BestBundles.swap(LiveBundles);
     }
   }
 
-  if (!BestReg)
+  if (BestCand == NoCand)
     return 0;
 
-  splitAroundRegion(VirtReg, BestReg, BestBundles, NewVRegs);
+  splitAroundRegion(VirtReg, GlobalCand[BestCand], NewVRegs);
   setStage(NewVRegs.begin(), NewVRegs.end(), RS_Global);
   return 0;
 }

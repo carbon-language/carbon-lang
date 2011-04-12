@@ -144,6 +144,9 @@ public:
   /// isThroughBlock - Return true if CurLI is live through MBB without uses.
   bool isThroughBlock(unsigned MBB) const { return ThroughBlocks.test(MBB); }
 
+  /// getThroughBlocks - Return the set of through blocks.
+  const BitVector &getThroughBlocks() const { return ThroughBlocks; }
+
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from
