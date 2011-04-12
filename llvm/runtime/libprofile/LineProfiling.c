@@ -28,7 +28,7 @@ void llvm_prof_linectr_start_file(const char *orig_filename) {
 /* Emit data about a counter to the data file. */
 void llvm_prof_linectr_emit_counter(const char *dir, const char *file,
                                     uint32_t line, uint32_t column,
-                                    int64_t *counter) {
+                                    uint64_t *counter) {
   printf("%s/%s:%u:%u %lu\n", dir, file, line, column, *counter);
 }
 
