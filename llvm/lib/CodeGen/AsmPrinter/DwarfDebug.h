@@ -198,8 +198,6 @@ class DwarfDebug {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
-  typedef SmallVector<DbgScope *, 2> ScopeVector;
-
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
   typedef std::pair<const MCSymbol *, DIE *> InlineInfoLabels;
