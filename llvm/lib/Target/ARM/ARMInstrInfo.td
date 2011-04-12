@@ -1802,41 +1802,47 @@ def STRD : AI3str<0b1111, (outs), (ins GPR:$Rt, GPR:$src2, addrmode3:$addr),
 def STR_PRE  : AI2stridx<0, 1, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePre, StFrm, IIC_iStore_ru,
-                     "str", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
+                     "str", "\t$Rt, [$Rn, $offset]!",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb,
                       (pre_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]>;
 
 def STR_POST : AI2stridx<0, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePost, StFrm, IIC_iStore_ru,
-                     "str", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
+                     "str", "\t$Rt, [$Rn], $offset",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb,
                       (post_store GPR:$Rt, GPR:$Rn, am2offset:$offset))]>;
 
 def STRB_PRE : AI2stridx<1, 1, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePre, StFrm, IIC_iStore_bh_ru,
-                     "strb", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
+                     "strb", "\t$Rt, [$Rn, $offset]!",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb, (pre_truncsti8 GPR:$Rt,
                                         GPR:$Rn, am2offset:$offset))]>;
 def STRB_POST: AI2stridx<1, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am2offset:$offset),
                      IndexModePost, StFrm, IIC_iStore_bh_ru,
-                     "strb", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
+                     "strb", "\t$Rt, [$Rn], $offset",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb, (post_truncsti8 GPR:$Rt,
                                         GPR:$Rn, am2offset:$offset))]>;
 
 def STRH_PRE : AI3stridx<0b1011, 0, 1, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
                      IndexModePre, StMiscFrm, IIC_iStore_ru,
-                     "strh", "\t$Rt, [$Rn, $offset]!", "$Rn = $Rn_wb",
+                     "strh", "\t$Rt, [$Rn, $offset]!",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb,
                       (pre_truncsti16 GPR:$Rt, GPR:$Rn, am3offset:$offset))]>;
 
 def STRH_POST: AI3stridx<0b1011, 0, 0, (outs GPR:$Rn_wb),
                      (ins GPR:$Rt, GPR:$Rn, am3offset:$offset),
                      IndexModePost, StMiscFrm, IIC_iStore_bh_ru,
-                     "strh", "\t$Rt, [$Rn], $offset", "$Rn = $Rn_wb",
+                     "strh", "\t$Rt, [$Rn], $offset",
+                     "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
                      [(set GPR:$Rn_wb, (post_truncsti16 GPR:$Rt,
                                         GPR:$Rn, am3offset:$offset))]>;
 
