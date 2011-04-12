@@ -347,6 +347,11 @@ public:
 
   // ===--- High level methods ---===
 
+  /// splitSingleBlock - Split CurLI into a separate live interval around the
+  /// uses in a single block. This is intended to be used as part of a larger
+  /// split, and doesn't call finish().
+  void splitSingleBlock(const SplitAnalysis::BlockInfo &BI);
+
   /// splitSingleBlocks - Split CurLI into a separate live interval inside each
   /// basic block in Blocks.
   void splitSingleBlocks(const SplitAnalysis::BlockPtrSet &Blocks);

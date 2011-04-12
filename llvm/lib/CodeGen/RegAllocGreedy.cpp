@@ -95,8 +95,7 @@ class RAGreedy : public MachineFunctionPass,
     RS_New,      ///< Never seen before.
     RS_First,    ///< First time in the queue.
     RS_Second,   ///< Second time in the queue.
-    RS_Region,   ///< Produced by region splitting.
-    RS_Block,    ///< Produced by per-block splitting.
+    RS_Global,   ///< Produced by global splitting.
     RS_Local,    ///< Produced by local splitting.
     RS_Spill     ///< Produced by spilling.
   };
@@ -636,7 +635,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
   SE->reset(LREdit);
 
   // Create the main cross-block interval.
-  SE->openIntv();
+  const unsigned MainIntv = SE->openIntv();
 
   // First add all defs that are live out of a block.
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
@@ -644,6 +643,14 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg, unsigned PhysReg,
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
     bool RegIn  = LiveBundles[Bundles->getBundle(BI.MBB->getNumber(), 0)];
     bool RegOut = LiveBundles[Bundles->getBundle(BI.MBB->getNumber(), 1)];
+
+    // Create separate intervals for isolated blocks with multiple uses.
+    if (!RegIn && !RegOut && BI.FirstUse != BI.LastUse) {
+      DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " isolated.\n");
+      SE->splitSingleBlock(BI);
+      SE->selectIntv(MainIntv);
+      continue;
+    }
 
     // Should the register be live out?
     if (!BI.LiveOut || !RegOut)
@@ -894,7 +901,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     return 0;
 
   splitAroundRegion(VirtReg, BestReg, BestBundles, NewVRegs);
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Region);
+  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Global);
   return 0;
 }
 
@@ -1185,30 +1192,25 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   // Don't iterate global splitting.
   // Move straight to spilling if this range was produced by a global split.
-  LiveRangeStage Stage = getStage(VirtReg);
-  if (Stage >= RS_Block)
+  if (getStage(VirtReg) >= RS_Global)
     return 0;
 
   SA->analyze(&VirtReg);
 
   // First try to split around a region spanning multiple blocks.
-  if (Stage < RS_Region) {
-    unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
-    if (PhysReg || !NewVRegs.empty())
-      return PhysReg;
-  }
+  unsigned PhysReg = tryRegionSplit(VirtReg, Order, NewVRegs);
+  if (PhysReg || !NewVRegs.empty())
+    return PhysReg;
 
   // Then isolate blocks with multiple uses.
-  if (Stage < RS_Block) {
-    SplitAnalysis::BlockPtrSet Blocks;
-    if (SA->getMultiUseBlocks(Blocks)) {
-      LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
-      SE->reset(LREdit);
-      SE->splitSingleBlocks(Blocks);
-      setStage(NewVRegs.begin(), NewVRegs.end(), RS_Block);
-      if (VerifyEnabled)
-        MF->verify(this, "After splitting live range around basic blocks");
-    }
+  SplitAnalysis::BlockPtrSet Blocks;
+  if (SA->getMultiUseBlocks(Blocks)) {
+    LiveRangeEdit LREdit(VirtReg, NewVRegs, this);
+    SE->reset(LREdit);
+    SE->splitSingleBlocks(Blocks);
+    setStage(NewVRegs.begin(), NewVRegs.end(), RS_Global);
+    if (VerifyEnabled)
+      MF->verify(this, "After splitting live range around basic blocks");
   }
 
   // Don't assign any physregs.
