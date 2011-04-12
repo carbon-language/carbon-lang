@@ -1693,6 +1693,9 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   if (isUTF16) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
     GV->setAlignment(Align.getQuantity());
+  } else {
+    CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
+    GV->setAlignment(Align.getQuantity());
   }
   Fields[2] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
 
@@ -1784,6 +1787,9 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   GV->setUnnamedAddr(true);
   if (isUTF16) {
     CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
+    GV->setAlignment(Align.getQuantity());
+  } else {
+    CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
     GV->setAlignment(Align.getQuantity());
   }
   Fields[1] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
