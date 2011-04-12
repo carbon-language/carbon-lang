@@ -901,6 +901,10 @@ static bool DisassembleThumb1LdStMul(bool Ld, MCInst &MI, unsigned Opcode,
   }
 
   unsigned RegListBits = slice(insn, 7, 0);
+  if (BitCount(RegListBits) < 1) {
+    DEBUG(errs() << "if BitCount(registers) < 1 then UNPREDICTABLE\n");
+    return false;
+  }
 
   // Fill the variadic part of reglist.
   for (unsigned i = 0; i < 8; ++i)

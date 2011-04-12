@@ -139,6 +139,31 @@ static inline void setSlice(unsigned &Bits, unsigned From, unsigned To,
   Bits |= (Val & Mask) << To;
 }
 
+// Return an integer result equal to the number of bits of x that are ones.
+static inline uint32_t
+BitCount (uint64_t x)
+{
+    // c accumulates the total bits set in x
+    uint32_t c;
+    for (c = 0; x; ++c)
+    {
+        x &= x - 1; // clear the least significant bit set
+    }
+    return c;
+}
+
+static inline bool
+BitIsSet (const uint64_t value, const uint64_t bit)
+{
+    return (value & (1ull << bit)) != 0;
+}
+
+static inline bool
+BitIsClear (const uint64_t value, const uint64_t bit)
+{
+    return (value & (1ull << bit)) == 0;
+}
+
 /// Various utilities for checking the target specific flags.
 
 /// A unary data processing instruction doesn't have an Rn operand.
