@@ -378,4 +378,20 @@ char *RDar9269695(char *dst, unsigned int n)
   return dst;
 }
 
+// Test that we invalidate byref arguments passed to constructors.
+class TestInvalidateInCtor {
+public:
+  TestInvalidateInCtor(unsigned &x);
+};
+
+unsigned test_invalidate_in_ctor() {
+  unsigned x;
+  TestInvalidateInCtor foo(x);
+  return x; // no-warning
+}
+unsigned test_invalidate_in_ctor_new() {
+  unsigned x;
+  delete (new TestInvalidateInCtor(x));
+  return x; // no-warning
+}
 
