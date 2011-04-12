@@ -429,7 +429,7 @@ void RegAllocBase::addMBBLiveIns(MachineFunction *MF) {
         if (!MBB->isLiveIn(PhysReg))
           MBB->addLiveIn(PhysReg);
       } else if (SI.start() > Stop)
-        MBB = Indexes->getMBBFromIndex(SI.start());
+        MBB = Indexes->getMBBFromIndex(SI.start().getPrevIndex());
       if (++MBB == MFE)
         break;
       tie(Start, Stop) = Indexes->getMBBRange(MBB);
