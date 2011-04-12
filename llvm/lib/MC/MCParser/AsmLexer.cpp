@@ -213,13 +213,13 @@ AsmToken AsmLexer::LexDigit() {
 
     // Requires at least one binary digit.
     if (CurPtr == NumStart)
-      return ReturnError(TokStart, "Invalid binary number");
+      return ReturnError(TokStart, "invalid binary number");
 
     StringRef Result(TokStart, CurPtr - TokStart);
 
     long long Value;
     if (Result.substr(2).getAsInteger(2, Value))
-      return ReturnError(TokStart, "Invalid binary number");
+      return ReturnError(TokStart, "invalid binary number");
 
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
     // suffixes on integer literals.
@@ -236,11 +236,11 @@ AsmToken AsmLexer::LexDigit() {
 
     // Requires at least one hex digit.
     if (CurPtr == NumStart)
-      return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+      return ReturnError(CurPtr-2, "invalid hexadecimal number");
 
     unsigned long long Result;
     if (StringRef(TokStart, CurPtr - TokStart).getAsInteger(0, Result))
-      return ReturnError(TokStart, "Invalid hexadecimal number");
+      return ReturnError(TokStart, "invalid hexadecimal number");
 
     // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
     // suffixes on integer literals.
@@ -257,7 +257,7 @@ AsmToken AsmLexer::LexDigit() {
   StringRef Result(TokStart, CurPtr - TokStart);
   long long Value;
   if (Result.getAsInteger(8, Value))
-    return ReturnError(TokStart, "Invalid octal number");
+    return ReturnError(TokStart, "invalid octal number");
 
   // The darwin/x86 (and x86-64) assembler accepts and ignores ULL and LL
   // suffixes on integer literals.
