@@ -18,6 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ConstantFolder.h"
 
@@ -153,9 +154,10 @@ public:
 
   /// CreateGlobalString - Make a new global variable with an initializer that
   /// has array of i8 type filled in with the nul terminated string value
-  /// specified.  If Name is specified, it is the name of the global variable
-  /// created.
-  Value *CreateGlobalString(const char *Str = "", const Twine &Name = "");
+  /// specified.  The new global variable will be marked mergable with any
+  /// others of the same contents.  If Name is specified, it is the name of the
+  /// global variable created.
+  Value *CreateGlobalString(StringRef Str, const Twine &Name = "");
 
   /// getInt1 - Get a constant value representing either true or false.
   ConstantInt *getInt1(bool V) {
@@ -862,7 +864,7 @@ public:
 
   /// CreateGlobalStringPtr - Same as CreateGlobalString, but return a pointer
   /// with "i8*" type instead of a pointer to array of i8.
-  Value *CreateGlobalStringPtr(const char *Str = "", const Twine &Name = "") {
+  Value *CreateGlobalStringPtr(StringRef Str, const Twine &Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
     Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *Args[] = { zero, zero };

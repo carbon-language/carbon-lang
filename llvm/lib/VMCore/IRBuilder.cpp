@@ -23,7 +23,7 @@ using namespace llvm;
 /// has array of i8 type filled in with the nul terminated string value
 /// specified.  If Name is specified, it is the name of the global variable
 /// created.
-Value *IRBuilderBase::CreateGlobalString(const char *Str, const Twine &Name) {
+Value *IRBuilderBase::CreateGlobalString(StringRef Str, const Twine &Name) {
   Constant *StrConstant = ConstantArray::get(Context, Str, true);
   Module &M = *BB->getParent()->getParent();
   GlobalVariable *GV = new GlobalVariable(M, StrConstant->getType(),
