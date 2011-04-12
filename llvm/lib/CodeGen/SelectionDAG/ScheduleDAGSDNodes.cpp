@@ -342,6 +342,10 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NodeSUnit->NodeNum);
 
+    // Set isVRegCycle if the node operands are live into and value is live out
+    // of a single block loop.
+    InitVRegCycleFlag(NodeSUnit);
+
     // Compute NumRegDefsLeft. This must be done before AddSchedEdges.
     InitNumRegDefsLeft(NodeSUnit);
 
@@ -412,13 +416,7 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
           PhysReg = 0;
 
         // If this is a ctrl dep, latency is 1.
-        // Special-case TokenFactor chains as zero-latency.
-        unsigned OpLatency = 1;
-        if (!isChain && OpSU->Latency > 0)
-          OpLatency = OpSU->Latency;
-        else if(isChain && OpN->getOpcode() == ISD::TokenFactor)
-          OpLatency = 0;
-
+        unsigned OpLatency = isChain ? 1 : OpSU->Latency;
         const SDep &dep = SDep(OpSU, isChain ? SDep::Order : SDep::Data,
                                OpLatency, PhysReg);
         if (!isChain && !UnitLatencies) {
@@ -512,6 +510,47 @@ void ScheduleDAGSDNodes::RegDefIter::Advance() {
     }
     InitNodeNumDefs();
   }
+}
+
+// Set isVRegCycle if this node's single use is CopyToReg and its only active
+// data operands are CopyFromReg.
+//
+// This is only relevant for single-block loops, in which case the VRegCycle
+// node is likely an induction variable in which the operand and target virtual
+// registers should be coalesced (e.g. pre/post increment values). Setting the
+// isVRegCycle flag helps the scheduler prioritize other uses of the same
+// CopyFromReg so that this node becomes the virtual register "kill". This
+// avoids interference between the values live in and out of the block and
+// eliminates a copy inside the loop.
+void ScheduleDAGSDNodes::InitVRegCycleFlag(SUnit *SU) {
+  if (!BB->isSuccessor(BB))
+    return;
+
+  SDNode *N = SU->getNode();
+  if (N->getGluedNode())
+    return;
+
+  if (!N->hasOneUse() || N->use_begin()->getOpcode() != ISD::CopyToReg)
+    return;
+
+  bool FoundLiveIn = false;
+  for (SDNode::op_iterator OI = N->op_begin(), E = N->op_end(); OI != E; ++OI) {
+    EVT OpVT = OI->getValueType();
+    assert(OpVT != MVT::Glue && "Glued nodes should be in same sunit!");
+
+    if (OpVT == MVT::Other)
+      continue; // ignore chain operands
+
+    if (isPassiveNode(OI->getNode()))
+      continue; // ignore constants and such
+
+    if (OI->getNode()->getOpcode() != ISD::CopyFromReg)
+      return;
+
+    FoundLiveIn = true;
+  }
+  if (FoundLiveIn)
+    SU->isVRegCycle = true;
 }
 
 void ScheduleDAGSDNodes::InitNumRegDefsLeft(SUnit *SU) {
