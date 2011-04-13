@@ -117,7 +117,7 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 /// getRangeSize - Return the size in bytes of the specified range if they
 /// are in the same file.  If not, this returns -1.
 int Rewriter::getRangeSize(const CharSourceRange &Range,
-                           bool AfterInserts) const {
+                           RewriteOptions opts) const {
   if (!isRewritable(Range.getBegin()) ||
       !isRewritable(Range.getEnd())) return -1;
 
@@ -136,8 +136,8 @@ int Rewriter::getRangeSize(const CharSourceRange &Range,
     RewriteBuffers.find(StartFileID);
   if (I != RewriteBuffers.end()) {
     const RewriteBuffer &RB = I->second;
-    EndOff = RB.getMappedOffset(EndOff, true);
-    StartOff = RB.getMappedOffset(StartOff, AfterInserts);
+    EndOff = RB.getMappedOffset(EndOff, opts.IncludeInsertsAtEndOfRange);
+    StartOff = RB.getMappedOffset(StartOff, !opts.IncludeInsertsAtBeginOfRange);
   }
 
 
@@ -149,8 +149,8 @@ int Rewriter::getRangeSize(const CharSourceRange &Range,
   return EndOff-StartOff;
 }
 
-int Rewriter::getRangeSize(SourceRange Range, bool AfterInserts) const {
-  return getRangeSize(CharSourceRange::getTokenRange(Range), AfterInserts);
+int Rewriter::getRangeSize(SourceRange Range, RewriteOptions opts) const {
+  return getRangeSize(CharSourceRange::getTokenRange(Range), opts);
 }
 
 
@@ -243,18 +243,20 @@ bool Rewriter::InsertTextAfterToken(SourceLocation Loc, llvm::StringRef Str) {
   if (!isRewritable(Loc)) return true;
   FileID FID;
   unsigned StartOffs = getLocationOffsetAndFileID(Loc, FID);
-  StartOffs += getRangeSize(SourceRange(Loc, Loc), /*AfterInserts*/true);
+  RewriteOptions rangeOpts;
+  rangeOpts.IncludeInsertsAtBeginOfRange = false;
+  StartOffs += getRangeSize(SourceRange(Loc, Loc), rangeOpts);
   getEditBuffer(FID).InsertText(StartOffs, Str, /*InsertAfter*/true);
   return false;
 }
 
 /// RemoveText - Remove the specified text region.
 bool Rewriter::RemoveText(SourceLocation Start, unsigned Length,
-                          bool removeLineIfEmpty) {
+                          RewriteOptions opts) {
   if (!isRewritable(Start)) return true;
   FileID FID;
   unsigned StartOffs = getLocationOffsetAndFileID(Start, FID);
-  getEditBuffer(FID).RemoveText(StartOffs, Length, removeLineIfEmpty);
+  getEditBuffer(FID).RemoveText(StartOffs, Length, opts.RemoveLineIfEmpty);
   return false;
 }
 

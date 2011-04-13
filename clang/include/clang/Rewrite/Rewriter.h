@@ -130,6 +130,23 @@ class Rewriter {
   const LangOptions *LangOpts;
   std::map<FileID, RewriteBuffer> RewriteBuffers;
 public:
+  struct RewriteOptions {
+    /// \brief Given a source range, true to include previous inserts at the
+    /// beginning of the range as part of the range itself (true by default).
+    bool IncludeInsertsAtBeginOfRange;
+    /// \brief Given a source range, true to include previous inserts at the
+    /// end of the range as part of the range itself (true by default).
+    bool IncludeInsertsAtEndOfRange;
+    /// \brief If true and removing some text leaves a blank line
+    /// also remove the empty line (false by default).
+    bool RemoveLineIfEmpty;
+
+    RewriteOptions()
+      : IncludeInsertsAtBeginOfRange(true),
+        IncludeInsertsAtEndOfRange(true),
+        RemoveLineIfEmpty(false) { }
+  };
+
   typedef std::map<FileID, RewriteBuffer>::iterator buffer_iterator;
 
   explicit Rewriter(SourceManager &SM, const LangOptions &LO)
@@ -151,11 +168,10 @@ public:
 
   /// getRangeSize - Return the size in bytes of the specified range if they
   /// are in the same file.  If not, this returns -1.
-  /// If AfterInserts is true and if the beginning of range indicates a position
-  /// where text is inserted, the beginning of range will be after any inserted
-  /// text at the position.
-  int getRangeSize(SourceRange Range, bool AfterInserts = false) const;
-  int getRangeSize(const CharSourceRange &Range, bool AfterInserts=false) const;
+  int getRangeSize(SourceRange Range,
+                   RewriteOptions opts = RewriteOptions()) const;
+  int getRangeSize(const CharSourceRange &Range,
+                   RewriteOptions opts = RewriteOptions()) const;
 
   /// getRewrittenText - Return the rewritten form of the text in the specified
   /// range.  If the start or end of the range was unrewritable or if they are
@@ -195,32 +211,17 @@ public:
 
   /// RemoveText - Remove the specified text region.
   bool RemoveText(SourceLocation Start, unsigned Length,
-                  bool removeLineIfEmpty = false);
+                  RewriteOptions opts = RewriteOptions());
 
   /// \brief Remove the specified text region.
-  ///
-  /// \param afterInserts if true the beginning of removal will be after any
-  /// inserted text at the position.
-  ///
-  /// \param removeLineIfEmpty if true and removing the text leaves a blank line
-  /// also remove the empty line.
-  bool RemoveText(CharSourceRange range, bool afterInserts = false,
-                  bool removeLineIfEmpty = false) {
-    return RemoveText(range.getBegin(), getRangeSize(range, afterInserts),
-                      removeLineIfEmpty);
+  bool RemoveText(CharSourceRange range,
+                  RewriteOptions opts = RewriteOptions()) {
+    return RemoveText(range.getBegin(), getRangeSize(range, opts), opts);
   }
 
   /// \brief Remove the specified text region.
-  ///
-  /// \param afterInserts if true the beginning of removal will be after any
-  /// inserted text at the position.
-  ///
-  /// \param removeLineIfEmpty if true and removing the text leaves a blank line
-  /// also remove the empty line.
-  bool RemoveText(SourceRange range, bool afterInserts = false,
-                  bool removeLineIfEmpty = false) {
-    return RemoveText(range.getBegin(), getRangeSize(range, afterInserts),
-                      removeLineIfEmpty);
+  bool RemoveText(SourceRange range, RewriteOptions opts = RewriteOptions()) {
+    return RemoveText(range.getBegin(), getRangeSize(range, opts), opts);
   }
 
   /// ReplaceText - This method replaces a range of characters in the input
