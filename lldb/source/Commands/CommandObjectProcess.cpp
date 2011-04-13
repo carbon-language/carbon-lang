@@ -43,8 +43,8 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
 
         ~CommandOptions ()
@@ -52,7 +52,7 @@ public:
         }
 
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -80,7 +80,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             stop_at_entry = false;
             in_new_tty = false;
@@ -423,8 +423,8 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
 
         ~CommandOptions ()
@@ -432,7 +432,7 @@ public:
         }
 
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -467,7 +467,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             pid = LLDB_INVALID_PROCESS_ID;
             name.clear();
@@ -973,8 +973,8 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
         
         ~CommandOptions ()
@@ -982,7 +982,7 @@ public:
         }
         
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -1001,7 +1001,7 @@ public:
         }
         
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             plugin_name.clear();
         }
@@ -1559,7 +1559,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options (interpreter)
         {
-            ResetOptionValues ();
+            OptionParsingStarting ();
         }
 
         ~CommandOptions ()
@@ -1567,7 +1567,7 @@ public:
         }
 
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -1591,7 +1591,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             stop.clear();
             notify.clear();

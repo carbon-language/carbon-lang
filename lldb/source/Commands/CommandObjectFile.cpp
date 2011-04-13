@@ -25,41 +25,51 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CommandObjectFile::CommandOptions::CommandOptions(CommandInterpreter &interpreter) :
-    Options (interpreter),
-    m_arch ()  // Breakpoint info defaults to brief descriptions
+FileOptionGroup::FileOptionGroup() :
+    m_arch (),
+    m_arch_str ()
 {
 }
 
-CommandObjectFile::CommandOptions::~CommandOptions ()
+FileOptionGroup::~FileOptionGroup ()
 {
 }
 
-OptionDefinition
-CommandObjectFile::CommandOptions::g_option_table[] =
+OptionDefinition g_file_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "arch", 'a', required_argument, NULL, 0, eArgTypeArchitecture, "Specify the architecture to be used when the process is launched."},
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+    { LLDB_OPT_SET_1 , false, "arch"    , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
 };
+const uint32_t k_num_file_options = sizeof(g_file_option_table)/sizeof(OptionDefinition);
+
+uint32_t
+FileOptionGroup::GetNumDefinitions ()
+{
+    return k_num_file_options;
+}
 
 const OptionDefinition *
-CommandObjectFile::CommandOptions::GetDefinitions ()
+FileOptionGroup::GetDefinitions ()
 {
-    return g_option_table;
+    return g_file_option_table;
 }
 
 Error
-CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+FileOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
+                                 uint32_t option_idx,
+                                 const char *option_arg)
 {
     Error error;
-    char short_option = (char) m_getopt_table[option_idx].val;
+    char short_option = (char) g_file_option_table[option_idx].short_option;
 
     switch (short_option)
     {
         case 'a':
             {
-                PlatformSP platform_sp (m_interpreter.GetPlatform (false));
-                ArchSpec option_arch (option_arg, platform_sp.get());
+                // Save the arch value in case we specify a platform after specifying the arch
+                m_arch_str.assign (option_arg);
+                // Check to see if we already have a platform?
+                m_arch_platform_sp = interpreter.GetPlatform (false);
+                ArchSpec option_arch (option_arg, m_arch_platform_sp.get());
                 if (option_arch.IsValid())
                     m_arch = option_arch;
                 else
@@ -76,9 +86,28 @@ CommandObjectFile::CommandOptions::SetOptionValue (int option_idx, const char *o
 }
 
 void
-CommandObjectFile::CommandOptions::ResetOptionValues ()
+FileOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
 {
     m_arch.Clear();
+}
+
+Error
+FileOptionGroup::OptionParsingFinished (CommandInterpreter &interpreter)
+{
+    Error error;
+    if (m_arch.IsValid())
+    {
+        PlatformSP curr_platform_sp (interpreter.GetPlatform (false));
+        if (curr_platform_sp.get() != m_arch_platform_sp.get())
+        {
+            ArchSpec option_arch (m_arch_str.c_str(), curr_platform_sp.get());
+            if (option_arch.IsValid())
+                m_arch = option_arch;
+            else
+                error.SetErrorStringWithFormat ("invalid arch '%s' for platform '%s'", m_arch_str.c_str(), curr_platform_sp->GetName());
+        }
+    }
+    return error;
 }
 
 //-------------------------------------------------------------------------
@@ -90,7 +119,9 @@ CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
                    "file",
                    "Set the file to be used as the main executable by the debugger.",
                    NULL),
-    m_options (interpreter)
+    m_option_group (interpreter),
+    m_file_options (),
+    m_platform_options(true) // Do include the "--platform" option in the platform settings by passing true
 {
     CommandArgumentEntry arg;
     CommandArgumentData file_arg;
@@ -104,6 +135,10 @@ CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
 
     // Push the data for the first argument into the m_arguments vector.
     m_arguments.push_back (arg);
+    
+    m_option_group.Append (&m_file_options);
+    m_option_group.Append (&m_platform_options);
+    m_option_group.Finalize();
 }
 
 CommandObjectFile::~CommandObjectFile ()
@@ -113,7 +148,7 @@ CommandObjectFile::~CommandObjectFile ()
 Options *
 CommandObjectFile::GetOptions ()
 {
-    return &m_options;
+    return &m_option_group;
 }
 
 bool
@@ -140,7 +175,7 @@ CommandObjectFile::Execute
         TargetSP target_sp;
 
         Debugger &debugger = m_interpreter.GetDebugger();
-        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_options.m_arch, true, target_sp);
+        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_file_options.m_arch, true, target_sp);
 
         if (target_sp)
         {

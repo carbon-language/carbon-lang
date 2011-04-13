@@ -346,7 +346,7 @@ ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions
 }
 
 Error
-ProcessLaunchCommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;

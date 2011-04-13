@@ -252,8 +252,8 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
 
         virtual
@@ -262,7 +262,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -298,7 +298,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_count = -1;
             m_start = 0;
@@ -490,8 +490,8 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options (interpreter)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
 
         virtual
@@ -500,7 +500,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -542,7 +542,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_avoid_no_debug = true;
             m_run_mode = eOnlyDuringStepping;
@@ -981,8 +981,8 @@ public:
             m_thread_idx(LLDB_INVALID_THREAD_ID),
             m_frame_idx(LLDB_INVALID_FRAME_ID)
         {
-            // Keep default values of all options in one place: ResetOptionValues ()
-            ResetOptionValues ();
+            // Keep default values of all options in one place: OptionParsingStarting ()
+            OptionParsingStarting ();
         }
 
         virtual
@@ -991,7 +991,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -1040,7 +1040,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_thread_idx = LLDB_INVALID_THREAD_ID;
             m_frame_idx = 0;

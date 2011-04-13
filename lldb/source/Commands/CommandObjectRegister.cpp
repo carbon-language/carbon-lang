@@ -159,7 +159,7 @@ protected:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues();
+            OptionParsingStarting();
         }
         
         virtual
@@ -168,7 +168,7 @@ protected:
         }
         
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -186,7 +186,7 @@ protected:
         }
         
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_format = eFormatBytes;
         }

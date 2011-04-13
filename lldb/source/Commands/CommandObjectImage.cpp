@@ -734,7 +734,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -764,7 +764,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_sort_order = eSortOrderNone;
         }
@@ -1155,7 +1155,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             char short_option = (char) m_getopt_table[option_idx].val;
             uint32_t width = 0;
@@ -1167,7 +1167,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_format_array.clear();
         }
@@ -1365,7 +1365,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues();
+            OptionParsingStarting();
         }
 
         virtual
@@ -1374,7 +1374,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
 
@@ -1441,7 +1441,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_type = eLookupTypeInvalid;
             m_str.clear();

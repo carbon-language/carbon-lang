@@ -82,7 +82,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::GetDefinitions ()
 Error
 CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue 
 (
-    int option_idx, 
+    uint32_t option_idx, 
     const char *option_arg
 )
 {
@@ -133,7 +133,7 @@ CommandObjectBreakpointCommandAdd::CommandOptions::SetOptionValue
 }
 
 void
-CommandObjectBreakpointCommandAdd::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointCommandAdd::CommandOptions::OptionParsingStarting ()
 {
     m_use_commands = true;
     m_use_script_language = false;

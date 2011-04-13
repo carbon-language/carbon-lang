@@ -725,8 +725,8 @@ public:
     ProcessLaunchCommandOptions (CommandInterpreter &interpreter) :
         Options(interpreter)
     {
-        // Keep default values of all options in one place: ResetOptionValues ()
-        ResetOptionValues ();
+        // Keep default values of all options in one place: OptionParsingStarting ()
+        OptionParsingStarting ();
     }
     
     ~ProcessLaunchCommandOptions ()
@@ -734,10 +734,10 @@ public:
     }
     
     Error
-    SetOptionValue (int option_idx, const char *option_arg);
+    SetOptionValue (uint32_t option_idx, const char *option_arg);
     
     void
-    ResetOptionValues ()
+    OptionParsingStarting ()
     {
         launch_info.Clear();
     }

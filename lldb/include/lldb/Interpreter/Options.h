@@ -56,7 +56,7 @@ namespace lldb_private {
 ///         }
 ///
 ///         virtual Error
-///         SetOptionValue (int option_idx, int option_val, const char *option_arg)
+///         SetOptionValue (uint32_t option_idx, int option_val, const char *option_arg)
 ///         {
 ///             Error error;
 ///             switch (option_val)
@@ -142,14 +142,12 @@ public:
     bool
     VerifyOptions (CommandReturnObject &result);
 
-    // Verify that the options given are in the options table and can be used together, but there may be
-    // some required options that are missing (used to verify options that get folded into command aliases).
+    // Verify that the options given are in the options table and can 
+    // be used together, but there may be some required options that are
+    // missing (used to verify options that get folded into command aliases).
 
     bool
     VerifyPartialOptions (CommandReturnObject &result);
-
-//    void
-//    BuildAliasOptions (OptionArgVector *option_arg_vector, Args args);
 
     void
     OutputFormattedUsageText (Stream &strm,
@@ -160,19 +158,22 @@ public:
     GenerateOptionUsage (Stream &strm,
                          CommandObject *cmd);
 
-    // The following two pure virtual functions must be defined by every class that inherits from
-    // this class.
+    // The following two pure virtual functions must be defined by every 
+    // class that inherits from this class.
 
     virtual const OptionDefinition*
     GetDefinitions () { return NULL; }
 
     // Call this prior to parsing any options. This call will call the
-    // subclass ResetOptionValues() and will avoid the need for all
-    // ResetOptionValues() function instances from having to call the
-    // Option::ResetOptionValues() like they did before. This was error
+    // subclass OptionParsingStarting() and will avoid the need for all
+    // OptionParsingStarting() function instances from having to call the
+    // Option::OptionParsingStarting() like they did before. This was error
     // prone and subclasses shouldn't have to do it.
     void
-    Reset ();
+    NotifyOptionParsingStarting ();
+    
+    Error
+    NotifyOptionParsingFinished ();
 
     //------------------------------------------------------------------
     /// Set the value of an option.
@@ -190,11 +191,11 @@ public:
     /// @see man getopt_long
     //------------------------------------------------------------------
     virtual Error
-    SetOptionValue (int option_idx, const char *option_arg) = 0;
+    SetOptionValue (uint32_t option_idx, const char *option_arg) = 0;
 
     //------------------------------------------------------------------
-    ///  Handles the generic bits of figuring out whether we are in an option, and if so completing
-    /// it.
+    /// Handles the generic bits of figuring out whether we are in an 
+    /// option, and if so completing it.
     ///
     /// @param[in] input
     ///    The command line parsed into words
@@ -207,20 +208,22 @@ public:
     ///
     /// @param[in] match_start_point
     /// @param[in] match_return_elements
-    ///     See CommandObject::HandleCompletions for a description of how these work.
+    ///     See CommandObject::HandleCompletions for a description of 
+    ///     how these work.
     ///
     /// @param[in] interpreter
     ///     The interpreter that's doing the completing.
     ///
     /// @param[out] word_complete
-    ///     \btrue if this is a complete option value (a space will be inserted after the
-    ///     completion.)  \bfalse otherwise.
+    ///     \btrue if this is a complete option value (a space will be 
+    ///     inserted after the completion.) \b false otherwise.
     ///
     /// @param[out] matches
     ///     The array of matches returned.
     ///
-    /// FIXME: This is the wrong return value, since we also need to make a distinction between
-    /// total number of matches, and the window the user wants returned.
+    /// FIXME: This is the wrong return value, since we also need to 
+    /// make a distinction between total number of matches, and the 
+    /// window the user wants returned.
     ///
     /// @return
     ///     \btrue if we were in an option, \bfalse otherwise.
@@ -236,8 +239,8 @@ public:
                             lldb_private::StringList &matches);
 
     //------------------------------------------------------------------
-    ///  Handles the generic bits of figuring out whether we are in an option, and if so completing
-    /// it.
+    /// Handles the generic bits of figuring out whether we are in an 
+    /// option, and if so completing it.
     ///
     /// @param[in] interpreter
     ///    The command interpreter doing the completion.
@@ -255,21 +258,24 @@ public:
     ///     The results of the options parse of \a input.
     ///
     /// @param[in] opt_element_index
-    ///     The position in \a opt_element_vector of the word in \a input containing the cursor.
+    ///     The position in \a opt_element_vector of the word in \a 
+    ///     input containing the cursor.
     ///
     /// @param[in] match_start_point
     /// @param[in] match_return_elements
-    ///     See CommandObject::HandleCompletions for a description of how these work.
+    ///     See CommandObject::HandleCompletions for a description of 
+    ///     how these work.
     ///
     /// @param[out] word_complete
-    ///     \btrue if this is a complete option value (a space will be inserted after the
-    ///     completion.)  \bfalse otherwise.
+    ///     \btrue if this is a complete option value (a space will 
+    ///     be inserted after the completion.) \bfalse otherwise.
     ///
     /// @param[out] matches
     ///     The array of matches returned.
     ///
-    /// FIXME: This is the wrong return value, since we also need to make a distinction between
-    /// total number of matches, and the window the user wants returned.
+    /// FIXME: This is the wrong return value, since we also need to
+    /// make a distinction between total number of matches, and the 
+    /// window the user wants returned.
     ///
     /// @return
     ///     \btrue if we were in an option, \bfalse otherwise.
@@ -321,8 +327,103 @@ protected:
     // option parse. Each subclass must override this function and revert
     // all option settings to default values.
     virtual void
-    ResetOptionValues () = 0;
+    OptionParsingStarting () = 0;
+
+    virtual Error
+    OptionParsingFinished ()
+    {
+        // If subclasses need to know when the options are done being parsed
+        // they can implement this function to do extra checking
+        Error error;
+        return error;
+    }
 };
+
+    class OptionGroup
+    {
+    public:
+        OptionGroup () 
+        {
+        }
+        
+        virtual 
+        ~OptionGroup () 
+        {
+        }
+        
+        virtual uint32_t
+        GetNumDefinitions () = 0;
+
+        virtual const OptionDefinition*
+        GetDefinitions () = 0;
+        
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value) = 0;
+
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter) = 0;
+        
+        virtual Error
+        OptionParsingFinished (CommandInterpreter &interpreter)
+        {
+            // If subclasses need to know when the options are done being parsed
+            // they can implement this function to do extra checking
+            Error error;
+            return error;
+        }
+    };
+
+    class OptionGroupOptions : public Options
+    {
+    public:
+        
+        OptionGroupOptions (CommandInterpreter &interpreter) :
+            Options (interpreter),
+            m_option_defs (),
+            m_option_groups (),
+            m_did_finalize (false)
+        {
+        }
+        
+        virtual
+        ~OptionGroupOptions ()
+        {
+        }
+        
+        void
+        Append (OptionGroup* group);
+
+        void
+        Append (OptionGroup* group, uint32_t usage_mask);        
+
+        void
+        Finalize ();
+        
+        virtual Error
+        SetOptionValue (uint32_t option_idx, 
+                        const char *option_arg);
+        
+        virtual void
+        OptionParsingStarting ();
+        
+        virtual Error
+        OptionParsingFinished ();
+        
+        const OptionDefinition*
+        GetDefinitions ()
+        {
+            assert (m_did_finalize);
+            return &m_option_defs[0];
+        }
+        typedef std::vector<OptionGroup*> OptionGroupsType;
+        
+        std::vector<OptionDefinition> m_option_defs;
+        OptionGroupsType m_option_groups;
+        bool m_did_finalize;
+    };
+    
 
 } // namespace lldb_private
 

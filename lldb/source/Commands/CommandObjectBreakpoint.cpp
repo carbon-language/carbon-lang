@@ -134,7 +134,7 @@ CommandObjectBreakpointSet::CommandOptions::GetDefinitions ()
 }
 
 Error
-CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
@@ -233,7 +233,7 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (int option_idx, cons
 }
 
 void
-CommandObjectBreakpointSet::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
 {
     m_filename.clear();
     m_line_num = 0;
@@ -675,7 +675,7 @@ CommandObjectBreakpointList::CommandOptions::GetDefinitions ()
 }
 
 Error
-CommandObjectBreakpointList::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectBreakpointList::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
@@ -703,7 +703,7 @@ CommandObjectBreakpointList::CommandOptions::SetOptionValue (int option_idx, con
 }
 
 void
-CommandObjectBreakpointList::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointList::CommandOptions::OptionParsingStarting ()
 {
     m_level = lldb::eDescriptionLevelBrief;
     m_internal = false;
@@ -1077,7 +1077,7 @@ CommandObjectBreakpointClear::CommandOptions::GetDefinitions ()
 }
 
 Error
-CommandObjectBreakpointClear::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectBreakpointClear::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
@@ -1101,7 +1101,7 @@ CommandObjectBreakpointClear::CommandOptions::SetOptionValue (int option_idx, co
 }
 
 void
-CommandObjectBreakpointClear::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointClear::CommandOptions::OptionParsingStarting ()
 {
     m_filename.clear();
     m_line_num = 0;
@@ -1394,7 +1394,7 @@ CommandObjectBreakpointModify::CommandOptions::GetDefinitions ()
 }
 
 Error
-CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectBreakpointModify::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
@@ -1480,7 +1480,7 @@ CommandObjectBreakpointModify::CommandOptions::SetOptionValue (int option_idx, c
 }
 
 void
-CommandObjectBreakpointModify::CommandOptions::ResetOptionValues ()
+CommandObjectBreakpointModify::CommandOptions::OptionParsingStarting ()
 {
     m_ignore_count = 0;
     m_thread_id = LLDB_INVALID_THREAD_ID;

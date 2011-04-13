@@ -40,7 +40,7 @@ CommandObjectArgs::CommandOptions::CommandOptions (CommandInterpreter &interpret
     Options(interpreter)
 {
     // Keep only one place to reset the values to their defaults
-    ResetOptionValues();
+    OptionParsingStarting();
 }
 
 
@@ -49,7 +49,7 @@ CommandObjectArgs::CommandOptions::~CommandOptions ()
 }
 
 Error
-CommandObjectArgs::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectArgs::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     
@@ -66,7 +66,7 @@ CommandObjectArgs::CommandOptions::SetOptionValue (int option_idx, const char *o
 }
 
 void
-CommandObjectArgs::CommandOptions::ResetOptionValues ()
+CommandObjectArgs::CommandOptions::OptionParsingStarting ()
 {
 }
 

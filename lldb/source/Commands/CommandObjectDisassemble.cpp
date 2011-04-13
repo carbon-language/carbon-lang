@@ -44,7 +44,7 @@ CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &in
     plugin_name (),
     arch() 
 {
-    ResetOptionValues();
+    OptionParsingStarting();
 }
 
 CommandObjectDisassemble::CommandOptions::~CommandOptions ()
@@ -52,7 +52,7 @@ CommandObjectDisassemble::CommandOptions::~CommandOptions ()
 }
 
 Error
-CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
 
@@ -140,7 +140,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (int option_idx, const 
 }
 
 void
-CommandObjectDisassemble::CommandOptions::ResetOptionValues ()
+CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
 {
     show_mixed = false;
     show_bytes = false;

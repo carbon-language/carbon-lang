@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/CommandObjectMultiword.h"
+#include "lldb/Interpreter/Options.h"
 
 namespace lldb_private {
 
@@ -25,21 +26,74 @@ namespace lldb_private {
 class CommandObjectPlatform : public CommandObjectMultiword
 {
 public:
-    //------------------------------------------------------------------
-    // Constructors and Destructors
-    //------------------------------------------------------------------
     CommandObjectPlatform(CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectPlatform();
 
-private:
-    //------------------------------------------------------------------
-    // For CommandObjectPlatform only
-    //------------------------------------------------------------------
+    private:
     DISALLOW_COPY_AND_ASSIGN (CommandObjectPlatform);
 };
 
+    
+//-------------------------------------------------------------------------
+// PlatformOptionGroup
+//
+// Make platform options available to to any other command in case they 
+// need them. The "file" command needs them, and by exposing them we can
+// reuse the platform command options for any command, we can keep things
+// consistent.
+//-------------------------------------------------------------------------
+class PlatformOptionGroup : public OptionGroup
+{
+public:
+    
+    PlatformOptionGroup (bool include_platform_option) :
+        m_include_platform_option (include_platform_option),
+        platform_sp (),
+        os_version_major (UINT32_MAX),
+        os_version_minor (UINT32_MAX),
+        os_version_update (UINT32_MAX)
+    {
+    }
+    
+    virtual
+    ~PlatformOptionGroup ()
+    {
+    }
+    
+    virtual uint32_t
+    GetNumDefinitions ();
+    
+    virtual const OptionDefinition*
+    GetDefinitions ();
+    
+    virtual Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_value);
+    
+    lldb::PlatformSP 
+    CreatePlatformWithOptions (CommandInterpreter &interpreter,
+                               const char *platform_name, 
+                               bool select, 
+                               Error& error);
+
+    virtual void
+    OptionParsingStarting (CommandInterpreter &interpreter);
+        
+    // Instance variables to hold the values for command options.
+    
+    lldb::PlatformSP platform_sp;
+    uint32_t os_version_major;
+    uint32_t os_version_minor;
+    uint32_t os_version_update;
+protected:
+    bool m_include_platform_option;
+};
+
+    
+    
 } // namespace lldb_private
 
 #endif  // liblldb_CommandObjectPlatform_h_

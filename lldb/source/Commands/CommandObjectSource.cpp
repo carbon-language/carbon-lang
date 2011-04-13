@@ -47,7 +47,7 @@ class CommandObjectSourceInfo : public CommandObject
         }
 
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             const char short_option = g_option_table[option_idx].short_option;
@@ -72,7 +72,7 @@ class CommandObjectSourceInfo : public CommandObject
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             file_spec.Clear();
             file_name.clear();
@@ -159,7 +159,7 @@ class CommandObjectSourceList : public CommandObject
         }
 
         Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             const char short_option = g_option_table[option_idx].short_option;
@@ -197,7 +197,7 @@ class CommandObjectSourceList : public CommandObject
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             file_spec.Clear();
             file_name.clear();

@@ -43,7 +43,7 @@ private:
         ~CommandOptions (){}
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -70,7 +70,7 @@ private:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_stop_on_error = true;
             m_stop_on_continue = true;
@@ -360,7 +360,7 @@ public:
                 if (options)
                 {
                     // See if any options were specified as part of the alias; if so, handle them appropriately
-                    options->Reset ();
+                    options->NotifyOptionParsingStarting ();
                     Args tmp_args (raw_command_string.c_str());
                     args.Unshift ("dummy_arg");
                     args.ParseAliasOptions (*options, result, option_arg_vector, raw_command_string);
@@ -491,7 +491,7 @@ public:
                              options = sub_cmd_obj->GetOptions();
                          else
                              options = cmd_obj->GetOptions();
-                         options->Reset ();
+                         options->NotifyOptionParsingStarting ();
                          std::string empty_string;
                          args.Unshift ("dummy_arg");
                          args.ParseAliasOptions (*options, result, option_arg_vector, empty_string);

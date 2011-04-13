@@ -183,7 +183,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -207,7 +207,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             log_file.clear();
             log_options = 0;

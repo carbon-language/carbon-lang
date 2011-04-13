@@ -39,7 +39,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues();
+            OptionParsingStarting();
         }
 
         virtual
@@ -48,7 +48,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -162,7 +162,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_format = eFormatBytesWithASCII;
             m_byte_size = 0;
@@ -438,7 +438,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues();
+            OptionParsingStarting();
         }
 
         virtual
@@ -447,7 +447,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -491,7 +491,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             m_format = eFormatBytes;
             m_byte_size = 1;

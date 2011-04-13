@@ -102,7 +102,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues ();
+            OptionParsingStarting ();
         }
 
         virtual
@@ -111,7 +111,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             bool success = false;
@@ -133,7 +133,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             relative_frame_offset = INT32_MIN;
         }
@@ -293,7 +293,7 @@ public:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter)
         {
-            ResetOptionValues ();
+            OptionParsingStarting ();
         }
 
         virtual
@@ -302,7 +302,7 @@ public:
         }
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             bool success;
@@ -350,7 +350,7 @@ public:
         }
 
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             use_objc      = false;
             use_regex     = false;

@@ -41,11 +41,17 @@ Options::~Options ()
 }
 
 void
-Options::Reset ()
+Options::NotifyOptionParsingStarting ()
 {
     m_seen_options.clear();
     // Let the subclass reset its option values
-    ResetOptionValues ();
+    OptionParsingStarting ();
+}
+
+Error
+Options::NotifyOptionParsingFinished ()
+{
+    return OptionParsingFinished ();
 }
 
 void
@@ -884,4 +890,81 @@ Options::HandleOptionArgumentCompletion
                                                                 word_complete,
                                                                 matches);
     
+}
+
+
+
+
+void
+OptionGroupOptions::Append (OptionGroup* group)
+{
+    m_option_groups.push_back (group);
+    const OptionDefinition* group_option_defs = group->GetDefinitions ();
+    const uint32_t group_option_count = group->GetNumDefinitions();
+    for (uint32_t i=0; i<group_option_count; ++i)
+        m_option_defs.push_back (group_option_defs[i]);
+}
+
+void
+OptionGroupOptions::Append (OptionGroup* group, uint32_t usage_mask)
+{
+    m_option_groups.push_back (group);
+    const OptionDefinition* group_option_defs = group->GetDefinitions ();
+    const uint32_t group_option_count = group->GetNumDefinitions();
+    for (uint32_t i=0; i<group_option_count; ++i)
+    {
+        m_option_defs.push_back (group_option_defs[i]);
+        m_option_defs.back().usage_mask = usage_mask;
+    }
+}
+
+void
+OptionGroupOptions::Finalize ()
+{
+    m_did_finalize = true;
+    OptionDefinition empty_option_def = { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL };
+    m_option_defs.push_back (empty_option_def);
+}
+
+Error
+OptionGroupOptions::SetOptionValue (uint32_t option_idx,  
+                                    const char *option_value)
+{
+    // After calling OptionGroupOptions::Append(...), you must finalize the groups
+    // by calling OptionGroupOptions::Finlize()
+    assert (m_did_finalize);
+
+    uint32_t curr_idx = 0;
+    OptionGroupsType::iterator pos, end = m_option_groups.end();
+    for (pos = m_option_groups.begin(); pos != end; ++pos)
+    {
+        const uint32_t num_group_definitions = (*pos)->GetNumDefinitions();
+        if (option_idx < curr_idx + num_group_definitions)
+            return (*pos)->SetOptionValue (m_interpreter, option_idx - curr_idx, option_value);
+        curr_idx += num_group_definitions;
+    }
+    Error error;
+    error.SetErrorString ("invalid option index"); // Shouldn't happen...
+    return error;
+}
+
+void
+OptionGroupOptions::OptionParsingStarting ()
+{
+    OptionGroupsType::iterator pos, end = m_option_groups.end();
+    for (pos = m_option_groups.begin(); pos != end; ++pos)
+        (*pos)->OptionParsingStarting (m_interpreter);
+}
+Error
+OptionGroupOptions::OptionParsingFinished ()
+{
+    Error error;
+    OptionGroupsType::iterator pos, end = m_option_groups.end();
+    for (pos = m_option_groups.begin(); pos != end; ++pos)
+    {
+        error = (*pos)->OptionParsingFinished (m_interpreter);
+        if (error.Fail())
+            return error;
+    }
+    return error;
 }

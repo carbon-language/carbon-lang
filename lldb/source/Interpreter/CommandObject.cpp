@@ -177,7 +177,7 @@ CommandObject::ParseOptions
     if (options != NULL)
     {
         Error error;
-        options->Reset();
+        options->NotifyOptionParsingStarting();
 
         // ParseOptions calls getopt_long, which always skips the zero'th item in the array and starts at position 1,
         // so we need to push a dummy value into position zero.
@@ -187,7 +187,15 @@ CommandObject::ParseOptions
         // The "dummy_string" will have already been removed by ParseOptions,
         // so no need to remove it.
 
-        if (error.Fail() || !options->VerifyOptions (result))
+        if (error.Success())
+            error = options->NotifyOptionParsingFinished();
+
+        if (error.Success())
+        {
+            if (options->VerifyOptions (result))
+                return true;
+        }
+        else
         {
             const char *error_cstr = error.AsCString();
             if (error_cstr)
@@ -200,10 +208,9 @@ CommandObject::ParseOptions
                 // No error string, output the usage information into result
                 options->GenerateOptionUsage (result.GetErrorStream(), this);
             }
-            // Set the return status to failed (this was an error).
-            result.SetStatus (eReturnStatusFailed);
-            return false;
         }
+        result.SetStatus (eReturnStatusFailed);
+        return false;
     }
     return true;
 }

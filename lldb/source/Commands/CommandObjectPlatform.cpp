@@ -27,24 +27,134 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+PlatformSP 
+PlatformOptionGroup::CreatePlatformWithOptions (CommandInterpreter &interpreter,
+                                                const char *platform_name, 
+                                                bool select, 
+                                                Error& error)
+{
+    if (platform_name && platform_name[0])
+    {
+        if (platform_sp)
+        {
+            error.SetErrorString ("platform can't be set more than once in a command");
+            return PlatformSP();
+        }
+
+        platform_sp = Platform::Create (platform_name, error);
+
+        if (platform_sp)
+        {
+                interpreter.GetDebugger().GetPlatformList().Append (platform_sp, select);
+                if (os_version_major != UINT32_MAX)
+                {
+                    platform_sp->SetOSVersion (os_version_major,
+                                               os_version_minor,
+                                               os_version_update);
+                }
+        }
+    }
+    else
+    {
+        error.SetErrorString ("invalid platform name");
+        platform_sp.reset();
+    }
+    return platform_sp;
+}
+
+void
+PlatformOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
+{
+    platform_sp.reset();
+    os_version_major = UINT32_MAX;
+    os_version_minor = UINT32_MAX;
+    os_version_update = UINT32_MAX;
+}
+
+static OptionDefinition
+g_option_table[] =
+{
+    { LLDB_OPT_SET_ALL, false, "platform"   , 'p', required_argument, NULL, 0, eArgTypeNone, "Specify name of the platform to use for this target, creating the platform if necessary."},
+    { LLDB_OPT_SET_ALL, false, "sdk-version", 'v', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." }
+};
+
+static const uint32_t k_option_table_size = sizeof(g_option_table)/sizeof (OptionDefinition);
+
+const OptionDefinition*
+PlatformOptionGroup::GetDefinitions ()
+{
+    if (m_include_platform_option)
+        return g_option_table;
+    return g_option_table + 1;
+}
+
+uint32_t
+PlatformOptionGroup::GetNumDefinitions ()
+{
+    if (m_include_platform_option)
+        return k_option_table_size;
+    return k_option_table_size - 1;
+}
+
+
+Error
+PlatformOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
+                                     uint32_t option_idx,
+                                     const char *option_arg)
+{
+    Error error;
+    if (!m_include_platform_option)
+        --option_idx;
+        
+    char short_option = (char) g_option_table[option_idx].short_option;
+    
+    switch (short_option)
+    {
+    case 'p':
+        CreatePlatformWithOptions (interpreter, option_arg, true, error);
+        break;
+
+    case 'v':
+        if (Args::StringToVersion (option_arg, os_version_major, os_version_minor, os_version_update) == option_arg)
+        {
+            error.SetErrorStringWithFormat ("invalid version string '%s'", option_arg);
+        }
+        else
+        {
+            if (platform_sp)
+                platform_sp->SetOSVersion (os_version_major, os_version_minor, os_version_update);
+        }
+        break;
+        
+    default:
+        error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+        break;
+    }
+    return error;
+}
+
 //----------------------------------------------------------------------
 // "platform create <platform-name>"
 //----------------------------------------------------------------------
-class CommandObjectPlatformCreate : public CommandObject
+class CommandObjectPlatformSelect : public CommandObject
 {
 public:
-    CommandObjectPlatformCreate (CommandInterpreter &interpreter) :
+    CommandObjectPlatformSelect (CommandInterpreter &interpreter) :
         CommandObject (interpreter, 
-                       "platform create",
-                       "Create a platform instance by name and select it as the current platform.",
-                       "platform create <platform-name>",
+                       "platform select",
+                       "Create a platform if needed and select it as the current platform.",
+                       "platform select <platform-name>",
                        0),
-        m_options (interpreter)
+        m_option_group (interpreter),
+        m_platform_options (false) // Don't include the "--platform" option by passing false
     {
+        m_option_group.Append (&m_platform_options);
+        m_option_group.Finalize();
     }
 
     virtual
-    ~CommandObjectPlatformCreate ()
+    ~CommandObjectPlatformSelect ()
     {
     }
 
@@ -54,20 +164,13 @@ public:
         Error error;
         if (args.GetArgumentCount() == 1)
         {
-            PlatformSP platform_sp (Platform::Create (args.GetArgumentAtIndex (0), error));
-            
+            const bool select = true;
+            PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter,
+                                                                                  args.GetArgumentAtIndex (0), 
+                                                                                  select, 
+                                                                                  error));
             if (platform_sp)
-            {
-                m_interpreter.GetDebugger().GetPlatformList().Append (platform_sp, true);
-                if (m_options.os_version_major != UINT32_MAX)
-                {
-                    platform_sp->SetOSVersion (m_options.os_version_major,
-                                               m_options.os_version_minor,
-                                               m_options.os_version_update);
-                }
-                
                 platform_sp->GetStatus (result.GetOutputStream());
-            }
         }
         else
         {
@@ -80,86 +183,12 @@ public:
     virtual Options *
     GetOptions ()
     {
-        return &m_options;
+        return &m_option_group;
     }
 
 protected:
-
-    class CommandOptions : public Options
-    {
-    public:
-
-        CommandOptions (CommandInterpreter &interpreter) :
-            Options (interpreter),
-            os_version_major (UINT32_MAX),
-            os_version_minor (UINT32_MAX),
-            os_version_update (UINT32_MAX)
-        {
-        }
-
-        virtual
-        ~CommandOptions ()
-        {
-        }
-
-        virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
-        {
-            Error error;
-            char short_option = (char) m_getopt_table[option_idx].val;
-
-            switch (short_option)
-            {
-            case 'v':
-                if (Args::StringToVersion (option_arg, 
-                                           os_version_major,
-                                           os_version_minor,
-                                           os_version_update) == option_arg)
-                {
-                    error.SetErrorStringWithFormat ("invalid version string '%s'", option_arg);
-                }
-                break;
-
-            default:
-                error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
-                break;
-            }
-
-            return error;
-        }
-
-        void
-        ResetOptionValues ()
-        {
-            os_version_major = UINT32_MAX;
-            os_version_minor = UINT32_MAX;
-            os_version_update = UINT32_MAX;
-        }
-
-        const OptionDefinition*
-        GetDefinitions ()
-        {
-            return g_option_table;
-        }
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-
-        // Instance variables to hold the values for command options.
-
-        uint32_t os_version_major;
-        uint32_t os_version_minor;
-        uint32_t os_version_update;
-    };
-    CommandOptions m_options;
-};
-
-OptionDefinition
-CommandObjectPlatformCreate::CommandOptions::g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "sdk-version", 'v', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." },
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+    OptionGroupOptions m_option_group;
+    PlatformOptionGroup m_platform_options;
 };
 
 //----------------------------------------------------------------------
@@ -255,37 +284,6 @@ public:
         return result.Succeeded();
     }
 };
-
-
-//----------------------------------------------------------------------
-// "platform select <platform-name>"
-//----------------------------------------------------------------------
-class CommandObjectPlatformSelect : public CommandObject
-{
-public:
-    CommandObjectPlatformSelect (CommandInterpreter &interpreter) :
-        CommandObject (interpreter, 
-                       "platform select",
-                       "Select a platform by name to be the currently selected platform.",
-                       "platform select <platform-name>",
-                       0)
-    {
-    }
-
-    virtual
-    ~CommandObjectPlatformSelect ()
-    {
-    }
-
-    virtual bool
-    Execute (Args& args, CommandReturnObject &result)
-    {
-        result.AppendError ("command not implemented\n");
-        result.SetStatus (eReturnStatusFailed);
-        return result.Succeeded();
-    }
-};
-
 
 //----------------------------------------------------------------------
 // "platform connect <connect-url>"
@@ -683,7 +681,7 @@ protected:
         }
         
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg)
+        SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
             char short_option = (char) m_getopt_table[option_idx].val;
@@ -773,7 +771,7 @@ protected:
         }
         
         void
-        ResetOptionValues ()
+        OptionParsingStarting ()
         {
             match_info.Clear();
             show_args = false;
@@ -956,11 +954,10 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
                             "platform",
                             "A set of commands to manage and create platforms.",
-                            "platform [connect|create|disconnect|info|list|status|select] ...")
+                            "platform [connect|disconnect|info|list|status|select] ...")
 {
-    LoadSubCommand ("create", CommandObjectSP (new CommandObjectPlatformCreate  (interpreter)));
-    LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList    (interpreter)));
     LoadSubCommand ("select", CommandObjectSP (new CommandObjectPlatformSelect  (interpreter)));
+    LoadSubCommand ("list"  , CommandObjectSP (new CommandObjectPlatformList    (interpreter)));
     LoadSubCommand ("status", CommandObjectSP (new CommandObjectPlatformStatus  (interpreter)));
     LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect  (interpreter)));
     LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect  (interpreter)));

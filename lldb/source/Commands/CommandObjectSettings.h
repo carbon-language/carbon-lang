@@ -65,10 +65,10 @@ public:
         ~CommandOptions ();
 
         virtual Error
-        SetOptionValue (int option_idx, const char *option_arg);
+        SetOptionValue (uint32_t option_idx, const char *option_arg);
 
         void
-        ResetOptionValues ();
+        OptionParsingStarting ();
 
         const OptionDefinition*
         GetDefinitions ();

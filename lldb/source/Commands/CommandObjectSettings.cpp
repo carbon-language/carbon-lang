@@ -263,7 +263,7 @@ CommandObjectSettingsSet::CommandOptions::GetDefinitions ()
 }
 
 Error
-CommandObjectSettingsSet::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectSettingsSet::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
     char short_option = (char) m_getopt_table[option_idx].val;
@@ -285,7 +285,7 @@ CommandObjectSettingsSet::CommandOptions::SetOptionValue (int option_idx, const 
 }
 
 void
-CommandObjectSettingsSet::CommandOptions::ResetOptionValues ()
+CommandObjectSettingsSet::CommandOptions::OptionParsingStarting ()
 {
     m_override = true;
     m_reset = false;

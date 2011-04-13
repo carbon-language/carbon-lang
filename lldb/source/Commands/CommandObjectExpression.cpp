@@ -41,7 +41,7 @@ CommandObjectExpression::CommandOptions::CommandOptions (CommandInterpreter &int
     Options(interpreter)
 {
     // Keep only one place to reset the values to their defaults
-    ResetOptionValues();
+    OptionParsingStarting();
 }
 
 
@@ -50,7 +50,7 @@ CommandObjectExpression::CommandOptions::~CommandOptions ()
 }
 
 Error
-CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const char *option_arg)
+CommandObjectExpression::CommandOptions::SetOptionValue (uint32_t option_idx, const char *option_arg)
 {
     Error error;
 
@@ -93,7 +93,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (int option_idx, const c
 }
 
 void
-CommandObjectExpression::CommandOptions::ResetOptionValues ()
+CommandObjectExpression::CommandOptions::OptionParsingStarting ()
 {
     //language.Clear();
     debug = false;
@@ -297,7 +297,7 @@ CommandObjectExpression::ExecuteRawCommandString
 {
     m_exe_ctx = m_interpreter.GetExecutionContext();
 
-    m_options.Reset();
+    m_options.NotifyOptionParsingStarting();
 
     const char * expr = NULL;
 
@@ -361,6 +361,14 @@ CommandObjectExpression::ExecuteRawCommandString
             Args args (command, end_options - command);
             if (!ParseOptions (args, result))
                 return false;
+            
+            Error error (m_options.NotifyOptionParsingFinished());
+            if (error.Fail())
+            {
+                result.AppendError (error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
         }
     }
 

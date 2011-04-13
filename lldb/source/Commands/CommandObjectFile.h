@@ -12,17 +12,51 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Interpreter/CommandObject.h"
+#include "CommandObjectPlatform.h"
 
 namespace lldb_private {
 
 //-------------------------------------------------------------------------
 // CommandObjectFile
 //-------------------------------------------------------------------------
+
+    class FileOptionGroup : public OptionGroup
+    {
+    public:
+        
+        FileOptionGroup ();
+        
+        virtual
+        ~FileOptionGroup ();
+
+        
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        virtual const OptionDefinition*
+        GetDefinitions ();
+        
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter);
+        
+        virtual Error
+        OptionParsingFinished (CommandInterpreter &interpreter);
+        
+        ArchSpec m_arch;
+        lldb::PlatformSP m_arch_platform_sp; // The platform that was used to resolve m_arch
+        std::string m_arch_str; // Save the arch triple in case a platform is specified after the architecture
+    };
 
 class CommandObjectFile : public CommandObject
 {
@@ -40,32 +74,6 @@ public:
     virtual Options *
     GetOptions ();
 
-    class CommandOptions : public Options
-    {
-    public:
-
-        CommandOptions (CommandInterpreter &interpreter);
-
-        virtual
-        ~CommandOptions ();
-
-        virtual Error
-        SetOptionValue (int option_idx, const char *option_arg);
-
-        void
-        ResetOptionValues ();
-
-        const OptionDefinition*
-        GetDefinitions ();
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-
-        // Instance variables to hold the values for command options.
-
-        ArchSpec m_arch;
-    };
     
     virtual int
     HandleArgumentCompletion (Args &input,
@@ -79,8 +87,9 @@ public:
     
 
 private:
-    CommandOptions m_options;
-
+    OptionGroupOptions m_option_group;
+    FileOptionGroup m_file_options;
+    PlatformOptionGroup m_platform_options;
 };
 
 } // namespace lldb_private
