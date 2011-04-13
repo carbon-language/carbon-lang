@@ -1,12 +1,12 @@
-; RUN: llc -march=mipsel -mcpu=mips2 < %s | FileCheck %s
-; RUN: llc -march=mipsel -mcpu=mips2 < %s -regalloc=basic | FileCheck %s
+; RUN: llc -march=mipsel -mcpu=mips2 -pre-RA-sched=source < %s | FileCheck %s
+; RUN: llc -march=mipsel -mcpu=mips2 -pre-RA-sched=source < %s -regalloc=basic | FileCheck %s
 
 
 ; All test functions do the same thing - they return the first variable
 ; argument.
 
-; All CHECK's do the same thing - they check whether variable arguments from 
-; registers are placed on correct stack locations, and whether the first 
+; All CHECK's do the same thing - they check whether variable arguments from
+; registers are placed on correct stack locations, and whether the first
 ; variable argument is returned from the correct stack location.
 
 
@@ -31,14 +31,14 @@ entry:
 
 ; CHECK: va1:
 ; CHECK: addiu   $sp, $sp, -32
-; CHECK: sw      $5, 36($sp)
-; CHECK: sw      $6, 40($sp)
 ; CHECK: sw      $7, 44($sp)
+; CHECK: sw      $6, 40($sp)
+; CHECK: sw      $5, 36($sp)
 ; CHECK: lw      $2, 36($sp)
 }
 
-; check whether the variable double argument will be accessed from the 8-byte 
-; aligned location (i.e. whether the address is computed by adding 7 and 
+; check whether the variable double argument will be accessed from the 8-byte
+; aligned location (i.e. whether the address is computed by adding 7 and
 ; clearing lower 3 bits)
 define double @va2(i32 %a, ...) nounwind {
 entry:
@@ -57,10 +57,10 @@ entry:
 
 ; CHECK: va2:
 ; CHECK: addiu   $sp, $sp, -40
-; CHECK: addiu   $[[R0:[0-9]+]], $sp, 44
-; CHECK: sw      $5, 44($sp)
-; CHECK: sw      $6, 48($sp)
 ; CHECK: sw      $7, 52($sp)
+; CHECK: sw      $6, 48($sp)
+; CHECK: sw      $5, 44($sp)
+; CHECK: addiu   $[[R0:[0-9]+]], $sp, 44
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7
 ; CHECK: addiu   $[[R2:[0-9]+]], $zero, -8
 ; CHECK: and     $[[R3:[0-9]+]], $[[R1]], $[[R2]]
@@ -85,8 +85,8 @@ entry:
 
 ; CHECK: va3:
 ; CHECK: addiu   $sp, $sp, -40
-; CHECK: sw      $6, 48($sp)
 ; CHECK: sw      $7, 52($sp)
+; CHECK: sw      $6, 48($sp)
 ; CHECK: lw      $2, 48($sp)
 }
 
@@ -108,8 +108,8 @@ entry:
 
 ; CHECK: va4:
 ; CHECK: addiu   $sp, $sp, -48
-; CHECK: sw      $6, 56($sp)
 ; CHECK: sw      $7, 60($sp)
+; CHECK: sw      $6, 56($sp)
 ; CHECK: addiu   $[[R0:[0-9]+]], $sp, 56
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7
 ; CHECK: addiu   $[[R2:[0-9]+]], $zero, -8

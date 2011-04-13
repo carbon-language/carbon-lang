@@ -1,10 +1,10 @@
-; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -pre-RA-sched=source | FileCheck %s
 ; Test that we correctly align elements when using va_arg
 
 ; CHECK: test1:
 ; CHECK-NOT: bfc
-; CHECK: add	r0, r0, #7
-; CHECK: bfc	r0, #0, #3
+; CHECK: add	[[REG:(r[0-9]+)|(lr)]], {{(r[0-9]+)|(lr)}}, #7
+; CHECK: bfc	[[REG]], #0, #3
 ; CHECK-NOT: bfc
 
 define i64 @test1(i32 %i, ...) nounwind optsize {
@@ -19,8 +19,8 @@ entry:
 
 ; CHECK: test2:
 ; CHECK-NOT: bfc
-; CHECK: add	r0, r0, #7
-; CHECK: bfc	r0, #0, #3
+; CHECK: add	[[REG:(r[0-9]+)|(lr)]], {{(r[0-9]+)|(lr)}}, #7
+; CHECK: bfc	[[REG]], #0, #3
 ; CHECK-NOT:	bfc
 ; CHECK: bx	lr
 
