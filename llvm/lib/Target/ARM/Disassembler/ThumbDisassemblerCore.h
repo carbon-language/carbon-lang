@@ -1920,6 +1920,38 @@ static bool BadRegsThumb2LdSt(unsigned Opcode, uint32_t insn, bool Load,
       DEBUG(errs() << "if t == 13 then UNPREDICTABLE\n");
       return true;
     }
+    // A6.3.8 Load halfword, memory hints
+    const StringRef Name = ARMInsts[Opcode].Name;
+    if (Name.startswith("t2LDRH") || Name.startswith("t2LDRSH")) {
+      if (WB) {
+        if (R0 == R1)  {
+          // A8.6.82 LDRSH (immediate) Encoding T2
+          DEBUG(errs() << "if WB && n == t then UNPREDICTABLE\n");
+          return true;
+        }
+        if (R0 == 15 && slice(insn, 10, 8) == 3)  {
+          // A8.6.82 LDRSH (immediate) Encoding T2 (errata markup 8.0)
+          DEBUG(errs() << "if t == 15 && PUW == '011' then UNPREDICTABLE\n");
+          return true;
+        }
+      } else {
+        if (Opcode == ARM::t2LDRHi8 || Opcode == ARM::t2LDRSHi8) {
+          if (R0 == 15 && slice(insn, 10, 8) == 4) {
+            // A8.6.82 LDRSH (immediate) Encoding T2
+            DEBUG(errs() << "if Rt == '1111' and PUW == '100' then SEE"
+                         << " \"Unallocated memory hints\"\n");
+            return true;
+          }
+        } else {
+          if (R0 == 15) {
+            // A8.6.82 LDRSH (immediate) Encoding T1
+            DEBUG(errs() << "if Rt == '1111' then SEE"
+                         << " \"Unallocated memory hints\"\n");
+            return true;
+          }
+        }
+      }
+    }
   } else {
     if (WB && R0 == R1) {
       DEBUG(errs() << "if wback && n == t then UNPREDICTABLE\n");
@@ -1998,7 +2030,7 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
   bool Imm12 = !ThreeReg && slice(insn, 23, 23) == 1; // ARMInstrThumb2.td
 
   // Build the register operands, followed by the immediate.
-  unsigned R0, R1, R2 = 0;
+  unsigned R0 = 0, R1 = 0, R2 = 0;
   unsigned Rd = decodeRd(insn);
   int Imm = 0;
 
