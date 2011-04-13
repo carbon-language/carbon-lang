@@ -6,7 +6,7 @@
 
 ; CHECK:	.bss
 ; CHECK:	.globl	GlobalA
-; CHECK:	.align	16
+; CHECK:	.align	8
 ; CHECK: GlobalA:
 ; CHECK:	.zero	384
 
@@ -15,12 +15,12 @@
 ; PR6921
 @GlobalB = common global { [384 x i8] } zeroinitializer, align 8
 
-; CHECK: 	.comm	GlobalB,384,16
+; CHECK: 	.comm	GlobalB,384,8
 
 
 @GlobalC = common global { [384 x i8] } zeroinitializer, align 2
 
-; CHECK: 	.comm	GlobalC,384,16
+; CHECK: 	.comm	GlobalC,384,2
 
 
 
