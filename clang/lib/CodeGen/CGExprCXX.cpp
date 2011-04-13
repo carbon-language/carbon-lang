@@ -17,6 +17,8 @@
 #include "CGObjCRuntime.h"
 #include "CGDebugInfo.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Support/CallSite.h"
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -1349,14 +1351,8 @@ static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
 }
 
 static void EmitBadTypeidCall(CodeGenFunction &CGF) {
-  llvm::Value *F = getBadTypeidFn(CGF);
-  if (llvm::BasicBlock *InvokeDest = CGF.getInvokeDest()) {
-    llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-    CGF.Builder.CreateInvoke(F, Cont, InvokeDest)->setDoesNotReturn();
-    CGF.EmitBlock(Cont);
-  } else
-    CGF.Builder.CreateCall(F)->setDoesNotReturn();
-  
+  llvm::Value *Fn = getBadTypeidFn(CGF);
+  CGF.EmitCallOrInvoke(Fn, 0, 0).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
@@ -1437,14 +1433,8 @@ static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
 }
 
 static void EmitBadCastCall(CodeGenFunction &CGF) {
-  llvm::Value *F = getBadCastFn(CGF);
-  if (llvm::BasicBlock *InvokeDest = CGF.getInvokeDest()) {
-    llvm::BasicBlock *Cont = CGF.createBasicBlock("invoke.cont");
-    CGF.Builder.CreateInvoke(F, Cont, InvokeDest)->setDoesNotReturn();
-    CGF.EmitBlock(Cont);
-  } else
-    CGF.Builder.CreateCall(F)->setDoesNotReturn();
-  
+  llvm::Value *Fn = getBadCastFn(CGF);
+  CGF.EmitCallOrInvoke(Fn, 0, 0).setDoesNotReturn();
   CGF.Builder.CreateUnreachable();
 }
 
