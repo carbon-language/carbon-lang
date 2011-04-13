@@ -479,6 +479,7 @@ static bool DisassembleThumb1DP(MCInst &MI, unsigned Opcode, uint32_t insn,
 // tBX_RET: 0 operand
 // tBX_RET_vararg: Rm
 // tBLXr_r9: Rm
+// tBRIND: Rm
 static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
     unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
@@ -486,14 +487,17 @@ static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
   if (NumOps == 0)
     return true;
 
-  // BX/BLX has 1 reg operand: Rm.
-  if (Opcode == ARM::tBLXr_r9 || Opcode == ARM::tBX_Rm) {
-    // Handling the two predicate operands before the reg operand.
-    if (!B->DoPredicateOperands(MI, Opcode, insn, NumOps))
-      return false;
+  // BX/BLX/tBRIND (indirect branch, i.e, mov pc, Rm) has 1 reg operand: Rm.
+  if (Opcode==ARM::tBLXr_r9 || Opcode==ARM::tBX_Rm || Opcode==ARM::tBRIND) {
+    if (Opcode != ARM::tBRIND) {
+      // Handling the two predicate operands before the reg operand.
+      if (!B->DoPredicateOperands(MI, Opcode, insn, NumOps))
+        return false;
+      NumOpsAdded += 2;
+    }
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
                                                        getT1Rm(insn))));
-    NumOpsAdded = 3;
+    NumOpsAdded += 1;
     return true;
   }
 
