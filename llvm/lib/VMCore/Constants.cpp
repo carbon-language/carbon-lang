@@ -855,10 +855,10 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 /// operands replaced with the specified values.  The specified operands must
 /// match count and type with the existing ones.
 Constant *ConstantExpr::
-getWithOperands(Constant *const *Ops, unsigned NumOps) const {
-  assert(NumOps == getNumOperands() && "Operand count mismatch!");
+getWithOperands(llvm::ArrayRef<Constant*> Ops) const {
+  assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
   bool AnyChange = false;
-  for (unsigned i = 0; i != NumOps; ++i) {
+  for (unsigned i = 0; i != Ops.size(); ++i) {
     assert(Ops[i]->getType() == getOperand(i)->getType() &&
            "Operand type mismatch!");
     AnyChange |= Ops[i] != getOperand(i);
@@ -890,8 +890,8 @@ getWithOperands(Constant *const *Ops, unsigned NumOps) const {
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
     return cast<GEPOperator>(this)->isInBounds() ?
-      ConstantExpr::getInBoundsGetElementPtr(Ops[0], &Ops[1], NumOps-1) :
-      ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], NumOps-1);
+      ConstantExpr::getInBoundsGetElementPtr(Ops[0], &Ops[1], Ops.size()-1) :
+      ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::ICmp:
   case Instruction::FCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);

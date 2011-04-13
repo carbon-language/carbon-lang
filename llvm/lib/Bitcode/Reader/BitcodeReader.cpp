@@ -301,8 +301,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
         NewC = ConstantVector::get(NewOps);
       } else {
         assert(isa<ConstantExpr>(UserC) && "Must be a ConstantExpr.");
-        NewC = cast<ConstantExpr>(UserC)->getWithOperands(&NewOps[0],
-                                                          NewOps.size());
+        NewC = cast<ConstantExpr>(UserC)->getWithOperands(NewOps);
       }
 
       UserC->replaceAllUsesWith(NewC);
