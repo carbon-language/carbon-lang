@@ -2375,8 +2375,7 @@ void DwarfDebug::emitDebugInfo() {
     unsigned ContentSize = Die->getSize() +
       sizeof(int16_t) + // DWARF version number
       sizeof(int32_t) + // Offset Into Abbrev. Section
-      sizeof(int8_t) +  // Pointer Size (in bytes)
-      sizeof(int32_t);  // FIXME - extra pad for gdb bug.
+      sizeof(int8_t);   // Pointer Size (in bytes)
 
     Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
     Asm->EmitInt32(ContentSize);
@@ -2389,12 +2388,6 @@ void DwarfDebug::emitDebugInfo() {
     Asm->EmitInt8(Asm->getTargetData().getPointerSize());
 
     emitDIE(Die);
-    // FIXME - extra padding for gdb bug.
-    Asm->OutStreamer.AddComment("4 extra padding bytes for GDB");
-    Asm->EmitInt8(0);
-    Asm->EmitInt8(0);
-    Asm->EmitInt8(0);
-    Asm->EmitInt8(0);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_end", TheCU->getID()));
   }
 }
