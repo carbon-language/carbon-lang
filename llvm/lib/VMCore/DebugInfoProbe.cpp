@@ -135,7 +135,9 @@ void DebugInfoProbeImpl::finalize(Function &F) {
          E = LineNos.end(); I != E; ++I) {
     unsigned LineNo = *I;
     if (LineNos2.count(LineNo) == 0) {
-      DEBUG(dbgs() << "DebugInfoProbe: Losing dbg info intrinsic at line " << LineNo << "\n");
+      DEBUG(dbgs() 
+            << "DebugInfoProbe: Losing dbg info for source line " 
+            << LineNo << "\n");
       ++NumDbgLineLost;
     }
   }
