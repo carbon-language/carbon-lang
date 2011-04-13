@@ -1129,8 +1129,8 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
-  if (AllowBuiltinCreation)
-    return LookupBuiltin(*this, R);
+  if (AllowBuiltinCreation && LookupBuiltin(*this, R))
+    return true;
 
   // If we didn't find a use of this identifier, the ExternalSource 
   // may be able to handle the situation. 
