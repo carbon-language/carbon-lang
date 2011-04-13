@@ -10081,12 +10081,11 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 
   SourceLocation Open = E->getSourceRange().getBegin();
   SourceLocation Close = E->getSourceRange().getEnd();
-  if (!Open.isMacroID() && !Close.isMacroID()) {
-    SourceLocation LocForEndOfToken = PP.getLocForEndOfToken(Close);
-    Diag(Loc, diag::note_condition_assign_silence)
-      << FixItHint::CreateInsertion(Open, "(")
-      << FixItHint::CreateInsertion(LocForEndOfToken, ")");
-  }
+  SourceLocation LocForEndOfToken = 
+    Close.isMacroID() ? Close : PP.getLocForEndOfToken(Close);
+  Diag(Loc, diag::note_condition_assign_silence)
+        << FixItHint::CreateInsertion(Open, "(")
+        << FixItHint::CreateInsertion(LocForEndOfToken, ")");
 }
 
 /// \brief Redundant parentheses over an equality comparison can indicate

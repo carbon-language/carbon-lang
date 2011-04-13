@@ -10,6 +10,7 @@ void myFunc() {
     int value;
 
     while (value = va_arg(values, int)) {  // expected-warning {{using the result of an assignment as a condition without parentheses}} \
-                                           // expected-note {{use '==' to turn this assignment into an equality comparison}}
+                                           // expected-note {{use '==' to turn this assignment into an equality comparison}} \
+					   // expected-note {{place parentheses around the assignment to silence this warning}}
     }
 }
