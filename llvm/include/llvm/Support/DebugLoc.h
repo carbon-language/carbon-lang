@@ -31,7 +31,7 @@ namespace llvm {
     /// not equal to the tombstone key or DebugLoc().
     static DebugLoc getEmptyKey() {
       DebugLoc DL;
-      DL.LineCol = -1;
+      DL.LineCol = 1;
       return DL;
     }
 
@@ -39,7 +39,7 @@ namespace llvm {
     /// is not equal to the empty key or DebugLoc().
     static DebugLoc getTombstoneKey() {
       DebugLoc DL;
-      DL.LineCol = -2;
+      DL.LineCol = 2;
       return DL;
     }
 
