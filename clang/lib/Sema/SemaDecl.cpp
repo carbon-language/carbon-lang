@@ -250,6 +250,33 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   return DeclSpec::TST_unspecified;
 }
 
+/// isMicrosoftMissingTypename - In Microsoft mode, within class scope,
+/// if a CXXScopeSpec's type is equal to the type of one of the base classes
+/// then downgrade the missing typename error to a warning.
+/// This is needed for MSVC compatibility; Example:
+/// @code
+/// template<class T> class A {
+/// public:
+///   typedef int TYPE;
+/// };
+/// template<class T> class B : public A<T> {
+/// public:
+///   A<T>::TYPE a; // no typename required because A<T> is a base class.
+/// };
+/// @endcode
+bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS) {
+  if (CurContext->isRecord()) {
+    const Type* Ty = SS->getScopeRep()->getAsType();
+
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(CurContext);
+    for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
+          BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base)
+      if (Context.hasSameUnqualifiedType(QualType(Ty, 1), Base->getType()))
+        return true;
+  } 
+  return false;
+}
+
 bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
                                    SourceLocation IILoc,
                                    Scope *S,
@@ -327,7 +354,11 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
     Diag(IILoc, diag::err_typename_nested_not_found) 
       << &II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
-    Diag(SS->getRange().getBegin(), diag::err_typename_missing)
+    unsigned DiagID = diag::err_typename_missing;
+    if (getLangOptions().Microsoft && isMicrosoftMissingTypename(SS))
+      DiagID = diag::war_typename_missing;
+
+    Diag(SS->getRange().getBegin(), DiagID)
       << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
       << FixItHint::CreateInsertion(SS->getRange().getBegin(), "typename ");

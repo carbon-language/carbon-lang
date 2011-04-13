@@ -799,6 +799,7 @@ public:
                          ParsedType ObjectType = ParsedType(),
                          bool WantNontrivialTypeSourceInfo = false);
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
+  bool isMicrosoftMissingTypename(const CXXScopeSpec *SS);
   bool DiagnoseUnknownTypeName(const IdentifierInfo &II,
                                SourceLocation IILoc,
                                Scope *S,

@@ -1946,6 +1946,8 @@ def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
 def err_typename_missing : Error<
   "missing 'typename' prior to dependent type name '%0%1'">;
+def war_typename_missing : ExtWarn<
+  "missing 'typename' prior to dependent type name '%0%1'">;
 def ext_typename_outside_of_template : ExtWarn<
   "'typename' occurs outside of a template">, InGroup<CXX0x>;
 def err_typename_refers_to_using_value_decl : Error<
