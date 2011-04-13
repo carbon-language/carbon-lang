@@ -1,7 +1,7 @@
 // RUN: env RC_DEBUG_OPTIONS=1 \
 // RUN:     CC_LOG_DIAGNOSTICS=1 \
 // RUN:     CC_LOG_DIAGNOSTICS_FILE=%t.log \
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -fsyntax-only %s
+// RUN: %clang -no-canonical-prefixes -ccc-host-triple x86_64-apple-darwin10 -fsyntax-only %s
 // RUN: FileCheck %s < %t.log
 
 int f0() {}
