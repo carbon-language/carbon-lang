@@ -3625,11 +3625,17 @@ bool ARMBasicMCBuilder::TryPredicateAndSBitModifier(MCInst& MI, unsigned Opcode,
         // like ARM.
         //
         // A8.6.16 B
-        if (Name == "t2Bcc")
-          MI.addOperand(MCOperand::CreateImm(CondCode(slice(insn, 25, 22))));
-        else if (Name == "tBcc")
-          MI.addOperand(MCOperand::CreateImm(CondCode(slice(insn, 11, 8))));
-        else
+        // Check for undefined encodings.
+        unsigned cond;
+        if (Name == "t2Bcc") {
+          if ((cond = slice(insn, 25, 22)) >= 14)
+            return false;
+          MI.addOperand(MCOperand::CreateImm(CondCode(cond)));
+        } else if (Name == "tBcc") {
+          if ((cond = slice(insn, 11, 8)) == 14)
+            return false;
+          MI.addOperand(MCOperand::CreateImm(CondCode(cond)));
+        } else
           MI.addOperand(MCOperand::CreateImm(ARMCC::AL));
       } else {
         // ARM instructions get their condition field from Inst{31-28}.
