@@ -38,6 +38,11 @@ Action(cl::desc("Action to perform:"),
                              "Load, link, and execute the inputs."),
                   clEnumValEnd));
 
+static cl::opt<std::string>
+EntryPoint("entry",
+           cl::desc("Function to call as entry point."),
+           cl::init("_main"));
+
 /* *** */
 
 // A trivial memory manager that doesn't do anything fancy, just uses the
@@ -93,10 +98,10 @@ static int executeInput() {
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
 
-  // Get the address of "_main".
-  void *MainAddress = Dyld.getSymbolAddress("_main");
+  // Get the address of the entry point (_main by default).
+  void *MainAddress = Dyld.getSymbolAddress(EntryPoint);
   if (MainAddress == 0)
-    return Error("no definition for '_main'");
+    return Error("no definition for '" + EntryPoint + "'");
 
   // Invalidate the instruction cache for each loaded function.
   for (unsigned i = 0, e = MemMgr->FunctionMemory.size(); i != e; ++i) {
