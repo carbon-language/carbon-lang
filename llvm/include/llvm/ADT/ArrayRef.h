@@ -22,8 +22,8 @@ namespace llvm {
   ///
   /// This class does not own the underlying data, it is expected to be used in
   /// situations where the data resides in some other buffer, whose lifetime
-  /// extends past that of the StringRef. For this reason, it is not in general
-  /// safe to store a ArrayRef.
+  /// extends past that of the ArrayRef. For this reason, it is not in general
+  /// safe to store an ArrayRef.
   ///
   /// This is intended to be trivially copyable, so it should be passed by
   /// value.
