@@ -621,7 +621,7 @@ unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
   if (GVAlignment >= Alignment) {
     Alignment = GVAlignment;
   } else if (GVAlignment != 0) {
-    Alignment = std::min(GVAlignment, getABITypeAlignment(ElemType));
+    Alignment = std::max(GVAlignment, getABITypeAlignment(ElemType));
   }
 
   if (GV->hasInitializer()) {
