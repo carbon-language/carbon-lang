@@ -617,8 +617,12 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
 unsigned TargetData::getPreferredAlignment(const GlobalVariable *GV) const {
   const Type *ElemType = GV->getType()->getElementType();
   unsigned Alignment = getPrefTypeAlignment(ElemType);
-  if (GV->getAlignment() > Alignment)
-    Alignment = GV->getAlignment();
+  unsigned GVAlignment = GV->getAlignment();
+  if (GVAlignment >= Alignment) {
+    Alignment = GVAlignment;
+  } else if (GVAlignment != 0) {
+    Alignment = std::min(GVAlignment, getABITypeAlignment(ElemType));
+  }
 
   if (GV->hasInitializer()) {
     if (Alignment < 16) {
