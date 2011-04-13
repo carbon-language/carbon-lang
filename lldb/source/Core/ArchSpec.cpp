@@ -79,11 +79,11 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 4, 4, llvm::Triple::sparc  , ArchSpec::eCore_sparc_generic   , "sparc"     },
     { eByteOrderLittle, 8, 4, 4, llvm::Triple::sparcv9, ArchSpec::eCore_sparc9_generic  , "sparcv9"   },
 
-    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i386     , "i386"      },
-    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i486     , "i486"      },
-    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i486sx   , "i486sx"    },
+    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i386    , "i386"      },
+    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i486    , "i486"      },
+    { eByteOrderLittle, 4, 1, 15, llvm::Triple::x86    , ArchSpec::eCore_x86_32_i486sx  , "i486sx"    },
 
-    { eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64 , ArchSpec::eCore_x86_64_x86_64   , "x86_64"    }
+    { eByteOrderLittle, 8, 1, 15, llvm::Triple::x86_64 , ArchSpec::eCore_x86_64_x86_64  , "x86_64"    }
 };
 
 struct ArchDefinitionEntry
@@ -102,6 +102,28 @@ struct ArchDefinition
     uint32_t sub_mask;
     const char *name;
 };
+
+
+uint32_t
+ArchSpec::AutoComplete (const char *name, StringList &matches)
+{
+    uint32_t i;
+    if (name && name[0])
+    {
+        for (i = 0; i < ArchSpec::kNumCores; ++i)
+        {
+            if (NameMatches(g_core_definitions[i].name, eNameMatchStartsWith, name))
+                matches.AppendString (g_core_definitions[i].name);
+        }
+    }
+    else
+    {
+        for (i = 0; i < ArchSpec::kNumCores; ++i)
+            matches.AppendString (g_core_definitions[i].name);
+    }
+    return matches.GetSize();
+}
+
 
 
 #define CPU_ANY (UINT32_MAX)

@@ -312,7 +312,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
                 break;
         }
     }
-    const uint32_t old_packet_timeout = m_gdb_client.SetPacketTimeout (3000); // TODO: lower this to 5 seconds prior to checkin!!!
+    const uint32_t old_packet_timeout = m_gdb_client.SetPacketTimeout (5);
     int arg_packet_err = m_gdb_client.SendArgumentsPacket (argv);
     m_gdb_client.SetPacketTimeout (old_packet_timeout);
     if (arg_packet_err == 0)

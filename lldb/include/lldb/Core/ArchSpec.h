@@ -142,6 +142,10 @@ public:
     const ArchSpec&
     operator= (const ArchSpec& rhs);
 
+    static uint32_t
+    AutoComplete (const char *name, 
+                  StringList &matches);
+
     //------------------------------------------------------------------
     /// Returns a static string representing the current architecture.
     ///

@@ -105,6 +105,13 @@ public:
 
     static void
     Terminate ();
+    
+    //------------------------------------------------------------------
+    // Auto completion
+    //------------------------------------------------------------------
+    static void
+    AutoCompleteChannelName (const char *channel_name, 
+                             StringList &matches);
 
     //------------------------------------------------------------------
     // Member functions
@@ -192,9 +199,6 @@ public:
 
     virtual
     ~LogChannel ();
-
-    static const char *
-    GetPluginSuffix ();
 
     static lldb::LogChannelSP
     FindPlugin (const char *plugin_name);

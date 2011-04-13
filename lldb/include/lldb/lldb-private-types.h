@@ -59,7 +59,7 @@ namespace lldb_private
         char short_option;                       // Single character for this option.
         int option_has_arg;                      // no_argument, required_argument or optional_argument
         OptionEnumValueElement *enum_values;     // If non-NULL an array of enum values.
-        uint32_t completionType;                 // Cookie the option class can use to do define the argument completion.
+        uint32_t completion_type;                // Cookie the option class can use to do define the argument completion.
         lldb::CommandArgumentType argument_type; // Type of argument this option takes
         const char *  usage_text;                // Full text explaining what this options does and what (if any) argument to
                                                  // pass it.

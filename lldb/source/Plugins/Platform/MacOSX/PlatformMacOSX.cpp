@@ -80,7 +80,7 @@ const char *
 PlatformMacOSX::GetShortPluginNameStatic (bool is_host)
 {
     if (is_host)
-        return "local-macosx";
+        return Platform::GetHostPlatformName ();
     else
         return "remote-macosx";
 }

@@ -20,6 +20,7 @@
 // Project includes
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/FileSpecList.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -38,6 +39,8 @@ CommandCompletions::g_common_completions[] =
     {eSymbolCompletion,          CommandCompletions::Symbols},
     {eModuleCompletion,          CommandCompletions::Modules},
     {eSettingsNameCompletion,    CommandCompletions::SettingsNames},
+    {ePlatformPluginCompletion,  CommandCompletions::PlatformPluginNames},
+    {eArchitectureCompletion,    CommandCompletions::ArchitectureNames},
     {eNoCompletion,              NULL}      // This one has to be last in the list.
 };
 
@@ -412,6 +415,36 @@ CommandCompletions::SettingsNames (CommandInterpreter &interpreter,
 
     //return matches.GetSize();
 }
+
+
+int
+CommandCompletions::PlatformPluginNames (CommandInterpreter &interpreter,
+                                         const char *partial_name,
+                                         int match_start_point,
+                                         int max_return_elements,
+                                         SearchFilter *searcher,
+                                         bool &word_complete,
+                                         lldb_private::StringList &matches)
+{
+    const uint32_t num_matches = PluginManager::AutoCompletePlatformName(partial_name, matches);
+    word_complete = num_matches == 1;
+    return num_matches;
+}
+
+int
+CommandCompletions::ArchitectureNames (CommandInterpreter &interpreter,
+                                       const char *partial_name,
+                                       int match_start_point,
+                                       int max_return_elements,
+                                       SearchFilter *searcher,
+                                       bool &word_complete,
+                                       lldb_private::StringList &matches)
+{
+    const uint32_t num_matches = ArchSpec::AutoComplete (partial_name, matches);
+    word_complete = num_matches == 1;
+    return num_matches;
+}
+
 
 CommandCompletions::Completer::Completer 
 (

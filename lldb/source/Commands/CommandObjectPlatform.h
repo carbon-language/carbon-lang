@@ -49,11 +49,11 @@ class PlatformOptionGroup : public OptionGroup
 public:
     
     PlatformOptionGroup (bool include_platform_option) :
-        m_include_platform_option (include_platform_option),
-        platform_sp (),
+        platform_name (),
         os_version_major (UINT32_MAX),
         os_version_minor (UINT32_MAX),
-        os_version_update (UINT32_MAX)
+        os_version_update (UINT32_MAX),
+        m_include_platform_option (include_platform_option)
     {
     }
     
@@ -74,17 +74,16 @@ public:
                     const char *option_value);
     
     lldb::PlatformSP 
-    CreatePlatformWithOptions (CommandInterpreter &interpreter,
-                               const char *platform_name, 
-                               bool select, 
-                               Error& error);
+    CreatePlatformWithOptions (CommandInterpreter &interpreter, 
+                               bool select,
+                               Error &error);
 
     virtual void
     OptionParsingStarting (CommandInterpreter &interpreter);
         
     // Instance variables to hold the values for command options.
     
-    lldb::PlatformSP platform_sp;
+    std::string platform_name;
     uint32_t os_version_major;
     uint32_t os_version_minor;
     uint32_t os_version_update;

@@ -650,7 +650,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeAddress, "address", CommandCompletions::eNoCompletion, NULL, "A valid address in the target program's execution space." },
     { eArgTypeAliasName, "alias-name", CommandCompletions::eNoCompletion, NULL, "The name of an abbreviation (alias) for a debugger command." },
     { eArgTypeAliasOptions, "options-for-aliased-command", CommandCompletions::eNoCompletion, NULL, "Command options to be used as part of an alias (abbreviation) definition.  (See 'help commands alias' for more information.)" },
-    { eArgTypeArchitecture, "arch", CommandCompletions::eNoCompletion, NULL, "The architecture name, e.g. i386 or x86_64." },
+    { eArgTypeArchitecture, "arch", CommandCompletions::eArchitectureCompletion, NULL, "The architecture name, e.g. i386 or x86_64." },
     { eArgTypeBoolean, "boolean", CommandCompletions::eNoCompletion, NULL, "A Boolean value: 'true' or 'false'" },
     { eArgTypeBreakpointID, "breakpt-id", CommandCompletions::eNoCompletion, BreakpointIDHelpTextCallback, NULL },
     { eArgTypeBreakpointIDRange, "breakpt-id-list", CommandCompletions::eNoCompletion, BreakpointIDRangeHelpTextCallback, NULL },
@@ -707,6 +707,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeValue, "value", CommandCompletions::eNoCompletion, NULL, "A value could be anything, depending on where and how it is used." },
     { eArgTypeWidth, "width", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeNone, "none", CommandCompletions::eNoCompletion, NULL, "No help available for this." },
+    { eArgTypePlatform, "platform-name", CommandCompletions::ePlatformPluginCompletion, NULL, "The name of an installed platform plug-in . Type 'platform list' to see a complete list of installed platforms." }
 };
 
 const CommandObject::ArgumentTableEntry*

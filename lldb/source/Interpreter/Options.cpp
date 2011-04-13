@@ -11,8 +11,9 @@
 
 // C Includes
 // C++ Includes
-#include <bitset>
 #include <algorithm>
+#include <bitset>
+#include <set>
 
 // Other libraries and framework includes
 // Project includes
@@ -853,7 +854,19 @@ Options::HandleOptionArgumentCompletion
     // for that shared library.
     // FIXME: Do we want to also have an "OptionType" so we don't have to match string names?
 
-    uint32_t completion_mask = opt_defs[opt_defs_index].completionType;
+    uint32_t completion_mask = opt_defs[opt_defs_index].completion_type;
+    
+    if (completion_mask == 0)
+    {
+        lldb::CommandArgumentType option_arg_type = opt_defs[opt_defs_index].argument_type;
+        if (option_arg_type != eArgTypeNone)
+        {
+            CommandObject::ArgumentTableEntry *arg_entry = CommandObject::FindArgumentDataByType (opt_defs[opt_defs_index].argument_type);
+            if (arg_entry)
+                completion_mask = arg_entry->completion_type;
+        }
+    }
+
     if (completion_mask & CommandCompletions::eSourceFileCompletion
         || completion_mask & CommandCompletions::eSymbolCompletion)
     {
@@ -893,28 +906,21 @@ Options::HandleOptionArgumentCompletion
 }
 
 
-
-
 void
-OptionGroupOptions::Append (OptionGroup* group)
+OptionGroupOptions::Append (OptionGroup* group, 
+                            uint32_t src_mask, 
+                            uint32_t dst_mask)
 {
-    m_option_groups.push_back (group);
-    const OptionDefinition* group_option_defs = group->GetDefinitions ();
-    const uint32_t group_option_count = group->GetNumDefinitions();
-    for (uint32_t i=0; i<group_option_count; ++i)
-        m_option_defs.push_back (group_option_defs[i]);
-}
-
-void
-OptionGroupOptions::Append (OptionGroup* group, uint32_t usage_mask)
-{
-    m_option_groups.push_back (group);
     const OptionDefinition* group_option_defs = group->GetDefinitions ();
     const uint32_t group_option_count = group->GetNumDefinitions();
     for (uint32_t i=0; i<group_option_count; ++i)
     {
-        m_option_defs.push_back (group_option_defs[i]);
-        m_option_defs.back().usage_mask = usage_mask;
+        if (group_option_defs[i].usage_mask & src_mask)
+        {
+            m_option_infos.push_back (OptionInfo (group, i));
+            m_option_defs.push_back (group_option_defs[i]);
+            m_option_defs.back().usage_mask = dst_mask;
+        }
     }
 }
 
@@ -933,38 +939,53 @@ OptionGroupOptions::SetOptionValue (uint32_t option_idx,
     // After calling OptionGroupOptions::Append(...), you must finalize the groups
     // by calling OptionGroupOptions::Finlize()
     assert (m_did_finalize);
-
-    uint32_t curr_idx = 0;
-    OptionGroupsType::iterator pos, end = m_option_groups.end();
-    for (pos = m_option_groups.begin(); pos != end; ++pos)
-    {
-        const uint32_t num_group_definitions = (*pos)->GetNumDefinitions();
-        if (option_idx < curr_idx + num_group_definitions)
-            return (*pos)->SetOptionValue (m_interpreter, option_idx - curr_idx, option_value);
-        curr_idx += num_group_definitions;
-    }
+    assert (m_option_infos.size() + 1 == m_option_defs.size());
     Error error;
-    error.SetErrorString ("invalid option index"); // Shouldn't happen...
+    if (option_idx < m_option_infos.size())
+    {
+        error = m_option_infos[option_idx].option_group->SetOptionValue (m_interpreter, 
+                                                                         m_option_infos[option_idx].option_index,
+                                                                         option_value);
+        
+    }
+    else
+    {
+        error.SetErrorString ("invalid option index"); // Shouldn't happen...
+    }
     return error;
 }
 
 void
 OptionGroupOptions::OptionParsingStarting ()
 {
-    OptionGroupsType::iterator pos, end = m_option_groups.end();
-    for (pos = m_option_groups.begin(); pos != end; ++pos)
-        (*pos)->OptionParsingStarting (m_interpreter);
+    std::set<OptionGroup*> group_set;
+    OptionInfos::iterator pos, end = m_option_infos.end();
+    for (pos = m_option_infos.begin(); pos != end; ++pos)
+    {
+        OptionGroup* group = pos->option_group;
+        if (group_set.find(group) == group_set.end())
+        {
+            group->OptionParsingStarting (m_interpreter);
+            group_set.insert(group);
+        }
+    }
 }
 Error
 OptionGroupOptions::OptionParsingFinished ()
 {
+    std::set<OptionGroup*> group_set;
     Error error;
-    OptionGroupsType::iterator pos, end = m_option_groups.end();
-    for (pos = m_option_groups.begin(); pos != end; ++pos)
+    OptionInfos::iterator pos, end = m_option_infos.end();
+    for (pos = m_option_infos.begin(); pos != end; ++pos)
     {
-        error = (*pos)->OptionParsingFinished (m_interpreter);
-        if (error.Fail())
-            return error;
+        OptionGroup* group = pos->option_group;
+        if (group_set.find(group) == group_set.end())
+        {
+            error = group->OptionParsingFinished (m_interpreter);
+            group_set.insert(group);
+            if (error.Fail())
+                return error;
+        }
     }
     return error;
 }

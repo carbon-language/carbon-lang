@@ -38,16 +38,19 @@ public:
                                        lldb_private::StringList &matches);  // The array of matches we return.
     typedef enum
     {
-        eNoCompletion            = 0,
-        eSourceFileCompletion    = (1 << 0),
-        eDiskFileCompletion      = (1 << 1),
-        eDiskDirectoryCompletion = (1 << 2),
-        eSymbolCompletion        = (1 << 3),
-        eModuleCompletion        = (1 << 4),
-        eSettingsNameCompletion  = (1 << 5),
-        eCustomCompletion        = (1 << 6)  // This item serves two purposes.  It is the last element in the enum,
-                                            // so you can add custom enums starting from here in your Option class.
-                                            // Also if you & in this bit the base code will not process the option.
+        eNoCompletion             = 0u,
+        eSourceFileCompletion     = (1u << 0),
+        eDiskFileCompletion       = (1u << 1),
+        eDiskDirectoryCompletion  = (1u << 2),
+        eSymbolCompletion         = (1u << 3),
+        eModuleCompletion         = (1u << 4),
+        eSettingsNameCompletion   = (1u << 5),
+        ePlatformPluginCompletion = (1u << 6),
+        eArchitectureCompletion   = (1u << 7),
+        // This item serves two purposes.  It is the last element in the enum,
+        // so you can add custom enums starting from here in your Option class.
+        // Also if you & in this bit the base code will not process the option.
+        eCustomCompletion         = (1u << 8)  
 
     } CommonCompletionTypes;
 
@@ -121,6 +124,25 @@ public:
                    SearchFilter *searcher,
                    bool &word_complete,
                    lldb_private::StringList &matches);
+
+    static int
+    PlatformPluginNames (CommandInterpreter &interpreter,
+                         const char *partial_file_name,
+                         int match_start_point,
+                         int max_return_elements,
+                         SearchFilter *searcher,
+                         bool &word_complete,
+                         lldb_private::StringList &matches);
+
+    
+    static int
+    ArchitectureNames (CommandInterpreter &interpreter,
+                       const char *partial_file_name,
+                       int match_start_point,
+                       int max_return_elements,
+                       SearchFilter *searcher,
+                       bool &word_complete,
+                       lldb_private::StringList &matches);
     
     //----------------------------------------------------------------------
     // The Completer class is a convenient base class for building searchers

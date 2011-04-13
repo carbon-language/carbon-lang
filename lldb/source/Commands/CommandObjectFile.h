@@ -26,37 +26,35 @@ namespace lldb_private {
 // CommandObjectFile
 //-------------------------------------------------------------------------
 
-    class FileOptionGroup : public OptionGroup
-    {
-    public:
-        
-        FileOptionGroup ();
-        
-        virtual
-        ~FileOptionGroup ();
+class FileOptionGroup : public OptionGroup
+{
+public:
+    
+    FileOptionGroup ();
+    
+    virtual
+    ~FileOptionGroup ();
 
-        
-        virtual uint32_t
-        GetNumDefinitions ();
-        
-        virtual const OptionDefinition*
-        GetDefinitions ();
-        
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx,
-                        const char *option_value);
-        
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
-        
-        virtual Error
-        OptionParsingFinished (CommandInterpreter &interpreter);
-        
-        ArchSpec m_arch;
-        lldb::PlatformSP m_arch_platform_sp; // The platform that was used to resolve m_arch
-        std::string m_arch_str; // Save the arch triple in case a platform is specified after the architecture
-    };
+    
+    virtual uint32_t
+    GetNumDefinitions ();
+    
+    virtual const OptionDefinition*
+    GetDefinitions ();
+    
+    virtual Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_value);
+    
+    virtual void
+    OptionParsingStarting (CommandInterpreter &interpreter);
+    
+    bool
+    GetArchitecture (Platform *platform, ArchSpec &arch);
+
+    std::string m_arch_str; // Save the arch triple in case a platform is specified after the architecture
+};
 
 class CommandObjectFile : public CommandObject
 {

@@ -29,36 +29,23 @@ using namespace lldb_private;
 
 
 PlatformSP 
-PlatformOptionGroup::CreatePlatformWithOptions (CommandInterpreter &interpreter,
-                                                const char *platform_name, 
-                                                bool select, 
-                                                Error& error)
+PlatformOptionGroup::CreatePlatformWithOptions (CommandInterpreter &interpreter, bool select, Error& error)
 {
-    if (platform_name && platform_name[0])
+    PlatformSP platform_sp;
+    if (!platform_name.empty())
     {
-        if (platform_sp)
-        {
-            error.SetErrorString ("platform can't be set more than once in a command");
-            return PlatformSP();
-        }
-
-        platform_sp = Platform::Create (platform_name, error);
+        platform_sp = Platform::Create (platform_name.c_str(), error);
 
         if (platform_sp)
         {
-                interpreter.GetDebugger().GetPlatformList().Append (platform_sp, select);
-                if (os_version_major != UINT32_MAX)
-                {
-                    platform_sp->SetOSVersion (os_version_major,
-                                               os_version_minor,
-                                               os_version_update);
-                }
+            interpreter.GetDebugger().GetPlatformList().Append (platform_sp, select);
+            if (os_version_major != UINT32_MAX)
+            {
+                platform_sp->SetOSVersion (os_version_major,
+                                           os_version_minor,
+                                           os_version_update);
+            }
         }
-    }
-    else
-    {
-        error.SetErrorString ("invalid platform name");
-        platform_sp.reset();
     }
     return platform_sp;
 }
@@ -66,7 +53,7 @@ PlatformOptionGroup::CreatePlatformWithOptions (CommandInterpreter &interpreter,
 void
 PlatformOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    platform_sp.reset();
+    platform_name.clear();
     os_version_major = UINT32_MAX;
     os_version_minor = UINT32_MAX;
     os_version_update = UINT32_MAX;
@@ -75,7 +62,7 @@ PlatformOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "platform"   , 'p', required_argument, NULL, 0, eArgTypeNone, "Specify name of the platform to use for this target, creating the platform if necessary."},
+    { LLDB_OPT_SET_ALL, false, "platform"   , 'p', required_argument, NULL, 0, eArgTypePlatform, "Specify name of the platform to use for this target, creating the platform if necessary."},
     { LLDB_OPT_SET_ALL, false, "sdk-version", 'v', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." }
 };
 
@@ -112,19 +99,12 @@ PlatformOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
     case 'p':
-        CreatePlatformWithOptions (interpreter, option_arg, true, error);
+        platform_name.assign (option_arg);
         break;
 
     case 'v':
         if (Args::StringToVersion (option_arg, os_version_major, os_version_minor, os_version_update) == option_arg)
-        {
             error.SetErrorStringWithFormat ("invalid version string '%s'", option_arg);
-        }
-        else
-        {
-            if (platform_sp)
-                platform_sp->SetOSVersion (os_version_major, os_version_minor, os_version_update);
-        }
         break;
         
     default:
@@ -149,7 +129,7 @@ public:
         m_option_group (interpreter),
         m_platform_options (false) // Don't include the "--platform" option by passing false
     {
-        m_option_group.Append (&m_platform_options);
+        m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, 1);
         m_option_group.Finalize();
     }
 
@@ -161,16 +141,31 @@ public:
     virtual bool
     Execute (Args& args, CommandReturnObject &result)
     {
-        Error error;
         if (args.GetArgumentCount() == 1)
         {
-            const bool select = true;
-            PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter,
-                                                                                  args.GetArgumentAtIndex (0), 
-                                                                                  select, 
-                                                                                  error));
-            if (platform_sp)
-                platform_sp->GetStatus (result.GetOutputStream());
+            const char *platform_name = args.GetArgumentAtIndex (0);
+            if (platform_name && platform_name[0])
+            {
+                const bool select = true;
+                m_platform_options.platform_name.assign (platform_name);
+                Error error;
+                PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter, select, error));
+                if (platform_sp)
+                {
+                    platform_sp->GetStatus (result.GetOutputStream());
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                }
+                else
+                {
+                    result.AppendError(error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            else
+            {
+                result.AppendError ("invalid platform name");
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         else
         {

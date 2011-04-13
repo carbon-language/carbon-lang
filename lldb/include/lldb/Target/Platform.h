@@ -57,6 +57,9 @@ namespace lldb_private {
         static lldb::PlatformSP
         GetDefaultPlatform ();
 
+        static const char *
+        GetHostPlatformName ();
+
         static void
         SetDefaultPlatform (const lldb::PlatformSP &platform_sp);
 

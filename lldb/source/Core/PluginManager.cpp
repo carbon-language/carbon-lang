@@ -19,6 +19,8 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Mutex.h"
 
+#include "llvm/ADT/StringRef.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -256,7 +258,7 @@ PluginManager::RegisterPlugin
     {
         ABIInstance instance;
         assert (name && name[0]);
-        instance.name = name;
+        instance.name.assign (name);
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
@@ -293,7 +295,6 @@ PluginManager::GetABICreateCallbackAtIndex (uint32_t idx)
 {
     Mutex::Locker locker (GetABIInstancesMutex ());
     ABIInstances &instances = GetABIInstances ();
-
     if (idx < instances.size())
         return instances[idx].create_callback;
     return NULL;
@@ -305,13 +306,13 @@ PluginManager::GetABICreateCallbackForPluginName (const char *name)
     if (name && name[0])
     {
         Mutex::Locker locker (GetABIInstancesMutex ());
-        std::string ss_name(name);
+        llvm::StringRef name_sref(name);
         ABIInstances &instances = GetABIInstances ();
 
         ABIInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (pos->name == ss_name)
+            if (name_sref.equals (pos->name))
                 return pos->create_callback;
         }
     }
@@ -338,50 +339,19 @@ struct DisassemblerInstance
 
 typedef std::vector<DisassemblerInstance> DisassemblerInstances;
 
-static bool
-AccessDisassemblerInstances (PluginAction action, DisassemblerInstance &instance, uint32_t index)
+static Mutex &
+GetDisassemblerMutex ()
 {
-    static DisassemblerInstances g_plugin_instances;
-
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            DisassemblerInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
 }
 
+static DisassemblerInstances &
+GetDisassemblerInstances ()
+{
+    static DisassemblerInstances g_instances;
+    return g_instances;
+}
 
 bool
 PluginManager::RegisterPlugin
@@ -399,7 +369,9 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessDisassemblerInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetDisassemblerMutex ());
+        GetDisassemblerInstances ().push_back (instance);
+        return true;
     }
     return false;
 }
@@ -409,9 +381,18 @@ PluginManager::UnregisterPlugin (DisassemblerCreateInstance create_callback)
 {
     if (create_callback)
     {
-        DisassemblerInstance instance;
-        instance.create_callback = create_callback;
-        return AccessDisassemblerInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetDisassemblerMutex ());
+        DisassemblerInstances &instances = GetDisassemblerInstances ();
+        
+        DisassemblerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -419,9 +400,10 @@ PluginManager::UnregisterPlugin (DisassemblerCreateInstance create_callback)
 DisassemblerCreateInstance
 PluginManager::GetDisassemblerCreateCallbackAtIndex (uint32_t idx)
 {
-    DisassemblerInstance instance;
-    if (AccessDisassemblerInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetDisassemblerMutex ());
+    DisassemblerInstances &instances = GetDisassemblerInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -430,12 +412,15 @@ PluginManager::GetDisassemblerCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        DisassemblerInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessDisassemblerInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetDisassemblerMutex ());
+        DisassemblerInstances &instances = GetDisassemblerInstances ();
+        
+        DisassemblerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -462,48 +447,19 @@ struct DynamicLoaderInstance
 
 typedef std::vector<DynamicLoaderInstance> DynamicLoaderInstances;
 
-static bool
-AccessDynamicLoaderInstances (PluginAction action, DynamicLoaderInstance &instance, uint32_t index)
+
+static Mutex &
+GetDynamicLoaderMutex ()
 {
-    static DynamicLoaderInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            DynamicLoaderInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static DynamicLoaderInstances &
+GetDynamicLoaderInstances ()
+{
+    static DynamicLoaderInstances g_instances;
+    return g_instances;
 }
 
 
@@ -523,7 +479,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessDynamicLoaderInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetDynamicLoaderMutex ());
+        GetDynamicLoaderInstances ().push_back (instance);
     }
     return false;
 }
@@ -533,9 +490,18 @@ PluginManager::UnregisterPlugin (DynamicLoaderCreateInstance create_callback)
 {
     if (create_callback)
     {
-        DynamicLoaderInstance instance;
-        instance.create_callback = create_callback;
-        return AccessDynamicLoaderInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetDynamicLoaderMutex ());
+        DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
+        
+        DynamicLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -543,9 +509,10 @@ PluginManager::UnregisterPlugin (DynamicLoaderCreateInstance create_callback)
 DynamicLoaderCreateInstance
 PluginManager::GetDynamicLoaderCreateCallbackAtIndex (uint32_t idx)
 {
-    DynamicLoaderInstance instance;
-    if (AccessDynamicLoaderInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetDynamicLoaderMutex ());
+    DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -554,12 +521,15 @@ PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        DynamicLoaderInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessDynamicLoaderInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetDynamicLoaderMutex ());
+        DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
+        
+        DynamicLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -584,48 +554,18 @@ struct EmulateInstructionInstance
 
 typedef std::vector<EmulateInstructionInstance> EmulateInstructionInstances;
 
-static bool
-AccessEmulateInstructionInstances (PluginAction action, EmulateInstructionInstance &instance, uint32_t index)
+static Mutex &
+GetEmulateInstructionMutex ()
 {
-    static EmulateInstructionInstances g_plugin_instances;
-    
-    switch (action)
-    {
-        case ePluginRegisterInstance:
-            if (instance.create_callback)
-            {
-                g_plugin_instances.push_back (instance);
-                return true;
-            }
-            break;
-            
-        case ePluginUnregisterInstance:
-            if (instance.create_callback)
-            {
-                EmulateInstructionInstances::iterator pos, end = g_plugin_instances.end();
-                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-                {
-                    if (pos->create_callback == instance.create_callback)
-                    {
-                        g_plugin_instances.erase(pos);
-                        return true;
-                    }
-                }
-            }
-            break;
-            
-        case ePluginGetInstanceAtIndex:
-            if (index < g_plugin_instances.size())
-            {
-                instance = g_plugin_instances[index];
-                return true;
-            }
-            break;
-            
-        default:
-            break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static EmulateInstructionInstances &
+GetEmulateInstructionInstances ()
+{
+    static EmulateInstructionInstances g_instances;
+    return g_instances;
 }
 
 
@@ -645,7 +585,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessEmulateInstructionInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetEmulateInstructionMutex ());
+        GetEmulateInstructionInstances ().push_back (instance);
     }
     return false;
 }
@@ -655,9 +596,18 @@ PluginManager::UnregisterPlugin (EmulateInstructionCreateInstance create_callbac
 {
     if (create_callback)
     {
-        EmulateInstructionInstance instance;
-        instance.create_callback = create_callback;
-        return AccessEmulateInstructionInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetEmulateInstructionMutex ());
+        EmulateInstructionInstances &instances = GetEmulateInstructionInstances ();
+        
+        EmulateInstructionInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -665,9 +615,10 @@ PluginManager::UnregisterPlugin (EmulateInstructionCreateInstance create_callbac
 EmulateInstructionCreateInstance
 PluginManager::GetEmulateInstructionCreateCallbackAtIndex (uint32_t idx)
 {
-    EmulateInstructionInstance instance;
-    if (AccessEmulateInstructionInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetEmulateInstructionMutex ());
+    EmulateInstructionInstances &instances = GetEmulateInstructionInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -676,12 +627,15 @@ PluginManager::GetEmulateInstructionCreateCallbackForPluginName (const char *nam
 {
     if (name && name[0])
     {
-        EmulateInstructionInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessEmulateInstructionInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetEmulateInstructionMutex ());
+        EmulateInstructionInstances &instances = GetEmulateInstructionInstances ();
+        
+        EmulateInstructionInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -707,50 +661,19 @@ struct LanguageRuntimeInstance
 
 typedef std::vector<LanguageRuntimeInstance> LanguageRuntimeInstances;
 
-static bool
-AccessLanguageRuntimeInstances (PluginAction action, LanguageRuntimeInstance &instance, uint32_t index)
+static Mutex &
+GetLanguageRuntimeMutex ()
 {
-    static LanguageRuntimeInstances g_plugin_instances;
-
-    switch (action)
-    {
-        case ePluginRegisterInstance:
-            if (instance.create_callback)
-            {
-                g_plugin_instances.push_back (instance);
-                return true;
-            }
-            break;
-
-        case ePluginUnregisterInstance:
-            if (instance.create_callback)
-            {
-                LanguageRuntimeInstances::iterator pos, end = g_plugin_instances.end();
-                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-                {
-                    if (pos->create_callback == instance.create_callback)
-                    {
-                        g_plugin_instances.erase(pos);
-                        return true;
-                    }
-                }
-            }
-            break;
-
-        case ePluginGetInstanceAtIndex:
-            if (index < g_plugin_instances.size())
-            {
-                instance = g_plugin_instances[index];
-                return true;
-            }
-            break;
-
-        default:
-            break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
 }
 
+static LanguageRuntimeInstances &
+GetLanguageRuntimeInstances ()
+{
+    static LanguageRuntimeInstances g_instances;
+    return g_instances;
+}
 
 bool
 PluginManager::RegisterPlugin
@@ -768,7 +691,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessLanguageRuntimeInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetLanguageRuntimeMutex ());
+        GetLanguageRuntimeInstances ().push_back (instance);
     }
     return false;
 }
@@ -778,9 +702,18 @@ PluginManager::UnregisterPlugin (LanguageRuntimeCreateInstance create_callback)
 {
     if (create_callback)
     {
-        LanguageRuntimeInstance instance;
-        instance.create_callback = create_callback;
-        return AccessLanguageRuntimeInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetLanguageRuntimeMutex ());
+        LanguageRuntimeInstances &instances = GetLanguageRuntimeInstances ();
+        
+        LanguageRuntimeInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -788,9 +721,10 @@ PluginManager::UnregisterPlugin (LanguageRuntimeCreateInstance create_callback)
 LanguageRuntimeCreateInstance
 PluginManager::GetLanguageRuntimeCreateCallbackAtIndex (uint32_t idx)
 {
-    LanguageRuntimeInstance instance;
-    if (AccessLanguageRuntimeInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetLanguageRuntimeMutex ());
+    LanguageRuntimeInstances &instances = GetLanguageRuntimeInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -799,12 +733,15 @@ PluginManager::GetLanguageRuntimeCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        LanguageRuntimeInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessLanguageRuntimeInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetLanguageRuntimeMutex ());
+        LanguageRuntimeInstances &instances = GetLanguageRuntimeInstances ();
+        
+        LanguageRuntimeInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -828,48 +765,18 @@ struct ObjectFileInstance
 
 typedef std::vector<ObjectFileInstance> ObjectFileInstances;
 
-static bool
-AccessObjectFileInstances (PluginAction action, ObjectFileInstance &instance, uint32_t index)
+static Mutex &
+GetObjectFileMutex ()
 {
-    static ObjectFileInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            ObjectFileInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static ObjectFileInstances &
+GetObjectFileInstances ()
+{
+    static ObjectFileInstances g_instances;
+    return g_instances;
 }
 
 
@@ -889,7 +796,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessObjectFileInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetObjectFileMutex ());
+        GetObjectFileInstances ().push_back (instance);
     }
     return false;
 }
@@ -899,9 +807,18 @@ PluginManager::UnregisterPlugin (ObjectFileCreateInstance create_callback)
 {
     if (create_callback)
     {
-        ObjectFileInstance instance;
-        instance.create_callback = create_callback;
-        return AccessObjectFileInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetObjectFileMutex ());
+        ObjectFileInstances &instances = GetObjectFileInstances ();
+        
+        ObjectFileInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -909,22 +826,27 @@ PluginManager::UnregisterPlugin (ObjectFileCreateInstance create_callback)
 ObjectFileCreateInstance
 PluginManager::GetObjectFileCreateCallbackAtIndex (uint32_t idx)
 {
-    ObjectFileInstance instance;
-    if (AccessObjectFileInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetObjectFileMutex ());
+    ObjectFileInstances &instances = GetObjectFileInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 ObjectFileCreateInstance
 PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        ObjectFileInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessObjectFileInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetObjectFileMutex ());
+        ObjectFileInstances &instances = GetObjectFileInstances ();
+        
+        ObjectFileInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -950,50 +872,19 @@ struct ObjectContainerInstance
 
 typedef std::vector<ObjectContainerInstance> ObjectContainerInstances;
 
-static bool
-AccessObjectContainerInstances (PluginAction action, ObjectContainerInstance &instance, uint32_t index)
+static Mutex &
+GetObjectContainerMutex ()
 {
-    static ObjectContainerInstances g_plugin_instances;
-
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            ObjectContainerInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
 }
 
+static ObjectContainerInstances &
+GetObjectContainerInstances ()
+{
+    static ObjectContainerInstances g_instances;
+    return g_instances;
+}
 
 bool
 PluginManager::RegisterPlugin
@@ -1011,7 +902,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessObjectContainerInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetObjectContainerMutex ());
+        GetObjectContainerInstances ().push_back (instance);
     }
     return false;
 }
@@ -1021,9 +913,18 @@ PluginManager::UnregisterPlugin (ObjectContainerCreateInstance create_callback)
 {
     if (create_callback)
     {
-        ObjectContainerInstance instance;
-        instance.create_callback = create_callback;
-        return AccessObjectContainerInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetObjectContainerMutex ());
+        ObjectContainerInstances &instances = GetObjectContainerInstances ();
+        
+        ObjectContainerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1031,22 +932,27 @@ PluginManager::UnregisterPlugin (ObjectContainerCreateInstance create_callback)
 ObjectContainerCreateInstance
 PluginManager::GetObjectContainerCreateCallbackAtIndex (uint32_t idx)
 {
-    ObjectContainerInstance instance;
-    if (AccessObjectContainerInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetObjectContainerMutex ());
+    ObjectContainerInstances &instances = GetObjectContainerInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 ObjectContainerCreateInstance
 PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        ObjectContainerInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessObjectContainerInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetObjectContainerMutex ());
+        ObjectContainerInstances &instances = GetObjectContainerInstances ();
+        
+        ObjectContainerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1054,9 +960,9 @@ PluginManager::GetObjectContainerCreateCallbackForPluginName (const char *name)
 
 #pragma mark LogChannel
 
-struct LogChannelInstance
+struct LogInstance
 {
-    LogChannelInstance() :
+    LogInstance() :
         name(),
         description(),
         create_callback(NULL)
@@ -1068,51 +974,22 @@ struct LogChannelInstance
     LogChannelCreateInstance create_callback;
 };
 
-typedef std::vector<LogChannelInstance> LogChannelInstances;
+typedef std::vector<LogInstance> LogInstances;
 
-static bool
-AccessLogChannelInstances (PluginAction action, LogChannelInstance &instance, uint32_t index)
+static Mutex &
+GetLogMutex ()
 {
-    static LogChannelInstances g_plugin_instances;
-
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            LogChannelInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
 }
+
+static LogInstances &
+GetLogInstances ()
+{
+    static LogInstances g_instances;
+    return g_instances;
+}
+
 
 
 bool
@@ -1125,13 +1002,14 @@ PluginManager::RegisterPlugin
 {
     if (create_callback)
     {
-        LogChannelInstance instance;
+        LogInstance instance;
         assert (name && name[0]);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessLogChannelInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetLogMutex ());
+        GetLogInstances ().push_back (instance);
     }
     return false;
 }
@@ -1141,9 +1019,18 @@ PluginManager::UnregisterPlugin (LogChannelCreateInstance create_callback)
 {
     if (create_callback)
     {
-        LogChannelInstance instance;
-        instance.create_callback = create_callback;
-        return AccessLogChannelInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetLogMutex ());
+        LogInstances &instances = GetLogInstances ();
+        
+        LogInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1151,9 +1038,10 @@ PluginManager::UnregisterPlugin (LogChannelCreateInstance create_callback)
 const char *
 PluginManager::GetLogChannelCreateNameAtIndex (uint32_t idx)
 {
-    LogChannelInstance instance;
-    if (AccessLogChannelInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.name.c_str();
+    Mutex::Locker locker (GetLogMutex ());
+    LogInstances &instances = GetLogInstances ();
+    if (idx < instances.size())
+        return instances[idx].name.c_str();
     return NULL;
 }
 
@@ -1161,9 +1049,10 @@ PluginManager::GetLogChannelCreateNameAtIndex (uint32_t idx)
 LogChannelCreateInstance
 PluginManager::GetLogChannelCreateCallbackAtIndex (uint32_t idx)
 {
-    LogChannelInstance instance;
-    if (AccessLogChannelInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetLogMutex ());
+    LogInstances &instances = GetLogInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -1172,12 +1061,15 @@ PluginManager::GetLogChannelCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        LogChannelInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessLogChannelInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetLogMutex ());
+        LogInstances &instances = GetLogInstances ();
+        
+        LogInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1215,6 +1107,7 @@ GetPlatformInstances ()
     return g_platform_instances;
 }
 
+
 bool
 PluginManager::RegisterPlugin (const char *name,
                                const char *description,
@@ -1240,9 +1133,9 @@ const char *
 PluginManager::GetPlatformPluginNameAtIndex (uint32_t idx)
 {
     Mutex::Locker locker (GetPlatformInstancesMutex ());
-    PlatformInstances &platform_instances = GetPlatformInstances ();
-    if (idx < platform_instances.size())
-        return platform_instances[idx].name.c_str();
+    PlatformInstances &instances = GetPlatformInstances ();
+    if (idx < instances.size())
+        return instances[idx].name.c_str();
     return NULL;
 }
 
@@ -1250,9 +1143,9 @@ const char *
 PluginManager::GetPlatformPluginDescriptionAtIndex (uint32_t idx)
 {
     Mutex::Locker locker (GetPlatformInstancesMutex ());
-    PlatformInstances &platform_instances = GetPlatformInstances ();
-    if (idx < platform_instances.size())
-        return platform_instances[idx].description.c_str();
+    PlatformInstances &instances = GetPlatformInstances ();
+    if (idx < instances.size())
+        return instances[idx].description.c_str();
     return NULL;
 }
 
@@ -1262,14 +1155,14 @@ PluginManager::UnregisterPlugin (PlatformCreateInstance create_callback)
     if (create_callback)
     {
         Mutex::Locker locker (GetPlatformInstancesMutex ());
-        PlatformInstances &platform_instances = GetPlatformInstances ();
+        PlatformInstances &instances = GetPlatformInstances ();
 
-        PlatformInstances::iterator pos, end = platform_instances.end();
-        for (pos = platform_instances.begin(); pos != end; ++ pos)
+        PlatformInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
             if (pos->create_callback == create_callback)
             {
-                platform_instances.erase(pos);
+                instances.erase(pos);
                 return true;
             }
         }
@@ -1281,9 +1174,9 @@ PlatformCreateInstance
 PluginManager::GetPlatformCreateCallbackAtIndex (uint32_t idx)
 {
     Mutex::Locker locker (GetPlatformInstancesMutex ());
-    PlatformInstances &platform_instances = GetPlatformInstances ();
-    if (idx < platform_instances.size())
-        return platform_instances[idx].create_callback;
+    PlatformInstances &instances = GetPlatformInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -1293,17 +1186,37 @@ PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
     if (name && name[0])
     {
         Mutex::Locker locker (GetPlatformInstancesMutex ());
-        std::string ss_name(name);
-        PlatformInstances &platform_instances = GetPlatformInstances ();
+        PlatformInstances &instances = GetPlatformInstances ();
+        llvm::StringRef name_sref(name);
 
-        PlatformInstances::iterator pos, end = platform_instances.end();
-        for (pos = platform_instances.begin(); pos != end; ++ pos)
+        PlatformInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (pos->name == ss_name)
+            if (name_sref.equals (name))
                 return pos->create_callback;
         }
     }
     return NULL;
+}
+
+uint32_t
+PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
+{
+    if (name && name[0])
+    {
+        Mutex::Locker locker (GetPlatformInstancesMutex ());
+        PlatformInstances &instances = GetPlatformInstances ();
+        llvm::StringRef name_sref(name);
+
+        PlatformInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            const char *plugin_name = pos->name.c_str();
+            if (name_sref.startswith(plugin_name))
+                matches.AppendString (plugin_name);
+        }
+    }
+    return matches.GetSize();
 }
 
 #pragma mark Process
@@ -1324,48 +1237,18 @@ struct ProcessInstance
 
 typedef std::vector<ProcessInstance> ProcessInstances;
 
-static bool
-AccessProcessInstances (PluginAction action, ProcessInstance &instance, uint32_t index)
+static Mutex &
+GetProcessMutex ()
 {
-    static ProcessInstances g_plugin_instances;
-    
-    switch (action)
-    {
-        case ePluginRegisterInstance:
-            if (instance.create_callback)
-            {
-                g_plugin_instances.push_back (instance);
-                return true;
-            }
-            break;
-            
-        case ePluginUnregisterInstance:
-            if (instance.create_callback)
-            {
-                ProcessInstances::iterator pos, end = g_plugin_instances.end();
-                for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-                {
-                    if (pos->create_callback == instance.create_callback)
-                    {
-                        g_plugin_instances.erase(pos);
-                        return true;
-                    }
-                }
-            }
-            break;
-            
-        case ePluginGetInstanceAtIndex:
-            if (index < g_plugin_instances.size())
-            {
-                instance = g_plugin_instances[index];
-                return true;
-            }
-            break;
-            
-        default:
-            break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static ProcessInstances &
+GetProcessInstances ()
+{
+    static ProcessInstances g_instances;
+    return g_instances;
 }
 
 
@@ -1385,7 +1268,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessProcessInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetProcessMutex ());
+        GetProcessInstances ().push_back (instance);
     }
     return false;
 }
@@ -1393,18 +1277,20 @@ PluginManager::RegisterPlugin
 const char *
 PluginManager::GetProcessPluginNameAtIndex (uint32_t idx)
 {
-    ProcessInstance instance;
-    if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.name.c_str();
+    Mutex::Locker locker (GetProcessMutex ());
+    ProcessInstances &instances = GetProcessInstances ();
+    if (idx < instances.size())
+        return instances[idx].name.c_str();
     return NULL;
 }
 
 const char *
 PluginManager::GetProcessPluginDescriptionAtIndex (uint32_t idx)
 {
-    ProcessInstance instance;
-    if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.description.c_str();
+    Mutex::Locker locker (GetProcessMutex ());
+    ProcessInstances &instances = GetProcessInstances ();
+    if (idx < instances.size())
+        return instances[idx].description.c_str();
     return NULL;
 }
 
@@ -1413,9 +1299,18 @@ PluginManager::UnregisterPlugin (ProcessCreateInstance create_callback)
 {
     if (create_callback)
     {
-        ProcessInstance instance;
-        instance.create_callback = create_callback;
-        return AccessProcessInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetProcessMutex ());
+        ProcessInstances &instances = GetProcessInstances ();
+        
+        ProcessInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1423,23 +1318,28 @@ PluginManager::UnregisterPlugin (ProcessCreateInstance create_callback)
 ProcessCreateInstance
 PluginManager::GetProcessCreateCallbackAtIndex (uint32_t idx)
 {
-    ProcessInstance instance;
-    if (AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetProcessMutex ());
+    ProcessInstances &instances = GetProcessInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 
 ProcessCreateInstance
 PluginManager::GetProcessCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        ProcessInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessProcessInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetProcessMutex ());
+        ProcessInstances &instances = GetProcessInstances ();
+        
+        ProcessInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1463,48 +1363,18 @@ struct SymbolFileInstance
 
 typedef std::vector<SymbolFileInstance> SymbolFileInstances;
 
-static bool
-AccessSymbolFileInstances (PluginAction action, SymbolFileInstance &instance, uint32_t index)
+static Mutex &
+GetSymbolFileMutex ()
 {
-    static SymbolFileInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            SymbolFileInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static SymbolFileInstances &
+GetSymbolFileInstances ()
+{
+    static SymbolFileInstances g_instances;
+    return g_instances;
 }
 
 
@@ -1524,7 +1394,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessSymbolFileInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetSymbolFileMutex ());
+        GetSymbolFileInstances ().push_back (instance);
     }
     return false;
 }
@@ -1534,9 +1405,18 @@ PluginManager::UnregisterPlugin (SymbolFileCreateInstance create_callback)
 {
     if (create_callback)
     {
-        SymbolFileInstance instance;
-        instance.create_callback = create_callback;
-        return AccessSymbolFileInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetSymbolFileMutex ());
+        SymbolFileInstances &instances = GetSymbolFileInstances ();
+        
+        SymbolFileInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1544,22 +1424,27 @@ PluginManager::UnregisterPlugin (SymbolFileCreateInstance create_callback)
 SymbolFileCreateInstance
 PluginManager::GetSymbolFileCreateCallbackAtIndex (uint32_t idx)
 {
-    SymbolFileInstance instance;
-    if (AccessSymbolFileInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetSymbolFileMutex ());
+    SymbolFileInstances &instances = GetSymbolFileInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 SymbolFileCreateInstance
 PluginManager::GetSymbolFileCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        SymbolFileInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessSymbolFileInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetSymbolFileMutex ());
+        SymbolFileInstances &instances = GetSymbolFileInstances ();
+        
+        SymbolFileInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1585,48 +1470,18 @@ struct SymbolVendorInstance
 
 typedef std::vector<SymbolVendorInstance> SymbolVendorInstances;
 
-static bool
-AccessSymbolVendorInstances (PluginAction action, SymbolVendorInstance &instance, uint32_t index)
+static Mutex &
+GetSymbolVendorMutex ()
 {
-    static SymbolVendorInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            SymbolVendorInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static SymbolVendorInstances &
+GetSymbolVendorInstances ()
+{
+    static SymbolVendorInstances g_instances;
+    return g_instances;
 }
 
 bool
@@ -1645,7 +1500,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessSymbolVendorInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetSymbolVendorMutex ());
+        GetSymbolVendorInstances ().push_back (instance);
     }
     return false;
 }
@@ -1655,9 +1511,18 @@ PluginManager::UnregisterPlugin (SymbolVendorCreateInstance create_callback)
 {
     if (create_callback)
     {
-        SymbolVendorInstance instance;
-        instance.create_callback = create_callback;
-        return AccessSymbolVendorInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetSymbolVendorMutex ());
+        SymbolVendorInstances &instances = GetSymbolVendorInstances ();
+        
+        SymbolVendorInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1665,23 +1530,28 @@ PluginManager::UnregisterPlugin (SymbolVendorCreateInstance create_callback)
 SymbolVendorCreateInstance
 PluginManager::GetSymbolVendorCreateCallbackAtIndex (uint32_t idx)
 {
-    SymbolVendorInstance instance;
-    if (AccessSymbolVendorInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetSymbolVendorMutex ());
+    SymbolVendorInstances &instances = GetSymbolVendorInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 
 SymbolVendorCreateInstance
 PluginManager::GetSymbolVendorCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        SymbolVendorInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessSymbolVendorInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetSymbolVendorMutex ());
+        SymbolVendorInstances &instances = GetSymbolVendorInstances ();
+        
+        SymbolVendorInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1706,48 +1576,18 @@ struct UnwindAssemblyProfilerInstance
 
 typedef std::vector<UnwindAssemblyProfilerInstance> UnwindAssemblyProfilerInstances;
 
-static bool
-AccessUnwindAssemblyProfilerInstances (PluginAction action, UnwindAssemblyProfilerInstance &instance, uint32_t index)
+static Mutex &
+GetUnwindAssemblyProfilerMutex ()
 {
-    static UnwindAssemblyProfilerInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            UnwindAssemblyProfilerInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static UnwindAssemblyProfilerInstances &
+GetUnwindAssemblyProfilerInstances ()
+{
+    static UnwindAssemblyProfilerInstances g_instances;
+    return g_instances;
 }
 
 bool
@@ -1766,7 +1606,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessUnwindAssemblyProfilerInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
+        GetUnwindAssemblyProfilerInstances ().push_back (instance);
     }
     return false;
 }
@@ -1776,9 +1617,18 @@ PluginManager::UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_cal
 {
     if (create_callback)
     {
-        UnwindAssemblyProfilerInstance instance;
-        instance.create_callback = create_callback;
-        return AccessUnwindAssemblyProfilerInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
+        UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+        
+        UnwindAssemblyProfilerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1786,23 +1636,28 @@ PluginManager::UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_cal
 UnwindAssemblyProfilerCreateInstance
 PluginManager::GetUnwindAssemblyProfilerCreateCallbackAtIndex (uint32_t idx)
 {
-    UnwindAssemblyProfilerInstance instance;
-    if (AccessUnwindAssemblyProfilerInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
+    UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 
 UnwindAssemblyProfilerCreateInstance
 PluginManager::GetUnwindAssemblyProfilerCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        UnwindAssemblyProfilerInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessUnwindAssemblyProfilerInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
+        UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+        
+        UnwindAssemblyProfilerInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1826,49 +1681,20 @@ struct ArchDefaultUnwindPlanInstance
 
 typedef std::vector<ArchDefaultUnwindPlanInstance> ArchDefaultUnwindPlanInstances;
 
-static bool
-AccessArchDefaultUnwindPlanInstances (PluginAction action, ArchDefaultUnwindPlanInstance &instance, uint32_t index)
+static Mutex &
+GetArchDefaultUnwindPlanMutex ()
 {
-    static ArchDefaultUnwindPlanInstances g_plugin_instances;
-
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            ArchDefaultUnwindPlanInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
 }
+
+static ArchDefaultUnwindPlanInstances &
+GetArchDefaultUnwindPlanInstances ()
+{
+    static ArchDefaultUnwindPlanInstances g_instances;
+    return g_instances;
+}
+
 
 bool
 PluginManager::RegisterPlugin
@@ -1886,7 +1712,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessArchDefaultUnwindPlanInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetArchDefaultUnwindPlanMutex ());
+        GetArchDefaultUnwindPlanInstances ().push_back (instance);
     }
     return false;
 }
@@ -1896,9 +1723,18 @@ PluginManager::UnregisterPlugin (ArchDefaultUnwindPlanCreateInstance create_call
 {
     if (create_callback)
     {
-        ArchDefaultUnwindPlanInstance instance;
-        instance.create_callback = create_callback;
-        return AccessArchDefaultUnwindPlanInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetArchDefaultUnwindPlanMutex ());
+        ArchDefaultUnwindPlanInstances &instances = GetArchDefaultUnwindPlanInstances ();
+        
+        ArchDefaultUnwindPlanInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -1906,23 +1742,28 @@ PluginManager::UnregisterPlugin (ArchDefaultUnwindPlanCreateInstance create_call
 ArchDefaultUnwindPlanCreateInstance
 PluginManager::GetArchDefaultUnwindPlanCreateCallbackAtIndex (uint32_t idx)
 {
-    ArchDefaultUnwindPlanInstance instance;
-    if (AccessArchDefaultUnwindPlanInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetArchDefaultUnwindPlanMutex ());
+    ArchDefaultUnwindPlanInstances &instances = GetArchDefaultUnwindPlanInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
+
 
 ArchDefaultUnwindPlanCreateInstance
 PluginManager::GetArchDefaultUnwindPlanCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        ArchDefaultUnwindPlanInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessArchDefaultUnwindPlanInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetArchDefaultUnwindPlanMutex ());
+        ArchDefaultUnwindPlanInstances &instances = GetArchDefaultUnwindPlanInstances ();
+        
+        ArchDefaultUnwindPlanInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;
@@ -1946,48 +1787,18 @@ struct ArchVolatileRegsInstance
 
 typedef std::vector<ArchVolatileRegsInstance> ArchVolatileRegsInstances;
 
-static bool
-AccessArchVolatileRegsInstances (PluginAction action, ArchVolatileRegsInstance &instance, uint32_t index)
+static Mutex &
+GetArchVolatileRegsMutex ()
 {
-    static ArchVolatileRegsInstances g_plugin_instances;
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
 
-    switch (action)
-    {
-    case ePluginRegisterInstance:
-        if (instance.create_callback)
-        {
-            g_plugin_instances.push_back (instance);
-            return true;
-        }
-        break;
-
-    case ePluginUnregisterInstance:
-        if (instance.create_callback)
-        {
-            ArchVolatileRegsInstances::iterator pos, end = g_plugin_instances.end();
-            for (pos = g_plugin_instances.begin(); pos != end; ++ pos)
-            {
-                if (pos->create_callback == instance.create_callback)
-                {
-                    g_plugin_instances.erase(pos);
-                    return true;
-                }
-            }
-        }
-        break;
-
-    case ePluginGetInstanceAtIndex:
-        if (index < g_plugin_instances.size())
-        {
-            instance = g_plugin_instances[index];
-            return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-    return false;
+static ArchVolatileRegsInstances &
+GetArchVolatileRegsInstances ()
+{
+    static ArchVolatileRegsInstances g_instances;
+    return g_instances;
 }
 
 bool
@@ -2006,7 +1817,8 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        return AccessArchVolatileRegsInstances (ePluginRegisterInstance, instance, 0);
+        Mutex::Locker locker (GetArchVolatileRegsMutex ());
+        GetArchVolatileRegsInstances ().push_back (instance);
     }
     return false;
 }
@@ -2016,9 +1828,18 @@ PluginManager::UnregisterPlugin (ArchVolatileRegsCreateInstance create_callback)
 {
     if (create_callback)
     {
-        ArchVolatileRegsInstance instance;
-        instance.create_callback = create_callback;
-        return AccessArchVolatileRegsInstances (ePluginUnregisterInstance, instance, 0);
+        Mutex::Locker locker (GetArchVolatileRegsMutex ());
+        ArchVolatileRegsInstances &instances = GetArchVolatileRegsInstances ();
+        
+        ArchVolatileRegsInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -2026,9 +1847,10 @@ PluginManager::UnregisterPlugin (ArchVolatileRegsCreateInstance create_callback)
 ArchVolatileRegsCreateInstance
 PluginManager::GetArchVolatileRegsCreateCallbackAtIndex (uint32_t idx)
 {
-    ArchVolatileRegsInstance instance;
-    if (AccessArchVolatileRegsInstances (ePluginGetInstanceAtIndex, instance, idx))
-        return instance.create_callback;
+    Mutex::Locker locker (GetArchVolatileRegsMutex ());
+    ArchVolatileRegsInstances &instances = GetArchVolatileRegsInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
     return NULL;
 }
 
@@ -2037,12 +1859,15 @@ PluginManager::GetArchVolatileRegsCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
-        ArchVolatileRegsInstance instance;
-        std::string ss_name(name);
-        for (uint32_t idx = 0; AccessArchVolatileRegsInstances (ePluginGetInstanceAtIndex, instance, idx); ++idx)
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetArchVolatileRegsMutex ());
+        ArchVolatileRegsInstances &instances = GetArchVolatileRegsInstances ();
+        
+        ArchVolatileRegsInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (instance.name == ss_name)
-                return instance.create_callback;
+            if (name_sref.equals (pos->name))
+                return pos->create_callback;
         }
     }
     return NULL;

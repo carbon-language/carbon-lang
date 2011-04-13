@@ -26,7 +26,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 FileOptionGroup::FileOptionGroup() :
-    m_arch (),
     m_arch_str ()
 {
 }
@@ -53,6 +52,17 @@ FileOptionGroup::GetDefinitions ()
     return g_file_option_table;
 }
 
+bool
+FileOptionGroup::GetArchitecture (Platform *platform, ArchSpec &arch)
+{
+    if (m_arch_str.empty())
+        arch.Clear();
+    else
+        arch.SetTriple(m_arch_str.c_str(), platform);
+    return arch.IsValid();
+}
+
+
 Error
 FileOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
                                  uint32_t option_idx,
@@ -64,17 +74,7 @@ FileOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'a':
-            {
-                // Save the arch value in case we specify a platform after specifying the arch
-                m_arch_str.assign (option_arg);
-                // Check to see if we already have a platform?
-                m_arch_platform_sp = interpreter.GetPlatform (false);
-                ArchSpec option_arch (option_arg, m_arch_platform_sp.get());
-                if (option_arch.IsValid())
-                    m_arch = option_arch;
-                else
-                    error.SetErrorStringWithFormat ("Invalid arch string '%s'.\n", option_arg);
-            }
+            m_arch_str.assign (option_arg);
             break;
 
         default:
@@ -88,26 +88,7 @@ FileOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
 void
 FileOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    m_arch.Clear();
-}
-
-Error
-FileOptionGroup::OptionParsingFinished (CommandInterpreter &interpreter)
-{
-    Error error;
-    if (m_arch.IsValid())
-    {
-        PlatformSP curr_platform_sp (interpreter.GetPlatform (false));
-        if (curr_platform_sp.get() != m_arch_platform_sp.get())
-        {
-            ArchSpec option_arch (m_arch_str.c_str(), curr_platform_sp.get());
-            if (option_arch.IsValid())
-                m_arch = option_arch;
-            else
-                error.SetErrorStringWithFormat ("invalid arch '%s' for platform '%s'", m_arch_str.c_str(), curr_platform_sp->GetName());
-        }
-    }
-    return error;
+    m_arch_str.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -136,8 +117,8 @@ CommandObjectFile::CommandObjectFile(CommandInterpreter &interpreter) :
     // Push the data for the first argument into the m_arguments vector.
     m_arguments.push_back (arg);
     
-    m_option_group.Append (&m_file_options);
-    m_option_group.Append (&m_platform_options);
+    m_option_group.Append (&m_file_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+    m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
     m_option_group.Finalize();
 }
 
@@ -164,18 +145,46 @@ CommandObjectFile::Execute
     if (argc == 1)
     {
         FileSpec file_spec (file_path, true);
+        
+        bool select = true;
+        PlatformSP platform_sp;
+        
+        Error error;
+        
+        if (!m_platform_options.platform_name.empty())
+        {
+            platform_sp = m_platform_options.CreatePlatformWithOptions(m_interpreter, select, error);
+            if (!platform_sp)
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+        ArchSpec file_arch;
+        
+        if (!m_file_options.m_arch_str.empty())
+        {        
+            if (!platform_sp)
+                platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+            if (!m_file_options.GetArchitecture(platform_sp.get(), file_arch))
+            {
+                result.AppendErrorWithFormat("invalid architecture '%s'", m_file_options.m_arch_str.c_str());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
 
         if (! file_spec.Exists() && !file_spec.ResolveExecutableLocation())
         {
             result.AppendErrorWithFormat ("File '%s' does not exist.\n", file_path);
             result.SetStatus (eReturnStatusFailed);
-            return result.Succeeded();
+            return false;
         }
 
         TargetSP target_sp;
-
         Debugger &debugger = m_interpreter.GetDebugger();
-        Error error = debugger.GetTargetList().CreateTarget (debugger, file_spec, m_file_options.m_arch, true, target_sp);
+        error = debugger.GetTargetList().CreateTarget (debugger, file_spec, file_arch, true, target_sp);
 
         if (target_sp)
         {

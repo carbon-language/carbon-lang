@@ -46,6 +46,13 @@ GetConnectedPlatformList ()
     return g_remote_connected_platforms;
 }
 
+
+const char *
+Platform::GetHostPlatformName ()
+{
+    return "host";
+}
+
 //------------------------------------------------------------------
 /// Get the native host platform plug-in. 
 ///
@@ -319,11 +326,8 @@ Platform::GetName ()
 const char *
 Platform::GetHostname ()
 {
-    if (IsHost() && m_name.empty())
-    {
-        if (!Host::GetHostname(m_name))
-            return "localhost";
-    }
+    if (IsHost())
+        return "localhost";
 
     if (m_name.empty())        
         return NULL;

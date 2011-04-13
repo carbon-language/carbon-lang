@@ -382,6 +382,27 @@ Log::EnableAllLogChannels
 }
 
 void
+Log::AutoCompleteChannelName (const char *channel_name, StringList &matches)
+{
+    LogChannelMap &map = GetChannelMap ();
+    LogChannelMapIter pos, end = map.end();
+    for (pos = map.begin(); pos != end; ++pos)
+    {
+        const char *pos_channel_name = pos->first.GetCString();
+        if (channel_name && channel_name[0])
+        {
+            if (NameMatches (channel_name, eNameMatchStartsWith, pos_channel_name))
+            {
+                matches.AppendString(pos_channel_name);
+            }
+        }
+        else
+            matches.AppendString(pos_channel_name);
+
+    }
+}
+
+void
 Log::DisableAllLogChannels (Stream *feedback_strm)
 {
     CallbackMap &callback_map = GetCallbackMap ();
@@ -497,12 +518,6 @@ LogChannel::LogChannel () :
 
 LogChannel::~LogChannel ()
 {
-}
-
-const char *
-LogChannel::GetPluginSuffix ()
-{
-    return ".log-channel";
 }
 
 

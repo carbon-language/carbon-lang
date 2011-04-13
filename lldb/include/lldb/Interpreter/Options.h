@@ -382,7 +382,7 @@ protected:
         OptionGroupOptions (CommandInterpreter &interpreter) :
             Options (interpreter),
             m_option_defs (),
-            m_option_groups (),
+            m_option_infos (),
             m_did_finalize (false)
         {
         }
@@ -392,11 +392,32 @@ protected:
         {
         }
         
+        //----------------------------------------------------------------------
+        /// Append options from a OptionGroup class.
+        ///
+        /// Append options from \a group that have a usage mask that has any bits
+        /// in "src_mask" set. After the option definition is copied into the
+        /// options definitions in this class, set the usage_mask to "dst_mask".
+        ///
+        /// @param[in] group
+        ///     A group of options to take option values from and copy their 
+        ///     definitions into this class.
+        ///
+        /// @param[in] src_mask
+        ///     When copying options from \a group, you might only want some of
+        ///     the options to be appended to this group. This mask allows you
+        ///     to control which options from \a group get added. It also allows
+        ///     you to specify the same options from \a group multiple times
+        ///     for different option sets.
+        ///
+        /// @param[in] dst_mask
+        ///     Set the usage mask for any copied options to \a dst_mask after
+        ///     copying the option definition.
+        //----------------------------------------------------------------------        
         void
-        Append (OptionGroup* group);
-
-        void
-        Append (OptionGroup* group, uint32_t usage_mask);        
+        Append (OptionGroup* group, 
+                uint32_t src_mask, 
+                uint32_t dst_mask);        
 
         void
         Finalize ();
@@ -417,10 +438,20 @@ protected:
             assert (m_did_finalize);
             return &m_option_defs[0];
         }
-        typedef std::vector<OptionGroup*> OptionGroupsType;
+        struct OptionInfo
+        {
+            OptionInfo (OptionGroup* g, uint32_t i) :
+                option_group (g),
+                option_index (i)
+            {
+            }
+            OptionGroup* option_group;  // The group that this option came from
+            uint32_t option_index;      // The original option index from the OptionGroup
+        };
+        typedef std::vector<OptionInfo> OptionInfos;
         
         std::vector<OptionDefinition> m_option_defs;
-        OptionGroupsType m_option_groups;
+        OptionInfos m_option_infos;
         bool m_did_finalize;
     };
     

@@ -42,16 +42,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-static LogChannelSP
-GetLogChannelPluginForChannel (const char *channel)
-{
-    std::string log_channel_plugin_name(channel);
-    log_channel_plugin_name += LogChannel::GetPluginSuffix();
-    LogChannelSP log_channel_sp (LogChannel::FindPlugin (log_channel_plugin_name.c_str()));
-    return log_channel_sp;
-}
-
-
 class CommandObjectLogEnable : public CommandObject
 {
 public:
@@ -99,6 +89,27 @@ public:
         return &m_options;
     }
 
+//    int
+//    HandleArgumentCompletion (Args &input,
+//                              int &cursor_index,
+//                              int &cursor_char_position,
+//                              OptionElementVector &opt_element_vector,
+//                              int match_start_point,
+//                              int max_return_elements,
+//                              bool &word_complete,
+//                              StringList &matches)
+//    {
+//        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+//        completion_str.erase (cursor_char_position);
+//        
+//        if (cursor_index == 1)
+//        {
+//            //
+//            Log::AutoCompleteChannelName (completion_str.c_str(), matches);
+//        }
+//        return matches.GetSize();
+//    }
+//
     virtual bool
     Execute (Args& args,
              CommandReturnObject &result)
@@ -141,7 +152,7 @@ public:
             }
             else
             {
-                LogChannelSP log_channel_sp (GetLogChannelPluginForChannel(channel.c_str()));
+                LogChannelSP log_channel_sp (LogChannel::FindPlugin (channel.c_str()));
                 if (log_channel_sp)
                 {
                     if (log_channel_sp->Enable (log_stream_sp, log_options, &result.GetErrorStream(), args))
@@ -314,7 +325,7 @@ public:
             }
             else
             {
-                LogChannelSP log_channel_sp (GetLogChannelPluginForChannel(channel.c_str()));
+                LogChannelSP log_channel_sp (LogChannel::FindPlugin(channel.c_str()));
                 if (log_channel_sp)
                 {
                     log_channel_sp->Disable(args, &result.GetErrorStream());
@@ -388,7 +399,7 @@ public:
                 }
                 else
                 {
-                    LogChannelSP log_channel_sp (GetLogChannelPluginForChannel(channel.c_str()));
+                    LogChannelSP log_channel_sp (LogChannel::FindPlugin(channel.c_str()));
                     if (log_channel_sp)
                     {
                         log_channel_sp->ListCategories(&result.GetOutputStream());

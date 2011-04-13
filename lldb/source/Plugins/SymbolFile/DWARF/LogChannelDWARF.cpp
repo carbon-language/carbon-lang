@@ -54,15 +54,8 @@ LogChannelDWARF::CreateInstance ()
 const char *
 LogChannelDWARF::GetPluginNameStatic()
 {
-    static std::string g_plugin_name;
-    if (g_plugin_name.empty())
-    {
-        g_plugin_name = SymbolFileDWARF::GetPluginNameStatic();
-        g_plugin_name += LogChannel::GetPluginSuffix ();
-    }
-    return g_plugin_name.c_str();
+    return SymbolFileDWARF::GetPluginNameStatic();
 }
-
 
 const char *
 LogChannelDWARF::GetPluginDescriptionStatic()
