@@ -146,7 +146,7 @@ def usage():
     print """
 Usage: dotest.py [option] [args]
 where options:
--h   : print this help message and exit (also --help)
+-h   : print this help message and exit.  Add '-v' for more detailed help.
 -A   : specify the architecture(s) to launch for the inferior process
        -A i386 => launch inferior with i386 architecture
        -A x86_64^i386 => launch inferior with x86_64 and i386 architectures
@@ -190,7 +190,10 @@ and:
 args : specify a list of directory names to search for test modules named after
        Test*.py (test discovery)
        if empty, search from the curret working directory, instead
+"""
 
+    if verbose > 0:
+        print """
 Examples:
 
 This is an example of using the -f option to pinpoint to a specfic test class
@@ -299,6 +302,8 @@ def parseOptionsAndInitTestdirs():
     global verbose
     global testdirs
 
+    do_help = False
+
     if len(sys.argv) == 1:
         return
 
@@ -313,7 +318,8 @@ def parseOptionsAndInitTestdirs():
             break
 
         if sys.argv[index].find('-h') != -1:
-            usage()
+            index += 1
+            do_help = True
         elif sys.argv[index].startswith('-A'):
             # Increment by 1 to fetch the ARCH spec.
             index += 1
@@ -433,6 +439,9 @@ def parseOptionsAndInitTestdirs():
         else:
             print "Unknown option: ", sys.argv[index]
             usage()
+
+    if do_help == True:
+        usage()
 
     # Do not specify both '-a' and '+a' at the same time.
     if dont_do_python_api_test and just_do_python_api_test:
