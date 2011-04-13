@@ -1678,6 +1678,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1));
         if (!ShAmt)
           break;
+        SDValue Shift = In.getOperand(1);
+        if (TLO.LegalTypes()) {
+          uint64_t ShVal = ShAmt->getZExtValue();
+          Shift =
+            TLO.DAG.getConstant(ShVal, getShiftAmountTy(Op.getValueType()));
+        }
+
         APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
                                                OperandBitWidth - BitWidth);
         HighBits = HighBits.lshr(ShAmt->getZExtValue()).trunc(BitWidth);
@@ -1691,7 +1698,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl,
                                                    Op.getValueType(),
                                                    NewTrunc,
-                                                   In.getOperand(1)));
+                                                   Shift));
         }
         break;
       }
