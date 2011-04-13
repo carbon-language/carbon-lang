@@ -97,7 +97,7 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
 
 Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial) {
-  return new LoopUnroll();
+  return new LoopUnroll(Threshold, Count, AllowPartial);
 }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
