@@ -1470,7 +1470,8 @@ static bool DisassembleThumb2DPSoReg(MCInst &MI, unsigned Opcode, uint32_t insn,
 static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
     uint32_t insn, unsigned short NumOps, unsigned &NumOpsAdded, BO B) {
 
-  const TargetOperandInfo *OpInfo = ARMInsts[Opcode].OpInfo;
+  const TargetInstrDesc &TID = ARMInsts[Opcode];
+  const TargetOperandInfo *OpInfo = TID.OpInfo;
   unsigned &OpIdx = NumOpsAdded;
 
   OpIdx = 0;
@@ -1497,8 +1498,15 @@ static bool DisassembleThumb2DPModImm(MCInst &MI, unsigned Opcode,
       DEBUG(errs()<<"Thumb2 encoding error: d==15 for DPModImm 2-reg instr.\n");
       return false;
     }
-    MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
-                                                       decodeRn(insn))));
+    int Idx;
+    if ((Idx = TID.getOperandConstraint(OpIdx, TOI::TIED_TO)) != -1) {
+      // The reg operand is tied to the first reg operand.
+      MI.addOperand(MI.getOperand(Idx));
+    } else {
+      // Add second reg operand.
+      MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, RnRegClassID,
+                                                         decodeRn(insn))));
+    }
     ++OpIdx;
   }
 
