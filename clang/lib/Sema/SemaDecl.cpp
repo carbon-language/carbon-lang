@@ -266,7 +266,7 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
 /// @endcode
 bool Sema::isMicrosoftMissingTypename(const CXXScopeSpec *SS) {
   if (CurContext->isRecord()) {
-    const Type* Ty = SS->getScopeRep()->getAsType();
+    const Type *Ty = SS->getScopeRep()->getAsType();
 
     CXXRecordDecl *RD = cast<CXXRecordDecl>(CurContext);
     for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
