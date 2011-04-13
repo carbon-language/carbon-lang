@@ -591,9 +591,10 @@ class MnemonicAlias<string From, string To> {
 /// InstAlias - This defines an alternate assembly syntax that is allowed to
 /// match an instruction that has a different (more canonical) assembly
 /// representation.
-class InstAlias<string Asm, dag Result> {
+class InstAlias<string Asm, dag Result, bit Emit = 0b1> {
   string AsmString = Asm;      // The .s format to match the instruction with.
   dag ResultInst = Result;     // The MCInst to generate.
+  bit EmitAlias = Emit;        // Emit the alias instead of what's aliased.
 
   // Predicates - Predicates that must be true for this to match.
   list<Predicate> Predicates = [];

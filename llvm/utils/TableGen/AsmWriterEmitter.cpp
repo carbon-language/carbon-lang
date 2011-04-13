@@ -840,6 +840,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
          I = AllInstAliases.begin(), E = AllInstAliases.end(); I != E; ++I) {
     CodeGenInstAlias *Alias = new CodeGenInstAlias(*I, Target);
     const Record *R = *I;
+    if (!R->getValueAsBit("EmitAlias"))
+      continue; // We were told not to emit the alias, but to emit the aliasee.
     const DagInit *DI = R->getValueAsDag("ResultInst");
     const DefInit *Op = dynamic_cast<const DefInit*>(DI->getOperator());
     AliasMap[getQualifiedName(Op->getDef())].push_back(Alias);
