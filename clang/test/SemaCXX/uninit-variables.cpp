@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -Wuninitialized -fsyntax-only -fcxx-exceptions %s -verify
 
+// Stub out types for 'typeid' to work.
+namespace std { class type_info {}; }
+
 int test1_aux(int &x);
 int test1() {
   int x;
@@ -11,6 +14,20 @@ int test2_aux() {
   int x;
   int &y = x;
   return x; // no-warning
+}
+
+// Don't warn on unevaluated contexts.
+void unevaluated_tests() {
+  int x;
+  (void)sizeof(x);
+  (void)typeid(x);
+}
+
+// Warn for glvalue arguments to typeid whose type is polymorphic.
+struct A { virtual ~A() {} };
+void polymorphic_test() {
+  A *a; // expected-note{{declared here}} expected-note{{add initialization}}
+  (void)typeid(*a); // expected-warning{{variable 'a' is uninitialized when used here }}
 }
 
 // Handle cases where the CFG may constant fold some branches, thus
