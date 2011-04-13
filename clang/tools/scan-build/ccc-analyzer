@@ -368,7 +368,8 @@ my %LangMap = (
   'ii'  => 'c++',
   'i'   => 'c-cpp-output',
   'm'   => 'objective-c',
-  'mi'  => 'objective-c-cpp-output'
+  'mi'  => 'objective-c-cpp-output',
+  'mm'  => 'objective-c++'
 );
 
 my %UniqueOptions = (
