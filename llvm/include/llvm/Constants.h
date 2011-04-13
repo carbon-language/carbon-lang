@@ -841,7 +841,7 @@ public:
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
 
-  /// Getelementptr form.  std::vector<Value*> is only accepted for convenience:
+  /// Getelementptr form.  Value* is only accepted for convenience;
   /// all elements must be Constant's.
   ///
   static Constant *getGetElementPtr(Constant *C,
