@@ -15,6 +15,56 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_256">checker-256</h4>
+
+<p><b>built:</b> April 13, 2011<br>
+<b>download:</b> <a href="/checker/checker-256.tar.bz2">checker-256.tar.bz2</a></p>
+<p><b>highlights:</b></p>
+
+<ul>
+  <li>Lots of bug fixes and improvements to analyzer precision (fewer false positives, possibly more bugs found).
+  <li>Introductory analysis support for C++ and Objective-C++.
+</ul>
+
+<p>This build contains basic support for C++ and Objective-C++ that is ready to be tried out
+  by general users.  It is still in its infancy, but establishes a baseline for things to come.  The main hope is that it can find some
+  issues and have a reasonable false positive rate.</p>
+  
+<p><b>Please</b> <a href="/filing_bugs.html">file bugs</a> when you see issues of any kind so we can assess
+  where development on C++ analysis support needs to be focused.</p>
+  
+<p>To try out C++ analysis support, it should work out of the box using <tt>scan-build</tt>.  If you are using this checker build
+  as a replacement to the analyzer bundled with Xcode, first use the <tt>set-xcode-analyzer</tt> script to <a href="/xcode.html">change Xcode to use
+  your version of the analyzer</a>.  You will then need to modify one configuration file in Xcode to enable C++ analysis support.  This can
+  be done with the following steps:</p>
+  
+<ol>
+  <li>Find the clang .xcspec file:
+<pre>$ cd /Developer/Library
+$ find . | grep xcspec | grep Clang
+./Xcode/<b>&lt;SNIP&gt;</b>/Clang LLVM 1.0.xcplugin/Contents/Resources/Clang LLVM 1.0.xcspec
+</pre></li>
+  <li>The exact location of the file may vary depending on your installation of Xcode.  Edit that file, and look for the string &quot;--analyze&quot;:
+<pre>
+  SourceFileOption = "--analyze";
+  FileTypes = (
+      "sourcecode.c.c",
+      "sourcecode.c.objc",
+  );
+  ...
+</pre>
+  Change the &quot;FileTypes&quot; entry to:
+<pre>
+  FileTypes = (
+      "sourcecode.c.c",
+      "sourcecode.c.objc",
+      "sourcecode.cpp.cpp",
+      "sourcecode.cpp.objcpp",
+  );
+</pre></li>
+<li>Restart Xcode.</li>
+</ol>
+
 <h4 id="checker_255">checker-255</h4>
 
 <p><b>built:</b> February 11, 2011<br>
