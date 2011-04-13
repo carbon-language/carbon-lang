@@ -897,7 +897,7 @@ public:
   /// getWithOperands - This returns the current constant expression with the
   /// operands replaced with the specified values.  The specified operands must
   /// match count and type with the existing ones.
-  Constant *getWithOperands(llvm::ArrayRef<Constant*> Ops) const;
+  Constant *getWithOperands(ArrayRef<Constant*> Ops) const;
   
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);

@@ -855,7 +855,7 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 /// operands replaced with the specified values.  The specified operands must
 /// match count and type with the existing ones.
 Constant *ConstantExpr::
-getWithOperands(llvm::ArrayRef<Constant*> Ops) const {
+getWithOperands(ArrayRef<Constant*> Ops) const {
   assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
   bool AnyChange = false;
   for (unsigned i = 0; i != Ops.size(); ++i) {
