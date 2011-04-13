@@ -527,6 +527,12 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       // or 0.
       NewFn = 0;
       return true;           
+    } else if (Name.compare(5, 16, "x86.sse.loadu.ps", 16) == 0 ||
+               Name.compare(5, 17, "x86.sse2.loadu.dq", 17) == 0 ||
+               Name.compare(5, 17, "x86.sse2.loadu.pd", 17) == 0) {
+      // Calls to these instructions are transformed into unaligned loads.
+      NewFn = 0;
+      return true;
     } else if (Name.compare(5, 17, "x86.ssse3.pshuf.w", 17) == 0) {
       // This is an SSE/MMX instruction.
       const Type *X86_MMXTy = VectorType::getX86_MMXTy(FTy->getContext());
@@ -946,7 +952,29 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         
       // Remove upgraded instruction.
       CI->eraseFromParent();
-      
+    
+    } else if (F->getName() == "llvm.x86.sse.loadu.ps" ||
+               F->getName() == "llvm.x86.sse2.loadu.dq" ||
+               F->getName() == "llvm.x86.sse2.loadu.pd") {
+      // Convert to a native, unaligned load.
+      const Type *VecTy = CI->getType();
+      const Type *IntTy = IntegerType::get(C, 128);
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI);
+
+      Value *BC = Builder.CreateBitCast(CI->getArgOperand(0),
+                                        PointerType::getUnqual(IntTy),
+                                        "cast");
+      LoadInst *LI = Builder.CreateLoad(BC, CI->getName());
+      LI->setAlignment(1);      // Unaligned load.
+      BC = Builder.CreateBitCast(LI, VecTy, "new.cast");
+
+      // Fix up all the uses with our new load.
+      if (!CI->use_empty())
+        CI->replaceAllUsesWith(BC);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
