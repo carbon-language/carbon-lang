@@ -128,7 +128,7 @@ Pass *createLoopInstSimplifyPass();
 //
 // LoopUnroll - This pass is a simple loop unrolling pass.
 //
-Pass *createLoopUnrollPass();
+Pass *createLoopUnrollPass(int Threshold = -1, int Count = -1, int AllowPartial = -1);
 
 //===----------------------------------------------------------------------===//
 //
