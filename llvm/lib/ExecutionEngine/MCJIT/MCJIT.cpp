@@ -93,6 +93,8 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
                                                               Buffer.size()));
   if (Dyld.loadObject(MB))
     report_fatal_error(Dyld.getErrorString());
+  // Resolve any relocations.
+  Dyld.resolveRelocations();
 }
 
 MCJIT::~MCJIT() {
