@@ -3750,8 +3750,8 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
         bool add, index, wback;
         switch (encoding) {
             case eEncodingT1:
-                Rt = Bits32(opcode, 5, 3);
-                Rn = Bits32(opcode, 2, 0);
+                Rt = Bits32(opcode, 2, 0);
+                Rn = Bits32(opcode, 5, 3);
                 imm32 = Bits32(opcode, 10, 6) << 2; // imm32 = ZeroExtend(imm5:'00', 32);
                 // index = TRUE; add = TRUE; wback = FALSE
                 add = true;
