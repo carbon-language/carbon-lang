@@ -1270,19 +1270,19 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                           unsigned NumCyles,
+                                           unsigned NumCycles,
                                            unsigned ExtraPredCycles,
                                            float Probability,
                                            float Confidence) const {
-  if (!NumCyles)
+  if (!NumCycles)
     return false;
 
   // Attempt to estimate the relative costs of predication versus branching.
-  float UnpredCost = Probability * NumCyles;
+  float UnpredCost = Probability * NumCycles;
   UnpredCost += 1.0; // The branch itself
   UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
 
-  return (float)(NumCyles + ExtraPredCycles) < UnpredCost;
+  return (float)(NumCycles + ExtraPredCycles) < UnpredCost;
 }
 
 bool ARMBaseInstrInfo::

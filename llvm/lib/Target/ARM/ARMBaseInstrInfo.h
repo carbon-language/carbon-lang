@@ -307,7 +307,7 @@ public:
                                     const MachineFunction &MF) const;
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                   unsigned NumCyles, unsigned ExtraPredCycles,
+                                   unsigned NumCycles, unsigned ExtraPredCycles,
                                    float Prob, float Confidence) const;
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
@@ -317,10 +317,10 @@ public:
                                    float Probability, float Confidence) const;
 
   virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
-                                         unsigned NumCyles,
+                                         unsigned NumCycles,
                                          float Probability,
                                          float Confidence) const {
-    return NumCyles == 1;
+    return NumCycles == 1;
   }
 
   /// AnalyzeCompare - For a comparison instruction, return the source register
