@@ -771,7 +771,7 @@ bool ConstantExpr::hasIndices() const {
          getOpcode() == Instruction::InsertValue;
 }
 
-const SmallVector<unsigned, 4> &ConstantExpr::getIndices() const {
+ArrayRef<unsigned> ConstantExpr::getIndices() const {
   if (const ExtractValueConstantExpr *EVCE =
         dyn_cast<ExtractValueConstantExpr>(this))
     return EVCE->Indices;
@@ -2151,7 +2151,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     Constant *Agg = getOperand(0);
     if (Agg == From) Agg = To;
     
-    const SmallVector<unsigned, 4> &Indices = getIndices();
+    ArrayRef<unsigned> Indices = getIndices();
     Replacement = ConstantExpr::getExtractValue(Agg,
                                                 &Indices[0], Indices.size());
   } else if (getOpcode() == Instruction::InsertValue) {
@@ -2160,7 +2160,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (Agg == From) Agg = To;
     if (Val == From) Val = To;
     
-    const SmallVector<unsigned, 4> &Indices = getIndices();
+    ArrayRef<unsigned> Indices = getIndices();
     Replacement = ConstantExpr::getInsertValue(Agg, Val,
                                                &Indices[0], Indices.size());
   } else if (isCast()) {

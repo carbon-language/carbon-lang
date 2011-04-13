@@ -1075,7 +1075,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
     }
 
     if (CE->hasIndices()) {
-      const SmallVector<unsigned, 4> &Indices = CE->getIndices();
+      ArrayRef<unsigned> Indices = CE->getIndices();
       for (unsigned i = 0, e = Indices.size(); i != e; ++i)
         Out << ", " << Indices[i];
     }

@@ -301,20 +301,18 @@ struct OperandTraits<CompareConstantExpr> :
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CompareConstantExpr, Value)
 
 struct ExprMapKeyType {
-  typedef SmallVector<unsigned, 4> IndexList;
-
   ExprMapKeyType(unsigned opc,
-      const std::vector<Constant*> &ops,
+      ArrayRef<Constant*> ops,
       unsigned short flags = 0,
       unsigned short optionalflags = 0,
-      const IndexList &inds = IndexList())
+      ArrayRef<unsigned> inds = ArrayRef<unsigned>())
         : opcode(opc), subclassoptionaldata(optionalflags), subclassdata(flags),
-        operands(ops), indices(inds) {}
+        operands(ops.begin(), ops.end()), indices(inds.begin(), inds.end()) {}
   uint8_t opcode;
   uint8_t subclassoptionaldata;
   uint16_t subclassdata;
   std::vector<Constant*> operands;
-  IndexList indices;
+  SmallVector<unsigned, 4> indices;
   bool operator==(const ExprMapKeyType& that) const {
     return this->opcode == that.opcode &&
            this->subclassdata == that.subclassdata &&
@@ -465,7 +463,7 @@ struct ConstantKeyData<ConstantExpr> {
         CE->isCompare() ? CE->getPredicate() : 0,
         CE->getRawSubclassOptionalData(),
         CE->hasIndices() ?
-          CE->getIndices() : SmallVector<unsigned, 4>());
+          CE->getIndices() : ArrayRef<unsigned>());
   }
 };
 

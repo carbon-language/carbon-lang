@@ -606,7 +606,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
                                     Type::getInt64Ty(V->getContext())))
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {
-      const SmallVector<unsigned, 4> &Indices = CE->getIndices();
+      ArrayRef<unsigned> Indices = CE->getIndices();
       if (Value *W = FindInsertedValue(CE->getOperand(0),
                                        Indices.begin(),
                                        Indices.end()))

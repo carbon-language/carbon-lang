@@ -885,7 +885,7 @@ public:
 
   /// getIndices - Assert that this is an insertvalue or exactvalue
   /// expression and return the list of indices.
-  const SmallVector<unsigned, 4> &getIndices() const;
+  ArrayRef<unsigned> getIndices() const;
 
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
