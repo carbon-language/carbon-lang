@@ -31,7 +31,8 @@ void llvm_prof_linectr_start_file(const char *orig_filename) {
 void llvm_prof_linectr_emit_counter(const char *dir, const char *file,
                                     uint32_t line, uint32_t column,
                                     uint64_t *counter) {
-  printf("%s/%s:%u:%u %" PRIu64 "\n", dir, file, line, column, *counter);
+  printf("%s/%s:%u:%u %ull\n", dir, file, line, column,
+         (unsigned long long)(*counter));
 }
 
 void llvm_prof_linectr_end_file() {
