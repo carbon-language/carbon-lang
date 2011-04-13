@@ -843,8 +843,6 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       SE->enterIntvAtEnd(*MBB);
   }
 
-  SE->closeIntv();
-
   // FIXME: Should we be more aggressive about splitting the stack region into
   // per-block segments? The current approach allows the stack region to
   // separate into connected components. Some components may be allocatable.
@@ -1171,7 +1169,6 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SlotIndex SegStart = SE->enterIntvBefore(Uses[BestBefore]);
   SlotIndex SegStop  = SE->leaveIntvAfter(Uses[BestAfter]);
   SE->useIntv(SegStart, SegStop);
-  SE->closeIntv();
   SE->finish();
   setStage(NewVRegs.begin(), NewVRegs.end(), RS_Local);
   ++NumLocalSplits;

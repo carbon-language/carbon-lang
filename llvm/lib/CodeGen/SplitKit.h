@@ -337,10 +337,6 @@ public:
   ///
   void overlapIntv(SlotIndex Start, SlotIndex End);
 
-  /// closeIntv - Indicate that we are done editing the currently open
-  /// LiveInterval, and ranges can be trimmed.
-  void closeIntv();
-
   /// finish - after all the new live ranges have been created, compute the
   /// remaining live range, and rewrite instructions to use the new registers.
   void finish();

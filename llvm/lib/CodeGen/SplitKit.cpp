@@ -558,8 +558,6 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 
 /// Create a new virtual register and live interval.
 unsigned SplitEditor::openIntv() {
-  assert(!OpenIdx && "Previous LI not closed before openIntv");
-
   // Create the complement as index 0.
   if (Edit->empty())
     Edit->create(LIS, VRM);
@@ -694,13 +692,6 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
   DEBUG(dbgs() << "    overlapIntv [" << Start << ';' << End << "):");
   RegAssign.insert(Start, End, OpenIdx);
   DEBUG(dump());
-}
-
-/// closeIntv - Indicate that we are done editing the currently open
-/// LiveInterval, and ranges can be trimmed.
-void SplitEditor::closeIntv() {
-  assert(OpenIdx && "openIntv not called before closeIntv");
-  OpenIdx = 0;
 }
 
 /// transferSimpleValues - Transfer all simply defined values to the new live
@@ -846,7 +837,6 @@ void SplitEditor::deleteRematVictims() {
 }
 
 void SplitEditor::finish() {
-  assert(OpenIdx == 0 && "Previous LI not closed before rewrite");
   ++NumFinished;
 
   // At this point, the live intervals in Edit contain VNInfos corresponding to
@@ -948,7 +938,6 @@ void SplitEditor::splitSingleBlock(const SplitAnalysis::BlockInfo &BI) {
     useIntv(SegStart, SegStop);
     overlapIntv(SegStop, BI.LastUse);
   }
-  closeIntv();
 }
 
 /// splitSingleBlocks - Split CurLI into a separate live interval inside each
