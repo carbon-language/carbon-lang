@@ -466,7 +466,7 @@ _mm_loadr_pd(double const *dp)
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loadu_pd(double const *dp)
 {
-  return __builtin_ia32_loadupd(dp);
+  return (__m128d){ dp[0], dp[1] };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
