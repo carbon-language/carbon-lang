@@ -9757,7 +9757,7 @@ EmulateInstructionARM::EmulateSTRBImmARM (const uint32_t opcode, const ARMEncodi
         // if wback then R[n] = offset_addr;
         if (wback)
         {
-            if (WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + n, offset_addr))
                 return false;
         }
     }
@@ -13036,7 +13036,7 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
     overflow = ((int32_t)result == signed_sum ? 0 : 1);
 
     if (carry_in)
-        carry_out = ((int32_t) x >= (int32_t) y) ? 1 : 0;
+        carry_out = ((int32_t) x >= (int32_t) (~y)) ? 1 : 0;
     else
         carry_out = ((int32_t) x > (int32_t) y) ? 1 : 0;
     
@@ -13193,7 +13193,16 @@ EmulateInstructionARM::EvaluateInstruction ()
     ARMOpcode *opcode_data;
    
     if (m_opcode_mode == eModeThumb)
+    {
+        if (m_opcode.GetType() == Opcode::eType32)
+        {
+            uint16_t upper_bits = Bits32 (m_opcode.GetOpcode32(), 31, 16);
+            uint16_t lower_bits = Bits32 (m_opcode.GetOpcode32(), 15, 0);
+            uint32_t swapped = (lower_bits << 16) | upper_bits;
+            m_opcode.SetOpcode32 (swapped);
+        }
         opcode_data = GetThumbOpcodeForInstruction (m_opcode.GetOpcode32());
+    }
     else if (m_opcode_mode == eModeARM)
         opcode_data = GetARMOpcodeForInstruction (m_opcode.GetOpcode32());
     else    
