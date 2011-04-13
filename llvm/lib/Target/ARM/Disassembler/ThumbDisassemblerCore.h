@@ -1909,6 +1909,8 @@ static bool BadRegsThumb2LdSt(unsigned Opcode, uint32_t insn, bool Load,
   // Inst{22-21} encodes the data item transferred for load/store.
   // For single word, it is encoded as ob10.
   bool Word = (slice(insn, 22, 21) == 2);
+  bool Half = (slice(insn, 22, 21) == 1);
+  bool Byte = (slice(insn, 22, 21) == 0);
 
   if (UseRm && BadReg(R2)) {
     DEBUG(errs() << "if BadReg(m) then UNPREDICTABLE\n");
@@ -1920,9 +1922,15 @@ static bool BadRegsThumb2LdSt(unsigned Opcode, uint32_t insn, bool Load,
       DEBUG(errs() << "if t == 13 then UNPREDICTABLE\n");
       return true;
     }
+    if (Byte) {
+      if (WB && R0 == 15 && slice(insn, 10, 8) == 3)  {
+        // A8.6.78 LDRSB (immediate) Encoding T2 (errata markup 8.0)
+        DEBUG(errs() << "if t == 15 && PUW == '011' then UNPREDICTABLE\n");
+        return true;
+      }
+    }
     // A6.3.8 Load halfword, memory hints
-    const StringRef Name = ARMInsts[Opcode].Name;
-    if (Name.startswith("t2LDRH") || Name.startswith("t2LDRSH")) {
+    if (Half) {
       if (WB) {
         if (R0 == R1)  {
           // A8.6.82 LDRSH (immediate) Encoding T2
@@ -2021,8 +2029,8 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
   OpIdx = 0;
 
   assert(NumOps >= 3 &&
-         OpInfo[0].RegClass == ARM::GPRRegClassID &&
-         OpInfo[1].RegClass == ARM::GPRRegClassID &&
+         OpInfo[0].RegClass > 0 &&
+         OpInfo[1].RegClass > 0 &&
          "Expect >= 3 operands and first two as reg operands");
 
   bool ThreeReg = (OpInfo[2].RegClass > 0);
@@ -2061,10 +2069,10 @@ static bool DisassembleThumb2LdSt(bool Load, MCInst &MI, unsigned Opcode,
       Imm = decodeImm8(insn);
   }
 
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      R0)));
   ++OpIdx;
-  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, ARM::GPRRegClassID,
+  MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
                                                      R1)));
   ++OpIdx;
 
