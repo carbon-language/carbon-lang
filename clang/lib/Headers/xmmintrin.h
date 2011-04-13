@@ -539,7 +539,7 @@ _mm_load_ps(const float *p)
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_loadu_ps(const float *p)
 {
-  return (__m128){ p[0], p[1], p[2], p[3] }; /*  __builtin_ia32_loadups(p); */
+  return (__m128){ p[0], p[1], p[2], p[3] };
 }
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
