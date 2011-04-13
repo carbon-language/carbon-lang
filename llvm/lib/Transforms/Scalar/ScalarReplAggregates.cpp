@@ -690,15 +690,45 @@ Value *ConvertToScalarInfo::
 ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
                            uint64_t Offset, IRBuilder<> &Builder) {
   // If the load is of the whole new alloca, no conversion is needed.
-  if (FromVal->getType() == ToType && Offset == 0)
+  const Type *FromType = FromVal->getType();
+  if (FromType == ToType && Offset == 0)
     return FromVal;
 
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
-  if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
+  if (const VectorType *VTy = dyn_cast<VectorType>(FromType)) {
     unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
-    if (ToTypeSize == AllocaSize)
-      return Builder.CreateBitCast(FromVal, ToType, "tmp");
+    if (ToTypeSize == AllocaSize) {
+      if (FromType->getPrimitiveSizeInBits() ==
+          ToType->getPrimitiveSizeInBits())
+        return Builder.CreateBitCast(FromVal, ToType, "tmp");
+      else {
+        // Vectors with the same element type can have the same allocation
+        // size but different primitive sizes (e.g., <3 x i32> and <4 x i32>)
+        // In this case, use a shuffle vector instead of a bit cast.
+        const VectorType *ToVTy = dyn_cast<VectorType>(ToType);
+        assert(ToVTy && (ToVTy->getElementType() == VTy->getElementType()) &&
+               "Vectors must have the same element type");
+        LLVMContext &Context = FromVal->getContext();
+        Value *UnV = UndefValue::get(FromType);
+        unsigned numEltsFrom = VTy->getNumElements();
+        unsigned numEltsTo = ToVTy->getNumElements();
+
+        SmallVector<Constant*, 3> Args;
+        unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
+        unsigned i;
+        for (i=0; i != minNumElts; ++i)
+          Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
+
+        if (i < numEltsTo) {
+          Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
+          for (; i != numEltsTo; ++i)
+            Args.push_back(UnC);
+        }
+        Constant *Mask = ConstantVector::get(Args);
+        return Builder.CreateShuffleVector(FromVal, UnV, Mask, "tmpV");
+      }
+    }
 
     if (ToType->isVectorTy()) {
       assert(isPowerOf2_64(AllocaSize / ToTypeSize) &&
@@ -837,8 +867,36 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
 
     // Changing the whole vector with memset or with an access of a different
     // vector type?
-    if (ValSize == VecSize)
-      return Builder.CreateBitCast(SV, AllocaType, "tmp");
+    if (ValSize == VecSize) {
+      if (VTy->getPrimitiveSizeInBits() ==
+          SV->getType()->getPrimitiveSizeInBits())
+        return Builder.CreateBitCast(SV, AllocaType, "tmp");
+      else {
+        // Vectors with the same element type can have the same allocation
+        // size but different primitive sizes (e.g., <3 x i32> and <4 x i32>)
+        // In this case, use a shuffle vector instead of a bit cast.
+        const VectorType *SVVTy = dyn_cast<VectorType>(SV->getType());
+        assert(SVVTy && (SVVTy->getElementType() == VTy->getElementType()) &&
+               "Vectors must have the same element type");
+        Value *UnV = UndefValue::get(SVVTy);
+        unsigned numEltsFrom = SVVTy->getNumElements();
+        unsigned numEltsTo = VTy->getNumElements();
+
+        SmallVector<Constant*, 3> Args;
+        unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
+        unsigned i;
+        for (i=0; i != minNumElts; ++i)
+          Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
+
+        if (i < numEltsTo) {
+          Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
+          for (; i != numEltsTo; ++i)
+            Args.push_back(UnC);
+        }
+        Constant *Mask = ConstantVector::get(Args);
+        return Builder.CreateShuffleVector(SV, UnV, Mask, "tmpV");
+      }
+    }
 
     if (SV->getType()->isVectorTy() && isPowerOf2_64(VecSize / ValSize)) {
       assert(Offset == 0 && "Can't insert a value of a smaller vector type at "

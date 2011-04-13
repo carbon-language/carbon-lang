@@ -202,3 +202,49 @@ define float @test13(<4 x float> %x, <2 x i32> %y) {
 ; CHECK-NOT: alloca
 ; CHECK: bitcast <4 x float> %x to i128
 }
+
+define <3 x float> @test14(<3 x float> %x)  {
+entry:
+  %x.addr = alloca <3 x float>, align 16
+  %r = alloca <3 x i32>, align 16
+  %extractVec = shufflevector <3 x float> %x, <3 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>
+  %storetmp = bitcast <3 x float>* %x.addr to <4 x float>*
+  store <4 x float> %extractVec, <4 x float>* %storetmp, align 16
+  %tmp = load <3 x float>* %x.addr, align 16
+  %cmp = fcmp une <3 x float> %tmp, zeroinitializer
+  %sext = sext <3 x i1> %cmp to <3 x i32>
+  %and = and <3 x i32> <i32 1065353216, i32 1065353216, i32 1065353216>, %sext
+  %extractVec1 = shufflevector <3 x i32> %and, <3 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>
+  %storetmp2 = bitcast <3 x i32>* %r to <4 x i32>*
+  store <4 x i32> %extractVec1, <4 x i32>* %storetmp2, align 16
+  %tmp3 = load <3 x i32>* %r, align 16
+  %0 = bitcast <3 x i32> %tmp3 to <3 x float>
+  %tmp4 = load <3 x float>* %x.addr, align 16
+  ret <3 x float> %tmp4
+; CHECK: @test14
+; CHECK-NOT: alloca
+; CHECK: shufflevector <4 x i32> %extractVec1, <4 x i32> undef, <3 x i32> <i32 0, i32 1, i32 2>
+}
+
+define void @test15(<3 x i64>* sret %agg.result, <3 x i64> %x, <3 x i64> %min) {
+entry:
+  %x.addr = alloca <3 x i64>, align 32
+  %min.addr = alloca <3 x i64>, align 32
+  %extractVec = shufflevector <3 x i64> %x, <3 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>
+  %storetmp = bitcast <3 x i64>* %x.addr to <4 x i64>*
+  store <4 x i64> %extractVec, <4 x i64>* %storetmp, align 32
+  %extractVec1 = shufflevector <3 x i64> %min, <3 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>
+  %storetmp2 = bitcast <3 x i64>* %min.addr to <4 x i64>*
+  store <4 x i64> %extractVec1, <4 x i64>* %storetmp2, align 32
+  %tmp = load <3 x i64>* %x.addr
+  %tmp5 = extractelement <3 x i64> %tmp, i32 0
+  %tmp11 = insertelement <3 x i64> %tmp, i64 %tmp5, i32 0
+  store <3 x i64> %tmp11, <3 x i64>* %x.addr
+  %tmp30 = load <3 x i64>* %x.addr, align 32
+  store <3 x i64> %tmp30, <3 x i64>* %agg.result
+  ret void
+; CHECK: @test15
+; CHECK-NOT: alloca
+; CHECK: shufflevector <4 x i64> %tmpV2, <4 x i64> undef, <3 x i32> <i32 0, i32 1, i32 2>
+}
+
