@@ -128,7 +128,7 @@ namespace {
       return GlobalToIndirectSymMap;
     }
 
-    pair<void *, Function *> LookupFunctionFromCallSite(
+    std::pair<void *, Function *> LookupFunctionFromCallSite(
         const MutexGuard &locked, void *CallSite) const {
       assert(locked.holds(TheJIT->lock));
 
@@ -646,7 +646,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
     // The address given to us for the stub may not be exactly right, it might
     // be a little bit after the stub.  As such, use upper_bound to find it.
-    pair<void*, Function*> I =
+    std::pair<void*, Function*> I =
       JR->state.LookupFunctionFromCallSite(locked, Stub);
     F = I.second;
     ActualPtr = I.first;

@@ -23,8 +23,6 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/ADT/DenseMap.h"
 
-using namespace std;
-
 namespace llvm {
 
 class MachineBasicBlock;
