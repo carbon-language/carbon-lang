@@ -2092,6 +2092,19 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
   }
+  case X86::BI__builtin_ia32_loadups:
+  case X86::BI__builtin_ia32_loadupd:
+  case X86::BI__builtin_ia32_loaddqu: {
+    const llvm::Type *VecTy = ConvertType(E->getType());
+    const llvm::Type *IntTy = llvm::IntegerType::get(getLLVMContext(), 128);
+
+    Value *BC = Builder.CreateBitCast(Ops[0],
+                                      llvm::PointerType::getUnqual(IntTy),
+                                      "cast");
+    LoadInst *LI = Builder.CreateLoad(BC);
+    LI->setAlignment(1); // Unaligned load.
+    return Builder.CreateBitCast(LI, VecTy, "loadu.cast");
+  }
   }
 }
 
