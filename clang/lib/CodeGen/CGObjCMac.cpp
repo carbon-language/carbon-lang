@@ -3562,7 +3562,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       // Note that 'i' here is actually the field index inside RD of Field,
       // although this dependency is hidden.
       const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-      FieldOffset = RL.getFieldOffset(i) / 8;
+      FieldOffset = RL.getFieldOffset(i) / ByteSizeInBits;
     } else
       FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 
@@ -4868,7 +4868,7 @@ void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
   if (!RL.getFieldCount())
     InstanceStart = InstanceSize;
   else
-    InstanceStart = RL.getFieldOffset(0) / 8;
+    InstanceStart = RL.getFieldOffset(0) / CGM.getContext().getCharWidth();
 }
 
 void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
