@@ -3323,8 +3323,10 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
       return DAG.getUNDEF(VT);
 
     if (!LegalTypes || TLI.isTypeDesirableForOp(ISD::SRL, SmallVT)) {
+      uint64_t ShiftAmt = N1C->getZExtValue();
       SDValue SmallShift = DAG.getNode(ISD::SRL, N0.getDebugLoc(), SmallVT,
-                                       N0.getOperand(0), N1);
+                                       N0.getOperand(0),
+                          DAG.getConstant(ShiftAmt, getShiftAmountTy(SmallVT)));
       AddToWorkList(SmallShift.getNode());
       return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, SmallShift);
     }
@@ -6264,7 +6266,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                           Ptr, ST->getPointerInfo(), ST->isVolatile(),
                           ST->isNonTemporal(), OrigAlign);
   }
-  
+
   // Turn 'store undef, Ptr' -> nothing.
   if (Value.getOpcode() == ISD::UNDEF && ST->isUnindexed())
     return Chain;
@@ -6303,7 +6305,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
                               Ptr, ST->getPointerInfo(), ST->isVolatile(),
                               ST->isNonTemporal(), ST->getAlignment());
         }
-          
+
         if (!ST->isVolatile() &&
             TLI.isOperationLegalOrCustom(ISD::STORE, MVT::i32)) {
           // Many FP stores are not made apparent until after legalize, e.g. for
