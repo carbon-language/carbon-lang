@@ -9,6 +9,8 @@ Configs := Debug Release Profile Static
 UniversalArchs := $(RC_ARCHS)
 
 ifeq (,$(SDKROOT))
+	CC.Release := $(CC)
+	CC.Static  := $(CC)
 else
 	CC.Release := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
 	CC.Static  := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
