@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin11"
 ; ISel doesn't yet know how to eliminate this extra zero-extend. But until
 ; it knows how to do so safely, it shouldn;t eliminate it.
 ; CHECK: movzbl  (%rdi), %eax
-; CHECK: movzx   %ax, %eax
+; CHECK: movzwl  %ax, %eax
 
 define i64 @_ZL5matchPKtPKhiR9MatchData(i8* %tmp13) nounwind {
 entry:

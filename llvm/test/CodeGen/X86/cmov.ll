@@ -121,7 +121,7 @@ define i32 @test5(i32* nocapture %P) nounwind readonly {
 entry:
 ; CHECK: test5:
 ; CHECK: 	setg	%al
-; CHECK:	movzx	%al, %eax
+; CHECK:	movzbl	%al, %eax
 ; CHECK:	orl	$-2, %eax
 ; CHECK:	ret
 
@@ -135,7 +135,7 @@ define i32 @test6(i32* nocapture %P) nounwind readonly {
 entry:
 ; CHECK: test6:
 ; CHECK: 	setl	%al
-; CHECK:	movzx	%al, %eax
+; CHECK:	movzbl	%al, %eax
 ; CHECK:	leal	4(%rax,%rax,8), %eax
 ; CHECK:        ret
 	%0 = load i32* %P, align 4		; <i32> [#uses=1]

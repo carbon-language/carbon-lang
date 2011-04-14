@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 > %t
 ; RUN: grep movb %t | count 2
-; RUN: grep {movzx} %t
+; RUN: grep {movzb\[wl\]} %t
 
 
 define void @handle_vector_size_attribute() nounwind {

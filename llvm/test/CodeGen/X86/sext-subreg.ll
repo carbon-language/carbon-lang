@@ -3,7 +3,7 @@
 
 define i64 @t(i64 %A, i64 %B, i32* %P, i64 *%P2) nounwind {
 ; CHECK: t:
-; CHECK: movsx %e{{.*}}, %rax
+; CHECK: movslq %e{{.*}}, %rax
 ; CHECK: movq %rax
 ; CHECK: movl %eax
   %C = add i64 %A, %B

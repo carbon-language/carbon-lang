@@ -14,7 +14,7 @@ define i32 @test1(i32 %t3, i32* %t1) nounwind {
 ; X32:  	ret
 
 ; X64: test1:
-; X64:  	movsx	%e[[A0:di|cx]], %rax
+; X64:  	movslq	%e[[A0:di|cx]], %rax
 ; X64:  	movl	(%r[[A1:si|dx]],%rax,4), %eax
 ; X64:  	ret
 
@@ -81,7 +81,7 @@ define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
   %v11 = add i64 %B, %v10
   ret i64 %v11
 ; X64: test5:
-; X64: movsx	%e[[A1]], %rax
+; X64: movslq	%e[[A1]], %rax
 ; X64-NEXT: movq	(%r[[A0]],%rax), %rax
 ; X64-NEXT: addq	%{{rdx|r8}}, %rax
 ; X64-NEXT: ret

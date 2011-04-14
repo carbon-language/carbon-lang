@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep {movzx	%\[abcd\]h,} | count 7
+; RUN: llc < %s -march=x86 | grep {movzbl	%\[abcd\]h,} | count 7
 
 ; Use h-register extract and zero-extend.
 

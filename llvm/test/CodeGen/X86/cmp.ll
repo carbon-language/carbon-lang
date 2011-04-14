@@ -38,7 +38,7 @@ define i64 @test3(i64 %x) nounwind {
 ; CHECK: test3:
 ; CHECK: 	testq	%rdi, %rdi
 ; CHECK: 	sete	%al
-; CHECK: 	movzx	%al, %eax
+; CHECK: 	movzbl	%al, %eax
 ; CHECK: 	ret
 }
 
@@ -49,7 +49,7 @@ define i64 @test4(i64 %x) nounwind {
 ; CHECK: test4:
 ; CHECK: 	testq	%rdi, %rdi
 ; CHECK: 	setle	%al
-; CHECK: 	movzx	%al, %eax
+; CHECK: 	movzbl	%al, %eax
 ; CHECK: 	ret
 }
 

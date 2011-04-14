@@ -30,7 +30,7 @@ bb91:		; preds = %bb84
 	ret i32 0
 ; CHECK: test2:
 ; CHECK: movnew
-; CHECK: movsx
+; CHECK: movswl
 }
 
 declare i1 @return_false()

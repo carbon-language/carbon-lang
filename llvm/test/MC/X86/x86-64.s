@@ -681,65 +681,65 @@ btq $0x01,%rdx
 // CHECK:  encoding: [0x48,0x0f,0xba,0xe2,0x01]
 
 //rdar://8017633
-// CHECK: movzx	%al, %esi
+// CHECK: movzbl	%al, %esi
 // CHECK:  encoding: [0x0f,0xb6,0xf0]
         movzx %al, %esi
 
-// CHECK: movzx	%al, %rsi
+// CHECK: movzbq	%al, %rsi
 // CHECK:  encoding: [0x48,0x0f,0xb6,0xf0]
         movzx %al, %rsi
 
-// CHECK: movsx	%al, %ax
+// CHECK: movsbw	%al, %ax
 // CHECK: encoding: [0x66,0x0f,0xbe,0xc0]
-        movsx %al, %ax
+movsx %al, %ax
 
-// CHECK: movsx	%al, %eax
+// CHECK: movsbl	%al, %eax
 // CHECK: encoding: [0x0f,0xbe,0xc0]
-        movsx %al, %eax
+movsx %al, %eax
 
-// CHECK: movsx	%ax, %eax
+// CHECK: movswl	%ax, %eax
 // CHECK: encoding: [0x0f,0xbf,0xc0]
-        movsx %ax, %eax
+movsx %ax, %eax
 
-// CHECK: movsx	%bl, %rax
+// CHECK: movsbq	%bl, %rax
 // CHECK: encoding: [0x48,0x0f,0xbe,0xc3]
-        movsx %bl, %rax
+movsx %bl, %rax
 
-// CHECK: movsx %cx, %rax
+// CHECK: movswq %cx, %rax
 // CHECK: encoding: [0x48,0x0f,0xbf,0xc1]
-        movsx %cx, %rax
+movsx %cx, %rax
 
-// CHECK: movsx	%edi, %rax
+// CHECK: movslq	%edi, %rax
 // CHECK: encoding: [0x48,0x63,0xc7]
-        movsx %edi, %rax
+movsx %edi, %rax
 
-// CHECK: movzx	%al, %ax
+// CHECK: movzbw	%al, %ax
 // CHECK: encoding: [0x66,0x0f,0xb6,0xc0]
-        movzx %al, %ax
+movzx %al, %ax
 
-// CHECK: movzx	%al, %eax
+// CHECK: movzbl	%al, %eax
 // CHECK: encoding: [0x0f,0xb6,0xc0]
-        movzx %al, %eax
+movzx %al, %eax
 
-// CHECK: movzx	%ax, %eax
+// CHECK: movzwl	%ax, %eax
 // CHECK: encoding: [0x0f,0xb7,0xc0]
-        movzx %ax, %eax
+movzx %ax, %eax
 
-// CHECK: movzx	%bl, %rax
+// CHECK: movzbq	%bl, %rax
 // CHECK: encoding: [0x48,0x0f,0xb6,0xc3]
-        movzx %bl, %rax
+movzx %bl, %rax
 
-// CHECK: movzx	%cx, %rax
+// CHECK: movzwq	%cx, %rax
 // CHECK: encoding: [0x48,0x0f,0xb7,0xc1]
-        movzx %cx, %rax
+movzx %cx, %rax
 
 // CHECK: movsbw	(%rax), %ax
 // CHECK: encoding: [0x66,0x0f,0xbe,0x00]
-        movsx (%rax), %ax
+movsx (%rax), %ax
 
 // CHECK: movzbw	(%rax), %ax
 // CHECK: encoding: [0x66,0x0f,0xb6,0x00]
-        movzx (%rax), %ax
+movzx (%rax), %ax
 
 
 // rdar://7873482
