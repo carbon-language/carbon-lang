@@ -494,14 +494,25 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
-    assert(D && "Invalid declaration cursor");
+    if (!D)
+      return false;
+
     return VisitAttributes(D) || Visit(D);
   }
 
-  if (clang_isStatement(Cursor.kind))
-    return Visit(getCursorStmt(Cursor));
-  if (clang_isExpression(Cursor.kind))
-    return Visit(getCursorExpr(Cursor));
+  if (clang_isStatement(Cursor.kind)) {
+    if (Stmt *S = getCursorStmt(Cursor))
+      return Visit(S);
+
+    return false;
+  }
+
+  if (clang_isExpression(Cursor.kind)) {
+    if (Expr *E = getCursorExpr(Cursor))
+      return Visit(E);
+
+    return false;
+  }
 
   if (clang_isTranslationUnit(Cursor.kind)) {
     CXTranslationUnit tu = getCursorTU(Cursor);
