@@ -21,7 +21,7 @@ distribution.
 
 =head1 OPTIONS
 
-=over 
+=over
 
 =item B<--additional-so> F<library>
 
@@ -87,7 +87,7 @@ mis-management.
 =item B<-find-bugs>
 
 Continually randomize the specified passes and run them on the test program
-until a bug is found or the user kills B<bugpoint>. 
+until a bug is found or the user kills B<bugpoint>.
 
 =item B<-help>
 
@@ -146,6 +146,20 @@ cannot currently be used as the "safe" backends.
 This option defines the command to use with the B<--run-custom> and
 B<--safe-custom> options to execute the bitcode testcase. This can
 be useful for cross-compilation.
+
+=item B<--compile-command> I<command>
+
+This option defines the command to use with the B<--compile-custom>
+option to compile the bitcode testcase. This can be useful for
+testing compiler output without running any link or execute stages. To
+generate a reduced unit test, you may add CHECK directives to the
+testcase and pass the name of a compile-command script in this form:
+
+    llc "$@"
+    not FileCheck [bugpoint input file].ll < bugpoint-test-program.s
+
+This script will "fail" as long as FileCheck passes. So the result
+will be the minimum bitcode that passes FileCheck.
 
 =item B<--safe-path> I<path>
 
