@@ -41,6 +41,7 @@ def ObjCForCollectionStmt : Stmt;
 // C++ statments
 def CXXCatchStmt : Stmt;
 def CXXTryStmt : Stmt;
+def CXXForRangeStmt : Stmt;
 
 // Expressions
 def Expr : Stmt<1>;

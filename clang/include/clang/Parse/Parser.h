@@ -1288,6 +1288,15 @@ private:
     DSC_top_level // top-level/namespace declaration context
   };
 
+  /// Information on a C++0x for-range-initializer found while parsing a
+  /// declaration which turns out to be a for-range-declaration.
+  struct ForRangeInit {
+    SourceLocation ColonLoc;
+    ExprResult RangeExpr;
+
+    bool ParsedForRangeDecl() { return !ColonLoc.isInvalid(); }
+  };
+
   DeclGroupPtrTy ParseDeclaration(StmtVector &Stmts,
                                   unsigned Context, SourceLocation &DeclEnd,
                                   ParsedAttributesWithRange &attrs);
@@ -1295,11 +1304,16 @@ private:
                                         unsigned Context,
                                         SourceLocation &DeclEnd,
                                         ParsedAttributes &attrs,
-                                        bool RequireSemi);
+                                        bool RequireSemi,
+                                        ForRangeInit *FRI = 0);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
-                                SourceLocation *DeclEnd = 0);
+                                SourceLocation *DeclEnd = 0,
+                                ForRangeInit *FRI = 0);
   Decl *ParseDeclarationAfterDeclarator(Declarator &D,
+               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
+  bool ParseAttributesAfterDeclarator(Declarator &D);
+  Decl *ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   Decl *ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope);
   Decl *ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope);

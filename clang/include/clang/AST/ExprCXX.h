@@ -1738,6 +1738,10 @@ class UnresolvedLookupExpr : public OverloadExpr {
   /// call.
   bool RequiresADL;
 
+  /// True if namespace ::std should be considered an associated namespace
+  /// for the purposes of argument-dependent lookup. See C++0x [stmt.ranged]p1.
+  bool StdIsAssociatedNamespace;
+
   /// True if these lookup results are overloaded.  This is pretty
   /// trivially rederivable if we urgently need to kill this field.
   bool Overloaded;
@@ -1755,15 +1759,19 @@ class UnresolvedLookupExpr : public OverloadExpr {
                        const DeclarationNameInfo &NameInfo,
                        bool RequiresADL, bool Overloaded, 
                        const TemplateArgumentListInfo *TemplateArgs,
-                       UnresolvedSetIterator Begin, UnresolvedSetIterator End)
+                       UnresolvedSetIterator Begin, UnresolvedSetIterator End,
+                       bool StdIsAssociatedNamespace)
     : OverloadExpr(UnresolvedLookupExprClass, C, QualifierLoc, NameInfo, 
                    TemplateArgs, Begin, End),
-      RequiresADL(RequiresADL), Overloaded(Overloaded), NamingClass(NamingClass)
+      RequiresADL(RequiresADL),
+      StdIsAssociatedNamespace(StdIsAssociatedNamespace),
+      Overloaded(Overloaded), NamingClass(NamingClass)
   {}
 
   UnresolvedLookupExpr(EmptyShell Empty)
     : OverloadExpr(UnresolvedLookupExprClass, Empty),
-      RequiresADL(false), Overloaded(false), NamingClass(0)
+      RequiresADL(false), StdIsAssociatedNamespace(false), Overloaded(false),
+      NamingClass(0)
   {}
 
   friend class ASTStmtReader;
@@ -1775,9 +1783,13 @@ public:
                                       const DeclarationNameInfo &NameInfo,
                                       bool ADL, bool Overloaded,
                                       UnresolvedSetIterator Begin, 
-                                      UnresolvedSetIterator End) {
+                                      UnresolvedSetIterator End,
+                                      bool StdIsAssociatedNamespace = false) {
+    assert((ADL || !StdIsAssociatedNamespace) &&
+           "std considered associated namespace when not performing ADL");
     return new(C) UnresolvedLookupExpr(C, NamingClass, QualifierLoc, NameInfo, 
-                                       ADL, Overloaded, 0, Begin, End);
+                                       ADL, Overloaded, 0, Begin, End,
+                                       StdIsAssociatedNamespace);
   }
 
   static UnresolvedLookupExpr *Create(ASTContext &C,
@@ -1796,6 +1808,10 @@ public:
   /// True if this declaration should be extended by
   /// argument-dependent lookup.
   bool requiresADL() const { return RequiresADL; }
+
+  /// True if namespace ::std should be artificially added to the set of
+  /// associated namespaecs for argument-dependent lookup purposes.
+  bool isStdAssociatedNamespace() const { return StdIsAssociatedNamespace; }
 
   /// True if this lookup is overloaded.
   bool isOverloaded() const { return Overloaded; }

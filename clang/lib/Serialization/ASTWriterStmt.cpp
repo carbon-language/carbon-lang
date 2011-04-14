@@ -115,6 +115,7 @@ namespace clang {
     // C++ Statements
     void VisitCXXCatchStmt(CXXCatchStmt *S);
     void VisitCXXTryStmt(CXXTryStmt *S);
+    void VisitCXXForRangeStmt(CXXForRangeStmt *);
 
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXMemberCallExpr(CXXMemberCallExpr *E);
@@ -963,6 +964,20 @@ void ASTStmtWriter::VisitCXXTryStmt(CXXTryStmt *S) {
   Code = serialization::STMT_CXX_TRY;
 }
 
+void ASTStmtWriter::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getForLoc(), Record);
+  Writer.AddSourceLocation(S->getColonLoc(), Record);
+  Writer.AddSourceLocation(S->getRParenLoc(), Record);
+  Writer.AddStmt(S->getRangeStmt());
+  Writer.AddStmt(S->getBeginEndStmt());
+  Writer.AddStmt(S->getCond());
+  Writer.AddStmt(S->getInc());
+  Writer.AddStmt(S->getLoopVarStmt());
+  Writer.AddStmt(S->getBody());
+  Code = serialization::STMT_CXX_FOR_RANGE;
+}
+
 void ASTStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
@@ -1267,6 +1282,8 @@ void ASTStmtWriter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
 void ASTStmtWriter::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   VisitOverloadExpr(E);
   Record.push_back(E->requiresADL());
+  if (E->requiresADL())
+    Record.push_back(E->isStdAssociatedNamespace());
   Record.push_back(E->isOverloaded());
   Writer.AddDeclRef(E->getNamingClass(), Record);
   Code = serialization::EXPR_CXX_UNRESOLVED_LOOKUP;

@@ -153,6 +153,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CXXTryStmtClass:
     EmitCXXTryStmt(cast<CXXTryStmt>(*S));
     break;
+  case Stmt::CXXForRangeStmtClass:
+    EmitCXXForRangeStmt(cast<CXXForRangeStmt>(*S));
+    break;
   }
 }
 
@@ -623,6 +626,80 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   BreakContinueStack.pop_back();
 
   ConditionScope.ForceCleanup();
+  EmitBranch(CondBlock);
+
+  ForScope.ForceCleanup();
+
+  if (DI) {
+    DI->setLocation(S.getSourceRange().getEnd());
+    DI->EmitRegionEnd(Builder);
+  }
+
+  // Emit the fall-through block.
+  EmitBlock(LoopExit.getBlock(), true);
+}
+
+void CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S) {
+  JumpDest LoopExit = getJumpDestInCurrentScope("for.end");
+
+  RunCleanupsScope ForScope(*this);
+
+  CGDebugInfo *DI = getDebugInfo();
+  if (DI) {
+    DI->setLocation(S.getSourceRange().getBegin());
+    DI->EmitRegionStart(Builder);
+  }
+
+  // Evaluate the first pieces before the loop.
+  EmitStmt(S.getRangeStmt());
+  EmitStmt(S.getBeginEndStmt());
+
+  // Start the loop with a block that tests the condition.
+  // If there's an increment, the continue scope will be overwritten
+  // later.
+  llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
+  EmitBlock(CondBlock);
+
+  // If there are any cleanups between here and the loop-exit scope,
+  // create a block to stage a loop exit along.
+  llvm::BasicBlock *ExitBlock = LoopExit.getBlock();
+  if (ForScope.requiresCleanups())
+    ExitBlock = createBasicBlock("for.cond.cleanup");
+  
+  // The loop body, consisting of the specified body and the loop variable.
+  llvm::BasicBlock *ForBody = createBasicBlock("for.body");
+
+  // The body is executed if the expression, contextually converted
+  // to bool, is true.
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+  Builder.CreateCondBr(BoolCondVal, ForBody, ExitBlock);
+
+  if (ExitBlock != LoopExit.getBlock()) {
+    EmitBlock(ExitBlock);
+    EmitBranchThroughCleanup(LoopExit);
+  }
+
+  EmitBlock(ForBody);
+
+  // Create a block for the increment. In case of a 'continue', we jump there.
+  JumpDest Continue = getJumpDestInCurrentScope("for.inc");
+
+  // Store the blocks to use for break and continue.
+  BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
+
+  {
+    // Create a separate cleanup scope for the loop variable and body.
+    RunCleanupsScope BodyScope(*this);
+    EmitStmt(S.getLoopVarStmt());
+    EmitStmt(S.getBody());
+  }
+
+  // If there is an increment, emit it next.
+  EmitBlock(Continue.getBlock());
+  EmitStmt(S.getInc());
+
+  BreakContinueStack.pop_back();
+
   EmitBranch(CondBlock);
 
   ForScope.ForceCleanup();

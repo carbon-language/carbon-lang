@@ -2754,6 +2754,22 @@ QualType ASTContext::getAutoType(QualType DeducedType) const {
   return QualType(AT, 0);
 }
 
+/// getAutoDeductType - Get type pattern for deducing against 'auto'.
+QualType ASTContext::getAutoDeductType() const {
+  if (AutoDeductTy.isNull())
+    AutoDeductTy = getAutoType(QualType());
+  assert(!AutoDeductTy.isNull() && "can't build 'auto' pattern");
+  return AutoDeductTy;
+}
+
+/// getAutoRRefDeductType - Get type pattern for deducing against 'auto &&'.
+QualType ASTContext::getAutoRRefDeductType() const {
+  if (AutoRRefDeductTy.isNull())
+    AutoRRefDeductTy = getRValueReferenceType(getAutoDeductType());
+  assert(!AutoRRefDeductTy.isNull() && "can't build 'auto &&' pattern");
+  return AutoRRefDeductTy;
+}
+
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
 QualType ASTContext::getTagDeclType(const TagDecl *Decl) const {

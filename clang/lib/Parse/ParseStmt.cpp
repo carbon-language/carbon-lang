@@ -977,6 +977,7 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
 /// [C++]   'for' '(' for-init-statement condition[opt] ';' expression[opt] ')'
 /// [C++]       statement
+/// [C++0x] 'for' '(' for-range-declaration : for-range-initializer ) statement
 /// [OBJC2] 'for' '(' declaration 'in' expr ')' statement
 /// [OBJC2] 'for' '(' expr 'in' expr ')' statement
 ///
@@ -984,6 +985,11 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
 /// [C++]   expression-statement
 /// [C++]   simple-declaration
 ///
+/// [C++0x] for-range-declaration:
+/// [C++0x]   attribute-specifier-seq[opt] type-specifier-seq declarator
+/// [C++0x] for-range-initializer:
+/// [C++0x]   expression
+/// [C++0x]   braced-init-list            [TODO]
 StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   // FIXME: Use attributes?
 
@@ -1025,11 +1031,12 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   SourceLocation LParenLoc = ConsumeParen();
   ExprResult Value;
 
-  bool ForEach = false;
+  bool ForEach = false, ForRange = false;
   StmtResult FirstPart;
   bool SecondPartIsInvalid = false;
   FullExprArg SecondPart(Actions);
   ExprResult Collection;
+  ForRangeInit ForRangeInit;
   FullExprArg ThirdPart(Actions);
   Decl *SecondVar = 0;
   
@@ -1052,13 +1059,21 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
     ParsedAttributesWithRange attrs(AttrFactory);
     MaybeParseCXX0XAttributes(attrs);
 
+    // In C++0x, "for (T NS:a" might not be a typo for ::
+    bool MightBeForRangeStmt = getLang().CPlusPlus;
+    ColonProtectionRAIIObject ColonProtection(*this, MightBeForRangeStmt);
+
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
     StmtVector Stmts(Actions);
     DeclGroupPtrTy DG = ParseSimpleDeclaration(Stmts, Declarator::ForContext, 
-                                               DeclEnd, attrs, false);
+                                               DeclEnd, attrs, false,
+                                               MightBeForRangeStmt ?
+                                                 &ForRangeInit : 0);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
 
-    if (Tok.is(tok::semi)) {  // for (int x = 4;
+    if (ForRangeInit.ParsedForRangeDecl()) {
+      ForRange = true;
+    } else if (Tok.is(tok::semi)) {  // for (int x = 4;
       ConsumeToken();
     } else if ((ForEach = isTokIdentifier_in())) {
       Actions.ActOnForEachDeclStmt(DG);
@@ -1107,7 +1122,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
       }
     }
   }
-  if (!ForEach) {
+  if (!ForEach && !ForRange) {
     assert(!SecondPart.get() && "Shouldn't have a second expression yet.");
     // Parse the second part of the for specifier.
     if (Tok.is(tok::semi)) {  // for (...;;
@@ -1149,6 +1164,17 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
+  // We need to perform most of the semantic analysis for a C++0x for-range
+  // statememt before parsing the body, in order to be able to deduce the type
+  // of an auto-typed loop variable.
+  StmtResult ForRangeStmt;
+  if (ForRange)
+    ForRangeStmt = Actions.ActOnCXXForRangeStmt(ForLoc, LParenLoc,
+                                                FirstPart.take(),
+                                                ForRangeInit.ColonLoc,
+                                                ForRangeInit.RangeExpr.get(),
+                                                RParenLoc);
+
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
@@ -1175,15 +1201,19 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
   if (Body.isInvalid())
     return StmtError();
 
-  if (!ForEach)
-    return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.take(), SecondPart,
-                                SecondVar, ThirdPart, RParenLoc, Body.take());
+  if (ForEach)
+    // FIXME: It isn't clear how to communicate the late destruction of 
+    // C++ temporaries used to create the collection.
+    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc,
+                                              FirstPart.take(),
+                                              Collection.take(), RParenLoc, 
+                                              Body.take());
 
-  // FIXME: It isn't clear how to communicate the late destruction of 
-  // C++ temporaries used to create the collection.
-  return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc, FirstPart.take(), 
-                                            Collection.take(), RParenLoc, 
-                                            Body.take());
+  if (ForRange)
+    return Actions.FinishCXXForRangeStmt(ForRangeStmt.take(), Body.take());
+
+  return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart.take(), SecondPart,
+                              SecondVar, ThirdPart, RParenLoc, Body.take());
 }
 
 /// ParseGotoStatement

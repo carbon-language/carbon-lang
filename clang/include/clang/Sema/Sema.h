@@ -864,6 +864,7 @@ public:
                             bool TypeMayContainAuto);
   void ActOnUninitializedDecl(Decl *dcl, bool TypeMayContainAuto);
   void ActOnInitializerError(Decl *Dcl);
+  void ActOnCXXForRangeDecl(Decl *D);
   void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
   void FinalizeDeclaration(Decl *D);
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
@@ -1268,7 +1269,8 @@ public:
                                             Expr **Args, unsigned NumArgs,
                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
-                                            bool PartialOverloading = false);
+                                            bool PartialOverloading = false,
+                                        bool StdNamespaceIsAssociated = false);
 
   // Emit as a 'note' the specific overload candidate
   void NoteOverloadCandidate(FunctionDecl *Fn);
@@ -1473,7 +1475,8 @@ public:
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
-                               ADLResult &Functions);
+                               ADLResult &Functions,
+                               bool StdNamespaceIsAssociated = false);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer,
@@ -1804,6 +1807,17 @@ public:
                                         SourceLocation LParenLoc,
                                         Stmt *First, Expr *Second,
                                         SourceLocation RParenLoc, Stmt *Body);
+  StmtResult ActOnCXXForRangeStmt(SourceLocation ForLoc,
+                                  SourceLocation LParenLoc, Stmt *LoopVar,
+                                  SourceLocation ColonLoc, Expr *Collection,
+                                  SourceLocation RParenLoc);
+  StmtResult BuildCXXForRangeStmt(SourceLocation ForLoc,
+                                  SourceLocation ColonLoc,
+                                  Stmt *RangeDecl, Stmt *BeginEndDecl,
+                                  Expr *Cond, Expr *Inc,
+                                  Stmt *LoopVarDecl,
+                                  SourceLocation RParenLoc);
+  StmtResult FinishCXXForRangeStmt(Stmt *ForRange, Stmt *Body);
 
   StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                            SourceLocation LabelLoc,

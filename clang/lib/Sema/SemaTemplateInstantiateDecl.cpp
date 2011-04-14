@@ -271,6 +271,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                  D->getStorageClassAsWritten());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
+  Var->setCXXForRangeDecl(D->isCXXForRangeDecl());
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(D, Var))
@@ -350,7 +351,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     }
     
     SemaRef.PopExpressionEvaluationContext();
-  } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
+  } else if ((!Var->isStaticDataMember() || Var->isOutOfLine()) &&
+             !Var->isCXXForRangeDecl())
     SemaRef.ActOnUninitializedDecl(Var, false);
 
   // Diagnose unused local variables.

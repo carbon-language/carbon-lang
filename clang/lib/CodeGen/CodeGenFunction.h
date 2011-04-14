@@ -42,6 +42,7 @@ namespace clang {
   class APValue;
   class ASTContext;
   class CXXDestructorDecl;
+  class CXXForRangeStmt;
   class CXXTryStmt;
   class Decl;
   class LabelDecl;
@@ -1694,6 +1695,7 @@ public:
   void ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);
 
   void EmitCXXTryStmt(const CXXTryStmt &S);
+  void EmitCXXForRangeStmt(const CXXForRangeStmt &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

@@ -567,7 +567,8 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
     T = Parm->getOriginalType();
   T.getAsStringInternal(Name, Policy);
   Out << Name;
-  if (Expr *Init = D->getInit()) {
+  Expr *Init = D->getInit();
+  if (!Policy.SuppressInitializers && Init) {
     if (D->hasCXXDirectInitializer())
       Out << "(";
     else {

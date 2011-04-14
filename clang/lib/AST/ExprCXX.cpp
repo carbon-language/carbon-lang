@@ -189,7 +189,7 @@ UnresolvedLookupExpr::Create(ASTContext &C,
                          ExplicitTemplateArgumentList::sizeFor(Args));
   return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc, NameInfo,
                                         ADL, /*Overload*/ true, &Args,
-                                        Begin, End);
+                                        Begin, End, /*StdIsAssociated=*/false);
 }
 
 UnresolvedLookupExpr *

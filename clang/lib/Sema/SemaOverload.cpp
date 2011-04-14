@@ -6152,7 +6152,8 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            Expr **Args, unsigned NumArgs,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
-                                           bool PartialOverloading) {
+                                           bool PartialOverloading,
+                                           bool StdNamespaceIsAssociated) {
   ADLResult Fns;
 
   // FIXME: This approach for uniquing ADL results (and removing
@@ -6163,7 +6164,8 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   // we supposed to consider on ADL candidates, anyway?
 
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Fns);
+  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Fns,
+                          StdNamespaceIsAssociated);
 
   // Erase all of the candidates we already knew about.
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
@@ -7693,7 +7695,8 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                          Args, NumArgs,
                                          ExplicitTemplateArgs,
                                          CandidateSet,
-                                         PartialOverloading);
+                                         PartialOverloading,
+                                         ULE->isStdAssociatedNamespace());
 }
 
 /// Attempts to recover from a call where no functions were found.
@@ -7772,7 +7775,9 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
 
     // We don't perform ADL in C.
     assert(getLangOptions().CPlusPlus && "ADL enabled in C");
-  }
+  } else
+    assert(!ULE->isStdAssociatedNamespace() &&
+           "std is associated namespace but not doing ADL");
 #endif
 
   OverloadCandidateSet CandidateSet(Fn->getExprLoc());

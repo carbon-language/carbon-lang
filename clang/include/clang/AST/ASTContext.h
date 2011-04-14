@@ -423,6 +423,10 @@ public:
   CanQualType OverloadTy, DependentTy, UnknownAnyTy;
   CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy, ObjCBuiltinSelTy;
 
+  // Types for deductions in C++0x [stmt.ranged]'s desugaring. Built on demand.
+  mutable QualType AutoDeductTy;     // Deduction against 'auto'.
+  mutable QualType AutoRRefDeductTy; // Deduction against 'auto &&'.
+
   ASTContext(const LangOptions& LOpts, SourceManager &SM, const TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
              Builtin::Context &builtins,
@@ -744,6 +748,12 @@ public:
 
   /// getAutoType - C++0x deduced auto type.
   QualType getAutoType(QualType DeducedType) const;
+
+  /// getAutoDeductType - C++0x deduction pattern for 'auto' type.
+  QualType getAutoDeductType() const;
+
+  /// getAutoRRefDeductType - C++0x deduction pattern for 'auto &&' type.
+  QualType getAutoRRefDeductType() const;
 
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.

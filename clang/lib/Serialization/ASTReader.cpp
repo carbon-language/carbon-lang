@@ -2676,6 +2676,11 @@ void ASTReader::InitializeContext(ASTContext &Ctx) {
   if (SpecialTypes[SPECIAL_TYPE_INT128_INSTALLED])
     Context->setInt128Installed();
 
+  if (unsigned AutoDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_DEDUCT])
+    Context->AutoDeductTy = GetType(AutoDeduct);
+  if (unsigned AutoRRefDeduct = SpecialTypes[SPECIAL_TYPE_AUTO_RREF_DEDUCT])
+    Context->AutoRRefDeductTy = GetType(AutoRRefDeduct);
+
   ReadPragmaDiagnosticMappings(Context->getDiagnostics());
 
   // If there were any CUDA special declarations, deserialize them.

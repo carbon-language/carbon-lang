@@ -205,6 +205,8 @@ struct TestUnexpandedDecls : T{
     Types t; // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
     for (Types *t = 0; ; ) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
     for (; Types *t = 0; ) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
+    T a[] = { T(), T(), T() };
+    for (Types t : a) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
     switch(Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
     while(Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
     if (Types *t = 0) { } // expected-error{{declaration type contains unexpanded parameter pack 'Types'}}
@@ -341,6 +343,8 @@ void test_unexpanded_exprs(Types ...values) {
   // SizeOfPackExpr is uninteresting
 
   // FIXME: Objective-C expressions will need to go elsewhere
+
+  for (auto t : values) { } // expected-error{{expression contains unexpanded parameter pack 'values'}}
 }
 
 // Test unexpanded parameter packs in partial specializations.

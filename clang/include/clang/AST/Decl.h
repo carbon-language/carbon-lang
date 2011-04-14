@@ -696,6 +696,10 @@ private:
   /// slot of its function, enabling the named return value optimization (NRVO).
   bool NRVOVariable : 1;
 
+  /// \brief Whether this variable is the for-range-declaration in a C++0x
+  /// for-range statement.
+  bool CXXForRangeDecl : 1;
+
   friend class StmtIteratorBase;
   friend class ASTDeclReader;
   
@@ -706,7 +710,7 @@ protected:
           StorageClass SCAsWritten)
     : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      ExceptionVar(false), NRVOVariable(false) {
+      ExceptionVar(false), NRVOVariable(false), CXXForRangeDecl(false) {
     SClass = SC;
     SClassAsWritten = SCAsWritten;
   }
@@ -1051,6 +1055,11 @@ public:
   /// NRVO candidate.
   bool isNRVOVariable() const { return NRVOVariable; }
   void setNRVOVariable(bool NRVO) { NRVOVariable = NRVO; }
+
+  /// \brief Determine whether this variable is the for-range-declaration in
+  /// a C++0x for-range statement.
+  bool isCXXForRangeDecl() const { return CXXForRangeDecl; }
+  void setCXXForRangeDecl(bool FRD) { CXXForRangeDecl = FRD; }
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member

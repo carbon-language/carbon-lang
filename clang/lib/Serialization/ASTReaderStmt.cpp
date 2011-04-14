@@ -141,6 +141,7 @@ namespace clang {
     // C++ Statements
     void VisitCXXCatchStmt(CXXCatchStmt *S);
     void VisitCXXTryStmt(CXXTryStmt *S);
+    void VisitCXXForRangeStmt(CXXForRangeStmt *);
 
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
     void VisitCXXConstructExpr(CXXConstructExpr *E);
@@ -999,6 +1000,19 @@ void ASTStmtReader::VisitCXXTryStmt(CXXTryStmt *S) {
     S->getStmts()[i + 1] = Reader.ReadSubStmt();
 }
 
+void ASTStmtReader::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
+  VisitStmt(S);
+  S->setForLoc(ReadSourceLocation(Record, Idx));
+  S->setColonLoc(ReadSourceLocation(Record, Idx));
+  S->setRParenLoc(ReadSourceLocation(Record, Idx));
+  S->setRangeStmt(Reader.ReadSubStmt());
+  S->setBeginEndStmt(Reader.ReadSubStmt());
+  S->setCond(Reader.ReadSubExpr());
+  S->setInc(Reader.ReadSubExpr());
+  S->setLoopVarStmt(Reader.ReadSubStmt());
+  S->setBody(Reader.ReadSubStmt());
+}
+
 void ASTStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   E->setOperator((OverloadedOperatorKind)Record[Idx++]);
@@ -1269,6 +1283,8 @@ void ASTStmtReader::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *E) {
 void ASTStmtReader::VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
   VisitOverloadExpr(E);
   E->RequiresADL = Record[Idx++];
+  if (E->RequiresADL)
+    E->StdIsAssociatedNamespace = Record[Idx++];
   E->Overloaded = Record[Idx++];
   E->NamingClass = cast_or_null<CXXRecordDecl>(Reader.GetDecl(Record[Idx++]));
 }
@@ -1736,6 +1752,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
     case STMT_CXX_TRY:
       S = CXXTryStmt::Create(*Context, Empty,
              /*NumHandlers=*/Record[ASTStmtReader::NumStmtFields]);
+      break;
+
+    case STMT_CXX_FOR_RANGE:
+      S = new (Context) CXXForRangeStmt(Empty);
       break;
 
     case EXPR_CXX_OPERATOR_CALL:

@@ -684,6 +684,7 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->setCXXDirectInitializer(Record[Idx++]);
   VD->setExceptionVariable(Record[Idx++]);
   VD->setNRVOVariable(Record[Idx++]);
+  VD->setCXXForRangeDecl(Record[Idx++]);
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr(F));
 

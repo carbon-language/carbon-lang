@@ -177,6 +177,10 @@ void StmtProfiler::VisitCXXTryStmt(CXXTryStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
 }

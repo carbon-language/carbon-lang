@@ -5247,6 +5247,47 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
   }
 }
 
+void Sema::ActOnCXXForRangeDecl(Decl *D) {
+  VarDecl *VD = dyn_cast<VarDecl>(D);
+  if (!VD) {
+    Diag(D->getLocation(), diag::err_for_range_decl_must_be_var);
+    D->setInvalidDecl();
+    return;
+  }
+
+  VD->setCXXForRangeDecl(true);
+
+  // for-range-declaration cannot be given a storage class specifier.
+  int Error = -1;
+  switch (VD->getStorageClassAsWritten()) {
+  case SC_None:
+    break;
+  case SC_Extern:
+    Error = 0;
+    break;
+  case SC_Static:
+    Error = 1;
+    break;
+  case SC_PrivateExtern:
+    Error = 2;
+    break;
+  case SC_Auto:
+    Error = 3;
+    break;
+  case SC_Register:
+    Error = 4;
+    break;
+  }
+  // FIXME: constexpr isn't allowed here.
+  //if (DS.isConstexprSpecified())
+  //  Error = 5;
+  if (Error != -1) {
+    Diag(VD->getOuterLocStart(), diag::err_for_range_storage_class)
+      << VD->getDeclName() << Error;
+    D->setInvalidDecl();
+  }
+}
+
 void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
   if (var->isInvalidDecl()) return;
 

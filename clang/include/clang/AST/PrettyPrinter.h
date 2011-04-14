@@ -39,6 +39,7 @@ struct PrintingPolicy {
   PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
       SuppressTagKeyword(false), SuppressTag(false), SuppressScope(false),
+      SuppressInitializers(false),
       Dump(false), ConstantArraySizeAsWritten(false),
       AnonymousTagLocations(true) { }
 
@@ -86,6 +87,19 @@ struct PrintingPolicy {
 
   /// \brief Suppresses printing of scope specifiers.
   bool SuppressScope : 1;
+
+  /// \brief Suppress printing of variable initializers.
+  ///
+  /// This flag is used when printing the loop variable in a for-range
+  /// statement. For example, given:
+  ///
+  /// \code
+  /// for (auto x : coll)
+  /// \endcode
+  ///
+  /// SuppressInitializers will be true when printing "auto x", so that the
+  /// internal initializer constructed for x will not be printed.
+  bool SuppressInitializers : 1;
 
   /// \brief True when we are "dumping" rather than "pretty-printing",
   /// where dumping involves printing the internal details of the AST
