@@ -44,8 +44,8 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopUnroll(int T = -1, int C = -1,  int P = -1) : LoopPass(ID) {
-      CurrentThreshold = (T == -1) ? UnrollThreshold : T;
-      CurrentCount = (C == -1) ? UnrollCount : C;
+      CurrentThreshold = (T == -1) ? UnrollThreshold : unsigned(T);
+      CurrentCount = (C == -1) ? UnrollCount : unsigned(C);
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
