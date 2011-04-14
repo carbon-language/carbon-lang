@@ -33,6 +33,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -624,6 +625,45 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   return true;
 }
 
+void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
+  MCSymbol *Label = MI.getOperand(0).getMCSymbol();
+  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI) {
+    OutStreamer.EmitLabel(Label);
+    return;
+  }
+
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  MachineModuleInfo &MMI = MF.getMMI();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
+  const MachineMove *Move = NULL;
+  for (std::vector<MachineMove>::iterator I = Moves.begin(),
+         E = Moves.end(); I != E; ++I) {
+    if (I->getLabel() == Label) {
+      Move = &*I;
+      break;
+    }
+  }
+  assert(Move);
+
+  const MachineLocation &Dst = Move->getDestination();
+  const MachineLocation &Src = Move->getSource();
+  const TargetAsmInfo &AsmInfo = OutContext.getTargetAsmInfo();
+  if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+    if (Src.getReg() == MachineLocation::VirtualFP)
+      OutStreamer.EmitCFIDefCfaOffset(-Src.getOffset());
+    else {
+      unsigned Reg = AsmInfo.getDwarfRegNum(Src.getReg(), true);
+      OutStreamer.EmitCFIDefCfa(Reg, -Src.getOffset());
+    }
+  } else if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+    unsigned Reg = AsmInfo.getDwarfRegNum(Dst.getReg(), true);
+    OutStreamer.EmitCFIDefCfaRegister(Reg);
+  } else {
+    unsigned Reg = AsmInfo.getDwarfRegNum(Src.getReg(), true);
+    OutStreamer.EmitCFIOffset(Reg, -Dst.getOffset());
+  }
+}
+
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
@@ -660,6 +700,9 @@ void AsmPrinter::EmitFunctionBody() {
 
       switch (II->getOpcode()) {
       case TargetOpcode::PROLOG_LABEL:
+        emitPrologLabel(*II);
+        break;
+
       case TargetOpcode::EH_LABEL:
       case TargetOpcode::GC_LABEL:
         OutStreamer.EmitLabel(II->getOperand(0).getMCSymbol());
