@@ -30,9 +30,12 @@ template<typename T> void f(int);
 
 A<f> *a9; // expected-error{{must be a class template}}
 
-// FIXME: The code below is ill-formed, because of the evil digraph '<:'. 
-// We should provide a much better error message than we currently do.
-// A<::N::Z> *a10;
+// Evil digraph '<:' is parsed as '[', expect error.
+A<::N::Z> *a10; // expected-error{{found '<::' after a template name which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?}}
+
+// Do not do a digraph correction here.
+A<: :N::Z> *a11;  // expected-error{{expected expression}} \
+          expected-error{{C++ requires a type specifier for all declarations}}
 
 // PR7807
 namespace N {

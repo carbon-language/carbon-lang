@@ -20,6 +20,55 @@
 
 using namespace clang;
 
+static int SelectDigraphErrorMessage(tok::TokenKind Kind) {
+  switch (Kind) {
+    case tok::kw_template:         return 0;
+    case tok::kw_const_cast:       return 1;
+    case tok::kw_dynamic_cast:     return 2;
+    case tok::kw_reinterpret_cast: return 3;
+    case tok::kw_static_cast:      return 4;
+    default:
+      assert(0 && "Unknown type for digraph error message.");
+      return -1;
+  }
+}
+
+// Are the two tokens adjacent in the same source file?
+static bool AreTokensAdjacent(Preprocessor &PP, Token &First, Token &Second) {
+  SourceManager &SM = PP.getSourceManager();
+  SourceLocation FirstLoc = SM.getSpellingLoc(First.getLocation());
+  SourceLocation FirstEnd = FirstLoc.getFileLocWithOffset(First.getLength());
+  return FirstEnd == SM.getSpellingLoc(Second.getLocation());
+}
+
+// Suggest fixit for "<::" after a cast.
+static void FixDigraph(Parser &P, Preprocessor &PP, Token &DigraphToken,
+                       Token &ColonToken, tok::TokenKind Kind, bool AtDigraph) {
+  // Pull '<:' and ':' off token stream.
+  if (!AtDigraph)
+    PP.Lex(DigraphToken);
+  PP.Lex(ColonToken);
+
+  SourceRange Range;
+  Range.setBegin(DigraphToken.getLocation());
+  Range.setEnd(ColonToken.getLocation());
+  P.Diag(DigraphToken.getLocation(), diag::err_missing_whitespace_digraph)
+      << SelectDigraphErrorMessage(Kind)
+      << FixItHint::CreateReplacement(Range, "< ::");
+
+  // Update token information to reflect their change in token type.
+  ColonToken.setKind(tok::coloncolon);
+  ColonToken.setLocation(ColonToken.getLocation().getFileLocWithOffset(-1));
+  ColonToken.setLength(2);
+  DigraphToken.setKind(tok::less);
+  DigraphToken.setLength(1);
+
+  // Push new tokens back to token stream.
+  PP.EnterToken(ColonToken);
+  if (!AtDigraph)
+    PP.EnterToken(DigraphToken);
+}
+
 /// \brief Parse global scope or nested-name-specifier if present.
 ///
 /// Parses a C++ global scope specifier ('::') or nested-name-specifier (which
@@ -287,6 +336,29 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       continue;
     }
 
+    // Check for '<::' which should be '< ::' instead of '[:' when following
+    // a template name.
+    if (Next.is(tok::l_square) && Next.getLength() == 2) {
+      Token SecondToken = GetLookAheadToken(2);
+      if (SecondToken.is(tok::colon) &&
+          AreTokensAdjacent(PP, Next, SecondToken)) {
+        TemplateTy Template;
+        UnqualifiedId TemplateName;
+        TemplateName.setIdentifier(&II, Tok.getLocation());
+        bool MemberOfUnknownSpecialization;
+        if (Actions.isTemplateName(getCurScope(), SS,
+                                   /*hasTemplateKeyword=*/false,
+                                   TemplateName,
+                                   ObjectType,
+                                   EnteringContext,
+                                   Template,
+                                   MemberOfUnknownSpecialization)) {
+          FixDigraph(*this, PP, Next, SecondToken, tok::kw_template,
+                     /*AtDigraph*/false);
+        }
+      }
+    }
+
     // nested-name-specifier:
     //   type-name '<'
     if (Next.is(tok::less)) {
@@ -452,6 +524,13 @@ ExprResult Parser::ParseCXXCasts() {
 
   SourceLocation OpLoc = ConsumeToken();
   SourceLocation LAngleBracketLoc = Tok.getLocation();
+
+  // Check for "<::" which is parsed as "[:".  If found, fix token stream,
+  // diagnose error, suggest fix, and recover parsing.
+  Token Next = NextToken();
+  if (Tok.is(tok::l_square) && Tok.getLength() == 2 && Next.is(tok::colon) &&
+      AreTokensAdjacent(PP, Tok, Next))
+    FixDigraph(*this, PP, Tok, Next, Kind, /*AtDigraph*/true);
 
   if (ExpectAndConsume(tok::less, diag::err_expected_less_after, CastName))
     return ExprError();

@@ -413,6 +413,10 @@ def err_ctor_init_missing_comma : Error<
 // C++ declarations
 def err_friend_decl_defines_class : Error<
   "cannot define a type in a friend declaration">;
+def err_missing_whitespace_digraph : Error<
+  "found '<::' after a "
+  "%select{template name|const_cast|dynamic_cast|reinterpret_cast|static_cast}0"
+  " which forms the digraph '<:' (aka '[') and a ':', did you mean '< ::'?">;
 
 def warn_deleted_function_accepted_as_extension: ExtWarn<
   "deleted function definition accepted as a C++0x extension">, InGroup<CXX0x>;
