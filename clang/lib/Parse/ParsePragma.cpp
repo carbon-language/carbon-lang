@@ -387,7 +387,7 @@ void
 PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP, 
                                            PragmaIntroducerKind Introducer,
                                            Token &Tok) {
-  PP.Lex(Tok);
+  PP.LexUnexpandedToken(Tok);
   if (Tok.isNot(tok::identifier)) {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) <<
       "OPENCL";
