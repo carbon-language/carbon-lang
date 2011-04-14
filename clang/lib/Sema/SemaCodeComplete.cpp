@@ -667,8 +667,39 @@ QualType clang::getDeclUsageType(ASTContext &C, NamedDecl *ND) {
     T = Value->getType();
   else
     return QualType();
-  
-  return T.getNonReferenceType();
+
+  // Dig through references, function pointers, and block pointers to
+  // get down to the likely type of an expression when the entity is
+  // used.
+  do {
+    if (const ReferenceType *Ref = T->getAs<ReferenceType>()) {
+      T = Ref->getPointeeType();
+      continue;
+    }
+
+    if (const PointerType *Pointer = T->getAs<PointerType>()) {
+      if (Pointer->getPointeeType()->isFunctionType()) {
+        T = Pointer->getPointeeType();
+        continue;
+      }
+
+      break;
+    }
+
+    if (const BlockPointerType *Block = T->getAs<BlockPointerType>()) {
+      T = Block->getPointeeType();
+      continue;
+    }
+
+    if (const FunctionType *Function = T->getAs<FunctionType>()) {
+      T = Function->getResultType();
+      continue;
+    }
+
+    break;
+  } while (true);
+    
+  return T;
 }
 
 void ResultBuilder::AdjustResultPriorityForDecl(Result &R) {

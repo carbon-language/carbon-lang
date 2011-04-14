@@ -175,6 +175,12 @@ void test_missing_open_more() {
   A *a = A class_method3];
 }
 
+void test_block_invoke(A *(^block1)(int), 
+                       int (^block2)(int), 
+                       id (^block3)(int)) {
+  [block1(5) init];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod}
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)}
@@ -284,6 +290,12 @@ void test_missing_open_more() {
 // RUN: c-index-test -code-completion-at=%s:170:16 %s | FileCheck -check-prefix=CHECK-CLASS-RESULT %s
 // CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method3} (35)
 // CHECK-CLASS-RESULT: ObjCClassMethodDecl:{ResultType void}{TypedText class_method4} (35)
+
+// RUN: c-index-test -code-completion-at=%s:181:4 %s | FileCheck -check-prefix=CHECK-BLOCK-RECEIVER %s
+// CHECK-BLOCK-RECEIVER: ObjCInterfaceDecl:{TypedText A} (50)
+// CHECK-BLOCK-RECEIVER: ObjCInterfaceDecl:{TypedText B} (50)
+// CHECK-BLOCK-RECEIVER: ParmDecl:{ResultType A *(^)(int)}{TypedText block1} (34)
+// CHECK-BLOCK-RECEIVER-NEXT: ParmDecl:{ResultType id (^)(int)}{TypedText block3} (34)
 
 // Test code completion with a missing opening bracket:
 // RUN: c-index-test -code-completion-at=%s:135:5 %s | FileCheck -check-prefix=CHECK-CCI %s
