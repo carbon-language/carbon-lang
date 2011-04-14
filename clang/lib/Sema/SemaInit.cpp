@@ -96,6 +96,15 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
   // the size may be smaller or larger than the string we are initializing.
   // FIXME: Avoid truncation for 64-bit length strings.
   if (S.getLangOptions().CPlusPlus) {
+    if (StringLiteral *SL = dyn_cast<StringLiteral>(Str)) {
+      // For Pascal strings it's OK to strip off the terminating null character,
+      // so the example below is valid:
+      //
+      // unsigned char a[2] = "\pa";
+      if (SL->isPascal())
+        StrLength--;
+    }
+  
     // [dcl.init.string]p2
     if (StrLength > CAT->getSize().getZExtValue())
       S.Diag(Str->getSourceRange().getBegin(),
