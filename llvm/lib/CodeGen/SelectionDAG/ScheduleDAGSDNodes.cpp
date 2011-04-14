@@ -87,6 +87,8 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SU->isCommutable = Old->isCommutable;
   SU->hasPhysRegDefs = Old->hasPhysRegDefs;
   SU->hasPhysRegClobbers = Old->hasPhysRegClobbers;
+  SU->isScheduleHigh = Old->isScheduleHigh;
+  SU->isScheduleLow = Old->isScheduleLow;
   SU->SchedulingPref = Old->SchedulingPref;
   Old->isCloned = true;
   return SU;
@@ -334,6 +336,12 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
         }
       if (!HasGlueUse) break;
     }
+
+    // Schedule zero-latency TokenFactor below any nodes that may increase the
+    // schedule height. Otherwise, ancestors of the TokenFactor may appear to
+    // have false stalls.
+    if (NI->getOpcode() == ISD::TokenFactor)
+      NodeSUnit->isScheduleLow = true;
 
     // If there are glue operands involved, N is now the bottom-most node
     // of the sequence of nodes that are glued together.

@@ -260,6 +260,7 @@ namespace llvm {
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
     bool isScheduleHigh   : 1;          // True if preferable to schedule high.
+    bool isScheduleLow    : 1;          // True if preferable to schedule low.
     bool isCloned         : 1;          // True if this node has been cloned.
     Sched::Preference SchedulingPref;   // Scheduling preference.
 
@@ -282,7 +283,7 @@ namespace llvm {
         isVRegCycle(false), isCall(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isScheduleHigh(false), isCloned(false),
+        isScheduleHigh(false), isScheduleLow(false), isCloned(false),
         SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
@@ -296,7 +297,7 @@ namespace llvm {
         isVRegCycle(false), isCall(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isScheduleHigh(false), isCloned(false),
+        isScheduleHigh(false), isScheduleLow(false), isCloned(false),
         SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}
@@ -309,7 +310,7 @@ namespace llvm {
         isVRegCycle(false), isCall(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        isScheduleHigh(false), isCloned(false),
+        isScheduleHigh(false), isScheduleLow(false), isCloned(false),
         SchedulingPref(Sched::None),
         isDepthCurrent(false), isHeightCurrent(false), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}

@@ -18,7 +18,8 @@ forcond.preheader:              ; preds = %entry
 ; CHECK: movl $1
 ; CHECK-NOT: xorl
 ; CHECK-NOT: movl
-; CHECK-NEXT: je
+; CHECK-NOT: LBB
+; CHECK: je
 
 ifthen:         ; preds = %entry
   ret i32 0

@@ -2,10 +2,10 @@
 ; rdar://5752025
 
 ; We want:
-;      CHECK: movl	4(%esp), %ecx
-; CHECK-NEXT: andl	$15, %ecx
-; CHECK-NEXT: movl	$42, %eax
-; CHECK-NEXT: cmovel	%ecx, %eax
+;      CHECK: movl	$42, %ecx
+; CHECK-NEXT: movl	4(%esp), %eax
+; CHECK-NEXT: andl	$15, %eax
+; CHECK-NEXT: cmovnel	%ecx, %eax
 ; CHECK-NEXT: ret
 ;
 ; We don't want:

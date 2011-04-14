@@ -71,6 +71,7 @@ static cl::opt<bool> DisableSchedCycles(
   cl::desc("Disable cycle-level precision during preRA scheduling"));
 
 // Temporary sched=list-ilp flags until the heuristics are robust.
+// Some options are also available under sched=list-hybrid.
 static cl::opt<bool> DisableSchedRegPressure(
   "disable-sched-reg-pressure", cl::Hidden, cl::init(false),
   cl::desc("Disable regpressure priority in sched=list-ilp"));
@@ -80,6 +81,9 @@ static cl::opt<bool> DisableSchedLiveUses(
 static cl::opt<bool> DisableSchedVRegCycle(
   "disable-sched-vrcycle", cl::Hidden, cl::init(false),
   cl::desc("Disable virtual register cycle interference checks"));
+static cl::opt<bool> DisableSchedPhysRegJoin(
+  "disable-sched-physreg-join", cl::Hidden, cl::init(false),
+  cl::desc("Disable physreg def-use affinity"));
 static cl::opt<bool> DisableSchedStalls(
   "disable-sched-stalls", cl::Hidden, cl::init(true),
   cl::desc("Disable no-stall priority in sched=list-ilp"));
@@ -1638,6 +1642,20 @@ ILPBURRPriorityQueue;
 //           Static Node Priority for Register Pressure Reduction
 //===----------------------------------------------------------------------===//
 
+// Check for special nodes that bypass scheduling heuristics.
+// Currently this pushes TokenFactor nodes down, but may be used for other
+// pseudo-ops as well.
+//
+// Return -1 to schedule right above left, 1 for left above right.
+// Return 0 if no bias exists.
+static int checkSpecialNodes(const SUnit *left, const SUnit *right) {
+  bool LSchedLow = left->isScheduleLow;
+  bool RSchedLow = right->isScheduleLow;
+  if (LSchedLow != RSchedLow)
+    return LSchedLow < RSchedLow ? 1 : -1;
+  return 0;
+}
+
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
 /// Smaller number is the higher priority.
 static unsigned
@@ -2198,24 +2216,31 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
 }
 
 static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
+  // Schedule physical register definitions close to their use. This is
+  // motivated by microarchitectures that can fuse cmp+jump macro-ops. But as
+  // long as shortening physreg live ranges is generally good, we can defer
+  // creating a subtarget hook.
+  if (!DisableSchedPhysRegJoin) {
+    bool LHasPhysReg = left->hasPhysRegDefs;
+    bool RHasPhysReg = right->hasPhysRegDefs;
+    if (LHasPhysReg != RHasPhysReg) {
+      DEBUG(++FactorCount[FactRegUses]);
+      #ifndef NDEBUG
+      const char *PhysRegMsg[] = {" has no physreg", " defines a physreg"};
+      #endif
+      DEBUG(dbgs() << "  SU (" << left->NodeNum << ") "
+            << PhysRegMsg[LHasPhysReg] << " SU(" << right->NodeNum << ") "
+            << PhysRegMsg[RHasPhysReg] << "\n");
+      return LHasPhysReg < RHasPhysReg;
+    }
+  }
+
+  // Prioritize by Seith-Ulmann number and push CopyToReg nodes down.
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority) {
     DEBUG(++FactorCount[FactStatic]);
     return LPriority > RPriority;
-  }
-  else if(LPriority == 0) {
-    // Schedule zero-latency TokenFactor below any other special
-    // nodes. The alternative may be to avoid artificially boosting the
-    // TokenFactor's height when it is scheduled, but we currently rely on an
-    // instruction's final height to equal the cycle in which it is scheduled,
-    // so heights are monotonically increasing.
-    unsigned LOpc = left->getNode() ? left->getNode()->getOpcode() : 0;
-    unsigned ROpc = right->getNode() ? right->getNode()->getOpcode() : 0;
-    if (LOpc == ISD::TokenFactor)
-      return false;
-    if (ROpc == ISD::TokenFactor)
-      return true;
   }
 
   // Try schedule def + use closer when Sethi-Ullman numbers are the same.
@@ -2275,11 +2300,17 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
 
 // Bottom up
 bool bu_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
+  if (int res = checkSpecialNodes(left, right))
+    return res > 0;
+
   return BURRSort(left, right, SPQ);
 }
 
 // Source order, otherwise bottom up.
 bool src_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
+  if (int res = checkSpecialNodes(left, right))
+    return res > 0;
+
   unsigned LOrder = SPQ->getNodeOrdering(left);
   unsigned ROrder = SPQ->getNodeOrdering(right);
 
@@ -2311,6 +2342,9 @@ bool hybrid_ls_rr_sort::isReady(SUnit *SU, unsigned CurCycle) const {
 
 // Return true if right should be scheduled with higher priority than left.
 bool hybrid_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
+  if (int res = checkSpecialNodes(left, right))
+    return res > 0;
+
   if (left->isCall || right->isCall)
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
@@ -2376,6 +2410,9 @@ static bool canEnableCoalescing(SUnit *SU) {
 // list-ilp is currently an experimental scheduler that allows various
 // heuristics to be enabled prior to the normal register reduction logic.
 bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
+  if (int res = checkSpecialNodes(left, right))
+    return res > 0;
+
   if (left->isCall || right->isCall)
     // No way to compute latency of calls.
     return BURRSort(left, right, SPQ);
@@ -2734,6 +2771,9 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
 
 // Top down
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
+  if (int res = checkSpecialNodes(left, right))
+    return res < 0;
+
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   bool LIsTarget = left->getNode() && left->getNode()->isMachineOpcode();

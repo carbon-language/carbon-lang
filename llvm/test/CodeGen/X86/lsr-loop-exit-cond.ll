@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llc -march=x86-64 < %s | FileCheck %s
 
 ; CHECK: decq
