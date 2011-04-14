@@ -68,7 +68,7 @@ class CrashingInferiorTestCase(TestBase):
 
         thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonException)
         if not thread:
-            self.fail("Fail to stop the thread due to exception")
+            self.fail("Fail to stop the thread upon bad access exception")
 
         lldbutil.PrintStackTrace(thread)
 
