@@ -244,10 +244,28 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     // and other things that _are_ target specific really shouldn't just be 
     // using the host triple. This needs to be fixed in a better way.
     if (target && target->GetArchitecture().IsValid())
-        m_compiler->getTargetOpts().Triple = target->GetArchitecture().GetTriple().str();
+    {
+        std::string triple = target->GetArchitecture().GetTriple().str();
+        
+        int dash_count = 0;
+        for (int i = 0; i < triple.size(); ++i)
+        {
+            if (triple[i] == '-')
+                dash_count++;
+            if (dash_count == 3)
+            {
+                triple.resize(i);
+                break;
+            }
+        }
+        
+        m_compiler->getTargetOpts().Triple = triple;
+    }
     else
+    {
         m_compiler->getTargetOpts().Triple = llvm::sys::getHostTriple();
-    
+    }
+        
     // 3. Set up various important bits of infrastructure.
     m_compiler->createDiagnostics(0, 0);
     

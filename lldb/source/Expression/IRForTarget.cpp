@@ -10,6 +10,7 @@
 #include "lldb/Expression/IRForTarget.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Constants.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"

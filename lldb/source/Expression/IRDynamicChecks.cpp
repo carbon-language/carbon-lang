@@ -18,6 +18,7 @@
 #include "lldb/Target/StackFrame.h"
 
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
