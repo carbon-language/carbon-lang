@@ -1411,16 +1411,13 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     Cond->getParent() != BB || !Cond->hasOneUse())
   return false;
 
-  SmallVector<DbgInfoIntrinsic *, 8> DbgValues;
   // Only allow this if the condition is a simple instruction that can be
   // executed unconditionally.  It must be in the same block as the branch, and
   // must be at the front of the block.
   BasicBlock::iterator FrontIt = BB->front();
+
   // Ignore dbg intrinsics.
-  while (DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(FrontIt)) {
-    DbgValues.push_back(DBI);
-    ++FrontIt;
-  }
+  while (isa<DbgInfoIntrinsic>(FrontIt)) ++FrontIt;
     
   // Allow a single instruction to be hoisted in addition to the compare
   // that feeds the branch.  We later ensure that any values that _it_ uses
@@ -1432,12 +1429,9 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       FrontIt->isSafeToSpeculativelyExecute()) {
     BonusInst = &*FrontIt;
     ++FrontIt;
-  }
-  
-  // Ignore dbg intrinsics.
-  while (DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(FrontIt)) {
-    DbgValues.push_back(DBI);
-    ++FrontIt;
+    
+    // Ignore dbg intrinsics.
+    while (isa<DbgInfoIntrinsic>(FrontIt)) ++FrontIt;
   }
 
   // Only a single bonus inst is allowed.
@@ -1446,15 +1440,12 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
+
   // Ingore dbg intrinsics.
-  while(DbgInfoIntrinsic *DBI = dyn_cast<DbgInfoIntrinsic>(CondIt)) {
-    DbgValues.push_back(DBI);
-    ++CondIt;
-  }
-  if (&*CondIt != BI) {
-    assert (!isa<DbgInfoIntrinsic>(CondIt) && "Hey do not forget debug info!");
+  while (isa<DbgInfoIntrinsic>(CondIt)) ++CondIt;
+  
+  if (&*CondIt != BI)
     return false;
-  }
 
   // Cond is known to be a compare or binary operator.  Check to make sure that
   // neither operand is a potentially-trapping constant expression.
@@ -1464,7 +1455,6 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Cond->getOperand(1)))
     if (CE->canTrap())
       return false;
-  
   
   // Finally, don't infinitely unroll conditional loops.
   BasicBlock *TrueDest  = BI->getSuccessor(0);
@@ -1479,10 +1469,24 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // Check that we have two conditional branches.  If there is a PHI node in
     // the common successor, verify that the same value flows in from both
     // blocks.
-    if (PBI == 0 || PBI->isUnconditional() ||
-        !SafeToMergeTerminators(BI, PBI))
+    if (PBI == 0 || PBI->isUnconditional() || !SafeToMergeTerminators(BI, PBI))
       continue;
     
+    // Determine if the two branches share a common destination.
+    Instruction::BinaryOps Opc;
+    bool InvertPredCond = false;
+    
+    if (PBI->getSuccessor(0) == TrueDest)
+      Opc = Instruction::Or;
+    else if (PBI->getSuccessor(1) == FalseDest)
+      Opc = Instruction::And;
+    else if (PBI->getSuccessor(0) == FalseDest)
+      Opc = Instruction::And, InvertPredCond = true;
+    else if (PBI->getSuccessor(1) == TrueDest)
+      Opc = Instruction::Or, InvertPredCond = true;
+    else
+      continue;
+
     // Ensure that any values used in the bonus instruction are also used
     // by the terminator of the predecessor.  This means that those values
     // must already have been resolved, so we won't be inhibiting the 
@@ -1520,20 +1524,6 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       
       if (!UsedValues.empty()) return false;
     }
-    
-    Instruction::BinaryOps Opc;
-    bool InvertPredCond = false;
-
-    if (PBI->getSuccessor(0) == TrueDest)
-      Opc = Instruction::Or;
-    else if (PBI->getSuccessor(1) == FalseDest)
-      Opc = Instruction::And;
-    else if (PBI->getSuccessor(0) == FalseDest)
-      Opc = Instruction::And, InvertPredCond = true;
-    else if (PBI->getSuccessor(1) == TrueDest)
-      Opc = Instruction::Or, InvertPredCond = true;
-    else
-      continue;
 
     DEBUG(dbgs() << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB);
     
@@ -1585,10 +1575,11 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       PBI->setSuccessor(1, FalseDest);
     }
 
-    // Move dbg value intrinsics in PredBlock.
-    for (SmallVector<DbgInfoIntrinsic *, 8>::iterator DBI = DbgValues.begin(),
-           DBE = DbgValues.end(); DBI != DBE; ++DBI)
-      (*DBI)->moveBefore(PBI);
+    // Copy any debug value intrinsics into the end of PredBlock.
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (isa<DbgInfoIntrinsic>(*I))
+        I->clone()->insertBefore(PBI);
+      
     return true;
   }
   return false;
