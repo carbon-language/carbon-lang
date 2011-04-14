@@ -1893,7 +1893,7 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &C,
   // Insert this function template specialization into the set of known
   // function template specializations.
   if (InsertPos)
-    Template->getSpecializations().InsertNode(Info, InsertPos);
+    Template->addSpecialization(Info, InsertPos);
   else {
     // Try to insert the new node. If there is an existing node, leave it, the
     // set will contain the canonical decls while

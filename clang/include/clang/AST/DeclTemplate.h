@@ -804,6 +804,13 @@ protected:
   llvm::FoldingSet<FunctionTemplateSpecializationInfo> &getSpecializations() {
     return getCommonPtr()->Specializations;
   }
+
+  /// \brief Add a specialization of this function template.
+  ///
+  /// \param InsertPos Insert position in the FoldingSet, must have been
+  ///        retrieved by an earlier call to findSpecialization().
+  void addSpecialization(FunctionTemplateSpecializationInfo* Info,
+                         void *InsertPos);
   
 public:
   /// Get the underlying function declaration of the template.

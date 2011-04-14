@@ -242,6 +242,13 @@ FunctionTemplateDecl::findSpecialization(const TemplateArgument *Args,
   return findSpecializationImpl(getSpecializations(), Args, NumArgs, InsertPos);
 }
 
+void FunctionTemplateDecl::addSpecialization(
+      FunctionTemplateSpecializationInfo *Info, void *InsertPos) {
+  getSpecializations().InsertNode(Info, InsertPos);
+  if (ASTMutationListener *L = getASTMutationListener())
+    L->AddedCXXTemplateSpecialization(this, Info->Function);
+}
+
 std::pair<const TemplateArgument *, unsigned> 
 FunctionTemplateDecl::getInjectedTemplateArgs() {
   TemplateParameterList *Params = getTemplateParameters();

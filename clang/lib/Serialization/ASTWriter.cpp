@@ -3936,4 +3936,16 @@ void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
   AddDeclRef(D, Record);
 }
 
+void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
+                                               const FunctionDecl *D) {
+  // The specializations set is kept in the canonical template.
+  TD = TD->getCanonicalDecl();
+  if (!(D->getPCHLevel() == 0 && TD->getPCHLevel() > 0))
+    return; // Not a source specialization added to a template from PCH.
+
+  UpdateRecord &Record = DeclUpdates[TD];
+  Record.push_back(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION);
+  AddDeclRef(D, Record);
+}
+
 ASTSerializationListener::~ASTSerializationListener() { }

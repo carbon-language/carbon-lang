@@ -586,6 +586,8 @@ public:
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
   virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                     const ClassTemplateSpecializationDecl *D);
+  virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
+                                              const FunctionDecl *D);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a
