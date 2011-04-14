@@ -1661,6 +1661,14 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
+  if (FromPointeeType->isVectorType() && ToPointeeType->isVectorType() &&
+      Context.areCompatibleVectorTypes(FromPointeeType, ToPointeeType)) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
+                                                       ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  }
+  
   return false;
 }
 
