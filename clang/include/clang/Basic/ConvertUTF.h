@@ -87,6 +87,9 @@
 
 ------------------------------------------------------------------------ */
 
+#ifndef CLANG_BASIC_CONVERTUTF_H
+#define CLANG_BASIC_CONVERTUTF_H
+
 /* ---------------------------------------------------------------------
     The following 4 definitions are compiler-specific.
     The C standard does not guarantee that wchar_t has at least
@@ -154,6 +157,8 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 /* --------------------------------------------------------------------- */
