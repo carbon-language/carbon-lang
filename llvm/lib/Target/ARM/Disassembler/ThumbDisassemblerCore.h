@@ -1232,29 +1232,66 @@ static bool DisassembleThumb2LdStEx(MCInst &MI, unsigned Opcode, uint32_t insn,
   bool isSW = (Opcode == ARM::t2LDREX || Opcode == ARM::t2STREX);
   bool isDW = (Opcode == ARM::t2LDREXD || Opcode == ARM::t2STREXD);
 
+  unsigned Rt  = decodeRd(insn);
+  unsigned Rt2 = decodeRs(insn); // But note that this is Rd for t2STREX.
+  unsigned Rd  = decodeRm(insn);
+  unsigned Rn  = decodeRn(insn);
+
+  // Some sanity checking first.
+  if (isStore) {
+    // if d == n || d == t then UNPREDICTABLE
+    // if d == n || d == t || d == t2 then UNPREDICTABLE
+    if (isDW) {
+      if (Rd == Rn || Rd == Rt || Rd == Rt2) {
+        DEBUG(errs() << "if d == n || d == t || d == t2 then UNPREDICTABLE\n");
+        return false;
+      }
+    } else {
+      if (isSW) {
+        if (Rt2 == Rn || Rt2 == Rt) {
+          DEBUG(errs() << "if d == n || d == t then UNPREDICTABLE\n");
+          return false;
+        }
+      } else {
+        if (Rd == Rn || Rd == Rt) {
+          DEBUG(errs() << "if d == n || d == t then UNPREDICTABLE\n");
+          return false;
+        }
+      }
+    }
+  } else {
+    // Load
+    // A8.6.71 LDREXD
+    // if t == t2 then UNPREDICTABLE
+    if (isDW && Rt == Rt2) {
+      DEBUG(errs() << "if t == t2 then UNPREDICTABLE\n");
+      return false;
+    }
+  }
+
   // Add the destination operand for store.
   if (isStore) {
     MI.addOperand(MCOperand::CreateReg(
                     getRegisterEnum(B, OpInfo[OpIdx].RegClass,
-                                    isSW ? decodeRs(insn) : decodeRm(insn))));
+                                    isSW ? Rt2 : Rd)));
     ++OpIdx;
   }
 
   // Source operand for store and destination operand for load.
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
-                                                     decodeRd(insn))));
+                                                     Rt)));
   ++OpIdx;
 
   // Thumb2 doubleword complication: with an extra source/destination operand.
   if (isDW) {
     MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B,OpInfo[OpIdx].RegClass,
-                                                       decodeRs(insn))));
+                                                       Rt2)));
     ++OpIdx;
   }
 
   // Finally add the pointer operand.
   MI.addOperand(MCOperand::CreateReg(getRegisterEnum(B, OpInfo[OpIdx].RegClass,
-                                                     decodeRn(insn))));
+                                                     Rn)));
   ++OpIdx;
 
   return true;
