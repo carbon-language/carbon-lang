@@ -741,9 +741,6 @@ public:
   }
 
   void AddFixItHint(const FixItHint &Hint) const {
-    if (Hint.isNull())
-      return;
-    
     assert(NumFixItHints < Diagnostic::MaxFixItHints &&
            "Too many fix-it hints!");
     if (DiagObj)
