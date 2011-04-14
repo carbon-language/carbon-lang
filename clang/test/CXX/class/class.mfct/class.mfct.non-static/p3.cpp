@@ -35,17 +35,22 @@ namespace test1 {
   struct A {
     void foo(Opaque1); // expected-note {{candidate}}
     void foo(Opaque2); // expected-note {{candidate}}
-    void test();
   };
 
   struct B : A {
-    
+    void test();
   };
 
-  void A::test() {
-    B::foo(Opaque1());
-    B::foo(Opaque2());
-    B::foo(Opaque3()); // expected-error {{no matching member function}}
+  struct C1 : A { };
+  struct C2 : B { };
+
+  void B::test() {
+    A::foo(Opaque1());
+    A::foo(Opaque2());
+    A::foo(Opaque3()); // expected-error {{no matching member function}}
+
+    C1::foo(Opaque1()); // expected-error {{call to non-static member function without an object argument}}
+    C2::foo(Opaque1()); // expected-error {{call to non-static member function without an object argument}}
   }
 }
 
