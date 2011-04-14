@@ -120,6 +120,9 @@ def err_function_declared_typedef : Error<
 def err_iboutletcollection_builtintype : Error<
   "type argument of iboutletcollection attribute cannot be a builtin type">;
 
+def err_at_defs_cxx : Error<"@defs is not supported in Objective-C++">;
+def err_at_in_class : Error<"unexpected '@' in member specification">;
+
 def err_expected_fn_body : Error<
   "expected function body after function declarator">;
 def err_expected_method_body : Error<"expected method body">;
