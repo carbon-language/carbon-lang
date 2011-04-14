@@ -2258,3 +2258,79 @@ SimplifyDemandedBits shrinks the "and" constant to 2 but instcombine misses the
 icmp transform.
 
 //===---------------------------------------------------------------------===//
+
+These functions:
+int foo(int *X) {
+  if ((*X & 255) == 47)
+    bar();
+}
+int foo2(int X) {
+  if ((X & 255) == 47)
+    bar();
+}
+
+codegen to:
+
+  movzbl	(%rdi), %eax
+  cmpl	$47, %eax
+  jne	LBB0_2
+
+and:
+  movzbl	%dil, %eax
+  cmpl	$47, %eax
+  jne	LBB1_2
+
+If a dag combine shrunk the compare to a byte compare, then we'd fold the load
+in the first example, and eliminate the movzbl in the second, saving a register.
+This can be a target independent dag combine that works on ISD::SETCC, it would
+catch this before the legalize ops pass.
+
+//===---------------------------------------------------------------------===//
+
+We should optimize this:
+
+  %tmp = load i16* %arrayidx, align 4, !tbaa !0
+  %A = trunc i16 %tmp to i8
+  %cmp = icmp eq i8 %A, 127
+  %B.mask = and i16 %tmp, -256
+  %cmp7 = icmp eq i16 %B.mask, 17664
+  %or.cond = and i1 %cmp, %cmp7
+  br i1 %or.cond, label %land.lhs.true9, label %if.end
+
+into:
+
+  %tmp = load i16* %arrayidx, align 4, !tbaa !0
+  %0 = icmp eq i16 %tmp, 17791
+  br i1 %0, label %land.lhs.true9, label %if.end
+
+with this patch:
+Index: InstCombine/InstCombineCompares.cpp
+===================================================================
+--- InstCombine/InstCombineCompares.cpp	(revision 129500)
++++ InstCombine/InstCombineCompares.cpp	(working copy)
+@@ -2506,6 +2506,18 @@
+         return &I;
+       }
+     }
++    
++    // Transform "icmp eq (trunc X), cst" to "icmp (and X, mask), cst"
++    if (Op0->hasOneUse() && match(Op0, m_Trunc(m_Value(A))) &&
++        isa<ConstantInt>(Op1)) {
++      APInt MaskV = APInt::getLowBitsSet(A->getType()->getPrimitiveSizeInBits(),
++                                      Op0->getType()->getPrimitiveSizeInBits());
++      Value *Mask =
++        Builder->CreateAnd(A, ConstantInt::get(A->getContext(), MaskV));
++      return new ICmpInst(I.getPredicate(), Mask,
++                          ConstantExpr::getZExt(cast<ConstantInt>(Op1),
++                                                Mask->getType()));
++    }
+   }
+   
+   {
+
+
+but we can't do that until the dag combine above is added.  Not having this
+is blocking resolving PR6627.
+
+//===---------------------------------------------------------------------===//
+
