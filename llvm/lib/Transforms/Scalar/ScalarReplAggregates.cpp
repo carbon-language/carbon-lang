@@ -676,6 +676,37 @@ static const Type *getScaledElementType(const Type *OldTy,
   llvm_unreachable("Invalid type for a partial vector access of an alloca!");
 }
 
+/// CreateShuffleVectorCast - Creates a shuffle vector to convert one vector
+/// to another vector of the same element type which has the same allocation
+/// size but different primitive sizes (e.g. <3 x i32> and <4 x i32>).
+static Value *CreateShuffleVectorCast(Value *FromVal, const Type *ToType,
+                                      IRBuilder<> &Builder) {
+  const Type *FromType = FromVal->getType();
+  const VectorType *FromVTy = dyn_cast<VectorType>(FromType);
+  const VectorType *ToVTy = dyn_cast<VectorType>(ToType);
+  assert(FromVTy && ToVTy &&
+         (ToVTy->getElementType() == FromVTy->getElementType()) &&
+         "Vectors must have the same element type");
+   LLVMContext &Context = FromVal->getContext();
+   Value *UnV = UndefValue::get(FromType);
+   unsigned numEltsFrom = FromVTy->getNumElements();
+   unsigned numEltsTo = ToVTy->getNumElements();
+
+   SmallVector<Constant*, 3> Args;
+   unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
+   unsigned i;
+   for (i=0; i != minNumElts; ++i)
+     Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
+
+   if (i < numEltsTo) {
+     Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
+     for (; i != numEltsTo; ++i)
+       Args.push_back(UnC);
+   }
+   Constant *Mask = ConstantVector::get(Args);
+   return Builder.CreateShuffleVector(FromVal, UnV, Mask, "tmpV");
+}
+
 /// ConvertScalar_ExtractValue - Extract a value of type ToType from an integer
 /// or vector value FromVal, extracting the bits from the offset specified by
 /// Offset.  This returns the value, which is of type ToType.
@@ -699,35 +730,15 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   if (const VectorType *VTy = dyn_cast<VectorType>(FromType)) {
     unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
     if (ToTypeSize == AllocaSize) {
+      // If the two types have the same primitive size, use a bit cast.
+      // Otherwise, it is two vectors with the same element type that has
+      // the same allocation size but different number of elements so use
+      // a shuffle vector.
       if (FromType->getPrimitiveSizeInBits() ==
           ToType->getPrimitiveSizeInBits())
         return Builder.CreateBitCast(FromVal, ToType, "tmp");
-      else {
-        // Vectors with the same element type can have the same allocation
-        // size but different primitive sizes (e.g., <3 x i32> and <4 x i32>)
-        // In this case, use a shuffle vector instead of a bit cast.
-        const VectorType *ToVTy = dyn_cast<VectorType>(ToType);
-        assert(ToVTy && (ToVTy->getElementType() == VTy->getElementType()) &&
-               "Vectors must have the same element type");
-        LLVMContext &Context = FromVal->getContext();
-        Value *UnV = UndefValue::get(FromType);
-        unsigned numEltsFrom = VTy->getNumElements();
-        unsigned numEltsTo = ToVTy->getNumElements();
-
-        SmallVector<Constant*, 3> Args;
-        unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
-        unsigned i;
-        for (i=0; i != minNumElts; ++i)
-          Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
-
-        if (i < numEltsTo) {
-          Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
-          for (; i != numEltsTo; ++i)
-            Args.push_back(UnC);
-        }
-        Constant *Mask = ConstantVector::get(Args);
-        return Builder.CreateShuffleVector(FromVal, UnV, Mask, "tmpV");
-      }
+      else
+        return CreateShuffleVectorCast(FromVal, ToType, Builder);
     }
 
     if (ToType->isVectorTy()) {
@@ -868,34 +879,15 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
     // Changing the whole vector with memset or with an access of a different
     // vector type?
     if (ValSize == VecSize) {
+      // If the two types have the same primitive size, use a bit cast.
+      // Otherwise, it is two vectors with the same element type that has
+      // the same allocation size but different number of elements so use
+      // a shuffle vector.
       if (VTy->getPrimitiveSizeInBits() ==
           SV->getType()->getPrimitiveSizeInBits())
         return Builder.CreateBitCast(SV, AllocaType, "tmp");
-      else {
-        // Vectors with the same element type can have the same allocation
-        // size but different primitive sizes (e.g., <3 x i32> and <4 x i32>)
-        // In this case, use a shuffle vector instead of a bit cast.
-        const VectorType *SVVTy = dyn_cast<VectorType>(SV->getType());
-        assert(SVVTy && (SVVTy->getElementType() == VTy->getElementType()) &&
-               "Vectors must have the same element type");
-        Value *UnV = UndefValue::get(SVVTy);
-        unsigned numEltsFrom = SVVTy->getNumElements();
-        unsigned numEltsTo = VTy->getNumElements();
-
-        SmallVector<Constant*, 3> Args;
-        unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
-        unsigned i;
-        for (i=0; i != minNumElts; ++i)
-          Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
-
-        if (i < numEltsTo) {
-          Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
-          for (; i != numEltsTo; ++i)
-            Args.push_back(UnC);
-        }
-        Constant *Mask = ConstantVector::get(Args);
-        return Builder.CreateShuffleVector(SV, UnV, Mask, "tmpV");
-      }
+      else
+        return CreateShuffleVectorCast(SV, VTy, Builder);
     }
 
     if (SV->getType()->isVectorTy() && isPowerOf2_64(VecSize / ValSize)) {
