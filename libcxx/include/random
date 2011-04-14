@@ -4477,7 +4477,7 @@ poisson_distribution<_IntType>::operator()(_URNG& __urng, const param_type& __pr
 {
     result_type __x;
     uniform_real_distribution<double> __urd;
-    if (__pr.__mean_ <= 10)
+    if (__pr.__mean_ < 10)
     {
          __x = 0;
         for (double __p = __urd(__urng); __p > __pr.__l_; ++__x)
