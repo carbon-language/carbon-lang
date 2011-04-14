@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=x86-64 | grep movzbl | count 2
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
-; Use movzbl to avoid partial-register updates.
+; Use movzbl (aliased as movzx) to avoid partial-register updates.
 
 define i32 @foo(i32 %p, i8 zeroext %x) nounwind {
+; CHECK: movzx %dil, %eax
+; CHECK: movzx %al, %eax
   %q = trunc i32 %p to i8
   %r = udiv i8 %q, %x
   %s = zext i8 %r to i32

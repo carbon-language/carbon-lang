@@ -75,7 +75,7 @@ declare <2 x double> @llvm.x86.sse2.cmp.sd(<2 x double>, <2 x double>, i8) nounw
 define i32 @test_x86_sse2_comieq_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.comieq.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -85,7 +85,7 @@ declare i32 @llvm.x86.sse2.comieq.sd(<2 x double>, <2 x double>) nounwind readno
 define i32 @test_x86_sse2_comige_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
   ; CHECK: setae
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.comige.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -95,7 +95,7 @@ declare i32 @llvm.x86.sse2.comige.sd(<2 x double>, <2 x double>) nounwind readno
 define i32 @test_x86_sse2_comigt_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.comigt.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -105,7 +105,7 @@ declare i32 @llvm.x86.sse2.comigt.sd(<2 x double>, <2 x double>) nounwind readno
 define i32 @test_x86_sse2_comile_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
   ; CHECK: setbe
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.comile.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -125,7 +125,7 @@ declare i32 @llvm.x86.sse2.comilt.sd(<2 x double>, <2 x double>) nounwind readno
 define i32 @test_x86_sse2_comineq_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vcomisd
   ; CHECK: setne
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.comineq.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -786,7 +786,7 @@ declare <2 x double> @llvm.x86.sse2.sub.sd(<2 x double>, <2 x double>) nounwind 
 define i32 @test_x86_sse2_ucomieq_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.ucomieq.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -796,7 +796,7 @@ declare i32 @llvm.x86.sse2.ucomieq.sd(<2 x double>, <2 x double>) nounwind readn
 define i32 @test_x86_sse2_ucomige_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
   ; CHECK: setae
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.ucomige.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -806,7 +806,7 @@ declare i32 @llvm.x86.sse2.ucomige.sd(<2 x double>, <2 x double>) nounwind readn
 define i32 @test_x86_sse2_ucomigt_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.ucomigt.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -816,7 +816,7 @@ declare i32 @llvm.x86.sse2.ucomigt.sd(<2 x double>, <2 x double>) nounwind readn
 define i32 @test_x86_sse2_ucomile_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
   ; CHECK: setbe
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.ucomile.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -835,7 +835,7 @@ declare i32 @llvm.x86.sse2.ucomilt.sd(<2 x double>, <2 x double>) nounwind readn
 define i32 @test_x86_sse2_ucomineq_sd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vucomisd
   ; CHECK: setne
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse2.ucomineq.sd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1192,7 +1192,7 @@ declare i32 @llvm.x86.sse41.ptestc(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse41_ptestnzc(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vptest 
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse41.ptestnzc(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1202,7 +1202,7 @@ declare i32 @llvm.x86.sse41.ptestnzc(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse41_ptestz(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vptest 
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse41.ptestz(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1414,7 +1414,7 @@ declare <4 x float> @llvm.x86.sse.cmp.ss(<4 x float>, <4 x float>, i8) nounwind 
 define i32 @test_x86_sse_comieq_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.comieq.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1424,7 +1424,7 @@ declare i32 @llvm.x86.sse.comieq.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_comige_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
   ; CHECK: setae
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.comige.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1434,7 +1434,7 @@ declare i32 @llvm.x86.sse.comige.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_comigt_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.comigt.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1444,7 +1444,7 @@ declare i32 @llvm.x86.sse.comigt.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_comile_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
   ; CHECK: setbe
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.comile.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1463,7 +1463,7 @@ declare i32 @llvm.x86.sse.comilt.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_comineq_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vcomiss
   ; CHECK: setne
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.comineq.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1655,7 +1655,7 @@ declare <4 x float> @llvm.x86.sse.sub.ss(<4 x float>, <4 x float>) nounwind read
 define i32 @test_x86_sse_ucomieq_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.ucomieq.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1665,7 +1665,7 @@ declare i32 @llvm.x86.sse.ucomieq.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_ucomige_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
   ; CHECK: setae
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.ucomige.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1675,7 +1675,7 @@ declare i32 @llvm.x86.sse.ucomige.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_ucomigt_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.ucomigt.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1685,7 +1685,7 @@ declare i32 @llvm.x86.sse.ucomigt.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_ucomile_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
   ; CHECK: setbe
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.ucomile.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1704,7 +1704,7 @@ declare i32 @llvm.x86.sse.ucomilt.ss(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_sse_ucomineq_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vucomiss
   ; CHECK: setne
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.sse.ucomineq.ss(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2179,7 +2179,7 @@ declare i32 @llvm.x86.avx.ptestc.256(<4 x i64>, <4 x i64>) nounwind readnone
 define i32 @test_x86_avx_ptestnzc_256(<4 x i64> %a0, <4 x i64> %a1) {
   ; CHECK: vptest
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.ptestnzc.256(<4 x i64> %a0, <4 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2189,7 +2189,7 @@ declare i32 @llvm.x86.avx.ptestnzc.256(<4 x i64>, <4 x i64>) nounwind readnone
 define i32 @test_x86_avx_ptestz_256(<4 x i64> %a0, <4 x i64> %a1) {
   ; CHECK: vptest
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.ptestz.256(<4 x i64> %a0, <4 x i64> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2483,7 +2483,7 @@ declare i32 @llvm.x86.avx.vtestc.ps.256(<8 x float>, <8 x float>) nounwind readn
 define i32 @test_x86_avx_vtestnzc_pd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vtestpd
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestnzc.pd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2493,7 +2493,7 @@ declare i32 @llvm.x86.avx.vtestnzc.pd(<2 x double>, <2 x double>) nounwind readn
 define i32 @test_x86_avx_vtestnzc_pd_256(<4 x double> %a0, <4 x double> %a1) {
   ; CHECK: vtestpd
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestnzc.pd.256(<4 x double> %a0, <4 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2503,7 +2503,7 @@ declare i32 @llvm.x86.avx.vtestnzc.pd.256(<4 x double>, <4 x double>) nounwind r
 define i32 @test_x86_avx_vtestnzc_ps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vtestps
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestnzc.ps(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2513,7 +2513,7 @@ declare i32 @llvm.x86.avx.vtestnzc.ps(<4 x float>, <4 x float>) nounwind readnon
 define i32 @test_x86_avx_vtestnzc_ps_256(<8 x float> %a0, <8 x float> %a1) {
   ; CHECK: vtestps
   ; CHECK: seta
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestnzc.ps.256(<8 x float> %a0, <8 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2523,7 +2523,7 @@ declare i32 @llvm.x86.avx.vtestnzc.ps.256(<8 x float>, <8 x float>) nounwind rea
 define i32 @test_x86_avx_vtestz_pd(<2 x double> %a0, <2 x double> %a1) {
   ; CHECK: vtestpd
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestz.pd(<2 x double> %a0, <2 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2533,7 +2533,7 @@ declare i32 @llvm.x86.avx.vtestz.pd(<2 x double>, <2 x double>) nounwind readnon
 define i32 @test_x86_avx_vtestz_pd_256(<4 x double> %a0, <4 x double> %a1) {
   ; CHECK: vtestpd
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestz.pd.256(<4 x double> %a0, <4 x double> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2543,7 +2543,7 @@ declare i32 @llvm.x86.avx.vtestz.pd.256(<4 x double>, <4 x double>) nounwind rea
 define i32 @test_x86_avx_vtestz_ps(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vtestps
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestz.ps(<4 x float> %a0, <4 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -2553,7 +2553,7 @@ declare i32 @llvm.x86.avx.vtestz.ps(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_x86_avx_vtestz_ps_256(<8 x float> %a0, <8 x float> %a1) {
   ; CHECK: vtestps
   ; CHECK: sete
-  ; CHECK: movzbl
+  ; CHECK: movzx
   %res = call i32 @llvm.x86.avx.vtestz.ps.256(<8 x float> %a0, <8 x float> %a1) ; <i32> [#uses=1]
   ret i32 %res
 }

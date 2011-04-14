@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 ; CHECK: @bar1
-; CHECK: movzbl
+; CHECK: movzx
 ; CHECK: callq
 define void @bar1(i1 zeroext %v1) nounwind ssp {
 entry:
@@ -11,7 +11,7 @@ entry:
 }
 
 ; CHECK: @bar2
-; CHECK-NOT: movzbl
+; CHECK-NOT: movzx
 ; CHECK: callq
 define void @bar2(i8 zeroext %v1) nounwind ssp {
 entry:
@@ -22,7 +22,7 @@ entry:
 
 ; CHECK: @bar3
 ; CHECK: callq
-; CHECK-NOT: movzbl
+; CHECK-NOT: movzx
 ; CHECK-NOT: and
 ; CHECK: ret
 define zeroext i1 @bar3() nounwind ssp {

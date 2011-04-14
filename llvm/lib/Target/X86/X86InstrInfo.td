@@ -1437,7 +1437,7 @@ def : InstAlias<"idivq $src, %rax", (IDIV64m i64mem:$src)>;
 
 // Various unary fpstack operations default to operating on on ST1.
 // For example, "fxch" -> "fxch %st(1)"
-def : InstAlias<"faddp",        (ADD_FPrST0  ST1)>;
+def : InstAlias<"faddp",        (ADD_FPrST0  ST1), 0>;
 def : InstAlias<"fsubp",        (SUBR_FPrST0 ST1)>;
 def : InstAlias<"fsubrp",       (SUB_FPrST0  ST1)>;
 def : InstAlias<"fmulp",        (MUL_FPrST0  ST1)>;
@@ -1455,13 +1455,15 @@ def : InstAlias<"fucompi",      (UCOM_FIPr   ST1)>;
 // For example, "fadd %st(4), %st(0)" -> "fadd %st(4)".  We also disambiguate
 // instructions like "fadd %st(0), %st(0)" as "fadd %st(0)" for consistency with
 // gas.
-multiclass FpUnaryAlias<string Mnemonic, Instruction Inst> {
- def : InstAlias<!strconcat(Mnemonic, " $op, %st(0)"),    (Inst RST:$op)>;
- def : InstAlias<!strconcat(Mnemonic, " %st(0), %st(0)"), (Inst ST0)>;
+multiclass FpUnaryAlias<string Mnemonic, Instruction Inst, bit EmitAlias = 1> {
+ def : InstAlias<!strconcat(Mnemonic, " $op, %st(0)"),
+                 (Inst RST:$op), EmitAlias>;
+ def : InstAlias<!strconcat(Mnemonic, " %st(0), %st(0)"),
+                 (Inst ST0), EmitAlias>;
 }
 
 defm : FpUnaryAlias<"fadd",   ADD_FST0r>;
-defm : FpUnaryAlias<"faddp",  ADD_FPrST0>;
+defm : FpUnaryAlias<"faddp",  ADD_FPrST0, 0>;
 defm : FpUnaryAlias<"fsub",   SUB_FST0r>;
 defm : FpUnaryAlias<"fsubp",  SUBR_FPrST0>;
 defm : FpUnaryAlias<"fsubr",  SUBR_FST0r>;
@@ -1472,8 +1474,8 @@ defm : FpUnaryAlias<"fdiv",   DIV_FST0r>;
 defm : FpUnaryAlias<"fdivp",  DIVR_FPrST0>;
 defm : FpUnaryAlias<"fdivr",  DIVR_FST0r>;
 defm : FpUnaryAlias<"fdivrp", DIV_FPrST0>;
-defm : FpUnaryAlias<"fcomi",   COM_FIr>;
-defm : FpUnaryAlias<"fucomi",  UCOM_FIr>;
+defm : FpUnaryAlias<"fcomi",   COM_FIr, 0>;
+defm : FpUnaryAlias<"fucomi",  UCOM_FIr, 0>;
 defm : FpUnaryAlias<"fcompi",   COM_FIPr>;
 defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 
@@ -1481,7 +1483,7 @@ defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
 // commute.  We also allow fdiv[r]p/fsubrp even though they don't commute,
 // solely because gas supports it.
-def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op)>;
+def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op), 0>;
 def : InstAlias<"fmulp %st(0), $op", (MUL_FPrST0 RST:$op)>;
 def : InstAlias<"fsubrp %st(0), $op", (SUB_FPrST0 RST:$op)>;
 def : InstAlias<"fdivp %st(0), $op", (DIVR_FPrST0 RST:$op)>;
@@ -1535,9 +1537,9 @@ def : InstAlias<"movq $imm, $reg", (MOV64ri GR64:$reg, i64imm:$imm)>;
 
 // Match 'movq GR64, MMX' as an alias for movd.
 def : InstAlias<"movq $src, $dst",
-                (MMX_MOVD64to64rr VR64:$dst, GR64:$src), 0b0>;
+                (MMX_MOVD64to64rr VR64:$dst, GR64:$src), 0>;
 def : InstAlias<"movq $src, $dst",
-                (MMX_MOVD64from64rr GR64:$dst, VR64:$src), 0b0>;
+                (MMX_MOVD64from64rr GR64:$dst, VR64:$src), 0>;
 
 // movsd with no operands (as opposed to the SSE scalar move of a double) is an
 // alias for movsl. (as in rep; movsd)

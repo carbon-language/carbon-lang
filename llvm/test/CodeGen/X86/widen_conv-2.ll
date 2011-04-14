@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse42 | FileCheck %s
-; CHECK: movswl
-; CHECK: movswl
+; CHECK: movsx
+; CHECK: movsx
 
 ; sign extension v2i32 to v2i16
 

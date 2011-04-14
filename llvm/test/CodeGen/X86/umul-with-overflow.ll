@@ -9,6 +9,6 @@ define i1 @a(i32 %x) zeroext nounwind {
 ; CHECK: a:
 ; CHECK: mull
 ; CHECK: seto %al
-; CHECK: movzbl	%al, %eax
+; CHECK: movzx	%al, %eax
 ; CHECK: ret
 }

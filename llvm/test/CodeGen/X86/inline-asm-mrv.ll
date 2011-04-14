@@ -1,5 +1,5 @@
 ; PR2094
-; RUN: llc < %s -march=x86-64 | grep movslq
+; RUN: llc < %s -march=x86-64 | grep movsx
 ; RUN: llc < %s -march=x86-64 | grep addps
 ; RUN: llc < %s -march=x86-64 | grep paddd
 ; RUN: llc < %s -march=x86-64 | not grep movq

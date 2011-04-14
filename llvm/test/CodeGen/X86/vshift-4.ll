@@ -57,7 +57,7 @@ entry:
 define void @shift3a(<8 x i16> %val, <8 x i16>* %dst, <8 x i16> %amt) nounwind {
 entry:
 ; CHECK: shift3a:
-; CHECK: movzwl
+; CHECK: movzx
 ; CHECK: psllw
   %shamt = shufflevector <8 x i16> %amt, <8 x i16> undef, <8 x i32> <i32 6, i32 6, i32 6, i32 6, i32 6, i32 6, i32 6, i32 6>
   %shl = shl <8 x i16> %val, %shamt

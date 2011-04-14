@@ -613,11 +613,11 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0xd5,0x01]
         	aad	$1
 
-// CHECK: aad	$10
+// CHECK: aad
 // CHECK:  encoding: [0xd5,0x0a]
         	aad	$0xA
 
-// CHECK: aad	$10
+// CHECK: aad
 // CHECK:  encoding: [0xd5,0x0a]
         	aad
 
@@ -625,11 +625,11 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0xd4,0x02]
         	aam	$2
 
-// CHECK: aam	$10
+// CHECK: aam
 // CHECK:  encoding: [0xd4,0x0a]
         	aam	$0xA
 
-// CHECK: aam	$10
+// CHECK: aam
 // CHECK:  encoding: [0xd4,0x0a]
         	aam
 
@@ -725,7 +725,7 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0xdf,0xf2]
         	fcompi	%st(2)
 
-// CHECK: fcompi	%st(1)
+// CHECK: fcompi
 // CHECK:  encoding: [0xdf,0xf1]
         	fcompi
 
@@ -737,7 +737,7 @@ pshufw $90, %mm4, %mm0
 // CHECK:  encoding: [0xdf,0xea]
         	fucompi	%st(2)
 
-// CHECK: fucompi	%st(1)
+// CHECK: fucompi
 // CHECK:  encoding: [0xdf,0xe9]
         	fucompi
 
@@ -866,9 +866,9 @@ pshufw $90, %mm4, %mm0
 	movsw	%ds:(%esi), %es:(%edi)
 	movsw	(%esi), %es:(%edi)
 
-// CHECK: movsl # encoding: [0xa5]
-// CHECK: movsl
-// CHECK: movsl
+// CHECK: movsd # encoding: [0xa5]
+// CHECK: movsd
+// CHECK: movsd
 	movsl
 	movsl	%ds:(%esi), %es:(%edi)
 	movsl	(%esi), %es:(%edi)

@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 > %t
-; RUN: grep {movzbl	%\[abcd\]h,} %t | count 1
+; RUN: grep {movzx	%\[abcd\]h,} %t | count 1
 ; RUN: grep {shll	\$3,} %t | count 1
 
 ; Use an h register, but don't omit the explicit shift for

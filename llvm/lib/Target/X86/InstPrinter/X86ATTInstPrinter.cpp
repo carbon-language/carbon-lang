@@ -42,7 +42,8 @@ X86ATTInstPrinter::X86ATTInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
 }
 
 void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
-  printInstruction(MI, OS);
+  if (printAliasInstr(MI, OS))
+    printInstruction(MI, OS);
   
   // If verbose assembly is enabled, we can print some informative comments.
   if (CommentStream)

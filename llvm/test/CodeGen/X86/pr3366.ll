@@ -1,6 +1,7 @@
-; RUN: llc < %s -march=x86 -disable-cgp-branch-opts | grep movzbl
+; RUN: llc < %s -march=x86 -disable-cgp-branch-opts | FileCheck %s
 ; PR3366
 
+; CHECK: movzx
 define void @_ada_c34002a() nounwind {
 entry:
   %0 = load i8* null, align 1

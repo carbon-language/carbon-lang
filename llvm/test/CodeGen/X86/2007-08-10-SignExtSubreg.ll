@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | grep {movsbl}
+; RUN: llc < %s -march=x86 | grep {movsx}
 
 @X = global i32 0               ; <i32*> [#uses=1]
 

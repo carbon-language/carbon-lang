@@ -112,12 +112,12 @@
 // rdar://8470918
 smovb // CHECK: movsb
 smovw // CHECK: movsw
-smovl // CHECK: movsl
+smovl // CHECK: movsd
 smovq // CHECK: movsq
 
 // rdar://8456361
 // CHECK: rep
-// CHECK: movsl
+// CHECK: movsd
         rep movsd
 
 // CHECK: rep
@@ -232,10 +232,10 @@ cmovnzq %rbx, %rax
 
 // rdar://8407928
 // CHECK: inb	$127, %al
-// CHECK: inw	%dx, %ax
+// CHECK: inw	%dx
 // CHECK: outb	%al, $127
-// CHECK: outw	%ax, %dx
-// CHECK: inl	%dx, %eax
+// CHECK: outw	%dx
+// CHECK: inl	%dx
 inb	$0x7f
 inw	%dx
 outb	$0x7f
@@ -244,12 +244,12 @@ inl	%dx
 
 
 // PR8114
-// CHECK: outb	%al, %dx
-// CHECK: outb	%al, %dx
-// CHECK: outw	%ax, %dx
-// CHECK: outw	%ax, %dx
-// CHECK: outl	%eax, %dx
-// CHECK: outl	%eax, %dx
+// CHECK: outb	%dx
+// CHECK: outb	%dx
+// CHECK: outw	%dx
+// CHECK: outw	%dx
+// CHECK: outl	%dx
+// CHECK: outl	%dx
 
 out	%al, (%dx)
 outb	%al, (%dx)
@@ -258,12 +258,12 @@ outw	%ax, (%dx)
 out	%eax, (%dx)
 outl	%eax, (%dx)
 
-// CHECK: inb	%dx, %al
-// CHECK: inb	%dx, %al
-// CHECK: inw	%dx, %ax
-// CHECK: inw	%dx, %ax
-// CHECK: inl	%dx, %eax
-// CHECK: inl	%dx, %eax
+// CHECK: inb	%dx
+// CHECK: inb	%dx
+// CHECK: inw	%dx
+// CHECK: inw	%dx
+// CHECK: inl	%dx
+// CHECK: inl	%dx
 
 in	(%dx), %al
 inb	(%dx), %al
@@ -274,16 +274,16 @@ inl	(%dx), %eax
 
 // rdar://8431422
 
-// CHECK: fxch	%st(1)
-// CHECK: fucom	%st(1)
-// CHECK: fucomp	%st(1)
-// CHECK: faddp	%st(1)
+// CHECK: fxch
+// CHECK: fucom
+// CHECK: fucomp
+// CHECK: faddp
 // CHECK: faddp	%st(0)
-// CHECK: fsubp	%st(1)
-// CHECK: fsubrp	%st(1)
-// CHECK: fmulp	%st(1)
-// CHECK: fdivp	%st(1)
-// CHECK: fdivrp	%st(1)
+// CHECK: fsubp
+// CHECK: fsubrp
+// CHECK: fmulp
+// CHECK: fdivp
+// CHECK: fdivrp
 
 fxch
 fucom
@@ -296,11 +296,11 @@ fmulp
 fdivp
 fdivrp
 
-// CHECK: fcomi	%st(1)
+// CHECK: fcomi
 // CHECK: fcomi	%st(2)
-// CHECK: fucomi	%st(1)
-// CHECK: fucomi	%st(2)
-// CHECK: fucomi	%st(2)
+// CHECK: fucomi
+// CHECK: fucomi %st(2)
+// CHECK: fucomi %st(2)
 
 fcomi
 fcomi	%st(2)
@@ -604,7 +604,7 @@ movsq
 // CHECK:   encoding: [0x48,0xa5]
 
 movsl
-// CHECK: movsl
+// CHECK: movsd
 // CHECK:   encoding: [0xa5]
 
 stosq
@@ -681,65 +681,65 @@ btq $0x01,%rdx
 // CHECK:  encoding: [0x48,0x0f,0xba,0xe2,0x01]
 
 //rdar://8017633
-// CHECK: movzbl	%al, %esi
+// CHECK: movzx	%al, %esi
 // CHECK:  encoding: [0x0f,0xb6,0xf0]
         movzx %al, %esi
 
-// CHECK: movzbq	%al, %rsi
+// CHECK: movzx	%al, %rsi
 // CHECK:  encoding: [0x48,0x0f,0xb6,0xf0]
         movzx %al, %rsi
 
-// CHECK: movsbw	%al, %ax
+// CHECK: movsx	%al, %ax
 // CHECK: encoding: [0x66,0x0f,0xbe,0xc0]
-movsx %al, %ax
+        movsx %al, %ax
 
-// CHECK: movsbl	%al, %eax
+// CHECK: movsx	%al, %eax
 // CHECK: encoding: [0x0f,0xbe,0xc0]
-movsx %al, %eax
+        movsx %al, %eax
 
-// CHECK: movswl	%ax, %eax
+// CHECK: movsx	%ax, %eax
 // CHECK: encoding: [0x0f,0xbf,0xc0]
-movsx %ax, %eax
+        movsx %ax, %eax
 
-// CHECK: movsbq	%bl, %rax
+// CHECK: movsx	%bl, %rax
 // CHECK: encoding: [0x48,0x0f,0xbe,0xc3]
-movsx %bl, %rax
+        movsx %bl, %rax
 
-// CHECK: movswq %cx, %rax
+// CHECK: movsx %cx, %rax
 // CHECK: encoding: [0x48,0x0f,0xbf,0xc1]
-movsx %cx, %rax
+        movsx %cx, %rax
 
-// CHECK: movslq	%edi, %rax
+// CHECK: movsx	%edi, %rax
 // CHECK: encoding: [0x48,0x63,0xc7]
-movsx %edi, %rax
+        movsx %edi, %rax
 
-// CHECK: movzbw	%al, %ax
+// CHECK: movzx	%al, %ax
 // CHECK: encoding: [0x66,0x0f,0xb6,0xc0]
-movzx %al, %ax
+        movzx %al, %ax
 
-// CHECK: movzbl	%al, %eax
+// CHECK: movzx	%al, %eax
 // CHECK: encoding: [0x0f,0xb6,0xc0]
-movzx %al, %eax
+        movzx %al, %eax
 
-// CHECK: movzwl	%ax, %eax
+// CHECK: movzx	%ax, %eax
 // CHECK: encoding: [0x0f,0xb7,0xc0]
-movzx %ax, %eax
+        movzx %ax, %eax
 
-// CHECK: movzbq	%bl, %rax
+// CHECK: movzx	%bl, %rax
 // CHECK: encoding: [0x48,0x0f,0xb6,0xc3]
-movzx %bl, %rax
+        movzx %bl, %rax
 
-// CHECK: movzwq	%cx, %rax
+// CHECK: movzx	%cx, %rax
 // CHECK: encoding: [0x48,0x0f,0xb7,0xc1]
-movzx %cx, %rax
+        movzx %cx, %rax
 
 // CHECK: movsbw	(%rax), %ax
 // CHECK: encoding: [0x66,0x0f,0xbe,0x00]
-movsx (%rax), %ax
+        movsx (%rax), %ax
 
 // CHECK: movzbw	(%rax), %ax
 // CHECK: encoding: [0x66,0x0f,0xb6,0x00]
-movzx (%rax), %ax
+        movzx (%rax), %ax
 
 
 // rdar://7873482
@@ -790,7 +790,7 @@ lock/incl 1(%rsp)
 rep movsl
 // CHECK: rep
 // CHECK: encoding: [0xf3]
-// CHECK: movsl
+// CHECK: movsd
 // CHECK: encoding: [0xa5]
 
 
@@ -1027,9 +1027,9 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	movsw	%ds:(%rsi), %es:(%rdi)
 	movsw	(%rsi), %es:(%rdi)
 
-// CHECK: movsl # encoding: [0xa5]
-// CHECK: movsl
-// CHECK: movsl
+// CHECK: movsd # encoding: [0xa5]
+// CHECK: movsd
+// CHECK: movsd
 	movsl
 	movsl	%ds:(%rsi), %es:(%rdi)
 	movsl	(%rsi), %es:(%rdi)

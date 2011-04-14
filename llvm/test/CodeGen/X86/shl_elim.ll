@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 | grep {movl	8(.esp), %eax}
 ; RUN: llc < %s -march=x86 | grep {shrl	.eax}
-; RUN: llc < %s -march=x86 | grep {movswl	.ax, .eax}
+; RUN: llc < %s -march=x86 | grep {movsx	.ax, .eax}
 
 define i32 @test1(i64 %a) nounwind {
         %tmp29 = lshr i64 %a, 24                ; <i64> [#uses=1]
