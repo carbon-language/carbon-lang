@@ -143,7 +143,7 @@ NOT_HERE_BEFORE_10_6(__gcc_qsub)
 NOT_HERE_BEFORE_10_6(__trampoline_setup)
 #endif /* __ppc__ */
 
-#if __arm__
+#if __arm__ && __DYNAMIC__
    #define NOT_HERE_UNTIL_AFTER_4_3(sym) \
         extern const char sym##_tmp1 __asm("$ld$hide$os3.0$_" #sym ); \
             __attribute__((visibility("default"))) const char sym##_tmp1 = 0; \
@@ -278,7 +278,7 @@ NOT_HERE_UNTIL_AFTER_4_3(__unordsf2vfp)
 
 NOT_HERE_UNTIL_AFTER_4_3(__divmodsi4)
 NOT_HERE_UNTIL_AFTER_4_3(__udivmodsi4)
-#endif
+#endif // __arm__ && __DYNAMIC__
 
        
        
