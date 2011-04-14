@@ -1203,8 +1203,11 @@ public:
                                 SourceLocation StartLoc,
                                 SourceLocation IdLoc,
                                 IdentifierInfo *Id) {
-    return getSema().BuildExceptionDeclaration(0, Declarator,
-                                               StartLoc, IdLoc, Id);
+    VarDecl *Var = getSema().BuildExceptionDeclaration(0, Declarator,
+                                                       StartLoc, IdLoc, Id);
+    if (Var)
+      getSema().CurContext->addDecl(Var);
+    return Var;
   }
 
   /// \brief Build a new C++ catch statement.

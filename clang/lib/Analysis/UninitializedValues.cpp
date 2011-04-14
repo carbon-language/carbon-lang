@@ -394,13 +394,7 @@ public:
   void BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt *fs);
   
   bool isTrackedVar(const VarDecl *vd) {
-#if 1
-    // FIXME: This is a temporary workaround to deal with the fact
-    // that DeclContext's do not always contain all of their variables!
-    return vals.hasEntry(vd);
-#else
     return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
-#endif
   }
   
   FindVarResult findBlockVarDecl(Expr *ex);
