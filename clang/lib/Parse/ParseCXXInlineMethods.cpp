@@ -87,6 +87,14 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
     }
   }
 
+
+  if (!FnD) {
+    // If semantic analysis could not build a function declaration,
+    // just throw away the late-parsed declaration.
+    delete getCurrentClass().LateParsedDeclarations.back();
+    getCurrentClass().LateParsedDeclarations.pop_back();
+  }
+
   return FnD;
 }
 
