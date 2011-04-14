@@ -2463,8 +2463,8 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(llvm::StringRef FileName,
   }
 
   if (!ASTBuffers.empty()) {
-    F.Buffer.reset(ASTBuffers.front());
-    ASTBuffers.pop_front();
+    F.Buffer.reset(ASTBuffers.back());
+    ASTBuffers.pop_back();
     assert(F.Buffer && "Passed null buffer");
   } else {
     // Open the AST file.
