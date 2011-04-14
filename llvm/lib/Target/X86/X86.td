@@ -1,10 +1,10 @@
 //===- X86.td - Target definition file for the Intel X86 ---*- tablegen -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a target description file for the Intel i386 architecture, refered to
@@ -32,7 +32,7 @@ def FeatureMMX     : SubtargetFeature<"mmx","X86SSELevel", "MMX",
 def FeatureSSE1    : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
                                       "Enable SSE instructions",
                                       // SSE codegen depends on cmovs, and all
-                                      // SSE1+ processors support them. 
+                                      // SSE1+ processors support them.
                                       [FeatureMMX, FeatureCMOV]>;
 def FeatureSSE2    : SubtargetFeature<"sse2", "X86SSELevel", "SSE2",
                                       "Enable SSE2 instructions",
