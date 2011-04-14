@@ -2398,6 +2398,21 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Kind = tok::lessequal;
     } else if (Features.Digraphs && Char == ':') {     // '<:' -> '['
+      if (Features.CPlusPlus0x &&
+          getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == ':') {
+        // C++0x [lex.pptoken]p3:
+        //  Otherwise, if the next three characters are <:: and the subsequent
+        //  character is neither : nor >, the < is treated as a preprocessor
+        //  token by itself and not as the first character of the alternative
+        //  token <:.
+        unsigned SizeTmp3;
+        char After = getCharAndSize(CurPtr + SizeTmp + SizeTmp2, SizeTmp3);
+        if (After != ':' && After != '>') {
+          Kind = tok::less;
+          break;
+        }
+      }
+
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Kind = tok::l_square;
     } else if (Features.Digraphs && Char == '%') {     // '<%' -> '{'
