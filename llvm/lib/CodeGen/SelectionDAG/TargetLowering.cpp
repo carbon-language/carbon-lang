@@ -1849,7 +1849,6 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               ISD::CondCode Cond, bool foldBooleans,
                               DAGCombinerInfo &DCI, DebugLoc dl) const {
   SelectionDAG &DAG = DCI.DAG;
-  LLVMContext &Context = *DAG.getContext();
 
   // These setcc operations always fold.
   switch (Cond) {
@@ -1956,7 +1955,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
       }
       if (bestWidth) {
-        EVT newVT = EVT::getIntegerVT(Context, bestWidth);
+        EVT newVT = EVT::getIntegerVT(*DAG.getContext(), bestWidth);
         if (newVT.isRound()) {
           EVT PtrType = Lod->getOperand(1).getValueType();
           SDValue Ptr = Lod->getBasePtr();
