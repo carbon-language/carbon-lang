@@ -1184,9 +1184,17 @@ def tREVSH :                    // A8.6.136
                  "revsh", "\t$Rd, $Rm",
                  [(set tGPR:$Rd,
                        (sext_inreg
-                         (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
+                         (or (srl tGPR:$Rm, (i32 8)),
                              (shl tGPR:$Rm, (i32 8))), i16))]>,
                  Requires<[IsThumb, IsThumb1Only, HasV6]>;
+
+def : T1Pat<(sext_inreg (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
+                            (shl tGPR:$Rm, (i32 8))), i16),
+            (tREVSH tGPR:$Rm)>,
+      Requires<[IsThumb, IsThumb1Only, HasV6]>;
+
+def : T1Pat<(sra (bswap tGPR:$Rm), (i32 16)), (tREVSH tGPR:$Rm)>,
+      Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 // Rotate right register
 def tROR :                      // A8.6.139
