@@ -682,24 +682,23 @@ static const Type *getScaledElementType(const Type *OldTy,
 static Value *CreateShuffleVectorCast(Value *FromVal, const Type *ToType,
                                       IRBuilder<> &Builder) {
   const Type *FromType = FromVal->getType();
-  const VectorType *FromVTy = dyn_cast<VectorType>(FromType);
-  const VectorType *ToVTy = dyn_cast<VectorType>(ToType);
-  assert(FromVTy && ToVTy &&
-         (ToVTy->getElementType() == FromVTy->getElementType()) &&
+  const VectorType *FromVTy = cast<VectorType>(FromType);
+  const VectorType *ToVTy = cast<VectorType>(ToType);
+  assert((ToVTy->getElementType() == FromVTy->getElementType()) &&
          "Vectors must have the same element type");
-   LLVMContext &Context = FromVal->getContext();
    Value *UnV = UndefValue::get(FromType);
    unsigned numEltsFrom = FromVTy->getNumElements();
    unsigned numEltsTo = ToVTy->getNumElements();
 
    SmallVector<Constant*, 3> Args;
+   const Type* Int32Ty = Builder.getInt32Ty();
    unsigned minNumElts = std::min(numEltsFrom, numEltsTo);
    unsigned i;
    for (i=0; i != minNumElts; ++i)
-     Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
+     Args.push_back(ConstantInt::get(Int32Ty, i));
 
    if (i < numEltsTo) {
-     Constant* UnC = UndefValue::get(Type::getInt32Ty(Context));
+     Constant* UnC = UndefValue::get(Int32Ty);
      for (; i != numEltsTo; ++i)
        Args.push_back(UnC);
    }
