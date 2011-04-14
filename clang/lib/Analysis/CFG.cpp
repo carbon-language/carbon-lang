@@ -2173,13 +2173,15 @@ CFGBlock *CFGBuilder::VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E,
   }
 
   // VLA types have expressions that must be evaluated.
+  CFGBlock *lastBlock = Block;
+  
   if (E->isArgumentType()) {
     for (const VariableArrayType *VA =FindVA(E->getArgumentType().getTypePtr());
          VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
-      addStmt(VA->getSizeExpr());
+      lastBlock = addStmt(VA->getSizeExpr());
   }
 
-  return Block;
+  return lastBlock;
 }
 
 /// VisitStmtExpr - Utility method to handle (nested) statement
