@@ -1151,6 +1151,7 @@ def err_cconv_varargs : Error<
 def err_regparm_mismatch : Error<"function declared with with regparm(%0) "
   "attribute was previously declared "
   "%plural{0:without the regparm|:with the regparm(%1)}1 attribute">;
+def err_invalid_pcs : Error<"Invalid PCS type">;
 
 // Availability attribute
 def warn_availability_unknown_platform : Warning<

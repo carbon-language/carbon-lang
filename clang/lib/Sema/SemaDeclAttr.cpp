@@ -2427,6 +2427,30 @@ static void HandleCallConvAttr(Decl *d, const AttributeList &attr, Sema &S) {
   case AttributeList::AT_pascal:
     d->addAttr(::new (S.Context) PascalAttr(attr.getLoc(), S.Context));
     return;
+  case AttributeList::AT_pcs: {
+    Expr *Arg = attr.getArg(0);
+    StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+    if (Str == 0 || Str->isWide()) {
+      S.Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
+        << "pcs" << 1;
+      attr.setInvalid();
+      return;
+    }
+
+    llvm::StringRef StrRef = Str->getString();
+    PcsAttr::PCSType PCS;
+    if (StrRef == "aapcs")
+      PCS = PcsAttr::AAPCS;
+    else if (StrRef == "aapcs-vfp")
+      PCS = PcsAttr::AAPCS_VFP;
+    else {
+      S.Diag(attr.getLoc(), diag::err_invalid_pcs);
+      attr.setInvalid();
+      return;
+    }
+
+    d->addAttr(::new (S.Context) PcsAttr(attr.getLoc(), S.Context, PCS));
+  }
   default:
     llvm_unreachable("unexpected attribute kind");
     return;
@@ -2442,19 +2466,41 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   if (attr.isInvalid())
     return true;
 
-  if (attr.getNumArgs() != 0) {
+  if (attr.getNumArgs() != 0 &&
+      !(attr.getKind() == AttributeList::AT_pcs && attr.getNumArgs() == 1)) {
     Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     attr.setInvalid();
     return true;
   }
 
-  // TODO: diagnose uses of these conventions on the wrong target.
+  // TODO: diagnose uses of these conventions on the wrong target. Or, better
+  // move to TargetAttributesSema one day.
   switch (attr.getKind()) {
   case AttributeList::AT_cdecl: CC = CC_C; break;
   case AttributeList::AT_fastcall: CC = CC_X86FastCall; break;
   case AttributeList::AT_stdcall: CC = CC_X86StdCall; break;
   case AttributeList::AT_thiscall: CC = CC_X86ThisCall; break;
   case AttributeList::AT_pascal: CC = CC_X86Pascal; break;
+  case AttributeList::AT_pcs: {
+    Expr *Arg = attr.getArg(0);
+    StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+    if (Str == 0 || Str->isWide()) {
+      Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
+        << "pcs" << 1;
+      attr.setInvalid();
+      return true;
+    }
+
+    llvm::StringRef StrRef = Str->getString();
+    if (StrRef == "aapcs") {
+      CC = CC_AAPCS;
+      break;
+    } else if (StrRef == "aapcs-vfp") {
+      CC = CC_AAPCS_VFP;
+      break;
+    }
+    // FALLS THROUGH
+  }
   default: llvm_unreachable("unexpected attribute kind"); return true;
   }
 
@@ -2882,6 +2928,7 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_fastcall:
   case AttributeList::AT_thiscall:
   case AttributeList::AT_pascal:
+  case AttributeList::AT_pcs:
     HandleCallConvAttr(D, Attr, S);
     break;
   case AttributeList::AT_opencl_kernel_function:

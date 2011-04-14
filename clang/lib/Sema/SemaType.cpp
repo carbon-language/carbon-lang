@@ -119,7 +119,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
     case AttributeList::AT_stdcall: \
     case AttributeList::AT_thiscall: \
     case AttributeList::AT_pascal: \
-    case AttributeList::AT_regparm
+    case AttributeList::AT_regparm: \
+    case AttributeList::AT_pcs \
 
 namespace {
   /// An object which stores processing state for the entire
@@ -2244,6 +2245,8 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_thiscall;
   case AttributedType::attr_pascal:
     return AttributeList::AT_pascal;
+  case AttributedType::attr_pcs:
+    return AttributeList::AT_pcs;
   }
   llvm_unreachable("unexpected attribute kind!");
   return AttributeList::Kind();

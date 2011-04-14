@@ -213,6 +213,7 @@ public:
     AT_ownership_takes,    // Clang-specific.
     AT_packed,
     AT_pascal,
+    AT_pcs,  // ARM specific
     AT_pure,
     AT_regparm,
     AT_section,

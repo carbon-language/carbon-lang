@@ -400,6 +400,12 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
   case CC_X86Pascal:
     S += " __attribute__((pascal))";
     break;
+  case CC_AAPCS:
+    S += " __attribute__((pcs(\"aapcs\")))";
+    break;
+  case CC_AAPCS_VFP:
+    S += " __attribute__((pcs(\"aapcs-vfp\")))";
+    break;
   }
   if (Info.getNoReturn())
     S += " __attribute__((noreturn))";
@@ -851,6 +857,16 @@ void TypePrinter::printAttributed(const AttributedType *T,
   case AttributedType::attr_stdcall: S += "stdcall"; break;
   case AttributedType::attr_thiscall: S += "thiscall"; break;
   case AttributedType::attr_pascal: S += "pascal"; break;
+  case AttributedType::attr_pcs: {
+   S += "pcs(";
+   QualType t = T->getEquivalentType();
+   while (!t->isFunctionType())
+     t = t->getPointeeType();
+   S += (t->getAs<FunctionType>()->getCallConv() == CC_AAPCS ?
+         "\"aapcs\"" : "\"aapcs-vfp\"");
+   S += ")";
+   break;
+  }
   }
   S += "))";
 }

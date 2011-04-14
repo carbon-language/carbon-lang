@@ -874,6 +874,8 @@ void MicrosoftCXXNameMangler::mangleCallingConvention(const FunctionType *T,
   if (CC == CC_Default)
     CC = IsInstMethod ? getASTContext().getDefaultMethodCallConv() : CC_C;
   switch (CC) {
+    default:
+      assert(0 && "Unsupported CC for mangling");
     case CC_Default:
     case CC_C: Out << 'A'; break;
     case CC_X86Pascal: Out << 'C'; break;

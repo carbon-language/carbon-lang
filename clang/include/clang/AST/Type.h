@@ -360,7 +360,9 @@ enum CallingConv {
   CC_X86StdCall,  // __attribute__((stdcall))
   CC_X86FastCall, // __attribute__((fastcall))
   CC_X86ThisCall, // __attribute__((thiscall))
-  CC_X86Pascal    // __attribute__((pascal))
+  CC_X86Pascal,   // __attribute__((pascal))
+  CC_AAPCS,       // __attribute__((pcs("aapcs")))
+  CC_AAPCS_VFP    // __attribute__((pcs("aapcs-vfp")))
 };
 
 typedef std::pair<const Type*, Qualifiers> SplitQualType;
@@ -2864,9 +2866,10 @@ public:
 
     // Enumerated operand (string or keyword).
     attr_objc_gc,
+    attr_pcs,
 
     FirstEnumOperandKind = attr_objc_gc,
-    LastEnumOperandKind = attr_objc_gc,
+    LastEnumOperandKind = attr_pcs,
 
     // No operand.
     attr_noreturn,

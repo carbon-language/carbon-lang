@@ -2271,27 +2271,33 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
        it != ie; ++it)
     it->info = classifyArgumentType(it->type);
 
-  const llvm::Triple &Triple(getContext().Target.getTriple());
+  // Always honor user-specified calling convention.
+  if (FI.getCallingConvention() != llvm::CallingConv::C)
+    return;
+
+  // Calling convention as default by an ABI.
   llvm::CallingConv::ID DefaultCC;
-  if (Triple.getEnvironmentName() == "gnueabi" ||
-      Triple.getEnvironmentName() == "eabi")
+  llvm::StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+  if (Env == "gnueabi" || Env == "eabi")
     DefaultCC = llvm::CallingConv::ARM_AAPCS;
   else
     DefaultCC = llvm::CallingConv::ARM_APCS;
 
+  // If user did not ask for specific calling convention explicitly (e.g. via
+  // pcs attribute), set effective calling convention if it's different than ABI
+  // default.
   switch (getABIKind()) {
   case APCS:
     if (DefaultCC != llvm::CallingConv::ARM_APCS)
       FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_APCS);
     break;
-
   case AAPCS:
     if (DefaultCC != llvm::CallingConv::ARM_AAPCS)
       FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS);
     break;
-
   case AAPCS_VFP:
-    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS_VFP);
+    if (DefaultCC != llvm::CallingConv::ARM_AAPCS_VFP)
+      FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS_VFP);
     break;
   }
 }

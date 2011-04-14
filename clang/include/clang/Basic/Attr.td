@@ -416,6 +416,13 @@ def Packed : InheritableAttr {
   let Spellings = ["packed"];
 }
 
+def Pcs : InheritableAttr {
+  let Spellings = ["pcs"];
+  let Args = [EnumArgument<"PCS", "PCSType",
+                           ["aapcs", "aapcs-vfp"],
+                           ["AAPCS", "AAPCS_VFP"]>];
+}
+
 def Pure : InheritableAttr {
   let Spellings = ["pure"];
 }
