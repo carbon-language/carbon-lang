@@ -2111,7 +2111,8 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   std::string StrEncoding;
   Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
   Expr *Replacement = StringLiteral::Create(*Context,StrEncoding.c_str(),
-                                            StrEncoding.length(), false,StrType,
+                                            StrEncoding.length(),
+                                            false, false, StrType,
                                             SourceLocation());
   ReplaceStmt(Exp, Replacement);
 
@@ -2130,7 +2131,8 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   SelExprs.push_back(StringLiteral::Create(*Context,
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
-                                       false, argType, SourceLocation()));
+                                       false, false, argType, 
+                                           SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
   ReplaceStmt(Exp, SelExp);
@@ -2796,7 +2798,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     ClsExprs.push_back(StringLiteral::Create(*Context,
                                    ClassDecl->getIdentifier()->getNameStart(),
                                    ClassDecl->getIdentifier()->getLength(),
-                                   false, argType, SourceLocation()));
+                                   false, false, argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(),
@@ -2875,8 +2877,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     ClsExprs.push_back(StringLiteral::Create(*Context,
                                              clsName->getNameStart(),
                                              clsName->getLength(),
-                                             false, argType,
-                                             SourceLocation()));
+                                             false, false, 
+                                             argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(), 
@@ -2907,7 +2909,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     ClsExprs.push_back(StringLiteral::Create(*Context,
                                    ClassDecl->getIdentifier()->getNameStart(),
                                    ClassDecl->getIdentifier()->getLength(),
-                                   false, argType, SourceLocation()));
+                                   false, false, argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                  &ClsExprs[0],
                                                  ClsExprs.size(), 
@@ -2989,7 +2991,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   SelExprs.push_back(StringLiteral::Create(*Context,
                                        Exp->getSelector().getAsString().c_str(),
                                        Exp->getSelector().getAsString().size(),
-                                       false, argType, SourceLocation()));
+                                       false, false, argType, SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size(),
                                                   StartLoc,

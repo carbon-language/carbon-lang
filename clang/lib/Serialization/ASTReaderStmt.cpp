@@ -468,7 +468,8 @@ void ASTStmtReader::VisitStringLiteral(StringLiteral *E) {
   assert(Record[Idx] == E->getNumConcatenated() &&
          "Wrong number of concatenated tokens!");
   ++Idx;
-  E->setWide(Record[Idx++]);
+  E->IsWide = Record[Idx++];
+  E->IsPascal = Record[Idx++];
 
   // Read string data
   llvm::SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);

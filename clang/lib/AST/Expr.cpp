@@ -511,7 +511,7 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 
 StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
                                      unsigned ByteLength, bool Wide,
-                                     QualType Ty,
+                                     bool Pascal, QualType Ty,
                                      const SourceLocation *Loc,
                                      unsigned NumStrs) {
   // Allocate enough space for the StringLiteral plus an array of locations for
@@ -527,6 +527,7 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
   SL->StrData = AStrData;
   SL->ByteLength = ByteLength;
   SL->IsWide = Wide;
+  SL->IsPascal = Pascal;
   SL->TokLocs[0] = Loc[0];
   SL->NumConcatenated = NumStrs;
 

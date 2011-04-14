@@ -425,6 +425,7 @@ void ASTStmtWriter::VisitStringLiteral(StringLiteral *E) {
   Record.push_back(E->getByteLength());
   Record.push_back(E->getNumConcatenated());
   Record.push_back(E->isWide());
+  Record.push_back(E->isPascal());
   // FIXME: String data should be stored as a blob at the end of the
   // StringLiteral. However, we can't do so now because we have no
   // provision for coping with abbreviations when we're jumping around
