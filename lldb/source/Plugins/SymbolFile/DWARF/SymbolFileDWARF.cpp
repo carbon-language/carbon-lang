@@ -3026,8 +3026,17 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                                 case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                                 case DW_AT_name:
+                                    
                                     type_name_cstr = form_value.AsCString(&get_debug_str_data());
-                                    type_name_const_str.SetCString(type_name_cstr);
+                                    // Work around a bug in llvm-gcc where they give a name to a reference type which doesn't
+                                    // include the "&"...
+                                    if (tag == DW_TAG_reference_type)
+                                    {
+                                        if (strchr (type_name_cstr, '&') == NULL)
+                                            type_name_cstr = NULL;
+                                    }
+                                    if (type_name_cstr)
+                                        type_name_const_str.SetCString(type_name_cstr);
                                     break;
                                 case DW_AT_byte_size:   byte_size = form_value.Unsigned();  byte_size_valid = true; break;
                                 case DW_AT_encoding:    encoding = form_value.Unsigned(); break;
