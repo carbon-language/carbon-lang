@@ -2657,6 +2657,33 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
     // <size> == 32 && Inst{6} == 1 --> DblSpaced = true
     if (Name.endswith("32") || Name.endswith("32_UPD"))
       DblSpaced = slice(insn, 6, 6) == 1;
+  } else if (Name.find("DUP") != std::string::npos) {
+    // Single element (or structure) to all lanes.
+    // Inst{9-8} encodes the number of element(s) in the structure, with:
+    // 0b00 (VLD1DUP) (for this, a bit makes sense only for data size 16 and 32.
+    // 0b01 (VLD2DUP)
+    // 0b10 (VLD3DUP) (for this, a bit must be encoded as 0)
+    // 0b11 (VLD4DUP)
+    //
+    // Inst{7-6} encodes the data size, with:
+    // 0b00 => 8, 0b01 => 16, 0b10 => 32
+    //
+    // Inst{4} (the a bit) encodes the align action (0: standard alignment)
+    unsigned elem = slice(insn, 9, 8) + 1;
+    unsigned a = slice(insn, 4, 4);
+    if (elem != 3) {
+      // 0b11 is not a valid encoding for Inst{7-6}.
+      if (slice(insn, 7, 6) == 3)
+        return false;
+      unsigned data_size = 8 << slice(insn, 7, 6);
+      // For VLD1DUP, a bit makes sense only for data size of 16 and 32.
+      if (a && data_size == 8)
+        return false;
+
+      // Now we can calculate the alignment!
+      if (a)
+        alignment = elem * data_size;
+    }
   } else {
     // Multiple n-element structures with type encoded as Inst{11-8}.
     // See, for example, A8.6.316 VLD4 (multiple 4-element structures).
