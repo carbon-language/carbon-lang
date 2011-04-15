@@ -2952,7 +2952,10 @@ SDValue ARMTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
         Tmp1 = DAG.getNode(ARMISD::VSHL, dl, OpVT,
                            DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp1),
                            DAG.getConstant(32, MVT::i32));
-    }
+    } else if (VT == MVT::f32)
+      Tmp1 = DAG.getNode(ARMISD::VSHRu, dl, MVT::v1i64,
+                         DAG.getNode(ISD::BITCAST, dl, MVT::v1i64, Tmp1),
+                         DAG.getConstant(32, MVT::i32));
     Tmp0 = DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp0);
     Tmp1 = DAG.getNode(ISD::BITCAST, dl, OpVT, Tmp1);
 
