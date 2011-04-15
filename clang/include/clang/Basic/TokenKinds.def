@@ -190,6 +190,7 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //              is a keyword in the implementation namespace that should
 //              always be treated as a keyword
 //   KEYC99   - This is a keyword introduced to C in C99
+//   KEYC1X   - This is a keyword introduced to C in C1X
 //   KEYCXX   - This is a C++ keyword, or a C++-specific keyword in the
 //              implementation namespace
 //   KEYNOCXX - This is a keyword in every non-C++ dialect.

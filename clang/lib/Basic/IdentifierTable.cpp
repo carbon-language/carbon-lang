@@ -91,7 +91,8 @@ namespace {
     KEYNOCXX = 0x80,
     KEYBORLAND = 0x100,
     KEYOPENCL = 0x200,
-    KEYALL = 0x3ff
+    KEYC1X = 0x400,
+    KEYALL = 0x7ff
   };
 }
 
@@ -118,6 +119,7 @@ static void AddKeyword(llvm::StringRef Keyword,
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;
   else if (LangOpts.OpenCL && (Flags & KEYOPENCL)) AddResult = 2;
   else if (!LangOpts.CPlusPlus && (Flags & KEYNOCXX)) AddResult = 2;
+  else if (LangOpts.C1X && (Flags & KEYC1X)) AddResult = 2;
 
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;

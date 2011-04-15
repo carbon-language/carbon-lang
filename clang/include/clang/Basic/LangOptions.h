@@ -34,6 +34,7 @@ public:
   unsigned Digraphs          : 1;  // C94, C99 and C++
   unsigned HexFloats         : 1;  // C99 Hexadecimal float constants.
   unsigned C99               : 1;  // C99 Support
+  unsigned C1X               : 1;  // C1X Support
   unsigned Microsoft         : 1;  // Microsoft extensions.
   unsigned Borland           : 1;  // Borland extensions.
   unsigned CPlusPlus         : 1;  // C++ Support
@@ -170,7 +171,7 @@ public:
     AppleKext = 0;
     ObjCDefaultSynthProperties = 0;
     NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
-    C99 = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
+    C99 = C1X = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;
     Exceptions = ObjCExceptions = CXXExceptions = SjLjExceptions = 0;
     TraditionalCPP = Freestanding = NoBuiltin = 0;

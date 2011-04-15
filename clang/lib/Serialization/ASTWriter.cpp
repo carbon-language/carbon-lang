@@ -1007,6 +1007,7 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.Digraphs);  // C94, C99 and C++
   Record.push_back(LangOpts.HexFloats);  // C99 Hexadecimal float constants.
   Record.push_back(LangOpts.C99);  // C99 Support
+  Record.push_back(LangOpts.C1X);  // C1X Support
   Record.push_back(LangOpts.Microsoft);  // Microsoft extensions.
   // LangOpts.MSCVersion is ignored because all it does it set a macro, which is
   // already saved elsewhere.

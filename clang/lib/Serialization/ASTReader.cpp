@@ -79,6 +79,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_BENIGN(Digraphs);
   PARSE_LANGOPT_BENIGN(HexFloats);
   PARSE_LANGOPT_IMPORTANT(C99, diag::warn_pch_c99);
+  PARSE_LANGOPT_IMPORTANT(C1X, diag::warn_pch_c1x);
   PARSE_LANGOPT_IMPORTANT(Microsoft, diag::warn_pch_microsoft_extensions);
   PARSE_LANGOPT_BENIGN(MSCVersion);
   PARSE_LANGOPT_IMPORTANT(CPlusPlus, diag::warn_pch_cplusplus);
@@ -2799,6 +2800,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(Digraphs);
     PARSE_LANGOPT(HexFloats);
     PARSE_LANGOPT(C99);
+    PARSE_LANGOPT(C1X);
     PARSE_LANGOPT(Microsoft);
     PARSE_LANGOPT(CPlusPlus);
     PARSE_LANGOPT(CPlusPlus0x);
