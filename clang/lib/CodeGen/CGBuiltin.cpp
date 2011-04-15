@@ -2103,6 +2103,138 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     LI->setAlignment(1); // Unaligned load.
     return Builder.CreateBitCast(LI, VecTy, "loadu.cast");
   }
+  // 3DNow!
+  case X86::BI__builtin_ia32_pavgusb:
+  case X86::BI__builtin_ia32_pf2id:
+  case X86::BI__builtin_ia32_pfacc:
+  case X86::BI__builtin_ia32_pfadd:
+  case X86::BI__builtin_ia32_pfcmpeq:
+  case X86::BI__builtin_ia32_pfcmpge:
+  case X86::BI__builtin_ia32_pfcmpgt:
+  case X86::BI__builtin_ia32_pfmax:
+  case X86::BI__builtin_ia32_pfmin:
+  case X86::BI__builtin_ia32_pfmul:
+  case X86::BI__builtin_ia32_pfrcp:
+  case X86::BI__builtin_ia32_pfrcpit1:
+  case X86::BI__builtin_ia32_pfrcpit2:
+  case X86::BI__builtin_ia32_pfrsqrt:
+  case X86::BI__builtin_ia32_pfrsqit1:
+  case X86::BI__builtin_ia32_pfrsqrtit1:
+  case X86::BI__builtin_ia32_pfsub:
+  case X86::BI__builtin_ia32_pfsubr:
+  case X86::BI__builtin_ia32_pi2fd:
+  case X86::BI__builtin_ia32_pmulhrw:
+  case X86::BI__builtin_ia32_pf2iw:
+  case X86::BI__builtin_ia32_pfnacc:
+  case X86::BI__builtin_ia32_pfpnacc:
+  case X86::BI__builtin_ia32_pi2fw:
+  case X86::BI__builtin_ia32_pswapdsf:
+  case X86::BI__builtin_ia32_pswapdsi: {
+    const char *name = 0;
+    Intrinsic::ID ID = Intrinsic::not_intrinsic;
+    switch(BuiltinID) {
+    case X86::BI__builtin_ia32_pavgusb:
+      name = "pavgusb";
+      ID = Intrinsic::x86_3dnow_pavgusb;
+      break;
+    case X86::BI__builtin_ia32_pf2id:
+      name = "pf2id";
+      ID = Intrinsic::x86_3dnow_pf2id;
+      break;
+    case X86::BI__builtin_ia32_pfacc:
+      name = "pfacc";
+      ID = Intrinsic::x86_3dnow_pfacc;
+      break;
+    case X86::BI__builtin_ia32_pfadd:
+      name = "pfadd";
+      ID = Intrinsic::x86_3dnow_pfadd;
+      break;
+    case X86::BI__builtin_ia32_pfcmpeq:
+      name = "pfcmpeq";
+      ID = Intrinsic::x86_3dnow_pfcmpeq;
+      break;
+    case X86::BI__builtin_ia32_pfcmpge:
+      name = "pfcmpge";
+      ID = Intrinsic::x86_3dnow_pfcmpge;
+      break;
+    case X86::BI__builtin_ia32_pfcmpgt:
+      name = "pfcmpgt";
+      ID = Intrinsic::x86_3dnow_pfcmpgt;
+      break;
+    case X86::BI__builtin_ia32_pfmax:
+      name = "pfmax";
+      ID = Intrinsic::x86_3dnow_pfmax;
+      break;
+    case X86::BI__builtin_ia32_pfmin:
+      name = "pfmin";
+      ID = Intrinsic::x86_3dnow_pfmin;
+      break;
+    case X86::BI__builtin_ia32_pfmul:
+      name = "pfmul";
+      ID = Intrinsic::x86_3dnow_pfmul;
+      break;
+    case X86::BI__builtin_ia32_pfrcp:
+      name = "pfrcp";
+      ID = Intrinsic::x86_3dnow_pfrcp;
+      break;
+    case X86::BI__builtin_ia32_pfrcpit1:
+      name = "pfrcpit1";
+      ID = Intrinsic::x86_3dnow_pfrcpit1;
+      break;
+    case X86::BI__builtin_ia32_pfrcpit2:
+      name = "pfrcpit2";
+      ID = Intrinsic::x86_3dnow_pfrcpit2;
+      break;
+    case X86::BI__builtin_ia32_pfrsqrt:
+      name = "pfrsqrt";
+      ID = Intrinsic::x86_3dnow_pfrsqrt;
+      break;
+    case X86::BI__builtin_ia32_pfrsqit1:
+    case X86::BI__builtin_ia32_pfrsqrtit1:
+      name = "pfrsqit1";
+      ID = Intrinsic::x86_3dnow_pfrsqit1;
+      break;
+    case X86::BI__builtin_ia32_pfsub:
+      name = "pfsub";
+      ID = Intrinsic::x86_3dnow_pfsub;
+      break;
+    case X86::BI__builtin_ia32_pfsubr:
+      name = "pfsubr";
+      ID = Intrinsic::x86_3dnow_pfsubr;
+      break;
+    case X86::BI__builtin_ia32_pi2fd:
+      name = "pi2fd";
+      ID = Intrinsic::x86_3dnow_pi2fd;
+      break;
+    case X86::BI__builtin_ia32_pmulhrw:
+      name = "pmulhrw";
+      ID = Intrinsic::x86_3dnow_pmulhrw;
+      break;
+    case X86::BI__builtin_ia32_pf2iw:
+      name = "pf2iw";
+      ID = Intrinsic::x86_3dnowa_pf2iw;
+      break;
+    case X86::BI__builtin_ia32_pfnacc:
+      name = "pfnacc";
+      ID = Intrinsic::x86_3dnowa_pfnacc;
+      break;
+    case X86::BI__builtin_ia32_pfpnacc:
+      name = "pfpnacc";
+      ID = Intrinsic::x86_3dnowa_pfpnacc;
+      break;
+    case X86::BI__builtin_ia32_pi2fw:
+      name = "pi2fw";
+      ID = Intrinsic::x86_3dnowa_pi2fw;
+      break;
+    case X86::BI__builtin_ia32_pswapdsf:
+    case X86::BI__builtin_ia32_pswapdsi:
+      name = "pswapd";
+      ID = Intrinsic::x86_3dnowa_pswapd;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
+  }
   }
 }
 
