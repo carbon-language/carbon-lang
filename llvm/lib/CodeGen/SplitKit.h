@@ -231,6 +231,30 @@ class SplitEditor {
   // entry in LiveOutCache.
   BitVector LiveOutSeen;
 
+  /// LiveInBlock - Info for updateSSA() about a block where a register is
+  /// live-in.
+  /// The updateSSA caller provides DomNode and Kill inside MBB, updateSSA()
+  /// adds the computed live-in value.
+  struct LiveInBlock {
+    // Dominator tree node for the block.
+    // Cleared by updateSSA when the final value has been determined.
+    MachineDomTreeNode *DomNode;
+
+    // Live-in value filled in by updateSSA once it is known.
+    VNInfo *Value;
+
+    // Position in block where the live-in range ends, or SlotIndex() if the
+    // range passes through the block.
+    SlotIndex Kill;
+
+    LiveInBlock(MachineDomTreeNode *node) : DomNode(node), Value(0) {}
+  };
+
+  /// LiveInBlocks - List of live-in blocks used by findReachingDefs() and
+  /// updateSSA(). This list is usually empty, it exists here to avoid frequent
+  /// reallocations.
+  SmallVector<LiveInBlock, 16> LiveInBlocks;
+
   /// defValue - define a value in RegIdx from ParentVNI at Idx.
   /// Idx does not have to be ParentVNI->def, but it must be contained within
   /// ParentVNI's live range in ParentLI. The new value is added to the value
@@ -254,17 +278,22 @@ class SplitEditor {
   /// Insert PHIDefs as needed to preserve SSA form.
   void extendRange(unsigned RegIdx, SlotIndex Idx);
 
-  /// updateSSA - Insert PHIDefs as necessary and update LiveOutCache such that
-  /// Edit.get(RegIdx) is live-in to all the blocks in LiveIn.
-  /// Return the value that is eventually live-in to IdxMBB.
-  VNInfo *updateSSA(unsigned RegIdx,
-                    SmallVectorImpl<MachineDomTreeNode*> &LiveIn,
-                    SlotIndex Idx,
-                    const MachineBasicBlock *IdxMBB);
+  /// findReachingDefs - Starting from MBB, add blocks to LiveInBlocks until all
+  /// reaching defs for LI are found.
+  /// @param LI   Live interval whose value is needed.
+  /// @param MBB  Block where LI should be live-in.
+  /// @param Kill Kill point in MBB.
+  /// @return Unique value seen, or NULL.
+  VNInfo *findReachingDefs(LiveInterval *LI, MachineBasicBlock *MBB,
+                           SlotIndex Kill);
 
-  /// transferSimpleValues - Transfer simply defined values to the new ranges.
-  /// Return true if any complex ranges were skipped.
-  bool transferSimpleValues();
+  /// updateSSA - Compute and insert PHIDefs such that all blocks in
+  // LiveInBlocks get a known live-in value. Add live ranges to the blocks.
+  void updateSSA();
+
+  /// transferValues - Transfer values to the new ranges.
+  /// Return true if any ranges were skipped.
+  bool transferValues();
 
   /// extendPHIKillRanges - Extend the ranges of all values killed by original
   /// parent PHIDefs.
