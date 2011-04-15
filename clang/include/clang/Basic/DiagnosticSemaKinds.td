@@ -2927,7 +2927,11 @@ def ext_array_size_conversion : Extension<
   "implicit conversion from array size expression of type %0 to "
   "%select{integral|enumeration}1 type %2 is a C++0x extension">,
   InGroup<CXX0x>;
-  
+def err_address_space_qualified_new : Error<
+  "'new' cannot allocate objects of type %0 in address space '%1'">;
+def err_address_space_qualified_delete : Error<
+  "'delete' cannot delete objects of type %0 in address space '%1'">;
+
 def err_default_init_const : Error<
   "default initialization of an object of const type %0"
   "%select{| requires a user-provided default constructor}1">;

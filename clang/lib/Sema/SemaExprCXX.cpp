@@ -1104,7 +1104,10 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
   else if (AllocType->isVariablyModifiedType())
     return Diag(Loc, diag::err_variably_modified_new_type)
              << AllocType;
-
+  else if (unsigned AddressSpace = AllocType.getAddressSpace())
+    return Diag(Loc, diag::err_address_space_qualified_new)
+      << AllocType.getUnqualifiedType() << AddressSpace;
+           
   return false;
 }
 
@@ -1725,7 +1728,10 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                  PDiag(diag::warn_delete_incomplete)
                                    << Ex.get()->getSourceRange()))
       return ExprError();
-
+    else if (unsigned AddressSpace = Pointee.getAddressSpace())
+      return Diag(Ex.get()->getLocStart(), 
+                  diag::err_address_space_qualified_delete)
+               << Pointee.getUnqualifiedType() << AddressSpace;
     // C++ [expr.delete]p2:
     //   [Note: a pointer to a const type can be the operand of a
     //   delete-expression; it is not necessary to cast away the constness
