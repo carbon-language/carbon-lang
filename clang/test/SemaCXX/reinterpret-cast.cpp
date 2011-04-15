@@ -45,9 +45,9 @@ void constness()
   // Valid: T1* -> T2 const*
   int const *icp = reinterpret_cast<int const*>(ipppc);
   // Invalid: T1 const* -> T2*
-  (void)reinterpret_cast<int*>(icp); // expected-error {{reinterpret_cast from 'const int *' to 'int *' casts away constness}}
+  (void)reinterpret_cast<int*>(icp); // expected-error {{reinterpret_cast from 'const int *' to 'int *' casts away qualifiers}}
   // Invalid: T1*** -> T2 const* const**
-  int const *const **icpcpp = reinterpret_cast<int const* const**>(ipppc); // expected-error {{reinterpret_cast from 'int ***' to 'const int *const **' casts away constness}}
+  int const *const **icpcpp = reinterpret_cast<int const* const**>(ipppc); // expected-error {{reinterpret_cast from 'int ***' to 'const int *const **' casts away qualifiers}}
   // Valid: T1* -> T2*
   int *ip = reinterpret_cast<int*>(icpcpp);
   // Valid: T* -> T const*
@@ -77,7 +77,7 @@ void memptrs()
 {
   const int structure::*psi = 0;
   (void)reinterpret_cast<const float structure::*>(psi);
-  (void)reinterpret_cast<int structure::*>(psi); // expected-error {{reinterpret_cast from 'const int structure::*' to 'int structure::*' casts away constness}}
+  (void)reinterpret_cast<int structure::*>(psi); // expected-error {{reinterpret_cast from 'const int structure::*' to 'int structure::*' casts away qualifiers}}
 
   void (structure::*psf)() = 0;
   (void)reinterpret_cast<int (structure::*)()>(psf);
@@ -105,6 +105,6 @@ void const_arrays() {
   const STRING *s;
   const char *c;
 
-  (void)reinterpret_cast<char *>(s); // expected-error {{reinterpret_cast from 'const STRING *' (aka 'char const (*)[10]') to 'char *' casts away constness}}
+  (void)reinterpret_cast<char *>(s); // expected-error {{reinterpret_cast from 'const STRING *' (aka 'char const (*)[10]') to 'char *' casts away qualifiers}}
   (void)reinterpret_cast<const STRING *>(c);
 }

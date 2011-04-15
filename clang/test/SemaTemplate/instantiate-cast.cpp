@@ -63,7 +63,7 @@ template struct DynamicCast0<Base*, A>; // expected-note{{instantiation}}
 template<typename T, typename U>
 struct ReinterpretCast0 {
   void f(T t) {
-    (void)reinterpret_cast<U>(t); // expected-error{{constness}}
+    (void)reinterpret_cast<U>(t); // expected-error{{qualifiers}}
   }
 };
 

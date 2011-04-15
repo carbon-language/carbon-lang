@@ -390,15 +390,17 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
            UnwrappedDestType = Self.Context.getCanonicalType(DestType);
   llvm::SmallVector<Qualifiers, 8> cv1, cv2;
 
-  // Find the qualifications.
+  // Find the qualifiers. We only care about cvr-qualifiers for the 
+  // purpose of this check, because other qualifiers (address spaces, 
+  // Objective-C GC, etc.) are part of the type's identity.
   while (UnwrapDissimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
     Qualifiers SrcQuals;
     Self.Context.getUnqualifiedArrayType(UnwrappedSrcType, SrcQuals);
-    cv1.push_back(SrcQuals);
+    cv1.push_back(Qualifiers::fromCVRMask(SrcQuals.getCVRQualifiers()));
     
     Qualifiers DestQuals;
     Self.Context.getUnqualifiedArrayType(UnwrappedDestType, DestQuals);
-    cv2.push_back(DestQuals);
+    cv2.push_back(Qualifiers::fromCVRMask(DestQuals.getCVRQualifiers()));
   }
   if (cv1.empty())
     return false;
@@ -510,7 +512,7 @@ CheckDynamicCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
 
   // C++ 5.2.7p1: The dynamic_cast operator shall not cast away constness.
   if (!DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
-    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_const_away)
+    Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_qualifiers_away)
       << CT_Dynamic << OrigSrcType << OrigDestType << OpRange;
     return;
   }
@@ -792,7 +794,7 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
           // This is definitely the intended conversion, but it might fail due
           // to a const violation.
           if (!CStyle && !DestPointee.isAtLeastAsQualifiedAs(SrcPointee)) {
-            msg = diag::err_bad_cxx_cast_const_away;
+            msg = diag::err_bad_cxx_cast_qualifiers_away;
             return TC_Failed;
           }
           Kind = CK_BitCast;
@@ -983,7 +985,7 @@ TryStaticDowncast(Sema &Self, CanQualType SrcType, CanQualType DestType,
 
   // Must preserve cv, as always, unless we're in C-style mode.
   if (!CStyle && !DestType.isAtLeastAsQualifiedAs(SrcType)) {
-    msg = diag::err_bad_cxx_cast_const_away;
+    msg = diag::err_bad_cxx_cast_qualifiers_away;
     return TC_Failed;
   }
 
@@ -1261,16 +1263,21 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
 
   // Unwrap the pointers. Ignore qualifiers. Terminate early if the types are
   // completely equal.
-  // FIXME: const_cast should probably not be able to convert between pointers
-  // to different address spaces.
   // C++ 5.2.11p3 describes the core semantics of const_cast. All cv specifiers
   // in multi-level pointers may change, but the level count must be the same,
   // as must be the final pointee type.
   while (SrcType != DestType &&
          Self.Context.UnwrapSimilarPointerTypes(SrcType, DestType)) {
-    Qualifiers Quals;
-    SrcType = Self.Context.getUnqualifiedArrayType(SrcType, Quals);
-    DestType = Self.Context.getUnqualifiedArrayType(DestType, Quals);
+    Qualifiers SrcQuals, DestQuals;
+    SrcType = Self.Context.getUnqualifiedArrayType(SrcType, SrcQuals);
+    DestType = Self.Context.getUnqualifiedArrayType(DestType, DestQuals);
+    
+    // const_cast is permitted to strip cvr-qualifiers, only. Make sure that
+    // the other qualifiers (e.g., address spaces) are identical.
+    SrcQuals.removeCVRQualifiers();
+    DestQuals.removeCVRQualifiers();
+    if (SrcQuals != DestQuals)
+      return TC_NotApplicable;
   }
 
   // Since we're dealing in canonical types, the remainder must be the same.
@@ -1345,7 +1352,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // A reinterpret_cast followed by a const_cast can, though, so in C-style,
     // we accept it.
     if (!CStyle && CastsAwayConstness(Self, SrcType, DestType)) {
-      msg = diag::err_bad_cxx_cast_const_away;
+      msg = diag::err_bad_cxx_cast_qualifiers_away;
       return TC_Failed;
     }
 
@@ -1458,7 +1465,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   // C++ 5.2.10p2: The reinterpret_cast operator shall not cast away constness.
   // The C-style cast operator can.
   if (!CStyle && CastsAwayConstness(Self, SrcType, DestType)) {
-    msg = diag::err_bad_cxx_cast_const_away;
+    msg = diag::err_bad_cxx_cast_qualifiers_away;
     return TC_Failed;
   }
   
