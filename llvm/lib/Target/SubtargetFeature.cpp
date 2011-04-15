@@ -211,7 +211,7 @@ const std::string & SubtargetFeatures::getCPU() const {
 /// feature, set it.
 ///
 static
-void SetImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
+void SetImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
                     const SubtargetFeatureKV *FeatureTable,
                     size_t FeatureTableSize) {
   for (size_t i = 0; i < FeatureTableSize; ++i) {
@@ -230,7 +230,7 @@ void SetImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 /// feature, clear it.
 /// 
 static
-void ClearImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
+void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
                       const SubtargetFeatureKV *FeatureTable,
                       size_t FeatureTableSize) {
   for (size_t i = 0; i < FeatureTableSize; ++i) {
@@ -247,7 +247,7 @@ void ClearImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 
 /// getBits - Get feature bits.
 ///
-uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
+uint64_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
                                           size_t CPUTableSize,
                                     const SubtargetFeatureKV *FeatureTable,
                                           size_t FeatureTableSize) {
@@ -263,7 +263,7 @@ uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
           "CPU features table is not sorted");
   }
 #endif
-  uint32_t Bits = 0;                    // Resulting bits
+  uint64_t Bits = 0;                    // Resulting bits
 
   // Check if help is needed
   if (Features[0] == "help")

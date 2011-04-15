@@ -33,7 +33,13 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
   OS << "enum {\n";
 
   // For each record
-  for (unsigned i = 0, N = DefList.size(); i < N;) {
+  unsigned N = DefList.size();
+  if (N > 64) {
+    errs() << "Too many (> 64) subtarget features!\n";
+    exit(1);
+  }
+
+  for (unsigned i = 0; i < N;) {
     // Next record
     Record *Def = DefList[i];
 
@@ -41,7 +47,7 @@ void SubtargetEmitter::Enumeration(raw_ostream &OS,
     OS << "  " << Def->getName();
 
     // If bit flags then emit expression (1 << i)
-    if (isBits)  OS << " = " << " 1 << " << i;
+    if (isBits)  OS << " = " << " 1ULL << " << i;
 
     // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
@@ -88,7 +94,7 @@ void SubtargetEmitter::FeatureKeyValues(raw_ostream &OS) {
       Feature->getValueAsListOfDefs("Implies");
 
     if (ImpliesList.empty()) {
-      OS << "0";
+      OS << "0ULL";
     } else {
       for (unsigned j = 0, M = ImpliesList.size(); j < M;) {
         OS << ImpliesList[j]->getName();
@@ -142,7 +148,7 @@ void SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
        << "\"Select the " << Name << " processor\", ";
 
     if (FeatureList.empty()) {
-      OS << "0";
+      OS << "0ULL";
     } else {
       for (unsigned j = 0, M = FeatureList.size(); j < M;) {
         OS << FeatureList[j]->getName();
@@ -151,7 +157,7 @@ void SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
     }
 
     // The "0" is for the "implies" section of this data structure.
-    OS << ", 0 }";
+    OS << ", 0ULL }";
 
     // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
@@ -608,7 +614,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
      << "  DEBUG(dbgs() << \"\\nCPU:\" << CPU);\n"
      << "  SubtargetFeatures Features(FS);\n"
      << "  Features.setCPUIfNone(CPU);\n"
-     << "  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
+     << "  uint64_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
      << "                                    FeatureKV, FeatureKVSize);\n";
 
   for (unsigned i = 0; i < Features.size(); i++) {

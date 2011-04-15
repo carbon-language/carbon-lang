@@ -35,8 +35,8 @@ namespace llvm {
 struct SubtargetFeatureKV {
   const char *Key;                      // K-V key string
   const char *Desc;                     // Help descriptor
-  uint32_t Value;                       // K-V integer value
-  uint32_t Implies;                     // K-V bit mask
+  uint64_t Value;                       // K-V integer value
+  uint64_t Implies;                     // K-V bit mask
   
   // Compare routine for std binary search
   bool operator<(const SubtargetFeatureKV &S) const {
@@ -94,7 +94,7 @@ public:
   void AddFeature(const std::string &String, bool IsEnabled = true);
            
   /// Get feature bits.
-  uint32_t getBits(const SubtargetFeatureKV *CPUTable,
+  uint64_t getBits(const SubtargetFeatureKV *CPUTable,
                          size_t CPUTableSize,
                    const SubtargetFeatureKV *FeatureTable,
                          size_t FeatureTableSize);
