@@ -33,10 +33,18 @@ public:
 };
 
 class ClangDiagGroupsEmitter : public TableGenBackend {
-    RecordKeeper &Records;
+  RecordKeeper &Records;
 public:
   explicit ClangDiagGroupsEmitter(RecordKeeper &R) : Records(R) {}
     
+  void run(raw_ostream &OS);
+};
+
+class ClangDiagsIndexNameEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+public:
+  explicit ClangDiagsIndexNameEmitter(RecordKeeper &R) : Records(R) {}
+  
   void run(raw_ostream &OS);
 };
 

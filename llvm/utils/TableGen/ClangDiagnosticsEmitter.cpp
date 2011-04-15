@@ -21,6 +21,8 @@
 #include "llvm/ADT/VectorExtras.h"
 #include <set>
 #include <map>
+#include <algorithm>
+#include <functional>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -121,7 +123,6 @@ namespace {
 } // end anonymous namespace.
 
 
-
 //===----------------------------------------------------------------------===//
 // Warning Tables (.inc file) generation.
 //===----------------------------------------------------------------------===//
@@ -179,6 +180,14 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
 
     // Category number.
     OS << ", " << CategoryIDs.getID(getDiagnosticCategory(&R, DGParentMap));
+
+    // Brief
+    OS << ", \"";
+    OS.write_escaped(R.getValueAsString("Brief")) << '"';
+
+    // Explanation 
+    OS << ", \"";
+    OS.write_escaped(R.getValueAsString("Explanation")) << '"';
     OS << ")\n";
   }
 }
@@ -293,4 +302,50 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
        E = CategoriesByID.end(); I != E; ++I)
     OS << "CATEGORY(\"" << *I << "\")\n";
   OS << "#endif // GET_CATEGORY_TABLE\n\n";
+}
+
+//===----------------------------------------------------------------------===//
+// Diagnostic name index generation
+//===----------------------------------------------------------------------===//
+
+namespace {
+struct RecordIndexElement
+{
+  RecordIndexElement() {}
+  explicit RecordIndexElement(Record const &R):
+    Name(R.getName()) {}
+  
+  std::string Name;
+};
+
+struct RecordIndexElementSorter :
+  public std::binary_function<RecordIndexElement, RecordIndexElement, bool> {
+  
+  bool operator()(RecordIndexElement const &Lhs,
+                  RecordIndexElement const &Rhs) const {
+    return Lhs.Name < Rhs.Name;
+  }
+  
+};
+
+} // end anonymous namespace.
+
+void ClangDiagsIndexNameEmitter::run(raw_ostream &OS) {
+  const std::vector<Record*> &Diags =
+    Records.getAllDerivedDefinitions("Diagnostic");
+  
+  std::vector<RecordIndexElement> Index;
+  Index.reserve(Diags.size());
+  for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
+    const Record &R = *(Diags[i]);    
+    Index.push_back(RecordIndexElement(R));
+  }
+  
+  std::sort(Index.begin(), Index.end(), RecordIndexElementSorter());
+  
+  for (unsigned i = 0, e = Index.size(); i != e; ++i) {
+    const RecordIndexElement &R = Index[i];
+    
+    OS << "DIAG_NAME_INDEX(" << R.Name << ")\n";
+  }
 }
