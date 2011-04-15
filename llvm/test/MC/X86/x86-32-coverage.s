@@ -372,6 +372,14 @@
 // CHECK: 	nop
         	nop
 
+// CHECK: flds	(%edi)
+// CHECK:  encoding: [0xd9,0x07]
+        	flds	(%edi)
+
+// CHECK: filds	(%edi)
+// CHECK:  encoding: [0xdf,0x07]
+        	filds	(%edi)
+
 // CHECK: 	fldl	3735928559(%ebx,%ecx,8)
         	fldl	0xdeadbeef(%ebx,%ecx,8)
 

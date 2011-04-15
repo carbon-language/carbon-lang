@@ -155,3 +155,19 @@ pshufb	CPI1_0(%rip), %xmm1
 // CHECK: leave
 // CHECK:  encoding: [0xc9]
         	leaveq
+
+// CHECK: flds	(%edi)
+// CHECK:  encoding: [0x67,0xd9,0x07]
+        	flds	(%edi)
+
+// CHECK: filds	(%edi)
+// CHECK:  encoding: [0x67,0xdf,0x07]
+        	filds	(%edi)
+
+// CHECK: flds	(%rdi)
+// CHECK:  encoding: [0xd9,0x07]
+        	flds	(%rdi)
+
+// CHECK: filds	(%rdi)
+// CHECK:  encoding: [0xdf,0x07]
+        	filds	(%rdi)
