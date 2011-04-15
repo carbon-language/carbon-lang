@@ -55,6 +55,19 @@ TEST(StringRefTest, StringOps) {
   EXPECT_EQ( 1, StringRef("aab").compare("aa"));
   EXPECT_EQ( 1, StringRef("\xFF").compare("\1"));
 
+  EXPECT_EQ(-1, StringRef("aab").compare("aad", 3));
+  EXPECT_EQ( 0, StringRef("aab").compare("aab", 3));
+  EXPECT_EQ( 1, StringRef("aab").compare("aaa", 3));
+  EXPECT_EQ(-1, StringRef("aab").compare("aabb", 4));
+  EXPECT_EQ( 1, StringRef("aab").compare("aa", 3));
+  EXPECT_EQ( 1, StringRef("\xFF").compare("\1", 3));
+  EXPECT_EQ( 0, StringRef("aab").compare("aad", 2));
+  EXPECT_EQ( 0, StringRef("aab").compare("aab", 2));
+  EXPECT_EQ( 0, StringRef("aab").compare("aab", 4));
+  EXPECT_EQ( 0, StringRef("aab").compare("aaa", 2));
+  EXPECT_EQ( 0, StringRef("aab").compare("aabb", 3));
+  EXPECT_EQ( 0, StringRef("aab").compare("aa", 2));
+
   EXPECT_EQ(-1, StringRef("AaB").compare_lower("aAd"));
   EXPECT_EQ( 0, StringRef("AaB").compare_lower("aab"));
   EXPECT_EQ( 1, StringRef("AaB").compare_lower("AAA"));

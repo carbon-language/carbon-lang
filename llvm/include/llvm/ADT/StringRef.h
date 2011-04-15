@@ -125,6 +125,12 @@ namespace llvm {
       return Length < RHS.Length ? -1 : 1;
     }
 
+    /// compare - Compare two strings; the result is -1, 0, or 1 if this string
+    /// is lexicographically less than, equal to, or greater than the \arg RHS.
+    /// This is different than compare with no size specified as it only 
+    /// compares at most the first n bytes.
+    int compare(StringRef RHS, size_t n) const;
+
     /// compare_lower - Compare two strings, ignoring case.
     int compare_lower(StringRef RHS) const;
 
