@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -60,11 +61,16 @@ void DwarfCFIException::EndModule() {
   // Begin eh frame section.
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
+  if ((PerEncoding & 0x70) != dwarf::DW_EH_PE_pcrel)
+    return;
+
   // Emit references to all used personality functions
   const std::vector<const Function*> &Personalities = MMI->getPersonalities();
   for (size_t i = 0, e = Personalities.size(); i != e; ++i) {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("personality", i));
-    Asm->EmitReference(Personalities[i], PerEncoding);
+    const MCSymbol *Sym = Asm->Mang->getSymbol(Personalities[i]);
+    unsigned Size = Asm->TM.getTargetData()->getPointerSize();
+    Asm->OutStreamer.EmitSymbolValue(Sym, Size);
   }
 }
 
@@ -77,7 +83,7 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   shouldEmitTable = !MMI->getLandingPads().empty();
 
   // See if we need frame move info.
-  shouldEmitMoves =
+  shouldEmitMoves = MMI->hasDebugInfo() ||
     !Asm->MF->getFunction()->doesNotThrow() || UnwindTablesMandatory;
 
   if (shouldEmitMoves || shouldEmitTable)
@@ -87,16 +93,8 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
 
   shouldEmitTableModule |= shouldEmitTable;
 
-  if (shouldEmitMoves) {
-    const TargetFrameLowering *TFL = Asm->TM.getFrameLowering();
+  if (shouldEmitMoves || shouldEmitTable)
     Asm->OutStreamer.EmitCFIStartProc();
-
-    // Indicate locations of general callee saved registers in frame.
-    std::vector<MachineMove> Moves;
-    TFL->getInitialFrameState(Moves);
-    Asm->EmitCFIFrameMoves(Moves);
-    Asm->EmitCFIFrameMoves(MMI->getFrameMoves());
-  }
 
   if (!shouldEmitTable)
     return;
@@ -112,11 +110,25 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
 
   // Indicate personality routine, if any.
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
-  if (PerEncoding != dwarf::DW_EH_PE_omit &&
-      MMI->getPersonalities()[MMI->getPersonalityIndex()])
-    Asm->OutStreamer.EmitCFIPersonality(Asm->GetTempSymbol("personality",
-                                                    MMI->getPersonalityIndex()),
-                                        PerEncoding);
+  const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+  if (PerEncoding == dwarf::DW_EH_PE_omit || !Per)
+    return;
+
+  const MCSymbol *Sym;
+  switch (PerEncoding & 0x70) {
+  default:
+    report_fatal_error("We do not support this DWARF encoding yet!");
+  case dwarf::DW_EH_PE_absptr: {
+    Sym = Asm->Mang->getSymbol(Per);
+    break;
+  }
+  case dwarf::DW_EH_PE_pcrel: {
+    Sym = Asm->GetTempSymbol("personality",
+                             MMI->getPersonalityIndex());
+    break;
+  }
+  }
+  Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 }
 
 /// EndFunction - Gather and emit post-function exception information.
