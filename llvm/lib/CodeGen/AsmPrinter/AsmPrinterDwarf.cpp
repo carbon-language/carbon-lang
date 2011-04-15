@@ -277,37 +277,42 @@ void AsmPrinter::EmitFrameMoves(const std::vector<MachineMove> &Moves,
   }
 }
 
+/// EmitFrameMoves - Emit a frame instruction.
+void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+
+  const MachineLocation &Dst = Move.getDestination();
+  const MachineLocation &Src = Move.getSource();
+
+  // If advancing cfa.
+  if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+    assert(!Src.isReg() && "Machine move not supported yet.");
+
+    if (Src.getReg() == MachineLocation::VirtualFP) {
+      OutStreamer.EmitCFIDefCfaOffset(-Src.getOffset());
+    } else {
+      assert("Machine move not supported yet");
+      // Reg + Offset
+    }
+  } else if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+    assert(Dst.isReg() && "Machine move not supported yet.");
+    OutStreamer.EmitCFIDefCfaRegister(RI->getDwarfRegNum(Dst.getReg(), true));
+  } else {
+    assert(!Dst.isReg() && "Machine move not supported yet.");
+    OutStreamer.EmitCFIOffset(RI->getDwarfRegNum(Src.getReg(), true),
+                              -Dst.getOffset());
+  }
+}
+
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
 void AsmPrinter::EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const {
-  const TargetRegisterInfo *RI = TM.getRegisterInfo();
-
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
     const MachineMove &Move = Moves[i];
     MCSymbol *Label = Move.getLabel();
     // Throw out move if the label is invalid.
     if (Label && !Label->isDefined()) continue; // Not emitted, in dead code.
 
-    const MachineLocation &Dst = Move.getDestination();
-    const MachineLocation &Src = Move.getSource();
-
-    // If advancing cfa.
-    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-      assert(!Src.isReg() && "Machine move not supported yet.");
-
-      if (Src.getReg() == MachineLocation::VirtualFP) {
-        OutStreamer.EmitCFIDefCfaOffset(-Src.getOffset());
-      } else {
-        assert("Machine move not supported yet");
-        // Reg + Offset
-      }
-    } else if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
-      assert(Dst.isReg() && "Machine move not supported yet.");
-      OutStreamer.EmitCFIDefCfaRegister(RI->getDwarfRegNum(Dst.getReg(), true));
-    } else {
-      assert(!Dst.isReg() && "Machine move not supported yet.");
-      OutStreamer.EmitCFIOffset(RI->getDwarfRegNum(Src.getReg(), true),
-                                Dst.getOffset());
-    }
+    EmitCFIFrameMove(Move);
   }
 }

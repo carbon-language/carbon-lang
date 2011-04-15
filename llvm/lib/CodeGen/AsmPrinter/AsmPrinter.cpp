@@ -644,24 +644,7 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
     }
   }
   assert(Move);
-
-  const MachineLocation &Dst = Move->getDestination();
-  const MachineLocation &Src = Move->getSource();
-  const TargetAsmInfo &AsmInfo = OutContext.getTargetAsmInfo();
-  if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-    if (Src.getReg() == MachineLocation::VirtualFP)
-      OutStreamer.EmitCFIDefCfaOffset(-Src.getOffset());
-    else {
-      unsigned Reg = AsmInfo.getDwarfRegNum(Src.getReg(), true);
-      OutStreamer.EmitCFIDefCfa(Reg, -Src.getOffset());
-    }
-  } else if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
-    unsigned Reg = AsmInfo.getDwarfRegNum(Dst.getReg(), true);
-    OutStreamer.EmitCFIDefCfaRegister(Reg);
-  } else {
-    unsigned Reg = AsmInfo.getDwarfRegNum(Src.getReg(), true);
-    OutStreamer.EmitCFIOffset(Reg, -Dst.getOffset());
-  }
+  EmitCFIFrameMove(*Move);
 }
 
 /// EmitFunctionBody - This method emits the body and trailer for a
