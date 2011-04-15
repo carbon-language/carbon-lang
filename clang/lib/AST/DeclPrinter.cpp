@@ -60,7 +60,7 @@ namespace {
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitCXXRecordDecl(CXXRecordDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
-    void VisitTemplateDecl(TemplateDecl *D);
+    void VisitTemplateDecl(const TemplateDecl *D);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
@@ -674,7 +674,7 @@ void DeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     Visit(*D->decls_begin());
 }
 
-void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
+void DeclPrinter::VisitTemplateDecl(const TemplateDecl *D) {
   Out << "template <";
 
   TemplateParameterList *Params = D->getTemplateParameters();
@@ -720,12 +720,17 @@ void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {
         NTTP->getDefaultArgument()->printPretty(Out, Context, 0, Policy,
                                                 Indentation);
       }
+    } else if (const TemplateTemplateParmDecl *TTPD =
+                 dyn_cast<TemplateTemplateParmDecl>(Param)) {
+      VisitTemplateDecl(TTPD);
+      // FIXME: print the default argument, if present.
     }
   }
 
   Out << "> ";
 
-  if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
+  if (const TemplateTemplateParmDecl *TTP =
+        dyn_cast<TemplateTemplateParmDecl>(D)) {
     Out << "class ";
     if (TTP->isParameterPack())
       Out << "...";
