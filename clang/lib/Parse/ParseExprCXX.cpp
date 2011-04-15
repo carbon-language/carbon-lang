@@ -1707,6 +1707,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
 ///
 ///        new-type-id:
 ///                   type-specifier-seq new-declarator[opt]
+/// [GNU]             attributes type-specifier-seq new-declarator[opt]
 ///
 ///        new-declarator:
 ///                   ptr-operator new-declarator[opt]
@@ -1752,12 +1753,14 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       // We still need the type.
       if (Tok.is(tok::l_paren)) {
         TypeIdParens.setBegin(ConsumeParen());
+        MaybeParseGNUAttributes(DeclaratorInfo);
         ParseSpecifierQualifierList(DS);
         DeclaratorInfo.SetSourceRange(DS.getSourceRange());
         ParseDeclarator(DeclaratorInfo);
         TypeIdParens.setEnd(MatchRHSPunctuation(tok::r_paren, 
                                                 TypeIdParens.getBegin()));
       } else {
+        MaybeParseGNUAttributes(DeclaratorInfo);
         if (ParseCXXTypeSpecifierSeq(DS))
           DeclaratorInfo.setInvalidType(true);
         else {
@@ -1770,6 +1773,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
   } else {
     // A new-type-id is a simplified type-id, where essentially the
     // direct-declarator is replaced by a direct-new-declarator.
+    MaybeParseGNUAttributes(DeclaratorInfo);
     if (ParseCXXTypeSpecifierSeq(DS))
       DeclaratorInfo.setInvalidType(true);
     else {
