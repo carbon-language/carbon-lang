@@ -52,6 +52,8 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case MipsISD::MSubu      : return "MipsISD::MSubu";
     case MipsISD::DivRem     : return "MipsISD::DivRem";
     case MipsISD::DivRemU    : return "MipsISD::DivRemU";
+    case MipsISD::BuildPairF64: return "MipsISD::BuildPairF64";
+    case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
     default                  : return NULL;
   }
 }
@@ -1132,11 +1134,12 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
           Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
         if (VA.getValVT() == MVT::f64 && VA.getLocVT() == MVT::i32) {
-          Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i64, Arg);
-          SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                   DAG.getConstant(0, getPointerTy()));
-          SDValue Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, Arg,
-                                   DAG.getConstant(1, getPointerTy()));
+          SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32, Arg,
+                                   DAG.getConstant(0, MVT::i32));
+          SDValue Hi = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32, Arg,
+                                   DAG.getConstant(1, MVT::i32));
+          if (!Subtarget->isLittle())
+            std::swap(Lo, Hi);
           RegsToPass.push_back(std::make_pair(VA.getLocReg(), Lo));
           RegsToPass.push_back(std::make_pair(VA.getLocReg()+1, Hi));
           continue;
@@ -1429,9 +1432,10 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           unsigned Reg2 = AddLiveIn(DAG.getMachineFunction(),
                                     VA.getLocReg()+1, RC);
           SDValue ArgValue2 = DAG.getCopyFromReg(Chain, dl, Reg2, RegVT);
-          SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, ArgValue, 
-                                       ArgValue2);
-          ArgValue = DAG.getNode(ISD::BITCAST, dl, MVT::f64, Pair);
+          if (!Subtarget->isLittle())
+            std::swap(ArgValue, ArgValue2);
+          ArgValue = DAG.getNode(MipsISD::BuildPairF64, dl, MVT::f64,
+                                 ArgValue, ArgValue2);
         }
       }
 

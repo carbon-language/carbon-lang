@@ -2,6 +2,9 @@
 ; RUN: llc -march=mipsel -mcpu=mips2 -pre-RA-sched=source < %s -regalloc=basic | FileCheck %s
 
 
+; FIXME: Temporarily disabled until buildpair patch is committed.
+; REQUIRES: disabled
+
 ; All test functions do the same thing - they return the first variable
 ; argument.
 

@@ -64,7 +64,10 @@ namespace llvm {
 
       // DivRem(u)
       DivRem,
-      DivRemU
+      DivRemU,
+
+      BuildPairF64,
+      ExtractElementF64
     };
   }
 

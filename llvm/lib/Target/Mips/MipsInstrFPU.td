@@ -30,6 +30,12 @@ def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<1>,
                                          SDTCisInt<2>]>;
 def SDT_MipsCMovFP : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisSameAs<1, 2>]>;
+def SDT_MipsBuildPairF64 : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
+                                                SDTCisVT<1, i32>,
+                                                SDTCisSameAs<1, 2>]>;
+def SDT_MipsExtractElementF64 : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
+                                                     SDTCisVT<1, f64>,
+                                                     SDTCisVT<0, i32>]>;
 
 def MipsFPCmp : SDNode<"MipsISD::FPCmp", SDT_MipsFPCmp, [SDNPOutGlue]>;
 def MipsCMovFP_T : SDNode<"MipsISD::CMovFP_T", SDT_MipsCMovFP, [SDNPInGlue]>;
@@ -37,6 +43,9 @@ def MipsCMovFP_F : SDNode<"MipsISD::CMovFP_F", SDT_MipsCMovFP, [SDNPInGlue]>;
 def MipsFPRound : SDNode<"MipsISD::FPRound", SDTFPRoundOp, [SDNPOptInGlue]>;
 def MipsFPBrcond : SDNode<"MipsISD::FPBrcond", SDT_MipsFPBrcond,
                           [SDNPHasChain, SDNPOptInGlue]>;
+def MipsBuildPairF64 : SDNode<"MipsISD::BuildPairF64", SDT_MipsBuildPairF64>;
+def MipsExtractElementF64 : SDNode<"MipsISD::ExtractElementF64",
+                                   SDT_MipsExtractElementF64>;
 
 // Operand for printing out a condition code.
 let PrintMethod = "printFCCOperand" in
@@ -311,6 +320,23 @@ let Predicates = [In32BitMode] in {
 //===----------------------------------------------------------------------===//
 def MOVCCRToCCR : MipsPseudo<(outs CCR:$dst), (ins CCR:$src),
                              "# MOVCCRToCCR", []>;
+
+// This pseudo instr gets expanded into 2 mtc1 instrs after register
+// allocation.
+def BuildPairF64 :
+  MipsPseudo<(outs AFGR64:$dst),
+             (ins CPURegs:$lo, CPURegs:$hi), "",
+             [(set AFGR64:$dst, (MipsBuildPairF64 CPURegs:$lo, CPURegs:$hi))]>;
+
+// This pseudo instr gets expanded into 2 mfc1 instrs after register
+// allocation.
+// if n is 0, lower part of src is extracted.
+// if n is 1, higher part of src is extracted.
+def ExtractElementF64 :
+  MipsPseudo<(outs CPURegs:$dst),
+             (ins AFGR64:$src, i32imm:$n), "",
+             [(set CPURegs:$dst,
+               (MipsExtractElementF64 AFGR64:$src, imm:$n))]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns

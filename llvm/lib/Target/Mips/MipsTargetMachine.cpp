@@ -75,3 +75,9 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
   PM.add(createMipsDelaySlotFillerPass(*this));
   return true;
 }
+
+bool MipsTargetMachine::
+addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+  PM.add(createMipsExpandPseudoPass(*this));
+  return true;
+}
