@@ -109,6 +109,17 @@ int no_inline_namespaces();
 // CHECK-0X: has_inline_namespaces
 // CHECK-NO-0X: no_inline_namespaces
 
+
+#if __has_feature(cxx_range_for)
+int has_range_for();
+#else
+int no_range_for();
+#endif
+
+// CHECK-0X: has_range_for
+// CHECK-NO-0X: no_range_for
+
+
 #if __has_feature(cxx_reference_qualified_functions)
 int has_reference_qualified_functions();
 #else
