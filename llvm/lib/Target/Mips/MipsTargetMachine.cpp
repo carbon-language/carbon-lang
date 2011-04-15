@@ -1,15 +1,15 @@
-//===-- MipsTargetMachine.cpp - Define TargetMachine for Mips ------------===//
+//===-- MipsTargetMachine.cpp - Define TargetMachine for Mips -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Implements the info about Mips target spec.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "Mips.h"
 #include "MipsMCAsmInfo.h"
@@ -34,8 +34,8 @@ extern "C" void LLVMInitializeMipsTarget() {
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
-MipsTargetMachine(const Target &T, const std::string &TT,
-                  const std::string &FS, bool isLittle=false) :
+MipsTargetMachine(const Target &T, const std::string &TT, const std::string &FS,
+                  bool isLittle=false):
   LLVMTargetMachine(T, TT),
   Subtarget(TT, FS, isLittle),
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32-n32") :

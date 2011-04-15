@@ -1,13 +1,13 @@
-//===- MipsRegisterInfo.td - Mips Register defs -----------*- tablegen -*-===//
+//===- MipsRegisterInfo.td - Mips Register defs ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //  Describe MIPS instructions format
 //
 //  CPU INSTRUCTION FORMATS
@@ -19,7 +19,7 @@
 //  shamt   - only used on shift instructions, contains the shift amount.
 //  funct   - combined with opcode field give us an operation code.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 // Generic Mips Format
 class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
@@ -46,9 +46,9 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
       MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
          list<dag> pattern, InstrItinClass itin>:
@@ -70,9 +70,9 @@ class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
   let Inst{5-0}   = funct;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Format I instruction class in Mips : <|opcode|rs|rt|immediate|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
          InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin>
@@ -88,9 +88,9 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{15-0}  = imm16;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Format J instruction class in Mips : <|opcode|address|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
          InstrItinClass itin>: MipsInst<outs, ins, asmstr, pattern, itin>
@@ -102,7 +102,7 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{25-0} = addr;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
 //
@@ -113,11 +113,11 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 //  fmt     - double or single precision.
 //  funct   - combined with opcode field give us an operation code.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Format FR instruction class in Mips : <|opcode|fmt|ft|fs|fd|funct|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
           string asmstr, list<dag> pattern> :
@@ -140,9 +140,9 @@ class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins,
   let Inst{5-0}   = funct;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Format FI instruction class in Mips : <|opcode|base|ft|immediate|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
           MipsInst<outs, ins, asmstr, pattern, NoItinerary>
@@ -158,9 +158,9 @@ class FFI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>:
   let Inst{15-0}  = imm16;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Compare instruction class in Mips : <|010001|fmt|ft|fs|0000011|condcode|>
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class FCC<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern> :
           MipsInst<outs, ins, asmstr, pattern, NoItinerary>

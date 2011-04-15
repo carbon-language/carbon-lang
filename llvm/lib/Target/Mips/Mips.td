@@ -1,23 +1,23 @@
-//===- Mips.td - Describe the Mips Target Machine ---------*- tablegen -*-===//
+//===- Mips.td - Describe the Mips Target Machine ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // This is the top level entry point for the Mips target.
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Target-independent interfaces
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 include "llvm/Target/Target.td"
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 include "MipsRegisterInfo.td"
 include "MipsSchedule.td"
@@ -26,17 +26,16 @@ include "MipsCallingConv.td"
 
 def MipsInstrInfo : InstrInfo;
 
-//===---------------------------------------------------------------------===//
-// Mips Subtarget features                                                   //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// Mips Subtarget features                                                    //
+//===----------------------------------------------------------------------===//
 
 def FeatureGP64Bit     : SubtargetFeature<"gp64", "IsGP64bit", "true",
                                 "General Purpose Registers are 64-bit wide.">;
 def FeatureFP64Bit     : SubtargetFeature<"fp64", "IsFP64bit", "true",
                                 "Support 64-bit FP registers.">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
-                                "true",
-                                "Only supports single precision float">;
+                                "true", "Only supports single precision float">;
 def FeatureO32         : SubtargetFeature<"o32", "MipsABI", "O32",
                                 "Enable o32 ABI">;
 def FeatureEABI        : SubtargetFeature<"eabi", "MipsABI", "EABI",
@@ -59,16 +58,16 @@ def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
                                 "Mips1 ISA Support">;
 def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
                                 "Mips2 ISA Support">;
-def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion",
-                                "Mips32", "Mips32 ISA Support",
+def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
+                                "Mips32 ISA Support",
                                 [FeatureCondMov, FeatureBitCount]>;
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips32, FeatureSEInReg]>;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Mips processors supported.
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;

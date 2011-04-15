@@ -1,15 +1,15 @@
-//===- MipsRegisterInfo.cpp - MIPS Register Information -== ----*- C++ -*-===//
+//===- MipsRegisterInfo.cpp - MIPS Register Information -== -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // This file contains the MIPS implementation of the TargetRegisterInfo class.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-reg-info"
 
@@ -88,9 +88,9 @@ getRegisterNumbering(unsigned RegEnum)
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Callee Saved Registers methods
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 /// Mips Callee Saved Registers
 const unsigned* MipsRegisterInfo::

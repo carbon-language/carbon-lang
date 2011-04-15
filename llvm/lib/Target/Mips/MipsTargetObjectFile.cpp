@@ -1,11 +1,11 @@
-//===-- MipsTargetObjectFile.cpp - Mips object files ---------------------===//
+//===-- MipsTargetObjectFile.cpp - Mips object files ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "MipsTargetObjectFile.h"
 #include "MipsSubtarget.h"
@@ -47,8 +47,7 @@ static bool IsInSmallSection(uint64_t Size) {
 }
 
 bool MipsTargetObjectFile::IsGlobalInSmallSection(const GlobalValue *GV,
-                                                  const TargetMachine &TM)
-  const {
+                                                const TargetMachine &TM) const {
   if (GV->isDeclaration() || GV->hasAvailableExternallyLinkage())
     return false;
 
@@ -99,6 +98,5 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     return SmallDataSection;
 
   // Otherwise, we work the same as ELF.
-  return TargetLoweringObjectFileELF::SelectSectionForGlobal(GV, Kind, Mang,
-                                                             TM);
+  return TargetLoweringObjectFileELF::SelectSectionForGlobal(GV, Kind, Mang,TM);
 }

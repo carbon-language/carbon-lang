@@ -1,16 +1,16 @@
-//===--  MipsExpandPseudo.cpp - Expand pseudo instructions ---------------===//
+//===--  MipsExpandPseudo.cpp - Expand pseudo instructions ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
-// This pass expands pseudo instructions into target instructions after
-// register allocation but before post-RA scheduling.
+// This pass expands pseudo instructions into target instructions after register
+// allocation but before post-RA scheduling.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-expand-pseudo"
 
@@ -86,8 +86,7 @@ bool MipsExpandPseudo::runOnMachineBasicBlock(MachineBasicBlock& MBB) {
 void MipsExpandPseudo::ExpandBuildPairF64(MachineBasicBlock& MBB,
                                             MachineBasicBlock::iterator I) {  
   unsigned DstReg = I->getOperand(0).getReg();
-  unsigned LoReg = I->getOperand(1).getReg();
-  unsigned HiReg = I->getOperand(2).getReg();
+  unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
   const TargetInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
   const unsigned* SubReg =

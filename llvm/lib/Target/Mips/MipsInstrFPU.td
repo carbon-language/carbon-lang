@@ -1,17 +1,17 @@
-//===- MipsInstrFPU.td - Mips FPU Instruction Information -*- tablegen -*-===//
+//===- MipsInstrFPU.td - Mips FPU Instruction Information --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // This file contains the Mips implementation of the TargetInstrInfo class.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Instructions
 // ------------------------
 // * 64bit fp:
@@ -21,7 +21,7 @@
 // * 32bit fp:
 //    - 16 even 32-bit registers - single and double (aliased)
 //    - 32 32-bit registers (within single-only mode)
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 // Floating Point Compare and Branch
 def SDT_MipsFPBrcond : SDTypeProfile<0, 2, [SDTCisInt<0>,
@@ -51,16 +51,16 @@ def MipsExtractElementF64 : SDNode<"MipsISD::ExtractElementF64",
 let PrintMethod = "printFCCOperand" in
   def condcode : Operand<i32>;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Feature predicates.
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 def In32BitMode      : Predicate<"!Subtarget.isFP64bit()">;
 def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">;
 def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 def IsNotMipsI       : Predicate<"!Subtarget.isMips1()">;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //
 // A set of multiclasses is used to address the register usage.
@@ -72,7 +72,7 @@ def IsNotMipsI       : Predicate<"!Subtarget.isMips1()">;
 // D64 - double precision in 32 64bit fp registers (In64BitMode)
 //
 // Only S32 and D32 are supported right now.
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 multiclass FFR1_1<bits<6> funct, string asmstr>
 {
@@ -91,8 +91,7 @@ multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
 
   def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
                  !strconcat(asmstr, ".d $fd, $fs"),
-                 [(set AFGR64:$fd, (FOp AFGR64:$fs))]>,
-                 Requires<[In32BitMode]>;
+                 [(set AFGR64:$fd, (FOp AFGR64:$fs))]>, Requires<[In32BitMode]>;
 }
 
 class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
@@ -114,9 +113,9 @@ multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
                  Requires<[In32BitMode]>;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Instructions
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 let ft = 0 in {
   defm FLOOR_W : FFR1_1<0b001111, "floor.w">;
@@ -200,8 +199,8 @@ let Predicates = [IsNotSingleFloat, IsNotMipsI] in {
 // LWC1 and SWC1 can always be emitted with odd registers.
 def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
                [(set FGR32:$ft, (load addr:$addr))]>;
-def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr),
-                "swc1 $ft, $addr", [(store FGR32:$ft, addr:$addr)]>;
+def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",
+               [(store FGR32:$ft, addr:$addr)]>;
 
 /// Floating-point Aritmetic
 defm FADD : FFR1_4<0x10, "add", fadd>;
@@ -209,9 +208,9 @@ defm FDIV : FFR1_4<0x03, "div", fdiv>;
 defm FMUL : FFR1_4<0x02, "mul", fmul>;
 defm FSUB : FFR1_4<0x01, "sub", fsub>;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Branch Codes
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Mips branch codes. These correspond to condcode in MipsInstrInfo.h.
 // They must be kept in synch.
 def MIPS_BRANCH_F  : PatLeaf<(i32 0)>;
@@ -230,9 +229,9 @@ def BC1T  : FBRANCH<MIPS_BRANCH_T,  "bc1t">;
 def BC1FL : FBRANCH<MIPS_BRANCH_FL, "bc1fl">;
 def BC1TL : FBRANCH<MIPS_BRANCH_TL, "bc1tl">;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Flag Conditions
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Mips condition codes. They must correspond to condcode in MipsInstrInfo.h.
 // They must be kept in synch.
 def MIPS_FCOND_F    : PatLeaf<(i32 0)>;
@@ -266,7 +265,7 @@ let hasDelaySlot = 1, Defs=[FCR31] in {
 
 
 // Conditional moves:
-// These instructions are expanded in 
+// These instructions are expanded in
 // MipsISelLowering::EmitInstrWithCustomInserter if target does not have
 // conditional move instructions.
 // flag:int, data:float
@@ -317,9 +316,9 @@ let Predicates = [In32BitMode] in {
   def MOVF_D : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 def MOVCCRToCCR : MipsPseudo<(outs CCR:$dst), (ins CCR:$src),
                              "# MOVCCRToCCR", []>;
 
@@ -340,9 +339,9 @@ def ExtractElementF64 :
              [(set CPURegs:$dst,
                (MipsExtractElementF64 AFGR64:$src, imm:$n))]>;
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Floating Point Patterns
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 def fpimm0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;

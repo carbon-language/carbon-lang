@@ -1,15 +1,15 @@
-//===- MipsInstrInfo.cpp - Mips Instruction Information --------*- C++ -*-===//
+//===- MipsInstrInfo.cpp - Mips Instruction Information ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // This file contains the Mips implementation of the TargetInstrInfo class.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
@@ -161,10 +161,10 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   if (RC == Mips::CPURegsRegisterClass)
     BuildMI(MBB, I, DL, get(Mips::SW)).addReg(SrcReg, getKillRegState(isKill))
-      .addImm(0).addFrameIndex(FI);
+          .addImm(0).addFrameIndex(FI);
   else if (RC == Mips::FGR32RegisterClass)
-    BuildMI(MBB, I, DL, get(Mips::SWC1))
-      .addReg(SrcReg, getKillRegState(isKill)).addImm(0).addFrameIndex(FI);
+    BuildMI(MBB, I, DL, get(Mips::SWC1)).addReg(SrcReg, getKillRegState(isKill))
+          .addImm(0).addFrameIndex(FI);
   else if (RC == Mips::AFGR64RegisterClass) {
     if (!TM.getSubtarget<MipsSubtarget>().isMips1()) {
       BuildMI(MBB, I, DL, get(Mips::SDC1))
@@ -200,8 +200,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Mips::LWC1), DestReg).addImm(0).addFrameIndex(FI);
   else if (RC == Mips::AFGR64RegisterClass) {
     if (!TM.getSubtarget<MipsSubtarget>().isMips1()) {
-      BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg)
-        .addImm(0).addFrameIndex(FI);
+      BuildMI(MBB, I, DL, get(Mips::LDC1), DestReg).addImm(0).addFrameIndex(FI);
     } else {
       const TargetRegisterInfo *TRI =
         MBB.getParent()->getTarget().getRegisterInfo();
@@ -215,9 +214,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     llvm_unreachable("Register class not handled!");
 }
 
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Branch Analysis
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 static unsigned GetAnalyzableBrOpc(unsigned Opc) {
   return (Opc == Mips::BEQ  || Opc == Mips::BNE  || Opc == Mips::BGTZ ||
