@@ -1,16 +1,16 @@
-//===--  MipsExpandPseudo.cpp - Expand pseudo instructions ---------------------===//
+//===--  MipsExpandPseudo.cpp - Expand pseudo instructions ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
-// This pass expands pseudo instructions into target instructions after register
-// allocation but before post-RA scheduling.
+// This pass expands pseudo instructions into target instructions after
+// register allocation but before post-RA scheduling.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-expand-pseudo"
 
@@ -42,7 +42,8 @@ namespace {
 
   private:
     void ExpandBuildPairF64(MachineBasicBlock&, MachineBasicBlock::iterator);
-    void ExpandExtractElementF64(MachineBasicBlock&, MachineBasicBlock::iterator);
+    void ExpandExtractElementF64(MachineBasicBlock&,
+                                 MachineBasicBlock::iterator);
   };
   char MipsExpandPseudo::ID = 0;
 } // end of anonymous namespace
@@ -85,7 +86,8 @@ bool MipsExpandPseudo::runOnMachineBasicBlock(MachineBasicBlock& MBB) {
 void MipsExpandPseudo::ExpandBuildPairF64(MachineBasicBlock& MBB,
                                             MachineBasicBlock::iterator I) {  
   unsigned DstReg = I->getOperand(0).getReg();
-  unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
+  unsigned LoReg = I->getOperand(1).getReg();
+  unsigned HiReg = I->getOperand(2).getReg();
   const TargetInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
   const unsigned* SubReg =
@@ -98,7 +100,7 @@ void MipsExpandPseudo::ExpandBuildPairF64(MachineBasicBlock& MBB,
 }
 
 void MipsExpandPseudo::ExpandExtractElementF64(MachineBasicBlock& MBB,
-                                                 MachineBasicBlock::iterator I) {
+                                               MachineBasicBlock::iterator I) {
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned SrcReg = I->getOperand(1).getReg();
   unsigned N = I->getOperand(2).getImm();

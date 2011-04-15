@@ -1,15 +1,15 @@
-//===-- MipsISelDAGToDAG.cpp - A dag to dag inst selector for Mips --------===//
+//===-- MipsISelDAGToDAG.cpp - A dag to dag inst selector for Mips -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file defines an instruction selector for the MIPS target.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-isel"
 #include "Mips.h"
@@ -34,14 +34,14 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Instruction Selector Implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // MipsDAGToDAGISel - MIPS specific code to select MIPS machine
 // instructions for SelectionDAG operations.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 namespace {
 
 class MipsDAGToDAGISel : public SelectionDAGISel {

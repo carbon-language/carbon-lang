@@ -1,16 +1,16 @@
-//===-- MipsAsmPrinter.cpp - Mips LLVM assembly writer --------------------===//
+//===-- MipsAsmPrinter.cpp - Mips LLVM assembly writer -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
 // of machine-dependent LLVM code to GAS-format MIPS assembly language.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
 #include "Mips.h"
@@ -68,7 +68,8 @@ namespace {
     const char *getCurrentABIString() const;
     void emitFrameDirective();
 
-    void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen'd.
+    void printInstruction(const MachineInstr *MI,
+                          raw_ostream &O); // autogen'd.
     void EmitInstruction(const MachineInstr *MI) {
       SmallString<128> Str;
       raw_svector_ostream OS(Str);
@@ -77,7 +78,8 @@ namespace {
     }
     virtual void EmitFunctionBodyStart();
     virtual void EmitFunctionBodyEnd();
-    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
+    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock
+                                                   *MBB) const;
     static const char *getRegisterName(unsigned RegNo);
 
     virtual void EmitFunctionEntryLabel();
@@ -87,7 +89,7 @@ namespace {
 
 #include "MipsGenAsmWriter.inc"
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 //  Mips Asm Directives
 //
@@ -116,11 +118,11 @@ namespace {
 //    stack pointer subtration, the first register in the mask (RA) will be
 //    saved at address 48-8=40.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mask directives
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
@@ -172,9 +174,9 @@ void MipsAsmPrinter::printHex32(unsigned Value, raw_ostream &O) {
     O << utohexstr((Value & (0xF << (i*4))) >> (i*4));
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Frame and Set directives
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// Frame Directive
 void MipsAsmPrinter::emitFrameDirective() {
@@ -236,8 +238,8 @@ void MipsAsmPrinter::EmitFunctionBodyEnd() {
 /// isBlockOnlyReachableByFallthough - Return true if the basic block has
 /// exactly one predecessor and the control transfer mechanism between
 /// the predecessor and this block is a fall-through.
-bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB)
-    const {
+bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock
+                                                       *MBB) const {
   // The predecessor has to be immediately before this block.
   const MachineBasicBlock *Pred = *MBB->pred_begin();
 
@@ -390,7 +392,8 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
 
   // Tell the assembler which ABI we are using
-  OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
+  OutStreamer.EmitRawText("\t.section .mdebug." +
+                          Twine(getCurrentABIString()));
 
   // TODO: handle O64 ABI
   if (Subtarget->isABI_EABI()) {

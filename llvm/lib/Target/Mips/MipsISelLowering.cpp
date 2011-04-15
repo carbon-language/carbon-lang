@@ -1,16 +1,16 @@
-//===-- MipsISelLowering.cpp - Mips DAG Lowering Implementation -----------===//
+//===-- MipsISelLowering.cpp - Mips DAG Lowering Implementation ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file defines the interfaces that Mips uses to lower LLVM code into a
 // selection DAG.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-lower"
 #include "MipsISelLowering.h"
@@ -221,8 +221,8 @@ static bool SelectMadd(SDNode* ADDENode, SelectionDAG* CurDAG) {
   // Transform this to a MADD only if ADDENode and ADDCNode are the only users
   // of the values of MultNode, in which case MultNode will be removed in later
   // phases.
-  // If there exist users other than ADDENode or ADDCNode, this function returns
-  // here, which will result in MultNode being mapped to a single MULT
+  // If there exist users other than ADDENode or ADDCNode, this function
+  // returns here, which will result in MultNode being mapped to a single MULT
   // instruction node rather than a pair of MULT and MADD instructions being
   // produced.
   if (!MultHi.hasOneUse() || !MultLo.hasOneUse())
@@ -295,8 +295,8 @@ static bool SelectMsub(SDNode* SUBENode, SelectionDAG* CurDAG) {
   // Transform this to a MSUB only if SUBENode and SUBCNode are the only users
   // of the values of MultNode, in which case MultNode will be removed in later
   // phases.
-  // If there exist users other than SUBENode or SUBCNode, this function returns
-  // here, which will result in MultNode being mapped to a single MULT
+  // If there exist users other than SUBENode or SUBCNode, this function
+  // returns here, which will result in MultNode being mapped to a single MULT
   // instruction node rather than a pair of MULT and MSUB instructions being
   // produced.
   if (!MultHi.hasOneUse() || !MultLo.hasOneUse())
@@ -444,8 +444,8 @@ static SDValue CreateFPCmp(SelectionDAG& DAG, const SDValue& Op) {
   SDValue RHS = Op.getOperand(1);
   DebugLoc dl = Op.getDebugLoc();
 
-  // Assume the 3rd operand is a CondCodeSDNode. Add code to check the type of node
-  // if necessary.
+  // Assume the 3rd operand is a CondCodeSDNode. Add code to check the type of
+  // node if necessary.
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
 
   return DAG.getNode(MipsISD::FPCmp, dl, MVT::Glue, LHS, RHS,
@@ -520,9 +520,9 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
   return SDValue();
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //  Lower helper functions
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // AddLiveIn - This helper function adds the specified physical register to the
 // MachineFunction as a live in value.  It also creates a corresponding
@@ -653,9 +653,9 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   return BB;
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 SDValue MipsTargetLowering::
 LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const
@@ -851,7 +851,8 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
                          MachinePointerInfo(),
                          false, false, 0);
 
-  SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_LO);
+  SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
+                                         MipsII::MO_ABS_LO);
   SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTILo);
   ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
 
@@ -879,9 +880,11 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     SDValue CPHi = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_HI);
+                                             N->getOffset(),
+                                             MipsII::MO_ABS_HI);
     SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_LO);
+                                             N->getOffset(),
+                                             MipsII::MO_ABS_LO);
     SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, MVT::i32, CPHi);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
@@ -892,7 +895,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
                                CP, MachinePointerInfo::getConstantPool(),
                                false, false, 0);
     SDValue CPLo = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment(),
-                                             N->getOffset(), MipsII::MO_ABS_LO);
+                                             N->getOffset(),
+                                             MipsII::MO_ABS_LO);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, CPLo);
     ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
   }
@@ -916,13 +920,13 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                       false, false, 0);
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //                      Calling Convention Implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #include "MipsGenCallingConv.inc"
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // TODO: Implement a generic logic using tblgen that can support this.
 // Mips O32 ABI rules:
 // ---
@@ -933,7 +937,7 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 //       yet to hold an argument. Otherwise, use A2, A3 and stack. If A1 is
 //       not used, it must be shadowed. If only A3 is avaiable, shadow it and
 //       go to stack.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
                        MVT LocVT, CCValAssign::LocInfo LocInfo,
@@ -957,7 +961,8 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
   // This must be the first arg of the call if no regs have been allocated.
   // Initialize IntRegUsed in that case.
   if (IntRegs[State.getFirstUnallocated(IntRegs, IntRegsSize)] == Mips::A0 &&
-      F32Regs[State.getFirstUnallocated(F32Regs, FloatRegsSize)] == Mips::F12 &&
+      F32Regs[State.getFirstUnallocated(F32Regs, FloatRegsSize)] == 
+      Mips::F12 &&
       F64Regs[State.getFirstUnallocated(F64Regs, FloatRegsSize)] == Mips::D6)
     IntRegUsed = false;
 
@@ -1070,9 +1075,9 @@ static bool CC_MipsO32_VarArgs(unsigned ValNo, MVT ValVT,
   return false; // CC must always match
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //                  Call Calling Convention Implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
@@ -1134,10 +1139,11 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
           Arg = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
         if (VA.getValVT() == MVT::f64 && VA.getLocVT() == MVT::i32) {
-          SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32, Arg,
+          SDValue Lo = DAG.getNode(MipsISD::ExtractElementF64, dl,
+                                   MVT::i32, Arg,
                                    DAG.getConstant(0, MVT::i32));
-          SDValue Hi = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32, Arg,
-                                   DAG.getConstant(1, MVT::i32));
+          SDValue Hi = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
+                                   Arg, DAG.getConstant(1, MVT::i32));
           if (!Subtarget->isLittle())
             std::swap(Lo, Hi);
           RegsToPass.push_back(std::make_pair(VA.getLocReg(), Lo));
@@ -1342,20 +1348,21 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   return Chain;
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //             Formal Arguments Calling Convention Implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// LowerFormalArguments - transform physical registers into virtual registers
 /// and generate load operations for arguments places on the stack.
 SDValue
 MipsTargetLowering::LowerFormalArguments(SDValue Chain,
-                                        CallingConv::ID CallConv, bool isVarArg,
-                                        const SmallVectorImpl<ISD::InputArg>
-                                        &Ins,
-                                        DebugLoc dl, SelectionDAG &DAG,
-                                        SmallVectorImpl<SDValue> &InVals)
-                                          const {
+                                         CallingConv::ID CallConv,
+                                         bool isVarArg,
+                                         const SmallVectorImpl<ISD::InputArg>
+                                         &Ins,
+                                         DebugLoc dl, SelectionDAG &DAG,
+                                         SmallVectorImpl<SDValue> &InVals)
+  const {
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1456,7 +1463,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // be used on emitPrologue) to avoid mis-calc of the first stack
       // offset on PEI::calculateFrameObjectOffsets.
       unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
-      LastStackArgEndOffset = FirstStackArgLoc + VA.getLocMemOffset() + ArgSize;
+      LastStackArgEndOffset = FirstStackArgLoc + VA.getLocMemOffset() +
+                              ArgSize;
       int FI = MFI->CreateFixedObject(ArgSize, 0, true);
       MipsFI->recordLoadArgsFI(FI, -(4 +
         (FirstStackArgLoc + VA.getLocMemOffset())));
@@ -1545,9 +1553,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   return Chain;
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 SDValue
 MipsTargetLowering::LowerReturn(SDValue Chain,
@@ -1572,7 +1580,8 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
       if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
+        DAG.getMachineFunction().getRegInfo()
+                                .addLiveOut(RVLocs[i].getLocReg());
   }
 
   SDValue Flag;
@@ -1616,9 +1625,9 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
                        Chain, DAG.getRegister(Mips::RA, MVT::i32));
 }
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //                           Mips Inline Assembly Support
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.

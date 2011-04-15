@@ -1,27 +1,28 @@
-//===- MipsInstrInfo.td - Mips Register defs ---------------*- tablegen -*-===//
+//===- MipsInstrInfo.td - Mips Register defs --------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Instruction format superclass
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 include "MipsInstrFormats.td"
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips profiles and nodes
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 def SDT_MipsRet          : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_MipsJmpLink      : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def SDT_MipsCMov         : SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>,
-                                         SDTCisSameAs<1, 2>, SDTCisSameAs<3, 4>,
-                                         SDTCisInt<4>]>;
+                                                SDTCisSameAs<1, 2>,
+                                                SDTCisSameAs<3, 4>,
+                                                SDTCisInt<4>]>;
 def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 def SDT_MipsMAddMSub     : SDTypeProfile<0, 4,
@@ -70,9 +71,9 @@ def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsDivRem,
 def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
                            [SDNPOutGlue]>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 def HasSEInReg  : Predicate<"Subtarget.hasSEInReg()">;
 def HasBitCount : Predicate<"Subtarget.hasBitCount()">;
 def HasSwap     : Predicate<"Subtarget.hasSwap()">;
@@ -80,9 +81,9 @@ def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
 def IsMips32    : Predicate<"Subtarget.isMips32()">;
 def IsMips32r2  : Predicate<"Subtarget.isMips32r2()">;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // Instruction operand types
 def brtarget    : Operand<OtherVT>;
@@ -135,9 +136,9 @@ def immZExt5 : PatLeaf<(imm), [{
 // since load and store instructions from stack used it.
 def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Instructions specific format
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // Arithmetic 3 register operands
 let isCommutable = 1 in
@@ -337,9 +338,9 @@ class CondMov<bits<6> func, string instr_asm, PatLeaf MovCode>:
      CPURegs:$cond), !strconcat(instr_asm, "\t$dst, $T, $cond"),
      [], NoItinerary>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Pseudo instructions
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {
@@ -368,15 +369,16 @@ def ATMACRO   : MipsPseudo<(outs), (ins), ".set\tat", []>;
 // are used, we have the same behavior, but get also a bunch of warnings
 // from the assembler.
 def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
-def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc), ".cprestore\t$loc\n", []>;
+def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc),
+                           ".cprestore\t$loc\n", []>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Instruction definition
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // MipsI Instructions
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
 def ADDiu   : ArithI<0x09, "addiu", add, simm16, immSExt16>;
@@ -491,8 +493,9 @@ def MIPS_CMOV_ZERO  : PatLeaf<(i32 0)>;
 def MIPS_CMOV_NZERO : PatLeaf<(i32 1)>;
 
 // Conditional moves:
-// These instructions are expanded in MipsISelLowering::EmitInstrWithCustomInserter
-// if target does not have conditional move instructions.
+// These instructions are expanded in
+// MipsISelLowering::EmitInstrWithCustomInserter if target does not have
+// conditional move instructions.
 // flag:int, data:int
 let usesCustomInserter = 1, shamt = 0, Constraints = "$F = $dst" in
   class CondMovIntInt<bits<6> funct, string instr_asm> :
@@ -523,9 +526,9 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 // it is a real instruction.
 def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul>, Requires<[IsMips32]>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // Small immediates
 def : Pat<(i32 immSExt16:$in),
@@ -674,9 +677,8 @@ def : Pat<(setge CPURegs:$lhs, immSExt16:$rhs),
 def : Pat<(setuge CPURegs:$lhs, immSExt16:$rhs),
           (XORi (SLTiu CPURegs:$lhs, immSExt16:$rhs), 1)>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Floating Point Support
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 include "MipsInstrFPU.td"
-

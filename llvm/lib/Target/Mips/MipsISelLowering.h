@@ -1,16 +1,16 @@
-//===-- MipsISelLowering.h - Mips DAG Lowering Interface --------*- C++ -*-===//
+//===-- MipsISelLowering.h - Mips DAG Lowering Interface -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file defines the interfaces that Mips uses to lower LLVM code into a
 // selection DAG.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #ifndef MipsISELLOWERING_H
 #define MipsISELLOWERING_H
@@ -71,9 +71,9 @@ namespace llvm {
     };
   }
 
-  //===--------------------------------------------------------------------===//
+  //===-------------------------------------------------------------------===//
   // TargetLowering Implementation
-  //===--------------------------------------------------------------------===//
+  //===-------------------------------------------------------------------===//
 
   class MipsTargetLowering : public TargetLowering  {
   public:
@@ -148,8 +148,9 @@ namespace llvm {
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;
 
-    /// Examine constraint string and operand type and determine a weight value.
-    /// The operand object must already have been set up with the operand type.
+    /// Examine constraint string and operand type and determine a weight
+    /// value. The operand object must already have been set up with the
+    /// operand type.
     ConstraintWeight getSingleConstraintMatchWeight(
       AsmOperandInfo &info, const char *constraint) const;
 

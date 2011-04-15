@@ -1,15 +1,15 @@
-//===- MipsInstrInfo.h - Mips Instruction Information -----------*- C++ -*-===//
+//===- MipsInstrInfo.h - Mips Instruction Information ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file contains the Mips implementation of the TargetInstrInfo class.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #ifndef MIPSINSTRUCTIONINFO_H
 #define MIPSINSTRUCTIONINFO_H
@@ -124,7 +124,7 @@ namespace Mips {
 namespace MipsII {
   /// Target Operand Flag enum.
   enum TOF {
-    //===------------------------------------------------------------------===//
+    //===-----------------------------------------------------------------===//
     // Mips Specific MachineOperand flags.
 
     MO_NO_FLAG,
@@ -200,7 +200,8 @@ public:
                            bool KillSrc) const;
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   unsigned SrcReg, bool isKill,
+                                   int FrameIndex,
                                    const TargetRegisterClass *RC,
                                    const TargetRegisterInfo *TRI) const;
 

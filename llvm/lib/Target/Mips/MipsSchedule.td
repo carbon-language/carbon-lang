@@ -1,21 +1,21 @@
-//===- MipsSchedule.td - Mips Scheduling Definitions -------*- tablegen -*-===//
+//===- MipsSchedule.td - Mips Scheduling Definitions ------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Functional units across Mips chips sets. Based on GCC/Mips backend files.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 def ALU     : FuncUnit;
 def IMULDIV : FuncUnit;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Instruction Itinerary classes used for Mips
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 def IIAlu              : InstrItinClass;
 def IILoad             : InstrItinClass;
 def IIStore            : InstrItinClass;
@@ -37,9 +37,9 @@ def IIFsqrtDouble      : InstrItinClass;
 def IIFrecipFsqrtStep  : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips Generic instruction itineraries.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<IIAlu              , [InstrStage<1,  [ALU]>]>,
   InstrItinData<IILoad             , [InstrStage<3,  [ALU]>]>,

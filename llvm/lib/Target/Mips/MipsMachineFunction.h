@@ -1,15 +1,15 @@
-//===-- MipsMachineFunctionInfo.h - Private data used for Mips ----*- C++ -*-=//
+//===-- MipsMachineFunctionInfo.h - Private data used for Mips ---*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file declares the Mips specific subclass of MachineFunctionInfo.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #ifndef MIPS_MACHINE_FUNCTION_INFO_H
 #define MIPS_MACHINE_FUNCTION_INFO_H

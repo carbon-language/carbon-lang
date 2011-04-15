@@ -1,21 +1,21 @@
-//===- MipsCallingConv.td - Calling Conventions for Mips ---*- tablegen -*-===//
+//===- MipsCallingConv.td - Calling Conventions for Mips --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // This describes the calling conventions for Mips architecture.
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 /// CCIfSubtarget - Match if the current subtarget has a feature F.
 class CCIfSubtarget<string F, CCAction A>:
   CCIf<!strconcat("State.getTarget().getSubtarget<MipsSubtarget>().", F), A>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips O32 Calling Convention
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // Only the return rules are defined here for O32. The rules for argument
 // passing are defined in MipsISelLowering.cpp.
@@ -30,9 +30,9 @@ def RetCC_MipsO32 : CallingConv<[
   CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()", CCAssignToReg<[D0, D1]>>>
 ]>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips EABI Calling Convention
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 def CC_MipsEABI : CallingConv<[
   // Promote i8/i16 arguments to i32.
@@ -72,9 +72,9 @@ def RetCC_MipsEABI : CallingConv<[
   CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()", CCAssignToReg<[D0]>>>
 ]>;
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 // Mips Calling Convention Dispatch
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 def CC_Mips : CallingConv<[
   CCIfSubtarget<"isABI_EABI()", CCDelegateTo<CC_MipsEABI>>

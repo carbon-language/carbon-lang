@@ -1,15 +1,15 @@
-//=======- MipsFrameLowering.cpp - Mips Frame Information ------*- C++ -*-====//
+//=======- MipsFrameLowering.cpp - Mips Frame Information -----*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // This file contains the Mips implementation of TargetFrameLowering class.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 #include "MipsFrameLowering.h"
 #include "MipsInstrInfo.h"
@@ -27,7 +27,7 @@
 using namespace llvm;
 
 
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 //
 // Stack Frame Processing methods
 // +----------------------------+
@@ -77,11 +77,11 @@ using namespace llvm;
 // possible to detect those references and the offsets are adjusted to
 // their real location.
 //
-//===----------------------------------------------------------------------===//
+//===---------------------------------------------------------------------===//
 
 // hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
+// pointer register.  This is true if the function has variable sized allocas
+// or if frame pointer elimination is disabled.
 bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
@@ -203,9 +203,8 @@ void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
     MipsFI->setFPUTopSavedRegOff(TopFPUSavedRegOff-StackOffset);
 }
 
-
-// expand pair of register and immediate if the immediate doesn't fit in the 16-bit
-// offset field.
+// expand pair of register and immediate if the immediate doesn't fit in the
+// 16-bit offset field.
 // e.g.
 //  if OrigImm = 0x10000, OrigReg = $sp:
 //    generate the following sequence of instrs:
@@ -216,7 +215,8 @@ void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
 //    return true
 static bool expandRegLargeImmPair(unsigned OrigReg, int OrigImm,
                                   unsigned& NewReg, int& NewImm,
-                                  MachineBasicBlock& MBB, MachineBasicBlock::iterator I) {
+                                  MachineBasicBlock& MBB,
+                                  MachineBasicBlock::iterator I) {
   // OrigImm fits in the 16-bit field
   if (OrigImm < 0x8000 && OrigImm >= -0x8000) {
     NewReg = OrigReg;
@@ -228,12 +228,14 @@ static bool expandRegLargeImmPair(unsigned OrigReg, int OrigImm,
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   DebugLoc DL = I->getDebugLoc();
   int ImmLo = OrigImm & 0xffff;
-  int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) + ((OrigImm & 0x8000) != 0);
+  int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) + 
+              ((OrigImm & 0x8000) != 0);
 
   // FIXME: change this when mips goes MC".
   BuildMI(MBB, I, DL, TII->get(Mips::NOAT));
   BuildMI(MBB, I, DL, TII->get(Mips::LUi), Mips::AT).addImm(ImmHi);
-  BuildMI(MBB, I, DL, TII->get(Mips::ADDu), Mips::AT).addReg(OrigReg).addReg(Mips::AT);
+  BuildMI(MBB, I, DL, TII->get(Mips::ADDu), Mips::AT).addReg(OrigReg)
+                                                     .addReg(Mips::AT);
   NewReg = Mips::AT;
   NewImm = ImmLo;
 
