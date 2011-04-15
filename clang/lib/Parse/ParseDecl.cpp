@@ -653,7 +653,7 @@ void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
 /// [C++]   namespace-definition
 /// [C++]   using-directive
 /// [C++]   using-declaration
-/// [C++0x] static_assert-declaration
+/// [C++0x/C1X] static_assert-declaration
 ///         others... [FIXME]
 ///
 Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
@@ -688,6 +688,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
                                                   DeclEnd, attrs);
     break;
   case tok::kw_static_assert:
+  case tok::kw__Static_assert:
     ProhibitAttributes(attrs);
     SingleDecl = ParseStaticAssertDeclaration(DeclEnd);
     break;
@@ -2922,6 +2923,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
 
     // typedef-name
   case tok::annot_typename:
+
+    // static_assert-declaration
+  case tok::kw__Static_assert:
 
     // GNU typeof support.
   case tok::kw_typeof:

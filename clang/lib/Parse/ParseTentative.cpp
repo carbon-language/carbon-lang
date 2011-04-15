@@ -58,6 +58,7 @@ bool Parser::isCXXDeclarationStatement() {
   case tok::kw_using:
     // static_assert-declaration
   case tok::kw_static_assert:
+  case tok::kw__Static_assert:
     return true;
     // simple-declaration
   default:

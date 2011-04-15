@@ -240,6 +240,7 @@ KEYWORD(_Bool                       , KEYNOCXX)
 KEYWORD(_Complex                    , KEYALL)
 KEYWORD(_Generic                    , KEYALL)
 KEYWORD(_Imaginary                  , KEYALL)
+KEYWORD(_Static_assert              , KEYALL)
 KEYWORD(__func__                    , KEYALL)
 
 // C++ 2.11p1: Keywords.

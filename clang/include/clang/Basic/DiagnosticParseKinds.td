@@ -241,6 +241,8 @@ def err_unexected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier">;
 def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
+def ext_c1x_static_assert : Extension<
+  "_Static_assert is a C1X-specific feature">;
 
 /// Objective-C parser diagnostics
 def err_expected_minus_or_plus : Error<
