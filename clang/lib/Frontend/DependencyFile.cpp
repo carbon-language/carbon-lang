@@ -171,7 +171,7 @@ void DependencyFileCallback::OutputDependencyFile() {
   *OS << '\n';
 
   // Create phony targets if requested.
-  if (PhonyTarget) {
+  if (PhonyTarget && !Files.empty()) {
     // Skip the first entry, this is always the input file itself.
     for (std::vector<std::string>::iterator I = Files.begin() + 1,
            E = Files.end(); I != E; ++I) {
