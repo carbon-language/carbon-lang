@@ -1777,6 +1777,22 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
   return true;
 }
 
+// GenericSelectionExpr is a special case because the types and expressions
+// are interleaved.  We also need to watch out for null types (default
+// generic associations).
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::
+TraverseGenericSelectionExpr(GenericSelectionExpr *S) {
+  TRY_TO(WalkUpFromGenericSelectionExpr(S));
+  TRY_TO(TraverseStmt(S->getControllingExpr()));
+  for (unsigned i = 0; i != S->getNumAssocs(); ++i) {
+    if (TypeSourceInfo *TS = S->getAssocTypeSourceInfo(i))
+      TRY_TO(TraverseTypeLoc(TS->getTypeLoc()));
+    TRY_TO(TraverseStmt(S->getAssocExpr(i)));
+  }
+  return true;
+}
+
 DEF_TRAVERSE_STMT(CXXScalarValueInitExpr, {
     // This is called for code like 'return T()' where T is a built-in
     // (i.e. non-class) type.

@@ -2009,6 +2009,20 @@ public:
   /// fragments (e.g. "foo" "bar" L"baz").
   ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
 
+  ExprResult ActOnGenericSelectionExpr(SourceLocation KeyLoc,
+                                       SourceLocation DefaultLoc,
+                                       SourceLocation RParenLoc,
+                                       Expr *ControllingExpr,
+                                       MultiTypeArg Types,
+                                       MultiExprArg Exprs);
+  ExprResult CreateGenericSelectionExpr(SourceLocation KeyLoc,
+                                        SourceLocation DefaultLoc,
+                                        SourceLocation RParenLoc,
+                                        Expr *ControllingExpr,
+                                        TypeSourceInfo **Types,
+                                        Expr **Exprs,
+                                        unsigned NumAssocs);
+
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   ExprResult CreateBuiltinUnaryOp(SourceLocation OpLoc, UnaryOperatorKind Opc,
                                   Expr *InputArg);

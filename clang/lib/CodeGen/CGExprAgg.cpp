@@ -81,6 +81,9 @@ public:
     CGF.ErrorUnsupported(S, "aggregate expression");
   }
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
+  void VisitGenericSelectionExpr(GenericSelectionExpr *GE) {
+    Visit(GE->getResultExpr());
+  }
   void VisitUnaryExtension(UnaryOperator *E) { Visit(E->getSubExpr()); }
 
   // l-values.
@@ -518,9 +521,8 @@ void AggExprEmitter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
 /// zero to memory, return true.  This can return false if uncertain, so it just
 /// handles simple cases.
 static bool isSimpleZero(const Expr *E, CodeGenFunction &CGF) {
-  // (0)
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
-    return isSimpleZero(PE->getSubExpr(), CGF);
+  E = E->IgnoreParens();
+
   // 0
   if (const IntegerLiteral *IL = dyn_cast<IntegerLiteral>(E))
     return IL->getValue() == 0;
@@ -743,8 +745,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// non-zero bytes that will be stored when outputting the initializer for the
 /// specified initializer expression.
 static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
-    return GetNumNonZeroBytesInInit(PE->getSubExpr(), CGF);
+  E = E->IgnoreParens();
 
   // 0 and 0.0 won't require any non-zero stores!
   if (isSimpleZero(E, CGF)) return 0;

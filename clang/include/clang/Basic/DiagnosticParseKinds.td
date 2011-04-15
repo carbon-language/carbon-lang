@@ -67,6 +67,13 @@ def ext_ms_enum_fixed_underlying_type : Extension<
   "enumeration types with a fixed underlying type are a Microsoft extension">, 
   InGroup<Microsoft>;
 
+def ext_c1x_generic_selection : Extension<
+  "generic selections are a C1X-specific feature">;
+def err_duplicate_default_assoc : Error<
+  "duplicate default generic association">;
+def note_previous_default_assoc : Note<
+  "previous default generic association is here">;
+
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
 def ext_gnu_address_of_label : Extension<

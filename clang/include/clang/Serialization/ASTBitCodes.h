@@ -878,6 +878,8 @@ namespace clang {
       EXPR_BLOCK,
       /// \brief A BlockDeclRef record.
       EXPR_BLOCK_DECL_REF,
+      /// \brief A GenericSelectionExpr record.
+      EXPR_GENERIC_SELECTION,
       
       // Objective-C
 

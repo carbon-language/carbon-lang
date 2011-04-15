@@ -3679,6 +3679,118 @@ public:
 };
 
 
+/// \brief Represents a C1X generic selection.
+///
+/// A generic selection (C1X 6.5.1.1) contains an unevaluated controlling
+/// expression, followed by one or more generic associations.  Each generic
+/// association specifies a type name and an expression, or "default" and an
+/// expression (in which case it is known as a default generic association).
+/// The type and value of the generic selection are identical to those of its
+/// result expression, which is defined as the expression in the generic
+/// association with a type name that is compatible with the type of the
+/// controlling expression, or the expression in the default generic association
+/// if no types are compatible.  For example:
+///
+/// @code
+/// _Generic(X, double: 1, float: 2, default: 3)
+/// @endcode
+///
+/// The above expression evaluates to 1 if 1.0 is substituted for X, 2 if 1.0f
+/// or 3 if "hello".
+///
+/// As an extension, generic selections are allowed in C++, where the following
+/// additional semantics apply:
+///
+/// Any generic selection whose controlling expression is type-dependent or
+/// which names a dependent type in its association list is result-dependent,
+/// which means that the choice of result expression is dependent.
+/// Result-dependent generic associations are both type- and value-dependent.
+class GenericSelectionExpr : public Expr {
+  enum { CONTROLLING, END_EXPR };
+  TypeSourceInfo **AssocTypes;
+  Stmt **SubExprs;
+  unsigned NumAssocs, ResultIndex;
+  SourceLocation GenericLoc, DefaultLoc, RParenLoc;
+
+public:
+  GenericSelectionExpr(ASTContext &Context,
+                       SourceLocation GenericLoc, Expr *ControllingExpr,
+                       TypeSourceInfo **AssocTypes, Expr **AssocExprs,
+                       unsigned NumAssocs, SourceLocation DefaultLoc,
+                       SourceLocation RParenLoc,
+                       bool ContainsUnexpandedParameterPack,
+                       unsigned ResultIndex);
+
+  /// This constructor is used in the result-dependent case.
+  GenericSelectionExpr(ASTContext &Context,
+                       SourceLocation GenericLoc, Expr *ControllingExpr,
+                       TypeSourceInfo **AssocTypes, Expr **AssocExprs,
+                       unsigned NumAssocs, SourceLocation DefaultLoc,
+                       SourceLocation RParenLoc,
+                       bool ContainsUnexpandedParameterPack);
+
+  explicit GenericSelectionExpr(EmptyShell Empty)
+    : Expr(GenericSelectionExprClass, Empty) { }
+
+  unsigned getNumAssocs() const { return NumAssocs; }
+
+  SourceLocation getGenericLoc() const { return GenericLoc; }
+  SourceLocation getDefaultLoc() const { return DefaultLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+
+  const Expr *getAssocExpr(unsigned i) const {
+    return cast<Expr>(SubExprs[END_EXPR+i]);
+  }
+  Expr *getAssocExpr(unsigned i) { return cast<Expr>(SubExprs[END_EXPR+i]); }
+
+  const TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) const {
+    return AssocTypes[i];
+  }
+  TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) { return AssocTypes[i]; }
+
+  QualType getAssocType(unsigned i) const {
+    if (const TypeSourceInfo *TS = getAssocTypeSourceInfo(i))
+      return TS->getType();
+    else
+      return QualType();
+  }
+
+  const Expr *getControllingExpr() const {
+    return cast<Expr>(SubExprs[CONTROLLING]);
+  }
+  Expr *getControllingExpr() { return cast<Expr>(SubExprs[CONTROLLING]); }
+
+  /// Whether this generic selection is result-dependent.
+  bool isResultDependent() const { return ResultIndex == -1U; }
+
+  /// The zero-based index of the result expression's generic association in
+  /// the generic selection's association list.  Defined only if the
+  /// generic selection is not result-dependent.
+  unsigned getResultIndex() const {
+    assert(!isResultDependent() && "Generic selection is result-dependent");
+    return ResultIndex;
+  }
+
+  /// The generic selection's result expression.  Defined only if the
+  /// generic selection is not result-dependent.
+  const Expr *getResultExpr() const { return getAssocExpr(getResultIndex()); }
+  Expr *getResultExpr() { return getAssocExpr(getResultIndex()); }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(GenericLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == GenericSelectionExprClass;
+  }
+  static bool classof(const GenericSelectionExpr *) { return true; }
+
+  child_range children() {
+    return child_range(SubExprs, SubExprs+END_EXPR+NumAssocs);
+  }
+
+  friend class ASTStmtReader;
+};
+
 //===----------------------------------------------------------------------===//
 // Clang Extensions
 //===----------------------------------------------------------------------===//

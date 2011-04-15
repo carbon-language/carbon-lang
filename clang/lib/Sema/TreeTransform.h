@@ -1602,6 +1602,22 @@ public:
                                    RParenLoc);
   }
 
+  /// \brief Build a new generic selection expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildGenericSelectionExpr(SourceLocation KeyLoc,
+                                         SourceLocation DefaultLoc,
+                                         SourceLocation RParenLoc,
+                                         Expr *ControllingExpr,
+                                         TypeSourceInfo **Types,
+                                         Expr **Exprs,
+                                         unsigned NumAssocs) {
+    return getSema().CreateGenericSelectionExpr(KeyLoc, DefaultLoc, RParenLoc,
+                                                ControllingExpr, Types, Exprs,
+                                                NumAssocs);
+  }
+
   /// \brief Build a new overloaded operator call expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -5521,6 +5537,42 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCharacterLiteral(CharacterLiteral *E) {
   return SemaRef.Owned(E);
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformGenericSelectionExpr(GenericSelectionExpr *E) {
+  ExprResult ControllingExpr =
+    getDerived().TransformExpr(E->getControllingExpr());
+  if (ControllingExpr.isInvalid())
+    return ExprError();
+
+  llvm::SmallVector<Expr *, 4> AssocExprs;
+  llvm::SmallVector<TypeSourceInfo *, 4> AssocTypes;
+  for (unsigned i = 0; i != E->getNumAssocs(); ++i) {
+    TypeSourceInfo *TS = E->getAssocTypeSourceInfo(i);
+    if (TS) {
+      TypeSourceInfo *AssocType = getDerived().TransformType(TS);
+      if (!AssocType)
+        return ExprError();
+      AssocTypes.push_back(AssocType);
+    } else {
+      AssocTypes.push_back(0);
+    }
+
+    ExprResult AssocExpr = getDerived().TransformExpr(E->getAssocExpr(i));
+    if (AssocExpr.isInvalid())
+      return ExprError();
+    AssocExprs.push_back(AssocExpr.release());
+  }
+
+  return getDerived().RebuildGenericSelectionExpr(E->getGenericLoc(),
+                                                  E->getDefaultLoc(),
+                                                  E->getRParenLoc(),
+                                                  ControllingExpr.release(),
+                                                  AssocTypes.data(),
+                                                  AssocExprs.data(),
+                                                  E->getNumAssocs());
 }
 
 template<typename Derived>

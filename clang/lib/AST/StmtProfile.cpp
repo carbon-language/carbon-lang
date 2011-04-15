@@ -434,6 +434,18 @@ void StmtProfiler::VisitBlockDeclRefExpr(BlockDeclRefExpr *S) {
   ID.AddBoolean(S->isConstQualAdded());
 }
 
+void StmtProfiler::VisitGenericSelectionExpr(GenericSelectionExpr *S) {
+  VisitExpr(S);
+  for (unsigned i = 0; i != S->getNumAssocs(); ++i) {
+    QualType T = S->getAssocType(i);
+    if (T.isNull())
+      ID.AddPointer(0);
+    else
+      VisitType(T);
+    VisitExpr(S->getAssocExpr(i));
+  }
+}
+
 static Stmt::StmtClass DecodeOperatorCall(CXXOperatorCallExpr *S,
                                           UnaryOperatorKind &UnaryOp,
                                           BinaryOperatorKind &BinaryOp) {

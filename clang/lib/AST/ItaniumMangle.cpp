@@ -1750,6 +1750,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::ChooseExprClass:
   case Expr::CompoundLiteralExprClass:
   case Expr::ExtVectorElementExprClass:
+  case Expr::GenericSelectionExprClass:
   case Expr::ObjCEncodeExprClass:
   case Expr::ObjCIsaExprClass:
   case Expr::ObjCIvarRefExprClass:

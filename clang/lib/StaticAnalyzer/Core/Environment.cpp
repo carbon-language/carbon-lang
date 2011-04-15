@@ -41,6 +41,10 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
         // ParenExprs are no-ops.
         E = cast<ParenExpr>(E)->getSubExpr();
         continue;
+      case Stmt::GenericSelectionExprClass:
+        // GenericSelectionExprs are no-ops.
+        E = cast<GenericSelectionExpr>(E)->getResultExpr();
+        continue;
       case Stmt::CharacterLiteralClass: {
         const CharacterLiteral* C = cast<CharacterLiteral>(E);
         return svalBuilder.makeIntVal(C->getValue(), C->getType());

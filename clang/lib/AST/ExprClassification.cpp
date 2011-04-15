@@ -233,6 +233,14 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::ParenExprClass:
     return ClassifyInternal(Ctx, cast<ParenExpr>(E)->getSubExpr());
 
+    // C1X 6.5.1.1p4: [A generic selection] is an lvalue, a function designator,
+    // or a void expression if its result expression is, respectively, an
+    // lvalue, a function designator, or a void expression.
+  case Expr::GenericSelectionExprClass:
+    if (cast<GenericSelectionExpr>(E)->isResultDependent())
+      return Cl::CL_PRValue;
+    return ClassifyInternal(Ctx,cast<GenericSelectionExpr>(E)->getResultExpr());
+
   case Expr::BinaryOperatorClass:
   case Expr::CompoundAssignOperatorClass:
     // C doesn't have any binary expressions that are lvalues.

@@ -238,6 +238,7 @@ KEYWORD(volatile                    , KEYALL)
 KEYWORD(while                       , KEYALL)
 KEYWORD(_Bool                       , KEYNOCXX)
 KEYWORD(_Complex                    , KEYALL)
+KEYWORD(_Generic                    , KEYALL)
 KEYWORD(_Imaginary                  , KEYALL)
 KEYWORD(__func__                    , KEYALL)
 

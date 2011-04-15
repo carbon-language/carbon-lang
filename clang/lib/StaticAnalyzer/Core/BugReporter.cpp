@@ -859,7 +859,8 @@ class EdgeBuilder {
           default:
             break;
           case Stmt::ParenExprClass:
-            S = cast<ParenExpr>(S)->IgnoreParens();
+          case Stmt::GenericSelectionExprClass:
+            S = cast<Expr>(S)->IgnoreParens();
             firstCharOnly = true;
             continue;
           case Stmt::BinaryConditionalOperatorClass:

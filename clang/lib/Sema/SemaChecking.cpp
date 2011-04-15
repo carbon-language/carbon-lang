@@ -905,6 +905,8 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
   if (E->isTypeDependent() || E->isValueDependent())
     return false;
 
+  E = E->IgnoreParens();
+
   switch (E->getStmtClass()) {
   case Stmt::BinaryConditionalOperatorClass:
   case Stmt::ConditionalOperatorClass: {
@@ -924,11 +926,6 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
 
   case Stmt::ImplicitCastExprClass: {
     E = cast<ImplicitCastExpr>(E)->getSubExpr();
-    goto tryAgain;
-  }
-
-  case Stmt::ParenExprClass: {
-    E = cast<ParenExpr>(E)->getSubExpr();
     goto tryAgain;
   }
 
@@ -1897,14 +1894,12 @@ static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
           E->getType()->isObjCQualifiedIdType()) &&
          "EvalAddr only works on pointers");
 
+  E = E->IgnoreParens();
+
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
-  case Stmt::ParenExprClass:
-    // Ignore parentheses.
-    return EvalAddr(cast<ParenExpr>(E)->getSubExpr(), refVars);
-
   case Stmt::DeclRefExprClass: {
     DeclRefExpr *DR = cast<DeclRefExpr>(E);
 
@@ -2034,6 +2029,8 @@ do {
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
+
+  E = E->IgnoreParens();
   switch (E->getStmtClass()) {
   case Stmt::ImplicitCastExprClass: {
     ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
@@ -2065,12 +2062,6 @@ do {
       }
 
     return NULL;
-  }
-
-  case Stmt::ParenExprClass: {
-    // Ignore parentheses.
-    E = cast<ParenExpr>(E)->getSubExpr();
-    continue;
   }
 
   case Stmt::UnaryOperatorClass: {
@@ -3272,11 +3263,9 @@ static void CheckArrayAccess_Check(Sema &S,
 }
 
 void Sema::CheckArrayAccess(const Expr *expr) {
-  while (true)
+  while (true) {
+    expr = expr->IgnoreParens();
     switch (expr->getStmtClass()) {
-      case Stmt::ParenExprClass:
-        expr = cast<ParenExpr>(expr)->getSubExpr();
-        continue;
       case Stmt::ArraySubscriptExprClass:
         CheckArrayAccess_Check(*this, cast<ArraySubscriptExpr>(expr));
         return;
@@ -3291,4 +3280,5 @@ void Sema::CheckArrayAccess(const Expr *expr) {
       default:
         return;
     }
+  }
 }

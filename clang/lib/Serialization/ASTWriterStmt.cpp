@@ -93,6 +93,7 @@ namespace clang {
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     void VisitBlockExpr(BlockExpr *E);
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+    void VisitGenericSelectionExpr(GenericSelectionExpr *E);
 
     // Objective-C Expressions
     void VisitObjCStringLiteral(ObjCStringLiteral *E);
@@ -783,6 +784,23 @@ void ASTStmtWriter::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   Record.push_back(E->isByRef());
   Record.push_back(E->isConstQualAdded());
   Code = serialization::EXPR_BLOCK_DECL_REF;
+}
+
+void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+  VisitExpr(E);
+  Record.push_back(E->getNumAssocs());
+
+  Writer.AddStmt(E->getControllingExpr());
+  for (unsigned I = 0, N = E->getNumAssocs(); I != N; ++I) {
+    Writer.AddTypeSourceInfo(E->getAssocTypeSourceInfo(I), Record);
+    Writer.AddStmt(E->getAssocExpr(I));
+  }
+  Record.push_back(E->isResultDependent() ? -1U : E->getResultIndex());
+
+  Writer.AddSourceLocation(E->getGenericLoc(), Record);
+  Writer.AddSourceLocation(E->getDefaultLoc(), Record);
+  Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Code = serialization::EXPR_GENERIC_SELECTION;
 }
 
 //===----------------------------------------------------------------------===//

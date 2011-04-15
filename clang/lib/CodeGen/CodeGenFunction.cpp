@@ -469,8 +469,7 @@ ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &ResultInt) {
 void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
                                            llvm::BasicBlock *TrueBlock,
                                            llvm::BasicBlock *FalseBlock) {
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Cond))
-    return EmitBranchOnBoolExpr(PE->getSubExpr(), TrueBlock, FalseBlock);
+  Cond = Cond->IgnoreParens();
 
   if (const BinaryOperator *CondBOp = dyn_cast<BinaryOperator>(Cond)) {
     // Handle X && Y in a condition.

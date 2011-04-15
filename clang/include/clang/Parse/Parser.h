@@ -1101,6 +1101,8 @@ private:
 
   ExprResult ParseStringLiteralExpression();
 
+  ExprResult ParseGenericSelectionExpression();
+
   //===--------------------------------------------------------------------===//
   // C++ Expressions
   ExprResult ParseCXXIdExpression(bool isAddressOfOperand = false);

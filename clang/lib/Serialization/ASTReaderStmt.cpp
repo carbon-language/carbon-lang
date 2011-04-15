@@ -122,6 +122,7 @@ namespace clang {
     void VisitShuffleVectorExpr(ShuffleVectorExpr *E);
     void VisitBlockExpr(BlockExpr *E);
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E);
+    void VisitGenericSelectionExpr(GenericSelectionExpr *E);
     void VisitObjCStringLiteral(ObjCStringLiteral *E);
     void VisitObjCEncodeExpr(ObjCEncodeExpr *E);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *E);
@@ -820,6 +821,25 @@ void ASTStmtReader::VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->setByRef(Record[Idx++]);
   E->setConstQualAdded(Record[Idx++]);
+}
+
+void ASTStmtReader::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+  VisitExpr(E);
+  E->NumAssocs = Record[Idx++];
+  E->AssocTypes = new (*Reader.getContext()) TypeSourceInfo*[E->NumAssocs];
+  E->SubExprs =
+   new(*Reader.getContext()) Stmt*[GenericSelectionExpr::END_EXPR+E->NumAssocs];
+
+  E->SubExprs[GenericSelectionExpr::CONTROLLING] = Reader.ReadSubExpr();
+  for (unsigned I = 0, N = E->getNumAssocs(); I != N; ++I) {
+    E->AssocTypes[I] = GetTypeSourceInfo(Record, Idx);
+    E->SubExprs[GenericSelectionExpr::END_EXPR+I] = Reader.ReadSubExpr();
+  }
+  E->ResultIndex = Record[Idx++];
+
+  E->GenericLoc = ReadSourceLocation(Record, Idx);
+  E->DefaultLoc = ReadSourceLocation(Record, Idx);
+  E->RParenLoc = ReadSourceLocation(Record, Idx);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1694,6 +1714,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
     case EXPR_BLOCK_DECL_REF:
       S = new (Context) BlockDeclRefExpr(Empty);
+      break;
+
+    case EXPR_GENERIC_SELECTION:
+      S = new (Context) GenericSelectionExpr(Empty);
       break;
 
     case EXPR_OBJC_STRING_LITERAL:

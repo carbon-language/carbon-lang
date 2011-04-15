@@ -239,10 +239,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
 
     llvm::SmallVector<SubobjectAdjustment, 2> Adjustments;
     while (true) {
-      if (const ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
-        E = PE->getSubExpr();
-        continue;
-      } 
+      E = E->IgnoreParens();
 
       if (const CastExpr *CE = dyn_cast<CastExpr>(E)) {
         if ((CE->getCastKind() == CK_DerivedToBase ||
@@ -545,6 +542,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::DeclRefExprClass:
     return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
+  case Expr::GenericSelectionExprClass:
+    return EmitLValue(cast<GenericSelectionExpr>(E)->getResultExpr());
   case Expr::PredefinedExprClass:
     return EmitPredefinedLValue(cast<PredefinedExpr>(E));
   case Expr::StringLiteralClass:
@@ -1099,6 +1098,12 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     }
     return;
   }
+
+  if (const GenericSelectionExpr *Exp = dyn_cast<GenericSelectionExpr>(E)) {
+    setObjCGCLValueClass(Ctx, Exp->getResultExpr(), LV);
+    return;
+  }
+
   if (const ImplicitCastExpr *Exp = dyn_cast<ImplicitCastExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
     return;

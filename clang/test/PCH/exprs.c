@@ -93,3 +93,6 @@ choose_expr *int_ptr8 = &integer;
 
 // ShuffleVectorExpr
 shuffle_expr *vec_ptr = &vec2;
+
+// GenericSelectionExpr
+generic_selection_expr *double_ptr6 = &floating;

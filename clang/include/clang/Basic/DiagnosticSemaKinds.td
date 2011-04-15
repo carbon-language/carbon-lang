@@ -3646,6 +3646,21 @@ def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
   "unspecified (use strncmp instead)">;
 
+// Generic selections.
+def err_assoc_type_incomplete : Error<
+  "type %0 in generic association incomplete">;
+def err_assoc_type_nonobject : Error<
+  "type %0 in generic association not an object type">;
+def err_assoc_type_variably_modified : Error<
+  "type %0 in generic association is a variably modified type">;
+def err_assoc_compatible_types : Error<
+  "type %0 in generic association compatible with previously specified type %1">;
+def note_compat_assoc : Note<
+  "compatible type %0 specified here">;
+def err_generic_sel_no_match : Error<
+  "controlling expression type %0 not compatible with any generic association type">;
+def err_generic_sel_multi_match : Error<
+  "controlling expression type %0 compatible with %1 generic association types">;
 
 
 // Blocks

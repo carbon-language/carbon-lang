@@ -75,6 +75,7 @@ def DesignatedInitExpr : DStmt<Expr>;
 def ImplicitValueInitExpr : DStmt<Expr>;
 def ParenListExpr : DStmt<Expr>;
 def VAArgExpr : DStmt<Expr>;
+def GenericSelectionExpr : DStmt<Expr>;
 
 // GNU Extensions.
 def AddrLabelExpr : DStmt<Expr>;

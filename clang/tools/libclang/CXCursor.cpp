@@ -130,6 +130,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::AddrLabelExprClass:        
   case Stmt::StmtExprClass:             
   case Stmt::ChooseExprClass:           
+  case Stmt::GenericSelectionExprClass:
   case Stmt::GNUNullExprClass:          
   case Stmt::CXXStaticCastExprClass:      
   case Stmt::CXXDynamicCastExprClass:     

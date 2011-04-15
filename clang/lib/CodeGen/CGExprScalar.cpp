@@ -163,6 +163,9 @@ public:
   Value *VisitParenExpr(ParenExpr *PE) {
     return Visit(PE->getSubExpr()); 
   }
+  Value *VisitGenericSelectionExpr(GenericSelectionExpr *GE) {
+    return Visit(GE->getResultExpr());
+  }
 
   // Leaves.
   Value *VisitIntegerLiteral(const IntegerLiteral *E) {
@@ -2396,8 +2399,7 @@ Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
 /// flow into selects in some cases.
 static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E,
                                                    CodeGenFunction &CGF) {
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(E))
-    return isCheapEnoughToEvaluateUnconditionally(PE->getSubExpr(), CGF);
+  E = E->IgnoreParens();
 
   // TODO: Allow anything we can constant fold to an integer or fp constant.
   if (isa<IntegerLiteral>(E) || isa<CharacterLiteral>(E) ||

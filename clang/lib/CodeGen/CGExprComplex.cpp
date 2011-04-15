@@ -108,6 +108,9 @@ public:
   }
   ComplexPairTy VisitExpr(Expr *S);
   ComplexPairTy VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr());}
+  ComplexPairTy VisitGenericSelectionExpr(GenericSelectionExpr *GE) {
+    return Visit(GE->getResultExpr());
+  }
   ComplexPairTy VisitImaginaryLiteral(const ImaginaryLiteral *IL);
 
   // l-values.

@@ -457,6 +457,10 @@ public:
     return Visit(PE->getSubExpr());
   }
 
+  llvm::Constant *VisitGenericSelectionExpr(GenericSelectionExpr *GE) {
+    return Visit(GE->getResultExpr());
+  }
+
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }

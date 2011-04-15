@@ -465,6 +465,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [C++]   boolean-literal  [C++ 2.13.5]
 /// [C++0x] 'nullptr'        [C++0x 2.14.7]
 ///         '(' expression ')'
+/// [C1X]   generic-selection
 ///         '__func__'        [C99 6.4.2.2]
 /// [GNU]   '__FUNCTION__'
 /// [GNU]   '__PRETTY_FUNCTION__'
@@ -730,6 +731,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::string_literal:    // primary-expression: string-literal
   case tok::wide_string_literal:
     Res = ParseStringLiteralExpression();
+    break;
+  case tok::kw__Generic:   // primary-expression: generic-selection [C1X 6.5.1]
+    Res = ParseGenericSelectionExpression();
     break;
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
@@ -1800,6 +1804,100 @@ ExprResult Parser::ParseStringLiteralExpression() {
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
   return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
+}
+
+/// ParseGenericSelectionExpression - Parse a C1X generic-selection
+/// [C1X 6.5.1.1].
+///
+///    generic-selection:
+///           _Generic ( assignment-expression , generic-assoc-list )
+///    generic-assoc-list:
+///           generic-association
+///           generic-assoc-list , generic-association
+///    generic-association:
+///           type-name : assignment-expression
+///           default : assignment-expression
+ExprResult Parser::ParseGenericSelectionExpression() {
+  assert(Tok.is(tok::kw__Generic) && "_Generic keyword expected");
+  SourceLocation KeyLoc = ConsumeToken();
+
+  if (!getLang().C1X)
+    Diag(KeyLoc, diag::ext_c1x_generic_selection);
+
+  SourceLocation LParenLoc = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen, ""))
+    return ExprError();
+
+  ExprResult ControllingExpr;
+  {
+    // C1X 6.5.1.1p3 "The controlling expression of a generic selection is
+    // not evaluated."
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
+    ControllingExpr = ParseAssignmentExpression();
+    if (ControllingExpr.isInvalid()) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+  }
+
+  if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "")) {
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  SourceLocation DefaultLoc;
+  TypeVector Types(Actions);
+  ExprVector Exprs(Actions);
+  while (1) {
+    ParsedType Ty;
+    if (Tok.is(tok::kw_default)) {
+      // C1X 6.5.1.1p2 "A generic selection shall have no more than one default
+      // generic association."
+      if (!DefaultLoc.isInvalid()) {
+        Diag(Tok, diag::err_duplicate_default_assoc);
+        Diag(DefaultLoc, diag::note_previous_default_assoc);
+        SkipUntil(tok::r_paren);
+        return ExprError();
+      }
+      DefaultLoc = ConsumeToken();
+      Ty = ParsedType();
+    } else {
+      ColonProtectionRAIIObject X(*this);
+      TypeResult TR = ParseTypeName();
+      if (TR.isInvalid()) {
+        SkipUntil(tok::r_paren);
+        return ExprError();
+      }
+      Ty = TR.release();
+    }
+    Types.push_back(Ty);
+
+    if (ExpectAndConsume(tok::colon, diag::err_expected_colon, "")) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+
+    // FIXME: These expressions should be parsed in a potentially potentially
+    // evaluated context.
+    ExprResult ER(ParseAssignmentExpression());
+    if (ER.isInvalid()) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+    Exprs.push_back(ER.release());
+
+    if (Tok.isNot(tok::comma))
+      break;
+    ConsumeToken();
+  }
+
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  if (RParenLoc.isInvalid())
+    return ExprError();
+
+  return Actions.ActOnGenericSelectionExpr(KeyLoc, DefaultLoc, RParenLoc,
+                                           ControllingExpr.release(),
+                                           move_arg(Types), move_arg(Exprs));
 }
 
 /// ParseExpressionList - Used for C/C++ (argument-)expression-list.

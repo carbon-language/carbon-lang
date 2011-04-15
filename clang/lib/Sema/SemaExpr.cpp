@@ -748,6 +748,163 @@ QualType Sema::UsualArithmeticConversions(ExprResult &lhsExpr, ExprResult &rhsEx
 //===----------------------------------------------------------------------===//
 
 
+ExprResult
+Sema::ActOnGenericSelectionExpr(SourceLocation KeyLoc,
+                                SourceLocation DefaultLoc,
+                                SourceLocation RParenLoc,
+                                Expr *ControllingExpr,
+                                MultiTypeArg types,
+                                MultiExprArg exprs) {
+  unsigned NumAssocs = types.size();
+  assert(NumAssocs == exprs.size());
+
+  ParsedType *ParsedTypes = types.release();
+  Expr **Exprs = exprs.release();
+
+  TypeSourceInfo **Types = new TypeSourceInfo*[NumAssocs];
+  for (unsigned i = 0; i < NumAssocs; ++i) {
+    if (ParsedTypes[i])
+      (void) GetTypeFromParser(ParsedTypes[i], &Types[i]);
+    else
+      Types[i] = 0;
+  }
+
+  ExprResult ER = CreateGenericSelectionExpr(KeyLoc, DefaultLoc, RParenLoc,
+                                             ControllingExpr, Types, Exprs,
+                                             NumAssocs);
+  delete Types;
+  return ER;
+}
+
+ExprResult
+Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
+                                 SourceLocation DefaultLoc,
+                                 SourceLocation RParenLoc,
+                                 Expr *ControllingExpr,
+                                 TypeSourceInfo **Types,
+                                 Expr **Exprs,
+                                 unsigned NumAssocs) {
+  bool TypeErrorFound = false,
+       IsResultDependent = ControllingExpr->isTypeDependent(),
+       ContainsUnexpandedParameterPack
+         = ControllingExpr->containsUnexpandedParameterPack();
+
+  for (unsigned i = 0; i < NumAssocs; ++i) {
+    if (Exprs[i]->containsUnexpandedParameterPack())
+      ContainsUnexpandedParameterPack = true;
+
+    if (Types[i]) {
+      if (Types[i]->getType()->containsUnexpandedParameterPack())
+        ContainsUnexpandedParameterPack = true;
+
+      if (Types[i]->getType()->isDependentType()) {
+        IsResultDependent = true;
+      } else {
+        // C1X 6.5.1.1p2 "The type name in a generic association shall specify a
+        // complete object type other than a variably modified type."
+        unsigned D = 0;
+        if (Types[i]->getType()->isIncompleteType())
+          D = diag::err_assoc_type_incomplete;
+        else if (!Types[i]->getType()->isObjectType())
+          D = diag::err_assoc_type_nonobject;
+        else if (Types[i]->getType()->isVariablyModifiedType())
+          D = diag::err_assoc_type_variably_modified;
+
+        if (D != 0) {
+          Diag(Types[i]->getTypeLoc().getBeginLoc(), D)
+            << Types[i]->getTypeLoc().getSourceRange()
+            << Types[i]->getType();
+          TypeErrorFound = true;
+        }
+
+        // C1X 6.5.1.1p2 "No two generic associations in the same generic
+        // selection shall specify compatible types."
+        for (unsigned j = i+1; j < NumAssocs; ++j)
+          if (Types[j] && !Types[j]->getType()->isDependentType() &&
+              Context.typesAreCompatible(Types[i]->getType(),
+                                         Types[j]->getType())) {
+            Diag(Types[j]->getTypeLoc().getBeginLoc(),
+                 diag::err_assoc_compatible_types)
+              << Types[j]->getTypeLoc().getSourceRange()
+              << Types[j]->getType()
+              << Types[i]->getType();
+            Diag(Types[i]->getTypeLoc().getBeginLoc(),
+                 diag::note_compat_assoc)
+              << Types[i]->getTypeLoc().getSourceRange()
+              << Types[i]->getType();
+            TypeErrorFound = true;
+          }
+      }
+    }
+  }
+  if (TypeErrorFound)
+    return ExprError();
+
+  // If we determined that the generic selection is result-dependent, don't
+  // try to compute the result expression.
+  if (IsResultDependent)
+    return Owned(new (Context) GenericSelectionExpr(
+                   Context, KeyLoc, ControllingExpr,
+                   Types, Exprs, NumAssocs, DefaultLoc,
+                   RParenLoc, ContainsUnexpandedParameterPack));
+
+  llvm::SmallVector<unsigned, 1> CompatIndices;
+  unsigned DefaultIndex = -1U;
+  for (unsigned i = 0; i < NumAssocs; ++i) {
+    if (!Types[i])
+      DefaultIndex = i;
+    else if (Context.typesAreCompatible(ControllingExpr->getType(),
+                                        Types[i]->getType()))
+      CompatIndices.push_back(i);
+  }
+
+  // C1X 6.5.1.1p2 "The controlling expression of a generic selection shall have
+  // type compatible with at most one of the types named in its generic
+  // association list."
+  if (CompatIndices.size() > 1) {
+    // We strip parens here because the controlling expression is typically
+    // parenthesized in macro definitions.
+    ControllingExpr = ControllingExpr->IgnoreParens();
+    Diag(ControllingExpr->getLocStart(), diag::err_generic_sel_multi_match)
+      << ControllingExpr->getSourceRange() << ControllingExpr->getType()
+      << (unsigned) CompatIndices.size();
+    for (llvm::SmallVector<unsigned, 1>::iterator I = CompatIndices.begin(),
+         E = CompatIndices.end(); I != E; ++I) {
+      Diag(Types[*I]->getTypeLoc().getBeginLoc(),
+           diag::note_compat_assoc)
+        << Types[*I]->getTypeLoc().getSourceRange()
+        << Types[*I]->getType();
+    }
+    return ExprError();
+  }
+
+  // C1X 6.5.1.1p2 "If a generic selection has no default generic association,
+  // its controlling expression shall have type compatible with exactly one of
+  // the types named in its generic association list."
+  if (DefaultIndex == -1U && CompatIndices.size() == 0) {
+    // We strip parens here because the controlling expression is typically
+    // parenthesized in macro definitions.
+    ControllingExpr = ControllingExpr->IgnoreParens();
+    Diag(ControllingExpr->getLocStart(), diag::err_generic_sel_no_match)
+      << ControllingExpr->getSourceRange() << ControllingExpr->getType();
+    return ExprError();
+  }
+
+  // C1X 6.5.1.1p3 "If a generic selection has a generic association with a
+  // type name that is compatible with the type of the controlling expression,
+  // then the result expression of the generic selection is the expression
+  // in that generic association. Otherwise, the result expression of the
+  // generic selection is the expression in the default generic association."
+  unsigned ResultIndex =
+    CompatIndices.size() ? CompatIndices[0] : DefaultIndex;
+
+  return Owned(new (Context) GenericSelectionExpr(
+                 Context, KeyLoc, ControllingExpr,
+                 Types, Exprs, NumAssocs, DefaultLoc,
+                 RParenLoc, ContainsUnexpandedParameterPack,
+                 ResultIndex));
+}
+
 /// ActOnStringLiteral - The specified tokens were lexed as pasted string
 /// fragments (e.g. "foo" "bar" L"baz").  The result string has to handle string
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from

@@ -274,6 +274,9 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
   bool VisitDeclRefExpr(DeclRefExpr *E) {
     if (Info.Ctx.getCanonicalType(E->getType()).isVolatileQualified())
       return true;
@@ -372,6 +375,9 @@ public:
   }
   
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
   bool VisitDeclRefExpr(DeclRefExpr *E);
   bool VisitPredefinedExpr(PredefinedExpr *E) { return Success(E); }
   bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
@@ -501,6 +507,9 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
 
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitCastExpr(CastExpr* E);
@@ -717,6 +726,8 @@ namespace {
 
     APValue VisitParenExpr(ParenExpr *E)
         { return Visit(E->getSubExpr()); }
+    APValue VisitGenericSelectionExpr(GenericSelectionExpr *E)
+        { return Visit(E->getResultExpr()); }
     APValue VisitUnaryExtension(const UnaryOperator *E)
       { return Visit(E->getSubExpr()); }
     APValue VisitUnaryPlus(const UnaryOperator *E)
@@ -975,6 +986,9 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
 
   bool VisitIntegerLiteral(const IntegerLiteral *E) {
     return Success(E->getValue(), E);
@@ -1918,6 +1932,9 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
   bool VisitCallExpr(const CallExpr *E);
 
   bool VisitUnaryOperator(const UnaryOperator *E);
@@ -2251,6 +2268,9 @@ public:
   }
 
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitGenericSelectionExpr(GenericSelectionExpr *E) {
+    return Visit(E->getResultExpr());
+  }
 
   bool VisitImaginaryLiteral(ImaginaryLiteral *E);
 
@@ -2839,6 +2859,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
 
   case Expr::ParenExprClass:
     return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);
+  case Expr::GenericSelectionExprClass:
+    return CheckICE(cast<GenericSelectionExpr>(E)->getResultExpr(), Ctx);
   case Expr::IntegerLiteralClass:
   case Expr::CharacterLiteralClass:
   case Expr::CXXBoolLiteralExprClass:

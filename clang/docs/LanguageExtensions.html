@@ -52,6 +52,7 @@ td {
 <li><a href="#checking_type_traits">Checks for Type Traits</a></li>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
+<li><a href="#generic-selections">Generic Selections</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
@@ -602,6 +603,20 @@ caveats to this use of name mangling:</p>
 
 <p>Query for this feature with __has_feature(attribute_overloadable).</p>
 
+
+<!-- ======================================================================= -->
+<h2 id="generic-selections">Generic Selections</h2>
+<!-- ======================================================================= -->
+
+<p>The C1X generic selection expression is available in all languages
+supported by Clang.  The syntax is the same as that given in the C1X draft
+standard.</p>
+
+<p>In C, type compatibility is decided according to the rules given in the
+appropriate standard, but in C++, which lacks the type compatibility rules
+used in C, types are considered compatible only if they are equivalent.</p>
+
+<p>Query for this feature with __has_feature(generic_selections).</p>
 
 <!-- ======================================================================= -->
 <h2 id="builtins">Builtin Functions</h2>
