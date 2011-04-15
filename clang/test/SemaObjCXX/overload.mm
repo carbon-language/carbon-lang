@@ -149,3 +149,13 @@ namespace rdar8734046 {
     f2(a);
   }
 }
+
+namespace PR9735 {
+  int &f3(const A*);
+  float &f3(const void*);
+
+  void test_f(B* b, const B* bc) {
+    int &ir1 = f3(b);
+    int &ir2 = f3(bc);
+  }
+}

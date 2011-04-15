@@ -240,7 +240,7 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
   if (First == ICK_Array_To_Pointer)
     FromType = Context.getArrayDecayedType(FromType);
 
-  if (Second == ICK_Pointer_Conversion && FromType->isPointerType())
+  if (Second == ICK_Pointer_Conversion && FromType->isAnyPointerType())
     if (const PointerType* ToPtrType = ToType->getAs<PointerType>())
       return ToPtrType->getPointeeType()->isVoidType();
 
