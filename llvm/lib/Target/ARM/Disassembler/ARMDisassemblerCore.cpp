@@ -2683,6 +2683,12 @@ static bool DisassembleNLdSt(MCInst &MI, unsigned Opcode, uint32_t insn,
       // Now we can calculate the alignment!
       if (a)
         alignment = elem * data_size;
+    } else {
+      if (a) {
+        // A8.6.315 VLD3 (single 3-element structure to all lanes)
+        // The a bit must be encoded as 0.
+        return false;
+      }
     }
   } else {
     // Multiple n-element structures with type encoded as Inst{11-8}.
