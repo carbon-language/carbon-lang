@@ -314,7 +314,7 @@ getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
                          MCStreamer &Streamer) const {
   const MCExpr *Res = MCSymbolRefExpr::Create(Sym, getContext());
 
-  switch (Encoding & 0x70) {
+  switch (Encoding & 0xF0) {
   default:
     report_fatal_error("We do not support this DWARF encoding yet!");
   case dwarf::DW_EH_PE_absptr:

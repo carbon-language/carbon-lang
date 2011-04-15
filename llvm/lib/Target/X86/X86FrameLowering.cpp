@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -477,15 +476,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(StackPtr);
 
     if (needsFrameMoves) {
-      const MCAsmInfo &MAI = MMI.getContext().getAsmInfo();
-      if (MAI.getExceptionHandlingType() == ExceptionHandling::DwarfCFI) {
-        MCSymbol *FrameLabel0 = MMI.getContext().CreateTempSymbol();
-        BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(FrameLabel0);
-        MachineLocation FPSrc0(FramePtr);
-        MachineLocation FPDst0(FramePtr, -2 * stackGrowth);
-        Moves.push_back(MachineMove(FrameLabel0, FPDst0, FPSrc0));
-      }
-
       // Mark effective beginning of when frame pointer becomes valid.
       MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
       BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(FrameLabel);
@@ -625,7 +615,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
                  TII, *RegInfo);
 
-  if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
+  if ((NumBytes || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
     MCSymbol *Label = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(Label);

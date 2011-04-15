@@ -89,9 +89,7 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  ExceptionsType = ExceptionHandling::DwarfCFI;
-
-  DwarfRequiresFrameSection = false;
+  ExceptionsType = ExceptionHandling::DwarfTable;
 
   // OpenBSD has buggy support for .quad in 32-bit mode, just split into two
   // .words.
