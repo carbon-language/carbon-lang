@@ -34,7 +34,7 @@ namespace clang {
   /// architectures where the two are the same size.
   /// 
   /// For portability, never assume that a target character is 8 bits wide. Use 
-  /// CharUnit values whereever you calculate sizes, offsets, or alignments
+  /// CharUnit values wherever you calculate sizes, offsets, or alignments
   /// in character units.
   class CharUnits {
     public:

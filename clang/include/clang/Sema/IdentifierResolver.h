@@ -28,7 +28,7 @@ class Scope;
 
 /// IdentifierResolver - Keeps track of shadowed decls on enclosing
 /// scopes.  It manages the shadowing chains of declaration names and
-/// implements efficent decl lookup based on a declaration name.
+/// implements efficient decl lookup based on a declaration name.
 class IdentifierResolver {
 
   /// IdDeclInfo - Keeps track of information about decls associated

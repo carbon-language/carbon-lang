@@ -527,7 +527,7 @@ PTHManager *PTHManager::Create(const std::string &file, Diagnostic &Diags) {
   // Get the number of IdentifierInfos and pre-allocate the identifier cache.
   uint32_t NumIds = ReadLE32(IData);
 
-  // Pre-allocate the peristent ID -> IdentifierInfo* cache.  We use calloc()
+  // Pre-allocate the persistent ID -> IdentifierInfo* cache.  We use calloc()
   // so that we in the best case only zero out memory once when the OS returns
   // us new pages.
   IdentifierInfo** PerIDCache = 0;

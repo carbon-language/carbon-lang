@@ -81,7 +81,7 @@ void pr3836(int *a, int *b) {
 
 //===---------------------------------------------------------------------===//
 // <rdar://problem/7342806>
-// This false positive occured because the symbolic constraint on a short was
+// This false positive occurred because the symbolic constraint on a short was
 // not maintained via sign extension.  The analyzer doesn't properly handle
 // the sign extension, but now tracks the constraint.  This particular
 // case relies on -analyzer-eagerly-assume because of the expression

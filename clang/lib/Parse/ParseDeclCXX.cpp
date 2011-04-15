@@ -1079,7 +1079,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     case tok::kw_mutable:         // struct foo {...} mutable      x;
       // As shown above, type qualifiers and storage class specifiers absolutely
       // can occur after class specifiers according to the grammar.  However,
-      // almost noone actually writes code like this.  If we see one of these,
+      // almost no one actually writes code like this.  If we see one of these,
       // it is much more likely that someone missed a semi colon and the
       // type/storage class specifier we're seeing is part of the *next*
       // intended declaration, as in:

@@ -1595,7 +1595,7 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 /// some tokens, this will store the first token and return true.
 bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   // Scan one character past where we should, looking for a '/' character.  Once
-  // we find it, check to see if it was preceeded by a *.  This common
+  // we find it, check to see if it was preceded by a *.  This common
   // optimization helps people who like to put a lot of * characters in their
   // comments.
 

@@ -2431,7 +2431,7 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
                                  SymbolRef sym, ExprEngine& Eng)
 : CFRefReport(D, tf, n, sym) {
 
-  // Most bug reports are cached at the location where they occured.
+  // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.  To do this, we need to find
   // the allocation site of a piece of tracked memory, which we do via a

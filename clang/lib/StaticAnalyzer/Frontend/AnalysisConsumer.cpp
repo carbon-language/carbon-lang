@@ -254,7 +254,7 @@ static void ActionObjCMemChecker(AnalysisConsumer &C, AnalysisManager& mgr,
 
 void AnalysisConsumer::HandleCode(Decl *D) {
 
-  // Don't run the actions if an error has occured with parsing the file.
+  // Don't run the actions if an error has occurred with parsing the file.
   Diagnostic &Diags = PP.getDiagnostics();
   if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred())
     return;

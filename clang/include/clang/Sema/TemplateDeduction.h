@@ -56,7 +56,7 @@ public:
   }
 
   /// \brief Returns the location at which template argument is
-  /// occuring.
+  /// occurring.
   SourceLocation getLocation() const {
     return Loc;
   }

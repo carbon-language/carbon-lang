@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides C++ name mangling targetting the Microsoft Visual C++ ABI.
+// This provides C++ name mangling targeting the Microsoft Visual C++ ABI.
 //
 //===----------------------------------------------------------------------===//
 

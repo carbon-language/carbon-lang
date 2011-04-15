@@ -216,7 +216,7 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
     return;
   }
   
-  // Otherwise, report the backend error as occuring in the generated .s file.
+  // Otherwise, report the backend error as occurring in the generated .s file.
   // If Loc is invalid, we still need to report the error, it just gets no
   // location info.
   Diags.Report(Loc, diag::err_fe_inline_asm).AddString(Message);

@@ -55,7 +55,7 @@ def insertMinimumPadding(a, b, dist):
     return a,b
 
 class ZipperDiff(object):
-    """ZipperDiff - Simple (slow) diff only accomodating inserts."""
+    """ZipperDiff - Simple (slow) diff only accommodating inserts."""
     
     def __init__(self, a, b):
         self.a = a

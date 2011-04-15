@@ -1512,7 +1512,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
   // Disable __VA_ARGS__ again.
   Ident__VA_ARGS__->setIsPoisoned(true);
 
-  // Check that there is no paste (##) operator at the begining or end of the
+  // Check that there is no paste (##) operator at the beginning or end of the
   // replacement list.
   unsigned NumTokens = MI->getNumTokens();
   if (NumTokens != 0) {

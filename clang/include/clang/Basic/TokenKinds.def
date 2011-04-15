@@ -427,7 +427,7 @@ TESTING_KEYWORD(__unknown_anytype , KEYALL)
 
 
 //===----------------------------------------------------------------------===//
-// Objective-C @-preceeded keywords.
+// Objective-C @-preceded keywords.
 //===----------------------------------------------------------------------===//
 
 // These have meaning after an '@' in Objective-C mode. These define enums in

@@ -1291,7 +1291,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
 
 void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
                                          LangStandard::Kind LangStd) {
-  // Set some properties which depend soley on the input kind; it would be nice
+  // Set some properties which depend solely on the input kind; it would be nice
   // to move these to the language standard, and have the driver resolve the
   // input kind + language standard.
   if (IK == IK_Asm) {

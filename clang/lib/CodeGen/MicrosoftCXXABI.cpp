@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides C++ code generation targetting the Microsoft Visual C++ ABI.
+// This provides C++ code generation targeting the Microsoft Visual C++ ABI.
 // The class in this file generates structures that follow the Microsoft
 // Visual C++ ABI, which is actually not very well documented at all outside
 // of Microsoft.

@@ -20,9 +20,9 @@ using namespace clang::driver::options;
 
 // Ordering on Info. The ordering is *almost* lexicographic, with two
 // exceptions. First, '\0' comes at the end of the alphabet instead of
-// the beginning (thus options preceed any other options which prefix
+// the beginning (thus options precede any other options which prefix
 // them). Second, for options with the same name, the less permissive
-// version should come first; a Flag option should preceed a Joined
+// version should come first; a Flag option should precede a Joined
 // option, for example.
 
 static int StrCmpOptionName(const char *A, const char *B) {

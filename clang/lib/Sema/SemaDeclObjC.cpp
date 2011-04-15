@@ -1474,7 +1474,7 @@ void Sema::CompareMethodParamsInBaseAndSuper(Decl *ClassDecl,
       assert(PrevI != SuperMethodDecl->param_end() && "Param mismatch");
       QualType T1 = Context.getCanonicalType((*ParamI)->getType());
       QualType T2 = Context.getCanonicalType((*PrevI)->getType());
-      // If type of arguement of method in this class does not match its
+      // If type of argument of method in this class does not match its
       // respective argument type in the super class method, issue warning;
       if (!Context.typesAreCompatible(T1, T2)) {
         Diag((*ParamI)->getLocation(), diag::ext_typecheck_base_super)

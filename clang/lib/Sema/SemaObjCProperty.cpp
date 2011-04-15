@@ -685,7 +685,7 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
 
 /// ComparePropertiesInBaseAndSuper - This routine compares property
 /// declarations in base and its super class, if any, and issues
-/// diagnostics in a variety of inconsistant situations.
+/// diagnostics in a variety of inconsistent situations.
 ///
 void Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();

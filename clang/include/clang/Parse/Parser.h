@@ -690,7 +690,7 @@ private:
 
   /// LateParsedDeclarationsContainer - During parsing of a top (non-nested)
   /// C++ class, its method declarations that contain parts that won't be
-  /// parsed until after the definiton is completed (C++ [class.mem]p2),
+  /// parsed until after the definition is completed (C++ [class.mem]p2),
   /// the method declarations and possibly attached inline definitions
   /// will be stored here with the tokens that will be parsed to create those entities.
   typedef llvm::SmallVector<LateParsedDeclaration*, 2> LateParsedDeclarationsContainer;

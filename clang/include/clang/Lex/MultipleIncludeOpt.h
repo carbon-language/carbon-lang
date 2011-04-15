@@ -47,7 +47,7 @@ public:
     TheMacro = 0;
   }
 
-  /// Invalidate - Permenantly mark this file as not being suitable for the
+  /// Invalidate - Permanently mark this file as not being suitable for the
   /// include-file optimization.
   void Invalidate() {
     // If we have read tokens but have no controlling macro, the state-machine

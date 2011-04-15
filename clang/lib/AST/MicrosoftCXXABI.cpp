@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides C++ AST support targetting the Microsoft Visual C++
+// This provides C++ AST support targeting the Microsoft Visual C++
 // ABI.
 //
 //===----------------------------------------------------------------------===//

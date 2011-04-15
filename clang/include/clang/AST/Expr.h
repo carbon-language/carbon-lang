@@ -3231,7 +3231,7 @@ public:
   ///
   /// When @p Init is out of range for this initializer list, the
   /// initializer list will be extended with NULL expressions to
-  /// accomodate the new entry.
+  /// accommodate the new entry.
   Expr *updateInit(ASTContext &C, unsigned Init, Expr *expr);
 
   /// \brief If this initializes a union, specifies which field in the

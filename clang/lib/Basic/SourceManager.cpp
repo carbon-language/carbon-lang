@@ -70,7 +70,7 @@ const llvm::MemoryBuffer *ContentCache::getBuffer(Diagnostic &Diag,
                                                   SourceLocation Loc,
                                                   bool *Invalid) const {
   // Lazily create the Buffer for ContentCaches that wrap files.  If we already
-  // computed it, jsut return what we have.
+  // computed it, just return what we have.
   if (Buffer.getPointer() || ContentsEntry == 0) {
     if (Invalid)
       *Invalid = isBufferInvalid();
@@ -1388,7 +1388,7 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   while (!MoveUpIncludeHierarchy(LOffs, *this)) /*empty*/;
   while (!MoveUpIncludeHierarchy(ROffs, *this)) /*empty*/;
   
-  // If exactly one location is a memory buffer, assume it preceeds the other.
+  // If exactly one location is a memory buffer, assume it precedes the other.
   
   // Strip off macro instantation locations, going up to the top-level File
   // SLocEntry.

@@ -1253,7 +1253,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // (a) If one of the classes is MEMORY, the whole argument is
     // passed in memory.
     //
-    // (b) If SSEUP is not preceeded by SSE, it is converted to SSE.
+    // (b) If SSEUP is not preceded by SSE, it is converted to SSE.
 
     // The first of these conditions is guaranteed by how we implement
     // the merge (just bail).
@@ -1690,7 +1690,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 5. If the class is SSEUP, the eightbyte
     // is passed in the upper half of the last used SSE register.
     //
-    // SSEUP should always be preceeded by SSE, just widen.
+    // SSEUP should always be preceded by SSE, just widen.
   case SSEUp:
     assert(Lo == SSE && "Unexpected SSEUp classification.");
     ResType = Get16ByteVectorType(RetTy);
@@ -1699,9 +1699,9 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 7. If the class is X87UP, the value is
     // returned together with the previous X87 value in %st0.
   case X87Up:
-    // If X87Up is preceeded by X87, we don't need to do
+    // If X87Up is preceded by X87, we don't need to do
     // anything. However, in some cases with unions it may not be
-    // preceeded by X87. In such situations we follow gcc and pass the
+    // preceded by X87. In such situations we follow gcc and pass the
     // extra bits in an SSE reg.
     if (Lo != X87) {
       HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy),
@@ -1800,7 +1800,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   const llvm::Type *HighPart = 0;
   switch (Hi) {
     // Memory was handled previously, ComplexX87 and X87 should
-    // never occur as hi classes, and X87Up must be preceed by X87,
+    // never occur as hi classes, and X87Up must be preceded by X87,
     // which is passed in memory.
   case Memory:
   case X87:

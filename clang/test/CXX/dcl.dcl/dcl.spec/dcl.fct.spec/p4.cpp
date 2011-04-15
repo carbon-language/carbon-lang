@@ -4,4 +4,4 @@
 void f0() {
 }
 
-inline void f0(); // expected-error {{function definition cannot preceed inline declaration}}
+inline void f0(); // expected-error {{function definition cannot precede inline declaration}}

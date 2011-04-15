@@ -1967,7 +1967,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::ArraySubscriptExprClass: {
     const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(E);
 
-    // Array subscript is treated as a syntactically wierd form of
+    // Array subscript is treated as a syntactically weird form of
     // binary operator.
     Out << "ix";
     mangleExpression(AE->getLHS());

@@ -348,7 +348,7 @@ ExprResult Sema::DefaultFunctionArrayLvalueConversion(Expr *E) {
 
 /// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are
-/// sometimes surpressed. For example, the array->pointer conversion doesn't
+/// sometimes suppressed. For example, the array->pointer conversion doesn't
 /// apply if the array is an argument to the sizeof or address (&) operators.
 /// In these instances, this routine should *not* be called.
 ExprResult Sema::UsualUnaryConversions(Expr *E) {

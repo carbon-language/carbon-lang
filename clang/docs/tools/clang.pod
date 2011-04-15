@@ -53,7 +53,7 @@ parse errors.  The output of this stage is an "Abstract Syntax Tree" (AST).
 
 This stage translates an AST into low-level intermediate code (known as "LLVM
 IR") and ultimately to machine code.  This phase is responsible for optimizing
-the generated code and handling target-specfic code generation.  The output of
+the generated code and handling target-specific code generation.  The output of
 this stage is typically called a ".s" file or "assembly" file.
 
 Clang also supports the use of an integrated assembler, in which the code

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides Objective-C code generation targetting the GNU runtime.  The
+// This provides Objective-C code generation targeting the GNU runtime.  The
 // class in this file generates structures used by the GNU Objective-C runtime
 // library.  These structures are defined in objc/objc.h and objc/objc-api.h in
 // the GNU runtime distribution.

@@ -432,7 +432,7 @@ public:
     else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
       // FIXME: Eventually CFGs won't have DeclStmts.  Right now we
       //  assume that each DeclStmt has a single Decl.  This invariant
-      //  holds by contruction in the CFG.
+      //  holds by construction in the CFG.
       VD = dyn_cast<VarDecl>(*DS->decl_begin());
     }
 

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides C++ AST support targetting the Itanium C++ ABI, which is
+// This provides C++ AST support targeting the Itanium C++ ABI, which is
 // documented at:
 //  http://www.codesourcery.com/public/cxx-abi/abi.html
 //  http://www.codesourcery.com/public/cxx-abi/abi-eh.html

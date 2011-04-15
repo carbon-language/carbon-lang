@@ -22,5 +22,5 @@
 // COMPILE-AST-PHASES: END
 
 // FIXME: There is a problem with compiling AST's in that the input language is
-// not availabe for use by other tools (for example, to automatically add
+// not available for use by other tools (for example, to automatically add
 // -lstdc++). We may need -x [objective-]c++-ast and all that goodness. :(

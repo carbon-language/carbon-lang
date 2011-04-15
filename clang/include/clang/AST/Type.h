@@ -2007,7 +2007,7 @@ public:
   friend class StmtIteratorBase;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert(0 && "Cannnot unique VariableArrayTypes.");
+    assert(0 && "Cannot unique VariableArrayTypes.");
   }
 };
 
@@ -2506,7 +2506,7 @@ public:
   bool hasDynamicExceptionSpec() const {
     return isDynamicExceptionSpec(getExceptionSpecType());
   }
-  /// \brief Return whther this function has a noexcept exception spec.
+  /// \brief Return whether this function has a noexcept exception spec.
   bool hasNoexceptExceptionSpec() const {
     return isNoexceptExceptionSpec(getExceptionSpecType());
   }

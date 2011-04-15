@@ -374,7 +374,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
         WL2.push_back(*I);
     }
 
-    // Finally, explictly mark all nodes without any successors as sinks.
+    // Finally, explicitly mark all nodes without any successors as sinks.
     if (N->isSink())
       NewN->markAsSink();
   }

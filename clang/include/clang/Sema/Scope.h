@@ -95,12 +95,12 @@ private:
   Scope *FnParent;
 
   /// BreakParent/ContinueParent - This is a direct link to the immediately
-  /// preceeding BreakParent/ContinueParent if this scope is not one, or null if
+  /// preceding BreakParent/ContinueParent if this scope is not one, or null if
   /// there is no containing break/continue scope.
   Scope *BreakParent, *ContinueParent;
 
   /// ControlParent - This is a direct link to the immediately
-  /// preceeding ControlParent if this scope is not one, or null if
+  /// preceding ControlParent if this scope is not one, or null if
   /// there is no containing control scope.
   Scope *ControlParent;
 

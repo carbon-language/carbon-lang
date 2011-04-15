@@ -2398,7 +2398,7 @@ public:
     return IntegerType.dyn_cast<TypeSourceInfo*>();
   }
 
-  /// \brief Returns the width in bits requred to store all the
+  /// \brief Returns the width in bits required to store all the
   /// non-negative enumerators of this enum.
   unsigned getNumPositiveBits() const {
     return NumPositiveBits;
@@ -2408,7 +2408,7 @@ public:
     assert(NumPositiveBits == Num && "can't store this bitcount");
   }
 
-  /// \brief Returns the width in bits requred to store all the
+  /// \brief Returns the width in bits required to store all the
   /// negative enumerators of this enum.  These widths include
   /// the rightmost leading 1;  that is:
   /// 

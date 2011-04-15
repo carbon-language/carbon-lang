@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -triple i386-unknown-unkown -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -x c++ -triple i386-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 // Runs in c++ mode so that wchar_t is available.
 
 int main() {

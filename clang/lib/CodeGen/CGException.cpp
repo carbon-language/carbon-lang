@@ -672,7 +672,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       assert(I.next() == EHStack.end() && "EH filter is not end of EH stack");
       assert(!CatchAll.isValid() && "EH filter reached after catch-all");
 
-      // Filter scopes get added to the selector in wierd ways.
+      // Filter scopes get added to the selector in weird ways.
       EHFilterScope &Filter = cast<EHFilterScope>(*I);
       HasEHFilter = true;
 

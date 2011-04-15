@@ -3599,7 +3599,7 @@ public:
   /// \param T The type that is being checked for unexpanded parameter
   /// packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(SourceLocation Loc, TypeSourceInfo *T,
                                        UnexpandedParameterPackContext UPPC);
 
@@ -3609,7 +3609,7 @@ public:
   /// \param E The expression that is being checked for unexpanded
   /// parameter packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(Expr *E,
                        UnexpandedParameterPackContext UPPC = UPPC_Expression);
 
@@ -3619,7 +3619,7 @@ public:
   /// \param SS The nested-name-specifier that is being checked for
   /// unexpanded parameter packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(const CXXScopeSpec &SS,
                                        UnexpandedParameterPackContext UPPC);
 
@@ -3629,7 +3629,7 @@ public:
   /// \param NameInfo The name (with source location information) that
   /// is being checked for unexpanded parameter packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(const DeclarationNameInfo &NameInfo,
                                        UnexpandedParameterPackContext UPPC);
 
@@ -3641,7 +3641,7 @@ public:
   /// \param Template The template name that is being checked for unexpanded 
   /// parameter packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(SourceLocation Loc,
                                        TemplateName Template,
                                        UnexpandedParameterPackContext UPPC);
@@ -3652,7 +3652,7 @@ public:
   /// \param Arg The template argument that is being checked for unexpanded 
   /// parameter packs.
   ///
-  /// \returns true if an error ocurred, false otherwise.
+  /// \returns true if an error occurred, false otherwise.
   bool DiagnoseUnexpandedParameterPack(TemplateArgumentLoc Arg,
                                        UnexpandedParameterPackContext UPPC);
   

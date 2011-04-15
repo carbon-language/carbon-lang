@@ -327,7 +327,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   }
 }
 
-/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
+/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
 //
 // FIXME: tblgen this.
 static const char *getARMTargetCPU(const ArgList &Args,

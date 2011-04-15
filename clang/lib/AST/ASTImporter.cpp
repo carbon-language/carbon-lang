@@ -835,7 +835,7 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
         return false;
   }  
   // If one is a class template specialization and the other is not, these
-  // structures are diferent.
+  // structures are different.
   else if (Spec1 || Spec2)
     return false;
 

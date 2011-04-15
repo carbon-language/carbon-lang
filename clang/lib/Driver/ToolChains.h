@@ -57,10 +57,10 @@ private:
   // the argument translation business.
   mutable bool TargetInitialized;
 
-  /// Whether we are targetting iPhoneOS target.
+  /// Whether we are targeting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
 
-  /// The OS version we are targetting.
+  /// The OS version we are targeting.
   mutable unsigned TargetVersion[3];
 
   /// The default macosx-version-min of this tool chain; empty until

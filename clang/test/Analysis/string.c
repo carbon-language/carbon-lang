@@ -15,7 +15,7 @@
 // Some functions are implemented as builtins. These should be #defined as
 // BUILTIN(f), which will prepend "__builtin_" if USE_BUILTINS is defined.
 
-// Functions that have variants and are also availabe as builtins should be
+// Functions that have variants and are also available as builtins should be
 // declared carefully! See memcpy() for an example.
 
 #ifdef USE_BUILTINS

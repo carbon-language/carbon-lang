@@ -203,7 +203,7 @@ void G_f0()  { new G<int>(); }
 // RUN: FileCheck --check-prefix=CHECK-H %s < %t
 
 // H<int> has a key function without a body but it's a template instantiation
-// so its VTable must be emmitted.
+// so its VTable must be emitted.
 // CHECK-H: @_ZTV1HIiE = linkonce_odr unnamed_addr constant
 template <typename T>
 class H {

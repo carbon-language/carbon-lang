@@ -48,7 +48,7 @@ void abort(void);
 int main ()
 {
 	Test *x = [[Test alloc] init];
-	/* 1. Test of a requred property */
+	/* 1. Test of a required property */
 	x.required1 = 100;
   	if (x.required1 != 100)
 	  abort ();

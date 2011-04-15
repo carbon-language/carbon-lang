@@ -46,7 +46,7 @@
  * and 64-bit widths regardless of whether there are corresponding exact-width
  * types. 
  *
- * To accomodate targets that are missing types that are exactly 8, 16, 32, or
+ * To accommodate targets that are missing types that are exactly 8, 16, 32, or
  * 64 bits wide, this implementation takes an approach of cascading
  * redefintions, redefining __int_leastN_t to successively smaller exact-width
  * types. It is therefore important that the types are defined in order of
@@ -58,7 +58,7 @@
  *
  * In violation of the standard, some targets do not implement a type that is
  * wide enough to represent all of the required widths (8-, 16-, 32-, 64-bit).  
- * To accomodate these targets, a required minimum-width type is only
+ * To accommodate these targets, a required minimum-width type is only
  * defined if there exists an exact-width type of equal or greater width.
  */
 

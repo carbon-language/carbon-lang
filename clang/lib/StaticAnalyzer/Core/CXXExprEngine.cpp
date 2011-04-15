@@ -146,7 +146,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   // Is the constructor elidable?
   if (E->isElidable()) {
     VisitAggExpr(E->getArg(0), destNodes, Pred, Dst);
-    // FIXME: this is here to force propogation if VisitAggExpr doesn't
+    // FIXME: this is here to force propagation if VisitAggExpr doesn't
     if (destNodes.empty())
       destNodes.Add(Pred);
     return;

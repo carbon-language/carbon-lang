@@ -118,7 +118,7 @@ public:
   ExplodedGraph& getGraph() { return *G.get(); }
 
   /// takeGraph - Returns the exploded graph.  Ownership of the graph is
-  ///  transfered to the caller.
+  ///  transferred to the caller.
   ExplodedGraph* takeGraph() { return G.take(); }
 
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of

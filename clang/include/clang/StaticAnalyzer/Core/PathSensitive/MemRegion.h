@@ -769,7 +769,7 @@ public:
   }
 };
 //===----------------------------------------------------------------------===//
-// Auxillary data classes for use with MemRegions.
+// Auxiliary data classes for use with MemRegions.
 //===----------------------------------------------------------------------===//
 
 class ElementRegion;
@@ -960,7 +960,7 @@ public:
   getCompoundLiteralRegion(const CompoundLiteralExpr* CL,
                            const LocationContext *LC);
   
-  /// getCXXThisRegion - Retrieve the [artifical] region associated with the
+  /// getCXXThisRegion - Retrieve the [artificial] region associated with the
   ///  parameter 'this'.
   const CXXThisRegion *getCXXThisRegion(QualType thisPointerTy,
                                         const LocationContext *LC);

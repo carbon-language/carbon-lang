@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides Objective-C code generation targetting the Apple runtime.
+// This provides Objective-C code generation targeting the Apple runtime.
 //
 //===----------------------------------------------------------------------===//
 

@@ -104,7 +104,7 @@ class HeaderSearch {
   /// consequtively. Requests for <x> search the current dir first, then each
   /// directory in SearchDirs, starting at SystemDirIdx, consequtively.  If
   /// NoCurDirSearch is true, then the check for the file in the current
-  /// directory is supressed.
+  /// directory is suppressed.
   std::vector<DirectoryLookup> SearchDirs;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;

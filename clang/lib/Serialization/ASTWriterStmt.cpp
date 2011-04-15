@@ -1456,7 +1456,7 @@ void ASTWriter::FlushStmts() {
     WriteSubStmt(StmtsToEmit[I]);
     
     assert(N == StmtsToEmit.size() &&
-           "Substatement writen via AddStmt rather than WriteSubStmt!");
+           "Substatement written via AddStmt rather than WriteSubStmt!");
 
     // Note that we are at the end of a full expression. Any
     // expression records that follow this one are part of a different

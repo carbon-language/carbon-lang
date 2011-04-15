@@ -158,7 +158,7 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
     Version[1] = Version[2];
     Version[2] = 0;
   } else {
-    // Use the environment to communicate that we are targetting iPhoneOS.
+    // Use the environment to communicate that we are targeting iPhoneOS.
     Triple.setEnvironmentName("iphoneos");
   }
 
@@ -366,7 +366,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       CmdArgs.push_back("-lgcc_s.10.5");
 
     // For OS X, we thought we would only need a static runtime library when
-    // targetting 10.4, to provide versions of the static functions which were
+    // targeting 10.4, to provide versions of the static functions which were
     // omitted from 10.4.dylib.
     //
     // Unfortunately, that turned out to not be true, because Darwin system

@@ -16,7 +16,7 @@
 // result of an initialization call (e.g. [super init], or [self initWith..])
 // before using 'self' or any instance variable.
 //
-// To perform the required checking, values are tagged wih flags that indicate
+// To perform the required checking, values are tagged with flags that indicate
 // 1) if the object is the one pointed to by 'self', and 2) if the object
 // is the result of an initializer (e.g. [super init]).
 //

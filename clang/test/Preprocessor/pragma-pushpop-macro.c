@@ -25,7 +25,7 @@ int pmx3 = X;
 #pragma pop_macro("Y")
 int pmy1 = Y;
 
-// Have a stray 'push' to show we don't crash when having inbalanced
+// Have a stray 'push' to show we don't crash when having imbalanced
 // push/pop
 #pragma push_macro("Y")
 #define Y 4

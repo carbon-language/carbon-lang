@@ -432,7 +432,7 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
     case ',': // multiple alternative constraint.  Ignore comma.
       break;
     case '?': // Disparage slightly code.
-    case '!': // Disparage severly.
+    case '!': // Disparage severely.
       break;  // Pass them.
     }
 

@@ -1,4 +1,4 @@
-/* This file tests that we can succesfully call each compiler-rt function. It is
+/* This file tests that we can successfully call each compiler-rt function. It is
    designed to check that the runtime libraries are available for linking and
    that they contain the expected contents. It is not designed to test the
    correctness of the individual functions in compiler-rt.

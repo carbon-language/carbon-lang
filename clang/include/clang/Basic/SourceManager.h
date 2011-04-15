@@ -150,7 +150,7 @@ namespace SrcMgr {
 
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
-    ///  is not transfered, so this is a logical error.
+    ///  is not transferred, so this is a logical error.
     ContentCache(const ContentCache &RHS) 
       : Buffer(0, false), SourceLineCache(0) 
     {

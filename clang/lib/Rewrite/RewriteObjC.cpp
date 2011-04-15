@@ -3762,7 +3762,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                            std::string &Result) {
   ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
 
-  // Explictly declared @interface's are already synthesized.
+  // Explicitly declared @interface's are already synthesized.
   if (CDecl->isImplicitInterfaceDecl()) {
     // FIXME: Implementation of a class with no @interface (legacy) doese not
     // produce correct synthesis as yet.
@@ -4601,7 +4601,7 @@ void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
 
 /// convertFunctionTypeOfBlocks - This routine converts a function type
 /// whose result type may be a block pointer or whose argument type(s)
-/// might be block pointers to an equivalent funtion type replacing
+/// might be block pointers to an equivalent function type replacing
 /// all block pointers to function pointers.
 QualType RewriteObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) {
   const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FT);

@@ -3495,7 +3495,7 @@ void ASTWriter::AddQualifierInfo(const QualifierInfo &Info,
 void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
                                        RecordDataImpl &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
-  // typically accomodate the vast majority.
+  // typically accommodate the vast majority.
   llvm::SmallVector<NestedNameSpecifier *, 8> NestedNames;
 
   // Push each of the NNS's onto a stack for serialization in reverse order.
@@ -3538,7 +3538,7 @@ void ASTWriter::AddNestedNameSpecifier(NestedNameSpecifier *NNS,
 void ASTWriter::AddNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
                                           RecordDataImpl &Record) {
   // Nested name specifiers usually aren't too long. I think that 8 would
-  // typically accomodate the vast majority.
+  // typically accommodate the vast majority.
   llvm::SmallVector<NestedNameSpecifierLoc , 8> NestedNames;
 
   // Push each of the nested-name-specifiers's onto a stack for

@@ -87,7 +87,7 @@ public:
 
 /// BasePaths - Represents the set of paths from a derived class to
 /// one of its (direct or indirect) bases. For example, given the
-/// following class hierachy:
+/// following class hierarchy:
 ///
 /// @code
 /// class A { };

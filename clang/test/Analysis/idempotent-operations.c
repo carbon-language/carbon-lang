@@ -176,7 +176,7 @@ int false6() {
 
 // Check that assignments filter out false positives correctly
 int false7() {
-  int zero = 0; // psuedo-constant
+  int zero = 0; // pseudo-constant
   int one = 1;
 
   int a = 55;

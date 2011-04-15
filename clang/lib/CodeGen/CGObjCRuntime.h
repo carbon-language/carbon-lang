@@ -138,7 +138,7 @@ public:
   /// accompanying metadata) and a list of protocols.
   virtual void GenerateCategory(const ObjCCategoryImplDecl *OCD) = 0;
 
-  /// Generate a class stucture for this class.
+  /// Generate a class structure for this class.
   virtual void GenerateClass(const ObjCImplementationDecl *OID) = 0;
 
   /// Generate an Objective-C message send operation.

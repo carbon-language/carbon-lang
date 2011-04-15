@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This provides C++ code generation targetting the Itanium C++ ABI.  The class
+// This provides C++ code generation targeting the Itanium C++ ABI.  The class
 // in this file generates structures that follow the Itanium C++ ABI, which is
 // documented at:
 //  http://www.codesourcery.com/public/cxx-abi/abi.html

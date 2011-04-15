@@ -126,7 +126,7 @@ public:
 
   /// getLocation - Return the "definitive" location of the reported bug.
   ///  While a bug can span an entire path, usually there is a specific
-  ///  location that can be used to identify where the key issue occured.
+  ///  location that can be used to identify where the key issue occurred.
   ///  This location is used by clients rendering diagnostics.
   virtual SourceLocation getLocation() const;
 

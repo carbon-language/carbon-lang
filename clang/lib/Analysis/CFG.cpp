@@ -1416,7 +1416,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     addAutomaticObjDtors(ScopePos, BeginScopePos, I);
   }
 
-  // The block we were proccessing is now finished.  Make it the successor
+  // The block we were processing is now finished.  Make it the successor
   // block.
   if (Block) {
     Succ = Block;
@@ -1799,7 +1799,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   Block = ExitConditionBlock;
 
   // Walk the 'element' expression to see if there are any side-effects.  We
-  // generate new blocks as necesary.  We DON'T add the statement by default to
+  // generate new blocks as necessary.  We DON'T add the statement by default to
   // the CFG unless it contains control-flow.
   EntryConditionBlock = Visit(S->getElement(), AddStmtChoice::NotAlwaysAdd);
   if (Block) {

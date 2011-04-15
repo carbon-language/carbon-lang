@@ -158,7 +158,7 @@ public:
   /// A scope specifier is present, but may be valid or invalid.
   bool isNotEmpty() const { return !isEmpty(); }
 
-  /// An error occured during parsing of the scope specifier.
+  /// An error occurred during parsing of the scope specifier.
   bool isInvalid() const { return isNotEmpty() && getScopeRep() == 0; }
   /// A scope specifier is present, and it refers to a real scope.
   bool isValid() const { return isNotEmpty() && getScopeRep() != 0; }

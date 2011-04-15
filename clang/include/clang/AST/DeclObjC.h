@@ -459,7 +459,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   ///
   /// Categories are stored as a linked list in the AST, since the categories
   /// and class extensions come long after the initial interface declaration,
-  /// and we avoid dynamically-resized arrays in the AST whereever possible.
+  /// and we avoid dynamically-resized arrays in the AST wherever possible.
   ObjCCategoryDecl *CategoryList;
   
   /// IvarList - List of all ivars defined by this class; including class
@@ -783,7 +783,7 @@ public:
 
 /// ObjCProtocolDecl - Represents a protocol declaration. ObjC protocols
 /// declare a pure abstract type (i.e no instance variables are permitted).
-/// Protocols orginally drew inspiration from C++ pure virtual functions (a C++
+/// Protocols originally drew inspiration from C++ pure virtual functions (a C++
 /// feature with nice semantics and lousy syntax:-). Here is an example:
 ///
 /// @protocol NSDraggingInfo <refproto1, refproto2>

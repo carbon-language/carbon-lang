@@ -175,7 +175,7 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
   // after the previous one.
   if ((Loc.isValid() && LastStateChangePos.isInvalid()) ||
       LastStateChangePos.isBeforeInTranslationUnitThan(Loc)) {
-    // A diagnostic pragma occured, create a new DiagState initialized with
+    // A diagnostic pragma occurred, create a new DiagState initialized with
     // the current one and a new DiagStatePoint to record at which location
     // the new state became active.
     DiagStates.push_back(*GetCurDiagState());

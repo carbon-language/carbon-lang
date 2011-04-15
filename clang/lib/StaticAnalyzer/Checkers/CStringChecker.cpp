@@ -288,7 +288,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
   NonLoc LastOffset = cast<NonLoc>(svalBuilder.evalBinOpNN(state, BO_Sub,
                                                     *Length, One, sizeTy));
 
-  // Check that the first buffer is sufficently long.
+  // Check that the first buffer is sufficiently long.
   SVal BufStart = svalBuilder.evalCast(BufVal, PtrTy, FirstBuf->getType());
   if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
     SVal BufEnd = svalBuilder.evalBinOpLN(state, BO_Add, *BufLoc,

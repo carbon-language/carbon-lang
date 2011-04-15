@@ -241,7 +241,7 @@ public:
   EntityKind getKind() const { return Kind; }
   
   /// \brief Retrieve the parent of the entity being initialized, when
-  /// the initialization itself is occuring within the context of a
+  /// the initialization itself is occurring within the context of a
   /// larger initialization.
   const InitializedEntity *getParent() const { return Parent; }
 
@@ -664,7 +664,7 @@ public:
   /// \param Kind the kind of initialization being performed.
   ///
   /// \param Args the argument(s) provided for initialization, ownership of
-  /// which is transfered into the routine.
+  /// which is transferred into the routine.
   ///
   /// \param ResultType if non-NULL, will be set to the type of the
   /// initialized object, which is the type of the declaration in most
