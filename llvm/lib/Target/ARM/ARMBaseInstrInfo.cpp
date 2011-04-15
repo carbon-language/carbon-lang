@@ -1638,7 +1638,11 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   case ARM::t2SUBrr:
   case ARM::t2SUBri:
   case ARM::t2SBCrr:
-  case ARM::t2SBCri: {
+  case ARM::t2SBCri:
+  case ARM::ANDrr:
+  case ARM::ANDri:
+  case ARM::t2ANDrr:
+  case ARM::t2ANDri: {
     // Scan forward for the use of CPSR, if it's a conditional code requires
     // checking of V bit, then this is not safe to do. If we can't find the
     // CPSR use (i.e. used in another block), then it's not safe to perform
@@ -1677,17 +1681,12 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
     if (!isSafe)
       return false;
 
-    // fallthrough
-  }
-  case ARM::ANDrr:
-  case ARM::ANDri:
-  case ARM::t2ANDrr:
-  case ARM::t2ANDri:
     // Toggle the optional operand to CPSR.
     MI->getOperand(5).setReg(ARM::CPSR);
     MI->getOperand(5).setIsDef(true);
     CmpInstr->eraseFromParent();
     return true;
+  }
   }
 
   return false;
