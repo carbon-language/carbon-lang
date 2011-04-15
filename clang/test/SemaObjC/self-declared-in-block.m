@@ -16,3 +16,36 @@
 
 @end
 
+
+// rdar://9284603
+@interface ShadowSelf
+{
+    int _anIvar;
+}
+@end
+
+@interface C {
+  int _cIvar;
+}
+@end
+
+@implementation ShadowSelf 
+- (void)doSomething {
+    __typeof(self) newSelf = self;
+    {
+        __typeof(self) self = newSelf;
+        (void)_anIvar;
+    }
+    {
+      C* self;	// expected-note {{declared here}}
+      (void) _anIvar; // expected-error {{instance variable '_anIvar' cannot be accessed because 'self' has been redeclared}}
+    }
+}
+- (void)doAThing {
+    ^{
+        id self;	// expected-note {{declared here}}
+	(void)_anIvar; // expected-error {{instance variable '_anIvar' cannot be accessed because 'self' has been redeclared}}
+    }();
+}
+@end
+

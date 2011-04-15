@@ -2089,11 +2089,21 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(base)) {
         const NamedDecl *ND = DE->getDecl();
         if (!isa<ImplicitParamDecl>(ND)) {
+          // relax the rule such that it is allowed to have a shadow 'self'
+          // where stand-alone ivar can be found in this 'self' object. 
+          // This is to match gcc's behavior.
+          ObjCInterfaceDecl *selfIFace = 0;
+          if (const ObjCObjectPointerType *OPT =
+              base->getType()->getAsObjCInterfacePointerType())
+            selfIFace = OPT->getInterfaceDecl();
+          if (!selfIFace || 
+              !selfIFace->lookupInstanceVariable(IV->getIdentifier())) {
             Diag(Loc, diag::error_implicit_ivar_access)
             << IV->getDeclName();
             Diag(ND->getLocation(), diag::note_declared_at);
             return ExprError();
           }
+        }
       }
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
