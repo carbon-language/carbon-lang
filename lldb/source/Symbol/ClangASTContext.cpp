@@ -2519,7 +2519,7 @@ ClangASTContext::GetChildClangTypeAtIndex
 
                             uint64_t clang_type_info_bit_size = ast->getTypeSize(base_class->getType());
 
-                            // Base classes biut sizes should be a multiple of 8 bits in size
+                            // Base classes bit sizes should be a multiple of 8 bits in size
                             assert (clang_type_info_bit_size % 8 == 0);
                             child_byte_size = clang_type_info_bit_size / 8;
                             child_is_base_class = true;
