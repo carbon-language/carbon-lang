@@ -2130,10 +2130,12 @@ def t2BFC : T2BitFI<(outs rGPR:$Rd), (ins rGPR:$src, bf_inv_mask_imm:$imm),
                 IIC_iUNAsi, "bfc", "\t$Rd, $imm",
                 [(set rGPR:$Rd, (and rGPR:$src, bf_inv_mask_imm:$imm))]> {
   let Inst{31-27} = 0b11110;
+  let Inst{26} = 0; // should be 0.
   let Inst{25} = 1;
   let Inst{24-20} = 0b10110;
   let Inst{19-16} = 0b1111; // Rn
   let Inst{15} = 0;
+  let Inst{5} = 0; // should be 0.
 
   bits<10> imm;
   let msb{4-0} = imm{9-5};

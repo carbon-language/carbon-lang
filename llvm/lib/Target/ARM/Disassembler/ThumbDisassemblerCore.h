@@ -1616,7 +1616,7 @@ static bool DisassembleThumb2Sat(MCInst &MI, unsigned Opcode, uint32_t insn,
 // o t2ADDri12, t2SUBri12: Rs Rn imm12
 // o t2LEApcrel (ADR): Rs imm12
 // o t2BFC (BFC): Rs Ro(TIED_TO) bf_inv_mask_imm
-// o t2BFI (BFI) (Currently not defined in LLVM as of Jan-07-2010)
+// o t2BFI (BFI): Rs Ro(TIED_TO) Rn bf_inv_mask_imm
 // o t2MOVi16: Rs imm16
 // o t2MOVTi16: Rs imm16
 // o t2SBFX (SBFX): Rs Rn lsb width
