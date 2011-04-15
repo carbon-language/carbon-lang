@@ -67,3 +67,30 @@ void func6(dispatch_object_t _head) {
   _dispatch_queue_push_list(_head._do);  // no warning
 }
 
+// rdar://9287695
+#define NULL (void*)0
+
+@interface NSObject 
+- (void)doSomethingWithNonNullPointer:(void *)ptr :(int)iarg : (void*)ptr1 __attribute__((nonnull(1, 3)));
++ (void)doSomethingClassyWithNonNullPointer:(void *)ptr __attribute__((nonnull(1)));
+@end
+
+extern void DoSomethingNotNull(void *db) __attribute__((nonnull(1)));
+
+@interface IMP 
+{
+  void * vp;
+}
+@end
+
+@implementation IMP
+- (void) Meth {
+  NSObject *object;
+  [object doSomethingWithNonNullPointer:NULL:1:NULL]; // expected-warning 2 {{null passed to a callee which requires a non-null argument}}
+  [object doSomethingWithNonNullPointer:vp:1:NULL]; // expected-warning {{null passed to a callee which requires a non-null argument}}
+  [NSObject doSomethingClassyWithNonNullPointer:NULL]; // expected-warning {{null passed to a callee which requires a non-null argument}}
+  DoSomethingNotNull(NULL); // expected-warning {{null passed to a callee which requires a non-null argument}}
+  [object doSomethingWithNonNullPointer:vp:1:vp];
+}
+@end
+

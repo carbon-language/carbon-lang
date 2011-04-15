@@ -324,6 +324,12 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                        Args[NumArgs-1]->getLocEnd());
     }
   }
+  // diagnose nonnull arguments.
+  for (specific_attr_iterator<NonNullAttr>
+       i = Method->specific_attr_begin<NonNullAttr>(),
+       e = Method->specific_attr_end<NonNullAttr>(); i != e; ++i) {
+    CheckNonNullArguments(*i, Args, lbrac);
+  }
 
   DiagnoseSentinelCalls(Method, lbrac, Args, NumArgs);
   return IsError;
