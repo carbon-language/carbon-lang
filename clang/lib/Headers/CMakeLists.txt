@@ -6,6 +6,7 @@ set(files
   immintrin.h
   iso646.h
   limits.h
+  mm3dnow.h
   mmintrin.h
   mm_malloc.h
   nmmintrin.h
