@@ -159,6 +159,8 @@ SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"
 
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
+STOPPED_DUE_TO_EXC_BAD_ACCESS = "Process should be stopped due to bad access exception"
+
 STOPPED_DUE_TO_BREAKPOINT = "Process should be stopped due to breakpoint"
 
 STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS = "%s, %s" % (
@@ -223,7 +225,7 @@ def line_number(filename, string_to_match):
             if line.find(string_to_match) != -1:
                 # Found our match.
                 return i+1
-    raise Exception("Unable to find %s within file %s" % (string_to_match, filename))
+    raise Exception("Unable to find '%s' within file %s" % (string_to_match, filename))
 
 def pointer_size():
     """Return the pointer size of the host system."""
