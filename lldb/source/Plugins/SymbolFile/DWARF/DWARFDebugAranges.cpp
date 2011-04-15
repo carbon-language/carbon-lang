@@ -15,6 +15,7 @@
 #include <algorithm>
 
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/Timer.h"
 
 #include "SymbolFileDWARF.h"
 #include "DWARFDebugInfo.h"
@@ -291,35 +292,47 @@ DWARFDebugAranges::AppendRange (dw_offset_t offset, dw_addr_t low_pc, dw_addr_t 
 void
 DWARFDebugAranges::Sort()
 {    
+    std::vector<size_t> indices;
+    size_t end;
+    Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p",
+                       __PRETTY_FUNCTION__, this);
+
     // Sort our address range entries
     std::stable_sort (m_aranges.begin(), m_aranges.end(), RangeLessThan);
 
-    // Merge any entries that have the same offset and same start/end address
-    RangeColl::iterator pos = m_aranges.begin();
-    RangeColl::iterator end = m_aranges.end();
-    while (pos != end)
+    // Merge all neighbouring ranges into a single range and remember the
+    // indices of all ranges merged.
+    end = m_aranges.size();
+    for (size_t merge, cursor = 1; cursor < end; ++cursor)
     {
-        RangeColl::iterator next_pos = pos + 1;
-        if (next_pos != end && 
-            pos->offset == next_pos->offset && 
-            pos->hi_pc == next_pos->lo_pc)
+        merge = cursor - 1;
+        Range &r1 = m_aranges[merge];
+        Range &r2 = m_aranges[cursor];
+
+        if (r1.hi_pc == r2.lo_pc && r1.offset == r2.offset)
         {
-            // We have found an entry whose end address it he same as the
-            // next entry's start address and the offsets are the same so 
-            // we can merge these two entries.
-            pos->hi_pc = next_pos->hi_pc;
-            // Erase the next entry that wasn't needed
-            pos = m_aranges.erase (next_pos);
-            // Now recompute the end of the collection
-            end = m_aranges.end();
-        }
-        else
-        {
-            // Two entries have either different offsets or there are gaps
-            // in the address range, move along, nothing to see here.
-            pos = next_pos;
+            r2.lo_pc = r1.lo_pc;
+            indices.push_back(merge);
         }
     }
+
+    if (indices.empty())
+        return;
+
+    // Remove the merged ranges by shifting down all the keepers...
+    std::set<size_t> purged(indices.begin(), indices.end());
+    size_t new_size = m_aranges.size() - indices.size();
+    for (size_t src = 0, dst = 0; dst < new_size; ++dst)
+    {
+        while (purged.count(src) > 0)
+            ++src;
+        if (src == dst)
+            continue;
+        m_aranges[dst] = m_aranges[src];
+    }
+
+    // ...and drop the extra elements.
+    m_aranges.resize(new_size);
 }
 
 //----------------------------------------------------------------------
