@@ -320,12 +320,13 @@ DWARFDebugAranges::Sort()
         return;
 
     // Remove the merged ranges by shifting down all the keepers...
-    std::set<size_t> purged(indices.begin(), indices.end());
     size_t new_size = m_aranges.size() - indices.size();
-    for (size_t src = 0, dst = 0; dst < new_size; ++src, ++dst)
+    for (size_t i = 0, src = 0, dst = 0; dst < new_size; ++src, ++dst)
     {
-        while (purged.count(src) > 0)
+        while (src == indices[i]) {
             ++src;
+            ++i;
+        }
         if (src == dst)
             continue;
         m_aranges[dst] = m_aranges[src];
