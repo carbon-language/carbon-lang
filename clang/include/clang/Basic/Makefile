@@ -4,7 +4,7 @@ BUILT_SOURCES = \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
-	DiagnosticGroups.inc AttrList.inc arm_neon.inc \
+	DiagnosticIndexName.inc DiagnosticGroups.inc AttrList.inc arm_neon.inc \
 	Version.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
@@ -32,6 +32,10 @@ endif
 $(ObjDir)/Diagnostic%Kinds.inc.tmp : Diagnostic.td Diagnostic%Kinds.td $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang $(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) diagnostic tables with tblgen"
 	$(Verb) $(TableGen) -gen-clang-diags-defs -clang-component=$(patsubst Diagnostic%Kinds.inc.tmp,%,$(@F)) -o $(call SYSPATH, $@) $<
+
+$(ObjDir)/DiagnosticIndexName.inc.tmp : Diagnostic.td $(INPUT_TDS) $(TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang diagnostic name index with tblgen"
+	$(Verb) $(TableGen) -gen-clang-diags-index-name -o $(call SYSPATH, $@) $<
 
 $(ObjDir)/DiagnosticGroups.inc.tmp : Diagnostic.td DiagnosticGroups.td $(INPUT_TDS) $(TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang diagnostic groups with tblgen"

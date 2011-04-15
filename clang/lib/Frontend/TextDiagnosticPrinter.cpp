@@ -908,6 +908,13 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   llvm::SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
+  if (DiagOpts->ShowNames &&
+      !DiagnosticIDs::isBuiltinNote(Info.getID())) {
+    OutStr += " [";
+    OutStr += DiagnosticIDs::getName(Info.getID());
+    OutStr += "]";
+  }
+  
   std::string OptionName;
   if (DiagOpts->ShowOptionNames) {
     // Was this a warning mapped to an error using -Werror or pragma?

@@ -60,6 +60,8 @@ class Diagnostic<string text, DiagClass DC, DiagMapping defaultmapping> {
   DiagMapping DefaultMapping = defaultmapping;
   DiagGroup   Group;
   string      CategoryName = "";
+  string      Brief = "";
+  string      Explanation = "";
 }
 
 class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>;
@@ -76,6 +78,12 @@ class DefaultFatal  { DiagMapping DefaultMapping = MAP_FATAL; }
 
 class NoSFINAE { bit SFINAE = 0; }
 class AccessControl { bit AccessControl = 1; }
+
+class Brief<string str> { string Brief = str; }
+class FullExplanation<string brief, string full> {
+  string Brief = brief;
+  string Explanation = full;
+}
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"

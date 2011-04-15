@@ -17,6 +17,10 @@ clang_tablegen(DiagnosticGroups.inc -gen-clang-diag-groups
   SOURCE Diagnostic.td
   TARGET ClangDiagnosticGroups)
 
+clang_tablegen(DiagnosticIndexName.inc -gen-clang-diags-index-name
+  SOURCE Diagnostic.td
+  TARGET ClangDiagnosticIndexName)
+
 clang_tablegen(AttrList.inc -gen-clang-attr-list
   -I ${CMAKE_CURRENT_SOURCE_DIR}/../../
   SOURCE Attr.td

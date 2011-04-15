@@ -46,19 +46,41 @@ struct StaticDiagInfoRec {
   unsigned AccessControl : 1;
   unsigned Category : 5;
   
+  const char *Name;
+  
   const char *Description;
   const char *OptionGroup;
+
+  const char *BriefExplanation;
+  const char *FullExplanation;
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
     return DiagID < RHS.DiagID;
   }
 };
 
+struct StaticDiagNameIndexRec {
+  const char *Name;
+  unsigned short DiagID;
+  
+  bool operator<(const StaticDiagNameIndexRec &RHS) const {
+    assert(Name && RHS.Name && "Null Diagnostic Name");
+    return strcmp(Name, RHS.Name) == -1;
+  }
+  
+  bool operator==(const StaticDiagNameIndexRec &RHS) const {
+    assert(Name && RHS.Name && "Null Diagnostic Name");
+    return strcmp(Name, RHS.Name) == 0;
+  }
+};
+
 }
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,SFINAE,ACCESS,CATEGORY)    \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS, CATEGORY, DESC, GROUP },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,     \
+             SFINAE,ACCESS,CATEGORY,BRIEF,FULL)         \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE,         \
+   ACCESS, CATEGORY, #ENUM, DESC, GROUP, BRIEF, FULL },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -67,20 +89,32 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticASTKinds.inc"
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
-  { 0, 0, 0, 0, 0, 0, 0, 0}
-};
 #undef DIAG
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+static const unsigned StaticDiagInfoSize =
+  sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0])-1;
+
+/// To be sorted before first use (since it's splitted among multiple files)
+static StaticDiagNameIndexRec StaticDiagNameIndex[] = {
+#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM },
+#include "clang/Basic/DiagnosticIndexName.inc"
+#undef DIAG_NAME_INDEX
+  { 0, 0 }
+};
+
+static const unsigned StaticDiagNameIndexSize =
+  sizeof(StaticDiagNameIndex)/sizeof(StaticDiagNameIndex[0])-1;
 
 /// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
 /// or null if the ID is invalid.
 static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
-  unsigned NumDiagEntries = sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0])-1;
-
   // If assertions are enabled, verify that the StaticDiagInfo array is sorted.
 #ifndef NDEBUG
   static bool IsFirst = true;
   if (IsFirst) {
-    for (unsigned i = 1; i != NumDiagEntries; ++i) {
+    for (unsigned i = 1; i != StaticDiagInfoSize; ++i) {
       assert(StaticDiagInfo[i-1].DiagID != StaticDiagInfo[i].DiagID &&
              "Diag ID conflict, the enums at the start of clang::diag (in "
              "DiagnosticIDs.h) probably need to be increased");
@@ -93,11 +127,11 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #endif
 
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0 };
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
   const StaticDiagInfoRec *Found =
-    std::lower_bound(StaticDiagInfo, StaticDiagInfo + NumDiagEntries, Find);
-  if (Found == StaticDiagInfo + NumDiagEntries ||
+    std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
+  if (Found == StaticDiagInfo + StaticDiagInfoSize ||
       Found->DiagID != DiagID)
     return 0;
 
@@ -119,7 +153,7 @@ const char *DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
   return 0;
 }
 
-/// getWarningOptionForDiag - Return the category number that a specified
+/// getCategoryNumberForDiag - Return the category number that a specified
 /// DiagID belongs to, or 0 if no category.
 unsigned DiagnosticIDs::getCategoryNumberForDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
@@ -167,7 +201,48 @@ DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
   return SFINAE_Report;
 }
 
-/// getDiagClass - Return the class field of the diagnostic.
+/// getName - Given a diagnostic ID, return its name
+const char *DiagnosticIDs::getName(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->Name;
+  return 0;
+}
+
+/// getIdFromName - Given a diagnostic name, return its ID, or 0
+unsigned DiagnosticIDs::getIdFromName(char const *Name) {
+  StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
+    StaticDiagNameIndex + StaticDiagNameIndexSize;
+  
+  if (Name == 0) { return diag::DIAG_UPPER_LIMIT; }
+  
+  StaticDiagNameIndexRec Find = { Name, 0 };
+  
+  const StaticDiagNameIndexRec *Found =
+    std::lower_bound( StaticDiagNameIndex, StaticDiagNameIndexEnd, Find);
+  if (Found == StaticDiagNameIndexEnd ||
+      strcmp(Found->Name, Name) != 0)
+    return diag::DIAG_UPPER_LIMIT;
+  
+  return Found->DiagID;
+}
+
+/// getBriefExplanation - Given a diagnostic ID, return a brief explanation
+/// of the issue
+const char *DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->BriefExplanation;
+  return 0;
+}
+
+/// getFullExplanation - Given a diagnostic ID, return a full explanation
+/// of the issue
+const char *DiagnosticIDs::getFullExplanation(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return Info->FullExplanation;
+  return 0;
+}
+
+/// getBuiltinDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))

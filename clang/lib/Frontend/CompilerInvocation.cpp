@@ -263,6 +263,8 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fcolor-diagnostics");
   if (Opts.VerifyDiagnostics)
     Res.push_back("-verify");
+  if (Opts.ShowNames)
+    Res.push_back("-fdiagnostics-show-name");
   if (Opts.ShowOptionNames)
     Res.push_back("-fdiagnostics-show-option");
   if (Opts.ShowCategories == 1)
@@ -997,6 +999,7 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.ShowColumn = !Args.hasArg(OPT_fno_show_column);
   Opts.ShowFixits = !Args.hasArg(OPT_fno_diagnostics_fixit_info);
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
+  Opts.ShowNames = Args.hasArg(OPT_fdiagnostics_show_name);
   Opts.ShowOptionNames = Args.hasArg(OPT_fdiagnostics_show_option);
 
   // Default behavior is to not to show note include stacks.

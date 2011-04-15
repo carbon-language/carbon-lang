@@ -15,7 +15,8 @@
 namespace clang {
   namespace diag {
     enum {
-#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,SFINAE,ACCESS,CATEGORY) ENUM,
+#define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,\
+             SFINAE,ACCESS,CATEGORY,BRIEF,FULL) ENUM,
 #define DRIVERSTART
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #undef DIAG
