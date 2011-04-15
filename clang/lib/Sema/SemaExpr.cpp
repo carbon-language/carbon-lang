@@ -772,7 +772,7 @@ Sema::ActOnGenericSelectionExpr(SourceLocation KeyLoc,
   ExprResult ER = CreateGenericSelectionExpr(KeyLoc, DefaultLoc, RParenLoc,
                                              ControllingExpr, Types, Exprs,
                                              NumAssocs);
-  delete Types;
+  delete [] Types;
   return ER;
 }
 
