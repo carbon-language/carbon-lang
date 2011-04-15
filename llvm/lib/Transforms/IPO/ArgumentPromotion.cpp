@@ -771,8 +771,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // function empty.
   NF->getBasicBlockList().splice(NF->begin(), F->getBasicBlockList());
 
-  // Loop over the argument list, transfering uses of the old arguments over to
-  // the new arguments, also transfering over the names as well.
+  // Loop over the argument list, transferring uses of the old arguments over to
+  // the new arguments, also transferring over the names as well.
   //
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
        I2 = NF->arg_begin(); I != E; ++I) {

@@ -514,7 +514,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
     }
 
     // To only check operands before the memory address ones, start
-    // the search from the begining
+    // the search from the beginning
     if (IsDestMem)
       CurOp = 0;
 

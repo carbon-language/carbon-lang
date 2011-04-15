@@ -587,7 +587,7 @@ StrongPHIElimination::SplitInterferencesForBasicBlock(
   }
 
   // We now walk the PHIs in successor blocks and check for interferences. This
-  // is necesary because the use of a PHI's operands are logically contained in
+  // is necessary because the use of a PHI's operands are logically contained in
   // the predecessor block. The def of a PHI's destination register is processed
   // along with the other defs in a basic block.
 

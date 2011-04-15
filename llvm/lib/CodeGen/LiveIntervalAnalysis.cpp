@@ -1507,7 +1507,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         // ...
         // def = ...
         //     = use
-        // It's better to start a new interval to avoid artifically
+        // It's better to start a new interval to avoid artificially
         // extend the new interval.
         if (MI->readsWritesVirtualRegister(li.reg) ==
             std::make_pair(false,true)) {

@@ -258,7 +258,7 @@ public:
   }
 
   virtual SDValue RunSDNodeXForm(SDValue V, unsigned XFormNo) {
-    assert(0 && "Tblgen shoudl generate this!");
+    assert(0 && "Tblgen should generate this!");
     return SDValue();
   }
 

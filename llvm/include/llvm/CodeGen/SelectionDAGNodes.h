@@ -838,7 +838,7 @@ public:
 
 
 /// HandleSDNode - This class is used to form a handle around another node that
-/// is persistant and is updated across invocations of replaceAllUsesWith on its
+/// is persistent and is updated across invocations of replaceAllUsesWith on its
 /// operand.  This node should be directly created by end-users and not added to
 /// the AllNodes list.
 class HandleSDNode : public SDNode {

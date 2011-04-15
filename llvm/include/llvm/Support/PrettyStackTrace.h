@@ -20,7 +20,7 @@ namespace llvm {
   class raw_ostream;
 
   /// DisablePrettyStackTrace - Set this to true to disable this module. This
-  /// might be neccessary if the host application installs its own signal
+  /// might be necessary if the host application installs its own signal
   /// handlers which conflict with the ones installed by this module.
   /// Defaults to false.
   extern bool DisablePrettyStackTrace;

@@ -792,7 +792,7 @@ void RALinScan::updateSpillWeights(std::vector<float> &Weights,
   // register class we are trying to allocate. Then add the weight to all
   // sub-registers of the super-register even if they are not aliases.
   // e.g. allocating for GR32, bh is not used, updating bl spill weight.
-  //      bl should get the same spill weight otherwise it will be choosen
+  //      bl should get the same spill weight otherwise it will be chosen
   //      as a spill candidate since spilling bh doesn't make ebx available.
   for (unsigned i = 0, e = Supers.size(); i != e; ++i) {
     for (const unsigned *sr = tri_->getSubRegisters(Supers[i]); *sr; ++sr)

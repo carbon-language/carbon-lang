@@ -178,7 +178,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
                                         bool isVolatile, bool AlwaysInline,
                                          MachinePointerInfo DstPtrInfo,
                                          MachinePointerInfo SrcPtrInfo) const {
-  // This requires the copy size to be a constant, preferrably
+  // This requires the copy size to be a constant, preferably
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
   if (!ConstantSize)

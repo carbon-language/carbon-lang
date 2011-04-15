@@ -198,7 +198,7 @@ int llvm::DiffFilesWithTolerance(const sys::PathWithStatus &FileA,
     return 1;
   }
 
-  // Now its safe to mmap the files into memory becasue both files
+  // Now its safe to mmap the files into memory because both files
   // have a non-zero size.
   error_code ec;
   OwningPtr<MemoryBuffer> F1;

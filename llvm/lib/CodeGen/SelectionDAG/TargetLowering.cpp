@@ -1859,12 +1859,11 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   case ISD::SETTRUE2:  return DAG.getConstant(1, VT);
   }
 
-  if (isa<ConstantSDNode>(N0.getNode())) {
-    // Ensure that the constant occurs on the RHS, and fold constant
-    // comparisons.
+  // Ensure that the constant occurs on the RHS, and fold constant
+  // comparisons.
+  if (isa<ConstantSDNode>(N0.getNode()))
     return DAG.getSetCC(dl, VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
-  }
-
+  
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
     const APInt &C1 = N1C->getAPIntValue();
 

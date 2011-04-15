@@ -12,7 +12,7 @@
 //
 // Global variables are constant pointers that refer to hunks of space that are
 // allocated by either the VM, or by the linker in a static compiler.  A global
-// variable may have an intial value, which is copied into the executables .data
+// variable may have an initial value, which is copied into the executables .data
 // area.  Global Constants are required to have initializers.
 //
 //===----------------------------------------------------------------------===//

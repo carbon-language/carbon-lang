@@ -1952,7 +1952,7 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
   return SDValue(OutRetAddr.getNode(), 1);
 }
 
-/// EmitTailCallStoreRetAddr - Emit a store of the return adress if tail call
+/// EmitTailCallStoreRetAddr - Emit a store of the return address if tail call
 /// optimization is performed and it is required (FPDiff!=0).
 static SDValue
 EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
@@ -2043,7 +2043,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
 
   SDValue RetAddrFrIdx;
-  // Load return adress for tail calls.
+  // Load return address for tail calls.
   if (isTailCall && FPDiff)
     Chain = EmitTailCallLoadRetAddr(DAG, RetAddrFrIdx, Chain, isTailCall,
                                     Is64Bit, FPDiff, dl);
@@ -2200,7 +2200,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     SmallVector<SDValue, 8> MemOpChains2;
     SDValue FIN;
     int FI = 0;
-    // Do not flag preceeding copytoreg stuff together with the following stuff.
+    // Do not flag preceding copytoreg stuff together with the following stuff.
     InFlag = SDValue();
     if (GuaranteedTailCallOpt) {
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -4018,7 +4018,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
 
 /// getNumOfConsecutiveZeros - Return the number of elements of a vector
 /// shuffle operation which come from a consecutively from a zero. The
-/// search can start in two diferent directions, from left or right.
+/// search can start in two different directions, from left or right.
 static
 unsigned getNumOfConsecutiveZeros(SDNode *N, int NumElems,
                                   bool ZerosFromLeft, SelectionDAG &DAG) {
@@ -12216,7 +12216,7 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     AsmPieces.clear();
     SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
 
-    // FIXME: this should verify that we are targetting a 486 or better.  If not,
+    // FIXME: this should verify that we are targeting a 486 or better.  If not,
     // we will turn this bswap into something that will be lowered to logical ops
     // instead of emitting the bswap asm.  For now, we don't support 486 or lower
     // so don't worry about this.

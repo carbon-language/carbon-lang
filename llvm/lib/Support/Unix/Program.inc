@@ -236,7 +236,7 @@ Program::Execute(const Path &path, const char **args, const char **envp,
   // Create a child process.
   int child = fork();
   switch (child) {
-    // An error occured:  Return to the caller.
+    // An error occurred:  Return to the caller.
     case -1:
       MakeErrMsg(ErrMsg, "Couldn't fork");
       return false;

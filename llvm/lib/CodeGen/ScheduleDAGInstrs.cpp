@@ -371,7 +371,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
                 // will be overlapped by work done outside the current
                 // scheduling region.
                 Latency -= std::min(Latency, Count);
-                // Add the artifical edge.
+                // Add the artificial edge.
                 ExitSU.addPred(SDep(SU, SDep::Order, Latency,
                                     /*Reg=*/0, /*isNormalMemory=*/false,
                                     /*isMustAlias=*/false,

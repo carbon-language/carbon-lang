@@ -2155,7 +2155,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
 }
 
 /// CalculateTailCallSPDiff - Get the amount the stack pointer has to be
-/// adjusted to accomodate the arguments for the tailcall.
+/// adjusted to accommodate the arguments for the tailcall.
 static int CalculateTailCallSPDiff(SelectionDAG& DAG, bool isTailCall,
                                    unsigned ParamSize) {
 
@@ -2396,7 +2396,7 @@ void PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
   // Emit a sequence of copyto/copyfrom virtual registers for arguments that
   // might overwrite each other in case of tail call optimization.
   SmallVector<SDValue, 8> MemOpChains2;
-  // Do not flag preceeding copytoreg stuff together with the following stuff.
+  // Do not flag preceding copytoreg stuff together with the following stuff.
   InFlag = SDValue();
   StoreTailCallArgumentsToStackSlot(DAG, Chain, TailCallArguments,
                                     MemOpChains2, dl);

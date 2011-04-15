@@ -2878,7 +2878,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   }
   case ISD::FP_ROUND_INREG: {
     // The only way we can lower this is to turn it into a TRUNCSTORE,
-    // EXTLOAD pair, targetting a temporary location (a stack slot).
+    // EXTLOAD pair, targeting a temporary location (a stack slot).
 
     // NOTE: there is a choice here between constantly creating new stack
     // slots and always reusing the same one.  We currently always create

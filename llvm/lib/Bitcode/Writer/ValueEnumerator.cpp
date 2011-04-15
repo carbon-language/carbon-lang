@@ -363,7 +363,7 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       // Initializers for globals are handled explicitly elsewhere.
     } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Do not enumerate the initializers for an array of simple characters.
-      // The initializers just polute the value table, and we emit the strings
+      // The initializers just pollute the value table, and we emit the strings
       // specially.
     } else if (C->getNumOperands()) {
       // If a constant has operands, enumerate them.  This makes sure that if a

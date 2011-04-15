@@ -723,7 +723,7 @@ LowerBRCOND(SDValue Op, SelectionDAG &DAG) const
 
   SDValue CondRes = CreateFPCmp(DAG, Op.getOperand(1));
 
-  // Return if flag is not set by a floating point comparision.
+  // Return if flag is not set by a floating point comparison.
   if (CondRes.getOpcode() != MipsISD::FPCmp)
     return Op;
 
@@ -741,7 +741,7 @@ LowerSELECT(SDValue Op, SelectionDAG &DAG) const
 {
   SDValue Cond = CreateFPCmp(DAG, Op.getOperand(0));
 
-  // Return if flag is not set by a floating point comparision.
+  // Return if flag is not set by a floating point comparison.
   if (Cond.getOpcode() != MipsISD::FPCmp)
     return Op;
 
@@ -867,7 +867,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
 
   // gp_rel relocation
   // FIXME: we should reference the constant pool using small data sections,
-  // but the asm printer currently doens't support this feature without
+  // but the asm printer currently doesn't support this feature without
   // hacking it. This feature should come soon so we can uncomment the
   // stuff below.
   //if (IsInSmallSection(C->getType())) {
@@ -1189,7 +1189,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Build a sequence of copy-to-reg nodes chained together with token
   // chain and flag operands which copy the outgoing args into registers.
-  // The InFlag in necessary since all emited instructions must be
+  // The InFlag in necessary since all emitted instructions must be
   // stuck together.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
@@ -1272,7 +1272,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Create a stack location to hold GP when PIC is used. This stack
   // location is used on function prologue to save GP and also after all
-  // emited CALL's to restore GP.
+  // emitted CALL's to restore GP.
   if (IsPIC) {
       // Function can have an arbitrary number of calls, so
       // hold the LastArgStackLoc with the biggest offset.

@@ -2965,7 +2965,7 @@ let isCall = 1,
 //   here, and we're using the stack frame for the containing function to
 //   save/restore registers, we can't keep anything live in regs across
 //   the eh_sjlj_setjmp(), else it will almost certainly have been tromped upon
-//   when we get here from a longjmp(). We force everthing out of registers
+//   when we get here from a longjmp(). We force everything out of registers
 //   except for our own input by listing the relevant registers in Defs. By
 //   doing so, we also cause the prologue/epilogue code to actively preserve
 //   all of the callee-saved resgisters, which is exactly what we want.

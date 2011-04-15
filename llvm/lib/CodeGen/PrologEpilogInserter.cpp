@@ -337,7 +337,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
         --BeforeI;
 
       // Restore all registers immediately before the return and any
-      // terminators that preceed it.
+      // terminators that precede it.
       if (!TFI->restoreCalleeSavedRegisters(*MBB, I, CSI, TRI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
           unsigned Reg = CSI[i].getReg();
@@ -437,7 +437,7 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
       --BeforeI;
 
     // Restore all registers immediately before the return and any
-    // terminators that preceed it.
+    // terminators that precede it.
     for (unsigned i = 0, e = blockCSI.size(); i != e; ++i) {
       unsigned Reg = blockCSI[i].getReg();
       const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);

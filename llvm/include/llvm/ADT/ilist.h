@@ -289,7 +289,7 @@ template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
 //===----------------------------------------------------------------------===//
 //
 /// iplist - The subset of list functionality that can safely be used on nodes
-/// of polymorphic types, i.e. a heterogenous list with a common base class that
+/// of polymorphic types, i.e. a heterogeneous list with a common base class that
 /// holds the next/prev pointers.  The only state of the list itself is a single
 /// pointer to the head of the list.
 ///

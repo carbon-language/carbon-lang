@@ -184,7 +184,7 @@ public:
 
   // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
   // for types as they are needed.  Because resolution of types must invalidate
-  // all of the abstract type descriptions, we keep them in a seperate map to 
+  // all of the abstract type descriptions, we keep them in a separate map to
   // make this easy.
   TypePrinting ConcreteTypeDescriptions;
   TypePrinting AbstractTypeDescriptions;

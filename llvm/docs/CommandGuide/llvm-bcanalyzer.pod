@@ -268,7 +268,7 @@ The number of bytes consumed by instructions in the function.
 
 =item B<Average Instruction Size>
 
-The average number of bytes consumed by the instructions in the funtion. This
+The average number of bytes consumed by the instructions in the function. This
 value is computed by dividing Instruction Size by Instructions.
 
 =item B<Bytes Per Instruction>

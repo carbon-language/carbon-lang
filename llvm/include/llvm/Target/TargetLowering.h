@@ -1042,7 +1042,7 @@ protected:
   }
 
   /// JumpIsExpensive - Tells the code generator not to expand sequence of
-  /// operations into a seperate sequences that increases the amount of
+  /// operations into a separate sequences that increases the amount of
   /// flow control.
   void setJumpIsExpensive(bool isExpensive = true) {
     JumpIsExpensive = isExpensive;

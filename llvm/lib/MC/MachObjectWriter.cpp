@@ -440,7 +440,7 @@ public:
       // Compensate for the relocation offset, Darwin x86_64 relocations only
       // have the addend and appear to have attempted to define it to be the
       // actual expression addend without the PCrel bias. However, instructions
-      // with data following the relocation are not accomodated for (see comment
+      // with data following the relocation are not accommodated for (see comment
       // below regarding SIGNED{1,2,4}), so it isn't exactly that either.
       Value += 1LL << Log2Size;
     }
@@ -541,7 +541,7 @@ public:
       }
 
       // x86_64 almost always uses external relocations, except when there is no
-      // symbol to use as a base address (a local symbol with no preceeding
+      // symbol to use as a base address (a local symbol with no preceding
       // non-local symbol).
       if (Base) {
         Index = Base->getIndex();

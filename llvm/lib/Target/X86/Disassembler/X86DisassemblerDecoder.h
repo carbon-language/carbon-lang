@@ -485,7 +485,7 @@ struct InternalInstruction {
      consumed___ indicates that the byte was already consumed and does not
      need to be consumed again */
 
-  /* The VEX.vvvv field, which contains a thrid register operand for some AVX
+  /* The VEX.vvvv field, which contains a third register operand for some AVX
      instructions */
   Reg                           vvvv;
   

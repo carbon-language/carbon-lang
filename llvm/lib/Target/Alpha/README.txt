@@ -33,9 +33,9 @@ add crazy vector instructions (MVI):
 (MIN|MAX)(U|S)(B8|W4) min and max, signed and unsigned, byte and word
 PKWB, UNPKBW pack/unpack word to byte
 PKLB UNPKBL pack/unpack long to byte
-PERR pixel error (sum accross bytes of bytewise abs(i8v8 a - i8v8 b))
+PERR pixel error (sum across bytes of bytewise abs(i8v8 a - i8v8 b))
 
-cmpbytes bytewise cmpeq of i8v8 a and i8v8 b (not part of MVI extentions)
+cmpbytes bytewise cmpeq of i8v8 a and i8v8 b (not part of MVI extensions)
 
 this has some good examples for other operations that can be synthesised well 
 from these rather meager vector ops (such as saturating add).

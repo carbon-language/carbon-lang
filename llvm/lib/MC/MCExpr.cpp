@@ -389,7 +389,7 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
     //   (LHS_A - RHS_B),
     //   (RHS_A - LHS_B),
     //   (RHS_A - RHS_B).
-    // Since we are attempting to be as aggresive as possible about folding, we
+    // Since we are attempting to be as aggressive as possible about folding, we
     // attempt to evaluate each possible alternative.
     AttemptToFoldSymbolOffsetDifference(Asm, Layout, Addrs, InSet, LHS_A, LHS_B,
                                         Result_Cst);

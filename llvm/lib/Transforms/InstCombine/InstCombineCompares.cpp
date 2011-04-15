@@ -699,7 +699,7 @@ Instruction *InstCombiner::FoldICmpAddOpCst(ICmpInst &ICI,
     return ReplaceInstUsesWith(ICI, ConstantInt::getTrue(X->getContext()));
 
   // From this point on, we know that (X+C <= X) --> (X+C < X) because C != 0,
-  // so the values can never be equal.  Similiarly for all other "or equals"
+  // so the values can never be equal.  Similarly for all other "or equals"
   // operators.
   
   // (X+1) <u X        --> X >u (MAXUINT-1)        --> X == 255

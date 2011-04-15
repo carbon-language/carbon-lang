@@ -31,7 +31,7 @@ typedef void *LLVMDisasmContextRef;
  * the call back in the DisInfo parameter.  The instruction containing operand
  * is at the PC parameter.  For some instruction sets, there can be more than
  * one operand with symbolic information.  To determine the symbolic operand
- * infomation for each operand, the bytes for the specific operand in the
+ * information for each operand, the bytes for the specific operand in the
  * instruction are specified by the Offset parameter and its byte widith is the
  * size parameter.  For instructions sets with fixed widths and one symbolic
  * operand per instruction, the Offset parameter will be zero and Size parameter
@@ -109,7 +109,7 @@ extern "C" {
  * Create a disassembler for the TripleName.  Symbolic disassembly is supported
  * by passing a block of information in the DisInfo parameter and specifing the
  * TagType and call back functions as described above.  These can all be passed
- * as NULL.  If successfull this returns a disassembler context if not it
+ * as NULL.  If successful this returns a disassembler context if not it
  * returns NULL.
  */
 extern LLVMDisasmContextRef
@@ -127,7 +127,7 @@ LLVMDisasmDispose(LLVMDisasmContextRef DC);
 
 /**
  * Disassmble a single instruction using the disassembler context specified in
- * the parameter DC.  The bytes of the instuction are specified in the parameter
+ * the parameter DC.  The bytes of the instruction are specified in the parameter
  * Bytes, and contains at least BytesSize number of bytes.  The instruction is
  * at the address specified by the PC parameter.  If a valid instruction can be
  * disassembled its string is returned indirectly in OutString which whos size

@@ -485,7 +485,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // away the store and we bail out.  However, if we depend on on something
       // that overwrites the memory location we *can* potentially optimize it.
       //
-      // Find out what memory location the dependant instruction stores.
+      // Find out what memory location the dependent instruction stores.
       Instruction *DepWrite = InstDep.getInst();
       AliasAnalysis::Location DepLoc = getLocForWrite(DepWrite, *AA);
       // If we didn't get a useful location, or if it isn't a size, bail out.

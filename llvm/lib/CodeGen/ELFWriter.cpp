@@ -77,7 +77,7 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   // Create the object code emitter object for this target.
   ElfCE = new ELFCodeEmitter(*this);
 
-  // Inital number of sections
+  // Initial number of sections
   NumSections = 0;
 }
 

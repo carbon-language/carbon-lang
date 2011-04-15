@@ -43,7 +43,7 @@ namespace llvm {
   /// InlineCost - Represent the cost of inlining a function. This
   /// supports special values for functions which should "always" or
   /// "never" be inlined. Otherwise, the cost represents a unitless
-  /// amount; smaller values increase the likelyhood of the function
+  /// amount; smaller values increase the likelihood of the function
   /// being inlined.
   class InlineCost {
     enum Kind {

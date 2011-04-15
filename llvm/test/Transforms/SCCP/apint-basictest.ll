@@ -1,4 +1,4 @@
-; This is a basic sanity check for constant propogation.  The add instruction 
+; This is a basic sanity check for constant propagation.  The add instruction
 ; should be eliminated.
 
 ; RUN: opt < %s -sccp -S | not grep add

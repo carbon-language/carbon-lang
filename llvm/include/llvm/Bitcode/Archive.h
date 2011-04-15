@@ -435,7 +435,7 @@ class Archive {
     /// to determine just enough information to create an ArchiveMember object
     /// which is then inserted into the Archive object's ilist at the location
     /// given by \p where.
-    /// @returns true if an error occured, false otherwise
+    /// @returns true if an error occurred, false otherwise
     /// @brief Add a file to the archive.
     bool addFileBefore(
       const sys::Path& filename, ///< The file to be added

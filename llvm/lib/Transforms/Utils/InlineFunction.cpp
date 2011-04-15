@@ -320,7 +320,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
 //
 // Note that this only does one level of inlining.  For example, if the
 // instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
-// exists in the instruction stream.  Similiarly this will inline a recursive
+// exists in the instruction stream.  Similarly this will inline a recursive
 // function by one level.
 //
 bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {

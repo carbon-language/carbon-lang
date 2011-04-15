@@ -306,7 +306,7 @@ separate option groups syntactically.
      sign: ``-std c99``. At most one occurrence is allowed.
 
    - ``parameter_list_option`` - same as the above, but more than one option
-     occurence is allowed.
+     occurrence is allowed.
 
    - ``prefix_option`` - same as the parameter_option, but the option name and
      argument do not have to be separated. Example: ``-ofile``. This can be also
@@ -314,7 +314,7 @@ separate option groups syntactically.
      (``=file`` will be interpreted as option value). At most one occurrence is
      allowed.
 
-   - ``prefix_list_option`` - same as the above, but more than one occurence of
+   - ``prefix_list_option`` - same as the above, but more than one occurrence of
      the option is allowed; example: ``-lm -lpthread``.
 
    - ``alias_option`` - a special option type for creating aliases. Unlike other

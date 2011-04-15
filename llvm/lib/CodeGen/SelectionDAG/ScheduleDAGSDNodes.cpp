@@ -617,7 +617,7 @@ namespace {
   };
 }
 
-/// ProcessSDDbgValues - Process SDDbgValues assoicated with this node.
+/// ProcessSDDbgValues - Process SDDbgValues associated with this node.
 static void ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG,
                                InstrEmitter &Emitter,
                     SmallVector<std::pair<unsigned, MachineInstr*>, 32> &Orders,

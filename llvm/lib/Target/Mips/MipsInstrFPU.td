@@ -187,7 +187,7 @@ let Predicates = [IsNotSingleFloat, IsNotMipsI] in {
                  "sdc1 $ft, $addr", [(store AFGR64:$ft, addr:$addr)]>;
 }
 
-// LWC1 and SWC1 can always be emited with odd registers.
+// LWC1 and SWC1 can always be emitted with odd registers.
 def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
                [(set FGR32:$ft, (load addr:$addr))]>;
 def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",

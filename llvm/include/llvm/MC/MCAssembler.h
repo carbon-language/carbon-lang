@@ -706,7 +706,7 @@ private:
   /// \param DF The fragment the fixup is inside.
   /// \param Target [out] On return, the relocatable expression the fixup
   /// evaluates to.
-  /// \param Value [out] On return, the value of the fixup as currently layed
+  /// \param Value [out] On return, the value of the fixup as currently laid
   /// out.
   /// \return Whether the fixup value was fully resolved. This is true if the
   /// \arg Value result is fixed, otherwise the value may change due to
@@ -745,7 +745,7 @@ private:
                        MCFragment &F, const MCFixup &Fixup);
 
 public:
-  /// Compute the effective fragment size assuming it is layed out at the given
+  /// Compute the effective fragment size assuming it is laid out at the given
   /// \arg SectionAddress and \arg FragmentOffset.
   uint64_t ComputeFragmentSize(const MCAsmLayout &Layout, const MCFragment &F) const;
 

@@ -36,7 +36,7 @@ _conv:
 	cmovb %rcx, %rax
 	ret
 
-Seems like the jb branch has high likelyhood of being taken. It would have
+Seems like the jb branch has high likelihood of being taken. It would have
 saved a few instructions.
 
 //===---------------------------------------------------------------------===//

@@ -13,7 +13,7 @@ define i32 @foo() {
 	%res2 = insertvalue { i32, i32 } %res1, i32 2, 1		; <{ i32, i32 }> [#uses=1]
         ; And store it
 	store { i32, i32 } %res2, { i32, i32 }* %target
-        ; Actually use %target, so it doesn't get removed alltogether
+        ; Actually use %target, so it doesn't get removed altogether
         %ptr = getelementptr { i32, i32 }* %target, i32 0, i32 0
         %val = load i32* %ptr
 	ret i32 %val
@@ -26,7 +26,7 @@ define i32 @bar() {
 	%res2 = insertvalue [ 2 x i32 ] %res1, i32 2, 1		; <{ i32, i32 }> [#uses=1]
         ; And store it
 	store [ 2 x i32 ] %res2, [ 2 x i32 ]* %target
-        ; Actually use %target, so it doesn't get removed alltogether
+        ; Actually use %target, so it doesn't get removed altogether
         %ptr = getelementptr [ 2 x i32 ]* %target, i32 0, i32 0
         %val = load i32* %ptr
 	ret i32 %val

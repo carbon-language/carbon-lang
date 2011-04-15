@@ -31,7 +31,7 @@
 //
 // The second field identifies the type's parent node in the tree, or
 // is null or omitted for a root node. A type is considered to alias
-// all of its decendents and all of its ancestors in the tree. Also,
+// all of its descendants and all of its ancestors in the tree. Also,
 // a type is considered to alias all types in other trees, so that
 // bitcode produced from multiple front-ends is handled conservatively.
 //

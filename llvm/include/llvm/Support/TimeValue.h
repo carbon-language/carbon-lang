@@ -35,13 +35,13 @@ namespace sys {
   public:
 
     /// A constant TimeValue representing the smallest time
-    /// value permissable by the class. MinTime is some point
+    /// value permissible by the class. MinTime is some point
     /// in the distant past, about 300 billion years BCE.
     /// @brief The smallest possible time value.
     static const TimeValue MinTime;
 
     /// A constant TimeValue representing the largest time
-    /// value permissable by the class. MaxTime is some point
+    /// value permissible by the class. MaxTime is some point
     /// in the distant future, about 300 billion years AD.
     /// @brief The largest possible time value.
     static const TimeValue MaxTime;

@@ -157,7 +157,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
         TI->replaceUsesOfWith(OldPred, NewBB);
       }
 
-    // Okay, everthing within the region is now branching to the right block, we
+    // Okay, everything within the region is now branching to the right block, we
     // just have to update the PHI nodes now, inserting PHI nodes into NewBB.
     for (AfterPHIs = OldPred->begin(); isa<PHINode>(AfterPHIs); ++AfterPHIs) {
       PHINode *PN = cast<PHINode>(AfterPHIs);

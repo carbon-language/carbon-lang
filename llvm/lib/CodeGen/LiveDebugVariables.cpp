@@ -290,7 +290,7 @@ public:
   /// mapVirtReg - Map virtual register to an equivalence class.
   void mapVirtReg(unsigned VirtReg, UserValue *EC);
 
-  /// renameRegister - Replace all references to OldReg wiht NewReg:SubIdx.
+  /// renameRegister - Replace all references to OldReg with NewReg:SubIdx.
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx);
 
   /// emitDebugVariables - Recreate DBG_VALUE instruction from data structures.

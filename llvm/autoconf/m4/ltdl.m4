@@ -156,7 +156,7 @@ AC_CACHE_CHECK([whether deplibs are loaded by dlopen],
   osf[[1234]]*)
     # dlopen did load deplibs (at least at 4.x), but until the 5.x series,
     # it did *not* use an RPATH in a shared library to find objects the
-    # library depends on, so we explictly say `no'.
+    # library depends on, so we explicitly say `no'.
     libltdl_cv_sys_dlopen_deplibs=no
     ;;
   osf5.0|osf5.0a|osf5.1)

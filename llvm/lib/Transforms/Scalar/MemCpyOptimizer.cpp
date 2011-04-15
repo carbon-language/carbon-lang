@@ -688,7 +688,7 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep,
   if (M->getSource() == MDep->getSource())
     return false;
   
-  // Second, the length of the memcpy's must be the same, or the preceeding one
+  // Second, the length of the memcpy's must be the same, or the preceding one
   // must be larger than the following one.
   ConstantInt *MDepLen = dyn_cast<ConstantInt>(MDep->getLength());
   ConstantInt *MLen = dyn_cast<ConstantInt>(M->getLength());

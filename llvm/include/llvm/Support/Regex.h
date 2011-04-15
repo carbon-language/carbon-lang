@@ -53,7 +53,7 @@ namespace llvm {
 
     /// matches - Match the regex against a given \arg String.
     ///
-    /// \param Matches - If given, on a succesful match this will be filled in
+    /// \param Matches - If given, on a successful match this will be filled in
     /// with references to the matched group expressions (inside \arg String),
     /// the first group is always the entire pattern.
     ///

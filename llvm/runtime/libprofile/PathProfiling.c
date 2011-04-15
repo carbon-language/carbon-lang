@@ -105,7 +105,7 @@ void writeArrayTable(uint32_t fNumber, ftEntry_t* ft, uint32_t* funcCount) {
 }
 
 inline uint32_t hash (uint32_t key) {
-  /* this may benifit from a proper hash function */
+  /* this may benefit from a proper hash function */
   return key%ARBITRARY_HASH_BIN_COUNT;
 }
 

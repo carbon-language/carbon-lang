@@ -1287,14 +1287,14 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         MergeLDR_STR(MBB, 0, CurrBase, CurrOpc, CurrSize,
                      CurrPred, CurrPredReg, Scratch, MemOps, Merges);
 
-        // Try folding preceeding/trailing base inc/dec into the generated
+        // Try folding preceding/trailing base inc/dec into the generated
         // LDM/STM ops.
         for (unsigned i = 0, e = Merges.size(); i < e; ++i)
           if (MergeBaseUpdateLSMultiple(MBB, Merges[i], Advance, MBBI))
             ++NumMerges;
         NumMerges += Merges.size();
 
-        // Try folding preceeding/trailing base inc/dec into those load/store
+        // Try folding preceding/trailing base inc/dec into those load/store
         // that were not merged to form LDM/STM ops.
         for (unsigned i = 0; i != NumMemOps; ++i)
           if (!MemOps[i].Merged)
@@ -1304,7 +1304,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // RS may be pointing to an instruction that's deleted.
         RS->skipTo(prior(MBBI));
       } else if (NumMemOps == 1) {
-        // Try folding preceeding/trailing base inc/dec into the single
+        // Try folding preceding/trailing base inc/dec into the single
         // load/store.
         if (MergeBaseUpdateLoadStore(MBB, MemOps[0].MBBI, TII, Advance, MBBI)) {
           ++NumMerges;
@@ -1334,7 +1334,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
 }
 
 /// MergeReturnIntoLDM - If this is a exit BB, try merging the return ops
-/// ("bx lr" and "mov pc, lr") into the preceeding stack restore so it
+/// ("bx lr" and "mov pc, lr") into the preceding stack restore so it
 /// directly restore the value of LR into pc.
 ///   ldmfd sp!, {..., lr}
 ///   bx lr

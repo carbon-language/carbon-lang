@@ -286,7 +286,7 @@ void BallLarusDag::calculatePathNumbers() {
       BallLarusEdge* exitEdge = addEdge(node, getExit(), 0);
       exitEdge->setType(BallLarusEdge::SPLITEDGE_PHONY);
 
-      // Counters to handle the possibilty of a multi-graph
+      // Counters to handle the possibility of a multi-graph
       BasicBlock* oldTarget = 0;
       unsigned duplicateNumber = 0;
 

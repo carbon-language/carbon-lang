@@ -1577,7 +1577,7 @@ void throwCppException (int32_t ignoreIt) {
 typedef void (*OurExceptionThrowFunctType) (int32_t typeToThrow);
 
 /// This is a test harness which runs test by executing generated 
-/// function with a type info type to throw. Harness wraps the excecution 
+/// function with a type info type to throw. Harness wraps the execution
 /// of generated function in a C++ try catch clause.
 /// @param engine execution engine to use for executing generated function.
 ///        This demo program expects this to be a JIT instance for demo

@@ -102,7 +102,7 @@ namespace sys {
       );
 
     /// This function terminates the program.
-    /// @returns true if an error occured.
+    /// @returns true if an error occurred.
     /// @see Execute
     /// @brief Terminates the program.
     bool Kill

@@ -1,4 +1,4 @@
-; Ensure constant propogation of logical instructions is working correctly.
+; Ensure constant propagation of logical instructions is working correctly.
 
 ; RUN: opt < %s -constprop -die -S | FileCheck %s
 ; CHECK-NOT:     {{and|or|xor}}

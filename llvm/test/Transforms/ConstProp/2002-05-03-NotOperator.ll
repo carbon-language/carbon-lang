@@ -1,4 +1,4 @@
-; This bug has to do with the fact that constant propogation was implemented in
+; This bug has to do with the fact that constant propagation was implemented in
 ; terms of _logical_ not (! in C) instead of _bitwise_ not (~ in C).  This was
 ; due to a spec change.
 

@@ -237,7 +237,7 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
 /// obvious the value of the load is not changed from the point of the load to
 /// the end of the block it is in.
 ///
-/// Finally, it is safe, but not profitable, to sink a load targetting a
+/// Finally, it is safe, but not profitable, to sink a load targeting a
 /// non-address-taken alloca.  Doing so will cause us to not promote the alloca
 /// to a register.
 static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {

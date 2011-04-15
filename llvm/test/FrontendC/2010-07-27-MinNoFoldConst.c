@@ -10,7 +10,7 @@ static void bad(unsigned int v1, unsigned int v2) {
 //   MIN(1631381461u * v2 - 4047041419, 1631381461u * v1 - 4047041419)
 //
 // 1631381461u * 1273463329u = 2077504466193943669, but 32-bit overflow clips
-// this to 4047041419. This breaks the comparision implicit in the MIN().
+// this to 4047041419. This breaks the comparison implicit in the MIN().
 // Two multiply operations suggests the bad optimization is happening;
 // one multiplication, after the MIN(), is correct.
 // CHECK: mul

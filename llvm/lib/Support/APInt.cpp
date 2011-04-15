@@ -1518,7 +1518,7 @@ APInt::ms APInt::magic() const {
 /// Requires that the divisor not be 0.  Taken from "Hacker's Delight", Henry
 /// S. Warren, Jr., chapter 10.
 /// LeadingZeros can be used to simplify the calculation if the upper bits
-/// of the devided value are known zero.
+/// of the divided value are known zero.
 APInt::mu APInt::magicu(unsigned LeadingZeros) const {
   const APInt& d = *this;
   unsigned p;

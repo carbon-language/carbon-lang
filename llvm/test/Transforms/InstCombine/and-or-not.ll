@@ -4,7 +4,7 @@
 
 ; PR1510
 
-; These are all equivelent to A^B
+; These are all equivalent to A^B
 
 define i32 @test1(i32 %a, i32 %b) {
 entry:

@@ -350,7 +350,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       Scale *= IndexScale.getSExtValue();
       
       
-      // If we already had an occurrance of this index variable, merge this
+      // If we already had an occurrence of this index variable, merge this
       // scale into it.  For example, we want to handle:
       //   A[x][x] -> x*16 + x*4 -> x*20
       // This also ensures that 'x' only appears in the index list once.
@@ -883,7 +883,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   if (GEP1BaseOffset == 0 && GEP1VariableIndices.empty())
     return MustAlias;
 
-  // If there is a difference betwen the pointers, but the difference is
+  // If there is a difference between the pointers, but the difference is
   // less than the size of the associated memory object, then we know
   // that the objects are partially overlapping.
   if (GEP1BaseOffset != 0 && GEP1VariableIndices.empty()) {

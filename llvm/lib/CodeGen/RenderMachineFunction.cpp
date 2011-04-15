@@ -47,7 +47,7 @@ outputFileSuffix("rmf-file-suffix",
 
 static cl::opt<std::string>
 machineFuncsToRender("rmf-funcs",
-                     cl::desc("Coma seperated list of functions to render"
+                     cl::desc("Comma separated list of functions to render"
                               ", or \"*\"."),
                      cl::init(""), cl::Hidden);
 

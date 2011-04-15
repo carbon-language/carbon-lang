@@ -21,7 +21,7 @@ include "llvm/Target/Target.td"
 //===----------------------------------------------------------------------===//
 
 def FeatureCIX : SubtargetFeature<"cix", "HasCT", "true",
-                                  "Enable CIX extentions">;
+                                  "Enable CIX extensions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

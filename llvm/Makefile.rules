@@ -2024,7 +2024,7 @@ $(DistZip) : $(TopDistDir)/.makedistdir
 	$(Verb) cd $(PROJ_OBJ_ROOT) ; $(ZIP) -rq $(DistZip) $(DistName)
 
 dist :: $(DistTarGZip) $(DistTarBZ2) $(DistZip)
-	$(Echo) ===== DISTRIBUTION PACKAGING SUCESSFUL =====
+	$(Echo) ===== DISTRIBUTION PACKAGING SUCCESSFUL =====
 
 DistCheckDir := $(PROJ_OBJ_ROOT)/_distcheckdir
 

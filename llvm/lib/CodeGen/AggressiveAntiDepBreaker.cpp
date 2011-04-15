@@ -357,7 +357,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
     RegRefs = State->GetRegRefs();
 
   // Handle dead defs by simulating a last-use of the register just
-  // after the def. A dead def can occur because the def is truely
+  // after the def. A dead def can occur because the def is truly
   // dead, or because only a subregister is live at the def. If we
   // don't do this the dead def will be incorrectly merged into the
   // previous def.

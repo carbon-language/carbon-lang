@@ -58,7 +58,7 @@ node_set = set()
 #read the file one line at a time
 buffer = input.readline()
 while buffer != '':
-	#filter out the unecessary checks on all the edge lines
+	#filter out the unnecessary checks on all the edge lines
 	if not arrowexp.search(buffer):
 		#check to see if this is a node we are looking for
 		for regexp in regexp_list:

@@ -36,8 +36,8 @@ private:
   /// List of sections in layout order.
   llvm::SmallVector<MCSectionData*, 16> SectionOrder;
 
-  /// The last fragment which was layed out, or 0 if nothing has been layed
-  /// out. Fragments are always layed out in order, so all fragments with a
+  /// The last fragment which was laid out, or 0 if nothing has been laid
+  /// out. Fragments are always laid out in order, so all fragments with a
   /// lower ordinal will be up to date.
   mutable DenseMap<const MCSectionData*, MCFragment *> LastValidFragment;
 
@@ -58,7 +58,7 @@ public:
   void Invalidate(MCFragment *F);
 
   /// \brief Perform layout for a single fragment, assuming that the previous
-  /// fragment has already been layed out correctly, and the parent section has
+  /// fragment has already been laid out correctly, and the parent section has
   /// been initialized.
   void LayoutFragment(MCFragment *Fragment);
 

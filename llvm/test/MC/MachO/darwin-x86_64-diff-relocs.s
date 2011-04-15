@@ -157,7 +157,7 @@ L3:
 // FIXME: Unfortunately, we do not get these relocations in exactly the same
 // order as Darwin 'as'. It turns out that 'as' *usually* ends up emitting
 // them in reverse address order, but sometimes it allocates some
-// additional relocations late so these end up preceed the other entries. I
+// additional relocations late so these end up precede the other entries. I
 // haven't figured out the exact criteria for this yet.
         
 // CHECK:     (('word-0', 0x56),

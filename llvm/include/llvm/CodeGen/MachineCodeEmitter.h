@@ -34,7 +34,7 @@ class Function;
 class MCSymbol;
 
 /// MachineCodeEmitter - This class defines two sorts of methods: those for
-/// emitting the actual bytes of machine code, and those for emitting auxillary
+/// emitting the actual bytes of machine code, and those for emitting auxiliary
 /// structures, such as jump tables, relocations, etc.
 ///
 /// Emission of machine code is complicated by the fact that we don't (in
@@ -54,7 +54,7 @@ protected:
   /// allocated for this code buffer.
   uint8_t *BufferBegin, *BufferEnd;
   /// CurBufferPtr - Pointer to the next byte of memory to fill when emitting
-  /// code.  This is guranteed to be in the range [BufferBegin,BufferEnd].  If
+  /// code.  This is guaranteed to be in the range [BufferBegin,BufferEnd].  If
   /// this pointer is at BufferEnd, it will never move due to code emission, and
   /// all code emission requests will be ignored (this is the buffer overflow
   /// condition).

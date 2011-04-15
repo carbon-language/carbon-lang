@@ -1882,7 +1882,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
       // outer mul and the inner addrec are guaranteed to have no overflow.
       //
       // No self-wrap cannot be guaranteed after changing the step size, but
-      // will be infered if either NUW or NSW is true.
+      // will be inferred if either NUW or NSW is true.
       Flags = AddRec->getNoWrapFlags(clearFlags(Flags, SCEV::FlagNW));
       const SCEV *NewRec = getAddRecExpr(NewOps, AddRecLoop, Flags);
 

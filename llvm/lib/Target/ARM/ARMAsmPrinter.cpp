@@ -1708,7 +1708,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
   // Tail jump branches are really just branch instructions with additional
-  // code-gen attributes. Convert them to the cannonical form here.
+  // code-gen attributes. Convert them to the canonical form here.
   case ARM::TAILJMPd:
   case ARM::TAILJMPdND: {
     MCInst TmpInst, TmpInst2;

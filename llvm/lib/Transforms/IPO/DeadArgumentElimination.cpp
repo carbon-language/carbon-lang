@@ -49,7 +49,7 @@ namespace {
 
     /// Struct that represents (part of) either a return value or a function
     /// argument.  Used so that arguments and return values can be used
-    /// interchangably.
+    /// interchangeably.
     struct RetOrArg {
       RetOrArg(const Function *F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
                IsArg(IsArg) {}
@@ -273,8 +273,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // function empty.
   NF->getBasicBlockList().splice(NF->begin(), Fn.getBasicBlockList());
 
-  // Loop over the argument list, transfering uses of the old arguments over to
-  // the new arguments, also transfering over the names as well.  While we're at
+  // Loop over the argument list, transferring uses of the old arguments over to
+  // the new arguments, also transferring over the names as well.  While we're at
   // it, remove the dead arguments from the DeadArguments list.
   //
   for (Function::arg_iterator I = Fn.arg_begin(), E = Fn.arg_end(),
@@ -379,7 +379,7 @@ DAE::Liveness DAE::SurveyUse(Value::const_use_iterator U,
       // The value is returned from a function. It's only live when the
       // function's return value is live. We use RetValNum here, for the case
       // that U is really a use of an insertvalue instruction that uses the
-      // orginal Use.
+      // original Use.
       RetOrArg Use = CreateRet(RI->getParent()->getParent(), RetValNum);
       // We might be live, depending on the liveness of Use.
       return MarkIfNotLive(Use, MaybeLiveUses);
@@ -894,8 +894,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // function empty.
   NF->getBasicBlockList().splice(NF->begin(), F->getBasicBlockList());
 
-  // Loop over the argument list, transfering uses of the old arguments over to
-  // the new arguments, also transfering over the names as well.
+  // Loop over the argument list, transferring uses of the old arguments over to
+  // the new arguments, also transferring over the names as well.
   i = 0;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
        I2 = NF->arg_begin(); I != E; ++I, ++i)

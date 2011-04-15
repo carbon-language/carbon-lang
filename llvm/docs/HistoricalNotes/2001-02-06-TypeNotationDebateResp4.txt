@@ -39,7 +39,7 @@ declaration and calling syntax.
 
 Very true.  If you're implementing an object oriented language, however,
 remember that you have to do all the pointer to member function stuff
-yourself.... so everytime you invoke a virtual method one is involved
+yourself.... so every time you invoke a virtual method one is involved
 (instead of having C++ hide it for you behind "syntactic sugar").
 
 > And the old array syntax:

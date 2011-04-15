@@ -36,7 +36,7 @@ extern "C" {
 // disassembly is supported by passing a block of information in the DisInfo
 // parameter and specifing the TagType and call back functions as described in
 // the header llvm-c/Disassembler.h .  The pointer to the block and the 
-// functions can all be passed as NULL.  If successfull this returns a
+// functions can all be passed as NULL.  If successful this returns a
 // disassembler context if not it returns NULL.
 //
 LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,

@@ -370,7 +370,7 @@ public:
 
         // Remove the old entry form TypesByHash.  If the hash values differ
         // now, remove it from the old place.  Otherwise, continue scanning
-        // withing this hashcode to reduce work.
+        // within this hashcode to reduce work.
         if (NewTypeHash != OldTypeHash) {
           RemoveFromTypesByHash(OldTypeHash, Ty);
         } else {

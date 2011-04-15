@@ -185,7 +185,7 @@ public:
   /// \param GVsWithCode - Allocating globals with code breaks
   /// freeMachineCodeForFunction and is probably unsafe and bad for performance.
   /// However, we have clients who depend on this behavior, so we must support
-  /// it.  Eventually, when we're willing to break some backwards compatability,
+  /// it.  Eventually, when we're willing to break some backwards compatibility,
   /// this flag should be flipped to false, so that by default
   /// freeMachineCodeForFunction works.
   static ExecutionEngine *create(Module *M,

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is a target description file for the Intel i386 architecture, refered to
+// This is a target description file for the Intel i386 architecture, referred to
 // here as the "X86" architecture.
 //
 //===----------------------------------------------------------------------===//

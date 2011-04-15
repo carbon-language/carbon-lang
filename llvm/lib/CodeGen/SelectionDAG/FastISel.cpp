@@ -1239,7 +1239,7 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       // Only handle legal types. Two interesting things to note here. First,
       // by bailing out early, we may leave behind some dead instructions,
       // since SelectionDAG's HandlePHINodesInSuccessorBlocks will insert its
-      // own moves. Second, this check is necessary becuase FastISel doesn't
+      // own moves. Second, this check is necessary because FastISel doesn't
       // use CreateRegs to create registers, so it always creates
       // exactly one register for each non-void instruction.
       EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);

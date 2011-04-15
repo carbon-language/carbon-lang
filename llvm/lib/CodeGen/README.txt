@@ -26,7 +26,7 @@ and then "merge" mul and mov:
         sxth r3, r3
         mla r4, r3, lr, r4
 
-It also increase the likelyhood the store may become dead.
+It also increase the likelihood the store may become dead.
 
 //===---------------------------------------------------------------------===//
 
@@ -162,7 +162,7 @@ synthesize the various copy insertion/inspection methods in TargetInstrInfo.
 
 //===---------------------------------------------------------------------===//
 
-Stack coloring improvments:
+Stack coloring improvements:
 
 1. Do proper LiveStackAnalysis on all stack objects including those which are
    not spill slots.

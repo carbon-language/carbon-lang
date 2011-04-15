@@ -584,7 +584,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
 /// @brief Represent an integer comparison operator.
 class ICmpInst: public CmpInst {
 protected:
-  /// @brief Clone an indentical ICmpInst
+  /// @brief Clone an identical ICmpInst
   virtual ICmpInst *clone_impl() const;
 public:
   /// @brief Constructor with insert-before-instruction semantics.
@@ -735,7 +735,7 @@ public:
 /// @brief Represents a floating point comparison operator.
 class FCmpInst: public CmpInst {
 protected:
-  /// @brief Clone an indentical FCmpInst
+  /// @brief Clone an identical FCmpInst
   virtual FCmpInst *clone_impl() const;
 public:
   /// @brief Constructor with insert-before-instruction semantics.

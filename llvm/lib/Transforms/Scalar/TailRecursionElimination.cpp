@@ -36,7 +36,7 @@
 //     evaluated each time through the tail recursion.  Safely keeping allocas
 //     in the entry block requires analysis to proves that the tail-called
 //     function does not read or write the stack object.
-//  2. Tail recursion is only performed if the call immediately preceeds the
+//  2. Tail recursion is only performed if the call immediately precedes the
 //     return instruction.  It's possible that there could be a jump between
 //     the call and the return.
 //  3. There can be intervening operations between the call and the return that
@@ -433,7 +433,7 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
     if (CanMoveAboveCall(BBI, CI)) continue;
     
     // If we can't move the instruction above the call, it might be because it
-    // is an associative and commutative operation that could be tranformed
+    // is an associative and commutative operation that could be transformed
     // using accumulator recursion elimination.  Check to see if this is the
     // case, and if so, remember the initial accumulator value for later.
     if ((AccumulatorRecursionEliminationInitVal =

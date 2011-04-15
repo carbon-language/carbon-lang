@@ -35,7 +35,7 @@ static int CompareOptionRecords(const void *Av, const void *Bv) {
   const Record *A = *(Record**) Av;
   const Record *B = *(Record**) Bv;
 
-  // Sentinel options preceed all others and are only ordered by precedence.
+  // Sentinel options precede all others and are only ordered by precedence.
   bool ASent = A->getValueAsDef("Kind")->getValueAsBit("Sentinel");
   bool BSent = B->getValueAsDef("Kind")->getValueAsBit("Sentinel");
   if (ASent != BSent)

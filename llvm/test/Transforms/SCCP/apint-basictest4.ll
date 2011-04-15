@@ -1,4 +1,4 @@
-; This is a basic sanity check for constant propogation.  It tests the basic 
+; This is a basic sanity check for constant propagation.  It tests the basic
 ; logic operations.
 
 

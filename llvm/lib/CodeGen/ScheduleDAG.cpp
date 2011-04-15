@@ -472,7 +472,7 @@ void ScheduleDAGTopologicalSort::InitDAGTopologicalSorting() {
 #endif
 }
 
-/// AddPred - Updates the topological ordering to accomodate an edge
+/// AddPred - Updates the topological ordering to accommodate an edge
 /// to be added from SUnit X to SUnit Y.
 void ScheduleDAGTopologicalSort::AddPred(SUnit *Y, SUnit *X) {
   int UpperBound, LowerBound;
@@ -490,7 +490,7 @@ void ScheduleDAGTopologicalSort::AddPred(SUnit *Y, SUnit *X) {
   }
 }
 
-/// RemovePred - Updates the topological ordering to accomodate an
+/// RemovePred - Updates the topological ordering to accommodate an
 /// an edge to be removed from the specified node N from the predecessors
 /// of the current node M.
 void ScheduleDAGTopologicalSort::RemovePred(SUnit *M, SUnit *N) {

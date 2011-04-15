@@ -60,11 +60,11 @@ Understood.  :)
 
 Yup, I think that this makes a lot of sense.  I am still intrigued,
 however, by the prospect of a minimally allocated VM representation... I
-think that it could have definate advantages for certain applications
+think that it could have definite advantages for certain applications
 (think very small machines, like PDAs).  I don't, however, think that our
 initial implementations should focus on this.  :)
 
-Here are some other auxilliary goals that I think we should consider:
+Here are some other auxiliary goals that I think we should consider:
 
 1. Primary goal: Support a high performance dynamic compilation
    system.  This means that we have an "ideal" division of labor between

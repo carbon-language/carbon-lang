@@ -53,7 +53,7 @@ static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print",
      cl::desc("Disable debug info printing"));
 
 static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
-     cl::desc("Make an absense of debug location information explicit."),
+     cl::desc("Make an absence of debug location information explicit."),
      cl::init(false));
 
 #ifndef NDEBUG
@@ -1422,7 +1422,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
 
       if (HI + 1 == HE)
         // If Begin is the last instruction in History then its value is valid
-        // until the end of the funtion.
+        // until the end of the function.
         SLabel = FunctionEndSym;
       else {
         const MachineInstr *End = HI[1];

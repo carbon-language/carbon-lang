@@ -1,7 +1,7 @@
 ; RUN: llc -O0 -asm-verbose < %s > %t
 ; RUN: grep "External Name" %t | grep -v X
 ; RUN: grep "External Name" %t | grep Y | count 1
-; Test to check type with no defintion is listed in pubtypes section.
+; Test to check type with no definition is listed in pubtypes section.
 %struct.X = type opaque
 %struct.Y = type { i32 }
 

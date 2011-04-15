@@ -794,7 +794,7 @@ my %hash_of_data = (
   'endtime' => $endtime,
   'target_triple' => $targetTriple,
 
-  # Unused, but left around for backwards compatability.
+  # Unused, but left around for backwards compatibility.
   'warnings' => "",
   'cvsusercommitlist' => "",
   'cvsuserupdatelist' => "",

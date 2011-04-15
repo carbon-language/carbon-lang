@@ -296,7 +296,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
   // It should be rewritten from scratch and generalized sometimes.
 
-  // Determine maximum offset (minumum due to stack growth).
+  // Determine maximum offset (minimum due to stack growth).
   int64_t MaxOffset = 0;
   for (std::vector<CalleeSavedInfo>::const_iterator
          I = CSI.begin(), E = CSI.end(); I != E; ++I)
@@ -785,7 +785,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     assert(Offset >= 0 && "Offset should never be negative");
 
     if (Offset) {
-      // Check for possible merge with preceeding ADD instruction.
+      // Check for possible merge with preceding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
       emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII, *RegInfo);
     }
@@ -829,7 +829,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     int delta = -1*X86FI->getTCReturnAddrDelta();
     MBBI = MBB.getLastNonDebugInstr();
 
-    // Check for possible merge with preceeding ADD instruction.
+    // Check for possible merge with preceding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
     emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, TII, *RegInfo);
   }

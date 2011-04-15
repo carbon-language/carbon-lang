@@ -13,7 +13,7 @@
 // Passes are designed this way so that it is possible to run passes in a cache
 // and organizationally optimal order without having to specify it at the front
 // end.  This allows arbitrary passes to be strung together and have them
-// executed as effeciently as possible.
+// executed as efficiently as possible.
 //
 // Passes should extend one of the classes below, depending on the guarantees
 // that it can make about what will be modified as it is run.  For example, most

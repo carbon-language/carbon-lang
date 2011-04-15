@@ -285,7 +285,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (ATUsed)
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
-  // Save the return address only if the function isnt a leaf one.
+  // Save the return address only if the function isn't a leaf one.
   // sw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
     ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,
@@ -360,7 +360,7 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
 
-  // Restore the return address only if the function isnt a leaf one.
+  // Restore the return address only if the function isn't a leaf one.
   // lw  $ra, stack_loc($sp)
   if (MFI->adjustsStack()) {
     ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,

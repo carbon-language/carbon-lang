@@ -6,7 +6,7 @@
 #
 # You can specify TARGETS=ppc (or i386) on the buildit command line to limit the
 # build to just one target. The default is for ppc and i386. The compiler
-# targetted at this host gets built anyway, but not installed unless it's listed
+# targeted at this host gets built anyway, but not installed unless it's listed
 # in TARGETS.
 
 # Include the set of standard Apple makefile definitions.

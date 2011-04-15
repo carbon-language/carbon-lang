@@ -277,7 +277,7 @@ void PEI::calculateAnticAvail(MachineFunction &Fn) {
   // Initialize data flow sets.
   clearAnticAvailSets();
 
-  // Calulate Antic{In,Out} and Avail{In,Out} iteratively on the MCFG.
+  // Calculate Antic{In,Out} and Avail{In,Out} iteratively on the MCFG.
   bool changed = true;
   unsigned iterations = 0;
   while (changed) {

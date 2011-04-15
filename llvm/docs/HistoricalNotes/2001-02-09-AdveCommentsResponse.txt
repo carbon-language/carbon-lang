@@ -18,7 +18,7 @@ suggested, as specified below:
 
 Very true.  We should discuss this more, but my reasoning is more of a
 consistency argument.  There are VERY few instructions that can have all
-of the types eliminated, and doing so when available unnecesarily makes
+of the types eliminated, and doing so when available unnecessarily makes
 the language more difficult to handle.  Especially when you see 'int
 %this' and 'bool %that' all over the place, I think it would be
 disorienting to see:
@@ -44,7 +44,7 @@ branches).
 
 No.  This was something I was debating for a while, and didn't really feel
 strongly about either way.  It is common to switch on other types in HLL's
-(for example signed int's are particually common), but in this case, all
+(for example signed int's are particularly common), but in this case, all
 that will be added is an additional 'cast' instruction.  I removed that
 from the spec.
 
@@ -160,7 +160,7 @@ that can be trivally translated into a conditional move...
 > I agree that we need a static data space.  Otherwise, emulating global
 > data gets unnecessarily complex.
 
-Definately.  Also a later item though.  :)
+Definitely.  Also a later item though.  :)
 
 > We once talked about adding a symbolic thread-id field to each
 > ..

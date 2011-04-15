@@ -42,7 +42,7 @@ Does using GCC's backend buy us anything?
 > optimization (step 16 in your list).  Do you have a breakdown of that?
 
 Not really.  The irritating part of GCC is that it mixes it all up and
-doesn't have a clean seperation of concerns.  A lot of the "back end
+doesn't have a clean separation of concerns.  A lot of the "back end
 optimization" happens right along with other data optimizations (ie, CSE
 of machine specific things).
 

@@ -786,7 +786,7 @@ void Cost::RateFormula(const Formula &F,
   }
 }
 
-/// Loose - Set this cost to a loosing value.
+/// Loose - Set this cost to a losing value.
 void Cost::Loose() {
   NumRegs = ~0u;
   AddRecCost = ~0u;
@@ -1824,7 +1824,7 @@ LSRInstance::OptimizeLoopTermCond() {
   }
 }
 
-/// reconcileNewOffset - Determine if the given use can accomodate a fixup
+/// reconcileNewOffset - Determine if the given use can accommodate a fixup
 /// at the given offset and other details. If so, update the use and
 /// return true.
 bool

@@ -259,7 +259,7 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// PathProfiler is a module pass which intruments path profiling instructions
+// PathProfiler is a module pass which instruments path profiling instructions
 // ---------------------------------------------------------------------------
 class PathProfiler : public ModulePass {
 private:

@@ -705,7 +705,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                                  offset
                                                 ));
 
-    // Shift the low similarily
+    // Shift the low similarly
     // TODO: add SPUISD::SHL_BYTES
     low = DAG.getNode(SPUISD::SHL_BYTES, dl, MVT::i128, low, offset );
 

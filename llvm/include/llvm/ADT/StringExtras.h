@@ -153,7 +153,7 @@ void SplitString(StringRef Source,
                  SmallVectorImpl<StringRef> &OutFragments,
                  StringRef Delimiters = " \t\n\v\f\r");
 
-/// HashString - Hash funtion for strings.
+/// HashString - Hash function for strings.
 ///
 /// This is the Bernstein hash function.
 //

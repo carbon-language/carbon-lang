@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// MBlaze instruction itineraries for the threee stage pipeline.
+// MBlaze instruction itineraries for the three stage pipeline.
 //===----------------------------------------------------------------------===//
 def MBlazePipe3Itineraries : ProcessorItineraries<
   [IF,ID,EX], [], [

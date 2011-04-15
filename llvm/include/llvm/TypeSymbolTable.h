@@ -133,7 +133,7 @@ private:
   /// is refined.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
 
-  /// This function markes a type as being concrete (defined).
+  /// This function marks a type as being concrete (defined).
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
 /// @}

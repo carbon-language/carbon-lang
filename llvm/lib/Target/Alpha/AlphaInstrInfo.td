@@ -1030,7 +1030,7 @@ def : Pat<(brcond (setune F8RC:$RA, immFPZ), bb:$DISP),
 //WMB Mfc 18.4400 Write memory barrier
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR
-//There are in the Multimedia extentions, so let's not use them yet
+//There are in the Multimedia extensions, so let's not use them yet
 //def MAXSB8  : OForm<0x1C, 0x3E, "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
 //def MAXSW4 : OForm< 0x1C, 0x3F, "MAXSW4 $RA,$RB,$RC">; //Vector signed word maximum
 //def MAXUB8  : OForm<0x1C, 0x3C, "MAXUB8 $RA,$RB,$RC">; //Vector unsigned byte maximum

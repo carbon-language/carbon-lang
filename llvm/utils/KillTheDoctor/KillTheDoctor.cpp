@@ -169,14 +169,14 @@ namespace {
 static error_code GetFileNameFromHandle(HANDLE FileHandle,
                                         std::string& Name) {
   char Filename[MAX_PATH+1];
-  bool Sucess = false;
+  bool Success = false;
   Name.clear();
 
   // Get the file size.
   LARGE_INTEGER FileSize;
-  Sucess = ::GetFileSizeEx(FileHandle, &FileSize);
+  Success = ::GetFileSizeEx(FileHandle, &FileSize);
 
-  if (!Sucess)
+  if (!Success)
     return windows_error(::GetLastError());
 
   // Create a file mapping object.
@@ -198,12 +198,12 @@ static error_code GetFileNameFromHandle(HANDLE FileHandle,
   if (!MappedFile)
     return windows_error(::GetLastError());
 
-  Sucess = ::GetMappedFileNameA(::GetCurrentProcess(),
+  Success = ::GetMappedFileNameA(::GetCurrentProcess(),
                                 MappedFile,
                                 Filename,
                                 array_lengthof(Filename) - 1);
 
-  if (!Sucess)
+  if (!Success)
     return windows_error(::GetLastError());
   else {
     Name = Filename;

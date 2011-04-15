@@ -6197,7 +6197,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
 
   // For a function returning void, there is no return value. We can't create
   // such a node, so we just return a null return value in that case. In
-  // that case, nothing will actualy look at the value.
+  // that case, nothing will actually look at the value.
   if (ReturnValues.empty())
     return std::make_pair(SDValue(), Chain);
 
@@ -6413,7 +6413,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
       SDB->setValue(I, Res);
 
       // If this argument is live outside of the entry block, insert a copy from
-      // whereever we got it to the vreg that other BB's will reference it as.
+      // wherever we got it to the vreg that other BB's will reference it as.
       SDB->CopyToExportRegsIfNeeded(I);
     }
   }

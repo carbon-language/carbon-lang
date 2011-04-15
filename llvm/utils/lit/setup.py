@@ -38,7 +38,7 @@ Features
 Documentation
 =============
 
-The offical *lit* documentation is in the man page, available online at the LLVM
+The official *lit* documentation is in the man page, available online at the LLVM
 Command Guide: http://llvm.org/cmds/lit.html.
 
 

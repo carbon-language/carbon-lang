@@ -20,7 +20,7 @@
 
 namespace llvm {
 //===----------------------------------------------------------------------===//
-/// @brief Hierachical RegionNode successor iterator.
+/// @brief Hierarchical RegionNode successor iterator.
 ///
 /// This iterator iterates over all successors of a RegionNode.
 ///

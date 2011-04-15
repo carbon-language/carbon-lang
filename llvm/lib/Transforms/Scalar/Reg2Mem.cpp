@@ -9,7 +9,7 @@
 //
 // This file demotes all registers to memory references.  It is intented to be
 // the inverse of PromoteMemoryToRegister.  By converting to loads, the only
-// values live accross basic blocks are allocas and loads before phi nodes.
+// values live across basic blocks are allocas and loads before phi nodes.
 // It is intended that this should make CFG hacking much easier.
 // To make later hacking easier, the entry block is split into two, such that
 // all introduced allocas and nothing else are in the entry block.

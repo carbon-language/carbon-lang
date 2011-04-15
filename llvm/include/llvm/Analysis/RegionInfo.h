@@ -146,7 +146,7 @@ inline Region* RegionNode::getNodeAs<Region>() const {
 /// two connections to the remaining graph. It can be used to analyze or
 /// optimize parts of the control flow graph.
 ///
-/// A <em> simple Region </em> is connected to the remaing graph by just two
+/// A <em> simple Region </em> is connected to the remaining graph by just two
 /// edges. One edge entering the Region and another one leaving the Region.
 ///
 /// An <em> extended Region </em> (or just Region) is a subgraph that can be
@@ -443,7 +443,7 @@ public:
 
   /// @brief Move all direct child nodes of this Region to another Region.
   ///
-  /// @param To The Region the child nodes will be transfered to.
+  /// @param To The Region the child nodes will be transferred to.
   void transferChildrenTo(Region *To);
 
   /// @brief Verify if the region is a correct region.

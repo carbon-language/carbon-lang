@@ -1328,7 +1328,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
         break;
       }
     }
-    // If we succesfully found a value for each of our subaggregates 
+    // If we successfully found a value for each of our subaggregates
     if (To)
       return To;
   }
@@ -1757,7 +1757,7 @@ llvm::GetUnderlyingObject(Value *V, const TargetData *TD, unsigned MaxLookup) {
     } else {
       // See if InstructionSimplify knows any relevant tricks.
       if (Instruction *I = dyn_cast<Instruction>(V))
-        // TODO: Aquire a DominatorTree and use it.
+        // TODO: Acquire a DominatorTree and use it.
         if (Value *Simplified = SimplifyInstruction(I, TD, 0)) {
           V = Simplified;
           continue;

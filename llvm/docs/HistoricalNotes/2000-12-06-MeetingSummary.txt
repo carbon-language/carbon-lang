@@ -40,7 +40,7 @@ IDEAS TO CONSIDER
    packaged with the bytecodes themselves.  As a conceptual implementation 
    idea, we could include an immediate dominator number for each basic block
    in the LLVM bytecode program.  Basic blocks could be numbered according
-   to the order of occurance in the bytecode representation.
+   to the order of occurrence in the bytecode representation.
 
 2. Including loop header and body information.  This would facilitate
    detection of intervals and natural loops.

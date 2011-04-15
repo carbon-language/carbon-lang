@@ -35,7 +35,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
   // This requires 4-byte alignment.
   if ((Align & 3) != 0)
     return SDValue();
-  // This requires the copy size to be a constant, preferrably
+  // This requires the copy size to be a constant, preferably
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
   if (!ConstantSize)

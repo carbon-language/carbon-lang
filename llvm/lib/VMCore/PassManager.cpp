@@ -982,7 +982,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
       // Keep track of higher level analysis used by this manager.
       HigherLevelAnalysis.push_back(PRequired);
     } else
-      llvm_unreachable("Unable to accomodate Required Pass");
+      llvm_unreachable("Unable to accommodate Required Pass");
   }
 
   // Set P as P's last user until someone starts using P.

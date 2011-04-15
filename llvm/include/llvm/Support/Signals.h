@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines some helpful functions for dealing with the possibility of
-// unix signals occuring while your program is running.
+// unix signals occurring while your program is running.
 //
 //===----------------------------------------------------------------------===//
 

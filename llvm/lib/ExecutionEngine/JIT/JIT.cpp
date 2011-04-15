@@ -666,7 +666,7 @@ void JIT::jitTheFunction(Function *F, const MutexGuard &locked) {
 }
 
 /// getPointerToFunction - This method is used to get the address of the
-/// specified function, compiling it if neccesary.
+/// specified function, compiling it if necessary.
 ///
 void *JIT::getPointerToFunction(Function *F) {
 

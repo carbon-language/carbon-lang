@@ -725,7 +725,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 // pressure of the register class's representative and all of it's super
 // classes' representatives transitively. We have not implemented this because
 // of the difficulty prior to coalescing of modeling operand register classes
-// due to the common occurence of cross class copies and subregister insertions
+// due to the common occurrence of cross class copies and subregister insertions
 // and extractions.
 std::pair<const TargetRegisterClass*, uint8_t>
 ARMTargetLowering::findRepresentativeClass(EVT VT) const{
@@ -1323,7 +1323,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // than necessary, because it means that each store effectively depends
     // on every argument instead of just those arguments it would clobber.
 
-    // Do not flag preceeding copytoreg stuff together with the following stuff.
+    // Do not flag preceding copytoreg stuff together with the following stuff.
     InFlag = SDValue();
     for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
       Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,

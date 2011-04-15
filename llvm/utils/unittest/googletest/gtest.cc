@@ -1415,7 +1415,7 @@ AssertionResult IsHRESULTFailure(const char* expr, long hr) {  // NOLINT
 // Utility functions for encoding Unicode text (wide strings) in
 // UTF-8.
 
-// A Unicode code-point can have upto 21 bits, and is encoded in UTF-8
+// A Unicode code-point can have up to 21 bits, and is encoded in UTF-8
 // like this:
 //
 // Code-point length   Encoding

@@ -501,7 +501,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     return InlineCost::getAlways();
     
   if (CalleeFI->Metrics.usesDynamicAlloca) {
-    // Get infomation about the caller.
+    // Get information about the caller.
     FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
 
     // If we haven't calculated this information yet, do so now.
@@ -549,7 +549,7 @@ InlineCost InlineCostAnalyzer::getSpecializationCost(Function *Callee,
 
   int Cost = 0;
   
-  // Look at the orginal size of the callee.  Each instruction counts as 5.
+  // Look at the original size of the callee.  Each instruction counts as 5.
   Cost += CalleeFI->Metrics.NumInsts * InlineConstants::InstrCost;
 
   // Offset that with the amount of code that can be constant-folded

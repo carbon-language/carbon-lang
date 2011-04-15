@@ -110,7 +110,7 @@ def SHL32rCL : Inst<(ops R32:$dst, R32:$src),
                   [(set R32:$dst, (shl R32:$src, CL))]>;
 
 // The RTL list is a list, allowing complex instructions to be defined easily.
-// Temporary 'internal' registers can be used to break instructions appart.
+// Temporary 'internal' registers can be used to break instructions apart.
 let isTwoAddress = 1 in
 def XOR32mi : Inst<(ops addr:$addr, imm32:$imm),
                    "xor $dst, $src2", 0x81, MRM6m,

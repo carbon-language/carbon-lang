@@ -602,7 +602,7 @@ void GlobalsModRef::addEscapingUse(Use &U) {
   // For the purposes of this analysis, it is conservatively correct to treat
   // a newly escaping value equivalently to a deleted one.  We could perhaps
   // be more precise by processing the new use and attempting to update our
-  // saved analysis results to accomodate it.
+  // saved analysis results to accommodate it.
   deleteValue(U);
   
   AliasAnalysis::addEscapingUse(U);

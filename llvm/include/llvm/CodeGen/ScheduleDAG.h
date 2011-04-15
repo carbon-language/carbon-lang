@@ -692,11 +692,11 @@ namespace llvm {
     /// will create a cycle.
     bool WillCreateCycle(SUnit *SU, SUnit *TargetSU);
 
-    /// AddPred - Updates the topological ordering to accomodate an edge
+    /// AddPred - Updates the topological ordering to accommodate an edge
     /// to be added from SUnit X to SUnit Y.
     void AddPred(SUnit *Y, SUnit *X);
 
-    /// RemovePred - Updates the topological ordering to accomodate an
+    /// RemovePred - Updates the topological ordering to accommodate an
     /// an edge to be removed from the specified node N from the predecessors
     /// of the current node M.
     void RemovePred(SUnit *M, SUnit *N);

@@ -232,7 +232,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     assert(!RegOp2MemOpTable2Addr.count(RegOp) && "Duplicated entries?");
     RegOp2MemOpTable2Addr[RegOp] = std::make_pair(MemOp, 0U);
 
-    // If this is not a reversable operation (because there is a many->one)
+    // If this is not a reversible operation (because there is a many->one)
     // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
     if (OpTbl2Addr[i][1] & TB_NOT_REVERSABLE)
       continue;
@@ -335,7 +335,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     assert(!RegOp2MemOpTable0.count(RegOp) && "Duplicated entries?");
     RegOp2MemOpTable0[RegOp] = std::make_pair(MemOp, Align);
 
-    // If this is not a reversable operation (because there is a many->one)
+    // If this is not a reversible operation (because there is a many->one)
     // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
     if (OpTbl0[i][1] & TB_NOT_REVERSABLE)
       continue;
@@ -460,7 +460,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     assert(!RegOp2MemOpTable1.count(RegOp) && "Duplicate entries");
     RegOp2MemOpTable1[RegOp] = std::make_pair(MemOp, Align);
 
-    // If this is not a reversable operation (because there is a many->one)
+    // If this is not a reversible operation (because there is a many->one)
     // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
     if (OpTbl1[i][1] & TB_NOT_REVERSABLE)
       continue;
@@ -682,7 +682,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     assert(!RegOp2MemOpTable2.count(RegOp) && "Duplicate entry!");
     RegOp2MemOpTable2[RegOp] = std::make_pair(MemOp, Align);
 
-    // If this is not a reversable operation (because there is a many->one)
+    // If this is not a reversible operation (because there is a many->one)
     // mapping, don't insert the reverse of the operation into MemOp2RegOpTable.
     if (OpTbl2[i][1] & TB_NOT_REVERSABLE)
       continue;

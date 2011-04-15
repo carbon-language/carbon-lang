@@ -131,7 +131,7 @@ unsigned StringRef::edit_distance(llvm::StringRef Other,
 
 /// find - Search for the first string \arg Str in the string.
 ///
-/// \return - The index of the first occurence of \arg Str, or npos if not
+/// \return - The index of the first occurrence of \arg Str, or npos if not
 /// found.
 size_t StringRef::find(StringRef Str, size_t From) const {
   size_t N = Str.size();
@@ -145,7 +145,7 @@ size_t StringRef::find(StringRef Str, size_t From) const {
 
 /// rfind - Search for the last string \arg Str in the string.
 ///
-/// \return - The index of the last occurence of \arg Str, or npos if not
+/// \return - The index of the last occurrence of \arg Str, or npos if not
 /// found.
 size_t StringRef::rfind(StringRef Str) const {
   size_t N = Str.size();

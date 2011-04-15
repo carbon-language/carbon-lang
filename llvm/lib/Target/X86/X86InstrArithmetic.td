@@ -163,7 +163,7 @@ def IMUL64rm : RI<0xAF, MRMSrcMem, (outs GR64:$dst),
 
 } // Defs = [EFLAGS]
 
-// Suprisingly enough, these are not two address instructions!
+// Surprisingly enough, these are not two address instructions!
 let Defs = [EFLAGS] in {
 // Register-Integer Signed Integer Multiply
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16

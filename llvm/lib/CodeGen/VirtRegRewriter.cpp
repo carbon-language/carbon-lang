@@ -32,7 +32,7 @@ STATISTIC(NumCommutes, "Number of instructions commuted");
 STATISTIC(NumDRM     , "Number of re-materializable defs elided");
 STATISTIC(NumStores  , "Number of stores added");
 STATISTIC(NumPSpills , "Number of physical register spills");
-STATISTIC(NumOmitted , "Number of reloads omited");
+STATISTIC(NumOmitted , "Number of reloads omitted");
 STATISTIC(NumAvoided , "Number of reloads deemed unnecessary");
 STATISTIC(NumCopified, "Number of available reloads turned into copies");
 STATISTIC(NumReMats  , "Number of re-materialization");
@@ -669,7 +669,7 @@ static void UpdateKills(MachineInstr &MI, const TargetRegisterInfo* TRI,
   }
 }
 
-/// ReMaterialize - Re-materialize definition for Reg targetting DestReg.
+/// ReMaterialize - Re-materialize definition for Reg targeting DestReg.
 ///
 static void ReMaterialize(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator &MII,

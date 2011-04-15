@@ -470,7 +470,7 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   // FIXME: It's more complicated than this...
   if (0 && requiresRealignment && MFI->hasVarSizedObjects())
     report_fatal_error(
-      "Stack realignment in presense of dynamic allocas is not supported");
+      "Stack realignment in presence of dynamic allocas is not supported");
 
   // If we've requested that we force align the stack do so now.
   if (ForceStackAlign)

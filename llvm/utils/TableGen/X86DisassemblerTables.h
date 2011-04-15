@@ -79,7 +79,7 @@ private:
   ///   regardless of ModR/M byte, two entries - one for bytes 0x00-0xbf and one
   ///   for bytes 0xc0-0xff -, or 256 entries, one for each possible byte.  
   ///   nnnn is the number of a table for looking up these values.  The tables
-  ///   are writen separately so that tables consisting entirely of zeros will
+  ///   are written separately so that tables consisting entirely of zeros will
   ///   not be duplicated.  (These all have the name modRMEmptyTable.)  A table
   ///   is printed as:
   ///   

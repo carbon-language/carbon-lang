@@ -115,7 +115,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", true, false)
 
-// Publically exposed interface to pass...
+// Publicly exposed interface to pass...
 char &llvm::LoopSimplifyID = LoopSimplify::ID;
 Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 

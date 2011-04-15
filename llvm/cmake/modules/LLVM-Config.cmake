@@ -135,7 +135,7 @@ function(explicit_map_components_to_libraries out_libs)
       string(TOUPPER "${c}" capitalized)
       list(FIND capitalized_libs LLVM${capitalized} lib_idx)
       if( lib_idx LESS 0 )
-	# The component is unkown. Maybe is an ommitted target?
+	# The component is unknown. Maybe is an omitted target?
 	is_llvm_target_library(${c} iltl_result)
 	if( NOT iltl_result )
 	  message(FATAL_ERROR "Library `${c}' not found in list of llvm libraries.")

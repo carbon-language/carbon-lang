@@ -1307,7 +1307,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // set up by FpSET_ST0, and our StackTop is off by one because of it.
     unsigned Op0 = getFPReg(MI->getOperand(0));
     // Restore the actual StackTop from before Fp_SET_ST0.
-    // Note we can't handle Fp_SET_ST1 without a preceeding Fp_SET_ST0, and we
+    // Note we can't handle Fp_SET_ST1 without a preceding Fp_SET_ST0, and we
     // are not enforcing the constraint.
     ++StackTop;
     unsigned RegOnTop = getStackEntry(0); // This reg must remain in st(0).
