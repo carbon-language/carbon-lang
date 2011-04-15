@@ -1618,16 +1618,26 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   // Set the "zero" bit in CPSR.
   switch (MI->getOpcode()) {
   default: break;
+  case ARM::RSBrr:
   case ARM::RSBri:
+  case ARM::RSCrr:
   case ARM::RSCri:
+  case ARM::ADDrr:
   case ARM::ADDri:
+  case ARM::ADCrr:
   case ARM::ADCri:
+  case ARM::SUBrr:
   case ARM::SUBri:
+  case ARM::SBCrr:
   case ARM::SBCri:
   case ARM::t2RSBri:
+  case ARM::t2ADDrr:
   case ARM::t2ADDri:
+  case ARM::t2ADCrr:
   case ARM::t2ADCri:
+  case ARM::t2SUBrr:
   case ARM::t2SUBri:
+  case ARM::t2SBCrr:
   case ARM::t2SBCri: {
     // Scan forward for the use of CPSR, if it's a conditional code requires
     // checking of V bit, then this is not safe to do. If we can't find the
@@ -1669,7 +1679,9 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 
     // fallthrough
   }
+  case ARM::ANDrr:
   case ARM::ANDri:
+  case ARM::t2ANDrr:
   case ARM::t2ANDri:
     // Toggle the optional operand to CPSR.
     MI->getOperand(5).setReg(ARM::CPSR);
