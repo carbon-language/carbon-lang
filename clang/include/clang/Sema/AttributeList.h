@@ -264,6 +264,10 @@ public:
   /// getNumArgs - Return the number of actual arguments to this attribute.
   unsigned getNumArgs() const { return NumArgs; }
 
+  /// hasParameterOrArguments - Return true if this attribute has a parameter,
+  /// or has a non empty argument expression list.
+  bool hasParameterOrArguments() const { return ParmName || NumArgs; }
+
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
