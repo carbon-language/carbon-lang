@@ -841,6 +841,12 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   // becomes every element of the vector, not just the first.
   // This is the behavior described in the IBM AltiVec documentation.
   if (NumInits == 1) {
+    
+    // Handle the case where the vector is initialized by a another 
+    // vector (OpenCL 6.1.6).
+    if (E->getInit(0)->getType()->isVectorType())
+      return this->Visit(const_cast<Expr*>(E->getInit(0)));
+    
     APValue InitValue;
     if (EltTy->isIntegerType()) {
       llvm::APSInt sInt(32);
