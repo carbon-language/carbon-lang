@@ -1642,7 +1642,15 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
   case ARM::ANDrr:
   case ARM::ANDri:
   case ARM::t2ANDrr:
-  case ARM::t2ANDri: {
+  case ARM::t2ANDri:
+  case ARM::ORRrr:
+  case ARM::ORRri:
+  case ARM::t2ORRrr:
+  case ARM::t2ORRri:
+  case ARM::EORrr:
+  case ARM::EORri:
+  case ARM::t2EORrr:
+  case ARM::t2EORri: {
     // Scan forward for the use of CPSR, if it's a conditional code requires
     // checking of V bit, then this is not safe to do. If we can't find the
     // CPSR use (i.e. used in another block), then it's not safe to perform
