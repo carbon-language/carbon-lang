@@ -128,7 +128,8 @@ TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   return Inst;
 }
 
-Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
+Decl *TemplateDeclInstantiator::VisitTypedefNameDecl(TypedefNameDecl *D,
+                                                     bool IsTypeAlias) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI->getType()->isDependentType() ||
@@ -144,9 +145,13 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   }
 
   // Create the new typedef
-  TypedefDecl *Typedef
-    = TypedefDecl::Create(SemaRef.Context, Owner, D->getLocStart(),
-                          D->getLocation(), D->getIdentifier(), DI);
+  TypedefNameDecl *Typedef;
+  if (IsTypeAlias)
+    Typedef = TypeAliasDecl::Create(SemaRef.Context, Owner, D->getLocStart(),
+                                    D->getLocation(), D->getIdentifier(), DI);
+  else
+    Typedef = TypedefDecl::Create(SemaRef.Context, Owner, D->getLocStart(),
+                                  D->getLocation(), D->getIdentifier(), DI);
   if (Invalid)
     Typedef->setInvalidDecl();
 
@@ -154,20 +159,20 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   // tag decl, re-establish that relationship for the new typedef.
   if (const TagType *oldTagType = D->getUnderlyingType()->getAs<TagType>()) {
     TagDecl *oldTag = oldTagType->getDecl();
-    if (oldTag->getTypedefForAnonDecl() == D) {
+    if (oldTag->getTypedefNameForAnonDecl() == D) {
       TagDecl *newTag = DI->getType()->castAs<TagType>()->getDecl();
-      assert(!newTag->getIdentifier() && !newTag->getTypedefForAnonDecl());
-      newTag->setTypedefForAnonDecl(Typedef);
+      assert(!newTag->getIdentifier() && !newTag->getTypedefNameForAnonDecl());
+      newTag->setTypedefNameForAnonDecl(Typedef);
     }
   }
   
-  if (TypedefDecl *Prev = D->getPreviousDeclaration()) {
+  if (TypedefNameDecl *Prev = D->getPreviousDeclaration()) {
     NamedDecl *InstPrev = SemaRef.FindInstantiatedDecl(D->getLocation(), Prev,
                                                        TemplateArgs);
     if (!InstPrev)
       return 0;
     
-    Typedef->setPreviousDeclaration(cast<TypedefDecl>(InstPrev));
+    Typedef->setPreviousDeclaration(cast<TypedefNameDecl>(InstPrev));
   }
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Typedef);
@@ -176,6 +181,14 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   Owner->addDecl(Typedef);
 
   return Typedef;
+}
+
+Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
+  return VisitTypedefNameDecl(D, /*IsTypeAlias=*/false);
+}
+
+Decl *TemplateDeclInstantiator::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  return VisitTypedefNameDecl(D, /*IsTypeAlias=*/true);
 }
 
 /// \brief Instantiate an initializer, breaking it into separate

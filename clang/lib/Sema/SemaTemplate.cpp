@@ -2978,7 +2978,7 @@ bool UnnamedLocalNoLinkageFinder::VisitTagDecl(const TagDecl *Tag) {
     return true;
   }
 
-  if (!Tag->getDeclName() && !Tag->getTypedefForAnonDecl()) {
+  if (!Tag->getDeclName() && !Tag->getTypedefNameForAnonDecl()) {
     S.Diag(SR.getBegin(), diag::ext_template_arg_unnamed_type) << SR;
     S.Diag(Tag->getLocation(), diag::note_template_unnamed_type_here);
     return true;
@@ -4374,7 +4374,7 @@ static NamedDecl *getPreviousDecl(NamedDecl *ND) {
     return FD->getPreviousDeclaration();
   if (TagDecl *TD = dyn_cast<TagDecl>(ND))
     return TD->getPreviousDeclaration();
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(ND))
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(ND))
     return TD->getPreviousDeclaration();
   if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
     return FTD->getPreviousDeclaration();

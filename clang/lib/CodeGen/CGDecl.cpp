@@ -91,8 +91,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     return EmitVarDecl(VD);
   }
 
-  case Decl::Typedef: {   // typedef int X;
-    const TypedefDecl &TD = cast<TypedefDecl>(D);
+  case Decl::Typedef:      // typedef int X;
+  case Decl::TypeAlias: {  // using X = int; [C++0x]
+    const TypedefNameDecl &TD = cast<TypedefNameDecl>(D);
     QualType Ty = TD.getUnderlyingType();
 
     if (Ty->isVariablyModifiedType())

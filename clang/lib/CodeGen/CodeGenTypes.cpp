@@ -387,7 +387,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         OS << TD->getQualifiedNameAsString();
       else
         TD->printName(OS);
-    } else if (const TypedefDecl *TDD = TD->getTypedefForAnonDecl()) {
+    } else if (const TypedefNameDecl *TDD = TD->getTypedefNameForAnonDecl()) {
       // FIXME: We should not have to check for a null decl context here.
       // Right now we do it because the implicit Obj-C decls don't have one.
       if (TDD->getDeclContext())

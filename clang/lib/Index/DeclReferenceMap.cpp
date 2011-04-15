@@ -55,7 +55,7 @@ void RefMapper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
 }
 
 void RefMapper::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
-  NamedDecl *ND = TL.getTypedefDecl();
+  NamedDecl *ND = TL.getTypedefNameDecl();
   Map.insert(std::make_pair(ND, ASTLocation(CurrentDecl, ND, TL.getNameLoc())));
 }
 

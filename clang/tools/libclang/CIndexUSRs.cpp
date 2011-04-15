@@ -431,7 +431,7 @@ void USRGenerator::VisitTagDecl(TagDecl *D) {
   const unsigned off = Buf.size() - 1;
 
   if (EmitDeclName(D)) {
-    if (const TypedefDecl *TD = D->getTypedefForAnonDecl()) {
+    if (const TypedefNameDecl *TD = D->getTypedefNameForAnonDecl()) {
       Buf[off] = 'A';
       Out << '@' << TD;
     }

@@ -55,7 +55,7 @@ static const FunctionType *getFunctionType(const Decl *d,
     Ty = decl->getType();
   else if (const FieldDecl *decl = dyn_cast<FieldDecl>(d))
     Ty = decl->getType();
-  else if (const TypedefDecl* decl = dyn_cast<TypedefDecl>(d))
+  else if (const TypedefNameDecl* decl = dyn_cast<TypedefNameDecl>(d))
     Ty = decl->getUnderlyingType();
   else
     return 0;
@@ -101,8 +101,8 @@ static bool isFunctionOrMethodOrBlock(const Decl *d) {
 /// Return true if the given decl has a declarator that should have
 /// been processed by Sema::GetTypeForDeclarator.
 static bool hasDeclarator(const Decl *d) {
-  // In some sense, TypedefDecl really *ought* to be a DeclaratorDecl.
-  return isa<DeclaratorDecl>(d) || isa<BlockDecl>(d) || isa<TypedefDecl>(d);
+  // In some sense, TypedefNameDecl really *ought* to be a DeclaratorDecl.
+  return isa<DeclaratorDecl>(d) || isa<BlockDecl>(d) || isa<TypedefNameDecl>(d);
 }
 
 /// hasFunctionProto - Return true if the given decl has a argument
@@ -202,7 +202,7 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
 
 static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
                                     const AttributeList &Attr, Sema &S) {
-  TypedefDecl *tDecl = dyn_cast<TypedefDecl>(d);
+  TypedefNameDecl *tDecl = dyn_cast<TypedefNameDecl>(d);
   if (tDecl == 0) {
     S.Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
     return;
@@ -1229,7 +1229,7 @@ static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     QualType T = TD->getUnderlyingType();
     if (!T->isPointerType() ||
         !T->getAs<PointerType>()->getPointeeType()->isRecordType()) {
@@ -1912,7 +1912,7 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
 
   // Try to find the underlying union declaration.
   RecordDecl *RD = 0;
-  TypedefDecl *TD = dyn_cast<TypedefDecl>(d);
+  TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(d);
   if (TD && TD->getUnderlyingType()->isUnionType())
     RD = TD->getUnderlyingType()->getAsUnionType()->getDecl();
   else
@@ -2103,7 +2103,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   QualType OldTy;
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
     OldTy = TD->getUnderlyingType();
   else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     OldTy = VD->getType();
@@ -2202,7 +2202,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   // Install the new type.
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     // FIXME: preserve existing source info.
     TD->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(NewTy));
   } else

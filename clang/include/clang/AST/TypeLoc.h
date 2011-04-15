@@ -527,7 +527,7 @@ class TypedefTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                         TypedefTypeLoc,
                                                         TypedefType> {
 public:
-  TypedefDecl *getTypedefDecl() const {
+  TypedefNameDecl *getTypedefNameDecl() const {
     return getTypePtr()->getDecl();
   }
 };

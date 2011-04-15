@@ -98,7 +98,7 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
     if (VD->getInit())
       return true;
   }
-  else if (TypedefDecl* TD = dyn_cast<TypedefDecl>(D)) {
+  else if (TypedefNameDecl* TD = dyn_cast<TypedefNameDecl>(D)) {
     if (const VariableArrayType* VAPtr =
         FindVA(TD->getUnderlyingType().getTypePtr())) {
       setVAPtr(VAPtr);

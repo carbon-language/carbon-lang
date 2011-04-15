@@ -1837,7 +1837,7 @@ static const char *GetCompletionTypeString(QualType T,
     // Anonymous tag types are constant strings.
     if (const TagType *TagT = dyn_cast<TagType>(T))
       if (TagDecl *Tag = TagT->getDecl())
-        if (!Tag->getIdentifier() && !Tag->getTypedefForAnonDecl()) {
+        if (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl()) {
           switch (Tag->getTagKind()) {
           case TTK_Struct: return "struct <anonymous>";
           case TTK_Class:  return "class <anonymous>";            
@@ -1940,7 +1940,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
       // Look through typedefs.
       if (TypedefTypeLoc *TypedefTL = dyn_cast<TypedefTypeLoc>(&TL)) {
         if (TypeSourceInfo *InnerTSInfo
-            = TypedefTL->getTypedefDecl()->getTypeSourceInfo()) {
+            = TypedefTL->getTypedefNameDecl()->getTypeSourceInfo()) {
           TL = InnerTSInfo->getTypeLoc().getUnqualifiedLoc();
           continue;
         }
@@ -2640,6 +2640,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
     case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
+    case Decl::TypeAlias:          return CXCursor_TypeAliasDecl;
     case Decl::Var:                return CXCursor_VarDecl;
     case Decl::Namespace:          return CXCursor_Namespace;
     case Decl::NamespaceAlias:     return CXCursor_NamespaceAlias;

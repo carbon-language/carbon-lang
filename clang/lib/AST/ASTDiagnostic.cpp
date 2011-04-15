@@ -100,7 +100,7 @@ break; \
     // Don't desugar through the primary typedef of an anonymous type.
     if (const TagType *UTT = Underlying->getAs<TagType>())
       if (const TypedefType *QTT = dyn_cast<TypedefType>(QT))
-        if (UTT->getDecl()->getTypedefForAnonDecl() == QTT->getDecl())
+        if (UTT->getDecl()->getTypedefNameForAnonDecl() == QTT->getDecl())
           break;
 
     // Record that we actually looked through an opaque type here.

@@ -907,7 +907,7 @@ ASTContext::getTypeInfo(const Type *T) const {
     return getTypeInfo(cast<ParenType>(T)->getInnerType().getTypePtr());
 
   case Type::Typedef: {
-    const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
+    const TypedefNameDecl *Typedef = cast<TypedefType>(T)->getDecl();
     std::pair<uint64_t, unsigned> Info
       = getTypeInfo(Typedef->getUnderlyingType().getTypePtr());
     // If the typedef has an aligned attribute on it, it overrides any computed
@@ -2032,7 +2032,7 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) const {
   assert(Decl && "Passed null for Decl param");
   assert(!Decl->TypeForDecl && "TypeForDecl present in slow case");
 
-  if (const TypedefDecl *Typedef = dyn_cast<TypedefDecl>(Decl))
+  if (const TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Decl))
     return getTypedefType(Typedef);
 
   assert(!isa<TemplateTypeParmDecl>(Decl) &&
@@ -2059,9 +2059,10 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) const {
 }
 
 /// getTypedefType - Return the unique reference to the type for the
-/// specified typename decl.
+/// specified typedef name decl.
 QualType
-ASTContext::getTypedefType(const TypedefDecl *Decl, QualType Canonical) const {
+ASTContext::getTypedefType(const TypedefNameDecl *Decl,
+                           QualType Canonical) const {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
   if (Canonical.isNull())
@@ -4577,7 +4578,7 @@ CanQualType ASTContext::getFromTargetType(unsigned Type) const {
 ///
 bool ASTContext::isObjCNSObjectType(QualType Ty) const {
   if (const TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
-    if (TypedefDecl *TD = TDT->getDecl())
+    if (TypedefNameDecl *TD = TDT->getDecl())
       if (TD->getAttr<ObjCNSObjectAttr>())
         return true;
   }

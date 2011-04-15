@@ -53,6 +53,7 @@ namespace clang {
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
+    void VisitTypeAliasDecl(TypeAliasDecl *D);
     void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
     void VisitTagDecl(TagDecl *D);
     void VisitEnumDecl(EnumDecl *D);
@@ -167,6 +168,12 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   Code = serialization::DECL_TYPEDEF;
 }
 
+void ASTDeclWriter::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  VisitTypeDecl(D);
+  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
+  Code = serialization::DECL_TYPEALIAS;
+}
+
 void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
   VisitRedeclarable(D);
@@ -179,7 +186,7 @@ void ASTDeclWriter::VisitTagDecl(TagDecl *D) {
   if (D->hasExtInfo())
     Writer.AddQualifierInfo(*D->getExtInfo(), Record);
   else
-    Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
+    Writer.AddDeclRef(D->getTypedefNameForAnonDecl(), Record);
 }
 
 void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {

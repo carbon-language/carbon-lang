@@ -4953,7 +4953,7 @@ void RewriteObjC::RewriteBlockPointerDecl(NamedDecl *ND) {
   QualType DeclT;
   if (VarDecl *VD = dyn_cast<VarDecl>(ND))
     DeclT = VD->getType();
-  else if (TypedefDecl *TDD = dyn_cast<TypedefDecl>(ND))
+  else if (TypedefNameDecl *TDD = dyn_cast<TypedefNameDecl>(ND))
     DeclT = TDD->getUnderlyingType();
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(ND))
     DeclT = FD->getType();
@@ -5736,7 +5736,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
             RewriteTypeOfDecl(VD);
         }
       }
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+      if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
         if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
           RewriteBlockPointerDecl(TD);
         else if (TD->getUnderlyingType()->isFunctionPointerType())
@@ -5906,7 +5906,7 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
     }
     return;
   }
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
       RewriteBlockPointerDecl(TD);
     else if (TD->getUnderlyingType()->isFunctionPointerType())

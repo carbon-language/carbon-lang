@@ -2964,9 +2964,9 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (const EnumType *SourceEnum = Source->getAs<EnumType>())
     if (const EnumType *TargetEnum = Target->getAs<EnumType>())
       if ((SourceEnum->getDecl()->getIdentifier() || 
-           SourceEnum->getDecl()->getTypedefForAnonDecl()) &&
+           SourceEnum->getDecl()->getTypedefNameForAnonDecl()) &&
           (TargetEnum->getDecl()->getIdentifier() ||
-           TargetEnum->getDecl()->getTypedefForAnonDecl()) &&
+           TargetEnum->getDecl()->getTypedefNameForAnonDecl()) &&
           SourceEnum != TargetEnum) {
         if (isFromSystemMacro(S, CC))
           return;

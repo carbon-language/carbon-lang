@@ -946,12 +946,12 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   return New;
 }
 
-/// MergeTypeDefDecl - We just parsed a typedef 'New' which has the
+/// MergeTypedefNameDecl - We just parsed a typedef 'New' which has the
 /// same name and scope as a previous declaration 'Old'.  Figure out
 /// how to resolve this situation, merging decls or emitting
 /// diagnostics as appropriate. If there was an error, set New to be invalid.
 ///
-void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
+void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   // If the new decl is known invalid already, don't bother doing any
   // merging checks.
   if (New->isInvalidDecl()) return;
@@ -1011,7 +1011,7 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
 
   // Determine the "old" type we'll use for checking and diagnostics.
   QualType OldType;
-  if (TypedefDecl *OldTypedef = dyn_cast<TypedefDecl>(Old))
+  if (TypedefNameDecl *OldTypedef = dyn_cast<TypedefNameDecl>(Old))
     OldType = OldTypedef->getUnderlyingType();
   else
     OldType = Context.getTypeDeclType(Old);
@@ -1022,8 +1022,11 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
   if (OldType != New->getUnderlyingType() &&
       Context.getCanonicalType(OldType) !=
       Context.getCanonicalType(New->getUnderlyingType())) {
+    int Kind = 0;
+    if (isa<TypeAliasDecl>(Old))
+      Kind = 1;
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
-      << New->getUnderlyingType() << OldType;
+      << Kind << New->getUnderlyingType() << OldType;
     if (Old->getLocation().isValid())
       Diag(Old->getLocation(), diag::note_previous_definition);
     return New->setInvalidDecl();
@@ -1033,8 +1036,8 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
   // declaration was a typedef.
   // FIXME: this is a potential source of wierdness if the type
   // spellings don't match exactly.
-  if (isa<TypedefDecl>(Old))
-    New->setPreviousDeclaration(cast<TypedefDecl>(Old));
+  if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old))
+    New->setPreviousDeclaration(Typedef);
 
   if (getLangOptions().Microsoft)
     return;
@@ -1068,7 +1071,7 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, LookupResult &OldDecls) {
     //   };
     //
     // since that was the intent of DR56.
-    if (!isa<TypedefDecl >(Old))
+    if (!isa<TypedefNameDecl>(Old))
       return;
 
     Diag(New->getLocation(), diag::err_redefinition)
@@ -2553,6 +2556,26 @@ Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
   return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
 }
 
+/// DiagnoseClassNameShadow - Implement C++ [class.mem]p13:
+///   If T is the name of a class, then each of the following shall have a 
+///   name different from T:
+///     - every static data member of class T;
+///     - every member function of class T
+///     - every member of class T that is itself a type;
+/// \returns true if the declaration name violates these rules.
+bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
+                                   DeclarationNameInfo NameInfo) {
+  DeclarationName Name = NameInfo.getName();
+
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) 
+    if (Record->getIdentifier() && Record->getDeclName() == Name) {
+      Diag(NameInfo.getLoc(), diag::err_member_name_of_class) << Name;
+      return true;
+    }
+
+  return false;
+}
+  
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParamLists,
                              bool IsFunctionDefinition) {
@@ -2640,23 +2663,12 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         D.setInvalidType();
     }
   }
-  
-  // C++ [class.mem]p13:
-  //   If T is the name of a class, then each of the following shall have a 
-  //   name different from T:
-  //     - every static data member of class T;
-  //     - every member function of class T
-  //     - every member of class T that is itself a type;
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC)) 
-    if (Record->getIdentifier() && Record->getDeclName() == Name) {
-      Diag(D.getIdentifierLoc(), diag::err_member_name_of_class)
-        << Name;
-      
-      // If this is a typedef, we'll end up spewing multiple diagnostics.
-      // Just return early; it's safer.
-      if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
-        return 0;
-    }
+
+  if (DiagnoseClassNameShadow(DC, NameInfo))
+    // If this is a typedef, we'll end up spewing multiple diagnostics.
+    // Just return early; it's safer.
+    if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+      return 0;
   
   NamedDecl *New;
 
@@ -2951,6 +2963,15 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewTD, D);
 
+  return ActOnTypedefNameDecl(S, DC, NewTD, Previous, Redeclaration);
+}
+
+/// ActOnTypedefNameDecl - Perform semantic checking for a declaration which
+/// declares a typedef-name, either using the 'typedef' type specifier or via
+/// a C++0x [dcl.typedef]p2 alias-declaration: 'using T = A;'.
+NamedDecl*
+Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
+                           LookupResult &Previous, bool &Redeclaration) {
   // C99 6.7.7p2: If a typedef name specifies a variably modified type
   // then it shall have block scope.
   // Note that variably modified types must be fixed before merging the decl so
@@ -2966,18 +2987,17 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative,
                                               Oversized);
       if (!FixedTy.isNull()) {
-        Diag(D.getIdentifierLoc(), diag::warn_illegal_constant_array_size);
+        Diag(NewTD->getLocation(), diag::warn_illegal_constant_array_size);
         NewTD->setTypeSourceInfo(Context.getTrivialTypeSourceInfo(FixedTy));
       } else {
         if (SizeIsNegative)
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_negative_array_size);
+          Diag(NewTD->getLocation(), diag::err_typecheck_negative_array_size);
         else if (T->isVariableArrayType())
-          Diag(D.getIdentifierLoc(), diag::err_vla_decl_in_file_scope);
+          Diag(NewTD->getLocation(), diag::err_vla_decl_in_file_scope);
         else if (Oversized.getBoolValue())
-          Diag(D.getIdentifierLoc(), diag::err_array_too_large)
-            << Oversized.toString(10);
+          Diag(NewTD->getLocation(), diag::err_array_too_large) << Oversized.toString(10);
         else
-          Diag(D.getIdentifierLoc(), diag::err_vm_decl_in_file_scope);
+          Diag(NewTD->getLocation(), diag::err_vm_decl_in_file_scope);
         NewTD->setInvalidDecl();
       }
     }
@@ -2989,7 +3009,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                        /*ExplicitInstantiationOrSpecialization=*/false);
   if (!Previous.empty()) {
     Redeclaration = true;
-    MergeTypeDefDecl(NewTD, Previous);
+    MergeTypedefNameDecl(NewTD, Previous);
   }
 
   // If this is the C FILE type, notify the AST context.
@@ -4061,8 +4081,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // In C++, the empty parameter-type-list must be spelled "void"; a
       // typedef of void is not permitted.
       if (getLangOptions().CPlusPlus &&
-          Param->getType().getUnqualifiedType() != Context.VoidTy)
-        Diag(Param->getLocation(), diag::err_param_typedef_of_void);
+          Param->getType().getUnqualifiedType() != Context.VoidTy) {
+        bool IsTypeAlias = false;
+        if (const TypedefType *TT = Param->getType()->getAs<TypedefType>())
+          IsTypeAlias = isa<TypeAliasDecl>(TT->getDecl());
+        Diag(Param->getLocation(), diag::err_param_typedef_of_void)
+          << IsTypeAlias;
+      }
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
       for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
         ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
@@ -6117,7 +6142,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
     // Do nothing if the tag is not anonymous or already has an
     // associated typedef (from an earlier typedef in this decl group).
     if (tagFromDeclSpec->getIdentifier()) break;
-    if (tagFromDeclSpec->getTypedefForAnonDecl()) break;
+    if (tagFromDeclSpec->getTypedefNameForAnonDecl()) break;
 
     // A well-formed anonymous tag must always be a TUK_Definition.
     assert(tagFromDeclSpec->isThisDeclarationADefinition());
@@ -6127,7 +6152,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
       break;
 
     // Otherwise, set this is the anon-decl typedef for the tag.
-    tagFromDeclSpec->setTypedefForAnonDecl(NewTD);
+    tagFromDeclSpec->setTypedefNameForAnonDecl(NewTD);
     break;
   }
     
@@ -6468,7 +6493,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // okay according to the likely resolution of an open issue;
     // see http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#407
     if (getLangOptions().CPlusPlus) {
-      if (TypedefDecl *TD = dyn_cast<TypedefDecl>(PrevDecl)) {
+      if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(PrevDecl)) {
         if (const TagType *TT = TD->getUnderlyingType()->getAs<TagType>()) {
           TagDecl *Tag = TT->getDecl();
           if (Tag->getDeclName() == Name &&
@@ -6626,7 +6651,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           !Previous.isForRedeclaration()) {
         unsigned Kind = 0;
         if (isa<TypedefDecl>(PrevDecl)) Kind = 1;
-        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 2;
+        else if (isa<TypeAliasDecl>(PrevDecl)) Kind = 2;
+        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 3;
         Diag(NameLoc, diag::err_tag_reference_non_tag) << Kind;
         Diag(PrevDecl->getLocation(), diag::note_declared_at);
         Invalid = true;
@@ -6640,17 +6666,19 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       } else if (TUK == TUK_Reference || TUK == TUK_Friend) {
         unsigned Kind = 0;
         if (isa<TypedefDecl>(PrevDecl)) Kind = 1;
-        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 2;
+        else if (isa<TypeAliasDecl>(PrevDecl)) Kind = 2;
+        else if (isa<ClassTemplateDecl>(PrevDecl)) Kind = 3;
         Diag(NameLoc, diag::err_tag_reference_conflict) << Kind;
         Diag(PrevDecl->getLocation(), diag::note_previous_decl) << PrevDecl;
         Invalid = true;
 
       // Otherwise it's a declaration.  Call out a particularly common
       // case here.
-      } else if (isa<TypedefDecl>(PrevDecl)) {
+      } else if (TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(PrevDecl)) {
+        unsigned Kind = 0;
+        if (isa<TypeAliasDecl>(PrevDecl)) Kind = 1;
         Diag(NameLoc, diag::err_tag_definition_of_typedef)
-          << Name
-          << cast<TypedefDecl>(PrevDecl)->getUnderlyingType();
+          << Name << Kind << TND->getUnderlyingType();
         Diag(PrevDecl->getLocation(), diag::note_previous_decl) << PrevDecl;
         Invalid = true;
 

@@ -427,6 +427,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
       return IDNS_Ordinary | IDNS_Type;
 
     case Typedef:
+    case TypeAlias:
     case UnresolvedUsingTypename:
     case TemplateTypeParm:
       return IDNS_Ordinary | IDNS_Type;

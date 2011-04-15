@@ -272,6 +272,7 @@ public:
   bool VisitChildren(CXCursor Parent);
 
   // Declaration visitors
+  bool VisitTypeAliasDecl(TypeAliasDecl *D);
   bool VisitAttributes(Decl *D);
   bool VisitBlockDecl(BlockDecl *B);
   bool VisitCXXRecordDecl(CXXRecordDecl *D);
@@ -639,6 +640,13 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
 
 bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   llvm_unreachable("Translation units are visited directly by Visit()");
+  return false;
+}
+
+bool CursorVisitor::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  if (TypeSourceInfo *TSInfo = D->getTypeSourceInfo())
+    return Visit(TSInfo->getTypeLoc());
+
   return false;
 }
 
@@ -1430,7 +1438,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
-  return Visit(MakeCursorTypeRef(TL.getTypedefDecl(), TL.getNameLoc(), TU));
+  return Visit(MakeCursorTypeRef(TL.getTypedefNameDecl(), TL.getNameLoc(), TU));
 }
 
 bool CursorVisitor::VisitUnresolvedUsingTypeLoc(UnresolvedUsingTypeLoc TL) {
@@ -3337,6 +3345,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("UsingDirective");
   case CXCursor_UsingDeclaration:
     return createCXString("UsingDeclaration");
+  case CXCursor_TypeAliasDecl:
+      return createCXString("TypeAliasDecl");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
@@ -3877,6 +3887,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   // declaration and definition.
   case Decl::Namespace:
   case Decl::Typedef:
+  case Decl::TypeAlias:
   case Decl::TemplateTypeParm:
   case Decl::EnumConstant:
   case Decl::Field:

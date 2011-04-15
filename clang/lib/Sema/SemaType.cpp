@@ -1600,9 +1600,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::TemplateTypeArgContext:
       Error = 7; // Template type argument
       break;
+    case Declarator::AliasDeclContext:
+      Error = 9; // Type alias
+      break;
     case Declarator::TypeNameContext:
       if (!AutoAllowedInTypeName)
-        Error = 10; // Generic
+        Error = 11; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
@@ -1616,7 +1619,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
     // In Objective-C it is an error to use 'auto' on a function declarator.
     if (D.isFunctionDeclarator())
-      Error = 9;
+      Error = 10;
 
     // C++0x [dcl.spec.auto]p2: 'auto' is always fine if the declarator
     // contains a trailing return type. That is only legal at the outermost
@@ -1652,6 +1655,11 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   DeclarationName Name;
   if (D.getIdentifier())
     Name = D.getIdentifier();
+
+  // Does this declaration declare a typedef-name?
+  bool IsTypedefName =
+    D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef ||
+    D.getContext() == Declarator::AliasDeclContext;
 
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
@@ -1829,9 +1837,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
       // Exception specs are not allowed in typedefs. Complain, but add it
       // anyway.
-      if (FTI.getExceptionSpecType() != EST_None &&
-          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
-        Diag(FTI.getExceptionSpecLoc(), diag::err_exception_spec_in_typedef);
+      if (IsTypedefName && FTI.getExceptionSpecType())
+        Diag(FTI.getExceptionSpecLoc(), diag::err_exception_spec_in_typedef)
+          << (D.getContext() == Declarator::AliasDeclContext);
 
       if (!FTI.NumArgs && !FTI.isVariadic && !getLangOptions().CPlusPlus) {
         // Simple void foo(), where the incoming T is the result type.
@@ -2057,8 +2065,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     //   declaration.
     if ((FnTy->getTypeQuals() != 0 || FnTy->getRefQualifier()) &&
         !(D.getContext() == Declarator::TemplateTypeArgContext &&
-          !D.isFunctionDeclarator()) &&
-        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_typedef &&
+          !D.isFunctionDeclarator()) && !IsTypedefName &&
         (FreeFunction ||
          D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)) {
       if (D.getContext() == Declarator::TemplateTypeArgContext) {
@@ -2196,6 +2203,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::KNRTypeListContext:
     case Declarator::ObjCPrototypeContext: // FIXME: special diagnostic here?
     case Declarator::TypeNameContext:
+    case Declarator::AliasDeclContext:
     case Declarator::MemberContext:
     case Declarator::BlockContext:
     case Declarator::ForContext:
@@ -2635,7 +2643,8 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
     //   A type-specifier-seq shall not define a class or enumeration
     //   unless it appears in the type-id of an alias-declaration
     //   (7.1.3).
-    if (OwnedTag && OwnedTag->isDefinition())
+    if (OwnedTag && OwnedTag->isDefinition() &&
+        D.getContext() != Declarator::AliasDeclContext)
       Diag(OwnedTag->getLocation(), diag::err_type_defined_in_type_specifier)
         << Context.getTypeDeclType(OwnedTag);
   }

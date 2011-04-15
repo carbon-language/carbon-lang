@@ -335,8 +335,9 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
       Out << "<field> " << FD << '\n';
       break;
     }
-    case Decl::Typedef: {
-      TypedefDecl* TD = cast<TypedefDecl>(*I);
+    case Decl::Typedef:
+    case Decl::TypeAlias: {
+      TypedefNameDecl* TD = cast<TypedefNameDecl>(*I);
       Out << "<typedef> " << TD << '\n';
       break;
     }

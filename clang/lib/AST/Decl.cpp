@@ -405,7 +405,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   //       has the typedef name for linkage purposes (7.1.3); or
   } else if (const TagDecl *Tag = dyn_cast<TagDecl>(D)) {
     // Unnamed tags have no linkage.
-    if (!Tag->getDeclName() && !Tag->getTypedefForAnonDecl())
+    if (!Tag->getDeclName() && !Tag->getTypedefNameForAnonDecl())
       return LinkageInfo::none();
 
     // If this is a class template specialization, consider the
@@ -477,7 +477,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
         isa<VarDecl>(D) ||
         isa<FieldDecl>(D) ||
         (isa<TagDecl>(D) &&
-         (D->getDeclName() || cast<TagDecl>(D)->getTypedefForAnonDecl()))))
+         (D->getDeclName() || cast<TagDecl>(D)->getTypedefNameForAnonDecl()))))
     return LinkageInfo::none();
 
   LinkageInfo LV;
@@ -2082,8 +2082,8 @@ TagDecl* TagDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }
 
-void TagDecl::setTypedefForAnonDecl(TypedefDecl *TDD) { 
-  TypedefDeclOrQualifier = TDD; 
+void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) { 
+  TypedefNameDeclOrQualifier = TDD; 
   if (TypeForDecl)
     const_cast<Type*>(TypeForDecl)->ClearLinkageCache();
   ClearLinkageCache();
@@ -2131,7 +2131,7 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
   if (QualifierLoc) {
     // Make sure the extended qualifier info is allocated.
     if (!hasExtInfo())
-      TypedefDeclOrQualifier = new (getASTContext()) ExtInfo;
+      TypedefNameDeclOrQualifier = new (getASTContext()) ExtInfo;
     // Set qualifier info.
     getExtInfo()->QualifierLoc = QualifierLoc;
   }
@@ -2140,7 +2140,7 @@ void TagDecl::setQualifierInfo(NestedNameSpecifierLoc QualifierLoc) {
     if (hasExtInfo()) {
       if (getExtInfo()->NumTemplParamLists == 0) {
         getASTContext().Deallocate(getExtInfo());
-        TypedefDeclOrQualifier = (TypedefDecl*) 0;
+        TypedefNameDeclOrQualifier = (TypedefNameDecl*) 0;
       }
       else
         getExtInfo()->QualifierLoc = QualifierLoc;
@@ -2155,7 +2155,7 @@ void TagDecl::setTemplateParameterListsInfo(ASTContext &Context,
   // Make sure the extended decl info is allocated.
   if (!hasExtInfo())
     // Allocate external info struct.
-    TypedefDeclOrQualifier = new (getASTContext()) ExtInfo;
+    TypedefNameDeclOrQualifier = new (getASTContext()) ExtInfo;
   // Set the template parameter lists info.
   getExtInfo()->setTemplateParameterListsInfo(Context, NumTPLists, TPLists);
 }
@@ -2393,12 +2393,26 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) TypedefDecl(DC, StartLoc, IdLoc, Id, TInfo);
 }
 
+TypeAliasDecl *TypeAliasDecl::Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation StartLoc,
+                                     SourceLocation IdLoc, IdentifierInfo *Id,
+                                     TypeSourceInfo *TInfo) {
+  return new (C) TypeAliasDecl(DC, StartLoc, IdLoc, Id, TInfo);
+}
+
 SourceRange TypedefDecl::getSourceRange() const {
   SourceLocation RangeEnd = getLocation();
   if (TypeSourceInfo *TInfo = getTypeSourceInfo()) {
     if (typeIsPostfix(TInfo->getType()))
       RangeEnd = TInfo->getTypeLoc().getSourceRange().getEnd();
   }
+  return SourceRange(getLocStart(), RangeEnd);
+}
+
+SourceRange TypeAliasDecl::getSourceRange() const {
+  SourceLocation RangeEnd = getLocStart();
+  if (TypeSourceInfo *TInfo = getTypeSourceInfo())
+    RangeEnd = TInfo->getTypeLoc().getSourceRange().getEnd();
   return SourceRange(getLocStart(), RangeEnd);
 }
 

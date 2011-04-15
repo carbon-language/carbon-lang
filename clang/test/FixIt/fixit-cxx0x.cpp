@@ -14,3 +14,6 @@ void x() {
   }
 }
 
+using ::T = void; // expected-error {{name defined in alias declaration must be an identifier}}
+using typename U = void; // expected-error {{name defined in alias declaration must be an identifier}}
+using typename ::V = void; // expected-error {{name defined in alias declaration must be an identifier}}

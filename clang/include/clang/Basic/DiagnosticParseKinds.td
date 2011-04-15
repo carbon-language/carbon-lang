@@ -430,6 +430,12 @@ def err_missing_whitespace_digraph : Error<
 def warn_deleted_function_accepted_as_extension: ExtWarn<
   "deleted function definition accepted as a C++0x extension">, InGroup<CXX0x>;
 
+// C++0x alias-declaration
+def ext_alias_declaration : ExtWarn<
+  "alias declarations accepted as a C++0x extension">, InGroup<CXX0x>;
+def err_alias_declaration_not_identifier : Error<
+  "name defined in alias declaration must be an identifier">;
+    
 // C++0x override control
 def ext_override_control_keyword : Extension<
   "'%0' keyword accepted as a C++0x extension">, InGroup<CXX0x>;

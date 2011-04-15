@@ -545,7 +545,7 @@ def ext_using_undefined_std : ExtWarn<
   
 // C++ exception specifications
 def err_exception_spec_in_typedef : Error<
-  "exception specifications are not allowed in typedefs">;
+  "exception specifications are not allowed in %select{typedefs|type aliases}0">;
 def err_distant_exception_spec : Error<
   "exception specifications are not allowed beyond a single level "
   "of indirection">;
@@ -795,7 +795,7 @@ def err_destructor_redeclared : Error<"destructor cannot be redeclared">;
 def err_destructor_with_params : Error<"destructor cannot have any parameters">;
 def err_destructor_variadic : Error<"destructor cannot be variadic">;
 def err_destructor_typedef_name : Error<
-  "destructor cannot be declared using a typedef %0 of the class name">;
+  "destructor cannot be declared using a %select{typedef|type alias}1 %0 of the class name">;
 def err_destructor_name : Error<
   "expected the class name after '~' to name the enclosing class">;
 def err_destructor_class_name : Error<
@@ -932,7 +932,7 @@ def err_auto_not_allowed : Error<
   "'auto' not allowed %select{in function prototype|in struct member"
   "|in union member|in class member|in exception declaration"
   "|in template parameter|in block literal|in template argument"
-  "|in typedef|in function return type|here}0">;
+  "|in typedef|in type alias|in function return type|here}0">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<
@@ -1321,7 +1321,7 @@ def err_ident_list_in_fn_declaration : Error<
 def ext_param_not_declared : Extension<
   "parameter %0 was not declared, defaulting to type 'int'">;
 def err_param_typedef_of_void : Error<
-  "empty parameter list defined with a typedef of 'void' not allowed in C++">;
+  "empty parameter list defined with a %select{typedef|type alias}0 of 'void' not allowed%select{ in C++|}0">;
 def err_param_default_argument : Error<
   "C does not support default arguments">;
 def err_param_default_argument_redefinition : Error<
@@ -2133,17 +2133,17 @@ def err_redefinition_different_type : Error<
 def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
 def err_redefinition_different_typedef : Error<
-  "typedef redefinition with different types (%0 vs %1)">;
+  "%select{typedef|type alias}0 redefinition with different types (%1 vs %2)">;
 def err_tag_reference_non_tag : Error<
-  "elaborated type refers to %select{a non-tag type|a typedef|a template}0">;
+  "elaborated type refers to %select{a non-tag type|a typedef|a type alias|a template}0">;
 def err_tag_reference_conflict : Error<
   "implicit declaration introduced by elaborated type conflicts with "
-  "%select{a declaration|a typedef|a template}0 of the same name">;
+  "%select{a declaration|a typedef|a type alias|a template}0 of the same name">;
 def err_dependent_tag_decl : Error<
   "%select{declaration|definition}0 of %select{struct|union|class|enum}1 "
   "in a dependent scope">;
 def err_tag_definition_of_typedef : Error<
-  "definition of type %0 conflicts with typedef of the same name">;
+  "definition of type %0 conflicts with %select{typedef|type alias}1 of the same name">;
 def err_conflicting_types : Error<"conflicting types for %0">;
 def err_nested_redefinition : Error<"nested redefinition of %0">;
 def err_use_with_wrong_tag : Error<
@@ -2295,6 +2295,8 @@ def note_protected_by_cleanup : Note<
   "jump bypasses initialization of variable with __attribute__((cleanup))">;
 def note_protected_by_vla_typedef : Note<
   "jump bypasses initialization of VLA typedef">;
+def note_protected_by_vla_type_alias : Note<
+  "jump bypasses initialization of VLA type alias">;
 def note_protected_by_vla : Note<
   "jump bypasses initialization of variable length array">;
 def note_protected_by_objc_try : Note<

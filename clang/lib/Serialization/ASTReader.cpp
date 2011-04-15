@@ -3151,7 +3151,7 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
       Error("incorrect encoding of typedef type");
       return QualType();
     }
-    TypedefDecl *Decl = cast<TypedefDecl>(GetDecl(Record[0]));
+    TypedefNameDecl *Decl = cast<TypedefNameDecl>(GetDecl(Record[0]));
     QualType Canonical = GetType(Record[1]);
     if (!Canonical.isNull())
       Canonical = Context->getCanonicalType(Canonical);
@@ -4083,7 +4083,7 @@ void ASTReader::InitializeSema(Sema &S) {
   // and add them to Sema's vector of such declarations.
   for (unsigned I = 0, N = ExtVectorDecls.size(); I != N; ++I)
     SemaObj->ExtVectorDecls.push_back(
-                               cast<TypedefDecl>(GetDecl(ExtVectorDecls[I])));
+                             cast<TypedefNameDecl>(GetDecl(ExtVectorDecls[I])));
 
   // FIXME: Do VTable uses and dynamic classes deserialize too much ?
   // Can we cut them down before writing them ?

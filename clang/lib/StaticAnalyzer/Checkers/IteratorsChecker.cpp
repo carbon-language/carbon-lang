@@ -176,7 +176,7 @@ static RefKind getTemplateKind(const DeclContext *dc) {
 }
 
 static RefKind getTemplateKind(const TypedefType *tdt) {
-  const TypedefDecl *td = tdt->getDecl();
+  const TypedefNameDecl *td = tdt->getDecl();
   RefKind parentKind = getTemplateKind(td->getDeclContext());
   if (parentKind == VectorKind) {
     return llvm::StringSwitch<RefKind>(td->getName())

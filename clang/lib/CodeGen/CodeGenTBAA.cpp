@@ -155,7 +155,7 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
     // theoretically implement this by combining information about all the
     // members into a single identifying MDNode.
     if (!Features.CPlusPlus &&
-        ETy->getDecl()->getTypedefForAnonDecl())
+        ETy->getDecl()->getTypedefNameForAnonDecl())
       return MetadataCache[Ty] = getChar();
 
     // In C++ mode, types have linkage, so we can rely on the ODR and

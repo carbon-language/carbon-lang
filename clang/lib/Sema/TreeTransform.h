@@ -669,7 +669,7 @@ public:
   QualType RebuildUnresolvedUsingType(Decl *D);
 
   /// \brief Build a new typedef type.
-  QualType RebuildTypedefType(TypedefDecl *Typedef) {
+  QualType RebuildTypedefType(TypedefNameDecl *Typedef) {
     return SemaRef.Context.getTypeDeclType(Typedef);
   }
 
@@ -851,7 +851,8 @@ public:
 	  NamedDecl *SomeDecl = Result.getRepresentativeDecl();
           unsigned Kind = 0;
           if (isa<TypedefDecl>(SomeDecl)) Kind = 1;
-          else if (isa<ClassTemplateDecl>(SomeDecl)) Kind = 2;
+          else if (isa<TypeAliasDecl>(SomeDecl)) Kind = 2;
+          else if (isa<ClassTemplateDecl>(SomeDecl)) Kind = 3;
           SemaRef.Diag(IdLoc, diag::err_tag_reference_non_tag) << Kind;
           SemaRef.Diag(SomeDecl->getLocation(), diag::note_declared_at);
           break;
@@ -3981,9 +3982,9 @@ template<typename Derived>
 QualType TreeTransform<Derived>::TransformTypedefType(TypeLocBuilder &TLB,
                                                       TypedefTypeLoc TL) {
   const TypedefType *T = TL.getTypePtr();
-  TypedefDecl *Typedef
-    = cast_or_null<TypedefDecl>(getDerived().TransformDecl(TL.getNameLoc(),
-                                                           T->getDecl()));
+  TypedefNameDecl *Typedef
+    = cast_or_null<TypedefNameDecl>(getDerived().TransformDecl(TL.getNameLoc(),
+                                                               T->getDecl()));
   if (!Typedef)
     return QualType();
 

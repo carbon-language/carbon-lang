@@ -546,7 +546,7 @@ void TypePrinter::AppendScope(DeclContext *DC, std::string &Buffer) {
     Buffer += Spec->getIdentifier()->getName();
     Buffer += TemplateArgsStr;
   } else if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
-    if (TypedefDecl *Typedef = Tag->getTypedefForAnonDecl())
+    if (TypedefNameDecl *Typedef = Tag->getTypedefNameForAnonDecl())
       Buffer += Typedef->getIdentifier()->getName();
     else if (Tag->getIdentifier())
       Buffer += Tag->getIdentifier()->getName();
@@ -569,7 +569,7 @@ void TypePrinter::printTag(TagDecl *D, std::string &InnerString) {
   // We don't print tags unless this is an elaborated type.
   // In C, we just assume every RecordType is an elaborated type.
   if (!(Policy.LangOpts.CPlusPlus || Policy.SuppressTagKeyword ||
-        D->getTypedefForAnonDecl())) {
+        D->getTypedefNameForAnonDecl())) {
     HasKindDecoration = true;
     Buffer += D->getKindName();
     Buffer += ' ';
@@ -583,7 +583,7 @@ void TypePrinter::printTag(TagDecl *D, std::string &InnerString) {
 
   if (const IdentifierInfo *II = D->getIdentifier())
     Buffer += II->getNameStart();
-  else if (TypedefDecl *Typedef = D->getTypedefForAnonDecl()) {
+  else if (TypedefNameDecl *Typedef = D->getTypedefNameForAnonDecl()) {
     assert(Typedef->getIdentifier() && "Typedef without identifier?");
     Buffer += Typedef->getIdentifier()->getNameStart();
   } else {

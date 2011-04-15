@@ -415,7 +415,7 @@ FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier,
        Path.Decls.first != Path.Decls.second;
        ++Path.Decls.first) {
     // FIXME: Refactor the "is it a nested-name-specifier?" check
-    if (isa<TypedefDecl>(*Path.Decls.first) ||
+    if (isa<TypedefNameDecl>(*Path.Decls.first) ||
         (*Path.Decls.first)->isInIdentifierNamespace(IDNS_Tag))
       return true;
   }

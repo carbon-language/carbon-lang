@@ -642,6 +642,8 @@ namespace clang {
       DECL_TRANSLATION_UNIT = 50,
       /// \brief A TypedefDecl record.
       DECL_TYPEDEF,
+      /// \brief A TypeAliasDecl record.
+      DECL_TYPEALIAS,
       /// \brief An EnumDecl record.
       DECL_ENUM,
       /// \brief A RecordDecl record.

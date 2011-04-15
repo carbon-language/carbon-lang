@@ -149,6 +149,11 @@ static std::pair<unsigned,unsigned>
       return std::make_pair((unsigned) diag::note_protected_by_vla_typedef, 0);
   }
 
+  if (const TypeAliasDecl *TD = dyn_cast<TypeAliasDecl>(D)) {
+    if (TD->getUnderlyingType()->isVariablyModifiedType())
+      return std::make_pair((unsigned) diag::note_protected_by_vla_type_alias, 0);
+  }
+
   return std::make_pair(0U, 0U);
 }
 

@@ -314,7 +314,7 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       
       // We must have an anonymous struct.
       const TagDecl *TD = cast<TagDecl>(ND);
-      if (const TypedefDecl *D = TD->getTypedefForAnonDecl()) {
+      if (const TypedefNameDecl *D = TD->getTypedefNameForAnonDecl()) {
         assert(TD->getDeclContext() == D->getDeclContext() &&
                "Typedef should not be in another decl context!");
         assert(D->getDeclName().getAsIdentifierInfo() &&

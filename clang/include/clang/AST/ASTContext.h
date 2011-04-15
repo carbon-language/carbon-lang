@@ -71,7 +71,7 @@ namespace clang {
   class TemplateTypeParmDecl;
   class TranslationUnitDecl;
   class TypeDecl;
-  class TypedefDecl;
+  class TypedefNameDecl;
   class UsingDecl;
   class UsingShadowDecl;
   class UnresolvedSetIterator;
@@ -664,9 +664,9 @@ public:
   }
 
   /// getTypedefType - Return the unique reference to the type for the
-  /// specified typename decl.
-  QualType getTypedefType(const TypedefDecl *Decl, QualType Canon = QualType())
-    const;
+  /// specified typedef-name decl.
+  QualType getTypedefType(const TypedefNameDecl *Decl,
+                          QualType Canon = QualType()) const;
 
   QualType getRecordType(const RecordDecl *Decl) const;
 

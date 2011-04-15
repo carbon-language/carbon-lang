@@ -543,9 +543,17 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 
   // TypedefDecl
   void visitTypedefDeclAttrs(TypedefDecl *D) {
-    visitRedeclarableAttrs(D);
+    visitRedeclarableAttrs<TypedefNameDecl>(D);
   }
   void visitTypedefDeclChildren(TypedefDecl *D) {
+    dispatch(D->getTypeSourceInfo()->getTypeLoc());
+  }
+
+  // TypeAliasDecl
+  void visitTypeAliasDeclAttrs(TypeAliasDecl *D) {
+    visitRedeclarableAttrs<TypedefNameDecl>(D);
+  }
+  void visitTypeAliasDeclChildren(TypeAliasDecl *D) {
     dispatch(D->getTypeSourceInfo()->getTypeLoc());
   }
 

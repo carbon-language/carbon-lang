@@ -255,7 +255,7 @@ bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
   QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
   if (T->isDependentType())
     return true;
-  else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(SD)) {
+  else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
     if (TD->getUnderlyingType()->isRecordType() ||
         (Context.getLangOptions().CPlusPlus0x &&
          TD->getUnderlyingType()->isEnumeralType()))
@@ -549,7 +549,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     } else if (isa<RecordDecl>(SD)) {
       RecordTypeLoc RecordTL = TLB.push<RecordTypeLoc>(T);
       RecordTL.setNameLoc(IdentifierLoc);
-    } else if (isa<TypedefDecl>(SD)) {
+    } else if (isa<TypedefNameDecl>(SD)) {
       TypedefTypeLoc TypedefTL = TLB.push<TypedefTypeLoc>(T);
       TypedefTL.setNameLoc(IdentifierLoc);
     } else if (isa<EnumDecl>(SD)) {

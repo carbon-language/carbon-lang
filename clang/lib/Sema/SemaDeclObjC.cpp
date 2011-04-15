@@ -174,7 +174,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       if (PrevDecl && SuperClassDecl == 0) {
         // The previous declaration was not a class decl. Check if we have a
         // typedef. If we do, get the underlying class type.
-        if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
+        if (const TypedefNameDecl *TDecl =
+              dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
           QualType T = TDecl->getUnderlyingType();
           if (T->isObjCObjectType()) {
             if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface())
@@ -193,7 +194,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
         }
       }
 
-      if (!dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
+      if (!dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
         if (!SuperClassDecl)
           Diag(SuperLoc, diag::err_undef_superclass)
             << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
@@ -242,7 +243,8 @@ Decl *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   // Check for class declaration
   NamedDecl *CDeclU = LookupSingleName(TUScope, ClassName, ClassLocation,
                                        LookupOrdinaryName, ForRedeclaration);
-  if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
+  if (const TypedefNameDecl *TDecl =
+        dyn_cast_or_null<TypedefNameDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCObjectType()) {
       if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface()) {
@@ -1242,7 +1244,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       // @class XCElementToggler;
       //
       // FIXME: Make an extension?
-      TypedefDecl *TDD = dyn_cast<TypedefDecl>(PrevDecl);
+      TypedefNameDecl *TDD = dyn_cast<TypedefNameDecl>(PrevDecl);
       if (!TDD || !TDD->getUnderlyingType()->isObjCObjectType()) {
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);

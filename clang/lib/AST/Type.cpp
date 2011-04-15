@@ -1578,7 +1578,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     NamedDecl::LinkageInfo LV = Tag->getLinkageAndVisibility();
     bool IsLocalOrUnnamed =
       Tag->getDeclContext()->isFunctionOrMethod() ||
-      (!Tag->getIdentifier() && !Tag->getTypedefForAnonDecl());
+      (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl());
     return CachedProperties(LV.linkage(), LV.visibility(), IsLocalOrUnnamed);
   }
 

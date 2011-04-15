@@ -45,6 +45,7 @@ namespace {
 
     void VisitTranslationUnitDecl(TranslationUnitDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
+    void VisitTypeAliasDecl(TypeAliasDecl *D);
     void VisitEnumDecl(EnumDecl *D);
     void VisitRecordDecl(RecordDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
@@ -110,7 +111,7 @@ static QualType GetBaseType(QualType T) {
 }
 
 static QualType getDeclType(Decl* D) {
-  if (TypedefDecl* TDD = dyn_cast<TypedefDecl>(D))
+  if (TypedefNameDecl* TDD = dyn_cast<TypedefNameDecl>(D))
     return TDD->getUnderlyingType();
   if (ValueDecl* VD = dyn_cast<ValueDecl>(D))
     return VD->getType();
@@ -306,6 +307,11 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
   if (!Policy.SuppressSpecifiers)
     Out << "typedef ";
   Out << S;
+}
+
+void DeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
+  Out << "using " << D->getNameAsString() << " = "
+      << D->getUnderlyingType().getAsString(Policy);
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {

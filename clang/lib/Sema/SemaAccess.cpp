@@ -1011,16 +1011,16 @@ static void DiagnoseAccessPath(Sema &S,
       // Find an original declaration.
       while (D->isOutOfLine()) {
         NamedDecl *PrevDecl = 0;
-        if (isa<VarDecl>(D))
-          PrevDecl = cast<VarDecl>(D)->getPreviousDeclaration();
-        else if (isa<FunctionDecl>(D))
-          PrevDecl = cast<FunctionDecl>(D)->getPreviousDeclaration();
-        else if (isa<TypedefDecl>(D))
-          PrevDecl = cast<TypedefDecl>(D)->getPreviousDeclaration();
-        else if (isa<TagDecl>(D)) {
+        if (VarDecl *VD = dyn_cast<VarDecl>(D))
+          PrevDecl = VD->getPreviousDeclaration();
+        else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+          PrevDecl = FD->getPreviousDeclaration();
+        else if (TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(D))
+          PrevDecl = TND->getPreviousDeclaration();
+        else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
           if (isa<RecordDecl>(D) && cast<RecordDecl>(D)->isInjectedClassName())
             break;
-          PrevDecl = cast<TagDecl>(D)->getPreviousDeclaration();
+          PrevDecl = TD->getPreviousDeclaration();
         }
         if (!PrevDecl) break;
         D = PrevDecl;

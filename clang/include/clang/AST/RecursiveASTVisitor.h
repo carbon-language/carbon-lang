@@ -1357,6 +1357,13 @@ DEF_TRAVERSE_DECL(TypedefDecl, {
     // source.
   })
 
+DEF_TRAVERSE_DECL(TypeAliasDecl, {
+    TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
+    // We shouldn't traverse D->getTypeForDecl(); it's a result of
+    // declaring the type alias, not something that was written in the
+    // source.
+  })
+
 DEF_TRAVERSE_DECL(UnresolvedUsingTypenameDecl, {
     // A dependent using declaration which was marked with 'typename'.
     //   template<class T> class A : public B<T> { using typename B<T>::foo; };

@@ -3416,9 +3416,9 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   //   be used as the identifier in the declarator for a destructor
   //   declaration.
   QualType DeclaratorType = GetTypeFromParser(D.getName().DestructorName);
-  if (isa<TypedefType>(DeclaratorType))
+  if (const TypedefType *TT = DeclaratorType->getAs<TypedefType>())
     Diag(D.getIdentifierLoc(), diag::err_destructor_typedef_name)
-      << DeclaratorType;
+      << DeclaratorType << isa<TypeAliasDecl>(TT->getDecl());
 
   // C++ [class.dtor]p2:
   //   A destructor is used to destroy objects of its class type. A
@@ -4051,8 +4051,8 @@ IsEquivalentForUsingDecl(ASTContext &Context, NamedDecl *D1, NamedDecl *D2,
     return true;
   }
 
-  if (TypedefDecl *TD1 = dyn_cast<TypedefDecl>(D1))
-    if (TypedefDecl *TD2 = dyn_cast<TypedefDecl>(D2)) {
+  if (TypedefNameDecl *TD1 = dyn_cast<TypedefNameDecl>(D1))
+    if (TypedefNameDecl *TD2 = dyn_cast<TypedefNameDecl>(D2)) {
       SuppressRedeclaration = true;
       return Context.hasSameType(TD1->getUnderlyingType(),
                                  TD2->getUnderlyingType());
@@ -4649,6 +4649,61 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
     << SS.getRange();
 
   return true;
+}
+
+Decl *Sema::ActOnAliasDeclaration(Scope *S,
+                                  AccessSpecifier AS,
+                                  SourceLocation UsingLoc,
+                                  UnqualifiedId &Name,
+                                  TypeResult Type) {
+  assert((S->getFlags() & Scope::DeclScope) &&
+         "got alias-declaration outside of declaration scope");
+
+  if (Type.isInvalid())
+    return 0;
+
+  bool Invalid = false;
+  DeclarationNameInfo NameInfo = GetNameFromUnqualifiedId(Name);
+  TypeSourceInfo *TInfo = 0;
+  QualType T = GetTypeFromParser(Type.get(), &TInfo);
+
+  if (DiagnoseClassNameShadow(CurContext, NameInfo))
+    return 0;
+
+  if (DiagnoseUnexpandedParameterPack(Name.StartLocation, TInfo,
+                                      UPPC_DeclarationType))
+    Invalid = true;
+
+  LookupResult Previous(*this, NameInfo, LookupOrdinaryName, ForRedeclaration);
+  LookupName(Previous, S);
+
+  // Warn about shadowing the name of a template parameter.
+  if (Previous.isSingleResult() &&
+      Previous.getFoundDecl()->isTemplateParameter()) {
+    if (DiagnoseTemplateParameterShadow(Name.StartLocation,
+                                        Previous.getFoundDecl()))
+      Invalid = true;
+    Previous.clear();
+  }
+
+  assert(Name.Kind == UnqualifiedId::IK_Identifier &&
+         "name in alias declaration must be an identifier");
+  TypeAliasDecl *NewTD = TypeAliasDecl::Create(Context, CurContext, UsingLoc,
+                                               Name.StartLocation,
+                                               Name.Identifier, TInfo);
+
+  NewTD->setAccess(AS);
+
+  if (Invalid)
+    NewTD->setInvalidDecl();
+
+  bool Redeclaration = false;
+  ActOnTypedefNameDecl(S, CurContext, NewTD, Previous, Redeclaration);
+
+  if (!Redeclaration)
+    PushOnScopeChains(NewTD, S);
+
+  return NewTD;
 }
 
 Decl *Sema::ActOnNamespaceAliasDef(Scope *S,
