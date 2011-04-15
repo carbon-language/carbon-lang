@@ -59,6 +59,7 @@ void LiveRangeEdit::scanRemattable(LiveIntervals &lis,
       continue;
     checkRematerializable(VNI, DefMI, tii, aa);
   }
+  scannedRemattable_ = true;
 }
 
 bool LiveRangeEdit::anyRematerializable(LiveIntervals &lis,
