@@ -312,3 +312,86 @@ std::string Rewriter::ConvertToString(Stmt *From) {
   From->printPretty(S, 0, PrintingPolicy(*LangOpts));
   return SStr;
 }
+
+bool Rewriter::IncreaseIndentation(CharSourceRange range,
+                                   SourceLocation parentIndent) {
+  using llvm::StringRef;
+
+  if (!isRewritable(range.getBegin())) return true;
+  if (!isRewritable(range.getEnd())) return true;
+  if (!isRewritable(parentIndent)) return true;
+
+  FileID StartFileID, EndFileID, parentFileID;
+  unsigned StartOff, EndOff, parentOff;
+
+  StartOff = getLocationOffsetAndFileID(range.getBegin(), StartFileID);
+  EndOff   = getLocationOffsetAndFileID(range.getEnd(), EndFileID);
+  parentOff = getLocationOffsetAndFileID(parentIndent, parentFileID);
+
+  if (StartFileID != EndFileID || StartFileID != parentFileID)
+    return true;
+  if (StartOff >= EndOff || parentOff >= StartOff)
+    return true;
+
+  FileID FID = StartFileID;
+  StringRef MB = SourceMgr->getBufferData(FID);
+
+  unsigned parentLineNo = SourceMgr->getLineNumber(FID, parentOff) - 1;
+  unsigned startLineNo = SourceMgr->getLineNumber(FID, StartOff) - 1;
+  unsigned endLineNo = SourceMgr->getLineNumber(FID, EndOff) - 1;
+  
+  const SrcMgr::ContentCache *
+      Content = SourceMgr->getSLocEntry(FID).getFile().getContentCache();
+  
+  // Find where the line starts for the three offsets.
+  unsigned parentLineOffs = Content->SourceLineCache[parentLineNo];
+  unsigned startLineOffs = Content->SourceLineCache[startLineNo];
+  unsigned endLineOffs = Content->SourceLineCache[endLineNo];
+
+  if (startLineOffs == endLineOffs || startLineOffs == parentLineOffs)
+    return true;
+
+  // Find the whitespace at the start of each line.
+  StringRef parentSpace, startSpace, endSpace;
+  {
+    unsigned i = parentLineOffs;
+    while (isWhitespace(MB[i]))
+      ++i;
+    parentSpace = MB.substr(parentLineOffs, i-parentLineOffs);
+
+    i = startLineOffs;
+    while (isWhitespace(MB[i]))
+      ++i;
+    startSpace = MB.substr(startLineOffs, i-startLineOffs);
+
+    i = endLineOffs;
+    while (isWhitespace(MB[i]))
+      ++i;
+    endSpace = MB.substr(endLineOffs, i-endLineOffs);
+  }
+  if (parentSpace.size() >= startSpace.size())
+    return true;
+  if (!startSpace.startswith(parentSpace))
+    return true;
+
+  llvm::StringRef indent = startSpace.substr(parentSpace.size());
+
+  // Indent the lines between start/end offsets.
+  RewriteBuffer &RB = getEditBuffer(FID);
+  for (unsigned i = startLineOffs; i != endLineOffs; ++i) {
+    if (MB[i] == '\n') {
+      unsigned startOfLine = i+1;
+      if (startOfLine == endLineOffs)
+        break;
+      StringRef origIndent;
+      unsigned ws = startOfLine;
+      while (isWhitespace(MB[ws]))
+        ++ws;
+      origIndent = MB.substr(startOfLine, ws-startOfLine);
+      if (origIndent.startswith(startSpace))
+        RB.InsertText(startOfLine, indent, /*InsertAfter=*/false);
+    }
+  }
+
+  return false;
+}

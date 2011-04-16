@@ -246,7 +246,17 @@ public:
   /// printer to generate the replacement code.  This returns true if the input
   /// could not be rewritten, or false if successful.
   bool ReplaceStmt(Stmt *From, Stmt *To);
-  
+
+  /// \brief Increase indentation for the lines between the given source range.
+  /// To determine what the indentation should be, 'parentIndent' is used
+  /// that should be at a source location with an indentation one degree
+  /// lower than the given range.
+  bool IncreaseIndentation(CharSourceRange range, SourceLocation parentIndent);
+  bool IncreaseIndentation(SourceRange range, SourceLocation parentIndent) {
+    return IncreaseIndentation(CharSourceRange::getTokenRange(range),
+                               parentIndent);
+  }
+
   /// ConvertToString converts statement 'From' to a string using the
   /// pretty printer.
   std::string ConvertToString(Stmt *From);
