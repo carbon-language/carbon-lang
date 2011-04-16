@@ -2401,9 +2401,8 @@ static bool isCheapEnoughToEvaluateUnconditionally(const Expr *E,
                                                    CodeGenFunction &CGF) {
   E = E->IgnoreParens();
 
-  // TODO: Allow anything we can constant fold to an integer or fp constant.
-  if (isa<IntegerLiteral>(E) || isa<CharacterLiteral>(E) ||
-      isa<FloatingLiteral>(E))
+  // Anything that is an integer or floating point constant is fine.
+  if (E->isConstantInitializer(CGF.getContext(), false))
     return true;
 
   // Non-volatile automatic variables too, to get "cond ? X : Y" where

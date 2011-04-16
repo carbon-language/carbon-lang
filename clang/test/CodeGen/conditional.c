@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o %t
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 float test1(int cond, float a, float b) {
   return cond ? a : b;
@@ -47,3 +47,22 @@ void test9(struct test9 *p) {
   p ? p : test9spare();
 }
 
+// CHECK: @test10
+// CHECK: select i1 {{.*}}, i32 4, i32 5
+int test10(int c) {
+  return c ? 4 : 5;
+}
+enum { Gronk = 5 };
+
+// rdar://9289603
+// CHECK: @test11
+// CHECK: select i1 {{.*}}, i32 4, i32 5
+int test11(int c) {
+  return c ? 4 : Gronk;
+}
+
+// CHECK: @test12
+// CHECK: select i1 {{.*}}, double 4.0{{.*}}, double 2.0
+double test12(int c) {
+  return c ? 4.0 : 2.0;
+}
