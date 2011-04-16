@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// #define DEBUG_GCDAPROFILING
+/* #define DEBUG_GCDAPROFILING */
 
 /*
  * --- GCOV file format I/O primitives ---
