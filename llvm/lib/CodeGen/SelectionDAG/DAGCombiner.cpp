@@ -3884,7 +3884,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
         // CombineTo deleted the truncate, if needed, but not what's under it.
         AddToWorkList(oye);
       }
-      return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, NarrowLoad);
+      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
 
@@ -4112,7 +4112,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
         // CombineTo deleted the truncate, if needed, but not what's under it.
         AddToWorkList(oye);
       }
-      return DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), VT, NarrowLoad);
+      return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
 
