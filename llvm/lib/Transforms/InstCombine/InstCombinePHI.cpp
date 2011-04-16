@@ -831,7 +831,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
       ++InValNo;
 
     if (InValNo != NumOperandVals) {
-      Value *NonPhiInVal = PN.getOperand(InValNo);
+      Value *NonPhiInVal = PN.getIncomingValue(InValNo);
       
       // Scan the rest of the operands to see if there are any conflicts, if so
       // there is no need to recursively scan other phis.
