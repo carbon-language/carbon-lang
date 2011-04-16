@@ -54,6 +54,10 @@ namespace {
     // Create the GCNO files for the Module based on DebugInfo.
     void EmitGCNO(DebugInfoFinder &DIF);
 
+    // Modify the program to track transitions along edges and call into the
+    // profiling runtime to emit .gcda files when run.
+    bool EmitProfileArcs(DebugInfoFinder &DIF);
+
     // Get pointers to the functions in the runtime library.
     Constant *getStartFileFunc();
     Constant *getEmitFunctionFunc();
@@ -285,6 +289,22 @@ namespace {
   };
 }
 
+// Replace the stem of a file, or add one if missing.
+static std::string ReplaceStem(std::string orig_filename, std::string new_stem){
+  return (sys::path::stem(orig_filename) + "." + new_stem).str();
+}
+
+bool GCOVProfiler::runOnModule(Module &M) {
+  Mod = &M;
+  Ctx = &M.getContext();
+
+  DebugInfoFinder DIF;
+  DIF.processModule(*Mod);
+
+  EmitGCNO(DIF);
+  return EmitProfileArcs(DIF);
+}
+
 void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
   DenseMap<const MDNode *, raw_fd_ostream *> gcno_files;
   for (DebugInfoFinder::iterator I = DIF.compile_unit_begin(),
@@ -296,9 +316,8 @@ void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
     DICompileUnit CU(*I);
     raw_fd_ostream *&Out = gcno_files[CU];
     std::string ErrorInfo;
-    Out = new raw_fd_ostream(
-        (sys::path::stem(CU.getFilename()) + ".gcno").str().c_str(),
-        ErrorInfo, raw_fd_ostream::F_Binary);
+    Out = new raw_fd_ostream(ReplaceStem(CU.getFilename(), "gcno").c_str(),
+                             ErrorInfo, raw_fd_ostream::F_Binary);
     Out->write("oncg*404MVLL", 12);
   }
 
@@ -342,14 +361,9 @@ void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
   }
 }
 
-bool GCOVProfiler::runOnModule(Module &M) {
-  Mod = &M;
-  Ctx = &M.getContext();
-
-  DebugInfoFinder DIF;
-  DIF.processModule(*Mod);
-
-  EmitGCNO(DIF);
+bool GCOVProfiler::EmitProfileArcs(DebugInfoFinder &DIF) {
+  if (DIF.subprogram_begin() == DIF.subprogram_end())
+    return false;
 
   SmallVector<std::pair<GlobalVariable *, uint32_t>, 8> counters_by_ident;
   for (DebugInfoFinder::iterator SPI = DIF.subprogram_begin(),
@@ -457,10 +471,6 @@ Constant *GCOVProfiler::getEmitArcsFunc() {
 Constant *GCOVProfiler::getEndFileFunc() {
   const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx), false);
   return Mod->getOrInsertFunction("llvm_gcda_end_file", FTy);
-}
-
-static std::string ReplaceStem(std::string orig_filename, std::string new_stem){
-  return (sys::path::stem(orig_filename) + "." + new_stem).str();
 }
 
 void GCOVProfiler::InsertCounterWriteout(
