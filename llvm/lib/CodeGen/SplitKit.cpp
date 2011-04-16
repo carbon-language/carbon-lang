@@ -816,7 +816,8 @@ bool SplitEditor::transferValues() {
           else {
             // Live-out, but we need updateSSA to tell us the value.
             LiveOutSeen.set(MBB->getNumber());
-            LiveOutCache[MBB] = LiveOutPair(0, 0);
+            LiveOutCache[MBB] = LiveOutPair((VNInfo*)0,
+                                            (MachineDomTreeNode*)0);
           }
         }
         BlockStart = BlockEnd;
