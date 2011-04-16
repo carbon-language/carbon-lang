@@ -123,6 +123,7 @@ static bool IsNullTerminatedString(const Constant *C) {
 MCSymbol *
 TargetLoweringObjectFile::getPersonalityPICSymbol(StringRef Name) const {
   assert(0 && "Not Available in this format.");
+  return 0;
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
