@@ -1191,9 +1191,22 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
       Flags = llvm::DIDescriptor::FlagPrivate;
 
-    FieldTy = DBuilder.createMemberType(FieldName, FieldDefUnit,
-                                        FieldLine, FieldSize, FieldAlign,
-                                        FieldOffset, Flags, FieldTy);
+    llvm::StringRef PropertyName;
+    llvm::StringRef PropertyGetter;
+    llvm::StringRef PropertySetter;
+    unsigned PropertyAttributes;
+    if (ObjCPropertyDecl *PD =
+        ID->FindPropertyVisibleInPrimaryClass(Field->getIdentifier())) {
+      PropertyName = PD->getName();
+      PropertyGetter = PD->getGetterName().getNameForSlot(0);
+      PropertySetter = PD->getSetterName().getNameForSlot(0);
+      PropertyAttributes = PD->getPropertyAttributes();
+    }
+    FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
+                                      FieldLine, FieldSize, FieldAlign,
+                                      FieldOffset, Flags, FieldTy,
+                                      PropertyName, PropertyGetter,
+                                      PropertySetter, PropertyAttributes);
     EltTys.push_back(FieldTy);
   }
 
