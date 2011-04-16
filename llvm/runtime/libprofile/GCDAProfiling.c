@@ -18,7 +18,6 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "llvm/Support/DataTypes.h"
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,8 +36,8 @@ static void write_int32(uint32_t i) {
 
 static void write_int64(uint64_t i) {
   uint32_t lo, hi;
-  lo = i & 0x00000000ffffffff;
-  hi = i & 0xffffffff00000000;
+  lo = i >>  0;
+  hi = i >> 32;
 
   write_int32(lo);
   write_int32(hi);
