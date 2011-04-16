@@ -25,3 +25,34 @@ entry:
   store i32 %rem, i32* %arrayidx6, align 4
   ret void
 }
+
+; rdar://9280991
+@flags = external unnamed_addr global i32
+@tabsize = external unnamed_addr global i32
+
+define void @do_indent(i32 %cols) nounwind {
+entry:
+; CHECK: do_indent:
+  %0 = load i32* @flags, align 4
+  %1 = and i32 %0, 67108864
+  %2 = icmp eq i32 %1, 0
+  br i1 %2, label %bb1, label %bb
+
+bb:
+; CHECK: bl ___divmodsi4
+  %3 = load i32* @tabsize, align 4
+  %4 = srem i32 %cols, %3
+  %5 = sdiv i32 %cols, %3
+  %6 = tail call i32 @llvm.objectsize.i32(i8* null, i1 false)
+  %7 = tail call i8* @__memset_chk(i8* null, i32 9, i32 %5, i32 %6) nounwind
+  br label %bb1
+
+bb1:
+  %line_indent_len.0 = phi i32 [ %4, %bb ], [ 0, %entry ]
+  %8 = getelementptr inbounds i8* null, i32 %line_indent_len.0
+  store i8 0, i8* %8, align 1
+  ret void
+}
+
+declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readnone
+declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
