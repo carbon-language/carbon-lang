@@ -140,6 +140,10 @@ public:
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
   virtual const MCSection *getEHFrameSection() const = 0;
+  virtual MCSymbol *getPersonalityPICSymbol(StringRef Name) const;
+  virtual void emitPersonalityValue(MCStreamer &Streamer,
+                                    const TargetMachine &TM,
+                                    const MCSymbol *Sym) const;
   const MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
   const MCSection *getDwarfInfoSection() const { return DwarfInfoSection; }
   const MCSection *getDwarfLineSection() const { return DwarfLineSection; }

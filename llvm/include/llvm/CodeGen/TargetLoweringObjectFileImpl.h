@@ -58,6 +58,11 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
+  virtual MCSymbol *getPersonalityPICSymbol(StringRef Name) const;
+
+  virtual void emitPersonalityValue(MCStreamer &Streamer,
+                                    const TargetMachine &TM,
+                                    const MCSymbol *Sym) const;
 
   const MCSection *getDataRelSection() const { return DataRelSection; }
 

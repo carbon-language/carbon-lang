@@ -23,6 +23,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionCOFF.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
@@ -174,6 +175,38 @@ const MCSection *TargetLoweringObjectFileELF::getEHFrameSection() const {
   return getContext().getELFSection(".eh_frame", ELF::SHT_PROGBITS,
                                     ELF::SHF_ALLOC,
                                     SectionKind::getDataRel());
+}
+
+MCSymbol *
+TargetLoweringObjectFileELF::getPersonalityPICSymbol(StringRef Name) const {
+  Twine FullName = StringRef("DW.ref.") + Name;
+  return getContext().GetOrCreateSymbol(FullName);
+}
+
+void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
+                                                       const TargetMachine &TM,
+                                                   const MCSymbol *Sym) const {
+    MCSymbol *Label = getPersonalityPICSymbol(Sym->getName());
+    Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
+    Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
+    Twine SectionName = StringRef(".data.") + Label->getName();
+    SmallString<64> NameData;
+    SectionName.toVector(NameData);
+    unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_GROUP;
+    const MCSection *Sec = getContext().getELFSection(NameData,
+                                                      ELF::SHT_PROGBITS,
+                                                      Flags,
+                                                      SectionKind::getDataRel(),
+                                                      0, Label->getName());
+    Streamer.SwitchSection(Sec);
+    Streamer.EmitValueToAlignment(8);
+    Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
+    const MCExpr *E = MCConstantExpr::Create(8, getContext());
+    Streamer.EmitELFSize(Label, E);
+    Streamer.EmitLabel(Label);
+
+    unsigned Size = TM.getTargetData()->getPointerSize();
+    Streamer.EmitSymbolValue(Sym, Size);
 }
 
 static SectionKind

@@ -120,6 +120,18 @@ static bool IsNullTerminatedString(const Constant *C) {
   return false;
 }
 
+MCSymbol *
+TargetLoweringObjectFile::getPersonalityPICSymbol(StringRef Name) const {
+  assert(0 && "Not Available in this format.");
+}
+
+void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
+                                                    const TargetMachine &TM,
+                                                    const MCSymbol *Sym) const {
+  assert(0 && "Not Available in this format.");
+}
+
+
 /// getKindForGlobal - This is a top-level target-independent classifier for
 /// a global variable.  Given an global variable and information from TM, it
 /// classifies the global in a variety of ways that make various target
