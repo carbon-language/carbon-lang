@@ -1121,10 +1121,16 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   unsigned CmpReg = getRegForValue(BI->getCondition());
   if (CmpReg == 0) return false;
 
-  // Re-set the flags just in case.
-  unsigned CmpOpc = isThumb ? ARM::t2CMPri : ARM::CMPri;
-  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
-                  .addReg(CmpReg).addImm(0));
+  // We've been divorced from our compare!  Our block was split, and
+  // now our compare lives in a predecessor block.  We musn't
+  // re-compare here, as the children of the compare aren't guaranteed
+  // live across the block boundary (we *could* check for this).
+  // Regardless, the compare has been done in the predecessor block,
+  // and it left a value for us in a virtual register.  Ergo, we test
+  // the one-bit value left in the virtual register.
+  unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
+                  .addReg(CmpReg).addImm(1));
 
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
