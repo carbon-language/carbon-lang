@@ -969,5 +969,36 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
   if (DT.isVirtual())
     addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag,
             dwarf::DW_VIRTUALITY_virtual);
+
+  // Objective-C properties.
+  StringRef PropertyName = DT.getObjCPropertyName();
+  if (!PropertyName.empty()) {
+    addString(MemberDie, dwarf::DW_AT_APPLE_property_name, dwarf::DW_FORM_string,
+              PropertyName);
+    StringRef GetterName = DT.getObjCPropertyGetterName();
+    if (!GetterName.empty())
+      addString(MemberDie, dwarf::DW_AT_APPLE_property_getter,
+                dwarf::DW_FORM_string, GetterName);
+    StringRef SetterName = DT.getObjCPropertySetterName();
+    if (!SetterName.empty())
+      addString(MemberDie, dwarf::DW_AT_APPLE_property_setter,
+                dwarf::DW_FORM_string, SetterName);
+    unsigned PropertyAttributes = 0;
+    if (DT.isReadOnlyObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_readonly;
+    if (DT.isReadWriteObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_readwrite;
+    if (DT.isAssignObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_assign;
+    if (DT.isRetainObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_retain;
+    if (DT.isCopyObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_copy;
+    if (DT.isNonAtomicObjCProperty())
+      PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_nonatomic;
+    if (PropertyAttributes)
+      addUInt(MemberDie, dwarf::DW_AT_APPLE_property_attribute, 0, 
+              PropertyAttributes);
+  }
   return MemberDie;
 }

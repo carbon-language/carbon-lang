@@ -236,6 +236,35 @@ DIType DIBuilder::createMemberType(StringRef Name,
   return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
 }
 
+/// createObjCIVar - Create debugging information entry for Objective-C
+/// instance variable.
+DIType DIBuilder::createObjCIVar(StringRef Name, 
+                                 DIFile File, unsigned LineNumber, 
+                                 uint64_t SizeInBits, uint64_t AlignInBits,
+                                 uint64_t OffsetInBits, unsigned Flags, 
+                                 DIType Ty, StringRef PropertyName,
+                                 StringRef GetterName, StringRef SetterName,
+                                 unsigned PropertyAttributes) {
+  // TAG_member is encoded in DIDerivedType format.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    File, // Or TheCU ? Ty ?
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), OffsetInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    Ty,
+    MDString::get(VMContext, PropertyName),
+    MDString::get(VMContext, GetterName),
+    MDString::get(VMContext, SetterName),
+    ConstantInt::get(Type::getInt32Ty(VMContext), PropertyAttributes)
+  };
+  return DIType(MDNode::get(VMContext, &Elts[0], array_lengthof(Elts)));
+}
+
 /// createClassType - Create debugging information entry for a class.
 DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name, 
                                   DIFile File, unsigned LineNumber, 

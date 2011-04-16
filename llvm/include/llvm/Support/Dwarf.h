@@ -231,6 +231,10 @@ enum dwarf_constants {
   DW_AT_APPLE_major_runtime_vers = 0x3fe5,
   DW_AT_APPLE_runtime_class = 0x3fe6,
   DW_AT_APPLE_omit_frame_ptr = 0x3fe7,
+  DW_AT_APPLE_property_name = 0x3fe8,
+  DW_AT_APPLE_property_getter = 0x3fe9,
+  DW_AT_APPLE_property_setter = 0x3fea,
+  DW_AT_APPLE_property_attribute = 0x3feb,
 
   // Attribute form encodings
   DW_FORM_addr = 0x01,
@@ -584,7 +588,15 @@ enum dwarf_constants {
   DW_EH_PE_datarel = 0x30,
   DW_EH_PE_funcrel = 0x40,
   DW_EH_PE_aligned = 0x50,
-  DW_EH_PE_indirect = 0x80
+  DW_EH_PE_indirect = 0x80,
+
+  // Apple Objective-C Property Attributes
+  DW_APPLE_PROPERTY_readonly = 0x01,
+  DW_APPLE_PROPERTY_readwrite = 0x02,
+  DW_APPLE_PROPERTY_assign = 0x04,
+  DW_APPLE_PROPERTY_retain = 0x08,
+  DW_APPLE_PROPERTY_copy = 0x10,
+  DW_APPLE_PROPERTY_nonatomic = 0x20
 };
 
 /// TagString - Return the string for the specified tag.

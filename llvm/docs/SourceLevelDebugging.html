@@ -551,7 +551,12 @@ DW_ATE_unsigned_char = 8
   i64,      ;; Size in bits
   i64,      ;; Alignment in bits
   i64,      ;; Offset in bits
-  metadata  ;; Reference to type derived from
+  metadata, ;; Reference to type derived from
+  metadata, ;; (optional) Name of the Objective C property assoicated with 
+            ;; Objective-C an ivar 
+  metadata, ;; (optional) Name of the Objective C property getter selector.
+  metadata, ;; (optional) Name of the Objective C property setter selector.
+  i32       ;; (optional) Objective C property attributes.
 }
 </pre>
 </div>

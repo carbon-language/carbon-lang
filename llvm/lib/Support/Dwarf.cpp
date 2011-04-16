@@ -203,6 +203,10 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_major_runtime_vers:   return "DW_AT_APPLE_major_runtime_vers";
   case DW_AT_APPLE_runtime_class:        return "DW_AT_APPLE_runtime_class";
   case DW_AT_APPLE_omit_frame_ptr:       return "DW_AT_APPLE_omit_frame_ptr";
+  case DW_AT_APPLE_property_name:        return "DW_AT_APPLE_property_name";
+  case DW_AT_APPLE_property_getter:      return "DW_AT_APPLE_property_getter";
+  case DW_AT_APPLE_property_setter:      return "DW_AT_APPLE_property_setter";
+  case DW_AT_APPLE_property_attribute:   return "DW_AT_APPLE_property_attribute";
   }
   return 0;
 }
