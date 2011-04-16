@@ -824,18 +824,18 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // quick check to see if the PHI node only contains a single non-phi value, if
   // so, scan to see if the phi cycle is actually equal to that value.
   {
-    unsigned InValNo = 0, NumOperandVals = PN.getNumIncomingValues();
+    unsigned InValNo = 0, NumIncomingVals = PN.getNumIncomingValues();
     // Scan for the first non-phi operand.
-    while (InValNo != NumOperandVals && 
+    while (InValNo != NumIncomingVals &&
            isa<PHINode>(PN.getIncomingValue(InValNo)))
       ++InValNo;
 
-    if (InValNo != NumOperandVals) {
+    if (InValNo != NumIncomingVals) {
       Value *NonPhiInVal = PN.getIncomingValue(InValNo);
       
       // Scan the rest of the operands to see if there are any conflicts, if so
       // there is no need to recursively scan other phis.
-      for (++InValNo; InValNo != NumOperandVals; ++InValNo) {
+      for (++InValNo; InValNo != NumIncomingVals; ++InValNo) {
         Value *OpVal = PN.getIncomingValue(InValNo);
         if (OpVal != NonPhiInVal && !isa<PHINode>(OpVal))
           break;
@@ -844,7 +844,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
       // If we scanned over all operands, then we have one unique value plus
       // phi values.  Scan PHI nodes to see if they all merge in each other or
       // the value.
-      if (InValNo == NumOperandVals) {
+      if (InValNo == NumIncomingVals) {
         SmallPtrSet<PHINode*, 16> ValueEqualPHIs;
         if (PHIsEqualValue(&PN, NonPhiInVal, ValueEqualPHIs))
           return ReplaceInstUsesWith(PN, NonPhiInVal);
