@@ -1602,16 +1602,16 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
   if (tcr == TC_NotApplicable) {
     // ... or if that is not possible, a static_cast, ignoring const, ...
     ExprResult CastExprRes = Owned(CastExpr);
-    tcr = TryStaticCast(*this, CastExprRes, CastTy, /*CStyle*/true, R, msg, Kind,
-                        BasePath);
+    tcr = TryStaticCast(*this, CastExprRes, CastTy, /*CStyle*/true, R, msg,
+                        Kind, BasePath);
     if (CastExprRes.isInvalid())
       return ExprError();
     CastExpr = CastExprRes.take();
     if (tcr == TC_NotApplicable) {
       // ... and finally a reinterpret_cast, ignoring const.
       CastExprRes = Owned(CastExpr);
-      tcr = TryReinterpretCast(*this, CastExprRes, CastTy, /*CStyle*/true, R, msg,
-                               Kind);
+      tcr = TryReinterpretCast(*this, CastExprRes, CastTy, /*CStyle*/true, R,
+                               msg, Kind);
       if (CastExprRes.isInvalid())
         return ExprError();
       CastExpr = CastExprRes.take();
@@ -1626,8 +1626,7 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
                                 /* Complain */ true,
                                 Found);
       
-      assert(!Fn 
-                && "cast failed but able to resolve overload expression!!");
+      assert(!Fn && "cast failed but able to resolve overload expression!!");
       (void)Fn;
 
     } else {
@@ -1643,4 +1642,3 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
 
   return Owned(CastExpr);
 }
-
