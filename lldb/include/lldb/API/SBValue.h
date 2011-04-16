@@ -99,6 +99,9 @@ public:
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);
 
+    lldb::SBValue
+    GetChildAtIndex (uint32_t idx, bool use_dynamic);
+
     // Matches children of this object only and will match base classes and
     // member names if this is a clang typed object.
     uint32_t
@@ -108,6 +111,11 @@ public:
     // classes.
     lldb::SBValue
     GetChildMemberWithName (const char *name);
+
+    // Matches child members of this object and child members of any base
+    // classes.
+    lldb::SBValue
+    GetChildMemberWithName (const char *name, bool use_dynamic);
 
     uint32_t
     GetNumChildren ();

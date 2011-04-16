@@ -339,6 +339,13 @@ SBValue::SetValueFromCString (const char *value_str)
 SBValue
 SBValue::GetChildAtIndex (uint32_t idx)
 {
+    bool use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
+    return GetChildAtIndex (idx, use_dynamic_value);
+}
+
+SBValue
+SBValue::GetChildAtIndex (uint32_t idx, bool use_dynamic_value)
+{
     lldb::ValueObjectSP child_sp;
 
     if (m_opaque_sp)
@@ -346,6 +353,16 @@ SBValue::GetChildAtIndex (uint32_t idx)
         child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
     }
 
+    if (use_dynamic_value)
+    {
+        if (child_sp)
+        {
+            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true, child_sp);
+            if (dynamic_sp)
+                child_sp = dynamic_sp;
+        }
+    }
+    
     SBValue sb_value (child_sp);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -374,6 +391,13 @@ SBValue::GetIndexOfChildWithName (const char *name)
 SBValue
 SBValue::GetChildMemberWithName (const char *name)
 {
+    bool use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
+    return GetChildMemberWithName (name, use_dynamic_value);
+}
+
+SBValue
+SBValue::GetChildMemberWithName (const char *name, bool use_dynamic_value)
+{
     lldb::ValueObjectSP child_sp;
     const ConstString str_name (name);
 
@@ -382,6 +406,16 @@ SBValue::GetChildMemberWithName (const char *name)
         child_sp = m_opaque_sp->GetChildMemberWithName (str_name, true);
     }
 
+    if (use_dynamic_value)
+    {
+        if (child_sp)
+        {
+            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true, child_sp);
+            if (dynamic_sp)
+                child_sp = dynamic_sp;
+        }
+    }
+    
     SBValue sb_value (child_sp);
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

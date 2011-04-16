@@ -77,6 +77,23 @@ CommandObjectExpression::CommandOptions::SetOptionValue (uint32_t option_idx, co
         print_object = true;
         break;
         
+    case 'd':
+        {
+            bool success;
+            bool result;
+            result = Args::StringToBoolean(option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat("Invalid dynamic value setting: \"%s\".\n", option_arg);
+            else
+            {
+                if (result)
+                    use_dynamic  = eLazyBoolYes;  
+                else
+                    use_dynamic = eLazyBoolNo;
+            }
+        }
+        break;
+        
     case 'u':
         bool success;
         unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
@@ -99,6 +116,7 @@ CommandObjectExpression::CommandOptions::OptionParsingStarting ()
     debug = false;
     format = eFormatDefault;
     print_object = false;
+    use_dynamic = eLazyBoolCalculate;
     unwind_on_error = true;
     show_types = true;
     show_summary = true;
@@ -239,8 +257,27 @@ CommandObjectExpression::EvaluateExpression
         ExecutionResults exe_results;
         
         bool keep_in_memory = true;
+        bool use_dynamic;
+        // If use dynamic is not set, get it from the target:
+        switch (m_options.use_dynamic)
+        {
+        case eLazyBoolCalculate:
+            {   
+                if (m_exe_ctx.target->GetPreferDynamicValue())
+                    use_dynamic = true;
+                else
+                    use_dynamic = false;
+            }
+            break;
+        case eLazyBoolYes:
+            use_dynamic = true;
+            break;
+        case eLazyBoolNo:
+            use_dynamic = false;
+            break;
+        }
         
-        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, keep_in_memory, result_valobj_sp);
+        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, use_dynamic, keep_in_memory, result_valobj_sp);
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {
@@ -266,6 +303,7 @@ CommandObjectExpression::EvaluateExpression
                                               m_options.show_types,     // Show types when dumping?
                                               false,                    // Show locations of variables, no since this is a host address which we don't care to see
                                               m_options.print_object,   // Print the objective C object?
+                                              use_dynamic,
                                               true,                     // Scope is already checked. Const results are always in scope.
                                               false);                   // Don't flatten output
                 if (result)
@@ -389,6 +427,7 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
 //{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
 { LLDB_OPT_SET_1, false, "format",             'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the expression output should use."},
 { LLDB_OPT_SET_2, false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone, "Print the object description of the value resulting from the expression."},
+{ LLDB_OPT_SET_2, false, "dynamic-value", 'd', required_argument,       NULL, 0, eArgTypeBoolean, "Upcast the value resulting from the expression to its dynamic type if available."},
 { LLDB_OPT_SET_ALL, false, "unwind-on-error",  'u', required_argument, NULL, 0, eArgTypeBoolean, "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
 { LLDB_OPT_SET_ALL, false, "debug",            'g', no_argument,       NULL, 0, eArgTypeNone, "Enable verbose debug logging of the expression parsing and evaluation."},
 { LLDB_OPT_SET_ALL, false, "use-ir",           'i', no_argument,       NULL, 0, eArgTypeNone, "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},

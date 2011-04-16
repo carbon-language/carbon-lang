@@ -37,8 +37,11 @@ public:
     virtual bool
     GetObjectDescription (Stream &str, ValueObject &object);
     
-    virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::ValueObjectSP in_value);
+    virtual bool
+    CouldHaveDynamicValue (ValueObject &in_value);
+    
+    virtual bool
+    GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address);
 
     // These are the ObjC specific functions.
     

@@ -84,8 +84,8 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
         if (result_sp)
         {
             // FIXME: This is not the right answer, we should have a "GetValueAsBoolean..."
-            Scalar scalar_value = result_sp->GetValue().ResolveValue (&m_exe_ctx, result_sp->GetClangAST());
-            if (scalar_value.IsValid())
+            Scalar scalar_value;
+            if (result_sp->ResolveValue (scalar_value))
             {
                 if (scalar_value.ULongLong(1) == 0)
                     m_did_stop = false;

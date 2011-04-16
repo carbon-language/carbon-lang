@@ -46,11 +46,10 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process, ModuleSP &objc_module_
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(ConstString("gdb_object_getClass")) != NULL);
 }
 
-lldb::ValueObjectSP
-AppleObjCRuntimeV2::GetDynamicValue (lldb::ValueObjectSP in_value)
+bool
+AppleObjCRuntimeV2::GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address)
 {
-    lldb::ValueObjectSP ret_sp;
-    return ret_sp;
+    return false;
 }
 
 //------------------------------------------------------------------

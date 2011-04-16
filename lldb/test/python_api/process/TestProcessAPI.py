@@ -209,7 +209,13 @@ class ProcessAPITestCase(TestBase):
         if not error.Success() or result != byteSize:
             self.fail("SBProcess.WriteMemory() failed")
 
-        # Get the SBValue for the global variable 'my_int' again, with its updated value.
+        # Make sure that the val we got originally updates itself to notice the change:
+        self.expect(val.GetValue(frame),
+                    "SBProcess.ReadMemory() successfully writes (int)256 to the memory location for 'my_int'",
+                    exe=False,
+            startstr = '256')
+
+        # And for grins, get the SBValue for the global variable 'my_int' again, to make sure that also tracks the new value:
         val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)
         self.expect(val.GetValue(frame),
                     "SBProcess.ReadMemory() successfully writes (int)256 to the memory location for 'my_int'",

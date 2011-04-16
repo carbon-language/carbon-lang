@@ -30,9 +30,12 @@ namespace lldb_private {
         virtual bool
         IsVTableName (const char *name);
         
-        virtual lldb::ValueObjectSP
-        GetDynamicValue (lldb::ValueObjectSP in_value);
-
+        virtual bool
+        GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address);
+        
+        virtual bool
+        CouldHaveDynamicValue (ValueObject &in_value);
+        
         //------------------------------------------------------------------
         // Static Functions
         //------------------------------------------------------------------

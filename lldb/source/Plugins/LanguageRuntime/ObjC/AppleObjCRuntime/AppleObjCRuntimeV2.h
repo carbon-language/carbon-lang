@@ -31,8 +31,8 @@ public:
     ~AppleObjCRuntimeV2() { }
     
     // These are generic runtime functions:
-    virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::ValueObjectSP in_value);
+    virtual bool
+    GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address);
     
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *);

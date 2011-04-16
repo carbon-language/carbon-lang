@@ -33,7 +33,8 @@ public:
     enum ExpressionPathOption
     {
         eExpressionPathOptionCheckPtrVsMember   = (1u << 0),
-        eExpressionPathOptionsNoFragileObjcIvar = (1u << 1)
+        eExpressionPathOptionsNoFragileObjcIvar = (1u << 1),
+        eExpressionPathOptionsDynamicValue      = (1u << 2)
     };
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -133,10 +134,10 @@ public:
     }
     
     lldb::ValueObjectSP
-    GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp);
+    GetValueObjectForFrameVariable (const lldb::VariableSP &variable_sp, bool use_dynamic);
 
     lldb::ValueObjectSP
-    TrackGlobalVariable (const lldb::VariableSP &variable_sp);
+    TrackGlobalVariable (const lldb::VariableSP &variable_sp, bool use_dynamic);
     
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions

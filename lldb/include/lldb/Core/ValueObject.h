@@ -306,7 +306,7 @@ public:
 
     bool
     ResolveValue (Scalar &scalar);
-
+    
     const char *
     GetLocationAsCString ();
 
@@ -325,9 +325,6 @@ public:
     bool
     UpdateValueIfNeeded ();
 
-    const DataExtractor &
-    GetDataExtractor () const;
-
     DataExtractor &
     GetDataExtractor ();
 
@@ -345,10 +342,10 @@ public:
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
     
     lldb::ValueObjectSP
-    GetDynamicValue ()
-    {
-        return m_dynamic_value_sp;
-    }
+    GetDynamicValue (bool can_create);
+    
+    lldb::ValueObjectSP
+    GetDynamicValue (bool can_create, lldb::ValueObjectSP &owning_valobj_sp);
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
@@ -369,8 +366,11 @@ public:
         m_object_desc_str.clear();
     }
 
-    bool
-    SetDynamicValue ();
+    virtual bool
+    IsDynamic ()
+    {
+        return false;
+    }
 
     static void
     DumpValueObject (Stream &s,
@@ -382,6 +382,7 @@ public:
                      bool show_types,
                      bool show_location,
                      bool use_objc,
+                     bool use_dynamic,
                      bool scope_already_checked,
                      bool flat_output);
 
@@ -411,13 +412,16 @@ public:
         m_format = format;
     }
 
-    ValueObject *
+    // Use GetParent for display purposes, but if you want to tell the parent to update itself
+    // then use m_parent.  The ValueObjectDynamicValue's parent is not the correct parent for
+    // displaying, they are really siblings, so for display it needs to route through to its grandparent.
+    virtual ValueObject *
     GetParent()
     {
         return m_parent;
     }
 
-    const ValueObject *
+    virtual const ValueObject *
     GetParent() const
     {
         return m_parent;
@@ -436,8 +440,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
-    ValueObject*        m_parent;       // The parent value object, or NULL if this has no parent
-    EvaluationPoint   m_update_point; // Stores both the stop id and the full context at which this value was last 
+    ValueObject  *m_parent;       // The parent value object, or NULL if this has no parent
+    EvaluationPoint      m_update_point; // Stores both the stop id and the full context at which this value was last 
                                         // updated.  When we are asked to update the value object, we check whether
                                         // the context & stop id are the same before updating.
     ConstString         m_name;         // The name of this object
@@ -453,6 +457,10 @@ protected:
     std::vector<lldb::ValueObjectSP> m_children;
     std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
     lldb::ValueObjectSP m_dynamic_value_sp;
+    lldb::ValueObjectSP m_addr_of_valobj_sp; // These two shared pointers help root the ValueObject shared pointers that
+    lldb::ValueObjectSP m_deref_valobj_sp;   // we hand out, so that we can use them in their dynamic types and ensure
+                                             // they will last as long as this ValueObject...
+
     lldb::Format        m_format;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
@@ -463,6 +471,7 @@ protected:
     
     friend class CommandObjectExpression;
     friend class ClangExpressionVariable;
+    friend class ClangExpressionDeclMap;  // For GetValue...
     friend class Target;
     friend class ValueObjectChild;
     //------------------------------------------------------------------
@@ -486,6 +495,9 @@ protected:
     virtual bool
     UpdateValue () = 0;
 
+    virtual void
+    CalculateDynamicValue ();
+    
     // Should only be called by ValueObject::GetChildAtIndex()
     virtual lldb::ValueObjectSP
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
@@ -509,7 +521,7 @@ protected:
     void
     SetValueIsValid (bool valid);
 
-
+public:
     lldb::addr_t
     GetPointerValue (AddressType &address_type, 
                      bool scalar_is_load_address);

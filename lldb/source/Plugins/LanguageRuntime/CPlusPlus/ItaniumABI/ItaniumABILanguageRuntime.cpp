@@ -15,6 +15,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -30,12 +32,134 @@ using namespace lldb_private;
 static const char *pluginName = "ItaniumABILanguageRuntime";
 static const char *pluginDesc = "Itanium ABI for the C++ language";
 static const char *pluginShort = "language.itanium";
+static const char *vtable_demangled_prefix = "vtable for ";
 
-lldb::ValueObjectSP
-ItaniumABILanguageRuntime::GetDynamicValue (ValueObjectSP in_value)
+bool
+ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    ValueObjectSP ret_sp;
-    return ret_sp;
+    return in_value.IsPointerOrReferenceType();
+}
+
+bool
+ItaniumABILanguageRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP &dynamic_type_sp, Address &dynamic_address)
+{
+    // For Itanium, if the type has a vtable pointer in the object, it will be at offset 0
+    // in the object.  That will point to the "address point" within the vtable (not the beginning of the
+    // vtable.)  We can then look up the symbol containing this "address point" and that symbol's name 
+    // demangled will contain the full class name.
+    // The second pointer above the "address point" is the "offset_to_top".  We'll use that to get the
+    // start of the value object which holds the dynamic type.
+    //
+    
+    // Only a pointer or reference type can have a different dynamic and static type:
+    if (CouldHaveDynamicValue (in_value))
+    {
+        // FIXME: Can we get the Clang Type and ask it if the thing is really virtual?  That would avoid false positives,
+        // at the cost of not looking for the dynamic type of objects if DWARF->Clang gets it wrong.
+        
+        // First job, pull out the address at 0 offset from the object.
+        AddressType address_type;
+        lldb::addr_t original_ptr = in_value.GetPointerValue(address_type, true);
+        if (original_ptr == LLDB_INVALID_ADDRESS)
+            return false;
+            
+        Target *target = in_value.GetUpdatePoint().GetTarget();
+        Process *process = in_value.GetUpdatePoint().GetProcess();
+
+        char memory_buffer[16];
+        DataExtractor data(memory_buffer, sizeof(memory_buffer), 
+                           process->GetByteOrder(), 
+                           process->GetAddressByteSize());
+        size_t address_byte_size = process->GetAddressByteSize();
+        Error error;
+        size_t bytes_read = process->ReadMemory (original_ptr, 
+                                                 memory_buffer, 
+                                                 address_byte_size, 
+                                                 error);
+        if (!error.Success() || (bytes_read != address_byte_size))
+        {
+            return false;
+        }
+        
+        uint32_t offset_ptr = 0;
+        lldb::addr_t vtable_address_point = data.GetAddress (&offset_ptr);
+            
+        if (offset_ptr == 0)
+            return false;
+        
+        // Now find the symbol that contains this address:
+        
+        SymbolContext sc;
+        Address address_point_address;
+        if (target && !target->GetSectionLoadList().IsEmpty())
+        {
+            if (target->GetSectionLoadList().ResolveLoadAddress (vtable_address_point, address_point_address))
+            {
+                target->GetImages().ResolveSymbolContextForAddress (address_point_address, eSymbolContextSymbol, sc);
+                Symbol *symbol = sc.symbol;
+                if (symbol != NULL)
+                {
+                    const char *name = symbol->GetMangled().GetDemangledName().AsCString();
+                    if (strstr(name, vtable_demangled_prefix) == name)
+                    {
+                         // We are a C++ class, that's good.  Get the class name and look it up:
+                        const char *class_name = name + strlen(vtable_demangled_prefix);
+                        TypeList class_types;
+                        uint32_t num_matches = target->GetImages().FindTypes (sc, 
+                                                                              ConstString(class_name),
+                                                                              true,
+                                                                              UINT32_MAX,
+                                                                              class_types);
+                        if (num_matches == 1)
+                        {
+                            dynamic_type_sp = class_types.GetTypeAtIndex(0);
+                        }
+                        else if (num_matches > 1)
+                        {
+                            // How to sort out which of the type matches to pick?
+                        }
+                        
+                        if (!dynamic_type_sp)
+                            return false;
+                            
+                        // The offset_to_top is two pointers above the address.
+                        Address offset_to_top_address = address_point_address;
+                        int64_t slide = -2 * ((int64_t) target->GetArchitecture().GetAddressByteSize());
+                        offset_to_top_address.Slide (slide);
+                        
+                        Error error;
+                        lldb::addr_t offset_to_top_location = offset_to_top_address.GetLoadAddress(target);
+                        
+                        size_t bytes_read = process->ReadMemory (offset_to_top_location, 
+                                                                 memory_buffer, 
+                                                                 address_byte_size, 
+                                                                 error);
+                                                                 
+                        if (!error.Success() || (bytes_read != address_byte_size))
+                        {
+                            return false;
+                        }
+                        
+                        offset_ptr = 0;
+                        int64_t offset_to_top = data.GetMaxS64(&offset_ptr, process->GetAddressByteSize());
+                        
+                        // So the dynamic type is a value that starts at offset_to_top
+                        // above the original address.
+                        lldb::addr_t dynamic_addr = original_ptr + offset_to_top;
+                        if (!target->GetSectionLoadList().ResolveLoadAddress (dynamic_addr, dynamic_address))
+                        {
+                            dynamic_address.SetOffset(dynamic_addr);
+                            dynamic_address.SetSection(NULL);
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        
+    }
+    
+    return false;
 }
 
 bool

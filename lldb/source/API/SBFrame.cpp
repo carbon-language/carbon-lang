@@ -343,6 +343,13 @@ SBFrame::Clear()
 SBValue
 SBFrame::FindVariable (const char *name)
 {
+    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    return FindVariable (name, use_dynamic);
+}
+
+SBValue
+SBFrame::FindVariable (const char *name, bool use_dynamic)
+{
     VariableSP var_sp;
     if (m_opaque_sp && name && name[0])
     {
@@ -369,7 +376,7 @@ SBFrame::FindVariable (const char *name)
     SBValue sb_value;
     
     if (var_sp)
-        *sb_value = ValueObjectSP (new ValueObjectVariable (m_opaque_sp.get(), var_sp));
+        *sb_value = ValueObjectSP (m_opaque_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic));
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -381,6 +388,13 @@ SBFrame::FindVariable (const char *name)
 
 SBValue
 SBFrame::FindValue (const char *name, ValueType value_type)
+{
+    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    return FindValue (name, value_type, use_dynamic);
+}
+
+SBValue
+SBFrame::FindValue (const char *name, ValueType value_type, bool use_dynamic)
 {
     SBValue sb_value;
     if (m_opaque_sp && name && name[0])
@@ -416,7 +430,8 @@ SBFrame::FindValue (const char *name, ValueType value_type)
                             variable_sp->GetScope() == value_type &&
                             variable_sp->GetName() == const_name)
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectVariable (m_opaque_sp.get(), variable_sp));
+                            *sb_value = ValueObjectSP (m_opaque_sp->GetValueObjectForFrameVariable(variable_sp, 
+                                                                                                   use_dynamic));
                             break;
                         }
                     }
@@ -564,6 +579,17 @@ SBFrame::GetVariables (bool arguments,
                        bool statics,
                        bool in_scope_only)
 {
+    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    return GetVariables (arguments, locals, statics, in_scope_only, use_dynamic);
+}
+
+SBValueList
+SBFrame::GetVariables (bool arguments,
+                       bool locals,
+                       bool statics,
+                       bool in_scope_only,
+                       bool use_dynamic)
+{
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
@@ -619,7 +645,7 @@ SBFrame::GetVariables (bool arguments,
                             if (in_scope_only && !variable_sp->IsInScope(m_opaque_sp.get()))
                                 continue;
 
-                            value_list.Append(m_opaque_sp->GetValueObjectForFrameVariable (variable_sp));
+                            value_list.Append(m_opaque_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic));
                         }
                     }
                 }
@@ -680,6 +706,13 @@ SBFrame::GetDescription (SBStream &description)
 SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
+    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    return EvaluateExpression (expr, use_dynamic);
+}
+
+SBValue
+SBFrame::EvaluateExpression (const char *expr, bool fetch_dynamic_value)
+{
     Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -696,14 +729,23 @@ SBFrame::EvaluateExpression (const char *expr)
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
 
-        exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, m_opaque_sp.get(), unwind_on_error, keep_in_memory, *expr_result);
+        exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, 
+                                                                                           m_opaque_sp.get(), 
+                                                                                           unwind_on_error, 
+                                                                                           fetch_dynamic_value, 
+                                                                                           keep_in_memory, 
+                                                                                           *expr_result);
     }
     
     if (expr_log)
-        expr_log->Printf("** [SBFrame::EvaluateExpression] Expression result is %s, summary %s **", expr_result.GetValue(*this), expr_result.GetSummary(*this));
+        expr_log->Printf("** [SBFrame::EvaluateExpression] Expression result is %s, summary %s **", 
+                         expr_result.GetValue(*this), 
+                         expr_result.GetSummary(*this));
     
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), expr, expr_result.get());
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p)", m_opaque_sp.get(), 
+                     expr, 
+                     expr_result.get());
 
     return expr_result;
 }

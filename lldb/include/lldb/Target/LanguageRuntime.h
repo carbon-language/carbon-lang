@@ -42,9 +42,14 @@ public:
     virtual bool
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) = 0;
     
-    virtual lldb::ValueObjectSP
-    GetDynamicValue (lldb::ValueObjectSP in_value) = 0;
+    virtual bool
+    GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address) = 0;
     
+    // This should be a fast test to determine whether it is likely that this value would
+    // have a dynamic type.
+    virtual bool
+    CouldHaveDynamicValue (ValueObject &in_value) = 0;
+
     virtual void
     SetExceptionBreakpoints ()
     {

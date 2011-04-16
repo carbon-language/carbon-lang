@@ -97,7 +97,7 @@ ValueObjectChild::UpdateValue ()
     ValueObject* parent = m_parent;
     if (parent)
     {
-        if (parent->UpdateValue())
+        if (parent->UpdateValueIfNeeded())
         {
             m_value.SetContext(Value::eContextTypeClangType, m_clang_type);
 

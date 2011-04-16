@@ -310,6 +310,22 @@ public:
             switch (short_option)
             {
             case 'o':   use_objc     = true;  break;
+            case 'd':
+                {
+                    bool success;
+                    bool result;
+                    result = Args::StringToBoolean(option_arg, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("Invalid dynamic value setting: \"%s\".\n", option_arg);
+                    else
+                    {
+                        if (result)
+                            use_dynamic  = eLazyBoolYes;  
+                        else
+                            use_dynamic = eLazyBoolNo;
+                    }
+                }
+                break;
             case 'r':   use_regex    = true;  break;
             case 'a':   show_args    = false; break;
             case 'l':   show_locals  = false; break;
@@ -321,7 +337,7 @@ public:
             case 'D':   debug        = true;  break;
             case 'f':   error = Args::StringToFormat(option_arg, format); break;
             case 'F':   flat_output  = true;  break;
-            case 'd':
+            case 'A':
                 max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
                 if (!success)
                     error.SetErrorStringWithFormat("Invalid max depth '%s'.\n", option_arg);
@@ -364,6 +380,7 @@ public:
             show_decl     = false;
             debug         = false;
             flat_output   = false;
+            use_dynamic   = eLazyBoolCalculate;
             max_depth     = UINT32_MAX;
             ptr_depth     = 0;
             format        = eFormatDefault;
@@ -391,6 +408,7 @@ public:
              show_decl:1,
              debug:1,
              flat_output:1;
+        LazyBool     use_dynamic;
         uint32_t max_depth; // The depth to print when dumping concrete (not pointers) aggreate values
         uint32_t ptr_depth; // The default depth that is dumped when we find pointers
         lldb::Format format; // The format to use when dumping variables or children of variables
@@ -461,7 +479,28 @@ public:
 
             VariableSP var_sp;
             ValueObjectSP valobj_sp;
-            //ValueObjectList &valobj_list = exe_ctx.frame->GetValueObjectList();
+
+            bool use_dynamic;
+            
+            // If use dynamic is not set, get it from the target:
+            switch (m_options.use_dynamic)
+            {
+            case eLazyBoolCalculate:
+                {   
+                    if (exe_ctx.target->GetPreferDynamicValue())
+                        use_dynamic = true;
+                    else
+                        use_dynamic = false;
+                }
+                break;
+            case eLazyBoolYes:
+                use_dynamic = true;
+                break;
+            case eLazyBoolNo:
+                use_dynamic = false;
+                break;
+            }
+            
             const char *name_cstr = NULL;
             size_t idx;
             if (!m_options.globals.empty())
@@ -473,12 +512,17 @@ public:
                     for (idx = 0; idx < num_globals; ++idx)
                     {
                         VariableList global_var_list;
-                        const uint32_t num_matching_globals = exe_ctx.target->GetImages().FindGlobalVariables (m_options.globals[idx], true, UINT32_MAX, global_var_list);
+                        const uint32_t num_matching_globals 
+                                = exe_ctx.target->GetImages().FindGlobalVariables (m_options.globals[idx], 
+                                                                                   true, 
+                                                                                   UINT32_MAX, 
+                                                                                   global_var_list);
 
                         if (num_matching_globals == 0)
                         {
                             ++fail_count;
-                            result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", m_options.globals[idx].AsCString());
+                            result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", 
+                                                            m_options.globals[idx].AsCString());
                         }
                         else
                         {
@@ -487,9 +531,9 @@ public:
                                 var_sp = global_var_list.GetVariableAtIndex(global_idx);
                                 if (var_sp)
                                 {
-                                    valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
+                                    valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp, use_dynamic);
                                     if (!valobj_sp)
-                                        valobj_sp = exe_ctx.frame->TrackGlobalVariable (var_sp);
+                                        valobj_sp = exe_ctx.frame->TrackGlobalVariable (var_sp, use_dynamic);
 
                                     if (valobj_sp)
                                     {
@@ -501,7 +545,7 @@ public:
                                             var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                             s.PutCString (": ");
                                         }
-
+                                        
                                         ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                       valobj_sp.get(), 
                                                                       name_cstr, 
@@ -510,7 +554,8 @@ public:
                                                                       m_options.max_depth, 
                                                                       m_options.show_types,
                                                                       m_options.show_location,
-                                                                      m_options.use_objc, 
+                                                                      m_options.use_objc,
+                                                                      use_dynamic,
                                                                       false,
                                                                       m_options.flat_output);                                        
                                     }
@@ -541,7 +586,9 @@ public:
                             if (regex.Compile(name_cstr))
                             {
                                 size_t num_matches = 0;
-                                const size_t num_new_regex_vars = variable_list->AppendVariablesIfUnique(regex, regex_var_list, num_matches);
+                                const size_t num_new_regex_vars = variable_list->AppendVariablesIfUnique(regex, 
+                                                                                                         regex_var_list, 
+                                                                                                         num_matches);
                                 if (num_new_regex_vars > 0)
                                 {
                                     for (uint32_t regex_idx = regex_start_index, end_index = regex_var_list.GetSize(); 
@@ -551,9 +598,9 @@ public:
                                         var_sp = regex_var_list.GetVariableAtIndex (regex_idx);
                                         if (var_sp)
                                         {
-                                            valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
+                                            valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp, use_dynamic);
                                             if (valobj_sp)
-                                            {
+                                            {                                        
                                                 if (m_options.format != eFormatDefault)
                                                     valobj_sp->SetFormat (m_options.format);
                                                 
@@ -571,7 +618,8 @@ public:
                                                                               m_options.max_depth, 
                                                                               m_options.show_types,
                                                                               m_options.show_location,
-                                                                              m_options.use_objc, 
+                                                                              m_options.use_objc,
+                                                                              use_dynamic, 
                                                                               false,
                                                                               m_options.flat_output);                                        
                                             }
@@ -595,10 +643,20 @@ public:
                         else
                         {
                             Error error;
-                            const uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
+                            uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember;
+                            if (use_dynamic)
+                                expr_path_options |= StackFrame::eExpressionPathOptionsDynamicValue;
+                                
                             valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, expr_path_options, error);
                             if (valobj_sp)
                             {
+//                                if (use_dynamic)
+//                                {
+//                                    lldb::ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue(true, valobj_sp);
+//                                    if (dynamic_sp != NULL)
+//                                        valobj_sp = dynamic_sp;
+//                                }
+//
                                 if (m_options.format != eFormatDefault)
                                     valobj_sp->SetFormat (m_options.format);
                                 
@@ -615,7 +673,8 @@ public:
                                                               m_options.max_depth, 
                                                               m_options.show_types,
                                                               m_options.show_location,
-                                                              m_options.use_objc, 
+                                                              m_options.use_objc,
+                                                              use_dynamic,
                                                               false,
                                                               m_options.flat_output);
                             }
@@ -639,6 +698,7 @@ public:
                         for (uint32_t i=0; i<num_variables; i++)
                         {
                             var_sp = variable_list->GetVariableAtIndex(i);
+                            
                             bool dump_variable = true;
                             
                             switch (var_sp->GetScope())
@@ -677,7 +737,7 @@ public:
                                 // Use the variable object code to make sure we are
                                 // using the same APIs as the the public API will be
                                 // using...
-                                valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp);
+                                valobj_sp = exe_ctx.frame->GetValueObjectForFrameVariable (var_sp, use_dynamic);
                                 if (valobj_sp)
                                 {
                                     if (m_options.format != eFormatDefault)
@@ -700,7 +760,8 @@ public:
                                                                       m_options.max_depth, 
                                                                       m_options.show_types,
                                                                       m_options.show_location,
-                                                                      m_options.use_objc, 
+                                                                      m_options.use_objc,
+                                                                      use_dynamic, 
                                                                       false,
                                                                       m_options.flat_output);                                        
                                     }
@@ -722,22 +783,23 @@ protected:
 OptionDefinition
 CommandObjectFrameVariable::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "debug",      'D', no_argument,       NULL, 0, eArgTypeNone,    "Enable verbose debug information."},
-{ LLDB_OPT_SET_1, false, "depth",      'd', required_argument, NULL, 0, eArgTypeCount,   "Set the max recurse depth when dumping aggregate types (default is infinity)."},
-{ LLDB_OPT_SET_1, false, "show-globals",'g', no_argument,      NULL, 0, eArgTypeNone,    "Show the current frame source file global and static variables."},
-{ LLDB_OPT_SET_1, false, "find-global",'G', required_argument, NULL, 0, eArgTypeVarName, "Find a global variable by name (which might not be in the current stack frame source file)."},
-{ LLDB_OPT_SET_1, false, "location",   'L', no_argument,       NULL, 0, eArgTypeNone,    "Show variable location information."},
-{ LLDB_OPT_SET_1, false, "show-declaration", 'c', no_argument, NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
-{ LLDB_OPT_SET_1, false, "no-args",    'a', no_argument,       NULL, 0, eArgTypeNone,    "Omit function arguments."},
-{ LLDB_OPT_SET_1, false, "no-locals",  'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
-{ LLDB_OPT_SET_1, false, "show-types", 't', no_argument,       NULL, 0, eArgTypeNone,    "Show variable types when dumping values."},
-{ LLDB_OPT_SET_1, false, "no-summary", 'y', no_argument,       NULL, 0, eArgTypeNone,    "Omit summary information."},
-{ LLDB_OPT_SET_1, false, "scope",      's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
-{ LLDB_OPT_SET_1, false, "objc",       'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name, print as an Objective-C object."},
-{ LLDB_OPT_SET_1, false, "ptr-depth",  'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
-{ LLDB_OPT_SET_1, false, "regex",      'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
-{ LLDB_OPT_SET_1, false, "flat",       'F', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},
-{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the variable output should use."},
+{ LLDB_OPT_SET_1, false, "aggregate-depth", 'A', required_argument, NULL, 0, eArgTypeCount,   "Set the max recurse depth when dumping aggregate types (default is infinity)."},
+{ LLDB_OPT_SET_1, false, "no-args",         'a', no_argument,       NULL, 0, eArgTypeNone,    "Omit function arguments."},
+{ LLDB_OPT_SET_1, false, "show-declaration",'c', no_argument,       NULL, 0, eArgTypeNone,    "Show variable declaration information (source file and line where the variable was declared)."},
+{ LLDB_OPT_SET_1, false, "debug",           'D', no_argument,       NULL, 0, eArgTypeNone,    "Enable verbose debug information."},
+{ LLDB_OPT_SET_1, false, "dynamic-type",    'd', required_argument, NULL, 0, eArgTypeBoolean, "Show the object as its full dynamic type, not its static type, if available."},
+{ LLDB_OPT_SET_1, false, "format",          'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the variable output should use."},
+{ LLDB_OPT_SET_1, false, "flat",            'F', no_argument,       NULL, 0, eArgTypeNone,    "Display results in a flat format that uses expression paths for each variable or member."},
+{ LLDB_OPT_SET_1, false, "show-globals",    'g', no_argument,       NULL, 0, eArgTypeNone,    "Show the current frame source file global and static variables."},
+{ LLDB_OPT_SET_1, false, "find-global",     'G', required_argument, NULL, 0, eArgTypeVarName, "Find a global variable by name (which might not be in the current stack frame source file)."},
+{ LLDB_OPT_SET_1, false, "location",        'L', no_argument,       NULL, 0, eArgTypeNone,    "Show variable location information."},
+{ LLDB_OPT_SET_1, false, "no-locals",       'l', no_argument,       NULL, 0, eArgTypeNone,    "Omit local variables."},
+{ LLDB_OPT_SET_1, false, "objc",            'o', no_argument,       NULL, 0, eArgTypeNone,    "When looking up a variable by name, print as an Objective-C object."},
+{ LLDB_OPT_SET_1, false, "ptr-depth",       'p', required_argument, NULL, 0, eArgTypeCount,   "The number of pointers to be traversed when dumping values (default is zero)."},
+{ LLDB_OPT_SET_1, false, "regex",           'r', no_argument,       NULL, 0, eArgTypeRegularExpression,    "The <variable-name> argument for name lookups are regular expressions."},
+{ LLDB_OPT_SET_1, false, "scope",           's', no_argument,       NULL, 0, eArgTypeNone,    "Show variable scope (argument, local, global, static)."},
+{ LLDB_OPT_SET_1, false, "show-types",      't', no_argument,       NULL, 0, eArgTypeNone,    "Show variable types when dumping values."},
+{ LLDB_OPT_SET_1, false, "no-summary",      'y', no_argument,       NULL, 0, eArgTypeNone,    "Omit summary information."},
 { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 #pragma mark CommandObjectMultiwordFrame

@@ -551,7 +551,6 @@
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
-				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
 				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
@@ -592,7 +591,6 @@
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
-				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
@@ -633,7 +631,6 @@
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
-				PREBINDING = NO;
 				PRODUCT_NAME = debugserver;
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";

@@ -66,6 +66,12 @@ public:
                               StringList &value,
                               Error *err);
 
+    bool
+    GetPreferDynamicValue()
+    {
+        return m_prefer_dynamic_value;
+    }
+    
 protected:
 
     void
@@ -77,6 +83,7 @@ protected:
     
     std::string m_expr_prefix_path;
     std::string m_expr_prefix_contents;
+    bool        m_prefer_dynamic_value;
 
 };
 
@@ -461,6 +468,7 @@ public:
                         StackFrame *frame,
                         bool unwind_on_error,
                         bool keep_in_memory,
+                        bool fetch_dynamic_value,
                         lldb::ValueObjectSP &result_valobj_sp);
 
     ClangPersistentVariables &

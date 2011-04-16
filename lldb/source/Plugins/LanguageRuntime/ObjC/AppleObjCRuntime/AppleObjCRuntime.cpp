@@ -191,11 +191,16 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
     return m_PrintForDebugger_addr.get();
 }
 
-lldb::ValueObjectSP
-AppleObjCRuntime::GetDynamicValue (lldb::ValueObjectSP in_value)
+bool
+AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    lldb::ValueObjectSP ret_sp;
-    return ret_sp;
+    return in_value.IsPointerType();
+}
+
+bool
+AppleObjCRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address)
+{
+    return false;
 }
 
 bool

@@ -887,6 +887,7 @@ Target::EvaluateExpression
     StackFrame *frame,
     bool unwind_on_error,
     bool keep_in_memory,
+    bool fetch_dynamic_value,
     lldb::ValueObjectSP &result_valobj_sp
 )
 {
@@ -927,7 +928,16 @@ Target::EvaluateExpression
             const_valobj_sp->SetName (persistent_variable_name);
         }
         else
+        {
+            if (fetch_dynamic_value)
+            {
+                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(true, result_valobj_sp);
+                if (dynamic_sp)
+                    result_valobj_sp = dynamic_sp;
+            }
+
             const_valobj_sp = result_valobj_sp->CreateConstantValue (persistent_variable_name);
+        }
 
         lldb::ValueObjectSP live_valobj_sp = result_valobj_sp;
         
@@ -1277,11 +1287,12 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 }
 
 
-#define TSC_DEFAULT_ARCH    "default-arch"
-#define TSC_EXPR_PREFIX     "expr-prefix"
-#define TSC_EXEC_LEVEL      "execution-level"
-#define TSC_EXEC_MODE       "execution-mode"
-#define TSC_EXEC_OS_TYPE    "execution-os-type"
+#define TSC_DEFAULT_ARCH      "default-arch"
+#define TSC_EXPR_PREFIX       "expr-prefix"
+#define TSC_EXEC_LEVEL        "execution-level"
+#define TSC_EXEC_MODE         "execution-mode"
+#define TSC_EXEC_OS_TYPE      "execution-os-type"
+#define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
 
 
 static const ConstString &
@@ -1317,6 +1328,13 @@ static const ConstString &
 GetSettingNameForExecutionOSType ()
 {
     static ConstString g_const_string (TSC_EXEC_OS_TYPE);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForPreferDynamicValue ()
+{
+    static ConstString g_const_string (TSC_PREFER_DYNAMIC);
     return g_const_string;
 }
 
@@ -1369,7 +1387,8 @@ TargetInstanceSettings::TargetInstanceSettings
 ) :
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_expr_prefix_path (),
-    m_expr_prefix_contents ()
+    m_expr_prefix_contents (),
+    m_prefer_dynamic_value (true)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1467,6 +1486,39 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
             return;
         }
     }
+    else if (var_name == GetSettingNameForPreferDynamicValue())
+    {
+        switch (op)
+        {
+        default:
+            err.SetErrorToGenericError ();
+            err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
+            return;
+        case eVarSetOperationAssign:
+            {
+                bool success;
+                bool result = Args::StringToBoolean(value, false, &success);
+
+                if (success)
+                {
+                    m_prefer_dynamic_value = result;
+                }
+                else
+                {
+                    err.SetErrorStringWithFormat ("Bad value \"%s\" for %s, should be Boolean.", 
+                                                  value, 
+                                                  GetSettingNameForPreferDynamicValue().AsCString());
+                }
+                return;
+            }
+        case eVarSetOperationClear:
+           m_prefer_dynamic_value = true;
+        case eVarSetOperationAppend:
+            err.SetErrorToGenericError ();
+            err.SetErrorString ("Cannot append to a bool.\n");
+            return;
+        }
+    }
 }
 
 void
@@ -1479,6 +1531,7 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     
     m_expr_prefix_path      = new_settings_ptr->m_expr_prefix_path;
     m_expr_prefix_contents  = new_settings_ptr->m_expr_prefix_contents;
+    m_prefer_dynamic_value  = new_settings_ptr->m_prefer_dynamic_value;
 }
 
 bool
@@ -1490,6 +1543,13 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     if (var_name == GetSettingNameForExpressionPrefix ())
     {
         value.AppendString (m_expr_prefix_path.c_str(), m_expr_prefix_path.size());
+    }
+    else if (var_name == GetSettingNameForPreferDynamicValue())
+    {
+        if (m_prefer_dynamic_value)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
     }
     else 
     {
@@ -1533,5 +1593,6 @@ Target::SettingsController::instance_settings_table[] =
     // var-name           var-type           default      enum  init'd hidden help-text
     // =================  ================== ===========  ====  ====== ====== =========================================================================
     { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL      , NULL, false, false, "Path to a file containing expressions to be prepended to all expressions." },
+    { TSC_PREFER_DYNAMIC, eSetVarTypeBoolean ,"true"    , NULL, false, false, "Should printed values be shown as their dynamic value." },
     { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
 };

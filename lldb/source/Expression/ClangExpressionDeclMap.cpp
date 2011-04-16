@@ -848,7 +848,6 @@ ClangExpressionDeclMap::DoMaterialize
             // with with a '$' character...
             if (member_sp->GetName().AsCString ("!")[0] == '$' && persistent_vars.ContainsVariable(member_sp))
             {
-                bool keep_this_in_memory = false;
                 
                 if (member_sp->GetName() == m_struct_vars->m_result_name)
                 {
@@ -858,7 +857,6 @@ ClangExpressionDeclMap::DoMaterialize
                     if (result_sp_ptr)
                         *result_sp_ptr = member_sp;
                     
-                    keep_this_in_memory = m_keep_result_in_memory;
                 }
 
                 if (!DoMaterializeOnePersistentVariable (dematerialize, 

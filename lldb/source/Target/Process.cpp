@@ -1902,6 +1902,12 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 
     if (buf == NULL || size == 0)
         return 0;
+
+    // Need to bump the stop ID after writing so that ValueObjects will know to re-read themselves.
+    // FUTURE: Doing this should be okay, but if anybody else gets upset about the stop_id changing when
+    // the target hasn't run, then we will need to add a "memory generation" as well as a stop_id...
+    m_stop_id++;
+
     // We need to write any data that would go where any current software traps
     // (enabled software breakpoints) any software traps (breakpoints) that we
     // may have placed in our tasks memory.
@@ -1962,7 +1968,7 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
                                              ubuf + bytes_written, 
                                              size - bytes_written, 
                                              error);
-    
+                                             
     return bytes_written;
 }
 
