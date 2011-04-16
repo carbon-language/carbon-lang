@@ -27,8 +27,8 @@ ModulePass *createOptimalEdgeProfilerPass();
 // Insert path profiling instrumentation
 ModulePass *createPathProfilerPass();
 
-// Insert line profiling instrumentation
-ModulePass *createLineProfilerPass();
+// Insert GCOV profiling instrumentation
+ModulePass *createGCOVProfilerPass();
 
 } // End llvm namespace
 
