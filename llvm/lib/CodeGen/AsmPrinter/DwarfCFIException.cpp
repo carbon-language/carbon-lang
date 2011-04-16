@@ -113,15 +113,12 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   switch (PerEncoding & 0x70) {
   default:
     report_fatal_error("We do not support this DWARF encoding yet!");
-  case dwarf::DW_EH_PE_absptr: {
+  case dwarf::DW_EH_PE_absptr:
     Sym = Asm->Mang->getSymbol(Per);
     break;
-  }
-  case dwarf::DW_EH_PE_pcrel: {
-    MCContext &Context = Asm->OutStreamer.getContext();
+  case dwarf::DW_EH_PE_pcrel:
     Sym = TLOF.getPersonalityPICSymbol(Per->getName());
     break;
-  }
   }
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 }
