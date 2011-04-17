@@ -17,3 +17,31 @@ namespace Test3 {
   // CHECK: %"struct.Test3::A" = type { i32 (...)**, i32 }
   struct A { virtual void f(); int a; } *a;
 }
+
+namespace Test4 {
+  // Test from PR5589.
+  // CHECK: %"struct.Test4::A" = type { i32, i8, float }
+  // CHECK: %"struct.Test4::B" = type { %"struct.Test4::A", i16, double }
+  struct A {
+    int a;
+    char c;
+    float b;
+  };
+  struct B : public A {
+    short d;
+    double e;
+  } *b;
+}
+
+namespace Test5 {
+  struct A {
+    virtual void f();
+    char a;
+  };
+
+  // CHECK: %"struct.Test4::B" = type { [9 x i8], i8, i8, [5 x i8] }
+  struct B : A {
+    char b : 1;
+    char c;
+  } *b;
+}

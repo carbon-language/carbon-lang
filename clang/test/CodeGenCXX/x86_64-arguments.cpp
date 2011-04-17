@@ -3,13 +3,13 @@
 // Basic base class test.
 struct f0_s0 { unsigned a; };
 struct f0_s1 : public f0_s0 { void *b; };
-// CHECK: define void @_Z2f05f0_s1(i64 %a0.coerce0, i8* %a0.coerce1)
+// CHECK: define void @_Z2f05f0_s1(i32 %a0.coerce0, i8* %a0.coerce1)
 void f0(f0_s1 a0) { }
 
 // Check with two eight-bytes in base class.
 struct f1_s0 { unsigned a; unsigned b; float c; };
 struct f1_s1 : public f1_s0 { float d;};
-// CHECK: define void @_Z2f15f1_s1(i64 %a0.coerce0, double %a0.coerce1)
+// CHECK: define void @_Z2f15f1_s1(i64 %a0.coerce0, <2 x float> %a0.coerce1)
 void f1(f1_s1 a0) { }
 
 // Check with two eight-bytes in base class and merge.
@@ -54,7 +54,7 @@ namespace PR7742 { // Also rdar://8250764
   
   struct c2 : public s2 {};
   
-  // CHECK: define double @_ZN6PR77423fooEPNS_2c2E(%"struct.PR7742::c2"* %P)
+  // CHECK: define <2 x float> @_ZN6PR77423fooEPNS_2c2E(%"struct.PR7742::c2"* %P)
   c2 foo(c2 *P) {
   }
   

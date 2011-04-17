@@ -55,7 +55,7 @@ namespace ZeroInit {
   };
 
   struct C : A, B { int j; };
-  // CHECK-GLOBAL: @_ZN8ZeroInit1cE = global {{%.*}} { [16 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00", [176 x i8] c"\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i32 0, [4 x i8] zeroinitializer }
+  // CHECK-GLOBAL: @_ZN8ZeroInit1cE = global {{%.*}} { %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.ZeroInit::B" { [10 x %"struct.PR7139::ptr_to_member_struct"] [%"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }], i8 0, i64 -1 }, i32 0 }, align 8
   C c;
 }
 
@@ -172,15 +172,15 @@ struct A {
   int A::*i;
 };
 
-// CHECK-GLOBAL: @_ZN12VirtualBases1bE = global {{%.*}} { i32 (...)** null, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
+// CHECK-GLOBAL: @_ZN12VirtualBases1bE = global %"struct.VirtualBases::B" { i32 (...)** null, %"struct.VirtualBases::A" { i8 0, i64 -1 } }, align 8
 struct B : virtual A { };
 B b;
 
-// CHECK-GLOBAL: @_ZN12VirtualBases1cE = global {{%.*}} { i32 (...)** null, i64 -1, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
+// CHECK-GLOBAL: @_ZN12VirtualBases1cE = global %"struct.VirtualBases::C" { i32 (...)** null, i64 -1, %"struct.VirtualBases::A" { i8 0, i64 -1 } }, align 8
 struct C : virtual A { int A::*i; };
 C c;
 
-  // CHECK-GLOBAL: @_ZN12VirtualBases1dE = global {{%.*}} { [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", i64 -1, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF" }
+// CHECK-GLOBAL: @_ZN12VirtualBases1dE = global %"struct.VirtualBases::D" { %"struct.VirtualBases::C.base" { i32 (...)** null, i64 -1 }, i64 -1, %"struct.VirtualBases::A" { i8 0, i64 -1 } }, align 8
 struct D : C { int A::*i; };
 D d;
 
@@ -227,6 +227,6 @@ namespace test4 {
   struct C : virtual B { int    *C_p; };
   struct D :         C { int    *D_p; };
 
-  // CHECK-GLOBAL: @_ZN5test41dE = global {{%.*}} { [16 x i8] zeroinitializer, i32* null, [16 x i8] c"\00\00\00\00\00\00\00\00\FF\FF\FF\FF\FF\FF\FF\FF", [4 x i8] zeroinitializer }
+  // CHECK-GLOBAL: @_ZN5test41dE = global %"struct.test4::D" { %"struct.test4::C.base" zeroinitializer, i32* null, %"struct.VirtualBases::C.base" { i32 (...)** null, i64 -1 }, %"struct.test4::A" zeroinitializer }, align 8
   D d;
 }

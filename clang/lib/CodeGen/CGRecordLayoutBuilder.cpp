@@ -81,9 +81,19 @@ public:
 private:
   CodeGenTypes &Types;
 
+  /// LastLaidOutBaseInfo - Contains the offset and non-virtual size of the
+  /// last base laid out. Used so that we can replace the last laid out base
+  /// type with an i8 array if needed.
+  struct LastLaidOutBaseInfo {
+    CharUnits Offset;
+    CharUnits NonVirtualSize;
+
+    bool isValid() const { return !NonVirtualSize.isZero(); }
+    void invalidate() { NonVirtualSize = CharUnits::Zero(); }
+  
+  } LastLaidOutBase;
+
   /// Alignment - Contains the alignment of the RecordDecl.
-  //
-  // FIXME: This is not needed and should be removed.
   CharUnits Alignment;
 
   /// BitsAvailableInLastField - If a bit field spans only part of a LLVM field,
@@ -143,6 +153,12 @@ private:
   /// struct size is a multiple of the field alignment.
   void AppendPadding(CharUnits fieldOffset, CharUnits fieldAlignment);
 
+  /// ResizeLastBaseFieldIfNecessary - Fields and bases can be laid out in the
+  /// tail padding of a previous base. If this happens, the type of the previous
+  /// base needs to be changed to an array of i8. Returns true if the last
+  /// laid out base was resized.
+  bool ResizeLastBaseFieldIfNecessary(CharUnits offset);
+
   /// getByteArrayType - Returns a byte array type with the given number of
   /// elements.
   const llvm::Type *getByteArrayType(CharUnits NumBytes);
@@ -190,6 +206,7 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
 
   // We weren't able to layout the struct. Try again with a packed struct
   Packed = true;
+  LastLaidOutBase.invalidate();
   NextFieldOffset = CharUnits::Zero();
   FieldTypes.clear();
   Fields.clear();
@@ -334,6 +351,17 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   uint64_t nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
   unsigned numBytesToAppend;
 
+  if (fieldOffset < nextFieldOffsetInBits && !BitsAvailableInLastField) {
+    assert(fieldOffset % 8 == 0 && "Field offset not aligned correctly");
+
+    CharUnits fieldOffsetInCharUnits = 
+      Types.getContext().toCharUnitsFromBits(fieldOffset);
+
+    // Try to resize the last base field.
+    if (ResizeLastBaseFieldIfNecessary(fieldOffsetInCharUnits))
+      nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
+  }
+
   if (fieldOffset < nextFieldOffsetInBits) {
     assert(BitsAvailableInLastField && "Bitfield size mismatch!");
     assert(!NextFieldOffset.isZero() && "Must have laid out at least one byte");
@@ -411,6 +439,14 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
     NextFieldOffset.RoundUpToAlignment(typeAlignment);
 
   if (fieldOffsetInBytes < alignedNextFieldOffsetInBytes) {
+    // Try to resize the last base field.
+    if (ResizeLastBaseFieldIfNecessary(fieldOffsetInBytes)) {
+      alignedNextFieldOffsetInBytes = 
+        NextFieldOffset.RoundUpToAlignment(typeAlignment);
+    }
+  }
+
+  if (fieldOffsetInBytes < alignedNextFieldOffsetInBytes) {
     assert(!Packed && "Could not place field even with packed struct!");
     return false;
   }
@@ -421,6 +457,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   Fields[D] = FieldTypes.size();
   AppendField(fieldOffsetInBytes, Ty);
 
+  LastLaidOutBase.invalidate();
   return true;
 }
 
@@ -516,10 +553,15 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
 void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *base,
                                        const CGRecordLayout &baseLayout,
                                        CharUnits baseOffset) {
+  ResizeLastBaseFieldIfNecessary(baseOffset);
+
   AppendPadding(baseOffset, CharUnits::One());
 
   const ASTRecordLayout &baseASTLayout
     = Types.getContext().getASTRecordLayout(base);
+
+  LastLaidOutBase.Offset = NextFieldOffset;
+  LastLaidOutBase.NonVirtualSize = baseASTLayout.getNonVirtualSize();
 
   // Fields and bases can be laid out in the tail padding of previous
   // bases.  If this happens, we need to allocate the base as an i8
@@ -529,20 +571,10 @@ void CGRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *base,
   // approximation, which is to use the base subobject type if it
   // has the same LLVM storage size as the nvsize.
 
-  // The nvsize, i.e. the unpadded size of the base class.
-  CharUnits nvsize = baseASTLayout.getNonVirtualSize();
-
-#if 0
   const llvm::StructType *subobjectType = baseLayout.getBaseSubobjectLLVMType();
-  const llvm::StructLayout *baseLLVMLayout =
-    Types.getTargetData().getStructLayout(subobjectType);
-  CharUnits stsize = CharUnits::fromQuantity(baseLLVMLayout->getSizeInBytes());
+  AppendField(baseOffset, subobjectType);
 
-  if (nvsize == stsize)
-    AppendField(baseOffset, subobjectType);
-  else 
-#endif
-    AppendBytes(nvsize);
+  Types.addBaseSubobjectTypeName(base, baseLayout);
 }
 
 void CGRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *base,
@@ -734,6 +766,8 @@ void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
 
   CharUnits RecordSizeInBytes =
     Types.getContext().toCharUnitsFromBits(RecordSize);
+  ResizeLastBaseFieldIfNecessary(RecordSizeInBytes);
+
   assert(NextFieldOffset <= RecordSizeInBytes && "Size mismatch!");
 
   CharUnits AlignedNextFieldOffset =
@@ -775,6 +809,24 @@ void CGRecordLayoutBuilder::AppendPadding(CharUnits fieldOffset,
 
     AppendBytes(padding);
   }
+}
+
+bool CGRecordLayoutBuilder::ResizeLastBaseFieldIfNecessary(CharUnits offset) {
+  // Check if we have a base to resize.
+  if (!LastLaidOutBase.isValid())
+    return false;
+
+  // This offset does not overlap with the tail padding.
+  if (offset >= NextFieldOffset)
+    return false;
+
+  // Restore the field offset and append an i8 array instead.
+  FieldTypes.pop_back();
+  NextFieldOffset = LastLaidOutBase.Offset;
+  AppendBytes(LastLaidOutBase.NonVirtualSize);
+  LastLaidOutBase.invalidate();
+
+  return true;
 }
 
 const llvm::Type *CGRecordLayoutBuilder::getByteArrayType(CharUnits numBytes) {
