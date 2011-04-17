@@ -4,10 +4,10 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 
 ; CHECK: f0:
-; CHECK: addq %rax, (%rdi)
-; CHECK: # encoding: [0xf0,0x48,0x01,0x07]
+; CHECK: addq %rcx, (%rdi)
+; CHECK: # encoding: [0xf0,0x48,0x01,0x0f]
 ; CHECK: ret
-define void @f0(i64* %a0) {
+define void @f0(i64* %a0) nounwind {
   %t0 = and i64 1, 1
   call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 true) nounwind
   %1 = call i64 @llvm.atomic.load.add.i64.p0i64(i64* %a0, i64 %t0) nounwind

@@ -52,8 +52,7 @@ struct OperandsSignature {
   /// of the Operands array accordingly. Return true if all the operands
   /// are supported, false otherwise.
   ///
-  bool initialize(TreePatternNode *InstPatNode,
-                  const CodeGenTarget &Target,
+  bool initialize(TreePatternNode *InstPatNode, const CodeGenTarget &Target,
                   MVT::SimpleValueType VT) {
 
     if (!InstPatNode->isLeaf()) {
@@ -74,13 +73,7 @@ struct OperandsSignature {
 
       // For now, filter out any operand with a predicate.
       // For now, filter out any operand with multiple values.
-      if (!Op->getPredicateFns().empty() ||
-          Op->getNumTypes() != 1)
-        return false;
-
-      assert(Op->hasTypeSet(0) && "Type infererence not done?");
-      // For now, all the operands must have the same type.
-      if (Op->getType(0) != VT)
+      if (!Op->getPredicateFns().empty() || Op->getNumTypes() != 1)
         return false;
 
       if (!Op->isLeaf()) {
@@ -95,6 +88,15 @@ struct OperandsSignature {
         // For now, ignore other non-leaf nodes.
         return false;
       }
+      
+      assert(Op->hasTypeSet(0) && "Type infererence not done?");
+
+      // For now, all the operands must have the same type (if they aren't
+      // immediates).  Note that this causes us to reject variable sized shifts
+      // on X86.
+      if (Op->getType(0) != VT)
+        return false;
+
       DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
       if (!OpDI)
         return false;
@@ -321,6 +323,11 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       assert(InstPatNode->getChild(0)->getNumTypes() == 1);
       VT = InstPatNode->getChild(0)->getType(0);
     }
+    
+    if (InstPatOp->getName() =="shl") {
+      InstPatNode->dump();
+    }
+    
 
     // For now, filter out instructions which just set a register to
     // an Operand or an immediate, like MOV32ri.

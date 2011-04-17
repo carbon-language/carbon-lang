@@ -339,34 +339,34 @@ bool FastISel::SelectBinaryOp(const User *I, unsigned ISDOpcode) {
 
       bool Op1IsKill = hasTrivialKill(I->getOperand(1));
       
-      unsigned ResultReg = FastEmit_ri(VT.getSimpleVT(), VT.getSimpleVT(),
-                                       ISDOpcode, Op1, Op1IsKill,
-                                       CI->getZExtValue());
-      if (ResultReg != 0) {
-        // We successfully emitted code for the given LLVM Instruction.
-        UpdateValueMap(I, ResultReg);
-        return true;
-      }
+      unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op1,
+                                        Op1IsKill, CI->getZExtValue(),
+                                        VT.getSimpleVT());
+      if (ResultReg == 0) return false;
+      
+      // We successfully emitted code for the given LLVM Instruction.
+      UpdateValueMap(I, ResultReg);
+      return true;
     }
   
   
   unsigned Op0 = getRegForValue(I->getOperand(0));
-  if (Op0 == 0)
-    // Unhandled operand. Halt "fast" selection and bail.
+  if (Op0 == 0)   // Unhandled operand. Halt "fast" selection and bail.
     return false;
 
   bool Op0IsKill = hasTrivialKill(I->getOperand(0));
 
   // Check if the second operand is a constant and handle it appropriately.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-    unsigned ResultReg = FastEmit_ri(VT.getSimpleVT(), VT.getSimpleVT(),
-                                     ISDOpcode, Op0, Op0IsKill,
-                                     CI->getZExtValue());
-    if (ResultReg != 0) {
-      // We successfully emitted code for the given LLVM Instruction.
-      UpdateValueMap(I, ResultReg);
-      return true;
-    }
+    uint64_t Imm = CI->getZExtValue();
+    
+    unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
+                                      Op0IsKill, Imm, VT.getSimpleVT());
+    if (ResultReg == 0) return false;
+    
+    // We successfully emitted code for the given LLVM Instruction.
+    UpdateValueMap(I, ResultReg);
+    return true;
   }
 
   // Check if the second operand is a constant float.
@@ -986,6 +986,18 @@ unsigned FastISel::FastEmit_rri(MVT, MVT,
 unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
                                 unsigned Op0, bool Op0IsKill,
                                 uint64_t Imm, MVT ImmType) {
+  // If this is a multiply by a power of two, emit this as a shift left.
+  if (Opcode == ISD::MUL && isPowerOf2_64(Imm)) {
+    Opcode = ISD::SHL;
+    Imm = Log2_64(Imm);
+  }
+  
+  // Horrible hack (to be removed), check to make sure shift amounts are
+  // in-range.
+  if ((Opcode == ISD::SHL || Opcode == ISD::SRA || Opcode == ISD::SRL) &&
+      Imm >= VT.getSizeInBits())
+    return 0;
+  
   // First check if immediate type is legal. If not, we can't use the ri form.
   unsigned ResultReg = FastEmit_ri(VT, VT, Opcode, Op0, Op0IsKill, Imm);
   if (ResultReg != 0)
