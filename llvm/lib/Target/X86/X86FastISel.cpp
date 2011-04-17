@@ -460,91 +460,91 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
 
   // Handle constant address.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    // Can't handle alternate code models yet.
+    // Can't handle alternate code models or TLS yet.
     if (TM.getCodeModel() != CodeModel::Small)
       return false;
 
-    // RIP-relative addresses can't have additional register operands.
-    if (Subtarget->isPICStyleRIPRel() &&
-        (AM.Base.Reg != 0 || AM.IndexReg != 0))
-      return false;
-
-    // Can't handle TLS yet.
     if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
       if (GVar->isThreadLocal())
         return false;
+    
+    // RIP-relative addresses can't have additional register operands, so if
+    // we've already folded stuff into the addressing mode, just force the
+    // global value into its own register, which we can use as the basereg.
+    if (!Subtarget->isPICStyleRIPRel() ||
+        (AM.Base.Reg == 0 && AM.IndexReg == 0)) {
+      // Okay, we've committed to selecting this global. Set up the address.
+      AM.GV = GV;
 
-    // Okay, we've committed to selecting this global. Set up the basic address.
-    AM.GV = GV;
+      // Allow the subtarget to classify the global.
+      unsigned char GVFlags = Subtarget->ClassifyGlobalReference(GV, TM);
 
-    // Allow the subtarget to classify the global.
-    unsigned char GVFlags = Subtarget->ClassifyGlobalReference(GV, TM);
-
-    // If this reference is relative to the pic base, set it now.
-    if (isGlobalRelativeToPICBase(GVFlags)) {
-      // FIXME: How do we know Base.Reg is free??
-      AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
-    }
-
-    // Unless the ABI requires an extra load, return a direct reference to
-    // the global.
-    if (!isGlobalStubReference(GVFlags)) {
-      if (Subtarget->isPICStyleRIPRel()) {
-        // Use rip-relative addressing if we can.  Above we verified that the
-        // base and index registers are unused.
-        assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
-        AM.Base.Reg = X86::RIP;
+      // If this reference is relative to the pic base, set it now.
+      if (isGlobalRelativeToPICBase(GVFlags)) {
+        // FIXME: How do we know Base.Reg is free??
+        AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(FuncInfo.MF);
       }
-      AM.GVOpFlags = GVFlags;
+
+      // Unless the ABI requires an extra load, return a direct reference to
+      // the global.
+      if (!isGlobalStubReference(GVFlags)) {
+        if (Subtarget->isPICStyleRIPRel()) {
+          // Use rip-relative addressing if we can.  Above we verified that the
+          // base and index registers are unused.
+          assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
+          AM.Base.Reg = X86::RIP;
+        }
+        AM.GVOpFlags = GVFlags;
+        return true;
+      }
+
+      // Ok, we need to do a load from a stub.  If we've already loaded from
+      // this stub, reuse the loaded pointer, otherwise emit the load now.
+      DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
+      unsigned LoadReg;
+      if (I != LocalValueMap.end() && I->second != 0) {
+        LoadReg = I->second;
+      } else {
+        // Issue load from stub.
+        unsigned Opc = 0;
+        const TargetRegisterClass *RC = NULL;
+        X86AddressMode StubAM;
+        StubAM.Base.Reg = AM.Base.Reg;
+        StubAM.GV = GV;
+        StubAM.GVOpFlags = GVFlags;
+
+        // Prepare for inserting code in the local-value area.
+        SavePoint SaveInsertPt = enterLocalValueArea();
+
+        if (TLI.getPointerTy() == MVT::i64) {
+          Opc = X86::MOV64rm;
+          RC  = X86::GR64RegisterClass;
+
+          if (Subtarget->isPICStyleRIPRel())
+            StubAM.Base.Reg = X86::RIP;
+        } else {
+          Opc = X86::MOV32rm;
+          RC  = X86::GR32RegisterClass;
+        }
+
+        LoadReg = createResultReg(RC);
+        MachineInstrBuilder LoadMI =
+          BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), LoadReg);
+        addFullAddress(LoadMI, StubAM);
+
+        // Ok, back to normal mode.
+        leaveLocalValueArea(SaveInsertPt);
+
+        // Prevent loading GV stub multiple times in same MBB.
+        LocalValueMap[V] = LoadReg;
+      }
+
+      // Now construct the final address. Note that the Disp, Scale,
+      // and Index values may already be set here.
+      AM.Base.Reg = LoadReg;
+      AM.GV = 0;
       return true;
     }
-
-    // Ok, we need to do a load from a stub.  If we've already loaded from this
-    // stub, reuse the loaded pointer, otherwise emit the load now.
-    DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
-    unsigned LoadReg;
-    if (I != LocalValueMap.end() && I->second != 0) {
-      LoadReg = I->second;
-    } else {
-      // Issue load from stub.
-      unsigned Opc = 0;
-      const TargetRegisterClass *RC = NULL;
-      X86AddressMode StubAM;
-      StubAM.Base.Reg = AM.Base.Reg;
-      StubAM.GV = GV;
-      StubAM.GVOpFlags = GVFlags;
-
-      // Prepare for inserting code in the local-value area.
-      SavePoint SaveInsertPt = enterLocalValueArea();
-
-      if (TLI.getPointerTy() == MVT::i64) {
-        Opc = X86::MOV64rm;
-        RC  = X86::GR64RegisterClass;
-
-        if (Subtarget->isPICStyleRIPRel())
-          StubAM.Base.Reg = X86::RIP;
-      } else {
-        Opc = X86::MOV32rm;
-        RC  = X86::GR32RegisterClass;
-      }
-
-      LoadReg = createResultReg(RC);
-      MachineInstrBuilder LoadMI =
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), LoadReg);
-      addFullAddress(LoadMI, StubAM);
-
-      // Ok, back to normal mode.
-      leaveLocalValueArea(SaveInsertPt);
-
-      // Prevent loading GV stub multiple times in same MBB.
-      LocalValueMap[V] = LoadReg;
-    }
-
-    // Now construct the final address. Note that the Disp, Scale,
-    // and Index values may already be set here.
-    AM.Base.Reg = LoadReg;
-    AM.GV = 0;
-    return true;
   }
 
   // If all else fails, try to materialize the value in a register.

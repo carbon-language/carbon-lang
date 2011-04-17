@@ -28,11 +28,11 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %if.then, %entry
   ret void
-}
-
 ; CHECK: test2:
 ; CHECK: movq	%rdi, -8(%rsp)
 ; CHECK: cmpq	$42, -8(%rsp)
+}
+
 
 
 
@@ -40,8 +40,24 @@ if.end:                                           ; preds = %if.then, %entry
 define i64 @test3() nounwind {
   %A = ptrtoint i32* @G to i64
   ret i64 %A
-}
-
 ; CHECK: test3:
 ; CHECK: movq _G@GOTPCREL(%rip), %rax
 ; CHECK-NEXT: ret
+}
+
+
+
+; rdar://9289558
+@rtx_length = external global [153 x i8]
+
+define i32 @test4(i64 %idxprom9) nounwind {
+  %arrayidx10 = getelementptr inbounds [153 x i8]* @rtx_length, i32 0, i64 %idxprom9
+  %tmp11 = load i8* %arrayidx10, align 1
+  %conv = zext i8 %tmp11 to i32
+  ret i32 %conv
+
+; CHECK: test4:
+; CHECK: movq	_rtx_length@GOTPCREL(%rip), %rax
+; CHECK-NEXT: movzbl	(%rax,%rdi), %eax
+; CHECK-NEXT: ret
+}
