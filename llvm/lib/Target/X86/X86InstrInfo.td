@@ -481,26 +481,18 @@ def X86_COND_O   : PatLeaf<(i8 13)>;
 def X86_COND_P   : PatLeaf<(i8 14)>; // alt. COND_PE
 def X86_COND_S   : PatLeaf<(i8 15)>;
 
-def immSext8 : PatLeaf<(imm), [{ return immSext8(N); }]>;
-
-def i16immSExt8  : PatLeaf<(i16 immSext8)>;
-def i32immSExt8  : PatLeaf<(i32 immSext8)>;
-def i64immSExt8  : PatLeaf<(i64 immSext8)>;
-
-
-def i64immSExt32  : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
+def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (char)Imm; }]>;
+def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (char)Imm; }]>;
+def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (char)Imm; }]>;
+def i64immSExt32 : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
 
 
+// i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
+// unsigned field.
+def i64immZExt32 : ImmLeaf<i64, [{ return (uint64_t)Imm == (uint32_t)Imm; }]>;
 
-def i64immZExt32  : PatLeaf<(i64 imm), [{
-  // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
-  // unsignedsign extended field.
-  return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
-}]>;
-
-def i64immZExt32SExt8 : PatLeaf<(i64 imm), [{
-    uint64_t v = N->getZExtValue();
-    return v == (uint32_t)v && (int32_t)v == (int8_t)v;
+def i64immZExt32SExt8 : ImmLeaf<i64, [{
+  return (uint64_t)Imm == (uint32_t)Imm && (int32_t)Imm == (int8_t)Imm;
 }]>;
 
 // Helper fragments for loads.
