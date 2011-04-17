@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -I%S %s -triple x86_64-apple-darwin10 -emit-llvm -fcxx-exceptions -fexceptions -std=c++0x -o - | FileCheck %s
 struct A { virtual ~A(); };
 struct B final : A { };
-struct C { virtual ~C(); };
+struct C { virtual ~C(); int c; };
 
 // CHECK: @_Z1fP1B
 C *f(B* b) {

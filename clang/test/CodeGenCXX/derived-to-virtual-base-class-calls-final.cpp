@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
 
 struct A { int i; };
-struct B { int j; };
+struct B { char j; };
 struct C : A, B { int k; };
 
 struct D final : virtual C { 
