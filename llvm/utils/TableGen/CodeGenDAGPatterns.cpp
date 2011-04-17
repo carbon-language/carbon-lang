@@ -657,8 +657,6 @@ std::string TreePredicateFn::getCodeToRunOnSDNode() const {
   if (!ImmCode.empty()) {
     std::string Result =
       "    int64_t Imm = cast<ConstantSDNode>(Node)->getSExtValue();\n";
-    if (ImmCode.find("VT") != std::string::npos)
-      Result += "    MVT VT = Node->getValueType(0).getSimpleVT();\n";
     return Result + ImmCode;
   }
   

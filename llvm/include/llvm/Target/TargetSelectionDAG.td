@@ -532,8 +532,7 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 
 // ImmLeaf is a pattern fragment with a constraint on the immediate.  The
 // constraint is a function that is run on the immediate (always with the value
-// sign extended out to an int64_t) as Imm.  The value type being matched is
-// available as VT.  For example:
+// sign extended out to an int64_t) as Imm.  For example:
 //
 //  def immSExt8 : ImmLeaf<i16, [{ return (char)Imm == Imm; }]>;
 //
