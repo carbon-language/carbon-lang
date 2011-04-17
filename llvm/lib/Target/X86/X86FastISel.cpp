@@ -1859,10 +1859,13 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) {
     X86AddressMode AM;
     if (X86SelectAddress(C, AM)) {
-      if (TLI.getPointerTy() == MVT::i32)
-        Opc = X86::LEA32r;
-      else
-        Opc = X86::LEA64r;
+      // If the expression is just a basereg, then we're done, otherwise we need
+      // to emit an LEA.
+      if (AM.BaseType == X86AddressMode::RegBase &&
+          AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == 0)
+        return AM.Base.Reg;
+      
+      Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
       unsigned ResultReg = createResultReg(RC);
       addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                              TII.get(Opc), ResultReg), AM);

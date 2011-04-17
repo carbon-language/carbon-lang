@@ -421,10 +421,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   return true;
 }
 
-void
-SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
-                                   BasicBlock::const_iterator End,
-                                   bool &HadTailCall) {
+void SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
+                                        BasicBlock::const_iterator End,
+                                        bool &HadTailCall) {
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block. Terminators
   // are handled below.
@@ -438,7 +437,6 @@ SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
 
   // Final step, emit the lowered DAG as machine code.
   CodeGenAndEmitDAG();
-  return;
 }
 
 void SelectionDAGISel::ComputeLiveOutVRegInfo() {

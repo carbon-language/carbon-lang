@@ -33,3 +33,15 @@ if.end:                                           ; preds = %if.then, %entry
 ; CHECK: test2:
 ; CHECK: movq	%rdi, -8(%rsp)
 ; CHECK: cmpq	$42, -8(%rsp)
+
+
+
+@G = external global i32
+define i64 @test3() nounwind {
+  %A = ptrtoint i32* @G to i64
+  ret i64 %A
+}
+
+; CHECK: test3:
+; CHECK: movq _G@GOTPCREL(%rip), %rax
+; CHECK-NEXT: ret
