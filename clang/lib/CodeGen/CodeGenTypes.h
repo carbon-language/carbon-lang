@@ -101,6 +101,11 @@ private:
   /// used to handle cyclic structures properly.
   void HandleLateResolvedPointers();
 
+  /// addTagTypeName - Compute a name from the given tag decl with an optional
+  /// suffix and name the given LLVM type using it.
+  void addTagTypeName(const TagDecl *TD, const llvm::Type *Ty,
+                      llvm::StringRef suffix);
+
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
                const ABIInfo &Info, CGCXXABI &CXXABI);
