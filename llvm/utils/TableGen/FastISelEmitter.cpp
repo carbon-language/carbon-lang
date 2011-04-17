@@ -40,7 +40,34 @@ struct InstructionMemo {
 /// types. It has utility methods for emitting text based on the operands.
 ///
 struct OperandsSignature {
-  SmallVector<char, 3> Operands;
+  class OpKind {
+    enum { OK_Reg, OK_FP, OK_Imm, OK_Invalid = -1 };
+    char Repr;
+  public:
+    
+    OpKind() : Repr(OK_Invalid) {}
+    
+    bool operator<(OpKind RHS) const { return Repr < RHS.Repr; }
+
+    static OpKind getReg() { OpKind K; K.Repr = OK_Reg; return K; }
+    static OpKind getFP()  { OpKind K; K.Repr = OK_FP; return K; }
+    static OpKind getImm() { OpKind K; K.Repr = OK_Imm; return K; }
+    
+    bool isReg() const { return Repr == OK_Reg; }
+    bool isFP() const  { return Repr == OK_FP; }
+    bool isImm() const { return Repr == OK_Imm; }
+    
+    void printManglingSuffix(raw_ostream &OS) const {
+      if (isReg())
+        OS << 'r';
+      else if (isFP())
+        OS << 'f';
+      else
+        OS << 'i';
+    }
+  };
+  
+  SmallVector<OpKind, 3> Operands;
 
   bool operator<(const OperandsSignature &O) const {
     return Operands < O.Operands;
@@ -57,11 +84,11 @@ struct OperandsSignature {
 
     if (!InstPatNode->isLeaf()) {
       if (InstPatNode->getOperator()->getName() == "imm") {
-        Operands.push_back('i');
+        Operands.push_back(OpKind::getImm());
         return true;
       }
       if (InstPatNode->getOperator()->getName() == "fpimm") {
-        Operands.push_back('f');
+        Operands.push_back(OpKind::getFP());
         return true;
       }
     }
@@ -78,11 +105,11 @@ struct OperandsSignature {
 
       if (!Op->isLeaf()) {
         if (Op->getOperator()->getName() == "imm") {
-          Operands.push_back('i');
+          Operands.push_back(OpKind::getImm());
           continue;
         }
         if (Op->getOperator()->getName() == "fpimm") {
-          Operands.push_back('f');
+          Operands.push_back(OpKind::getFP());
           continue;
         }
         // For now, ignore other non-leaf nodes.
@@ -101,8 +128,8 @@ struct OperandsSignature {
       if (!OpDI)
         return false;
       Record *OpLeafRec = OpDI->getDef();
+      
       // For now, the only other thing we accept is register operands.
-
       const CodeGenRegisterClass *RC = 0;
       if (OpLeafRec->isSubClassOf("RegisterClass"))
         RC = &Target.getRegisterClass(OpLeafRec);
@@ -122,18 +149,18 @@ struct OperandsSignature {
           return false;
       } else
         DstRC = RC;
-      Operands.push_back('r');
+      Operands.push_back(OpKind::getReg());
     }
     return true;
   }
 
   void PrintParameters(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i] == 'r') {
+      if (Operands[i].isReg()) {
         OS << "unsigned Op" << i << ", bool Op" << i << "IsKill";
-      } else if (Operands[i] == 'i') {
+      } else if (Operands[i].isImm()) {
         OS << "uint64_t imm" << i;
-      } else if (Operands[i] == 'f') {
+      } else if (Operands[i].isFP()) {
         OS << "ConstantFP *f" << i;
       } else {
         assert("Unknown operand kind!");
@@ -145,7 +172,7 @@ struct OperandsSignature {
   }
 
   void PrintArguments(raw_ostream &OS,
-                      const std::vector<std::string>& PR) const {
+                      const std::vector<std::string> &PR) const {
     assert(PR.size() == Operands.size());
     bool PrintedArg = false;
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
@@ -155,13 +182,13 @@ struct OperandsSignature {
 
       if (PrintedArg)
         OS << ", ";
-      if (Operands[i] == 'r') {
+      if (Operands[i].isReg()) {
         OS << "Op" << i << ", Op" << i << "IsKill";
         PrintedArg = true;
-      } else if (Operands[i] == 'i') {
+      } else if (Operands[i].isImm()) {
         OS << "imm" << i;
         PrintedArg = true;
-      } else if (Operands[i] == 'f') {
+      } else if (Operands[i].isFP()) {
         OS << "f" << i;
         PrintedArg = true;
       } else {
@@ -173,11 +200,11 @@ struct OperandsSignature {
 
   void PrintArguments(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i] == 'r') {
+      if (Operands[i].isReg()) {
         OS << "Op" << i << ", Op" << i << "IsKill";
-      } else if (Operands[i] == 'i') {
+      } else if (Operands[i].isImm()) {
         OS << "imm" << i;
-      } else if (Operands[i] == 'f') {
+      } else if (Operands[i].isFP()) {
         OS << "f" << i;
       } else {
         assert("Unknown operand kind!");
@@ -190,7 +217,7 @@ struct OperandsSignature {
 
 
   void PrintManglingSuffix(raw_ostream &OS,
-                           const std::vector<std::string>& PR) const {
+                           const std::vector<std::string> &PR) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (PR[i] != "")
         // Implicit physical register operand. e.g. Instruction::Mul expect to
@@ -199,14 +226,13 @@ struct OperandsSignature {
         // like a binary instruction except for the very inner FastEmitInst_*
         // call.
         continue;
-      OS << Operands[i];
+      Operands[i].printManglingSuffix(OS);
     }
   }
 
   void PrintManglingSuffix(raw_ostream &OS) const {
-    for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      OS << Operands[i];
-    }
+    for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+      Operands[i].printManglingSuffix(OS);
   }
 };
 
