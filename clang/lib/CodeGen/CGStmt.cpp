@@ -873,7 +873,8 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     return;
   }
 
-  // If the body of the case is just a 'break', try to not emit an empty block.
+  // If the body of the case is just a 'break', and if there was no fallthrough,
+  // try to not emit an empty block.
   if (isa<BreakStmt>(S.getSubStmt())) {
     JumpDest Block = BreakContinueStack.back().BreakBlock;
     
@@ -882,6 +883,13 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
       llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
       SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
                           Block.getBlock());
+
+      // If there was a fallthrough into this case, make sure to redirect it to
+      // the end of the switch as well.
+      if (Builder.GetInsertBlock()) {
+        Builder.CreateBr(Block.getBlock());
+        Builder.ClearInsertionPoint();
+      }
       return;
     }
   }

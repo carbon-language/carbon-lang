@@ -229,3 +229,19 @@ void test13(int x) {
   default: test13(42); break;
   }
 }
+
+
+// Verify that case 42 only calls test14 once.
+// CHECK: @test14
+// CHECK: call void @test14(i32 97)
+// CHECK-NEXT: br label [[EPILOG2:%[0-9.a-z]+]]
+// CHECK: call void @test14(i32 42)
+// CHECK-NEXT: br label [[EPILOG2]]
+void test14(int x) {
+  switch (x) {
+    case 42: test14(97);  // fallthrough
+    case 11: break;
+    default: test14(42); break;
+  }
+}
+
