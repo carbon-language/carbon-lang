@@ -122,10 +122,9 @@ unsigned FastISel::getRegForValue(const Value *V) {
   // only locally. This is because Instructions already have the SSA
   // def-dominates-use requirement enforced.
   DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(V);
-  if (I != FuncInfo.ValueMap.end()) {
-    unsigned Reg = I->second;
-    return Reg;
-  }
+  if (I != FuncInfo.ValueMap.end())
+    return I->second;
+
   unsigned Reg = LocalValueMap[V];
   if (Reg != 0)
     return Reg;
@@ -331,6 +330,26 @@ bool FastISel::SelectBinaryOp(const User *I, unsigned ISDOpcode) {
       return false;
   }
 
+  // Check if the first operand is a constant, and handle it as "ri".  At -O0,
+  // we don't have anything that canonicalizes operand order.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(0)))
+    if (isa<Instruction>(I) && cast<Instruction>(I)->isCommutative()) {
+      unsigned Op1 = getRegForValue(I->getOperand(1));
+      if (Op1 == 0) return false;
+
+      bool Op1IsKill = hasTrivialKill(I->getOperand(1));
+      
+      unsigned ResultReg = FastEmit_ri(VT.getSimpleVT(), VT.getSimpleVT(),
+                                       ISDOpcode, Op1, Op1IsKill,
+                                       CI->getZExtValue());
+      if (ResultReg != 0) {
+        // We successfully emitted code for the given LLVM Instruction.
+        UpdateValueMap(I, ResultReg);
+        return true;
+      }
+    }
+  
+  
   unsigned Op0 = getRegForValue(I->getOperand(0));
   if (Op0 == 0)
     // Unhandled operand. Halt "fast" selection and bail.
