@@ -543,6 +543,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Address);
   }
       
+  case Builtin::BI__builtin___memcpy_chk: {
+    // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
+    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
+        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+      break;
+    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
+    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
+    if (Size.ugt(DstSize))
+      break;
+    Value *Dest = EmitScalarExpr(E->getArg(0));
+    Value *Src = EmitScalarExpr(E->getArg(1));
+    Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
+    Builder.CreateMemCpy(Dest, Src, SizeVal, 1, false);
+    return RValue::get(0);
+  }
+      
   case Builtin::BI__builtin_objc_memmove_collectable: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
@@ -551,7 +567,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                                   Address, SrcAddr, SizeVal);
     return RValue::get(Address);
   }
-      
+
+  case Builtin::BI__builtin___memmove_chk: {
+    // fold __builtin_memmove_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
+    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
+        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+      break;
+    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
+    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
+    if (Size.ugt(DstSize))
+      break;
+    Value *Dest = EmitScalarExpr(E->getArg(0));
+    Value *Src = EmitScalarExpr(E->getArg(1));
+    Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
+    Builder.CreateMemMove(Dest, Src, SizeVal, 1, false);
+    return RValue::get(0);
+  }
+
   case Builtin::BImemmove:
   case Builtin::BI__builtin_memmove: {
     Value *Address = EmitScalarExpr(E->getArg(0));
@@ -568,6 +600,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
     Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
     return RValue::get(Address);
+  }
+  case Builtin::BI__builtin___memset_chk: {
+    // fold __builtin_memset_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
+    if (!E->getArg(2)->isEvaluatable(CGM.getContext()) ||
+        !E->getArg(3)->isEvaluatable(CGM.getContext()))
+      break;
+    llvm::APSInt Size = E->getArg(2)->EvaluateAsInt(CGM.getContext());
+    llvm::APSInt DstSize = E->getArg(3)->EvaluateAsInt(CGM.getContext());
+    if (Size.ugt(DstSize))
+      break;
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *ByteVal = Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
+                                         Builder.getInt8Ty());
+    Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
+    Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
+    
+    return RValue::get(0);
   }
   case Builtin::BI__builtin_dwarf_cfa: {
     // The offset in bytes from the first argument to the CFA.
