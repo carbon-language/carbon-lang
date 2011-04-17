@@ -220,10 +220,8 @@ void test12() {
 // rdar://9289524 - Check that the empty cases don't produce an empty block.
 // CHECK: @test13
 // CHECK: switch 
-// CHECK:     i32 42, label %sw.epilog
-// CHECK:     i32 11, label %sw.epilog
-// CHECK: sw.epilog:
-// CHECK: ret void
+// CHECK:     i32 42, label [[EPILOG:%[0-9.a-z]+]]
+// CHECK:     i32 11, label [[EPILOG]]
 void test13(int x) {
   switch (x) {
   case 42: break;  // No empty block please.
