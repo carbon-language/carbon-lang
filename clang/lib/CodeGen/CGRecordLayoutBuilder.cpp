@@ -34,7 +34,7 @@ class CGRecordLayoutBuilder {
 public:
   /// FieldTypes - Holds the LLVM types that the struct is created from.
   /// 
-  std::vector<const llvm::Type *> FieldTypes;
+  llvm::SmallVector<const llvm::Type *, 16> FieldTypes;
 
   /// BaseSubobjectType - Holds the LLVM type for the non-virtual part
   /// of the struct. For example, consider:
