@@ -396,43 +396,45 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
       const Value *Op = *i;
       if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
         const StructLayout *SL = TD.getStructLayout(STy);
-        unsigned Idx = cast<ConstantInt>(Op)->getZExtValue();
-        Disp += SL->getElementOffset(Idx);
-      } else {
-        uint64_t S = TD.getTypeAllocSize(GTI.getIndexedType());
-        for (;;) {
-          if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
-            // Constant-offset addressing.
-            Disp += CI->getSExtValue() * S;
-            break;
-          }
-          if (isa<AddOperator>(Op) &&
-              (!isa<Instruction>(Op) ||
-               FuncInfo.MBBMap[cast<Instruction>(Op)->getParent()]
-                 == FuncInfo.MBB) &&
-              isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
-            // An add (in the same block) with a constant operand. Fold the
-            // constant.
-            ConstantInt *CI =
-              cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
-            Disp += CI->getSExtValue() * S;
-            // Iterate on the other operand.
-            Op = cast<AddOperator>(Op)->getOperand(0);
-            continue;
-          }
-          if (IndexReg == 0 &&
-              (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
-              (S == 1 || S == 2 || S == 4 || S == 8)) {
-            // Scaled-index addressing.
-            Scale = S;
-            IndexReg = getRegForGEPIndex(Op).first;
-            if (IndexReg == 0)
-              return false;
-            break;
-          }
-          // Unsupported.
-          goto unsupported_gep;
+        Disp += SL->getElementOffset(cast<ConstantInt>(Op)->getZExtValue());
+        continue;
+      }
+      
+      // A array/variable index is always of the form i*S where S is the
+      // constant scale size.  See if we can push the scale into immediates.
+      uint64_t S = TD.getTypeAllocSize(GTI.getIndexedType());
+      for (;;) {
+        if (const ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
+          // Constant-offset addressing.
+          Disp += CI->getSExtValue() * S;
+          break;
         }
+        if (isa<AddOperator>(Op) &&
+            (!isa<Instruction>(Op) ||
+             FuncInfo.MBBMap[cast<Instruction>(Op)->getParent()]
+               == FuncInfo.MBB) &&
+            isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
+          // An add (in the same block) with a constant operand. Fold the
+          // constant.
+          ConstantInt *CI =
+            cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
+          Disp += CI->getSExtValue() * S;
+          // Iterate on the other operand.
+          Op = cast<AddOperator>(Op)->getOperand(0);
+          continue;
+        }
+        if (IndexReg == 0 &&
+            (!AM.GV || !Subtarget->isPICStyleRIPRel()) &&
+            (S == 1 || S == 2 || S == 4 || S == 8)) {
+          // Scaled-index addressing.
+          Scale = S;
+          IndexReg = getRegForGEPIndex(Op).first;
+          if (IndexReg == 0)
+            return false;
+          break;
+        }
+        // Unsupported.
+        goto unsupported_gep;
       }
     }
     // Check for displacement overflow.
@@ -446,7 +448,7 @@ bool X86FastISel::X86SelectAddress(const Value *V, X86AddressMode &AM) {
     if (X86SelectAddress(U->getOperand(0), AM))
       return true;
 
-    // If we couldn't merge the sub value into this addr mode, revert back to
+    // If we couldn't merge the gep value into this addr mode, revert back to
     // our address and just match the value instead of completely failing.
     AM = SavedAM;
     break;
