@@ -1205,7 +1205,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     llvm::StringRef PropertyName;
     llvm::StringRef PropertyGetter;
     llvm::StringRef PropertySetter;
-    unsigned PropertyAttributes;
+    unsigned PropertyAttributes = 0;
     if (ObjCPropertyDecl *PD =
         ID->FindPropertyVisibleInPrimaryClass(Field->getIdentifier())) {
       PropertyName = PD->getName();
