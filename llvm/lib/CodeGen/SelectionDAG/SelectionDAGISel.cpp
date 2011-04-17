@@ -748,9 +748,31 @@ void SelectionDAGISel::PrepareEHLandingPad() {
 
 
 
-
+/// TryToFoldFastISelLoad - We're checking to see if we can fold the specified
+/// load into the specified FoldInst.  Note that we could have a sequence where
+/// multiple LLVM IR instructions are folded into the same machineinstr.  For
+/// example we could have:
+///   A: x = load i32 *P
+///   B: y = icmp A, 42
+///   C: br y, ...
+///
+/// In this scenario, LI is "A", and FoldInst is "C".  We know about "B" (and
+/// any other folded instructions) because it is between A and C.
+///
+/// If we succeed in folding the load into the operation, return true.
+///
 bool SelectionDAGISel::TryToFoldFastISelLoad(const LoadInst *LI,
+                                             const Instruction *FoldInst,
                                              FastISel *FastIS) {
+  SmallPtrSet<const Instruction*, 4> FoldedInsts;
+  for (BasicBlock::const_iterator II = FoldInst; &*II != LI; --II)
+    FoldedInsts.insert(II);
+  
+  // We know that the load has a single use, but don't know what it is.  If it
+  // isn't one of the folded instructions, then we can't succeed here.
+  if (!FoldedInsts.count(LI->use_back()))
+    return false;
+  
   // Don't try to fold volatile loads.  Target has to deal with alignment
   // constraints.
   if (LI->isVolatile()) return false;
@@ -835,10 +857,10 @@ static void CheckLineNumbers(const MachineBasicBlock *MBB) {
 /// Return false if it needs to be emitted.
 static bool isFoldedOrDeadInstruction(const Instruction *I,
                                       FunctionLoweringInfo *FuncInfo) {
-  return !I->mayWriteToMemory() &&
-         !isa<TerminatorInst>(I) &&
-         !isa<DbgInfoIntrinsic>(I) &&
-         !FuncInfo->isExportedInst(I);
+  return !I->mayWriteToMemory() && // Side-effecting instructions aren't folded.
+         !isa<TerminatorInst>(I) && // Terminators aren't folded.
+         !isa<DbgInfoIntrinsic>(I) &&  // Debug instructions aren't folded.
+         !FuncInfo->isExportedInst(I); // Exported instrs must be computed.
 }
 
 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
@@ -930,16 +952,20 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(Inst)) {
-          // If fast isel succeeded, check to see if there is a single-use
-          // non-volatile load right before the selected instruction, and see if
-          // the load is used by the instruction.  If so, try to fold it.
-          const Instruction *BeforeInst = 0;
-          if (Inst != Begin)
-            BeforeInst = llvm::prior(llvm::prior(BI));
-          if (BeforeInst && isa<LoadInst>(BeforeInst) &&
-              BeforeInst->hasOneUse() && *BeforeInst->use_begin() == Inst &&
-              TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), FastIS))
-            --BI; // If we succeeded, don't re-select the load.
+          // If fast isel succeeded, skip over all the folded instructions, and
+          // then see if there is a load right before the selected instructions.
+          // Try to fold the load if so.
+          const Instruction *BeforeInst = Inst;
+          while (BeforeInst != Begin) {
+            BeforeInst = llvm::prior(BasicBlock::const_iterator(BeforeInst));
+            if (!isFoldedOrDeadInstruction(BeforeInst, FuncInfo))
+              break;
+          }
+          if (BeforeInst != Inst && isa<LoadInst>(BeforeInst) &&
+              BeforeInst->hasOneUse() &&
+              TryToFoldFastISelLoad(cast<LoadInst>(BeforeInst), Inst, FastIS))
+            // If we succeeded, don't re-select the load.
+            BI = llvm::next(BasicBlock::const_iterator(BeforeInst));
           continue;
         }
 
