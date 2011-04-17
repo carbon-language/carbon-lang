@@ -707,7 +707,7 @@ class CodeInit : public Init {
 public:
   explicit CodeInit(const std::string &V) : Value(V) {}
 
-  const std::string getValue() const { return Value; }
+  const std::string &getValue() const { return Value; }
 
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);

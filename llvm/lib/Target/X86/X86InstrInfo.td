@@ -486,7 +486,12 @@ def immSext8 : PatLeaf<(imm), [{ return immSext8(N); }]>;
 def i16immSExt8  : PatLeaf<(i16 immSext8)>;
 def i32immSExt8  : PatLeaf<(i32 immSext8)>;
 def i64immSExt8  : PatLeaf<(i64 immSext8)>;
-def i64immSExt32  : PatLeaf<(i64 imm), [{ return i64immSExt32(N); }]>;
+
+
+def i64immSExt32  : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
+
+
+
 def i64immZExt32  : PatLeaf<(i64 imm), [{
   // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // unsignedsign extended field.

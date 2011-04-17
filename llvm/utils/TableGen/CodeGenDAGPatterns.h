@@ -249,7 +249,7 @@ class TreePredicateFn {
   TreePattern *PatFragRec;
 public:
   /// TreePredicateFn constructor.  Here 'N' is a subclass of PatFrag.
-  TreePredicateFn(TreePattern *N) : PatFragRec(N) {}
+  TreePredicateFn(TreePattern *N);
 
   
   TreePattern *getOrigPatFragRecord() const { return PatFragRec; }
@@ -276,6 +276,7 @@ public:
   
 private:
   std::string getPredCode() const;
+  std::string getImmCode() const;
 };
   
 

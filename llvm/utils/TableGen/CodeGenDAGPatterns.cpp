@@ -621,14 +621,24 @@ static void DumpDepVars(MultipleUseVarSet &DepVars) {
 // TreePredicateFn Implementation
 //===----------------------------------------------------------------------===//
 
+/// TreePredicateFn constructor.  Here 'N' is a subclass of PatFrag.
+TreePredicateFn::TreePredicateFn(TreePattern *N) : PatFragRec(N) {
+  assert((getPredCode().empty() || getImmCode().empty()) &&
+        ".td file corrupt: can't have a node predicate *and* an imm predicate");
+}
+
 std::string TreePredicateFn::getPredCode() const {
   return PatFragRec->getRecord()->getValueAsCode("PredicateCode");
+}
+
+std::string TreePredicateFn::getImmCode() const {
+  return PatFragRec->getRecord()->getValueAsCode("ImmediateCode");
 }
 
 
 /// isAlwaysTrue - Return true if this is a noop predicate.
 bool TreePredicateFn::isAlwaysTrue() const {
-  return getPredCode().empty();
+  return getPredCode().empty() && getImmCode().empty();
 }
 
 /// Return the name to use in the generated code to reference this, this is
@@ -642,6 +652,18 @@ std::string TreePredicateFn::getFnName() const {
 /// not N.  This handles casting and conversion to a concrete node type as
 /// appropriate.
 std::string TreePredicateFn::getCodeToRunOnSDNode() const {
+  // Handle immediate predicates first.
+  std::string ImmCode = getImmCode();
+  if (!ImmCode.empty()) {
+    std::string Result =
+      "    int64_t Imm = cast<ConstantSDNode>(Node)->getSExtValue();\n";
+    if (ImmCode.find("VT") != std::string::npos)
+      Result += "    MVT VT = Node->getValueType(0).getSimpleVT();\n";
+    return Result + ImmCode;
+  }
+  
+  // Handle arbitrary node predicates.
+  assert(!getPredCode().empty() && "Don't have any predicate code!");
   std::string ClassName;
   if (PatFragRec->getOnlyTree()->isLeaf())
     ClassName = "SDNode";
