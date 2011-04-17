@@ -580,34 +580,29 @@ typedef std::map<std::string, int> DepVarMap;
 /// Const iterator shorthand for DepVarMap
 typedef DepVarMap::const_iterator DepVarMap_citer;
 
-namespace {
-void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
+static void FindDepVarsOf(TreePatternNode *N, DepVarMap &DepMap) {
   if (N->isLeaf()) {
-    if (dynamic_cast<DefInit*>(N->getLeafValue()) != NULL) {
+    if (dynamic_cast<DefInit*>(N->getLeafValue()) != NULL)
       DepMap[N->getName()]++;
-    }
   } else {
     for (size_t i = 0, e = N->getNumChildren(); i != e; ++i)
       FindDepVarsOf(N->getChild(i), DepMap);
   }
 }
-
-//! Find dependent variables within child patterns
-/*!
- */
-void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
+  
+/// Find dependent variables within child patterns
+static void FindDepVars(TreePatternNode *N, MultipleUseVarSet &DepVars) {
   DepVarMap depcounts;
   FindDepVarsOf(N, depcounts);
   for (DepVarMap_citer i = depcounts.begin(); i != depcounts.end(); ++i) {
-    if (i->second > 1) {            // std::pair<std::string, int>
+    if (i->second > 1)            // std::pair<std::string, int>
       DepVars.insert(i->first);
-    }
   }
 }
 
-//! Dump the dependent variable set:
 #ifndef NDEBUG
-void DumpDepVars(MultipleUseVarSet &DepVars) {
+/// Dump the dependent variable set:
+static void DumpDepVars(MultipleUseVarSet &DepVars) {
   if (DepVars.empty()) {
     DEBUG(errs() << "<empty set>");
   } else {
@@ -621,6 +616,46 @@ void DumpDepVars(MultipleUseVarSet &DepVars) {
 }
 #endif
 
+
+//===----------------------------------------------------------------------===//
+// TreePredicateFn Implementation
+//===----------------------------------------------------------------------===//
+
+std::string TreePredicateFn::getPredCode() const {
+  return PatFragRec->getRecord()->getValueAsCode("PredicateCode");
+}
+
+
+/// isAlwaysTrue - Return true if this is a noop predicate.
+bool TreePredicateFn::isAlwaysTrue() const {
+  return getPredCode().empty();
+}
+
+/// Return the name to use in the generated code to reference this, this is
+/// "Predicate_foo" if from a pattern fragment "foo".
+std::string TreePredicateFn::getFnName() const {
+  return "Predicate_" + PatFragRec->getRecord()->getName();
+}
+
+/// getCodeToRunOnSDNode - Return the code for the function body that
+/// evaluates this predicate.  The argument is expected to be in "Node",
+/// not N.  This handles casting and conversion to a concrete node type as
+/// appropriate.
+std::string TreePredicateFn::getCodeToRunOnSDNode() const {
+  std::string ClassName;
+  if (PatFragRec->getOnlyTree()->isLeaf())
+    ClassName = "SDNode";
+  else {
+    Record *Op = PatFragRec->getOnlyTree()->getOperator();
+    ClassName = PatFragRec->getDAGPatterns().getSDNodeInfo(Op).getSDClassName();
+  }
+  std::string Result;
+  if (ClassName == "SDNode")
+    Result = "    SDNode *N = Node;\n";
+  else
+    Result = "    " + ClassName + "*N = cast<" + ClassName + ">(Node);\n";
+  
+  return Result + getPredCode();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1015,7 +1050,7 @@ void TreePatternNode::print(raw_ostream &OS) const {
   }
 
   for (unsigned i = 0, e = PredicateFns.size(); i != e; ++i)
-    OS << "<<P:" << PredicateFns[i] << ">>";
+    OS << "<<P:" << PredicateFns[i].getFnName() << ">>";
   if (TransformFn)
     OS << "<<X:" << TransformFn->getName() << ">>";
   if (!getName().empty())
@@ -1150,9 +1185,9 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 
   TreePatternNode *FragTree = Frag->getOnlyTree()->clone();
 
-  std::string Code = Op->getValueAsCode("Predicate");
-  if (!Code.empty())
-    FragTree->addPredicateFn("Predicate_"+Op->getName());
+  TreePredicateFn PredFn(Frag);
+  if (!PredFn.isAlwaysTrue())
+    FragTree->addPredicateFn(PredFn);
 
   // Resolve formal arguments to their actual value.
   if (Frag->getNumArgs()) {
@@ -2063,9 +2098,9 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
 
     // If there is a code init for this fragment, keep track of the fact that
     // this fragment uses it.
-    std::string Code = Fragments[i]->getValueAsCode("Predicate");
-    if (!Code.empty())
-      P->getOnlyTree()->addPredicateFn("Predicate_"+Fragments[i]->getName());
+    TreePredicateFn PredFn(P);
+    if (!PredFn.isAlwaysTrue())
+      P->getOnlyTree()->addPredicateFn(PredFn);
 
     // If there is a node transformation corresponding to this, keep track of
     // it.

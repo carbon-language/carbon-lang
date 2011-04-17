@@ -239,6 +239,45 @@ public:
     return MadeChange;
   }
 };
+  
+/// TreePredicateFn - This is an abstraction that represents the predicates on
+/// a PatFrag node.  This is a simple one-word wrapper around a pointer to
+/// provide nice accessors.
+class TreePredicateFn {
+  /// PatFragRec - This is the TreePattern for the PatFrag that we
+  /// originally came from.
+  TreePattern *PatFragRec;
+public:
+  /// TreePredicateFn constructor.  Here 'N' is a subclass of PatFrag.
+  TreePredicateFn(TreePattern *N) : PatFragRec(N) {}
+
+  
+  TreePattern *getOrigPatFragRecord() const { return PatFragRec; }
+  
+  /// isAlwaysTrue - Return true if this is a noop predicate.
+  bool isAlwaysTrue() const;
+  
+  
+  bool operator==(const TreePredicateFn &RHS) const {
+    return PatFragRec == RHS.PatFragRec;
+  }
+
+  bool operator!=(const TreePredicateFn &RHS) const { return !(*this == RHS); }
+
+  /// Return the name to use in the generated code to reference this, this is
+  /// "Predicate_foo" if from a pattern fragment "foo".
+  std::string getFnName() const;
+  
+  /// getCodeToRunOnSDNode - Return the code for the function body that
+  /// evaluates this predicate.  The argument is expected to be in "Node",
+  /// not N.  This handles casting and conversion to a concrete node type as
+  /// appropriate.
+  std::string getCodeToRunOnSDNode() const;
+  
+private:
+  std::string getPredCode() const;
+};
+  
 
 /// FIXME: TreePatternNode's can be shared in some cases (due to dag-shaped
 /// patterns), and as such should be ref counted.  We currently just leak all
@@ -263,7 +302,7 @@ class TreePatternNode {
 
   /// PredicateFns - The predicate functions to execute on this node to check
   /// for a match.  If this list is empty, no predicate is involved.
-  std::vector<std::string> PredicateFns;
+  std::vector<TreePredicateFn> PredicateFns;
 
   /// TransformFn - The transformation function to execute on this node before
   /// it can be substituted into the resulting instruction on a pattern match.
@@ -323,14 +362,18 @@ public:
     return false;
   }
 
-  const std::vector<std::string> &getPredicateFns() const {return PredicateFns;}
+  bool hasAnyPredicate() const { return !PredicateFns.empty(); }
+  
+  const std::vector<TreePredicateFn> &getPredicateFns() const {
+    return PredicateFns;
+  }
   void clearPredicateFns() { PredicateFns.clear(); }
-  void setPredicateFns(const std::vector<std::string> &Fns) {
+  void setPredicateFns(const std::vector<TreePredicateFn> &Fns) {
     assert(PredicateFns.empty() && "Overwriting non-empty predicate list!");
     PredicateFns = Fns;
   }
-  void addPredicateFn(const std::string &Fn) {
-    assert(!Fn.empty() && "Empty predicate string!");
+  void addPredicateFn(const TreePredicateFn &Fn) {
+    assert(!Fn.isAlwaysTrue() && "Empty predicate string!");
     if (std::find(PredicateFns.begin(), PredicateFns.end(), Fn) ==
           PredicateFns.end())
       PredicateFns.push_back(Fn);

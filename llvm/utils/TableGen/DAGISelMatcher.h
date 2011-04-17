@@ -25,6 +25,8 @@ namespace llvm {
   class ComplexPattern;
   class Record;
   class SDNodeInfo;
+  class TreePredicateFn;
+  class TreePattern;
 
 Matcher *ConvertPatternToMatcher(const PatternToMatch &Pattern,unsigned Variant,
                                  const CodeGenDAGPatterns &CGP);
@@ -419,12 +421,11 @@ private:
 /// CheckPredicateMatcher - This checks the target-specific predicate to
 /// see if the node is acceptable.
 class CheckPredicateMatcher : public Matcher {
-  StringRef PredName;
+  TreePattern *Pred;
 public:
-  CheckPredicateMatcher(StringRef predname)
-    : Matcher(CheckPredicate), PredName(predname) {}
+  CheckPredicateMatcher(const TreePredicateFn &pred);
 
-  StringRef getPredicateName() const { return PredName; }
+  TreePredicateFn getPredicate() const;
 
   static inline bool classof(const Matcher *N) {
     return N->getKind() == CheckPredicate;
@@ -436,7 +437,7 @@ public:
 private:
   virtual void printImpl(raw_ostream &OS, unsigned indent) const;
   virtual bool isEqualImpl(const Matcher *M) const {
-    return cast<CheckPredicateMatcher>(M)->PredName == PredName;
+    return cast<CheckPredicateMatcher>(M)->Pred == Pred;
   }
   virtual unsigned getHashImpl() const;
 };

@@ -459,7 +459,7 @@ def CallImmAddr  : Predicate<"Subtarget->IsLegalToCallImmediateAddr(TM)">;
 include "X86InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
-// Pattern fragments...
+// Pattern fragments.
 //
 
 // X86 specific condition code. These correspond to CondCode in

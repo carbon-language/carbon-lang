@@ -33,8 +33,12 @@ OmitComments("omit-comments", cl::desc("Do not generate comments"),
 namespace {
 class MatcherTableEmitter {
   const CodeGenDAGPatterns &CGP;
-  StringMap<unsigned> NodePredicateMap, PatternPredicateMap;
-  std::vector<std::string> NodePredicates, PatternPredicates;
+  
+  DenseMap<TreePattern *, unsigned> NodePredicateMap;
+  std::vector<TreePredicateFn> NodePredicates;
+  
+  StringMap<unsigned> PatternPredicateMap;
+  std::vector<std::string> PatternPredicates;
 
   DenseMap<const ComplexPattern*, unsigned> ComplexPatternMap;
   std::vector<const ComplexPattern*> ComplexPatterns;
@@ -57,14 +61,15 @@ private:
   unsigned EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
                        formatted_raw_ostream &OS);
 
-  unsigned getNodePredicate(StringRef PredName) {
-    unsigned &Entry = NodePredicateMap[PredName];
+  unsigned getNodePredicate(TreePredicateFn Pred) {
+    unsigned &Entry = NodePredicateMap[Pred.getOrigPatFragRecord()];
     if (Entry == 0) {
-      NodePredicates.push_back(PredName.str());
+      NodePredicates.push_back(Pred);
       Entry = NodePredicates.size();
     }
     return Entry-1;
   }
+  
   unsigned getPatternPredicate(StringRef PredName) {
     unsigned &Entry = PatternPredicateMap[PredName];
     if (Entry == 0) {
@@ -73,7 +78,6 @@ private:
     }
     return Entry-1;
   }
-
   unsigned getComplexPat(const ComplexPattern &P) {
     unsigned &Entry = ComplexPatternMap[&P];
     if (Entry == 0) {
@@ -239,7 +243,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2;
 
   case Matcher::CheckPatternPredicate: {
-    StringRef Pred = cast<CheckPatternPredicateMatcher>(N)->getPredicate();
+    StringRef Pred =cast<CheckPatternPredicateMatcher>(N)->getPredicate();
     OS << "OPC_CheckPatternPredicate, " << getPatternPredicate(Pred) << ',';
     if (!OmitComments)
       OS.PadToColumn(CommentIndent) << "// " << Pred;
@@ -247,10 +251,10 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2;
   }
   case Matcher::CheckPredicate: {
-    StringRef Pred = cast<CheckPredicateMatcher>(N)->getPredicateName();
+    TreePredicateFn Pred = cast<CheckPredicateMatcher>(N)->getPredicate();
     OS << "OPC_CheckPredicate, " << getNodePredicate(Pred) << ',';
     if (!OmitComments)
-      OS.PadToColumn(CommentIndent) << "// " << Pred;
+      OS.PadToColumn(CommentIndent) << "// " << Pred.getFnName();
     OS << '\n';
     return 2;
   }
@@ -617,25 +621,13 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
     OS << "  switch (PredNo) {\n";
     OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
     for (unsigned i = 0, e = NodePredicates.size(); i != e; ++i) {
-      // FIXME: Storing this by name is horrible.
-      TreePattern *P =PFsByName[NodePredicates[i].substr(strlen("Predicate_"))];
-      assert(P && "Unknown name?");
-
       // Emit the predicate code corresponding to this pattern.
-      std::string Code = P->getRecord()->getValueAsCode("Predicate");
-      assert(!Code.empty() && "No code in this predicate");
-      OS << "  case " << i << ": { // " << NodePredicates[i] << '\n';
-      std::string ClassName;
-      if (P->getOnlyTree()->isLeaf())
-        ClassName = "SDNode";
-      else
-        ClassName =
-          CGP.getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
-      if (ClassName == "SDNode")
-        OS << "    SDNode *N = Node;\n";
-      else
-        OS << "    " << ClassName << "*N = cast<" << ClassName << ">(Node);\n";
-      OS << Code << "\n  }\n";
+      TreePredicateFn PredFn = NodePredicates[i];
+      
+      assert(!PredFn.isAlwaysTrue() && "No code in this predicate");
+      OS << "  case " << i << ": { // " << NodePredicates[i].getFnName() <<'\n';
+      
+      OS << PredFn.getCodeToRunOnSDNode() << "\n  }\n";
     }
     OS << "  }\n";
     OS << "}\n\n";
