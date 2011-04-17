@@ -830,6 +830,17 @@ static void CheckLineNumbers(const MachineBasicBlock *MBB) {
 }
 #endif
 
+/// isFoldedOrDeadInstruction - Return true if the specified instruction is
+/// side-effect free and is either dead or folded into a generated instruction.
+/// Return false if it needs to be emitted.
+static bool isFoldedOrDeadInstruction(const Instruction *I,
+                                      FunctionLoweringInfo *FuncInfo) {
+  return !I->mayWriteToMemory() &&
+         !isa<TerminatorInst>(I) &&
+         !isa<DbgInfoIntrinsic>(I) &&
+         !FuncInfo->isExportedInst(I);
+}
+
 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
@@ -856,15 +867,13 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       }
 
       if (AllPredsVisited) {
-        for (BasicBlock::const_iterator I = LLVMBB->begin(), E = LLVMBB->end();
-             I != E && isa<PHINode>(I); ++I) {
+        for (BasicBlock::const_iterator I = LLVMBB->begin();
+             isa<PHINode>(I); ++I)
           FuncInfo->ComputePHILiveOutRegInfo(cast<PHINode>(I));
-        }
       } else {
-        for (BasicBlock::const_iterator I = LLVMBB->begin(), E = LLVMBB->end();
-             I != E && isa<PHINode>(I); ++I) {
+        for (BasicBlock::const_iterator I = LLVMBB->begin();
+             isa<PHINode>(I); ++I)
           FuncInfo->InvalidatePHILiveOutRegInfo(cast<PHINode>(I));
-        }
       }
 
       FuncInfo->VisitedBBs.insert(LLVMBB);
@@ -912,10 +921,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         const Instruction *Inst = llvm::prior(BI);
 
         // If we no longer require this instruction, skip it.
-        if (!Inst->mayWriteToMemory() &&
-            !isa<TerminatorInst>(Inst) &&
-            !isa<DbgInfoIntrinsic>(Inst) &&
-            !FuncInfo->isExportedInst(Inst))
+        if (isFoldedOrDeadInstruction(Inst, FuncInfo))
           continue;
 
         // Bottom-up: reset the insert pos at the top, after any local-value
