@@ -7,14 +7,6 @@ copy (3-addr bswap + memory support?)  This is available on Atom processors.
 
 //===---------------------------------------------------------------------===//
 
-CodeGen/X86/lea-3.ll:test3 should be a single LEA, not a shift/move.  The X86
-backend knows how to three-addressify this shift, but it appears the register
-allocator isn't even asking it to do so in this case.  We should investigate
-why this isn't happening, it could have significant impact on other important
-cases for X86 as well.
-
-//===---------------------------------------------------------------------===//
-
 This should be one DIV/IDIV instruction, not a libcall:
 
 unsigned test(unsigned long long X, unsigned Y) {

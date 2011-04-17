@@ -14,7 +14,7 @@ define i32 @test(i32 %a) {
         ret i32 %tmp2
 }
 
-;; TODO!  LEA instead of shift + copy.
+; CHECK: leaq (,[[A0]],8), %rax
 define i64 @test3(i64 %a) {
         %tmp2 = shl i64 %a, 3
         ret i64 %tmp2
