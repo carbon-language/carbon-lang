@@ -324,11 +324,6 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
       VT = InstPatNode->getChild(0)->getType(0);
     }
     
-    if (InstPatOp->getName() =="shl") {
-      InstPatNode->dump();
-    }
-    
-
     // For now, filter out instructions which just set a register to
     // an Operand or an immediate, like MOV32ri.
     if (InstPatOp->isSubClassOf("Operand"))
