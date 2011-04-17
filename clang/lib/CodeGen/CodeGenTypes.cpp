@@ -511,6 +511,15 @@ CodeGenTypes::getCGRecordLayout(const RecordDecl *RD) {
   return *Layout;
 }
 
+void CodeGenTypes::addBaseSubobjectTypeName(const CXXRecordDecl *RD,
+                                            const CGRecordLayout &layout) {
+  llvm::StringRef suffix;
+  if (layout.getBaseSubobjectLLVMType() != layout.getLLVMType())
+    suffix = ".base";
+
+  addTagTypeName(RD, layout.getBaseSubobjectLLVMType(), suffix);
+}
+
 bool CodeGenTypes::isZeroInitializable(QualType T) {
   // No need to check for member pointers when not compiling C++.
   if (!Context.getLangOptions().CPlusPlus)
