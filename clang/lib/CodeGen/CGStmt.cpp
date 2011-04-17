@@ -867,11 +867,25 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 }
 
 void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
+  // Handle case ranges.
   if (S.getRHS()) {
     EmitCaseStmtRange(S);
     return;
   }
 
+  // If the body of the case is just a 'break', try to not emit an empty block.
+  if (isa<BreakStmt>(S.getSubStmt())) {
+    JumpDest Block = BreakContinueStack.back().BreakBlock;
+    
+    // Only do this optimization if there are no cleanups that need emitting.
+    if (isObviouslyBranchWithoutCleanups(Block)) {
+      llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
+      SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
+                          Block.getBlock());
+      return;
+    }
+  }
+  
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
