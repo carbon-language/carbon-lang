@@ -137,6 +137,7 @@ namespace llvm {
     bool isVariadic;
 
     // Provide transparent accessors to the operand list.
+    bool empty() const { return OperandList.empty(); }
     unsigned size() const { return OperandList.size(); }
     const OperandInfo &operator[](unsigned i) const { return OperandList[i]; }
     OperandInfo &operator[](unsigned i) { return OperandList[i]; }

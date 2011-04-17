@@ -40,7 +40,7 @@ struct InstructionMemo {
 /// types. It has utility methods for emitting text based on the operands.
 ///
 struct OperandsSignature {
-  std::vector<std::string> Operands;
+  SmallVector<char, 3> Operands;
 
   bool operator<(const OperandsSignature &O) const {
     return Operands < O.Operands;
@@ -57,11 +57,11 @@ struct OperandsSignature {
 
     if (!InstPatNode->isLeaf()) {
       if (InstPatNode->getOperator()->getName() == "imm") {
-        Operands.push_back("i");
+        Operands.push_back('i');
         return true;
       }
       if (InstPatNode->getOperator()->getName() == "fpimm") {
-        Operands.push_back("f");
+        Operands.push_back('f');
         return true;
       }
     }
@@ -78,11 +78,11 @@ struct OperandsSignature {
 
       if (!Op->isLeaf()) {
         if (Op->getOperator()->getName() == "imm") {
-          Operands.push_back("i");
+          Operands.push_back('i');
           continue;
         }
         if (Op->getOperator()->getName() == "fpimm") {
-          Operands.push_back("f");
+          Operands.push_back('f');
           continue;
         }
         // For now, ignore other non-leaf nodes.
@@ -122,18 +122,18 @@ struct OperandsSignature {
           return false;
       } else
         DstRC = RC;
-      Operands.push_back("r");
+      Operands.push_back('r');
     }
     return true;
   }
 
   void PrintParameters(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i] == "r") {
+      if (Operands[i] == 'r') {
         OS << "unsigned Op" << i << ", bool Op" << i << "IsKill";
-      } else if (Operands[i] == "i") {
+      } else if (Operands[i] == 'i') {
         OS << "uint64_t imm" << i;
-      } else if (Operands[i] == "f") {
+      } else if (Operands[i] == 'f') {
         OS << "ConstantFP *f" << i;
       } else {
         assert("Unknown operand kind!");
@@ -155,13 +155,13 @@ struct OperandsSignature {
 
       if (PrintedArg)
         OS << ", ";
-      if (Operands[i] == "r") {
+      if (Operands[i] == 'r') {
         OS << "Op" << i << ", Op" << i << "IsKill";
         PrintedArg = true;
-      } else if (Operands[i] == "i") {
+      } else if (Operands[i] == 'i') {
         OS << "imm" << i;
         PrintedArg = true;
-      } else if (Operands[i] == "f") {
+      } else if (Operands[i] == 'f') {
         OS << "f" << i;
         PrintedArg = true;
       } else {
@@ -173,11 +173,11 @@ struct OperandsSignature {
 
   void PrintArguments(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-      if (Operands[i] == "r") {
+      if (Operands[i] == 'r') {
         OS << "Op" << i << ", Op" << i << "IsKill";
-      } else if (Operands[i] == "i") {
+      } else if (Operands[i] == 'i') {
         OS << "imm" << i;
-      } else if (Operands[i] == "f") {
+      } else if (Operands[i] == 'f') {
         OS << "f" << i;
       } else {
         assert("Unknown operand kind!");
@@ -266,7 +266,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
     if (!Op->isSubClassOf("Instruction"))
       continue;
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
-    if (II.Operands.size() == 0)
+    if (II.Operands.empty())
       continue;
 
     // For now, ignore multi-instruction patterns.
