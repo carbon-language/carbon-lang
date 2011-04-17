@@ -1,10 +1,12 @@
 // RUN: %clang_cc1 -I%S %s -triple x86_64-apple-darwin10 -emit-llvm -fcxx-exceptions -fexceptions -o - | FileCheck %s
 #include <typeinfo>
 
+namespace Test1 {
+
 // PR7400
 struct A { virtual void f(); };
 
-// CHECK: define i8* @_Z1fv
+// CHECK: define i8* @_ZN5Test11fEv
 const char *f() {
   try {
     // CHECK: br i1
@@ -15,4 +17,6 @@ const char *f() {
   }
 
   return 0;
+}
+
 }
