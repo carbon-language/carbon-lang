@@ -134,9 +134,10 @@ private:
   bool foldMemoryOperand(MachineBasicBlock::iterator MI,
                          const SmallVectorImpl<unsigned> &Ops,
                          MachineInstr *LoadMI = 0);
-  void insertReload(LiveInterval &NewLI, MachineBasicBlock::iterator MI);
+  void insertReload(LiveInterval &NewLI, SlotIndex,
+                    MachineBasicBlock::iterator MI);
   void insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
-                   MachineBasicBlock::iterator MI);
+                   SlotIndex, MachineBasicBlock::iterator MI);
 
   void spillAroundUses(unsigned Reg);
   void spillAll();
@@ -780,9 +781,9 @@ bool InlineSpiller::foldMemoryOperand(MachineBasicBlock::iterator MI,
 
 /// insertReload - Insert a reload of NewLI.reg before MI.
 void InlineSpiller::insertReload(LiveInterval &NewLI,
+                                 SlotIndex Idx,
                                  MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
-  SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
   TII.loadRegFromStackSlot(MBB, MI, NewLI.reg, StackSlot,
                            MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to load instruction.
@@ -796,15 +797,8 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
 
 /// insertSpill - Insert a spill of NewLI.reg after MI.
 void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
-                                MachineBasicBlock::iterator MI) {
+                                SlotIndex Idx, MachineBasicBlock::iterator MI) {
   MachineBasicBlock &MBB = *MI->getParent();
-
-  // Get the defined value. It could be an early clobber so keep the def index.
-  SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
-  VNInfo *VNI = OldLI.getVNInfoAt(Idx);
-  assert(VNI && VNI->def.getDefIndex() == Idx && "Inconsistent VNInfo");
-  Idx = VNI->def;
-
   TII.storeRegToStackSlot(MBB, ++MI, NewLI.reg, true, StackSlot,
                           MRI.getRegClass(NewLI.reg), &TRI);
   --MI; // Point to store instruction.
@@ -854,6 +848,13 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     SmallVector<unsigned, 8> Ops;
     tie(Reads, Writes) = MI->readsWritesVirtualRegister(Reg, &Ops);
 
+    // Find the slot index where this instruction reads and writes OldLI.
+    // This is usually the def slot, except for tied early clobbers.
+    SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
+    if (VNInfo *VNI = OldLI.getVNInfoAt(Idx.getUseIndex()))
+      if (SlotIndex::isSameInstr(Idx, VNI->def))
+        Idx = VNI->def;
+
     // Check for a sibling copy.
     unsigned SibReg = isFullCopyOf(MI, Reg);
     if (SibReg && isSibling(SibReg)) {
@@ -867,7 +868,6 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
         }
       } else {
         // This is a reload for a sib-reg copy. Drop spills downstream.
-        SlotIndex Idx = LIS.getInstructionIndex(MI).getDefIndex();
         LiveInterval &SibLI = LIS.getInterval(SibReg);
         eliminateRedundantSpills(SibLI, SibLI.getVNInfoAt(Idx));
         // The COPY will fold to a reload below.
@@ -884,7 +884,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     NewLI.markNotSpillable();
 
     if (Reads)
-      insertReload(NewLI, MI);
+      insertReload(NewLI, Idx, MI);
 
     // Rewrite instruction operands.
     bool hasLiveDef = false;
@@ -899,10 +899,11 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
           hasLiveDef = true;
       }
     }
+    DEBUG(dbgs() << "\trewrite: " << Idx << '\t' << *MI);
 
     // FIXME: Use a second vreg if instruction has no tied ops.
     if (Writes && hasLiveDef)
-      insertSpill(NewLI, OldLI, MI);
+      insertSpill(NewLI, OldLI, Idx, MI);
 
     DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   }
