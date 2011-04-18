@@ -13,26 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMAddressingModes.h"
-#include "ARMBaseInstrInfo.h"
-#include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
 #include "Thumb2InstrInfo.h"
 #include "Thumb2RegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineLocation.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 Thumb2RegisterInfo::Thumb2RegisterInfo(const ARMBaseInstrInfo &tii,
