@@ -250,7 +250,7 @@ public:
   /// StructType::get - Create an empty structure type.
   ///
   static StructType *get(LLVMContext &Context, bool isPacked=false) {
-    return get(Context, std::vector<const Type*>(), isPacked);
+    return get(Context, llvm::ArrayRef<const Type*>(), isPacked);
   }
 
   /// StructType::get - This static method is a convenience method for
