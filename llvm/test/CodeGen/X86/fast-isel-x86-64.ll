@@ -119,3 +119,11 @@ define i32 @test10(i32 %X) nounwind {
 ; CHECK: test10:
 ; CHECK: shrl	$3, 
 }
+
+define i32 @test11(i32 %X) nounwind {
+  %Y = sdiv exact i32 %X, 8
+  ret i32 %Y
+; CHECK: test11:
+; CHECK: sarl	$3, 
+}
+

@@ -360,6 +360,14 @@ bool FastISel::SelectBinaryOp(const User *I, unsigned ISDOpcode) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
     uint64_t Imm = CI->getZExtValue();
     
+    // Transform "sdiv exact X, 8" -> "sra X, 3".
+    if (ISDOpcode == ISD::SDIV && isa<BinaryOperator>(I) &&
+        cast<BinaryOperator>(I)->isExact() &&
+        isPowerOf2_64(Imm)) {
+      Imm = Log2_64(Imm);
+      ISDOpcode = ISD::SRA;
+    }
+    
     unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISDOpcode, Op0,
                                       Op0IsKill, Imm, VT.getSimpleVT());
     if (ResultReg == 0) return false;
