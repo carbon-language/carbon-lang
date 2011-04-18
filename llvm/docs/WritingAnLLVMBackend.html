@@ -9,9 +9,9 @@
 
 <body>
 
-<div class="doc_title">
+<h1>
   Writing an LLVM Compiler Backend
-</div>
+</h1>
 
 <ol>
   <li><a href="#intro">Introduction</a>
@@ -61,9 +61,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="intro">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -93,9 +93,9 @@ conventions.
 
 </div>
 
-<div class="doc_subsection">
+<h3>
   <a name="Audience">Audience</a>
-</div>  
+</h3>
 
 <div class="doc_text">
 
@@ -106,9 +106,9 @@ generate code for a specific hardware or software target.
 
 </div>
 
-<div class="doc_subsection">
+<h3>
   <a name="Prerequisite">Prerequisite Reading</a>
-</div>  
+</h3>
 
 <div class="doc_text">  
 
@@ -155,9 +155,9 @@ machine dependent features.
 
 </div>
 
-<div class="doc_subsection">
+<h3>
   <a name="Basic">Basic Steps</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -220,9 +220,9 @@ that the class will need and which components will need to be subclassed.
 
 </div>
 
-<div class="doc_subsection">
+<h3>
   <a name="Preliminaries">Preliminaries</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -282,9 +282,9 @@ regenerate configure by running <tt>./autoconf/AutoRegen.sh</tt>.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="TargetMachine">Target Machine</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -424,9 +424,9 @@ SparcTargetMachine::SparcTargetMachine(const Module &amp;M, const std::string &a
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="TargetRegistration">Target Registration</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -480,9 +480,9 @@ For more information, see
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="RegisterSet">Register Set and Register Classes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -517,9 +517,9 @@ implementation of <tt>XXXRegisterInfo</tt> requires hand-coding.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="RegisterDef">Defining a Register</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -700,9 +700,9 @@ fields of a register's TargetRegisterDesc.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="RegisterClassDef">Defining a Register Class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -894,10 +894,10 @@ namespace SP {   // Register class instances
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="implementRegister">Implement a subclass of</a> 
   <a href="CodeGenerator.html#targetregisterinfo">TargetRegisterInfo</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -934,9 +934,9 @@ implementation in <tt>SparcRegisterInfo.cpp</tt>:
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="InstructionSet">Instruction Set</a>
-</div>
+</h2>
 
 <!-- *********************************************************************** -->
 <div class="doc_text">
@@ -1191,9 +1191,9 @@ correspond to the values in <tt>SparcInstrInfo.td</tt>. I.e.,
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="operandMapping">Instruction Operand Mapping</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1283,10 +1283,10 @@ the <tt>rd</tt>, <tt>rs1</tt>, and <tt>rs2</tt> fields respectively.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="implementInstr">Implement a subclass of </a>
   <a href="CodeGenerator.html#targetinstrinfo">TargetInstrInfo</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1327,9 +1327,9 @@ implementation in <tt>SparcInstrInfo.cpp</tt>:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="branchFolding">Branch Folding and If Conversion</a>
-</div>
+</h3>
 <div class="doc_text">
 
 <p>
@@ -1486,9 +1486,9 @@ branch.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="InstructionSelector">Instruction Selector</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1645,9 +1645,9 @@ SDNode *Select_ISD_STORE(const SDValue &amp;N) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="LegalizePhase">The SelectionDAG Legalize Phase</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1719,9 +1719,9 @@ contains examples of all four <tt>LegalAction</tt> values.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="promote">Promote</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1742,9 +1742,9 @@ setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="expand">Expand</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1767,9 +1767,9 @@ setOperationAction(ISD::FCOS, MVT::f32, Expand);
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="custom">Custom</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1833,9 +1833,9 @@ static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &amp;DAG) {
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="legal">Legal</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1866,9 +1866,9 @@ if (TM.getSubtarget&lt;SparcSubtarget&gt;().isV9())
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="callingConventions">Calling Conventions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2016,9 +2016,9 @@ def RetCC_X86_32 : CallingConv&lt;[
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="assemblyPrinter">Assembly Printer</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2171,9 +2171,9 @@ output.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="subtargetSupport">Subtarget Support</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2289,9 +2289,9 @@ XXXSubtarget::XXXSubtarget(const Module &amp;M, const std::string &amp;FS) {
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="jitSupport">JIT Support</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2336,9 +2336,9 @@ that write data (in bytes, words, strings, etc.) to the output stream.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mce">Machine Code Emitter</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2478,9 +2478,9 @@ enum RelocationType {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetJITInfo">Target JIT Info</a>
-</div>
+</h3>
 
 <div class="doc_text">
 

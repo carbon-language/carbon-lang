@@ -7,7 +7,7 @@
 </head>
 <body>
       
-<div class="doc_title">LLVM gold plugin</div>
+<h1>LLVM gold plugin</h1>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#build">How to build it</a></li>
@@ -21,7 +21,7 @@
 <div class="doc_author">Written by Nick Lewycky</div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="introduction">Introduction</a></div>
+<h2><a name="introduction">Introduction</a></h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>Building with link time optimization requires cooperation from the
@@ -38,7 +38,7 @@ The same plugin can also be used by other tools such as <tt>ar</tt> and
 <tt>nm</tt>.
 </div>
 <!--=========================================================================-->
-<div class="doc_section"><a name="build">How to build it</a></div>
+<h2><a name="build">How to build it</a></h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>You need to have gold with plugin support and build the LLVMgold
@@ -72,7 +72,7 @@ placed.
 </ul>
 </div>
 <!--=========================================================================-->
-<div class="doc_section"><a name="usage">Usage</a></div>
+<h2><a name="usage">Usage</a></h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>The linker takes a <tt>-plugin</tt> option that points to the path of
@@ -98,9 +98,9 @@ placed.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="example1">Example of link time optimization</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>The following example shows a worked example of the gold plugin mixing
@@ -150,7 +150,11 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="lto_autotools">Quickstart for using LTO with autotooled projects</a></div>
+<h2>
+  <a name="lto_autotools">
+    Quickstart for using LTO with autotooled projects
+  </a>
+</h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>Once your system <tt>ld</tt>, <tt>ar</tt> and <tt>nm</tt> all support LLVM
@@ -189,7 +193,7 @@ export CFLAGS="-O4"
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="licensing">Licensing</a></div>
+<h2><a name="licensing">Licensing</a></h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>Gold is licensed under the GPLv3. LLVMgold uses the interface file

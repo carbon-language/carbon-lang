@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<div class="doc_title">TableGen Fundamentals</div>
+<h1>TableGen Fundamentals</h1>
 
 <div class="doc_text">
 <ul>
@@ -50,7 +50,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction</a></div>
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -75,7 +75,7 @@ distribution, respectively.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="concepts">Basic concepts</a></div>
+<h3><a name="concepts">Basic concepts</a></h3>
 
 <div class="doc_text">
 
@@ -112,7 +112,7 @@ multiclass, as if they were declared in the current multiclass.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="example">An example record</a></div>
+<h3><a name="example">An example record</a></h3>
 
 <div class="doc_text">
 
@@ -212,7 +212,7 @@ abstractions they prefer to use when describing their information.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="running">Running TableGen</a></div>
+<h3><a name="running">Running TableGen</a></h3>
 
 <div class="doc_text">
 
@@ -258,7 +258,7 @@ what you need and formats it in the appropriate way.</p>
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="syntax">TableGen syntax</a></div>
+<h2><a name="syntax">TableGen syntax</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -271,10 +271,10 @@ This section describes the syntax and the constructs allowed in a TableGen file.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="primitives">TableGen primitives</a></div>
+<h3><a name="primitives">TableGen primitives</a></h3>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection"><a name="comments">TableGen comments</a></div>
+<h4><a name="comments">TableGen comments</a></h4>
 
 <div class="doc_text">
 
@@ -284,9 +284,9 @@ the line, and it also supports <b>nestable</b> "<tt>/* */</tt>" comments.</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="types">The TableGen type system</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -344,9 +344,9 @@ needed.</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="values">TableGen values and expressions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -434,9 +434,9 @@ to a "<tt>bits&lt;4&gt;</tt>" value, for example.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="classesdefs">Classes and definitions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -476,9 +476,9 @@ subclasses to override them as they wish.</p>
 </div>
 
 <!---------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="valuedef">Value definitions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -492,9 +492,9 @@ equal sign.  Value definitions require terminating semicolons.</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="recordlet">'let' expressions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -519,9 +519,9 @@ because the <tt>D</tt> class overrode its value.</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="templateargs">Class template arguments</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -610,9 +610,9 @@ X86 backend.</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="multiclass">Multiclass definitions and instances</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -773,14 +773,14 @@ before them.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="filescope">File scope entities</a>
-</div>
+</h3>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="include">File inclusion</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>TableGen supports the '<tt>include</tt>' token, which textually substitutes
@@ -797,9 +797,9 @@ keyword.  Example:</p>
 </div>
 
 <!-- -------------------------------------------------------------------------->
-<div class="doc_subsubsection">
+<h4>
   <a name="globallet">'let' expressions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -865,7 +865,7 @@ several levels of multiclass instanciations. This also avoids the need of using
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="codegen">Code Generator backend info</a></div>
+<h2><a name="codegen">Code Generator backend info</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -882,7 +882,7 @@ patterns:</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="backends">TableGen backends</a></div>
+<h2><a name="backends">TableGen backends</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">

@@ -8,9 +8,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   LLVM Programmer's Manual
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a></li>
@@ -210,9 +210,9 @@ with another <tt>Value</tt></a> </li>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction </a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -242,9 +242,9 @@ href="/doxygen/InstVisitor_8h-source.html">InstVisitor</a></tt> template.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="general">General Information</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -255,9 +255,9 @@ in the LLVM source-base, but that isn't specific to any particular API.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="stl">The C++ Standard Template Library</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -305,9 +305,9 @@ to write maintainable code more than where to put your curly braces.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="stl">Other useful references</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -319,9 +319,9 @@ static and shared libraries across platforms</a></li>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="apis">Important and useful LLVM APIs</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -332,10 +332,10 @@ know about when writing transformations.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt> and
   <tt>dyn_cast&lt;&gt;</tt> templates</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -442,10 +442,10 @@ are lots of examples in the LLVM source base.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="string_apis">Passing strings (the <tt>StringRef</tt>
 and <tt>Twine</tt> classes)</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -464,9 +464,9 @@ passing strings efficiently.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="StringRef">The <tt>StringRef</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -504,9 +504,9 @@ small and pervasive enough in LLVM that it should always be passed by value.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="Twine">The <tt>Twine</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -541,9 +541,9 @@ accept concatenated strings.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="DEBUG">The <tt>DEBUG()</tt> macro and <tt>-debug</tt> option</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -594,10 +594,10 @@ program hasn't been started yet, you can always just run it with
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="DEBUG_TYPE">Fine grained debug info with <tt>DEBUG_TYPE</tt> and
   the <tt>-debug-only</tt> option</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -668,10 +668,10 @@ DEBUG_WITH_TYPE("", errs() &lt;&lt; "No debug type (2)\n");
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Statistic">The <tt>Statistic</tt> class &amp; <tt>-stats</tt>
   option</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -768,9 +768,9 @@ maintainable and useful.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ViewGraph">Viewing graphs while debugging code</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -817,9 +817,9 @@ attributes, then you can <tt>call DAG.clearGraphAttrs()</tt>. </p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="datastructure">Picking the Right Data Structure for a Task</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -881,9 +881,9 @@ cost of adding the elements to the container. </p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ds_sequential">Sequential Containers (std::vector, std::list, etc)</a>
-</div>
+</h3>
 
 <div class="doc_text">
 There are a variety of sequential containers available for you, based on your
@@ -891,9 +891,9 @@ needs.  Pick the first in this section that will do what you want.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_arrayref">llvm/ADT/ArrayRef.h</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>The llvm::ArrayRef class is the preferred class to use in an interface that
@@ -906,9 +906,9 @@ needs.  Pick the first in this section that will do what you want.
 
   
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_fixedarrays">Fixed Size Arrays</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>Fixed size arrays are very simple and very fast.  They are good if you know
@@ -917,9 +917,9 @@ you have.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_heaparrays">Heap Allocated Arrays</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>Heap allocated arrays (new[] + delete[]) are also simple.  They are good if
@@ -933,9 +933,9 @@ construct those elements actually used).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_smallvector">"llvm/ADT/SmallVector.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>SmallVector&lt;Type, N&gt;</tt> is a simple class that looks and smells
@@ -962,9 +962,9 @@ SmallVectors are most useful when on the stack.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_vector">&lt;vector&gt;</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -1004,9 +1004,9 @@ the loop.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_deque">&lt;deque&gt;</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>std::deque is, in some senses, a generalized version of std::vector.  Like
@@ -1020,9 +1020,9 @@ something cheaper.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_list">&lt;list&gt;</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>std::list is an extremely inefficient class that is rarely useful.
@@ -1038,9 +1038,9 @@ not invalidate iterator or pointers to other elements in the list.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_ilist">llvm/ADT/ilist.h</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>ilist&lt;T&gt;</tt> implements an 'intrusive' doubly-linked list.  It is
@@ -1068,9 +1068,9 @@ Related classes of interest are explained in the following subsections:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_ilist_traits">ilist_traits</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>ilist_traits&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s customization
@@ -1079,9 +1079,9 @@ publicly derive from this traits class.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_iplist">iplist</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>iplist&lt;T&gt;</tt> is <tt>ilist&lt;T&gt;</tt>'s base and as such
@@ -1093,9 +1093,9 @@ used for a wide variety of customizations.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_ilist_node">llvm/ADT/ilist_node.h</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>ilist_node&lt;T&gt;</tt> implements a the forward and backward links
@@ -1108,9 +1108,9 @@ in the default manner.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_ilist_sentinel">Sentinels</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p><tt>ilist</tt>s have another specialty that must be considered. To be a good
@@ -1146,9 +1146,9 @@ field in the ghostly sentinel which can be legally accessed.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_other">Other Sequential Container options</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>Other STL containers are available, such as std::string.</p>
@@ -1161,9 +1161,9 @@ underlying container but don't affect the cost of the container itself.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1175,9 +1175,9 @@ this, providing various trade-offs.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_sortedvectorset">A sorted 'vector'</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1197,9 +1197,9 @@ efficiently queried with a standard binary or radix search.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_smallset">"llvm/ADT/SmallSet.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1220,9 +1220,9 @@ and erasing, but does not support iteration.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_smallptrset">"llvm/ADT/SmallPtrSet.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1240,9 +1240,9 @@ visited in sorted order.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_denseset">"llvm/ADT/DenseSet.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1259,9 +1259,9 @@ href="#dss_densemap">DenseMap</a> has.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1296,9 +1296,9 @@ elements.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_set">&lt;set&gt;</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1321,9 +1321,9 @@ std::set is almost never a good choice.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_setvector">"llvm/ADT/SetVector.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>LLVM's SetVector&lt;Type&gt; is an adapter class that combines your choice of
@@ -1361,9 +1361,9 @@ heap traffic.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_uniquevector">"llvm/ADT/UniqueVector.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1381,9 +1381,9 @@ factors, and produces a lot of malloc traffic.  It should be avoided.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_otherset">Other Set-Like Container Options</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1402,9 +1402,9 @@ better.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ds_map">Map-Like Containers (std::map, DenseMap, etc)</a>
-</div>
+</h3>
 
 <div class="doc_text">
 Map-like containers are useful when you want to associate data to a key.  As
@@ -1412,9 +1412,9 @@ usual, there are a lot of different ways to do this. :)
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_sortedvectormap">A sorted 'vector'</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1429,9 +1429,9 @@ vectors for sets.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_stringmap">"llvm/ADT/StringMap.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1463,9 +1463,9 @@ copies a string if a value is inserted into the table.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_indexedmap">"llvm/ADT/IndexedMap.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -1483,9 +1483,9 @@ virtual register ID).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_densemap">"llvm/ADT/DenseMap.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1509,9 +1509,9 @@ inserted into the map) that it needs internally.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_valuemap">"llvm/ADT/ValueMap.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1526,9 +1526,9 @@ a <code>Config</code> parameter to the ValueMap template.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_intervalmap">"llvm/ADT/IntervalMap.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1543,9 +1543,9 @@ as STL iterators. The heavyweight iterators allow a smaller data structure.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_map">&lt;map&gt;</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1563,9 +1563,9 @@ another element takes place).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_inteqclasses">"llvm/ADT/IntEqClasses.h"</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1583,9 +1583,9 @@ it can be edited again.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_othermap">Other Map-Like Container Options</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1602,9 +1602,9 @@ always better.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ds_string">String-like containers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1616,9 +1616,9 @@ xref to #string_apis.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ds_bit">Bit storage containers (BitVector, SparseBitVector)</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>Unlike the other containers, there are only two bit storage containers, and 
@@ -1633,9 +1633,9 @@ please don't use it.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_bitvector">BitVector</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p> The BitVector container provides a dynamic size set of bits for manipulation.
@@ -1648,9 +1648,9 @@ the number of set bits to be high (IE a dense set).
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_smallbitvector">SmallBitVector</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p> The SmallBitVector container provides the same interface as BitVector, but
@@ -1667,9 +1667,9 @@ and its operator[] does not provide an assignable lvalue.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="dss_sparsebitvector">SparseBitVector</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p> The SparseBitVector container is much like BitVector, with one major
@@ -1682,9 +1682,9 @@ universe).  The downside to the SparseBitVector is that setting and testing of r
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="common">Helpful Hints for Common Operations</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1700,9 +1700,9 @@ and descriptions of the main classes that you should know about.</p>
 
 <!-- NOTE: this section should be heavy on example code -->
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="inspection">Basic Inspection and Traversal Routines</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1724,11 +1724,11 @@ structures are traversed in very similar ways.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_function">Iterating over the </a><a
   href="#BasicBlock"><tt>BasicBlock</tt></a>s in a <a
   href="#Function"><tt>Function</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1759,11 +1759,11 @@ exactly equivalent to <tt>(*i).size()</tt> just like you'd expect.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_basicblock">Iterating over the </a><a
   href="#Instruction"><tt>Instruction</tt></a>s in a <a
   href="#BasicBlock"><tt>BasicBlock</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1790,11 +1790,11 @@ basic block itself: <tt>errs() &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_institer">Iterating over the </a><a
   href="#Instruction"><tt>Instruction</tt></a>s in a <a
   href="#Function"><tt>Function</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1836,10 +1836,10 @@ for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_convert">Turning an iterator into a class pointer (and
   vice-versa)</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1913,10 +1913,10 @@ and <tt>operator*</tt> changed to return a pointer instead of a reference.</p>
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_complex">Finding call sites: a slightly more complex
   example</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1975,9 +1975,9 @@ class OurFunctionPass : public FunctionPass {
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="calls_and_invokes">Treating calls and invokes the same way</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2002,9 +2002,9 @@ If you look at its definition, it has only a single pointer member.</p>
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_chains">Iterating over def-use &amp; use-def chains</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2063,10 +2063,10 @@ calling <tt>use/op_begin()</tt> on <tt>const Value*</tt>s or
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="iterate_preds">Iterating over predecessors &amp;
 successors of blocks</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2093,9 +2093,9 @@ succ_iterator/succ_begin/succ_end.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="simplechanges">Making simple changes</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2108,10 +2108,10 @@ and gives example code.</p>
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="schanges_creating">Creating and inserting new
   <tt>Instruction</tt>s</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2249,9 +2249,9 @@ Instruction* newInst = new Instruction(..., pi);
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="schanges_deleting">Deleting <tt>Instruction</tt>s</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2273,10 +2273,10 @@ block but not delete it, you can use the <tt>removeFromParent()</tt> method.</p>
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="schanges_replacing">Replacing an <tt>Instruction</tt> with another
   <tt>Value</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2339,9 +2339,9 @@ ReplaceInstWithValue, ReplaceInstWithInst -->
 </div>
 
 <!--_______________________________________________________________________-->
-<div class="doc_subsubsection">
+<h4>
   <a name="schanges_deletingGV">Deleting <tt>GlobalVariable</tt>s</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2361,9 +2361,9 @@ GV-&gt;eraseFromParent();
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="create_types">How to Create Types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2401,9 +2401,9 @@ comment</a> for more details.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="threading">Threads and LLVM</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2432,9 +2432,9 @@ support.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="startmultithreaded">Entering and Exiting Multithreaded Mode</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2469,9 +2469,9 @@ result in concurrent LLVM API calls.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="shutdown">Ending Execution with <tt>llvm_shutdown()</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -2489,9 +2489,9 @@ destructor.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="managedstatic">Lazy Initialization with <tt>ManagedStatic</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -2518,9 +2518,9 @@ and only if you know what you're doing!
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="llvmcontext">Achieving Isolation with <tt>LLVMContext</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -2562,9 +2562,9 @@ isolation is not a concern.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="jitthreading">Threads and the JIT</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -2590,9 +2590,9 @@ access, but we suggest using only the eager JIT in threaded programs.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="advanced">Advanced Topics</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2604,9 +2604,9 @@ LLVM system, and only need to be accessed in unusual circumstances.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="TypeResolve">LLVM Type Resolution</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2640,9 +2640,9 @@ float }</tt>").
 </div>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="BuildRecType">Basic Recursive Type Construction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2696,9 +2696,9 @@ href="#PATypeHolder">PATypeHolder class</a>.
 </div>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="refineAbstractTypeTo">The <tt>refineAbstractTypeTo</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -2726,9 +2726,9 @@ complex datastructures.
 </div>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="PATypeHolder">The PATypeHolder Class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -2748,9 +2748,9 @@ Type is maintained by PATypeHolder objects.
 </div>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="AbstractTypeUser">The AbstractTypeUser Class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2768,10 +2768,10 @@ objects) can never be refined.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="SymbolTable">The <tt>ValueSymbolTable</tt> and
    <tt>TypeSymbolTable</tt> classes</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>The <tt><a href="http://llvm.org/doxygen/classllvm_1_1ValueSymbolTable.html">
@@ -2804,9 +2804,9 @@ insert entries into the symbol table.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="UserLayout">The <tt>User</tt> and owned <tt>Use</tt> classes' memory layout</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>The <tt><a href="http://llvm.org/doxygen/classllvm_1_1User.html">
@@ -2817,9 +2817,11 @@ Use</a></tt> helper class is employed to do the bookkeeping and to facilitate <i
 addition and removal.</p>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="Use2User">Interaction and relationship between <tt>User</tt> and <tt>Use</tt> objects</a>
-</div>
+<h4>
+  <a name="Use2User">
+    Interaction and relationship between <tt>User</tt> and <tt>Use</tt> objects
+  </a>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -2878,9 +2880,9 @@ enforce the following memory layouts:</p>
     is stored in each <tt>Use</tt> object in the member <tt>Use::Prev</tt>)</i>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="Waymarking">The waymarking algorithm</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -2919,9 +2921,9 @@ stops, so that the <i>worst case is 20 memory accesses</i> when there are
 1000 <tt>Use</tt> objects associated with a <tt>User</tt>.</p>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ReferenceImpl">Reference implementation</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -3009,9 +3011,9 @@ OK, passed 500 tests.
 </pre>
 
 <!-- ______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="Tagging">Tagging considerations</a>
-</div>
+</h4>
 
 <p>
 To maintain the invariant that the 2 LSBits of each <tt>Use**</tt> in <tt>Use</tt>
@@ -3028,9 +3030,9 @@ the LSBit set. (Portability is relying on the fact that all known compilers plac
 </div>
 
   <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="coreclasses">The Core LLVM Class Hierarchy Reference </a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -3045,9 +3047,9 @@ the <tt>lib/VMCore</tt> directory.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Type">The <tt>Type</tt> class and Derived Types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3067,9 +3069,9 @@ the <tt>lib/VMCore</tt> directory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="m_Type">Important Public Methods</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3089,9 +3091,9 @@ the <tt>lib/VMCore</tt> directory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="derivedtypes">Important Derived Types</a>
-</div>
+</h4>
 <div class="doc_text">
 <dl>
   <dt><tt>IntegerType</tt></dt>
@@ -3157,9 +3159,9 @@ the <tt>lib/VMCore</tt> directory.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Module">The <tt>Module</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3179,9 +3181,9 @@ helpful member functions that try to make common operations easy.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="m_Module">Important Public Members of the <tt>Module</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3284,9 +3286,9 @@ provide a name for it (probably based on the name of the translation unit).</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Value">The <tt>Value</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3342,9 +3344,9 @@ simplifies the representation and makes it easier to manipulate.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="m_Value">Important Public Members of the <tt>Value</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3394,9 +3396,9 @@ Inst-&gt;replaceAllUsesWith(ConstVal);
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="User">The <tt>User</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
   
@@ -3420,9 +3422,9 @@ information in LLVM.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="m_User">Important Public Members of the <tt>User</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3448,9 +3450,9 @@ the operands of a <tt>User</tt>.</p></li>
 </div>    
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Instruction">The <tt>Instruction</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3486,10 +3488,11 @@ this file confuses doxygen, so these enum values don't show up correctly in the
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="s_Instruction">Important Subclasses of the <tt>Instruction</tt>
-  class</a>
-</div>
+<h4>
+  <a name="s_Instruction">
+    Important Subclasses of the <tt>Instruction</tt> class
+  </a>
+</h4>
 <div class="doc_text">
   <ul>
     <li><tt><a name="BinaryOperator">BinaryOperator</a></tt>
@@ -3509,10 +3512,11 @@ this file confuses doxygen, so these enum values don't show up correctly in the
   </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_Instruction">Important Public Members of the <tt>Instruction</tt>
-  class</a>
-</div>
+<h4>
+  <a name="m_Instruction">
+    Important Public Members of the <tt>Instruction</tt> class
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -3535,9 +3539,9 @@ and it has no name</p></li>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Constant">The <tt>Constant</tt> class and subclasses</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3550,7 +3554,7 @@ a subclass, which represents the address of a global variable or function.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Important Subclasses of Constant </div>
+<h4>Important Subclasses of Constant</h4>
 <div class="doc_text">
 <ul>
   <li>ConstantInt : This subclass of Constant represents an integer constant of
@@ -3601,9 +3605,9 @@ a subclass, which represents the address of a global variable or function.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="GlobalValue">The <tt>GlobalValue</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3648,10 +3652,11 @@ Language Reference Manual</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_GlobalValue">Important Public Members of the <tt>GlobalValue</tt>
-  class</a>
-</div>
+<h4>
+  <a name="m_GlobalValue">
+    Important Public Members of the <tt>GlobalValue</tt> class
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -3670,9 +3675,9 @@ GlobalValue is currently embedded into.</p></li>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Function">The <tt>Function</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3724,10 +3729,11 @@ is its address (after linking) which is guaranteed to be constant.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_Function">Important Public Members of the <tt>Function</tt>
-  class</a>
-</div>
+<h4>
+  <a name="m_Function">
+    Important Public Members of the <tt>Function</tt> class
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -3808,9 +3814,9 @@ iterator<br>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="GlobalVariable">The <tt>GlobalVariable</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3837,10 +3843,11 @@ never change at runtime).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_GlobalVariable">Important Public Members of the
-  <tt>GlobalVariable</tt> class</a>
-</div>
+<h4>
+  <a name="m_GlobalVariable">
+    Important Public Members of the <tt>GlobalVariable</tt> class
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -3882,9 +3889,9 @@ never change at runtime).</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="BasicBlock">The <tt>BasicBlock</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -3914,10 +3921,11 @@ like branches and can go in the switch tables. <tt>BasicBlock</tt>s have type
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="m_BasicBlock">Important Public Members of the <tt>BasicBlock</tt>
-  class</a>
-</div>
+<h4>
+  <a name="m_BasicBlock">
+    Important Public Members of the <tt>BasicBlock</tt> class
+  </a>
+</h4>
 
 <div class="doc_text">
 <ul>
@@ -3973,9 +3981,9 @@ returned.</p></li>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="Argument">The <tt>Argument</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 

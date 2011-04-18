@@ -12,7 +12,7 @@
 
 <body>
 
-<div class="doc_title"> LLVM Language Reference Manual </div>
+<h1>LLVM Language Reference Manual</h1>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#introduction">Introduction</a></li>
@@ -321,7 +321,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="abstract">Abstract </a></div>
+<h2><a name="abstract">Abstract</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -335,7 +335,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="introduction">Introduction</a> </div>
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -362,7 +362,9 @@
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="wellformed">Well-Formedness</a> </div>
+<h4>
+  <a name="wellformed">Well-Formedness</a>
+</h4>
 
 <div class="doc_text">
 
@@ -387,7 +389,7 @@
 <!-- Describe the typesetting conventions here. -->
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="identifiers">Identifiers</a> </div>
+<h2><a name="identifiers">Identifiers</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -475,12 +477,13 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="highlevel">High Level Structure</a> </div>
+<h2><a name="highlevel">High Level Structure</a></h2>
 <!-- *********************************************************************** -->
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="modulestructure">Module Structure</a>
-</div>
+<h3>
+  <a name="modulestructure">Module Structure</a>
+</h3>
 
 <div class="doc_text">
 
@@ -528,9 +531,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="linkage">Linkage Types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -677,9 +680,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="callingconv">Calling Conventions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -750,9 +753,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="visibility">Visibility Styles</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -784,9 +787,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="namedtypes">Named Types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -815,9 +818,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="globalvars">Global Variables</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -883,9 +886,9 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="functionstructure">Functions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -946,9 +949,9 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="aliasstructure">Aliases</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -965,9 +968,9 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="namedmetadatastructure">Named Metadata</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -988,7 +991,9 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="paramattrs">Parameter Attributes</a></div>
+<h3>
+  <a name="paramattrs">Parameter Attributes</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1097,9 +1102,9 @@ declare signext i8 @returns_signed_char()
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="gc">Garbage Collector Names</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1117,9 +1122,9 @@ define void @f() gc "name" { ... }
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="fnattrs">Function Attributes</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1240,9 +1245,9 @@ define void @f() optsize { ... }
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="moduleasm">Module-Level Inline Assembly</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1266,9 +1271,9 @@ module asm "more can go here"
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="datalayout">Data Layout</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1378,9 +1383,9 @@ target datalayout = "<i>layout specification</i>"
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="pointeraliasing">Pointer Aliasing Rules</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1442,9 +1447,9 @@ to implement type-based alias analysis.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="volatile">Volatile Memory Accesses</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1460,7 +1465,7 @@ synchronization behavior.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="typesystem">Type System</a> </div>
+<h2><a name="typesystem">Type System</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1476,8 +1481,9 @@ synchronization behavior.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="t_classifications">Type
-Classifications</a> </div>
+<h3>
+  <a name="t_classifications">Type Classifications</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1536,7 +1542,9 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="t_primitive">Primitive Types</a> </div>
+<h3>
+  <a name="t_primitive">Primitive Types</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1546,7 +1554,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_integer">Integer Type</a> </div>
+<h4>
+  <a name="t_integer">Integer Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1582,7 +1592,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_floating">Floating Point Types</a> </div>
+<h4>
+  <a name="t_floating">Floating Point Types</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1600,7 +1612,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_x86mmx">X86mmx Type</a> </div>
+<h4>
+  <a name="t_x86mmx">X86mmx Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1615,7 +1629,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_void">Void Type</a> </div>
+<h4>
+  <a name="t_void">Void Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1630,7 +1646,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_label">Label Type</a> </div>
+<h4>
+  <a name="t_label">Label Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1645,7 +1663,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_metadata">Metadata Type</a> </div>
+<h4>
+  <a name="t_metadata">Metadata Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1663,7 +1683,9 @@ Classifications</a> </div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="t_derived">Derived Types</a> </div>
+<h3>
+  <a name="t_derived">Derived Types</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1678,7 +1700,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_aggregate">Aggregate Types</a> </div>
+<h4>
+  <a name="t_aggregate">Aggregate Types</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1690,7 +1714,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_array">Array Type</a> </div>
+<h4>
+  <a name="t_array">Array Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1748,7 +1774,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_function">Function Type</a> </div>
+<h4>
+  <a name="t_function">Function Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1801,7 +1829,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_struct">Structure Type</a> </div>
+<h4>
+  <a name="t_struct">Structure Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1839,8 +1869,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_pstruct">Packed Structure Type</a>
-</div>
+<h4>
+  <a name="t_pstruct">Packed Structure Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1877,7 +1908,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_pointer">Pointer Type</a> </div>
+<h4>
+  <a name="t_pointer">Pointer Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1921,7 +1954,9 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_vector">Vector Type</a> </div>
+<h4>
+  <a name="t_vector">Vector Type</a>
+</h4>
 
 <div class="doc_text">
 
@@ -1960,7 +1995,10 @@ Classifications</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_opaque">Opaque Type</a> </div>
+<h4>
+  <a name="t_opaque">Opaque Type</a>
+</h4>
+
 <div class="doc_text">
 
 <h5>Overview:</h5>
@@ -1985,9 +2023,9 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="t_uprefs">Type Up-references</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2033,7 +2071,7 @@ Classifications</a> </div>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="constants">Constants</a> </div>
+<h2><a name="constants">Constants</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2044,7 +2082,9 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="simpleconstants">Simple Constants</a></div>
+<h3>
+  <a name="simpleconstants">Simple Constants</a>
+</h3>
 
 <div class="doc_text">
 
@@ -2099,10 +2139,10 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
 <a name="aggregateconstants"></a> <!-- old anchor -->
 <a name="complexconstants">Complex Constants</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2154,9 +2194,9 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="globalconstants">Global Variable and Function Addresses</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2176,7 +2216,10 @@ Classifications</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="undefvalues">Undefined Values</a></div>
+<h3>
+  <a name="undefvalues">Undefined Values</a>
+</h3>
+
 <div class="doc_text">
 
 <p>The string '<tt>undef</tt>' can be used anywhere a constant is expected, and
@@ -2316,7 +2359,10 @@ b: unreachable
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="trapvalues">Trap Values</a></div>
+<h3>
+  <a name="trapvalues">Trap Values</a>
+</h3>
+
 <div class="doc_text">
 
 <p>Trap values are similar to <a href="#undefvalues">undef values</a>, however
@@ -2441,8 +2487,10 @@ second_end:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="blockaddress">Addresses of Basic
-    Blocks</a></div>
+<h3>
+  <a name="blockaddress">Addresses of Basic Blocks</a>
+</h3>
+
 <div class="doc_text">
 
 <p><b><tt>blockaddress(@function, %block)</tt></b></p>
@@ -2468,8 +2516,9 @@ second_end:
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="constantexprs">Constant Expressions</a>
-</div>
+<h3>
+  <a name="constantexprs">Constant Expressions</a>
+</h3>
 
 <div class="doc_text">
 
@@ -2598,13 +2647,13 @@ second_end:
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="othervalues">Other Values</a> </div>
+<h2><a name="othervalues">Other Values</a></h2>
 <!-- *********************************************************************** -->
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
 <a name="inlineasm">Inline Assembler Expressions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2657,9 +2706,9 @@ call void asm alignstack "eieio", ""()
    another document that covers inline asm from a holistic perspective.</p>
 </div>
 
-<div class="doc_subsubsection">
+<h4>
 <a name="inlineasm_md">Inline Asm Metadata</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2683,9 +2732,9 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="metadata">Metadata Nodes and Metadata
-  Strings</a>
-</div>
+<h3>
+  <a name="metadata">Metadata Nodes and Metadata Strings</a>
+</h3>
 
 <div class="doc_text">
 
@@ -2731,9 +2780,9 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="intrinsic_globals">Intrinsic Global Variables</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <p>LLVM has a number of "magic" global variables that contain data that affect
@@ -2743,9 +2792,9 @@ section and all globals that start with "<tt>llvm.</tt>" are reserved for use
 by LLVM.</p>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
 <a name="intg_used">The '<tt>llvm.used</tt>' Global Variable</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2778,9 +2827,11 @@ object file to prevent the assembler and linker from molesting the symbol.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
-<a name="intg_compiler_used">The '<tt>llvm.compiler.used</tt>' Global Variable</a>
-</div>
+<h3>
+  <a name="intg_compiler_used">
+    The '<tt>llvm.compiler.used</tt>' Global Variable
+  </a>
+</h3>
 
 <div class="doc_text">
 
@@ -2796,9 +2847,9 @@ should not be exposed to source languages.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
 <a name="intg_global_ctors">The '<tt>llvm.global_ctors</tt>' Global Variable</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <pre>
@@ -2811,9 +2862,9 @@ should not be exposed to source languages.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
 <a name="intg_global_dtors">The '<tt>llvm.global_dtors</tt>' Global Variable</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <pre>
@@ -2828,7 +2879,7 @@ should not be exposed to source languages.</p>
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="instref">Instruction Reference</a> </div>
+<h2><a name="instref">Instruction Reference</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2843,8 +2894,9 @@ should not be exposed to source languages.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="terminators">Terminator
-Instructions</a> </div>
+<h3>
+  <a name="terminators">Terminator Instructions</a>
+</h3>
 
 <div class="doc_text">
 
@@ -2867,8 +2919,9 @@ Instructions</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_ret">'<tt>ret</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_ret">'<tt>ret</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -2916,7 +2969,9 @@ Instruction</a> </div>
 
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_br">'<tt>br</tt>' Instruction</a> </div>
+<h4>
+  <a name="i_br">'<tt>br</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -2957,9 +3012,9 @@ IfUnequal:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_switch">'<tt>switch</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3012,9 +3067,9 @@ IfUnequal:
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_indirectbr">'<tt>indirectbr</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3060,9 +3115,9 @@ IfUnequal:
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_invoke">'<tt>invoke</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3150,8 +3205,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_subsubsection"> <a name="i_unwind">'<tt>unwind</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_unwind">'<tt>unwind</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3181,8 +3237,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_subsubsection"> <a name="i_unreachable">'<tt>unreachable</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_unreachable">'<tt>unreachable</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3203,7 +3260,9 @@ Instruction</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="binaryops">Binary Operations</a> </div>
+<h3>
+  <a name="binaryops">Binary Operations</a>
+</h3>
 
 <div class="doc_text">
 
@@ -3218,9 +3277,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_add">'<tt>add</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3263,9 +3322,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_fadd">'<tt>fadd</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3293,9 +3352,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_sub">'<tt>sub</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3345,9 +3404,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_fsub">'<tt>fsub</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3381,9 +3440,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_mul">'<tt>mul</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3431,9 +3490,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_fmul">'<tt>fmul</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3461,8 +3520,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_udiv">'<tt>udiv</tt>' Instruction
-</a></div>
+<h4>
+  <a name="i_udiv">'<tt>udiv</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3501,8 +3561,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_sdiv">'<tt>sdiv</tt>' Instruction
-</a> </div>
+<h4>
+  <a name="i_sdiv">'<tt>sdiv</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3543,8 +3604,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_fdiv">'<tt>fdiv</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_fdiv">'<tt>fdiv</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3572,8 +3634,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_urem">'<tt>urem</tt>' Instruction</a>
-</div>
+<h4>
+  <a name="i_urem">'<tt>urem</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3609,9 +3672,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_srem">'<tt>srem</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -3660,8 +3723,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="i_frem">'<tt>frem</tt>' Instruction</a> </div>
+<h4>
+  <a name="i_frem">'<tt>frem</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3691,8 +3755,9 @@ Instruction</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="bitwiseops">Bitwise Binary
-Operations</a> </div>
+<h3>
+  <a name="bitwiseops">Bitwise Binary Operations</a>
+</h3>
 
 <div class="doc_text">
 
@@ -3705,8 +3770,9 @@ Operations</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_shl">'<tt>shl</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_shl">'<tt>shl</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3755,8 +3821,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_lshr">'<tt>lshr</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_lshr">'<tt>lshr</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3801,8 +3868,10 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_ashr">'<tt>ashr</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_ashr">'<tt>ashr</tt>' Instruction</a>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -3846,8 +3915,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_and">'<tt>and</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_and">'<tt>and</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3906,7 +3976,9 @@ Instruction</a> </div>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_or">'<tt>or</tt>' Instruction</a> </div>
+<h4>
+  <a name="i_or">'<tt>or</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -3967,8 +4039,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_xor">'<tt>xor</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_xor">'<tt>xor</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -4031,9 +4104,9 @@ Instruction</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="vectorops">Vector Operations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -4047,9 +4120,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_extractelement">'<tt>extractelement</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4083,9 +4156,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_insertelement">'<tt>insertelement</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4119,9 +4192,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_shufflevector">'<tt>shufflevector</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4167,9 +4240,9 @@ Instruction</a> </div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="aggregateops">Aggregate Operations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -4179,9 +4252,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_extractvalue">'<tt>extractvalue</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4221,9 +4294,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_insertvalue">'<tt>insertvalue</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4261,9 +4334,9 @@ Instruction</a> </div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="memoryops">Memory Access and Addressing Operations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -4275,9 +4348,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_alloca">'<tt>alloca</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4326,8 +4399,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_load">'<tt>load</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_load">'<tt>load</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -4384,8 +4458,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_store">'<tt>store</tt>'
-Instruction</a> </div>
+<h4>
+  <a name="i_store">'<tt>store</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -4445,9 +4520,9 @@ Instruction</a> </div>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4576,8 +4651,9 @@ entry:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="convertops">Conversion Operations</a>
-</div>
+<h3>
+  <a name="convertops">Conversion Operations</a>
+</h3>
 
 <div class="doc_text">
 
@@ -4588,9 +4664,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_trunc">'<tt>trunc .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4627,9 +4704,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_zext">'<tt>zext .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4666,9 +4744,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_sext">'<tt>sext .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4704,9 +4783,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_fptrunc">'<tt>fptrunc .. to</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -4742,9 +4821,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_fpext">'<tt>fpext .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4778,9 +4858,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_fptoui">'<tt>fptoui .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4815,9 +4896,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_fptosi">'<tt>fptosi .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4853,9 +4935,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_uitofp">'<tt>uitofp .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4889,9 +4972,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4924,9 +5008,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_ptrtoint">'<tt>ptrtoint .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4961,9 +5046,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -4998,9 +5084,10 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_bitcast">'<tt>bitcast .. to</tt>' Instruction</a>
-</div>
+</h4>
+
 <div class="doc_text">
 
 <h5>Syntax:</h5>
@@ -5041,7 +5128,9 @@ entry:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="otherops">Other Operations</a> </div>
+<h3>
+  <a name="otherops">Other Operations</a>
+</h3>
 
 <div class="doc_text">
 
@@ -5051,8 +5140,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="i_icmp">'<tt>icmp</tt>' Instruction</a>
-</div>
+<h4>
+  <a name="i_icmp">'<tt>icmp</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -5153,8 +5243,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="i_fcmp">'<tt>fcmp</tt>' Instruction</a>
-</div>
+<h4>
+  <a name="i_fcmp">'<tt>fcmp</tt>' Instruction</a>
+</h4>
 
 <div class="doc_text">
 
@@ -5273,9 +5364,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_phi">'<tt>phi</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5321,9 +5412,9 @@ Loop:       ; Infinite loop that counts from 0 on up...
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
    <a name="i_select">'<tt>select</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5364,9 +5455,9 @@ Loop:       ; Infinite loop that counts from 0 on up...
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_call">'<tt>call</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5473,9 +5564,9 @@ freestanding environments and non-C-based languages.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="i_va_arg">'<tt>va_arg</tt>' Instruction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5519,7 +5610,7 @@ freestanding environments and non-C-based languages.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="intrinsics">Intrinsic Functions</a> </div>
+<h2><a name="intrinsics">Intrinsic Functions</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -5568,9 +5659,9 @@ freestanding environments and non-C-based languages.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_varargs">Variable Argument Handling Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -5617,9 +5708,9 @@ declare void @llvm.va_end(i8*)
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
-</div>
+</h4>
 
 
 <div class="doc_text">
@@ -5648,9 +5739,9 @@ declare void @llvm.va_end(i8*)
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
  <a name="int_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5679,9 +5770,9 @@ declare void @llvm.va_end(i8*)
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5710,9 +5801,9 @@ declare void @llvm.va_end(i8*)
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_gc">Accurate Garbage Collection Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -5732,9 +5823,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5763,9 +5854,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5795,9 +5886,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5827,9 +5918,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_codegen">Code Generator Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -5839,9 +5930,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5874,9 +5965,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_frameaddress">'<tt>llvm.frameaddress</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5908,9 +5999,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5938,9 +6029,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5963,9 +6054,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -5996,9 +6087,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6027,9 +6118,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_readcyclecounter">'<tt>llvm.readcyclecounter</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6054,9 +6145,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_libc">Standard C Library Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6068,9 +6159,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6122,9 +6213,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6178,9 +6269,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_memset">'<tt>llvm.memset.*</tt>' Intrinsics</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6228,9 +6319,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6266,9 +6357,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6302,9 +6393,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_sin">'<tt>llvm.sin.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6336,9 +6427,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6370,9 +6461,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6405,9 +6496,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_manip">Bit Manipulation Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6417,9 +6508,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6452,9 +6543,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6484,9 +6575,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6518,9 +6609,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -6552,9 +6643,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_overflow">Arithmetic with Overflow Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6563,9 +6654,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_sadd_overflow">'<tt>llvm.sadd.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_sadd_overflow">
+    '<tt>llvm.sadd.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6609,9 +6702,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_uadd_overflow">'<tt>llvm.uadd.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_uadd_overflow">
+    '<tt>llvm.uadd.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6654,9 +6749,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_ssub_overflow">'<tt>llvm.ssub.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_ssub_overflow">
+    '<tt>llvm.ssub.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6700,9 +6797,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_usub_overflow">'<tt>llvm.usub.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_usub_overflow">
+    '<tt>llvm.usub.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6746,9 +6845,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_smul_overflow">'<tt>llvm.smul.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_smul_overflow">
+    '<tt>llvm.smul.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6793,9 +6894,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_umul_overflow">'<tt>llvm.umul.with.overflow.*</tt>' Intrinsics</a>
-</div>
+<h4>
+  <a name="int_umul_overflow">
+    '<tt>llvm.umul.with.overflow.*</tt>' Intrinsics
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6839,9 +6942,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_fp16">Half Precision Floating Point Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6860,9 +6963,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_convert_to_fp16">'<tt>llvm.convert.to.fp16</tt>' Intrinsic</a>
-</div>
+<h4>
+  <a name="int_convert_to_fp16">
+    '<tt>llvm.convert.to.fp16</tt>' Intrinsic
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6895,9 +7000,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
- <a name="int_convert_from_fp16">'<tt>llvm.convert.from.fp16</tt>' Intrinsic</a>
-</div>
+<h4>
+  <a name="int_convert_from_fp16">
+    '<tt>llvm.convert.from.fp16</tt>' Intrinsic
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -6930,9 +7037,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_debugger">Debugger Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6944,9 +7051,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_eh">Exception Handling Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6958,9 +7065,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_trampoline">Trampoline Intrinsic</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -6991,9 +7098,11 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_it">'<tt>llvm.init.trampoline</tt>' Intrinsic</a>
-</div>
+<h4>
+  <a name="int_it">
+    '<tt>llvm.init.trampoline</tt>' Intrinsic
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -7033,9 +7142,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_atomics">Atomic Operations and Synchronization Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -7060,9 +7169,10 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_memory_barrier">'<tt>llvm.memory.barrier</tt>' Intrinsic</a>
-</div>
+</h4>
+
 <div class="doc_text">
 <h5>Syntax:</h5>
 <pre>
@@ -7131,9 +7241,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_atomic_cmp_swap">'<tt>llvm.atomic.cmp.swap.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7191,9 +7301,10 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_atomic_swap">'<tt>llvm.atomic.swap.*</tt>' Intrinsic</a>
-</div>
+</h4>
+
 <div class="doc_text">
 <h5>Syntax:</h5>
 
@@ -7247,10 +7358,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_atomic_load_add">'<tt>llvm.atomic.load.add.*</tt>' Intrinsic</a>
-
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7297,10 +7407,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_atomic_load_sub">'<tt>llvm.atomic.load.sub.*</tt>' Intrinsic</a>
-
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7349,12 +7458,23 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_atomic_load_and">'<tt>llvm.atomic.load.and.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_nand">'<tt>llvm.atomic.load.nand.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_or">'<tt>llvm.atomic.load.or.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_xor">'<tt>llvm.atomic.load.xor.*</tt>' Intrinsic</a><br>
-</div>
+<h4>
+  <a name="int_atomic_load_and">
+    '<tt>llvm.atomic.load.and.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_nand">
+    '<tt>llvm.atomic.load.nand.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_or">
+    '<tt>llvm.atomic.load.or.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_xor">
+    '<tt>llvm.atomic.load.xor.*</tt>' Intrinsic
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -7429,12 +7549,23 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="int_atomic_load_max">'<tt>llvm.atomic.load.max.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_min">'<tt>llvm.atomic.load.min.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_umax">'<tt>llvm.atomic.load.umax.*</tt>' Intrinsic</a><br>
-  <a name="int_atomic_load_umin">'<tt>llvm.atomic.load.umin.*</tt>' Intrinsic</a><br>
-</div>
+<h4>
+  <a name="int_atomic_load_max">
+    '<tt>llvm.atomic.load.max.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_min">
+    '<tt>llvm.atomic.load.min.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_umax">
+    '<tt>llvm.atomic.load.umax.*</tt>' Intrinsic
+  </a>
+  <br>
+  <a name="int_atomic_load_umin">
+    '<tt>llvm.atomic.load.umin.*</tt>' Intrinsic
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -7509,9 +7640,9 @@ LLVM</a>.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_memorymarkers">Memory Use Markers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -7521,9 +7652,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_lifetime_start">'<tt>llvm.lifetime.start</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7551,9 +7682,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_lifetime_end">'<tt>llvm.lifetime.end</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7580,9 +7711,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_invariant_start">'<tt>llvm.invariant.start</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7608,9 +7739,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_invariant_end">'<tt>llvm.invariant.end</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7635,9 +7766,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="int_general">General Intrinsics</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -7647,9 +7778,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_var_annotation">'<tt>llvm.var.annotation</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7675,9 +7806,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_annotation">'<tt>llvm.annotation.*</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7711,9 +7842,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_trap">'<tt>llvm.trap</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7736,9 +7867,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_stackprotector">'<tt>llvm.stackprotector</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -7770,9 +7901,9 @@ LLVM</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="int_objectsize">'<tt>llvm.objectsize</tt>' Intrinsic</a>
-</div>
+</h4>
 
 <div class="doc_text">
 

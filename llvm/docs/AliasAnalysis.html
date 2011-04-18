@@ -7,9 +7,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   LLVM Alias Analysis Infrastructure
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a></li>
@@ -59,9 +59,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -96,9 +96,9 @@ know</a>.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="overview"><tt>AliasAnalysis</tt> Class Overview</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -125,9 +125,9 @@ same function.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="pointers">Representation of Pointers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -181,9 +181,9 @@ that the accesses alias.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="alias">The <tt>alias</tt> method</a>
-</div>
+</h3>
   
 <div class="doc_text">
 <p>The <tt>alias</tt> method is the primary interface used to determine whether
@@ -197,9 +197,9 @@ least one of the values is a <a href="LangRef.html#constants">constant</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="MustMayNo">Must, May, and No Alias Responses</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>The NoAlias response may be used when there is never an immediate dependence
@@ -228,9 +228,9 @@ implies that the pointers compare equal.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ModRefInfo">The <tt>getModRefInfo</tt> methods</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -250,9 +250,9 @@ memory written to by CS2.  Note that this relation is not commutative.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="OtherItfs">Other useful <tt>AliasAnalysis</tt> methods</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -264,9 +264,9 @@ analysis implementations and can be put to good use by various clients.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   The <tt>pointsToConstantMemory</tt> method
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -279,10 +279,10 @@ memory location to be modified.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="simplemodref">The <tt>doesNotAccessMemory</tt> and
   <tt>onlyReadsMemory</tt> methods</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -308,9 +308,9 @@ functions that satisfy the <tt>doesNotAccessMemory</tt> method also satisfies
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="writingnew">Writing a new <tt>AliasAnalysis</tt> Implementation</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -324,9 +324,9 @@ implementations</a> included with LLVM.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="passsubclasses">Different Pass styles</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -352,9 +352,9 @@ solve:</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="requiredcalls">Required initialization calls</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -393,9 +393,9 @@ bool run(Module &amp;M) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="interfaces">Interfaces which may be specified</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -412,9 +412,9 @@ implementing, you just override the interfaces you can improve.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="chaining"><tt>AliasAnalysis</tt> chaining behavior</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -451,9 +451,9 @@ updated.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="updating">Updating analysis results for transformations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -474,7 +474,7 @@ sure to call these interfaces appropriately.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">The <tt>deleteValue</tt> method</div>
+<h4>The <tt>deleteValue</tt> method</h4>
 
 <div class="doc_text">
 The <tt>deleteValue</tt> method is called by transformations when they remove an
@@ -485,7 +485,7 @@ any entries for the specified value, if they exist.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">The <tt>copyValue</tt> method</div>
+<h4>The <tt>copyValue</tt> method</h4>
 
 <div class="doc_text">
 The <tt>copyValue</tt> method is used when a new value is introduced into the
@@ -496,7 +496,7 @@ new value has exactly the same properties as the value being copied.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">The <tt>replaceWithNewValue</tt> method</div>
+<h4>The <tt>replaceWithNewValue</tt> method</h4>
 
 <div class="doc_text">
 This method is a simple helper method that is provided to make clients easier to
@@ -506,7 +506,7 @@ analysis implementations.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">The <tt>addEscapingUse</tt> method</div>
+<h4>The <tt>addEscapingUse</tt> method</h4>
 
 <div class="doc_text">
 <p>The <tt>addEscapingUse</tt> method is used when the uses of a pointer
@@ -528,9 +528,9 @@ uses below:</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="implefficiency">Efficiency Issues</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -544,9 +544,9 @@ method as possible (within reason).</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="limitations">Limitations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -617,9 +617,9 @@ from itself.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="using">Using alias analysis results</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -630,9 +630,9 @@ preference, these are...</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="memdep">Using the <tt>MemoryDependenceAnalysis</tt> Pass</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -645,9 +645,9 @@ efficient, and is used by Dead Store Elimination, GVN, and memcpy optimizations.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ast">Using the <tt>AliasSetTracker</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -681,9 +681,9 @@ pointer argument is loop-invariant.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   The AliasSetTracker implementation
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -707,9 +707,9 @@ are.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="direct">Using the <tt>AliasAnalysis</tt> interface directly</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -722,9 +722,9 @@ best precision and efficiency.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="exist">Existing alias analysis implementations and clients</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -738,9 +738,9 @@ for monitoring and evaluating different implementations.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="impls">Available <tt>AliasAnalysis</tt> implementations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -752,9 +752,9 @@ href="#chaining">chain</a> to other alias analysis implementations.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="no-aa">The <tt>-no-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -766,9 +766,9 @@ problem.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="basic-aa">The <tt>-basicaa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -794,9 +794,9 @@ many important facts:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="globalsmodref">The <tt>-globalsmodref-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -818,9 +818,9 @@ non-address taken globals), but is very quick analysis.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="steens-aa">The <tt>-steens-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -841,9 +841,9 @@ module, it is not part of the LLVM core.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ds-aa">The <tt>-ds-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -864,9 +864,9 @@ module, it is not part of the LLVM core.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scev-aa">The <tt>-scev-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -878,9 +878,9 @@ and loop induction variables than other alias analyses have.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="aliasanalysis-xforms">Alias analysis driven transformations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 LLVM includes several alias-analysis driven transformations which can be used
@@ -888,9 +888,9 @@ with any of the implementations above.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="adce">The <tt>-adce</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -902,9 +902,9 @@ not have side-effects and are not used.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="licm">The <tt>-licm</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -927,9 +927,9 @@ no may aliases to the loaded/stored memory location.</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="argpromotion">The <tt>-argpromotion</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -942,10 +942,10 @@ pointer.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="gvn">The <tt>-gvn</tt>, <tt>-memcpyopt</tt>, and <tt>-dse</tt>
      passes</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -955,10 +955,10 @@ pointer.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="aliasanalysis-debug">Clients for debugging and evaluation of
   implementations</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -969,9 +969,9 @@ implementations.  You can use them with commands like '<tt>opt -ds-aa
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="print-alias-sets">The <tt>-print-alias-sets</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -990,9 +990,9 @@ the <tt>AliasSetTracker</tt> class.  To use it, use something like:</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="count-aa">The <tt>-count-aa</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1014,9 +1014,9 @@ when debugging a transformation or an alias analysis implementation.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="aa-eval">The <tt>-aa-eval</tt> pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1029,9 +1029,9 @@ algorithm will have a lower number of may aliases).</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="memdep">Memory Dependence Analysis</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">

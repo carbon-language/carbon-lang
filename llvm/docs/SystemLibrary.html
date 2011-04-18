@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<div class="doc_title">System Library</div>
+<h1>System Library</h1>
 <ul>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#requirements">Keeping LLVM Portable</a>
@@ -36,7 +36,7 @@
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="abstract">Abstract</a></div>
+<h2><a name="abstract">Abstract</a></h2>
 <div class="doc_text">
   <p>This document provides some details on LLVM's System Library, located in
   the source at <tt>lib/System</tt> and <tt>include/llvm/System</tt>. The
@@ -63,9 +63,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="requirements">Keeping LLVM Portable</a>
-</div>
+</h2>
 <div class="doc_text">
   <p>In order to keep LLVM portable, LLVM developers should adhere to a set of
   portability rules associated with the System Library. Adherence to these rules
@@ -75,8 +75,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="headers">Don't Include System Headers</a>
-</div>
+<h3><a name="headers">Don't Include System Headers</a></h3>
 <div class="doc_text">
   <p>Except in <tt>lib/System</tt>, no LLVM source code should directly
   <tt>#include</tt> a system header. Care has been taken to remove all such
@@ -91,8 +90,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="expose">Don't Expose System Headers</a>
-</div>
+<h3><a name="expose">Don't Expose System Headers</a></h3>
 <div class="doc_text">
   <p>The System Library must shield LLVM from <em>all</em> system headers. To 
   obtain system level functionality, LLVM source must 
@@ -103,7 +101,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="c_headers">Use Standard C Headers</a></div>
+<h3><a name="c_headers">Use Standard C Headers</a></h3>
 <div class="doc_text">
   <p>The <em>standard</em> C headers (the ones beginning with "c") are allowed
   to be exposed through the <tt>lib/System</tt> interface. These headers and 
@@ -113,8 +111,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="cpp_headers">Use Standard C++ Headers</a>
-</div>
+<h3><a name="cpp_headers">Use Standard C++ Headers</a></h3>
 <div class="doc_text">
   <p>The <em>standard</em> C++ headers from the standard C++ library and
   standard template library may be exposed through the <tt>lib/System</tt>
@@ -124,7 +121,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="highlev">High Level Interface</a></div>
+<h3><a name="highlev">High Level Interface</a></h3>
 <div class="doc_text">
   <p>The entry points specified in the interface of lib/System must be aimed at 
   completing some reasonably high level task needed by LLVM. We do not want to
@@ -143,7 +140,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nounused">No Unused Functionality</a></div>
+<h3><a name="nounused">No Unused Functionality</a></h3>
 <div class="doc_text">
   <p>There must be no functionality specified in the interface of lib/System 
   that isn't actually used by LLVM. We're not writing a general purpose
@@ -153,8 +150,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nodupl">No Duplicate Implementations</a>
-</div>
+<h3><a name="nodupl">No Duplicate Implementations</a></h3>
 <div class="doc_text">
   <p>The implementation of a function for a given platform must be written
   exactly once. This implies that it must be possible to apply a function's 
@@ -165,7 +161,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="virtuals">No Virtual Methods</a></div>
+<h3><a name="virtuals">No Virtual Methods</a></h3>
 <div class="doc_text">
   <p>The System Library interfaces can be called quite frequently by LLVM. In
   order to make those calls as efficient as possible, we discourage the use of
@@ -175,7 +171,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nofunc">No Exposed Functions</a></div>
+<h3><a name="nofunc">No Exposed Functions</a></h3>
 <div class="doc_text">
   <p>Any functions defined by system libraries (i.e. not defined by lib/System) 
   must not be exposed through the lib/System interface, even if the header file 
@@ -191,7 +187,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="nodata">No Exposed Data</a></div>
+<h3><a name="nodata">No Exposed Data</a></h3>
 <div class="doc_text">
   <p>Any data defined by system libraries (i.e. not defined by lib/System) must
   not be exposed through the lib/System interface, even if the header file for
@@ -200,7 +196,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="softerrors">Minimize Soft Errors</a></div>
+<h3><a name="softerrors">Minimize Soft Errors</a></h3>
 <div class="doc_text">
   <p>Operating system interfaces will generally provide error results for every
   little thing that could go wrong. In almost all cases, you can divide these
@@ -239,8 +235,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="throw_spec">No throw Specifications</a>
-</div>
+<h3><a name="throw_spec">No throw Specifications</a></h3>
 <div class="doc_text">
   <p>None of the lib/System interface functions may be declared with C++ 
   <tt>throw()</tt> specifications on them. This requirement makes sure that the
@@ -252,7 +247,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="organization">Code Organization</a></div>
+<h3><a name="organization">Code Organization</a></h3>
 <div class="doc_text">
   <p>Implementations of the System Library interface are separated by their
   general class of operating system. Currently only Unix and Win32 classes are
@@ -281,7 +276,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="semantics">Consistent Semantics</a></div>
+<h3><a name="semantics">Consistent Semantics</a></h3>
 <div class="doc_text">
   <p>The implementation of a lib/System interface can vary drastically between
   platforms. That's okay as long as the end result of the interface function 
@@ -296,7 +291,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="bug">Bug 351</a></div>
+<h3><a name="bug">Bug 351</a></h3>
 <div class="doc_text">
   <p>See <a href="http://llvm.org/PR351">bug 351</a>
   for further details on the progress of this work</p>

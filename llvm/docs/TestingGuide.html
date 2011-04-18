@@ -7,9 +7,9 @@
 </head>
 <body>
       
-<div class="doc_title">
+<h1>
   LLVM Testing Infrastructure Guide
-</div>
+</h1>
 
 <ol>
   <li><a href="#overview">Overview</a></li>
@@ -52,7 +52,7 @@
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="overview">Overview</a></div>
+<h2><a name="overview">Overview</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -64,7 +64,7 @@ use it, and how to add and run tests.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="requirements">Requirements</a></div>
+<h2><a name="requirements">Requirements</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -76,7 +76,7 @@ as <a href="http://python.org">Python</a> 2.4 or later.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="org">LLVM testing infrastructure organization</a></div>
+<h2><a name="org">LLVM testing infrastructure organization</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -92,7 +92,7 @@ in subversion.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="regressiontests">Regression tests</a></div>
+<h3><a name="regressiontests">Regression tests</a></h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -119,7 +119,7 @@ application or benchmark.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="testsuite">Test suite</a></div>
+<h3><a name="testsuite">Test suite</a></h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -144,8 +144,7 @@ generates code.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="debuginfotests">Debugging Information 
-tests</a></div>
+<h3><a name="debuginfotests">Debugging Information tests</a></h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -161,7 +160,7 @@ test suite for more information . This test suite is located in the
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="quick">Quick start</a></div>
+<h2><a name="quick">Quick start</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -179,7 +178,7 @@ the <tt>test-suite</tt> directory will be automatically configured.
 Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="quickregressiontests">Regression tests</a></div>
+<h3><a name="quickregressiontests">Regression tests</a></h3>
 <!-- _______________________________________________________________________ -->
 <p>To run all of the LLVM regression tests, use master Makefile in
  the <tt>llvm/test</tt> directory:</p>
@@ -240,7 +239,7 @@ script which is built as part of LLVM. For example, to run the
 'lit' man page.</p>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="quicktestsuite">Test suite</a></div>
+<h3><a name="quicktestsuite">Test suite</a></h3>
 <!-- _______________________________________________________________________ -->
 
 <p>To run the comprehensive test suite (tests that compile and execute whole 
@@ -292,8 +291,7 @@ that subdirectory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="quickdebuginfotests">Debugging Information 
-tests</a></div>
+<h3><a name="quickdebuginfotests">Debugging Information tests</a></h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
 
@@ -312,7 +310,7 @@ clang/test directory. </p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="rtstructure">Regression test structure</a></div>
+<h2><a name="rtstructure">Regression test structure</a></h2>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>The LLVM regression tests are driven by 'lit' and are located in
@@ -339,7 +337,7 @@ clang/test directory. </p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="rtcustom">Writing new regression tests</a></div>
+<h3><a name="rtcustom">Writing new regression tests</a></h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>The regression test structure is very simple, but does require some
@@ -493,7 +491,7 @@ negatives).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="FileCheck">The FileCheck utility</a></div>
+<h3><a name="FileCheck">The FileCheck utility</a></h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -565,8 +563,9 @@ file.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a 
-name="FileCheck-check-prefix">The FileCheck -check-prefix option</a></div>
+<h4>
+  <a name="FileCheck-check-prefix">The FileCheck -check-prefix option</a>
+</h4>
 
 <div class="doc_text">
 
@@ -599,8 +598,9 @@ both 32-bit and 64-bit code generation.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a 
-name="FileCheck-CHECK-NEXT">The "CHECK-NEXT:" directive</a></div>
+<h4>
+  <a name="FileCheck-CHECK-NEXT">The "CHECK-NEXT:" directive</a>
+</h4>
 
 <div class="doc_text">
 
@@ -639,8 +639,9 @@ directive in a file.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a 
-name="FileCheck-CHECK-NOT">The "CHECK-NOT:" directive</a></div>
+<h4>
+  <a name="FileCheck-CHECK-NOT">The "CHECK-NOT:" directive</a>
+</h4>
 
 <div class="doc_text">
 
@@ -669,8 +670,9 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a 
-name="FileCheck-Matching">FileCheck Pattern Matching Syntax</a></div>
+<h4>
+  <a name="FileCheck-Matching">FileCheck Pattern Matching Syntax</a>
+</h4>
 
 <div class="doc_text">
 
@@ -701,8 +703,9 @@ braces explicitly from the input, you can use something ugly like
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a 
-name="FileCheck-Variables">FileCheck Variables</a></div>
+<h4>
+  <a name="FileCheck-Variables">FileCheck Variables</a>
+</h4>
 
 <div class="doc_text">
 
@@ -740,8 +743,7 @@ define two separate CHECK lines that match on the same line.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="rtvars">Variables and
-substitutions</a></div>
+<h3><a name="rtvars">Variables and substitutions</a></h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>With a RUN line there are a number of substitutions that are permitted. In
@@ -836,7 +838,7 @@ substitutions</a></div>
 </div>
   
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="rtfeatures">Other Features</a></div>
+<h3><a name="rtfeatures">Other Features</a></h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>To make RUN line writing easier, there are several shell scripts located
@@ -894,8 +896,7 @@ substitutions</a></div>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="testsuitestructure">Test suite
-Structure</a></div>
+<h2><a name="testsuitestructure">Test suite Structure</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -963,7 +964,7 @@ will help you separate benign warnings from actual test failures.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="testsuiterun">Running the test suite</a></div>
+<h2><a name="testsuiterun">Running the test suite</a></h2>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -1024,8 +1025,9 @@ the test code or configure script changes).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
-<a name="testsuiteexternal">Configuring External Tests</a></div>
+<h3>
+  <a name="testsuiteexternal">Configuring External Tests</a>
+</h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -1056,8 +1058,9 @@ the test code or configure script changes).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
-<a name="testsuitetests">Running different tests</a></div>
+<h3>
+  <a name="testsuitetests">Running different tests</a>
+</h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
 <p>In addition to the regular "whole program" tests, the <tt>test-suite</tt>
@@ -1079,8 +1082,9 @@ LLVM.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
-<a name="testsuiteoutput">Generating test output</a></div>
+<h3>
+  <a name="testsuiteoutput">Generating test output</a>
+</h3>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>There are a number of ways to run the tests and generate output. The most
@@ -1110,8 +1114,9 @@ LLVM.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
-<a name="testsuitecustom">Writing custom tests for the test suite</a></div>
+<h3>
+  <a name="testsuitecustom">Writing custom tests for the test suite</a>
+</h3>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">

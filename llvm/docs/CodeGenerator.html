@@ -19,9 +19,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   The LLVM Target-Independent Code Generator
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a>
@@ -127,9 +127,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -191,9 +191,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
  <a name="required">Required components in the code generator</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -223,9 +223,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
  <a name="high-level-design">The high-level design of the code generator</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -297,9 +297,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
  <a name="tablegen">Using TableGen for target description</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -325,9 +325,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="targetdesc">Target description classes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -349,9 +349,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetmachine">The <tt>TargetMachine</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -369,9 +369,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetdata">The <tt>TargetData</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -385,9 +385,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetlowering">The <tt>TargetLowering</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -411,9 +411,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetregisterinfo">The <tt>TargetRegisterInfo</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -445,9 +445,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -463,9 +463,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -479,9 +479,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetsubtarget">The <tt>TargetSubtarget</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -495,9 +495,9 @@
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -510,9 +510,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="codegendesc">Machine code description classes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -531,9 +531,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="machineinstr">The <tt>MachineInstr</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -579,9 +579,9 @@
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="buildmi">Using the <tt>MachineInstrBuilder.h</tt> functions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -630,9 +630,9 @@ MI.addReg(Reg, RegState::Define);
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="fixedregs">Fixed (preassigned) registers</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -702,9 +702,9 @@ ret
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ssa">Machine code in SSA form</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -720,9 +720,9 @@ ret
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="machinebasicblock">The <tt>MachineBasicBlock</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -737,9 +737,9 @@ ret
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="machinefunction">The <tt>MachineFunction</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -756,9 +756,9 @@ ret
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="mc">The "MC" Layer</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -783,9 +783,9 @@ in this manual.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mcstreamer">The <tt>MCStreamer</tt> API</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -817,9 +817,9 @@ MCObjectStreamer implements a full assembler.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mccontext">The <tt>MCContext</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -832,9 +832,9 @@ interact with to create symbols and sections.  This class can not be subclassed.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mcsymbol">The <tt>MCSymbol</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -864,9 +864,9 @@ like this to the .s file:<p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mcsection">The <tt>MCSection</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -882,9 +882,9 @@ directive in a .s file).
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="mcinst">The <tt>MCInst</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -906,9 +906,9 @@ printer, and the type generated by the assembly parser and disassembler.
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="codegenalgs">Target-independent code generation algorithms</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -920,9 +920,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="instselect">Instruction Selection</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -939,9 +939,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_intro">Introduction to SelectionDAGs</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1001,9 +1001,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_process">SelectionDAG Instruction Selection Process</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1082,9 +1082,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_build">Initial SelectionDAG Construction</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1102,9 +1102,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_legalize_types">SelectionDAG LegalizeTypes Phase</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1135,9 +1135,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_legalize">SelectionDAG Legalize Phase</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1167,10 +1167,11 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="selectiondag_optimize">SelectionDAG Optimization Phase: the DAG
-  Combiner</a>
-</div>
+<h4>
+  <a name="selectiondag_optimize">
+    SelectionDAG Optimization Phase: the DAG Combiner
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -1202,9 +1203,9 @@ printer, and the type generated by the assembly parser and disassembler.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_select">SelectionDAG Select Phase</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1363,9 +1364,9 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_sched">SelectionDAG Scheduling and Formation Phase</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1384,9 +1385,9 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="selectiondag_future">Future directions for the SelectionDAG</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1399,15 +1400,15 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
  
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ssamco">SSA-based Machine Code Optimizations</a>
-</div>
+</h3>
 <div class="doc_text"><p>To Be Written</p></div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="liveintervals">Live Intervals</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1420,9 +1421,9 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="livevariable_analysis">Live Variable Analysis</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1466,9 +1467,9 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="liveintervals_analysis">Live Intervals Analysis</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1486,9 +1487,9 @@ def : Pat&lt;(i32 imm:$imm),
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="regalloc">Register Allocation</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1504,9 +1505,9 @@ def : Pat&lt;(i32 imm:$imm),
 
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_represent">How registers are represented in LLVM</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1617,9 +1618,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_howTo">Mapping virtual registers to physical registers</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1667,9 +1668,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_twoAddr">Handling two address instructions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1703,9 +1704,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_ssaDecon">The SSA deconstruction phase</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1727,9 +1728,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_fold">Instruction folding</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1764,9 +1765,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
 
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_subsubsection">
+<h4>
   <a name="regAlloc_builtIn">Built in register allocators</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1806,20 +1807,20 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="proepicode">Prolog/Epilog Code Insertion</a>
-</div>
+</h3>
 <div class="doc_text"><p>To Be Written</p></div>
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="latemco">Late Machine Code Optimizations</a>
-</div>
+</h3>
 <div class="doc_text"><p>To Be Written</p></div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="codeemit">Code Emission</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1882,9 +1883,9 @@ to implement an assembler for your target.</p>
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="nativeassembler">Implementing a Native Assembler</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1899,15 +1900,15 @@ compiler.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection" id="na_instparsing">Instruction Parsing</div>
+<h3 id="na_instparsing">Instruction Parsing</h3>
 
 <div class="doc_text"><p>To Be Written</p></div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection" id="na_instaliases">
+<h3 id="na_instaliases">
   Instruction Alias Processing
-</div>
+</h3>
 
 <div class="doc_text">
 <p>Once the instruction is parsed, it enters the MatchInstructionImpl function.
@@ -1925,7 +1926,7 @@ description.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Mnemonic Aliases</div>
+<h4>Mnemonic Aliases</h4>
 
 <div class="doc_text">
 
@@ -1965,7 +1966,7 @@ on the current instruction set.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Instruction Aliases</div>
+<h4>Instruction Aliases</h4>
 
 <div class="doc_text">
 
@@ -2031,7 +2032,7 @@ subtarget specific.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection" id="na_matching">Instruction Matching</div>
+<h3 id="na_matching">Instruction Matching</h3>
 
 <div class="doc_text"><p>To Be Written</p></div>
 
@@ -2039,9 +2040,9 @@ subtarget specific.</p>
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="targetimpls">Target-specific Implementation Notes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -2053,9 +2054,9 @@ subtarget specific.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="targetfeatures">Target Feature Matrix</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2231,7 +2232,7 @@ is the key:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_reliable">Is Generally Reliable</div>
+<h4 id="feat_reliable">Is Generally Reliable</h4>
 
 <div class="doc_text">
 <p>This box indicates whether the target is considered to be production quality.
@@ -2241,7 +2242,7 @@ continuous use.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_asmparser">Assembly Parser</div>
+<h4 id="feat_asmparser">Assembly Parser</h4>
 
 <div class="doc_text">
 <p>This box indicates whether the target supports parsing target specific .s
@@ -2253,7 +2254,7 @@ support in the native .o file writer.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_disassembler">Disassembler</div>
+<h4 id="feat_disassembler">Disassembler</h4>
 
 <div class="doc_text">
 <p>This box indicates whether the target supports the MCDisassembler API for
@@ -2262,7 +2263,7 @@ disassembling machine opcode bytes into MCInst's.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_inlineasm">Inline Asm</div>
+<h4 id="feat_inlineasm">Inline Asm</h4>
 
 <div class="doc_text">
 <p>This box indicates whether the target supports most popular inline assembly
@@ -2274,7 +2275,7 @@ constraints relating to the X86 floating point stack.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_jit">JIT Support</div>
+<h4 id="feat_jit">JIT Support</h4>
 
 <div class="doc_text">
 <p>This box indicates whether the target supports the JIT compiler through
@@ -2286,7 +2287,7 @@ in ARM codegen mode, but lacks NEON and full Thumb support.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_objectwrite">.o File Writing</div>
+<h4 id="feat_objectwrite">.o File Writing</h4>
 
 <div class="doc_text">
 
@@ -2302,7 +2303,7 @@ file to a .o file (as is the case for many C compilers).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection" id="feat_tailcall">Tail Calls</div>
+<h4 id="feat_tailcall">Tail Calls</h4>
 
 <div class="doc_text">
 
@@ -2317,9 +2318,9 @@ more more details</a>.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="tailcallopt">Tail call optimization</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2383,9 +2384,9 @@ define fastcc i32 @tailcaller(i32 %in1, i32 %in2) {
 
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="sibcallopt">Sibling call optimization</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2427,9 +2428,9 @@ entry:
 
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="x86">The X86 backend</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2440,9 +2441,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="x86_tt">X86 Target Triples supported</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2469,9 +2470,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="x86_cc">X86 Calling Conventions supported</a>
-</div>
+</h4>
 
 
 <div class="doc_text">
@@ -2489,9 +2490,9 @@ entry:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="x86_memory">Representing X86 addressing modes in MachineInstrs</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2526,9 +2527,9 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm  PhysReg
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="x86_memory">X86 address spaces supported</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2571,9 +2572,9 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm  PhysReg
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="x86_names">Instruction naming</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2592,9 +2593,9 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ppc">The PowerPC backend</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -2605,9 +2606,9 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ppc_abi">LLVM PowerPC ABI</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2625,9 +2626,9 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ppc_frame">Frame Layout</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2772,9 +2773,9 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ppc_prolog">Prolog/Epilog</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -2789,9 +2790,9 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ppc_dynamic">Dynamic Allocation</a>
-</div>
+</h4>
 
 <div class="doc_text">
 

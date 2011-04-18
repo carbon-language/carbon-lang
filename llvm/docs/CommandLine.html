@@ -8,9 +8,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   CommandLine 2.0 Library Manual
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a></li>
@@ -100,9 +100,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -184,9 +184,9 @@ href="mailto:sabre@nondot.org">Chris Lattner</a>.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="quickstart">Quick Start Guide</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -324,9 +324,9 @@ OPTIONS:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="bool">Boolean Arguments</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -406,9 +406,9 @@ and <a href="#list">lists</a> of options.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="alias">Argument Aliases</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -456,10 +456,10 @@ uses.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="onealternative">Selecting an alternative from a set of
   possibilities</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -567,9 +567,9 @@ which is when you would use it.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="namedalternatives">Named Alternatives</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -629,9 +629,9 @@ that you can choose the form most appropriate for your application.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="list">Parsing a list of options</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -699,9 +699,9 @@ checking we have to do.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="bits">Collecting options as a set of flags</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -758,9 +758,9 @@ href="#list"> <tt>cl::list</tt></a> option.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="description">Adding freeform text to help output</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -802,9 +802,9 @@ OPTIONS:
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="referenceguide">Reference Guide</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -817,9 +817,9 @@ processing capabilities.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="positional">Positional Arguments</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -858,9 +858,9 @@ define all of your positional arguments in one .cpp file.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="--">Specifying positional options with hyphens</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -895,9 +895,9 @@ can use it like this:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="getPosition">Determining absolute position with getPosition()</a>
-</div>
+</h4>
 <div class="doc_text">
   <p>Sometimes an option can affect or modify the meaning of another option. For
   example, consider <tt>gcc</tt>'s <tt>-x LANG</tt> option. This tells
@@ -954,9 +954,9 @@ can use it like this:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::ConsumeAfter">The <tt>cl::ConsumeAfter</tt> modifier</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1007,9 +1007,9 @@ href="#cl::list">cl::list</a> option.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="storage">Internal vs External Storage</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1076,9 +1076,9 @@ that <tt>DebugFlag</tt> is automatically set.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="attributes">Option Attributes</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1166,9 +1166,9 @@ obviously).</li>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="modifiers">Option Modifiers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1199,9 +1199,9 @@ usually shouldn't have to worry about these.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hiding">Hiding an option from <tt>-help</tt> output</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1230,10 +1230,10 @@ indicates that the option should not appear in any help output.</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="numoccurrences">Controlling the number of occurrences required and
   allowed</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1279,9 +1279,9 @@ retained.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="valrequired">Controlling whether or not a value must be specified</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1328,9 +1328,9 @@ when <a href="#extensionguide">extending the library</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="formatting">Controlling other formatting options</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1409,9 +1409,9 @@ strategy basically looks like this:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="misc">Miscellaneous option modifiers</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1453,9 +1453,9 @@ only makes sense with a <a href="#cl::list">cl::list</a> option.</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="response">Response files</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1476,9 +1476,9 @@ and
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="toplevel">Top-Level Classes and Functions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1493,10 +1493,10 @@ classes in detail.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::ParseCommandLineOptions">The <tt>cl::ParseCommandLineOptions</tt>
   function</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1514,10 +1514,10 @@ which holds <a href="#description">additional extra text</a> to emit when the
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::ParseEnvironmentOptions">The <tt>cl::ParseEnvironmentOptions</tt>
   function</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1551,10 +1551,10 @@ input.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::SetVersionPrinter">The <tt>cl::SetVersionPrinter</tt>
   function</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1572,9 +1572,9 @@ called when the <tt>--version</tt> option is given by the user.</p>
 
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::opt">The <tt>cl::opt</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1607,9 +1607,9 @@ href="#customparser">custom parser</a>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::list">The <tt>cl::list</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1634,9 +1634,9 @@ be used.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::bits">The <tt>cl::bits</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1659,9 +1659,9 @@ must be of <b>type</b> <tt>unsigned</tt> if external storage is used.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::alias">The <tt>cl::alias</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1682,9 +1682,9 @@ the conversion from string to data.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="cl::extrahelp">The <tt>cl::extrahelp</tt> class</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1710,9 +1710,9 @@ single <tt>cl::extrahelp</tt> instance.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="builtinparsers">Builtin parsers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1774,9 +1774,9 @@ exponential notation (ex: <tt>1.7e15</tt>) and properly supports locales.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="extensionguide">Extension Guide</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1789,9 +1789,9 @@ the covers and illustrates how to do some simple, common, extensions.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="customparser">Writing a custom parser</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1932,9 +1932,9 @@ tutorial.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="explotingexternal">Exploiting external storage</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>Several of the LLVM libraries define static <tt>cl::opt</tt> instances that
@@ -1951,9 +1951,9 @@ tutorial.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="dynamicopts">Dynamically adding command line options</a>
-</div>
+</h3>
 
 <div class="doc_text">
 

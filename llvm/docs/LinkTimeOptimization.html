@@ -6,9 +6,9 @@
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 
-<div class="doc_title">
+<h1>
   LLVM Link Time Optimization: Design and Implementation
-</div>
+</h1>
 
 <ul>
   <li><a href="#desc">Description</a></li>
@@ -36,9 +36,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
 <a name="desc">Description</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -50,9 +50,9 @@ and design between the LTO optimizer and the linker.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
 <a name="design">Design Philosophy</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -72,9 +72,9 @@ conservative escape analysis.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="example1">Example of link time optimization</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>The following example illustrates the advantages of LTO's integrated
@@ -145,9 +145,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="alternative_approaches">Alternative Approaches</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <dl>
@@ -176,9 +176,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="multiphase">Multi-phase communication between libLTO and linker</a>
-</div>
+</h2>
 
 <div class="doc_text">
   <p>The linker collects information about symbol defininitions and uses in 
@@ -195,9 +195,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="phase1">Phase 1 : Read LLVM Bitcode Files</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>The linker first reads all object files in natural order and collects 
@@ -219,9 +219,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="phase2">Phase 2 : Symbol Resolution</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>In this stage, the linker resolves symbols using global symbol table. 
@@ -233,9 +233,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="phase3">Phase 3 : Optimize Bitcode Files</a>
-</div>
+</h3>
 <div class="doc_text">
   <p>After symbol resolution, the linker tells the LTO shared object which
   symbols are needed by native object files.  In the example above, the linker 
@@ -248,9 +248,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="phase4">Phase 4 : Symbol Resolution after optimization</a>
-</div>
+</h3>
 
 <div class="doc_text">
   <p>In this phase, the linker reads optimized a native object file and 
@@ -265,9 +265,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
 <a name="lto">libLTO</a>
-</div>
+</h2>
 
 <div class="doc_text">
   <p><tt>libLTO</tt> is a shared object that is part of the LLVM tools, and 
@@ -281,9 +281,9 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="lto_module_t">lto_module_t</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -325,9 +325,9 @@ lto_module_get_symbol_attribute(lto_module_t, unsigned int)
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="lto_code_gen_t">lto_code_gen_t</a>
-</div>
+</h3>
 
 <div class="doc_text">
 

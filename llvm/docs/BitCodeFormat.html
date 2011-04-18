@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 <body>
-<div class="doc_title"> LLVM Bitcode File Format </div>
+<h1> LLVM Bitcode File Format</h1>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
   <li><a href="#overview">Overview</a></li>
@@ -47,7 +47,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="abstract">Abstract</a></div>
+<h2><a name="abstract">Abstract</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -58,7 +58,7 @@ the LLVM IR into it.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="overview">Overview</a></div>
+<h2><a name="overview">Overview</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -88,7 +88,7 @@ wrapper format, then describes the record structure used by LLVM IR files.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="bitstream">Bitstream Format</a></div>
+<h2><a name="bitstream">Bitstream Format</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -117,8 +117,9 @@ understanding the encoding.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="magic">Magic Numbers</a>
-</div>
+<h3>
+  <a name="magic">Magic Numbers</a>
+</h3>
 
 <div class="doc_text">
 
@@ -130,8 +131,9 @@ bitcode, while application-specific programs will want to look at all four.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="primitives">Primitives</a>
-</div>
+<h3>
+  <a name="primitives">Primitives</a>
+</h3>
 
 <div class="doc_text">
 
@@ -147,8 +149,9 @@ Integers</a>.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="fixedwidth">Fixed Width Integers</a>
-</div>
+<h4>
+  <a name="fixedwidth">Fixed Width Integers</a>
+</h4>
 
 <div class="doc_text">
 
@@ -161,8 +164,9 @@ Integers</a>.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="variablewidth">Variable Width
-Integers</a></div>
+<h4>
+  <a name="variablewidth">Variable Width Integers</a>
+</h4>
 
 <div class="doc_text">
 
@@ -182,7 +186,7 @@ value of 24 (011 << 3) with no continuation.  The sum (3+24) yields the value
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="char6">6-bit characters</a></div>
+<h4><a name="char6">6-bit characters</a></h4>
 
 <div class="doc_text">
 
@@ -206,7 +210,7 @@ characters not in the set.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="wordalign">Word Alignment</a></div>
+<h4><a name="wordalign">Word Alignment</a></h4>
 
 <div class="doc_text">
 
@@ -218,8 +222,9 @@ represented as a multiple of 32-bit words.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="abbrevid">Abbreviation IDs</a>
-</div>
+<h3>
+  <a name="abbrevid">Abbreviation IDs</a>
+</h3>
 
 <div class="doc_text">
 
@@ -253,8 +258,9 @@ an <a href="#abbrev_records">abbreviated record encoding</a>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="blocks">Blocks</a>
-</div>
+<h3>
+  <a name="blocks">Blocks</a>
+</h3>
 
 <div class="doc_text">
 
@@ -300,8 +306,7 @@ popped, the saved values are restored.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="ENTER_SUBBLOCK">ENTER_SUBBLOCK
-Encoding</a></div>
+<h4><a name="ENTER_SUBBLOCK">ENTER_SUBBLOCK Encoding</a></h4>
 
 <div class="doc_text">
 
@@ -322,8 +327,7 @@ reader to skip over the entire block in one jump.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="END_BLOCK">END_BLOCK
-Encoding</a></div>
+<h4><a name="END_BLOCK">END_BLOCK Encoding</a></h4>
 
 <div class="doc_text">
 
@@ -340,8 +344,9 @@ an even multiple of 32-bits.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="datarecord">Data Records</a>
-</div>
+<h3>
+  <a name="datarecord">Data Records</a>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -358,8 +363,7 @@ ASCII codes for the characters in the string.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="UNABBREV_RECORD">UNABBREV_RECORD
-Encoding</a></div>
+<h4><a name="UNABBREV_RECORD">UNABBREV_RECORD Encoding</a></h4>
 
 <div class="doc_text">
 
@@ -385,8 +389,7 @@ bits.  This is not an efficient encoding, but it is fully general.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="abbrev_records">Abbreviated Record
-Encoding</a></div>
+<h4><a name="abbrev_records">Abbreviated Record Encoding</a></h4>
 
 <div class="doc_text">
 
@@ -410,8 +413,9 @@ operand value).</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="abbreviations">Abbreviations</a>
-</div>
+<h3>
+  <a name="abbreviations">Abbreviations</a>
+</h3>
 
 <div class="doc_text">
 <p>
@@ -434,8 +438,7 @@ operators, the abbreviation does not need to be emitted.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="DEFINE_ABBREV">DEFINE_ABBREV
- Encoding</a></div>
+<h4><a name="DEFINE_ABBREV">DEFINE_ABBREV  Encoding</a></h4>
 
 <div class="doc_text">
 
@@ -553,8 +556,9 @@ used for any other string value.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="stdblocks">Standard Blocks</a>
-</div>
+<h3>
+  <a name="stdblocks">Standard Blocks</a>
+</h3>
 
 <div class="doc_text">
 
@@ -568,8 +572,7 @@ may be added.  Block IDs 0-7 are reserved for standard blocks.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="BLOCKINFO">#0 - BLOCKINFO
-Block</a></div>
+<h4><a name="BLOCKINFO">#0 - BLOCKINFO Block</a></h4>
 
 <div class="doc_text">
 
@@ -621,7 +624,7 @@ from the corresponding blocks.  It is not safe to skip them.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="wrapper">Bitcode Wrapper Format</a></div>
+<h2><a name="wrapper">Bitcode Wrapper Format</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -652,7 +655,7 @@ value that can be used to encode the CPU of the target.
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>
+<h2><a name="llvmir">LLVM IR Encoding</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -669,11 +672,12 @@ reader is not allowed to build in any knowledge of this.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="basics">Basics</a>
-</div>
+<h3>
+  <a name="basics">Basics</a>
+</h3>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="ir_magic">LLVM IR Magic Number</a></div>
+<h4><a name="ir_magic">LLVM IR Magic Number</a></h4>
 
 <div class="doc_text">
 
@@ -695,7 +699,7 @@ When combined with the bitcode magic number and viewed as bytes, this is
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="ir_signed_vbr">Signed VBRs</a></div>
+<h4><a name="ir_signed_vbr">Signed VBRs</a></h4>
 
 <div class="doc_text">
 
@@ -728,7 +732,7 @@ within <tt>CONSTANTS_BLOCK</tt> blocks.
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="ir_blocks">LLVM IR Blocks</a></div>
+<h4><a name="ir_blocks">LLVM IR Blocks</a></h4>
 
 <div class="doc_text">
 
@@ -759,8 +763,9 @@ LLVM IR is defined with the following blocks:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="MODULE_BLOCK">MODULE_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="MODULE_BLOCK">MODULE_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -785,8 +790,7 @@ following sub-blocks:
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_VERSION">MODULE_CODE_VERSION Record</a>
-</div>
+<h4><a name="MODULE_CODE_VERSION">MODULE_CODE_VERSION Record</a></h4>
 
 <div class="doc_text">
 
@@ -798,8 +802,7 @@ time.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_TRIPLE">MODULE_CODE_TRIPLE Record</a>
-</div>
+<h4><a name="MODULE_CODE_TRIPLE">MODULE_CODE_TRIPLE Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[TRIPLE, ...string...]</tt></p>
@@ -810,8 +813,7 @@ specification string.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_DATALAYOUT">MODULE_CODE_DATALAYOUT Record</a>
-</div>
+<h4><a name="MODULE_CODE_DATALAYOUT">MODULE_CODE_DATALAYOUT Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[DATALAYOUT, ...string...]</tt></p>
@@ -822,8 +824,7 @@ specification string.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_ASM">MODULE_CODE_ASM Record</a>
-</div>
+<h4><a name="MODULE_CODE_ASM">MODULE_CODE_ASM Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[ASM, ...string...]</tt></p>
@@ -834,8 +835,7 @@ individual assembly blocks separated by newline (ASCII 10) characters.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME Record</a>
-</div>
+<h4><a name="MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[SECTIONNAME, ...string...]</tt></p>
@@ -850,8 +850,7 @@ referenced by the 1-based index in the <i>section</i> fields of
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_DEPLIB">MODULE_CODE_DEPLIB Record</a>
-</div>
+<h4><a name="MODULE_CODE_DEPLIB">MODULE_CODE_DEPLIB Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[DEPLIB, ...string...]</tt></p>
@@ -864,8 +863,7 @@ library name referenced.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_GLOBALVAR">MODULE_CODE_GLOBALVAR Record</a>
-</div>
+<h4><a name="MODULE_CODE_GLOBALVAR">MODULE_CODE_GLOBALVAR Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal]</tt></p>
@@ -929,8 +927,7 @@ has <tt>unnamed_addr</tt></li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_FUNCTION">MODULE_CODE_FUNCTION Record</a>
-</div>
+<h4><a name="MODULE_CODE_FUNCTION">MODULE_CODE_FUNCTION Record</a></h4>
 
 <div class="doc_text">
 
@@ -986,8 +983,7 @@ has <tt>unnamed_addr</tt></li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_ALIAS">MODULE_CODE_ALIAS Record</a>
-</div>
+<h4><a name="MODULE_CODE_ALIAS">MODULE_CODE_ALIAS Record</a></h4>
 
 <div class="doc_text">
 
@@ -1011,8 +1007,7 @@ for this alias</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_PURGEVALS">MODULE_CODE_PURGEVALS Record</a>
-</div>
+<h4><a name="MODULE_CODE_PURGEVALS">MODULE_CODE_PURGEVALS Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[PURGEVALS, numvals]</tt></p>
@@ -1025,8 +1020,7 @@ new value indices will start from the given <i>numvals</i> value.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="MODULE_CODE_GCNAME">MODULE_CODE_GCNAME Record</a>
-</div>
+<h4><a name="MODULE_CODE_GCNAME">MODULE_CODE_GCNAME Record</a></h4>
 
 <div class="doc_text">
 <p><tt>[GCNAME, ...string...]</tt></p>
@@ -1040,8 +1034,9 @@ fields of <tt>FUNCTION</tt> records.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="PARAMATTR_BLOCK">PARAMATTR_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="PARAMATTR_BLOCK">PARAMATTR_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1061,8 +1056,7 @@ attribute lists). </p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="PARAMATTR_CODE_ENTRY">PARAMATTR_CODE_ENTRY Record</a>
-</div>
+<h4><a name="PARAMATTR_CODE_ENTRY">PARAMATTR_CODE_ENTRY Record</a></h4>
 
 <div class="doc_text">
 
@@ -1106,8 +1100,9 @@ the logarithm base 2 of the requested alignment, plus 1</li>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="TYPE_BLOCK">TYPE_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="TYPE_BLOCK">TYPE_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1127,8 +1122,7 @@ equivalent types). </p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_NUMENTRY">TYPE_CODE_NUMENTRY Record</a>
-</div>
+<h4><a name="TYPE_CODE_NUMENTRY">TYPE_CODE_NUMENTRY Record</a></h4>
 
 <div class="doc_text">
 
@@ -1142,8 +1136,7 @@ in the block.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_VOID">TYPE_CODE_VOID Record</a>
-</div>
+<h4><a name="TYPE_CODE_VOID">TYPE_CODE_VOID Record</a></h4>
 
 <div class="doc_text">
 
@@ -1155,8 +1148,7 @@ type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_FLOAT">TYPE_CODE_FLOAT Record</a>
-</div>
+<h4><a name="TYPE_CODE_FLOAT">TYPE_CODE_FLOAT Record</a></h4>
 
 <div class="doc_text">
 
@@ -1168,8 +1160,7 @@ floating point) type to the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_DOUBLE">TYPE_CODE_DOUBLE Record</a>
-</div>
+<h4><a name="TYPE_CODE_DOUBLE">TYPE_CODE_DOUBLE Record</a></h4>
 
 <div class="doc_text">
 
@@ -1181,8 +1172,7 @@ floating point) type to the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_LABEL">TYPE_CODE_LABEL Record</a>
-</div>
+<h4><a name="TYPE_CODE_LABEL">TYPE_CODE_LABEL Record</a></h4>
 
 <div class="doc_text">
 
@@ -1194,8 +1184,7 @@ the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_OPAQUE">TYPE_CODE_OPAQUE Record</a>
-</div>
+<h4><a name="TYPE_CODE_OPAQUE">TYPE_CODE_OPAQUE Record</a></h4>
 
 <div class="doc_text">
 
@@ -1208,8 +1197,7 @@ unified.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_INTEGER">TYPE_CODE_INTEGER  Record</a>
-</div>
+<h4><a name="TYPE_CODE_INTEGER">TYPE_CODE_INTEGER  Record</a></h4>
 
 <div class="doc_text">
 
@@ -1222,8 +1210,7 @@ integer type.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_POINTER">TYPE_CODE_POINTER Record</a>
-</div>
+<h4><a name="TYPE_CODE_POINTER">TYPE_CODE_POINTER Record</a></h4>
 
 <div class="doc_text">
 
@@ -1243,8 +1230,7 @@ default address space is zero.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_FUNCTION">TYPE_CODE_FUNCTION Record</a>
-</div>
+<h4><a name="TYPE_CODE_FUNCTION">TYPE_CODE_FUNCTION Record</a></h4>
 
 <div class="doc_text">
 
@@ -1268,8 +1254,7 @@ parameter types of the function</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_STRUCT">TYPE_CODE_STRUCT Record</a>
-</div>
+<h4><a name="TYPE_CODE_STRUCT">TYPE_CODE_STRUCT Record</a></h4>
 
 <div class="doc_text">
 
@@ -1287,8 +1272,7 @@ types of the structure</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_ARRAY">TYPE_CODE_ARRAY Record</a>
-</div>
+<h4><a name="TYPE_CODE_ARRAY">TYPE_CODE_ARRAY Record</a></h4>
 
 <div class="doc_text">
 
@@ -1305,8 +1289,7 @@ table.  The operand fields are</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_VECTOR">TYPE_CODE_VECTOR Record</a>
-</div>
+<h4><a name="TYPE_CODE_VECTOR">TYPE_CODE_VECTOR Record</a></h4>
 
 <div class="doc_text">
 
@@ -1323,8 +1306,7 @@ table.  The operand fields are</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_X86_FP80">TYPE_CODE_X86_FP80 Record</a>
-</div>
+<h4><a name="TYPE_CODE_X86_FP80">TYPE_CODE_X86_FP80 Record</a></h4>
 
 <div class="doc_text">
 
@@ -1336,8 +1318,7 @@ floating point) type to the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_FP128">TYPE_CODE_FP128 Record</a>
-</div>
+<h4><a name="TYPE_CODE_FP128">TYPE_CODE_FP128 Record</a></h4>
 
 <div class="doc_text">
 
@@ -1349,8 +1330,7 @@ floating point) type to the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_PPC_FP128">TYPE_CODE_PPC_FP128 Record</a>
-</div>
+<h4><a name="TYPE_CODE_PPC_FP128">TYPE_CODE_PPC_FP128 Record</a></h4>
 
 <div class="doc_text">
 
@@ -1362,8 +1342,7 @@ floating point) type to the type table.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TYPE_CODE_METADATA">TYPE_CODE_METADATA Record</a>
-</div>
+<h4><a name="TYPE_CODE_METADATA">TYPE_CODE_METADATA Record</a></h4>
 
 <div class="doc_text">
 
@@ -1375,8 +1354,9 @@ type to the type table.
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1387,8 +1367,9 @@ type to the type table.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="FUNCTION_BLOCK">FUNCTION_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="FUNCTION_BLOCK">FUNCTION_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1409,8 +1390,9 @@ type to the type table.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="TYPE_SYMTAB_BLOCK">TYPE_SYMTAB_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="TYPE_SYMTAB_BLOCK">TYPE_SYMTAB_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1422,8 +1404,7 @@ indices.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"><a name="TST_CODE_ENTRY">TST_CODE_ENTRY Record</a>
-</div>
+<h4><a name="TST_CODE_ENTRY">TST_CODE_ENTRY Record</a></h4>
 
 <div class="doc_text">
 
@@ -1438,8 +1419,9 @@ name. Each entry corresponds to a single named type.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="VALUE_SYMTAB_BLOCK">VALUE_SYMTAB_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="VALUE_SYMTAB_BLOCK">VALUE_SYMTAB_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1450,8 +1432,9 @@ name. Each entry corresponds to a single named type.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="METADATA_BLOCK">METADATA_BLOCK Contents</a>
-</div>
+<h3>
+  <a name="METADATA_BLOCK">METADATA_BLOCK Contents</a>
+</h3>
 
 <div class="doc_text">
 
@@ -1462,8 +1445,9 @@ name. Each entry corresponds to a single named type.
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="METADATA_ATTACHMENT">METADATA_ATTACHMENT Contents</a>
-</div>
+<h3>
+  <a name="METADATA_ATTACHMENT">METADATA_ATTACHMENT Contents</a>
+</h3>
 
 <div class="doc_text">
 

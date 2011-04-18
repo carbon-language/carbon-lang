@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<div class="doc_title">Source Level Debugging with LLVM</div>
+<h1>Source Level Debugging with LLVM</h1>
 
 <table class="layout" style="width:100%">
   <tr class="layout">
@@ -68,7 +68,7 @@ height="369">
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction</a></div> 
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -83,9 +83,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="phil">Philosophy behind LLVM debugging information</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -133,9 +133,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="consumers">Debug information consumers</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -157,9 +157,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="debugopt">Debugging optimized code</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -227,9 +227,9 @@ height="369">
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="format">Debugging information format</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -268,9 +268,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="debug_info_descriptors">Debug information descriptors</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -315,9 +315,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_compile_units">Compile unit descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -351,9 +351,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_files">File descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -380,9 +380,9 @@ height="369">
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_global_variables">Global variable descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -413,9 +413,9 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_subprograms">Subprogram descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -456,9 +456,9 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_blocks">Block descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -482,9 +482,9 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_basic_type">Basic type descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -534,9 +534,9 @@ DW_ATE_unsigned_char = 8
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_derived_type">Derived type descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -606,9 +606,9 @@ DW_TAG_restrict_type    = 55
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_composite_type">Composite type descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -693,9 +693,9 @@ DW_TAG_inheritance      = 28
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_subrange">Subrange descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -719,9 +719,9 @@ DW_TAG_inheritance      = 28
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_enumeration">Enumerator descriptors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -743,9 +743,9 @@ DW_TAG_inheritance      = 28
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_variables">Local variables</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -787,9 +787,9 @@ DW_TAG_return_variable = 258
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="format_common_intrinsics">Debugger intrinsic functions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -799,9 +799,9 @@ DW_TAG_return_variable = 258
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_common_declare">llvm.dbg.declare</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <pre>
@@ -814,9 +814,9 @@ DW_TAG_return_variable = 258
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="format_common_value">llvm.dbg.value</a>
-</div>
+</h4>
 
 <div class="doc_text">
 <pre>
@@ -831,9 +831,9 @@ DW_TAG_return_variable = 258
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="format_common_lifetime">Object lifetimes and scoping</a>
-</div>
+</h3>
 
 <div class="doc_text">
 <p>In many languages, the local variables in functions can have their lifetimes
@@ -994,9 +994,9 @@ call void @llvm.dbg.declare(metadata, metadata !12), !dbg !14
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="ccxx_frontend">C/C++ front-end specific debug information</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1023,9 +1023,9 @@ call void @llvm.dbg.declare(metadata, metadata !12), !dbg !14
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_compile_units">C/C++ source file information</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1101,9 +1101,9 @@ using <tt>Instruction::getMetadata()</tt> and
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_global_variable">C/C++ global variable information</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1171,9 +1171,9 @@ int MyGlobal = 100;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_subprogram">C/C++ function information</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1228,9 +1228,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_basic_types">C/C++ basic types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1239,9 +1239,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_type_bool">bool</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1265,9 +1265,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_char">char</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1291,9 +1291,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_unsigned_char">unsigned char</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1317,9 +1317,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_short">short</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1343,9 +1343,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_unsigned_short">unsigned short</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1369,9 +1369,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_int">int</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1394,9 +1394,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_unsigned_int">unsigned int</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1420,9 +1420,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_long_long">long long</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1446,9 +1446,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_unsigned_long_long">unsigned long long</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1472,9 +1472,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_float">float</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1498,9 +1498,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ccxx_basic_double">double</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1524,9 +1524,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_derived_types">C/C++ derived types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1609,9 +1609,9 @@ typedef const int *IntPtr;
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_composite_types">C/C++ struct/union types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1722,9 +1722,9 @@ struct Color {
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ccxx_enumeration_types">C/C++ enumeration types</a>
-</div>
+</h3>
 
 <div class="doc_text">
 

@@ -11,7 +11,7 @@
 
 <body>
 
-<div class="doc_title">Exception Handling in LLVM</div>
+<h1>Exception Handling in LLVM</h1>
 
 <table class="layout" style="width:100%">
   <tr class="layout">
@@ -58,7 +58,7 @@
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction</a></div>
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -73,9 +73,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="itanium">Itanium ABI Zero-cost Exception Handling</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -106,9 +106,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="sjlj">Setjmp/Longjmp Exception Handling</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -138,9 +138,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="overview">Overview</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -186,9 +186,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_section">
+<h2>
   <a name="codegen">LLVM Code Generation</a>
-</div>
+</h2>
 
 <div class="doc_text">
 
@@ -203,9 +203,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="throw">Throw</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -225,9 +225,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="try_catch">Try/Catch</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -313,9 +313,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="cleanups">Cleanups</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -332,9 +332,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="throw_filters">Throw Filters</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -359,9 +359,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="restrictions">Restrictions</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -385,9 +385,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_section">
+<h2>
   <a name="format_common_intrinsics">Exception Handling Intrinsics</a>
-</div>
+</h2>
 
 <div class="doc_text">
 
@@ -398,9 +398,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_exception">llvm.eh.exception</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -413,9 +413,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_selector">llvm.eh.selector</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -445,9 +445,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_typeid_for">llvm.eh.typeid.for</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -463,9 +463,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -492,9 +492,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_sjlj_longjmp">llvm.eh.sjlj.longjmp</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -512,9 +512,9 @@
 
 </div>
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -531,9 +531,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -549,9 +549,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="llvm_eh_sjlj_dispatchsetup">llvm.eh.sjlj.dispatchsetup</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -566,9 +566,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_section">
+<h2>
   <a name="asm">Asm Table Formats</a>
-</div>
+</h2>
 
 <div class="doc_text">
 
@@ -578,9 +578,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="unwind_tables">Exception Handling Frame</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -596,9 +596,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="exception_tables">Exception Tables</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -612,9 +612,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_section">
+<h2>
   <a name="todo">ToDo</a>
-</div>
+</h2>
 
 <div class="doc_text">
 

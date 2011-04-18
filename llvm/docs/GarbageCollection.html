@@ -13,9 +13,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   Accurate Garbage Collection with LLVM
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a>
@@ -79,9 +79,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -127,9 +127,9 @@ support accurate garbage collection.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="feature">Goals and non-goals</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -199,9 +199,9 @@ compiler matures.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="quickstart">Getting started</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -249,9 +249,9 @@ into <tt>llc</tt> and works even with the interpreter and C backends.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="quickstart-compiler">In your compiler</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -276,9 +276,9 @@ switching to a more advanced GC.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="quickstart-runtime">In your runtime</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -343,9 +343,9 @@ void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
 }</pre></div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="shadow-stack">About the shadow stack</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -373,9 +373,9 @@ in order to improve performance.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="core">IR features</a><a name="intrinsics"></a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -393,9 +393,9 @@ program.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="gcattr">Specifying GC code generation: <tt>gc "..."</tt></a>
-</div>
+</h3>
 
 <div class="doc_code"><tt>
   define <i>ty</i> @<i>name</i>(...) <span style="text-decoration: underline">gc "<i>name</i>"</span> { ...
@@ -418,9 +418,9 @@ programs that use different garbage collection algorithms (or none at all).</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="gcroot">Identifying GC roots on the stack: <tt>llvm.gcroot</tt></a>
-</div>
+</h3>
 
 <div class="doc_code"><tt>
   void @llvm.gcroot(i8** %ptrloc, i8* %metadata)
@@ -494,9 +494,9 @@ CodeBlock:
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="barriers">Reading and writing references in the heap</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -537,9 +537,9 @@ are used.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="gcwrite">Write barrier: <tt>llvm.gcwrite</tt></a>
-</div>
+</h4>
 
 <div class="doc_code"><tt>
 void @llvm.gcwrite(i8* %value, i8* %object, i8** %derived)
@@ -559,9 +559,9 @@ implement reference counting.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="gcread">Read barrier: <tt>llvm.gcread</tt></a>
-</div>
+</h4>
 
 <div class="doc_code"><tt>
 i8* @llvm.gcread(i8* %object, i8** %derived)<br>
@@ -581,9 +581,9 @@ writes.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="plugin">Implementing a collector plugin</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -669,9 +669,9 @@ as a language-specific compiler front-end.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="collector-algos">Overview of available features</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -958,9 +958,9 @@ interest.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="stack-map">Computing stack maps</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1014,9 +1014,9 @@ for collector plugins which implement reference counting or a shadow stack.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="init-roots">Initializing roots to null: <tt>InitRoots</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1039,10 +1039,10 @@ this feature should be used by all GC plugins. It is enabled by default.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="custom">Custom lowering of intrinsics: <tt>CustomRoots</tt>, 
     <tt>CustomReadBarriers</tt>, and <tt>CustomWriteBarriers</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1129,9 +1129,9 @@ bool MyGC::performCustomLowering(Function &amp;F) {
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="safe-points">Generating safe points: <tt>NeededSafePoints</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1193,9 +1193,9 @@ safe point (because only the topmost function has been patched).</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="assembly">Emitting assembly code: <tt>GCMetadataPrinter</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1343,9 +1343,9 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="references">References</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">

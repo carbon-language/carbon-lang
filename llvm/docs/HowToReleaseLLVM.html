@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<div class="doc_title">How To Release LLVM To The Public</div>
+<h1>How To Release LLVM To The Public</h1>
 <ol>
   <li><a href="#introduction">Introduction</a></li>
   <li><a href="#criteria">Qualification Criteria</a></li>
@@ -23,7 +23,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction</a></div>
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -36,7 +36,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="process">Release Timeline</a></div>
+<h2><a name="process">Release Timeline</a></h2>
 <!-- *********************************************************************** -->
 <div class="doc_text">
 
@@ -76,7 +76,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="process">Release Process</a></div>
+<h2><a name="process">Release Process</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -122,7 +122,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-admin">Release Administrative Tasks</a></div>
+<h3><a name="release-admin">Release Administrative Tasks</a></h3>
 
 <div class="doc_text">
 
@@ -138,7 +138,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="branch">Create Release Branch</a></div>
+<h4><a name="branch">Create Release Branch</a></h4>
 
 <div class="doc_text">
 
@@ -198,7 +198,7 @@ $ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> clang-
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="verchanges">Update LLVM Version</a></div>
+<h4><a name="verchanges">Update LLVM Version</a></h4>
 
 <div class="doc_text">
 
@@ -214,7 +214,7 @@ $ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> clang-
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="dist">Build the LLVM Release Candidates</a></div>
+<h4><a name="dist">Build the LLVM Release Candidates</a></h4>
 
 <div class="doc_text">
 
@@ -269,7 +269,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-build">Building the Release</a></div>
+<h3><a name="release-build">Building the Release</a></h3>
 
 <div class="doc_text">
 
@@ -290,7 +290,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="build">Build LLVM</a></div>
+<h4><a name="build">Build LLVM</a></h4>
 
 <div class="doc_text">
 
@@ -302,7 +302,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></div>
+<h4><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></h4>
 
 <div class="doc_text">
 
@@ -329,7 +329,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="clangbin">Build Clang Binary Distribution</a></div>
+<h4><a name="clangbin">Build Clang Binary Distribution</a></h4>
 
 <div class="doc_text">
 
@@ -350,7 +350,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="target-build">Target Specific Build Details</a></div>
+<h4><a name="target-build">Target Specific Build Details</a></h4>
 
 <div class="doc_text">
 
@@ -372,8 +372,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-qualify">
-Building the Release</a></div>
+<h3><a name="release-qualify">Building the Release</a></h3>
 
 <div class="doc_text">
 
@@ -394,7 +393,7 @@ Building the Release</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="llvm-qualify">Qualify LLVM</a></div>
+<h4><a name="llvm-qualify">Qualify LLVM</a></h4>
 
 <div class="doc_text">
 
@@ -405,7 +404,7 @@ Building the Release</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="llvmgcc-qualify">Qualify LLVM-GCC</a></div>
+<h4><a name="llvmgcc-qualify">Qualify LLVM-GCC</a></h4>
 
 <div class="doc_text">
 
@@ -418,7 +417,7 @@ Building the Release</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="clang-qualify">Qualify Clang</a></div>
+<h4><a name="clang-qualify">Qualify Clang</a></h4>
 
 <div class="doc_text">
 
@@ -429,8 +428,7 @@ Building the Release</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="targets">Specific Target 
-Qualification Details</a></div>
+<h4><a name="targets">Specific Target Qualification Details</a></h4>
 
 <div class="doc_text">
 
@@ -447,7 +445,7 @@ Qualification Details</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="commTest">Community Testing</a></div>
+<h3><a name="commTest">Community Testing</a></h3>
 <div class="doc_text">
 
 <p>Once all testing has been completed and appropriate bugs filed, the release
@@ -484,7 +482,7 @@ Qualification Details</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-patch">Release Patch Rules</a></div>
+<h3><a name="release-patch">Release Patch Rules</a></h3>
 
 <div class="doc_text">
 
@@ -508,8 +506,7 @@ Qualification Details</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="release-final">Release Final Tasks 
-</a></div>
+<h3><a name="release-final">Release Final Tasks</a></h3>
 
 <div class="doc_text">
 
@@ -521,7 +518,7 @@ Qualification Details</a></div>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="updocs">Update Documentation</a></div>
+<h4><a name="updocs">Update Documentation</a></h4>
 
 <div class="doc_text">
 
@@ -535,7 +532,7 @@ Qualification Details</a></div>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="tag">Tag the LLVM Final Release</a></div>
+<h4><a name="tag">Tag the LLVM Final Release</a></h4>
 
 <div class="doc_text">
 
@@ -560,7 +557,7 @@ $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="updemo">Update the LLVM Demo Page</a></div>
+<h3><a name="updemo">Update the LLVM Demo Page</a></h3>
 
 <div class="doc_text">
 
@@ -570,7 +567,7 @@ $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="webupdates">Update the LLVM Website</a></div>
+<h4><a name="webupdates">Update the LLVM Website</a></h4>
 
 <div class="doc_text">
 
@@ -606,7 +603,7 @@ $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="announce">Announce the Release</a></div>
+<h4><a name="announce">Announce the Release</a></h4>
 
 <div class="doc_text">
 

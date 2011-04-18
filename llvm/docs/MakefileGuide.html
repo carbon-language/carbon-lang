@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<div class="doc_title">LLVM Makefile Guide</div>
+<h1>LLVM Makefile Guide</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a></li>
@@ -77,7 +77,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction </a></div>
+<h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -99,7 +99,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="general">General Concepts</a></div>
+<h2><a name="general">General Concepts</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -111,7 +111,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="projects">Projects</a></div>
+<h3><a name="projects">Projects</a></h3>
 <div class="doc_text">
   <p>The LLVM Makefile System is quite generous. It not only builds its own
   software, but it can build yours too. Built into the system is knowledge of
@@ -129,7 +129,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="varvalues">Variable Values</a></div>
+<h3><a name="varvalues">Variable Values</a></h3>
 <div class="doc_text">
   <p>To use the makefile system, you simply create a file named 
   <tt>Makefile</tt> in your directory and declare values for certain variables. 
@@ -139,7 +139,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="including">Including Makefiles</a></div>
+<h3><a name="including">Including Makefiles</a></h3>
 <div class="doc_text">
   <p>Setting variables alone is not enough. You must include into your Makefile
   additional files that provide the rules of the LLVM Makefile system. The 
@@ -147,7 +147,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="Makefile">Makefile</a></div>
+<h4><a name="Makefile">Makefile</a></h4>
 <div class="doc_text">
   <p>Each directory to participate in the build needs to have a file named
   <tt>Makefile</tt>. This is the file first read by <tt>make</tt>. It has three
@@ -163,8 +163,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="Makefile.common">Makefile.common</a>
-</div>
+<h4><a name="Makefile.common">Makefile.common</a></h4>
 <div class="doc_text">
   <p>Every project must have a <tt>Makefile.common</tt> file at its top source 
   directory. This file serves three purposes:</p>
@@ -182,8 +181,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="Makefile.config">Makefile.config</a>
-</div>
+<h4><a name="Makefile.config">Makefile.config</a></h4>
 <div class="doc_text">
   <p>Every project must have a <tt>Makefile.config</tt> at the top of its
   <em>build</em> directory. This file is <b>generated</b> by the
@@ -196,7 +194,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="Makefile.rules">Makefile.rules</a></div>
+<h4><a name="Makefile.rules">Makefile.rules</a></h4>
 <div class="doc_text">
   <p>This file, located at <tt>$(LLVM_SRC_ROOT)/Makefile.rules</tt> is the heart
   of the LLVM Makefile System. It provides all the logic, dependencies, and
@@ -206,7 +204,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="Comments">Comments</a></div>
+<h3><a name="Comments">Comments</a></h3>
 <div class="doc_text">
   <p>User Makefiles need not have comments in them unless the construction is
   unusual or it does not strictly follow the rules and patterns of the LLVM
@@ -216,7 +214,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="tutorial">Tutorial</a></div>
+<h2><a name="tutorial">Tutorial</a></h2>
 <!-- *********************************************************************** -->
 <div class="doc_text">
   <p>This section provides some examples of the different kinds of modules you
@@ -226,7 +224,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="libraries">Libraries</a></div>
+<h3><a name="libraries">Libraries</a></h3>
 <div class="doc_text">
   <p>Only a few variable definitions are needed to build a regular library.
   Normally, the makefile system will build all the software into a single
@@ -259,7 +257,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="BCModules">Bitcode Modules</a></div>
+<h4><a name="BCModules">Bitcode Modules</a></h4>
 <div class="doc_text">
   <p>In some situations, it is desirable to build a single bitcode module from
   a variety of sources, instead of an archive, shared library, or bitcode 
@@ -280,9 +278,9 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection">
+<h4>
   <a name="LoadableModules">Loadable Modules</a>
-</div>
+</h4>
 <div class="doc_text">
   <p>In some situations, you need to create a loadable module. Loadable modules
   can be loaded into programs like <tt>opt</tt> or <tt>llc</tt> to specify
@@ -312,7 +310,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tools">Tools</a></div>
+<h3><a name="tools">Tools</a></h3>
 <div class="doc_text">
   <p>For building executable programs (tools), you must provide the name of the
   tool and the names of the libraries you wish to link with the tool. For
@@ -347,7 +345,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="JIT">JIT Tools</a></div>
+<h4><a name="JIT">JIT Tools</a></h4>
 <div class="doc_text">
   <p>Many tools will want to use the JIT features of LLVM.  To do this, you
      simply specify that you want an execution 'engine', and the makefiles will
@@ -368,7 +366,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="targets">Targets Supported</a></div>
+<h2><a name="targets">Targets Supported</a></h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -429,7 +427,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="all">all (default)</a></div>
+<h3><a name="all">all (default)</a></h3>
 <div class="doc_text">
   <p>When you invoke <tt>make</tt> with no arguments, you are implicitly
   instructing it to seek the "all" target (goal). This target is used for
@@ -440,14 +438,14 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="all-local">all-local</a></div>
+<h3><a name="all-local">all-local</a></h3>
 <div class="doc_text">
   <p>This target is the same as <a href="#all">all</a> but it operates only on
   the current directory instead of recursively.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="check">check</a></div>
+<h3><a name="check">check</a></h3>
 <div class="doc_text">
   <p>This target can be invoked from anywhere within a project's directories
   but always invokes the <a href="#check-local"><tt>check-local</tt></a> target 
@@ -464,7 +462,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="check-local">check-local</a></div>
+<h3><a name="check-local">check-local</a></h3>
 <div class="doc_text">
   <p>This target should be implemented by the <tt>Makefile</tt> in the project's
   <tt>test</tt> directory. It is invoked by the <tt>check</tt> target elsewhere.
@@ -475,7 +473,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="clean">clean</a></div>
+<h3><a name="clean">clean</a></h3>
 <div class="doc_text">
   <p>This target cleans the build directory, recursively removing all things
   that the Makefile builds. The cleaning rules have been made guarded so they 
@@ -484,14 +482,14 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="clean-local">clean-local</a></div>
+<h3><a name="clean-local">clean-local</a></h3>
 <div class="doc_text">
   <p>This target does the same thing as <tt>clean</tt> but only for the current
   (local) directory.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="dist">dist</a></div>
+<h3><a name="dist">dist</a></h3>
 <div class="doc_text">
   <p>This target builds a distribution tarball. It first builds the entire
   project using the <tt>all</tt> target and then tars up the necessary files and
@@ -500,7 +498,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="dist-check">dist-check</a></div>
+<h3><a name="dist-check">dist-check</a></h3>
 <div class="doc_text">
   <p>This target does the same thing as the <tt>dist</tt> target but also checks
   the distribution tarball. The check is made by unpacking the tarball to a new
@@ -512,7 +510,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="dist-clean">dist-clean</a></div>
+<h3><a name="dist-clean">dist-clean</a></h3>
 <div class="doc_text">
   <p>This is a special form of the <tt>clean</tt> clean target. It performs a
   normal <tt>clean</tt> but also removes things pertaining to building the
@@ -520,7 +518,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="install">install</a></div>
+<h3><a name="install">install</a></h3>
 <div class="doc_text">
   <p>This target finalizes shared objects and executables and copies all
   libraries, headers, executables and documentation to the directory given 
@@ -538,7 +536,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="preconditions">preconditions</a></div>
+<h3><a name="preconditions">preconditions</a></h3>
 <div class="doc_text">
   <p>This utility target checks to see if the <tt>Makefile</tt> in the object
   directory is older than the <tt>Makefile</tt> in the source directory and
@@ -549,14 +547,14 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="printvars">printvars</a></div>
+<h3><a name="printvars">printvars</a></h3>
 <div class="doc_text">
   <p>This utility target just causes the LLVM makefiles to print out some of 
   the makefile variables so that you can double check how things are set. </p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="reconfigure">reconfigure</a></div>
+<h3><a name="reconfigure">reconfigure</a></h3>
 <div class="doc_text">
   <p>This utility target will force a reconfigure of LLVM or your project. It 
   simply runs <tt>$(PROJ_OBJ_ROOT)/config.status --recheck</tt> to rerun the
@@ -566,7 +564,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="spotless">spotless</a></div>
+<h3><a name="spotless">spotless</a></h3>
 <div class="doc_text">
   <p>This utility target, only available when <tt>$(PROJ_OBJ_ROOT)</tt> is not 
   the same as <tt>$(PROJ_SRC_ROOT)</tt>, will completely clean the
@@ -578,7 +576,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="tags">tags</a></div>
+<h3><a name="tags">tags</a></h3>
 <div class="doc_text">
   <p>This target will generate a <tt>TAGS</tt> file in the top-level source
   directory. It is meant for use with emacs, XEmacs, or ViM. The TAGS file
@@ -587,7 +585,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="uninstall">uninstall</a></div>
+<h3><a name="uninstall">uninstall</a></h3>
 <div class="doc_text">
   <p>This target is the opposite of the <tt>install</tt> target. It removes the
   header, library and executable files from the installation directories. Note
@@ -596,7 +594,7 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="variables">Variables</a></div>
+<h2><a name="variables">Variables</a></h2>
 <!-- *********************************************************************** -->
 <div class="doc_text">
   <p>Variables are used to tell the LLVM Makefile System what to do and to
@@ -609,7 +607,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="setvars">Control Variables</a></div>
+<h3><a name="setvars">Control Variables</a></h3>
 <div class="doc_text">
   <p>Variables listed in the table below should be set <em>before</em> the 
   inclusion of <a href="#Makefile.common"><tt>$(LEVEL)/Makefile.common</tt></a>.
@@ -762,7 +760,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="overvars">Override Variables</a></div>
+<h3><a name="overvars">Override Variables</a></h3>
 <div class="doc_text">
   <p>Override variables can be used to override the default
   values provided by the LLVM makefile system. These variables can be set in 
@@ -868,7 +866,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="getvars">Readable Variables</a></div>
+<h3><a name="getvars">Readable Variables</a></h3>
 <div class="doc_text">
   <p>Variables listed in the table below can be used by the user's Makefile but
   should not be changed. Changing the value will generally cause the build to go
@@ -939,7 +937,7 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="intvars">Internal Variables</a></div>
+<h3><a name="intvars">Internal Variables</a></h3>
 <div class="doc_text">
   <p>Variables listed below are used by the LLVM Makefile System 
   and considered internal. You should not use these variables under any

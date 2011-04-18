@@ -8,9 +8,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   Writing an LLVM Pass
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction - What is a pass?</a></li>
@@ -121,9 +121,9 @@
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction - What is a pass?</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -156,9 +156,9 @@ more advanced features are discussed.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="quickstart">Quick Start - Writing hello world</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -172,9 +172,9 @@ source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="makefile">Setting up the build environment</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -220,9 +220,9 @@ the pass itself.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="basiccode">Basic code required</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -356,9 +356,9 @@ them) to be useful.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="running">Running a pass with <tt>opt</tt></a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -447,9 +447,9 @@ about some more details of how they work and how to use them.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="passtype">Pass classes and requirements</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -470,9 +470,9 @@ slow.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ImmutablePass">The <tt>ImmutablePass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -493,9 +493,9 @@ invalidated, and are never "run".</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="ModulePass">The <tt>ModulePass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -522,9 +522,9 @@ following signature:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnModule">The <tt>runOnModule</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -539,9 +539,9 @@ false otherwise.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -587,10 +587,11 @@ false if they didn't.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doInitialization_scc">The <tt>doInitialization(CallGraph &amp;)</tt>
-  method</a>
-</div>
+<h4>
+  <a name="doInitialization_scc">
+    The <tt>doInitialization(CallGraph &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -609,9 +610,9 @@ fast).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnSCC">The <tt>runOnSCC</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -626,10 +627,11 @@ otherwise.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doFinalization_scc">The <tt>doFinalization(CallGraph
-   &amp;)</tt> method</a>
-</div>
+<h4>
+  <a name="doFinalization_scc">
+    The <tt>doFinalization(CallGraph &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -645,9 +647,9 @@ program being compiled.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="FunctionPass">The <tt>FunctionPass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -677,10 +679,11 @@ should return true if they modified the program, or false if they didn't.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doInitialization_mod">The <tt>doInitialization(Module &amp;)</tt>
-  method</a>
-</div>
+<h4>
+  <a name="doInitialization_mod">
+    The <tt>doInitialization(Module &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -706,9 +709,9 @@ free functions that it needs, adding prototypes to the module if necessary.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnFunction">The <tt>runOnFunction</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -723,10 +726,11 @@ be returned if the function is modified.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doFinalization_mod">The <tt>doFinalization(Module
-  &amp;)</tt> method</a>
-</div>
+<h4>
+  <a name="doFinalization_mod">
+    The <tt>doFinalization(Module &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -742,9 +746,9 @@ program being compiled.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="LoopPass">The <tt>LoopPass</tt> class </a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -760,11 +764,11 @@ program, or false if they didn't. </p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doInitialization_loop">The <tt>doInitialization(Loop *,
-                                                 LPPassManager &amp;)</tt>
-  method</a>
-</div>
+<h4>
+  <a name="doInitialization_loop">
+    The <tt>doInitialization(Loop *,LPPassManager &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -783,9 +787,9 @@ information.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnLoop">The <tt>runOnLoop</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -801,9 +805,9 @@ should be used to update loop nest.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="doFinalization_loop">The <tt>doFinalization()</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -819,9 +823,9 @@ program being compiled. </p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="RegionPass">The <tt>RegionPass</tt> class </a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -838,11 +842,11 @@ methods should return true if they modified the program, or false if they didn n
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doInitialization_region">The <tt>doInitialization(Region *,
-                                                 RGPassManager &amp;)</tt>
-  method</a>
-</div>
+<h4>
+  <a name="doInitialization_region">
+    The <tt>doInitialization(Region *, RGPassManager &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -861,9 +865,9 @@ information.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnRegion">The <tt>runOnRegion</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -879,9 +883,9 @@ should be used to update region tree.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="doFinalization_region">The <tt>doFinalization()</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -899,9 +903,9 @@ program being compiled. </p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="BasicBlockPass">The <tt>BasicBlockPass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -928,10 +932,11 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the followi
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doInitialization_fn">The <tt>doInitialization(Function
-  &amp;)</tt> method</a>
-</div>
+<h4>
+  <a name="doInitialization_fn">
+    The <tt>doInitialization(Function &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -950,9 +955,9 @@ fast).</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="runOnBasicBlock">The <tt>runOnBasicBlock</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -968,10 +973,11 @@ if the basic block is modified.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="doFinalization_fn">The <tt>doFinalization(Function &amp;)</tt> 
-  method</a>
-</div>
+<h4>
+  <a name="doFinalization_fn">
+    The <tt>doFinalization(Function &amp;)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -988,9 +994,9 @@ finalization.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="MachineFunctionPass">The <tt>MachineFunctionPass</tt> class</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1020,10 +1026,11 @@ data)</li>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="runOnMachineFunction">The <tt>runOnMachineFunction(MachineFunction
-  &amp;MF)</tt> method</a>
-</div>
+<h4>
+  <a name="runOnMachineFunction">
+    The <tt>runOnMachineFunction(MachineFunction &amp;MF)</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -1047,9 +1054,9 @@ remember, you may not modify the LLVM <tt>Function</tt> or its contents from a
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="registration">Pass registration</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1072,9 +1079,9 @@ implement the virtual <tt>print</tt> method:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="print">The <tt>print</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1097,9 +1104,9 @@ depended on.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="interaction">Specifying interactions between passes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1122,9 +1129,9 @@ having any prerequisite passes, and invalidating <b>all</b> other passes.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="getAnalysisUsage">The <tt>getAnalysisUsage</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1142,9 +1149,12 @@ object:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="AU::addRequired">The <tt>AnalysisUsage::addRequired&lt;&gt;</tt> and <tt>AnalysisUsage::addRequiredTransitive&lt;&gt;</tt> methods</a>
-</div>
+<h4>
+  <a name="AU::addRequired">
+    The <tt>AnalysisUsage::addRequired&lt;&gt;</tt>
+    and <tt>AnalysisUsage::addRequiredTransitive&lt;&gt;</tt> methods
+  </a>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -1168,9 +1178,11 @@ pass is.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="AU::addPreserved">The <tt>AnalysisUsage::addPreserved&lt;&gt;</tt> method</a>
-</div>
+<h4>
+  <a name="AU::addPreserved">
+    The <tt>AnalysisUsage::addPreserved&lt;&gt;</tt> method
+  </a>
+</h4>
 
 <div class="doc_text">
 <p>
@@ -1203,9 +1215,11 @@ the fact that it hacks on the CFG.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="AU::examples">Example implementations of <tt>getAnalysisUsage</tt></a>
-</div>
+<h4>
+  <a name="AU::examples">
+    Example implementations of <tt>getAnalysisUsage</tt>
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -1220,10 +1234,12 @@ the fact that it hacks on the CFG.
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="getAnalysis">The <tt>getAnalysis&lt;&gt;</tt> and
-<tt>getAnalysisIfAvailable&lt;&gt;</tt> methods</a>
-</div>
+<h4>
+  <a name="getAnalysis">
+    The <tt>getAnalysis&lt;&gt;</tt> and
+    <tt>getAnalysisIfAvailable&lt;&gt;</tt> methods
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -1278,9 +1294,9 @@ if it is active.  For example:</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="analysisgroup">Implementing Analysis Groups</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1305,9 +1321,9 @@ Analysis Groups.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="agconcepts">Analysis Group Concepts</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1356,9 +1372,9 @@ hypothetical example) instead.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="registerag">Using <tt>RegisterAnalysisGroup</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1418,9 +1434,9 @@ pass is the default implementation for the interface.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="passStatistics">Pass Statistics</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1435,9 +1451,9 @@ line. See the <a href="http://llvm.org/docs/ProgrammersManual.html#Statistic">St
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="passmanager">What PassManager does</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1610,9 +1626,9 @@ anymore, and therefore do not have to compute it twice.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="releaseMemory">The <tt>releaseMemory</tt> method</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1636,9 +1652,9 @@ class, before the next call of <tt>run*</tt> in your pass.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="registering">Registering dynamically loaded passes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1671,9 +1687,9 @@ register on load and unregister at unload.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
+<h3>
   <a name="registering_existing">Using existing registries</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1736,9 +1752,9 @@ call line to <tt>llvm/Codegen/LinkAllCodegenComponents.h</tt>.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection">
+<h3>
   <a name="registering_new">Creating new registries</a>
-</div>
+</h3>
 
 <div class="doc_text">
 
@@ -1769,9 +1785,9 @@ creator.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="debughints">Using GDB with dynamically loaded passes</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1789,9 +1805,9 @@ on that.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="breakpoint">Setting a breakpoint in your pass</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1834,9 +1850,9 @@ or do other standard debugging stuff.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="debugmisc">Miscellaneous Problems</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1867,9 +1883,9 @@ href="mailto:sabre@nondot.org">Chris</a>.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="future">Future extensions planned</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -1881,9 +1897,9 @@ where we are going:</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="SMP">Multithreaded LLVM</a>
-</div>
+</h4>
 
 <div class="doc_text">
 

@@ -7,9 +7,9 @@
 </head>
 <body>
 
-<div class="doc_title">
+<h1>
   LLVM Coding Standards
-</div>
+</h1>
 
 <ol>
   <li><a href="#introduction">Introduction</a></li>
@@ -83,9 +83,9 @@
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="introduction">Introduction</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -117,20 +117,20 @@ href="mailto:sabre@nondot.org">Chris</a>.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="mechanicalissues">Mechanical Source Issues</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="sourceformating">Source Code Formatting</a>
-</div>
+</h3>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_commenting">Commenting</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -208,9 +208,9 @@ happens: does the method return null?  Abort?  Format your hard disk?</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_commentformat">Comment Formatting</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -233,9 +233,9 @@ These nest properly and are better behaved in general than C style comments.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_includes"><tt>#include</tt> Style</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -273,9 +273,9 @@ implements are defined.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_codewidth">Source Code Width</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -298,9 +298,9 @@ for debate.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_spacestabs">Use Spaces Instead of Tabs</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -319,9 +319,9 @@ makes for incredible diffs that are absolutely worthless.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="scf_indentation">Indent Code Consistently</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -333,15 +333,15 @@ Just do it.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="compilerissues">Compiler Issues</a>
-</div>
+</h3>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ci_warningerrors">Treat Compiler Warnings Like Errors</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -393,9 +393,9 @@ be fixed by massaging the code appropriately.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ci_portable_code">Write Portable Code</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -412,9 +412,9 @@ libSystem.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
 <a name="ci_rtti_exceptions">Do not use RTTI or Exceptions</a>
-</div>
+</h4>
 <div class="doc_text">
 
 <p>In an effort to reduce code and executable size, LLVM does not use RTTI
@@ -433,9 +433,9 @@ than <tt>dynamic_cast&lt;&gt;</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
 <a name="ci_class_struct">Use of <tt>class</tt> and <tt>struct</tt> Keywords</a>
-</div>
+</h4>
 <div class="doc_text">
 
 <p>In C++, the <tt>class</tt> and <tt>struct</tt> keywords can be used almost
@@ -455,23 +455,23 @@ which case <tt>struct</tt> is allowed.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="styleissues">Style Issues</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="macro">The High-Level Issues</a>
-</div>
+</h3>
 <!-- ======================================================================= -->
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_module">A Public Header File <b>is</b> a Module</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -499,9 +499,9 @@ translation unit.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_dontinclude"><tt>#include</tt> as Little as Possible</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -528,9 +528,9 @@ dependencies that you'll find out about later.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_privateheaders">Keep "Internal" Headers Private</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -549,9 +549,9 @@ class itself. Just make them private (or protected) and all is well.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_earlyexit">Use Early Exits and <tt>continue</tt> to Simplify Code</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -658,9 +658,9 @@ can be a big understandability win.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_else_after_return">Don't use <tt>else</tt> after a <tt>return</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -741,9 +741,9 @@ track of when reading the code.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="hl_predicateloops">Turn Predicate Loops into Predicate Functions</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -804,16 +804,18 @@ locality.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="micro">The Low-Level Issues</a>
-</div>
+</h3>
 <!-- ======================================================================= -->
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="ll_naming">Name Types, Functions, Variables, and Enumerators Properly</a>
-</div>
+<h4>
+  <a name="ll_naming">
+    Name Types, Functions, Variables, and Enumerators Properly
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -894,9 +896,9 @@ Vehicle MakeVehicle(VehicleType Type) {
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_assert">Assert Liberally</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -997,9 +999,9 @@ assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_ns_std">Do Not Use '<tt>using namespace std</tt>'</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1035,10 +1037,11 @@ use any others.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="ll_virtual_anch">Provide a Virtual Method Anchor for Classes
-  in Headers</a>
-</div>
+<h4>
+  <a name="ll_virtual_anch">
+    Provide a Virtual Method Anchor for Classes in Headers
+  </a>
+</h4>
 
 <div class="doc_text">
 
@@ -1052,9 +1055,9 @@ increasing link times.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_end">Don't evaluate <tt>end()</tt> every time through a loop</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1114,9 +1117,9 @@ prefer it.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is Forbidden</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1149,9 +1152,9 @@ the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_raw_ostream">Use <tt>raw_ostream</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1169,9 +1172,9 @@ declarations and constant references to <tt>raw_ostream</tt> instances.</p>
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="ll_avoidendl">Avoid <tt>std::endl</tt></a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1193,18 +1196,18 @@ it's better to use a literal <tt>'\n'</tt>.</p>
 
 
 <!-- ======================================================================= -->
-<div class="doc_subsection">
+<h3>
   <a name="nano">Microscopic Details</a>
-</div>
+</h3>
 <!-- ======================================================================= -->
 
 <p>This section describes preferred low-level formatting guidelines along with
 reasoning on why we prefer them.</p>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="micro_spaceparen">Spaces Before Parentheses</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1260,9 +1263,9 @@ this misinterpretation.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="micro_preincrement">Prefer Preincrement</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1280,9 +1283,9 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="micro_namespaceindent">Namespace Indentation</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1368,9 +1371,9 @@ the contents of the namespace.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
+<h4>
   <a name="micro_anonns">Anonymous Namespaces</a>
-</div>
+</h4>
 
 <div class="doc_text">
 
@@ -1455,9 +1458,9 @@ namespace just because it was declared there.
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section">
+<h2>
   <a name="seealso">See Also</a>
-</div>
+</h2>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
