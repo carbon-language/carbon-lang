@@ -342,6 +342,12 @@ public:
   }
   void Deallocate(void *Ptr) const { }
   
+  /// Return the total amount of physical memory allocated for representing
+  /// AST nodes and type information.
+  size_t getTotalAllocatedMemory() const {
+    return BumpAlloc.getTotalMemory();
+  }
+  
   PartialDiagnostic::StorageAllocator &getDiagAllocator() {
     return DiagAllocator;
   }
