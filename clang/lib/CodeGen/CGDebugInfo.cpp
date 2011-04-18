@@ -119,7 +119,7 @@ llvm::StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
   return llvm::StringRef(StrPtr, OS.tell());
 }
 
-/// getSelectporName - Return selector name. This is used for debugging
+/// getSelectorName - Return selector name. This is used for debugging
 /// info.
 llvm::StringRef CGDebugInfo::getSelectorName(Selector S) {
   llvm::SmallString<256> SName;

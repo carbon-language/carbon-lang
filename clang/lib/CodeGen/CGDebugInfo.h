@@ -267,7 +267,7 @@ private:
   /// This is the display name for the debugging info.  
   llvm::StringRef getObjCMethodName(const ObjCMethodDecl *FD);
 
-  /// getSelectporName - Return selector name. This is used for debugging
+  /// getSelectorName - Return selector name. This is used for debugging
   /// info.
   llvm::StringRef getSelectorName(Selector S);
 
