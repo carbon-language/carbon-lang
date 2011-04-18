@@ -37,7 +37,7 @@ using namespace lldb_private;
 void
 SBDebugger::Initialize ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger::Initialize ()");
@@ -56,7 +56,7 @@ SBDebugger::Terminate ()
 void
 SBDebugger::Clear ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::Clear ()", m_opaque_sp.get());
@@ -70,7 +70,7 @@ SBDebugger::Clear ()
 SBDebugger
 SBDebugger::Create()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBDebugger debugger;
     debugger.reset(Debugger::CreateInstance());
@@ -88,7 +88,7 @@ SBDebugger::Create()
 void
 SBDebugger::Destroy (SBDebugger &debugger)
 {
-    LogSP log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     if (log)
     {
@@ -153,7 +153,7 @@ SBDebugger::SkipLLDBInitFiles (bool b)
 void
 SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::SetInputFileHandle (fh=%p, transfer_ownership=%i)", m_opaque_sp.get(),
@@ -166,7 +166,7 @@ SBDebugger::SetInputFileHandle (FILE *fh, bool transfer_ownership)
 void
 SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
 
     if (log)
@@ -180,7 +180,7 @@ SBDebugger::SetOutputFileHandle (FILE *fh, bool transfer_ownership)
 void
 SBDebugger::SetErrorFileHandle (FILE *fh, bool transfer_ownership)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
 
     if (log)
@@ -218,7 +218,7 @@ SBDebugger::GetErrorFileHandle ()
 SBCommandInterpreter
 SBDebugger::GetCommandInterpreter ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBCommandInterpreter sb_interpreter;
     if (m_opaque_sp)
@@ -271,7 +271,7 @@ SBDebugger::HandleCommand (const char *command)
 SBListener
 SBDebugger::GetListener ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBListener sb_listener;
     if (m_opaque_sp)
@@ -339,11 +339,15 @@ SBDebugger::GetDefaultArchitecture (char *arch_name, size_t arch_name_len)
 {
     if (arch_name && arch_name_len)
     {
-        ArchSpec default_arch = lldb_private::Target::GetDefaultArchitecture ();
+        ArchSpec default_arch = Target::GetDefaultArchitecture ();
 
         if (default_arch.IsValid())
         {
-            ::snprintf (arch_name, arch_name_len, "%s", default_arch.GetArchitectureName());
+            const std::string &triple_str = default_arch.GetTriple().str();
+            if (!triple_str.empty())
+                ::snprintf (arch_name, arch_name_len, "%s", triple_str.c_str());
+            else
+                ::snprintf (arch_name, arch_name_len, "%s", default_arch.GetArchitectureName());
             return true;
         }
     }
@@ -361,7 +365,7 @@ SBDebugger::SetDefaultArchitecture (const char *arch_name)
         ArchSpec arch (arch_name, NULL);
         if (arch.IsValid())
         {
-            lldb_private::Target::SetDefaultArchitecture (arch);
+            Target::SetDefaultArchitecture (arch);
             return true;
         }
     }
@@ -380,37 +384,37 @@ SBDebugger::GetScriptingLanguage (const char *script_language_name)
 const char *
 SBDebugger::GetVersionString ()
 {
-    return lldb_private::GetVersion();
+    return GetVersion();
 }
 
 const char *
-SBDebugger::StateAsCString (lldb::StateType state)
+SBDebugger::StateAsCString (StateType state)
 {
-    return lldb_private::StateAsCString (state);
+    return StateAsCString (state);
 }
 
 bool
-SBDebugger::StateIsRunningState (lldb::StateType state)
+SBDebugger::StateIsRunningState (StateType state)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    const bool result = lldb_private::StateIsRunningState (state);
+    const bool result = StateIsRunningState (state);
     if (log)
         log->Printf ("SBDebugger::StateIsRunningState (state=%s) => %i", 
-                     lldb_private::StateAsCString (state), result);
+                     StateAsCString (state), result);
 
     return result;
 }
 
 bool
-SBDebugger::StateIsStoppedState (lldb::StateType state)
+SBDebugger::StateIsStoppedState (StateType state)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    const bool result = lldb_private::StateIsStoppedState (state);
+    const bool result = StateIsStoppedState (state);
     if (log)
         log->Printf ("SBDebugger::StateIsStoppedState (state=%s) => %i", 
-                     lldb_private::StateAsCString (state), result);
+                     StateAsCString (state), result);
 
     return result;
 }
@@ -431,7 +435,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
         target.reset (target_sp);
     }
     
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename=\"%s\", triple=%s) => SBTarget(%p)", 
@@ -444,7 +448,7 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
 SBTarget
 SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_cstr)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget target;
     if (m_opaque_sp)
@@ -482,7 +486,7 @@ SBDebugger::CreateTarget (const char *filename)
     if (m_opaque_sp)
     {
         FileSpec file (filename, true);
-        ArchSpec arch = lldb_private::Target::GetDefaultArchitecture ();
+        ArchSpec arch = Target::GetDefaultArchitecture ();
         TargetSP target_sp;
         Error error;
 
@@ -494,7 +498,7 @@ SBDebugger::CreateTarget (const char *filename)
             target.reset (target_sp);
         }
     }
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTarget (filename=\"%s\") => SBTarget(%p)", 
@@ -542,7 +546,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
 }
 
 SBTarget
-SBDebugger::FindTargetWithLLDBProcess (const lldb::ProcessSP &process_sp)
+SBDebugger::FindTargetWithLLDBProcess (const ProcessSP &process_sp)
 {
     SBTarget sb_target;
     if (m_opaque_sp)
@@ -568,7 +572,7 @@ SBDebugger::GetNumTargets ()
 SBTarget
 SBDebugger::GetSelectedTarget ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget sb_target;
     if (m_opaque_sp)
@@ -580,7 +584,7 @@ SBDebugger::GetSelectedTarget ()
     if (log)
     {
         SBStream sstr;
-        sb_target.GetDescription (sstr, lldb::eDescriptionLevelBrief);
+        sb_target.GetDescription (sstr, eDescriptionLevelBrief);
         log->Printf ("SBDebugger(%p)::GetSelectedTarget () => SBTarget(%p): %s", m_opaque_sp.get(),
                      sb_target.get(), sstr.GetData());
     }
@@ -591,7 +595,7 @@ SBDebugger::GetSelectedTarget ()
 void
 SBDebugger::DispatchInput (void *baton, const void *data, size_t data_len)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::DispatchInput (baton=%p, data=\"%.*s\", size_t=%zu)", m_opaque_sp.get(),
@@ -618,7 +622,7 @@ SBDebugger::DispatchInputEndOfFile ()
 void
 SBDebugger::PushInputReader (SBInputReader &reader)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBDebugger(%p)::PushInputReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
@@ -635,7 +639,7 @@ SBDebugger::PushInputReader (SBInputReader &reader)
 }
 
 void
-SBDebugger::reset (const lldb::DebuggerSP &debugger_sp)
+SBDebugger::reset (const DebuggerSP &debugger_sp)
 {
     m_opaque_sp = debugger_sp;
 }
@@ -659,7 +663,7 @@ SBDebugger::FindDebuggerWithID (int id)
 {
     // No need to lock, the debugger list is thread safe
     SBDebugger sb_debugger;
-    lldb::DebuggerSP debugger_sp = Debugger::FindDebuggerWithID (id);
+    DebuggerSP debugger_sp = Debugger::FindDebuggerWithID (id);
     if (debugger_sp)
         sb_debugger.reset (debugger_sp);
     return sb_debugger;
@@ -677,7 +681,7 @@ SBDebugger::GetInstanceName()
 SBError
 SBDebugger::SetInternalVariable (const char *var_name, const char *value, const char *debugger_instance_name)
 {
-    lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
+    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
 
     Error err = root_settings_controller->SetVariable (var_name, 
                                                        value, 
@@ -690,14 +694,14 @@ SBDebugger::SetInternalVariable (const char *var_name, const char *value, const 
     return sb_error;
 }
 
-lldb::SBStringList
+SBStringList
 SBDebugger::GetInternalVariableValue (const char *var_name, const char *debugger_instance_name)
 {
     SBStringList ret_value;
     SettableVariableType var_type;
-    lldb_private::Error err;
+    Error err;
 
-    lldb::UserSettingsControllerSP root_settings_controller = lldb_private::Debugger::GetSettingsController();
+    UserSettingsControllerSP root_settings_controller = Debugger::GetSettingsController();
 
     StringList value = root_settings_controller->GetVariable (var_name, var_type, debugger_instance_name, err);
     
@@ -733,7 +737,7 @@ SBDebugger::SetTerminalWidth (uint32_t term_width)
 const char *
 SBDebugger::GetPrompt() const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     if (log)
         log->Printf ("SBDebugger(%p)::GetPrompt () => \"%s\"", m_opaque_sp.get(), 
@@ -752,7 +756,7 @@ SBDebugger::SetPrompt (const char *prompt)
 }
 
     
-lldb::ScriptLanguage 
+ScriptLanguage 
 SBDebugger::GetScriptLanguage() const
 {
     if (m_opaque_sp)
@@ -761,7 +765,7 @@ SBDebugger::GetScriptLanguage() const
 }
 
 void
-SBDebugger::SetScriptLanguage (lldb::ScriptLanguage script_lang)
+SBDebugger::SetScriptLanguage (ScriptLanguage script_lang)
 {
     if (m_opaque_sp)
     {
@@ -791,7 +795,7 @@ SBDebugger::GetDescription (SBStream &description)
     if (m_opaque_sp)
     {
         const char *name = m_opaque_sp->GetInstanceName().AsCString();
-        lldb::user_id_t id = m_opaque_sp->GetID();
+        user_id_t id = m_opaque_sp->GetID();
         description.Printf ("Debugger (instance: \"%s\", id: %d)", name, id);
     }
     else
@@ -800,7 +804,7 @@ SBDebugger::GetDescription (SBStream &description)
     return true;
 }
 
-lldb::user_id_t
+user_id_t
 SBDebugger::GetID()
 {
     if (m_opaque_sp)
