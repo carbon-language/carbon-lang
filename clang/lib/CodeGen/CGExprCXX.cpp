@@ -1356,52 +1356,68 @@ static void EmitBadTypeidCall(CodeGenFunction &CGF) {
   CGF.Builder.CreateUnreachable();
 }
 
+static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF,
+                                         const Expr *E, 
+                                         const llvm::Type *StdTypeInfoPtrTy) {
+  // Get the vtable pointer.
+  llvm::Value *ThisPtr = CGF.EmitLValue(E).getAddress();
+
+  // C++ [expr.typeid]p2:
+  //   If the glvalue expression is obtained by applying the unary * operator to
+  //   a pointer and the pointer is a null pointer value, the typeid expression
+  //   throws the std::bad_typeid exception.
+  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E->IgnoreParens())) {
+    if (UO->getOpcode() == UO_Deref) {
+      llvm::BasicBlock *BadTypeidBlock = 
+        CGF.createBasicBlock("typeid.bad_typeid");
+      llvm::BasicBlock *EndBlock =
+        CGF.createBasicBlock("typeid.end");
+
+      llvm::Value *IsNull = CGF.Builder.CreateIsNull(ThisPtr);
+      CGF.Builder.CreateCondBr(IsNull, BadTypeidBlock, EndBlock);
+
+      CGF.EmitBlock(BadTypeidBlock);
+      EmitBadTypeidCall(CGF);
+      CGF.EmitBlock(EndBlock);
+    }
+  }
+
+  llvm::Value *Value = CGF.GetVTablePtr(ThisPtr, 
+                                        StdTypeInfoPtrTy->getPointerTo());
+
+  // Load the type info.
+  Value = CGF.Builder.CreateConstInBoundsGEP1_64(Value, -1ULL);
+  return CGF.Builder.CreateLoad(Value);
+}
+
 llvm::Value *CodeGenFunction::EmitCXXTypeidExpr(const CXXTypeidExpr *E) {
-  QualType Ty = E->getType();
-  const llvm::Type *LTy = ConvertType(Ty)->getPointerTo();
+  const llvm::Type *StdTypeInfoPtrTy = 
+    ConvertType(E->getType())->getPointerTo();
   
   if (E->isTypeOperand()) {
     llvm::Constant *TypeInfo = 
       CGM.GetAddrOfRTTIDescriptor(E->getTypeOperand());
-    return Builder.CreateBitCast(TypeInfo, LTy);
+    return Builder.CreateBitCast(TypeInfo, StdTypeInfoPtrTy);
   }
-  
-  Expr *subE = E->getExprOperand();
-  Ty = subE->getType();
-  CanQualType CanTy = CGM.getContext().getCanonicalType(Ty);
-  Ty = CanTy.getUnqualifiedType().getNonReferenceType();
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-    if (RD->isPolymorphic()) {
-      // FIXME: if subE is an lvalue do
-      LValue Obj = EmitLValue(subE);
-      llvm::Value *This = Obj.getAddress();
-      // We need to do a zero check for *p, unless it has NonNullAttr.
-      // FIXME: PointerType->hasAttr<NonNullAttr>()
-      bool CanBeZero = false;
-      if (UnaryOperator *UO = dyn_cast<UnaryOperator>(subE->IgnoreParens()))
-        if (UO->getOpcode() == UO_Deref)
-          CanBeZero = true;
-      if (CanBeZero) {
-        llvm::BasicBlock *NonZeroBlock = createBasicBlock();
-        llvm::BasicBlock *ZeroBlock = createBasicBlock();
-        
-        llvm::Value *Zero = llvm::Constant::getNullValue(This->getType());
-        Builder.CreateCondBr(Builder.CreateICmpNE(This, Zero),
-                             NonZeroBlock, ZeroBlock);
-        EmitBlock(ZeroBlock);
 
-        EmitBadTypeidCall(*this);
-
-        EmitBlock(NonZeroBlock);
-      }
-      llvm::Value *V = GetVTablePtr(This, LTy->getPointerTo());
-      V = Builder.CreateConstInBoundsGEP1_64(V, -1ULL);
-      V = Builder.CreateLoad(V);
-      return V;
+  // C++ [expr.typeid]p2:
+  //   When typeid is applied to a glvalue expression whose type is a
+  //   polymorphic class type, the result refers to a std::type_info object
+  //   representing the type of the most derived object (that is, the dynamic
+  //   type) to which the glvalue refers.
+  if (E->getExprOperand()->isGLValue()) {
+    if (const RecordType *RT =
+          E->getExprOperand()->getType()->getAs<RecordType>()) {
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->isPolymorphic())
+        return EmitTypeidFromVTable(*this, E->getExprOperand(), 
+                                    StdTypeInfoPtrTy);
     }
   }
-  return Builder.CreateBitCast(CGM.GetAddrOfRTTIDescriptor(Ty), LTy);
+
+  QualType OperandTy = E->getExprOperand()->getType();
+  return Builder.CreateBitCast(CGM.GetAddrOfRTTIDescriptor(OperandTy),
+                               StdTypeInfoPtrTy);
 }
 
 static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
