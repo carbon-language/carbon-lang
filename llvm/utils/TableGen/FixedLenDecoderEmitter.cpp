@@ -611,7 +611,8 @@ void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation) {
   o << '\n';
 
   o.indent(Indentation) <<
-    "static bool decodeInstruction(MCInst &MI, field_t insn) {\n";
+    "static bool decodeInstruction(MCInst &MI, field_t insn, "
+    "uint64_t Address, const void *Decoder) {\n";
   o.indent(Indentation) << "  unsigned tmp = 0;\n";
 
   ++Indentation; ++Indentation;
@@ -795,7 +796,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
          I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
       // If a custom instruction decoder was specified, use that.
       if (I->FieldBase == ~0U && I->FieldLength == ~0U) {
-        o.indent(Indentation) << "  " << I->Decoder << "(MI, insn);\n";
+        o.indent(Indentation) << "  " << I->Decoder
+                              << "(MI, insn, Address, Decoder);\n";
         break;
       }
 
@@ -803,7 +805,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
         << "  tmp = fieldFromInstruction(insn, " << I->FieldBase
         << ", " << I->FieldLength << ");\n";
       if (I->Decoder != "") {
-        o.indent(Indentation) << "  " << I->Decoder << "(MI, tmp);\n";
+        o.indent(Indentation) << "  " << I->Decoder
+                              << "(MI, tmp, Address, Decoder);\n";
       } else {
         o.indent(Indentation)
           << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
@@ -846,7 +849,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
        I = InsnOperands.begin(), E = InsnOperands.end(); I != E; ++I) {
     // If a custom instruction decoder was specified, use that.
     if (I->FieldBase == ~0U && I->FieldLength == ~0U) {
-      o.indent(Indentation) << "  " << I->Decoder << "(MI, insn);\n";
+      o.indent(Indentation) << "  " << I->Decoder
+                            << "(MI, insn, Address, Decoder);\n";
       break;
     }
 
@@ -854,7 +858,8 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
       << "  tmp = fieldFromInstruction(insn, " << I->FieldBase
       << ", " << I->FieldLength << ");\n";
     if (I->Decoder != "") {
-      o.indent(Indentation) << "  " << I->Decoder << "(MI, tmp);\n";
+      o.indent(Indentation) << "  " << I->Decoder
+                            << "(MI, tmp, Address, Decoder);\n";
     } else {
       o.indent(Indentation)
         << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
