@@ -38,7 +38,7 @@ CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 OBJECTS =
-EXE = a.out
+EXE ?= a.out
 DSYM = $(EXE).dSYM
 
 # Function that returns the counterpart C++ compiler, given $(CC) as arg.

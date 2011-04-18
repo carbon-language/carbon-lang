@@ -546,6 +546,9 @@ class TestBase(unittest2.TestCase):
         # These are for customized teardown cleanup.
         self.dict = None
         self.doTearDownCleanup = False
+        # And in rare cases where there are multiple teardown cleanups.
+        self.dicts = []
+        self.doTearDownCleanups = False
 
         # Create a string buffer to record the session info, to be dumped into a
         # test case specific file if test failure is encountered.
@@ -644,6 +647,11 @@ class TestBase(unittest2.TestCase):
         self.dict = dictionary
         self.doTearDownCleanup = True
 
+    def addTearDownCleanup(self, dictionary):
+        """Add a cleanup action at tearDown() time with a dictinary"""
+        self.dicts.append(dictionary)
+        self.doTearDownCleanups = True
+
     def addTearDownHook(self, hook):
         """
         Add a function to be run during tearDown() time.
@@ -686,7 +694,15 @@ class TestBase(unittest2.TestCase):
         if doCleanup and self.doTearDownCleanup:
             module = __import__(sys.platform)
             if not module.cleanup(self, dictionary=self.dict):
-                raise Exception("Don't know how to do cleanup")
+                raise Exception("Don't know how to do cleanup with dictionary: " + self.dict)
+
+        # In rare cases where there are multiple teardown cleanups added.
+        if doCleanup and self.doTearDownCleanups:
+            module = __import__(sys.platform)
+            if self.dicts:
+                for dict in reversed(self.dicts):
+                    if not module.cleanup(self, dictionary=dict):
+                        raise Exception("Don't know how to do cleanup with dictionary: " + dict)
 
         # Decide whether to dump the session info.
         self.dumpSessionInfo()

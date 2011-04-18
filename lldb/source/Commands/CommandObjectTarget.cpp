@@ -300,6 +300,7 @@ public:
             {
                 strm.PutCString ("No targets.\n");
             }
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
         else
         {
@@ -355,6 +356,7 @@ public:
                         target_list.SetSelectedTarget (target_sp.get());
                         bool show_stopped_process_status = false;
                         DumpTargetList (target_list, show_stopped_process_status, strm);
+                        result.SetStatus (eReturnStatusSuccessFinishResult);
                     }
                     else
                     {
