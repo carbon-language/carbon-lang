@@ -114,6 +114,7 @@ class ARMAsmParser : public TargetAsmParser {
 public:
   ARMAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
     : TargetAsmParser(T), Parser(_Parser), TM(_TM) {
+      MCAsmParserExtension::Initialize(_Parser);
       // Initialize the set of available features.
       setAvailableFeatures(ComputeAvailableFeatures(
           &TM.getSubtarget<ARMSubtarget>()));
