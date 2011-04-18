@@ -5372,14 +5372,51 @@ void Sema::CodeCompleteObjCPropertySynthesizeIvar(Scope *S,
 
   // Add all of the instance variables in this class and its superclasses.
   Results.EnterNewScope();
+  bool SawSimilarlyNamedIvar = false;
+  std::string NameWithPrefix;
+  NameWithPrefix += '_';
+  NameWithPrefix += PropertyName->getName().str();
+  std::string NameWithSuffix = PropertyName->getName().str();
+  NameWithSuffix += '_';
   for(; Class; Class = Class->getSuperClass()) {
     // FIXME: We could screen the type of each ivar for compatibility with
-    // the property, but is that being too paternal?
-    for (ObjCInterfaceDecl::ivar_iterator IVar = Class->ivar_begin(),
-                                       IVarEnd = Class->ivar_end();
-         IVar != IVarEnd; ++IVar) 
-      Results.AddResult(Result(*IVar, 0), CurContext, 0, false);
+    // the property, but is that being too paternal?    
+    for (ObjCIvarDecl *Ivar = Class->all_declared_ivar_begin(); Ivar; 
+         Ivar = Ivar->getNextIvar()) {
+      // Determine whether we've seen an ivar with a name similar to the 
+      // property.
+      if (!SawSimilarlyNamedIvar &&
+          (PropertyName->getName() == Ivar->getName() ||
+           NameWithPrefix == Ivar->getName() ||
+           NameWithSuffix == Ivar->getName()))
+        SawSimilarlyNamedIvar = true;
+      
+      Results.AddResult(Result(Ivar, 0), CurContext, 0, false);
+    }
   }
+  
+  if (!SawSimilarlyNamedIvar) {
+    // Create ivar result _propName, that the user can use to synthesize
+    // an ivar of the appropriate type.
+    QualType T = Context.getObjCIdType();
+    
+    if (Class) {
+      if (ObjCPropertyDecl *Property
+                                = Class->FindPropertyDeclaration(PropertyName))
+        T = Property->getType().getNonReferenceType().getUnqualifiedType();
+    }
+    
+    unsigned Priority = CCP_MemberDeclaration;
+    typedef CodeCompletionResult Result;
+    CodeCompletionAllocator &Allocator = Results.getAllocator();
+    CodeCompletionBuilder Builder(Allocator, Priority,CXAvailability_Available);
+
+    Builder.AddResultTypeChunk(GetCompletionTypeString(T, Context, Allocator));
+    Builder.AddTypedTextChunk(Allocator.CopyString(NameWithPrefix));
+    Results.AddResult(Result(Builder.TakeString(), Priority, 
+                             CXCursor_ObjCIvarDecl));
+  }
+  
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
