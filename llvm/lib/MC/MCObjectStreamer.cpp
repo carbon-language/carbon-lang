@@ -191,8 +191,11 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
 void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
 
-  raw_svector_ostream VecOS(IF->getCode());
+  SmallString<128> Code;
+  raw_svector_ostream VecOS(Code);
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
+  VecOS.flush();
+  IF->getCode().append(Code.begin(), Code.end());
 }
 
 static const MCExpr *BuildSymbolDiff(MCContext &Context,
