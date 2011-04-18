@@ -372,9 +372,11 @@ void PrintDiagnostics(CXTranslationUnit TU) {
 
 void PrintMemoryUsage(CXTranslationUnit TU) {
   CXTUMemoryUsage usage = clang_getCXTUMemoryUsage(TU);
-  fprintf(stderr, "Memory usage:\n");
   unsigned long total = 0.0;
-  for (unsigned i = 0, n = usage.numEntries; i != n; ++i) {
+  unsigned i, n;
+
+  fprintf(stderr, "Memory usage:\n");
+  for (i = 0, n = usage.numEntries; i != n; ++i) {
     const char *name = clang_getTUMemoryUsageName(usage.entries[i].kind);
     unsigned long amount = usage.entries[i].amount;
     total += amount;
