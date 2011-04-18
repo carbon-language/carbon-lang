@@ -4,8 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 
 ; CHECK: f0:
-; CHECK: addq %rcx, (%rdi)
-; CHECK: # encoding: [0xf0,0x48,0x01,0x0f]
+; CHECK: addq %{{.*}}, ({{.*}}){{.*}}encoding: [0xf0,
 ; CHECK: ret
 define void @f0(i64* %a0) nounwind {
   %t0 = and i64 1, 1
