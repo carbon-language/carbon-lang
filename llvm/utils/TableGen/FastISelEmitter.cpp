@@ -190,14 +190,22 @@ struct OperandsSignature {
       if (!Op->isLeaf() && Op->getOperator()->getName() == "imm") {
         unsigned PredNo = 0;
         if (!Op->getPredicateFns().empty()) {
+          TreePredicateFn PredFn = Op->getPredicateFns()[0];
           // If there is more than one predicate weighing in on this operand
           // then we don't handle it.  This doesn't typically happen for
           // immediates anyway.
           if (Op->getPredicateFns().size() > 1 ||
-              !Op->getPredicateFns()[0].isImmediatePattern())
+              !PredFn.isImmediatePattern())
+            return false;
+          // Ignore any instruction with 'FastIselShouldIgnore', these are
+          // not needed and just bloat the fast instruction selector.  For
+          // example, X86 doesn't need to generate code to match ADD16ri8 since
+          // ADD16ri will do just fine.
+          Record *Rec = PredFn.getOrigPatFragRecord()->getRecord();
+          if (Rec->getValueAsBit("FastIselShouldIgnore"))
             return false;
         
-          PredNo = ImmediatePredicates.getIDFor(Op->getPredicateFns()[0])+1;
+          PredNo = ImmediatePredicates.getIDFor(PredFn)+1;
         }
         
         // Handle unmatched immediate sizes here.

@@ -539,8 +539,14 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 // this is a more convenient form to match 'imm' nodes in than PatLeaf and also
 // is preferred over using PatLeaf because it allows the code generator to
 // reason more about the constraint.
-class ImmLeaf<ValueType vt, code pred> : PatFrag<(ops), (vt imm)> {
+//
+// If FastIsel should ignore all instructions that have an operand of this type,
+// the FastIselShouldIgnore flag can be set.  This is an optimization to reduce
+// the code size of the generated fast instruction selector.
+class ImmLeaf<ValueType vt, code pred>
+  : PatFrag<(ops), (vt imm)> {
   let ImmediateCode = pred;
+  bit FastIselShouldIgnore = 0;
 }
 
 

@@ -481,9 +481,12 @@ def X86_COND_O   : PatLeaf<(i8 13)>;
 def X86_COND_P   : PatLeaf<(i8 14)>; // alt. COND_PE
 def X86_COND_S   : PatLeaf<(i8 15)>;
 
-def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (char)Imm; }]>;
-def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (char)Imm; }]>;
-def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (char)Imm; }]>;
+let FastIselShouldIgnore = 1 in { // FastIsel should ignore all simm8 instrs.
+  def i16immSExt8  : ImmLeaf<i16, [{ return Imm == (char)Imm; }]>;
+  def i32immSExt8  : ImmLeaf<i32, [{ return Imm == (char)Imm; }]>;
+  def i64immSExt8  : ImmLeaf<i64, [{ return Imm == (char)Imm; }]>;
+}
+
 def i64immSExt32 : ImmLeaf<i64, [{ return Imm == (int32_t)Imm; }]>;
 
 
