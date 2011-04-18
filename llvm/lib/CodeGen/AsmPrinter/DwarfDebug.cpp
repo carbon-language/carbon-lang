@@ -2146,9 +2146,8 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S){
 
     Src = GetOrCreateSourceID(Fn, Dir);
   }
-
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, DWARF2_FLAG_IS_STMT,
-                                         0, 0);
+                                         0, 0, Fn);
 }
 
 //===----------------------------------------------------------------------===//

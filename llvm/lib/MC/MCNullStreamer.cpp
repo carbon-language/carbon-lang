@@ -89,7 +89,8 @@ namespace {
     }
     virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                        unsigned Column, unsigned Flags,
-                                       unsigned Isa, unsigned Discriminator) {}
+                                       unsigned Isa, unsigned Discriminator,
+                                       StringRef FileName) {}
     virtual void EmitInstruction(const MCInst &Inst) {}
 
     virtual void Finish() {}

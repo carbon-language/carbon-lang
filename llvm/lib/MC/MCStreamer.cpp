@@ -135,7 +135,8 @@ bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
 void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                        unsigned Column, unsigned Flags,
                                        unsigned Isa,
-                                       unsigned Discriminator) {
+                                       unsigned Discriminator,
+                                       StringRef FileName) {
   getContext().setCurrentDwarfLoc(FileNo, Line, Column, Flags, Isa,
                                   Discriminator);
 }

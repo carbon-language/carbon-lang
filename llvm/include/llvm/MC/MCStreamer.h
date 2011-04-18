@@ -422,7 +422,8 @@ namespace llvm {
     virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                        unsigned Column, unsigned Flags,
                                        unsigned Isa,
-                                       unsigned Discriminator);
+                                       unsigned Discriminator,
+                                       StringRef FileName);
 
     virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                           const MCSymbol *LastLabel,

@@ -182,7 +182,8 @@ public:
   virtual bool EmitDwarfFileDirective(unsigned FileNo, StringRef Filename);
   virtual void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                      unsigned Column, unsigned Flags,
-                                     unsigned Isa, unsigned Discriminator);
+                                     unsigned Isa, unsigned Discriminator,
+                                     StringRef FileName);
 
   virtual void EmitCFIStartProc();
   virtual void EmitCFIEndProc();
@@ -689,9 +690,10 @@ bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Filename){
 void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           unsigned Column, unsigned Flags,
                                           unsigned Isa,
-                                          unsigned Discriminator) {
+                                          unsigned Discriminator,
+                                          StringRef FileName) {
   this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
-                                          Isa, Discriminator);
+                                          Isa, Discriminator, FileName);
   if (!UseLoc)
     return;
 
@@ -717,6 +719,12 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
     OS << "isa " << Isa;
   if (Discriminator)
     OS << "discriminator " << Discriminator;
+
+  if (IsVerboseAsm) {
+    OS.PadToColumn(MAI.getCommentColumn());
+    OS << MAI.getCommentString() << ' ' << FileName << ':' 
+       << Line << ':' << Column;
+  }
   EmitEOL();
 }
 
