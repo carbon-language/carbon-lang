@@ -433,6 +433,10 @@ static SelectorTableImpl &getSelectorTableImpl(void *P) {
   return *static_cast<SelectorTableImpl*>(P);
 }
 
+size_t SelectorTable::getTotalMemory() const {
+  SelectorTableImpl &SelTabImpl = getSelectorTableImpl(Impl);
+  return SelTabImpl.Allocator.getTotalMemory();
+}
 
 Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   if (nKeys < 2)

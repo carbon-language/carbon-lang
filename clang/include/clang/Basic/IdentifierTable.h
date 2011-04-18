@@ -624,6 +624,9 @@ public:
     return Selector(ID, 0);
   }
 
+  /// Return the total amount of memory allocated for managing selectors.
+  size_t getTotalMemory() const;
+
   /// constructSetterName - Return the setter name for the given
   /// identifier, i.e. "set" + Name where the initial character of Name
   /// has been capitalized.
