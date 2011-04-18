@@ -42,7 +42,7 @@ ifeq ($(shell test -d $(COMPILERRT_SRC_ROOT) && echo OK),OK)
 RuntimeDirs :=
 ifeq ($(OS),Darwin)
 RuntimeDirs += darwin
-RuntimeLibrary.darwin.Configs = eprintf 10.4 armv6 cc_kext
+RuntimeLibrary.darwin.Configs = eprintf 10.4 ios cc_kext
 
 # On Darwin, fake Clang into using the iOS assembler (since compiler-rt wants to
 # build ARM bits).

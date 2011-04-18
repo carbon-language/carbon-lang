@@ -353,10 +353,8 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   if (isTargetIPhoneOS()) {
     CmdArgs.push_back("-lgcc_s.1");
 
-    // We may need some static functions for armv6/thumb which are required to
-    // be in the same linkage unit as their caller.
-    if (getDarwinArchName(Args) == "armv6")
-      DarwinStaticLib = "libclang_rt.armv6.a";
+    // We currently always need a static runtime library for iOS.
+    DarwinStaticLib = "libclang_rt.ios.a";
   } else {
     // The dynamic runtime library was merged with libSystem for 10.6 and
     // beyond; only 10.4 and 10.5 need an additional runtime library.
