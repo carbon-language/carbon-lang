@@ -975,11 +975,11 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       CasesO << '\n';
     }
 
-    CasesO.indent(4) << "return true;\n";
+    CasesO.indent(4) << "return false;\n";
   }
 
   if (CasesO.str().empty() || !isMC) {
-    O << "  return true;\n";
+    O << "  return false;\n";
     O << "}\n\n";
     O << "#endif // PRINT_ALIAS_INSTR\n";
     return;
@@ -990,7 +990,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   if (NeedAvailableFeatures)
     O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
-  O.indent(2) << "default: return true;\n";
+  O.indent(2) << "default: return false;\n";
   O << CasesO.str();
   O.indent(2) << "}\n\n";
 
@@ -1019,7 +1019,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "    }\n";
   O << "  }\n\n";
   
-  O << "  return false;\n";
+  O << "  return true;\n";
   O << "}\n\n";
 
   O << "#endif // PRINT_ALIAS_INSTR\n";
