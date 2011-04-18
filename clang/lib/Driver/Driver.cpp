@@ -950,7 +950,8 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
     } else if (Args.hasArg(options::OPT_emit_ast)) {
       return new CompileJobAction(Input, types::TY_AST);
     } else if (Args.hasArg(options::OPT_emit_llvm) ||
-               Args.hasArg(options::OPT_flto) || HasO4) {
+               Args.hasFlag(options::OPT_flto, options::OPT_fno_lto, false) ||
+               HasO4) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
       return new CompileJobAction(Input, Output);
