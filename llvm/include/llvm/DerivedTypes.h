@@ -167,7 +167,7 @@ public:
     const Type *Result, ///< The result type
     bool isVarArg  ///< Whether this is a variable argument length function
   ) {
-    return get(Result, std::vector<const Type *>(), isVarArg);
+    return get(Result, ArrayRef<const Type *>(), isVarArg);
   }
 
   /// isValidReturnType - Return true if the specified type is valid as a return
