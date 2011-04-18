@@ -385,7 +385,7 @@ def PrintStackTraces(process, string_buffer = False):
         return output.getvalue()
 
 def GetThreadsStoppedAtBreakpoint (process, bkpt):
-    """ For a stopped process returns the thread stopped at the breakpoint passed in in bkpt"""
+    """ For a stopped process returns the thread stopped at the breakpoint passed in bkpt"""
     stopped_threads = []
     threads = []
 
@@ -403,7 +403,7 @@ def GetThreadsStoppedAtBreakpoint (process, bkpt):
     return threads
 
 def ContinueToBreakpoint (process, bkpt):
-    """ Continues the process, when it stops, if there is a thread stopped at bkpt, returns that thread"""
+    """ Continues the process, if it stops, returns the threads stopped at bkpt; otherwise, returns None"""
     process.Continue()
     if process.GetState() != lldb.eStateStopped:
         return None
