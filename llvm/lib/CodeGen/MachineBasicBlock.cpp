@@ -363,8 +363,7 @@ void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
 }
 
 void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
-  std::vector<MachineBasicBlock *>::iterator I =
-    std::find(Predecessors.begin(), Predecessors.end(), pred);
+  pred_iterator I = std::find(Predecessors.begin(), Predecessors.end(), pred);
   assert(I != Predecessors.end() && "Pred is not a predecessor of this block!");
   Predecessors.erase(I);
 }
@@ -402,8 +401,7 @@ MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
 }
 
 bool MachineBasicBlock::isSuccessor(const MachineBasicBlock *MBB) const {
-  std::vector<MachineBasicBlock *>::const_iterator I =
-    std::find(Successors.begin(), Successors.end(), MBB);
+  const_succ_iterator I = std::find(Successors.begin(), Successors.end(), MBB);
   return I != Successors.end();
 }
 
