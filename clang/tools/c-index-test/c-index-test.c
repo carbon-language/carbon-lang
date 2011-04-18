@@ -371,19 +371,18 @@ void PrintDiagnostics(CXTranslationUnit TU) {
 }
 
 void PrintMemoryUsage(CXTranslationUnit TU) {
-  CXTUMemoryUsage usage = clang_getCXTUMemoryUsage(TU);
   unsigned long total = 0.0;
-  unsigned i, n;
-
+  unsigned i = 0;
+  CXTUMemoryUsage usage = clang_getCXTUMemoryUsage(TU);
   fprintf(stderr, "Memory usage:\n");
-  for (i = 0, n = usage.numEntries; i != n; ++i) {
+  for (i = 0 ; i != usage.numEntries; ++i) {
     const char *name = clang_getTUMemoryUsageName(usage.entries[i].kind);
     unsigned long amount = usage.entries[i].amount;
     total += amount;
-    fprintf(stderr, "  %s : %ld bytes (%lf MBytes)\n", name, amount,
+    fprintf(stderr, "  %s : %ld bytes (%f MBytes)\n", name, amount,
             ((double) amount)/(1024*1024));
   }
-  fprintf(stderr, "  TOTAL = %ld bytes (%lf MBytes)\n", total,
+  fprintf(stderr, "  TOTAL = %ld bytes (%f MBytes)\n", total,
           ((double) total)/(1024*1024));
   clang_disposeCXTUMemoryUsage(usage);  
 }
@@ -1548,9 +1547,9 @@ static void print_usage(void) {
           "<symbol filter> {<args>}*\n"
     "       c-index-test -test-annotate-tokens=<range> {<args>}*\n"
     "       c-index-test -test-inclusion-stack-source {<args>}*\n"
-    "       c-index-test -test-inclusion-stack-tu <AST file>\n"
-    "       c-index-test -test-print-linkage-source {<args>}*\n");
+    "       c-index-test -test-inclusion-stack-tu <AST file>\n");
   fprintf(stderr,
+    "       c-index-test -test-print-linkage-source {<args>}*\n"
     "       c-index-test -test-print-typekind {<args>}*\n"
     "       c-index-test -print-usr [<CursorKind> {<args>}]*\n"
     "       c-index-test -print-usr-file <file>\n"

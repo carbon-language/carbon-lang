@@ -1020,8 +1020,9 @@ enum CXTUMemoryUsageKind {
   CXTUMemoryUsage_AST = 1,
   CXTUMemoryUsage_Identifiers = 2,
   CXTUMemoryUsage_Selectors = 3,
+  CXTUMemoryUsage_GlobalCompletionResults = 4,
   CXTUMemoryUsage_First = CXTUMemoryUsage_AST,
-  CXTUMemoryUsage_Last = CXTUMemoryUsage_Selectors
+  CXTUMemoryUsage_Last = CXTUMemoryUsage_GlobalCompletionResults
 };
 
 /**

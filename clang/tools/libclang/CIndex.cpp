@@ -5202,6 +5202,8 @@ const char *clang_getTUMemoryUsageName(CXTUMemoryUsageKind kind) {
       break;
     case CXTUMemoryUsage_Selectors:
       str = "ASTContext: selectors";
+    case CXTUMemoryUsage_GlobalCompletionResults:
+      str = "Code completion: cached global results";
   }
   return str;
 }
@@ -5228,6 +5230,16 @@ CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU) {
   createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_Selectors,
     (unsigned long) astContext.Selectors.getTotalMemory());
   
+  // How much memory is used for caching global code completion results?
+  unsigned long completionBytes = 0;
+  if (GlobalCodeCompletionAllocator *completionAllocator =
+      astUnit->getCachedCompletionAllocator().getPtr()) {
+    completionBytes = completionAllocator-> getTotalMemory();
+  }
+  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_GlobalCompletionResults,
+    completionBytes);
+
+
   CXTUMemoryUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
                             entries->size() ? &(*entries)[0] : 0 };
