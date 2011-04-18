@@ -43,7 +43,7 @@ class UniqueTypesTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'stop reason = breakpoint'])
 
         if self.getCompiler().endswith('clang'):

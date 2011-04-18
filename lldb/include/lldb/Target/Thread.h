@@ -703,6 +703,21 @@ public:
     
     lldb::StackFrameSP
     GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr);
+    
+    size_t
+    GetStatus (Stream &strm, 
+               uint32_t start_frame, 
+               uint32_t num_frames,
+               uint32_t num_frames_with_source);
+
+    size_t
+    GetStackFrameStatus (Stream& strm,
+                         uint32_t first_frame,
+                         uint32_t num_frames,
+                         bool show_frame_info,
+                         uint32_t num_frames_with_source,
+                         uint32_t source_lines_before,
+                         uint32_t source_lines_after);
 
 protected:
 

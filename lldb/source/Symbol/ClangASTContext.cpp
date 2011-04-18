@@ -2318,6 +2318,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
     case clang::Type::Builtin:                  
         switch (cast<clang::BuiltinType>(qual_type)->getKind())
         {
+        case clang::BuiltinType::UnknownAny:
         case clang::BuiltinType::Void:
         case clang::BuiltinType::NullPtr:  
             return 0;

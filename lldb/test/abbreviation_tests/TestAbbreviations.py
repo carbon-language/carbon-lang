@@ -23,8 +23,8 @@ class AbbreviationsTestCase(TestBase):
 
         self.runCmd("com a alias com al")
         self.runCmd("alias gurp help")
-        self.expect("gurp file",
-                    substrs = ['Syntax: file <cmd-options> <filename>'])
+        self.expect("gurp target create",
+                    substrs = ['Syntax: target create <cmd-options> <filename>'])
         self.runCmd("com u gurp")
         self.expect("gurp",
                     COMMAND_FAILED_AS_EXPECTED, error = True,

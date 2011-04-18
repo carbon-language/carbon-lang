@@ -1121,13 +1121,13 @@ Driver::MainLoop ()
                 if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
                     ::snprintf (command_string, 
                                 sizeof (command_string), 
-                                "file --arch=%s '%s'", 
+                                "target create --arch=%s '%s'", 
                                 arch_name,
                                 m_option_data.m_args[0].c_str());
                 else
                     ::snprintf (command_string, 
                                 sizeof(command_string), 
-                                "file '%s'", 
+                                "target create '%s'", 
                                 m_option_data.m_args[0].c_str());
 
                 m_debugger.HandleCommand (command_string);

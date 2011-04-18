@@ -16,10 +16,9 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "CommandObjectThread.h"
-#include "lldb/Host/Host.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -1491,52 +1490,26 @@ public:
         CommandReturnObject &result
     )
     {
-        Stream &output_stream = result.GetOutputStream();
+        Stream &strm = result.GetOutputStream();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.process)
         {
-            const StateType state = exe_ctx.process->GetState();
-            if (StateIsStoppedState(state))
-            {
-                if (state == eStateExited)
-                {
-                    int exit_status = exe_ctx.process->GetExitStatus();
-                    const char *exit_description = exe_ctx.process->GetExitDescription();
-                    output_stream.Printf ("Process %d exited with status = %i (0x%8.8x) %s\n",
-                                          exe_ctx.process->GetID(),
-                                          exit_status,
-                                          exit_status,
-                                          exit_description ? exit_description : "");
-                }
-                else
-                {
-                    if (state == eStateConnected)
-                        output_stream.Printf ("Connected to remote target.\n");
-                    else
-                        output_stream.Printf ("Process %d %s\n", exe_ctx.process->GetID(), StateAsCString (state));
-                    if (exe_ctx.thread == NULL)
-                        exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
-                    if (exe_ctx.thread != NULL)
-                    {
-                        DisplayThreadsInfo (m_interpreter, &exe_ctx, result, true, true);
-                    }
-                    else
-                    {
-                        result.AppendError ("No valid thread found in current process.");
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
-            else
-            {
-                output_stream.Printf ("Process %d is running.\n", 
-                                          exe_ctx.process->GetID());
-            }
+            const bool only_threads_with_stop_reason = true;
+            const uint32_t start_frame = 0;
+            const uint32_t num_frames = 1;
+            const uint32_t num_frames_with_source = 1;
+            exe_ctx.process->GetStatus(strm);
+            exe_ctx.process->GetThreadStatus (strm, 
+                                              only_threads_with_stop_reason, 
+                                              start_frame,
+                                              num_frames,
+                                              num_frames_with_source);
+            
         }
         else
         {
-            result.AppendError ("No current location or status available.");
+            result.AppendError ("No process.");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();

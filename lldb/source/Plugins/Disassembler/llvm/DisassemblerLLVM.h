@@ -21,7 +21,8 @@ class InstructionLLVM : public lldb_private::Instruction
 public:
     InstructionLLVM (const lldb_private::Address &addr,
                      lldb_private::AddressClass addr_class,
-                     EDDisassemblerRef disassembler);
+                     EDDisassemblerRef disassembler,
+                     bool force_raw);
     
     virtual
     ~InstructionLLVM();
@@ -45,6 +46,7 @@ public:
 protected:
     EDDisassemblerRef m_disassembler;
     EDInstRef m_inst;
+    bool m_force_raw;
 };
 
 

@@ -56,7 +56,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'stop reason = breakpoint'])
 
         # We should be stopped on the ctor function of class C.

@@ -18,9 +18,12 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionGroupArchitecture.h"
+#include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
@@ -28,6 +31,360 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+
+
+static void
+DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bool show_stopped_process_status, Stream &strm)
+{
+    ArchSpec &target_arch = target->GetArchitecture();
+    
+    ModuleSP exe_module_sp (target->GetExecutableModule ());
+    char exe_path[PATH_MAX];
+    bool exe_valid = false;
+    if (exe_module_sp)
+        exe_valid = exe_module_sp->GetFileSpec().GetPath (exe_path, sizeof(exe_path));
+    
+    if (!exe_valid)
+        ::strcpy (exe_path, "<none>");
+    
+    strm.Printf ("%starget #%u: %s", prefix_cstr ? prefix_cstr : "", target_idx, exe_path);
+    
+    uint32_t properties = 0;
+    if (target_arch.IsValid())
+    {
+        strm.Printf ("%sarch=%s", properties++ > 0 ? ", " : " ( ", target_arch.GetTriple().str().c_str());
+        properties++;
+    }
+    PlatformSP platform_sp (target->GetPlatform());
+    if (platform_sp)
+        strm.Printf ("%splatform=%s", properties++ > 0 ? ", " : " ( ", platform_sp->GetName());
+    
+    ProcessSP process_sp (target->GetProcessSP());
+    bool show_process_status = false;
+    if (process_sp)
+    {
+        lldb::pid_t pid = process_sp->GetID();
+        StateType state = process_sp->GetState();
+        if (show_stopped_process_status)
+            show_process_status = StateIsStoppedState(state);
+        const char *state_cstr = StateAsCString (state);
+        if (pid != LLDB_INVALID_PROCESS_ID)
+            strm.Printf ("%spid=%i", properties++ > 0 ? ", " : " ( ", pid);
+        strm.Printf ("%sstate=%s", properties++ > 0 ? ", " : " ( ", state_cstr);
+    }
+    if (properties > 0)
+        strm.PutCString (" )\n");
+    else
+        strm.EOL();
+    if (show_process_status)
+    {
+        const bool only_threads_with_stop_reason = true;
+        const uint32_t start_frame = 0;
+        const uint32_t num_frames = 1;
+        const uint32_t num_frames_with_source = 1;
+        process_sp->GetStatus (strm);
+        process_sp->GetThreadStatus (strm, 
+                                     only_threads_with_stop_reason, 
+                                     start_frame,
+                                     num_frames,
+                                     num_frames_with_source);
+
+    }
+}
+
+static uint32_t
+DumpTargetList (TargetList &target_list, bool show_stopped_process_status, Stream &strm)
+{
+    const uint32_t num_targets = target_list.GetNumTargets();
+    if (num_targets)
+    {        
+        TargetSP selected_target_sp (target_list.GetSelectedTarget());
+        strm.PutCString ("Current targets:\n");
+        for (uint32_t i=0; i<num_targets; ++i)
+        {
+            TargetSP target_sp (target_list.GetTargetAtIndex (i));
+            if (target_sp)
+            {
+                bool is_selected = target_sp.get() == selected_target_sp.get();
+                DumpTargetInfo (i, 
+                                target_sp.get(), 
+                                is_selected ? "* " : "  ", 
+                                show_stopped_process_status,
+                                strm);
+            }
+        }
+    }
+    return num_targets;
+}
+#pragma mark CommandObjectTargetCreate
+
+//-------------------------------------------------------------------------
+// "target create"
+//-------------------------------------------------------------------------
+
+class CommandObjectTargetCreate : public CommandObject
+{
+public:
+    CommandObjectTargetCreate(CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target create",
+                       "Create a target using the argument as the main executable.",
+                       NULL),
+        m_option_group (interpreter),
+        m_file_options (),
+        m_platform_options(true) // Do include the "--platform" option in the platform settings by passing true
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData file_arg;
+    
+        // Define the first (and only) variant of this arg.
+            file_arg.arg_type = eArgTypeFilename;
+        file_arg.arg_repetition = eArgRepeatPlain;
+        
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (file_arg);
+        
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+        
+        m_option_group.Append (&m_file_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Finalize();
+    }
+
+    ~CommandObjectTargetCreate ()
+    {
+    }
+
+    Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+
+    bool
+    Execute (Args& command, CommandReturnObject &result)
+    {
+        const int argc = command.GetArgumentCount();
+        if (argc == 1)
+        {
+            const char *file_path = command.GetArgumentAtIndex(0);
+            Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
+            FileSpec file_spec (file_path, true);
+            
+            bool select = true;
+            PlatformSP platform_sp;
+            
+            Error error;
+            
+            if (m_platform_options.PlatformWasSpecified ())
+            {
+                platform_sp = m_platform_options.CreatePlatformWithOptions(m_interpreter, select, error);
+                if (!platform_sp)
+                {
+                    result.AppendError(error.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            ArchSpec file_arch;
+            
+            const char *arch_cstr = m_file_options.GetArchitectureName();
+            if (arch_cstr)
+            {        
+                if (!platform_sp)
+                    platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
+                if (!m_file_options.GetArchitecture(platform_sp.get(), file_arch))
+                {
+                    result.AppendErrorWithFormat("invalid architecture '%s'\n", arch_cstr);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            
+            if (! file_spec.Exists() && !file_spec.ResolveExecutableLocation())
+            {
+                result.AppendErrorWithFormat ("File '%s' does not exist.\n", file_path);
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            
+            TargetSP target_sp;
+            Debugger &debugger = m_interpreter.GetDebugger();
+            error = debugger.GetTargetList().CreateTarget (debugger, file_spec, file_arch, true, target_sp);
+            
+            if (target_sp)
+            {
+                debugger.GetTargetList().SetSelectedTarget(target_sp.get());
+                result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().GetArchitectureName());
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendError(error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat("'%s' takes exactly one executable path argument.\n", m_cmd_name.c_str());
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+        
+    }
+
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
+private:
+    OptionGroupOptions m_option_group;
+    OptionGroupArchitecture m_file_options;
+    OptionGroupPlatform m_platform_options;
+
+};
+
+#pragma mark CommandObjectTargetList
+
+//----------------------------------------------------------------------
+// "target list"
+//----------------------------------------------------------------------
+
+class CommandObjectTargetList : public CommandObject
+{
+public:
+    CommandObjectTargetList (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target list",
+                       "List all current targets in the current debug session.",
+                       NULL,
+                       0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectTargetList ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        if (args.GetArgumentCount() == 0)
+        {
+            Stream &strm = result.GetOutputStream();
+            
+            bool show_stopped_process_status = false;
+            if (DumpTargetList (m_interpreter.GetDebugger().GetTargetList(), show_stopped_process_status, strm) == 0)
+            {
+                strm.PutCString ("No targets.\n");
+            }
+        }
+        else
+        {
+            result.AppendError ("the 'target list' command takes no arguments\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
+
+#pragma mark CommandObjectTargetSelect
+
+//----------------------------------------------------------------------
+// "target select"
+//----------------------------------------------------------------------
+
+class CommandObjectTargetSelect : public CommandObject
+{
+public:
+    CommandObjectTargetSelect (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target select",
+                       "Select a target as the current target by target index.",
+                       NULL,
+                       0)
+    {
+    }
+    
+    virtual
+    ~CommandObjectTargetSelect ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        if (args.GetArgumentCount() == 1)
+        {
+            bool success = false;
+            const char *target_idx_arg = args.GetArgumentAtIndex(0);
+            uint32_t target_idx = Args::StringToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
+            if (success)
+            {
+                TargetList &target_list = m_interpreter.GetDebugger().GetTargetList();
+                const uint32_t num_targets = target_list.GetNumTargets();
+                if (target_idx < num_targets)
+                {        
+                    TargetSP target_sp (target_list.GetTargetAtIndex (target_idx));
+                    if (target_sp)
+                    {
+                        Stream &strm = result.GetOutputStream();
+                        target_list.SetSelectedTarget (target_sp.get());
+                        bool show_stopped_process_status = false;
+                        DumpTargetList (target_list, show_stopped_process_status, strm);
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("target #%u is NULL in target list\n", target_idx);
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("index %u is out of range, valid target indexes are 0 - %u\n", 
+                                                  target_idx,
+                                                  num_targets - 1);
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            else
+            {
+                result.AppendErrorWithFormat("invalid index string value '%s'\n", target_idx_arg);
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("'target select' takes a single argument: a target index\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+};
+
 
 #pragma mark CommandObjectTargetImageSearchPaths
 
@@ -77,7 +434,7 @@ public:
             uint32_t argc = command.GetArgumentCount();
             if (argc & 1)
             {
-                result.AppendError ("add requires an even number of arguments");
+                result.AppendError ("add requires an even number of arguments\n");
                 result.SetStatus (eReturnStatusFailed);
             }
             else
@@ -98,9 +455,9 @@ public:
                     else
                     {
                         if (from[0])
-                            result.AppendError ("<path-prefix> can't be empty");
+                            result.AppendError ("<path-prefix> can't be empty\n");
                         else
-                            result.AppendError ("<new-path-prefix> can't be empty");
+                            result.AppendError ("<new-path-prefix> can't be empty\n");
                         result.SetStatus (eReturnStatusFailed);
                     }
                 }
@@ -108,7 +465,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -144,7 +501,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -241,9 +598,9 @@ public:
                     else
                     {
                         if (from[0])
-                            result.AppendError ("<path-prefix> can't be empty");
+                            result.AppendError ("<path-prefix> can't be empty\n");
                         else
-                            result.AppendError ("<new-path-prefix> can't be empty");
+                            result.AppendError ("<new-path-prefix> can't be empty\n");
                         result.SetStatus (eReturnStatusFailed);
                         return false;
                     }
@@ -251,7 +608,7 @@ public:
             }
             else
             {
-                result.AppendError ("insert requires at least three arguments");
+                result.AppendError ("insert requires at least three arguments\n");
                 result.SetStatus (eReturnStatusFailed);
                 return result.Succeeded();
             }
@@ -259,7 +616,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -291,7 +648,7 @@ public:
         {
             if (command.GetArgumentCount() != 0)
             {
-                result.AppendError ("list takes no arguments");
+                result.AppendError ("list takes no arguments\n");
                 result.SetStatus (eReturnStatusFailed);
                 return result.Succeeded();
             }
@@ -301,7 +658,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -345,7 +702,7 @@ public:
         {
             if (command.GetArgumentCount() != 1)
             {
-                result.AppendError ("query requires one argument");
+                result.AppendError ("query requires one argument\n");
                 result.SetStatus (eReturnStatusFailed);
                 return result.Succeeded();
             }
@@ -361,7 +718,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -790,7 +1147,7 @@ public:
             InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
             if (!reader_sp)
             {
-                result.AppendError("out of memory");
+                result.AppendError("out of memory\n");
                 result.SetStatus (eReturnStatusFailed);
                 target->RemoveStopHookByID (new_hook_sp->GetID());
                 return false;
@@ -815,7 +1172,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         
@@ -902,14 +1259,14 @@ public:
                     lldb::user_id_t user_id = Args::StringToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
                     if (!success)
                     {
-                        result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".", command.GetArgumentAtIndex(i));
+                        result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
                     success = target->RemoveStopHookByID (user_id);
                     if (!success)
                     {
-                        result.AppendErrorWithFormat ("unknown stop hook id: \"%s\".", command.GetArgumentAtIndex(i));
+                        result.AppendErrorWithFormat ("unknown stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
@@ -919,7 +1276,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         
@@ -971,14 +1328,14 @@ public:
                     lldb::user_id_t user_id = Args::StringToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
                     if (!success)
                     {
-                        result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".", command.GetArgumentAtIndex(i));
+                        result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
                     success = target->SetStopHookActiveStateByID (user_id, m_enable);
                     if (!success)
                     {
-                        result.AppendErrorWithFormat ("unknown stop hook id: \"%s\".", command.GetArgumentAtIndex(i));
+                        result.AppendErrorWithFormat ("unknown stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));
                         result.SetStatus(eReturnStatusFailed);
                         return false;
                     }
@@ -988,7 +1345,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -1032,7 +1389,7 @@ public:
         }
         else
         {
-            result.AppendError ("invalid target");
+            result.AppendError ("invalid target\n");
             result.SetStatus (eReturnStatusFailed);
         }
         
@@ -1104,11 +1461,16 @@ CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &
                             "A set of commands for operating on debugger targets.",
                             "target <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand ("image-search-paths", CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)));
+    
+    LoadSubCommand ("create",    CommandObjectSP (new CommandObjectTargetCreate (interpreter)));
+    LoadSubCommand ("list",      CommandObjectSP (new CommandObjectTargetList   (interpreter)));
+    LoadSubCommand ("select",    CommandObjectSP (new CommandObjectTargetSelect (interpreter)));
     LoadSubCommand ("stop-hook", CommandObjectSP (new CommandObjectMultiwordTargetStopHooks (interpreter)));
+    LoadSubCommand ("image-search-paths", CommandObjectSP (new CommandObjectMultiwordImageSearchPaths (interpreter)));
 }
 
 CommandObjectMultiwordTarget::~CommandObjectMultiwordTarget ()
 {
 }
+
 

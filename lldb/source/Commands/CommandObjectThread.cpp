@@ -38,205 +38,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-bool
-lldb_private::DisplayThreadInfo
-(
-    CommandInterpreter &interpreter,
-    Stream &strm,
-    Thread *thread,
-    bool only_threads_with_stop_reason,
-    bool show_source
-)
-{
-    if (thread)
-    {
-        if (only_threads_with_stop_reason)
-        {
-            if (thread->GetStopInfo() == NULL)
-                return false;
-        }
-
-        strm.Indent();
-        strm.Printf("%c ", thread->GetProcess().GetThreadList().GetSelectedThread().get() == thread ? '*' : ' ');
-
-        // Show one frame with only the first showing source
-        if (show_source)
-        {
-            bool already_shown = false;
-            StackFrameSP frame_sp = thread->GetStackFrameAtIndex(0);
-            SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
-            if (interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
-            {
-                already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
-            }
-            
-            DisplayFramesForExecutionContext (thread,
-                                              interpreter,
-                                              strm,
-                                              0,    // Start at first frame
-                                              1,    // Number of frames to show
-                                              false,// Don't show the frame info since we already displayed most of it above...
-                                              !already_shown,    // Show source for the first frame
-                                              3,    // lines of source context before
-                                              3);   // lines of source context after
-        }
-        else
-        {
-            thread->DumpUsingSettingsFormat (strm, 0);
-        }
-
-        return true;
-    }
-    return false;
-}
-
-size_t
-lldb_private::DisplayThreadsInfo
-(
-    CommandInterpreter &interpreter,
-    ExecutionContext *exe_ctx,
-    CommandReturnObject &result,
-    bool only_threads_with_stop_reason,
-    bool show_source
-)
-{
-    StreamString strm;
-
-    size_t num_thread_infos_dumped = 0;
-
-    if (!exe_ctx->process)
-        return 0;
-
-    const size_t num_threads = exe_ctx->process->GetThreadList().GetSize();
-    if (num_threads > 0)
-    {
-
-        for (uint32_t i = 0; i < num_threads; i++)
-        {
-            Thread *thread = exe_ctx->process->GetThreadList().GetThreadAtIndex(i).get();
-            if (thread)
-            {
-                if (DisplayThreadInfo (interpreter,
-                                       strm,
-                                       thread,
-                                       only_threads_with_stop_reason,
-                                       show_source))
-                    ++num_thread_infos_dumped;
-            }
-        }
-    }
-
-    if (num_thread_infos_dumped > 0)
-    {
-        if (num_thread_infos_dumped < num_threads)
-            result.GetOutputStream().Printf("%u of %u threads stopped with reasons:\n", num_thread_infos_dumped, num_threads);
-
-        result.AppendMessage (strm.GetString().c_str());
-        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-    }
-    return num_thread_infos_dumped;
-}
-
-
-size_t
-lldb_private::DisplayFramesForExecutionContext
-(
-    Thread *thread,
-    CommandInterpreter &interpreter,
-    Stream& strm,
-    uint32_t first_frame,
-    uint32_t num_frames,
-    bool show_frame_info,
-    uint32_t num_frames_with_source,
-    uint32_t source_lines_before,
-    uint32_t source_lines_after
-)
-{
-    if (thread == NULL)
-        return 0;
-
-    size_t num_frames_displayed = 0;
-
-    if (num_frames == 0)
-        return 0;
-    
-    thread->DumpUsingSettingsFormat (strm, num_frames > 1 ? UINT32_MAX : first_frame);
-    strm.IndentMore();
-
-    StackFrameSP frame_sp;
-    uint32_t frame_idx = 0;
-    uint32_t last_frame;
-    
-    // Don't let the last frame wrap around...
-    if (num_frames == UINT32_MAX)
-        last_frame = UINT32_MAX;
-    else
-        last_frame = first_frame + num_frames;
-    
-    for (frame_idx = first_frame; frame_idx < last_frame; ++frame_idx)
-    {
-        frame_sp = thread->GetStackFrameAtIndex (frame_idx);
-        if (frame_sp.get() == NULL)
-            break;
-
-        if (DisplayFrameForExecutionContext (thread,
-                                             frame_sp.get(),
-                                             interpreter,
-                                             strm,
-                                             show_frame_info,
-                                             num_frames_with_source > first_frame - frame_idx,
-                                             source_lines_before,
-                                             source_lines_after) == false)
-            break;
-
-        ++num_frames_displayed;
-    }
-
-    strm.IndentLess();
-    return num_frames_displayed;
-}
-
-bool
-lldb_private::DisplayFrameForExecutionContext
-(
-    Thread *thread,
-    StackFrame *frame,
-    CommandInterpreter &interpreter,
-    Stream& strm,
-    bool show_frame_info,
-    bool show_source,
-    uint32_t source_lines_before,
-    uint32_t source_lines_after
-)
-{
-    // thread and frame must be filled in prior to calling this function
-    if (thread && frame)
-    {
-        if (show_frame_info)
-        {
-            strm.Indent();
-            frame->DumpUsingSettingsFormat (&strm);
-        }
-
-        SymbolContext sc (frame->GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry));
-
-        if (show_source && sc.comp_unit && sc.line_entry.IsValid())
-        {
-            interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
-                    sc.line_entry.file,
-                    sc.line_entry.line,
-                    3,
-                    3,
-                    "->",
-                    &strm);
-
-        }
-        return true;
-    }
-    return false;
-}
-
-
 //-------------------------------------------------------------------------
 // CommandObjectThreadBacktrace
 //-------------------------------------------------------------------------
@@ -300,7 +101,7 @@ public:
         void
         OptionParsingStarting ()
         {
-            m_count = -1;
+            m_count = UINT32_MAX;
             m_start = 0;
         }
 
@@ -353,27 +154,21 @@ public:
 
     virtual bool
     Execute (Args& command, CommandReturnObject &result)
-    {
-
-        bool show_frame_info = true;
-        uint32_t num_frames_with_source = 0; // Don't show any frames with source when backtracing
-        
+    {        
         result.SetStatus (eReturnStatusSuccessFinishResult);
-        
+        Stream &strm = result.GetOutputStream();
+
+        // Don't show source context when doing backtraces.
+        const uint32_t num_frames_with_source = 0;
         if (command.GetArgumentCount() == 0)
         {
             ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
             if (exe_ctx.thread)
             {
-                if (DisplayFramesForExecutionContext (exe_ctx.thread,
-                                                      m_interpreter,
-                                                      result.GetOutputStream(),
-                                                      m_options.m_start,
-                                                      m_options.m_count,
-                                                      show_frame_info,
-                                                      num_frames_with_source,
-                                                      3,
-                                                      3))
+                if (exe_ctx.thread->GetStatus (strm,
+                                               m_options.m_start,
+                                               m_options.m_count,
+                                               num_frames_with_source))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -391,22 +186,15 @@ public:
             for (uint32_t i = 0; i < num_threads; i++)
             {
                 ThreadSP thread_sp = process->GetThreadList().GetThreadAtIndex(i);
-                if (!DisplayFramesForExecutionContext (thread_sp.get(),
-                                                      m_interpreter,
-                                                      result.GetOutputStream(),
-                                                      m_options.m_start,
-                                                      m_options.m_count,
-                                                      show_frame_info,
-                                                      num_frames_with_source,
-                                                      3,
-                                                      3))
+                if (thread_sp->GetStatus (strm,
+                                          m_options.m_start,
+                                          m_options.m_count,
+                                          num_frames_with_source))
                 {
                     result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", i);
                     result.SetStatus (eReturnStatusFailed);
                     return false;
                 }
-                if (i < num_threads - 1)
-                    result.AppendMessage("");
             }
         }
         else
@@ -440,15 +228,10 @@ public:
             
             for (uint32_t i = 0; i < num_args; i++)
             {
-                if (!DisplayFramesForExecutionContext (thread_sps[i].get(),
-                                                      m_interpreter,
-                                                      result.GetOutputStream(),
-                                                      m_options.m_start,
-                                                      m_options.m_count,
-                                                      show_frame_info,
-                                                      num_frames_with_source,
-                                                      3,
-                                                      3))
+                if (!thread_sps[i]->GetStatus (strm,
+                                               m_options.m_start,
+                                               m_options.m_count,
+                                               num_frames_with_source))
                 {
                     result.AppendErrorWithFormat ("error displaying backtrace for thread: \"%s\"\n", command.GetArgumentAtIndex(i));
                     result.SetStatus (eReturnStatusFailed);
@@ -1335,11 +1118,13 @@ public:
         process->GetThreadList().SetSelectedThreadByID(new_thread->GetID());
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         
-        DisplayThreadInfo (m_interpreter,
-                           result.GetOutputStream(),
-                           new_thread,
-                           false,
-                           true);
+        const uint32_t start_frame = 0;
+        const uint32_t num_frames = 1;
+        const uint32_t num_frames_with_source = 1;
+        new_thread->GetStatus (result.GetOutputStream(), 
+                               start_frame,
+                               num_frames,
+                               num_frames_with_source);
 
         return result.Succeeded();
     }
@@ -1381,41 +1166,16 @@ public:
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         if (exe_ctx.process)
         {
-            const StateType state = exe_ctx.process->GetState();
-
-            if (StateIsStoppedState(state))
-            {
-                if (state == eStateExited)
-                {
-                    int exit_status = exe_ctx.process->GetExitStatus();
-                    const char *exit_description = exe_ctx.process->GetExitDescription();
-                    strm.Printf ("Process %d exited with status = %i (0x%8.8x) %s\n",
-                                          exe_ctx.process->GetID(),
-                                          exit_status,
-                                          exit_status,
-                                          exit_description ? exit_description : "");
-                }
-                else
-                {
-                    strm.Printf ("Process %d state is %s\n", exe_ctx.process->GetID(), StateAsCString (state));
-                    if (exe_ctx.thread == NULL)
-                        exe_ctx.thread = exe_ctx.process->GetThreadList().GetThreadAtIndex(0).get();
-                    if (exe_ctx.thread != NULL)
-                    {
-                        DisplayThreadsInfo (m_interpreter, &exe_ctx, result, false, false);
-                    }
-                    else
-                    {
-                        result.AppendError ("no valid thread found in current process");
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
-            else
-            {
-                result.AppendError ("process is currently running");
-                result.SetStatus (eReturnStatusFailed);
-            }
+            const bool only_threads_with_stop_reason = false;
+            const uint32_t start_frame = 0;
+            const uint32_t num_frames = 0;
+            const uint32_t num_frames_with_source = 0;
+            exe_ctx.process->GetStatus(strm);
+            exe_ctx.process->GetThreadStatus (strm, 
+                                              only_threads_with_stop_reason, 
+                                              start_frame,
+                                              num_frames,
+                                              num_frames_with_source);            
         }
         else
         {

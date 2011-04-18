@@ -41,7 +41,7 @@ class CrashingInferiorTestCase(TestBase):
 
         # The stop reason of the thread should be a bad access exception.
         self.expect("thread list", STOPPED_DUE_TO_EXC_BAD_ACCESS,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'stop reason = EXC_BAD_ACCESS'])
 
         # And it should report the correct line number.

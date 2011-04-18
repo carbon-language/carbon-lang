@@ -1896,6 +1896,16 @@ public:
     static const char *
     ExecutionResultAsCString (ExecutionResults result);
 
+    void
+    GetStatus (Stream &ostrm);
+
+    size_t
+    GetThreadStatus (Stream &ostrm, 
+                     bool only_threads_with_stop_reason,
+                     uint32_t start_frame, 
+                     uint32_t num_frames, 
+                     uint32_t num_frames_with_source);
+
 protected:
     friend class CommandObjectProcessLaunch;
     friend class ProcessEventData;

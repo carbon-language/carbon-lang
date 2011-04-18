@@ -14,6 +14,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
@@ -1099,6 +1100,63 @@ Thread::RunModeAsCString (lldb::RunMode mode)
     snprintf(unknown_state_string, sizeof (unknown_state_string), "RunMode = %i", mode);
     return unknown_state_string;
 }
+
+size_t
+Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint32_t num_frames_with_source)
+{
+    size_t num_frames_shown = 0;
+    strm.Indent();
+    strm.Printf("%c ", GetProcess().GetThreadList().GetSelectedThread().get() == this ? '*' : ' ');
+
+    StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
+    SymbolContext frame_sc(frame_sp->GetSymbolContext (eSymbolContextLineEntry));
+    if (frame_sc.line_entry.line != 0 &&
+        frame_sc.line_entry.file &&
+        GetProcess().GetTarget().GetDebugger().GetUseExternalEditor())
+    {
+        Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+    }
+    
+    DumpUsingSettingsFormat (strm, start_frame);
+    
+    if (num_frames > 0)
+    {
+        strm.IndentMore();
+        
+        const bool show_frame_info = true;
+        const uint32_t source_lines_before = 3;
+        const uint32_t source_lines_after = 3;
+        num_frames_shown = GetStackFrameList ().GetStatus (strm, 
+                                                           start_frame, 
+                                                           num_frames, 
+                                                           show_frame_info, 
+                                                           num_frames_with_source,
+                                                           source_lines_before,
+                                                           source_lines_after);
+        strm.IndentLess();
+    }
+    return num_frames_shown;
+}
+
+size_t
+Thread::GetStackFrameStatus (Stream& strm,
+                             uint32_t first_frame,
+                             uint32_t num_frames,
+                             bool show_frame_info,
+                             uint32_t num_frames_with_source,
+                             uint32_t source_lines_before,
+                             uint32_t source_lines_after)
+{
+    return GetStackFrameList().GetStatus (strm, 
+                                          first_frame,
+                                          num_frames,
+                                          show_frame_info,
+                                          num_frames_with_source,
+                                          source_lines_before,
+                                          source_lines_after);
+}
+
+
 
 #pragma mark "Thread::SettingsController"
 //--------------------------------------------------------------

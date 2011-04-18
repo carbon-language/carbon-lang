@@ -19,7 +19,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
@@ -28,94 +28,8 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-PlatformSP 
-PlatformOptionGroup::CreatePlatformWithOptions (CommandInterpreter &interpreter, bool select, Error& error)
-{
-    PlatformSP platform_sp;
-    if (!platform_name.empty())
-    {
-        platform_sp = Platform::Create (platform_name.c_str(), error);
-
-        if (platform_sp)
-        {
-            interpreter.GetDebugger().GetPlatformList().Append (platform_sp, select);
-            if (os_version_major != UINT32_MAX)
-            {
-                platform_sp->SetOSVersion (os_version_major,
-                                           os_version_minor,
-                                           os_version_update);
-            }
-        }
-    }
-    return platform_sp;
-}
-
-void
-PlatformOptionGroup::OptionParsingStarting (CommandInterpreter &interpreter)
-{
-    platform_name.clear();
-    os_version_major = UINT32_MAX;
-    os_version_minor = UINT32_MAX;
-    os_version_update = UINT32_MAX;
-}
-
-static OptionDefinition
-g_option_table[] =
-{
-    { LLDB_OPT_SET_ALL, false, "platform"   , 'p', required_argument, NULL, 0, eArgTypePlatform, "Specify name of the platform to use for this target, creating the platform if necessary."},
-    { LLDB_OPT_SET_ALL, false, "sdk-version", 'v', required_argument, NULL, 0, eArgTypeNone, "Specify the initial SDK version to use prior to connecting." }
-};
-
-static const uint32_t k_option_table_size = sizeof(g_option_table)/sizeof (OptionDefinition);
-
-const OptionDefinition*
-PlatformOptionGroup::GetDefinitions ()
-{
-    if (m_include_platform_option)
-        return g_option_table;
-    return g_option_table + 1;
-}
-
-uint32_t
-PlatformOptionGroup::GetNumDefinitions ()
-{
-    if (m_include_platform_option)
-        return k_option_table_size;
-    return k_option_table_size - 1;
-}
-
-
-Error
-PlatformOptionGroup::SetOptionValue (CommandInterpreter &interpreter,
-                                     uint32_t option_idx,
-                                     const char *option_arg)
-{
-    Error error;
-    if (!m_include_platform_option)
-        --option_idx;
-        
-    char short_option = (char) g_option_table[option_idx].short_option;
-    
-    switch (short_option)
-    {
-    case 'p':
-        platform_name.assign (option_arg);
-        break;
-
-    case 'v':
-        if (Args::StringToVersion (option_arg, os_version_major, os_version_minor, os_version_update) == option_arg)
-            error.SetErrorStringWithFormat ("invalid version string '%s'", option_arg);
-        break;
-        
-    default:
-        error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
-        break;
-    }
-    return error;
-}
-
 //----------------------------------------------------------------------
-// "platform create <platform-name>"
+// "platform select <platform-name>"
 //----------------------------------------------------------------------
 class CommandObjectPlatformSelect : public CommandObject
 {
@@ -147,7 +61,7 @@ public:
             if (platform_name && platform_name[0])
             {
                 const bool select = true;
-                m_platform_options.platform_name.assign (platform_name);
+                m_platform_options.SetPlatformName (platform_name);
                 Error error;
                 PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter, select, error));
                 if (platform_sp)
@@ -175,6 +89,29 @@ public:
         return result.Succeeded();
     }
     
+    
+    virtual int
+    HandleCompletion (Args &input,
+                      int &cursor_index,
+                      int &cursor_char_position,
+                      int match_start_point,
+                      int max_return_elements,
+                      bool &word_complete,
+                      StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::PlatformPluginNames (m_interpreter, 
+                                                 completion_str.c_str(),
+                                                 match_start_point,
+                                                 max_return_elements,
+                                                 NULL,
+                                                 word_complete,
+                                                 matches);
+        return matches.GetSize();
+    }
+
     virtual Options *
     GetOptions ()
     {
@@ -183,7 +120,7 @@ public:
 
 protected:
     OptionGroupOptions m_option_group;
-    PlatformOptionGroup m_platform_options;
+    OptionGroupPlatform m_platform_options;
 };
 
 //----------------------------------------------------------------------

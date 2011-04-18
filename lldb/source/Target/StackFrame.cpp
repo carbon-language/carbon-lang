@@ -991,3 +991,38 @@ StackFrame::GetSP ()
 {
     return m_thread.GetStackFrameSPForStackFramePtr (this);
 }
+
+
+
+bool
+StackFrame::GetStatus (Stream& strm,
+                       bool show_frame_info,
+                       bool show_source,
+                       uint32_t source_lines_before,
+                       uint32_t source_lines_after)
+{
+    if (show_frame_info)
+    {
+        strm.Indent();
+        DumpUsingSettingsFormat (&strm);
+    }
+    
+    if (show_source)
+    {
+        GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
+    
+        if (m_sc.comp_unit && m_sc.line_entry.IsValid())
+        {
+            GetThread().GetProcess().GetTarget().GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
+                m_sc.line_entry.file,
+                m_sc.line_entry.line,
+                3,
+                3,
+                "->",
+                &strm);
+        
+        }
+    }
+    return true;
+}
+

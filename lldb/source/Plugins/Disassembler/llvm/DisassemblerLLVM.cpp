@@ -76,9 +76,11 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
 
 InstructionLLVM::InstructionLLVM (const Address &addr, 
                                   AddressClass addr_class,
-                                  EDDisassemblerRef disassembler) :
+                                  EDDisassemblerRef disassembler,
+                                  bool force_raw) :
     Instruction (addr, addr_class),
-    m_disassembler (disassembler)
+    m_disassembler (disassembler),
+    m_force_raw (force_raw)
 {
 }
 
@@ -152,6 +154,9 @@ InstructionLLVM::Dump
 
     int numTokens = -1;
     
+    if (!raw)
+        raw = m_force_raw;
+
     if (!raw)
         numTokens = EDNumTokens(m_inst);
 
@@ -471,9 +476,20 @@ DisassemblerLLVM::DecodeInstructions
             if (inst_address_class == eAddressClassCodeAlternateISA)
                 use_thumb = true;
         }
+        bool force_raw = false;
+        switch (m_arch.GetMachine())
+        {
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                force_raw = true;
+                break;
+            default:
+                break;
+        }
         InstructionSP inst_sp (new InstructionLLVM (inst_addr, 
                                                     inst_address_class,
-                                                    use_thumb ? m_disassembler_thumb : m_disassembler));
+                                                    use_thumb ? m_disassembler_thumb : m_disassembler,
+                                                    force_raw));
 
         size_t inst_byte_size = inst_sp->Decode (*this, data, data_offset);
 

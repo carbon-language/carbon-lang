@@ -260,6 +260,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         switch (cast<clang::BuiltinType>(qual_type)->getKind())
         {
         //default: assert(0 && "Unknown builtin type!");
+        case clang::BuiltinType::UnknownAny:
         case clang::BuiltinType::Void:
             break;
 

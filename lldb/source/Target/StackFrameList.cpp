@@ -569,3 +569,46 @@ StackFrameList::GetStackFrameSPForStackFramePtr (StackFrame *stack_frame_ptr)
     return ret_sp;
 }
 
+size_t
+StackFrameList::GetStatus (Stream& strm,
+                           uint32_t first_frame,
+                           uint32_t num_frames,
+                           bool show_frame_info,
+                           uint32_t num_frames_with_source,
+                           uint32_t source_lines_before,
+                           uint32_t source_lines_after)
+{
+    size_t num_frames_displayed = 0;
+    
+    if (num_frames == 0)
+        return 0;
+    
+    StackFrameSP frame_sp;
+    uint32_t frame_idx = 0;
+    uint32_t last_frame;
+    
+    // Don't let the last frame wrap around...
+    if (num_frames == UINT32_MAX)
+        last_frame = UINT32_MAX;
+    else
+        last_frame = first_frame + num_frames;
+    
+    for (frame_idx = first_frame; frame_idx < last_frame; ++frame_idx)
+    {
+        frame_sp = GetFrameAtIndex(frame_idx);
+        if (frame_sp.get() == NULL)
+            break;
+        
+        if (!frame_sp->GetStatus (strm,
+                                  show_frame_info,
+                                  num_frames_with_source > first_frame - frame_idx,
+                                  source_lines_before,
+                                  source_lines_after))
+            break;
+        ++num_frames_displayed;
+    }
+    
+    strm.IndentLess();
+    return num_frames_displayed;
+}
+

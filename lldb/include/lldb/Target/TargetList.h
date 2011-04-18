@@ -182,9 +182,6 @@ public:
     uint32_t
     SetSelectedTarget (Target *target);
 
-    void
-    SetSelectedTargetWithIndex (uint32_t idx);
-
     lldb::TargetSP
     GetSelectedTarget ();
 

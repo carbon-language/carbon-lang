@@ -37,8 +37,6 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 
-#include "CommandObjectThread.h"
-
 using namespace lldb;
 using namespace lldb_private;
 
@@ -243,14 +241,15 @@ public:
                         already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
                     }
 
-                    if (DisplayFrameForExecutionContext (exe_ctx.thread,
-                                                         exe_ctx.frame,
-                                                         m_interpreter,
-                                                         result.GetOutputStream(),
-                                                         true,
-                                                         !already_shown,
-                                                         3,
-                                                         3))
+                    bool show_frame_info = true;
+                    bool show_source = !already_shown;
+                    uint32_t source_lines_before = 3;
+                    uint32_t source_lines_after = 3;
+                    if (exe_ctx.frame->GetStatus(result.GetOutputStream(),
+                                                 show_frame_info,
+                                                 show_source,
+                                                 source_lines_before,
+                                                 source_lines_after))
                     {
                         result.SetStatus (eReturnStatusSuccessFinishResult);
                         return result.Succeeded();

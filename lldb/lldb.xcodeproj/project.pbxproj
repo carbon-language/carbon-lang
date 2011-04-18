@@ -94,7 +94,6 @@
 		2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C5DBBC611E3FEC60035160F /* CommandObjectCommands.cpp */; };
 		2689001713353DDE00698AC0 /* CommandObjectDisassemble.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E3010F1B84700F91463 /* CommandObjectDisassemble.cpp */; };
 		2689001813353DDE00698AC0 /* CommandObjectExpression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E3110F1B84700F91463 /* CommandObjectExpression.cpp */; };
-		2689001913353DDE00698AC0 /* CommandObjectFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E3210F1B84700F91463 /* CommandObjectFile.cpp */; };
 		2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2672D8461189055500FF4019 /* CommandObjectFrame.cpp */; };
 		2689001B13353DDE00698AC0 /* CommandObjectHelp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E3310F1B84700F91463 /* CommandObjectHelp.cpp */; };
 		2689001C13353DDE00698AC0 /* CommandObjectImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E3410F1B84700F91463 /* CommandObjectImage.cpp */; };
@@ -380,6 +379,8 @@
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
+		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
+		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
 		26DC6A171337FE8000FF7998 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		26DC6A1D1337FECA00FF7998 /* lldb-platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */; };
 		26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -756,7 +757,6 @@
 		26BC7D1410F1B76300F91463 /* CommandObjectBreakpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectBreakpoint.h; path = source/Commands/CommandObjectBreakpoint.h; sourceTree = "<group>"; };
 		26BC7D1710F1B76300F91463 /* CommandObjectDisassemble.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectDisassemble.h; path = source/Commands/CommandObjectDisassemble.h; sourceTree = "<group>"; };
 		26BC7D1810F1B76300F91463 /* CommandObjectExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectExpression.h; path = source/Commands/CommandObjectExpression.h; sourceTree = "<group>"; };
-		26BC7D1910F1B76300F91463 /* CommandObjectFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectFile.h; path = source/Commands/CommandObjectFile.h; sourceTree = "<group>"; };
 		26BC7D1A10F1B76300F91463 /* CommandObjectHelp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectHelp.h; path = source/Commands/CommandObjectHelp.h; sourceTree = "<group>"; };
 		26BC7D1B10F1B76300F91463 /* CommandObjectImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectImage.h; path = source/Commands/CommandObjectImage.h; sourceTree = "<group>"; };
 		26BC7D1D10F1B76300F91463 /* CommandObjectMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectMemory.h; path = source/Commands/CommandObjectMemory.h; sourceTree = "<group>"; };
@@ -861,7 +861,6 @@
 		26BC7E2D10F1B84700F91463 /* CommandObjectBreakpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectBreakpoint.cpp; path = source/Commands/CommandObjectBreakpoint.cpp; sourceTree = "<group>"; };
 		26BC7E3010F1B84700F91463 /* CommandObjectDisassemble.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectDisassemble.cpp; path = source/Commands/CommandObjectDisassemble.cpp; sourceTree = "<group>"; };
 		26BC7E3110F1B84700F91463 /* CommandObjectExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectExpression.cpp; path = source/Commands/CommandObjectExpression.cpp; sourceTree = "<group>"; };
-		26BC7E3210F1B84700F91463 /* CommandObjectFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFile.cpp; path = source/Commands/CommandObjectFile.cpp; sourceTree = "<group>"; };
 		26BC7E3310F1B84700F91463 /* CommandObjectHelp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectHelp.cpp; path = source/Commands/CommandObjectHelp.cpp; sourceTree = "<group>"; };
 		26BC7E3410F1B84700F91463 /* CommandObjectImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectImage.cpp; path = source/Commands/CommandObjectImage.cpp; sourceTree = "<group>"; };
 		26BC7E3610F1B84700F91463 /* CommandObjectMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectMemory.cpp; path = source/Commands/CommandObjectMemory.cpp; sourceTree = "<group>"; };
@@ -980,6 +979,10 @@
 		26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BreakpointResolverName.cpp; path = source/Breakpoint/BreakpointResolverName.cpp; sourceTree = "<group>"; };
 		26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ELFHeader.cpp; sourceTree = "<group>"; };
 		26D27C9E11ED3A4E0024D721 /* ELFHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFHeader.h; sourceTree = "<group>"; };
+		26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupArchitecture.cpp; path = source/Interpreter/OptionGroupArchitecture.cpp; sourceTree = "<group>"; };
+		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
+		26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupPlatform.h; path = include/lldb/Interpreter/OptionGroupPlatform.h; sourceTree = "<group>"; };
+		26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupPlatform.cpp; path = source/Interpreter/OptionGroupPlatform.cpp; sourceTree = "<group>"; };
 		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
 		26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = source/Core/EmulateInstruction.cpp; sourceTree = "<group>"; };
 		26D9FDCC12F7853F0003F2EE /* EmulateInstructionARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstructionARM.cpp; path = Instruction/ARM/EmulateInstructionARM.cpp; sourceTree = "<group>"; };
@@ -2044,8 +2047,6 @@
 				26BC7E3010F1B84700F91463 /* CommandObjectDisassemble.cpp */,
 				26BC7D1810F1B76300F91463 /* CommandObjectExpression.h */,
 				26BC7E3110F1B84700F91463 /* CommandObjectExpression.cpp */,
-				26BC7D1910F1B76300F91463 /* CommandObjectFile.h */,
-				26BC7E3210F1B84700F91463 /* CommandObjectFile.cpp */,
 				2672D8471189055500FF4019 /* CommandObjectFrame.h */,
 				2672D8461189055500FF4019 /* CommandObjectFrame.cpp */,
 				26BC7D1A10F1B76300F91463 /* CommandObjectHelp.h */,
@@ -2164,6 +2165,10 @@
 				26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */,
 				26BC7D6D10F1B77400F91463 /* Options.h */,
 				26BC7E8610F1B85900F91463 /* Options.cpp */,
+				26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */,
+				26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */,
+				26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */,
+				26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */,
 				26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */,
 				9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */,
 				9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */,
@@ -2870,7 +2875,6 @@
 				2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */,
 				2689001713353DDE00698AC0 /* CommandObjectDisassemble.cpp in Sources */,
 				2689001813353DDE00698AC0 /* CommandObjectExpression.cpp in Sources */,
-				2689001913353DDE00698AC0 /* CommandObjectFile.cpp in Sources */,
 				2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */,
 				2689001B13353DDE00698AC0 /* CommandObjectHelp.cpp in Sources */,
 				2689001C13353DDE00698AC0 /* CommandObjectImage.cpp in Sources */,
@@ -3130,6 +3134,8 @@
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
 				4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */,
+				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
+				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

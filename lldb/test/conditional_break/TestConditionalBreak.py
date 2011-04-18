@@ -109,7 +109,7 @@ class ConditionalBreakTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped', 'stop reason = breakpoint'])
+            substrs = ['stopped', 'stop reason = breakpoint'])
 
         # The frame info for frame #0 points to a.out`c and its immediate caller
         # (frame #1) points to a.out`a.

@@ -3867,6 +3867,66 @@ Process::ExecutionResultAsCString (ExecutionResults result)
     return result_name;
 }
 
+void
+Process::GetStatus (Stream &strm)
+{
+    const StateType state = GetState();
+    if (StateIsStoppedState(state))
+    {
+        if (state == eStateExited)
+        {
+            int exit_status = GetExitStatus();
+            const char *exit_description = GetExitDescription();
+            strm.Printf ("Process %d exited with status = %i (0x%8.8x) %s\n",
+                          GetID(),
+                          exit_status,
+                          exit_status,
+                          exit_description ? exit_description : "");
+        }
+        else
+        {
+            if (state == eStateConnected)
+                strm.Printf ("Connected to remote target.\n");
+            else
+                strm.Printf ("Process %d %s\n", GetID(), StateAsCString (state));
+        }
+    }
+    else
+    {
+        strm.Printf ("Process %d is running.\n", GetID());
+    }
+}
+
+size_t
+Process::GetThreadStatus (Stream &strm, 
+                          bool only_threads_with_stop_reason,
+                          uint32_t start_frame, 
+                          uint32_t num_frames, 
+                          uint32_t num_frames_with_source)
+{
+    size_t num_thread_infos_dumped = 0;
+    
+    const size_t num_threads = GetThreadList().GetSize();
+    for (uint32_t i = 0; i < num_threads; i++)
+    {
+        Thread *thread = GetThreadList().GetThreadAtIndex(i).get();
+        if (thread)
+        {
+            if (only_threads_with_stop_reason)
+            {
+                if (thread->GetStopInfo().get() == NULL)
+                    continue;
+            }
+            thread->GetStatus (strm, 
+                               start_frame, 
+                               num_frames, 
+                               num_frames_with_source);
+            ++num_thread_infos_dumped;
+        }
+    }
+    return num_thread_infos_dumped;
+}
+
 //--------------------------------------------------------------
 // class Process::SettingsController
 //--------------------------------------------------------------

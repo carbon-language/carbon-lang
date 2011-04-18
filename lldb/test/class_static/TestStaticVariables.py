@@ -54,7 +54,7 @@ class StaticVariableTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'stop reason = breakpoint'])
 
         # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.

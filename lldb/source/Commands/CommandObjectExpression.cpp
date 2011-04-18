@@ -13,7 +13,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "CommandObjectThread.h" // For DisplayThreadInfo.
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/InputReader.h"
@@ -32,6 +31,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/Thread.h"
 #include "llvm/ADT/StringRef.h"
 
 using namespace lldb;
@@ -281,10 +281,25 @@ CommandObjectExpression::EvaluateExpression
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {
+            uint32_t start_frame = 0;
+            uint32_t num_frames = 1;
+            uint32_t num_frames_with_source = 0;
             if (m_exe_ctx.thread)
-                lldb_private::DisplayThreadInfo (m_interpreter, result->GetOutputStream(), m_exe_ctx.thread, false, true);
-            else
-                lldb_private::DisplayThreadsInfo (m_interpreter, &m_exe_ctx, *result, true, true); 
+            {
+                m_exe_ctx.thread->GetStatus (result->GetOutputStream(), 
+                                             start_frame, 
+                                             num_frames, 
+                                             num_frames_with_source);
+            }
+            else if (m_exe_ctx.process)
+            {
+                bool only_threads_with_stop_reason = true;
+                m_exe_ctx.process->GetThreadStatus (result->GetOutputStream(), 
+                                                    only_threads_with_stop_reason, 
+                                                    start_frame, 
+                                                    num_frames, 
+                                                    num_frames_with_source);
+            }
         }
 
         if (result_valobj_sp)

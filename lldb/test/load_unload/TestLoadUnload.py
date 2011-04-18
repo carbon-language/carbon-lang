@@ -179,7 +179,7 @@ class LoadUnloadTestCase(TestBase):
 
         # The stop reason of the thread should be breakpoint and at a_function.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'a_function',
                        'stop reason = breakpoint'])
 
@@ -194,7 +194,7 @@ class LoadUnloadTestCase(TestBase):
         # rdar://problem/8508987
         # The a_function breakpoint should be encountered twice.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
-            substrs = ['state is stopped',
+            substrs = ['stopped',
                        'a_function',
                        'stop reason = breakpoint'])
 

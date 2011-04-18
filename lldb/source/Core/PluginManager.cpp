@@ -1192,7 +1192,7 @@ PluginManager::GetPlatformCreateCallbackForPluginName (const char *name)
         PlatformInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            if (name_sref.equals (name))
+            if (name_sref.equals (pos->name))
                 return pos->create_callback;
         }
     }
@@ -1211,9 +1211,9 @@ PluginManager::AutoCompletePlatformName (const char *name, StringList &matches)
         PlatformInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
-            const char *plugin_name = pos->name.c_str();
-            if (name_sref.startswith(plugin_name))
-                matches.AppendString (plugin_name);
+            llvm::StringRef plugin_name (pos->name);
+            if (plugin_name.startswith(name_sref))
+                matches.AppendString (plugin_name.data());
         }
     }
     return matches.GetSize();

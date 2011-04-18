@@ -112,9 +112,9 @@ PlatformRemoteiOS::GetStatus (Stream &strm)
     Platform::GetStatus (strm);
     const char *sdk_directory = GetDeviceSupportDirectoryForOSVersion();
     if (sdk_directory)
-        strm.Printf ("SDKROOT: \"%s\"\n", sdk_directory);
+        strm.Printf ("  SDK Path: \"%s\"\n", sdk_directory);
     else
-        strm.PutCString ("SDKROOT: error: unable to locate SDK\n");
+        strm.PutCString ("  SDK Path: error: unable to locate SDK\n");
 }
 
 

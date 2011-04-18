@@ -156,13 +156,6 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             }
         }
     }
-    else
-    {
-        error.SetErrorStringWithFormat ("'%s%s%s' does not exist",
-                                        exe_file.GetDirectory().AsCString(""),
-                                        exe_file.GetDirectory() ? "/" : "",
-                                        exe_file.GetFilename().AsCString(""));
-    }
 
     return error;
 }

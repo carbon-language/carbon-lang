@@ -19,7 +19,7 @@
 //#include "../Commands/CommandObjectCall.h"
 #include "../Commands/CommandObjectDisassemble.h"
 #include "../Commands/CommandObjectExpression.h"
-#include "../Commands/CommandObjectFile.h"
+//#include "../Commands/CommandObjectFile.h"
 #include "../Commands/CommandObjectFrame.h"
 #include "../Commands/CommandObjectHelp.h"
 #include "../Commands/CommandObjectImage.h"
@@ -117,6 +117,7 @@ CommandInterpreter::Initialize ()
     HandleCommand ("command alias po       expression -o --", false, result);
     HandleCommand ("command alias up       _regexp-up", false, result);
     HandleCommand ("command alias down     _regexp-down", false, result);
+    HandleCommand ("command alias file     target create", false, result);
     
 }
 
@@ -165,7 +166,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["commands"]  = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
     m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble (*this));
     m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression (*this));
-    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
+//    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
     m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (*this));
     m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp (*this));
     m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));

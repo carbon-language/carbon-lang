@@ -160,6 +160,13 @@ public:
     lldb::StackFrameSP
     GetSP ();
 
+    bool
+    GetStatus (Stream &strm,
+               bool show_frame_info,
+               bool show_source,
+               uint32_t source_lines_before,
+               uint32_t source_lines_after);
+    
 protected:
     friend class StackFrameList;
 
