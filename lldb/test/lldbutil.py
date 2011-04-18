@@ -9,8 +9,8 @@ import StringIO
 def is_exe(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-# Find the full path to a program, or return None.
 def which(program):
+    """Find the full path to a program, or return None."""
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):
