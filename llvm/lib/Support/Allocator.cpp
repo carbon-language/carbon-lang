@@ -136,6 +136,14 @@ unsigned BumpPtrAllocator::GetNumSlabs() const {
   return NumSlabs;
 }
 
+size_t BumpPtrAllocator::getTotalMemory() const {
+  size_t TotalMemory = 0;
+  for (MemSlab *Slab = CurSlab; Slab != 0; Slab = Slab->NextPtr) {
+    TotalMemory += Slab->Size;
+  }
+  return TotalMemory;
+}
+  
 void BumpPtrAllocator::PrintStats() const {
   unsigned NumSlabs = 0;
   size_t TotalMemory = 0;

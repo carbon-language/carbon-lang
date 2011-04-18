@@ -177,6 +177,9 @@ public:
   unsigned GetNumSlabs() const;
 
   void PrintStats() const;
+  
+  /// Compute the total physical memory allocated by this allocator.
+  size_t getTotalMemory() const;
 };
 
 /// SpecificBumpPtrAllocator - Same as BumpPtrAllocator but allows only
