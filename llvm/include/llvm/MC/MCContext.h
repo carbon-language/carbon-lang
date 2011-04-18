@@ -45,12 +45,18 @@ namespace llvm {
 
     const TargetAsmInfo *TAI;
 
+    /// Allocator - Allocator object used for creating machine code objects.
+    ///
+    /// We use a bump pointer allocator to avoid the need to track all allocated
+    /// objects.
+    BumpPtrAllocator Allocator;
+
     /// Symbols - Bindings of names to symbols.
-    StringMap<MCSymbol*> Symbols;
+    StringMap<MCSymbol*, BumpPtrAllocator&> Symbols;
 
     /// UsedNames - Keeps tracks of names that were used both for used declared
     /// and artificial symbols.
-    StringMap<bool> UsedNames;
+    StringMap<bool, BumpPtrAllocator&> UsedNames;
 
     /// NextUniqueID - The next ID to dole out to an unnamed assembler temporary
     /// symbol.
@@ -95,12 +101,6 @@ namespace llvm {
     /// We need a deterministic iteration order, so we remember the order
     /// the elements were added.
     std::vector<const MCSection *> MCLineSectionOrder;
-
-    /// Allocator - Allocator object used for creating machine code objects.
-    ///
-    /// We use a bump pointer allocator to avoid the need to track all allocated
-    /// objects.
-    BumpPtrAllocator Allocator;
 
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
 

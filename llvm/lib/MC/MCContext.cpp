@@ -27,7 +27,9 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 
 MCContext::MCContext(const MCAsmInfo &mai, const TargetAsmInfo *tai) :
-  MAI(mai), TAI(tai), NextUniqueID(0),
+  MAI(mai), TAI(tai),
+  Allocator(), Symbols(Allocator), UsedNames(Allocator),
+  NextUniqueID(0),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
   AllowTemporaryLabels(true) {
   MachOUniquingMap = 0;
