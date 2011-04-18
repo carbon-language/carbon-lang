@@ -1323,6 +1323,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     else if (!llvm::sys::fs::exists("/usr/lib/gcc/i586-suse-linux", Exists) &&
              Exists)
       GccTriple = "i586-suse-linux";
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/i486-slackware-linux", Exists)
+            && Exists)
+      GccTriple = "i486-slackware-linux";
   } else if (Arch == llvm::Triple::ppc) {
     if (!llvm::sys::fs::exists("/usr/lib/powerpc-linux-gnu", Exists) && Exists)
       GccTriple = "powerpc-linux-gnu";
