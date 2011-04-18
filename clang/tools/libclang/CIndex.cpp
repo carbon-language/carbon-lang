@@ -5177,6 +5177,72 @@ CXType clang_getIBOutletCollectionType(CXCursor C) {
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
+// Inspecting memory usage.
+//===----------------------------------------------------------------------===//
+
+typedef std::vector<CXTUMemoryUsageEntry> MemUsageEntries;
+
+static inline void createCXTUMemoryUsageEntry(MemUsageEntries &entries,
+                                              enum CXTUMemoryUsageKind k,
+                                              double amount) {
+  CXTUMemoryUsageEntry entry = { k, amount };
+  entries.push_back(entry);
+}
+
+extern "C" {
+
+const char *clang_getTUMemoryUsageName(CXTUMemoryUsageKind kind) {
+  const char *str = "";
+  switch (kind) {
+    case CXTUMemoryUsage_AST:
+      str = "ASTContext: expressions, declarations, and types"; 
+      break;
+    case CXTUMemoryUsage_Identifiers:
+      str = "ASTContext: identifiers";
+      break;
+    case CXTUMemoryUsage_Selectors:
+      str = "ASTContext: selectors";
+  }
+  return str;
+}
+
+CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU) {
+  if (!TU) {
+    CXTUMemoryUsage usage = { (void*) 0, 0, 0 };
+    return usage;
+  }
+  
+  ASTUnit *astUnit = static_cast<ASTUnit*>(TU->TUData);
+  llvm::OwningPtr<MemUsageEntries> entries(new MemUsageEntries());
+  ASTContext &astContext = astUnit->getASTContext();
+  
+  // How much memory is used by AST nodes and types?
+  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_AST,
+    (unsigned long) astContext.getTotalAllocatedMemory());
+
+  // How much memory is used by identifiers?
+  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_Identifiers,
+    (unsigned long) astContext.Idents.getAllocator().getTotalMemory());
+
+  // How much memory is used for selectors?
+  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_Selectors,
+    (unsigned long) astContext.Selectors.getTotalMemory());
+  
+  CXTUMemoryUsage usage = { (void*) entries.get(),
+                            (unsigned) entries->size(),
+                            entries->size() ? &(*entries)[0] : 0 };
+  entries.take();
+  return usage;
+}
+
+void clang_disposeCXTUMemoryUsage(CXTUMemoryUsage usage) {
+  if (usage.data)
+    delete (MemUsageEntries*) usage.data;
+}
+
+} // end extern "C"
+
+//===----------------------------------------------------------------------===//
 // Misc. utility functions.
 //===----------------------------------------------------------------------===//
 
@@ -5212,3 +5278,4 @@ CXString clang_getClangVersion() {
 }
 
 } // end: extern "C"
+

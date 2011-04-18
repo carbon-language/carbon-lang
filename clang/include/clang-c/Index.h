@@ -1012,7 +1012,56 @@ CINDEX_LINKAGE int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                                 unsigned num_unsaved_files,
                                           struct CXUnsavedFile *unsaved_files,
                                                 unsigned options);
-  
+
+/**
+  * \brief Categorizes how memory is being used by a translation unit.
+  */
+enum CXTUMemoryUsageKind {
+  CXTUMemoryUsage_AST = 1,
+  CXTUMemoryUsage_Identifiers = 2,
+  CXTUMemoryUsage_Selectors = 3,
+  CXTUMemoryUsage_First = CXTUMemoryUsage_AST,
+  CXTUMemoryUsage_Last = CXTUMemoryUsage_Selectors
+};
+
+/**
+  * \brief Returns the human-readable null-terminated C string that represents
+  *  the name of the memory category.
+  */
+CINDEX_LINKAGE
+const char *clang_getTUMemoryUsageName(enum CXTUMemoryUsageKind kind);
+
+typedef struct CXTUMemoryUsageEntry {
+  /* \brief The memory usage category. */
+  enum CXTUMemoryUsageKind kind;  
+  /* \brief Memory usage in bytes. */
+  unsigned long amount;
+} CXTUMemoryUsageEntry;
+
+/**
+  * \brief The memory usage of a CXTranslationUnit, broken into categories.
+  */
+typedef struct CXTUMemoryUsage {
+  /* \brief Private data member, used for queries. */
+  void *data;
+
+  /* \brief The number of entries in the 'entries' array. */
+  unsigned numEntries;
+
+  /* \brief An array of key-value pairs, representing the breakdown of memory
+            usage. */
+  CXTUMemoryUsageEntry *entries;
+
+} CXTUMemoryUsage;
+
+/**
+  * \brief Return the memory usage of a translation unit.  This object
+  *  should be released with clang_disposeCXTUMemoryUsage().
+  */
+CINDEX_LINKAGE CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU);
+
+CINDEX_LINKAGE void clang_disposeCXTUMemoryUsage(CXTUMemoryUsage usage);
+
 /**
  * @}
  */
