@@ -990,6 +990,10 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
   if (Opcode == ISD::MUL && isPowerOf2_64(Imm)) {
     Opcode = ISD::SHL;
     Imm = Log2_64(Imm);
+  } else if (Opcode == ISD::UDIV && isPowerOf2_64(Imm)) {
+    // div x, 8 -> srl x, 3
+    Opcode = ISD::SRL;
+    Imm = Log2_64(Imm);
   }
   
   // Horrible hack (to be removed), check to make sure shift amounts are

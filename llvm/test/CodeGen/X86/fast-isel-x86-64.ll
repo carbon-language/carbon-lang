@@ -1,4 +1,4 @@
-; RUN: llc < %s  -fast-isel -O0 -regalloc=fast -asm-verbose=0 | FileCheck %s
+; RUN: llc < %s  -fast-isel -O0 -regalloc=fast -asm-verbose=0 -fast-isel-abort | FileCheck %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.0.0"
@@ -110,4 +110,12 @@ entry:
   ret i64 %add
 ; CHECK: test9:
 ; CHECK: imulq	$7, %rdi, %rax
+}
+
+; rdar://9297011 - Don't reject udiv by a power of 2.
+define i32 @test10(i32 %X) nounwind {
+  %Y = udiv i32 %X, 8
+  ret i32 %Y
+; CHECK: test10:
+; CHECK: shrl	$3, 
 }
