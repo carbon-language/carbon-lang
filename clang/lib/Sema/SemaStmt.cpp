@@ -1029,6 +1029,7 @@ static VarDecl *BuildForRangeVarDecl(Sema &SemaRef, SourceLocation Loc,
   TypeSourceInfo *TInfo = SemaRef.Context.getTrivialTypeSourceInfo(Type, Loc);
   VarDecl *Decl = VarDecl::Create(SemaRef.Context, DC, Loc, Loc, II, Type,
                                   TInfo, SC_Auto, SC_None);
+  Decl->setImplicit();
   return Decl;
 }
 
@@ -1052,6 +1053,7 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   SemaRef.AddInitializerToDecl(Decl, Init, /*DirectInit=*/false,
                                /*TypeMayContainAuto=*/false);
   SemaRef.FinalizeDeclaration(Decl);
+  SemaRef.CurContext->addHiddenDecl(Decl);
   return false;
 }
 

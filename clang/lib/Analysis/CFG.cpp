@@ -2629,8 +2629,8 @@ CFGBlock* CFGBuilder::VisitCXXForRangeStmt(CXXForRangeStmt* S) {
 
   // Add the initialization statements.
   Block = createBlock();
-  addStmt(S->getRangeStmt());
-  return addStmt(S->getBeginEndStmt());
+  addStmt(S->getBeginEndStmt());
+  return addStmt(S->getRangeStmt());
 }
 
 CFGBlock *CFGBuilder::VisitExprWithCleanups(ExprWithCleanups *E,
