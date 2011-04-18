@@ -257,6 +257,17 @@ public:
   /// isAlwaysTrue - Return true if this is a noop predicate.
   bool isAlwaysTrue() const;
   
+  bool isImmediatePattern() const { return !getImmCode().empty(); }
+  
+  /// getImmediatePredicateCode - Return the code that evaluates this pattern if
+  /// this is an immediate predicate.  It is an error to call this on a
+  /// non-immediate pattern.
+  std::string getImmediatePredicateCode() const {
+    std::string Result = getImmCode();
+    assert(!Result.empty() && "Isn't an immediate pattern!");
+    return Result;
+  }
+  
   
   bool operator==(const TreePredicateFn &RHS) const {
     return PatFragRec == RHS.PatFragRec;

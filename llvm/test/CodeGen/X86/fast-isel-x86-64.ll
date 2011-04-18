@@ -93,3 +93,21 @@ entry:
 ; CHECK: leal	(,%rdi,8), %eax
 }
 
+
+; rdar://9289507 - folding of immediates into 64-bit operations.
+define i64 @test8(i64 %x) nounwind ssp {
+entry:
+  %add = add nsw i64 %x, 7
+  ret i64 %add
+
+; CHECK: test8:
+; CHECK: addq	$7, %rdi
+}
+
+define i64 @test9(i64 %x) nounwind ssp {
+entry:
+  %add = mul nsw i64 %x, 7
+  ret i64 %add
+; CHECK: test9:
+; CHECK: imulq	$7, %rdi, %rax
+}
