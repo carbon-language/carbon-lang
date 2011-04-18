@@ -292,8 +292,6 @@ DWARFDebugAranges::AppendRange (dw_offset_t offset, dw_addr_t low_pc, dw_addr_t 
 void
 DWARFDebugAranges::Sort()
 {    
-    std::vector<size_t> indices;
-    size_t end;
     Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p",
                        __PRETTY_FUNCTION__, this);
 
@@ -302,8 +300,9 @@ DWARFDebugAranges::Sort()
 
     // Merge all neighbouring ranges into a single range and remember the
     // indices of all ranges merged.
-    end = m_aranges.size();
-    for (size_t merge, cursor = 1; cursor < end; ++cursor)
+    const size_t old_size = m_aranges.size();
+    std::vector<size_t> merged;
+    for (size_t merge, cursor = 1; cursor < old_size; ++cursor)
     {
         merge = cursor - 1;
         Range &r1 = m_aranges[merge];
@@ -312,18 +311,18 @@ DWARFDebugAranges::Sort()
         if (r1.hi_pc == r2.lo_pc && r1.offset == r2.offset)
         {
             r2.lo_pc = r1.lo_pc;
-            indices.push_back(merge);
+            merged.push_back(merge);
         }
     }
 
-    if (indices.empty())
+    if (merged.empty())
         return;
 
     // Remove the merged ranges by shifting down all the keepers...
-    size_t new_size = m_aranges.size() - indices.size();
+    const size_t new_size = old_size - merged.size();
     for (size_t i = 0, src = 0, dst = 0; dst < new_size; ++src, ++dst)
     {
-        while (src == indices[i]) {
+        while (src == merged[i]) {
             ++src;
             ++i;
         }
