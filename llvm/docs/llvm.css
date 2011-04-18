@@ -23,7 +23,7 @@ th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
  * Documentation
  */
 /* Common for title and header */
-.doc_title, .doc_section, .doc_subsection, h1, h2 {
+.doc_title, .doc_section, .doc_subsection, h1, h2, h3 {
   color: black; background: url("img/lines.gif");
   font-family: "Georgia,Palatino,Times,Roman,SanSerif"; font-weight: bold;
   border-width: 1px;
@@ -35,17 +35,17 @@ th          { border: 2px solid gray; font-weight: bold; font-size: 105%;
   padding-bottom: 2px
 }
 
-h1, .doc_section   { text-align: center; font-size: 22pt;
+h1, .doc_title, .title { text-align: left;   font-size: 25pt }
+
+h2, .doc_section   { text-align: center; font-size: 22pt;
                      margin: 20pt 0pt 5pt 0pt; }
 
-.doc_title, .title { text-align: left;   font-size: 25pt }
-
-h2, .doc_subsection { width: 75%;
+h3, .doc_subsection { width: 75%;
                       text-align: left;  font-size: 12pt;
                       padding: 4pt 4pt 4pt 4pt;
                       margin: 1.5em 0.5em 0.5em 0.5em }
 
-h3, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
+h4, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
                          font-weight: bold; font-style: oblique;
                          border-bottom: 1px solid #999999; font-size: 12pt;
                          width: 75%; }
