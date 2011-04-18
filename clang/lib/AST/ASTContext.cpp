@@ -4963,10 +4963,10 @@ QualType ASTContext::areCommonBaseCompatible(
   const ObjCObjectType *RHS = Rptr->getObjectType();
   const ObjCInterfaceDecl* LDecl = LHS->getInterface();
   const ObjCInterfaceDecl* RDecl = RHS->getInterface();
-  if (!LDecl || !RDecl)
+  if (!LDecl || !RDecl || (LDecl == RDecl))
     return QualType();
   
-  while ((LDecl = LDecl->getSuperClass())) {
+  do {
     LHS = cast<ObjCInterfaceType>(getObjCInterfaceType(LDecl));
     if (canAssignObjCInterfaces(LHS, RHS)) {
       llvm::SmallVector<ObjCProtocolDecl *, 8> Protocols;
@@ -4978,7 +4978,7 @@ QualType ASTContext::areCommonBaseCompatible(
       Result = getObjCObjectPointerType(Result);
       return Result;
     }
-  }
+  } while ((LDecl = LDecl->getSuperClass()));
     
   return QualType();
 }
