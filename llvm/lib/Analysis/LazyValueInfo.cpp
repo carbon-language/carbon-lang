@@ -268,6 +268,8 @@ public:
 } // end anonymous namespace.
 
 namespace llvm {
+raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val)
+    LLVM_ATTRIBUTE_USED;
 raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
   if (Val.isUndefined())
     return OS << "undefined";

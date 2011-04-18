@@ -389,6 +389,9 @@ namespace llvm {
 
   // BallLarusEdge << operator overloading
   raw_ostream& operator<<(raw_ostream& os,
+                          const BLInstrumentationEdge& edge)
+      LLVM_ATTRIBUTE_USED;
+  raw_ostream& operator<<(raw_ostream& os,
                           const BLInstrumentationEdge& edge) {
     os << "[" << edge.getSource()->getName() << " -> "
        << edge.getTarget()->getName() << "] init: "
