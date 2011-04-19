@@ -57,6 +57,9 @@ public:
 
     bool
     DumpEmulation (const char * triple); // triple is to specify the architecture, e.g. 'armv6' or 'arm-apple-darwin'
+    
+    bool
+    TestEmulation (lldb::SBStream &output_stream, const char *test_file);
 
 protected:
     friend class SBInstructionList;

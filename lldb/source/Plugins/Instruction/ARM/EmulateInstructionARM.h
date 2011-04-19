@@ -148,6 +148,9 @@ public:
 
     virtual bool
     EvaluateInstruction ();
+    
+    virtual bool
+    TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch);
 
     uint32_t
     ArchVersion();

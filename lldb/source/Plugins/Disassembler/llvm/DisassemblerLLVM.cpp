@@ -367,7 +367,19 @@ InstructionLLVM::Decode (const Disassembler &disassembler,
                 break;
 
             case 4:
-                m_opcode.SetOpcode32 (data.GetU32 (&offset));
+                {
+                if (GetAddressClass() ==  eAddressClassCodeAlternateISA)
+                {
+                    // If it is a 32-bit THUMB instruction, we need to swap the upper & lower halves.
+                    uint32_t orig_bytes = data.GetU32 (&offset);
+                    uint16_t upper_bits = (orig_bytes >> 16) & ((1u << 16) - 1);
+                    uint16_t lower_bits = orig_bytes & ((1u << 16) - 1);
+                    uint32_t swapped = (lower_bits << 16) | upper_bits;
+                    m_opcode.SetOpcode32 (swapped);
+                }
+                else
+                    m_opcode.SetOpcode32 (data.GetU32 (&offset));
+                }
                 break;
 
             default:

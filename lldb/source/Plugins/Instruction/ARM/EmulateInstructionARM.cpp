@@ -10,10 +10,12 @@
 #include <stdlib.h>
 
 #include "EmulateInstructionARM.h"
+#include "EmulationStateARM.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Stream.h"
 
 #include "Plugins/Process/Utility/ARMDefines.h"
 #include "Plugins/Process/Utility/ARMUtils.h"
@@ -12218,6 +12220,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
         { 0x0fef00f0, 0x01a00070, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateRORReg, "ror{s}<c> <Rd>, <Rn>, <Rm>"},
         // mul
         { 0x0fe000f0, 0x00000090, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul{s}<c> <Rd>,<R>,<Rm>" },
+
+        // subs pc, lr and related instructions
         { 0x0e10f000, 0x0210f000, ARMvAll,       eEncodingA1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "<opc>S<c> PC,#<const> | <Rn>,#<const>" }, 
         { 0x0e10f010, 0x0010f000, ARMvAll,       eEncodingA2, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "<opc>S<c> PC,<Rn>,<Rm{,<shift>}" },
 
@@ -12504,8 +12508,9 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
         { 0xffffffc0, 0x00004340, ARMV4T_ABOVE,  eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateMUL, "muls <Rdm>,<Rn>,<Rdm>" },
         // mul
         { 0xfff0f0f0, 0xfb00f000, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateMUL, "mul<c> <Rd>,<Rn>,<Rm>" },
+
+        // subs pc, lr and related instructions
         { 0xffffff00, 0xf3de8f00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize32, &EmulateInstructionARM::EmulateSUBSPcLrEtc, "SUBS<c> PC, LR, #<imm8>" },
-                   
 
         //----------------------------------------------------------------------
         // RFE instructions  *** IMPORTANT *** THESE MUST BE LISTED **BEFORE** THE LDM.. Instructions in this table; 
@@ -13193,16 +13198,7 @@ EmulateInstructionARM::EvaluateInstruction ()
     ARMOpcode *opcode_data;
    
     if (m_opcode_mode == eModeThumb)
-    {
-        if (m_opcode.GetType() == Opcode::eType32)
-        {
-            uint16_t upper_bits = Bits32 (m_opcode.GetOpcode32(), 31, 16);
-            uint16_t lower_bits = Bits32 (m_opcode.GetOpcode32(), 15, 0);
-            uint32_t swapped = (lower_bits << 16) | upper_bits;
-            m_opcode.SetOpcode32 (swapped);
-        }
         opcode_data = GetThumbOpcodeForInstruction (m_opcode.GetOpcode32());
-    }
     else if (m_opcode_mode == eModeARM)
         opcode_data = GetARMOpcodeForInstruction (m_opcode.GetOpcode32());
     else    
@@ -13311,3 +13307,112 @@ EmulateInstructionARM::EvaluateInstruction ()
 
     return true;
 }
+
+bool
+EmulateInstructionARM::TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch)
+{
+    if (!test_file)
+    {
+        out_stream->Printf ("TestEmulation: Missing test file.\n");
+        return false;
+    }
+        
+    uint32_t test_opcode;
+    if (fscanf (test_file, "%x", &test_opcode) != 1)
+    {
+        out_stream->Printf ("Test Emulation: Error reading opcode from test file.\n");
+        return false;
+    }
+
+    char buffer[256];
+    fgets (buffer, 255, test_file); // consume the newline after reading the opcode.
+    
+    SetAdvancePC (true);
+
+    if (arch.GetTriple().getArch() == llvm::Triple::arm)
+    {
+        m_opcode_mode = eModeARM;
+        m_opcode.SetOpcode32 (test_opcode);
+    }
+    else if (arch.GetTriple().getArch() == llvm::Triple::thumb)
+    {
+        m_opcode_mode = eModeThumb;
+        if (test_opcode < 0x10000)
+            m_opcode.SetOpcode16 (test_opcode);
+        else
+            m_opcode.SetOpcode32 (test_opcode);
+
+    }
+    else
+    {
+        out_stream->Printf ("Test Emulation:  Invalid arch.\n");
+        return false;
+    }
+
+
+    EmulationStateARM before_state;
+    EmulationStateARM after_state;
+    
+    // Read Memory info & load into before_state
+    if (!fgets (buffer, 255, test_file))
+    {
+        out_stream->Printf ("Test Emulation: Error attempting to read from test file.\n");
+        return false;
+    }
+        
+    if (strncmp (buffer, "Memory-Begin", 12) != 0)
+    {
+        out_stream->Printf ("Test Emulation: Cannot find Memory-Begin in test file.\n");
+        return false;
+    }
+
+    bool done = false;
+    while (!done)
+    {
+        if (fgets (buffer, 255, test_file))
+        {
+            if (strncmp (buffer, "Memory-End", 10) == 0)
+                done = true;
+            else
+            {
+                uint32_t addr;
+                uint32_t value;
+                if (sscanf (buffer, "%x  %x", &addr, &value) == 2)
+                    before_state.StoreToPseudoAddress ((addr_t) addr, (uint64_t) value, 4);
+                else
+                {    
+                    out_stream->Printf ("Test Emulation:  Error attempting to sscanf address/value pair.\n");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            out_stream->Printf ("Test Emulation:  Error attemping to read test file.\n");
+            return false;
+        }
+    }
+    
+    if (!EmulationStateARM::LoadRegisterStatesFromTestFile (test_file, before_state, after_state))
+    {
+        out_stream->Printf ("Test Emulation:  Error occurred while attempting to load the register data.\n");
+        return false;
+    }
+    
+    SetBaton ((void *) &before_state);
+    SetCallbacks (&EmulationStateARM::ReadPseudoMemory,
+                  &EmulationStateARM::WritePseudoMemory,
+                  &EmulationStateARM::ReadPseudoRegister,
+                  &EmulationStateARM::WritePseudoRegister);
+                  
+    bool success = EvaluateInstruction ();
+    if (!success)
+    {
+        out_stream->Printf ("Test Emulation:  EvaluateInstruction() failed.\n");
+        return false;
+    }
+        
+    success = before_state.CompareState (after_state);
+    return success;
+}
+

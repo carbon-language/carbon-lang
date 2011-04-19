@@ -111,7 +111,9 @@ public:
         // Add or subtract a value from a base address register (other than SP)
         eContextAdjustBaseRegister,
 
+        // Add or subtract a value from the PC or store a value to the PC.
         eContextAdjustPC,
+        
         // Used in WriteRegister callbacks to indicate where the 
         eContextRegisterPlusOffset,
 
@@ -414,6 +416,9 @@ public:
 
     virtual bool
     EvaluateInstruction () = 0;
+    
+    virtual bool
+    TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch) = 0;
     
     bool
     GetAdvancePC () { return m_advance_pc; }

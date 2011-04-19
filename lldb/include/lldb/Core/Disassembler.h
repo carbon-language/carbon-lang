@@ -68,8 +68,14 @@ public:
             const DataExtractor& data, 
             uint32_t data_offset) = 0;
             
+    virtual void
+    SetDescription (const char *) {};  // May be overridden in sub-classes that have descriptions.
+    
     bool
     DumpEmulation (const ArchSpec &arch);
+    
+    virtual bool
+    TestEmulation (Stream *stream, const char *test_file_name);
     
     bool
     Emulate (const ArchSpec &arch,
@@ -126,6 +132,44 @@ private:
     typedef collection::const_iterator const_iterator;
 
     collection m_instructions;
+};
+
+class PseudoInstruction : 
+    public lldb_private::Instruction
+{
+public:
+
+    PseudoInstruction ();
+    
+     virtual
+     ~PseudoInstruction ();
+     
+    virtual void
+    Dump (lldb_private::Stream *s,
+          uint32_t max_opcode_byte_size,
+          bool show_address,
+          bool show_bytes,
+          const lldb_private::ExecutionContext* exe_ctx,
+          bool raw);
+    
+    virtual bool
+    DoesBranch () const;
+    
+    virtual size_t
+    Decode (const lldb_private::Disassembler &disassembler,
+            const lldb_private::DataExtractor &data,
+            uint32_t data_offset);
+            
+    void
+    SetOpcode (size_t opcode_size, void *opcode_data);
+    
+    virtual void
+    SetDescription (const char *description);
+    
+protected:
+    std::string m_description;
+    
+    DISALLOW_COPY_AND_ASSIGN (PseudoInstruction);
 };
 
 class Disassembler :

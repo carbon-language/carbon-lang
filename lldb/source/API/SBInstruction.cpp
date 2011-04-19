@@ -149,3 +149,14 @@ SBInstruction::DumpEmulation (const char *triple)
     return false;
 }
 
+bool
+SBInstruction::TestEmulation (lldb::SBStream &output_stream,  const char *test_file)
+{
+    if (!m_opaque_sp.get())
+        m_opaque_sp.reset (new PseudoInstruction());
+        
+    bool success = m_opaque_sp->TestEmulation (output_stream.get(), test_file);
+    if (output_stream.GetSize() > 0)
+        fprintf (stdout, "%s", output_stream.GetData());
+    return success;
+}

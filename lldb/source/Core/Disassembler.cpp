@@ -503,6 +503,60 @@ Instruction::DumpEmulation (const ArchSpec &arch)
 }
 
 bool
+Instruction::TestEmulation (Stream *out_stream, const char *file_name)
+{
+    if (!out_stream)
+        return false;
+
+    if (!file_name)
+    {
+        out_stream->Printf ("Instruction::TestEmulation:  Missing file_name.\n");
+        return false;
+    }
+        
+    FILE *test_file = fopen (file_name, "r");
+    if (!test_file)
+    {
+        out_stream->Printf ("Instruction::TestEmulation: Attempt to open test file failed.\n");
+        return false;
+    }
+
+    ArchSpec arch;
+    char buffer[256];
+    if (!fgets (buffer,255, test_file)) // Read/skip first line of file, which should be a comment line (description).
+    {
+        out_stream->Printf ("Instruction::TestEmulation: Read comment line failed.\n");
+        fclose (test_file);
+        return false;
+    }
+    SetDescription (buffer);
+            
+    if (fscanf (test_file, "%s", buffer) != 1) // Read the arch or arch-triple from the file
+    {
+        out_stream->Printf ("Instruction::TestEmulation: Read arch failed.\n");
+        fclose (test_file);
+        return false;
+    }
+    
+    const char *cptr = buffer;
+    arch.SetTriple (llvm::Triple (cptr));
+
+    bool success = false;
+    std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+    if (insn_emulator_ap.get())
+        success = insn_emulator_ap->TestEmulation (out_stream, test_file, arch);
+
+    fclose (test_file);
+    
+    if (success)
+        out_stream->Printf ("Emulation test succeeded.\n");
+    else
+        out_stream->Printf ("Emulation test failed.\n");
+        
+    return success;
+}
+
+bool
 Instruction::Emulate (const ArchSpec &arch,
                       bool auto_advance_pc,
                       void *baton,
@@ -691,4 +745,98 @@ const InstructionList &
 Disassembler::GetInstructionList () const
 {
     return m_instruction_list;
+}
+
+//----------------------------------------------------------------------
+// Class PseudoInstruction
+//----------------------------------------------------------------------
+PseudoInstruction::PseudoInstruction () :
+    Instruction (Address(), eAddressClassUnknown),
+    m_description ()
+{
+}
+
+PseudoInstruction::~PseudoInstruction ()
+{
+}
+     
+void
+PseudoInstruction::Dump (lldb_private::Stream *s,
+                        uint32_t max_opcode_byte_size,
+                        bool show_address,
+                        bool show_bytes,
+                        const lldb_private::ExecutionContext* exe_ctx,
+                        bool raw)
+{
+    if (!s)
+        return;
+        
+    if (show_bytes)
+        m_opcode.Dump (s, max_opcode_byte_size);
+    
+    if (m_description.size() > 0)
+        s->Printf ("%s", m_description.c_str());
+    else
+        s->Printf ("<unknown>");
+        
+}
+    
+bool
+PseudoInstruction::DoesBranch () const
+{
+    // This is NOT a valid question for a pseudo instruction.
+    return false;
+}
+    
+size_t
+PseudoInstruction::Decode (const lldb_private::Disassembler &disassembler,
+                           const lldb_private::DataExtractor &data,
+                           uint32_t data_offset)
+{
+    return m_opcode.GetByteSize();
+}
+
+
+void
+PseudoInstruction::SetOpcode (size_t opcode_size, void *opcode_data)
+{
+    if (!opcode_data)
+        return;
+
+    switch (opcode_size)
+    {
+        case 8:
+        {
+            uint8_t value8 = *((uint8_t *) opcode_data);
+            m_opcode.SetOpcode8 (value8);
+            break;
+         }   
+        case 16:
+        {
+            uint16_t value16 = *((uint16_t *) opcode_data);
+            m_opcode.SetOpcode16 (value16);
+            break;
+         }   
+        case 32:
+        {
+            uint32_t value32 = *((uint32_t *) opcode_data);
+            m_opcode.SetOpcode32 (value32);
+            break;
+         }   
+        case 64:
+        {
+            uint64_t value64 = *((uint64_t *) opcode_data);
+            m_opcode.SetOpcode64 (value64);
+            break;
+         }   
+        default:
+            break;
+    }
+}
+
+void
+PseudoInstruction::SetDescription (const char *description)
+{
+    if (description && strlen (description) > 0)
+        m_description = description;
 }
