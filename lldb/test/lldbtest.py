@@ -951,3 +951,7 @@ class TestBase(unittest2.TestCase):
             return
 
         print child
+
+    def TraceOn(self):
+        """Returns True if we are in trace mode (i.e., verbose output)."""
+        return traceAlways

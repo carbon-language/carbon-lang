@@ -70,7 +70,8 @@ class CrashingInferiorTestCase(TestBase):
         if not thread:
             self.fail("Fail to stop the thread upon bad access exception")
 
-        lldbutil.PrintStackTrace(thread)
+        if self.TraceOn():
+            lldbutil.PrintStackTrace(thread)
 
 if __name__ == '__main__':
     import atexit
