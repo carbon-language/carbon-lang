@@ -127,13 +127,9 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
         Min = Maj - 4;
         Maj = 10;
       }
-    } else if (Triple.getOS() == llvm::Triple::OSX) {
-      Triple.getOSVersion(Maj, Min, Rev);
-      PlatformName = "macosx";
     } else {
-      assert(Triple.getOS() == llvm::Triple::IOS && "unexpected triple!");
       Triple.getOSVersion(Maj, Min, Rev);
-      PlatformName = "ios";
+      PlatformName = Triple.getOSName();
     }
   }
 

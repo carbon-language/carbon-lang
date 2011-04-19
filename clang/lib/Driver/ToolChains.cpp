@@ -151,7 +151,7 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
   
   llvm::SmallString<16> Str;
   llvm::raw_svector_ostream(Str)
-    << (isTargetIPhoneOS() ? "ios" : "osx")
+    << (isTargetIPhoneOS() ? "ios" : "macosx")
     << Version[0] << "." << Version[1] << "." << Version[2];
   Triple.setOSName(Str.str());
 
