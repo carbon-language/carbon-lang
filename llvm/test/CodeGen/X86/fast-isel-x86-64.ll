@@ -143,6 +143,17 @@ if.end:                                           ; preds = %if.then, %entry
 ; CHECK: test12:
 ; CHECK: testb	$1,
 ; CHECK-NEXT: je L
-; CHECK-NEXT: movb	$0, %al
+; CHECK-NEXT: movl $0, %edi
+; CHECK-NEXT: callq
+}
+
+declare void @test13f(i1 %X)
+
+define void @test13() nounwind {
+  call void @test13f(i1 0)
+  ret void
+; CHECK: test13:
+; CHECK: movl $0, %edi
+; CHECK-NEXT: callq
 }
 

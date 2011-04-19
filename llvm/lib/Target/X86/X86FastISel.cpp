@@ -1457,8 +1457,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // Handle only C and fastcc calling conventions for now.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();
-  if (CC != CallingConv::C &&
-      CC != CallingConv::Fast &&
+  if (CC != CallingConv::C && CC != CallingConv::Fast &&
       CC != CallingConv::X86_FastCall)
     return false;
 
@@ -1517,15 +1516,30 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   ArgFlags.reserve(CS.arg_size());
   for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
        i != e; ++i) {
-    unsigned Arg = getRegForValue(*i);
-    if (Arg == 0)
-      return false;
+    Value *ArgVal = *i;
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
     if (CS.paramHasAttr(AttrInd, Attribute::SExt))
       Flags.setSExt();
     if (CS.paramHasAttr(AttrInd, Attribute::ZExt))
       Flags.setZExt();
+
+    // If this is an i1/i8/i16 argument, promote to i32 to avoid an extra
+    // instruction.  This is safe because it is common to all fastisel supported
+    // calling conventions on x86.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(ArgVal)) {
+      if (CI->getBitWidth() == 1 || CI->getBitWidth() == 8 ||
+          CI->getBitWidth() == 16) {
+        if (Flags.isSExt())
+          ArgVal = ConstantExpr::getSExt(CI,Type::getInt32Ty(CI->getContext()));
+        else
+          ArgVal = ConstantExpr::getZExt(CI,Type::getInt32Ty(CI->getContext()));
+      }
+    }
+    
+    unsigned Arg = getRegForValue(ArgVal);
+    if (Arg == 0)
+      return false;
 
     // FIXME: Only handle *easy* calls for now.
     if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
@@ -1534,7 +1548,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
         CS.paramHasAttr(AttrInd, Attribute::ByVal))
       return false;
 
-    const Type *ArgTy = (*i)->getType();
+    const Type *ArgTy = ArgVal->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
       return false;
@@ -1542,7 +1556,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     Flags.setOrigAlign(OriginalAlignment);
 
     Args.push_back(Arg);
-    ArgVals.push_back(*i);
+    ArgVals.push_back(ArgVal);
     ArgVTs.push_back(ArgVT);
     ArgFlags.push_back(Flags);
   }
@@ -1552,9 +1566,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   CCState CCInfo(CC, false, TM, ArgLocs, I->getParent()->getContext());
 
   // Allocate shadow area for Win64
-  if (Subtarget->isTargetWin64()) {
+  if (Subtarget->isTargetWin64())
     CCInfo.AllocateStack(32, 8);
-  }
 
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_X86);
 
