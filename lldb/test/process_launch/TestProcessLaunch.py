@@ -150,7 +150,8 @@ class ProcessLaunchTestCase(TestBase):
         else:
             # Check to see if the 'stdout' file contains the right output
             line = out_f.readline();
-            print "line:", line
+            if self.TraceOn():
+                print "line:", line
             if not re.search(mywd, line):
                 success = False
                 err_msg = err_msg + "The current working directory was not set correctly.\n"
