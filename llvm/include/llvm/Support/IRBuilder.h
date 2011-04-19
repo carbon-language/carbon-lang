@@ -193,6 +193,10 @@ public:
   ConstantInt *getInt64(uint64_t C) {
     return ConstantInt::get(getInt64Ty(), C);
   }
+  
+  ConstantInt *getInt(const APInt &AI) {
+    return ConstantInt::get(Context, AI);
+  }
 
   //===--------------------------------------------------------------------===//
   // Type creation methods
