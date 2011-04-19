@@ -94,11 +94,13 @@ class StdCXXDisassembleTestCase(TestBase):
             match = codeRE.search(line)
             if match:
                 LA = match.group(1)
-                print "line:", line
-                print "load address:", LA
-                print "SA:", SA
+                if self.TraceOn():
+                    print "line:", line
+                    print "load address:", LA
+                    print "SA:", SA
                 if SA and LA:
-                    self.runCmd("disassemble -s %s -e %s" % (SA, LA))
+                    if int(LA, 16) > int(SA, 16):
+                        self.runCmd("disassemble -s %s -e %s" % (SA, LA))
                 SA = LA
             else:
                 # This entry is not a Code entry.  Reset SA = None.
