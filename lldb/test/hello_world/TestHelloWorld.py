@@ -52,8 +52,7 @@ class HelloWorldTestCase(TestBase):
         # SBTarget.Launch() issue (or is there some race condition)?
 
         if useLaunchAPI:
-            error = lldb.SBError()
-            process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+            process = target.LaunchSimple(None, None, os.getcwd())
             # The following isn't needed anymore, rdar://8364687 is fixed.
             #
             # Apply some dances after LaunchProcess() in order to break at "main".
