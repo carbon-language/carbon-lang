@@ -61,8 +61,10 @@ Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
     if (TR->isFunctionType() || TR == Ctx.OverloadTy)
       kind = Cl::CL_Function;
     // No void either, but qualified void is OK because it is "other than void".
-    else if (TR->isVoidType() && !Ctx.getCanonicalType(TR).hasQualifiers())
-      kind = Cl::CL_Void;
+    // Void "lvalues" are classified as addressable void values, which are void
+    // expressions whose address can be taken.
+    else if (TR->isVoidType() && !TR.hasQualifiers())
+      kind = (kind == Cl::CL_LValue ? Cl::CL_AddressableVoid : Cl::CL_Void);
   }
 
   // Enable this assertion for testing.
@@ -71,6 +73,7 @@ Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
   case Cl::CL_XValue: assert(getValueKind() == VK_XValue); break;
   case Cl::CL_Function:
   case Cl::CL_Void:
+  case Cl::CL_AddressableVoid:
   case Cl::CL_DuplicateVectorComponents:
   case Cl::CL_MemberFunction:
   case Cl::CL_SubObjCPropertySetting:
@@ -563,7 +566,8 @@ Expr::LValueClassification Expr::ClassifyLValue(ASTContext &Ctx) const {
   case Cl::CL_LValue: return LV_Valid;
   case Cl::CL_XValue: return LV_InvalidExpression;
   case Cl::CL_Function: return LV_NotObjectType;
-  case Cl::CL_Void: return LV_IncompleteVoidType;
+  case Cl::CL_Void: return LV_InvalidExpression;
+  case Cl::CL_AddressableVoid: return LV_IncompleteVoidType;
   case Cl::CL_DuplicateVectorComponents: return LV_DuplicateVectorComponents;
   case Cl::CL_MemberFunction: return LV_MemberFunction;
   case Cl::CL_SubObjCPropertySetting: return LV_SubObjCPropertySetting;
@@ -582,7 +586,8 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   case Cl::CL_LValue: break;
   case Cl::CL_XValue: return MLV_InvalidExpression;
   case Cl::CL_Function: return MLV_NotObjectType;
-  case Cl::CL_Void: return MLV_IncompleteVoidType;
+  case Cl::CL_Void: return MLV_InvalidExpression;
+  case Cl::CL_AddressableVoid: return MLV_IncompleteVoidType;
   case Cl::CL_DuplicateVectorComponents: return MLV_DuplicateVectorComponents;
   case Cl::CL_MemberFunction: return MLV_MemberFunction;
   case Cl::CL_SubObjCPropertySetting: return MLV_SubObjCPropertySetting;

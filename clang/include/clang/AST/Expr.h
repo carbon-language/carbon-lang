@@ -221,6 +221,7 @@ public:
       CL_XValue,
       CL_Function, // Functions cannot be lvalues in C.
       CL_Void, // Void cannot be an lvalue in C.
+      CL_AddressableVoid, // Void expression whose address can be taken in C.
       CL_DuplicateVectorComponents, // A vector shuffle with dupes.
       CL_MemberFunction, // An expression referring to a member function
       CL_SubObjCPropertySetting,

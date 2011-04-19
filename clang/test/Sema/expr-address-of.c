@@ -107,3 +107,14 @@ char* f7() {
 
   void* t3 = &(*(void*)0);
 }
+
+void f8() {
+  void *dummy0 = &f8(); // expected-error {{address expression must be an lvalue or a function designator}}
+
+  extern void v;
+  void *dummy1 = &(1 ? v : f8()); // expected-error {{address expression must be an lvalue or a function designator}}
+
+  void *dummy2 = &(f8(), v); // expected-error {{address expression must be an lvalue or a function designator}}
+
+  void *dummy3 = &({ ; }); // expected-error {{address expression must be an lvalue or a function designator}}
+}
