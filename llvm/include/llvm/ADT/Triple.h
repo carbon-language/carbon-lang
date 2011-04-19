@@ -249,6 +249,8 @@ public:
     return getOSMajorVersion();
   }
 
+  /// isOSVersionLT - Helper function for doing comparisons against version
+  /// numbers included in the target triple.
   bool isOSVersionLT(unsigned Major, unsigned Minor = 0,
                      unsigned Micro = 0) const {
     unsigned LHS[3];
@@ -268,6 +270,17 @@ public:
   /// "darwin" and "osx" as OS X triples.
   bool isOSX() const {
     return getOS() == Triple::Darwin || getOS() == Triple::OSX;
+  }
+
+  /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
+  bool isOSDarwin() const {
+    return isOSX() ||getOS() == Triple::IOS;
+  }
+
+  /// isOSWindows - Is this a "Windows" OS.
+  bool isOSWindows() const {
+    return getOS() == Triple::Win32 || getOS() == Triple::Cygwin ||
+      getOS() == Triple::MinGW32;
   }
 
   /// isOSXVersionLT - Comparison function for checking OS X version
