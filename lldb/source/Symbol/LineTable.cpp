@@ -378,6 +378,41 @@ LineTable::FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx,
     return UINT32_MAX;
 }
 
+size_t
+LineTable::FineLineEntriesForFileIndex (uint32_t file_idx, 
+                                        bool append,
+                                        SymbolContextList &sc_list)
+{
+    
+    if (!append)
+        sc_list.Clear();
+
+    size_t num_added = 0;
+    const size_t count = m_entries.size();
+    if (count > 0)
+    {
+        SymbolContext sc (m_comp_unit);
+
+        for (size_t idx = 0; idx < count; ++idx)
+        {
+            // Skip line table rows that terminate the previous row (is_terminal_entry is non-zero)
+            if (m_entries[idx].is_terminal_entry)
+                continue;
+            
+            if (m_entries[idx].file_idx == file_idx)
+            {
+                if (ConvertEntryAtIndexToLineEntry (idx, sc.line_entry))
+                {
+                    ++num_added;
+                    sc_list.Append(sc);
+                }
+            }
+        }
+    }
+    return num_added;
+}
+
+
 void
 LineTable::Dump (Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges)
 {

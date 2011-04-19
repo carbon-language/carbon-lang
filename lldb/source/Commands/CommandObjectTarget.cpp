@@ -37,7 +37,7 @@ using namespace lldb_private;
 static void
 DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bool show_stopped_process_status, Stream &strm)
 {
-    ArchSpec &target_arch = target->GetArchitecture();
+    const ArchSpec &target_arch = target->GetArchitecture();
     
     ModuleSP exe_module_sp (target->GetExecutableModule ());
     char exe_path[PATH_MAX];

@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb_private;
 
@@ -85,7 +86,8 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
     uint32_t context_before,
     uint32_t context_after,
     const char* current_line_cstr,
-    Stream *s
+    Stream *s,
+    const SymbolContextList *bp_locs
 )
 {
     if (line == 0)
@@ -119,7 +121,21 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
                 break;
             }
 
-            s->Printf("%2.2s %-4u\t", curr_line == line ? current_line_cstr : "", curr_line);
+            char prefix[32] = "";
+            if (bp_locs)
+            {
+                uint32_t bp_count = bp_locs->NumLineEntriesWithLine (curr_line);
+                
+                if (bp_count > 0)
+                    ::snprintf (prefix, sizeof (prefix), "[%u] ", bp_count);
+                else
+                    ::snprintf (prefix, sizeof (prefix), "    ");
+            }
+
+            s->Printf("%s%2.2s %-4u\t", 
+                      prefix,
+                      curr_line == line ? current_line_cstr : "", 
+                      curr_line);
             if (m_last_file_sp->DisplaySourceLines (curr_line, 0, 0, s) == 0)
             {
                 m_last_file_line = UINT32_MAX;
@@ -138,7 +154,8 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     uint32_t context_before,
     uint32_t context_after,
     const char* current_line_cstr,
-    Stream *s
+    Stream *s,
+    const SymbolContextList *bp_locs
 )
 {
     bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
@@ -152,17 +169,17 @@ SourceManager::DisplaySourceLinesWithLineNumbers
             m_last_file_line = 0;
     }
 
-    return DisplaySourceLinesWithLineNumbersUsingLastFile (line, context_before, context_after, current_line_cstr, s);
+    return DisplaySourceLinesWithLineNumbersUsingLastFile (line, context_before, context_after, current_line_cstr, s, bp_locs);
 }
 
 size_t
-SourceManager::DisplayMoreWithLineNumbers (Stream *s)
+SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *bp_locs)
 {
     if (m_last_file_sp)
     {
         if (m_last_file_line == UINT32_MAX)
             return 0;
-        DisplaySourceLinesWithLineNumbersUsingLastFile (0, m_last_file_context_before, m_last_file_context_after, "", s);
+        DisplaySourceLinesWithLineNumbersUsingLastFile (0, m_last_file_context_before, m_last_file_context_after, "", s, bp_locs);
     }
     return 0;
 }

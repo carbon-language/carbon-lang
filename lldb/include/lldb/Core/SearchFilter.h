@@ -105,9 +105,9 @@ public:
     /// @param[in] target
     ///    The Target that provides the module list to search.
     //------------------------------------------------------------------
-    SearchFilter (lldb::TargetSP &target_sp);
+    SearchFilter (const lldb::TargetSP &target_sp);
 
-    SearchFilter(const SearchFilter& rhs);
+    SearchFilter (const SearchFilter& rhs);
 
     virtual
     ~SearchFilter ();

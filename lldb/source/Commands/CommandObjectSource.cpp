@@ -15,11 +15,12 @@
 // Project includes
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/FileLineResolver.h"
+#include "lldb/Core/SourceManager.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Core/SourceManager.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/Options.h"
@@ -28,7 +29,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 //-------------------------------------------------------------------------
-// CommandObjectSourceList
+// CommandObjectSourceInfo
 //-------------------------------------------------------------------------
 
 class CommandObjectSourceInfo : public CommandObject
@@ -177,7 +178,7 @@ class CommandObjectSourceList : public CommandObject
                     error.SetErrorStringWithFormat("Invalid line count: '%s'.\n", option_arg);
                 break;
 
-             case 'f':
+            case 'f':
                 file_name = option_arg;
                 break;
                 
@@ -186,7 +187,11 @@ class CommandObjectSourceList : public CommandObject
                 break;
 
             case 's':
-                m_modules.push_back (std::string (option_arg));
+                modules.push_back (std::string (option_arg));
+                break;
+            
+            case 'b':
+                show_bp_locs = true;
                 break;
            default:
                 error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
@@ -204,7 +209,8 @@ class CommandObjectSourceList : public CommandObject
             symbol_name.clear();
             start_line = 0;
             num_lines = 10;
-            m_modules.clear();
+            show_bp_locs = false;
+            modules.clear();
         }
 
         const OptionDefinition*
@@ -220,7 +226,8 @@ class CommandObjectSourceList : public CommandObject
         std::string symbol_name;
         uint32_t start_line;
         uint32_t num_lines;
-        STLStringArray m_modules;        
+        STLStringArray modules;        
+        bool show_bp_locs;
     };
  
 public:   
@@ -291,12 +298,12 @@ public:
             bool append = true;
             size_t num_matches = 0;
             
-            if (m_options.m_modules.size() > 0)
+            if (m_options.modules.size() > 0)
             {
                 ModuleList matching_modules;
-                for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
+                for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.m_modules[i].c_str(), false);
+                    FileSpec module_spec(m_options.modules[i].c_str(), false);
                     if (module_spec)
                     {
                         matching_modules.Clear();
@@ -408,8 +415,8 @@ public:
                     m_options.num_lines = end_line - line_no;
             }
             
-            char path_buf[PATH_MAX+1];
-            start_file.GetPath(path_buf, PATH_MAX);
+            char path_buf[PATH_MAX];
+            start_file.GetPath(path_buf, sizeof(path_buf));
             result.AppendMessageWithFormat("File: %s.\n", path_buf);
             m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
                                                                                               line_no,
@@ -430,7 +437,8 @@ public:
             // more likely because you typed it once, then typed it again
             if (m_options.start_line == 0)
             {
-                if (m_interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream()))
+                if (m_interpreter.GetDebugger().GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream(),
+                                                                                               GetBreakpointLocations ()))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -442,7 +450,8 @@ public:
                             0,                      // Lines before line to display
                             m_options.num_lines,    // Lines after line to display
                             "",                     // Don't mark "line"
-                            &result.GetOutputStream()))
+                            &result.GetOutputStream(),
+                            GetBreakpointLocations ()))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -465,21 +474,21 @@ public:
             SymbolContextList sc_list;
             size_t num_matches = 0;
             
-            if (m_options.m_modules.size() > 0)
+            if (m_options.modules.size() > 0)
             {
                 ModuleList matching_modules;
-                for (unsigned i = 0, e = m_options.m_modules.size(); i != e; i++)
+                for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.m_modules[i].c_str(), false);
+                    FileSpec module_spec(m_options.modules[i].c_str(), false);
                     if (module_spec)
                     {
                         matching_modules.Clear();
                         target->GetImages().FindModules (&module_spec, NULL, NULL, NULL, matching_modules);
                         num_matches += matching_modules.ResolveSymbolContextForFilePath (filename,
-                                                                                   0,
-                                                                                   check_inlines,
-                                                                                   eSymbolContextModule | eSymbolContextCompUnit,
-                                                                                   sc_list);
+                                                                                         0,
+                                                                                         check_inlines,
+                                                                                         eSymbolContextModule | eSymbolContextCompUnit,
+                                                                                         sc_list);
                     }
                 }
             }
@@ -535,13 +544,24 @@ public:
             {
                 if (sc.comp_unit)
                 {
+                    if (m_options.show_bp_locs && exe_ctx.target)
+                    {
+                        const bool show_inlines = true;
+                        m_breakpoint_locations.Reset (*sc.comp_unit, 0, show_inlines);
+                        SearchFilter target_search_filter (exe_ctx.target->GetSP());
+                        target_search_filter.Search (m_breakpoint_locations);
+                    }
+                    else
+                        m_breakpoint_locations.Clear();
+
                     m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
                                                                                                       m_options.start_line,
                                                                                                       0,
                                                                                                       m_options.num_lines,
                                                                                                       "",
-                                                                                                      &result.GetOutputStream());
-                    
+                                                                                                      &result.GetOutputStream(),
+                                                                                                      GetBreakpointLocations ());
+
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
                 else
@@ -562,7 +582,15 @@ public:
     }
 
 protected:
+    const SymbolContextList *
+    GetBreakpointLocations ()
+    {
+        if (m_breakpoint_locations.GetFileLineMatches().GetSize() > 0)
+            return &m_breakpoint_locations.GetFileLineMatches();
+        return NULL;
+    }
     CommandOptions m_options;
+    FileLineResolver m_breakpoint_locations;
 
 };
 
@@ -571,6 +599,7 @@ CommandObjectSourceList::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "count",    'c', required_argument, NULL, 0, eArgTypeCount,   "The number of source lines to display."},
 { LLDB_OPT_SET_ALL, false, "shlib",    's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Look up the source file in the given shared library."},
+{ LLDB_OPT_SET_ALL, false, "show-breakpoints", 'b', no_argument, NULL, 0, eArgTypeNone, "Show the line table locations from the debug information that indicate valid places to set source level breakpoints."},
 { LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,    "The file from which to display source."},
 { LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
 { LLDB_OPT_SET_2, false, "name",       'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeSymbol,    "The name of a function whose source to display."},

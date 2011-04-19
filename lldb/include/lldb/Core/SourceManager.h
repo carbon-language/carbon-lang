@@ -86,18 +86,21 @@ public:
                                        uint32_t context_before,
                                        uint32_t context_after,
                                        const char* current_line_cstr,
-                                       Stream *s);
+                                       Stream *s,
+                                       const SymbolContextList *bp_locs = NULL);
 
     // This variant uses the last file we visited.
     size_t
     DisplaySourceLinesWithLineNumbersUsingLastFile (uint32_t line,
-                                       uint32_t context_before,
-                                       uint32_t context_after,
-                                       const char* current_line_cstr,
-                                       Stream *s);
+                                                    uint32_t context_before,
+                                                    uint32_t context_after,
+                                                    const char* current_line_cstr,
+                                                    Stream *s,
+                                                    const SymbolContextList *bp_locs = NULL);
 
     size_t
-    DisplayMoreWithLineNumbers (Stream *s);
+    DisplayMoreWithLineNumbers (Stream *s,
+                                const SymbolContextList *bp_locs = NULL);
 
 protected:
     //------------------------------------------------------------------

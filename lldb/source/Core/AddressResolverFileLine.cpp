@@ -23,7 +23,7 @@ using namespace lldb_private;
 AddressResolverFileLine::AddressResolverFileLine
 (
     const FileSpec &file_spec,
-        uint32_t line_no,
+    uint32_t line_no,
     bool check_inlines
 ) :
     AddressResolver (),
@@ -42,7 +42,7 @@ AddressResolverFileLine::SearchCallback
 (
     SearchFilter &filter,
     SymbolContext &context,
-        Address *addr,
+    Address *addr,
     bool containing
 )
 {

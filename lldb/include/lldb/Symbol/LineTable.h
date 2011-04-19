@@ -91,10 +91,15 @@ public:
     /// @see Address::DumpStyle
     //------------------------------------------------------------------
     void
-    Dump (Stream *s, Target *target, Address::DumpStyle style, Address::DumpStyle fallback_style, bool show_line_ranges);
+    Dump (Stream *s, Target *target, 
+          Address::DumpStyle style, 
+          Address::DumpStyle fallback_style, 
+          bool show_line_ranges);
 
     void
-    GetDescription (Stream *s, Target *target, lldb::DescriptionLevel level);
+    GetDescription (Stream *s, 
+                    Target *target, 
+                    lldb::DescriptionLevel level);
 
     //------------------------------------------------------------------
     /// Find a line entry that contains the section offset address \a
@@ -156,7 +161,11 @@ public:
     /// @see FileSpecList::FindFileIndex (uint32_t, const FileSpec &) const
     //------------------------------------------------------------------
     uint32_t
-    FindLineEntryIndexByFileIndex (uint32_t start_idx, uint32_t file_idx, uint32_t line, bool exact, LineEntry* line_entry_ptr);
+    FindLineEntryIndexByFileIndex (uint32_t start_idx, 
+                                   uint32_t file_idx, 
+                                   uint32_t line, 
+                                   bool exact, 
+                                   LineEntry* line_entry_ptr);
 
     uint32_t
     FindLineEntryIndexByFileIndex (uint32_t start_idx, 
@@ -164,6 +173,11 @@ public:
                                    uint32_t line, 
                                    bool exact, 
                                    LineEntry* line_entry_ptr);
+
+    size_t
+    FineLineEntriesForFileIndex (uint32_t file_idx, 
+                                 bool append,
+                                 SymbolContextList &sc_list);
 
     //------------------------------------------------------------------
     /// Get the line entry from the line table at index \a idx.

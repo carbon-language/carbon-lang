@@ -400,6 +400,9 @@ public:
     uint32_t
     GetSize() const;
 
+    uint32_t
+    NumLineEntriesWithLine (uint32_t line) const;
+    
 protected:
     typedef std::vector<SymbolContext> collection; ///< The collection type for the list.
 

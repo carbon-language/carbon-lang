@@ -842,3 +842,17 @@ SymbolContextList::GetSize() const
 {
     return m_symbol_contexts.size();
 }
+
+uint32_t
+SymbolContextList::NumLineEntriesWithLine (uint32_t line) const
+{
+    uint32_t match_count = 0;
+    const uint32_t size = m_symbol_contexts.size();
+    for (uint32_t idx = 0; idx<size; ++idx)
+    {
+        if (m_symbol_contexts[idx].line_entry.line == line)
+            ++match_count;
+    }
+    return match_count;
+}
+

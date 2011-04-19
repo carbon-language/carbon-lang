@@ -40,7 +40,7 @@ Searcher::GetDescription (Stream *s)
 //----------------------------------------------------------------------
 // SearchFilter constructor
 //----------------------------------------------------------------------
-SearchFilter::SearchFilter(lldb::TargetSP &target_sp) :
+SearchFilter::SearchFilter(const TargetSP &target_sp) :
     m_target_sp (target_sp)
 {
 }

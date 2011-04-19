@@ -29,9 +29,9 @@ class BreakpointResolverFileLine :
 {
 public:
     BreakpointResolverFileLine (Breakpoint *bkpt,
-                           const FileSpec &resolver,
-                           uint32_t line_no,
-                           bool check_inlines);
+                                const FileSpec &resolver,
+                                uint32_t line_no,
+                                bool check_inlines);
 
     virtual
     ~BreakpointResolverFileLine ();

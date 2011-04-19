@@ -337,13 +337,10 @@ CommandObjectBreakpointSet::Execute
                     }
                     else
                     {
-                        const SymbolContext &context = cur_frame->GetSymbolContext(true);
-                        if (context.line_entry.file)
+                        const SymbolContext &sc = cur_frame->GetSymbolContext (eSymbolContextLineEntry);
+                        if (sc.line_entry.file)
                         {
-                            file = context.line_entry.file;
-                        }
-                        else if (context.comp_unit != NULL)
-                        {    file = context.comp_unit;
+                            file = sc.line_entry.file;
                         }
                         else
                         {
