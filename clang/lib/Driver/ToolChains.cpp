@@ -148,23 +148,11 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
     
   unsigned Version[3];
   getTargetVersion(Version);
-
-  // Mangle the target version into the OS triple component.  For historical
-  // reasons that make little sense, the version passed here is the "darwin"
-  // version, which drops the 10 and offsets by 4. See inverse code when
-  // setting the OS version preprocessor define.
-  if (!isTargetIPhoneOS()) {
-    Version[0] = Version[1] + 4;
-    Version[1] = Version[2];
-    Version[2] = 0;
-  } else {
-    // Use the environment to communicate that we are targeting iPhoneOS.
-    Triple.setEnvironmentName("iphoneos");
-  }
-
+  
   llvm::SmallString<16> Str;
-  llvm::raw_svector_ostream(Str) << "darwin" << Version[0]
-                                 << "." << Version[1] << "." << Version[2];
+  llvm::raw_svector_ostream(Str)
+    << (isTargetIPhoneOS() ? "ios" : "osx")
+    << Version[0] << "." << Version[1] << "." << Version[2];
   Triple.setOSName(Str.str());
 
   return Triple.getTriple();

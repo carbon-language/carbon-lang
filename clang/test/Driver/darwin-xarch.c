@@ -4,8 +4,8 @@
 // RUN:   -c %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-COMPILE < %t %s
 //
-// CHECK-COMPILE: clang{{.*}}" "-cc1" "-triple" "i386-apple-darwin8.0.0" 
-// CHECK-COMPILE: clang{{.*}}" "-cc1" "-triple" "x86_64-apple-darwin9.0.0"
+// CHECK-COMPILE: clang{{.*}}" "-cc1" "-triple" "i386-apple-osx10.4.0" 
+// CHECK-COMPILE: clang{{.*}}" "-cc1" "-triple" "x86_64-apple-osx10.5.0"
 
 // RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### \
 // RUN:   -arch i386 -Xarch_i386 -Wl,-some-linker-arg -filelist X 2> %t
