@@ -55,6 +55,11 @@ FunctionPass *llvm::createRegisterAllocator(CodeGenOpt::Level OptLevel) {
     RegisterRegAlloc::setDefault(RegAlloc);
   }
 
+  // This forces linking of the greedy register allocator, so -regalloc=greedy
+  // works in clang.
+  if (Ctor == createGreedyRegisterAllocator)
+    return createGreedyRegisterAllocator();
+
   if (Ctor != createDefaultRegisterAllocator)
     return Ctor();
 
