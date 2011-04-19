@@ -45,10 +45,10 @@ define i32 @test4() ssp {
 entry:
 ; SOFT: test4:
 ; SOFT: vmov.f64 [[REG4:(d[0-9]+)]], #1.000000e+00
-; SOFT: vcvt.f32.f64 s0, [[REG4]]
+; SOFT: vcvt.f32.f64 {{s[0-9]+}}, [[REG4]]
 ; SOFT: vshr.u64 [[REG4]], [[REG4]], #32
 ; SOFT: vmov.i32 [[REG5:(d[0-9]+)]], #0x80000000
-; SOFT: vbsl [[REG5]], [[REG4]], d0
+; SOFT: vbsl [[REG5]], [[REG4]], {{d[0-9]+}}
   %call80 = tail call double @copysign(double 1.000000e+00, double undef)
   %conv81 = fptrunc double %call80 to float
   %tmp88 = bitcast float %conv81 to i32
