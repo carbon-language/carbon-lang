@@ -41,6 +41,8 @@
 #include <stdint.h>
 #include <limits.h>
 
+#include "int_lib.h"
+
 typedef float src_t;
 typedef uint32_t src_rep_t;
 #define SRC_REP_C UINT32_C
@@ -66,6 +68,8 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 }
 
 // End helper routines.  Conversion implementation follows.
+
+ARM_EABI_FNALIAS(f2d, extendsfdf2);
 
 dst_t __extendsfdf2(src_t a) {
     

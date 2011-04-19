@@ -15,6 +15,10 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(dmul, muldf3);
+
 fp_t __muldf3(fp_t a, fp_t b) {
     
     const unsigned int aExponent = toRep(a) >> significandBits & maxExponent;

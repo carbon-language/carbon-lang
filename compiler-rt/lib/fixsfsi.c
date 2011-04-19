@@ -16,6 +16,10 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(f2iz, fixsfsi);
+
 int __fixsfsi(fp_t a) {
     
     // Break a into sign, exponent, significand

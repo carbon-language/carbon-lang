@@ -16,6 +16,10 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(i2f, floatsisf);
+
 fp_t __floatsisf(int a) {
     
     const int aWidth = sizeof a * CHAR_BIT;

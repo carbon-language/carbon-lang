@@ -15,9 +15,15 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
 fp_t __addsf3(fp_t a, fp_t b);
+
+ARM_EABI_FNALIAS(fsub, subsf3);
 
 // Subtraction; flip the sign bit of b and add.
 fp_t __subsf3(fp_t a, fp_t b) {
     return __addsf3(a, fromRep(toRep(b) ^ signBit));
 }
+
+/* FIXME: rsub for ARM EABI */

@@ -15,9 +15,16 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
 fp_t __adddf3(fp_t a, fp_t b);
+
+
+ARM_EABI_FNALIAS(dsub, subdf3);
 
 // Subtraction; flip the sign bit of b and add.
 fp_t __subdf3(fp_t a, fp_t b) {
     return __adddf3(a, fromRep(toRep(b) ^ signBit));
 }
+
+/* FIXME: rsub for ARM EABI */

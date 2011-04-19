@@ -18,6 +18,8 @@
 
 /* Precondition:  0 <= b < bits_in_dword */
 
+ARM_EABI_FNALIAS(llsl, ashldi3);
+
 di_int
 __ashldi3(di_int a, si_int b)
 {

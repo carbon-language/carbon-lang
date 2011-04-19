@@ -15,6 +15,10 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(fadd, addsf3);
+
 fp_t __addsf3(fp_t a, fp_t b) {
 
     rep_t aRep = toRep(a);

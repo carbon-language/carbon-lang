@@ -26,6 +26,8 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
+ARM_EABI_FNALIAS(f2uiz, fixunssfsi);
+
 su_int
 __fixunssfsi(float a)
 {

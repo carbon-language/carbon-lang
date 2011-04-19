@@ -23,6 +23,10 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(ul2f, floatundisf);
+
 float
 __floatundisf(du_int a)
 {

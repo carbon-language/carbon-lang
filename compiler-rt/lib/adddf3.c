@@ -12,8 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "int_lib.h"
+
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
+
+ARM_EABI_FNALIAS(dadd, adddf3);
 
 fp_t __adddf3(fp_t a, fp_t b) {
     

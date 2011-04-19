@@ -26,6 +26,8 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
+ARM_EABI_FNALIAS(d2ulz, fixunsdfdi);
+
 du_int
 __fixunsdfdi(double a)
 {

@@ -18,6 +18,8 @@ su_int __udivsi3(su_int n, su_int d);
 
 /* Returns: a / b */
 
+ARM_EABI_FNALIAS(idiv, divsi3);
+
 si_int
 __divsi3(si_int a, si_int b)
 {

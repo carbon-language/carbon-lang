@@ -14,6 +14,10 @@
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(fneg, negsf2);
+
 fp_t __negsf2(fp_t a) {
     return fromRep(toRep(a) ^ signBit);
 }

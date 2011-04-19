@@ -23,6 +23,8 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
+ARM_EABI_FNALIAS(d2lz, fixsfdi);
+
 di_int
 __fixsfdi(float a)
 {

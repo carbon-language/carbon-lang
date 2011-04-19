@@ -40,6 +40,8 @@ __muldsi3(su_int a, su_int b)
 
 /* Returns: a * b */
 
+ARM_EABI_FNALIAS(lmul, muldi3);
+
 di_int
 __muldi3(di_int a, di_int b)
 {

@@ -16,6 +16,10 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(i2d, floatsidf);
+
 fp_t __floatsidf(int a) {
     
     const int aWidth = sizeof a * CHAR_BIT;

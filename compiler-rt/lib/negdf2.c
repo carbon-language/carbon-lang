@@ -14,6 +14,10 @@
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(dneg, negdf2);
+
 fp_t __negdf2(fp_t a) {
     return fromRep(toRep(a) ^ signBit);
 }

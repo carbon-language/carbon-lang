@@ -26,6 +26,10 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
+#include "int_lib.h"
+
+ARM_EABI_FNALIAS(f2ulz, fixunssfdi);
+
 du_int
 __fixunssfdi(float a)
 {

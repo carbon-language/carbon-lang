@@ -30,6 +30,8 @@
 
 .syntax unified
 .align 3
+// Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.
+DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 //  We use a simple digit by digit algorithm; before we get into the actual 
 //  divide loop, we must calculate the left-shift amount necessary to align
