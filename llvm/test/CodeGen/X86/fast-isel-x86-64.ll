@@ -142,5 +142,7 @@ if.end:                                           ; preds = %if.then, %entry
   ret void
 ; CHECK: test12:
 ; CHECK: testb	$1,
+; CHECK-NEXT: je L
+; CHECK-NEXT: movb	$0, %al
 }
 

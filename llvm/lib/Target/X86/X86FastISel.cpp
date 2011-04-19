@@ -1084,7 +1084,14 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         if (OpReg == 0) return false;
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TestOpc))
           .addReg(OpReg).addImm(1);
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::JNE_4))
+        
+        unsigned JmpOpc = X86::JNE_4;
+        if (FuncInfo.MBB->isLayoutSuccessor(TrueMBB)) {
+          std::swap(TrueMBB, FalseMBB);
+          JmpOpc = X86::JE_4;
+        }
+        
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(JmpOpc))
           .addMBB(TrueMBB);
         FastEmitBranch(FalseMBB, DL);
         FuncInfo.MBB->addSuccessor(TrueMBB);
