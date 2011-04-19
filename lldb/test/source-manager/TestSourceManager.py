@@ -96,7 +96,8 @@ class SourceManagerTestCase(TestBase):
         # Read the main.c file content.
         with open('main.c', 'r') as f:
             original_content = f.read()
-            print "original content:", original_content
+            if self.TraceOn():
+                print "original content:", original_content
 
         # Modify the in-memory copy of the original source code.
         new_content = original_content.replace('Hello world', 'Hello lldb', 1)
@@ -107,11 +108,13 @@ class SourceManagerTestCase(TestBase):
             time.sleep(1)
             with open('main.c', 'w') as f:
                 f.write(original_content)
-            with open('main.c', 'r') as f:
-                print "content restored to:", f.read()
+            if self.TraceOn():
+                with open('main.c', 'r') as f:
+                    print "content restored to:", f.read()
             # Touch the file just to be sure.
             os.utime('main.c', None)
-            print "os.path.getmtime() after restore:", os.path.getmtime('main.c')
+            if self.TraceOn():
+                print "os.path.getmtime() after restore:", os.path.getmtime('main.c')
 
 
 
@@ -119,8 +122,9 @@ class SourceManagerTestCase(TestBase):
         with open('main.c', 'w') as f:
             time.sleep(1)
             f.write(new_content)
-            print "new content:", new_content
-            print "os.path.getmtime() after writing new content:", os.path.getmtime('main.c')
+            if self.TraceOn():
+                print "new content:", new_content
+                print "os.path.getmtime() after writing new content:", os.path.getmtime('main.c')
             # Add teardown hook to restore the file to the original content.
             self.addTearDownHook(restore_file)
 
