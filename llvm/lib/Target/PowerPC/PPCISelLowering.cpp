@@ -2444,7 +2444,8 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     if (!DAG.getTarget().getSubtarget<PPCSubtarget>().isJITCodeModel()) {
       unsigned OpFlags = 0;
       if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
-          PPCSubTarget.getDarwinVers() < 9 &&
+          (!PPCSubTarget.getTargetTriple().isOSX() ||
+           PPCSubTarget.getTargetTriple().isOSXVersionLT(10, 5)) &&
           (G->getGlobal()->isDeclaration() ||
            G->getGlobal()->isWeakForLinker())) {
         // PC-relative references to external symbols should go through $stub,
@@ -2467,7 +2468,8 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     unsigned char OpFlags = 0;
 
     if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
-        PPCSubTarget.getDarwinVers() < 9) {
+        (!PPCSubTarget.getTargetTriple().isOSX() ||
+         PPCSubTarget.getTargetTriple().isOSXVersionLT(10, 5))) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.
