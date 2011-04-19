@@ -12,6 +12,7 @@
 // conversion is undefined for out of range values in the C standard.
 //
 //===----------------------------------------------------------------------===//
+#include "abi.h"
 
 #define DOUBLE_PRECISION
 #include "fp_lib.h"
