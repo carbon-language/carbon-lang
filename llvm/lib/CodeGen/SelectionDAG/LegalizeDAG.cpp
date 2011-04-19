@@ -66,9 +66,6 @@ class SelectionDAGLegalize {
   /// against each other, including inserted libcalls.
   SmallVector<SDValue, 8> LastCALLSEQ;
 
-  // Track CALLSEQ_BEGIN/CALLSEQ_END nesting.
-  int depthCALLSEQ;
-
   enum LegalizeAction {
     Legal,      // The target natively supports this operation.
     Promote,    // This operation should be executed in a larger type.
@@ -183,16 +180,13 @@ private:
   void ExpandNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
   void PromoteNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
 
-  SDValue getLastCALLSEQ() { return LastCALLSEQ.back(); /*[depthCALLSEQ];*/ }
-  void setLastCALLSEQ(const SDValue s) { LastCALLSEQ.back() /*[depthCALLSEQ]*/ = s; }
+  SDValue getLastCALLSEQ() { return LastCALLSEQ.back();  }
+  void setLastCALLSEQ(const SDValue s) { LastCALLSEQ.back() = s; }
   void pushLastCALLSEQ(SDValue s) {
-    depthCALLSEQ++;
     LastCALLSEQ.push_back(s);
   }
   void popLastCALLSEQ() {
     LastCALLSEQ.pop_back();
-    depthCALLSEQ--;
-    assert(depthCALLSEQ >= 0 && "excess pop of LastCALLSEQ");
   }
 };
 }
@@ -239,7 +233,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
 }
 
 void SelectionDAGLegalize::LegalizeDAG() {
-  depthCALLSEQ = 0;
   pushLastCALLSEQ(DAG.getEntryNode());
 
   // The legalize process is inherently a bottom-up recursive process (users
@@ -952,7 +945,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case ISD::BR_JT:
     case ISD::BR_CC:
     case ISD::BRCOND:
-      assert(depthCALLSEQ == 1 && "branch inside CALLSEQ_BEGIN/END?");
+      assert(LastCALLSEQ.size() == 1 && "branch inside CALLSEQ_BEGIN/END?");
       // Branches tweak the chain to include LastCALLSEQ
       Ops[0] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ops[0],
                            getLastCALLSEQ());
@@ -3546,7 +3539,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     LegalizeSetCCCondCode(TLI.getSetCCResultType(Tmp2.getValueType()),
                           Tmp2, Tmp3, Tmp4, dl);
-    assert(depthCALLSEQ == 1 && "branch inside CALLSEQ_BEGIN/END?");
+    assert(LastCALLSEQ.size() == 1 && "branch inside CALLSEQ_BEGIN/END?");
     setLastCALLSEQ(DAG.getEntryNode());
 
     assert(!Tmp3.getNode() && "Can't legalize BR_CC with legal condition!");
