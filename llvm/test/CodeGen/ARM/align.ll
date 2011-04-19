@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=ELF
-; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=arm-apple-darwin10 | FileCheck %s -check-prefix=DARWIN
 
 @a = global i1 true
 ; no alignment

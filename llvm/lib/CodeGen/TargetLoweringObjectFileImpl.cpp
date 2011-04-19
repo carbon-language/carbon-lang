@@ -479,18 +479,10 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
 
+  // .comm doesn't support alignment before Leopard.
   Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
-  if (T.getOS() == Triple::Darwin) {
-    switch (T.getDarwinMajorNumber()) {
-    case 7:  // 10.3 Panther.
-    case 8:  // 10.4 Tiger.
-      CommDirectiveSupportsAlignment = false;
-      break;
-    case 9:   // 10.5 Leopard.
-    case 10:  // 10.6 SnowLeopard.
-      break;
-    }
-  }
+  if (T.isOSX() && T.isOSXVersionLT(10, 5))
+    CommDirectiveSupportsAlignment = false;
 
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
