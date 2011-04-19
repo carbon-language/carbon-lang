@@ -44,8 +44,7 @@ class FrameAPITestCase(TestBase):
         # Note that we don't assign the process to self.process as in other test
         # cases.  We want the inferior to run till it exits and there's no need
         # for the testing framework to kill the inferior upon tearDown().
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         process = target.GetProcess()
         self.assertTrue(process.GetState() == lldb.eStateStopped,
@@ -63,7 +62,8 @@ class FrameAPITestCase(TestBase):
             numFrames = min(3, thread.GetNumFrames())
             for i in range(numFrames):
                 frame = thread.GetFrameAtIndex(i)
-                print "frame:", frame
+                if self.TraceOn():
+                    print "frame:", frame
                 #print "frame.FindValue('val', lldb.eValueTypeVariableArgument)", frame.FindValue('val', lldb.eValueTypeVariableArgument).GetValue(frame)
                 #print "frame.FindValue('ch', lldb.eValueTypeVariableArgument)", frame.FindValue('ch', lldb.eValueTypeVariableArgument).GetValue(frame)
                 #print "frame.EvaluateExpression('val'):", frame.EvaluateExpression('val').GetValue(frame)
@@ -112,8 +112,9 @@ class FrameAPITestCase(TestBase):
         # By design, the 'a' call frame has the following arg vals:
         #     o a((int)val=1, (char)ch='A')
         #     o a((int)val=3, (char)ch='A')
-        print "Full stack traces when stopped on the breakpoint 'c':"
-        print session.getvalue()
+        if self.TraceOn():
+            print "Full stack traces when stopped on the breakpoint 'c':"
+            print session.getvalue()
         self.expect(session.getvalue(), "Argugment values displayed correctly",
                     exe=False,
             substrs = ["a((int)val=1, (char)ch='A')",
