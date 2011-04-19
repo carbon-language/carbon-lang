@@ -24,12 +24,11 @@ using namespace llvm;
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  case Triple::Darwin:
+
+  if (TheTriple.isOSDarwin())
     return new ARMMCAsmInfoDarwin();
-  default:
-    return new ARMELFMCAsmInfo();
-  }
+
+  return new ARMELFMCAsmInfo();
 }
 
 // This is duplicated code. Refactor this.
@@ -39,17 +38,17 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     MCCodeEmitter *Emitter,
                                     bool RelaxAll,
                                     bool NoExecStack) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin())
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
+
+  if (TheTriple.isOSWindows()) {
     llvm_unreachable("ARM does not support Windows COFF format");
     return NULL;
-  default:
-    return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
   }
+
+  return createELFStreamer(Ctx, TAB, OS, Emitter, RelaxAll, NoExecStack);
 }
 
 extern "C" void LLVMInitializeARMTarget() {

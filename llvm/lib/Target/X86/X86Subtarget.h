@@ -167,9 +167,13 @@ public:
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 
-  bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
-  bool isTargetFreeBSD() const { return TargetTriple.getOS() == Triple::FreeBSD; }
-  bool isTargetSolaris() const { return TargetTriple.getOS() == Triple::Solaris; }
+  bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
+  bool isTargetFreeBSD() const {
+    return TargetTriple.getOS() == Triple::FreeBSD;
+  }
+  bool isTargetSolaris() const {
+    return TargetTriple.getOS() == Triple::Solaris;
+  }
 
   // ELF is a reasonably sane default and the only other X86 targets we
   // support are Darwin and Windows. Just use "not those".

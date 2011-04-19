@@ -26,19 +26,14 @@ using namespace llvm;
 
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  case Triple::Darwin:
+
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
     return new X86MCAsmInfoDarwin(TheTriple);
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
-    if (TheTriple.getEnvironment() == Triple::MachO)
-      return new X86MCAsmInfoDarwin(TheTriple);
-    else
-      return new X86MCAsmInfoCOFF(TheTriple);
-  default:
-    return new X86ELFMCAsmInfo(TheTriple);
-  }
+
+  if (TheTriple.isOSWindows())
+    return new X86MCAsmInfoCOFF(TheTriple);
+
+  return new X86ELFMCAsmInfo(TheTriple);
 }
 
 static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
@@ -48,19 +43,14 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     bool RelaxAll,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  case Triple::Darwin:
+
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
     return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
-    if (TheTriple.getEnvironment() == Triple::MachO)
-      return createMachOStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll);
-    else
-      return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
-  default:
-    return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
-  }
+
+  if (TheTriple.isOSWindows())
+    return createWinCOFFStreamer(Ctx, TAB, *_Emitter, _OS, RelaxAll);
+
+  return createELFStreamer(Ctx, TAB, _OS, _Emitter, RelaxAll, NoExecStack);
 }
 
 extern "C" void LLVMInitializeX86Target() {

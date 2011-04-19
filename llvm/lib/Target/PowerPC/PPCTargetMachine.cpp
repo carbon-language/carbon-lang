@@ -24,7 +24,7 @@ using namespace llvm;
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
-  if (TheTriple.getOS() == Triple::Darwin)
+  if (TheTriple.isOSDarwin())
     return new PPCMCAsmInfoDarwin(isPPC64);
   return new PPCLinuxMCAsmInfo(isPPC64);
   
@@ -37,12 +37,10 @@ static MCStreamer *createMCStreamer(const Target &T, const std::string &TT,
                                     MCCodeEmitter *Emitter,
                                     bool RelaxAll,
                                     bool NoExecStack) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  if (Triple(TT).isOSDarwin())
     return createMachOStreamer(Ctx, TAB, OS, Emitter, RelaxAll);
-  default:
-    return NULL;
-  }
+
+  return NULL;
 }
 
 extern "C" void LLVMInitializePowerPCTarget() {

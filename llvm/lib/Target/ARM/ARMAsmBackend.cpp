@@ -501,18 +501,16 @@ void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                             const std::string &TT) {
   Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  case Triple::Darwin: {
+
+  if (TheTriple.isOSDarwin()) {
     if (TheTriple.getArchName() == "armv6" ||
         TheTriple.getArchName() == "thumbv6")
       return new DarwinARMAsmBackend(T, object::mach::CSARM_V6);
     return new DarwinARMAsmBackend(T, object::mach::CSARM_V7);
   }
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
+
+  if (TheTriple.isOSWindows())
     assert(0 && "Windows not supported on ARM");
-  default:
-    return new ELFARMAsmBackend(T, Triple(TT).getOS());
-  }
+
+  return new ELFARMAsmBackend(T, Triple(TT).getOS());
 }

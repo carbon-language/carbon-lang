@@ -414,34 +414,26 @@ public:
 
 TargetAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                                const std::string &TT) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
     return new DarwinX86_32AsmBackend(T);
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
-    if (Triple(TT).getEnvironment() == Triple::MachO)
-      return new DarwinX86_32AsmBackend(T);
-    else
-      return new WindowsX86AsmBackend(T, false);
-  default:
-    return new ELFX86_32AsmBackend(T, Triple(TT).getOS());
-  }
+
+  if (TheTriple.isOSWindows())
+    return new WindowsX86AsmBackend(T, false);
+
+  return new ELFX86_32AsmBackend(T, TheTriple.getOS());
 }
 
 TargetAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                                const std::string &TT) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
     return new DarwinX86_64AsmBackend(T);
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
-    if (Triple(TT).getEnvironment() == Triple::MachO)
-      return new DarwinX86_64AsmBackend(T);
-    else
-      return new WindowsX86AsmBackend(T, true);
-  default:
-    return new ELFX86_64AsmBackend(T, Triple(TT).getOS());
-  }
+
+  if (TheTriple.isOSWindows())
+    return new WindowsX86AsmBackend(T, true);
+
+  return new ELFX86_64AsmBackend(T, TheTriple.getOS());
 }

@@ -150,14 +150,13 @@ void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
 
 TargetAsmBackend *llvm::createMBlazeAsmBackend(const Target &T,
                                             const std::string &TT) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  Triple TheTriple(TT);
+
+  if (TheTriple.isOSDarwin())
     assert(0 && "Mac not supported on MBlaze");
-  case Triple::MinGW32:
-  case Triple::Cygwin:
-  case Triple::Win32:
+
+  if (TheTriple.isOSWindows())
     assert(0 && "Windows not supported on MBlaze");
-  default:
-    return new ELFMBlazeAsmBackend(T, Triple(TT).getOS());
-  }
+
+  return new ELFMBlazeAsmBackend(T, TheTriple.getOS());
 }

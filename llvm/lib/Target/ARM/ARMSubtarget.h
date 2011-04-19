@@ -201,7 +201,7 @@ protected:
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }
 
-  bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
+  bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetELF() const { return !isTargetDarwin(); }
 
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }

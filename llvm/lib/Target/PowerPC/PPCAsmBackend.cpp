@@ -110,10 +110,8 @@ namespace {
 
 TargetAsmBackend *llvm::createPPCAsmBackend(const Target &T,
                                             const std::string &TT) {
-  switch (Triple(TT).getOS()) {
-  case Triple::Darwin:
+  if (Triple(TT).isOSDarwin())
     return new DarwinPPCAsmBackend(T);
-  default:
-    return 0;
-  }
+
+  return 0;
 }

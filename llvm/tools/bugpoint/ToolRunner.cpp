@@ -758,8 +758,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
       // For ARM architectures we don't want this flag. bugpoint isn't
       // explicitly told what architecture it is working on, so we get
       // it from gcc flags
-      if ((TargetTriple.getOS() == Triple::Darwin) &&
-          !IsARMArchitecture(GCCArgs))
+      if (TargetTriple.isOSDarwin() && !IsARMArchitecture(GCCArgs))
         GCCArgs.push_back("-force_cpusubtype_ALL");
     }
   }
@@ -900,7 +899,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   GCCArgs.push_back("none");
   if (TargetTriple.getArch() == Triple::sparc)
     GCCArgs.push_back("-G");       // Compile a shared library, `-G' for Sparc
-  else if (TargetTriple.getOS() == Triple::Darwin) {
+  else if (TargetTriple.isOSDarwin()) {
     // link all source files into a single module in data segment, rather than
     // generating blocks. dynamic_lookup requires that you set
     // MACOSX_DEPLOYMENT_TARGET=10.3 in your env.  FIXME: it would be better for
