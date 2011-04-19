@@ -78,10 +78,8 @@ private:
 
   bool X86FastEmitLoad(EVT VT, const X86AddressMode &AM, unsigned &RR);
 
-  bool X86FastEmitStore(EVT VT, const Value *Val,
-                        const X86AddressMode &AM);
-  bool X86FastEmitStore(EVT VT, unsigned Val,
-                        const X86AddressMode &AM);
+  bool X86FastEmitStore(EVT VT, const Value *Val, const X86AddressMode &AM);
+  bool X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM);
 
   bool X86FastEmitExtend(ISD::NodeType Opc, EVT DstVT, unsigned Src, EVT SrcVT,
                          unsigned &ResultReg);
@@ -225,8 +223,7 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
 /// and a displacement offset, or a GlobalAddress,
 /// i.e. V. Return true if it is possible.
 bool
-X86FastISel::X86FastEmitStore(EVT VT, unsigned Val,
-                              const X86AddressMode &AM) {
+X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -1537,9 +1534,25 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       }
     }
     
-    unsigned Arg = getRegForValue(ArgVal);
-    if (Arg == 0)
-      return false;
+    unsigned ArgReg;
+    if (ArgVal->getType()->isIntegerTy(1) && isa<TruncInst>(ArgVal) &&
+        cast<TruncInst>(ArgVal)->getParent() == I->getParent() &&
+        ArgVal->hasOneUse()) {
+      // Passing bools around ends up doing a trunc to i1 and passing it.
+      // Codegen this as an argument + "and 1".
+      ArgVal = cast<TruncInst>(ArgVal)->getOperand(0);
+      ArgReg = getRegForValue(ArgVal);
+      if (ArgReg == 0) return false;
+      
+      MVT ArgVT;
+      if (!isTypeLegal(ArgVal->getType(), ArgVT)) return false;
+      
+      ArgReg = FastEmit_ri(ArgVT, ArgVT, ISD::AND, ArgReg,
+                           ArgVal->hasOneUse(), 1);
+    } else {
+      ArgReg = getRegForValue(ArgVal);
+      if (ArgReg == 0) return false;
+    }
 
     // FIXME: Only handle *easy* calls for now.
     if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
@@ -1555,7 +1568,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
     Flags.setOrigAlign(OriginalAlignment);
 
-    Args.push_back(Arg);
+    Args.push_back(ArgReg);
     ArgVals.push_back(ArgVal);
     ArgVTs.push_back(ArgVT);
     ArgFlags.push_back(Flags);

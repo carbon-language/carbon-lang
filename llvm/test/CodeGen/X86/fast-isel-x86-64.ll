@@ -157,3 +157,16 @@ define void @test13() nounwind {
 ; CHECK-NEXT: callq
 }
 
+
+
+; rdar://9297003 - fast isel bails out on all functions taking bools
+define void @test14(i8 %tmp) nounwind ssp noredzone {
+entry:
+  %tobool = trunc i8 %tmp to i1
+  call void @test13f(i1 zeroext %tobool) noredzone
+  ret void
+; CHECK: test14:
+; CHECK: andb	$1, 
+; CHECK: callq
+}
+
