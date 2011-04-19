@@ -42,12 +42,12 @@ DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
     tst     b,      b   // detect divide-by-zero
     clz     r3,     b
     mov     q,      #0
-    beq     L_return    // return 0 if b is zero.
+    beq     LOCAL_LABEL(return)    // return 0 if b is zero.
     mov     one,    #1
     subs    i,      r3, r4
-    blt     L_return    // return 0 if MSB(a) < MSB(b)
+    blt     LOCAL_LABEL(return)    // return 0 if MSB(a) < MSB(b)
 
-L_mainLoop:
+LOCAL_LABEL(mainLoop):
 //  This loop basically implements the following:
 //
 //  do {
@@ -65,7 +65,7 @@ L_mainLoop:
     orrhs   q,      q,one, lsl i
     movhs   a,      r
     subsne  i,      i, #1
-    bhi     L_mainLoop
+    bhi     LOCAL_LABEL(mainLoop)
 
 //  Do the final test subtraction and update of quotient (i == 0), as it is
 //  not performed in the main loop.
@@ -73,7 +73,7 @@ L_mainLoop:
     orrhs   q,      #1
     movhs   a,      r
 
-L_return:
+LOCAL_LABEL(return):
 //  Store the remainder, and move the quotient to r0, then return.
     str     a,     [r2]
     mov     r0,     q

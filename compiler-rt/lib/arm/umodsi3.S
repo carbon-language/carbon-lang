@@ -33,7 +33,7 @@ DEFINE_COMPILERRT_FUNCTION(__umodsi3)
     subs    i,      r3, r2
     bxlt    lr              // return a if MSB(a) < MSB(b)
 
-L_mainLoop:
+LOCAL_LABEL(mainLoop):
 //  This loop basically implements the following:
 //
 //  do {
@@ -49,7 +49,7 @@ L_mainLoop:
     subs    r,      a,  b, lsl i
     movhs   a,      r
     subsne  i,      i, #1
-    bhi     L_mainLoop
+    bhi     LOCAL_LABEL(mainLoop)
 
 //  Do the final test subtraction and update of remainder (i == 0), as it is
 //  not performed in the main loop.
