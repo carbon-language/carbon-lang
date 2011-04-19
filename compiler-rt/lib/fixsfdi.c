@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -25,7 +26,7 @@
 
 ARM_EABI_FNALIAS(d2lz, fixsfdi);
 
-di_int
+COMPILER_RT_ABI di_int
 __fixsfdi(float a)
 {
     float_bits fb;

@@ -15,11 +15,10 @@
 // underflow with correct rounding.
 //
 //===----------------------------------------------------------------------===//
+#include "abi.h"
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
-
-#include "int_lib.h"
 
 ARM_EABI_FNALIAS(fdiv, divsf3);
 

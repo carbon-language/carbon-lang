@@ -41,7 +41,7 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include "int_lib.h"
+#include "abi.h"
 
 typedef double src_t;
 typedef uint64_t src_rep_t;
@@ -70,7 +70,8 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 
 ARM_EABI_FNALIAS(d2f, truncdfsf2);
 
-dst_t __truncdfsf2(src_t a) {
+COMPILER_RT_ABI dst_t
+__truncdfsf2(src_t a) {
     
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.

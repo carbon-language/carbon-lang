@@ -11,6 +11,7 @@
  *
  *===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
 /* Effects: aborts if abs(x) < 0 */
 
-di_int
+COMPILER_RT_ABI di_int
 __absvdi2(di_int a)
 {
     const int N = (int)(sizeof(di_int) * CHAR_BIT);

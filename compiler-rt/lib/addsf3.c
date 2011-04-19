@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "abi.h"
+
 #define SINGLE_PRECISION
 #include "fp_lib.h"
-
-#include "int_lib.h"
 
 ARM_EABI_FNALIAS(fadd, addsf3);
 

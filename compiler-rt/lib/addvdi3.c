@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
 /* Effects: aborts if a + b overflows */
 
-di_int
+COMPILER_RT_ABI di_int
 __addvdi3(di_int a, di_int b)
 {
     di_int s = a + b;

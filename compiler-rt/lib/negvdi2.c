@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
 /* Effects: aborts if -a overflows */
 
-di_int
+COMPILER_RT_ABI di_int
 __negvdi2(di_int a)
 {
     const di_int MIN = (di_int)1 << ((int)(sizeof(di_int) * CHAR_BIT)-1);

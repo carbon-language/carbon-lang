@@ -41,7 +41,7 @@
 #include <stdint.h>
 #include <limits.h>
 
-#include "int_lib.h"
+#include "abi.h"
 
 typedef float src_t;
 typedef uint32_t src_rep_t;

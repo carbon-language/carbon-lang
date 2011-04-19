@@ -11,15 +11,16 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
-extern si_int __divsi3(si_int a, si_int b);
+extern COMPILER_RT_ABI si_int __divsi3(si_int a, si_int b);
 
 
 /* Returns: a / b, *rem = a % b  */
 
-si_int
+COMPILER_RT_ABI si_int
 __divmodsi4(si_int a, si_int b, si_int* rem)
 {
   si_int d = __divsi3(a,b);

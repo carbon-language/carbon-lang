@@ -11,12 +11,13 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
 /* Returns: a ^ b */
 
-double
+COMPILER_RT_ABI double
 __powidf2(double a, si_int b)
 {
     const int recip = b < 0;

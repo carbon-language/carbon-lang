@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -18,7 +19,7 @@
 
 /* Precondition: a != 0 */
 
-si_int
+COMPILER_RT_ABI si_int
 __ctzdi2(di_int a)
 {
     dwords x;

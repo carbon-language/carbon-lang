@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -18,7 +19,7 @@
  * the value zero if a is zero. The least significant bit is index one.
  */
 
-si_int
+COMPILER_RT_ABI si_int
 __ffsdi2(di_int a)
 {
     dwords x;

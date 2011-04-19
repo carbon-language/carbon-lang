@@ -12,7 +12,7 @@
  * ===----------------------------------------------------------------------===
  */
 
-#include "int_lib.h"
+#include "abi.h"
 #include <float.h>
 
 /* Returns: convert a to a double, rounding toward even. */
@@ -34,7 +34,7 @@ ARM_EABI_FNALIAS(ul2d, floatundidf);
 
 #include <stdint.h>
 
-double
+COMPILER_RT_ABI double
 __floatundidf(du_int a)
 {
 	static const double twop52 = 0x1.0p52;
@@ -56,7 +56,7 @@ __floatundidf(du_int a)
  * set, and we don't want to code-gen to an unknown soft-float implementation.
  */ 
 
-double
+COMPILER_RT_ABI double
 __floatundidf(du_int a)
 {
     if (a == 0)

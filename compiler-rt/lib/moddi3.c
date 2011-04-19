@@ -11,14 +11,15 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
-du_int __udivmoddi4(du_int a, du_int b, du_int* rem);
+COMPILER_RT_ABI du_int __udivmoddi4(du_int a, du_int b, du_int* rem);
 
 /* Returns: a % b */
 
-di_int
+COMPILER_RT_ABI di_int
 __moddi3(di_int a, di_int b)
 {
     const int bits_in_dword_m1 = (int)(sizeof(di_int) * CHAR_BIT) - 1;

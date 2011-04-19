@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
 /* Effects: aborts if a + b overflows */
 
-si_int
+COMPILER_RT_ABI si_int
 __addvsi3(si_int a, si_int b)
 {
     si_int s = a + b;

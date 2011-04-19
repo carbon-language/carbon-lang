@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -20,7 +21,7 @@
 
 ARM_EABI_FNALIAS(uidiv, udivsi3);
 
-su_int
+COMPILER_RT_ABI su_int
 __udivsi3(su_int n, su_int d)
 {
     const unsigned n_uword_bits = sizeof(su_int) * CHAR_BIT;

@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -19,7 +20,7 @@
  *           if (a >  b) returns 2
  */
 
-si_int
+COMPILER_RT_ABI si_int
 __ucmpdi2(du_int a, du_int b)
 {
     udwords x;

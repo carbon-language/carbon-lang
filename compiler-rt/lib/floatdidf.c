@@ -11,6 +11,7 @@
  *
  *===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <float.h>
@@ -23,8 +24,6 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-#include "int_lib.h"
-
 ARM_EABI_FNALIAS(l2d, floatdidf);
 
 #ifndef __SOFT_FP__
@@ -33,7 +32,7 @@ ARM_EABI_FNALIAS(l2d, floatdidf);
  */
 #include <stdint.h>
 
-double
+COMPILER_RT_ABI double
 __floatdidf(di_int a)
 {
 	static const double twop52 = 0x1.0p52;
@@ -53,7 +52,7 @@ __floatdidf(di_int a)
  * set, and we don't want to code-gen to an unknown soft-float implementation.
  */
 
-double
+COMPILER_RT_ABI double
 __floatdidf(di_int a)
 {
     if (a == 0)

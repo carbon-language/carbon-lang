@@ -11,12 +11,13 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
 /* Returns: a ^ b */
 
-float
+COMPILER_RT_ABI float
 __powisf2(float a, si_int b)
 {
     const int recip = b < 0;

@@ -12,16 +12,15 @@
 // conversion is undefined for out of range values in the C standard.
 //
 //===----------------------------------------------------------------------===//
+#include "abi.h"
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 
-#include "int_lib.h"
-
 ARM_EABI_FNALIAS(f2iz, fixsfsi);
 
-int __fixsfsi(fp_t a) {
-    
+COMPILER_RT_ABI int
+__fixsfsi(fp_t a) {
     // Break a into sign, exponent, significand
     const rep_t aRep = toRep(a);
     const rep_t aAbs = aRep & absMask;

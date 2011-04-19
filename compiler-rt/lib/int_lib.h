@@ -37,13 +37,6 @@ extern void panic (const char *, ...);
 #define INFINITY HUGE_VAL
 #endif /* INFINITY */
 
-#if __ARM_EABI__
-# define ARM_EABI_FNALIAS(aeabi_name, name)         \
-  void __aeabi_##aeabi_name() __attribute__((alias("__" #name)));
-#else
-# define ARM_EABI_FNALIAS(aeabi_name, name)
-#endif
-
 typedef      int si_int;
 typedef unsigned su_int;
 

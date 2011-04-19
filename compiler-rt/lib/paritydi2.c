@@ -11,14 +11,15 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
 /* Returns: 1 if number of bits is odd else returns 0 */
 
-si_int __paritysi2(si_int a);
+si_int COMPILER_RT_ABI __paritysi2(si_int a);
 
-si_int
+COMPILER_RT_ABI si_int
 __paritydi2(di_int a)
 {
     dwords x;

@@ -11,20 +11,21 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
-extern su_int __udivsi3(su_int n, su_int d);
+extern su_int COMPILER_RT_ABI __udivsi3(su_int n, su_int d);
 
 
 /* Returns: a / b, *rem = a % b  */
 
-su_int 
+COMPILER_RT_ABI su_int
 __udivmodsi4(su_int a, su_int b, su_int* rem)
 {
   si_int d = __udivsi3(a,b);
   *rem = a - (d*b);
-  return d; 
+  return d;
 }
 
 

@@ -11,6 +11,7 @@
  *
  * ===----------------------------------------------------------------------===
  */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -20,7 +21,7 @@
 
 ARM_EABI_FNALIAS(lasr, ashrdi3);
 
-di_int
+COMPILER_RT_ABI di_int
 __ashrdi3(di_int a, si_int b)
 {
     const int bits_in_word = (int)(sizeof(si_int) * CHAR_BIT);

@@ -10,7 +10,8 @@
  * This file implements __absvsi2 for the compiler_rt library.
  *
  * ===----------------------------------------------------------------------===
- */ 
+ */
+#include "abi.h"
 
 #include "int_lib.h"
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
 /* Effects: aborts if abs(x) < 0 */
 
-si_int
+COMPILER_RT_ABI si_int
 __absvsi2(si_int a)
 {
     const int N = (int)(sizeof(si_int) * CHAR_BIT);

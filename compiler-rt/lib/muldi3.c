@@ -10,7 +10,8 @@
  * This file implements __muldi3 for the compiler_rt library.
  *
  * ===----------------------------------------------------------------------===
- */ 
+ */
+#include "abi.h"
 
 #include "int_lib.h"
 
@@ -42,7 +43,7 @@ __muldsi3(su_int a, su_int b)
 
 ARM_EABI_FNALIAS(lmul, muldi3);
 
-di_int
+COMPILER_RT_ABI di_int
 __muldi3(di_int a, di_int b)
 {
     dwords x;
