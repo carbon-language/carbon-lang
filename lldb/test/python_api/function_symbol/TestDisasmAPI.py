@@ -53,8 +53,7 @@ class DisasmAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
@@ -74,7 +73,8 @@ class DisasmAPITestCase(TestBase):
         context1 = target.ResolveSymbolContextForAddress(address1, lldb.eSymbolContextEverything)
 
         self.assertTrue(context1.IsValid())
-        print "context1:", context1
+        if self.TraceOn():
+            print "context1:", context1
 
         # Continue the inferior, the breakpoint 2 should be hit.
         self.process.Continue()
@@ -90,11 +90,15 @@ class DisasmAPITestCase(TestBase):
         function = frame0.GetFunction()
         self.assertTrue(symbol.IsValid() and function.IsValid())
 
-        print "symbol:", symbol
-        print "disassembly=>\n", lldbutil.disassemble(target, symbol)
+        disasm_output = lldbutil.disassemble(target, symbol)
+        if self.TraceOn():
+            print "symbol:", symbol
+            print "disassembly=>\n", disasm_output
 
-        print "function:", function
-        print "disassembly=>\n", lldbutil.disassemble(target, function)
+        disasm_output = lldbutil.disassemble(target, function)
+        if self.TraceOn():
+            print "function:", function
+            print "disassembly=>\n", disasm_output
 
         sa1 = symbol.GetStartAddress()
         #print "sa1:", sa1

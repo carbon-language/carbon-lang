@@ -53,8 +53,7 @@ class SymbolAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        error = lldb.SBError()
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
@@ -85,7 +84,8 @@ class SymbolAPITestCase(TestBase):
         self.assertTrue(addr_line2.GetSectionType() == lldb.eSectionTypeCode)
 
         # Now verify that both addresses point to the same module.
-        print "UUID:", addr_line1.GetModule().GetUUIDString()
+        if self.TraceOn():
+            print "UUID:", addr_line1.GetModule().GetUUIDString()
         self.assertTrue(addr_line1.GetModule().GetUUIDString() == addr_line2.GetModule().GetUUIDString())
 
         
