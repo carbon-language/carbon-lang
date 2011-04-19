@@ -61,15 +61,13 @@ class SelectionDAGLegalize {
 
   // Libcall insertion helpers.
 
-  /// LastCALLSEQ_END - This keeps track of the CALLSEQ_END node that has been
+  /// LastCALLSEQ - This keeps track of the CALLSEQ_END node that has been
   /// legalized.  We use this to ensure that calls are properly serialized
   /// against each other, including inserted libcalls.
-  SDValue LastCALLSEQ_END;
+  SmallVector<SDValue, 8> LastCALLSEQ;
 
-  /// IsLegalizingCall - This member is used *only* for purposes of providing
-  /// helpful assertions that a libcall isn't created while another call is
-  /// being legalized (which could lead to non-serialized call sequences).
-  bool IsLegalizingCall;
+  // Track CALLSEQ_BEGIN/CALLSEQ_END nesting.
+  int depthCALLSEQ;
 
   enum LegalizeAction {
     Legal,      // The target natively supports this operation.
@@ -184,6 +182,18 @@ private:
 
   void ExpandNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
   void PromoteNode(SDNode *Node, SmallVectorImpl<SDValue> &Results);
+
+  SDValue getLastCALLSEQ() { return LastCALLSEQ.back(); /*[depthCALLSEQ];*/ }
+  void setLastCALLSEQ(const SDValue s) { LastCALLSEQ.back() /*[depthCALLSEQ]*/ = s; }
+  void pushLastCALLSEQ(SDValue s) {
+    depthCALLSEQ++;
+    LastCALLSEQ.push_back(s);
+  }
+  void popLastCALLSEQ() {
+    LastCALLSEQ.pop_back();
+    depthCALLSEQ--;
+    assert(depthCALLSEQ >= 0 && "excess pop of LastCALLSEQ");
+  }
 };
 }
 
@@ -229,8 +239,8 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
 }
 
 void SelectionDAGLegalize::LegalizeDAG() {
-  LastCALLSEQ_END = DAG.getEntryNode();
-  IsLegalizingCall = false;
+  depthCALLSEQ = 0;
+  pushLastCALLSEQ(DAG.getEntryNode());
 
   // The legalize process is inherently a bottom-up recursive process (users
   // legalize their uses before themselves).  Given infinite stack space, we
@@ -258,14 +268,15 @@ void SelectionDAGLegalize::LegalizeDAG() {
 /// FindCallEndFromCallStart - Given a chained node that is part of a call
 /// sequence, find the CALLSEQ_END node that terminates the call sequence.
 static SDNode *FindCallEndFromCallStart(SDNode *Node, int depth = 0) {
-  // Nested CALLSEQ_START/END constructs aren't yet legal,
-  // but we can DTRT and handle them correctly here.
+  int next_depth = depth;
   if (Node->getOpcode() == ISD::CALLSEQ_START)
-    depth++;
-  else if (Node->getOpcode() == ISD::CALLSEQ_END) {
-    depth--;
-    if (depth == 0)
+    next_depth = depth + 1;
+  if (Node->getOpcode() == ISD::CALLSEQ_END) {
+    assert(depth > 0 && "negative depth!");
+    if (depth == 1)
       return Node;
+    else
+      next_depth = depth - 1;
   }
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
@@ -296,7 +307,7 @@ static SDNode *FindCallEndFromCallStart(SDNode *Node, int depth = 0) {
     SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
       if (User->getOperand(i) == TheChain)
-        if (SDNode *Result = FindCallEndFromCallStart(User, depth))
+        if (SDNode *Result = FindCallEndFromCallStart(User, next_depth))
           return Result;
   }
   return 0;
@@ -941,11 +952,12 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     case ISD::BR_JT:
     case ISD::BR_CC:
     case ISD::BRCOND:
-      // Branches tweak the chain to include LastCALLSEQ_END
+      assert(depthCALLSEQ == 1 && "branch inside CALLSEQ_BEGIN/END?");
+      // Branches tweak the chain to include LastCALLSEQ
       Ops[0] = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ops[0],
-                            LastCALLSEQ_END);
+                           getLastCALLSEQ());
       Ops[0] = LegalizeOp(Ops[0]);
-      LastCALLSEQ_END = DAG.getEntryNode();
+      setLastCALLSEQ(DAG.getEntryNode());
       break;
     case ISD::SHL:
     case ISD::SRL:
@@ -1034,6 +1046,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     break;
   case ISD::CALLSEQ_START: {
     SDNode *CallEnd = FindCallEndFromCallStart(Node);
+    assert(CallEnd && "didn't find CALLSEQ_END!");
 
     // Recursively Legalize all of the inputs of the call end that do not lead
     // to this call start.  This ensures that any libcalls that need be inserted
@@ -1050,9 +1063,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 
     // Merge in the last call to ensure that this call starts after the last
     // call ended.
-    if (LastCALLSEQ_END.getOpcode() != ISD::EntryToken) {
+    if (getLastCALLSEQ().getOpcode() != ISD::EntryToken) {
       Tmp1 = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                         Tmp1, LastCALLSEQ_END);
+                         Tmp1, getLastCALLSEQ());
       Tmp1 = LegalizeOp(Tmp1);
     }
 
@@ -1073,25 +1086,28 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     // sequence have been legalized, legalize the call itself.  During this
     // process, no libcalls can/will be inserted, guaranteeing that no calls
     // can overlap.
-    assert(!IsLegalizingCall && "Inconsistent sequentialization of calls!");
     // Note that we are selecting this call!
-    LastCALLSEQ_END = SDValue(CallEnd, 0);
-    IsLegalizingCall = true;
+    setLastCALLSEQ(SDValue(CallEnd, 0));
 
     // Legalize the call, starting from the CALLSEQ_END.
-    LegalizeOp(LastCALLSEQ_END);
-    assert(!IsLegalizingCall && "CALLSEQ_END should have cleared this!");
+    LegalizeOp(getLastCALLSEQ());
     return Result;
   }
   case ISD::CALLSEQ_END:
-    // If the CALLSEQ_START node hasn't been legalized first, legalize it.  This
-    // will cause this node to be legalized as well as handling libcalls right.
-    if (LastCALLSEQ_END.getNode() != Node) {
-      LegalizeOp(SDValue(FindCallStartFromCallEnd(Node), 0));
-      DenseMap<SDValue, SDValue>::iterator I = LegalizedNodes.find(Op);
-      assert(I != LegalizedNodes.end() &&
-             "Legalizing the call start should have legalized this node!");
-      return I->second;
+    {
+      SDNode *myCALLSEQ_BEGIN = FindCallStartFromCallEnd(Node);
+
+      // If the CALLSEQ_START node hasn't been legalized first, legalize it.  This
+      // will cause this node to be legalized as well as handling libcalls right.
+      if (getLastCALLSEQ().getNode() != Node) {
+        LegalizeOp(SDValue(myCALLSEQ_BEGIN, 0));
+        DenseMap<SDValue, SDValue>::iterator I = LegalizedNodes.find(Op);
+        assert(I != LegalizedNodes.end() &&
+               "Legalizing the call start should have legalized this node!");
+        return I->second;
+      }
+
+      pushLastCALLSEQ(SDValue(myCALLSEQ_BEGIN, 0));
     }
 
     // Otherwise, the call start has been legalized and everything is going
@@ -1119,9 +1135,8 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
                          Result.getResNo());
       }
     }
-    assert(IsLegalizingCall && "Call sequence imbalance between start/end?");
     // This finishes up call legalization.
-    IsLegalizingCall = false;
+    popLastCALLSEQ();
 
     // If the CALLSEQ_END node has a flag, remember that we legalized it.
     AddLegalizedOperand(SDValue(Node, 0), Result.getValue(0));
@@ -2007,7 +2022,6 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 // and leave the Hi part unset.
 SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                             bool isSigned) {
-  assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
   // The input chain to this libcall is the entry node of the function.
   // Legalizing the call will automatically add the previous call to the
   // dependence.
@@ -2043,7 +2057,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
     return DAG.getRoot();
 
   // Legalize the call sequence, starting with the chain.  This will advance
-  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // the LastCALLSEQ to the legalized version of the CALLSEQ_END node that
   // was added by LowerCallTo (guaranteeing proper serialization of calls).
   LegalizeOp(CallInfo.second);
   return CallInfo.first;
@@ -2055,7 +2069,6 @@ std::pair<SDValue, SDValue>
 SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
                                          SDNode *Node,
                                          bool isSigned) {
-  assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
   SDValue InChain = Node->getOperand(0);
 
   TargetLowering::ArgListTy Args;
@@ -2081,7 +2094,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
                     Callee, Args, DAG, Node->getDebugLoc());
 
   // Legalize the call sequence, starting with the chain.  This will advance
-  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // the LastCALLSEQ to the legalized version of the CALLSEQ_END node that
   // was added by LowerCallTo (guaranteeing proper serialization of calls).
   LegalizeOp(CallInfo.second);
   return CallInfo;
@@ -2217,12 +2230,12 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
                     /*isReturnValueUsed=*/true, Callee, Args, DAG, dl);
 
   // Legalize the call sequence, starting with the chain.  This will advance
-  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // the LastCALLSEQ to the legalized version of the CALLSEQ_END node that
   // was added by LowerCallTo (guaranteeing proper serialization of calls).
   LegalizeOp(CallInfo.second);
 
   // Remainder is loaded back from the stack frame.
-  SDValue Rem = DAG.getLoad(RetVT, dl, LastCALLSEQ_END, FIPtr,
+  SDValue Rem = DAG.getLoad(RetVT, dl, getLastCALLSEQ(), FIPtr,
                             MachinePointerInfo(), false, false, 0);
   Results.push_back(CallInfo.first);
   Results.push_back(Rem);
@@ -3533,7 +3546,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
 
     LegalizeSetCCCondCode(TLI.getSetCCResultType(Tmp2.getValueType()),
                           Tmp2, Tmp3, Tmp4, dl);
-    LastCALLSEQ_END = DAG.getEntryNode();
+    assert(depthCALLSEQ == 1 && "branch inside CALLSEQ_BEGIN/END?");
+    setLastCALLSEQ(DAG.getEntryNode());
 
     assert(!Tmp3.getNode() && "Can't legalize BR_CC with legal condition!");
     Tmp3 = DAG.getConstant(0, Tmp2.getValueType());
