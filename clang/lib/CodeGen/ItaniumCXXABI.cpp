@@ -652,20 +652,21 @@ ItaniumCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
     return Builder.CreateICmpNE(MemPtr, NegativeOne, "memptr.tobool");
   }
   
-  // In Itanium, a member function pointer is null if 'ptr' is null.
+  // In Itanium, a member function pointer is not null if 'ptr' is not null.
   llvm::Value *Ptr = Builder.CreateExtractValue(MemPtr, 0, "memptr.ptr");
 
   llvm::Constant *Zero = llvm::ConstantInt::get(Ptr->getType(), 0);
   llvm::Value *Result = Builder.CreateICmpNE(Ptr, Zero, "memptr.tobool");
 
-  // In ARM, it's that, plus the low bit of 'adj' must be zero.
+  // On ARM, a member function pointer is also non-null if the low bit of 'adj'
+  // (the virtual bit) is set.
   if (IsARM) {
     llvm::Constant *One = llvm::ConstantInt::get(Ptr->getType(), 1);
     llvm::Value *Adj = Builder.CreateExtractValue(MemPtr, 1, "memptr.adj");
     llvm::Value *VirtualBit = Builder.CreateAnd(Adj, One, "memptr.virtualbit");
-    llvm::Value *IsNotVirtual = Builder.CreateICmpEQ(VirtualBit, Zero,
-                                                     "memptr.notvirtual");
-    Result = Builder.CreateAnd(Result, IsNotVirtual);
+    llvm::Value *IsVirtual = Builder.CreateICmpNE(VirtualBit, Zero,
+                                                  "memptr.isvirtual");
+    Result = Builder.CreateOr(Result, IsVirtual);
   }
 
   return Result;
