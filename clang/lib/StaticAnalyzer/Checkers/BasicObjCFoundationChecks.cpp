@@ -593,6 +593,10 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     if (ArgTy->isObjCObjectPointerType())
       continue;
 
+    // Block pointers are treaded as Objective-C pointers.
+    if (ArgTy->isBlockPointerType())
+      continue;
+
     // Ignore pointer constants.
     if (isa<loc::ConcreteInt>(msg.getArgSVal(I, state)))
       continue;

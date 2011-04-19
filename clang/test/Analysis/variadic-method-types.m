@@ -67,6 +67,7 @@ typedef struct BarType * BarType;
 
 void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [NSArray arrayWithObjects:@"Hello", a, b, c, d, nil];
+  [NSArray arrayWithObjects:@"Foo", ^{}, nil];
 
   [NSArray arrayWithObjects:@"Foo", "Bar", "Baz", nil]; // expected-warning 2 {{Argument to 'NSArray' method 'arrayWithObjects:' should be an Objective-C pointer type, not 'char *'}}
   [NSDictionary dictionaryWithObjectsAndKeys:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
