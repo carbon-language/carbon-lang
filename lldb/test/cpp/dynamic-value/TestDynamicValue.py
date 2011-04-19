@@ -114,9 +114,7 @@ class DynamicValueTestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
-
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple (None, None, os.getcwd())
 
         self.assertTrue(self.process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
