@@ -224,19 +224,29 @@ public:
   /// if the environment component is present).
   StringRef getOSAndEnvironmentName() const;
 
+  /// getOSNumber - Parse the version number from the OS name component of the
+  /// triple, if present.
+  ///
+  /// For example, "fooos1.2.3" would return (1, 2, 3).
+  ///
+  /// If an entry is not defined, it will be returned as 0.
+  void getOSVersion(unsigned &Major, unsigned &Minor, unsigned &Micro) const;
 
-  /// getDarwinNumber - Parse the 'darwin number' out of the specific target
-  /// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
-  /// not defined, return 0's.  This requires that the triple have an OSType of
-  /// darwin before it is called.
-  void getDarwinNumber(unsigned &Maj, unsigned &Min, unsigned &Revision) const;
-
-  /// getDarwinMajorNumber - Return just the major version number, this is
+  /// getOSMajorVersion - Return just the major version number, this is
   /// specialized because it is a common query.
-  unsigned getDarwinMajorNumber() const {
-    unsigned Maj, Min, Rev;
-    getDarwinNumber(Maj, Min, Rev);
+  unsigned getOSMajorVersion() const {
+    unsigned Maj, Min, Micro;
+    getDarwinNumber(Maj, Min, Micro);
     return Maj;
+  }
+
+  void getDarwinNumber(unsigned &Major, unsigned &Minor,
+                       unsigned &Micro) const {
+    return getOSVersion(Major, Minor, Micro);
+  }
+
+  unsigned getDarwinMajorNumber() const {
+    return getOSMajorVersion();
   }
 
   /// @}

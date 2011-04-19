@@ -532,67 +532,44 @@ StringRef Triple::getOSAndEnvironmentName() const {
 
 static unsigned EatNumber(StringRef &Str) {
   assert(!Str.empty() && Str[0] >= '0' && Str[0] <= '9' && "Not a number");
-  unsigned Result = Str[0]-'0';
+  unsigned Result = 0;
 
-  // Eat the digit.
-  Str = Str.substr(1);
-
-  // Handle "darwin11".
-  if (Result == 1 && !Str.empty() && Str[0] >= '0' && Str[0] <= '9') {
+  do {
+    // Consume the leading digit.
     Result = Result*10 + (Str[0] - '0');
+
     // Eat the digit.
     Str = Str.substr(1);
-  }
+  } while (!Str.empty() && Str[0] >= '0' && Str[0] <= '9');
 
   return Result;
 }
 
-/// getDarwinNumber - Parse the 'darwin number' out of the specific target
-/// triple.  For example, if we have darwin8.5 return 8,5,0.  If any entry is
-/// not defined, return 0's.  This requires that the triple have an OSType of
-/// darwin before it is called.
-void Triple::getDarwinNumber(unsigned &Maj, unsigned &Min,
-                             unsigned &Revision) const {
-  assert(getOS() == Darwin && "Not a darwin target triple!");
+void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
+                          unsigned &Micro) const {
   StringRef OSName = getOSName();
-  assert(OSName.startswith("darwin") && "Unknown darwin target triple!");
 
-  // Strip off "darwin".
-  OSName = OSName.substr(6);
+  // Assume that the OS portion of the triple starts with the canonical name.
+  StringRef OSTypeName = getOSTypeName(getOS());
+  if (OSName.startswith(OSTypeName))
+    OSName = OSName.substr(OSTypeName.size());
 
-  Maj = Min = Revision = 0;
+  // Any unset version defaults to 0.
+  Major = Minor = Micro = 0;
 
-  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
-    return;
+  // Parse up to three components.
+  unsigned *Components[3] = { &Major, &Minor, &Micro };
+  for (unsigned i = 0; i != 3; ++i) {
+    if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
+      break;
 
-  // The major version is the first digit.
-  Maj = EatNumber(OSName);
-  if (OSName.empty()) return;
+    // Consume the leading number.
+    *Components[i] = EatNumber(OSName);
 
-  // Handle minor version: 10.4.9 -> darwin8.9.
-  if (OSName[0] != '.')
-    return;
-
-  // Eat the '.'.
-  OSName = OSName.substr(1);
-
-  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
-    return;
-
-  Min = EatNumber(OSName);
-  if (OSName.empty()) return;
-
-  // Handle revision darwin8.9.1
-  if (OSName[0] != '.')
-    return;
-
-  // Eat the '.'.
-  OSName = OSName.substr(1);
-
-  if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
-    return;
-
-  Revision = EatNumber(OSName);
+    // Consume the separator, if present.
+    if (OSName.startswith("."))
+      OSName = OSName.substr(1);
+  }
 }
 
 void Triple::setTriple(const Twine &Str) {
