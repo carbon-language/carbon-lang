@@ -89,7 +89,6 @@ public:
     MacOSX,
     MinGW32,    // i*86-pc-mingw32, *-w64-mingw32
     NetBSD,
-    OSX,
     OpenBSD,
     Psp,
     Solaris,
@@ -270,8 +269,7 @@ public:
   /// isOSX - Is this an OS X triple. For legacy reasons, we support both
   /// "darwin" and "osx" as OS X triples.
   bool isOSX() const {
-    return getOS() == Triple::Darwin || getOS() == Triple::OSX ||
-      getOS() == Triple::MacOSX;
+    return getOS() == Triple::Darwin || getOS() == Triple::MacOSX;
   }
 
   /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
@@ -293,7 +291,7 @@ public:
     assert(isOSX() && "Not an OS X triple!");
 
     // If this is OS X, expect a sane version number.
-    if (getOS() == Triple::OSX || getOS() == Triple::MacOSX)
+    if (getOS() == Triple::MacOSX)
       return isOSVersionLT(Major, Minor, Micro);
 
     // Otherwise, compare to the "Darwin" number.
