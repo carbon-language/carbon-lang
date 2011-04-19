@@ -21,10 +21,11 @@ UniversalArchs.eprintf := i386
 Configs += 10.4
 UniversalArchs.10.4 := i386 x86_64
 
-# Configuration for targetting armv6. We need a few additional functions which
-# must be in the same linkage unit.
-Configs += armv6
-UniversalArchs.armv6 := armv6
+# Configuration for targetting iOS, for some ARMv6 functions, which must be
+# in the same linkage unit, and for a couple of other functions that didn't
+# make it into libSystem.
+Configs += ios
+UniversalArchs.ios := armv6 armv7
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
@@ -42,8 +43,12 @@ CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
-FUNCTIONS.armv6 := switch16 switch32 switch8 switchu8 \
-                   save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
+
+IOS_COMMON_FUNCTIONS := divmodsi4 udivmodsi4
+FUNCTIONS.ios.armv6 := $(IOS_COMMON_FUNCTIONS) \
+                       switch16 switch32 switch8 switchu8 \
+                       save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
+FUNCTIONS.ios.armv7 := $(IOS_COMMON_FUNCTIONS)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
