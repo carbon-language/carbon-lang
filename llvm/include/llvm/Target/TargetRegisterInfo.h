@@ -624,6 +624,14 @@ public:
     return 0;
   }
 
+  /// avoidWriteAfterWrite - Return true if the register allocator should avoid
+  /// writing a register from RC in two consecutive instructions.
+  /// This can avoid pipeline stalls on certain architectures.
+  /// It does cause increased register pressure, though.
+  virtual bool avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
+    return false;
+  }
+
   /// UpdateRegAllocHint - A callback to allow target a chance to update
   /// register allocation hints when a register is "changed" (e.g. coalesced)
   /// to another register. e.g. On ARM, some virtual registers should target

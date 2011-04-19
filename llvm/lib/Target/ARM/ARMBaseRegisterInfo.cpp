@@ -554,6 +554,29 @@ ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
   }
 }
 
+bool
+ARMBaseRegisterInfo::avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
+  // CortexA9 has a Write-after-write hazard for NEON registers.
+  if (!STI.isCortexA9())
+    return false;
+
+  switch (RC->getID()) {
+  case ARM::DPRRegClassID:
+  case ARM::DPR_8RegClassID:
+  case ARM::DPR_VFP2RegClassID:
+  case ARM::QPRRegClassID:
+  case ARM::QPR_8RegClassID:
+  case ARM::QPR_VFP2RegClassID:
+  case ARM::SPRRegClassID:
+  case ARM::SPR_8RegClassID:
+    // Avoid reusing S, D, and Q registers.
+    // Don't increase register pressure for QQ and QQQQ.
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();

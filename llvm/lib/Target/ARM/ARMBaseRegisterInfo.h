@@ -142,6 +142,8 @@ public:
   void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const;
 
+  virtual bool avoidWriteAfterWrite(const TargetRegisterClass *RC) const;
+
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;

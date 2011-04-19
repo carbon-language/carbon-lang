@@ -5,7 +5,7 @@
 
 define i32 @test1(float %a, float %b) {
 ; VFP2: test1:
-; VFP2: vcvt.s32.f32 s0, s0
+; VFP2: vcvt.s32.f32 s{{.}}, s{{.}}
 ; NEON: test1:
 ; NEON: vcvt.s32.f32 d0, d0
 entry:
@@ -16,7 +16,7 @@ entry:
 
 define i32 @test2(float %a, float %b) {
 ; VFP2: test2:
-; VFP2: vcvt.u32.f32 s0, s0
+; VFP2: vcvt.u32.f32 s{{.}}, s{{.}}
 ; NEON: test2:
 ; NEON: vcvt.u32.f32 d0, d0
 entry:
@@ -27,7 +27,7 @@ entry:
 
 define float @test3(i32 %a, i32 %b) {
 ; VFP2: test3:
-; VFP2: vcvt.f32.u32 s0, s0
+; VFP2: vcvt.f32.u32 s{{.}}, s{{.}}
 ; NEON: test3:
 ; NEON: vcvt.f32.u32 d0, d0
 entry:
@@ -38,7 +38,7 @@ entry:
 
 define float @test4(i32 %a, i32 %b) {
 ; VFP2: test4:
-; VFP2: vcvt.f32.s32 s0, s0
+; VFP2: vcvt.f32.s32 s{{.}}, s{{.}}
 ; NEON: test4:
 ; NEON: vcvt.f32.s32 d0, d0
 entry:
