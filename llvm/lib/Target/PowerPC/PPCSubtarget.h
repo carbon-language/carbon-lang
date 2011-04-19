@@ -66,10 +66,6 @@ protected:
   bool HasLazyResolverStubs;
   bool IsJITCodeModel;
   
-  /// DarwinVers - Nonzero if this is a darwin platform.  Otherwise, the numeric
-  /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
-  unsigned char DarwinVers; // Is any darwin-ppc platform.
-
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
@@ -142,12 +138,7 @@ public:
   const Triple &getTargetTriple() const { return TargetTriple; }
 
   /// isDarwin - True if this is any darwin platform.
-  bool isDarwin() const { return DarwinVers != 0; }
-  /// isDarwin - True if this is darwin9 (leopard, 10.5) or above.
-  bool isDarwin9() const { return DarwinVers >= 9; }
-
-  /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
-  unsigned getDarwinVers() const { return DarwinVers; }
+  bool isDarwin() const { return TargetTriple.isOSX(); }
 
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
