@@ -12,6 +12,7 @@
 // mode.
 //
 //===----------------------------------------------------------------------===//
+#include "abi.h"
 
 #define DOUBLE_PRECISION
 #include "fp_lib.h"

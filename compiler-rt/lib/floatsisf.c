@@ -12,6 +12,7 @@
 // mode.
 //
 //===----------------------------------------------------------------------===//
+#include "abi.h"
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
