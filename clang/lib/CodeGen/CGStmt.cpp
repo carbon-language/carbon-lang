@@ -830,8 +830,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
     // Range is small enough to add multiple switch instruction cases.
     for (unsigned i = 0, e = Range.getZExtValue() + 1; i != e; ++i) {
-      SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), LHS),
-                          CaseDest);
+      SwitchInsn->addCase(Builder.getInt(LHS), CaseDest);
       LHS++;
     }
     return;
@@ -852,11 +851,9 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 
   // Emit range check.
   llvm::Value *Diff =
-    Builder.CreateSub(SwitchInsn->getCondition(),
-                      llvm::ConstantInt::get(getLLVMContext(), LHS),  "tmp");
+    Builder.CreateSub(SwitchInsn->getCondition(), Builder.getInt(LHS),  "tmp");
   llvm::Value *Cond =
-    Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(getLLVMContext(), Range),
-                          "inbounds");
+    Builder.CreateICmpULE(Diff, Builder.getInt(Range), "inbounds");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
 
   // Restore the appropriate insertion point.
@@ -873,6 +870,9 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     return;
   }
 
+  llvm::ConstantInt *CaseVal =
+    Builder.getInt(S.getLHS()->EvaluateAsInt(getContext()));
+
   // If the body of the case is just a 'break', and if there was no fallthrough,
   // try to not emit an empty block.
   if (isa<BreakStmt>(S.getSubStmt())) {
@@ -880,9 +880,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     
     // Only do this optimization if there are no cleanups that need emitting.
     if (isObviouslyBranchWithoutCleanups(Block)) {
-      llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
-      SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
-                          Block.getBlock());
+      SwitchInsn->addCase(CaseVal, Block.getBlock());
 
       // If there was a fallthrough into this case, make sure to redirect it to
       // the end of the switch as well.
@@ -896,9 +894,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-  llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
-  SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
-                      CaseDest);
+  SwitchInsn->addCase(CaseVal, CaseDest);
 
   // Recursively emitting the statement is acceptable, but is not wonderful for
   // code where we have many case statements nested together, i.e.:
@@ -912,13 +908,12 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   const CaseStmt *CurCase = &S;
   const CaseStmt *NextCase = dyn_cast<CaseStmt>(S.getSubStmt());
 
-  // Otherwise, iteratively add consequtive cases to this switch stmt.
+  // Otherwise, iteratively add consecutive cases to this switch stmt.
   while (NextCase && NextCase->getRHS() == 0) {
     CurCase = NextCase;
-    CaseVal = CurCase->getLHS()->EvaluateAsInt(getContext());
-    SwitchInsn->addCase(llvm::ConstantInt::get(getLLVMContext(), CaseVal),
-                        CaseDest);
-
+    llvm::ConstantInt *CaseVal = 
+      Builder.getInt(CurCase->getLHS()->EvaluateAsInt(getContext()));
+    SwitchInsn->addCase(CaseVal, CaseDest);
     NextCase = dyn_cast<CaseStmt>(CurCase->getSubStmt());
   }
 
