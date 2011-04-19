@@ -865,12 +865,9 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
 
     unsigned NEReg = createResultReg(&X86::GR8RegClass);
     unsigned PReg = createResultReg(&X86::GR8RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-            TII.get(X86::SETNEr), NEReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-            TII.get(X86::SETPr), PReg);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-            TII.get(X86::OR8rr), ResultReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::SETNEr), NEReg);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::SETPr), PReg);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::OR8rr),ResultReg)
       .addReg(PReg).addReg(NEReg);
     UpdateValueMap(I, ResultReg);
     return true;
@@ -1066,6 +1063,32 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
             return true;
           }
         }
+      }
+    }
+  } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
+    // Handle things like "%cond = trunc i32 %X to i1 / br i1 %cond", which
+    // typically happen for _Bool and C++ bools.
+    MVT SourceVT;
+    if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
+        isTypeLegal(TI->getOperand(0)->getType(), SourceVT)) {
+      unsigned TestOpc = 0;
+      switch (SourceVT.SimpleTy) {
+      default: break;
+      case MVT::i8:  TestOpc = X86::TEST8ri; break;
+      case MVT::i16: TestOpc = X86::TEST16ri; break;
+      case MVT::i32: TestOpc = X86::TEST32ri; break;
+      case MVT::i64: TestOpc = X86::TEST64ri32; break;
+      }
+      if (TestOpc) {
+        unsigned OpReg = getRegForValue(TI->getOperand(0));
+        if (OpReg == 0) return false;
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TestOpc))
+          .addReg(OpReg).addImm(1);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::JNE_4))
+          .addMBB(TrueMBB);
+        FastEmitBranch(FalseMBB, DL);
+        FuncInfo.MBB->addSuccessor(TrueMBB);
+        return true;
       }
     }
   }

@@ -127,3 +127,20 @@ define i32 @test11(i32 %X) nounwind {
 ; CHECK: sarl	$3, 
 }
 
+
+; rdar://9297006 - Trunc to bool.
+define void @test12(i8 %tmp) nounwind ssp noredzone {
+entry:
+  %tobool = trunc i8 %tmp to i1
+  br i1 %tobool, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  call void @test12(i8 0) noredzone
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  ret void
+; CHECK: test12:
+; CHECK: testb	$1,
+}
+
