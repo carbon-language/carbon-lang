@@ -249,6 +249,20 @@ public:
     return getOSMajorVersion();
   }
 
+  bool isOSVersionLT(unsigned Major, unsigned B_Minor, unsigned Micro) {
+    unsigned LHS[3];
+    getOSVersion(LHS[0], LHS[1], LHS[2]);
+
+    if (LHS[0] != Major)
+      return LHS[0] < Major;
+    if (LHS[1] != Minor)
+      return LHS[1] < Minor;
+    if (LHS[2] != Micro)
+      return LHS[1] < Micro;
+
+    return false;
+  }
+
   /// @}
   /// @name Mutators
   /// @{
