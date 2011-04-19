@@ -242,6 +242,18 @@ bool Decl::isUsed(bool CheckUsedAttr) const {
   return false; 
 }
 
+bool Decl::isReferenced() const { 
+  if (Referenced)
+    return true;
+
+  // Check redeclarations.
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
+    if (I->Referenced)
+      return true;
+
+  return false; 
+}
+
 /// \brief Determine the availability of the given declaration based on
 /// the target platform.
 ///

@@ -214,6 +214,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   }
   D->setImplicit(Record[Idx++]);
   D->setUsed(Record[Idx++]);
+  D->setReferenced(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->setPCHLevel(Record[Idx++] + (F.Type <= ASTReader::PCH));
 }

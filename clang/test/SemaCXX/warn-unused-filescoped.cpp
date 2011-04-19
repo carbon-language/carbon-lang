@@ -78,3 +78,12 @@ namespace test4 {
   void test(A a); // expected-warning {{unused function}}
   extern "C" void test4(A a);
 }
+
+namespace rdar8733476 {
+  static void foo() { } // expected-warning {{not needed and will not be emitted}}
+
+  template <int>
+  void bar() {
+    foo();
+  }
+}

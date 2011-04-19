@@ -298,8 +298,10 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
   Var->setAccess(D->getAccess());
   
-  if (!D->isStaticDataMember())
+  if (!D->isStaticDataMember()) {
     Var->setUsed(D->isUsed(false));
+    Var->setReferenced(D->isReferenced());
+  }
   
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.

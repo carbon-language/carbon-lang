@@ -9885,6 +9885,8 @@ Sema::PopExpressionEvaluationContext() {
 void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   assert(D && "No declaration?");
 
+  D->setReferenced();
+
   if (D->isUsed(false))
     return;
 

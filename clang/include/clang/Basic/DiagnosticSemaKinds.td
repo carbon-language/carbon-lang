@@ -116,6 +116,12 @@ def warn_unused_member_function : Warning<"unused member function %0">,
   InGroup<UnusedMemberFunction>, DefaultIgnore;
 def warn_used_but_marked_unused: Warning<"%0 was marked unused but was used">,
   InGroup<UsedButMarkedUnused>, DefaultIgnore;
+def warn_unneeded_internal_decl : Warning<
+  "%select{function|variable}0 %1 is not needed and will not be emitted">,
+  InGroup<UnneededInternalDecl>, DefaultIgnore;
+def warn_unneeded_member_function : Warning<
+  "member function %0 is not needed and will not be emitted">,
+  InGroup<UnneededMemberFunction>, DefaultIgnore;
 
 def warn_parameter_size: Warning<
   "%0 is a large (%1 bytes) pass-by-value argument; "

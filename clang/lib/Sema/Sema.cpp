@@ -473,16 +473,30 @@ void Sema::ActOnEndOfTranslationUnit() {
           DiagD = FD;
         if (DiagD->isDeleted())
           continue; // Deleted functions are supposed to be unused.
-        Diag(DiagD->getLocation(),
-             isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
-                                       : diag::warn_unused_function)
-              << DiagD->getDeclName();
+        if (DiagD->isReferenced()) {
+          if (isa<CXXMethodDecl>(DiagD))
+            Diag(DiagD->getLocation(), diag::warn_unneeded_member_function)
+                  << DiagD->getDeclName();
+          else
+            Diag(DiagD->getLocation(), diag::warn_unneeded_internal_decl)
+                  << /*function*/0 << DiagD->getDeclName();
+        } else {
+          Diag(DiagD->getLocation(),
+               isa<CXXMethodDecl>(DiagD) ? diag::warn_unused_member_function
+                                         : diag::warn_unused_function)
+                << DiagD->getDeclName();
+        }
       } else {
         const VarDecl *DiagD = cast<VarDecl>(*I)->getDefinition();
         if (!DiagD)
           DiagD = cast<VarDecl>(*I);
-        Diag(DiagD->getLocation(), diag::warn_unused_variable)
-              << DiagD->getDeclName();
+        if (DiagD->isReferenced()) {
+          Diag(DiagD->getLocation(), diag::warn_unneeded_internal_decl)
+                << /*variable*/1 << DiagD->getDeclName();
+        } else {
+          Diag(DiagD->getLocation(), diag::warn_unused_variable)
+                << DiagD->getDeclName();
+        }
       }
     }
 

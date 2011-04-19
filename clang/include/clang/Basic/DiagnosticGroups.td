@@ -154,6 +154,8 @@ def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
+def UnneededInternalDecl : DiagGroup<"unneeded-internal-declaration">;
+def UnneededMemberFunction : DiagGroup<"unneeded-member-function">;
 def UsedButMarkedUnused : DiagGroup<"used-but-marked-unused">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
 def Reorder : DiagGroup<"reorder">;
@@ -198,11 +200,16 @@ def Conversion : DiagGroup<"conversion",
                             BoolConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
+def Unneeded : DiagGroup<"unneeded",
+                         [UnneededInternalDecl
+                       //,UnneededMemberFunction (clean-up llvm before enabling)
+                          ]>;
+
 def Unused : DiagGroup<"unused",
                        [UnusedArgument, UnusedFunction, UnusedLabel,
                         // UnusedParameter, (matches GCC's behavior)
                         // UnusedMemberFunction, (clean-up llvm before enabling)
-                        UnusedValue, UnusedVariable]>,
+                        UnusedValue, UnusedVariable, Unneeded]>,
                         DiagCategory<"Unused Entity Issue">;
 
 // Format settings.

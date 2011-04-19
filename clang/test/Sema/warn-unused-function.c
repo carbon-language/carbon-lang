@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wunused-function -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-function -Wunneeded-internal-declaration -verify %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
 
@@ -6,7 +6,7 @@ void foo() {}
 static void f2() {} 
 static void f1() {f2();} // expected-warning{{unused}}
 
-static int f0() { return 17; } // expected-warning{{unused}}
+static int f0() { return 17; } // expected-warning{{not needed and will not be emitted}}
 int x = sizeof(f0());
 
 static void f3();
@@ -46,7 +46,7 @@ static void f12(void) { }  // expected-warning{{unused}}
 static void f12(void);
 
 // PR7923
-static void unused(void) { unused(); }  // expected-warning{{unused}}
+static void unused(void) { unused(); }  // expected-warning{{not needed and will not be emitted}}
 
 // rdar://8728293
 static void cleanupMalloc(char * const * const allocation) { }
