@@ -486,8 +486,7 @@ bool FastISel::SelectCall(const User *I) {
   if (!F) return false;
 
   // Handle selected intrinsic function calls.
-  unsigned IID = F->getIntrinsicID();
-  switch (IID) {
+  switch (F->getIntrinsicID()) {
   default: break;
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
@@ -552,64 +551,57 @@ bool FastISel::SelectCall(const User *I) {
   }
   case Intrinsic::eh_exception: {
     EVT VT = TLI.getValueType(I->getType());
-    switch (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)) {
-    default: break;
-    case TargetLowering::Expand: {
-      assert(FuncInfo.MBB->isLandingPad() &&
-             "Call to eh.exception not in landing pad!");
-      unsigned Reg = TLI.getExceptionAddressRegister();
-      const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
-      unsigned ResultReg = createResultReg(RC);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-              ResultReg).addReg(Reg);
-      UpdateValueMap(I, ResultReg);
-      return true;
-    }
-    }
-    break;
+    if (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)!=TargetLowering::Expand)
+      break;
+    
+    assert(FuncInfo.MBB->isLandingPad() &&
+           "Call to eh.exception not in landing pad!");
+    unsigned Reg = TLI.getExceptionAddressRegister();
+    const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(Reg);
+    UpdateValueMap(I, ResultReg);
+    return true;
   }
   case Intrinsic::eh_selector: {
     EVT VT = TLI.getValueType(I->getType());
-    switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
-    default: break;
-    case TargetLowering::Expand: {
-      if (FuncInfo.MBB->isLandingPad())
-        AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), FuncInfo.MBB);
-      else {
+    if (TLI.getOperationAction(ISD::EHSELECTION, VT) != TargetLowering::Expand)
+      break;
+    if (FuncInfo.MBB->isLandingPad())
+      AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), FuncInfo.MBB);
+    else {
 #ifndef NDEBUG
-        FuncInfo.CatchInfoLost.insert(cast<CallInst>(I));
+      FuncInfo.CatchInfoLost.insert(cast<CallInst>(I));
 #endif
-        // FIXME: Mark exception selector register as live in.  Hack for PR1508.
-        unsigned Reg = TLI.getExceptionSelectorRegister();
-        if (Reg) FuncInfo.MBB->addLiveIn(Reg);
-      }
-
+      // FIXME: Mark exception selector register as live in.  Hack for PR1508.
       unsigned Reg = TLI.getExceptionSelectorRegister();
-      EVT SrcVT = TLI.getPointerTy();
-      const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
-      unsigned ResultReg = createResultReg(RC);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-              ResultReg).addReg(Reg);
-
-      bool ResultRegIsKill = hasTrivialKill(I);
-
-      // Cast the register to the type of the selector.
-      if (SrcVT.bitsGT(MVT::i32))
-        ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32, ISD::TRUNCATE,
-                               ResultReg, ResultRegIsKill);
-      else if (SrcVT.bitsLT(MVT::i32))
-        ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32,
-                               ISD::SIGN_EXTEND, ResultReg, ResultRegIsKill);
-      if (ResultReg == 0)
-        // Unhandled operand. Halt "fast" selection and bail.
-        return false;
-
-      UpdateValueMap(I, ResultReg);
-
-      return true;
+      if (Reg) FuncInfo.MBB->addLiveIn(Reg);
     }
-    }
-    break;
+
+    unsigned Reg = TLI.getExceptionSelectorRegister();
+    EVT SrcVT = TLI.getPointerTy();
+    const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(Reg);
+
+    bool ResultRegIsKill = hasTrivialKill(I);
+
+    // Cast the register to the type of the selector.
+    if (SrcVT.bitsGT(MVT::i32))
+      ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32, ISD::TRUNCATE,
+                             ResultReg, ResultRegIsKill);
+    else if (SrcVT.bitsLT(MVT::i32))
+      ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32,
+                             ISD::SIGN_EXTEND, ResultReg, ResultRegIsKill);
+    if (ResultReg == 0)
+      // Unhandled operand. Halt "fast" selection and bail.
+      return false;
+
+    UpdateValueMap(I, ResultReg);
+
+    return true;
   }
   }
 

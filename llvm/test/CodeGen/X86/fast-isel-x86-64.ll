@@ -170,3 +170,14 @@ entry:
 ; CHECK: callq
 }
 
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i32, i1)
+
+; rdar://9289488 - fast-isel shouldn't bail out on llvm.memcpy
+define void @test15(i8* %a, i8* %b) nounwind {
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 4, i32 4, i1 false)
+  ret void
+; CHECK: test15:
+; CHECK-NEXT: movl	(%rsi), %eax
+; CHECK-NEXT: movl	%eax, (%rdi)
+; CHECK-NEXT: ret
+}

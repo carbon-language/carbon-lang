@@ -1325,6 +1325,52 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
   default: return false;
+  case Intrinsic::memcpy: {
+    const MemCpyInst &MCI = cast<MemCpyInst>(I);
+    // Don't handle volatile or variable length memcpys.
+    if (MCI.isVolatile() || !isa<ConstantInt>(MCI.getLength()))
+      return false;
+    
+    // Don't inline super long memcpys.  We could lower these to a memcpy call,
+    // but we might as well bail out.
+    uint64_t Len = cast<ConstantInt>(MCI.getLength())->getZExtValue();
+    bool i64Legal = TLI.isTypeLegal(MVT::i64);
+    if (Len > (i64Legal ? 32 : 16)) return false;
+    
+    // Get the address of the dest and source addresses.
+    X86AddressMode DestAM, SrcAM;
+    if (!X86SelectAddress(MCI.getRawDest(), DestAM) ||
+        !X86SelectAddress(MCI.getRawSource(), SrcAM))
+      return false;
+    
+    // We don't care about alignment here since we just emit integer accesses.
+    while (Len) {
+      MVT VT;
+      if (Len >= 8 && i64Legal)
+        VT = MVT::i64;
+      else if (Len >= 4)
+        VT = MVT::i32;
+      else if (Len >= 2)
+        VT = MVT::i16;
+      else {
+        assert(Len == 1);
+        VT = MVT::i8;
+      }
+      
+      unsigned Reg;
+      bool RV = X86FastEmitLoad(VT, SrcAM, Reg);
+      RV &= X86FastEmitStore(VT, Reg, DestAM);
+      assert(RV && "Failed to emit load or store??");
+      
+      unsigned Size = VT.getSizeInBits()/8;
+      Len -= Size;
+      DestAM.Disp += Size;
+      SrcAM.Disp += Size;
+    }
+    
+    return true;
+  }
+      
   case Intrinsic::stackprotector: {
     // Emit code inline code to store the stack guard onto the stack.
     EVT PtrTy = TLI.getPointerTy();
@@ -1335,16 +1381,13 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     // Grab the frame index.
     X86AddressMode AM;
     if (!X86SelectAddress(Slot, AM)) return false;
-
     if (!X86FastEmitStore(PtrTy, Op1, AM)) return false;
-
     return true;
   }
   case Intrinsic::objectsize: {
-    ConstantInt *CI = dyn_cast<ConstantInt>(I.getArgOperand(1));
+    // FIXME: This should be moved to generic code!
+    ConstantInt *CI = cast<ConstantInt>(I.getArgOperand(1));
     const Type *Ty = I.getCalledFunction()->getReturnType();
-
-    assert(CI && "Non-constant type in Intrinsic::objectsize?");
 
     MVT VT;
     if (!isTypeLegal(Ty, VT))
@@ -1383,6 +1426,8 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   }
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow: {
+    // FIXME: Should fold immediates.
+    
     // Replace "add with overflow" intrinsics with an "add" instruction followed
     // by a seto/setc instruction. Later on, when the "extractvalue"
     // instructions are encountered, we use the fact that two registers were
