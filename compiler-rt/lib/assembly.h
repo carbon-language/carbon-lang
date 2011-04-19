@@ -22,17 +22,17 @@
 #define SEPARATOR ;
 #endif
 
-/* We can't use __USER_LABEL_PREFIX__ here, it isn't possible to concatenate the
-   *values* of two macros. This is quite brittle, though. */
 #if defined(__APPLE__)
-#define SYMBOL_NAME(name) _##name
 #define HIDDEN_DIRECTIVE .private_extern
 #define LOCAL_LABEL(name) L_##name
 #else
-#define SYMBOL_NAME(name) name
 #define HIDDEN_DIRECTIVE .hidden
 #define LOCAL_LABEL(name) .L_##name
 #endif
+
+#define GLUE2(a, b) a ## b
+#define GLUE(a, b) GLUE2(a, b)
+#define SYMBOL_NAME(name) GLUE(__USER_LABEL_PREFIX__, name)
 
 #ifdef VISIBILITY_HIDDEN
 #define DEFINE_COMPILERRT_FUNCTION(name)                   \
