@@ -1735,6 +1735,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
           DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
         PrevSpec = ""; // Not used by the diagnostic.
         DiagID = diag::err_bool_redeclaration;
+        // For better error recovery.
+        Tok.setKind(tok::identifier);
         isInvalid = true;
       } else {
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec,
@@ -1856,7 +1858,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     }
 
     DS.SetRangeEnd(Tok.getLocation());
-    ConsumeToken();
+    if (DiagID != diag::err_bool_redeclaration)
+      ConsumeToken();
   }
 }
 
