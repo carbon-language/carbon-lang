@@ -656,19 +656,19 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [1, 1, 1]>,
   //
   // Single-precision to Integer Move
+  //
+  // On A9 move-from-VFP is free to issue with no stall if other VFP
+  // operations are in flight. I assume it still can't dual-issue though.
   InstrItinData<IIC_fpMOVSI,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
-                               InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_DRegsVFP], 0, Required>,
-                               InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_NPipe]>],
+                               InstrStage<1, [A9_MUX0], 0>],
                               [2, 1]>,
   //
   // Double-precision to Integer Move
+  //
+  // On A9 move-from-VFP is free to issue with no stall if other VFP
+  // operations are in flight. I assume it still can't dual-issue though.
   InstrItinData<IIC_fpMOVDI,  [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
-                               InstrStage<1, [A9_MUX0], 0>,
-                               InstrStage<1, [A9_DRegsVFP], 0, Required>,
-                               InstrStage<2, [A9_DRegsN],   0, Reserved>,
-                               InstrStage<1, [A9_NPipe]>],
+                               InstrStage<1, [A9_MUX0], 0>],
                               [2, 1, 1]>,
   //
   // Single-precision FP Load
@@ -691,20 +691,22 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [2, 1]>,
   //
   // FP Load Multiple
+  // FIXME: assumes 2 doubles which requires 2 LS cycles.
   InstrItinData<IIC_fpLoad_m, [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<1, [A9_LSUnit]>], [1, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>], [1, 1, 1, 1]>,
   //
   // FP Load Multiple + update
+  // FIXME: assumes 2 doubles which requires 2 LS cycles.
   InstrItinData<IIC_fpLoad_mu,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<1, [A9_LSUnit]>], [2, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>], [2, 1, 1, 1]>,
   //
   // Single-precision FP Store
   InstrItinData<IIC_fpStore32,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
@@ -725,20 +727,22 @@ def CortexA9Itineraries : ProcessorItineraries<
                               [1, 1]>,
   //
   // FP Store Multiple
+  // FIXME: assumes 2 doubles which requires 2 LS cycles.
   InstrItinData<IIC_fpStore_m,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                InstrStage<1, [A9_MUX0], 0>,
                                InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                InstrStage<1, [A9_NPipe], 0>,
-                               InstrStage<1, [A9_LSUnit]>], [1, 1, 1, 1]>,
+                               InstrStage<2, [A9_LSUnit]>], [1, 1, 1, 1]>,
   //
   // FP Store Multiple + update
+  // FIXME: assumes 2 doubles which requires 2 LS cycles.
   InstrItinData<IIC_fpStore_mu,[InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
                                 InstrStage<1, [A9_MUX0], 0>,
                                 InstrStage<1, [A9_DRegsVFP], 0, Required>,
                                 InstrStage<2, [A9_DRegsN],   0, Reserved>,
                                 InstrStage<1, [A9_NPipe], 0>,
-                                InstrStage<1, [A9_LSUnit]>], [2, 1, 1, 1]>,
+                                InstrStage<2, [A9_LSUnit]>], [2, 1, 1, 1]>,
   // NEON
   // VLD1
   InstrItinData<IIC_VLD1,     [InstrStage<1, [A9_Issue0, A9_Issue1], 0>,
