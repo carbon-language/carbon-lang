@@ -153,7 +153,7 @@ if( MSVC )
     -wd4715 # Suppress ''function' : not all control paths return a value'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
     -wd4065 # Suppress 'switch statement contains 'default' but no 'case' labels'
-
+    -wd4181 # Suppress 'qualifier applied to reference type; ignored'
     -w14062 # Promote "enumerator in switch of enum is not handled" to level 1 warning.
     )
 
