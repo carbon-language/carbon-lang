@@ -67,6 +67,14 @@ def FeatureNEONForFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
 def FeaturePref32BitThumb : SubtargetFeature<"32bit", "Pref32BitThumb", "true",
                                              "Prefer 32-bit Thumb instrs">;
 
+/// Some instructions update CPSR partially, which can add false dependency for
+/// out-of-order implementation, e.g. Cortex-A9, unless each individual bit is
+/// mapped to a separate physical register. Avoid partial CPSR update for these
+/// processors.
+def FeatureAvoidPartialCPSR : SubtargetFeature<"avoid-partial-cpsr",
+                                               "AvoidCPSRPartialUpdate", "true",
+                                 "Avoid CPSR partial update for OOO execution">;
+
 // Multiprocessing extension.
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
                                  "Supports Multiprocessing extension">;
@@ -111,7 +119,8 @@ def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
 def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    "Cortex-A9 ARM processors",
                                    [FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
-                                    FeatureT2XtPk, FeatureFP16]>;
+                                    FeatureT2XtPk, FeatureFP16,
+                                    FeatureAvoidPartialCPSR]>;
 
 class ProcNoItin<string Name, list<SubtargetFeature> Features>
  : Processor<Name, GenericItineraries, Features>;
