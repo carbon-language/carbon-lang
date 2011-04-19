@@ -1535,11 +1535,12 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     }
     
     unsigned ArgReg;
+    
+    // Passing bools around ends up doing a trunc to i1 and passing it.
+    // Codegen this as an argument + "and 1".
     if (ArgVal->getType()->isIntegerTy(1) && isa<TruncInst>(ArgVal) &&
         cast<TruncInst>(ArgVal)->getParent() == I->getParent() &&
         ArgVal->hasOneUse()) {
-      // Passing bools around ends up doing a trunc to i1 and passing it.
-      // Codegen this as an argument + "and 1".
       ArgVal = cast<TruncInst>(ArgVal)->getOperand(0);
       ArgReg = getRegForValue(ArgVal);
       if (ArgReg == 0) return false;
@@ -1551,8 +1552,9 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
                            ArgVal->hasOneUse(), 1);
     } else {
       ArgReg = getRegForValue(ArgVal);
-      if (ArgReg == 0) return false;
     }
+
+    if (ArgReg == 0) return false;
 
     // FIXME: Only handle *easy* calls for now.
     if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
