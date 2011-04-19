@@ -1,5 +1,5 @@
 """
-Test SBprocess and SBThread APIs with printing of the stack traces.
+Test SBprocess and SBThread APIs with printing of the stack traces using lldbutil.
 """
 
 import os, time
@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ThreadsStackTracesTestCase(TestBase):
 
-    mydir = "threads"
+    mydir = "python_api/lldbutil"
 
     def setUp(self):
         # Call super's setUp().
@@ -46,7 +46,8 @@ class ThreadsStackTracesTestCase(TestBase):
                       "instead the actual state is: '%s'" %
                       lldbutil.StateTypeString(self.process.GetState()))
 
-        lldbutil.PrintStackTraces(self.process)
+        if self.TraceOn():
+            lldbutil.PrintStackTraces(self.process)
 
 
 if __name__ == '__main__':
