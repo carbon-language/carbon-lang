@@ -22,8 +22,6 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<bool>ExpandMLx("expand-fp-mlx", cl::init(false), cl::Hidden);
-
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
   switch (TheTriple.getOS()) {
@@ -148,8 +146,7 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass(true));
-  if (ExpandMLx &&
-      OptLevel != CodeGenOpt::None && Subtarget.hasVFP2())
+  if (OptLevel != CodeGenOpt::None && Subtarget.isCortexA9())
     PM.add(createMLxExpansionPass());
 
   return true;

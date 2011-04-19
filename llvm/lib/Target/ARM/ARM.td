@@ -118,7 +118,7 @@ def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                     FeatureT2XtPk]>;
 def ProcA9      : SubtargetFeature<"a9", "ARMProcFamily", "CortexA9",
                                    "Cortex-A9 ARM processors",
-                                   [FeatureHasSlowFPVMLx, FeatureVMLxForwarding,
+                                   [FeatureVMLxForwarding,
                                     FeatureT2XtPk, FeatureFP16,
                                     FeatureAvoidPartialCPSR]>;
 

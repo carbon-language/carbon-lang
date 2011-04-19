@@ -15,11 +15,13 @@
 #define DEBUG_TYPE "mlx-expansion"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
+#include "ARMSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -49,15 +51,17 @@ namespace {
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo *MRI;
 
+    bool isA9;
     unsigned MIIdx;
     MachineInstr* LastMIs[4];
+    SmallPtrSet<MachineInstr*, 4> IgnoreStall;
 
     void clearStack();
     void pushStack(MachineInstr *MI);
     MachineInstr *getAccDefMI(MachineInstr *MI) const;
     unsigned getDefReg(MachineInstr *MI) const;
     bool hasRAWHazard(unsigned Reg, MachineInstr *MI) const;
-    bool FindMLxHazard(MachineInstr *MI) const;
+    bool FindMLxHazard(MachineInstr *MI);
     void ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
                                 unsigned MulOpc, unsigned AddSubOpc,
                                 bool NegAcc, bool HasLane);
@@ -146,7 +150,7 @@ bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
 }
 
 
-bool MLxExpansion::FindMLxHazard(MachineInstr *MI) const {
+bool MLxExpansion::FindMLxHazard(MachineInstr *MI) {
   if (NumExpand >= ExpandLimit)
     return false;
 
@@ -154,7 +158,7 @@ bool MLxExpansion::FindMLxHazard(MachineInstr *MI) const {
     return true;
 
   MachineInstr *DefMI = getAccDefMI(MI);
-  if (TII->isFpMLxInstruction(DefMI->getOpcode()))
+  if (TII->isFpMLxInstruction(DefMI->getOpcode())) {
     // r0 = vmla
     // r3 = vmla r0, r1, r2
     // takes 16 - 17 cycles
@@ -163,24 +167,33 @@ bool MLxExpansion::FindMLxHazard(MachineInstr *MI) const {
     // r4 = vmul r1, r2
     // r3 = vadd r0, r4
     // takes about 14 - 15 cycles even with vmul stalling for 4 cycles.
+    IgnoreStall.insert(DefMI);
     return true;
+  }
+
+  if (IgnoreStall.count(MI))
+    return false;
 
   // If a VMLA.F is followed by an VADD.F or VMUL.F with no RAW hazard, the
   // VADD.F or VMUL.F will stall 4 cycles before issue. The 4 cycle stall
   // preserves the in-order retirement of the instructions.
   // Look at the next few instructions, if *most* of them can cause hazards,
   // then the scheduler can't *fix* this, we'd better break up the VMLA.
+  unsigned Limit1 = isA9 ? 1 : 4;
+  unsigned Limit2 = isA9 ? 1 : 4;
   for (unsigned i = 1; i <= 4; ++i) {
     int Idx = ((int)MIIdx - i + 4) % 4;
     MachineInstr *NextMI = LastMIs[Idx];
     if (!NextMI)
       continue;
 
-    if (TII->canCauseFpMLxStall(NextMI->getOpcode()))
-      return true;
+    if (TII->canCauseFpMLxStall(NextMI->getOpcode())) {
+      if (i <= Limit1)
+        return true;
+    }
 
     // Look for VMLx RAW hazard.
-    if (hasRAWHazard(getDefReg(MI), NextMI))
+    if (i <= Limit2 && hasRAWHazard(getDefReg(MI), NextMI))
       return true;
   }
 
@@ -248,6 +261,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
   bool Changed = false;
 
   clearStack();
+  IgnoreStall.clear();
 
   unsigned Skip = 0;
   MachineBasicBlock::reverse_iterator MII = MBB.rbegin(), E = MBB.rend();
@@ -299,6 +313,8 @@ bool MLxExpansion::runOnMachineFunction(MachineFunction &Fn) {
   TII = static_cast<const ARMBaseInstrInfo*>(Fn.getTarget().getInstrInfo());
   TRI = Fn.getTarget().getRegisterInfo();
   MRI = &Fn.getRegInfo();
+  const ARMSubtarget *STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
+  isA9 = STI->isCortexA9();
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;

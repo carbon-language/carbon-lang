@@ -45,7 +45,7 @@ DisableShifterOp("disable-shifter-op", cl::Hidden,
 static cl::opt<bool>
 CheckVMLxHazard("check-vmlx-hazard", cl::Hidden,
   cl::desc("Check fp vmla / vmls hazard at isel time"),
-  cl::init(false));
+  cl::init(true));
 
 //===--------------------------------------------------------------------===//
 /// ARMDAGToDAGISel - ARM specific code to select ARM machine
