@@ -101,18 +101,44 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   if (Opts.POSIXThreads)
     Builder.defineMacro("_REENTRANT");
 
-  // Get the OS version number from the triple.
+  // Get the platform type and version number from the triple.
   unsigned Maj, Min, Rev;
 
   // If no version was given, default to to 10.4.0, for simplifying tests.
-  if (Triple.getOSName() == "darwin") {
+  if (Triple.getOSName() == "darwin" || Triple.getOSName() == "osx") {
+    PlatformName = "macosx";
     Min = Rev = 0;
     Maj = 8;
-  } else
-    Triple.getDarwinNumber(Maj, Min, Rev);
+  } else {
+    // Otherwise, honor all three triple forms ("-darwinNNN[-iphoneos]",
+    // "-osxNNN", and "-iosNNN").
+
+    if (Triple.getOS() == llvm::Triple::Darwin) {
+      // For historical reasons that make little sense, the version passed here
+      // is the "darwin" version, which drops the 10 and offsets by 4.
+      Triple.getOSVersion(Maj, Min, Rev);
+
+      if (Triple.getEnvironmentName() == "iphoneos") {
+        PlatformName = "ios";
+      } else {
+        assert(Rev == 0 && "invalid triple, unexpected micro version!");
+        PlatformName = "macosx";
+        Rev = Min;
+        Min = Maj - 4;
+        Maj = 10;
+      }
+    } else if (Triple.getOS() == llvm::Triple::OSX) {
+      Triple.getOSVersion(Maj, Min, Rev);
+      PlatformName = "macosx";
+    } else {
+      assert(Triple.getOS() == llvm::Triple::IOS && "unexpected triple!");
+      Triple.getOSVersion(Maj, Min, Rev);
+      PlatformName = "ios";
+    }
+  }
 
   // Set the appropriate OS version define.
-  if (Triple.getEnvironmentName() == "iphoneos") {
+  if (PlatformName == "ios") {
     assert(Maj < 10 && Min < 99 && Rev < 99 && "Invalid version!");
     char Str[6];
     Str[0] = '0' + Maj;
@@ -122,16 +148,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[4] = '0' + (Rev % 10);
     Str[5] = '\0';
     Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
-
-    PlatformName = "ios";
-    PlatformMinVersion = VersionTuple(Maj, Min, Rev);
   } else {
-    // For historical reasons that make little sense, the version passed here is
-    // the "darwin" version, which drops the 10 and offsets by 4.
-    Rev = Min;
-    Min = Maj - 4;
-    Maj = 10;
-
     assert(Triple.getEnvironmentName().empty() && "Invalid environment!");
     assert(Maj < 99 && Min < 10 && Rev < 10 && "Invalid version!");
     char Str[5];
@@ -141,10 +158,9 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[3] = '0' + Rev;
     Str[4] = '\0';
     Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
-
-    PlatformName = "macosx";
-    PlatformMinVersion = VersionTuple(Maj, Min, Rev);
   }
+
+  PlatformMinVersion = VersionTuple(Maj, Min, Rev);
 }
 
 namespace {
