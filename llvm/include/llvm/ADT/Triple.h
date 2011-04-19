@@ -249,7 +249,8 @@ public:
     return getOSMajorVersion();
   }
 
-  bool isOSVersionLT(unsigned Major, unsigned B_Minor, unsigned Micro) {
+  bool isOSVersionLT(unsigned Major, unsigned Minor = 0,
+                     unsigned Micro = 0) const {
     unsigned LHS[3];
     getOSVersion(LHS[0], LHS[1], LHS[2]);
 
@@ -263,6 +264,28 @@ public:
     return false;
   }
 
+  /// isOSX - Is this an OS X triple. For legacy reasons, we support both
+  /// "darwin" and "osx" as OS X triples.
+  bool isOSX() const {
+    return getOS() == Triple::Darwin || getOS() == Triple::OSX;
+  }
+
+  /// isOSXVersionLT - Comparison function for checking OS X version
+  /// compatibility, which handles supporting skewed version numbering schemes
+  /// used by the "darwin" triples.
+  unsigned isOSXVersionLT(unsigned Major, unsigned Minor = 0,
+                          unsigned Micro = 0) const {
+    assert(isOSX() && "Not an OS X triple!");
+
+    // If this is OS X, expect a sane version number.
+    if (getOS() == Triple::OSX)
+      return isOSVersionLT(Major, Minor, Micro);
+
+    // Otherwise, compare to the "Darwin" number.
+    assert(Major == 10 && "Unexpected major version");
+    return isOSVersionLT(Minor + 4, Micro, 0);
+  }
+    
   /// @}
   /// @name Mutators
   /// @{
