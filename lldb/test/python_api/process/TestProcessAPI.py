@@ -98,7 +98,8 @@ class ProcessAPITestCase(TestBase):
         content = self.process.ReadMemory(location, 1, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
-        print "memory content:", content
+        if self.TraceOn():
+            print "memory content:", content
 
         self.expect(content, "Result from SBProcess.ReadMemory() matches our expected output: 'x'",
                     exe=False,
@@ -148,7 +149,8 @@ class ProcessAPITestCase(TestBase):
         content = self.process.ReadMemory(location, 1, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
-        print "memory content:", content
+        if self.TraceOn():
+            print "memory content:", content
 
         self.expect(content, "Result from SBProcess.ReadMemory() matches our expected output: 'a'",
                     exe=False,
@@ -239,8 +241,9 @@ class ProcessAPITestCase(TestBase):
             self.fail("Memory content read from 'my_int' does not match (int)256")
 
         # Dump the memory content....
-        for i in new_bytes:
-            print "byte:", i
+        if self.TraceOn():
+            for i in new_bytes:
+                print "byte:", i
 
     def remote_launch_should_fail(self):
         """Test SBProcess.RemoteLaunch() API with a process not in eStateConnected, and it should fail."""
@@ -254,7 +257,8 @@ class ProcessAPITestCase(TestBase):
         error = lldb.SBError()
         process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        print "process state:", StateTypeString(process.GetState())
+        if self.TraceOn():
+            print "process state:", StateTypeString(process.GetState())
         self.assertTrue(process.GetState() != lldb.eStateConnected)
 
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
