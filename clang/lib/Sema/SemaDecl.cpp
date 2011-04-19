@@ -4649,8 +4649,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
   // Darwin passes an undocumented fourth argument of type char**.  If
   // other platforms start sprouting these, the logic below will start
   // getting shifty.
-  if (nparams == 4 &&
-      Context.Target.getTriple().getOS() == llvm::Triple::Darwin)
+  if (nparams == 4 && Context.Target.getTriple().isOSDarwin())
     HasExtraParameters = false;
 
   if (HasExtraParameters) {

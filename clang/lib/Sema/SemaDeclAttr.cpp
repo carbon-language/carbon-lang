@@ -721,7 +721,7 @@ static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (S.Context.Target.getTriple().getOS() == llvm::Triple::Darwin) {
+  if (S.Context.Target.getTriple().isOSDarwin()) {
     S.Diag(Attr.getLoc(), diag::err_alias_not_supported_on_darwin);
     return;
   }
@@ -1439,7 +1439,7 @@ static void HandleWeakImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
              diag::warn_attribute_weak_import_invalid_on_definition)
         << "weak_import" << 2 /*variable and function*/;
     else if (isa<ObjCPropertyDecl>(D) || isa<ObjCMethodDecl>(D) ||
-             (S.Context.Target.getTriple().getOS() == llvm::Triple::Darwin &&
+             (S.Context.Target.getTriple().isOSDarwin() &&
               isa<ObjCInterfaceDecl>(D))) {
       // Nothing to warn about here.
     } else

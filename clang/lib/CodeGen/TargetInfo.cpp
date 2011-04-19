@@ -2845,10 +2845,11 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
 
   case llvm::Triple::x86:
-    switch (Triple.getOS()) {
-    case llvm::Triple::Darwin:
+    if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =
                new X86_32TargetCodeGenInfo(Types, true, true));
+
+    switch (Triple.getOS()) {
     case llvm::Triple::Cygwin:
     case llvm::Triple::MinGW32:
     case llvm::Triple::AuroraUX:

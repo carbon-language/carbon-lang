@@ -2615,11 +2615,12 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
+    if (Triple.isOSDarwin())
+      return new DarwinARMTargetInfo(T);
+
     switch (os) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<ARMTargetInfo>(T);
-    case llvm::Triple::Darwin:
-      return new DarwinARMTargetInfo(T);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<ARMTargetInfo>(T);
     default:
@@ -2647,14 +2648,14 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     return new MipselTargetInfo(T);
 
   case llvm::Triple::ppc:
-    if (os == llvm::Triple::Darwin)
+    if (Triple.isOSDarwin())
       return new DarwinPPC32TargetInfo(T);
     else if (os == llvm::Triple::FreeBSD)
       return new FreeBSDTargetInfo<PPC32TargetInfo>(T);
     return new PPC32TargetInfo(T);
 
   case llvm::Triple::ppc64:
-    if (os == llvm::Triple::Darwin)
+    if (Triple.isOSDarwin())
       return new DarwinPPC64TargetInfo(T);
     else if (os == llvm::Triple::Lv2)
       return new PS3PPUTargetInfo<PPC64TargetInfo>(T);
@@ -2683,11 +2684,12 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     return new TCETargetInfo(T);
 
   case llvm::Triple::x86:
+    if (Triple.isOSDarwin())
+      return new DarwinI386TargetInfo(T);
+
     switch (os) {
     case llvm::Triple::AuroraUX:
       return new AuroraUXTargetInfo<X86_32TargetInfo>(T);
-    case llvm::Triple::Darwin:
-      return new DarwinI386TargetInfo(T);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::DragonFly:
@@ -2715,11 +2717,12 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     }
 
   case llvm::Triple::x86_64:
+    if (Triple.isOSDarwin() || Triple.getEnvironment() == llvm::Triple::MachO)
+      return new DarwinX86_64TargetInfo(T);
+
     switch (os) {
     case llvm::Triple::AuroraUX:
       return new AuroraUXTargetInfo<X86_64TargetInfo>(T);
-    case llvm::Triple::Darwin:
-      return new DarwinX86_64TargetInfo(T);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_64TargetInfo>(T);
     case llvm::Triple::DragonFly:
@@ -2735,10 +2738,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::MinGW32:
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
-      if (Triple.getEnvironment() == llvm::Triple::MachO)
-        return new DarwinX86_64TargetInfo(T);
-      else
-        return new VisualStudioWindowsX86_64TargetInfo(T);
+      return new VisualStudioWindowsX86_64TargetInfo(T);
     default:
       return new X86_64TargetInfo(T);
     }

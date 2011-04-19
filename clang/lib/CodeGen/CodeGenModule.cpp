@@ -150,7 +150,7 @@ void CodeGenModule::DecorateInstruction(llvm::Instruction *Inst,
 }
 
 bool CodeGenModule::isTargetDarwin() const {
-  return getContext().Target.getTriple().getOS() == llvm::Triple::Darwin;
+  return getContext().Target.getTriple().isOSDarwin();
 }
 
 void CodeGenModule::Error(SourceLocation loc, llvm::StringRef error) {

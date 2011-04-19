@@ -578,33 +578,8 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     return;
   }
   // FIXME: temporary hack: hard-coded paths.
-  switch (os) {
-  case llvm::Triple::Cygwin:
-    // Cygwin-1.7
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
-    // g++-4 / Cygwin-1.5
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
-    // FIXME: Do we support g++-3.4.4?
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
-    break;
-  case llvm::Triple::MinGW32:
-    // FIXME: We should be aware of i686-w64-mingw32.
-    if (triple.getArch() == llvm::Triple::x86_64) {
-      // mingw-w64-20110207
-      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.3");
-      // mingw-w64-20101129
-      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.2");
-    }
-    // Try gcc 4.5.2 (MSYS)
-    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2");
-    // Try gcc 4.5.0
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
-    // Try gcc 4.4.0
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
-    // Try gcc 4.3.0
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
-    break;
-  case llvm::Triple::Darwin:
+
+  if (triple.isOSDarwin()) {
     switch (triple.getArch()) {
     default: break;
 
@@ -634,6 +609,34 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                   "arm-apple-darwin10", "v6", "", triple);
       break;
     }
+    return;
+  }
+
+  switch (os) {
+  case llvm::Triple::Cygwin:
+    // Cygwin-1.7
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+    // g++-4 / Cygwin-1.5
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
+    // FIXME: Do we support g++-3.4.4?
+    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
+    break;
+  case llvm::Triple::MinGW32:
+    // FIXME: We should be aware of i686-w64-mingw32.
+    if (triple.getArch() == llvm::Triple::x86_64) {
+      // mingw-w64-20110207
+      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.3");
+      // mingw-w64-20101129
+      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.2");
+    }
+    // Try gcc 4.5.2 (MSYS)
+    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2");
+    // Try gcc 4.5.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
+    // Try gcc 4.4.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
+    // Try gcc 4.3.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
     break;
   case llvm::Triple::DragonFly:
     AddPath("/usr/include/c++/4.1", CXXSystem, true, false, false);
@@ -863,7 +866,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
   AddDefaultCIncludePaths(triple, HSOpts);
 
   // Add the default framework include paths on Darwin.
-  if (triple.getOS() == llvm::Triple::Darwin) {
+  if (triple.isOSDarwin()) {
     AddPath("/System/Library/Frameworks", System, true, false, true);
     AddPath("/Library/Frameworks", System, true, false, true);
   }
