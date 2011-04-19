@@ -94,8 +94,7 @@ class BitfieldsTestCase(TestBase):
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
