@@ -107,7 +107,6 @@ class ThreadAPITestCase(TestBase):
     def get_process(self):
         """Test Python SBThread.GetProcess() API."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
@@ -117,8 +116,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
@@ -131,7 +129,6 @@ class ThreadAPITestCase(TestBase):
     def get_stop_description(self):
         """Test Python SBThread.GetStopDescription() API."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
@@ -141,8 +138,7 @@ class ThreadAPITestCase(TestBase):
         #self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
@@ -158,7 +154,6 @@ class ThreadAPITestCase(TestBase):
     def step_out_of_malloc_into_function_b(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
@@ -168,8 +163,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         while True:
             thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
@@ -193,7 +187,6 @@ class ThreadAPITestCase(TestBase):
     def step_over_3_times(self):
         """Test Python SBThread.StepOver() API."""
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
@@ -203,8 +196,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
@@ -236,7 +228,6 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
 
         exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
@@ -246,8 +237,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
 
@@ -262,9 +252,10 @@ class ThreadAPITestCase(TestBase):
 
         # Get the start/end addresses for this line entry.
         start_addr = lineEntry.GetStartAddress().GetLoadAddress(target)
-        print "start addr:", hex(start_addr)
         end_addr = lineEntry.GetEndAddress().GetLoadAddress(target)
-        print "end addr:", hex(end_addr)
+        if self.TraceOn():
+            print "start addr:", hex(start_addr)
+            print "end addr:", hex(end_addr)
 
         # Disable the breakpoint.
         self.assertTrue(target.DisableAllBreakpoints())
