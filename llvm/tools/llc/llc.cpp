@@ -278,18 +278,10 @@ int main(int argc, char **argv) {
 
   if (DisableDotLoc)
     Target.setMCUseLoc(false);
-  if (TheTriple.getOS() == Triple::Darwin) {
-    switch (TheTriple.getDarwinMajorNumber()) {
-    case 7:
-    case 8:
-    case 9:
-      // disable .loc support for older darwin OS.
-      Target.setMCUseLoc(false);
-      break;
-    default:
-      break;
-    }
-  }
+
+  // Disable .loc support for older OS X versions.
+  if (TheTriple.isOSX() && TheTriple.isOSXVersionLT(10, 5))
+    Target.setMCUseLoc(false);
 
   // Figure out where we are going to send the output...
   OwningPtr<tool_output_file> Out
