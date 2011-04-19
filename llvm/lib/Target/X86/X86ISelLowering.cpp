@@ -2281,7 +2281,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         OpFlags = X86II::MO_PLT;
       } else if (Subtarget->isPICStyleStubAny() &&
                  (GV->isDeclaration() || GV->isWeakForLinker()) &&
-                 Subtarget->getDarwinVers() < 9) {
+                 (!Subtarget->getTargetTriple().isOSX() ||
+                  Subtarget->getTargetTriple().isOSXVersionLT(10, 5))) {
         // PC-relative references to external symbols should go through $stub,
         // unless we're building with the leopard linker or later, which
         // automatically synthesizes these stubs.
@@ -2300,7 +2301,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         getTargetMachine().getRelocationModel() == Reloc::PIC_) {
       OpFlags = X86II::MO_PLT;
     } else if (Subtarget->isPICStyleStubAny() &&
-               Subtarget->getDarwinVers() < 9) {
+               (!Subtarget->getTargetTriple().isOSX() ||
+                Subtarget->getTargetTriple().isOSXVersionLT(10, 5))) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.

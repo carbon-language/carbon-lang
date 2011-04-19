@@ -217,13 +217,6 @@ public:
     return PICStyle == PICStyles::StubDynamicNoPIC ||
            PICStyle == PICStyles::StubPIC; }
 
-  /// getDarwinVers - Return the darwin version number, 8 = Tiger, 9 = Leopard,
-  /// 10 = Snow Leopard, etc.
-  unsigned getDarwinVers() const {
-    if (isTargetDarwin()) return TargetTriple.getDarwinMajorNumber();
-    return 0;
-  }
-
   /// ClassifyGlobalReference - Classify a global variable reference for the
   /// current subtarget according to how we should reference it in a non-pcrel
   /// context.
