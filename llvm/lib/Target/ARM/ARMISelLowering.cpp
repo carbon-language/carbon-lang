@@ -511,18 +511,15 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   // i64 operation support.
+  setOperationAction(ISD::MUL,     MVT::i64, Expand);
+  setOperationAction(ISD::MULHU,   MVT::i32, Expand);
   if (Subtarget->isThumb1Only()) {
-    setOperationAction(ISD::MUL,     MVT::i64, Expand);
-    setOperationAction(ISD::MULHU,   MVT::i32, Expand);
-    setOperationAction(ISD::MULHS,   MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  } else {
-    setOperationAction(ISD::MUL,     MVT::i64, Expand);
-    setOperationAction(ISD::MULHU,   MVT::i32, Expand);
-    if (!Subtarget->hasV6Ops())
-      setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
+  if (Subtarget->isThumb1Only() || !Subtarget->hasV6Ops())
+    setOperationAction(ISD::MULHS, MVT::i32, Expand);
+
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
   setOperationAction(ISD::SRA_PARTS, MVT::i32, Custom);
   setOperationAction(ISD::SRL_PARTS, MVT::i32, Custom);
