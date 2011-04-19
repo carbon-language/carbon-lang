@@ -165,6 +165,8 @@ public:
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
 
+  const Triple &getTargetTriple() const { return TargetTriple; }
+
   bool isTargetDarwin() const { return TargetTriple.getOS() == Triple::Darwin; }
   bool isTargetFreeBSD() const { return TargetTriple.getOS() == Triple::FreeBSD; }
   bool isTargetSolaris() const { return TargetTriple.getOS() == Triple::Solaris; }
