@@ -1553,6 +1553,11 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
                                  Ops.data(), Ops.size());
   }
 
+  // Transfer memoperands.
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
+  cast<MachineSDNode>(VLd)->setMemRefs(MemOp, MemOp + 1);
+
   if (NumVecs == 1)
     return VLd;
 
@@ -1581,6 +1586,9 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
   unsigned Vec0Idx = 3; // AddrOpIdx + (isUpdating ? 2 : 1)
   if (!SelectAddrMode6(N, N->getOperand(AddrOpIdx), MemAddr, Align))
     return NULL;
+
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
 
   SDValue Chain = N->getOperand(0);
   EVT VT = N->getOperand(Vec0Idx).getValueType();
@@ -1654,7 +1662,13 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
     Ops.push_back(Pred);
     Ops.push_back(Reg0);
     Ops.push_back(Chain);
-    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), Ops.size());
+    SDNode *VSt =
+      CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), Ops.size());
+
+    // Transfer memoperands.
+    cast<MachineSDNode>(VSt)->setMemRefs(MemOp, MemOp + 1);
+
+    return VSt;
   }
 
   // Otherwise, quad registers are stored with two separate instructions,
@@ -1675,6 +1689,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
   SDNode *VStA = CurDAG->getMachineNode(QOpcodes0[OpcodeIndex], dl,
                                         MemAddr.getValueType(),
                                         MVT::Other, OpsA, 7);
+  cast<MachineSDNode>(VStA)->setMemRefs(MemOp, MemOp + 1);
   Chain = SDValue(VStA, 1);
 
   // Store the odd D registers.
@@ -1691,8 +1706,10 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
   Ops.push_back(Pred);
   Ops.push_back(Reg0);
   Ops.push_back(Chain);
-  return CurDAG->getMachineNode(QOpcodes1[OpcodeIndex], dl, ResTys,
-                                Ops.data(), Ops.size());
+  SDNode *VStB = CurDAG->getMachineNode(QOpcodes1[OpcodeIndex], dl, ResTys,
+                                        Ops.data(), Ops.size());
+  cast<MachineSDNode>(VStB)->setMemRefs(MemOp, MemOp + 1);
+  return VStB;
 }
 
 SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
@@ -1707,6 +1724,9 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   unsigned Vec0Idx = 3; // AddrOpIdx + (isUpdating ? 2 : 1)
   if (!SelectAddrMode6(N, N->getOperand(AddrOpIdx), MemAddr, Align))
     return NULL;
+
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
 
   SDValue Chain = N->getOperand(0);
   unsigned Lane =
@@ -1794,6 +1814,7 @@ SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
                                   QOpcodes[OpcodeIndex]);
   SDNode *VLdLn = CurDAG->getMachineNode(Opc, dl, ResTys,
                                          Ops.data(), Ops.size());
+  cast<MachineSDNode>(VLdLn)->setMemRefs(MemOp, MemOp + 1);
   if (!IsLoad)
     return VLdLn;
 
@@ -1819,6 +1840,9 @@ SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, bool isUpdating,
   SDValue MemAddr, Align;
   if (!SelectAddrMode6(N, N->getOperand(1), MemAddr, Align))
     return NULL;
+
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
 
   SDValue Chain = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -1864,12 +1888,13 @@ SDNode *ARMDAGToDAGISel::SelectVLDDup(SDNode *N, bool isUpdating,
 
   unsigned ResTyElts = (NumVecs == 3) ? 4 : NumVecs;
   std::vector<EVT> ResTys;
-  ResTys.push_back(EVT::getVectorVT(*CurDAG->getContext(), MVT::i64, ResTyElts));
+  ResTys.push_back(EVT::getVectorVT(*CurDAG->getContext(), MVT::i64,ResTyElts));
   if (isUpdating)
     ResTys.push_back(MVT::i32);
   ResTys.push_back(MVT::Other);
   SDNode *VLdDup =
     CurDAG->getMachineNode(Opc, dl, ResTys, Ops.data(), Ops.size());
+  cast<MachineSDNode>(VLdDup)->setMemRefs(MemOp, MemOp + 1);
   SuperReg = SDValue(VLdDup, 0);
 
   // Extract the subregisters.

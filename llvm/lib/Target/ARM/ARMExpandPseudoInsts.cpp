@@ -455,6 +455,10 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
   // Add an implicit def for the super-register.
   MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
   TransferImpOps(MI, MIB, MIB);
+
+  // Transfer memoperands.
+  (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+
   MI.eraseFromParent();
 }
 
@@ -500,6 +504,10 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
     // Add an implicit kill for the super-reg.
     (*MIB).addRegisterKilled(SrcReg, TRI, true);
   TransferImpOps(MI, MIB, MIB);
+
+  // Transfer memoperands.
+  (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+
   MI.eraseFromParent();
 }
 

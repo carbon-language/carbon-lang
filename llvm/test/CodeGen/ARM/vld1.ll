@@ -133,8 +133,6 @@ declare <2 x i64> @llvm.arm.neon.vld1.v2i64(i8*, i32) nounwind readonly
 ; Do not crash if the vld1 result is not used.
 define void @unused_vld1_result() {
 entry:
-;CHECK: unused_vld1_result
-;CHECK: vld1.32
   %0 = call <4 x float> @llvm.arm.neon.vld1.v4f32(i8* undef, i32 1) 
   call void @llvm.trap()
   unreachable
