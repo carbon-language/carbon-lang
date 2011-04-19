@@ -14,6 +14,7 @@
 #ifndef POWERPCSUBTARGET_H
 #define POWERPCSUBTARGET_H
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
 
@@ -68,6 +69,10 @@ protected:
   /// DarwinVers - Nonzero if this is a darwin platform.  Otherwise, the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
   unsigned char DarwinVers; // Is any darwin-ppc platform.
+
+  /// TargetTriple - What processor and OS we're targeting.
+  Triple TargetTriple;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
@@ -133,6 +138,8 @@ public:
   bool hasSTFIWX() const { return HasSTFIWX; }
   bool hasAltivec() const { return HasAltivec; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
+
+  const Triple &getTargetTriple() const { return TargetTriple; }
 
   /// isDarwin - True if this is any darwin platform.
   bool isDarwin() const { return DarwinVers != 0; }
