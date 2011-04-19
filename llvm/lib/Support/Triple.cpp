@@ -99,10 +99,12 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Darwin: return "darwin";
   case DragonFly: return "dragonfly";
   case FreeBSD: return "freebsd";
+  case IOS: return "ios";
   case Linux: return "linux";
   case Lv2: return "lv2";
   case MinGW32: return "mingw32";
   case NetBSD: return "netbsd";
+  case OSX: return "osx";
   case OpenBSD: return "openbsd";
   case Psp: return "psp";
   case Solaris: return "solaris";
@@ -314,6 +316,8 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return DragonFly;
   else if (OSName.startswith("freebsd"))
     return FreeBSD;
+  else if (OSName.startswith("ios"))
+    return IOS;
   else if (OSName.startswith("linux"))
     return Linux;
   else if (OSName.startswith("lv2"))
@@ -322,6 +326,8 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return MinGW32;
   else if (OSName.startswith("netbsd"))
     return NetBSD;
+  else if (OSName.startswith("osx"))
+    return OSX;
   else if (OSName.startswith("openbsd"))
     return OpenBSD;
   else if (OSName.startswith("psp"))
