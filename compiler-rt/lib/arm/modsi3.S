@@ -32,7 +32,7 @@ DEFINE_COMPILERRT_FUNCTION(__modsi3)
     sub     r0,     r2, r0, asr #31
     sub     r1,     r3, r1, asr #31
     //  abs(a) % abs(b)
-    bl      ___umodsi3
+    bl     SYMBOL_NAME(__umodsi3)
     //  Apply sign of dividend to result and return.
     eor     r0,     r0, r4, asr #31
     sub     r0,     r0, r4, asr #31

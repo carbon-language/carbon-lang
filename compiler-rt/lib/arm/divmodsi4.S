@@ -36,7 +36,7 @@ DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
     sub     r0,     ip, r0, asr #31
     sub     r1,     lr, r1, asr #31
 //  Unsigned divmod:
-    bl      ___udivmodsi4
+    bl      SYMBOL_NAME(__udivmodsi4)
 //  Apply the sign of quotient and modulus
     ldr     r1,    [r6]
     eor     r0,     r0, r4, asr #31
