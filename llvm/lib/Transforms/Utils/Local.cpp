@@ -68,8 +68,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 
       // Let the basic block know that we are letting go of it.  Based on this,
       // it will adjust it's PHI nodes.
-      assert(BI->getParent() && "Terminator not inserted in block!");
-      OldDest->removePredecessor(BI->getParent());
+      OldDest->removePredecessor(BB);
 
       // Replace the conditional branch with an unconditional one.
       BranchInst::Create(Destination, BI);
