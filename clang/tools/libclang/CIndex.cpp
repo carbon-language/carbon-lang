@@ -5202,8 +5202,10 @@ const char *clang_getTUMemoryUsageName(CXTUMemoryUsageKind kind) {
       break;
     case CXTUMemoryUsage_Selectors:
       str = "ASTContext: selectors";
+      break;
     case CXTUMemoryUsage_GlobalCompletionResults:
       str = "Code completion: cached global results";
+      break;
   }
   return str;
 }
