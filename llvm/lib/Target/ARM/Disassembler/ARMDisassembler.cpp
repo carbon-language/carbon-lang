@@ -437,7 +437,7 @@ bool ThumbDisassembler::getInstruction(MCInst &MI,
                                        const MemoryObject &Region,
                                        uint64_t Address,
                                        raw_ostream &os) const {
-  // The Thumb instruction stream is a sequence of halhwords.
+  // The Thumb instruction stream is a sequence of halfwords.
 
   // This represents the first halfword as well as the machine instruction
   // passed to decodeThumbInstruction().  For 16-bit Thumb instruction, the top
