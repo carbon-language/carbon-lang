@@ -99,9 +99,12 @@ CommandObjectApropos::Execute
             
             StreamString settings_search_results;
             lldb::UserSettingsControllerSP root = Debugger::GetSettingsController ();
-            std::string settings_prefix = root->GetLevelName().AsCString();
+            const char *settings_prefix = root->GetLevelName().GetCString();
              
-            UserSettingsController::SearchAllSettingsDescriptions (m_interpreter, root, settings_prefix, search_word,
+            UserSettingsController::SearchAllSettingsDescriptions (m_interpreter, 
+                                                                   root, 
+                                                                   settings_prefix, 
+                                                                   search_word,
                                                                    settings_search_results);
             
             if (settings_search_results.GetSize() > 0)

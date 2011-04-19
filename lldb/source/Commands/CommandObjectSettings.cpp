@@ -30,27 +30,15 @@ CommandObjectMultiwordSettings::CommandObjectMultiwordSettings (CommandInterpret
                             "A set of commands for manipulating internal settable debugger variables.",
                             "settings <command> [<command-options>]")
 {
-    bool status;
-
-    CommandObjectSP set_command_object (new CommandObjectSettingsSet (interpreter));
-    CommandObjectSP show_command_object (new CommandObjectSettingsShow (interpreter));
-    CommandObjectSP list_command_object (new CommandObjectSettingsList (interpreter));
-    CommandObjectSP remove_command_object (new CommandObjectSettingsRemove (interpreter));
-    CommandObjectSP replace_command_object (new CommandObjectSettingsReplace (interpreter));
-    CommandObjectSP insert_before_command_object (new CommandObjectSettingsInsertBefore (interpreter));
-    CommandObjectSP insert_after_command_object (new CommandObjectSettingsInsertAfter(interpreter));
-    CommandObjectSP append_command_object (new CommandObjectSettingsAppend(interpreter));
-    CommandObjectSP clear_command_object (new CommandObjectSettingsClear(interpreter));
-
-    status = LoadSubCommand ("set",           set_command_object);
-    status = LoadSubCommand ("show",          show_command_object);
-    status = LoadSubCommand ("list",          list_command_object);
-    status = LoadSubCommand ("remove",        remove_command_object);
-    status = LoadSubCommand ("replace",       replace_command_object);
-    status = LoadSubCommand ("insert-before", insert_before_command_object);
-    status = LoadSubCommand ("insert-after",  insert_after_command_object);
-    status = LoadSubCommand ("append",        append_command_object);
-    status = LoadSubCommand ("clear",         clear_command_object);
+    LoadSubCommand ("set",           CommandObjectSP (new CommandObjectSettingsSet (interpreter)));
+    LoadSubCommand ("show",          CommandObjectSP (new CommandObjectSettingsShow (interpreter)));
+    LoadSubCommand ("list",          CommandObjectSP (new CommandObjectSettingsList (interpreter)));
+    LoadSubCommand ("remove",        CommandObjectSP (new CommandObjectSettingsRemove (interpreter)));
+    LoadSubCommand ("replace",       CommandObjectSP (new CommandObjectSettingsReplace (interpreter)));
+    LoadSubCommand ("insert-before", CommandObjectSP (new CommandObjectSettingsInsertBefore (interpreter)));
+    LoadSubCommand ("insert-after",  CommandObjectSP (new CommandObjectSettingsInsertAfter (interpreter)));
+    LoadSubCommand ("append",        CommandObjectSP (new CommandObjectSettingsAppend (interpreter)));
+    LoadSubCommand ("clear",         CommandObjectSP (new CommandObjectSettingsClear (interpreter)));
 }
 
 CommandObjectMultiwordSettings::~CommandObjectMultiwordSettings ()
@@ -123,7 +111,7 @@ CommandObjectSettingsSet::~CommandObjectSettingsSet()
 bool
 CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -161,11 +149,11 @@ CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
     }
     else
     {
-      Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                              var_value, 
-                                              eVarSetOperationAssign, 
-                                              m_options.m_override, 
-                                              m_interpreter.GetDebugger().GetInstanceName().AsCString());
+      Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                       var_value, 
+                                       eVarSetOperationAssign, 
+                                       m_options.m_override, 
+                                       m_interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -209,11 +197,11 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
             && completion_str.compare (matches.GetStringAtIndex(0)) == 0))
     {
         matches.Clear();
-        UserSettingsControllerSP root_settings = Debugger::GetSettingsController();
+        UserSettingsControllerSP usc_sp = Debugger::GetSettingsController();
         if (cursor_index == 1)
         {
             // The user is at the end of the variable name, which is complete and valid.
-            UserSettingsController::CompleteSettingsValue (root_settings,
+            UserSettingsController::CompleteSettingsValue (usc_sp,
                                                            input.GetArgumentAtIndex (1), // variable name
                                                            NULL,                         // empty value string
                                                            word_complete,
@@ -222,7 +210,7 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
         else
         {
             // The user is partly into the variable value.
-            UserSettingsController::CompleteSettingsValue (root_settings,
+            UserSettingsController::CompleteSettingsValue (usc_sp,
                                                            input.GetArgumentAtIndex (1),  // variable name
                                                            completion_str.c_str(),        // partial value string
                                                            word_complete,
@@ -328,11 +316,10 @@ CommandObjectSettingsShow::~CommandObjectSettingsShow()
 
 
 bool
-CommandObjectSettingsShow::Execute (Args& command,
-                                    CommandReturnObject &result)
+CommandObjectSettingsShow::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
-    std::string current_prefix = root_settings->GetLevelName().AsCString();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
+    const char *current_prefix = usc_sp->GetLevelName().GetCString();
 
     Error err;
 
@@ -341,48 +328,27 @@ CommandObjectSettingsShow::Execute (Args& command,
         // The user requested to see the value of a particular variable.
         SettableVariableType var_type;
         const char *variable_name = command.GetArgumentAtIndex (0);
-        StringList value = root_settings->GetVariable (variable_name, var_type,
-                                                       m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                                       err);
+        StringList value = usc_sp->GetVariable (variable_name, 
+                                                var_type,
+                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                                err);
         
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
             result.SetStatus (eReturnStatusFailed);
               
-         }
+        }
         else
         {
-            StreamString tmp_str;
-            char *type_name = (char *) "";
-            if (var_type != eSetVarTypeNone)
-            {
-                tmp_str.Printf (" (%s)", UserSettingsController::GetTypeString (var_type));
-                type_name = (char *) tmp_str.GetData();
-            }
-
-            if (value.GetSize() == 0)
-                result.AppendMessageWithFormat ("%s%s = ''\n", variable_name, type_name);
-            else if ((var_type != eSetVarTypeArray) && (var_type != eSetVarTypeDictionary))
-                result.AppendMessageWithFormat ("%s%s = '%s'\n", variable_name, type_name, value.GetStringAtIndex (0));
-            else
-            {
-                result.AppendMessageWithFormat ("%s%s:\n", variable_name, type_name);
-                for (unsigned i = 0, e = value.GetSize(); i != e; ++i)
-                {
-                    if (var_type == eSetVarTypeArray)
-                        result.AppendMessageWithFormat ("  [%d]: '%s'\n", i, value.GetStringAtIndex (i));
-                    else if (var_type == eSetVarTypeDictionary)
-                        result.AppendMessageWithFormat ("  '%s'\n", value.GetStringAtIndex (i));
-                }
-            }
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            UserSettingsController::DumpValue(m_interpreter, usc_sp, variable_name, result.GetOutputStream());
+            result.SetStatus (eReturnStatusSuccessFinishResult);
         }
     }
     else
     {
         UserSettingsController::GetAllVariableValues (m_interpreter, 
-                                                      root_settings, 
+                                                      usc_sp, 
                                                       current_prefix, 
                                                       result.GetOutputStream(), 
                                                       err);
@@ -459,18 +425,17 @@ CommandObjectSettingsList::~CommandObjectSettingsList()
 
 
 bool
-CommandObjectSettingsList::Execute (                       Args& command,
-                                    CommandReturnObject &result)
+CommandObjectSettingsList::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
-    std::string current_prefix = root_settings->GetLevelName().AsCString();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
+    const char *current_prefix = usc_sp->GetLevelName().GetCString();
 
     Error err;
 
     if (command.GetArgumentCount() == 0)
     {
         UserSettingsController::FindAllSettingsDescriptions (m_interpreter, 
-                                                             root_settings, 
+                                                             usc_sp, 
                                                              current_prefix, 
                                                              result.GetOutputStream(), 
                                                              err);
@@ -479,7 +444,7 @@ CommandObjectSettingsList::Execute (                       Args& command,
     {
         const char *search_name = command.GetArgumentAtIndex (0);
         UserSettingsController::FindSettingsDescriptions (m_interpreter, 
-                                                          root_settings, 
+                                                          usc_sp, 
                                                           current_prefix,
                                                           search_name, 
                                                           result.GetOutputStream(), 
@@ -574,10 +539,9 @@ CommandObjectSettingsRemove::~CommandObjectSettingsRemove ()
 }
 
 bool
-CommandObjectSettingsRemove::Execute (                        Args& command,
-                                     CommandReturnObject &result)
+CommandObjectSettingsRemove::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -611,12 +575,12 @@ CommandObjectSettingsRemove::Execute (                        Args& command,
 
     index_value_string = index_value;
 
-    Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                            NULL, 
-                                            eVarSetOperationRemove,  
-                                            true, 
-                                            m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                            index_value_string.c_str());
+    Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                     NULL, 
+                                     eVarSetOperationRemove,  
+                                     true, 
+                                     m_interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                     index_value_string.c_str());
     if (err.Fail ())
     {
         result.AppendError (err.AsCString());
@@ -710,10 +674,9 @@ CommandObjectSettingsReplace::~CommandObjectSettingsReplace ()
 }
 
 bool
-CommandObjectSettingsReplace::Execute (                         Args& command,
-                                      CommandReturnObject &result)
+CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -761,12 +724,12 @@ CommandObjectSettingsReplace::Execute (                         Args& command,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                                var_value, 
-                                                eVarSetOperationReplace, 
-                                                true, 
-                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                                index_value_string.c_str());
+        Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                         var_value, 
+                                         eVarSetOperationReplace, 
+                                         true, 
+                                         m_interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                         index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -855,10 +818,9 @@ CommandObjectSettingsInsertBefore::~CommandObjectSettingsInsertBefore ()
 }
 
 bool
-CommandObjectSettingsInsertBefore::Execute (                              Args& command,
-                                           CommandReturnObject &result)
+CommandObjectSettingsInsertBefore::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -907,12 +869,12 @@ CommandObjectSettingsInsertBefore::Execute (                              Args& 
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                                var_value, 
-                                                eVarSetOperationInsertBefore,
-                                                true, 
-                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(),
-                                                index_value_string.c_str());
+        Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                         var_value, 
+                                         eVarSetOperationInsertBefore,
+                                         true, 
+                                         m_interpreter.GetDebugger().GetInstanceName().AsCString(),
+                                         index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -1002,10 +964,9 @@ CommandObjectSettingsInsertAfter::~CommandObjectSettingsInsertAfter ()
 }
 
 bool
-CommandObjectSettingsInsertAfter::Execute (                             Args& command,
-                                          CommandReturnObject &result)
+CommandObjectSettingsInsertAfter::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -1054,12 +1015,12 @@ CommandObjectSettingsInsertAfter::Execute (                             Args& co
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                                var_value, 
-                                                eVarSetOperationInsertAfter,
-                                                true, 
-                                                m_interpreter.GetDebugger().GetInstanceName().AsCString(), 
-                                                index_value_string.c_str());
+        Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                         var_value, 
+                                         eVarSetOperationInsertAfter,
+                                         true, 
+                                         m_interpreter.GetDebugger().GetInstanceName().AsCString(), 
+                                         index_value_string.c_str());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -1139,10 +1100,9 @@ CommandObjectSettingsAppend::~CommandObjectSettingsAppend ()
 }
 
 bool
-CommandObjectSettingsAppend::Execute (Args& command,
-                                      CommandReturnObject &result)
+CommandObjectSettingsAppend::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -1179,11 +1139,11 @@ CommandObjectSettingsAppend::Execute (Args& command,
     }
     else
     {
-        Error err = root_settings->SetVariable (var_name_string.c_str(), 
-                                                var_value, 
-                                                eVarSetOperationAppend, 
-                                                true, 
-                                                m_interpreter.GetDebugger().GetInstanceName().AsCString());
+        Error err = usc_sp->SetVariable (var_name_string.c_str(), 
+                                         var_value, 
+                                         eVarSetOperationAppend, 
+                                         true, 
+                                         m_interpreter.GetDebugger().GetInstanceName().AsCString());
         if (err.Fail ())
         {
             result.AppendError (err.AsCString());
@@ -1253,10 +1213,9 @@ CommandObjectSettingsClear::~CommandObjectSettingsClear ()
 }
 
 bool
-CommandObjectSettingsClear::Execute (                       Args& command,
-                                    CommandReturnObject &result)
+CommandObjectSettingsClear::Execute (Args& command, CommandReturnObject &result)
 {
-    UserSettingsControllerSP root_settings = Debugger::GetSettingsController ();
+    UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
     const int argc = command.GetArgumentCount ();
 
@@ -1275,11 +1234,11 @@ CommandObjectSettingsClear::Execute (                       Args& command,
         return false;
     }
 
-    Error err = root_settings->SetVariable (var_name, 
-                                            NULL, 
-                                            eVarSetOperationClear, 
-                                            false, 
-                                            m_interpreter.GetDebugger().GetInstanceName().AsCString());
+    Error err = usc_sp->SetVariable (var_name, 
+                                     NULL, 
+                                     eVarSetOperationClear, 
+                                     false, 
+                                     m_interpreter.GetDebugger().GetInstanceName().AsCString());
 
     if (err.Fail ())
     {

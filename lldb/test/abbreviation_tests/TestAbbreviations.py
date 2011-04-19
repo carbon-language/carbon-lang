@@ -38,12 +38,12 @@ class AbbreviationsTestCase(TestBase):
                     patterns = ["Executing commands in '.*change_prompt.lldb'"])
 
         self.expect("settings show prompt",
-                    startstr = "prompt (string) = '[old-oak]'")
+                    startstr = 'prompt (string) = "[old-oak]"')
 
 
         self.runCmd("settings set -r prompt")
         self.expect("settings show prompt",
-                    startstr = "prompt (string) = '(lldb) '")
+                    startstr = 'prompt (string) = "(lldb) "')
 
 
         self.expect("lo li",
@@ -51,11 +51,11 @@ class AbbreviationsTestCase(TestBase):
 
         self.runCmd("se se prompt Sycamore> ")
         self.expect("se sh prompt",
-                    startstr = "prompt (string) = 'Sycamore>'")
+                    startstr = 'prompt (string) = "Sycamore>"')
 
         self.runCmd("se se -r prompt")
         self.expect("set sh prompt",
-                    startstr = "prompt (string) = '(lldb) '")
+                    startstr = 'prompt (string) = "(lldb) "')
 
         self.runCmd (r'''sc print "\n\n\tHello!\n"''')
 

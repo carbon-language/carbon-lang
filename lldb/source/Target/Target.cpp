@@ -1289,9 +1289,6 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 
 #define TSC_DEFAULT_ARCH      "default-arch"
 #define TSC_EXPR_PREFIX       "expr-prefix"
-#define TSC_EXEC_LEVEL        "execution-level"
-#define TSC_EXEC_MODE         "execution-mode"
-#define TSC_EXEC_OS_TYPE      "execution-os-type"
 #define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
 
 
@@ -1307,27 +1304,6 @@ static const ConstString &
 GetSettingNameForExpressionPrefix ()
 {
     static ConstString g_const_string (TSC_EXPR_PREFIX);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForExecutionLevel ()
-{
-    static ConstString g_const_string (TSC_EXEC_LEVEL);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForExecutionMode ()
-{
-    static ConstString g_const_string (TSC_EXEC_MODE);
-    return g_const_string;
-}
-
-static const ConstString &
-GetSettingNameForExecutionOSType ()
-{
-    static ConstString g_const_string (TSC_EXEC_OS_TYPE);
     return g_const_string;
 }
 

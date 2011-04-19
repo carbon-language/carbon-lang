@@ -22,7 +22,7 @@ using namespace lldb_private;
 
 static void
 DumpSettingEntry (CommandInterpreter &interpreter, 
-                  Stream &result_stream,
+                  Stream &strm,
                   const uint32_t max_len, 
                   const SettingEntry &entry)
 {
@@ -34,7 +34,7 @@ DumpSettingEntry (CommandInterpreter &interpreter,
     if (entry.default_value && entry.default_value[0])
         description.Printf (" (default: %s)", entry.default_value);
     
-    interpreter.OutputFormattedHelpText (result_stream, 
+    interpreter.OutputFormattedHelpText (strm, 
                                          entry.var_name, 
                                          "--", 
                                          description.GetData(), 
@@ -42,7 +42,7 @@ DumpSettingEntry (CommandInterpreter &interpreter,
     
     if (entry.enum_values && entry.enum_values[0].string_value)
     {
-        interpreter.OutputFormattedHelpText (result_stream, 
+        interpreter.OutputFormattedHelpText (strm, 
                                              "", 
                                              "  ", 
                                              "Enumeration values:", 
@@ -56,7 +56,7 @@ DumpSettingEntry (CommandInterpreter &interpreter,
                                     entry.enum_values[enum_idx].usage);
             else
                 description.Printf ("%s", entry.enum_values[enum_idx].string_value);
-            interpreter.OutputFormattedHelpText (result_stream, 
+            interpreter.OutputFormattedHelpText (strm, 
                                                  "", 
                                                  "  ", 
                                                  description.GetData(), 
@@ -82,6 +82,7 @@ UserSettingsController::UserSettingsController (const char *level_name,
 
 UserSettingsController::~UserSettingsController ()
 {
+    Mutex::Locker locker (m_live_settings_mutex);
     m_live_settings.clear();
 }
 
@@ -141,7 +142,7 @@ void
 UserSettingsController::InitializeGlobalVariables ()
 {
     int num_entries;
-    const char *prefix = GetLevelName().AsCString();
+    const char *prefix = GetLevelName().GetCString();
 
     num_entries = m_settings.global_settings.size();
     for (int i = 0; i < num_entries; ++i)
@@ -247,7 +248,7 @@ UserSettingsController::BuildParentPrefix (std::string &parent_prefix)
         if (parent_prefix.length() > 0)
             parent_prefix.append (".");
     }
-    parent_prefix.append (GetLevelName().AsCString());
+    parent_prefix.append (GetLevelName().GetCString());
 }
 
 void
@@ -337,7 +338,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                 if (entry == NULL)
                 {
                     err.SetErrorStringWithFormat ("Unable to find variable '%s.%s'; cannot assign value.\n",
-                                                  prefix.AsCString(), const_var_name.AsCString());
+                                                  prefix.GetCString(), const_var_name.GetCString());
                     return err;
                 }
                 else
@@ -424,7 +425,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                 if (entry == NULL)
                 {
                     err.SetErrorStringWithFormat ("Unknown instance variable '%s'; cannot assign value.\n",
-                                                  const_var_name.AsCString());
+                                                  const_var_name.GetCString());
                     return err;
                 }
 
@@ -465,7 +466,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
                     
                     {   // Scope for mutex.
                         Mutex::Locker locker (m_pending_settings_mutex);
-                        m_pending_settings[instance_name.AsCString()] = current_settings_sp;
+                        m_pending_settings[instance_name.GetCString()] = current_settings_sp;
                     }
  
                     if (override)
@@ -522,7 +523,7 @@ UserSettingsController::SetVariable (const char *full_dot_name,
     else
     {
         err.SetErrorStringWithFormat ("'%s' is not a valid level name; was expecting '%s'. Cannot assign value.\n",
-                                      prefix.AsCString(), m_settings.level_name.AsCString());
+                                      prefix.GetCString(), m_settings.level_name.GetCString());
     }
 
     return err;
@@ -604,7 +605,7 @@ UserSettingsController::GetVariable
                 {
                     // Look for instance name setting in pending settings.
 
-                    std::string inst_name_str = instance_name.AsCString();
+                    std::string inst_name_str = instance_name.GetCString();
                     std::map<std::string, InstanceSettingsSP>::iterator pos;
 
                     pos = m_pending_settings.find (inst_name_str);
@@ -684,10 +685,10 @@ UserSettingsController::RemovePendingSettings (const ConstString &instance_name)
 
     // Add surrounding brackets to instance name if not already present.
 
-    if (instance_name.AsCString()[0] != '[')
-        tmp_name.Printf ("[%s]", instance_name.AsCString());
+    if (instance_name.GetCString()[0] != '[')
+        tmp_name.Printf ("[%s]", instance_name.GetCString());
     else
-        tmp_name.Printf ("%s", instance_name.AsCString());
+        tmp_name.Printf ("%s", instance_name.GetCString());
 
     std::string instance_name_str (tmp_name.GetData());
     std::map<std::string, InstanceSettingsSP>::iterator pos;
@@ -704,10 +705,10 @@ UserSettingsController::FindPendingSettings (const ConstString &instance_name)
 
     // Add surrounding brackets to instance name if not already present.
 
-    if (instance_name.AsCString()[0] != '[')
-        tmp_name.Printf ("[%s]", instance_name.AsCString());
+    if (instance_name.GetCString()[0] != '[')
+        tmp_name.Printf ("[%s]", instance_name.GetCString());
     else
-        tmp_name.Printf ("%s", instance_name.AsCString());
+        tmp_name.Printf ("%s", instance_name.GetCString());
 
     std::string instance_name_str (tmp_name.GetData());  // Need std::string for std::map look-up
 
@@ -776,7 +777,7 @@ UserSettingsController::CopyDefaultSettings (const InstanceSettingsSP &actual_se
 InstanceSettingsSP
 UserSettingsController::PendingSettingsForInstance (const ConstString &instance_name)
 {
-    std::string name_str (instance_name.AsCString());
+    std::string name_str (instance_name.GetCString());
     std::map<std::string, InstanceSettingsSP>::iterator pos;
     Mutex::Locker locker (m_pending_settings_mutex);
 
@@ -788,7 +789,7 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
     }
     else
     {
-        InstanceSettingsSP new_settings_sp = CreateInstanceSettings (instance_name.AsCString());
+        InstanceSettingsSP new_settings_sp = CreateInstanceSettings (instance_name.GetCString());
         CopyDefaultSettings (new_settings_sp, instance_name, true);
         m_pending_settings[name_str] = new_settings_sp;
         return new_settings_sp;
@@ -802,50 +803,30 @@ UserSettingsController::PendingSettingsForInstance (const ConstString &instance_
 }
 
 void
-UserSettingsController::GetAllDefaultSettingValues (Stream &result_stream)
+UserSettingsController::GetAllDefaultSettingValues (Stream &strm)
 {
     std::string parent_prefix;
     BuildParentPrefix (parent_prefix);
-    const char *prefix = parent_prefix.c_str();
 
     for (int i = 0; i < m_settings.instance_settings.size(); ++i)
     {
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
-        StringList tmp_value;
-        m_default_settings->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
-
-        StreamString value_string;
-        bool multi_value = false;
-
-        if (tmp_value.GetSize() == 1)
-            value_string.Printf ("%s", tmp_value.GetStringAtIndex (0));
-        else
-        {
-            for (int j = 0; j < tmp_value.GetSize(); ++j)
-            {
-                if (entry.var_type == eSetVarTypeArray)
-                    value_string.Printf ("\n  [%d]: '%s'", j, tmp_value.GetStringAtIndex (j));
-                else if (entry.var_type == eSetVarTypeDictionary)
-                    value_string.Printf ("\n  '%s'", tmp_value.GetStringAtIndex (j));
-            }
-            multi_value = true;
-        }
-
-        if (! parent_prefix.empty())
-        {
-            if (multi_value)
-                result_stream.Printf ("%s.%s (%s):%s\n", prefix, var_name.AsCString(),
-                                      UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
-            else
-                result_stream.Printf ("%s.%s (%s) = '%s'\n", prefix, var_name.AsCString(),
-                                      UserSettingsController::GetTypeString (entry.var_type), value_string.GetData());
-        }
+        StringList value;
+        m_default_settings->GetInstanceSettingsValue (entry, var_name, value, NULL);
+        
+        if (!parent_prefix.empty())
+            strm.Printf ("%s.", parent_prefix.c_str());
+    
+        DumpValue (var_name.GetCString(),
+                   entry.var_type,
+                   value,
+                   strm);
     }
 }
 
 void
-UserSettingsController::GetAllPendingSettingValues (Stream &result_stream)
+UserSettingsController::GetAllPendingSettingValues (Stream &strm)
 {
     std::map<std::string, InstanceSettingsSP>::iterator pos;
 
@@ -881,13 +862,13 @@ UserSettingsController::GetAllPendingSettingValues (Stream &result_stream)
             
             if (parent_prefix.length() > 0)
             {
-                result_stream.Printf ("%s.%s.%s (%s) = '%s' [pending]\n", prefix, instance_name.AsCString(), 
-                                      var_name.AsCString(), UserSettingsController::GetTypeString (entry.var_type),
+                strm.Printf ("%s.%s.%s (%s) = '%s' [pending]\n", prefix, instance_name.GetCString(), 
+                                      var_name.GetCString(), UserSettingsController::GetTypeString (entry.var_type),
                                       value_str.GetData());
             }
             else
             {
-                result_stream.Printf ("%s (%s) = '%s' [pending]\n", var_name.AsCString(),
+                strm.Printf ("%s (%s) = '%s' [pending]\n", var_name.GetCString(),
                                       UserSettingsController::GetTypeString (entry.var_type), 
                                       value_str.GetData());                                      
             }
@@ -898,30 +879,24 @@ UserSettingsController::GetAllPendingSettingValues (Stream &result_stream)
 InstanceSettings *
 UserSettingsController::FindSettingsForInstance (const ConstString &instance_name)
 {
-    std::string instance_name_str (instance_name.AsCString());
-    std::map<std::string, InstanceSettings *>::iterator pos;
-
-    pos = m_live_settings.find (instance_name_str);
+    std::string instance_name_str (instance_name.GetCString());
+    Mutex::Locker locker (m_live_settings_mutex);
+    InstanceSettingsMap::iterator pos = m_live_settings.find (instance_name_str);
     if (pos != m_live_settings.end ())
-      {
-        InstanceSettings *settings = pos->second;
-        return settings;
-      }
-
+        return pos->second;
     return NULL;
 }
 
 void
 UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interpreter,
-                                                      Stream &result_stream)
+                                                      Stream &strm)
 {
-    std::map<std::string, InstanceSettings *>::iterator pos;
     std::string parent_prefix;
     BuildParentPrefix (parent_prefix);
-    const char *prefix = parent_prefix.c_str();
     StreamString description;
 
-    for (pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
+    Mutex::Locker locker (m_live_settings_mutex);
+    for (InstanceSettingsMap::iterator pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
     {
         std::string instance_name = pos->first;
         InstanceSettings *settings = pos->second;
@@ -932,31 +907,11 @@ UserSettingsController::GetAllInstanceVariableValues (CommandInterpreter &interp
             const ConstString var_name (entry.var_name);
             StringList tmp_value;
             settings->GetInstanceSettingsValue (entry, var_name, tmp_value, NULL);
-            StreamString tmp_value_str;
-
-            if (tmp_value.GetSize() == 0)
-                tmp_value_str.Printf ("");
-            else if (tmp_value.GetSize() == 1)
-                tmp_value_str.Printf ("%s", tmp_value.GetStringAtIndex (0));
-            else
-            {
-                for (int j = 0; j < tmp_value.GetSize(); ++j)
-                    tmp_value_str.Printf ("%s ",tmp_value.GetStringAtIndex (j));
-            }
             
-            description.Clear();
-            if (parent_prefix.length() > 0)
-            {
-                description.Printf ("%s.%s.%s (%s) = '%s'", prefix, instance_name.c_str(), var_name.AsCString(), 
-                                    UserSettingsController::GetTypeString (entry.var_type),
-                                    tmp_value_str.GetData());
-            }
-            else
-            {
-                description.Printf ("%s (%s) = '%s'", var_name.AsCString(),
-                                    UserSettingsController::GetTypeString (entry.var_type), tmp_value_str.GetData());
-            }
-            result_stream.Printf ("%s\n", description.GetData());
+            if (!parent_prefix.empty())
+                strm.Printf ("%s.", parent_prefix.c_str());
+            
+            DumpValue(var_name.GetCString(), entry.var_type, tmp_value, strm);
         }
     }
 }
@@ -968,14 +923,14 @@ UserSettingsController::OverrideAllInstances (const ConstString &var_name,
                                               const char *index_value,
                                               Error &err)
 {
-    std::map<std::string, InstanceSettings *>::iterator pos;
     StreamString description;
 
-    for (pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
+    Mutex::Locker locker (m_live_settings_mutex);
+    for (InstanceSettingsMap::iterator pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
     {
         InstanceSettings *settings = pos->second;
         StreamString tmp_name;
-        tmp_name.Printf ("[%s]", settings->GetInstanceName().AsCString());
+        tmp_name.Printf ("[%s]", settings->GetInstanceName().GetCString());
         const ConstString instance_name (tmp_name.GetData());
         const SettingEntry *entry = GetInstanceEntry (var_name);
         settings->UpdateInstanceSettingsVariable (var_name, index_value, value, instance_name, *entry, op, err, false);
@@ -988,10 +943,10 @@ UserSettingsController::RegisterInstanceSettings (InstanceSettings *instance_set
 {
     Mutex::Locker locker (m_live_settings_mutex);
     StreamString tmp_name;
-    tmp_name.Printf ("[%s]", instance_settings->GetInstanceName().AsCString());
+    tmp_name.Printf ("[%s]", instance_settings->GetInstanceName().GetCString());
     const ConstString instance_name (tmp_name.GetData());
-    std::string instance_name_str (instance_name.AsCString());
-    if (instance_name_str.compare (InstanceSettings::GetDefaultName().AsCString()) != 0)
+    std::string instance_name_str (instance_name.GetCString());
+    if (instance_name_str.compare (InstanceSettings::GetDefaultName().GetCString()) != 0)
         m_live_settings[instance_name_str] = instance_settings;
 }
 
@@ -1000,12 +955,10 @@ UserSettingsController::UnregisterInstanceSettings (InstanceSettings *instance)
 {
     Mutex::Locker locker (m_live_settings_mutex);
     StreamString tmp_name;
-    tmp_name.Printf ("[%s]", instance->GetInstanceName().AsCString());
+    tmp_name.Printf ("[%s]", instance->GetInstanceName().GetCString());
     std::string instance_name (tmp_name.GetData());
 
-    std::map <std::string, InstanceSettings *>::iterator pos;
-
-    pos = m_live_settings.find (instance_name);
+    InstanceSettingsMap::iterator pos = m_live_settings.find (instance_name);
     if (pos != m_live_settings.end())
         m_live_settings.erase (pos);
 }
@@ -1022,7 +975,7 @@ UserSettingsController::CreateSettingsVector (const SettingEntry *table,
         SettingEntry new_entry;
         
         new_entry = table_entry;
-        new_entry.var_name = const_var_name.AsCString();
+        new_entry.var_name = const_var_name.GetCString();
         
         if (global)
             m_settings.global_settings.push_back (new_entry);
@@ -1090,73 +1043,80 @@ UserSettingsController::PrintEnumValues (const OptionEnumValueElement *enum_valu
 
 void
 UserSettingsController::FindAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                                     UserSettingsControllerSP root, 
-                                                     std::string &current_prefix, 
-                                                     Stream &result_stream,
+                                                     const UserSettingsControllerSP& usc_sp, 
+                                                     const char *current_prefix, 
+                                                     Stream &strm,
                                                      Error &err)
 {
     // Write out current prefix line.
     StreamString prefix_line;
     StreamString description;
-    uint32_t max_len = FindMaxNameLength (root->m_settings.global_settings);
-    int num_entries = root->m_settings.global_settings.size();
+    uint32_t max_len = FindMaxNameLength (usc_sp->m_settings.global_settings);
+    int num_entries = usc_sp->m_settings.global_settings.size();
 
-    if (! current_prefix.empty())
-        result_stream.Printf ("\n'%s' variables:\n\n", current_prefix.c_str());
+    if (current_prefix && current_prefix[0])
+        strm.Printf ("\n'%s' variables:\n\n", current_prefix);
     else
-        result_stream.Printf ("\nTop level variables:\n\n");
+        strm.Printf ("\nTop level variables:\n\n");
         
     if (num_entries > 0)
     {
         // Write out all "global" variables.
         for (int i = 0; i < num_entries; ++i)
         {
-            DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.global_settings[i]);
+            DumpSettingEntry (interpreter, strm, max_len, usc_sp->m_settings.global_settings[i]);
         }
     }
 
-    num_entries = root->m_settings.instance_settings.size();
-    max_len = FindMaxNameLength (root->m_settings.instance_settings);
+    num_entries = usc_sp->m_settings.instance_settings.size();
+    max_len = FindMaxNameLength (usc_sp->m_settings.instance_settings);
    
     if (num_entries > 0)
     {
         // Write out all instance variables.
         for (int i = 0; i < num_entries; ++i)
         {
-            DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.instance_settings[i]);
+            DumpSettingEntry (interpreter, strm, max_len, usc_sp->m_settings.instance_settings[i]);
         }
     }
     
     // Now, recurse across all children.
-    int num_children = root->GetNumChildren();
+    int num_children = usc_sp->GetNumChildren();
     for (int i = 0; i < num_children; ++i)
     {
-        UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = usc_sp->GetChildAtIndex (i);
         
         if (child)
         {
             ConstString child_prefix = child->GetLevelName();
-            StreamString new_prefix;
-            if (! current_prefix.empty())
-                new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
+            if (current_prefix && current_prefix[0])
+            {
+                StreamString new_prefix;
+                new_prefix.Printf ("%s.%s", current_prefix, child_prefix.GetCString());
+                UserSettingsController::FindAllSettingsDescriptions (interpreter, 
+                                                                     child, 
+                                                                     new_prefix.GetData(), 
+                                                                     strm, 
+                                                                     err);
+            }
             else
-                new_prefix.Printf ("%s", child_prefix.AsCString());
-            std::string new_prefix_str = new_prefix.GetData();
-            UserSettingsController::FindAllSettingsDescriptions (interpreter, 
-                                                                 child, 
-                                                                 new_prefix_str, 
-                                                                 result_stream, 
-                                                                 err);
+            {
+                UserSettingsController::FindAllSettingsDescriptions (interpreter, 
+                                                                     child, 
+                                                                     child_prefix.GetCString(),
+                                                                     strm, 
+                                                                     err);
+            }
         }
     }
 }
 
 void
 UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interpreter,
-                                                  UserSettingsControllerSP root,
-                                                  std::string &current_prefix,
+                                                  const UserSettingsControllerSP& usc_sp,
+                                                  const char *current_prefix,
                                                   const char *search_name,
-                                                  Stream &result_stream,
+                                                  Stream &strm,
                                                   Error &err)
 {
     Args names = UserSettingsController::BreakNameIntoPieces (search_name);
@@ -1165,15 +1125,15 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
     if (num_pieces == 0)
         return;
 
-    if (root->GetLevelName().GetLength() > 0)
+    if (usc_sp->GetLevelName().GetLength() > 0)
     {
         ConstString prefix (names.GetArgumentAtIndex (0));
-        if (prefix != root->GetLevelName())
+        if (prefix != usc_sp->GetLevelName())
         {
             std::string parent_prefix;
-            root->BuildParentPrefix (parent_prefix);
+            usc_sp->BuildParentPrefix (parent_prefix);
             err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), 
-                                          prefix.AsCString());
+                                          prefix.GetCString());
             return;
         }
         else
@@ -1189,30 +1149,30 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
         StreamString prefix_line;
         StreamString description;
         uint32_t max_len;
-        int num_entries = root->m_settings.global_settings.size();
+        int num_entries = usc_sp->m_settings.global_settings.size();
         
-        max_len = FindMaxNameLength (root->m_settings.global_settings);
+        max_len = FindMaxNameLength (usc_sp->m_settings.global_settings);
 
-        result_stream.Printf ("\n'%s' variables:\n\n", search_name);
+        strm.Printf ("\n'%s' variables:\n\n", search_name);
         
         if (num_entries > 0)
         {
             // Write out all "global" variables.
             for (int i = 0; i < num_entries; ++i)
             {
-                DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.global_settings[i]);
+                DumpSettingEntry (interpreter, strm, max_len, usc_sp->m_settings.global_settings[i]);
             }
         }
         
-        num_entries = root->m_settings.instance_settings.size();
-        max_len = FindMaxNameLength (root->m_settings.instance_settings);
+        num_entries = usc_sp->m_settings.instance_settings.size();
+        max_len = FindMaxNameLength (usc_sp->m_settings.instance_settings);
         
         if (num_entries > 0)
         {
             // Write out all instance variables.
             for (int i = 0; i < num_entries; ++i)
             {
-                DumpSettingEntry (interpreter, result_stream, max_len, root->m_settings.instance_settings[i]);
+                DumpSettingEntry (interpreter, strm, max_len, usc_sp->m_settings.instance_settings[i]);
             }
         }
     }
@@ -1221,26 +1181,26 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
         ConstString var_name (names.GetArgumentAtIndex (0));
         bool is_global = false;
 
-        const SettingEntry *setting_entry = root->GetGlobalEntry (var_name);
+        const SettingEntry *setting_entry = usc_sp->GetGlobalEntry (var_name);
 
         if (setting_entry == NULL)
-            setting_entry = root->GetInstanceEntry (var_name);
+            setting_entry = usc_sp->GetInstanceEntry (var_name);
         else
             is_global = true;
 
         // Check to see if it is a global or instance variable name.
         if (setting_entry != NULL)
         {
-            DumpSettingEntry (interpreter, result_stream, var_name.GetLength(), *setting_entry);
+            DumpSettingEntry (interpreter, strm, var_name.GetLength(), *setting_entry);
         }
         else
         {
             // It must be a child name.
-            int num_children = root->GetNumChildren();
+            int num_children = usc_sp->GetNumChildren();
             bool found = false;
             for (int i = 0; i < num_children && !found; ++i)
             {
-                UserSettingsControllerSP child = root->GetChildAtIndex (i);
+                UserSettingsControllerSP child = usc_sp->GetChildAtIndex (i);
                 if (child)
                 {
                     ConstString child_prefix = child->GetLevelName();
@@ -1250,8 +1210,8 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
                         UserSettingsController::FindSettingsDescriptions (interpreter, 
                                                                           child, 
                                                                           current_prefix,
-                                                                          var_name.AsCString(), 
-                                                                          result_stream, 
+                                                                          var_name.GetCString(), 
+                                                                          strm, 
                                                                           err);
                     }
                 }
@@ -1259,7 +1219,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
             if (!found)
             {
                 std::string parent_prefix;
-                root->BuildParentPrefix (parent_prefix);
+                usc_sp->BuildParentPrefix (parent_prefix);
                 err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), search_name);
                 return;
             }
@@ -1278,11 +1238,11 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
                 rest_of_search_name.Printf (".");
         }
 
-        int num_children = root->GetNumChildren();
+        int num_children = usc_sp->GetNumChildren();
         bool found = false;
         for (int i = 0; i < num_children && !found; ++i)
         {
-            UserSettingsControllerSP child = root->GetChildAtIndex (i);
+            UserSettingsControllerSP child = usc_sp->GetChildAtIndex (i);
             if (child)
             {
                 ConstString child_prefix = child->GetLevelName();
@@ -1290,7 +1250,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
                 {
                     found = true;
                     UserSettingsController::FindSettingsDescriptions (interpreter, child, current_prefix,
-                                                                      rest_of_search_name.GetData(), result_stream,
+                                                                      rest_of_search_name.GetData(), strm,
                                                                       err);
                 }
             }
@@ -1298,7 +1258,7 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
         if (!found)
         {
             std::string parent_prefix;
-            root->BuildParentPrefix (parent_prefix);
+            usc_sp->BuildParentPrefix (parent_prefix);
             err.SetErrorStringWithFormat ("Cannot find match for '%s.%s'\n", parent_prefix.c_str(), search_name);
             return;
         }
@@ -1307,135 +1267,212 @@ UserSettingsController::FindSettingsDescriptions (CommandInterpreter &interprete
 
 void
 UserSettingsController::SearchAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                                       UserSettingsControllerSP root,
-                                                       std::string &current_prefix,
+                                                       const UserSettingsControllerSP& usc_sp,
+                                                       const char *current_prefix,
                                                        const char *search_word,
-                                                       Stream &result_stream)
+                                                       Stream &strm)
 {
     if ((search_word == NULL) || (strlen (search_word) == 0))
         return;
     
-    int num_entries = root->m_settings.global_settings.size();
+    int num_entries = usc_sp->m_settings.global_settings.size();
 
     if (num_entries > 0)
     {
         for (int i = 0; i < num_entries; ++i)
         {
-            const SettingEntry &entry = root->m_settings.global_settings[i];
+            const SettingEntry &entry = usc_sp->m_settings.global_settings[i];
             if (strcasestr (entry.description, search_word) != NULL)
             {
                 StreamString var_name;
-                if (current_prefix.size() > 0)
-                    var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
+                if (current_prefix && current_prefix[0])
+                    var_name.Printf ("%s.%s", current_prefix, entry.var_name);
                 else
                     var_name.Printf ("%s", entry.var_name);
-                interpreter.OutputFormattedHelpText (result_stream, var_name.GetData(), "--", entry.description,
+                interpreter.OutputFormattedHelpText (strm, var_name.GetData(), "--", entry.description,
                                                      var_name.GetSize());
             }
         }
     }
     
-    num_entries = root->m_settings.instance_settings.size();
+    num_entries = usc_sp->m_settings.instance_settings.size();
     if (num_entries > 0)
     {
         for (int i = 0; i < num_entries; ++i)
         {
-            SettingEntry &entry = root->m_settings.instance_settings[i];
+            SettingEntry &entry = usc_sp->m_settings.instance_settings[i];
             if (strcasestr (entry.description, search_word) != NULL)
             {
                 StreamString var_name;
-                if (current_prefix.size() > 0)
-                    var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
+                if (current_prefix && current_prefix[0])
+                    var_name.Printf ("%s.%s", current_prefix, entry.var_name);
                 else
                     var_name.Printf ("%s", entry.var_name);
-                interpreter.OutputFormattedHelpText (result_stream, var_name.GetData(), "--", entry.description,
+                interpreter.OutputFormattedHelpText (strm, 
+                                                     var_name.GetData(),
+                                                     "--", 
+                                                     entry.description,
                                                      var_name.GetSize());
             }
         }
     }
     
-    int num_children = root->GetNumChildren ();
+    int num_children = usc_sp->GetNumChildren ();
     for (int i = 0; i < num_children; ++i)
     {
-        UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = usc_sp->GetChildAtIndex (i);
         
         if (child)
         {
             ConstString child_prefix = child->GetLevelName();
-            StreamString new_prefix;
-            if (! current_prefix.empty())
-                new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
+            if (current_prefix && current_prefix[0])
+            {
+                StreamString new_prefix;
+                new_prefix.Printf ("%s.%s", current_prefix, child_prefix.GetCString());
+                UserSettingsController::SearchAllSettingsDescriptions (interpreter, 
+                                                                       child, 
+                                                                       new_prefix.GetData(), 
+                                                                       search_word,
+                                                                       strm);
+            }
             else
-                new_prefix.Printf ("%s", child_prefix.AsCString());
-            std::string new_prefix_str = new_prefix.GetData();
-            UserSettingsController::SearchAllSettingsDescriptions (interpreter, child, new_prefix_str, search_word,
-                                                                   result_stream);
+            {
+                UserSettingsController::SearchAllSettingsDescriptions (interpreter, 
+                                                                       child, 
+                                                                       child_prefix.GetCString(),
+                                                                       search_word,
+                                                                       strm);
+            }
         }
     }
 }
 
+bool
+UserSettingsController::DumpValue (CommandInterpreter &interpreter, 
+                                   const UserSettingsControllerSP& usc_sp,
+                                   const char *variable_dot_name,
+                                   Stream &strm)
+{
+    SettableVariableType var_type;
+    Error err;
+    StringList value = usc_sp->GetVariable (variable_dot_name, 
+                                            var_type,
+                                            interpreter.GetDebugger().GetInstanceName().GetCString(),
+                                            err);
+    
+    if (err.Success())
+        return DumpValue (variable_dot_name, var_type, value, strm);
+    return false;
+}
+
+
+bool
+UserSettingsController::DumpValue (const char *variable_dot_name,
+                                   SettableVariableType var_type,
+                                   const StringList &value,
+                                   Stream &strm)
+{
+    const char *type_name = UserSettingsController::GetTypeString (var_type);
+    
+    strm.Printf ("%s (%s) = ", variable_dot_name, type_name);
+    if (value.GetSize() == 0)
+    {
+        strm.EOL();
+    }
+    else
+    {
+        switch (var_type)
+        {
+            case eSetVarTypeNone:
+            case eSetVarTypeEnum:
+            case eSetVarTypeInt:
+            case eSetVarTypeBoolean:
+                strm.Printf ("%s\n", value.GetStringAtIndex (0));
+                break;
+
+            case eSetVarTypeString:
+                strm.Printf ("\"%s\"\n", value.GetStringAtIndex (0));
+                break;
+                
+            case eSetVarTypeArray:
+                {
+                    strm.EOL();
+                    for (unsigned i = 0, e = value.GetSize(); i != e; ++i)
+                        strm.Printf ("  [%u]: \"%s\"\n", i, value.GetStringAtIndex (i));
+                }
+                break;
+                
+            case eSetVarTypeDictionary:
+                {   
+                    strm.EOL();
+                    for (unsigned i = 0, e = value.GetSize(); i != e; ++i)
+                        strm.Printf ("  %s\n", value.GetStringAtIndex (i));
+                }
+                break;
+                
+            default:
+                return false;
+        }
+    }
+    return true;
+}
+
 void
 UserSettingsController::GetAllVariableValues (CommandInterpreter &interpreter,
-                                              UserSettingsControllerSP root,
-                                              std::string &current_prefix,
-                                              Stream &result_stream,
+                                              const UserSettingsControllerSP& usc_sp,
+                                              const char *current_prefix,
+                                              Stream &strm,
                                               Error &err)
 {
     StreamString description;
-    int num_entries = root->m_settings.global_settings.size();
-    SettableVariableType var_type;
-
+    int num_entries = usc_sp->m_settings.global_settings.size();
 
     for (int i = 0; i < num_entries; ++i)
     {
         StreamString full_var_name;
-        const SettingEntry &entry = root->m_settings.global_settings[i];
-        if (! current_prefix.empty())
-            full_var_name.Printf ("%s.%s", current_prefix.c_str(), entry.var_name);
+        const SettingEntry &entry = usc_sp->m_settings.global_settings[i];
+        
+        if (current_prefix && current_prefix[0])
+            full_var_name.Printf ("%s.%s", current_prefix, entry.var_name);
         else
             full_var_name.Printf ("%s", entry.var_name);
-        StringList value = root->GetVariable (full_var_name.GetData(), var_type, 
-                                              interpreter.GetDebugger().GetInstanceName().AsCString(), err);
-        description.Clear();
-        if (value.GetSize() == 1)   
-            description.Printf ("%s (%s) = '%s'", full_var_name.GetData(), GetTypeString (entry.var_type),
-                                value.GetStringAtIndex (0));
-        else
-        {
-            description.Printf ("%s (%s):\n", full_var_name.GetData(), GetTypeString (entry.var_type));
-            for (int j = 0; j < value.GetSize(); ++j)
-                if (entry.var_type == eSetVarTypeArray)
-                    description.Printf ("  [%d]: '%s'\n", j, value.GetStringAtIndex (j));
-                else if (entry.var_type == eSetVarTypeDictionary)
-                    description.Printf ("  '%s'\n", value.GetStringAtIndex (j));
-        }
-
-        result_stream.Printf ("%s\n", description.GetData());
+        
+        DumpValue (interpreter, usc_sp, full_var_name.GetData(),  strm);
     }
 
-    root->GetAllInstanceVariableValues (interpreter, result_stream);
-    root->GetAllPendingSettingValues (result_stream);
-    if (root->GetLevelName().GetLength() > 0)               // Don't bother with default values for Debugger level.
-         root->GetAllDefaultSettingValues (result_stream);
+    usc_sp->GetAllInstanceVariableValues (interpreter, strm);
+    usc_sp->GetAllPendingSettingValues (strm);
+    if (usc_sp->GetLevelName().GetLength() > 0)               // Don't bother with default values for Debugger level.
+         usc_sp->GetAllDefaultSettingValues (strm);
 
 
     // Now, recurse across all children.
-    int num_children = root->GetNumChildren();
+    int num_children = usc_sp->GetNumChildren();
     for (int i = 0; i < num_children; ++i)
     {
-        UserSettingsControllerSP child = root->GetChildAtIndex (i);
+        UserSettingsControllerSP child = usc_sp->GetChildAtIndex (i);
         
         if (child)
         {
             ConstString child_prefix = child->GetLevelName();
-            StreamString new_prefix;
-            if (! current_prefix.empty())
-                new_prefix.Printf ("%s.%s", current_prefix.c_str(), child_prefix.AsCString());
+            if (current_prefix && current_prefix[0])
+            {
+                StreamString new_prefix;
+                new_prefix.Printf ("%s.%s", current_prefix, child_prefix.GetCString());
+                UserSettingsController::GetAllVariableValues (interpreter, 
+                                                              child, 
+                                                              new_prefix.GetData(), 
+                                                              strm, 
+                                                              err);
+            }
             else
-                new_prefix.Printf ("%s", child_prefix.AsCString());
-            std::string new_prefix_str = new_prefix.GetData();
-            UserSettingsController::GetAllVariableValues (interpreter, child, new_prefix_str, result_stream, 
-                                                          err);
+            {
+                UserSettingsController::GetAllVariableValues (interpreter, 
+                                                              child, 
+                                                              child_prefix.GetCString(),
+                                                              strm, 
+                                                              err);
+            }
         }
     }
 
@@ -1468,9 +1505,8 @@ UserSettingsController::BreakNameIntoPieces (const char *full_dot_name)
 bool
 UserSettingsController::IsLiveInstance (const std::string &instance_name)
 {
-    std::map<std::string, InstanceSettings *>::iterator pos;
-    
-    pos = m_live_settings.find (instance_name);
+    Mutex::Locker locker (m_live_settings_mutex);
+    InstanceSettingsMap::iterator pos = m_live_settings.find (instance_name);
     if (pos != m_live_settings.end())
         return true;
     
@@ -1478,7 +1514,7 @@ UserSettingsController::IsLiveInstance (const std::string &instance_name)
 }
 
 int
-UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_settings,
+UserSettingsController::CompleteSettingsValue (const UserSettingsControllerSP& usc_sp,
                                                const char *full_dot_name,
                                                const char *partial_value,
                                                bool &word_complete,
@@ -1488,7 +1524,7 @@ UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_set
     int num_pieces = names.GetArgumentCount();
     word_complete = true;
 
-    ConstString root_level = root_settings->GetLevelName();
+    ConstString root_level = usc_sp->GetLevelName();
     int num_extra_levels = num_pieces - 2;
     if ((num_extra_levels > 0)
         && root_level.GetLength() > 0)
@@ -1507,13 +1543,14 @@ UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_set
     {
         ConstString child_level (names.GetArgumentAtIndex (0));
         bool found = false;
-        int num_children = root_settings->GetNumChildren();
+        int num_children = usc_sp->GetNumChildren();
+        UserSettingsControllerSP child_usc_sp = usc_sp;
         for (int j = 0; j < num_children && !found; ++j)
         {
-            if (root_settings->GetChildAtIndex (j)->GetLevelName() == child_level)
+            if (child_usc_sp->GetChildAtIndex (j)->GetLevelName() == child_level)
             {
                 found = true;
-                root_settings = root_settings->GetChildAtIndex (j);
+                child_usc_sp = child_usc_sp->GetChildAtIndex (j);
                 names.Shift();
             }
         }
@@ -1536,14 +1573,15 @@ UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_set
     {
         // 'next_name' is child name.
         bool found = false;
-        int num_children = root_settings->GetNumChildren();
+        int num_children = usc_sp->GetNumChildren();
         ConstString child_level (next_name.c_str());
+        UserSettingsControllerSP child_usc_sp = usc_sp;
         for (int j = 0; j < num_children && !found; ++j)
         {
-            if (root_settings->GetChildAtIndex (j)->GetLevelName() == child_level)
+            if (child_usc_sp->GetChildAtIndex (j)->GetLevelName() == child_level)
             {
                 found = true;
-                root_settings = root_settings->GetChildAtIndex (j);
+                child_usc_sp = child_usc_sp->GetChildAtIndex (j);
             }
         }
         if (!found)
@@ -1551,9 +1589,9 @@ UserSettingsController::CompleteSettingsValue (UserSettingsControllerSP root_set
     }
 
     ConstString var_name (names.GetArgumentAtIndex(0));
-    const SettingEntry *entry = root_settings->GetGlobalEntry (var_name);
+    const SettingEntry *entry = usc_sp->GetGlobalEntry (var_name);
     if (entry == NULL)
-        entry = root_settings->GetInstanceEntry (var_name);
+        entry = usc_sp->GetInstanceEntry (var_name);
 
     if (entry == NULL)
         return 0;
@@ -1629,7 +1667,7 @@ UserSettingsController::EnumMatches (const char *partial_value,
 }
 
 int
-UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_settings,
+UserSettingsController::CompleteSettingsNames (const UserSettingsControllerSP& usc_sp,
                                                Args &partial_setting_name_pieces,
                                                bool &word_complete,
                                                StringList &matches)
@@ -1646,7 +1684,7 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
 
         // Deal with current level first.
 
-        ConstString root_level = root_settings->GetLevelName();
+        ConstString root_level = usc_sp->GetLevelName();
         if ((num_extra_levels > 0)
             && (root_level.GetLength() > 0))
         {
@@ -1665,13 +1703,15 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
         {
             ConstString child_level (partial_setting_name_pieces.GetArgumentAtIndex (0));
             bool found = false;
-            int num_children = root_settings->GetNumChildren();
+            int num_children = usc_sp->GetNumChildren();
+            UserSettingsControllerSP child_usc_sp = usc_sp;
+
             for (int j = 0; j < num_children && !found; ++j)
             {
-                if (root_settings->GetChildAtIndex (j)->GetLevelName() == child_level)
+                if (child_usc_sp->GetChildAtIndex (j)->GetLevelName() == child_level)
                 {
                     found = true;
-                    root_settings = root_settings->GetChildAtIndex (j);
+                    child_usc_sp = child_usc_sp->GetChildAtIndex (j);
                     partial_setting_name_pieces.Shift();
                 }
             }
@@ -1695,12 +1735,12 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
             // 'next_name' is an instance name.  The last name piece must be a non-empty partial match against an
             // instance_name, assuming 'next_name' is valid.
 
-            if (root_settings->IsLiveInstance (next_name))
+            if (usc_sp->IsLiveInstance (next_name))
             {
                 std::string complete_prefix;
-                root_settings->BuildParentPrefix (complete_prefix);
+                usc_sp->BuildParentPrefix (complete_prefix);
 
-                num_matches = root_settings->InstanceVariableMatches(partial_setting_name_pieces.GetArgumentAtIndex(0),
+                num_matches = usc_sp->InstanceVariableMatches(partial_setting_name_pieces.GetArgumentAtIndex(0),
                                                                      complete_prefix,
                                                                      next_name.c_str(),
                                                                      matches);
@@ -1717,14 +1757,14 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
         {
             // 'next_name' must be a child name.  Find the correct child and pass the remaining piece to be resolved.
             bool found = false;
-            int num_children = root_settings->GetNumChildren();
+            int num_children = usc_sp->GetNumChildren();
             ConstString child_level (next_name.c_str());
             for (int i = 0; i < num_children; ++i)
             {
-                if (root_settings->GetChildAtIndex (i)->GetLevelName() == child_level)
+                if (usc_sp->GetChildAtIndex (i)->GetLevelName() == child_level)
                 {
                     found = true;
-                    return UserSettingsController::CompleteSettingsNames (root_settings->GetChildAtIndex (i),
+                    return UserSettingsController::CompleteSettingsNames (usc_sp->GetChildAtIndex (i),
                                                                           partial_setting_name_pieces,
                                                                           word_complete, matches);
                 }
@@ -1736,7 +1776,7 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
     else if (num_name_pieces == 1)
     {
         std::string complete_prefix;
-        root_settings->BuildParentPrefix (complete_prefix);
+        usc_sp->BuildParentPrefix (complete_prefix);
 
         word_complete = true;
         std::string name (partial_setting_name_pieces.GetArgumentAtIndex (0));
@@ -1745,15 +1785,15 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
         {
             // It's a partial instance name.
 
-            num_matches = root_settings->LiveInstanceMatches (name.c_str(), complete_prefix, word_complete, matches);
+            num_matches = usc_sp->LiveInstanceMatches (name.c_str(), complete_prefix, word_complete, matches);
         }
         else
         {
             // It could be anything *except* an instance name...
 
-            num_matches = root_settings->GlobalVariableMatches (name.c_str(), complete_prefix, matches);
-            num_matches += root_settings->InstanceVariableMatches (name.c_str(), complete_prefix, NULL, matches);
-            num_matches += root_settings->ChildMatches (name.c_str(), complete_prefix, word_complete, matches);
+            num_matches = usc_sp->GlobalVariableMatches (name.c_str(), complete_prefix, matches);
+            num_matches += usc_sp->InstanceVariableMatches (name.c_str(), complete_prefix, NULL, matches);
+            num_matches += usc_sp->ChildMatches (name.c_str(), complete_prefix, word_complete, matches);
         }
 
         if (num_matches > 1)
@@ -1766,11 +1806,11 @@ UserSettingsController::CompleteSettingsNames (UserSettingsControllerSP root_set
         // We have a user settings controller with a blank partial string.  Return everything possible at this level.
 
         std::string complete_prefix;
-        root_settings->BuildParentPrefix (complete_prefix);
-        num_matches = root_settings->GlobalVariableMatches (NULL, complete_prefix, matches);
-        num_matches += root_settings->InstanceVariableMatches (NULL, complete_prefix, NULL, matches);
-        num_matches += root_settings->LiveInstanceMatches (NULL, complete_prefix, word_complete, matches);
-        num_matches += root_settings->ChildMatches (NULL, complete_prefix, word_complete, matches);
+        usc_sp->BuildParentPrefix (complete_prefix);
+        num_matches = usc_sp->GlobalVariableMatches (NULL, complete_prefix, matches);
+        num_matches += usc_sp->InstanceVariableMatches (NULL, complete_prefix, NULL, matches);
+        num_matches += usc_sp->LiveInstanceMatches (NULL, complete_prefix, word_complete, matches);
+        num_matches += usc_sp->ChildMatches (NULL, complete_prefix, word_complete, matches);
         word_complete = false;
         return num_matches;
     }
@@ -1860,7 +1900,8 @@ UserSettingsController::LiveInstanceMatches (const char *partial_name,
     int partial_len = (partial_name != NULL) ? strlen (partial_name) : 0;
     int num_matches = 0;
 
-    std::map<std::string, InstanceSettings*>::iterator pos;
+    InstanceSettingsMap::iterator pos;
+    Mutex::Locker locker (m_live_settings_mutex);
     for (pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
     {
         std::string instance_name = pos->first;
@@ -1895,7 +1936,7 @@ UserSettingsController::ChildMatches (const char *partial_name,
     int num_matches = 0;
     for (int i = 0; i < num_children; ++i)
     {
-        std::string child_name (GetChildAtIndex(i)->GetLevelName().AsCString());
+        std::string child_name (GetChildAtIndex(i)->GetLevelName().GetCString());
         StreamString match_name;
         if ((partial_len == 0)
           || ((partial_len <= child_name.length())
@@ -2239,7 +2280,7 @@ UserSettingsController::RenameInstanceSettings (const char *old_name, const char
     size_t len = new_name_key.length();
     std::string stripped_new_name = new_name_key.substr (1, len-2);  // new name without the '[ ]'
 
-    std::map<std::string, InstanceSettings *>::iterator pos;
+    InstanceSettingsMap::iterator pos;
 
     pos = m_live_settings.find (old_name_key);
     if (pos != m_live_settings.end())

@@ -35,11 +35,11 @@ class SettingsCommandTestCase(TestBase):
 
         # Immediately test the setting.
         self.expect("settings show prompt", SETTING_MSG("prompt"),
-            startstr = "prompt (string) = 'lldb2'")
+            startstr = 'prompt (string) = "lldb2"')
 
         # The overall display should also reflect the new setting.
         self.expect("settings show", SETTING_MSG("prompt"),
-            substrs = ["prompt (string) = 'lldb2'"])
+            substrs = ['prompt (string) = "lldb2"'])
 
         # Use '-r' option to reset to the original default prompt.
         self.runCmd("settings set -r prompt")
@@ -51,11 +51,11 @@ class SettingsCommandTestCase(TestBase):
 
         # Immediately test the setting.
         self.expect("settings show term-width", SETTING_MSG("term-width"),
-            startstr = "term-width (int) = '70'")
+            startstr = "term-width (int) = 70")
 
         # The overall display should also reflect the new setting.
         self.expect("settings show", SETTING_MSG("term-width"),
-            substrs = ["term-width (int) = '70'"])
+            substrs = ["term-width (int) = 70"])
 
     def test_set_auto_confirm(self):
         """Test that after 'set auto-confirm true', manual confirmation should not kick in."""
@@ -68,7 +68,7 @@ class SettingsCommandTestCase(TestBase):
 
         # Immediately test the setting.
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
-            startstr = "auto-confirm (boolean) = 'true'")
+            startstr = "auto-confirm (boolean) = true")
 
         # Now 'breakpoint delete' should just work fine without confirmation
         # prompt from the command interpreter.
@@ -79,7 +79,7 @@ class SettingsCommandTestCase(TestBase):
         # Restore the original setting of auto-confirm.
         self.runCmd("settings set -r auto-confirm")
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
-            startstr = "auto-confirm (boolean) = 'false'")
+            startstr = "auto-confirm (boolean) = false")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_run_args_and_env_vars_with_dsym(self):
@@ -127,7 +127,7 @@ class SettingsCommandTestCase(TestBase):
 
         # By default, inherit-env is 'true'.
         self.expect('settings show target.process.inherit-env', "Default inherit-env is 'true'",
-            startstr = "target.process.inherit-env (boolean) = 'true'")
+            startstr = "target.process.inherit-env (boolean) = true")
 
         # Set some host environment variables now.
         os.environ["MY_HOST_ENV_VAR1"] = "VAR1"
@@ -167,11 +167,11 @@ class SettingsCommandTestCase(TestBase):
 
         self.expect("settings show target.process.error-path",
                     SETTING_MSG("target.process.error-path"),
-            startstr = "target.process.error-path (string) = 'stderr.txt'")
+            startstr = 'target.process.error-path (string) = "stderr.txt"')
 
         self.expect("settings show target.process.output-path",
                     SETTING_MSG("target.process.output-path"),
-            startstr = "target.process.output-path (string) = 'stdout.txt'")
+            startstr = 'target.process.output-path (string) = "stdout.txt"')
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -201,31 +201,31 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd ("settings set -r target.process.env-vars")
         self.runCmd ("settings set target.process.env-vars [\"MY_VAR\"]=some-value")
         self.expect ("settings show target.process.env-vars",
-                     substrs = [ "'MY_VAR=some-value'" ])
+                     substrs = [ "MY_VAR=some-value" ])
         self.runCmd ("settings set -r target.process.env-vars")
 
     def test_print_array_setting(self):
         self.runCmd ("settings set -r target.process.run-args")
         self.runCmd ("settings set target.process.run-args gobbledy-gook")
         self.expect ("settings show target.process.run-args",
-                     substrs = [ "[0]: 'gobbledy-gook'" ])
+                     substrs = [ '[0]: "gobbledy-gook"' ])
         self.runCmd ("settings set -r target.process.run-args")
 
     def test_settings_with_quotes (self):
         self.runCmd ("settings set -r target.process.run-args")
         self.runCmd ("settings set target.process.run-args a b c")
         self.expect ("settings show target.process.run-args",
-                     substrs = [ "[0]: 'a'",
-                                 "[1]: 'b'",
-                                 "[2]: 'c'" ])
+                     substrs = [ '[0]: "a"',
+                                 '[1]: "b"',
+                                 '[2]: "c"' ])
         self.runCmd ("settings set target.process.run-args 'a b c'")
         self.expect ("settings show target.process.run-args",
-                     substrs = [ "[0]: 'a b c'" ])
+                     substrs = [ '[0]: "a b c"' ])
         self.runCmd ("settings set -r target.process.run-args")
         self.runCmd ("settings set -r target.process.env-vars")
-        self.runCmd ("settings set target.process.env-vars [\"MY_FILE\"]='this is a file name with spaces.txt'")
+        self.runCmd ('settings set target.process.env-vars ["MY_FILE"]="this is a file name with spaces.txt"')
         self.expect ("settings show target.process.env-vars",
-                     substrs = [ "'MY_FILE=this is a file name with spaces.txt'" ])
+                     substrs = [ 'MY_FILE=this is a file name with spaces.txt' ])
         self.runCmd ("settings set -r target.process.env-vars")
 
 
@@ -238,18 +238,18 @@ class SettingsCommandTestCase(TestBase):
                                  "thread-format (string) = ",
                                  "use-external-editor (boolean) = ",
                                  "auto-confirm (boolean) = ",
-                                 "target.default-arch (string):",
+                                 "target.default-arch (string) =",
                                  "target.expr-prefix (string) = ",
-                                 "target.process.run-args (array):",
-                                 "target.process.env-vars (dictionary):",
+                                 "target.process.run-args (array) =",
+                                 "target.process.env-vars (dictionary) =",
                                  "target.process.inherit-env (boolean) = ",
                                  "target.process.input-path (string) = ",
                                  "target.process.output-path (string) = ",
                                  "target.process.error-path (string) = ",
-                                 "target.process.plugin (enum):",
+                                 "target.process.plugin (enum) =",
                                  "target.process.disable-aslr (boolean) = ",
                                  "target.process.disable-stdio (boolean) = ",
-                                 "target.process.thread.step-avoid-regexp (string):",
+                                 "target.process.thread.step-avoid-regexp (string) =",
                                  "target.process.thread.trace-thread (boolean) =" ])
         
 

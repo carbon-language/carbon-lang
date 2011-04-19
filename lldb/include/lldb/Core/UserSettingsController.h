@@ -135,41 +135,53 @@ public:
 
     static void
     FindAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                 lldb::UserSettingsControllerSP root, 
-                                 std::string &current_prefix, 
+                                 const lldb::UserSettingsControllerSP& usc_sp, 
+                                 const const char *current_prefix, 
                                  Stream &result_stream,
                                  Error &err);
 
     static void
     FindSettingsDescriptions (CommandInterpreter &interpreter,
-                              lldb::UserSettingsControllerSP root, 
-                              std::string &current_prefix, 
+                              const lldb::UserSettingsControllerSP& usc_sp, 
+                              const char *current_prefix, 
                               const char *search_name,
                               Stream &result_stream,
                               Error &err);
     
     static void
     SearchAllSettingsDescriptions (CommandInterpreter &interpreter,
-                                   lldb::UserSettingsControllerSP root,
-                                   std::string &current_prefix,
+                                   const lldb::UserSettingsControllerSP& usc_sp,
+                                   const char *current_prefix,
                                    const char *search_word,
                                    Stream &result_stream);
 
     static void
     GetAllVariableValues (CommandInterpreter &interpreter,
-                          lldb::UserSettingsControllerSP root,
-                          std::string &current_prefix,
+                          const lldb::UserSettingsControllerSP& usc_sp,
+                          const char *current_prefix, 
                           Stream &result_stream,
                           Error &err);
 
+    static bool
+    DumpValue (CommandInterpreter &interpreter, 
+               const lldb::UserSettingsControllerSP& usc_sp,
+               const char *variable_dot_name,
+               Stream &strm);
+    
+    static bool
+    DumpValue (const char *variable_dot_name,
+               SettableVariableType var_type,
+               const StringList &variable_value,
+               Stream &strm);
+
     static int
-    CompleteSettingsNames (lldb::UserSettingsControllerSP root_settings,
+    CompleteSettingsNames (const lldb::UserSettingsControllerSP& usc_sp,
                            Args &partial_setting_name_pieces,
                            bool &word_complete,
                            StringList &matches);
 
     static int
-    CompleteSettingsValue (lldb::UserSettingsControllerSP root_settings,
+    CompleteSettingsValue (const lldb::UserSettingsControllerSP& usc_sp,
                            const char *full_dot_name,
                            const char *partial_value,
                            bool &word_complete,
@@ -341,10 +353,12 @@ protected:
 private:
 
     UserSettingDefinition m_settings;
+    
+    typedef std::map<std::string,InstanceSettings*> InstanceSettingsMap;
 
     std::vector<lldb::UserSettingsControllerSP> m_children;
     std::map <std::string, lldb::InstanceSettingsSP> m_pending_settings;
-    std::map <std::string, InstanceSettings *> m_live_settings;    // live settings should never be NULL (hence 'live')
+    InstanceSettingsMap m_live_settings;    // live settings should never be NULL (hence 'live')
     mutable Mutex m_children_mutex;
     mutable Mutex m_pending_settings_mutex;
     mutable Mutex m_live_settings_mutex;
