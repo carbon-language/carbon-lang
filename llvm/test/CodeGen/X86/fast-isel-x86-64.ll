@@ -181,3 +181,22 @@ define void @test15(i8* %a, i8* %b) nounwind {
 ; CHECK-NEXT: movl	%eax, (%rdi)
 ; CHECK-NEXT: ret
 }
+
+; Handling for varargs calls
+declare void @test16callee(...) nounwind
+define void @test16() nounwind {
+; CHECK: test16:
+; CHECK: movl $1, %edi
+; CHECK: movb $0, %al
+; CHECK: callq _test16callee
+  call void (...)* @test16callee(i32 1)
+  br label %block2
+
+block2:
+; CHECK: movabsq $1
+; CHECK: cvtsi2sdq {{.*}} %xmm0
+; CHECK: movb $1, %al
+; CHECK: callq _test16callee
+  call void (...)* @test16callee(double 1.000000e+00)
+  ret void
+}

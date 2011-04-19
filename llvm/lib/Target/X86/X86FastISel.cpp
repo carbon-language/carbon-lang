@@ -1508,14 +1508,17 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
     return false;
 
-  // Let SDISel handle vararg functions.
   const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  if (FTy->isVarArg())
+  bool isVarArg = FTy->isVarArg();
+
+  // Don't know how to handle Win64 varargs yet.  Nothing special needed for
+  // x86-32.  Special handling for x86-64 is implemented.
+  if (isVarArg && Subtarget->isTargetWin64())
     return false;
 
   // Fast-isel doesn't know about callee-pop yet.
-  if (Subtarget->IsCalleePop(FTy->isVarArg(), CC))
+  if (Subtarget->IsCalleePop(isVarArg, CC))
     return false;
 
   // Handle *simple* calls for now.
@@ -1623,7 +1626,7 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, TM, ArgLocs, I->getParent()->getContext());
+  CCState CCInfo(CC, isVarArg, TM, ArgLocs, I->getParent()->getContext());
 
   // Allocate shadow area for Win64
   if (Subtarget->isTargetWin64())
@@ -1721,6 +1724,17 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
             X86::EBX).addReg(Base);
   }
 
+  if (Subtarget->is64Bit() && isVarArg && !Subtarget->isTargetWin64()) {
+    // Count the number of XMM registers allocated.
+    static const unsigned XMMArgRegs[] = {
+      X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
+      X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
+    };
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::MOV8ri),
+            X86::AL).addImm(NumXMMRegs);
+  }
+
   // Issue the call.
   MachineInstrBuilder MIB;
   if (CalleeOp) {
@@ -1774,6 +1788,9 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // Add an implicit use GOT pointer in EBX.
   if (Subtarget->isPICStyleGOT())
     MIB.addReg(X86::EBX);
+
+  if (Subtarget->is64Bit() && isVarArg && !Subtarget->isTargetWin64())
+    MIB.addReg(X86::AL);
 
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
