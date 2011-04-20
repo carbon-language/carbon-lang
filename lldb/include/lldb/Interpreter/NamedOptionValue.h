@@ -58,6 +58,16 @@ namespace lldb_private {
         
         virtual bool
         ResetValueToDefault () = 0;
+
+        //-----------------------------------------------------------------
+        // Subclasses should NOT override these functions as they use the
+        // above functions to implement functionality
+        //-----------------------------------------------------------------
+        uint32_t
+        GetTypeAsMask ()
+        {
+            return 1u << GetType();
+        }
     };
     
     
@@ -69,8 +79,8 @@ namespace lldb_private {
     {
         OptionValueBoolean (bool current_value, 
                             bool default_value) :
-        m_current_value (current_value),
-        m_default_value (default_value)
+            m_current_value (current_value),
+            m_default_value (default_value)
         {
         }
         
@@ -442,7 +452,8 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueArray : public OptionValue
     {
-        OptionValueArray () :
+        OptionValueArray (uint32_t type_mask = UINT32_MAX) :
+            m_type_mask (type_mask),
             m_values ()
         {
         }
@@ -494,28 +505,47 @@ namespace lldb_private {
             return value_sp;
         }
         
-        void
+        bool
         AppendValue (const lldb::OptionValueSP &value_sp)
         {
-            m_values.push_back(value_sp);
+            // Make sure the value_sp object is allowed to contain
+            // values of the type passed in...
+            if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
+            {
+                m_values.push_back(value_sp);
+                return true;
+            }
+            return false;
         }
         
-        void
+        bool
         InsertValue (uint32_t idx, const lldb::OptionValueSP &value_sp)
         {
-            if (idx < m_values.size())
-                m_values.insert(m_values.begin() + idx, value_sp);
-            else
-                m_values.push_back(value_sp);
+            // Make sure the value_sp object is allowed to contain
+            // values of the type passed in...
+            if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
+            {
+                if (idx < m_values.size())
+                    m_values.insert(m_values.begin() + idx, value_sp);
+                else
+                    m_values.push_back(value_sp);
+                return true;
+            }
+            return false;
         }
 
         bool
         ReplaceValue (uint32_t idx, const lldb::OptionValueSP &value_sp)
         {
-            if (idx < m_values.size())
+            // Make sure the value_sp object is allowed to contain
+            // values of the type passed in...
+            if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
             {
-                m_values[idx] = value_sp;
-                return true;
+                if (idx < m_values.size())
+                {
+                    m_values[idx] = value_sp;
+                    return true;
+                }
             }
             return false;
         }
@@ -533,6 +563,8 @@ namespace lldb_private {
         
     protected:
         typedef std::vector<lldb::OptionValueSP> collection;
+                
+        uint32_t m_type_mask;
         collection m_values;
     };
 
@@ -543,8 +575,9 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueDictionary : public OptionValue
     {
-        OptionValueDictionary () :
-        m_values ()
+        OptionValueDictionary (uint32_t type_mask = UINT32_MAX) :
+            m_type_mask (type_mask),
+            m_values ()
         {
         }
         
@@ -601,14 +634,20 @@ namespace lldb_private {
                         const lldb::OptionValueSP &value_sp, 
                         bool can_replace)
         {
-            if (!can_replace)
+            // Make sure the value_sp object is allowed to contain
+            // values of the type passed in...
+            if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
             {
-                collection::const_iterator pos = m_values.find (key);
-                if (pos != m_values.end())
-                    return false;
+                if (!can_replace)
+                {
+                    collection::const_iterator pos = m_values.find (key);
+                    if (pos != m_values.end())
+                        return false;
+                }
+                m_values[key] = value_sp;
+                return true;
             }
-            m_values[key] = value_sp;
-            return true;
+            return false;
         }
         
         bool
@@ -625,6 +664,7 @@ namespace lldb_private {
         
     protected:
         typedef std::map<ConstString, lldb::OptionValueSP> collection;
+        uint32_t m_type_mask;
         collection m_values;
     };
     
@@ -683,9 +723,15 @@ namespace lldb_private {
         GetQualifiedName (Stream &strm);
 
         lldb::OptionValueSP
-        GetOptionValue ()
+        GetValue ()
         {
             return m_value_sp;
+        }
+        
+        void
+        SetValue (const lldb::OptionValueSP &value_sp)
+        {
+            m_value_sp = value_sp;
         }
         
         OptionValue::Type
