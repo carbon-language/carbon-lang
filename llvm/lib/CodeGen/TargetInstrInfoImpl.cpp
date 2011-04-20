@@ -388,11 +388,6 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
     if (MO.isDef() != (i == 0))
       return false;
 
-    // For the def, it should be the only def of that register.
-    if (MO.isDef() && (llvm::next(MRI.def_begin(Reg)) != MRI.def_end() ||
-                       MRI.isLiveIn(Reg)))
-      return false;
-
     // Don't allow any virtual-register uses. Rematting an instruction with
     // virtual register uses would length the live ranges of the uses, which
     // is not necessarily a good idea, certainly not "trivial".
