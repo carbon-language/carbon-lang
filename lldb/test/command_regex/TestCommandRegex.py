@@ -23,7 +23,7 @@ class CommandRegexTestCase(TestBase):
         if self.TraceOn():
             child.logfile_read = sys.stdout
 
-        # Set the breakpoint, followed by the target stop-hook commands.
+        # Substitute 'Help!' with 'help' using the 'commands regex' mechanism.
         child.expect(prompt)
         child.sendline('commands regex Help!')
         child.expect(regex_prompt)
