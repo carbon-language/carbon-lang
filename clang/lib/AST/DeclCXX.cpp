@@ -813,8 +813,6 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
     return 0;
 
   CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);
-  assert(++I == E && "Found more than one destructor!");
-
   return Dtor;
 }
 
