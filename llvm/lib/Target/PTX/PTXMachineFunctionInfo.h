@@ -42,7 +42,6 @@ public:
   void setRetReg(unsigned reg) { reg_ret = reg; }
 
   void doneAddArg(void) {
-    std::sort(reg_arg.begin(), reg_arg.end());
     _isDoneAddArg = true;
   }
   void doneAddLocalVar(void) {
