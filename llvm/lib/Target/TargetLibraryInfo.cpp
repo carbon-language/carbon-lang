@@ -28,8 +28,8 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
 
   
   // memset_pattern16 is only available on iOS 3.0 and Mac OS/X 10.5 and later.
-  if (T.isOSX()) {
-    if (T.isOSXVersionLT(10, 5))
+  if (T.isMacOSX()) {
+    if (T.isMacOSXVersionLT(10, 5))
       TLI.setUnavailable(LibFunc::memset_pattern16);
   } else if (T.getOS() == Triple::IOS) {
     if (T.isOSVersionLT(3, 0))

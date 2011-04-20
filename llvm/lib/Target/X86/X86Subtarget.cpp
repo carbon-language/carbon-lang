@@ -144,7 +144,8 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
 /// passed as the second argument. Otherwise it returns null.
 const char *X86Subtarget::getBZeroEntry() const {
   // Darwin 10 has a __bzero entry point for this purpose.
-  if (getTargetTriple().isOSX() && !getTargetTriple().isOSXVersionLT(10, 6))
+  if (getTargetTriple().isMacOSX() &&
+      !getTargetTriple().isMacOSXVersionLT(10, 6))
     return "__bzero";
 
   return 0;

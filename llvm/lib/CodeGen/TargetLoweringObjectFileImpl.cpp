@@ -481,7 +481,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 
   // .comm doesn't support alignment before Leopard.
   Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
-  if (T.isOSX() && T.isOSXVersionLT(10, 5))
+  if (T.isMacOSX() && T.isMacOSXVersionLT(10, 5))
     CommDirectiveSupportsAlignment = false;
 
   TargetLoweringObjectFile::Initialize(Ctx, TM);

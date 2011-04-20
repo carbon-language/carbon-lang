@@ -266,15 +266,15 @@ public:
     return false;
   }
 
-  /// isOSX - Is this an OS X triple. For legacy reasons, we support both
+  /// isMacOSX - Is this a Mac OS X triple. For legacy reasons, we support both
   /// "darwin" and "osx" as OS X triples.
-  bool isOSX() const {
+  bool isMacOSX() const {
     return getOS() == Triple::Darwin || getOS() == Triple::MacOSX;
   }
 
   /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
   bool isOSDarwin() const {
-    return isOSX() ||getOS() == Triple::IOS;
+    return isMacOSX() ||getOS() == Triple::IOS;
   }
 
   /// isOSWindows - Is this a "Windows" OS.
@@ -283,12 +283,12 @@ public:
       getOS() == Triple::MinGW32;
   }
 
-  /// isOSXVersionLT - Comparison function for checking OS X version
+  /// isMacOSXVersionLT - Comparison function for checking OS X version
   /// compatibility, which handles supporting skewed version numbering schemes
   /// used by the "darwin" triples.
-  unsigned isOSXVersionLT(unsigned Major, unsigned Minor = 0,
+  unsigned isMacOSXVersionLT(unsigned Major, unsigned Minor = 0,
                           unsigned Micro = 0) const {
-    assert(isOSX() && "Not an OS X triple!");
+    assert(isMacOSX() && "Not an OS X triple!");
 
     // If this is OS X, expect a sane version number.
     if (getOS() == Triple::MacOSX)

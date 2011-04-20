@@ -1773,8 +1773,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       OpFlags = X86II::MO_PLT;
     } else if (Subtarget->isPICStyleStubAny() &&
                (GV->isDeclaration() || GV->isWeakForLinker()) &&
-               (!Subtarget->getTargetTriple().isOSX() ||
-                Subtarget->getTargetTriple().isOSXVersionLT(10, 5))) {
+               (!Subtarget->getTargetTriple().isMacOSX() ||
+                Subtarget->getTargetTriple().isMacOSXVersionLT(10, 5))) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.
