@@ -77,11 +77,6 @@ static const unsigned GPRArgRegs[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3
 };
 
-static cl::opt<bool>
-UseDivMod("arm-divmod-libcall", cl::Hidden,
-  cl::desc("Use __{u}divmod libcalls for div / rem pairs"),
-  cl::init(false));
-
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
