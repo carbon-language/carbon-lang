@@ -141,6 +141,8 @@ typedef bool CCCustomFn(unsigned &ValNo, MVT &ValVT,
                         MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                         ISD::ArgFlagsTy &ArgFlags, CCState &State);
 
+typedef enum { Invalid, Prologue, Call } ParmContext;
+
 /// CCState - This class holds information needed while lowering arguments and
 /// return values.  It captures which registers are already assigned and which
 /// stack slots are used.  It provides accessors to allocate these values.
@@ -154,6 +156,9 @@ class CCState {
 
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
+  unsigned FirstByValReg;
+  bool FirstByValRegValid;
+  ParmContext CallOrPrologue;
 public:
   CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &TM,
           SmallVector<CCValAssign, 16> &locs, LLVMContext &C);
@@ -287,6 +292,16 @@ public:
   void HandleByVal(unsigned ValNo, MVT ValVT,
                    MVT LocVT, CCValAssign::LocInfo LocInfo,
                    int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
+
+  // First GPR that carries part of a byval aggregate that's split
+  // between registers and memory.
+  unsigned getFirstByValReg() { return FirstByValRegValid ? FirstByValReg : 0; }
+  void setFirstByValReg(unsigned r) { FirstByValReg = r; FirstByValRegValid = true; }
+  void clearFirstByValReg() { FirstByValReg = 0; FirstByValRegValid = false; }
+  bool isFirstByValRegValid() { return FirstByValRegValid; }
+
+  ParmContext getCallOrPrologue() { return CallOrPrologue; }
+  void setCallOrPrologue(ParmContext pc) { CallOrPrologue = pc; }
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

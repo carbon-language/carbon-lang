@@ -23,7 +23,7 @@ class CCIfAlign<string Align, CCAction A>:
 def CC_ARM_APCS : CallingConv<[
 
   // Handles byval parameters.
-  CCIfByVal<CCPassByVal<8, 8>>,
+  CCIfByVal<CCPassByVal<4, 4>>,
     
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 

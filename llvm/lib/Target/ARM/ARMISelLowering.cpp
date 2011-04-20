@@ -72,6 +72,16 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
+// The APCS parameter registers.
+static const unsigned GPRArgRegs[] = {
+  ARM::R0, ARM::R1, ARM::R2, ARM::R3
+};
+
+static cl::opt<bool>
+UseDivMod("arm-divmod-libcall", cl::Hidden,
+  cl::desc("Use __{u}divmod libcalls for div / rem pairs"),
+  cl::init(false));
+
 void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
                                        EVT PromotedBitwiseVT) {
   if (VT != PromotedLdStVT) {
@@ -1117,22 +1127,6 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   return Chain;
 }
 
-/// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
-/// by "Src" to address "Dst" of size "Size".  Alignment information is
-/// specified by the specific parameter attribute.  The copy will be passed as
-/// a byval function parameter.
-/// Sometimes what we are copying is the end of a larger object, the part that
-/// does not fit in registers.
-static SDValue
-CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
-                          ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
-                          DebugLoc dl) {
-  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
-  return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
-                       /*isVolatile=*/false, /*AlwaysInline=*/false,
-                       MachinePointerInfo(0), MachinePointerInfo(0));
-}
-
 /// LowerMemOpCallTo - Store the argument to the stack.
 SDValue
 ARMTargetLowering::LowerMemOpCallTo(SDValue Chain,
@@ -1143,9 +1137,6 @@ ARMTargetLowering::LowerMemOpCallTo(SDValue Chain,
   unsigned LocMemOffset = VA.getLocMemOffset();
   SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
   PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
-  if (Flags.isByVal())
-    return CreateCopyOfByValArgument(Arg, PtrOff, Chain, Flags, DAG, dl);
-
   return DAG.getStore(Chain, dl, Arg, PtrOff,
                       MachinePointerInfo::getStack(LocMemOffset),
                       false, false, 0);
@@ -1211,6 +1202,7 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
                  *DAG.getContext());
+  CCInfo.setCallOrPrologue(Call);
   CCInfo.AnalyzeCallOperands(Outs,
                              CCAssignFnForNode(CallConv, /* Return*/ false,
                                                isVarArg));
@@ -1287,7 +1279,44 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       }
     } else if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-    } else if (!IsSibCall || isByVal) {
+    } else if (isByVal) {
+      assert(VA.isMemLoc());
+      unsigned offset = 0;
+
+      // True if this byval aggregate will be split between registers
+      // and memory.
+      if (CCInfo.isFirstByValRegValid()) {
+        EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+        unsigned int i, j;
+        for (i = 0, j = CCInfo.getFirstByValReg(); j < ARM::R4; i++, j++) {
+          SDValue Const = DAG.getConstant(4*i, MVT::i32);
+          SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const);
+          SDValue Load = DAG.getLoad(PtrVT, dl, Chain, AddArg,
+                                     MachinePointerInfo(),
+                                     false, false, 0);
+          MemOpChains.push_back(Load.getValue(1));
+          RegsToPass.push_back(std::make_pair(j, Load));
+        }
+        offset = ARM::R4 - CCInfo.getFirstByValReg();
+        CCInfo.clearFirstByValReg();
+      }
+
+      unsigned LocMemOffset = VA.getLocMemOffset();
+      SDValue StkPtrOff = DAG.getIntPtrConstant(LocMemOffset);
+      SDValue Dst = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
+                                StkPtrOff);
+      SDValue SrcOffset = DAG.getIntPtrConstant(4*offset);
+      SDValue Src = DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg, SrcOffset);
+      SDValue SizeNode = DAG.getConstant(Flags.getByValSize() - 4*offset,
+                                         MVT::i32);
+      MemOpChains.push_back(DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode,
+                                          Flags.getByValAlign(),
+                                          /*isVolatile=*/false,
+                                          /*AlwaysInline=*/false,
+                                          MachinePointerInfo(0),
+                                          MachinePointerInfo(0)));
+
+    } else if (!IsSibCall) {
       assert(VA.isMemLoc());
 
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
@@ -1481,14 +1510,32 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 }
 
 /// HandleByVal - Every parameter *after* a byval parameter is passed
-/// on the stack.  Confiscate all the parameter registers to insure
+/// on the stack.  Remember the next parameter register to allocate,
+/// and then confiscate the rest of the parameter registers to insure
 /// this.
 void
-llvm::ARMTargetLowering::HandleByVal(CCState *State) const {
-  static const unsigned RegList1[] = {
-    ARM::R0, ARM::R1, ARM::R2, ARM::R3
-  };
-  do {} while (State->AllocateReg(RegList1, 4));
+llvm::ARMTargetLowering::HandleByVal(CCState *State, unsigned &size) const {
+  unsigned reg = State->AllocateReg(GPRArgRegs, 4);
+  assert((State->getCallOrPrologue() == Prologue ||
+          State->getCallOrPrologue() == Call) &&
+         "unhandled ParmContext");
+  if ((!State->isFirstByValRegValid()) &&
+      (ARM::R0 <= reg) && (reg <= ARM::R3)) {
+    State->setFirstByValReg(reg);
+    // At a call site, a byval parameter that is split between
+    // registers and memory needs its size truncated here.  In a
+    // function prologue, such byval parameters are reassembled in
+    // memory, and are not truncated.
+    if (State->getCallOrPrologue() == Call) {
+      unsigned excess = 4 * (ARM::R4 - reg);
+      assert(size >= excess && "expected larger existing stack allocation");
+      size -= excess;
+    }
+  }
+  // Confiscate any remaining parameter registers to preclude their
+  // assignment to subsequent parameters.
+  while (State->AllocateReg(GPRArgRegs, 4))
+    ;
 }
 
 /// MatchingStackOffset - Return true if the given stack call argument is
@@ -2273,6 +2320,88 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
   return DAG.getNode(ARMISD::VMOVDRR, dl, MVT::f64, ArgValue, ArgValue2);
 }
 
+void
+ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
+                                  unsigned &VARegSize, unsigned &VARegSaveSize)
+  const {
+  unsigned NumGPRs;
+  if (CCInfo.isFirstByValRegValid())
+    NumGPRs = ARM::R4 - CCInfo.getFirstByValReg();
+  else {
+    unsigned int firstUnalloced;
+    firstUnalloced = CCInfo.getFirstUnallocated(GPRArgRegs,
+                                                sizeof(GPRArgRegs) /
+                                                sizeof(GPRArgRegs[0]));
+    NumGPRs = (firstUnalloced <= 3) ? (4 - firstUnalloced) : 0;
+  }
+
+  unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
+  VARegSize = NumGPRs * 4;
+  VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
+}
+
+// The remaining GPRs hold either the beginning of variable-argument
+// data, or the beginning of an aggregate passed by value (usuall
+// byval).  Either way, we allocate stack slots adjacent to the data
+// provided by our caller, and store the unallocated registers there.
+// If this is a variadic function, the va_list pointer will begin with
+// these values; otherwise, this reassembles a (byval) structure that
+// was split between registers and memory.
+void
+ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
+                                        DebugLoc dl, SDValue &Chain,
+                                        unsigned ArgOffset) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  unsigned firstRegToSaveIndex;
+  if (CCInfo.isFirstByValRegValid())
+    firstRegToSaveIndex = CCInfo.getFirstByValReg() - ARM::R0;
+  else {
+    firstRegToSaveIndex = CCInfo.getFirstUnallocated
+      (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
+  }
+
+  unsigned VARegSize, VARegSaveSize;
+  computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
+  if (VARegSaveSize) {
+    // If this function is vararg, store any remaining integer argument regs
+    // to their spots on the stack so that they may be loaded by deferencing
+    // the result of va_next.
+    AFI->setVarArgsRegSaveSize(VARegSaveSize);
+    AFI->setVarArgsFrameIndex(
+                              MFI->CreateFixedObject(VARegSaveSize,
+                                                     ArgOffset + VARegSaveSize - VARegSize,
+                                                     false));
+    SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
+                                    getPointerTy());
+
+    SmallVector<SDValue, 4> MemOps;
+    for (; firstRegToSaveIndex < 4; ++firstRegToSaveIndex) {
+      TargetRegisterClass *RC;
+      if (AFI->isThumb1OnlyFunction())
+        RC = ARM::tGPRRegisterClass;
+      else
+        RC = ARM::GPRRegisterClass;
+
+      unsigned VReg = MF.addLiveIn(GPRArgRegs[firstRegToSaveIndex], RC);
+      SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+      SDValue Store =
+        DAG.getStore(Val.getValue(1), dl, Val, FIN,
+                     MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
+                     false, false, 0);
+      MemOps.push_back(Store);
+      FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
+                        DAG.getConstant(4, getPointerTy()));
+    }
+    if (!MemOps.empty())
+      Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                          &MemOps[0], MemOps.size());
+  } else
+    // This will point to the next argument passed via stack.
+    AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset, true));
+}
+
 SDValue
 ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                                         CallingConv::ID CallConv, bool isVarArg,
@@ -2281,7 +2410,6 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
                                         DebugLoc dl, SelectionDAG &DAG,
                                         SmallVectorImpl<SDValue> &InVals)
                                           const {
-
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -2291,6 +2419,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
                  *DAG.getContext());
+  CCInfo.setCallOrPrologue(Prologue);
   CCInfo.AnalyzeFormalArguments(Ins,
                                 CCAssignFnForNode(CallConv, /* Return*/ false,
                                                   isVarArg));
@@ -2393,9 +2522,13 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           // In case of tail call optimization mark all arguments mutable. Since they
           // could be overwritten by lowering of arguments in case of a tail call.
           if (Flags.isByVal()) {
-            unsigned Bytes = Flags.getByValSize();
+            unsigned VARegSize, VARegSaveSize;
+            computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
+            VarArgStyleRegisters(CCInfo, DAG, dl, Chain, 0);
+            unsigned Bytes = Flags.getByValSize() - VARegSize;
             if (Bytes == 0) Bytes = 1; // Don't create zero-sized stack objects.
-            int FI = MFI->CreateFixedObject(Bytes, VA.getLocMemOffset(), false);
+            int FI = MFI->CreateFixedObject(Bytes,
+                                            VA.getLocMemOffset(), false);
             InVals.push_back(DAG.getFrameIndex(FI, getPointerTy()));
           } else {
             int FI = MFI->CreateFixedObject(VA.getLocVT().getSizeInBits()/8,
@@ -2413,55 +2546,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   // varargs
-  if (isVarArg) {
-    static const unsigned GPRArgRegs[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3
-    };
-
-    unsigned NumGPRs = CCInfo.getFirstUnallocated
-      (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
-
-    unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
-    unsigned VARegSize = (4 - NumGPRs) * 4;
-    unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
-    unsigned ArgOffset = CCInfo.getNextStackOffset();
-    if (VARegSaveSize) {
-      // If this function is vararg, store any remaining integer argument regs
-      // to their spots on the stack so that they may be loaded by deferencing
-      // the result of va_next.
-      AFI->setVarArgsRegSaveSize(VARegSaveSize);
-      AFI->setVarArgsFrameIndex(
-        MFI->CreateFixedObject(VARegSaveSize,
-                               ArgOffset + VARegSaveSize - VARegSize,
-                               false));
-      SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
-                                      getPointerTy());
-
-      SmallVector<SDValue, 4> MemOps;
-      for (; NumGPRs < 4; ++NumGPRs) {
-        TargetRegisterClass *RC;
-        if (AFI->isThumb1OnlyFunction())
-          RC = ARM::tGPRRegisterClass;
-        else
-          RC = ARM::GPRRegisterClass;
-
-        unsigned VReg = MF.addLiveIn(GPRArgRegs[NumGPRs], RC);
-        SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
-        SDValue Store =
-          DAG.getStore(Val.getValue(1), dl, Val, FIN,
-               MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
-                       false, false, 0);
-        MemOps.push_back(Store);
-        FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
-                          DAG.getConstant(4, getPointerTy()));
-      }
-      if (!MemOps.empty())
-        Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                            &MemOps[0], MemOps.size());
-    } else
-      // This will point to the next argument passed via stack.
-      AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(4, ArgOffset, true));
-  }
+  if (isVarArg)
+    VarArgStyleRegisters(CCInfo, DAG, dl, Chain, CCInfo.getNextStackOffset());
 
   return Chain;
 }

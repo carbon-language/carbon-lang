@@ -25,10 +25,12 @@ using namespace llvm;
 CCState::CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &tm,
                  SmallVector<CCValAssign, 16> &locs, LLVMContext &C)
   : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
-    TRI(*TM.getRegisterInfo()), Locs(locs), Context(C) {
+    TRI(*TM.getRegisterInfo()), Locs(locs), Context(C),
+    CallOrPrologue(Invalid) {
   // No stack is used.
   StackOffset = 0;
   
+  clearFirstByValReg();
   UsedRegs.resize((TRI.getNumRegs()+31)/32);
 }
 
@@ -45,10 +47,9 @@ void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
     Size = MinSize;
   if (MinAlign > (int)Align)
     Align = MinAlign;
+  TM.getTargetLowering()->HandleByVal(const_cast<CCState*>(this), Size);
   unsigned Offset = AllocateStack(Size, Align);
-
   addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
-  TM.getTargetLowering()->HandleByVal(const_cast<CCState*>(this));
 }
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
