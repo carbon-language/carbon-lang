@@ -86,12 +86,27 @@ class SourceManagerTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped',
-                       'main.c',
+                       'main.c:%d' % self.line,
                        'stop reason = breakpoint'])
 
         # Display some source code.
         self.expect("list -f main.c -l %d" % self.line, SOURCE_DISPLAYED_CORRECTLY,
             substrs = ['Hello world'])
+
+        # The '-b' option shows the line table locations from the debug information
+        # that indicates valid places to set source level breakpoints.
+
+        # The file to display is implicit in this case.
+        self.runCmd("list -l %d -c 3 -b" % self.line)
+        output = self.res.GetOutput().splitlines()[0]
+
+        # If the breakpoint set command succeeded, we should expect a positive number
+        # of breakpoints for the current line, i.e., self.line.
+        import re
+        m = re.search('^\[(\d+)\].*// Set break point at this line.', output)
+        if not m:
+            self.fail("Fail to display source level breakpoints")
+        self.assertTrue(int(m.group(1)) > 0)
 
         # Read the main.c file content.
         with open('main.c', 'r') as f:
