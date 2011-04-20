@@ -40,10 +40,10 @@ void clang_getInclusions(CXTranslationUnit TU, CXInclusionVisitor CB,
     i = 0;
   
   for ( ; i < n ; ++i) {
-
-    const SrcMgr::SLocEntry &SL = SM.getSLocEntry(i);
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &SL = SM.getSLocEntry(i, &Invalid);
     
-    if (!SL.isFile())
+    if (!SL.isFile() || Invalid)
       continue;
 
     const SrcMgr::FileInfo &FI = SL.getFile();

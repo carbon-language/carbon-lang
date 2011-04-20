@@ -4383,8 +4383,8 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
   return IdentifiersLoaded[ID];
 }
 
-void ASTReader::ReadSLocEntry(unsigned ID) {
-  ReadSLocEntryRecord(ID);
+bool ASTReader::ReadSLocEntry(unsigned ID) {
+  return ReadSLocEntryRecord(ID) != Success;
 }
 
 Selector ASTReader::DecodeSelector(unsigned ID) {

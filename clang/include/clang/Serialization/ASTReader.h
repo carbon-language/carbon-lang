@@ -1120,7 +1120,7 @@ public:
   }
 
   /// \brief Read the source location entry with index ID.
-  virtual void ReadSLocEntry(unsigned ID);
+  virtual bool ReadSLocEntry(unsigned ID);
 
   Selector DecodeSelector(unsigned Idx);
 

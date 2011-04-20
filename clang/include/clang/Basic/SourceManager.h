@@ -314,7 +314,10 @@ public:
   virtual ~ExternalSLocEntrySource();
 
   /// \brief Read the source location entry with index ID.
-  virtual void ReadSLocEntry(unsigned ID) = 0;
+  ///
+  /// \returns true if an error occurred that prevented the source-location
+  /// entry from being loaded.
+  virtual bool ReadSLocEntry(unsigned ID) = 0;
 };
   
 
@@ -377,7 +380,7 @@ public:
 /// Spelling locations represent where the bytes corresponding to a token came
 /// from and instantiation locations represent where the location is in the
 /// user's view.  In the case of a macro expansion, for example, the spelling
-/// location indicates where the expanded token came from and the instantiation
+/// location indicates  where the expanded token came from and the instantiation
 /// location specifies where it was expanded.
 class SourceManager : public llvm::RefCountedBase<SourceManager> {
   /// \brief Diagnostic object.
@@ -445,6 +448,9 @@ class SourceManager : public llvm::RefCountedBase<SourceManager> {
   // Cache results for the isBeforeInTranslationUnit method.
   mutable IsBeforeInTranslationUnitCache IsBeforeInTUCache;
 
+  // Cache for the "fake" buffer used for error-recovery purposes.
+  mutable llvm::MemoryBuffer *FakeBufferForRecovery;
+  
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
@@ -571,18 +577,42 @@ public:
   /// buffer and returns a non-empty error string.
   const llvm::MemoryBuffer *getBuffer(FileID FID, SourceLocation Loc,
                                       bool *Invalid = 0) const {
-    return getSLocEntry(FID).getFile().getContentCache()
-       ->getBuffer(Diag, *this, Loc, Invalid);
+    bool MyInvalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
+    if (MyInvalid || !Entry.isFile()) {
+      if (Invalid)
+        *Invalid = true;
+      
+      return getFakeBufferForRecovery();
+    }
+        
+    return Entry.getFile().getContentCache()->getBuffer(Diag, *this, Loc, 
+                                                        Invalid);
   }
 
   const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
-    return getSLocEntry(FID).getFile().getContentCache()
-       ->getBuffer(Diag, *this, SourceLocation(), Invalid);
+    bool MyInvalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
+    if (MyInvalid || !Entry.isFile()) {
+      if (Invalid)
+        *Invalid = true;
+      
+      return getFakeBufferForRecovery();
+    }
+
+    return Entry.getFile().getContentCache()->getBuffer(Diag, *this, 
+                                                        SourceLocation(), 
+                                                        Invalid);
   }
   
   /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
   const FileEntry *getFileEntryForID(FileID FID) const {
-    return getSLocEntry(FID).getFile().getContentCache()->OrigEntry;
+    bool MyInvalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
+    if (MyInvalid || !Entry.isFile())
+      return 0;
+    
+    return Entry.getFile().getContentCache()->OrigEntry;
   }
 
   /// Returns the FileEntry record for the provided SLocEntry.
@@ -622,8 +652,12 @@ public:
   /// first byte of the specified file.
   SourceLocation getLocForStartOfFile(FileID FID) const {
     assert(FID.ID < SLocEntryTable.size() && "FileID out of range");
-    assert(getSLocEntry(FID).isFile() && "FileID is not a file");
-    unsigned FileOffset = getSLocEntry(FID).getOffset();
+    bool Invalid = false;
+    const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
+    if (Invalid || !Entry.isFile())
+      return SourceLocation();
+    
+    unsigned FileOffset = Entry.getOffset();
     return SourceLocation::getFileLoc(FileOffset);
   }
 
@@ -851,17 +885,22 @@ public:
   //  any other external source).
   unsigned sloc_loaded_entry_size() const { return SLocEntryLoaded.size(); }
 
-  const SrcMgr::SLocEntry &getSLocEntry(unsigned ID) const {
+  const SrcMgr::SLocEntry &getSLocEntry(unsigned ID, bool *Invalid = 0) const {
     assert(ID < SLocEntryTable.size() && "Invalid id");
+    // If we haven't loaded this source-location entry from the external source
+    // yet, do so now.
     if (ExternalSLocEntries &&
         ID < SLocEntryLoaded.size() &&
-        !SLocEntryLoaded[ID])
-      ExternalSLocEntries->ReadSLocEntry(ID);
+        !SLocEntryLoaded[ID] &&
+        ExternalSLocEntries->ReadSLocEntry(ID) &&
+        Invalid)
+      *Invalid = true;
+
     return SLocEntryTable[ID];
   }
 
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
-    return getSLocEntry(FID.ID);
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID, bool *Invalid = 0) const {
+    return getSLocEntry(FID.ID, Invalid);
   }
 
   unsigned getNextOffset() const { return NextOffset; }
@@ -877,6 +916,8 @@ public:
   void ClearPreallocatedSLocEntries();
 
 private:
+  const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
+
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.
   inline bool isOffsetInFileID(FileID FID, unsigned SLocOffset) const {
