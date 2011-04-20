@@ -1016,33 +1016,39 @@ CINDEX_LINKAGE int clang_reparseTranslationUnit(CXTranslationUnit TU,
 /**
   * \brief Categorizes how memory is being used by a translation unit.
   */
-enum CXTUMemoryUsageKind {
-  CXTUMemoryUsage_AST = 1,
-  CXTUMemoryUsage_Identifiers = 2,
-  CXTUMemoryUsage_Selectors = 3,
-  CXTUMemoryUsage_GlobalCompletionResults = 4,
-  CXTUMemoryUsage_First = CXTUMemoryUsage_AST,
-  CXTUMemoryUsage_Last = CXTUMemoryUsage_GlobalCompletionResults
+enum CXTUResourceUsageKind {
+  CXTUResourceUsage_AST = 1,
+  CXTUResourceUsage_Identifiers = 2,
+  CXTUResourceUsage_Selectors = 3,
+  CXTUResourceUsage_GlobalCompletionResults = 4,
+
+  CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN = CXTUResourceUsage_AST,
+  CXTUResourceUsage_MEMORY_IN_BYTES_END =
+    CXTUResourceUsage_GlobalCompletionResults,
+
+  CXTUResourceUsage_First = CXTUResourceUsage_AST,
+  CXTUResourceUsage_Last = CXTUResourceUsage_GlobalCompletionResults
 };
 
 /**
   * \brief Returns the human-readable null-terminated C string that represents
-  *  the name of the memory category.
+  *  the name of the memory category.  This string should never be freed.
   */
 CINDEX_LINKAGE
-const char *clang_getTUMemoryUsageName(enum CXTUMemoryUsageKind kind);
+const char *clang_getTUResourceUsageName(enum CXTUResourceUsageKind kind);
 
-typedef struct CXTUMemoryUsageEntry {
+typedef struct CXTUResourceUsageEntry {
   /* \brief The memory usage category. */
-  enum CXTUMemoryUsageKind kind;  
-  /* \brief Memory usage in bytes. */
+  enum CXTUResourceUsageKind kind;  
+  /* \brief Amount of resources used. 
+      The units will depend on the resource kind. */
   unsigned long amount;
-} CXTUMemoryUsageEntry;
+} CXTUResourceUsageEntry;
 
 /**
   * \brief The memory usage of a CXTranslationUnit, broken into categories.
   */
-typedef struct CXTUMemoryUsage {
+typedef struct CXTUResourceUsage {
   /* \brief Private data member, used for queries. */
   void *data;
 
@@ -1051,17 +1057,17 @@ typedef struct CXTUMemoryUsage {
 
   /* \brief An array of key-value pairs, representing the breakdown of memory
             usage. */
-  CXTUMemoryUsageEntry *entries;
+  CXTUResourceUsageEntry *entries;
 
-} CXTUMemoryUsage;
+} CXTUResourceUsage;
 
 /**
   * \brief Return the memory usage of a translation unit.  This object
-  *  should be released with clang_disposeCXTUMemoryUsage().
+  *  should be released with clang_disposeCXTUResourceUsage().
   */
-CINDEX_LINKAGE CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU);
+CINDEX_LINKAGE CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU);
 
-CINDEX_LINKAGE void clang_disposeCXTUMemoryUsage(CXTUMemoryUsage usage);
+CINDEX_LINKAGE void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage);
 
 /**
  * @}

@@ -5181,39 +5181,39 @@ CXType clang_getIBOutletCollectionType(CXCursor C) {
 // Inspecting memory usage.
 //===----------------------------------------------------------------------===//
 
-typedef std::vector<CXTUMemoryUsageEntry> MemUsageEntries;
+typedef std::vector<CXTUResourceUsageEntry> MemUsageEntries;
 
-static inline void createCXTUMemoryUsageEntry(MemUsageEntries &entries,
-                                              enum CXTUMemoryUsageKind k,
+static inline void createCXTUResourceUsageEntry(MemUsageEntries &entries,
+                                              enum CXTUResourceUsageKind k,
                                               double amount) {
-  CXTUMemoryUsageEntry entry = { k, amount };
+  CXTUResourceUsageEntry entry = { k, amount };
   entries.push_back(entry);
 }
 
 extern "C" {
 
-const char *clang_getTUMemoryUsageName(CXTUMemoryUsageKind kind) {
+const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
   const char *str = "";
   switch (kind) {
-    case CXTUMemoryUsage_AST:
+    case CXTUResourceUsage_AST:
       str = "ASTContext: expressions, declarations, and types"; 
       break;
-    case CXTUMemoryUsage_Identifiers:
+    case CXTUResourceUsage_Identifiers:
       str = "ASTContext: identifiers";
       break;
-    case CXTUMemoryUsage_Selectors:
+    case CXTUResourceUsage_Selectors:
       str = "ASTContext: selectors";
       break;
-    case CXTUMemoryUsage_GlobalCompletionResults:
+    case CXTUResourceUsage_GlobalCompletionResults:
       str = "Code completion: cached global results";
       break;
   }
   return str;
 }
 
-CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU) {
+CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   if (!TU) {
-    CXTUMemoryUsage usage = { (void*) 0, 0, 0 };
+    CXTUResourceUsage usage = { (void*) 0, 0, 0 };
     return usage;
   }
   
@@ -5222,15 +5222,15 @@ CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU) {
   ASTContext &astContext = astUnit->getASTContext();
   
   // How much memory is used by AST nodes and types?
-  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_AST,
+  createCXTUResourceUsageEntry(*entries, CXTUResourceUsage_AST,
     (unsigned long) astContext.getTotalAllocatedMemory());
 
   // How much memory is used by identifiers?
-  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_Identifiers,
+  createCXTUResourceUsageEntry(*entries, CXTUResourceUsage_Identifiers,
     (unsigned long) astContext.Idents.getAllocator().getTotalMemory());
 
   // How much memory is used for selectors?
-  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_Selectors,
+  createCXTUResourceUsageEntry(*entries, CXTUResourceUsage_Selectors,
     (unsigned long) astContext.Selectors.getTotalMemory());
   
   // How much memory is used for caching global code completion results?
@@ -5239,18 +5239,18 @@ CXTUMemoryUsage clang_getCXTUMemoryUsage(CXTranslationUnit TU) {
       astUnit->getCachedCompletionAllocator().getPtr()) {
     completionBytes = completionAllocator-> getTotalMemory();
   }
-  createCXTUMemoryUsageEntry(*entries, CXTUMemoryUsage_GlobalCompletionResults,
+  createCXTUResourceUsageEntry(*entries, CXTUResourceUsage_GlobalCompletionResults,
     completionBytes);
 
 
-  CXTUMemoryUsage usage = { (void*) entries.get(),
+  CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
                             entries->size() ? &(*entries)[0] : 0 };
   entries.take();
   return usage;
 }
 
-void clang_disposeCXTUMemoryUsage(CXTUMemoryUsage usage) {
+void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
   if (usage.data)
     delete (MemUsageEntries*) usage.data;
 }

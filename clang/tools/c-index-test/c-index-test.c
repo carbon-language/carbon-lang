@@ -373,10 +373,10 @@ void PrintDiagnostics(CXTranslationUnit TU) {
 void PrintMemoryUsage(CXTranslationUnit TU) {
   unsigned long total = 0.0;
   unsigned i = 0;
-  CXTUMemoryUsage usage = clang_getCXTUMemoryUsage(TU);
+  CXTUResourceUsage usage = clang_getCXTUResourceUsage(TU);
   fprintf(stderr, "Memory usage:\n");
   for (i = 0 ; i != usage.numEntries; ++i) {
-    const char *name = clang_getTUMemoryUsageName(usage.entries[i].kind);
+    const char *name = clang_getTUResourceUsageName(usage.entries[i].kind);
     unsigned long amount = usage.entries[i].amount;
     total += amount;
     fprintf(stderr, "  %s : %ld bytes (%f MBytes)\n", name, amount,
@@ -384,7 +384,7 @@ void PrintMemoryUsage(CXTranslationUnit TU) {
   }
   fprintf(stderr, "  TOTAL = %ld bytes (%f MBytes)\n", total,
           ((double) total)/(1024*1024));
-  clang_disposeCXTUMemoryUsage(usage);  
+  clang_disposeCXTUResourceUsage(usage);  
 }
 
 /******************************************************************************/

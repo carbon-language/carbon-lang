@@ -21,7 +21,7 @@ _clang_defaultEditingTranslationUnitOptions
 _clang_defaultReparseOptions
 _clang_defaultSaveOptions
 _clang_disposeCXCursorSet
-_clang_disposeCXTUMemoryUsage
+_clang_disposeCXTUResourceUsage
 _clang_disposeCodeCompleteResults
 _clang_disposeDiagnostic
 _clang_disposeIndex
@@ -36,7 +36,7 @@ _clang_equalTypes
 _clang_executeOnThread
 _clang_formatDiagnostic
 _clang_getCString
-_clang_getCXTUMemoryUsage
+_clang_getCXTUResourceUsage
 _clang_getCXXAccessSpecifier
 _clang_getCanonicalCursor
 _clang_getCanonicalType
@@ -100,7 +100,7 @@ _clang_getRangeStart
 _clang_getResultType
 _clang_getSpecializedCursorTemplate
 _clang_getSpellingLocation
-_clang_getTUMemoryUsageName
+_clang_getTUResourceUsageName
 _clang_getTemplateCursorKind
 _clang_getTokenExtent
 _clang_getTokenKind
