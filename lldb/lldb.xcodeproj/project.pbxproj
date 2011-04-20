@@ -63,9 +63,6 @@
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
 		266E8C6A13528ABC000C2042 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
-		26700BD4133D1262009921FB /* ARMDisassembler.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26700BD2133D1256009921FB /* ARMDisassembler.framework */; };
-		26700BD5133D1266009921FB /* ARMDisassembler.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26700BD2133D1256009921FB /* ARMDisassembler.framework */; };
-		26700BD6133D1267009921FB /* ARMDisassembler.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26700BD2133D1256009921FB /* ARMDisassembler.framework */; };
 		2671A0CE134825F6003A87BB /* ConnectionMachPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 2671A0CD134825F6003A87BB /* ConnectionMachPort.h */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
@@ -674,7 +671,6 @@
 		266A42D5128E3FFB0090CF7C /* ClangNamespaceDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangNamespaceDecl.cpp; path = source/Symbol/ClangNamespaceDecl.cpp; sourceTree = "<group>"; };
 		266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangNamespaceDecl.h; path = include/lldb/Symbol/ClangNamespaceDecl.h; sourceTree = "<group>"; };
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
-		26700BD2133D1256009921FB /* ARMDisassembler.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARMDisassembler.framework; path = /System/Library/PrivateFrameworks/ARMDisassembler.framework; sourceTree = "<absolute>"; };
 		2671A0CD134825F6003A87BB /* ConnectionMachPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionMachPort.h; path = include/lldb/Core/ConnectionMachPort.h; sourceTree = "<group>"; };
 		2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionMachPort.cpp; path = source/Core/ConnectionMachPort.cpp; sourceTree = "<group>"; };
 		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; };
@@ -1247,7 +1243,6 @@
 				26680232115FD1A4008E1FE4 /* libpython.dylib in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
 				4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */,
-				26700BD4133D1262009921FB /* ARMDisassembler.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1255,7 +1250,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26700BD5133D1266009921FB /* ARMDisassembler.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1270,7 +1264,6 @@
 				26B1FCBB13381071002886E2 /* libpython.dylib in Frameworks */,
 				26B1FCBC13381071002886E2 /* libobjc.dylib in Frameworks */,
 				26B1FCBD13381071002886E2 /* Carbon.framework in Frameworks */,
-				26700BD6133D1267009921FB /* ARMDisassembler.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2380,7 +2373,6 @@
 		26F5C32810F3DF7D009D5894 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				26700BD2133D1256009921FB /* ARMDisassembler.framework */,
 				26F5C39010F3FA26009D5894 /* CoreFoundation.framework */,
 				265ABF6210F42EE900531910 /* DebugSymbols.framework */,
 				260C876910F538E700BB2B04 /* Foundation.framework */,
