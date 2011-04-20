@@ -858,6 +858,10 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
       // Claim here to avoid the more general unused warning.
       InputArg->claim();
 
+      // Suppress all unused style warnings with -Qunused-arguments
+      if (Args.hasArg(options::OPT_Qunused_arguments))
+        continue;
+
       // Special case '-E' warning on a previously preprocessed file to make
       // more sense.
       if (InitialPhase == phases::Compile && FinalPhase == phases::Preprocess &&
