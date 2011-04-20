@@ -300,7 +300,6 @@ bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
   std::string SStr;
   llvm::raw_string_ostream S(SStr);
   To->printPretty(S, 0, PrintingPolicy(*LangOpts));
-  S.flush();
   const std::string &Str = S.str();
 
   ReplaceText(From->getLocStart(), Size, Str);
@@ -311,8 +310,7 @@ std::string Rewriter::ConvertToString(Stmt *From) {
   std::string SStr;
   llvm::raw_string_ostream S(SStr);
   From->printPretty(S, 0, PrintingPolicy(*LangOpts));
-  S.flush();
-  return SStr;
+  return S.str();
 }
 
 bool Rewriter::IncreaseIndentation(CharSourceRange range,
