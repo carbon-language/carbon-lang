@@ -142,6 +142,9 @@ private:
                              DebugLoc dl);
 
   SDValue ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned);
+  SDValue ExpandLibCall(RTLIB::Libcall LC, EVT RetVT, const SDValue *Ops,
+                        unsigned NumOps, bool isSigned, DebugLoc dl);
+
   std::pair<SDValue, SDValue> ExpandChainLibCall(RTLIB::Libcall LC,
                                                  SDNode *Node, bool isSigned);
   SDValue ExpandFPLibCall(SDNode *Node, RTLIB::Libcall Call_F32,
@@ -2056,6 +2059,40 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   return CallInfo.first;
 }
 
+/// ExpandLibCall - Generate a libcall taking the given operands as arguments 
+/// and returning a result of type RetVT.
+SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
+                                            const SDValue *Ops, unsigned NumOps,
+                                            bool isSigned, DebugLoc dl) {
+  TargetLowering::ArgListTy Args;
+  Args.reserve(NumOps);
+  
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    Entry.Node = Ops[i];
+    Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                         TLI.getPointerTy());
+  
+  const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  std::pair<SDValue,SDValue> CallInfo =
+  TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
+                  false, 0, TLI.getLibcallCallingConv(LC), false,
+                  /*isReturnValueUsed=*/true,
+                  Callee, Args, DAG, dl);
+  
+  // Legalize the call sequence, starting with the chain.  This will advance
+  // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
+  // was added by LowerCallTo (guaranteeing proper serialization of calls).
+  LegalizeOp(CallInfo.second);
+
+  return CallInfo.first;
+}
+
 // ExpandChainLibCall - Expand a node into a call to a libcall. Similar to
 // ExpandLibCall except that the first operand is the in-chain.
 std::pair<SDValue, SDValue>
@@ -3355,6 +3392,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
   case ISD::UMULO:
   case ISD::SMULO: {
     EVT VT = Node->getValueType(0);
+    EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
     SDValue LHS = Node->getOperand(0);
     SDValue RHS = Node->getOperand(1);
     SDValue BottomHalf;
@@ -3372,7 +3410,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       TopHalf = BottomHalf.getValue(1);
     } else if (TLI.isTypeLegal(EVT::getIntegerVT(*DAG.getContext(),
                                                  VT.getSizeInBits() * 2))) {
-      EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
       LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
       RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
       Tmp1 = DAG.getNode(ISD::MUL, dl, WideVT, LHS, RHS);
@@ -3385,7 +3422,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       // have a libcall big enough.
       // Also, we can fall back to a division in some cases, but that's a big
       // performance hit in the general case.
-      EVT WideVT = EVT::getIntegerVT(*DAG.getContext(), VT.getSizeInBits() * 2);
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       if (WideVT == MVT::i16)
         LC = RTLIB::MUL_I16;
@@ -3396,15 +3432,27 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       else if (WideVT == MVT::i128)
         LC = RTLIB::MUL_I128;
       assert(LC != RTLIB::UNKNOWN_LIBCALL && "Cannot expand this operation!");
-      LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
-      RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
+      
+      // The high part is obtained by SRA'ing all but one of the bits of low 
+      // part.
+      unsigned LoSize = VT.getSizeInBits();
+      SDValue HiLHS = DAG.getNode(ISD::SRA, dl, VT, RHS,
+                                DAG.getConstant(LoSize-1, TLI.getPointerTy()));
+      SDValue HiRHS = DAG.getNode(ISD::SRA, dl, VT, LHS,
+                                DAG.getConstant(LoSize-1, TLI.getPointerTy()));
 
-      SDValue Ret = ExpandLibCall(LC, Node, isSigned);
-      BottomHalf = DAG.getNode(ISD::TRUNCATE, dl, VT, Ret);
-      TopHalf = DAG.getNode(ISD::SRL, dl, Ret.getValueType(), Ret,
-                       DAG.getConstant(VT.getSizeInBits(), TLI.getPointerTy()));
-      TopHalf = DAG.getNode(ISD::TRUNCATE, dl, VT, TopHalf);
+      // Here we're passing the 2 arguments explicitly as 4 arguments that are
+      // pre-lowered to the correct types. This all depends upon WideVT not
+      // being a legal type for the architecture and thus has to be split to
+      // two arguments.
+      SDValue Args[] = { LHS, HiLHS, RHS, HiRHS };
+      SDValue Ret = ExpandLibCall(LC, WideVT, Args, 4, isSigned, dl);
+      BottomHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Ret,
+                               DAG.getIntPtrConstant(0));
+      TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Ret,
+                            DAG.getIntPtrConstant(1));
     }
+    
     if (isSigned) {
       Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1,
                              TLI.getShiftAmountTy(BottomHalf.getValueType()));
