@@ -136,7 +136,7 @@ public:
     static void
     FindAllSettingsDescriptions (CommandInterpreter &interpreter,
                                  const lldb::UserSettingsControllerSP& usc_sp, 
-                                 const const char *current_prefix, 
+                                 const char *current_prefix, 
                                  Stream &result_stream,
                                  Error &err);
 
