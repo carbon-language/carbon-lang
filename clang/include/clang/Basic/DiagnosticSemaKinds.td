@@ -2724,6 +2724,8 @@ def err_ref_array_type : Error<
   "cannot refer to declaration with an array type inside block">;
 def err_property_not_found : Error<
   "property %0 not found on object of type %1">;
+def err_invalid_property_name : Error<
+  "%0 is not a valid property name (accessing an object of type %1)">;
 def err_getter_not_found : Error<
   "expected getter method not found on object of type %0">;
 def err_property_not_found_forward_class : Error<

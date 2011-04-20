@@ -39,3 +39,13 @@ void g(B *b) {
   b.value.staticData = 17;
   b.value.method();
 }
+
+@interface C
+@end
+
+@implementation C
+- (void)method:(B *)b {
+  // <rdar://problem/8985943>
+  b.operator+ = 17; // expected-error{{'operator+' is not a valid property name (accessing an object of type 'B *')}}
+}
+@end
