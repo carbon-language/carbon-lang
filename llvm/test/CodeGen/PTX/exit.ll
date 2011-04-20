@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx | FileCheck %s
+; RUN: llc < %s -march=ptx32 | FileCheck %s
 
 define ptx_kernel void @t1() {
 ; CHECK: exit;

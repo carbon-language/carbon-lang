@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx | FileCheck %s
+; RUN: llc < %s -march=ptx32 | FileCheck %s
 
 define ptx_device i32 @test_setp_eq_u32_rr(i32 %x, i32 %y) {
 ; CHECK: setp.eq.u32 p0, r1, r2;

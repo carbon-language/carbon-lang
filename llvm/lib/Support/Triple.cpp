@@ -41,7 +41,8 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case x86_64:  return "x86_64";
   case xcore:   return "xcore";
   case mblaze:  return "mblaze";
-  case ptx:     return "ptx";
+  case ptx32:   return "ptx32";
+  case ptx64:   return "ptx64";
   }
 
   return "<invalid>";
@@ -74,7 +75,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
 
   case xcore:   return "xcore";
 
-  case ptx:     return "ptx";
+  case ptx32:   return "ptx";
+  case ptx64:   return "ptx";
   }
 }
 
@@ -165,8 +167,10 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     return x86_64;
   if (Name == "xcore")
     return xcore;
-  if (Name == "ptx")
-    return ptx;
+  if (Name == "ptx32")
+    return ptx32;
+  if (Name == "ptx64")
+    return ptx64;
 
   return UnknownArch;
 }
@@ -205,8 +209,10 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
       Str == "armv6" || Str == "armv7")
     return Triple::arm;
 
-  if (Str == "ptx")
-    return Triple::ptx;
+  if (Str == "ptx32")
+    return Triple::ptx32;
+  if (Str == "ptx64")
+    return Triple::ptx64;
 
   return Triple::UnknownArch;
 }
@@ -238,8 +244,10 @@ const char *Triple::getArchNameForAssembler() {
     return "armv6";
   if (Str == "armv7" || Str == "thumbv7")
     return "armv7";
-  if (Str == "ptx")
-    return "ptx";
+  if (Str == "ptx32")
+    return "ptx32";
+  if (Str == "ptx64")
+    return "ptx64";
   return NULL;
 }
 
@@ -288,8 +296,10 @@ Triple::ArchType Triple::ParseArch(StringRef ArchName) {
     return tce;
   else if (ArchName == "xcore")
     return xcore;
-  else if (ArchName == "ptx")
-    return ptx;
+  else if (ArchName == "ptx32")
+    return ptx32;
+  else if (ArchName == "ptx64")
+    return ptx64;
   else
     return UnknownArch;
 }

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx -mattr=+ptx20,+sm20 | FileCheck %s
+; RUN: llc < %s -march=ptx32 -mattr=+ptx20,+sm20 | FileCheck %s
 
 define ptx_device i32 @test_tid_x() {
 ; CHECK: mov.u32 r0, %tid.x;

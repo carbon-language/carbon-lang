@@ -447,5 +447,6 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
 
 // Force static initialization.
 extern "C" void LLVMInitializePTXAsmPrinter() {
-  RegisterAsmPrinter<PTXAsmPrinter> X(ThePTXTarget);
+  RegisterAsmPrinter<PTXAsmPrinter> X(ThePTX32Target);
+  RegisterAsmPrinter<PTXAsmPrinter> Y(ThePTX64Target);
 }

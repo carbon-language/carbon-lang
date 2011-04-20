@@ -42,7 +42,8 @@ namespace llvm {
   FunctionPass *createPTXMFInfoExtract(PTXTargetMachine &TM,
                                        CodeGenOpt::Level OptLevel);
 
-  extern Target ThePTXTarget;
+  extern Target ThePTX32Target;
+  extern Target ThePTX64Target;
 } // namespace llvm;
 
 // Defines symbolic names for PTX registers.

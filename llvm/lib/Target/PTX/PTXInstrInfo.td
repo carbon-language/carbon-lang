@@ -22,8 +22,8 @@ include "PTXInstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 // Addressing
-def Use32BitAddresses : Predicate<"!getSubtarget().use64BitAddresses()">;
-def Use64BitAddresses : Predicate<"getSubtarget().use64BitAddresses()">;
+def Use32BitAddresses : Predicate<"!getSubtarget().is64Bit()">;
+def Use64BitAddresses : Predicate<"getSubtarget().is64Bit()">;
 
 // Shader Model Support
 def SupportsSM13       : Predicate<"getSubtarget().supportsSM13()">;

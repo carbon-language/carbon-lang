@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx -mattr=+sm13 | FileCheck %s
+; RUN: llc < %s -march=ptx32 -mattr=+sm13 | FileCheck %s
 
 define ptx_device float @t1_f32(float %x, float %y) {
 ; CHECK: div.approx.f32 f0, f1, f2;

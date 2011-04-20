@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx | FileCheck %s
+; RUN: llc < %s -march=ptx32 | FileCheck %s
 
 define ptx_device i16 @t1_u16(i16 %x, i16 %y) {
 ; CHECK: add.u16 rh0, rh1, rh2;

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx | FileCheck %s
+; RUN: llc < %s -march=ptx32 | FileCheck %s
 
 ;CHECK: .extern .global .b8 array_i16[20];
 @array_i16 = external global [10 x i16]

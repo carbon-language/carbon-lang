@@ -30,9 +30,15 @@ namespace llvm {
 }
 
 extern "C" void LLVMInitializePTXTarget() {
-  RegisterTargetMachine<PTXTargetMachine> X(ThePTXTarget);
-  RegisterAsmInfo<PTXMCAsmInfo> Y(ThePTXTarget);
-  TargetRegistry::RegisterAsmStreamer(ThePTXTarget, createPTXAsmStreamer);
+
+  RegisterTargetMachine<PTX32TargetMachine> X(ThePTX32Target);
+  RegisterTargetMachine<PTX64TargetMachine> Y(ThePTX64Target);
+
+  RegisterAsmInfo<PTXMCAsmInfo> Z(ThePTX32Target);
+  RegisterAsmInfo<PTXMCAsmInfo> W(ThePTX64Target);
+
+  TargetRegistry::RegisterAsmStreamer(ThePTX32Target, createPTXAsmStreamer);
+  TargetRegistry::RegisterAsmStreamer(ThePTX64Target, createPTXAsmStreamer);
 }
 
 namespace {
@@ -45,16 +51,26 @@ namespace {
 // DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    const std::string &TT,
-                                   const std::string &FS)
+                                   const std::string &FS,
+                                   bool is64Bit)
   : LLVMTargetMachine(T, TT),
-    // FIXME: This feels like a dirty hack, but Subtarget does not appear to be
-    //        initialized at this point, and we need to finish initialization of
-    //        DataLayout.
-    DataLayout((FS.find("64bit") != FS.npos) ? DataLayout64 : DataLayout32),
-    Subtarget(TT, FS),
+    DataLayout(is64Bit ? DataLayout64 : DataLayout32),
+    Subtarget(TT, FS, is64Bit),
     FrameLowering(Subtarget),
     InstrInfo(*this),
     TLInfo(*this) {
+}
+
+PTX32TargetMachine::PTX32TargetMachine(const Target &T,
+                                       const std::string& TT,
+                                       const std::string& FS)
+  : PTXTargetMachine(T, TT, FS, false) {
+}
+
+PTX64TargetMachine::PTX64TargetMachine(const Target &T,
+                                       const std::string& TT,
+                                       const std::string& FS)
+  : PTXTargetMachine(T, TT, FS, true) {
 }
 
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM,

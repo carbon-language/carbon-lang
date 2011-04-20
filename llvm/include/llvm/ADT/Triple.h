@@ -64,7 +64,8 @@ public:
     x86_64,  // X86-64: amd64, x86_64
     xcore,   // XCore: xcore
     mblaze,  // MBlaze: mblaze
-    ptx,     // PTX: ptx
+    ptx32,   // PTX: ptx (32-bit)
+    ptx64,   // PTX: ptx (64-bit)
 
     InvalidArch
   };

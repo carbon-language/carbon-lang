@@ -50,10 +50,10 @@ namespace llvm {
       bool SupportsDouble;
 
       // Use .u64 instead of .u32 for addresses.
-      bool Use64BitAddresses;
+      bool Is64Bit;
 
     public:
-      PTXSubtarget(const std::string &TT, const std::string &FS);
+      PTXSubtarget(const std::string &TT, const std::string &FS, bool is64Bit);
 
       std::string getTargetString() const;
 
@@ -61,7 +61,7 @@ namespace llvm {
 
       bool supportsDouble() const { return SupportsDouble; }
 
-      bool use64BitAddresses() const { return Use64BitAddresses; }
+      bool is64Bit() const { return Is64Bit; }
 
       bool supportsSM13() const { return PTXShaderModel >= PTX_SM_1_3; }
 

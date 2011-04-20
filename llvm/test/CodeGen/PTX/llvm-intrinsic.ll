@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=ptx -mattr=+ptx20,+sm20 | FileCheck %s
+; RUN: llc < %s -march=ptx32 -mattr=+ptx20,+sm20 | FileCheck %s
 
 define ptx_device float @test_sqrt_f32(float %x) {
 entry:

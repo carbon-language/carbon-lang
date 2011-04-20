@@ -16,11 +16,12 @@
 
 using namespace llvm;
 
-PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &FS)
+PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &FS,
+                           bool is64Bit)
   : PTXShaderModel(PTX_SM_1_0),
     PTXVersion(PTX_VERSION_2_0),
     SupportsDouble(false),
-    Use64BitAddresses(false) {
+    Is64Bit(is64Bit) {
   std::string TARGET = "generic";
   ParseSubtargetFeatures(FS, TARGET);
 }
