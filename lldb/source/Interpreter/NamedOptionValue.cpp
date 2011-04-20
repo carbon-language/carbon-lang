@@ -94,6 +94,13 @@ NamedOptionValue::GetUInt64Value ()
     return NULL;
 }
 
+OptionValueString *
+NamedOptionValue::GetStringValue ()
+{
+    if (GetValueType() == OptionValue::eTypeString)
+        return static_cast<OptionValueString *>(m_value_sp.get());
+    return NULL;
+}
 
 OptionValueFileSpec *
 NamedOptionValue::GetFileSpecValue ()
@@ -184,6 +191,24 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr)
     }
     return false;
 }
+
+//-------------------------------------------------------------------------
+// OptionValueDictionary
+//-------------------------------------------------------------------------
+void
+OptionValueString::DumpValue (Stream &strm)
+{
+    strm.Printf ("\"%s\"", m_current_value.c_str());
+}
+
+bool
+OptionValueString::SetValueFromCString (const char *value_cstr)
+{
+    SetCurrentValue (value_cstr);
+    return true;
+}
+
+
 
 //-------------------------------------------------------------------------
 // OptionValueFileSpec

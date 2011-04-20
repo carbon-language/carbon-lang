@@ -16,8 +16,8 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Interpreter/CommandObject.h"
 
 namespace lldb_private {
 
@@ -52,6 +52,12 @@ public:
 
     bool
     AddRegexCommand (const char *re_cstr, const char *command_cstr);
+
+    bool
+    HasRegexEntries () const
+    {
+        return !m_entries.empty();
+    }
 
 protected:
     struct Entry

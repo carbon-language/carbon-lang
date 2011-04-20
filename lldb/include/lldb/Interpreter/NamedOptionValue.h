@@ -282,6 +282,89 @@ namespace lldb_private {
     };
 
     //---------------------------------------------------------------------
+    // OptionValueString
+    //---------------------------------------------------------------------
+    class OptionValueString : public OptionValue
+    {
+        OptionValueString (const char *current_value, 
+                           const char *default_value) :
+            m_current_value (),
+            m_default_value ()
+        {
+            if  (current_value && current_value[0])
+                m_current_value.assign (current_value);
+            if  (default_value && default_value[0])
+                m_default_value.assign (default_value);
+        }
+        
+        virtual 
+        ~OptionValueString()
+        {
+        }
+        
+        //---------------------------------------------------------------------
+        // Virtual subclass pure virtual overrides
+        //---------------------------------------------------------------------
+        
+        virtual OptionValue::Type
+        GetType ()
+        {
+            return eTypeString;
+        }
+        
+        virtual void
+        DumpValue (Stream &strm);
+        
+        virtual bool
+        SetValueFromCString (const char *value);
+
+        virtual bool
+        ResetValueToDefault ()
+        {
+            m_current_value = m_default_value;
+            return true;
+        }
+        
+        //---------------------------------------------------------------------
+        // Subclass specific functions
+        //---------------------------------------------------------------------
+        
+        const char *
+        GetCurrentValue() const
+        {
+            return m_current_value.c_str();
+        }
+        
+        const char *
+        GetDefaultValue() const
+        {
+            return m_default_value.c_str();
+        }
+        
+        void
+        SetCurrentValue (const char *value)
+        {
+            if (value && value[0])
+                m_current_value.assign (value);
+            else
+                m_current_value.clear();
+        }
+        
+        void
+        SetDefaultValue (const char *value)
+        {
+            if (value && value[0])
+                m_default_value.assign (value);
+            else
+                m_default_value.clear();
+        }
+        
+    protected:
+        std::string m_current_value;
+        std::string m_default_value;
+    };
+
+    //---------------------------------------------------------------------
     // OptionValueFileSpec
     //---------------------------------------------------------------------
     class OptionValueFileSpec : public OptionValue
@@ -625,6 +708,9 @@ namespace lldb_private {
         
         OptionValueUInt64 *
         GetUInt64Value ();        
+
+        OptionValueString *
+        GetStringValue ();
 
         OptionValueFileSpec *
         GetFileSpecValue() ;

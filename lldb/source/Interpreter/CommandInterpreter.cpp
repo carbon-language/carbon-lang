@@ -356,6 +356,24 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
     return ret_val;
 }
 
+bool
+CommandInterpreter::AddCommand (const char *name, const lldb::CommandObjectSP &cmd_sp, bool can_replace)
+{
+    if (name && name[0])
+    {
+        std::string name_sstr(name);
+        if (!can_replace)
+        {
+            if (m_command_dict.find (name_sstr) != m_command_dict.end())
+                return false;
+        }
+        m_command_dict[name_sstr] = cmd_sp;
+        return true;
+    }
+    return false;
+}
+
+
 CommandObjectSP
 CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliases)
 {

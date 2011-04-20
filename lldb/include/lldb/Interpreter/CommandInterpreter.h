@@ -49,6 +49,11 @@ public:
     virtual
     ~CommandInterpreter ();
 
+    bool
+    AddCommand (const char *name, 
+                const lldb::CommandObjectSP &cmd_sp,
+                bool can_replace);
+    
     lldb::CommandObjectSP
     GetCommandSPExact (const char *cmd, 
                        bool include_aliases);

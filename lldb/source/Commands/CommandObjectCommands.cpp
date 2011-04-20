@@ -13,9 +13,11 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/InputReader.h"
+#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 
@@ -92,10 +94,6 @@ private:
         bool m_stop_on_continue;
     };
     
-    // Options table: Required for subclasses of Options.
-
-    static OptionDefinition g_option_table[];
-
     CommandOptions m_options;
     
     virtual Options *
@@ -640,6 +638,275 @@ public:
     }
 };
 
+#pragma mark CommandObjectCommandsAddRegex
+//-------------------------------------------------------------------------
+// CommandObjectCommandsAddRegex
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsAddRegex : public CommandObject
+{
+public:
+    CommandObjectCommandsAddRegex (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "commands regex",
+                       "Allow the user to create a regular expression command.",
+                       NULL),
+        m_options (interpreter)
+    {
+    }
+    
+    ~CommandObjectCommandsAddRegex()
+    {
+    }
+    
+    
+    bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        if (args.GetArgumentCount() == 1)
+        {
+            const char *name = args.GetArgumentAtIndex(0);
+            InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
+            m_regex_cmd_ap.reset (new CommandObjectRegexCommand (m_interpreter, 
+                                                                 name, 
+                                                                 m_options.GetHelp (),
+                                                                 m_options.GetSyntax (),
+                                                                 10));
+            if (reader_sp)
+            {
+                Error err (reader_sp->Initialize (CommandObjectCommandsAddRegex::InputReaderCallback,
+                                                  this,                         // baton
+                                                  eInputReaderGranularityLine,  // token size, to pass to callback function
+                                                  "DONE",                       // end token
+                                                  "> ",                         // prompt
+                                                  true));                       // echo input
+                if (err.Success())
+                {
+                    m_interpreter.GetDebugger().PushInputReader (reader_sp);
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                {
+                    result.AppendError (err.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+        }
+        else
+        {
+            result.AppendError ("invalid arguments.\n");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        return result.Succeeded();
+    }
+    
+    bool
+    AppendRegexAndSubstitution (const char *regex, const char *subst)
+    {
+        if (m_regex_cmd_ap.get())
+        {
+            m_regex_cmd_ap->AddRegexCommand (regex, subst);
+            return true;
+        }
+        return false;
+    }
+    
+    void
+    InputReaderIsDone()
+    {
+        if (m_regex_cmd_ap.get())
+        {
+            if (m_regex_cmd_ap->HasRegexEntries())
+            {
+                CommandObjectSP cmd_sp (m_regex_cmd_ap.release());
+                m_interpreter.AddCommand(cmd_sp->GetCommandName(), cmd_sp, true);
+            }
+        }
+    }
+
+    static size_t
+    InputReaderCallback (void *baton, 
+                         InputReader &reader, 
+                         lldb::InputReaderAction notification,
+                         const char *bytes, 
+                         size_t bytes_len);
+private:
+    std::auto_ptr<CommandObjectRegexCommand> m_regex_cmd_ap;    
+
+     class CommandOptions : public Options
+     {
+     public:
+         
+         CommandOptions (CommandInterpreter &interpreter) :
+            Options (interpreter)
+         {
+         }
+         
+         virtual
+         ~CommandOptions (){}
+         
+         virtual Error
+         SetOptionValue (uint32_t option_idx, const char *option_arg)
+         {
+             Error error;
+             char short_option = (char) m_getopt_table[option_idx].val;
+             
+             switch (short_option)
+             {
+                 case 'h':
+                     m_help.assign (option_arg);
+                     break;
+                 case 's':
+                     m_syntax.assign (option_arg);
+                     break;
+
+                 default:
+                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
+                     break;
+             }
+             
+             return error;
+         }
+         
+         void
+         OptionParsingStarting ()
+         {
+             m_help.clear();
+             m_syntax.clear();
+         }
+         
+         const OptionDefinition*
+         GetDefinitions ()
+         {
+             return g_option_table;
+         }
+         
+         // Options table: Required for subclasses of Options.
+         
+         static OptionDefinition g_option_table[];
+         
+         const char *
+         GetHelp ()
+         {
+             if (m_help.empty())
+                 return NULL;
+             return m_help.c_str();
+         }
+         const char *
+         GetSyntax ()
+         {
+             if (m_syntax.empty())
+                 return NULL;
+             return m_syntax.c_str();
+         }
+         // Instance variables to hold the values for command options.
+     protected:
+         std::string m_help;
+         std::string m_syntax;
+     };
+     
+     CommandOptions m_options;
+     
+     virtual Options *
+     GetOptions ()
+     {
+         return &m_options;
+     }
+
+};
+
+size_t
+CommandObjectCommandsAddRegex::InputReaderCallback (void *baton, 
+                                                    InputReader &reader, 
+                                                    lldb::InputReaderAction notification,
+                                                    const char *bytes, 
+                                                    size_t bytes_len)
+{
+    CommandObjectCommandsAddRegex *add_regex_cmd = (CommandObjectCommandsAddRegex *) baton;
+    
+    switch (notification)
+    {
+        case eInputReaderActivate:
+            reader.GetDebugger().GetOutputStream().Printf("%s\n", "Enter multiple regular expressions in the form s/find/replace/ then terminate with an empty line:");
+            break;
+        case eInputReaderReactivate:
+            break;
+            
+        case eInputReaderDeactivate:
+            break;
+            
+        case eInputReaderGotToken:
+            if (bytes_len == 0)
+                reader.SetIsDone(true);
+            else if (bytes)
+            {
+                std::string regex_sed (bytes, bytes_len);
+                bool success = regex_sed.size() > 3 && regex_sed[0] == 's';
+                if (success)
+                {
+                    const size_t first_separator_char_pos = 1;
+                    const char separator_char = regex_sed[first_separator_char_pos];
+                    const size_t third_separator_char_pos = regex_sed.rfind (separator_char);
+
+                    if (third_separator_char_pos != regex_sed.size() - 1)
+                        success = false;    // Didn't end with regex separator char
+                    else
+                    {
+                        const size_t second_separator_char_pos = regex_sed.find (separator_char, first_separator_char_pos + 1);
+                        if (second_separator_char_pos == std::string::npos)
+                            success = false;    // Didn't find second regex separator char
+                        else 
+                        {
+                            if (second_separator_char_pos <= 3)
+                                success = false;    // Empty regex is invalid ("s///")
+                            else
+                            {
+                                std::string regex(regex_sed.substr(first_separator_char_pos + 1, second_separator_char_pos - first_separator_char_pos - 1));
+                                std::string subst(regex_sed.substr(second_separator_char_pos + 1, third_separator_char_pos - second_separator_char_pos - 1));
+                                if (regex.empty() || subst.empty())
+                                    success= false;
+                                else
+                                {
+                                    add_regex_cmd->AppendRegexAndSubstitution(regex.c_str(), subst.c_str());
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!success)
+                {
+                    reader.GetDebugger().GetOutputStream().PutCString("Regular expressions should be in the form s/<regex>/<subst>/.\n");
+                }
+            }
+            break;
+            
+        case eInputReaderInterrupt:
+            reader.SetIsDone (true);
+            reader.GetDebugger().GetOutputStream().PutCString("Regular expression command creations was cancelled.\n");
+            break;
+            
+        case eInputReaderEndOfFile:
+            reader.SetIsDone (true);
+            break;
+            
+        case eInputReaderDone:
+            add_regex_cmd->InputReaderIsDone();
+            break;
+    }
+    
+    return bytes_len;
+}
+
+                                                                 
+OptionDefinition
+CommandObjectCommandsAddRegex::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, false, "help", 'h', required_argument, NULL, 0, eArgTypeNone,    "The help text to display for this command."},
+{ LLDB_OPT_SET_1, false, "syntax", 's', required_argument, NULL, 0, eArgTypeNone, "A syntax string showing the typical usage syntax."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+};
+
+
 #pragma mark CommandObjectMultiwordCommands
 
 //-------------------------------------------------------------------------
@@ -655,6 +922,7 @@ CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpret
     LoadSubCommand ("source",  CommandObjectSP (new CommandObjectCommandsSource (interpreter)));
     LoadSubCommand ("alias",   CommandObjectSP (new CommandObjectCommandsAlias (interpreter)));
     LoadSubCommand ("unalias", CommandObjectSP (new CommandObjectCommandsUnalias (interpreter)));
+    LoadSubCommand ("regex",   CommandObjectSP (new CommandObjectCommandsAddRegex (interpreter)));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()
