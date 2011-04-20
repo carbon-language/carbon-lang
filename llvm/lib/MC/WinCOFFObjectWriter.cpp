@@ -647,13 +647,12 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   COFFSection *coff_section = SectionMap[&SectionData->getSection()];
   COFFSymbol *coff_symbol = SymbolMap[&A_SD.getSymbol()];
+  const MCSymbolRefExpr *SymA = Target.getSymA();
+  const MCSymbolRefExpr *SymB = Target.getSymB();
+  const bool CrossSection = SymB &&
+    &SymA->getSymbol().getSection() != &SymB->getSymbol().getSection();
 
   if (Target.getSymB()) {
-    if (&Target.getSymA()->getSymbol().getSection()
-     != &Target.getSymB()->getSymbol().getSection()) {
-      llvm_unreachable("Symbol relative relocations are only allowed between "
-                       "symbols in the same section");
-    }
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     MCSymbolData &B_SD = Asm.getSymbolData(*B);
 
@@ -662,7 +661,8 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     // In the case where we have SymbA and SymB, we just need to store the delta
     // between the two symbols.  Update FixedValue to account for the delta, and
     // skip recording the relocation.
-    return;
+    if (!CrossSection)
+      return;
   } else {
     FixedValue = Target.getConstant();
   }
@@ -673,7 +673,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
 
   // Turn relocations for temporary symbols into section relocations.
-  if (coff_symbol->MCData->getSymbol().isTemporary()) {
+  if (coff_symbol->MCData->getSymbol().isTemporary() || CrossSection) {
     Reloc.Symb = coff_symbol->Section->Symbol;
     FixedValue += Layout.getFragmentOffset(coff_symbol->MCData->Fragment)
                 + coff_symbol->MCData->getOffset();
@@ -684,7 +684,12 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
 
-  switch ((unsigned)Fixup.getKind()) {
+  unsigned FixupKind = Fixup.getKind();
+
+  if (CrossSection)
+    FixupKind = FK_PCRel_4;
+
+  switch (FixupKind) {
   case FK_PCRel_4:
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:
