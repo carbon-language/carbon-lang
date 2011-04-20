@@ -198,15 +198,24 @@ int EDOperand::evaluate(uint64_t &result,
     default:
       return -1;
     case kOperandTypeImmediate:
+      if (!Inst.Inst->getOperand(MCOpIndex).isImm())
+        return -1;
+            
       result = Inst.Inst->getOperand(MCOpIndex).getImm();
       return 0;
     case kOperandTypeRegister:
     {
+      if (!Inst.Inst->getOperand(MCOpIndex).isReg())
+        return -1;
+        
       unsigned reg = Inst.Inst->getOperand(MCOpIndex).getReg();
       return callback(&result, reg, arg);
     }
     case kOperandTypeARMBranchTarget:
     {
+      if (!Inst.Inst->getOperand(MCOpIndex).isImm())
+        return -1;
+        
       int64_t displacement = Inst.Inst->getOperand(MCOpIndex).getImm();
       
       uint64_t pcVal;
