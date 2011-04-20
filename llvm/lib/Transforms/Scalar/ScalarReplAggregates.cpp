@@ -914,18 +914,13 @@ ConvertScalar_InsertValue(Value *SV, Value *Old,
       return Builder.CreateBitCast(Insert, AllocaType, "tmp");
     }
 
-    uint64_t EltSize = TD.getTypeAllocSizeInBits(VTy->getElementType());
-
     // Must be an element insertion.
+    assert(SV->getType() == VTy->getElementType());
+    uint64_t EltSize = TD.getTypeAllocSizeInBits(VTy->getElementType());
     unsigned Elt = Offset/EltSize;
-
-    if (SV->getType() != VTy->getElementType())
-      SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
-
-    SV = Builder.CreateInsertElement(Old, SV,
+    return Builder.CreateInsertElement(Old, SV,
                      ConstantInt::get(Type::getInt32Ty(SV->getContext()), Elt),
                                      "tmp");
-    return SV;
   }
 
   // If SV is a first-class aggregate value, insert each value recursively.
