@@ -157,10 +157,6 @@ namespace llvm {
   /// wth earlier copy coalescing.
   extern bool StrongPHIElim;
 
-  /// HasDivModLibcall - This flag indicates whether the target compiler
-  /// runtime library has integer divmod libcalls.
-  extern bool HasDivModLibcall;
-
   /// getTrapFunctionName - If this returns a non-empty string, this means isel
   /// should lower Intrinsic::trap to a call to the specified function name
   /// instead of an ISD::TRAP node.

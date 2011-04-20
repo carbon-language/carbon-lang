@@ -206,11 +206,6 @@ EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
   cl::desc("Use strong PHI elimination."),
   cl::location(StrongPHIElim),
   cl::init(false));
-static cl::opt<bool, true>
-UseDivMod("use-divmod-libcall",
-  cl::desc("Use __{u}divmod libcalls for div / rem pairs"),
-  cl::location(HasDivModLibcall),
-  cl::init(false));
 static cl::opt<std::string>
 TrapFuncName("trap-func", cl::Hidden,
   cl::desc("Emit a call to trap function rather than a trap instruction"),

@@ -201,6 +201,8 @@ protected:
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }
 
+  const Triple &getTargetTriple() const { return TargetTriple; }
+
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetELF() const { return !isTargetDarwin(); }
 
