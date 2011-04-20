@@ -534,6 +534,8 @@ multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
 defm ADD : INT3<"add", add>;
 defm SUB : INT3<"sub", sub>;
 defm MUL : INT3<"mul.lo", mul>; // FIXME: Allow 32x32 -> 64 multiplies
+defm DIV : INT3<"div", udiv>;
+defm REM : INT3<"rem", urem>;
 
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
 
