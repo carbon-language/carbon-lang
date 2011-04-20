@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 
   // Disable .loc support for older OS X versions.
   if (TheTriple.isMacOSX() &&
-      TheTriple.isMacOSXVersionLT(10, 5))
+      TheTriple.isMacOSXVersionLT(10, 6))
     Target.setMCUseLoc(false);
 
   // Figure out where we are going to send the output...
