@@ -845,6 +845,87 @@ public:
 } // end anonymous namespace.
 
 namespace {
+  class PTXTargetInfo : public TargetInfo {
+    static const char * const GCCRegNames[];
+    static const Builtin::Info BuiltinInfo[];
+  public:
+    PTXTargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
+      LongWidth = LongAlign = 64;
+    }
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  MacroBuilder &Builder) const {
+      Builder.defineMacro("__PTX__");
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {
+      Records = BuiltinInfo;
+      NumRecords = clang::PTX::LastTSBuiltin-Builtin::FirstTSBuiltin;
+    }
+
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const;
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {
+      // No aliases.
+      Aliases = 0;
+      NumAliases = 0;
+    }
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &info) const {
+      // FIXME: implement
+      return true;
+    }
+    virtual const char *getClobbers() const {
+      // FIXME: Is this really right?
+      return "";
+    }
+    virtual const char *getVAListDeclaration() const {
+      // FIXME: implement
+      return "typedef char* __builtin_va_list;";
+    }
+  };
+
+  const Builtin::Info PTXTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES, false },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
+                                              ALL_LANGUAGES, false },
+#include "clang/Basic/BuiltinsPTX.def"
+  };
+
+  const char * const PTXTargetInfo::GCCRegNames[] = {
+    "r0"
+  };
+
+  void PTXTargetInfo::getGCCRegNames(const char * const *&Names,
+                                     unsigned &NumNames) const {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+
+
+  class PTX32TargetInfo : public PTXTargetInfo {
+  public:
+  PTX32TargetInfo(const std::string& triple) : PTXTargetInfo(triple) {
+      PointerWidth = PointerAlign = 32;
+      SizeType = PtrDiffType = IntPtrType = TargetInfo::UnsignedInt;
+      DescriptionString
+        = "e-p:32:32-i64:64:64-f64:64:64-n1:8:16:32:64";
+    }
+  };
+
+  class PTX64TargetInfo : public PTXTargetInfo {
+  public:
+  PTX64TargetInfo(const std::string& triple) : PTXTargetInfo(triple) {
+      PointerWidth = PointerAlign = 64;
+      SizeType = PtrDiffType = IntPtrType = TargetInfo::UnsignedLongLong;
+      DescriptionString
+        = "e-p:64:64-i64:64:64-f64:64:64-n1:8:16:32:64";
+    }
+  };
+}
+
+namespace {
 // MBlaze abstract base class
 class MBlazeTargetInfo : public TargetInfo {
   static const char * const GCCRegNames[];
@@ -2658,6 +2739,11 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     else if (os == llvm::Triple::FreeBSD)
       return new FreeBSDTargetInfo<PPC64TargetInfo>(T);
     return new PPC64TargetInfo(T);
+
+  case llvm::Triple::ptx32:
+    return new PTX32TargetInfo(T);
+  case llvm::Triple::ptx64:
+    return new PTX64TargetInfo(T);
 
   case llvm::Triple::mblaze:
     return new MBlazeTargetInfo(T);

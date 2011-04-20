@@ -35,6 +35,17 @@ namespace clang {
     };
   }
 
+  /// PTX builtins
+  namespace PTX {
+    enum {
+        LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsPTX.def"
+        LastTSBuiltin
+    };
+  }
+
+
   /// X86 builtins
   namespace X86 {
     enum {
