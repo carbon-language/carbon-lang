@@ -47,6 +47,12 @@ public:
         bool
         FileSpecMatches (const FileSpec &file_spec);
 
+        const FileSpec &
+        GetFileSpec ()
+        {
+            return m_file_spec;
+        }
+
     protected:
 
         bool
@@ -72,6 +78,12 @@ public:
 
     FileSP
     GetFile (const FileSpec &file_spec);
+
+    FileSP
+    GetLastFile () 
+    {
+        return m_last_file_sp;
+    }
 
     size_t
     DisplaySourceLines (const FileSpec &file,

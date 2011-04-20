@@ -417,13 +417,25 @@ public:
             
             char path_buf[PATH_MAX];
             start_file.GetPath(path_buf, sizeof(path_buf));
+            
+            if (m_options.show_bp_locs && exe_ctx.target)
+            {
+                const bool show_inlines = true;
+                m_breakpoint_locations.Reset (start_file, 0, show_inlines);
+                SearchFilter target_search_filter (exe_ctx.target->GetSP());
+                target_search_filter.Search (m_breakpoint_locations);
+            }
+            else
+                m_breakpoint_locations.Clear();
+
             result.AppendMessageWithFormat("File: %s.\n", path_buf);
             m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
                                                                                               line_no,
                                                                                               0,
                                                                                               m_options.num_lines,
                                                                                               "",
-                                                                                              &result.GetOutputStream());
+                                                                                              &result.GetOutputStream(),
+                                                                                              GetBreakpointLocations ());
             
             result.SetStatus (eReturnStatusSuccessFinishResult);
             return true;
@@ -445,6 +457,20 @@ public:
             }
             else
             {
+                if (m_options.show_bp_locs && exe_ctx.target)
+                {
+                    SourceManager::FileSP last_file_sp (m_interpreter.GetDebugger().GetSourceManager().GetLastFile ());
+                    if (last_file_sp)
+                    {
+                        const bool show_inlines = true;
+                        m_breakpoint_locations.Reset (last_file_sp->GetFileSpec(), 0, show_inlines);
+                        SearchFilter target_search_filter (exe_ctx.target->GetSP());
+                        target_search_filter.Search (m_breakpoint_locations);
+                    }
+                }
+                else
+                    m_breakpoint_locations.Clear();
+
                 if (m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbersUsingLastFile(
                             m_options.start_line,   // Line to display
                             0,                      // Lines before line to display
