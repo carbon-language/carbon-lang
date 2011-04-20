@@ -248,3 +248,18 @@ entry:
 ; CHECK: shufflevector <4 x i64> %tmpV2, <4 x i64> undef, <3 x i32> <i32 0, i32 1, i32 2>
 }
 
+define <4 x float> @test16(<4 x float> %x, i64 %y0, i64 %y1) {
+entry:
+  %tmp8 = bitcast <4 x float> undef to <2 x double>
+  %tmp9 = bitcast i64 %y0 to double
+  %tmp10 = insertelement <2 x double> %tmp8, double %tmp9, i32 0
+  %tmp11 = bitcast <2 x double> %tmp10 to <4 x float>
+  %tmp3 = bitcast <4 x float> %tmp11 to <2 x double>
+  %tmp4 = bitcast i64 %y1 to double
+  %tmp5 = insertelement <2 x double> %tmp3, double %tmp4, i32 1
+  %tmp6 = bitcast <2 x double> %tmp5 to <4 x float>
+	ret <4 x float> %tmp6
+; CHECK: @test16
+; CHECK-NOT: alloca
+; CHECK: bitcast <4 x float> %tmp11 to <2 x double>
+}
