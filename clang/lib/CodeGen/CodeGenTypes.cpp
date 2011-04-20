@@ -65,22 +65,22 @@ void CodeGenTypes::HandleLateResolvedPointers() {
   }
 }
 
-void CodeGenTypes::addTagTypeName(const TagDecl *TD, const llvm::Type *Ty,
-                                  llvm::StringRef suffix) {
+void CodeGenTypes::addRecordTypeName(const RecordDecl *RD, const llvm::Type *Ty,
+                                     llvm::StringRef suffix) {
   llvm::SmallString<256> TypeName;
   llvm::raw_svector_ostream OS(TypeName);
-  OS << TD->getKindName() << '.';
+  OS << RD->getKindName() << '.';
   
   // Name the codegen type after the typedef name
   // if there is no tag type name available
-  if (TD->getIdentifier()) {
+  if (RD->getIdentifier()) {
     // FIXME: We should not have to check for a null decl context here.
     // Right now we do it because the implicit Obj-C decls don't have one.
-    if (TD->getDeclContext())
-      OS << TD->getQualifiedNameAsString();
+    if (RD->getDeclContext())
+      OS << RD->getQualifiedNameAsString();
     else
-      TD->printName(OS);
-  } else if (const TypedefNameDecl *TDD = TD->getTypedefNameForAnonDecl()) {
+      RD->printName(OS);
+  } else if (const TypedefNameDecl *TDD = RD->getTypedefNameForAnonDecl()) {
     // FIXME: We should not have to check for a null decl context here.
     // Right now we do it because the implicit Obj-C decls don't have one.
     if (TDD->getDeclContext())
@@ -403,8 +403,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
     const llvm::Type *Res = ConvertTagDeclType(TD);
-    
-    addTagTypeName(TD, Res, llvm::StringRef());
+
+    if (const RecordDecl *RD = dyn_cast<RecordDecl>(TD))
+      addRecordTypeName(RD, Res, llvm::StringRef());
     return Res;
   }
 
@@ -517,7 +518,7 @@ void CodeGenTypes::addBaseSubobjectTypeName(const CXXRecordDecl *RD,
   if (layout.getBaseSubobjectLLVMType() != layout.getLLVMType())
     suffix = ".base";
 
-  addTagTypeName(RD, layout.getBaseSubobjectLLVMType(), suffix);
+  addRecordTypeName(RD, layout.getBaseSubobjectLLVMType(), suffix);
 }
 
 bool CodeGenTypes::isZeroInitializable(QualType T) {
