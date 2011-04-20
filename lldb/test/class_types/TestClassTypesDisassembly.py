@@ -103,8 +103,12 @@ class IterateFrameAndDisassembleTestCase(TestBase):
                 # Get all instructions for this function and print them out.
                 insts = function.GetInstructions(target)
                 from lldbutil import lldb_iter
-                for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
-                    print i
+                for inst in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
+                    # It could simply be 'print inst' to print out the disassembly.
+                    # But we want to print to stdout only if self.TraceOn() is True.
+                    disasm = str(inst)
+                    if self.TraceOn():
+                        print disasm
 
 
 if __name__ == '__main__':
