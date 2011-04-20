@@ -337,16 +337,20 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset,
     unsigned EltSize = In->getPrimitiveSizeInBits()/8;
     if (IsLoadOrStore && EltSize == AllocaSize)
       return;
+
     // If we're accessing something that could be an element of a vector, see
     // if the implied vector agrees with what we already have and if Offset is
     // compatible with it.
-    if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
-        (VectorTy == 0 ||
-         cast<VectorType>(VectorTy)->getElementType()
-               ->getPrimitiveSizeInBits()/8 == EltSize)) {
-      if (VectorTy == 0)
+    if (Offset % EltSize == 0 && AllocaSize % EltSize == 0) {
+      if (!VectorTy) {
         VectorTy = VectorType::get(In, AllocaSize/EltSize);
-      return;
+        return;
+      }
+
+      unsigned CurrentEltSize = cast<VectorType>(VectorTy)->getElementType()
+                                ->getPrimitiveSizeInBits()/8;
+      if (EltSize == CurrentEltSize)
+        return;
     }
   }
 
