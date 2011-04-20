@@ -878,8 +878,8 @@ ASTContext::getTypeInfo(const Type *T) const {
     const TagType *TT = cast<TagType>(T);
 
     if (TT->getDecl()->isInvalidDecl()) {
-      Width = 1;
-      Align = 1;
+      Width = 8;
+      Align = 8;
       break;
     }
 
