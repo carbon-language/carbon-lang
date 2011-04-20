@@ -318,12 +318,11 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                MachineModuleInfo *MMI, unsigned Encoding,
                                MCStreamer &Streamer) const {
   const MCSymbol *Sym = Mang->getSymbol(GV);
-  return getExprForDwarfReference(Sym, Mang, MMI, Encoding, Streamer);
+  return getExprForDwarfReference(Sym, Encoding, Streamer);
 }
 
 const MCExpr *TargetLoweringObjectFile::
-getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
-                         MachineModuleInfo *MMI, unsigned Encoding,
+getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
                          MCStreamer &Streamer) const {
   const MCExpr *Res = MCSymbolRefExpr::Create(Sym, getContext());
 

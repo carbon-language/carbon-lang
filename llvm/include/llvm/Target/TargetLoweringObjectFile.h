@@ -224,8 +224,7 @@ public:
 
   /// 
   const MCExpr *
-  getExprForDwarfReference(const MCSymbol *Sym, Mangler *Mang,
-                           MachineModuleInfo *MMI, unsigned Encoding,
+  getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
                            MCStreamer &Streamer) const;
   
   virtual unsigned getPersonalityEncoding() const;

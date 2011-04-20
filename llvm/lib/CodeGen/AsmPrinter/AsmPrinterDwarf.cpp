@@ -155,7 +155,7 @@ void AsmPrinter::EmitReference(const MCSymbol *Sym, unsigned Encoding) const {
   const TargetLoweringObjectFile &TLOF = getObjFileLowering();
   
   const MCExpr *Exp =
-    TLOF.getExprForDwarfReference(Sym, Mang, MMI, Encoding, OutStreamer);
+    TLOF.getExprForDwarfReference(Sym, Encoding, OutStreamer);
   OutStreamer.EmitAbsValue(Exp, GetSizeOfEncodedValue(Encoding));
 }
 
