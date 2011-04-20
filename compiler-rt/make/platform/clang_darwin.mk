@@ -87,6 +87,8 @@ CCKEXT_COMMON_FUNCTIONS := \
 	divdc3 \
 	divdi3 \
 	divsc3 \
+	divmodsi4 \
+	udivmodsi4 \
 	do_global_dtors \
 	eprintf \
 	ffsdi2 \
