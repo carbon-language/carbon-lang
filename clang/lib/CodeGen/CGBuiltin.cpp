@@ -556,7 +556,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Src = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
     Builder.CreateMemCpy(Dest, Src, SizeVal, 1, false);
-    return RValue::get(0);
+    return RValue::get(Dest);
   }
       
   case Builtin::BI__builtin_objc_memmove_collectable: {
@@ -581,7 +581,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Src = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
     Builder.CreateMemMove(Dest, Src, SizeVal, 1, false);
-    return RValue::get(0);
+    return RValue::get(Dest);
   }
 
   case Builtin::BImemmove:
@@ -616,7 +616,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
     Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
     
-    return RValue::get(0);
+    return RValue::get(Address);
   }
   case Builtin::BI__builtin_dwarf_cfa: {
     // The offset in bytes from the first argument to the CFA.

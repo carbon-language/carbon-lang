@@ -42,3 +42,9 @@ void test4(char *P, char *Q) {
 void test5(char *P, char *Q) {
   __builtin___memmove_chk(P, Q, 128, 128);
 }
+
+// CHECK: @test6
+// CHECK: call void @llvm.memcpy
+int test6(char *X) {
+  return __builtin___memcpy_chk(X, X, 42, 42) != 0;
+}
