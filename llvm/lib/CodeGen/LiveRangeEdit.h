@@ -137,7 +137,7 @@ public:
 
   /// checkRematerializable - Manually add VNI to the list of rematerializable
   /// values if DefMI may be rematerializable.
-  void checkRematerializable(VNInfo *VNI, const MachineInstr *DefMI,
+  bool checkRematerializable(VNInfo *VNI, const MachineInstr *DefMI,
                              const TargetInstrInfo&, AliasAnalysis*);
 
   /// Remat - Information needed to rematerialize at a specific location.

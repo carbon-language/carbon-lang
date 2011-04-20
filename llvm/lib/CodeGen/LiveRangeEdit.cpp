@@ -36,14 +36,16 @@ LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg,
   return LI;
 }
 
-void LiveRangeEdit::checkRematerializable(VNInfo *VNI,
+bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
                                           const MachineInstr *DefMI,
                                           const TargetInstrInfo &tii,
                                           AliasAnalysis *aa) {
   assert(DefMI && "Missing instruction");
-  if (tii.isTriviallyReMaterializable(DefMI, aa))
-    remattable_.insert(VNI);
   scannedRemattable_ = true;
+  if (!tii.isTriviallyReMaterializable(DefMI, aa))
+    return false;
+  remattable_.insert(VNI);
+  return true;
 }
 
 void LiveRangeEdit::scanRemattable(LiveIntervals &lis,

@@ -420,8 +420,10 @@ void InlineSpiller::analyzeSiblingValues() {
       }
       if (!DefMI && !VNI->isPHIDef())
         DefMI = LIS.getInstructionFromIndex(VNI->def);
-      if (DefMI)
-        Edit->checkRematerializable(VNI, DefMI, TII, AA);
+      if (DefMI && Edit->checkRematerializable(VNI, DefMI, TII, AA)) {
+        DEBUG(dbgs() << "Value " << PrintReg(Reg) << ':' << VNI->id << '@'
+                     << VNI->def << " may remat from " << *DefMI);
+      }
     }
   }
 }
