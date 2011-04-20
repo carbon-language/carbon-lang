@@ -41,6 +41,26 @@ override CC := $(patsubst -arch_%,,$(CC))
 
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
 
+# Always set deployment target arguments for every build, these libraries should
+# never depend on the environmental overrides. We simply set them to minimum
+# supported deployment target -- nothing in the compiler-rt libraries should
+# actually depend on the deployment target.
+X86_DEPLOYMENT_ARGS := -mmacosx-version-min=10.4
+ARM_DEPLOYMENT_ARGS := -miphoneos-version-min=1.0
+
+# If an explicit ARM_SDK build variable is set, use that as the isysroot.
+ifneq ($(ARM_SDK),)
+ARM_DEPLOYMENT_ARGS += -isysroot $(ARM_SDK)
+endif
+
+CFLAGS.eprintf		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.10.4		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.ios		:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.i386	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
+CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
+
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
@@ -161,9 +181,6 @@ CCKEXT_ARM_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 
 FUNCTIONS.cc_kext.armv6 := $(CCKEXT_ARM_FUNCTIONS)
 FUNCTIONS.cc_kext.armv7 := $(CCKEXT_ARM_FUNCTIONS)
-
-CFLAGS.cc_kext.armv6 := $(CFLAGS) -mthumb
-CFLAGS.cc_kext.armv7 := $(CFLAGS) -mthumb
 
 CCKEXT_X86_FUNCTIONS := $(CCKEXT_COMMON_FUNCTIONS) \
 	divxc3 \
