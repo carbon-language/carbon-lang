@@ -99,6 +99,8 @@ class   ObjCLanguageRuntime;
 class   ObjectContainer;
 class   ObjectFile;
 class   Options;
+class   OptionValue;
+class   NamedOption;
 class   PathMappingList;
 class   Platform;
 class   Process;

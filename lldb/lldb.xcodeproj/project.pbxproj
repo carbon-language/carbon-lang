@@ -370,6 +370,7 @@
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A54C133A6305004E4240 /* PlatformDarwin.h */; };
+		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
 		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
 		26B1FCB913381071002886E2 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
@@ -426,7 +427,6 @@
 		9A357673116E7B6400E8ED2F /* SBStringList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A357672116E7B6400E8ED2F /* SBStringList.cpp */; };
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
-		9AA20A84133D278400E2E4A7 /* DisassemblerShark.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AA20A82133D278400E2E4A7 /* DisassemblerShark.cpp */; };
 		9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
 		9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AA69DAE118A023300D753A0 /* SBInputReader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AA69DB0118A024600D753A0 /* SBInputReader.cpp */; };
@@ -715,6 +715,8 @@
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
 		26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerBSDArchive.h; sourceTree = "<group>"; };
 		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LLDBWrapPython.cpp; path = source/LLDBWrapPython.cpp; sourceTree = "<group>"; };
+		26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NamedOptionValue.cpp; path = source/Interpreter/NamedOptionValue.cpp; sourceTree = "<group>"; };
+		26A7A036135E6E5300FB369E /* NamedOptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NamedOptionValue.h; path = include/lldb/Interpreter/NamedOptionValue.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
 		26B42C4C1187ABA50079C8C8 /* LLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LLDB.h; path = include/lldb/API/LLDB.h; sourceTree = "<group>"; };
 		26B4E26E112F35F700AB3F64 /* TimeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeValue.h; path = include/lldb/Host/TimeValue.h; sourceTree = "<group>"; };
@@ -1196,8 +1198,6 @@
 		9A9831081125FC5800A56CB0 /* SBTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBTarget.h; path = include/lldb/API/SBTarget.h; sourceTree = "<group>"; };
 		9A9831091125FC5800A56CB0 /* SBThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBThread.cpp; path = source/API/SBThread.cpp; sourceTree = "<group>"; };
 		9A98310A1125FC5800A56CB0 /* SBThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBThread.h; path = include/lldb/API/SBThread.h; sourceTree = "<group>"; };
-		9AA20A82133D278400E2E4A7 /* DisassemblerShark.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DisassemblerShark.cpp; sourceTree = "<group>"; };
-		9AA20A83133D278400E2E4A7 /* DisassemblerShark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DisassemblerShark.h; sourceTree = "<group>"; };
 		9AA69DAE118A023300D753A0 /* SBInputReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBInputReader.h; path = include/lldb/API/SBInputReader.h; sourceTree = "<group>"; };
 		9AA69DB0118A024600D753A0 /* SBInputReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBInputReader.cpp; path = source/API/SBInputReader.cpp; sourceTree = "<group>"; };
 		9AA69DB5118A027A00D753A0 /* InputReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InputReader.cpp; path = source/Core/InputReader.cpp; sourceTree = "<group>"; };
@@ -1366,7 +1366,6 @@
 			isa = PBXGroup;
 			children = (
 				260C897310F57C5600BB2B04 /* llvm */,
-				9AA20A81133D278400E2E4A7 /* shark */,
 			);
 			path = Disassembler;
 			sourceTree = "<group>";
@@ -2182,6 +2181,8 @@
 				26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */,
 				26BC7DE410F1B7F900F91463 /* CommandReturnObject.h */,
 				26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */,
+				26A7A036135E6E5300FB369E /* NamedOptionValue.h */,
+				26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */,
 				26BC7D6D10F1B77400F91463 /* Options.h */,
 				26BC7E8610F1B85900F91463 /* Options.cpp */,
 				26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */,
@@ -2507,15 +2508,6 @@
 			);
 			name = common;
 			path = source/Host/common;
-			sourceTree = "<group>";
-		};
-		9AA20A81133D278400E2E4A7 /* shark */ = {
-			isa = PBXGroup;
-			children = (
-				9AA20A82133D278400E2E4A7 /* DisassemblerShark.cpp */,
-				9AA20A83133D278400E2E4A7 /* DisassemblerShark.h */,
-			);
-			path = shark;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -3160,7 +3152,6 @@
 				264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */,
 				2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */,
 				26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */,
-				9AA20A84133D278400E2E4A7 /* DisassemblerShark.cpp in Sources */,
 				266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */,
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
@@ -3168,6 +3159,7 @@
 				26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */,
 				26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */,
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
+				26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 			);
