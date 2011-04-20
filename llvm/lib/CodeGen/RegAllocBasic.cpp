@@ -278,6 +278,7 @@ void RegAllocBase::assign(LiveInterval &VirtReg, unsigned PhysReg) {
                << " to " << PrintReg(PhysReg, TRI) << '\n');
   assert(!VRM->hasPhys(VirtReg.reg) && "Duplicate VirtReg assignment");
   VRM->assignVirt2Phys(VirtReg.reg, PhysReg);
+  MRI->setPhysRegUsed(PhysReg);
   PhysReg2LiveUnion[PhysReg].unify(VirtReg);
   ++NumAssigned;
 }

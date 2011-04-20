@@ -46,7 +46,8 @@ let Namespace = "X86" in {
   def CL : Register<"cl">, DwarfRegNum<[2, 1, 1]>;
   def BL : Register<"bl">, DwarfRegNum<[3, 3, 3]>;
 
-  // X86-64 only
+  // X86-64 only, requires REX.
+  let CostPerUse = 1 in {
   def SIL : Register<"sil">, DwarfRegNum<[4, 6, 6]>;
   def DIL : Register<"dil">, DwarfRegNum<[5, 7, 7]>;
   def BPL : Register<"bpl">, DwarfRegNum<[6, 4, 5]>;
@@ -59,6 +60,7 @@ let Namespace = "X86" in {
   def R13B : Register<"r13b">, DwarfRegNum<[13, -2, -2]>;
   def R14B : Register<"r14b">, DwarfRegNum<[14, -2, -2]>;
   def R15B : Register<"r15b">, DwarfRegNum<[15, -2, -2]>;
+  }
 
   // High registers. On x86-64, these cannot be used in any instruction
   // with a REX prefix.
@@ -82,8 +84,8 @@ let Namespace = "X86" in {
   }
   def IP : Register<"ip">, DwarfRegNum<[16]>;
 
-  // X86-64 only
-  let SubRegIndices = [sub_8bit] in {
+  // X86-64 only, requires REX.
+  let SubRegIndices = [sub_8bit], CostPerUse = 1 in {
   def R8W  : RegisterWithSubRegs<"r8w", [R8B]>, DwarfRegNum<[8, -2, -2]>;
   def R9W  : RegisterWithSubRegs<"r9w", [R9B]>, DwarfRegNum<[9, -2, -2]>;
   def R10W : RegisterWithSubRegs<"r10w", [R10B]>, DwarfRegNum<[10, -2, -2]>;
@@ -105,7 +107,8 @@ let Namespace = "X86" in {
   def ESP : RegisterWithSubRegs<"esp", [SP]>, DwarfRegNum<[7, 5, 4]>;
   def EIP : RegisterWithSubRegs<"eip", [IP]>, DwarfRegNum<[16, 8, 8]>;
 
-  // X86-64 only
+  // X86-64 only, requires REX
+  let CostPerUse = 1 in {
   def R8D  : RegisterWithSubRegs<"r8d", [R8W]>, DwarfRegNum<[8, -2, -2]>;
   def R9D  : RegisterWithSubRegs<"r9d", [R9W]>, DwarfRegNum<[9, -2, -2]>;
   def R10D : RegisterWithSubRegs<"r10d", [R10W]>, DwarfRegNum<[10, -2, -2]>;
@@ -114,7 +117,7 @@ let Namespace = "X86" in {
   def R13D : RegisterWithSubRegs<"r13d", [R13W]>, DwarfRegNum<[13, -2, -2]>;
   def R14D : RegisterWithSubRegs<"r14d", [R14W]>, DwarfRegNum<[14, -2, -2]>;
   def R15D : RegisterWithSubRegs<"r15d", [R15W]>, DwarfRegNum<[15, -2, -2]>;
-  }
+  }}
 
   // 64-bit registers, X86-64 only
   let SubRegIndices = [sub_32bit] in {
@@ -127,6 +130,8 @@ let Namespace = "X86" in {
   def RBP : RegisterWithSubRegs<"rbp", [EBP]>, DwarfRegNum<[6, -2, -2]>;
   def RSP : RegisterWithSubRegs<"rsp", [ESP]>, DwarfRegNum<[7, -2, -2]>;
 
+  // These also require REX.
+  let CostPerUse = 1 in {
   def R8  : RegisterWithSubRegs<"r8", [R8D]>, DwarfRegNum<[8, -2, -2]>;
   def R9  : RegisterWithSubRegs<"r9", [R9D]>, DwarfRegNum<[9, -2, -2]>;
   def R10 : RegisterWithSubRegs<"r10", [R10D]>, DwarfRegNum<[10, -2, -2]>;
@@ -136,7 +141,7 @@ let Namespace = "X86" in {
   def R14 : RegisterWithSubRegs<"r14", [R14D]>, DwarfRegNum<[14, -2, -2]>;
   def R15 : RegisterWithSubRegs<"r15", [R15D]>, DwarfRegNum<[15, -2, -2]>;
   def RIP : RegisterWithSubRegs<"rip", [EIP]>,  DwarfRegNum<[16, -2, -2]>;
-  }
+  }}
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
   def MM0 : Register<"mm0">, DwarfRegNum<[41, 29, 29]>;
@@ -170,6 +175,7 @@ let Namespace = "X86" in {
   def XMM7: Register<"xmm7">, DwarfRegNum<[24, 28, 28]>;
 
   // X86-64 only
+  let CostPerUse = 1 in {
   def XMM8:  Register<"xmm8">,  DwarfRegNum<[25, -2, -2]>;
   def XMM9:  Register<"xmm9">,  DwarfRegNum<[26, -2, -2]>;
   def XMM10: Register<"xmm10">, DwarfRegNum<[27, -2, -2]>;
@@ -178,7 +184,7 @@ let Namespace = "X86" in {
   def XMM13: Register<"xmm13">, DwarfRegNum<[30, -2, -2]>;
   def XMM14: Register<"xmm14">, DwarfRegNum<[31, -2, -2]>;
   def XMM15: Register<"xmm15">, DwarfRegNum<[32, -2, -2]>;
-  }
+  }}
 
   // YMM Registers, used by AVX instructions
   let SubRegIndices = [sub_xmm] in {

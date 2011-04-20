@@ -841,7 +841,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   }
 
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t0,\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
@@ -854,9 +854,10 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     else
       OS << "Empty_SubRegsSet,\t";
     if (!RegisterSuperRegs[Reg.TheDef].empty())
-      OS << Reg.getName() << "_SuperRegsSet },\n";
+      OS << Reg.getName() << "_SuperRegsSet,\t";
     else
-      OS << "Empty_SuperRegsSet },\n";
+      OS << "Empty_SuperRegsSet,\t";
+    OS << Reg.CostPerUse << " },\n";
   }
   OS << "  };\n";      // End of register descriptors...
 

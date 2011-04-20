@@ -78,6 +78,13 @@ class Register<string n> {
   // -1 indicates that the gcc number is undefined and -2 that register number
   // is invalid for this mode/flavour.
   list<int> DwarfNumbers = [];
+
+  // CostPerUse - Additional cost of instructions using this register compared
+  // to other registers in its class. The register allocator will try to
+  // minimize the number of instructions using a register with a CostPerUse.
+  // This is used by the x86-64 and ARM Thumb targets where some registers 
+  // require larger instruction encodings.
+  int CostPerUse = 0;
 }
 
 // RegisterWithSubRegs - This can be used to define instances of Register which

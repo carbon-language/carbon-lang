@@ -31,6 +31,7 @@ namespace llvm {
     const std::string &getName() const;
     unsigned DeclaredSpillSize, DeclaredSpillAlignment;
     unsigned EnumValue;
+    unsigned CostPerUse;
     CodeGenRegister(Record *R);
   };
 

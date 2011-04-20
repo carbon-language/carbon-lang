@@ -187,8 +187,10 @@ private:
   unsigned nextSplitPoint(unsigned);
   bool canEvictInterference(LiveInterval&, unsigned, float&);
 
+  unsigned tryAssign(LiveInterval&, AllocationOrder&,
+                     SmallVectorImpl<LiveInterval*>&);
   unsigned tryEvict(LiveInterval&, AllocationOrder&,
-                    SmallVectorImpl<LiveInterval*>&);
+                    SmallVectorImpl<LiveInterval*>&, unsigned = ~0u);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
                           SmallVectorImpl<LiveInterval*>&);
   unsigned tryLocalSplit(LiveInterval&, AllocationOrder&,
@@ -334,6 +336,37 @@ LiveInterval *RAGreedy::dequeue() {
   return LI;
 }
 
+
+//===----------------------------------------------------------------------===//
+//                            Direct Assignment
+//===----------------------------------------------------------------------===//
+
+/// tryAssign - Try to assign VirtReg to an available register.
+unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
+                             AllocationOrder &Order,
+                             SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  Order.rewind();
+  unsigned PhysReg;
+  while ((PhysReg = Order.next()))
+    if (!checkPhysRegInterference(VirtReg, PhysReg))
+      break;
+  if (!PhysReg || Order.isHint(PhysReg))
+    return PhysReg;
+
+  // PhysReg is available. Try to evict interference from a cheaper alternative.
+  unsigned Cost = TRI->getCostPerUse(PhysReg);
+
+  // Most registers have 0 additional cost.
+  if (!Cost)
+    return PhysReg;
+
+  DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " is available at cost " << Cost
+               << '\n');
+  unsigned CheapReg = tryEvict(VirtReg, Order, NewVRegs, Cost);
+  return CheapReg ? CheapReg : PhysReg;
+}
+
+
 //===----------------------------------------------------------------------===//
 //                         Interference eviction
 //===----------------------------------------------------------------------===//
@@ -371,7 +404,8 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 /// @return         Physreg to assign VirtReg, or 0.
 unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
                             AllocationOrder &Order,
-                            SmallVectorImpl<LiveInterval*> &NewVRegs){
+                            SmallVectorImpl<LiveInterval*> &NewVRegs,
+                            unsigned CostPerUseLimit) {
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
   // Keep track of the lightest single interference seen so far.
@@ -380,6 +414,12 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
+    if (TRI->getCostPerUse(PhysReg) >= CostPerUseLimit)
+      continue;
+    // The first use of a register in a function has cost 1.
+    if (CostPerUseLimit == 1 && !MRI->isPhysRegUsed(PhysReg))
+      continue;
+
     float Weight = BestWeight;
     if (!canEvictInterference(VirtReg, PhysReg, Weight))
       continue;
@@ -1230,10 +1270,8 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
-  while (unsigned PhysReg = Order.next()) {
-    if (!checkPhysRegInterference(VirtReg, PhysReg))
-      return PhysReg;
-  }
+  if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
+    return PhysReg;
 
   if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
     return PhysReg;

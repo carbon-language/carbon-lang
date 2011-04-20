@@ -46,6 +46,7 @@ struct TargetRegisterDesc {
   const unsigned *Overlaps;     // Overlapping registers, described above
   const unsigned *SubRegs;      // Sub-register set, described above
   const unsigned *SuperRegs;    // Super-register set, described above
+  unsigned CostPerUse;          // Extra cost of instructions using register.
 };
 
 class TargetRegisterClass {
@@ -424,6 +425,12 @@ public:
   /// specified physical register.
   const char *getName(unsigned RegNo) const {
     return get(RegNo).Name;
+  }
+
+  /// getCostPerUse - Return the additional cost of using this register instead
+  /// of other registers in its class.
+  unsigned getCostPerUse(unsigned RegNo) const {
+    return get(RegNo).CostPerUse;
   }
 
   /// getNumRegs - Return the number of registers this target has (useful for
