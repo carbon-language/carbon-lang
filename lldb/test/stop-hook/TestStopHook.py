@@ -40,7 +40,7 @@ class StopHookTestCase(TestBase):
 
         child = pexpect.spawn('%s %s' % (self.lldbExec, exe))
         # Turn on logging for what the child sends back.
-        if traceAlways:
+        if self.TraceOn():
             child.logfile_read = sys.stdout
 
         # Set the breakpoint, followed by the target stop-hook commands.
