@@ -565,11 +565,11 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
       Streamer.EmitSLEB128IntValue(Offset);
     } else if (Reg < 64) {
       Streamer.EmitIntValue(dwarf::DW_CFA_offset + Reg, 1);
-      Streamer.EmitULEB128IntValue(Offset, 1);
+      Streamer.EmitULEB128IntValue(Offset);
     } else {
       Streamer.EmitIntValue(dwarf::DW_CFA_offset_extended, 1);
-      Streamer.EmitULEB128IntValue(Reg, 1);
-      Streamer.EmitULEB128IntValue(Offset, 1);
+      Streamer.EmitULEB128IntValue(Reg);
+      Streamer.EmitULEB128IntValue(Offset);
     }
     return;
   }
