@@ -702,91 +702,145 @@ namespace lldb_private {
     };
     
 
-
+    
     //---------------------------------------------------------------------
-    // NamedOptionValue
+    // OptionValueCollection
+    //
+    // The option value collection is a class that must be subclassed in
+    // order to provide a collection of named OptionValue objects. The
+    // collection is immutable (use OptionValueDictionary for mutable key
+    // value pair collection). This allows classes to have some member
+    // variables that are OptionValue subclasses, and still provide access
+    // to setting and modifying these values from textual commands:
+    //
+    //    
+    //    class Car : public OptionValueCollection 
+    //    {
+    //    public:
+    //        
+    //        Car () : OptionValueCollection (NULL, "car"),
+    //             m_is_running_name ("running"),
+    //             m_license_number_name ("license"),
+    //             m_is_running (false, false),
+    //             m_license_number ()
+    //        {
+    //        }
+    //        
+    //        
+    //        bool
+    //        GetIsRunning () const
+    //        {
+    //            return m_is_running.GetCurrentValue();
+    //        }
+    //        
+    //        const char *
+    //        GetLicense () const
+    //        {
+    //            return m_license_number.GetCurrentValue();
+    //        }
+    //        
+    //        virtual uint32_t
+    //        GetNumValues() const
+    //        {
+    //            return 2;
+    //        }
+    //        
+    //        virtual ConstString
+    //        GetKeyAtIndex (uint32_t idx) const
+    //        {
+    //            switch (idx)
+    //            {
+    //                case 0: return m_is_running_name;
+    //                case 1: return m_license_number_name;
+    //            }
+    //            return ConstString();
+    //        }
+    //        
+    //        virtual OptionValue*
+    //        GetValueForKey (const ConstString &key)
+    //        {
+    //            if (key == m_is_running_name)
+    //                return &m_is_running;
+    //            else if (key == m_license_number_name)
+    //                return &m_license_number;
+    //            return NULL;
+    //        }
+    //        
+    //    protected:
+    //        ConstString m_is_running_name;
+    //        ConstString m_license_number_name;
+    //        OptionValueBoolean m_is_running;
+    //        OptionValueString m_license_number;
+    //        
+    //    };
+    //
+    // As we can see above, this allows the Car class to have direct access
+    // to its member variables settings m_is_running and m_license_number,
+    // yet it allows them to also be available by name to our command
+    // interpreter.
     //---------------------------------------------------------------------
-    class NamedOptionValue
+    class OptionValueCollection
     {
     public:
-        
-        NamedOptionValue (NamedOptionValue *parent, const ConstString &name) :
+        OptionValueCollection (OptionValueCollection *parent, const ConstString &name) :
             m_parent (parent),
-            m_name (name),
-            m_user_data (0)
+            m_name (name)
         {
         }
 
-        virtual
-        ~NamedOptionValue ()
+        OptionValueCollection (OptionValueCollection *parent, const char *name) :
+            m_parent (parent),
+            m_name (name)
+        {
+        }
+
+        virtual 
+        ~OptionValueCollection()
         {
         }
         
-        NamedOptionValue *
+        
+        OptionValueCollection *
         GetParent ()
         {
             return m_parent;
         }
-
-        const NamedOptionValue *
+        
+        const OptionValueCollection *
         GetParent () const
         {
             return m_parent;
         }
-
+        
         const ConstString &
         GetName () const
         {
             return m_name;
         }
-        
-        uint32_t
-        GetUserData () const
-        {
-            return m_user_data;
-        }
-
-        void
-        SetUserData (uint32_t user_data)
-        {
-            m_user_data = user_data;
-        }
 
         void
         GetQualifiedName (Stream &strm);
 
-        lldb::OptionValueSP
-        GetValue ()
-        {
-            return m_value_sp;
-        }
+        //---------------------------------------------------------------------
+        // Subclass specific functions
+        //---------------------------------------------------------------------
         
-        void
-        SetValue (const lldb::OptionValueSP &value_sp)
-        {
-            m_value_sp = value_sp;
-        }
+        virtual uint32_t
+        GetNumValues() const = 0;
         
-        OptionValue::Type
-        GetValueType ();
-        
-        bool
-        DumpValue (Stream &strm);
-        
-        bool
-        SetValueFromCString (const char *value);
-        
-        bool
-        ResetValueToDefault ();
-        
-    protected:
-        NamedOptionValue *m_parent;      // NULL if this is a root object
-        ConstString m_name;         // Name for this setting
-        uint32_t m_user_data;       // User data that can be used for anything.
-        lldb::OptionValueSP m_value_sp;   // Abstract option value
-    };
+        virtual ConstString
+        GetKeyAtIndex (uint32_t idx) const = 0;
 
+        virtual OptionValue*
+        GetValueForKey (const ConstString &key) = 0;
+
+    protected:
+        OptionValueCollection *m_parent;    // NULL if this is a root object
+        ConstString m_name;                 // Name for this collection setting (if any)
+    };
     
+    
+
 } // namespace lldb_private
 
 #endif  // liblldb_NamedOptionValue_h_

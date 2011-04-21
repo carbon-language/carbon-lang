@@ -81,11 +81,11 @@ OptionValue::GetAsDictionaryValue ()
 
 
 //-------------------------------------------------------------------------
-// NamedOptionValue
+// OptionValueCollection
 //-------------------------------------------------------------------------
 
 void
-NamedOptionValue::GetQualifiedName (Stream &strm)
+OptionValueCollection::GetQualifiedName (Stream &strm)
 {
     if (m_parent)
     {
@@ -93,41 +93,6 @@ NamedOptionValue::GetQualifiedName (Stream &strm)
         strm.PutChar('.');
     }
     strm << m_name;
-}
-
-OptionValue::Type
-NamedOptionValue::GetValueType ()
-{
-    if (m_value_sp)
-        return m_value_sp->GetType();
-    return OptionValue::eTypeInvalid;
-}
-
-bool
-NamedOptionValue::DumpValue (Stream &strm)
-{
-    if (m_value_sp)
-    {
-        m_value_sp->DumpValue (strm);
-        return true;
-    }
-    return false;
-}
-
-bool
-NamedOptionValue::SetValueFromCString (const char *value_cstr)
-{
-    if (m_value_sp)
-        return m_value_sp->SetValueFromCString (value_cstr);
-    return false;
-}
-
-bool
-NamedOptionValue::ResetValueToDefault ()
-{
-    if (m_value_sp)
-        return m_value_sp->ResetValueToDefault ();
-    return false;
 }
 
 
