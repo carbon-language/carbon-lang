@@ -510,14 +510,14 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
 
     if (!file_name)
     {
-        out_stream->Printf ("Instruction::TestEmulation:  Missing file_name.\n");
+        out_stream->Printf ("Instruction::TestEmulation:  Missing file_name.");
         return false;
     }
         
     FILE *test_file = fopen (file_name, "r");
     if (!test_file)
     {
-        out_stream->Printf ("Instruction::TestEmulation: Attempt to open test file failed.\n");
+        out_stream->Printf ("Instruction::TestEmulation: Attempt to open test file failed.");
         return false;
     }
 
@@ -525,7 +525,7 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
     char buffer[256];
     if (!fgets (buffer,255, test_file)) // Read/skip first line of file, which should be a comment line (description).
     {
-        out_stream->Printf ("Instruction::TestEmulation: Read comment line failed.\n");
+        out_stream->Printf ("Instruction::TestEmulation: Read comment line failed.");
         fclose (test_file);
         return false;
     }
@@ -533,7 +533,7 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
             
     if (fscanf (test_file, "%s", buffer) != 1) // Read the arch or arch-triple from the file
     {
-        out_stream->Printf ("Instruction::TestEmulation: Read arch failed.\n");
+        out_stream->Printf ("Instruction::TestEmulation: Read arch failed.");
         fclose (test_file);
         return false;
     }
@@ -549,9 +549,9 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
     fclose (test_file);
     
     if (success)
-        out_stream->Printf ("Emulation test succeeded.\n");
+        out_stream->Printf ("Emulation test succeeded.");
     else
-        out_stream->Printf ("Emulation test failed.\n");
+        out_stream->Printf ("Emulation test failed.");
         
     return success;
 }

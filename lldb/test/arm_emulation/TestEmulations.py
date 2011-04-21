@@ -22,7 +22,6 @@ class ARMEmulationTestCase(TestBase):
                 
         for f in thumb_files:
             test_file = os.path.join (test_dir, f)
-            print '\nRunning test ' + f 
             self.run_a_single_test (test_file)
 
 
@@ -37,7 +36,6 @@ class ARMEmulationTestCase(TestBase):
                 
         for f in arm_files:
             test_file = os.path.join (test_dir, f)
-            print '\nRunning test ' + f 
             self.run_a_single_test (test_file)
 
     def run_a_single_test (self, filename):
@@ -45,11 +43,11 @@ class ARMEmulationTestCase(TestBase):
         stream = lldb.SBStream ();
         success = insn.TestEmulation (stream, filename);
         output = stream.GetData();
-        if not success:
+        if self.TraceOn():
+            print '\nRunning test ' + os.path.basename(filename)
             print output
 
-        self.assertTrue ('Emulation test succeeded.' in output)
-        self.assertTrue (success == True)
+        self.assertTrue (success, 'Emulation test succeeded.')
 
 if __name__ == '__main__':
     import atexit
