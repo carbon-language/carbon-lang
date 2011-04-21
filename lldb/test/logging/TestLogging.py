@@ -34,16 +34,16 @@ class LogTestCase(TestBase):
 
         self.runCmd ("log enable lldb commands -f " + log_file)
         
-        self.runCmd ("commands alias bp breakpoint")
+        self.runCmd ("command alias bp breakpoint")
                      
         self.runCmd ("bp set -n main")
 
         self.runCmd ("bp l")
 
         expected_log_lines = [
-            "com.apple.main-thread Processing command: commands alias bp breakpoint\n",
-            "com.apple.main-thread HandleCommand, cmd_obj : 'commands alias'\n",
-            "com.apple.main-thread HandleCommand, revised_command_line: 'commands alias bp breakpoint'\n",
+            "com.apple.main-thread Processing command: command alias bp breakpoint\n",
+            "com.apple.main-thread HandleCommand, cmd_obj : 'command alias'\n",
+            "com.apple.main-thread HandleCommand, revised_command_line: 'command alias bp breakpoint'\n",
             "com.apple.main-thread HandleCommand, wants_raw_input:'True'\n",
             "com.apple.main-thread HandleCommand, command line after removing command name(s): 'bp breakpoint'\n",
             "\n",
