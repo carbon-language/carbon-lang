@@ -945,8 +945,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (Arg *A = Args.getLastArg(options::OPT_O_Group))
       IsOpt = !A->getOption().matches(options::OPT_O0);
     if (Args.hasFlag(options::OPT_mrelax_all,
-                      options::OPT_mno_relax_all,
-                      !IsOpt))
+                     options::OPT_mno_relax_all,
+                     !IsOpt))
       CmdArgs.push_back("-mrelax-all");
 
     // When using an integrated assembler, translate -Wa, and -Xassembler
