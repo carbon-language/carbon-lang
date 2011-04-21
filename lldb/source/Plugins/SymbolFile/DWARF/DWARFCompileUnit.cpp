@@ -624,7 +624,7 @@ DWARFCompileUnit::Index
 
         DWARFDebugInfoEntry::Attributes attributes;
         const char *name = NULL;
-        Mangled mangled;
+        const char *mangled_cstr = NULL;
         bool is_variable = false;
         bool is_declaration = false;
         bool is_artificial = false;
@@ -664,7 +664,7 @@ DWARFCompileUnit::Index
 
                 case DW_AT_MIPS_linkage_name:
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
-                        mangled.GetMangledName().SetCString(form_value.AsCString(debug_str));
+                        mangled_cstr = form_value.AsCString(debug_str);                        
                     break;
 
                 case DW_AT_low_pc:
@@ -825,7 +825,7 @@ DWARFCompileUnit::Index
                         }
                         else
                         {
-                            if (mangled && specification_die_offset != DW_INVALID_OFFSET)
+                            if (mangled_cstr && specification_die_offset != DW_INVALID_OFFSET)
                             {
                                 const DWARFDebugInfoEntry *specification_die = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
                                 if (specification_die)
@@ -849,10 +849,20 @@ DWARFCompileUnit::Index
                     else
                         func_basenames.Insert (ConstString(name), die_info);
                 }
-                if (mangled.GetMangledName())
-                    func_fullnames.Insert (mangled.GetMangledName(), die_info);
-                if (mangled.GetDemangledName())
-                    func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                if (mangled_cstr)
+                {
+                    // Make sure our mangled name isn't the same string table entry
+                    // as our name. If it starts with '_', then it is ok, else compare
+                    // the string to make sure it isn't the same and we don't end up
+                    // with duplicate entries
+                    if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
+                    {
+                        Mangled mangled (mangled_cstr, true);
+                        func_fullnames.Insert (mangled.GetMangledName(), die_info);
+                        if (mangled.GetDemangledName())
+                            func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                    }
+                }
             }
             break;
 
@@ -861,10 +871,20 @@ DWARFCompileUnit::Index
             {
                 if (name)
                     func_basenames.Insert (ConstString(name), die_info);
-                if (mangled.GetMangledName())
-                    func_fullnames.Insert (mangled.GetMangledName(), die_info);
-                if (mangled.GetDemangledName())
-                    func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                if (mangled_cstr)
+                {
+                    // Make sure our mangled name isn't the same string table entry
+                    // as our name. If it starts with '_', then it is ok, else compare
+                    // the string to make sure it isn't the same and we don't end up
+                    // with duplicate entries
+                    if (name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
+                    {
+                        Mangled mangled (mangled_cstr, true);
+                        func_fullnames.Insert (mangled.GetMangledName(), die_info);
+                        if (mangled.GetDemangledName())
+                            func_fullnames.Insert (mangled.GetDemangledName(), die_info);
+                    }
+                }
             }
             break;
         
@@ -896,10 +916,18 @@ DWARFCompileUnit::Index
                 // names if they have any since a variable can have a basename
                 // "i", a mangled named "_ZN12_GLOBAL__N_11iE" and a demangled 
                 // mangled name "(anonymous namespace)::i"...
-                if (mangled.GetMangledName())
+                
+                // Make sure our mangled name isn't the same string table entry
+                // as our name. If it starts with '_', then it is ok, else compare
+                // the string to make sure it isn't the same and we don't end up
+                // with duplicate entries
+                if (mangled_cstr && name != mangled_cstr && ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0)))
+                {
+                    Mangled mangled (mangled_cstr, true);
                     globals.Insert (mangled.GetMangledName(), die_info);
-                if (mangled.GetDemangledName())
-                    globals.Insert (mangled.GetDemangledName(), die_info);
+                    if (mangled.GetDemangledName())
+                        globals.Insert (mangled.GetDemangledName(), die_info);
+                }
             }
             break;
             
