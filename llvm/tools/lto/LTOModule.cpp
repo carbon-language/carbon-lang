@@ -155,7 +155,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   if (!march)
     return NULL;
 
-  // construct LTModule, hand over ownership of module and target
+  // construct LTOModule, hand over ownership of module and target
   SubtargetFeatures Features;
   Features.getDefaultSubtargetFeatures("" /* cpu */, llvm::Triple(Triple));
   std::string FeatureStr = Features.getString();
