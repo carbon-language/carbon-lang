@@ -66,6 +66,7 @@ FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
 IOS_COMMON_FUNCTIONS := divmodsi4 udivmodsi4
 FUNCTIONS.ios.armv6 := $(IOS_COMMON_FUNCTIONS) \
+                       sync_synchronize \
                        switch16 switch32 switch8 switchu8 \
                        save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
 FUNCTIONS.ios.armv7 := $(IOS_COMMON_FUNCTIONS)
