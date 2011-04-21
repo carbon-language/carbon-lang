@@ -52,6 +52,8 @@ public:
                                   /// Decl* various IR entities came from.  Only
                                   /// useful when running CodeGen as a
                                   /// subroutine.
+  unsigned EmitGcovArcs      : 1; /// Emit coverage data files, aka. GCDA.
+  unsigned EmitGcovNotes     : 1; /// Emit coverage "notes" files, aka GCNO.
   unsigned ForbidGuardVariables : 1; /// Issue errors if C++ guard variables
                                   /// are required
   unsigned FunctionSections  : 1; /// Set when -ffunction-sections is enabled
@@ -135,6 +137,8 @@ public:
     DisableLLVMOpts = 0;
     DisableRedZone = 0;
     EmitDeclMetadata = 0;
+    EmitGcovArcs = 0;
+    EmitGcovNotes = 0;
     ForbidGuardVariables = 0;
     FunctionSections = 0;
     HiddenWeakTemplateVTables = 0;

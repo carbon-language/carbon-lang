@@ -135,6 +135,10 @@ def fdata_sections : Flag<"-fdata-sections">,
   HelpText<"Place each data in its own section (ELF Only)">;
 def funroll_loops : Flag<"-funroll-loops">,
   HelpText<"Turn on loop unroller">;
+def femit_coverage_notes : Flag<"-femit-coverage-notes">,
+  HelpText<"Emit a gcov coverage notes file when compiling.">;
+def femit_coverage_data: Flag<"-femit-coverage-data">,
+  HelpText<"Instrument the program to emit gcov coverage data when run.">;
 def relaxed_aliasing : Flag<"-relaxed-aliasing">,
   HelpText<"Turn off Type Based Alias Analysis">;
 def masm_verbose : Flag<"-masm-verbose">,

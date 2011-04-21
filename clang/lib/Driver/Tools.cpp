@@ -1277,6 +1277,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_finstrument_functions);
 
+  if (Args.hasArg(options::OPT_ftest_coverage) ||
+      Args.hasArg(options::OPT_coverage))
+    CmdArgs.push_back("-femit-coverage-notes");
+  if (Args.hasArg(options::OPT_fprofile_arcs) ||
+      Args.hasArg(options::OPT_coverage))
+    CmdArgs.push_back("-femit-coverage-data");
+
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
   Args.AddLastArg(CmdArgs, options::OPT_nostdincxx);
   Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);

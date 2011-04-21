@@ -64,7 +64,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ABI(createCXXABI(*this)), 
     Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI),
     TBAA(0),
-    VTables(*this), Runtime(0),
+    VTables(*this), Runtime(0), DebugInfo(0),
     CFConstantStringClassRef(0), ConstantStringClassRef(0),
     VMContext(M.getContext()),
     NSConcreteGlobalBlockDecl(0), NSConcreteStackBlockDecl(0),
@@ -80,8 +80,11 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     TBAA = new CodeGenTBAA(Context, VMContext, getLangOptions(),
                            ABI.getMangleContext());
 
-  // If debug info generation is enabled, create the CGDebugInfo object.
-  DebugInfo = CodeGenOpts.DebugInfo ? new CGDebugInfo(*this) : 0;
+  // If debug info or coverage generation is enabled, create the CGDebugInfo
+  // object.
+  if (CodeGenOpts.DebugInfo || CodeGenOpts.EmitGcovArcs ||
+      CodeGenOpts.EmitGcovNotes)
+    DebugInfo = new CGDebugInfo(*this);
 
   Block.GlobalUniqueCount = 0;
 

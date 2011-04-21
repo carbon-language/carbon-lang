@@ -123,6 +123,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-dwarf-debug-flags");
     Res.push_back(Opts.DwarfDebugFlags);
   }
+  if (Opts.EmitGcovArcs)
+    Res.push_back("-femit-coverage-data");
+  if (Opts.EmitGcovNotes)
+    Res.push_back("-femit-coverage-notes");
   if (!Opts.MergeAllConstants)
     Res.push_back("-fno-merge-all-constants");
   if (Opts.NoCommon)
@@ -960,6 +964,8 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.InstrumentFunctions = Args.hasArg(OPT_finstrument_functions);
   Opts.InstrumentForProfiling = Args.hasArg(OPT_pg);
+  Opts.EmitGcovArcs = Args.hasArg(OPT_femit_coverage_data);
+  Opts.EmitGcovNotes = Args.hasArg(OPT_femit_coverage_notes);
 
   if (Arg *A = Args.getLastArg(OPT_fobjc_dispatch_method_EQ)) {
     llvm::StringRef Name = A->getValue(Args);

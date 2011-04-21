@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Transforms/Instrumentation.h"
 using namespace clang;
 using namespace llvm;
 
@@ -151,6 +152,13 @@ void EmitAssemblyHelper::CreatePasses() {
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
   MPM->add(TLI);
+
+  if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
+    MPM->add(createGCOVProfilerPass(CodeGenOpts.EmitGcovNotes,
+                                    CodeGenOpts.EmitGcovArcs));
+    if (!CodeGenOpts.DebugInfo)
+      MPM->add(createStripSymbolsPass(true));
+  }
 
   // For now we always create per module passes.
   llvm::createStandardModulePasses(MPM, OptLevel,

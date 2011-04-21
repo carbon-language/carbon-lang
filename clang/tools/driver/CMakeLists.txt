@@ -23,6 +23,7 @@ set( LLVM_LINK_COMPONENTS
   bitreader
   bitwriter
   codegen
+  instrumentation
   ipo
   selectiondag
   )
