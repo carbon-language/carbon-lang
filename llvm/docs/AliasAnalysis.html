@@ -64,7 +64,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Alias Analysis (aka Pointer Analysis) is a class of techniques which attempt
 to determine whether or not two pointers ever can point to the same object in
@@ -101,7 +101,7 @@ know</a>.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The <a
 href="http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html"><tt>AliasAnalysis</tt></a>
@@ -122,14 +122,12 @@ multiple values, values which are not
 <a href="LangRef.html#constants">constants</a> are all defined within the
 same function.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="pointers">Representation of Pointers</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Most importantly, the <tt>AliasAnalysis</tt> class provides several methods
 which are used to query whether or not two memory objects alias, whether
@@ -185,7 +183,7 @@ that the accesses alias.</p>
   <a name="alias">The <tt>alias</tt> method</a>
 </h3>
   
-<div class="doc_text">
+<div>
 <p>The <tt>alias</tt> method is the primary interface used to determine whether
 or not two memory objects alias each other.  It takes two memory objects as
 input and returns MustAlias, PartialAlias, MayAlias, or NoAlias as
@@ -194,14 +192,13 @@ appropriate.</p>
 <p>Like all <tt>AliasAnalysis</tt> interfaces, the <tt>alias</tt> method requires
 that either the two pointer values be defined within the same function, or at
 least one of the values is a <a href="LangRef.html#constants">constant</a>.</p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="MustMayNo">Must, May, and No Alias Responses</a>
 </h4>
 
-<div class="doc_text">
+<div>
 <p>The NoAlias response may be used when there is never an immediate dependence
 between any memory reference <i>based</i> on one pointer and any memory
 reference <i>based</i> the other. The most obvious example is when the two
@@ -227,12 +224,14 @@ implies that the pointers compare equal.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="ModRefInfo">The <tt>getModRefInfo</tt> methods</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>getModRefInfo</tt> methods return information about whether the
 execution of an instruction can read or modify a memory location.  Mod/Ref
@@ -254,21 +253,19 @@ memory written to by CS2.  Note that this relation is not commutative.</p>
   <a name="OtherItfs">Other useful <tt>AliasAnalysis</tt> methods</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 Several other tidbits of information are often collected by various alias
 analysis implementations and can be put to good use by various clients.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   The <tt>pointsToConstantMemory</tt> method
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>pointsToConstantMemory</tt> method returns true if and only if the
 analysis can prove that the pointer only points to unchanging memory locations
@@ -284,7 +281,7 @@ memory location to be modified.</p>
   <tt>onlyReadsMemory</tt> methods</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>These methods are used to provide very simple mod/ref information for
 function calls.  The <tt>doesNotAccessMemory</tt> method returns true for a
@@ -307,13 +304,17 @@ functions that satisfy the <tt>doesNotAccessMemory</tt> method also satisfies
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="writingnew">Writing a new <tt>AliasAnalysis</tt> Implementation</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Writing a new alias analysis implementation for LLVM is quite
 straight-forward.  There are already several implementations that you can use
@@ -321,14 +322,12 @@ for examples, and the following information should help fill in any details.
 For a examples, take a look at the <a href="#impls">various alias analysis
 implementations</a> included with LLVM.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="passsubclasses">Different Pass styles</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The first step to determining what type of <a
 href="WritingAnLLVMPass.html">LLVM pass</a> you need to use for your Alias
@@ -356,7 +355,7 @@ solve:</p>
   <a name="requiredcalls">Required initialization calls</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Your subclass of <tt>AliasAnalysis</tt> is required to invoke two methods on
 the <tt>AliasAnalysis</tt> base class: <tt>getAnalysisUsage</tt> and
@@ -397,7 +396,7 @@ bool run(Module &amp;M) {
   <a name="interfaces">Interfaces which may be specified</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>All of the <a
 href="/doxygen/classllvm_1_1AliasAnalysis.html"><tt>AliasAnalysis</tt></a>
@@ -416,7 +415,7 @@ implementing, you just override the interfaces you can improve.</p>
   <a name="chaining"><tt>AliasAnalysis</tt> chaining behavior</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>With only two special exceptions (the <tt><a
 href="#basic-aa">basicaa</a></tt> and <a href="#no-aa"><tt>no-aa</tt></a>
@@ -455,7 +454,7 @@ updated.</p>
   <a name="updating">Updating analysis results for transformations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 <p>
 Alias analysis information is initially computed for a static snapshot of the
 program, but clients will use this information to make transformations to the
@@ -471,12 +470,11 @@ their internal data structures are kept up-to-date as the program changes (for
 example, when an instruction is deleted), and clients of alias analysis must be
 sure to call these interfaces appropriately.
 </p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>The <tt>deleteValue</tt> method</h4>
 
-<div class="doc_text">
+<div>
 The <tt>deleteValue</tt> method is called by transformations when they remove an
 instruction or any other value from the program (including values that do not
 use pointers).  Typically alias analyses keep data structures that have entries
@@ -487,7 +485,7 @@ any entries for the specified value, if they exist.
 <!-- _______________________________________________________________________ -->
 <h4>The <tt>copyValue</tt> method</h4>
 
-<div class="doc_text">
+<div>
 The <tt>copyValue</tt> method is used when a new value is introduced into the
 program.  There is no way to introduce a value into the program that did not
 exist before (this doesn't make sense for a safe compiler transformation), so
@@ -498,7 +496,7 @@ new value has exactly the same properties as the value being copied.
 <!-- _______________________________________________________________________ -->
 <h4>The <tt>replaceWithNewValue</tt> method</h4>
 
-<div class="doc_text">
+<div>
 This method is a simple helper method that is provided to make clients easier to
 use.  It is implemented by copying the old analysis information to the new
 value, then deleting the old value.  This method cannot be overridden by alias
@@ -508,7 +506,7 @@ analysis implementations.
 <!-- _______________________________________________________________________ -->
 <h4>The <tt>addEscapingUse</tt> method</h4>
 
-<div class="doc_text">
+<div>
 <p>The <tt>addEscapingUse</tt> method is used when the uses of a pointer
 value have changed in ways that may invalidate precomputed analysis information. 
 Implementations may either use this callback to provide conservative responses
@@ -527,12 +525,14 @@ uses below:</p>
 </ul>
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="implefficiency">Efficiency Issues</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>From the LLVM perspective, the only thing you need to do to provide an
 efficient alias analysis is to make sure that alias analysis <b>queries</b> are
@@ -548,7 +548,7 @@ method as possible (within reason).</p>
   <a name="limitations">Limitations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The AliasAnalysis infrastructure has several limitations which make
 writing a new <tt>AliasAnalysis</tt> implementation difficult.</p>
@@ -616,25 +616,25 @@ from itself.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="using">Using alias analysis results</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>There are several different ways to use alias analysis results.  In order of
 preference, these are...</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="memdep">Using the <tt>MemoryDependenceAnalysis</tt> Pass</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>memdep</tt> pass uses alias analysis to provide high-level dependence
 information about memory-using instructions.  This will tell you which store
@@ -649,7 +649,7 @@ efficient, and is used by Dead Store Elimination, GVN, and memcpy optimizations.
   <a name="ast">Using the <tt>AliasSetTracker</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Many transformations need information about alias <b>sets</b> that are active
 in some scope, rather than information about pairwise aliasing.  The <tt><a
@@ -678,14 +678,12 @@ sunk to outside of the loop, promoting the memory location to a register for the
 duration of the loop nest.  Both of these transformations only apply if the
 pointer argument is loop-invariant.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   The AliasSetTracker implementation
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The AliasSetTracker class is implemented to be as efficient as possible.  It
 uses the union-find algorithm to efficiently merge AliasSets when a pointer is
@@ -706,12 +704,14 @@ are.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="direct">Using the <tt>AliasAnalysis</tt> interface directly</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>If neither of these utility class are what your pass needs, you should use
 the interfaces exposed by the <tt>AliasAnalysis</tt> class directly.  Try to use
@@ -721,13 +721,15 @@ best precision and efficiency.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="exist">Existing alias analysis implementations and clients</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>If you're going to be working with the LLVM alias analysis infrastructure,
 you should know what clients and implementations of alias analysis are
@@ -735,28 +737,24 @@ available.  In particular, if you are implementing an alias analysis, you should
 be aware of the <a href="#aliasanalysis-debug">the clients</a> that are useful
 for monitoring and evaluating different implementations.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="impls">Available <tt>AliasAnalysis</tt> implementations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>This section lists the various implementations of the <tt>AliasAnalysis</tt>
 interface.  With the exception of the <a href="#no-aa"><tt>-no-aa</tt></a> and
 <a href="#basic-aa"><tt>-basicaa</tt></a> implementations, all of these <a
 href="#chaining">chain</a> to other alias analysis implementations.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="no-aa">The <tt>-no-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-no-aa</tt> pass is just like what it sounds: an alias analysis that
 never returns any useful information.  This pass can be useful if you think that
@@ -770,7 +768,7 @@ problem.</p>
   <a name="basic-aa">The <tt>-basicaa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-basicaa</tt> pass is an aggressive local analysis that "knows"
 many important facts:</p>
@@ -798,7 +796,7 @@ many important facts:</p>
   <a name="globalsmodref">The <tt>-globalsmodref-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>This pass implements a simple context-sensitive mod/ref and alias analysis
 for internal global variables that don't "have their address taken".  If a
@@ -822,7 +820,7 @@ non-address taken globals), but is very quick analysis.</p>
   <a name="steens-aa">The <tt>-steens-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-steens-aa</tt> pass implements a variation on the well-known
 "Steensgaard's algorithm" for interprocedural alias analysis.  Steensgaard's
@@ -845,7 +843,7 @@ module, it is not part of the LLVM core.</p>
   <a name="ds-aa">The <tt>-ds-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-ds-aa</tt> pass implements the full Data Structure Analysis
 algorithm.  Data Structure Analysis is a modular unification-based,
@@ -868,7 +866,7 @@ module, it is not part of the LLVM core.</p>
   <a name="scev-aa">The <tt>-scev-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-scev-aa</tt> pass implements AliasAnalysis queries by
 translating them into ScalarEvolution queries. This gives it a
@@ -877,22 +875,23 @@ and loop induction variables than other alias analyses have.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="aliasanalysis-xforms">Alias analysis driven transformations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 LLVM includes several alias-analysis driven transformations which can be used
 with any of the implementations above.
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="adce">The <tt>-adce</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-adce</tt> pass, which implements Aggressive Dead Code Elimination
 uses the <tt>AliasAnalysis</tt> interface to delete calls to functions that do
@@ -906,7 +905,7 @@ not have side-effects and are not used.</p>
   <a name="licm">The <tt>-licm</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-licm</tt> pass implements various Loop Invariant Code Motion related
 transformations.  It uses the <tt>AliasAnalysis</tt> interface for several
@@ -931,7 +930,7 @@ no may aliases to the loaded/stored memory location.</li>
   <a name="argpromotion">The <tt>-argpromotion</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 <p>
 The <tt>-argpromotion</tt> pass promotes by-reference arguments to be passed in
 by-value instead.  In particular, if pointer arguments are only loaded from it
@@ -947,10 +946,12 @@ pointer.</p>
      passes</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>These passes use AliasAnalysis information to reason about loads and stores.
 </p>
+
+</div>
 
 </div>
 
@@ -960,20 +961,18 @@ pointer.</p>
   implementations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>These passes are useful for evaluating the various alias analysis
 implementations.  You can use them with commands like '<tt>opt -ds-aa
 -aa-eval foo.bc -disable-output -stats</tt>'.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="print-alias-sets">The <tt>-print-alias-sets</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-print-alias-sets</tt> pass is exposed as part of the
 <tt>opt</tt> tool to print out the Alias Sets formed by the <a
@@ -994,7 +993,7 @@ the <tt>AliasSetTracker</tt> class.  To use it, use something like:</p>
   <a name="count-aa">The <tt>-count-aa</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-count-aa</tt> pass is useful to see how many queries a particular
 pass is making and what responses are returned by the alias analysis.  As an
@@ -1018,7 +1017,7 @@ when debugging a transformation or an alias analysis implementation.</p>
   <a name="aa-eval">The <tt>-aa-eval</tt> pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>-aa-eval</tt> pass simply iterates through all pairs of pointers in a
 function and asks an alias analysis whether or not the pointers alias.  This
@@ -1028,13 +1027,17 @@ algorithm will have a lower number of may aliases).</p>
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="memdep">Memory Dependence Analysis</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>If you're just looking to be a client of alias analysis information, consider
 using the Memory Dependence Analysis interface instead.  MemDep is a lazy, 

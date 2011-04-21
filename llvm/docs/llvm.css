@@ -70,6 +70,10 @@ h4, .doc_subsubsection { margin: 2.0em 0.5em 0.5em 0.5em;
                   display: table;
                 }
 
+h2+div, h2+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
+h3+div, h3+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
+h4+div, h4+p {text-align: left; padding-left: 20pt; padding-right: 10pt;}
+
 /* It is preferrable to use <pre class="doc_code"> everywhere instead of the
  * <div class="doc_code"><pre>...</ptr></div> construct.
  *
