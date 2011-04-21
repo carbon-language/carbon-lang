@@ -209,6 +209,33 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
         EmitULEB128(32);
         EmitULEB128(0);
       }
+    } else if (Reg >= ARM::Q0 && Reg <= ARM::Q15) {
+      // Q registers Q0-Q15 are described by composing two D registers together.
+      // Qx = DW_OP_regx(256+2x) DW_OP_piece(8) DW_OP_regx(256+2x+1) DW_OP_piece(8)
+
+      unsigned QReg = Reg - ARM::Q0;
+      unsigned D1 = 256 + 2 * QReg;
+      unsigned D2 = D1 + 1;
+      
+      OutStreamer.AddComment("Loc expr size");
+      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8) +
+      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8);
+      //   6 + ULEB(D1) + ULEB(D2)
+      EmitInt16(6 + MCAsmInfo::getULEB128Size(D1) + MCAsmInfo::getULEB128Size(D2));
+
+      OutStreamer.AddComment("DW_OP_regx for Q register: D1");
+      EmitInt8(dwarf::DW_OP_regx);
+      EmitULEB128(D1);
+      OutStreamer.AddComment("DW_OP_piece 8");
+      EmitInt8(dwarf::DW_OP_piece);
+      EmitULEB128(8);
+
+      OutStreamer.AddComment("DW_OP_regx for Q register: D2");
+      EmitInt8(dwarf::DW_OP_regx);
+      EmitULEB128(D2);
+      OutStreamer.AddComment("DW_OP_piece 8");
+      EmitInt8(dwarf::DW_OP_piece);
+      EmitULEB128(8);
     }
   }
 }
