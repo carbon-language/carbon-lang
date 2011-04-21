@@ -39,8 +39,6 @@ def err_drv_invalid_darwin_version : Error<
   "invalid Darwin version number: %0">;
 def err_drv_missing_argument : Error<
   "argument to '%0' is missing (expected %1 %plural{1:value|:values}1)">;
-def err_drv_invalid_Xarch_argument_unknown : Error<
-  "invalid Xarch argument: '%0', option is unrecognized">;
 def err_drv_invalid_Xarch_argument_with_args : Error<
   "invalid Xarch argument: '%0', options requiring arguments are unsupported">;
 def err_drv_invalid_Xarch_argument_isdriver : Error<

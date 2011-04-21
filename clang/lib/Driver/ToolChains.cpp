@@ -555,11 +555,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
       // driver behavior; that isn't going to work in our model. We
       // use isDriverOption() as an approximation, although things
       // like -O4 are going to slip through.
-      if (!XarchArg) {
-        getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument_unknown)
-          << A->getAsString(Args);
-        continue;
-      } else if (Index > Prev + 1) {
+      if (!XarchArg || Index > Prev + 1) {
         getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument_with_args)
           << A->getAsString(Args);
         continue;
