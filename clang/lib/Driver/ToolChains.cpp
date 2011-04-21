@@ -441,7 +441,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     assert(!iPhoneVersion && "Unknown target platform!");
     if (!Driver::GetReleaseVersion(OSXVersion->getValue(Args), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
-        Major != 10 || Minor >= 10 || Micro >= 10)
+        Major != 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(clang::diag::err_drv_invalid_version_number)
         << OSXVersion->getAsString(Args);
   } else {

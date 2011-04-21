@@ -21,3 +21,11 @@
 #error Invalid version
 #endif
 #endif
+
+// RUN: env MACOSX_DEPLOYMENT_TARGET=10.4.10 \
+// RUN:   %clang -ccc-host-triple i386-apple-darwin9 -DTEST3 -E %s
+#ifdef TEST3
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ != 1049
+#error Invalid version
+#endif
+#endif

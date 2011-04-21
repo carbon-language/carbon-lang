@@ -135,7 +135,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
 
   // Set the appropriate OS version define.
   if (PlatformName == "ios") {
-    assert(Maj < 10 && Min < 99 && Rev < 99 && "Invalid version!");
+    assert(Maj < 10 && Min < 100 && Rev < 100 && "Invalid version!");
     char Str[6];
     Str[0] = '0' + Maj;
     Str[1] = '0' + (Min / 10);
@@ -145,13 +145,17 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Str[5] = '\0';
     Builder.defineMacro("__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", Str);
   } else {
+    // Note that the Driver allows versions which aren't representable in the
+    // define (because we only get a single digit for the minor and micro
+    // revision numbers). So, we limit them to the maximum representable
+    // version.
     assert(Triple.getEnvironmentName().empty() && "Invalid environment!");
-    assert(Maj < 99 && Min < 10 && Rev < 10 && "Invalid version!");
+    assert(Maj < 100 && Min < 100 && Rev < 100 && "Invalid version!");
     char Str[5];
     Str[0] = '0' + (Maj / 10);
     Str[1] = '0' + (Maj % 10);
-    Str[2] = '0' + Min;
-    Str[3] = '0' + Rev;
+    Str[2] = '0' + std::min(Min, 9U);
+    Str[3] = '0' + std::min(Rev, 9U);
     Str[4] = '\0';
     Builder.defineMacro("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__", Str);
   }
