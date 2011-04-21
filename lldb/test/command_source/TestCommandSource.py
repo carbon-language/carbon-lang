@@ -27,7 +27,8 @@ class CommandSourceTestCase(TestBase):
         sys.stdout = session
 
         # Python should evaluate "my.date()" successfully.
-        self.runCmd("script my.date()")
+        # Pass 'check=False' so that sys.stdout gets restored unconditionally.
+        self.runCmd("script my.date()", check=False)
 
         # Now restore stdout to the way we were. :-)
         sys.stdout = old_stdout

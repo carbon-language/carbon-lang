@@ -566,6 +566,9 @@ class TestBase(unittest2.TestCase):
         # function to be run during tearDown() time.
         self.hooks = []
 
+        # See HideStdout(self).
+        self.sys_stdout_hidden = False
+
     def markError(self):
         """Callback invoked when an error (unexpected exception) errored."""
         self.__errored__ = True
@@ -955,3 +958,30 @@ class TestBase(unittest2.TestCase):
     def TraceOn(self):
         """Returns True if we are in trace mode (i.e., tracing lldb command execution)."""
         return traceAlways
+
+    def HideStdout(self):
+        """Hide output to stdout from the user.
+
+        During test execution, there might be cases where we don't want to show the
+        standard output to the user.  For example,
+
+            self.runCmd(r'''sc print "\n\n\tHello!\n"''')
+
+        tests whether command abbreviation for 'script' works or not.  There is no
+        need to show the 'Hello' output to the user as long as the 'script' command
+        succeeds and we are not in TraceOn() mode (see the '-t' option).
+
+        In this case, the test method calls self.HideStdout(self) to redirect the
+        sys.stdout to a null device, and restores the sys.stdout upon teardown.
+
+        Note that you should only call this method at most once during a test case
+        execution.  Any subsequent call has no effect at all."""
+        if self.sys_stdout_hidden:
+            return
+
+        self.sys_stdout_hidden = True
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        def restore_stdout():
+            sys.stdout = old_stdout
+        self.addTearDownHook(restore_stdout)

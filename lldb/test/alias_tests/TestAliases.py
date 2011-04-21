@@ -32,12 +32,7 @@ class AliasTestCase(TestBase):
 
         # We don't want to display the stdout if not in TraceOn() mode.
         if not self.TraceOn():
-            old_stdout = sys.stdout
-            session = StringIO.StringIO()
-            sys.stdout = session
-            def restore_stdout():
-                sys.stdout = old_stdout
-            self.addTearDownHook(restore_stdout)
+            self.HideStdout()
 
         self.runCmd (r'''python print "\n\n\nWhoopee!\n\n\n"''')
 #        self.expect (r'''python print "\n\n\nWhoopee!\n\n\n"''',
