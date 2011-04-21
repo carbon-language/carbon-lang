@@ -7,7 +7,7 @@
 // OR
 // #pragma message messagestring
 //
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Werror %s
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
 #pragma message(":O I'm a message! " STRING(__LINE__)) // expected-warning {{:O I'm a message! 13}}

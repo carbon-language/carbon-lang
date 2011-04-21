@@ -18,6 +18,7 @@ def MAP_IGNORE  : DiagMapping;
 def MAP_WARNING : DiagMapping;
 def MAP_ERROR   : DiagMapping;
 def MAP_FATAL   : DiagMapping;
+def MAP_WARNING_NO_WERROR : DiagMapping;
 
 // Define the diagnostic classes.
 class DiagClass;
@@ -75,6 +76,7 @@ class DefaultIgnore { DiagMapping DefaultMapping = MAP_IGNORE; }
 class DefaultWarn   { DiagMapping DefaultMapping = MAP_WARNING; }
 class DefaultError  { DiagMapping DefaultMapping = MAP_ERROR; }
 class DefaultFatal  { DiagMapping DefaultMapping = MAP_FATAL; }
+class DefaultWarnNoWerror  { DiagMapping DefaultMapping = MAP_WARNING_NO_WERROR; }
 
 class NoSFINAE { bit SFINAE = 0; }
 class AccessControl { bit AccessControl = 1; }
