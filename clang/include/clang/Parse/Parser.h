@@ -1238,7 +1238,9 @@ private:
   StmtResult ParseStatementOrDeclaration(StmtVector& Stmts,
                                          bool OnlyStatement = false);
   StmtResult ParseLabeledStatement(ParsedAttributes &Attr);
-  StmtResult ParseCaseStatement(ParsedAttributes &Attr);
+  StmtResult ParseCaseStatement(ParsedAttributes &Attr,
+                                bool MissingCase = false,
+                                ExprResult Expr = ExprResult());
   StmtResult ParseDefaultStatement(ParsedAttributes &Attr);
   StmtResult ParseCompoundStatement(ParsedAttributes &Attr,
                                           bool isStmtExpr = false);

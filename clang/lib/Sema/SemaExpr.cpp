@@ -10734,3 +10734,11 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   assert(!type->isPlaceholderType());
   return Owned(E);
 }
+
+bool Sema::CheckCaseExpression(Expr *expr) {
+  if (expr->isTypeDependent())
+    return true;
+  if (expr->isValueDependent() || expr->isIntegerConstantExpr(Context))
+    return expr->getType()->isIntegralOrEnumerationType();
+  return false;
+}

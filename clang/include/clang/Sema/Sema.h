@@ -2226,6 +2226,8 @@ public:
   // __null
   ExprResult ActOnGNUNullExpr(SourceLocation TokenLoc);
 
+  bool CheckCaseExpression(Expr *expr);
+
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is

@@ -75,7 +75,10 @@ public:
     
     /// ObjCMethodScope - This scope corresponds to an Objective-C method body.
     /// It always has FnScope and DeclScope set as well.
-    ObjCMethodScope = 0x400
+    ObjCMethodScope = 0x400,
+
+    /// SwitchScope - This is a scope that corresponds to a switch statement.
+    SwitchScope = 0x800
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -258,6 +261,20 @@ public:
   /// isAtCatchScope - Return true if this scope is @catch.
   bool isAtCatchScope() const {
     return getFlags() & Scope::AtCatchScope;
+  }
+
+  /// isSwitchScope - Return true if this scope is a switch scope.
+  bool isSwitchScope() const {
+    for (const Scope *S = this; S; S = S->getParent()) {
+      if (S->getFlags() & Scope::SwitchScope)
+        return true;
+      else if (S->getFlags() & (Scope::FnScope | Scope::ClassScope |
+                                Scope::BlockScope | Scope::TemplateParamScope |
+                                Scope::FunctionPrototypeScope |
+                                Scope::AtCatchScope | Scope::ObjCMethodScope))
+        return false;
+    }
+    return false;
   }
 
   typedef UsingDirectivesTy::iterator udir_iterator;

@@ -204,6 +204,9 @@ def err_expected_class_name : Error<"expected class name">;
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
 
+def err_expected_case_before_expression: Error<
+  "expected 'case' keyword before expression">;
+
 // Declarations.
 def err_typename_requires_specqual : Error<
   "type name requires a specifier or qualifier">;

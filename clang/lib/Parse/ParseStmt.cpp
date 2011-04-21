@@ -121,6 +121,9 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
       return StmtError();
     }
 
+    // If a case keyword is missing, this is where it should be inserted.
+    Token OldToken = Tok;
+
     // FIXME: Use the attributes
     // expression[opt] ';'
     ExprResult Expr(ParseExpression());
@@ -133,6 +136,18 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
         ConsumeToken();
       return StmtError();
     }
+
+    if (Tok.is(tok::colon) && getCurScope()->isSwitchScope() &&
+        Actions.CheckCaseExpression(Expr.get())) {
+      // If a constant expression is followed by a colon inside a switch block,
+      // suggest a missing case keywork.
+      Diag(OldToken, diag::err_expected_case_before_expression)
+          << FixItHint::CreateInsertion(OldToken.getLocation(), "case ");
+
+      // Recover parsing as a case statement.
+      return ParseCaseStatement(attrs, /*MissingCase=*/true, Expr);
+    }
+
     // Otherwise, eat the semicolon.
     ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
     return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
@@ -251,8 +266,9 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
 ///         'case' constant-expression ':' statement
 /// [GNU]   'case' constant-expression '...' constant-expression ':' statement
 ///
-StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs) {
-  assert(Tok.is(tok::kw_case) && "Not a case stmt!");
+StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
+                                      ExprResult Expr) {
+  assert(MissingCase || Tok.is(tok::kw_case) && "Not a case stmt!");
   // FIXME: Use attributes?
 
   // It is very very common for code to contain many case statements recursively
@@ -280,7 +296,8 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs) {
 
   // While we have case statements, eat and stack them.
   do {
-    SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
+    SourceLocation CaseLoc = MissingCase ? Expr.get()->getExprLoc() :
+                                           ConsumeToken();  // eat the 'case'.
 
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteCase(getCurScope());
@@ -292,7 +309,8 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs) {
     /// expression.
     ColonProtectionRAIIObject ColonProtection(*this);
     
-    ExprResult LHS(ParseConstantExpression());
+    ExprResult LHS(MissingCase ? Expr : ParseConstantExpression());
+    MissingCase = false;
     if (LHS.isInvalid()) {
       SkipUntil(tok::colon);
       return StmtError();
@@ -775,7 +793,7 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs) {
   // while, for, and switch statements are local to the if, while, for, or
   // switch statement (including the controlled statement).
   //
-  unsigned ScopeFlags = Scope::BreakScope;
+  unsigned ScopeFlags = Scope::BreakScope | Scope::SwitchScope;
   if (C99orCXX)
     ScopeFlags |= Scope::DeclScope | Scope::ControlScope;
   ParseScope SwitchScope(this, ScopeFlags);
