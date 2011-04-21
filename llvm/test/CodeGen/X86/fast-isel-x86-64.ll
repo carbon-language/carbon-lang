@@ -14,28 +14,6 @@ define i32 @test1(i32 %i) nounwind ssp {
 ; CHECK: andl	$8, 
 
 
-; rdar://9289512 - The load should fold into the compare.
-define void @test2(i64 %x) nounwind ssp {
-entry:
-  %x.addr = alloca i64, align 8
-  store i64 %x, i64* %x.addr, align 8
-  %tmp = load i64* %x.addr, align 8
-  %cmp = icmp sgt i64 %tmp, 42
-  br i1 %cmp, label %if.then, label %if.end
-
-if.then:                                          ; preds = %entry
-  br label %if.end
-
-if.end:                                           ; preds = %if.then, %entry
-  ret void
-; CHECK: test2:
-; CHECK: movq	%rdi, -8(%rsp)
-; CHECK: cmpq	$42, -8(%rsp)
-}
-
-
-
-
 @G = external global i32
 define i64 @test3() nounwind {
   %A = ptrtoint i32* @G to i64

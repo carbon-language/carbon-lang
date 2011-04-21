@@ -280,8 +280,7 @@ private:
 
   void PrepareEHLandingPad();
   void SelectAllBasicBlocks(const Function &Fn);
-  bool TryToFoldFastISelLoad(const LoadInst *LI, const Instruction *FoldInst,
-                             FastISel *FastIS);
+  bool TryToFoldFastISelLoad(const LoadInst *LI, FastISel *FastIS);
   void FinishBasicBlock();
 
   void SelectBasicBlock(BasicBlock::const_iterator Begin,
