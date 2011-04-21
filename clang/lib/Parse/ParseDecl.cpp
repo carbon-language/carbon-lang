@@ -1143,21 +1143,25 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   //
   // C++ doesn't need this, and isTagName doesn't take SS.
   if (SS == 0) {
-    const char *TagName = 0;
+    const char *TagName = 0, *FixitTagName = 0;
     tok::TokenKind TagKind = tok::unknown;
 
     switch (Actions.isTagName(*Tok.getIdentifierInfo(), getCurScope())) {
       default: break;
-      case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
-      case DeclSpec::TST_union: TagName="union" ;TagKind=tok::kw_union ;break;
-      case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
-      case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
+      case DeclSpec::TST_enum:
+        TagName="enum"  ; FixitTagName = "enum "  ; TagKind=tok::kw_enum ;break;
+      case DeclSpec::TST_union:
+        TagName="union" ; FixitTagName = "union " ;TagKind=tok::kw_union ;break;
+      case DeclSpec::TST_struct:
+        TagName="struct"; FixitTagName = "struct ";TagKind=tok::kw_struct;break;
+      case DeclSpec::TST_class:
+        TagName="class" ; FixitTagName = "class " ;TagKind=tok::kw_class ;break;
     }
 
     if (TagName) {
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
         << Tok.getIdentifierInfo() << TagName << getLang().CPlusPlus
-        << FixItHint::CreateInsertion(Tok.getLocation(),TagName);
+        << FixItHint::CreateInsertion(Tok.getLocation(),FixitTagName);
 
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
