@@ -70,11 +70,12 @@ public:
   unsigned retReg() const { return reg_ret; }
 
   bool isArgReg(unsigned reg) const {
-    return std::binary_search(reg_arg.begin(), reg_arg.end(), reg);
+    return std::find(reg_arg.begin(), reg_arg.end(), reg) != reg_arg.end();
   }
 
   bool isLocalVarReg(unsigned reg) const {
-    return std::binary_search(reg_local_var.begin(), reg_local_var.end(), reg);
+    return std::find(reg_local_var.begin(), reg_local_var.end(), reg)
+      != reg_local_var.end();
   }
 }; // class PTXMachineFunctionInfo
 } // namespace llvm
