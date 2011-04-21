@@ -53,6 +53,38 @@ def P28 : PTXReg<"p28">;
 def P29 : PTXReg<"p29">;
 def P30 : PTXReg<"p30">;
 def P31 : PTXReg<"p31">;
+def P32 : PTXReg<"p32">;
+def P33 : PTXReg<"p33">;
+def P34 : PTXReg<"p34">;
+def P35 : PTXReg<"p35">;
+def P36 : PTXReg<"p36">;
+def P37 : PTXReg<"p37">;
+def P38 : PTXReg<"p38">;
+def P39 : PTXReg<"p39">;
+def P40 : PTXReg<"p40">;
+def P41 : PTXReg<"p41">;
+def P42 : PTXReg<"p42">;
+def P43 : PTXReg<"p43">;
+def P44 : PTXReg<"p44">;
+def P45 : PTXReg<"p45">;
+def P46 : PTXReg<"p46">;
+def P47 : PTXReg<"p47">;
+def P48 : PTXReg<"p48">;
+def P49 : PTXReg<"p49">;
+def P50 : PTXReg<"p50">;
+def P51 : PTXReg<"p51">;
+def P52 : PTXReg<"p52">;
+def P53 : PTXReg<"p53">;
+def P54 : PTXReg<"p54">;
+def P55 : PTXReg<"p55">;
+def P56 : PTXReg<"p56">;
+def P57 : PTXReg<"p57">;
+def P58 : PTXReg<"p58">;
+def P59 : PTXReg<"p59">;
+def P60 : PTXReg<"p60">;
+def P61 : PTXReg<"p61">;
+def P62 : PTXReg<"p62">;
+def P63 : PTXReg<"p63">;
 
 ///===- 16-bit Integer Registers ------------------------------------------===//
 
@@ -88,6 +120,39 @@ def RH28 : PTXReg<"rh28">;
 def RH29 : PTXReg<"rh29">;
 def RH30 : PTXReg<"rh30">;
 def RH31 : PTXReg<"rh31">;
+def RH32 : PTXReg<"rh32">;
+def RH33 : PTXReg<"rh33">;
+def RH34 : PTXReg<"rh34">;
+def RH35 : PTXReg<"rh35">;
+def RH36 : PTXReg<"rh36">;
+def RH37 : PTXReg<"rh37">;
+def RH38 : PTXReg<"rh38">;
+def RH39 : PTXReg<"rh39">;
+def RH40 : PTXReg<"rh40">;
+def RH41 : PTXReg<"rh41">;
+def RH42 : PTXReg<"rh42">;
+def RH43 : PTXReg<"rh43">;
+def RH44 : PTXReg<"rh44">;
+def RH45 : PTXReg<"rh45">;
+def RH46 : PTXReg<"rh46">;
+def RH47 : PTXReg<"rh47">;
+def RH48 : PTXReg<"rh48">;
+def RH49 : PTXReg<"rh49">;
+def RH50 : PTXReg<"rh50">;
+def RH51 : PTXReg<"rh51">;
+def RH52 : PTXReg<"rh52">;
+def RH53 : PTXReg<"rh53">;
+def RH54 : PTXReg<"rh54">;
+def RH55 : PTXReg<"rh55">;
+def RH56 : PTXReg<"rh56">;
+def RH57 : PTXReg<"rh57">;
+def RH58 : PTXReg<"rh58">;
+def RH59 : PTXReg<"rh59">;
+def RH60 : PTXReg<"rh60">;
+def RH61 : PTXReg<"rh61">;
+def RH62 : PTXReg<"rh62">;
+def RH63 : PTXReg<"rh63">;
+
 
 ///===- 32-bit Integer Registers ------------------------------------------===//
 
@@ -123,6 +188,39 @@ def R28 : PTXReg<"r28">;
 def R29 : PTXReg<"r29">;
 def R30 : PTXReg<"r30">;
 def R31 : PTXReg<"r31">;
+def R32 : PTXReg<"r32">;
+def R33 : PTXReg<"r33">;
+def R34 : PTXReg<"r34">;
+def R35 : PTXReg<"r35">;
+def R36 : PTXReg<"r36">;
+def R37 : PTXReg<"r37">;
+def R38 : PTXReg<"r38">;
+def R39 : PTXReg<"r39">;
+def R40 : PTXReg<"r40">;
+def R41 : PTXReg<"r41">;
+def R42 : PTXReg<"r42">;
+def R43 : PTXReg<"r43">;
+def R44 : PTXReg<"r44">;
+def R45 : PTXReg<"r45">;
+def R46 : PTXReg<"r46">;
+def R47 : PTXReg<"r47">;
+def R48 : PTXReg<"r48">;
+def R49 : PTXReg<"r49">;
+def R50 : PTXReg<"r50">;
+def R51 : PTXReg<"r51">;
+def R52 : PTXReg<"r52">;
+def R53 : PTXReg<"r53">;
+def R54 : PTXReg<"r54">;
+def R55 : PTXReg<"r55">;
+def R56 : PTXReg<"r56">;
+def R57 : PTXReg<"r57">;
+def R58 : PTXReg<"r58">;
+def R59 : PTXReg<"r59">;
+def R60 : PTXReg<"r60">;
+def R61 : PTXReg<"r61">;
+def R62 : PTXReg<"r62">;
+def R63 : PTXReg<"r63">;
+
 
 ///===- 64-bit Integer Registers ------------------------------------------===//
 
@@ -158,6 +256,39 @@ def RD28 : PTXReg<"rd28">;
 def RD29 : PTXReg<"rd29">;
 def RD30 : PTXReg<"rd30">;
 def RD31 : PTXReg<"rd31">;
+def RD32 : PTXReg<"rd32">;
+def RD33 : PTXReg<"rd33">;
+def RD34 : PTXReg<"rd34">;
+def RD35 : PTXReg<"rd35">;
+def RD36 : PTXReg<"rd36">;
+def RD37 : PTXReg<"rd37">;
+def RD38 : PTXReg<"rd38">;
+def RD39 : PTXReg<"rd39">;
+def RD40 : PTXReg<"rd40">;
+def RD41 : PTXReg<"rd41">;
+def RD42 : PTXReg<"rd42">;
+def RD43 : PTXReg<"rd43">;
+def RD44 : PTXReg<"rd44">;
+def RD45 : PTXReg<"rd45">;
+def RD46 : PTXReg<"rd46">;
+def RD47 : PTXReg<"rd47">;
+def RD48 : PTXReg<"rd48">;
+def RD49 : PTXReg<"rd49">;
+def RD50 : PTXReg<"rd50">;
+def RD51 : PTXReg<"rd51">;
+def RD52 : PTXReg<"rd52">;
+def RD53 : PTXReg<"rd53">;
+def RD54 : PTXReg<"rd54">;
+def RD55 : PTXReg<"rd55">;
+def RD56 : PTXReg<"rd56">;
+def RD57 : PTXReg<"rd57">;
+def RD58 : PTXReg<"rd58">;
+def RD59 : PTXReg<"rd59">;
+def RD60 : PTXReg<"rd60">;
+def RD61 : PTXReg<"rd61">;
+def RD62 : PTXReg<"rd62">;
+def RD63 : PTXReg<"rd63">;
+
 
 ///===- 32-bit Floating-Point Registers -----------------------------------===//
 
@@ -193,6 +324,39 @@ def F28 : PTXReg<"f28">;
 def F29 : PTXReg<"f29">;
 def F30 : PTXReg<"f30">;
 def F31 : PTXReg<"f31">;
+def F32 : PTXReg<"f32">;
+def F33 : PTXReg<"f33">;
+def F34 : PTXReg<"f34">;
+def F35 : PTXReg<"f35">;
+def F36 : PTXReg<"f36">;
+def F37 : PTXReg<"f37">;
+def F38 : PTXReg<"f38">;
+def F39 : PTXReg<"f39">;
+def F40 : PTXReg<"f40">;
+def F41 : PTXReg<"f41">;
+def F42 : PTXReg<"f42">;
+def F43 : PTXReg<"f43">;
+def F44 : PTXReg<"f44">;
+def F45 : PTXReg<"f45">;
+def F46 : PTXReg<"f46">;
+def F47 : PTXReg<"f47">;
+def F48 : PTXReg<"f48">;
+def F49 : PTXReg<"f49">;
+def F50 : PTXReg<"f50">;
+def F51 : PTXReg<"f51">;
+def F52 : PTXReg<"f52">;
+def F53 : PTXReg<"f53">;
+def F54 : PTXReg<"f54">;
+def F55 : PTXReg<"f55">;
+def F56 : PTXReg<"f56">;
+def F57 : PTXReg<"f57">;
+def F58 : PTXReg<"f58">;
+def F59 : PTXReg<"f59">;
+def F60 : PTXReg<"f60">;
+def F61 : PTXReg<"f61">;
+def F62 : PTXReg<"f62">;
+def F63 : PTXReg<"f63">;
+
 
 ///===- 64-bit Floating-Point Registers -----------------------------------===//
 
@@ -228,6 +392,38 @@ def FD28 : PTXReg<"fd28">;
 def FD29 : PTXReg<"fd29">;
 def FD30 : PTXReg<"fd30">;
 def FD31 : PTXReg<"fd31">;
+def FD32 : PTXReg<"fd32">;
+def FD33 : PTXReg<"fd33">;
+def FD34 : PTXReg<"fd34">;
+def FD35 : PTXReg<"fd35">;
+def FD36 : PTXReg<"fd36">;
+def FD37 : PTXReg<"fd37">;
+def FD38 : PTXReg<"fd38">;
+def FD39 : PTXReg<"fd39">;
+def FD40 : PTXReg<"fd40">;
+def FD41 : PTXReg<"fd41">;
+def FD42 : PTXReg<"fd42">;
+def FD43 : PTXReg<"fd43">;
+def FD44 : PTXReg<"fd44">;
+def FD45 : PTXReg<"fd45">;
+def FD46 : PTXReg<"f4d6">;
+def FD47 : PTXReg<"fd47">;
+def FD48 : PTXReg<"fd48">;
+def FD49 : PTXReg<"fd49">;
+def FD50 : PTXReg<"fd50">;
+def FD51 : PTXReg<"fd51">;
+def FD52 : PTXReg<"fd52">;
+def FD53 : PTXReg<"fd53">;
+def FD54 : PTXReg<"fd54">;
+def FD55 : PTXReg<"fd55">;
+def FD56 : PTXReg<"fd56">;
+def FD57 : PTXReg<"fd57">;
+def FD58 : PTXReg<"fd58">;
+def FD59 : PTXReg<"fd59">;
+def FD60 : PTXReg<"fd60">;
+def FD61 : PTXReg<"fd61">;
+def FD62 : PTXReg<"fd62">;
+def FD63 : PTXReg<"fd63">;
 
 
 //===----------------------------------------------------------------------===//
@@ -238,34 +434,58 @@ def Preds : RegisterClass<"PTX", [i1], 8,
                           [P0, P1, P2, P3, P4, P5, P6, P7,
                            P8, P9, P10, P11, P12, P13, P14, P15,
                            P16, P17, P18, P19, P20, P21, P22, P23,
-                           P24, P25, P26, P27, P28, P29, P30, P31]>;
+                           P24, P25, P26, P27, P28, P29, P30, P31,
+                           P32, P33, P34, P35, P36, P37, P38, P39,
+                           P40, P41, P42, P43, P44, P45, P46, P47,
+                           P48, P49, P50, P51, P52, P53, P54, P55,
+                           P56, P57, P58, P59, P60, P61, P62, P63]>;
 
 def RRegu16 : RegisterClass<"PTX", [i16], 16,
                             [RH0, RH1, RH2, RH3, RH4, RH5, RH6, RH7,
                              RH8, RH9, RH10, RH11, RH12, RH13, RH14, RH15,
                              RH16, RH17, RH18, RH19, RH20, RH21, RH22, RH23,
-                             RH24, RH25, RH26, RH27, RH28, RH29, RH30, RH31]>;
+                             RH24, RH25, RH26, RH27, RH28, RH29, RH30, RH31,
+                             RH32, RH33, RH34, RH35, RH36, RH37, RH38, RH39,
+                             RH40, RH41, RH42, RH43, RH44, RH45, RH46, RH47,
+                             RH48, RH49, RH50, RH51, RH52, RH53, RH54, RH55,
+                             RH56, RH57, RH58, RH59, RH60, RH61, RH62, RH63]>;
 
 def RRegu32 : RegisterClass<"PTX", [i32], 32,
                             [R0, R1, R2, R3, R4, R5, R6, R7,
                              R8, R9, R10, R11, R12, R13, R14, R15,
                              R16, R17, R18, R19, R20, R21, R22, R23,
-                             R24, R25, R26, R27, R28, R29, R30, R31]>;
+                             R24, R25, R26, R27, R28, R29, R30, R31,
+                             R32, R33, R34, R35, R36, R37, R38, R39,
+                             R40, R41, R42, R43, R44, R45, R46, R47,
+                             R48, R49, R50, R51, R52, R53, R54, R55,
+                             R56, R57, R58, R59, R60, R61, R62, R63]>;
 
 def RRegu64 : RegisterClass<"PTX", [i64], 64,
                             [RD0, RD1, RD2, RD3, RD4, RD5, RD6, RD7,
                              RD8, RD9, RD10, RD11, RD12, RD13, RD14, RD15,
                              RD16, RD17, RD18, RD19, RD20, RD21, RD22, RD23,
-                             RD24, RD25, RD26, RD27, RD28, RD29, RD30, RD31]>;
+                             RD24, RD25, RD26, RD27, RD28, RD29, RD30, RD31,
+                             RD32, RD33, RD34, RD35, RD36, RD37, RD38, RD39,
+                             RD40, RD41, RD42, RD43, RD44, RD45, RD46, RD47,
+                             RD48, RD49, RD50, RD51, RD52, RD53, RD54, RD55,
+                             RD56, RD57, RD58, RD59, RD60, RD61, RD62, RD63]>;
 
 def RRegf32 : RegisterClass<"PTX", [f32], 32,
                             [F0, F1, F2, F3, F4, F5, F6, F7,
                              F8, F9, F10, F11, F12, F13, F14, F15,
                              F16, F17, F18, F19, F20, F21, F22, F23,
-                             F24, F25, F26, F27, F28, F29, F30, F31]>;
+                             F24, F25, F26, F27, F28, F29, F30, F31,
+                             F32, F33, F34, F35, F36, F37, F38, F39,
+                             F40, F41, F42, F43, F44, F45, F46, F47,
+                             F48, F49, F50, F51, F52, F53, F54, F55,
+                             F56, F57, F58, F59, F60, F61, F62, F63]>;
 
 def RRegf64 : RegisterClass<"PTX", [f64], 64,
                             [FD0, FD1, FD2, FD3, FD4, FD5, FD6, FD7,
                              FD8, FD9, FD10, FD11, FD12, FD13, FD14, FD15,
                              FD16, FD17, FD18, FD19, FD20, FD21, FD22, FD23,
-                             FD24, FD25, FD26, FD27, FD28, FD29, FD30, FD31]>;
+                             FD24, FD25, FD26, FD27, FD28, FD29, FD30, FD31,
+                             FD32, FD33, FD34, FD35, FD36, FD37, FD38, FD39,
+                             FD40, FD41, FD42, FD43, FD44, FD45, FD46, FD47,
+                             FD48, FD49, FD50, FD51, FD52, FD53, FD54, FD55,
+                             FD56, FD57, FD58, FD59, FD60, FD61, FD62, FD63]>;
