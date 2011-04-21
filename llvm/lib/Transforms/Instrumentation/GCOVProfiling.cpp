@@ -123,8 +123,8 @@ namespace {
     // represent this string in a GCOV file
     unsigned LengthOfGCOVString(StringRef s) {
       // A GCOV string is a length, followed by a NUL, then between 0 and 3 NULs
-      // padding out to the next 4-byte word. The length is measured in 4-byte words
-      // including padding, not bytes of actual string.
+      // padding out to the next 4-byte word. The length is measured in 4-byte
+      // words including padding, not bytes of actual string.
       return (s.size() + 5) / 4;
     }
 
@@ -367,7 +367,7 @@ void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
   for (DenseMap<const MDNode *, raw_fd_ostream *>::iterator
            I = gcno_files.begin(), E = gcno_files.end(); I != E; ++I) {
     raw_fd_ostream *&Out = I->second;
-    Out->write("\0\0\0\0\0\0\0\0", 4); // EOF
+    Out->write("\0\0\0\0\0\0\0\0", 8); // EOF
     Out->close();
     delete Out;
   }
