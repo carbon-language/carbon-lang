@@ -43,7 +43,13 @@ namespace {
     bool runOnModule(Module &M);
   public:
     static char ID;
-    GCOVProfiler() : ModulePass(ID) {
+    GCOVProfiler()
+        : ModulePass(ID), EmitNotes(true), EmitData(true) {
+      initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
+    }
+    GCOVProfiler(bool EmitNotes, bool EmitData)
+        : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData) {
+      assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
     virtual const char *getPassName() const {
@@ -70,6 +76,9 @@ namespace {
                                SmallVector<std::pair<GlobalVariable *,
                                                      uint32_t>, 8> &);
 
+    bool EmitNotes;
+    bool EmitData;
+
     Module *Mod;
     LLVMContext *Ctx;
   };
@@ -79,7 +88,9 @@ char GCOVProfiler::ID = 0;
 INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
                 "Insert instrumentation for GCOV profiling", false, false)
 
-ModulePass *llvm::createGCOVProfilerPass() { return new GCOVProfiler(); }
+ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData) {
+  return new GCOVProfiler(EmitNotes, EmitData);
+}
 
 static DISubprogram FindSubprogram(DIScope scope) {
   while (!scope.isSubprogram()) {
@@ -301,8 +312,9 @@ bool GCOVProfiler::runOnModule(Module &M) {
   DebugInfoFinder DIF;
   DIF.processModule(*Mod);
 
-  EmitGCNO(DIF);
-  return EmitProfileArcs(DIF);
+  if (EmitNotes) EmitGCNO(DIF);
+  if (EmitData) return EmitProfileArcs(DIF);
+  return false;
 }
 
 void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
