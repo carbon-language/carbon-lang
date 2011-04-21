@@ -383,6 +383,9 @@ namespace llvm {
     /// encoding specified.
     virtual unsigned getISAEncoding() { return 0; }
 
+    /// EmitDwarfRegOp - Emit dwarf register operation.
+    virtual void EmitDwarfRegOp(const MachineLocation &MLoc) const;
+
     //===------------------------------------------------------------------===//
     // Dwarf Lowering Routines
     //===------------------------------------------------------------------===//

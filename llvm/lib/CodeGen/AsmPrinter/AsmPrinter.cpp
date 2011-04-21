@@ -752,6 +752,40 @@ getDebugValueLocation(const MachineInstr *MI) const {
   return MachineLocation();
 }
 
+/// EmitDwarfRegOp - Emit dwarf register operation.
+void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  unsigned Reg = RI->getDwarfRegNum(MLoc.getReg(), false);
+  if (int Offset =  MLoc.getOffset()) {
+    // If the value is at a certain offset from frame register then
+    // use DW_OP_fbreg.
+    unsigned OffsetSize = Offset ? MCAsmInfo::getSLEB128Size(Offset) : 1;
+    OutStreamer.AddComment("Loc expr size");
+    EmitInt16(1 + OffsetSize);
+    OutStreamer.AddComment(
+      dwarf::OperationEncodingString(dwarf::DW_OP_fbreg));
+    EmitInt8(dwarf::DW_OP_fbreg);
+    OutStreamer.AddComment("Offset");
+    EmitSLEB128(Offset);
+  } else {
+    if (Reg < 32) {
+      OutStreamer.AddComment("Loc expr size");
+      EmitInt16(1);
+      OutStreamer.AddComment(
+        dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
+      EmitInt8(dwarf::DW_OP_reg0 + Reg);
+    } else {
+      OutStreamer.AddComment("Loc expr size");
+      EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
+      OutStreamer.AddComment(
+        dwarf::OperationEncodingString(dwarf::DW_OP_regx));
+      EmitInt8(dwarf::DW_OP_regx);
+      OutStreamer.AddComment(Twine(Reg));
+      EmitULEB128(Reg);
+    }
+  }
+}
+
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();

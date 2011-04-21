@@ -2692,36 +2692,7 @@ void DwarfDebug::emitDebugLoc() {
     } else {
       Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
       Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
-      const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-      unsigned Reg = RI->getDwarfRegNum(Entry.Loc.getReg(), false);
-      if (int Offset =  Entry.Loc.getOffset()) {
-        // If the value is at a certain offset from frame register then
-        // use DW_OP_fbreg.
-        unsigned OffsetSize = Offset ? MCAsmInfo::getSLEB128Size(Offset) : 1;
-        Asm->OutStreamer.AddComment("Loc expr size");
-        Asm->EmitInt16(1 + OffsetSize);
-        Asm->OutStreamer.AddComment(
-          dwarf::OperationEncodingString(dwarf::DW_OP_fbreg));
-        Asm->EmitInt8(dwarf::DW_OP_fbreg);
-        Asm->OutStreamer.AddComment("Offset");
-        Asm->EmitSLEB128(Offset);
-      } else {
-        if (Reg < 32) {
-          Asm->OutStreamer.AddComment("Loc expr size");
-          Asm->EmitInt16(1);
-          Asm->OutStreamer.AddComment(
-            dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
-          Asm->EmitInt8(dwarf::DW_OP_reg0 + Reg);
-        } else {
-          Asm->OutStreamer.AddComment("Loc expr size");
-          Asm->EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
-          Asm->OutStreamer.AddComment(
-            dwarf::OperationEncodingString(dwarf::DW_OP_regx));
-          Asm->EmitInt8(dwarf::DW_OP_regx);
-          Asm->OutStreamer.AddComment(Twine(Reg));
-          Asm->EmitULEB128(Reg);
-        }
-      }
+      Asm->EmitDwarfRegOp(Entry.Loc);
     }
   }
 }
