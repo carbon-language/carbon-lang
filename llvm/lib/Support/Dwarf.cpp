@@ -395,6 +395,7 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   case DW_OP_call_ref:                   return "DW_OP_call_ref";
   case DW_OP_form_tls_address:           return "DW_OP_form_tls_address";
   case DW_OP_call_frame_cfa:             return "DW_OP_call_frame_cfa";
+  case DW_OP_bit_piece:                  return "DW_OP_bit_piece";
   case DW_OP_lo_user:                    return "DW_OP_lo_user";
   case DW_OP_hi_user:                    return "DW_OP_hi_user";
   }

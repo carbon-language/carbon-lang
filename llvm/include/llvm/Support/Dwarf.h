@@ -411,6 +411,7 @@ enum dwarf_constants {
   DW_OP_call_ref = 0x9a,
   DW_OP_form_tls_address = 0x9b,
   DW_OP_call_frame_cfa = 0x9c,
+  DW_OP_bit_piece = 0x9d,
   DW_OP_lo_user = 0xe0,
   DW_OP_hi_user = 0xff,
 
