@@ -1254,7 +1254,7 @@ InitListExpr::InitListExpr(ASTContext &C, SourceLocation lbraceloc,
          false),
     InitExprs(C, numInits),
     LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), SyntacticForm(0),
-    UnionFieldInit(0), HadArrayRangeDesignator(false) 
+    HadArrayRangeDesignator(false) 
 {      
   for (unsigned I = 0; I != numInits; ++I) {
     if (initExprs[I]->isTypeDependent())

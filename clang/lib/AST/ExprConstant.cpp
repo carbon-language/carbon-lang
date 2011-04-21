@@ -319,6 +319,8 @@ public:
   bool VisitInitListExpr(InitListExpr *E) {
     for (unsigned i = 0, e = E->getNumInits(); i != e; ++i)
       if (Visit(E->getInit(i))) return true;
+    if (Expr *filler = E->getArrayFiller())
+      return Visit(filler);
     return false;
   }
     

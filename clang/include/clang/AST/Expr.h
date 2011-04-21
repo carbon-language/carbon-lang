@@ -3178,9 +3178,14 @@ class InitListExpr : public Expr {
   /// written in the source code.
   InitListExpr *SyntacticForm;
 
-  /// If this initializer list initializes a union, specifies which
-  /// field within the union will be initialized.
-  FieldDecl *UnionFieldInit;
+  /// \brief Either:
+  ///  If this initializer list initializes an array with more elements than
+  ///  there are initializers in the list, specifies an expression to be used
+  ///  for value initialization of the rest of the elements.
+  /// Or
+  ///  If this initializer list initializes a union, specifies which
+  ///  field within the union will be initialized.
+  llvm::PointerUnion<Expr *, FieldDecl *> ArrayFillerOrUnionFieldInit;
 
   /// Whether this initializer list originally had a GNU array-range
   /// designator in it. This is a temporary marker used by CodeGen.
@@ -3235,14 +3240,28 @@ public:
   /// accommodate the new entry.
   Expr *updateInit(ASTContext &C, unsigned Init, Expr *expr);
 
+  /// \brief If this initializer list initializes an array with more elements
+  /// than there are initializers in the list, specifies an expression to be
+  /// used for value initialization of the rest of the elements.
+  Expr *getArrayFiller() {
+    return ArrayFillerOrUnionFieldInit.dyn_cast<Expr *>();
+  }
+  void setArrayFiller(Expr *filler) {
+    ArrayFillerOrUnionFieldInit = filler;
+  }
+
   /// \brief If this initializes a union, specifies which field in the
   /// union to initialize.
   ///
   /// Typically, this field is the first named field within the
   /// union. However, a designated initializer can specify the
   /// initialization of a different field within the union.
-  FieldDecl *getInitializedFieldInUnion() { return UnionFieldInit; }
-  void setInitializedFieldInUnion(FieldDecl *FD) { UnionFieldInit = FD; }
+  FieldDecl *getInitializedFieldInUnion() {
+    return ArrayFillerOrUnionFieldInit.dyn_cast<FieldDecl *>();
+  }
+  void setInitializedFieldInUnion(FieldDecl *FD) {
+    ArrayFillerOrUnionFieldInit = FD;
+  }
 
   // Explicit InitListExpr's originate from source code (and have valid source
   // locations). Implicit InitListExpr's are created by the semantic analyzer.
@@ -3293,6 +3312,9 @@ public:
   const_reverse_iterator rbegin() const { return InitExprs.rbegin(); }
   reverse_iterator rend() { return InitExprs.rend(); }
   const_reverse_iterator rend() const { return InitExprs.rend(); }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// @brief Represents a C99 designated initializer expression.

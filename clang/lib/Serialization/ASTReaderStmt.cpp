@@ -690,8 +690,11 @@ void ASTStmtReader::VisitInitListExpr(InitListExpr *E) {
   E->setSyntacticForm(cast_or_null<InitListExpr>(Reader.ReadSubStmt()));
   E->setLBraceLoc(ReadSourceLocation(Record, Idx));
   E->setRBraceLoc(ReadSourceLocation(Record, Idx));
-  E->setInitializedFieldInUnion(
-                      cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++])));
+  if (Record[Idx++]) // isArrayFiller
+    E->ArrayFillerOrUnionFieldInit = Reader.ReadSubExpr();
+  else
+    E->ArrayFillerOrUnionFieldInit
+        = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
   E->sawArrayRangeDesignator(Record[Idx++]);
 }
 

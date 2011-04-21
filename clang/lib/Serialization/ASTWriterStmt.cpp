@@ -673,7 +673,12 @@ void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
   Writer.AddStmt(E->getSyntacticForm());
   Writer.AddSourceLocation(E->getLBraceLoc(), Record);
   Writer.AddSourceLocation(E->getRBraceLoc(), Record);
-  Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
+  bool isArrayFiller = E->ArrayFillerOrUnionFieldInit.is<Expr*>();
+  Record.push_back(isArrayFiller);
+  if (isArrayFiller)
+    Writer.AddStmt(E->getArrayFiller());
+  else
+    Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
   Record.push_back(E->hadArrayRangeDesignator());
   Code = serialization::EXPR_INIT_LIST;
 }

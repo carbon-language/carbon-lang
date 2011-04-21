@@ -641,6 +641,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       
       if (i < NumInitElements)
         EmitInitializationToLValue(E->getInit(i), LV, ElementType);
+      else if (Expr *filler = E->getArrayFiller())
+        EmitInitializationToLValue(filler, LV, ElementType);
       else
         EmitNullInitializationToLValue(LV, ElementType);
       

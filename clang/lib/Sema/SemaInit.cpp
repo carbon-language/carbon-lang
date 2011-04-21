@@ -405,14 +405,23 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
         // Do nothing
       } else if (Init < NumInits) {
         ILE->setInit(Init, ElementInit.takeAs<Expr>());
-      } else if (InitSeq.getKind()
+      } else {
+        // For arrays, just set the expression used for value-initialization
+        // of the rest of elements and exit.
+        if (ElementEntity.getKind() == InitializedEntity::EK_ArrayElement) {
+          ILE->setArrayFiller(ElementInit.takeAs<Expr>());
+          return;
+        }
+
+        if (InitSeq.getKind()
                    == InitializationSequence::ConstructorInitialization) {
-        // Value-initialization requires a constructor call, so
-        // extend the initializer list to include the constructor
-        // call and make a note that we'll need to take another pass
-        // through the initializer list.
-        ILE->updateInit(SemaRef.Context, Init, ElementInit.takeAs<Expr>());
-        RequiresSecondPass = true;
+          // Value-initialization requires a constructor call, so
+          // extend the initializer list to include the constructor
+          // call and make a note that we'll need to take another pass
+          // through the initializer list.
+          ILE->updateInit(SemaRef.Context, Init, ElementInit.takeAs<Expr>());
+          RequiresSecondPass = true;
+        }
       }
     } else if (InitListExpr *InnerILE
                  = dyn_cast<InitListExpr>(ILE->getInit(Init)))

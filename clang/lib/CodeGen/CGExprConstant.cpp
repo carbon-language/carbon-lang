@@ -667,8 +667,16 @@ public:
 
     // Initialize remaining array elements.
     // FIXME: This doesn't handle member pointers correctly!
+    llvm::Constant *fillC;
+    if (Expr *filler = ILE->getArrayFiller())
+      fillC = CGM.EmitConstantExpr(filler, filler->getType(), CGF);
+    else
+      fillC = llvm::Constant::getNullValue(ElemTy);
+    if (!fillC)
+      return 0;
+    RewriteType |= (fillC->getType() != ElemTy);
     for (; i < NumElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+      Elts.push_back(fillC);
 
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
