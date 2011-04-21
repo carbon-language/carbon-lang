@@ -2715,7 +2715,10 @@ void DwarfDebug::emitDebugLoc() {
         } else {
           Asm->OutStreamer.AddComment("Loc expr size");
           Asm->EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
+          Asm->OutStreamer.AddComment(
+            dwarf::OperationEncodingString(dwarf::DW_OP_regx));
           Asm->EmitInt8(dwarf::DW_OP_regx);
+          Asm->OutStreamer.AddComment(Twine(Reg));
           Asm->EmitULEB128(Reg);
         }
       }
