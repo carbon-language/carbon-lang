@@ -404,7 +404,12 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
       if (hadError) {
         // Do nothing
       } else if (Init < NumInits) {
-        ILE->setInit(Init, ElementInit.takeAs<Expr>());
+        // For arrays, just set the expression used for value-initialization
+        // of the "holes" in the array.
+        if (ElementEntity.getKind() == InitializedEntity::EK_ArrayElement)
+          ILE->setArrayFiller(ElementInit.takeAs<Expr>());
+        else
+          ILE->setInit(Init, ElementInit.takeAs<Expr>());
       } else {
         // For arrays, just set the expression used for value-initialization
         // of the rest of elements and exit.

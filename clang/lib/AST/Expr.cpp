@@ -1289,6 +1289,15 @@ Expr *InitListExpr::updateInit(ASTContext &C, unsigned Init, Expr *expr) {
   return Result;
 }
 
+void InitListExpr::setArrayFiller(Expr *filler) {
+  ArrayFillerOrUnionFieldInit = filler;
+  // Fill out any "holes" in the array due to designated initializers.
+  Expr **inits = getInits();
+  for (unsigned i = 0, e = getNumInits(); i != e; ++i)
+    if (inits[i] == 0)
+      inits[i] = filler;
+}
+
 SourceRange InitListExpr::getSourceRange() const {
   if (SyntacticForm)
     return SyntacticForm->getSourceRange();

@@ -3246,9 +3246,7 @@ public:
   Expr *getArrayFiller() {
     return ArrayFillerOrUnionFieldInit.dyn_cast<Expr *>();
   }
-  void setArrayFiller(Expr *filler) {
-    ArrayFillerOrUnionFieldInit = filler;
-  }
+  void setArrayFiller(Expr *filler);
 
   /// \brief If this initializes a union, specifies which field in the
   /// union to initialize.
