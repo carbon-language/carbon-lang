@@ -349,7 +349,7 @@ Value *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
   }
 
   // Create and return a placeholder, which will later be RAUW'd.
-  Value *V = MDNode::getTemporary(Context, 0, 0);
+  Value *V = MDNode::getTemporary(Context, ArrayRef<Value*>());
   MDValuePtrs[Idx] = V;
   return V;
 }
@@ -843,9 +843,7 @@ bool BitcodeReader::ParseMetadata() {
         else
           Elts.push_back(NULL);
       }
-      Value *V = MDNode::getWhenValsUnresolved(Context,
-                                               Elts.data(), Elts.size(),
-                                               IsFunctionLocal);
+      Value *V = MDNode::getWhenValsUnresolved(Context, Elts, IsFunctionLocal);
       IsFunctionLocal = false;
       MDValueList.AssignValue(V, NextMDValueNo++);
       break;

@@ -84,18 +84,18 @@ static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
   return reinterpret_cast<MDNodeOperand*>(N+1)+Op;
 }
 
-MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-               bool isFunctionLocal)
+MDNode::MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal)
 : Value(Type::getMetadataTy(C), Value::MDNodeVal) {
-  NumOperands = NumVals;
+  NumOperands = Vals.size();
 
   if (isFunctionLocal)
     setValueSubclassData(getSubclassDataFromValue() | FunctionLocalBit);
 
   // Initialize the operand list, which is co-allocated on the end of the node.
+  unsigned i = 0;
   for (MDNodeOperand *Op = getOperandPtr(this, 0), *E = Op+NumOperands;
-       Op != E; ++Op, ++Vals)
-    new (Op) MDNodeOperand(*Vals, this);
+       Op != E; ++Op, ++i)
+    new (Op) MDNodeOperand(Vals[i], this);
 }
 
 
@@ -183,9 +183,8 @@ static bool isFunctionLocalValue(Value *V) {
          (isa<MDNode>(V) && cast<MDNode>(V)->isFunctionLocal());
 }
 
-MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
-                          unsigned NumVals, FunctionLocalness FL,
-                          bool Insert) {
+MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
+                          FunctionLocalness FL, bool Insert) {
   LLVMContextImpl *pImpl = Context.pImpl;
 
   // Add all the operand pointers. Note that we don't have to add the
@@ -193,7 +192,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
   // Note that if the operands are later nulled out, the node will be
   // removed from the uniquing map.
   FoldingSetNodeID ID;
-  for (unsigned i = 0; i != NumVals; ++i)
+  for (unsigned i = 0; i != Vals.size(); ++i)
     ID.AddPointer(Vals[i]);
 
   void *InsertPoint;
@@ -205,7 +204,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
   bool isFunctionLocal = false;
   switch (FL) {
   case FL_Unknown:
-    for (unsigned i = 0; i != NumVals; ++i) {
+    for (unsigned i = 0; i != Vals.size(); ++i) {
       Value *V = Vals[i];
       if (!V) continue;
       if (isFunctionLocalValue(V)) {
@@ -223,8 +222,8 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
   }
 
   // Coallocate space for the node and Operands together, then placement new.
-  void *Ptr = malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
-  N = new (Ptr) MDNode(Context, Vals, NumVals, isFunctionLocal);
+  void *Ptr = malloc(sizeof(MDNode)+Vals.size()*sizeof(MDNodeOperand));
+  N = new (Ptr) MDNode(Context, Vals, isFunctionLocal);
 
   // InsertPoint will have been set by the FindNodeOrInsertPos call.
   pImpl->MDNodeSet.InsertNode(N, InsertPoint);
@@ -233,26 +232,23 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, Value *const *Vals,
 }
 
 MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Value*> Vals) {
-  return getMDNode(Context, Vals.data(), Vals.size(), FL_Unknown);
-}
-MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
-  return getMDNode(Context, Vals, NumVals, FL_Unknown);
+  return getMDNode(Context, Vals, FL_Unknown);
 }
 
-MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
-                                      unsigned NumVals, bool isFunctionLocal) {
-  return getMDNode(Context, Vals, NumVals, isFunctionLocal ? FL_Yes : FL_No);
+MDNode *MDNode::getWhenValsUnresolved(LLVMContext &Context,
+                                      ArrayRef<Value*> Vals,
+                                      bool isFunctionLocal) {
+  return getMDNode(Context, Vals, isFunctionLocal ? FL_Yes : FL_No);
 }
 
-MDNode *MDNode::getIfExists(LLVMContext &Context, Value *const *Vals,
-                            unsigned NumVals) {
-  return getMDNode(Context, Vals, NumVals, FL_Unknown, false);
+MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals) {
+  return getMDNode(Context, Vals, FL_Unknown, false);
 }
 
-MDNode *MDNode::getTemporary(LLVMContext &Context, Value *const *Vals,
-                             unsigned NumVals) {
-  MDNode *N = (MDNode *)malloc(sizeof(MDNode)+NumVals*sizeof(MDNodeOperand));
-  N = new (N) MDNode(Context, Vals, NumVals, FL_No);
+MDNode *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals) {
+  MDNode *N =
+    (MDNode *)malloc(sizeof(MDNode)+Vals.size()*sizeof(MDNodeOperand));
+  N = new (N) MDNode(Context, Vals, FL_No);
   N->setValueSubclassData(N->getSubclassDataFromValue() |
                           NotUniquedBit);
   LeakDetector::addGarbageObject(N);

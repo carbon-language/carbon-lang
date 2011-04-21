@@ -111,30 +111,25 @@ class MDNode : public Value, public FoldingSetNode {
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
 
-  MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
-         bool isFunctionLocal);
+  MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal);
   
-  static MDNode *getMDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals,
+  static MDNode *getMDNode(LLVMContext &C, ArrayRef<Value*> Vals,
                            FunctionLocalness FL, bool Insert = true);
 public:
   // Constructors and destructors.
-  static MDNode *get(LLVMContext &Context, ArrayRef<Value*> V);
-  // FIXME: Eliminate this constructor form.
-  static MDNode *get(LLVMContext &Context, Value *const *Vals,
-                     unsigned NumVals);
+  static MDNode *get(LLVMContext &Context, ArrayRef<Value*> Vals);
   // getWhenValsUnresolved - Construct MDNode determining function-localness
   // from isFunctionLocal argument, not by analyzing Vals.
-  static MDNode *getWhenValsUnresolved(LLVMContext &Context, Value *const *Vals,
-                                       unsigned NumVals, bool isFunctionLocal);
+  static MDNode *getWhenValsUnresolved(LLVMContext &Context,
+                                       ArrayRef<Value*> Vals,
+                                       bool isFunctionLocal);
                                        
-  static MDNode *getIfExists(LLVMContext &Context, Value *const *Vals,
-                             unsigned NumVals);
+  static MDNode *getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals);
 
   /// getTemporary - Return a temporary MDNode, for use in constructing
   /// cyclic MDNode structures. A temporary MDNode is not uniqued,
   /// may be RAUW'd, and must be manually deleted with deleteTemporary.
-  static MDNode *getTemporary(LLVMContext &Context, Value *const *Vals,
-                              unsigned NumVals);
+  static MDNode *getTemporary(LLVMContext &Context, ArrayRef<Value*> Vals);
 
   /// deleteTemporary - Deallocate a node created by getTemporary. The
   /// node must not have any users.

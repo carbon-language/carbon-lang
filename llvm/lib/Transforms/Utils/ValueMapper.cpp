@@ -39,7 +39,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
       return VM[V] = const_cast<Value*>(V);
     
     // Create a dummy node in case we have a metadata cycle.
-    MDNode *Dummy = MDNode::getTemporary(V->getContext(), 0, 0);
+    MDNode *Dummy = MDNode::getTemporary(V->getContext(), ArrayRef<Value*>());
     VM[V] = Dummy;
     
     // Check all operands to see if any need to be remapped.
@@ -54,7 +54,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
         Value *Op = MD->getOperand(i);
         Elts.push_back(Op ? MapValue(Op, VM, Flags) : 0);
       }
-      MDNode *NewMD = MDNode::get(V->getContext(), Elts.data(), Elts.size());
+      MDNode *NewMD = MDNode::get(V->getContext(), Elts);
       Dummy->replaceAllUsesWith(NewMD);
       VM[V] = NewMD;
       MDNode::deleteTemporary(Dummy);

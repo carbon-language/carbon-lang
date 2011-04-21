@@ -104,7 +104,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
 /// FindAllocaDbgDeclare - Finds the llvm.dbg.declare intrinsic describing the
 /// alloca 'V', if any.
 static DbgDeclareInst *FindAllocaDbgDeclare(Value *V) {
-  if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), &V, 1))
+  if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), V))
     for (Value::use_iterator UI = DebugNode->use_begin(),
          E = DebugNode->use_end(); UI != E; ++UI)
       if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))

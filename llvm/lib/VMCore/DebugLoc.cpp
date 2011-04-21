@@ -109,7 +109,7 @@ MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
     ConstantInt::get(Int32, getLine()), ConstantInt::get(Int32, getCol()),
     Scope, IA
   };
-  return MDNode::get(Ctx2, &Elts[0], 4);
+  return MDNode::get(Ctx2, Elts);
 }
 
 /// getFromDILocation - Translate the DILocation quad into a DebugLoc.

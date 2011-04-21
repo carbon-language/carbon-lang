@@ -543,7 +543,8 @@ LLVMValueRef LLVMMDString(const char *Str, unsigned SLen) {
 
 LLVMValueRef LLVMMDNodeInContext(LLVMContextRef C, LLVMValueRef *Vals,
                                  unsigned Count) {
-  return wrap(MDNode::get(*unwrap(C), unwrap<Value>(Vals, Count), Count));
+  return wrap(MDNode::get(*unwrap(C),
+                          ArrayRef<Value*>(unwrap<Value>(Vals, Count), Count)));
 }
 
 LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count) {
