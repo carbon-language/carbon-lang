@@ -17,7 +17,7 @@ class AbbreviationsTestCase(TestBase):
                     substrs = ['breakpoint command add',
                                'breakpoint command list',
                                'breakpoint list',
-                               'commands alias',
+                               'command alias',
                                'expression',
                                'script'])
 

@@ -53,8 +53,8 @@ class AliasTestCase(TestBase):
 #                     substrs = [ "hello" ])
 
 
-        self.runCmd ("commands alias alias commands alias")
-        self.runCmd ("commands alias unalias commands unalias")
+        self.runCmd ("command alias alias command alias")
+        self.runCmd ("command alias unalias command unalias")
 
         self.runCmd ("alias myrun process launch -t%1 --")
         self.runCmd ("alias bp breakpoint")

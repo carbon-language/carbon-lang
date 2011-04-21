@@ -163,7 +163,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["apropos"]   = CommandObjectSP (new CommandObjectApropos (*this));
     m_command_dict["breakpoint"]= CommandObjectSP (new CommandObjectMultiwordBreakpoint (*this));
     //m_command_dict["call"]      = CommandObjectSP (new CommandObjectCall (*this));
-    m_command_dict["commands"]  = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
+    m_command_dict["command"]   = CommandObjectSP (new CommandObjectMultiwordCommands (*this));
     m_command_dict["disassemble"] = CommandObjectSP (new CommandObjectDisassemble (*this));
     m_command_dict["expression"]= CommandObjectSP (new CommandObjectExpression (*this));
 //    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
@@ -562,7 +562,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result)
     if (m_alias_dict.size() > 0)
     {
         result.AppendMessage("The following is a list of your current command abbreviations "
-                             "(see 'help commands alias' for more info):");
+                             "(see 'help command alias' for more info):");
         result.AppendMessage("");
         max_len = FindLongestCommandWord (m_alias_dict);
 
