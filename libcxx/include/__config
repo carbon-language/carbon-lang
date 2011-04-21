@@ -184,10 +184,12 @@ namespace std {
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
 #define _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#define _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
 
 #else  // __GXX_EXPERIMENTAL_CXX0X__
 
 #define _LIBCPP_HAS_NO_TRAILING_RETURN
+#define _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 3)
 #define _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -207,7 +209,6 @@ namespace std {
 #endif  // !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 4)
 
 #if !(__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
-#define _LIBCPP_HAS_NO_ALWAYS_INLINE_VARIADICS
 #define _LIBCPP_HAS_NO_NULLPTR
 #endif
 
