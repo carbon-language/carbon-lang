@@ -268,7 +268,7 @@ StmtResult Parser::ParseLabeledStatement(ParsedAttributes &attrs) {
 ///
 StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
                                       ExprResult Expr) {
-  assert(MissingCase || Tok.is(tok::kw_case) && "Not a case stmt!");
+  assert((MissingCase || Tok.is(tok::kw_case)) && "Not a case stmt!");
   // FIXME: Use attributes?
 
   // It is very very common for code to contain many case statements recursively
