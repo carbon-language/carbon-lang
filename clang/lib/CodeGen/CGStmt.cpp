@@ -1351,7 +1351,7 @@ static llvm::MDNode *getAsmSrcLocInfo(const StringLiteral *Str,
     }
   }    
   
-  return llvm::MDNode::get(CGF.getLLVMContext(), Locs.data(), Locs.size());
+  return llvm::MDNode::get(CGF.getLLVMContext(), Locs);
 }
 
 void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {

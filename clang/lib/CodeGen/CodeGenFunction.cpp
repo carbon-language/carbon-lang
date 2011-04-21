@@ -241,7 +241,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
           CGM.getModule().getOrInsertNamedMetadata("opencl.kernels");
           
         llvm::Value *Op = Fn;
-        OpenCLMetadata->addOperand(llvm::MDNode::get(Context, &Op, 1));
+        OpenCLMetadata->addOperand(llvm::MDNode::get(Context, Op));
       }
   }
 

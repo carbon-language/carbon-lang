@@ -2160,7 +2160,7 @@ static void EmitGlobalDeclMetadata(CodeGenModule &CGM,
     Addr,
     GetPointerConstant(CGM.getLLVMContext(), D.getDecl())
   };
-  GlobalMetadata->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops, 2));
+  GlobalMetadata->addOperand(llvm::MDNode::get(CGM.getLLVMContext(), Ops));
 }
 
 /// Emits metadata nodes associating all the global values in the
@@ -2201,7 +2201,7 @@ void CodeGenFunction::EmitDeclMetadata() {
 
     if (llvm::AllocaInst *Alloca = dyn_cast<llvm::AllocaInst>(Addr)) {
       llvm::Value *DAddr = GetPointerConstant(getLLVMContext(), D);
-      Alloca->setMetadata(DeclPtrKind, llvm::MDNode::get(Context, &DAddr, 1));
+      Alloca->setMetadata(DeclPtrKind, llvm::MDNode::get(Context, DAddr));
     } else if (llvm::GlobalValue *GV = dyn_cast<llvm::GlobalValue>(Addr)) {
       GlobalDecl GD = GlobalDecl(cast<VarDecl>(D));
       EmitGlobalDeclMetadata(CGM, GlobalMetadata, GD, GV);

@@ -1035,7 +1035,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
       llvm::MDString::get(VMContext, Class->getSuperClass()->getNameAsString()),
       llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), IsClassMessage)
    };
-  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
   llvm::Instruction *call;
   RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
@@ -1109,7 +1109,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
         llvm::MDString::get(VMContext, Class ? Class->getNameAsString() :""),
         llvm::ConstantInt::get(llvm::Type::getInt1Ty(VMContext), Class!=0)
    };
-  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD, 3);
+  llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
   // Get the IMP to call
   llvm::Value *imp = LookupIMP(CGF, Receiver, cmd, node);

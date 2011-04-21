@@ -74,7 +74,8 @@ llvm::MDNode *CodeGenTBAA::getTBAAInfoForNamedType(llvm::StringRef NameStr,
   };
 
   // Create the mdnode.
-  return llvm::MDNode::get(VMContext, Ops, llvm::array_lengthof(Ops) - !Flags);
+  unsigned Len = llvm::array_lengthof(Ops) - !Flags;
+  return llvm::MDNode::get(VMContext, llvm::ArrayRef<llvm::Value*>(Ops, Len));
 }
 
 static bool TypeHasMayAlias(QualType QTy) {
