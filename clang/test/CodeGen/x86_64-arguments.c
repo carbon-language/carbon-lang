@@ -1,8 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s| FileCheck %s
 #include <stdarg.h>
 
-// CHECK: %0 = type { i64, double }
-
 // CHECK: define signext i8 @f0()
 char f0(void) {
   return 0;
@@ -44,8 +42,8 @@ void f7(e7 a0) {
 
 // Test merging/passing of upper eightbyte with X87 class.
 //
-// CHECK: define %0 @f8_1()
-// CHECK: define void @f8_2(i64 %a0.coerce0, double %a0.coerce1)
+// CHECK: define void @f8_1(%struct.s19* sret %agg.result)
+// CHECK: define void @f8_2(%struct.s19* byval align 16 %a0)
 union u8 {
   long double a;
   int b;
@@ -244,4 +242,20 @@ v1i64 f34(v1i64 arg) { return arg; }
 // CHECK: define i64 @f35(i64 %arg.coerce)
 typedef unsigned long v1i64_2 __attribute__((__vector_size__(8)));
 v1i64_2 f35(v1i64_2 arg) { return arg+arg; }
+
+// rdar://9122143
+// CHECK: declare void @func(%struct._str* byval align 16)
+typedef struct _str {
+  union {
+    long double a;
+    long c;
+  };
+} str;
+
+void func(str s);
+str ss;
+void f9122143()
+{
+  func(ss);
+}
 

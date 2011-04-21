@@ -865,6 +865,15 @@ class X86_64ABIInfo : public ABIInfo {
                                   unsigned &neededInt,
                                   unsigned &neededSSE) const;
 
+  /// The 0.98 ABI revision clarified a lot of ambiguities,
+  /// unfortunately in ways that were not always consistent with
+  /// certain previous compilers.  In particular, platforms which
+  /// required strict binary compatibility with older versions of GCC
+  /// may need to exempt themselves.
+  bool honorsRevision0_98() const {
+    return !getContext().Target.getTriple().isOSDarwin();
+  }
+
 public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
 
@@ -1253,14 +1262,23 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // (a) If one of the classes is MEMORY, the whole argument is
     // passed in memory.
     //
-    // (b) If SSEUP is not preceded by SSE, it is converted to SSE.
-
-    // The first of these conditions is guaranteed by how we implement
-    // the merge (just bail).
+    // (b) If X87UP is not preceded by X87, the whole argument is 
+    // passed in memory.
+    // 
+    // (c) If the size of the aggregate exceeds two eightbytes and the first
+    // eight-byte isn’t SSE or any other eightbyte isn’t SSEUP, the whole 
+    // argument is passed in memory.
+    // 
+    // (d) If SSEUP is not preceded by SSE or SSEUP, it is converted to SSE.
     //
-    // The second condition occurs in the case of unions; for example
-    // union { _Complex double; unsigned; }.
+    // Some of these are enforced by the merging logic.  Others can arise
+    // only with unions; for example:
+    //   union { _Complex double; unsigned; }
+    //
+    // Note that clauses (b) and (c) were added in 0.98.
     if (Hi == Memory)
+      Lo = Memory;
+    if (Hi == X87Up && Lo != X87 && honorsRevision0_98())
       Lo = Memory;
     if (Hi == SSEUp && Lo != SSE)
       Hi = SSE;
