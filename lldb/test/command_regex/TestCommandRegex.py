@@ -13,9 +13,9 @@ class CommandRegexTestCase(TestBase):
     mydir = "command_regex"
 
     def test_command_regex(self):
-        """Test a simple scenario of 'commands regexp' invocation and subsequent use."""
+        """Test a simple scenario of 'command regexp' invocation and subsequent use."""
         prompt = "\(lldb\) "
-        regex_prompt = "Enter multiple regular expressions in the form s/find/replace/ then terminate with an empty line:\r\n"
+        regex_prompt = "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:\r\n"
         regex_prompt1 = "\r\n"
 
         child = pexpect.spawn('%s' % self.lldbExec)
@@ -25,7 +25,7 @@ class CommandRegexTestCase(TestBase):
 
         # Substitute 'Help!' with 'help' using the 'commands regex' mechanism.
         child.expect(prompt)
-        child.sendline('commands regex Help!')
+        child.sendline("command regex 'Help!'")
         child.expect(regex_prompt)
         child.sendline('s/^$/help/')
         child.expect(regex_prompt1)
