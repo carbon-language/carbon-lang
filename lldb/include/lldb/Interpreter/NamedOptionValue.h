@@ -22,6 +22,13 @@
 
 namespace lldb_private {
 
+    class OptionValueBoolean;
+    class OptionValueSInt64;
+    class OptionValueUInt64;
+    class OptionValueString;
+    class OptionValueFileSpec;
+    class OptionValueArray;
+    class OptionValueDictionary;
 
     //---------------------------------------------------------------------
     // OptionValue
@@ -68,6 +75,27 @@ namespace lldb_private {
         {
             return 1u << GetType();
         }
+        
+        OptionValueBoolean *
+        GetAsBooleanValue ();
+        
+        OptionValueSInt64 *
+        GetAsSInt64Value ();
+        
+        OptionValueUInt64 *
+        GetAsUInt64Value ();        
+        
+        OptionValueString *
+        GetAsStringValue ();
+        
+        OptionValueFileSpec *
+        GetAsFileSpecValue() ;
+        
+        OptionValueArray *
+        GetAsArrayValue() ;
+        
+        OptionValueDictionary *
+        GetAsDictionaryValue() ;
     };
     
     
@@ -77,6 +105,7 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueBoolean : public OptionValue
     {
+    public:
         OptionValueBoolean (bool current_value, 
                             bool default_value) :
             m_current_value (current_value),
@@ -150,6 +179,7 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueSInt64 : public OptionValue
     {
+    public:
         OptionValueSInt64 (int64_t current_value, 
                            int64_t default_value) :
         m_current_value (current_value),
@@ -223,6 +253,7 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueUInt64 : public OptionValue
     {
+    public:
         OptionValueUInt64 (uint64_t current_value, 
                            uint64_t default_value) :
         m_current_value (current_value),
@@ -296,8 +327,15 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueString : public OptionValue
     {
+    public:
+        OptionValueString () :
+            m_current_value (),
+            m_default_value ()
+        {
+        }
+
         OptionValueString (const char *current_value, 
-                           const char *default_value) :
+                           const char *default_value = NULL) :
             m_current_value (),
             m_default_value ()
         {
@@ -379,6 +417,19 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueFileSpec : public OptionValue
     {
+    public:
+        OptionValueFileSpec () :
+            m_current_value (),
+            m_default_value ()
+        {
+        }
+
+        OptionValueFileSpec (const FileSpec &current_value) :
+            m_current_value (current_value),
+            m_default_value ()
+        {
+        }
+
         OptionValueFileSpec (const FileSpec &current_value, 
                              const FileSpec &default_value) :
             m_current_value (current_value),
@@ -452,6 +503,7 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueArray : public OptionValue
     {
+    public:
         OptionValueArray (uint32_t type_mask = UINT32_MAX) :
             m_type_mask (type_mask),
             m_values ()
@@ -575,6 +627,7 @@ namespace lldb_private {
     //---------------------------------------------------------------------
     class OptionValueDictionary : public OptionValue
     {
+    public:
         OptionValueDictionary (uint32_t type_mask = UINT32_MAX) :
             m_type_mask (type_mask),
             m_values ()
@@ -620,47 +673,27 @@ namespace lldb_private {
         }
         
         lldb::OptionValueSP
-        GetValueForKey (const ConstString &key) const
-        {
-            lldb::OptionValueSP value_sp;
-            collection::const_iterator pos = m_values.find (key);
-            if (pos != m_values.end())
-                value_sp = pos->second;
-            return value_sp;
-        }
+        GetValueForKey (const ConstString &key) const;
+        
+        //---------------------------------------------------------------------
+        // String value getters and setters
+        //---------------------------------------------------------------------
+        const char *
+        GetStringValueForKey (const ConstString &key);
+
+        bool
+        SetStringValueForKey (const ConstString &key, 
+                              const char *value,
+                              bool can_replace = true);
+
         
         bool
         SetValueForKey (const ConstString &key, 
                         const lldb::OptionValueSP &value_sp, 
-                        bool can_replace)
-        {
-            // Make sure the value_sp object is allowed to contain
-            // values of the type passed in...
-            if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
-            {
-                if (!can_replace)
-                {
-                    collection::const_iterator pos = m_values.find (key);
-                    if (pos != m_values.end())
-                        return false;
-                }
-                m_values[key] = value_sp;
-                return true;
-            }
-            return false;
-        }
+                        bool can_replace = true);
         
         bool
-        DeleteValueForKey (const ConstString &key)
-        {
-            collection::iterator pos = m_values.find (key);
-            if (pos != m_values.end())
-            {
-                m_values.erase(pos);
-                return true;
-            }
-            return false;
-        }
+        DeleteValueForKey (const ConstString &key);
         
     protected:
         typedef std::map<ConstString, lldb::OptionValueSP> collection;
@@ -746,27 +779,6 @@ namespace lldb_private {
         bool
         ResetValueToDefault ();
         
-        OptionValueBoolean *
-        GetBooleanValue ();
-
-        OptionValueSInt64 *
-        GetSInt64Value ();
-        
-        OptionValueUInt64 *
-        GetUInt64Value ();        
-
-        OptionValueString *
-        GetStringValue ();
-
-        OptionValueFileSpec *
-        GetFileSpecValue() ;
-
-        OptionValueArray *
-        GetArrayValue() ;
-
-        OptionValueDictionary *
-        GetDictionaryValue() ;
-
     protected:
         NamedOptionValue *m_parent;      // NULL if this is a root object
         ConstString m_name;         // Name for this setting

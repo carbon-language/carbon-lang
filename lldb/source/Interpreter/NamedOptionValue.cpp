@@ -19,6 +19,67 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+//-------------------------------------------------------------------------
+// OptionValue
+//-------------------------------------------------------------------------
+OptionValueBoolean *
+OptionValue::GetAsBooleanValue ()
+{
+    if (GetType () == OptionValue::eTypeBoolean)
+        return static_cast<OptionValueBoolean *>(this);
+    return NULL;
+}
+
+OptionValueSInt64 *
+OptionValue::GetAsSInt64Value ()
+{
+    if (GetType () == OptionValue::eTypeSInt64)
+        return static_cast<OptionValueSInt64 *>(this);
+    return NULL;
+}
+
+OptionValueUInt64 *
+OptionValue::GetAsUInt64Value ()
+{
+    if (GetType () == OptionValue::eTypeUInt64)
+        return static_cast<OptionValueUInt64 *>(this);
+    return NULL;
+}
+
+OptionValueString *
+OptionValue::GetAsStringValue ()
+{
+    if (GetType () == OptionValue::eTypeString)
+        return static_cast<OptionValueString *>(this);
+    return NULL;
+}
+
+OptionValueFileSpec *
+OptionValue::GetAsFileSpecValue ()
+{
+    if (GetType () == OptionValue::eTypeFileSpec)
+        return static_cast<OptionValueFileSpec *>(this);
+    return NULL;
+}
+
+OptionValueArray *
+OptionValue::GetAsArrayValue ()
+{
+    if (GetType () == OptionValue::eTypeArray)
+        return static_cast<OptionValueArray *>(this);
+    return NULL;
+}
+
+OptionValueDictionary *
+OptionValue::GetAsDictionaryValue ()
+{
+    if (GetType () == OptionValue::eTypeDictionary)
+        return static_cast<OptionValueDictionary *>(this);
+    return NULL;
+}
+
+
 //-------------------------------------------------------------------------
 // NamedOptionValue
 //-------------------------------------------------------------------------
@@ -69,62 +130,6 @@ NamedOptionValue::ResetValueToDefault ()
     return false;
 }
 
-
-OptionValueBoolean *
-NamedOptionValue::GetBooleanValue ()
-{
-    if (GetValueType() == OptionValue::eTypeBoolean)
-        return static_cast<OptionValueBoolean *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueSInt64 *
-NamedOptionValue::GetSInt64Value ()
-{
-    if (GetValueType() == OptionValue::eTypeSInt64)
-        return static_cast<OptionValueSInt64 *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueUInt64 *
-NamedOptionValue::GetUInt64Value ()
-{
-    if (GetValueType() == OptionValue::eTypeUInt64)
-        return static_cast<OptionValueUInt64 *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueString *
-NamedOptionValue::GetStringValue ()
-{
-    if (GetValueType() == OptionValue::eTypeString)
-        return static_cast<OptionValueString *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueFileSpec *
-NamedOptionValue::GetFileSpecValue ()
-{
-    if (GetValueType() == OptionValue::eTypeFileSpec)
-        return static_cast<OptionValueFileSpec *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueArray *
-NamedOptionValue::GetArrayValue ()
-{
-    if (GetValueType() == OptionValue::eTypeArray)
-        return static_cast<OptionValueArray *>(m_value_sp.get());
-    return NULL;
-}
-
-OptionValueDictionary *
-NamedOptionValue::GetDictionaryValue ()
-{
-    if (GetValueType() == OptionValue::eTypeDictionary)
-        return static_cast<OptionValueDictionary *>(m_value_sp.get());
-    return NULL;
-}
 
 //-------------------------------------------------------------------------
 // OptionValueBoolean
@@ -283,6 +288,83 @@ bool
 OptionValueDictionary::SetValueFromCString (const char *value_cstr)
 {
     // We must be able to set this using the array specific functions
+    return false;
+}
+
+lldb::OptionValueSP
+OptionValueDictionary::GetValueForKey (const ConstString &key) const
+{
+    lldb::OptionValueSP value_sp;
+    collection::const_iterator pos = m_values.find (key);
+    if (pos != m_values.end())
+        value_sp = pos->second;
+    return value_sp;
+}
+
+const char *
+OptionValueDictionary::GetStringValueForKey (const ConstString &key)
+{
+    collection::const_iterator pos = m_values.find (key);
+    if (pos != m_values.end())
+    {
+        if (pos->second->GetType() == OptionValue::eTypeString)
+            return static_cast<OptionValueString *>(pos->second.get())->GetCurrentValue();
+    }
+    return NULL;
+}
+
+
+bool
+OptionValueDictionary::SetStringValueForKey (const ConstString &key, 
+                                             const char *value, 
+                                             bool can_replace)
+{
+    collection::const_iterator pos = m_values.find (key);
+    if (pos != m_values.end())
+    {
+        if (!can_replace)
+            return false;
+        if (pos->second->GetType() == OptionValue::eTypeString)
+        {
+            pos->second->SetValueFromCString(value);
+            return true;
+        }
+    }
+    m_values[key] = OptionValueSP (new OptionValueString (value));
+    return true;
+
+}
+
+bool
+OptionValueDictionary::SetValueForKey (const ConstString &key, 
+                                       const lldb::OptionValueSP &value_sp, 
+                                       bool can_replace)
+{
+    // Make sure the value_sp object is allowed to contain
+    // values of the type passed in...
+    if (value_sp && (m_type_mask & value_sp->GetTypeAsMask()))
+    {
+        if (!can_replace)
+        {
+            collection::const_iterator pos = m_values.find (key);
+            if (pos != m_values.end())
+                return false;
+        }
+        m_values[key] = value_sp;
+        return true;
+    }
+    return false;
+}
+
+bool
+OptionValueDictionary::DeleteValueForKey (const ConstString &key)
+{
+    collection::iterator pos = m_values.find (key);
+    if (pos != m_values.end())
+    {
+        m_values.erase(pos);
+        return true;
+    }
     return false;
 }
 
