@@ -1059,6 +1059,12 @@
 // X86_64:UINTMAX_C_(0) 0UL
 //
 //
+// RUN: %clang_cc1 -E -ffreestanding -triple=x86_64-pc-linux-gnu %s | FileCheck -check-prefix X86_64_LINUX %s
+//
+// X86_64_LINUX:WINT_MIN_ 0
+// X86_64_LINUX:WINT_MAX_ 4294967295U
+//
+//
 // stdint.h forms several macro definitions by pasting together identifiers
 // to form names (eg. int32_t is formed from int ## 32 ## _t). The following 
 // case tests that these joining operations are performed correctly even if

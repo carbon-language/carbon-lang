@@ -630,8 +630,13 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 /* C99 7.18.3 Limits of other integer types. */
 #define SIG_ATOMIC_MIN __INTN_MIN(__SIG_ATOMIC_WIDTH__)
 #define SIG_ATOMIC_MAX __INTN_MAX(__SIG_ATOMIC_WIDTH__)
-#define WINT_MIN       __INTN_MIN(__WINT_WIDTH__)
-#define WINT_MAX       __INTN_MAX(__WINT_WIDTH__)
+#ifdef __WINT_UNSIGNED__
+# define WINT_MIN       0
+# define WINT_MAX       __UINTN_MAX(__WINT_WIDTH__)
+#else
+# define WINT_MIN       __INTN_MIN(__WINT_WIDTH__)
+# define WINT_MAX       __INTN_MAX(__WINT_WIDTH__)
+#endif
 
 /* FIXME: if we ever support a target with unsigned wchar_t, this should be
  * 0 .. Max.

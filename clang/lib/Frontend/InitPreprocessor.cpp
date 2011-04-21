@@ -419,6 +419,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.CharIsSigned)
     Builder.defineMacro("__CHAR_UNSIGNED__");
 
+  if (!TargetInfo::isTypeSigned(TI.getWIntType()))
+    Builder.defineMacro("__WINT_UNSIGNED__");
+
   // Define exact-width integer types for stdint.h
   Builder.defineMacro("__INT" + llvm::Twine(TI.getCharWidth()) + "_TYPE__",
                       "char");
