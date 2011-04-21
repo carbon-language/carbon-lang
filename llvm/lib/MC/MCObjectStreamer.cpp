@@ -124,21 +124,19 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setOffset(F->getContents().size());
 }
 
-void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value,
-                                        unsigned AddrSpace) {
+void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
-    EmitULEB128IntValue(IntValue, AddrSpace);
+    EmitULEB128IntValue(IntValue);
     return;
   }
   new MCLEBFragment(*Value, false, getCurrentSectionData());
 }
 
-void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value,
-                                        unsigned AddrSpace) {
+void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
-    EmitSLEB128IntValue(IntValue, AddrSpace);
+    EmitSLEB128IntValue(IntValue);
     return;
   }
   new MCLEBFragment(*Value, true, getCurrentSectionData());

@@ -319,11 +319,9 @@ namespace llvm {
     void EmitAbsValue(const MCExpr *Value, unsigned Size,
                       unsigned AddrSpace = 0);
 
-    virtual void EmitULEB128Value(const MCExpr *Value,
-                                  unsigned AddrSpace = 0) = 0;
+    virtual void EmitULEB128Value(const MCExpr *Value) = 0;
 
-    virtual void EmitSLEB128Value(const MCExpr *Value,
-                                  unsigned AddrSpace = 0) = 0;
+    virtual void EmitSLEB128Value(const MCExpr *Value) = 0;
 
     /// EmitULEB128Value - Special case of EmitULEB128Value that avoids the
     /// client having to pass in a MCExpr for constant integers.

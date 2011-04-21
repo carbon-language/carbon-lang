@@ -144,8 +144,8 @@ public:
 
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
                              bool isPCRel, unsigned AddrSpace);
-  virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
-  virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+  virtual void EmitULEB128Value(const MCExpr *Value);
+  virtual void EmitSLEB128Value(const MCExpr *Value);
   virtual void EmitGPRel32Value(const MCExpr *Value);
 
 
@@ -383,15 +383,13 @@ void PTXMCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   EmitEOL();
 }
 
-void PTXMCAsmStreamer::EmitULEB128Value(const MCExpr *Value,
-                                        unsigned AddrSpace) {
+void PTXMCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
   assert(MAI.hasLEB128() && "Cannot print a .uleb");
   OS << ".uleb128 " << *Value;
   EmitEOL();
 }
 
-void PTXMCAsmStreamer::EmitSLEB128Value(const MCExpr *Value,
-                                        unsigned AddrSpace) {
+void PTXMCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
   assert(MAI.hasLEB128() && "Cannot print a .sleb");
   OS << ".sleb128 " << *Value;
   EmitEOL();

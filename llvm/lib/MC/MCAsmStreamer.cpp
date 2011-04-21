@@ -158,9 +158,9 @@ public:
   virtual void EmitIntValue(uint64_t Value, unsigned Size,
                             unsigned AddrSpace = 0);
 
-  virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+  virtual void EmitULEB128Value(const MCExpr *Value);
 
-  virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+  virtual void EmitSLEB128Value(const MCExpr *Value);
 
   virtual void EmitGPRel32Value(const MCExpr *Value);
 
@@ -560,10 +560,10 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue)) {
-    EmitULEB128IntValue(IntValue, AddrSpace);
+    EmitULEB128IntValue(IntValue);
     return;
   }
   assert(MAI.hasLEB128() && "Cannot print a .uleb");
@@ -571,10 +571,10 @@ void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace) {
+void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue)) {
-    EmitSLEB128IntValue(IntValue, AddrSpace);
+    EmitSLEB128IntValue(IntValue);
     return;
   }
   assert(MAI.hasLEB128() && "Cannot print a .sleb");

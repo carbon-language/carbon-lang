@@ -541,7 +541,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
       else
         CFAOffset = -Src.getOffset();
 
-      Streamer.EmitULEB128IntValue(CFAOffset, 1);
+      Streamer.EmitULEB128IntValue(CFAOffset);
       return;
     }
 
@@ -582,7 +582,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
   case MCCFIInstruction::SameValue: {
     unsigned Reg = Instr.getDestination().getReg();
     Streamer.EmitIntValue(dwarf::DW_CFA_same_value, 1);
-    Streamer.EmitULEB128IntValue(Reg, 1);
+    Streamer.EmitULEB128IntValue(Reg);
     return;
   }
   }

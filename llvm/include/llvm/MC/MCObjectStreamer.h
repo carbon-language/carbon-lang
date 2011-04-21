@@ -64,8 +64,8 @@ public:
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
                              bool isPCRel, unsigned AddrSpace);
-  virtual void EmitULEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
-  virtual void EmitSLEB128Value(const MCExpr *Value, unsigned AddrSpace = 0);
+  virtual void EmitULEB128Value(const MCExpr *Value);
+  virtual void EmitSLEB128Value(const MCExpr *Value);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void ChangeSection(const MCSection *Section);
   virtual void EmitInstruction(const MCInst &Inst);
