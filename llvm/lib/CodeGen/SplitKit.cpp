@@ -1001,7 +1001,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     DEBUG(dbgs() << "  " << NumComp << " components: " << *li << '\n');
     SmallVector<LiveInterval*, 8> dups;
     dups.push_back(li);
-    for (unsigned i = 1; i != NumComp; ++i)
+    for (unsigned j = 1; j != NumComp; ++j)
       dups.push_back(&Edit->create(LIS, VRM));
     ConEQ.Distribute(&dups[0], MRI);
     // The new intervals all map back to i.
