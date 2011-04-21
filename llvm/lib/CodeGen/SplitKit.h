@@ -368,7 +368,10 @@ public:
 
   /// finish - after all the new live ranges have been created, compute the
   /// remaining live range, and rewrite instructions to use the new registers.
-  void finish();
+  /// @param LRMap When not null, this vector will map each live range in Edit
+  ///              back to the indices returned by openIntv.
+  ///              There may be extra indices created by dead code elimination.
+  void finish(SmallVectorImpl<unsigned> *LRMap = 0);
 
   /// dump - print the current interval maping to dbgs().
   void dump() const;

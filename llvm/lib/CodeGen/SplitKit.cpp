@@ -935,7 +935,7 @@ void SplitEditor::deleteRematVictims() {
   Edit->eliminateDeadDefs(Dead, LIS, VRM, TII);
 }
 
-void SplitEditor::finish() {
+void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
   ++NumFinished;
 
   // At this point, the live intervals in Edit contain VNInfos corresponding to
@@ -983,6 +983,13 @@ void SplitEditor::finish() {
   for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
     (*I)->RenumberValues(LIS);
 
+  // Provide a reverse mapping from original indices to Edit ranges.
+  if (LRMap) {
+    LRMap->clear();
+    for (unsigned i = 0, e = Edit->size(); i != e; ++i)
+      LRMap->push_back(i);
+  }
+
   // Now check if any registers were separated into multiple components.
   ConnectedVNInfoEqClasses ConEQ(LIS);
   for (unsigned i = 0, e = Edit->size(); i != e; ++i) {
@@ -997,10 +1004,15 @@ void SplitEditor::finish() {
     for (unsigned i = 1; i != NumComp; ++i)
       dups.push_back(&Edit->create(LIS, VRM));
     ConEQ.Distribute(&dups[0], MRI);
+    // The new intervals all map back to i.
+    if (LRMap)
+      LRMap->resize(Edit->size(), i);
   }
 
   // Calculate spill weight and allocation hints for new intervals.
   Edit->calculateRegClassAndHint(VRM.getMachineFunction(), LIS, SA.Loops);
+
+  assert(!LRMap || LRMap->size() == Edit->size());
 }
 
 

@@ -883,11 +883,35 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       SE->enterIntvAtEnd(*MBB);
   }
 
-  // FIXME: Should we be more aggressive about splitting the stack region into
-  // per-block segments? The current approach allows the stack region to
-  // separate into connected components. Some components may be allocatable.
-  SE->finish();
   ++NumGlobalSplits;
+
+  SmallVector<unsigned, 8> IntvMap;
+  SE->finish(&IntvMap);
+  LRStage.resize(MRI->getNumVirtRegs());
+
+  // Sort out the new intervals created by splitting. We get four kinds:
+  // - Remainder intervals should not be split again.
+  // - Candidate intervals can be assigned to Cand.PhysReg.
+  // - Block-local splits are candidates for local splitting.
+  // - DCE leftovers should go back on the queue.
+  for (unsigned i = 0, e = LREdit.size(); i != e; ++i) {
+    unsigned Reg = LREdit.get(i)->reg;
+
+    // Ignore old intervals from DCE.
+    if (LRStage[Reg] != RS_New)
+      continue;
+
+    // Remainder interval. Don't try splitting again, spill if it doesn't
+    // allocate.
+    if (IntvMap[i] == 0) {
+      LRStage[Reg] = RS_Global;
+      continue;
+    }
+
+    // Other intervals are treated as new. This includes the main interval,
+    // local intervals created for blocks with multiple uses, and anything
+    // created by DCE.
+  }
 
   if (VerifyEnabled)
     MF->verify(this, "After splitting live range around region");
@@ -946,7 +970,6 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     return 0;
 
   splitAroundRegion(VirtReg, GlobalCand[BestCand], NewVRegs);
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Global);
   return 0;
 }
 
