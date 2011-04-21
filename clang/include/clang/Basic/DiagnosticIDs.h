@@ -64,9 +64,12 @@ namespace clang {
       /// Map this diagnostic to "warning", but make it immune to -Werror.  This
       /// happens when you specify -Wno-error=foo.
       MAP_WARNING_NO_WERROR = 5,
+      /// Map this diagnostic to "warning", but make it immune to
+      /// -Wno-system-headers.
+      MAP_WARNING_SHOW_IN_SYSTEM_HEADER = 6,
       /// Map this diagnostic to "error", but make it immune to -Wfatal-errors.
       /// This happens for -Wno-fatal-errors=foo.
-      MAP_ERROR_NO_WFATAL = 6
+      MAP_ERROR_NO_WFATAL = 7
     };
   }
 

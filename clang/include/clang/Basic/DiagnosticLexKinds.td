@@ -114,7 +114,8 @@ def err_invalid_pth_file : Error<
 //===----------------------------------------------------------------------===//
 // Preprocessor Diagnostics
 //===----------------------------------------------------------------------===//
-def pp_hash_warning : Warning<"#warning%0">, InGroup<PoundWarning>;
+def pp_hash_warning : Warning<"#warning%0">,
+  InGroup<PoundWarning>, DefaultWarnShowInSystemHeader;
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
 def pp_include_macros_out_of_predefines : Error<

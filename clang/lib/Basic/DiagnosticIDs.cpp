@@ -404,6 +404,8 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   if (mapping)
     *mapping = (diag::Mapping) (MappingInfo & 7);
 
+  bool ShouldEmitInSystemHeader = false;
+
   switch (MappingInfo & 7) {
   default: assert(0 && "Unknown mapping!");
   case diag::MAP_IGNORE:
@@ -426,6 +428,9 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   case diag::MAP_FATAL:
     Result = DiagnosticIDs::Fatal;
     break;
+  case diag::MAP_WARNING_SHOW_IN_SYSTEM_HEADER:
+    ShouldEmitInSystemHeader = true;
+    // continue as MAP_WARNING.
   case diag::MAP_WARNING:
     // If warnings are globally mapped to ignore or error, do it.
     if (Diag.IgnoreAllWarnings)
@@ -477,6 +482,7 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
       DiagClass != CLASS_ERROR &&
       // Custom diagnostics always are emitted in system headers.
       DiagID < diag::DIAG_UPPER_LIMIT &&
+      !ShouldEmitInSystemHeader &&
       Diag.SuppressSystemWarnings &&
       Loc.isValid() &&
       Diag.getSourceManager().isInSystemHeader(
