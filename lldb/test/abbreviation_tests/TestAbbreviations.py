@@ -57,6 +57,15 @@ class AbbreviationsTestCase(TestBase):
         self.expect("set sh prompt",
                     startstr = 'prompt (string) = "(lldb) "')
 
+        # We don't want to display the stdout if not in TraceOn() mode.
+        if not self.TraceOn():
+            old_stdout = sys.stdout
+            session = StringIO.StringIO()
+            sys.stdout = session
+            def restore_stdout():
+                sys.stdout = old_stdout
+            self.addTearDownHook(restore_stdout)
+
         self.runCmd (r'''sc print "\n\n\tHello!\n"''')
 
 

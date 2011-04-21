@@ -97,8 +97,9 @@ class IterateFrameAndDisassembleTestCase(TestBase):
             frame = thread.GetFrameAtIndex(i)
             function = frame.GetFunction()
             # Print the function header.
-            print
-            print function
+            if self.traceOn():
+                print
+                print function
             if function.IsValid():
                 # Get all instructions for this function and print them out.
                 insts = function.GetInstructions(target)

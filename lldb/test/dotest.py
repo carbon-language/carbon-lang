@@ -181,8 +181,8 @@ where options:
 -s   : specify the name of the dir created to store the session files of tests
        with errored or failed status; if not specified, the test driver uses the
        timestamp as the session dir name
--t   : trace lldb command execution and result
--v   : do verbose mode of unittest framework
+-t   : turn on tracing of lldb command and other detailed test executions
+-v   : do verbose mode of unittest framework (print out each test case invocation)
 -w   : insert some wait time (currently 0.5 sec) between consecutive test cases
 -#   : Repeat the test suite for a specified number of times
 
