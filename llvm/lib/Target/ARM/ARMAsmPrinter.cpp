@@ -172,6 +172,47 @@ getDebugValueLocation(const MachineInstr *MI) const {
   return Location;
 }
 
+/// EmitDwarfRegOp - Emit dwarf register operation.
+void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  if (RI->getDwarfRegNum(MLoc.getReg(), false) != -1)
+    AsmPrinter::EmitDwarfRegOp(MLoc);
+  else {
+    unsigned Reg = MLoc.getReg();
+    if (Reg >= ARM::S0 && Reg <= ARM::S31) {
+      // S registers are described as bit-pieces of a register
+      // S[2x] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 0)
+      // S[2x+1] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 32)
+      
+      unsigned SReg = Reg - ARM::S0;
+      bool odd = SReg & 0x1;
+      unsigned Rx = 256 + (SReg >> 1);
+      OutStreamer.AddComment("Loc expr size");
+      // DW_OP_regx + ULEB + DW_OP_bit_piece + ULEB + ULEB
+      //   1 + ULEB(Rx) + 1 + 1 + 1
+      EmitInt16(4 + MCAsmInfo::getULEB128Size(Rx));
+
+      OutStreamer.AddComment("DW_OP_regx for S register");
+      EmitInt8(dwarf::DW_OP_regx);
+
+      OutStreamer.AddComment(Twine(SReg));
+      EmitULEB128(Rx);
+
+      if (odd) {
+        OutStreamer.AddComment("DW_OP_bit_piece 32 32");
+        EmitInt8(dwarf::DW_OP_bit_piece);
+        EmitULEB128(32);
+        EmitULEB128(32);
+      } else {
+        OutStreamer.AddComment("DW_OP_bit_piece 32 0");
+        EmitInt8(dwarf::DW_OP_bit_piece);
+        EmitULEB128(32);
+        EmitULEB128(0);
+      }
+    }
+  }
+}
+
 void ARMAsmPrinter::EmitFunctionEntryLabel() {
   if (AFI->isThumbFunction()) {
     OutStreamer.EmitAssemblerFlag(MCAF_Code16);
