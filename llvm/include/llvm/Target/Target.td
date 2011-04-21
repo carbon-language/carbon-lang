@@ -32,17 +32,6 @@ class Register<string n> {
   string Namespace = "";
   string AsmName = n;
 
-  // SpillSize - If this value is set to a non-zero value, it is the size in
-  // bits of the spill slot required to hold this register.  If this value is
-  // set to zero, the information is inferred from any register classes the
-  // register belongs to.
-  int SpillSize = 0;
-
-  // SpillAlignment - This value is used to specify the alignment required for
-  // spilling the register.  Like SpillSize, this should only be explicitly
-  // specified if the register is not in a register class.
-  int SpillAlignment = 0;
-
   // Aliases - A list of registers that this register overlaps with.  A read or
   // modification of this register can potentially read or modify the aliased
   // registers.
