@@ -244,6 +244,7 @@ namespace {
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         blocks[BB] = new GCOVBlock(i++, os);
       }
+      return_block = new GCOVBlock(i++, os);
 
       WriteBytes(function_tag, 4);
       uint32_t block_len = 1 + 1 + 1 + LengthOfGCOVString(SP.getName()) +
@@ -259,17 +260,22 @@ namespace {
 
     ~GCOVFunction() {
       DeleteContainerSeconds(blocks);
+      delete return_block;
     }
 
     GCOVBlock &GetBlock(BasicBlock *BB) {
       return *blocks[BB];
     }
 
+    GCOVBlock &GetReturnBlock() {
+      return *return_block;
+    }
+
     void WriteOut() {
       // Emit count of blocks.
       WriteBytes(block_tag, 4);
-      Write(blocks.size());
-      for (int i = 0, e = blocks.size(); i != e; ++i) {
+      Write(blocks.size() + 1);
+      for (int i = 0, e = blocks.size() + 1; i != e; ++i) {
         Write(0);  // No flags on our blocks.
       }
 
@@ -297,6 +303,7 @@ namespace {
 
    private:
     DenseMap<BasicBlock *, GCOVBlock *> blocks;
+    GCOVBlock *return_block;
   };
 }
 
@@ -347,6 +354,8 @@ void GCOVProfiler::EmitGCNO(DebugInfoFinder &DIF) {
         for (int i = 0; i != successors; ++i) {
           block.AddEdge(function.GetBlock(TI->getSuccessor(i)));
         }
+      } else if (isa<ReturnInst>(TI)) {
+        block.AddEdge(function.GetReturnBlock());
       }
 
       uint32_t line = 0;
@@ -383,11 +392,13 @@ bool GCOVProfiler::EmitProfileArcs(DebugInfoFinder &DIF) {
     DISubprogram SP(*SPI);
     Function *F = SP.getFunction();
 
-    // TODO: GCOV format requires a distinct unified exit block.
     unsigned edges = 0;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       TerminatorInst *TI = BB->getTerminator();
-      edges += TI->getNumSuccessors();
+      if (isa<ReturnInst>(TI))
+        ++edges;
+      else
+        edges += TI->getNumSuccessors();
     }
 
     const ArrayType *counter_type =
@@ -406,7 +417,8 @@ bool GCOVProfiler::EmitProfileArcs(DebugInfoFinder &DIF) {
     unsigned edge_num = 0;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       TerminatorInst *TI = BB->getTerminator();
-      if (int successors = TI->getNumSuccessors()) {
+      int successors = isa<ReturnInst>(TI) ? 1 : TI->getNumSuccessors();
+      if (successors) {
         IRBuilder<> builder(TI);
 
         if (successors == 1) {
