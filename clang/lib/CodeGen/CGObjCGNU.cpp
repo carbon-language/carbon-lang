@@ -1330,8 +1330,10 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(llvm::ConstantInt::get(LongTy, info));
   if (isMeta) {
     llvm::TargetData td(&TheModule);
-    Elements.push_back(llvm::ConstantInt::get(LongTy,
-                     td.getTypeSizeInBits(ClassTy)/8));
+    Elements.push_back(
+        llvm::ConstantInt::get(LongTy,
+                               td.getTypeSizeInBits(ClassTy) /
+                                 CGM.getContext().getCharWidth()));
   } else
     Elements.push_back(InstanceSize);
   Elements.push_back(IVars);
@@ -2137,8 +2139,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
   // sizeof(ModuleTy)
   llvm::TargetData td(&TheModule);
-  Elements.push_back(llvm::ConstantInt::get(LongTy,
-                     td.getTypeSizeInBits(ModuleTy)/8));
+  Elements.push_back(
+    llvm::ConstantInt::get(LongTy,
+                           td.getTypeSizeInBits(ModuleTy) /
+                             CGM.getContext().getCharWidth()));
 
   // The path to the source file where this module was declared
   SourceManager &SM = CGM.getContext().getSourceManager();
