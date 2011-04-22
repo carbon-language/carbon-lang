@@ -281,31 +281,27 @@ StringRef MachOObjectFile::getFileFormatName() const {
   if (!MachOObj->is64Bit()) {
     switch (MachOObj->getHeader().CPUType) {
     case 0x00000007:
-      return "MACHO32-i386";
-    case 0x01000007:
-      return "MACHO32-x86-64";
+      return "Mach-O 32-bit i386";
     case 0x0000000c:
-      return "MACHO32-arm";
+      return "Mach-O arm";
     case 0x00000012:
-      return "MACHO32-ppc";
-    case 0x01000012:
-      return "MACHO32-ppc64";
+      return "Mach-O 32-bit ppc";
+    default:
+      assert((MachOObj->getHeader().CPUType & 0x01000000) == 0 &&
+             "64-bit object file when we're not 64-bit?");
+      return "Mach-O 32-bit unknown";
     }
   }
 
   switch (MachOObj->getHeader().CPUType) {
-  case 0x00000007:
-    return "MACHO64-i386";
   case 0x01000007:
-    return "MACHO64-x86-64";
-  case 0x0000000c:
-    return "MACHO64-arm";
-  case 0x00000012:
-    return "MACHO64-ppc";
+    return "Mach-O 64-bit x86-64";
   case 0x01000012:
-    return "MACHO64-ppc64";
+    return "Mach-O 64-bit ppc64";
   default:
-    return "MACHO64-unknown";
+    assert((MachOObj->getHeader().CPUType & 0x01000000) == 1 &&
+           "32-bit object file when we're 64-bit?");
+    return "Mach-O 64-bit unknown";
   }
 }
 
