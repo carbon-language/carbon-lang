@@ -180,6 +180,7 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   else {
     unsigned Reg = MLoc.getReg();
     if (Reg >= ARM::S0 && Reg <= ARM::S31) {
+      assert(ARM::S0 + 31 == ARM::S31 && "Unexpected ARM S register numbering");
       // S registers are described as bit-pieces of a register
       // S[2x] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 0)
       // S[2x+1] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 32)
@@ -210,6 +211,7 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
         EmitULEB128(0);
       }
     } else if (Reg >= ARM::Q0 && Reg <= ARM::Q15) {
+      assert(ARM::Q0 + 15 == ARM::Q15 && "Unexpected ARM Q register numbering");
       // Q registers Q0-Q15 are described by composing two D registers together.
       // Qx = DW_OP_regx(256+2x) DW_OP_piece(8) DW_OP_regx(256+2x+1) DW_OP_piece(8)
 
