@@ -175,6 +175,7 @@ private:
   void LRE_WillShrinkVirtReg(unsigned);
   void LRE_DidCloneVirtReg(unsigned, unsigned);
 
+  float calcSpillCost();
   bool addSplitConstraints(InterferenceCache::Cursor, float&);
   void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
   void growRegion(GlobalSplitCandidate &Cand, InterferenceCache::Cursor);
@@ -201,6 +202,11 @@ private:
 } // end anonymous namespace
 
 char RAGreedy::ID = 0;
+
+// Hysteresis to use when comparing floats.
+// This helps stabilize decisions based on float comparisons.
+const float Hysteresis = 0.98f;
+
 
 FunctionPass* llvm::createGreedyRegisterAllocator() {
   return new RAGreedy();
@@ -615,6 +621,33 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
   DEBUG(dbgs() << ", v=" << Visited);
 }
 
+/// calcSpillCost - Compute how expensive it would be to split the live range in
+/// SA around all use blocks instead of forming bundle regions.
+float RAGreedy::calcSpillCost() {
+  float Cost = 0;
+  const LiveInterval &LI = SA->getParent();
+  ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
+  for (unsigned i = 0; i != UseBlocks.size(); ++i) {
+    const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
+    unsigned Number = BI.MBB->getNumber();
+    // We normally only need one spill instruction - a load or a store.
+    Cost += SpillPlacer->getBlockFrequency(Number);
+
+    // Unless the value is redefined in the block.
+    if (BI.LiveIn && BI.LiveOut) {
+      SlotIndex Start, Stop;
+      tie(Start, Stop) = Indexes->getMBBRange(Number);
+      LiveInterval::const_iterator I = LI.find(Start);
+      assert(I != LI.end() && "Expected live-in value");
+      // Is there a different live-out value? If so, we need an extra spill
+      // instruction.
+      if (I->end < Stop)
+        Cost += SpillPlacer->getBlockFrequency(Number);
+    }
+  }
+  return Cost;
+}
+
 /// calcGlobalSplitCost - Return the global split cost of following the split
 /// pattern in LiveBundles. This cost should be added to the local cost of the
 /// interference pattern in SplitConstraints.
@@ -919,7 +952,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
 
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                                   SmallVectorImpl<LiveInterval*> &NewVRegs) {
-  float BestCost = 0;
+  float BestCost = Hysteresis * calcSpillCost();
+  DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
   const unsigned NoCand = ~0u;
   unsigned BestCand = NoCand;
 
@@ -937,9 +971,14 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       continue;
     }
     DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tstatic = " << Cost);
-    if (BestCand != NoCand && Cost >= BestCost) {
-      DEBUG(dbgs() << " worse than "
-                   << PrintReg(GlobalCand[BestCand].PhysReg, TRI) << '\n');
+    if (Cost >= BestCost) {
+      DEBUG({
+        if (BestCand == NoCand)
+          dbgs() << " worse than no bundles\n";
+        else
+          dbgs() << " worse than "
+                 << PrintReg(GlobalCand[BestCand].PhysReg, TRI) << '\n';
+      });
       continue;
     }
     growRegion(GlobalCand[Cand], Intf);
@@ -960,9 +999,9 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
         dbgs() << " EB#" << i;
       dbgs() << ".\n";
     });
-    if (BestCand == NoCand || Cost < BestCost) {
+    if (Cost < BestCost) {
       BestCand = Cand;
-      BestCost = 0.98f * Cost; // Prevent rounding effects.
+      BestCost = Hysteresis * Cost; // Prevent rounding effects.
     }
   }
 
