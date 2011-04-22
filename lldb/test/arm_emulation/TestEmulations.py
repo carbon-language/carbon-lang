@@ -13,7 +13,7 @@ class ARMEmulationTestCase(TestBase):
 
     def test_thumb_emulations (self):
         current_dir = os.getcwd();
-        test_dir = os.path.join (current_dir, "test-files")
+        test_dir = os.path.join (current_dir, "new-test-files")
         files = os.listdir (test_dir)
         thumb_files = list()
         for f in files:
@@ -27,7 +27,7 @@ class ARMEmulationTestCase(TestBase):
 
     def test_arm_emulations (self):
         current_dir = os.getcwd();
-        test_dir = os.path.join (current_dir, "test-files")
+        test_dir = os.path.join (current_dir, "new-test-files")
         files = os.listdir (test_dir)
         arm_files = list()
         for f in files:
