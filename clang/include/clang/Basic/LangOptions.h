@@ -130,6 +130,7 @@ public:
                                     // testing languages such as OpenCL.
 
   unsigned MRTD : 1;            // -mrtd calling convention
+  unsigned DelayedTemplateParsing : 1;  // Delayed template parsing
 
 private:
   // We declare multibit enums as unsigned because MSVC insists on making enums
@@ -225,6 +226,7 @@ public:
     NoBitFieldTypeAlign = 0;
     FakeAddressSpaceMap = 0;
     MRTD = 0;
+    DelayedTemplateParsing = 0;
     ParseUnknownAnytype = 0;
   }
 

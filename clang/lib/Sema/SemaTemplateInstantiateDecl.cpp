@@ -2262,6 +2262,21 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (PatternDecl)
     Pattern = PatternDecl->getBody(PatternDecl);
 
+  // Postpone late parsed template instantiations.
+  if (PatternDecl->isLateTemplateParsed() && !LateTemplateParser) {
+    PendingInstantiations.push_back(
+      std::make_pair(Function, PointOfInstantiation));
+    return;
+  }
+
+  // Call the LateTemplateParser callback if there a need to late parse
+  // a templated function definition. 
+  if (!Pattern && PatternDecl && PatternDecl->isLateTemplateParsed() &&
+      LateTemplateParser) {
+    LateTemplateParser(OpaqueParser, (FunctionDecl*)PatternDecl);
+    Pattern = PatternDecl->getBody(PatternDecl);
+  }
+
   if (!Pattern) {
     if (DefinitionRequired) {
       if (Function->getPrimaryTemplate())

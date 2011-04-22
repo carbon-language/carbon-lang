@@ -532,6 +532,9 @@ def traditional_cpp : Flag<"-traditional-cpp">,
   HelpText<"Enable some traditional CPP emulation">;
 def ffake_address_space_map : Flag<"-ffake-address-space-map">,
   HelpText<"Use a fake address space map; OpenCL testing purposes only">;
+def fdelayed_template_parsing : Flag<"-fdelayed-template-parsing">,
+  HelpText<"Parse templated function definitions at the end of the "
+           "translation unit ">;
 def funknown_anytype : Flag<"-funknown-anytype">,
   HelpText<"Enable parser support for the __unknown_anytype type; for testing purposes only">;
 

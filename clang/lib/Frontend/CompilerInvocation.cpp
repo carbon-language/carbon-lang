@@ -692,6 +692,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-ffake-address-space-map");
   if (Opts.ParseUnknownAnytype)
     Res.push_back("-funknown-anytype");
+  if (Opts.DelayedTemplateParsing)
+    Res.push_back("-fdelayed-template-parsing");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -1436,6 +1438,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_pthread))
     Opts.POSIXThreads = 1;
 
+  if (Args.hasArg(OPT_fdelayed_template_parsing))
+    Opts.DelayedTemplateParsing = 1;
+
   llvm::StringRef Vis = Args.getLastArgValue(OPT_fvisibility, "default");
   if (Vis == "default")
     Opts.setVisibilityMode(DefaultVisibility);
@@ -1495,6 +1500,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MathErrno = Args.hasArg(OPT_fmath_errno);
   Opts.InstantiationDepth = Args.getLastArgIntValue(OPT_ftemplate_depth, 1024,
                                                Diags);
+  Opts.DelayedTemplateParsing = Args.hasArg(OPT_fdelayed_template_parsing);
   Opts.NumLargeByValueCopy = Args.getLastArgIntValue(OPT_Wlarge_by_value_copy,
                                                     0, Diags);
   Opts.MSBitfields = Args.hasArg(OPT_mms_bitfields);

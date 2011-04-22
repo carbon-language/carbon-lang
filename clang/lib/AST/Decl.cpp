@@ -1413,7 +1413,7 @@ bool FunctionDecl::isVariadic() const {
 
 bool FunctionDecl::hasBody(const FunctionDecl *&Definition) const {
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
-    if (I->Body) {
+    if (I->Body || I->IsLateTemplateParsed) {
       Definition = *I;
       return true;
     }
@@ -1427,6 +1427,9 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
     if (I->Body) {
       Definition = *I;
       return I->Body.get(getASTContext().getExternalSource());
+    } else if (I->IsLateTemplateParsed) {
+      Definition = *I;
+      return 0;
     }
   }
 

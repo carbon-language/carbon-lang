@@ -788,7 +788,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     // FIXME: Attributes?
   }
   
-  if (ND->isThisDeclarationADefinition()) {
+  if (ND->isThisDeclarationADefinition() && !ND->isLateTemplateParsed()) {
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(ND)) {
       // Find the initializers that were written in the source.
       llvm::SmallVector<CXXCtorInitializer *, 4> WrittenInits;

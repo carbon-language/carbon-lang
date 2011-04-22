@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "RAIIObjectsForParser.h"
 #include "ParsePragma.h"
+#include "clang/AST/DeclTemplate.h"
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Sema &actions)
@@ -362,6 +363,11 @@ Parser::~Parser() {
   for (unsigned i = 0, e = NumCachedScopes; i != e; ++i)
     delete ScopeCache[i];
 
+  // Free LateParsedTemplatedFunction nodes.
+  for (LateParsedTemplateMapT::iterator it = LateParsedTemplateMap.begin();
+      it != LateParsedTemplateMap.end(); ++it)
+    delete it->second;
+
   // Remove the pragma handlers we installed.
   PP.RemovePragmaHandler(AlignHandler.get());
   AlignHandler.reset();
@@ -438,6 +444,10 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
 
   Result = DeclGroupPtrTy();
   if (Tok.is(tok::eof)) {
+    // Late template parsing can begin.
+    if (getLang().DelayedTemplateParsing)
+      Actions.SetLateTemplateParser(LateTemplateParserCallback, this);
+
     Actions.ActOnEndOfTranslationUnit();
     return true;
   }
@@ -785,6 +795,43 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     if (Tok.isNot(tok::l_brace))
       return 0;
   }
+
+  // In delayed template parsing mode, for function template we consume the
+  // tokens and store them for late parsing at the end of the translation unit.
+  if (getLang().DelayedTemplateParsing &&
+      TemplateInfo.Kind == ParsedTemplateInfo::Template) {
+    MultiTemplateParamsArg TemplateParameterLists(Actions,
+                                         TemplateInfo.TemplateParams->data(),
+                                         TemplateInfo.TemplateParams->size());
+    
+    ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
+    Scope *ParentScope = getCurScope()->getParent();
+
+    Decl *DP = Actions.HandleDeclarator(ParentScope, D,
+                                move(TemplateParameterLists),
+                                /*IsFunctionDefinition=*/true);
+    D.complete(DP);
+    D.getMutableDeclSpec().abort();
+
+    if (DP) {
+      LateParsedTemplatedFunction *LPT = new LateParsedTemplatedFunction(this, DP);
+
+      FunctionDecl *FnD = 0;
+      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(DP))
+        FnD = FunTmpl->getTemplatedDecl();
+      else
+        FnD = cast<FunctionDecl>(DP);
+
+      LateParsedTemplateMap[FnD] = LPT;
+      Actions.MarkAsLateParsedTemplate(FnD);
+      LexTemplateFunctionForLateParsing(LPT->Toks);
+    } else {
+      CachedTokens Toks;
+      LexTemplateFunctionForLateParsing(Toks);
+    }
+    return DP;
+  }
+
 
   // Enter a scope for the function body.
   ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);

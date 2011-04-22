@@ -6381,3 +6381,24 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
   Out << ']';
   return Out.str();
 }
+
+void Sema::MarkAsLateParsedTemplate(FunctionDecl *FD, bool Flag) {
+  if (!FD)
+    return;
+  FD->setLateTemplateParsed(Flag);
+} 
+
+bool Sema::IsInsideALocalClassWithinATemplateFunction() {
+  DeclContext *DC = CurContext;
+
+  while (DC) {
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(CurContext)) {
+      const FunctionDecl *FD = RD->isLocalClass();
+      return (FD && FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate);
+    } else if (DC->isTranslationUnit() || DC->isNamespace())
+      return false;
+
+    DC = DC->getParent();
+  }
+  return false;
+}

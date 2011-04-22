@@ -3166,6 +3166,25 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   }
 }
 
+void Sema::ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D) {
+  if (!D)
+    return;
+
+  int NumParamList = D->getNumTemplateParameterLists();
+  for (int i = 0; i < NumParamList; i++) {
+    TemplateParameterList* Params = D->getTemplateParameterList(i);
+    for (TemplateParameterList::iterator Param = Params->begin(),
+                                      ParamEnd = Params->end();
+          Param != ParamEnd; ++Param) {
+      NamedDecl *Named = cast<NamedDecl>(*Param);
+      if (Named->getDeclName()) {
+        S->AddDecl(Named);
+        IdResolver.AddDecl(Named);
+      }
+    }
+  }
+}
+
 void Sema::ActOnReenterTemplateScope(Scope *S, Decl *D) {
   if (!D)
     return;

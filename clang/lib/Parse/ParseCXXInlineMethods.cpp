@@ -15,6 +15,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
+#include "clang/AST/DeclTemplate.h"
 using namespace clang;
 
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
@@ -45,6 +46,36 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   HandleMemberFunctionDefaultArgs(D, FnD);
 
   D.complete(FnD);
+
+  // In delayed template parsing mode, if we are within a class template
+  // or if we are about to parse function member template then consume
+  // the tokens and store them for parsing at the end of the translation unit.
+  if (getLang().DelayedTemplateParsing && 
+      ((Actions.CurContext->isDependentContext() ||
+        TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) && 
+        !Actions.IsInsideALocalClassWithinATemplateFunction()) &&
+        !D.getDeclSpec().isFriendSpecified()) {
+
+    if (FnD) {
+      LateParsedTemplatedFunction *LPT =
+        new LateParsedTemplatedFunction(this, FnD);
+
+      FunctionDecl *FD = 0;
+      if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(FnD))
+        FD = FunTmpl->getTemplatedDecl();
+      else
+        FD = cast<FunctionDecl>(FnD);
+
+      LateParsedTemplateMap[FD] = LPT;
+      Actions.MarkAsLateParsedTemplate(FD);
+      LexTemplateFunctionForLateParsing(LPT->Toks);
+    } else {
+      CachedTokens Toks;
+      LexTemplateFunctionForLateParsing(Toks);
+    }
+
+    return FnD;
+  }
 
   // Consume the tokens and store them for later parsing.
 

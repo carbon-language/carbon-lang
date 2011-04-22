@@ -5748,8 +5748,13 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // See if this is a redefinition.
   // But don't complain if we're in GNU89 mode and the previous definition
   // was an extern inline function.
+
+  // FIXME: This code doesn't complain about multiple definition for late
+  // parsed template function.
+  bool IsLateParsingRedefinition = LateTemplateParser &&
+                                   FD->isLateTemplateParsed();
   const FunctionDecl *Definition;
-  if (FD->hasBody(Definition) &&
+  if (FD->hasBody(Definition) && !IsLateParsingRedefinition &&
       !canRedefineFunction(Definition, getLangOptions())) {
     if (getLangOptions().GNUMode && Definition->isInlineSpecified() &&
         Definition->getStorageClass() == SC_Extern)

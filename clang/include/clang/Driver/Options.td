@@ -314,6 +314,7 @@ def fmerge_all_constants : Flag<"-fmerge-all-constants">, Group<f_Group>;
 def fmessage_length_EQ : Joined<"-fmessage-length=">, Group<f_Group>;
 def fms_extensions : Flag<"-fms-extensions">, Group<f_Group>;
 def fmsc_version : Joined<"-fmsc-version=">, Group<f_Group>;
+def fdelayed_template_parsing : Flag<"-fdelayed-template-parsing">, Group<f_Group>;
 def fmudflapth : Flag<"-fmudflapth">, Group<f_Group>;
 def fmudflap : Flag<"-fmudflap">, Group<f_Group>;
 def fnested_functions : Flag<"-fnested-functions">, Group<f_Group>;
@@ -349,6 +350,7 @@ def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">, Group<f_Gr
 def fno_math_errno : Flag<"-fno-math-errno">, Group<f_Group>;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">, Group<f_Group>;
 def fno_ms_extensions : Flag<"-fno-ms-extensions">, Group<f_Group>;
+def fno_delayed_template_parsing : Flag<"-fno-delayed-template-parsing">, Group<f_Group>;
 def fno_objc_default_synthesize_properties 
   : Flag<"-fno-objc-default-synthesize-properties">, Group<f_Group>;
 def fno_objc_exceptions: Flag<"-fno-objc-exceptions">, Group<f_Group>;

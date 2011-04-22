@@ -17,6 +17,8 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
 #include "RAIIObjectsForParser.h"
+#include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ASTConsumer.h"
 using namespace clang;
 
 /// \brief Parse a template declaration, explicit instantiation, or
@@ -1124,4 +1126,126 @@ SourceRange Parser::ParsedTemplateInfo::getSourceRange() const {
   if (ExternLoc.isValid())
     R.setBegin(ExternLoc);
   return R;
+}
+
+void Parser::LateTemplateParserCallback(void *P, FunctionDecl *FD) {
+  ((Parser*)P)->LateTemplateParser(FD);
+}
+
+
+void Parser::LateTemplateParser(FunctionDecl *FD) {
+  LateParsedTemplatedFunction *LPT = LateParsedTemplateMap[FD];
+  if (LPT) {
+    ParseLateTemplatedFuncDef(*LPT);
+    return;
+  }
+
+  llvm_unreachable("Late templated function without associated lexed tokens");
+}
+
+/// \brief Late parse a C++ function template in Microsoft mode.
+void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
+  if(!LMT.D)
+     return;
+
+  // If this is a member template, introduce the template parameter scope.
+  ParseScope TemplateScope(this, Scope::TemplateParamScope);
+
+  // Get the FunctionDecl.
+  FunctionDecl *FD = 0;
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(LMT.D))
+    FD = FunTmpl->getTemplatedDecl();
+  else
+    FD = cast<FunctionDecl>(LMT.D);
+  
+  // Reinject the template parameters.
+  DeclaratorDecl* Declarator = dyn_cast<DeclaratorDecl>(FD);
+  if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
+    Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
+    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
+  } else {
+    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
+
+    DeclContext *DD = FD->getLexicalParent();
+    while (DD && DD->isRecord()) {
+      if (ClassTemplatePartialSpecializationDecl* MD =
+                  dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(DD))
+          Actions.ActOnReenterTemplateScope(getCurScope(), MD);
+      else if (CXXRecordDecl* MD = dyn_cast_or_null<CXXRecordDecl>(DD))
+          Actions.ActOnReenterTemplateScope(getCurScope(),
+                                            MD->getDescribedClassTemplate());
+
+      DD = DD->getLexicalParent();
+    }
+  }
+  assert(!LMT.Toks.empty() && "Empty body!");
+
+  // Append the current token at the end of the new token stream so that it
+  // doesn't get lost.
+  LMT.Toks.push_back(Tok);
+  PP.EnterTokenStream(LMT.Toks.data(), LMT.Toks.size(), true, false);
+
+  // Consume the previously pushed token.
+  ConsumeAnyToken();
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try))
+         && "Inline method not starting with '{', ':' or 'try'");
+
+  // Parse the method body. Function body parsing code is similar enough
+  // to be re-used for method bodies as well.
+  ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
+
+  // Recreate the DeclContext.
+  Sema::ContextRAII SavedContext(Actions, Actions.getContainingDC(FD));
+
+  if (FunctionTemplateDecl *FunctionTemplate
+        = dyn_cast_or_null<FunctionTemplateDecl>(LMT.D))
+    Actions.ActOnStartOfFunctionDef(getCurScope(),
+                                   FunctionTemplate->getTemplatedDecl());
+  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(LMT.D))
+    Actions.ActOnStartOfFunctionDef(getCurScope(), Function);
+  
+
+  if (Tok.is(tok::kw_try)) {
+    ParseFunctionTryBlock(LMT.D, FnScope);
+    return;
+  }
+  if (Tok.is(tok::colon)) {
+    ParseConstructorInitializer(LMT.D);
+
+    // Error recovery.
+    if (!Tok.is(tok::l_brace)) {
+      Actions.ActOnFinishFunctionBody(LMT.D, 0);
+      return;
+    }
+  } else
+    Actions.ActOnDefaultCtorInitializers(LMT.D);
+
+  ParseFunctionStatementBody(LMT.D, FnScope);
+  Actions.MarkAsLateParsedTemplate(FD, false);
+
+  DeclGroupPtrTy grp = Actions.ConvertDeclToDeclGroup(LMT.D);
+  if (grp)
+    Actions.getASTConsumer().HandleTopLevelDecl(grp.get());
+}
+
+/// \brief Lex a delayed template function for late parsing.
+void Parser::LexTemplateFunctionForLateParsing(CachedTokens &Toks) {
+  tok::TokenKind kind = Tok.getKind();
+  // We may have a constructor initializer or function-try-block here.
+  if (kind == tok::colon || kind == tok::kw_try)
+    ConsumeAndStoreUntil(tok::l_brace, Toks);
+  else {
+    Toks.push_back(Tok);
+    ConsumeBrace();
+  }
+  // Consume everything up to (and including) the matching right brace.
+  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+
+  // If we're in a function-try-block, we need to store all the catch blocks.
+  if (kind == tok::kw_try) {
+    while (Tok.is(tok::kw_catch)) {
+      ConsumeAndStoreUntil(tok::l_brace, Toks, /*StopAtSemi=*/false);
+      ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+    }
+  }
 }

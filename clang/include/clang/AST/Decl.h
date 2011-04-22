@@ -1294,6 +1294,7 @@ private:
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
+  bool IsLateTemplateParsed : 1;
 
   /// \brief End part of this FunctionDecl's source range.
   ///
@@ -1375,7 +1376,8 @@ protected:
       IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
-      HasImplicitReturnZero(false), EndRangeLoc(NameInfo.getEndLoc()),
+      HasImplicitReturnZero(false), IsLateTemplateParsed(false),
+      EndRangeLoc(NameInfo.getEndLoc()),
       TemplateOrSpecialization(),
       DNLoc(NameInfo.getInfo()) {}
 
@@ -1458,7 +1460,9 @@ public:
   /// previous definition); for that information, use getBody.
   /// FIXME: Should return true if function is deleted or defaulted. However,
   /// CodeGenModule.cpp uses it, and I don't know if this would break it.
-  bool isThisDeclarationADefinition() const { return Body; }
+  bool isThisDeclarationADefinition() const {
+    return Body || IsLateTemplateParsed;
+  }
 
   void setBody(Stmt *B);
   void setLazyBody(uint64_t Offset) { Body = Offset; }
@@ -1474,6 +1478,10 @@ public:
   /// abstract.
   bool isPure() const { return IsPure; }
   void setPure(bool P = true);
+
+  /// Whether this templated function will be late parsed.
+  bool isLateTemplateParsed() const { return IsLateTemplateParsed; }
+  void setLateTemplateParsed(bool ILT = true) { IsLateTemplateParsed = ILT; }
 
   /// Whether this function is "trivial" in some specialized C++ senses.
   /// Can only be true for default constructors, copy constructors,

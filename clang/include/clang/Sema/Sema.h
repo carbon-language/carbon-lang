@@ -307,6 +307,16 @@ public:
   /// and must warn if not used. Only contains the first declaration.
   llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
+  /// \brief Callback to the parser to parse templated functions when needed.
+  typedef void LateTemplateParserCB(void *P, FunctionDecl *FD);
+  LateTemplateParserCB *LateTemplateParser;
+  void *OpaqueParser; 
+
+  void SetLateTemplateParser(LateTemplateParserCB *LTP, void *P) {
+    LateTemplateParser = LTP;
+    OpaqueParser = P; 
+  }
+
   class DelayedDiagnostics;
 
   class ParsingDeclState {
@@ -2974,11 +2984,14 @@ public:
                                          AttributeList *AttrList);
 
   void ActOnReenterTemplateScope(Scope *S, Decl *Template);
+  void ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D);
   void ActOnStartDelayedMemberDeclarations(Scope *S, Decl *Record);
   void ActOnStartDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
   void ActOnDelayedCXXMethodParameter(Scope *S, Decl *Param);
   void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
   void ActOnFinishDelayedMemberDeclarations(Scope *S, Decl *Record);
+  void MarkAsLateParsedTemplate(FunctionDecl *FD, bool Flag = true);
+  bool IsInsideALocalClassWithinATemplateFunction();
 
   Decl *ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
                                      Expr *AssertExpr,

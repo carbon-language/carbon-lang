@@ -2031,7 +2031,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::CXXMethod:
   case Decl::Function:
     // Skip function templates
-    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate())
+    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate() ||
+        cast<FunctionDecl>(D)->isLateTemplateParsed())
       return;
 
     EmitGlobal(cast<FunctionDecl>(D));
@@ -2060,12 +2061,15 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   case Decl::CXXConstructor:
     // Skip function templates
-    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate())
+    if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate() ||
+        cast<FunctionDecl>(D)->isLateTemplateParsed())
       return;
       
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
     break;
   case Decl::CXXDestructor:
+    if (cast<FunctionDecl>(D)->isLateTemplateParsed())
+      return;
     EmitCXXDestructors(cast<CXXDestructorDecl>(D));
     break;
 
