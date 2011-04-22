@@ -1652,6 +1652,11 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
         Name == "t2ADDrSPi12" || Name == "t2SUBrSPi12")
       return false;
 
+    // FIXME: Use ldr.n to work around a Darwin assembler bug.
+    // Introduce a workaround with tLDRpciDIS opcode.
+    if (Name == "tLDRpci")
+      return false;
+
     // Ignore t2LDRDpci, prefer the generic t2LDRDi8, t2LDRD_PRE, t2LDRD_POST.
     if (Name == "t2LDRDpci")
       return false;

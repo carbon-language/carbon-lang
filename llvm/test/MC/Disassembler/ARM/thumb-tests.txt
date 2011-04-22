@@ -30,6 +30,9 @@
 # CHECK:	ldmia	r0!, {r1}
 0x02 0xc8
 
+# CHECK:	ldr	r5, #432
+0x6c 0x4d
+
 # CHECK:	str	r0, [r3]
 0x18 0x60
 
