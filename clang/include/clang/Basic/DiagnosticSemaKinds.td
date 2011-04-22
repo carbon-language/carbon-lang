@@ -2124,6 +2124,8 @@ def err_inline_declaration_block_scope : Error<
   "inline declaration of %0 not allowed in block scope">;
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
+def warn_static_non_static : ExtWarn<
+  "static declaration of %0 follows non-static declaration">;
 def err_non_static_static : Error<
   "non-static declaration of %0 follows static declaration">;
 def err_extern_non_extern : Error<

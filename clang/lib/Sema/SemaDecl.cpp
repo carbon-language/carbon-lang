@@ -1258,8 +1258,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
       New->getStorageClass() == SC_Static &&
       Old->getStorageClass() != SC_Static &&
       !canRedefineFunction(Old, getLangOptions())) {
-    Diag(New->getLocation(), diag::err_static_non_static)
-      << New;
+    unsigned DiagID = diag::err_static_non_static;
+    if (getLangOptions().Microsoft)
+      DiagID = diag::warn_static_non_static;
+    Diag(New->getLocation(), DiagID) << New;
     Diag(Old->getLocation(), PrevDiag);
     return true;
   }

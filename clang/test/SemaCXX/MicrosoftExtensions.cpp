@@ -168,3 +168,15 @@ public:
  };
 
 }
+
+
+
+
+extern void static_func();
+void static_func(); // expected-note {{previous declaration is here}}
+
+
+static void static_func() // expected-warning {{static declaration of 'static_func' follows non-static declaration}}
+{
+
+}
