@@ -334,11 +334,11 @@ struct OptionValueBase : public GenericOptionValue {
 
   // Some options may take their value from a different data type.
   template<class DT>
-  void setValue(const DT& V) {}
+  void setValue(const DT& /*V*/) {}
 
-  bool compare(const DataType &V) const { return false; }
+  bool compare(const DataType &/*V*/) const { return false; }
 
-  virtual bool compare(const GenericOptionValue& V) const { return false; }
+  virtual bool compare(const GenericOptionValue& /*V*/) const { return false; }
 };
 
 // Simple copy of the option value.
@@ -904,8 +904,8 @@ void printOptionDiff(const Option &O, const generic_parser_base &P, const DT &V,
 // type than the option value. e.g. HelpPrinter.
 template<class ParserDT, class ValDT>
 struct OptionDiffPrinter {
-  void print(const Option &O, const parser<ParserDT> P, const ValDT &V,
-             const OptionValue<ValDT> &Default, size_t GlobalWidth) {
+  void print(const Option &O, const parser<ParserDT> P, const ValDT &/*V*/,
+             const OptionValue<ValDT> &/*Default*/, size_t GlobalWidth) {
     P.printOptionNoValue(O, GlobalWidth);
   }
 };
@@ -1287,7 +1287,7 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 
   // Unimplemented: list options don't currently store their default value.
-  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
+  virtual void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const {}
 
   void done() {
     addArgument();
@@ -1489,7 +1489,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   }
 
   // Unimplemented: bits options don't currently store their default values.
-  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
+  virtual void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const {}
 
   void done() {
     addArgument();
@@ -1583,7 +1583,7 @@ class alias : public Option {
   virtual void printOptionInfo(size_t GlobalWidth) const;
 
   // Aliases do not need to print their values.
-  virtual void printOptionValue(size_t GlobalWidth, bool Force) const {}
+  virtual void printOptionValue(size_t /*GlobalWidth*/, bool /*Force*/) const {}
 
   void done() {
     if (!hasArgStr())
