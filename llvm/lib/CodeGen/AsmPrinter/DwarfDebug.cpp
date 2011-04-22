@@ -2061,7 +2061,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   // Clear debug info
   CurrentFnDbgScope = NULL;
-  CurrentFnArguments.clear();
+  DeleteContainerPointers(CurrentFnArguments);
   DbgVariableToFrameIndexMap.clear();
   VarToAbstractVarMap.clear();
   DbgVariableToDbgInstMap.clear();
