@@ -117,8 +117,8 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
     CGF.CGM.getContext().getASTObjCInterfaceLayout(OID);
   uint64_t TypeSizeInBits = CGF.CGM.getContext().toBits(RL.getSize());
   uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
-  uint64_t BitOffset = FieldBitOffset % 8;
-  uint64_t ContainingTypeAlign = 8;
+  uint64_t BitOffset = FieldBitOffset % CGF.CGM.getContext().getCharWidth();
+  uint64_t ContainingTypeAlign = CGF.CGM.getContext().Target.getCharAlign();
   uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
   uint64_t BitFieldSize =
     Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
