@@ -2259,34 +2259,6 @@ icmp transform.
 
 //===---------------------------------------------------------------------===//
 
-These functions:
-int foo(int *X) {
-  if ((*X & 255) == 47)
-    bar();
-}
-int foo2(int X) {
-  if ((X & 255) == 47)
-    bar();
-}
-
-codegen to:
-
-  movzbl	(%rdi), %eax
-  cmpl	$47, %eax
-  jne	LBB0_2
-
-and:
-  movzbl	%dil, %eax
-  cmpl	$47, %eax
-  jne	LBB1_2
-
-If a dag combine shrunk the compare to a byte compare, then we'd fold the load
-in the first example, and eliminate the movzbl in the second, saving a register.
-This can be a target independent dag combine that works on ISD::SETCC, it would
-catch this before the legalize ops pass.
-
-//===---------------------------------------------------------------------===//
-
 We should optimize this:
 
   %tmp = load i16* %arrayidx, align 4, !tbaa !0
@@ -2329,8 +2301,7 @@ Index: InstCombine/InstCombineCompares.cpp
    {
 
 
-but we can't do that until the dag combine above is added.  Not having this
-is blocking resolving PR6627.
+Not having this is blocking resolving PR6627.
 
 //===---------------------------------------------------------------------===//
 

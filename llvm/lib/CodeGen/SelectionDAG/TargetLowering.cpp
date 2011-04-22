@@ -1916,6 +1916,42 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       // TODO: (ctpop x) == 1 -> x && (x & x-1) == 0 iff ctpop is illegal.
     }
 
+    // (zext x) == C --> x == (trunc C)
+    if (DCI.isBeforeLegalize() && N0->hasOneUse() &&
+        (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+      unsigned MinBits = N0.getValueSizeInBits();
+      SDValue PreZExt;
+      if (N0->getOpcode() == ISD::ZERO_EXTEND) {
+        // ZExt
+        MinBits = N0->getOperand(0).getValueSizeInBits();
+        PreZExt = N0->getOperand(0);
+      } else if (N0->getOpcode() == ISD::AND) {
+        // DAGCombine turns costly ZExts into ANDs
+        if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0->getOperand(1)))
+          if ((C->getAPIntValue()+1).isPowerOf2()) {
+            MinBits = C->getAPIntValue().countTrailingOnes();
+            PreZExt = N0->getOperand(0);
+          }
+      } else if (LoadSDNode *LN0 = dyn_cast<LoadSDNode>(N0)) {
+        // ZEXTLOAD
+        if (LN0->getExtensionType() == ISD::ZEXTLOAD) {
+          MinBits = LN0->getMemoryVT().getSizeInBits();
+          PreZExt = N0;
+        }
+      }
+
+      // Make sure we're not loosing bits from the constant.
+      if (MinBits < C1.getBitWidth() && MinBits > C1.getActiveBits()) {
+        EVT MinVT = EVT::getIntegerVT(*DAG.getContext(), MinBits);
+        if (isTypeDesirableForOp(ISD::SETCC, MinVT)) {
+          // Will get folded away.
+          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, MinVT, PreZExt);
+          SDValue C = DAG.getConstant(C1.trunc(MinBits), MinVT);
+          return DAG.getSetCC(dl, VT, Trunc, C, Cond);
+        }
+      }
+    }
+
     // If the LHS is '(and load, const)', the RHS is 0,
     // the test is for equality or unsigned, and all 1 bits of the const are
     // in the same partial word, see if we can shorten the load.
