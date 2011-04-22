@@ -414,6 +414,7 @@ ALIAS("_stdcall"     , __stdcall  , KEYMS | KEYBORLAND)
 ALIAS("_thiscall"    , __thiscall , KEYMS)
 ALIAS("_uuidof"      , __uuidof   , KEYMS | KEYBORLAND)
 ALIAS("_inline"      , inline     , KEYMS)
+ALIAS("_declspec"    , __declspec , KEYMS)
 
 // Borland Extensions which should be disabled in strict conformance mode.
 ALIAS("_pascal"      , __pascal   , KEYBORLAND)
