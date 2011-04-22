@@ -1,4 +1,4 @@
-//===-- MCJIT.cpp - MC-based Just-in-Time Compiler --------------------------===//
+//===-- MCJIT.cpp - MC-based Just-in-Time Compiler ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
