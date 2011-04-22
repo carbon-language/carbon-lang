@@ -401,7 +401,8 @@ namespace llvm {
                                 unsigned Flags = 0,
                                 bool isOptimized = false,
                                 Function *Fn = 0,
-                                MDNode *TParam = 0);
+                                MDNode *TParam = 0,
+                                MDNode *Decl = 0);
 
     /// createMethod - Create a new descriptor for the specified C++ method.
     /// See comments in DISubprogram for descriptions of these fields.

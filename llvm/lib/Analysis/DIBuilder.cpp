@@ -672,7 +672,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
                                        bool isLocalToUnit, bool isDefinition,
                                        unsigned Flags, bool isOptimized,
                                        Function *Fn,
-                                       MDNode *TParams) {
+                                       MDNode *TParams,
+                                       MDNode *Decl) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subprogram),
     llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -691,7 +692,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context,
     ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
     ConstantInt::get(Type::getInt1Ty(VMContext), isOptimized),
     Fn,
-    TParams
+    TParams,
+    Decl
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
 

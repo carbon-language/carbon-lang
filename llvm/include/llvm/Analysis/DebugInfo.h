@@ -538,6 +538,9 @@ namespace llvm {
 
     Function *getFunction() const { return getFunctionField(16); }
     DIArray getTemplateParams() const { return getFieldAs<DIArray>(17); }
+    DISubprogram getFunctionDeclaration() const {
+      return getFieldAs<DISubprogram>(18);
+    }
   };
 
   /// DIGlobalVariable - This is a wrapper for a global variable.

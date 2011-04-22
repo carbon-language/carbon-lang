@@ -433,15 +433,16 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
   i32,      ;; Line number where defined
   metadata, ;; Reference to type descriptor
   i1,       ;; True if the global is local to compile unit (static)
-  i1        ;; True if the global is defined in the compile unit (not extern)
-  i32       ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
-  i32       ;; Index into a virtual function
+  i1,       ;; True if the global is defined in the compile unit (not extern)
+  i32,      ;; Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
+  i32,      ;; Index into a virtual function
   metadata, ;; indicates which base type contains the vtable pointer for the 
             ;; derived class
-  i1        ;; isArtificial
-  i1        ;; isOptimized
-  Function *;; Pointer to LLVM function
-  metadata  ;; Lists function template parameters
+  i1,       ;; isArtificial
+  i1,       ;; isOptimized
+  Function *,;; Pointer to LLVM function
+  metadata, ;; Lists function template parameters
+  metadata  ;; Function declaration descriptor
 }
 </pre>
 </div>
