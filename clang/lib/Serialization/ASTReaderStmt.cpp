@@ -683,19 +683,29 @@ void ASTStmtReader::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
 
 void ASTStmtReader::VisitInitListExpr(InitListExpr *E) {
   VisitExpr(E);
-  unsigned NumInits = Record[Idx++];
-  E->reserveInits(*Reader.getContext(), NumInits);
-  for (unsigned I = 0; I != NumInits; ++I)
-    E->updateInit(*Reader.getContext(), I, Reader.ReadSubExpr());
   E->setSyntacticForm(cast_or_null<InitListExpr>(Reader.ReadSubStmt()));
   E->setLBraceLoc(ReadSourceLocation(Record, Idx));
   E->setRBraceLoc(ReadSourceLocation(Record, Idx));
-  if (Record[Idx++]) // isArrayFiller
-    E->ArrayFillerOrUnionFieldInit = Reader.ReadSubExpr();
-  else
+  bool isArrayFiller = Record[Idx++];
+  Expr *filler = 0;
+  if (isArrayFiller) {
+    filler = Reader.ReadSubExpr();
+    E->ArrayFillerOrUnionFieldInit = filler;
+  } else
     E->ArrayFillerOrUnionFieldInit
         = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
   E->sawArrayRangeDesignator(Record[Idx++]);
+  unsigned NumInits = Record[Idx++];
+  E->reserveInits(*Reader.getContext(), NumInits);
+  if (isArrayFiller) {
+    for (unsigned I = 0; I != NumInits; ++I) {
+      Expr *init = Reader.ReadSubExpr();
+      E->updateInit(*Reader.getContext(), I, init ? init : filler);
+    }
+  } else {
+    for (unsigned I = 0; I != NumInits; ++I)
+      E->updateInit(*Reader.getContext(), I, Reader.ReadSubExpr());
+  }
 }
 
 void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {

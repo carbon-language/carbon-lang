@@ -667,9 +667,6 @@ void ASTStmtWriter::VisitExtVectorElementExpr(ExtVectorElementExpr *E) {
 
 void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
   VisitExpr(E);
-  Record.push_back(E->getNumInits());
-  for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
-    Writer.AddStmt(E->getInit(I));
   Writer.AddStmt(E->getSyntacticForm());
   Writer.AddSourceLocation(E->getLBraceLoc(), Record);
   Writer.AddSourceLocation(E->getRBraceLoc(), Record);
@@ -680,6 +677,17 @@ void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
   else
     Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
   Record.push_back(E->hadArrayRangeDesignator());
+  Record.push_back(E->getNumInits());
+  if (isArrayFiller) {
+    // ArrayFiller may have filled "holes" due to designated initializer.
+    // Replace them by 0 to indicate that the filler goes in that place.
+    Expr *filler = E->getArrayFiller();
+    for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
+      Writer.AddStmt(E->getInit(I) != filler ? E->getInit(I) : 0);
+  } else {
+    for (unsigned I = 0, N = E->getNumInits(); I != N; ++I)
+      Writer.AddStmt(E->getInit(I));
+  }
   Code = serialization::EXPR_INIT_LIST;
 }
 
