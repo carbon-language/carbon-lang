@@ -60,11 +60,11 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm) = 0;
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value) = 0;
         
         virtual bool
-        ResetValueToDefault () = 0;
+        Clear () = 0;
 
         //-----------------------------------------------------------------
         // Subclasses should NOT override these functions as they use the
@@ -76,6 +76,18 @@ namespace lldb_private {
             return 1u << GetType();
         }
         
+        static uint32_t
+        ConvertTypeToMask (OptionValue::Type type)
+        {
+            return 1u << type;
+        }
+
+        // Get this value as a uint64_t value if it is encoded as a boolean,
+        // uint64_t or int64_t. Other types will cause "fail_value" to be 
+        // returned
+        uint64_t
+        GetUInt64Value (uint64_t fail_value, bool *success_ptr);
+
         OptionValueBoolean *
         GetAsBooleanValue ();
         
@@ -89,13 +101,21 @@ namespace lldb_private {
         GetAsStringValue ();
         
         OptionValueFileSpec *
-        GetAsFileSpecValue() ;
+        GetAsFileSpecValue();
         
         OptionValueArray *
-        GetAsArrayValue() ;
+        GetAsArrayValue();
         
         OptionValueDictionary *
-        GetAsDictionaryValue() ;
+        GetAsDictionaryValue();
+
+    protected:
+        bool m_value_was_set; // This can be used to see if a value has been set
+                              // by a call to SetValueFromCString(). It is often
+                              // handy to know if an option value was set from
+                              // the command line or as a setting, versus if we
+                              // just have the default value that was already
+                              // populated in the option value.
     };
     
     
@@ -131,13 +151,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_current_value = m_default_value;
+            m_value_was_set = false;
             return true;
         }
         
@@ -145,6 +166,26 @@ namespace lldb_private {
         // Subclass specific functions
         //---------------------------------------------------------------------
         
+        //------------------------------------------------------------------
+        /// Convert to bool operator.
+        ///
+        /// This allows code to check a OptionValueBoolean in conditions.
+        ///
+        /// @code
+        /// OptionValueBoolean bool_value(...);
+        /// if (bool_value)
+        /// { ...
+        /// @endcode
+        ///
+        /// @return
+        ///     /b True this object contains a valid namespace decl, \b 
+        ///     false otherwise.
+        //------------------------------------------------------------------
+        operator bool() const
+        {
+            return m_current_value;
+        }
+
         bool
         GetCurrentValue() const
         {
@@ -180,10 +221,16 @@ namespace lldb_private {
     class OptionValueSInt64 : public OptionValue
     {
     public:
+        OptionValueSInt64 () :
+            m_current_value (0),
+            m_default_value (0)
+        {
+        }
+        
         OptionValueSInt64 (int64_t current_value, 
                            int64_t default_value) :
-        m_current_value (current_value),
-        m_default_value (default_value)
+            m_current_value (current_value),
+            m_default_value (default_value)
         {
         }
         
@@ -205,13 +252,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_current_value = m_default_value;
+            m_value_was_set = false;
             return true;
         }
         
@@ -254,10 +302,16 @@ namespace lldb_private {
     class OptionValueUInt64 : public OptionValue
     {
     public:
+        OptionValueUInt64 () :
+            m_current_value (0),
+            m_default_value (0)
+        {
+        }
+
         OptionValueUInt64 (uint64_t current_value, 
                            uint64_t default_value) :
-        m_current_value (current_value),
-        m_default_value (default_value)
+            m_current_value (current_value),
+            m_default_value (default_value)
         {
         }
         
@@ -266,6 +320,14 @@ namespace lldb_private {
         {
         }
         
+        //---------------------------------------------------------------------
+        // Decode a uint64_t from "value_cstr" return a OptionValueUInt64 object
+        // inside of a lldb::OptionValueSP object if all goes well. If the 
+        // string isn't a uint64_t value or any other error occurs, return an 
+        // empty lldb::OptionValueSP and fill error in with the correct stuff.
+        //---------------------------------------------------------------------
+        static lldb::OptionValueSP
+        Create (const char *value_cstr, Error &error);
         //---------------------------------------------------------------------
         // Virtual subclass pure virtual overrides
         //---------------------------------------------------------------------
@@ -279,13 +341,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_current_value = m_default_value;
+            m_value_was_set = false;
             return true;
         }
         
@@ -363,13 +426,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
 
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_current_value = m_default_value;
+            m_value_was_set = false;
             return true;
         }
         
@@ -455,13 +519,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_current_value = m_default_value;
+            m_value_was_set = false;
             return true;
         }
         
@@ -528,13 +593,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_values.clear();
+            m_value_was_set = false;
             return true;
         }
         
@@ -543,7 +609,7 @@ namespace lldb_private {
         //---------------------------------------------------------------------
 
         uint32_t
-        GetNumValues() const
+        GetSize () const
         {
             return m_values.size();
         }
@@ -557,6 +623,11 @@ namespace lldb_private {
             return value_sp;
         }
         
+        uint64_t
+        GetUInt64ValueAtIndex (uint32_t idx, 
+                               uint64_t fail_value, 
+                               bool *success_ptr) const;
+
         bool
         AppendValue (const lldb::OptionValueSP &value_sp)
         {
@@ -652,13 +723,14 @@ namespace lldb_private {
         virtual void
         DumpValue (Stream &strm);
         
-        virtual bool
+        virtual Error
         SetValueFromCString (const char *value);
         
         virtual bool
-        ResetValueToDefault ()
+        Clear ()
         {
             m_values.clear();
+            m_value_was_set = false;
             return true;
         }
         

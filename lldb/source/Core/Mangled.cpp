@@ -109,15 +109,23 @@ Mangled::Compare (const Mangled& a, const Mangled& b)
 void
 Mangled::SetValue (const char *s, bool mangled)
 {
-    m_mangled.Clear();
-    m_demangled.Clear();
-
     if (s)
     {
         if (mangled)
+        {
+            m_demangled.Clear();        
             m_mangled.SetCString (s);
+        }
         else
+        {
             m_demangled.SetCString(s);
+            m_mangled.Clear();
+        }
+    }
+    else
+    {
+        m_demangled.Clear();        
+        m_mangled.Clear();
     }
 }
 

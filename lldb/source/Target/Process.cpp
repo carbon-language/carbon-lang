@@ -4062,9 +4062,9 @@ ProcessInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_
     else if (var_name == ErrorPathVarName())
         UserSettingsController::UpdateStringVariable (op, m_error_path, value, err);
     else if (var_name == DisableASLRVarName())
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, err);
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_aslr, value, true, err);
     else if (var_name == DisableSTDIOVarName ())
-        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, err);
+        UserSettingsController::UpdateBooleanVariable (op, m_disable_stdio, value, false, err);
 }
 
 void

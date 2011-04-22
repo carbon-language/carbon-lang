@@ -1290,6 +1290,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_DEFAULT_ARCH      "default-arch"
 #define TSC_EXPR_PREFIX       "expr-prefix"
 #define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
+#define TSC_SKIP_PROLOGUE     "skip-prologue"
 
 
 static const ConstString &
@@ -1313,6 +1314,15 @@ GetSettingNameForPreferDynamicValue ()
     static ConstString g_const_string (TSC_PREFER_DYNAMIC);
     return g_const_string;
 }
+
+
+static const ConstString &
+GetSettingNameForSkipPrologue ()
+{
+    static ConstString g_const_string (TSC_SKIP_PROLOGUE);
+    return g_const_string;
+}
+
 
 
 bool
@@ -1364,7 +1374,8 @@ TargetInstanceSettings::TargetInstanceSettings
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_expr_prefix_path (),
     m_expr_prefix_contents (),
-    m_prefer_dynamic_value (true)
+    m_prefer_dynamic_value (true),
+    m_skip_prologue (true)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1381,7 +1392,6 @@ TargetInstanceSettings::TargetInstanceSettings
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);
-        //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 
@@ -1392,7 +1402,6 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     {
         const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);
-        //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 
@@ -1464,36 +1473,11 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
     }
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
-        switch (op)
-        {
-        default:
-            err.SetErrorToGenericError ();
-            err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
-            return;
-        case eVarSetOperationAssign:
-            {
-                bool success;
-                bool result = Args::StringToBoolean(value, false, &success);
-
-                if (success)
-                {
-                    m_prefer_dynamic_value = result;
-                }
-                else
-                {
-                    err.SetErrorStringWithFormat ("Bad value \"%s\" for %s, should be Boolean.", 
-                                                  value, 
-                                                  GetSettingNameForPreferDynamicValue().AsCString());
-                }
-                return;
-            }
-        case eVarSetOperationClear:
-           m_prefer_dynamic_value = true;
-        case eVarSetOperationAppend:
-            err.SetErrorToGenericError ();
-            err.SetErrorString ("Cannot append to a bool.\n");
-            return;
-        }
+        UserSettingsController::UpdateBooleanVariable (op, m_prefer_dynamic_value, value, true, err);
+    }
+    else if (var_name == GetSettingNameForSkipPrologue())
+    {
+        UserSettingsController::UpdateBooleanVariable (op, m_skip_prologue, value, true, err);
     }
 }
 
@@ -1523,6 +1507,13 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
         if (m_prefer_dynamic_value)
+            value.AppendString ("true");
+        else
+            value.AppendString ("false");
+    }
+    else if (var_name == GetSettingNameForSkipPrologue())
+    {
+        if (m_skip_prologue)
             value.AppendString ("true");
         else
             value.AppendString ("false");
@@ -1570,5 +1561,6 @@ Target::SettingsController::instance_settings_table[] =
     // =================  ================== ===========  ====  ====== ====== =========================================================================
     { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL      , NULL, false, false, "Path to a file containing expressions to be prepended to all expressions." },
     { TSC_PREFER_DYNAMIC, eSetVarTypeBoolean ,"true"    , NULL, false, false, "Should printed values be shown as their dynamic value." },
+    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean ,"true"    , NULL, false, false, "Skip function prologues when setting breakpoints by name." },
     { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
 };

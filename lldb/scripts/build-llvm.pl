@@ -83,7 +83,7 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMX86Utils.a",
 );
 
-if (-e "$llvm_srcroot/lib")
+if ($ENV{CONFIGURATION} ne "BuildAndIntegration" and -e "$llvm_srcroot/lib")
 {
 	print "Using standard LLVM build directory...\n";
 	# LLVM in the "lldb" root is a symlink which indicates we are using a 

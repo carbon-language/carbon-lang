@@ -1439,11 +1439,11 @@ DebuggerInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var
     }
     else if (var_name == UseExternalEditorVarName ())
     {
-        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, err);
+        UserSettingsController::UpdateBooleanVariable (op, m_use_external_editor, value, false, err);
     }
     else if (var_name == AutoConfirmName ())
     {
-        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, err);
+        UserSettingsController::UpdateBooleanVariable (op, m_auto_confirm_on, value, false, err);
     }
 }
 

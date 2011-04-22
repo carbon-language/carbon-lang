@@ -71,7 +71,13 @@ public:
     {
         return m_prefer_dynamic_value;
     }
-    
+
+    bool
+    GetSkipPrologue()
+    {
+        return m_skip_prologue;
+    }
+
 protected:
 
     void
@@ -84,6 +90,7 @@ protected:
     std::string m_expr_prefix_path;
     std::string m_expr_prefix_contents;
     bool        m_prefer_dynamic_value;
+    bool        m_skip_prologue;
 
 };
 

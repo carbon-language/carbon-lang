@@ -208,6 +208,7 @@ public:
     UpdateBooleanVariable (VarSetOperationType op,
                            bool &bool_var,
                            const char *new_value,
+                           bool clear_value, // Used for op == eVarSetOperationClear
                            Error &err);
 
     static void

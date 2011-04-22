@@ -19,6 +19,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/RegisterContext.h"
@@ -66,6 +67,85 @@ public:
         return &m_options;
     }
 
+    bool
+    DumpRegister (const ExecutionContext &exe_ctx,
+                  Stream &strm,
+                  RegisterContext *reg_ctx,
+                  const RegisterInfo *reg_info)
+    {
+        if (reg_info)
+        {
+            uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+
+            DataExtractor reg_data;
+
+            if (reg_ctx->ReadRegisterBytes(reg, reg_data))
+            {
+                strm.Indent ();
+                strm.Printf ("%-12s = ", reg_info ? reg_info->name : "<INVALID REGINFO>");
+                Format format;
+                if (m_options.format == eFormatDefault)
+                    format = reg_info->format;
+                else
+                    format = m_options.format;
+
+                reg_data.Dump(&strm, 0, format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                if (m_options.lookup_addresses && ((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)))
+                {
+                    addr_t reg_addr = reg_ctx->ReadRegisterAsUnsigned (reg, 0);
+                    if (reg_addr)
+                    {
+                        Address so_reg_addr;
+                        if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
+                        {
+                            strm.PutCString ("  ");
+                            so_reg_addr.Dump(&strm, exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
+                        }
+                        else
+                        {
+                        }
+                    }
+                }
+                strm.EOL();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool
+    DumpRegisterSet (const ExecutionContext &exe_ctx,
+                     Stream &strm,
+                     RegisterContext *reg_ctx,
+                     uint32_t set_idx)
+    {
+        uint32_t unavailable_count = 0;
+        uint32_t available_count = 0;
+        const RegisterSet * const reg_set = reg_ctx->GetRegisterSet(set_idx);
+        if (reg_set)
+        {
+            strm.Printf ("%s:\n", reg_set->name);
+            strm.IndentMore ();
+            const uint32_t num_registers = reg_set->num_registers;
+            for (uint32_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
+            {
+                const uint32_t reg = reg_set->registers[reg_idx];
+                if (DumpRegister (exe_ctx, strm, reg_ctx, reg_ctx->GetRegisterInfoAtIndex(reg)))
+                    ++available_count;
+                else
+                    ++unavailable_count;
+            }
+            strm.IndentLess ();
+            if (unavailable_count)
+            {
+                strm.Indent ();
+                strm.Printf("%u registers were unavailable.\n", unavailable_count);
+            }
+            strm.EOL();
+        }
+        return available_count > 0;
+    }
+
     virtual bool
     Execute 
     (
@@ -73,73 +153,80 @@ public:
         CommandReturnObject &result
     )
     {
-        Stream &output_stream = result.GetOutputStream();
-        DataExtractor reg_data;
+        Stream &strm = result.GetOutputStream();
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
+        RegisterContext *reg_ctx = exe_ctx.GetRegisterContext ();
 
-        if (reg_context)
+        if (reg_ctx)
         {
             const RegisterInfo *reg_info = NULL;
             if (command.GetArgumentCount() == 0)
             {
                 uint32_t set_idx;
-                const uint32_t num_register_sets = reg_context->GetRegisterSetCount();
-                for (set_idx = 0; set_idx < num_register_sets; ++set_idx)
+                
+                uint32_t num_register_sets = 1;
+                const uint32_t set_array_size = m_options.set_indexes.GetSize();
+                if (set_array_size > 0)
                 {
-                    uint32_t unavailable_count = 0;
-                    const RegisterSet * const reg_set = reg_context->GetRegisterSet(set_idx);
-                    output_stream.Printf ("%s:\n", reg_set->name);
-                    output_stream.IndentMore ();
-                    const uint32_t num_registers = reg_set->num_registers;
-                    for (uint32_t reg_idx = 0; reg_idx < num_registers; ++reg_idx)
+                    for (uint32_t i=0; i<set_array_size; ++i)
                     {
-                        uint32_t reg = reg_set->registers[reg_idx];
-                        reg_info = reg_context->GetRegisterInfoAtIndex(reg);
-                        if (reg_context->ReadRegisterBytes(reg, reg_data))
+                        set_idx = m_options.set_indexes.GetUInt64ValueAtIndex (i, UINT32_MAX, NULL);
+                        if (set_idx != UINT32_MAX)
                         {
-                            output_stream.Indent ();
-                            output_stream.Printf ("%-12s = ", reg_info ? reg_info->name : "<INVALID REGINFO>");
-                            reg_data.Dump(&output_stream, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
-                            output_stream.EOL();
+                            if (!DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx))
+                            {
+                                result.AppendErrorWithFormat ("invalid register set index: %u\n", set_idx);
+                                result.SetStatus (eReturnStatusFailed);
+                                break;
+                            }
                         }
                         else
                         {
-                            ++unavailable_count;
+                            result.AppendError ("invalid register set index\n");
+                            result.SetStatus (eReturnStatusFailed);
+                            break;
                         }
                     }
-                    if (unavailable_count)
+                }
+                else
+                {
+                    if (m_options.dump_all_sets)
+                        num_register_sets = reg_ctx->GetRegisterSetCount();
+
+                    for (set_idx = 0; set_idx < num_register_sets; ++set_idx)
                     {
-                        output_stream.Indent ();
-                        output_stream.Printf("%u registers were unavailable.\n", unavailable_count);
+                        DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx);
                     }
-                    output_stream.IndentLess ();
-                    output_stream.EOL();
                 }
             }
             else
             {
-                const char *arg_cstr;
-                for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
+                if (m_options.dump_all_sets)
                 {
-                    reg_info = reg_context->GetRegisterInfoByName(arg_cstr);
-
-                    if (reg_info)
+                    result.AppendError ("the --all option can't be used when registers names are supplied as arguments\n");
+                    result.SetStatus (eReturnStatusFailed);
+                }
+                else if (m_options.set_indexes.GetSize() > 0)
+                {
+                    result.AppendError ("the --set <set> option can't be used when registers names are supplied as arguments\n");
+                    result.SetStatus (eReturnStatusFailed);
+                }
+                else
+                {
+                    const char *arg_cstr;
+                    for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
                     {
-                        output_stream.Printf("%-12s = ", reg_info->name);
-                        if (reg_context->ReadRegisterBytes(reg_info->kinds[eRegisterKindLLDB], reg_data))
+                        reg_info = reg_ctx->GetRegisterInfoByName(arg_cstr);
+
+                        if (reg_info)
                         {
-                            reg_data.Dump(&output_stream, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                            if (!DumpRegister (exe_ctx, strm, reg_ctx, reg_info))
+                                strm.Printf("%-12s = error: unavailable\n", reg_info->name);
                         }
                         else
                         {
-                            output_stream.PutCString ("error: unavailable");
+                            result.AppendErrorWithFormat ("Invalid register name '%s'.\n", arg_cstr);
                         }
-                        output_stream.EOL();
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat ("Invalid register name '%s'.\n", arg_cstr);
                     }
                 }
             }
@@ -157,7 +244,10 @@ protected:
     {
     public:
         CommandOptions (CommandInterpreter &interpreter) :
-            Options(interpreter)
+            Options(interpreter),
+            set_indexes (OptionValue::ConvertTypeToMask (OptionValue::eTypeUInt64)),
+            dump_all_sets (false, false), // Initial and default values are false
+            lookup_addresses (false, false)         // Initial and default values are false
         {
             OptionParsingStarting();
         }
@@ -175,9 +265,25 @@ protected:
             switch (short_option)
             {
                 case 'f':
-                    error = Args::StringToFormat (option_arg, m_format);
+                    error = Args::StringToFormat (option_arg, format);
                     break;
-                    
+
+                case 's':
+                    {
+                        OptionValueSP value_sp (OptionValueUInt64::Create (option_arg, error));
+                        if (value_sp)
+                            set_indexes.AppendValue (value_sp);
+                    }
+                    break;
+
+                case 'a':
+                    dump_all_sets.SetCurrentValue(true);
+                    break;
+
+                case 'l':
+                    lookup_addresses.SetCurrentValue(true);
+                    break;
+
                 default:
                     error.SetErrorStringWithFormat("Unrecognized short option '%c'\n", short_option);
                     break;
@@ -188,7 +294,10 @@ protected:
         void
         OptionParsingStarting ()
         {
-            m_format = eFormatBytes;
+            format = eFormatDefault;
+            set_indexes.Clear();
+            dump_all_sets.Clear();
+            lookup_addresses.Clear();
         }
         
         const OptionDefinition*
@@ -202,7 +311,10 @@ protected:
         static OptionDefinition g_option_table[];
         
         // Instance variables to hold the values for command options.
-        lldb::Format m_format;
+        lldb::Format format;
+        OptionValueArray set_indexes;
+        OptionValueBoolean dump_all_sets;
+        OptionValueBoolean lookup_addresses;
     };
 
     CommandOptions m_options;
@@ -211,13 +323,10 @@ protected:
 OptionDefinition
 CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 {
-    //{ LLDB_OPT_SET_ALL, false, "language",   'l', required_argument, NULL, 0, "[c|c++|objc|objc++]",          "Sets the language to use when parsing the expression."},
-    //{ LLDB_OPT_SET_1, false, "format",     'f', required_argument, NULL, 0, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]",  "Specify the format that the expression output should use."},
-    { LLDB_OPT_SET_1, false, "format",             'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format that the expression output should use."},
-    { LLDB_OPT_SET_2, false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone, "Print the object description of the value resulting from the expression."},
-    { LLDB_OPT_SET_ALL, false, "unwind-on-error",  'u', required_argument, NULL, 0, eArgTypeBoolean, "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
-    { LLDB_OPT_SET_ALL, false, "debug",            'g', no_argument,       NULL, 0, eArgTypeNone, "Enable verbose debug logging of the expression parsing and evaluation."},
-    { LLDB_OPT_SET_ALL, false, "use-ir",           'i', no_argument,       NULL, 0, eArgTypeNone, "[Temporary] Instructs the expression evaluator to use IR instead of ASTs."},
+    { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format to use when dumping register values."},
+    { LLDB_OPT_SET_ALL, false, "lookup", 'l', no_argument      , NULL, 0, eArgTypeNone      , "Lookup the register values as addresses and show that each value maps to in the address space."},
+    { LLDB_OPT_SET_1  , false, "set"   , 's', required_argument, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
+    { LLDB_OPT_SET_2  , false, "all"   , 'a', no_argument      , NULL, 0, eArgTypeNone      , "Show all register sets."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
@@ -275,9 +384,9 @@ public:
     {
         DataExtractor reg_data;
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        RegisterContext *reg_context = exe_ctx.GetRegisterContext ();
+        RegisterContext *reg_ctx = exe_ctx.GetRegisterContext ();
 
-        if (reg_context)
+        if (reg_ctx)
         {
             if (command.GetArgumentCount() != 2)
             {
@@ -288,7 +397,7 @@ public:
             {
                 const char *reg_name = command.GetArgumentAtIndex(0);
                 const char *value_str = command.GetArgumentAtIndex(1);
-                const RegisterInfo *reg_info = reg_context->GetRegisterInfoByName(reg_name);
+                const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName(reg_name);
 
                 if (reg_info)
                 {
@@ -296,7 +405,7 @@ public:
                     Error error(scalar.SetValueFromCString (value_str, reg_info->encoding, reg_info->byte_size));
                     if (error.Success())
                     {
-                        if (reg_context->WriteRegisterValue(reg_info->kinds[eRegisterKindLLDB], scalar))
+                        if (reg_ctx->WriteRegisterValue(reg_info->kinds[eRegisterKindLLDB], scalar))
                         {
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                             return true;

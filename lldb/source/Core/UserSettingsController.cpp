@@ -2028,32 +2028,51 @@ UserSettingsController::UpdateStringVariable (VarSetOperationType op,
 
 void
 UserSettingsController::UpdateBooleanVariable (VarSetOperationType op,
-                                               bool &bool_var,
-                                               const char *new_value,
+                                               bool &bool_value,
+                                               const char *value_cstr,
+                                               bool clear_value,
                                                Error &err)
 {
-    if (op != eVarSetOperationAssign)
-        err.SetErrorString ("Invalid operation for Boolean variable.  Cannot update value.\n");
-
-    if (new_value && new_value[0])
+    switch (op)
     {
-        if ((::strcasecmp(new_value, "true") == 0) ||
-            (::strcasecmp(new_value, "yes") == 0)  ||
-            (::strcasecmp(new_value, "on") == 0)   ||
-            (::strcasecmp(new_value, "1") == 0))
-            bool_var = true;
-        else 
-        if ((::strcasecmp(new_value, "false") == 0) ||
-            (::strcasecmp(new_value, "no") == 0)    ||
-            (::strcasecmp(new_value, "off") == 0)   ||
-            (::strcasecmp(new_value, "0") == 0))
-            bool_var = false;
-        else
-            err.SetErrorStringWithFormat ("Invalid boolean value '%s'\n", new_value);
-    }
-    else
-        err.SetErrorString ("Invalid value.  Cannot perform update.\n");
+    case eVarSetOperationReplace:
+    case eVarSetOperationInsertBefore:
+    case eVarSetOperationInsertAfter:
+    case eVarSetOperationRemove:
+    case eVarSetOperationAppend:
+    case eVarSetOperationInvalid:
+    default:
+        err.SetErrorString ("Invalid operation for Boolean variable.  Cannot update value.\n");
+        break;
 
+    case eVarSetOperationClear:
+        err.Clear();
+        bool_value = clear_value;
+        break;
+        
+    case eVarSetOperationAssign:
+        {
+            bool success = false;
+            
+            
+            if (value_cstr == NULL)
+                err.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n", value_cstr);
+            else if (value_cstr[0] == '\0')
+                err.SetErrorStringWithFormat ("invalid boolean string value (empty)\n", value_cstr);
+            else
+            {
+                bool new_value = Args::StringToBoolean (value_cstr, false, &success);
+                if (success)
+                {
+                    err.Clear();
+                    bool_value = new_value;
+                }
+                else
+                    err.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value_cstr);
+            }
+        }
+        break;
+    }
 }
 
 void

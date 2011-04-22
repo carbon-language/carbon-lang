@@ -324,7 +324,7 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
 
 
 static void
-DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolContextList &sc_list, bool prepend_addr)
+DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolContextList &sc_list, bool prepend_addr, bool verbose)
 {
     strm.IndentMore ();
     uint32_t i;
@@ -336,31 +336,50 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
         if (sc_list.GetContextAtIndex(i, sc))
         {
             strm.Indent();
+            ExecutionContextScope *exe_scope = interpreter.GetExecutionContext().GetBestExecutionContextScope ();
+
             if (prepend_addr)
             {
                 if (sc.line_entry.range.GetBaseAddress().IsValid())
                 {
-                    lldb::addr_t vm_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(interpreter.GetExecutionContext().target);
-                    int addr_size = sizeof (addr_t);
-                    Process *process = interpreter.GetExecutionContext().process;
-                    if (process)
-                        addr_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
-                    if (vm_addr != LLDB_INVALID_ADDRESS)
-                        strm.Address (vm_addr, addr_size);
-                    else
-                        sc.line_entry.range.GetBaseAddress().Dump (&strm, NULL, Address::DumpStyleSectionNameOffset);
-
+                    sc.line_entry.range.GetBaseAddress().Dump (&strm, 
+                                                               exe_scope,
+                                                               Address::DumpStyleLoadAddress, 
+                                                               Address::DumpStyleModuleWithFileAddress);
                     strm.PutCString(" in ");
                 }
             }
-            sc.DumpStopContext(&strm, interpreter.GetExecutionContext().process, sc.line_entry.range.GetBaseAddress(), true, true, false);
+            sc.DumpStopContext(&strm, 
+                               exe_scope, 
+                               sc.line_entry.range.GetBaseAddress(), 
+                               true, 
+                               true, 
+                               false);
+            strm.EOL();
+            if (verbose)
+            {
+                if (sc.line_entry.range.GetBaseAddress().IsValid())
+                {
+                    if (sc.line_entry.range.GetBaseAddress().Dump (&strm, 
+                                                                   exe_scope, 
+                                                                   Address::DumpStyleDetailedSymbolContext))
+                        strm.PutCString("\n\n");
+                }
+                else if (sc.function->GetAddressRange().GetBaseAddress().IsValid())
+                {
+                    if (sc.function->GetAddressRange().GetBaseAddress().Dump (&strm, 
+                                                                              exe_scope, 
+                                                                              Address::DumpStyleDetailedSymbolContext))
+                        strm.PutCString("\n\n");
+                }
+            }
         }
     }
     strm.IndentLess ();
 }
 
 static uint32_t
-LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex)
+LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex, bool verbose)
 {
     if (module && name && name[0])
     {
@@ -392,7 +411,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
             strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            DumpSymbolContextList (interpreter, strm, sc_list, true);
+            DumpSymbolContextList (interpreter, strm, sc_list, true, verbose);
         }
         return num_matches;
     }
@@ -457,7 +476,13 @@ LookupTypeInModule
 }
 
 static uint32_t
-LookupFileAndLineInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const FileSpec &file_spec, uint32_t line, bool check_inlines)
+LookupFileAndLineInModule (CommandInterpreter &interpreter, 
+                           Stream &strm, 
+                           Module *module, 
+                           const FileSpec &file_spec, 
+                           uint32_t line, 
+                           bool check_inlines,
+                           bool verbose)
 {
     if (module && file_spec)
     {
@@ -474,7 +499,7 @@ LookupFileAndLineInModule (CommandInterpreter &interpreter, Stream &strm, Module
             strm << " in ";
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
-            DumpSymbolContextList (interpreter, strm, sc_list, true);
+            DumpSymbolContextList (interpreter, strm, sc_list, true, verbose);
             return num_matches;
         }
     }
@@ -1550,7 +1575,8 @@ public:
                                                module,
                                                m_options.m_file,
                                                m_options.m_line_number,
-                                               m_options.m_check_inlines))
+                                               m_options.m_check_inlines,
+                                               m_options.m_verbose))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;
@@ -1565,7 +1591,8 @@ public:
                                             result.GetOutputStream(),
                                             module,
                                             m_options.m_str.c_str(),
-                                            m_options.m_use_regex))
+                                            m_options.m_use_regex,
+                                            m_options.m_verbose))
                 {
                     result.SetStatus(eReturnStatusSuccessFinishResult);
                     return true;

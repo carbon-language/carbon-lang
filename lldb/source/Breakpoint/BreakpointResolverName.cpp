@@ -16,7 +16,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
-#include "lldb/lldb-private-log.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -146,6 +146,11 @@ BreakpointResolverName::SearchCallback
     Address break_addr;
     assert (m_breakpoint != NULL);
     
+    if (context.target_sp)
+    {
+        skip_prologue = context.target_sp->GetSkipPrologue();
+    }
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     
     if (m_class_name)

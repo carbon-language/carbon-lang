@@ -23,6 +23,29 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 // OptionValue
 //-------------------------------------------------------------------------
+
+// Get this value as a uint64_t value if it is encoded as a boolean,
+// uint64_t or int64_t. Other types will cause "fail_value" to be 
+// returned
+uint64_t
+OptionValue::GetUInt64Value (uint64_t fail_value, bool *success_ptr)
+{
+    if (success_ptr)
+        *success_ptr = true;
+    switch (GetType())
+    {
+    case OptionValue::eTypeBoolean: return static_cast<OptionValueBoolean *>(this)->GetCurrentValue();
+    case OptionValue::eTypeSInt64:  return static_cast<OptionValueSInt64 *>(this)->GetCurrentValue();
+    case OptionValue::eTypeUInt64:  return static_cast<OptionValueUInt64 *>(this)->GetCurrentValue();
+    default: 
+        break;
+    }
+    if (success_ptr)
+        *success_ptr = false;
+    return fail_value;
+}
+
+
 OptionValueBoolean *
 OptionValue::GetAsBooleanValue ()
 {
@@ -105,17 +128,22 @@ OptionValueBoolean::DumpValue (Stream &strm)
     strm.PutCString (m_current_value ? "true" : "false");
 }
 
-bool
+Error
 OptionValueBoolean::SetValueFromCString (const char *value_cstr)
 {
+    Error error;
     bool success = false;
     bool value = Args::StringToBoolean(value_cstr, false, &success);
     if (success)
     {
+        m_value_was_set = true;
         m_current_value = value;
-        return true;
     }
-    return false;
+    else
+    {
+        error.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value_cstr);
+    }
+    return error;
 }
 
 //-------------------------------------------------------------------------
@@ -127,39 +155,62 @@ OptionValueSInt64::DumpValue (Stream &strm)
     strm.Printf ("%lli", m_current_value);
 }
 
-bool
+Error
 OptionValueSInt64::SetValueFromCString (const char *value_cstr)
 {
+ 
+    Error error;
     bool success = false;
     int64_t value = Args::StringToSInt64 (value_cstr, 0, 0, &success);
     if (success)
     {
+        m_value_was_set = true;
         m_current_value = value;
-        return true;
     }
-    return false;
+    else
+    {
+        error.SetErrorStringWithFormat ("invalid int64_t string value: '%s'\n", value_cstr);
+    }
+    return error;
 }
 
 //-------------------------------------------------------------------------
 // OptionValueUInt64
 //-------------------------------------------------------------------------
+
+lldb::OptionValueSP
+OptionValueUInt64::Create (const char *value_cstr, Error &error)
+{
+    lldb::OptionValueSP value_sp (new OptionValueUInt64());
+    error = value_sp->SetValueFromCString (value_cstr);
+    if (error.Fail())
+        value_sp.reset();
+    return value_sp;
+}
+
+
 void
 OptionValueUInt64::DumpValue (Stream &strm)
 {
     strm.Printf ("0x%llx", m_current_value);
 }
 
-bool
+Error
 OptionValueUInt64::SetValueFromCString (const char *value_cstr)
 {
+    Error error;
     bool success = false;
     uint64_t value = Args::StringToUInt64 (value_cstr, 0, 0, &success);
     if (success)
     {
+        m_value_was_set = true;
         m_current_value = value;
-        return true;
     }
-    return false;
+    else
+    {
+        error.SetErrorStringWithFormat ("invalid uint64_t string value: '%s'\n", value_cstr);
+    }
+    return error;
 }
 
 //-------------------------------------------------------------------------
@@ -171,11 +222,12 @@ OptionValueString::DumpValue (Stream &strm)
     strm.Printf ("\"%s\"", m_current_value.c_str());
 }
 
-bool
+Error
 OptionValueString::SetValueFromCString (const char *value_cstr)
 {
+    m_value_was_set = true;
     SetCurrentValue (value_cstr);
-    return true;
+    return Error ();
 }
 
 
@@ -202,14 +254,15 @@ OptionValueFileSpec::DumpValue (Stream &strm)
     }
 }
 
-bool
+Error
 OptionValueFileSpec::SetValueFromCString (const char *value_cstr)
 {
     if (value_cstr && value_cstr[0])
         m_current_value.SetFile(value_cstr, false);
     else
         m_current_value.Clear();
-    return true;
+    m_value_was_set = true;
+    return Error();
 }
 
 
@@ -227,12 +280,24 @@ OptionValueArray::DumpValue (Stream &strm)
     }
 }
 
-bool
+Error
 OptionValueArray::SetValueFromCString (const char *value_cstr)
 {
-    // We must be able to set this using the array specific functions
-    return false;
+    Error error;
+    error.SetErrorStringWithFormat ("array option values don't yet support being set by string: '%s'\n", value_cstr);
+    return error;
 }
+
+
+uint64_t
+OptionValueArray::GetUInt64ValueAtIndex (uint32_t idx, uint64_t fail_value, bool *success_ptr) const
+{
+    if (idx < m_values.size())
+        return m_values[idx]->GetUInt64Value (fail_value, success_ptr);
+    return fail_value;
+}
+
+
 
 //-------------------------------------------------------------------------
 // OptionValueDictionary
@@ -249,11 +314,12 @@ OptionValueDictionary::DumpValue (Stream &strm)
     }
 }
 
-bool
+Error
 OptionValueDictionary::SetValueFromCString (const char *value_cstr)
 {
-    // We must be able to set this using the array specific functions
-    return false;
+    Error error;
+    error.SetErrorStringWithFormat ("dictionary option values don't yet support being set by string: '%s'\n", value_cstr);
+    return error;
 }
 
 lldb::OptionValueSP
