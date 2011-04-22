@@ -7639,7 +7639,7 @@ bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
 /// class X.
 void Sema::ActOnCXXEnterDeclInitializer(Scope *S, Decl *D) {
   // If there is no declaration, there was an error parsing it.
-  if (D == 0) return;
+  if (D == 0 || D->isInvalidDecl()) return;
 
   // We should only get called for declarations with scope specifiers, like:
   //   int foo::bar;
@@ -7651,7 +7651,7 @@ void Sema::ActOnCXXEnterDeclInitializer(Scope *S, Decl *D) {
 /// initializer for the out-of-line declaration 'D'.
 void Sema::ActOnCXXExitDeclInitializer(Scope *S, Decl *D) {
   // If there is no declaration, there was an error parsing it.
-  if (D == 0) return;
+  if (D == 0 || D->isInvalidDecl()) return;
 
   assert(D->isOutOfLine());
   ExitDeclaratorContext(S);
