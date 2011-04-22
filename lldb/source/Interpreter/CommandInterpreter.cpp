@@ -956,7 +956,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         std::string white_space (" \t\v");
         size_t pos = remainder.find_first_not_of (white_space);
         if (pos != 0 && pos != std::string::npos)
-            remainder = remainder.substr (pos);
+            remainder.erase(0, pos);
 
         if (log)
             log->Printf ("HandleCommand, command line after removing command name(s): '%s'\n", remainder.c_str());
