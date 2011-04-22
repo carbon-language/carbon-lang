@@ -288,7 +288,12 @@ protected:
   unsigned FastEmitInst_i(unsigned MachineInstrOpcode,
                           const TargetRegisterClass *RC,
                           uint64_t Imm);
-  
+
+  /// FastEmitInst_ii - Emit a MachineInstr with a two immediate operands.
+  unsigned FastEmitInst_ii(unsigned MachineInstrOpcode,
+                          const TargetRegisterClass *RC,
+                          uint64_t Imm1, uint64_t Imm2);
+
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
   /// from a specified index of a superregister to a specified type.
   unsigned FastEmitInst_extractsubreg(MVT RetVT,
