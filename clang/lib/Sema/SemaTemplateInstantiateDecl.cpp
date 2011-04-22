@@ -3109,7 +3109,10 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 
 /// \brief Performs template instantiation for all implicit template
 /// instantiations we have seen until this point.
-void Sema::PerformPendingInstantiations(bool LocalOnly) {
+///
+/// \returns true if anything was instantiated.
+bool Sema::PerformPendingInstantiations(bool LocalOnly) {
+  bool InstantiatedAnything = false;
   while (!PendingLocalImplicitInstantiations.empty() ||
          (!LocalOnly && !PendingInstantiations.empty())) {
     PendingImplicitInstantiation Inst;
@@ -3130,6 +3133,7 @@ void Sema::PerformPendingInstantiations(bool LocalOnly) {
                                 TSK_ExplicitInstantiationDefinition;
       InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true,
                                     DefinitionRequired);
+      InstantiatedAnything = true;
       continue;
     }
 
@@ -3166,7 +3170,10 @@ void Sema::PerformPendingInstantiations(bool LocalOnly) {
                               TSK_ExplicitInstantiationDefinition;
     InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true,
                                           DefinitionRequired);
+    InstantiatedAnything = true;
   }
+  
+  return InstantiatedAnything;
 }
 
 void Sema::PerformDependentDiagnostics(const DeclContext *Pattern,

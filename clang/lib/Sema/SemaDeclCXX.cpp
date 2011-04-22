@@ -7751,6 +7751,7 @@ bool Sema::DefineUsedVTables() {
   // the members of a class as "used", so we check the size each
   // time through the loop and prefer indices (with are stable) to
   // iterators (which are not).
+  bool DefinedAnything = false;
   for (unsigned I = 0; I != VTableUses.size(); ++I) {
     CXXRecordDecl *Class = VTableUses[I].first->getDefinition();
     if (!Class)
@@ -7803,6 +7804,7 @@ bool Sema::DefineUsedVTables() {
     // Mark all of the virtual members of this class as referenced, so
     // that we can build a vtable. Then, tell the AST consumer that a
     // vtable for this class is required.
+    DefinedAnything = true;
     MarkVirtualMembersReferenced(Loc, Class);
     CXXRecordDecl *Canonical = cast<CXXRecordDecl>(Class->getCanonicalDecl());
     Consumer.HandleVTable(Class, VTablesUsed[Canonical]);
@@ -7816,7 +7818,7 @@ bool Sema::DefineUsedVTables() {
   }
   VTableUses.clear();
 
-  return true;
+  return DefinedAnything;
 }
 
 void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,

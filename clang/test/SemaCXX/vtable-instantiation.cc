@@ -18,3 +18,29 @@ void f() {
   c2.c2();  // expected-note {{in instantiation of member function}}
 }
 
+namespace PR9325 {
+  template<typename T>
+  class Target
+  {
+  public:
+    virtual T Value() const
+    {
+      return 1; // expected-error{{cannot initialize return object of type 'int *' with an rvalue of type 'int'}}
+    }
+  };
+
+  template<typename T>
+  struct Provider
+  {
+    static Target<T> Instance;
+  };
+
+  template<typename T>
+  Target<T> Provider<T>::Instance; // expected-note{{in instantiation of}}
+
+  void f()
+  {
+    Target<int*>* traits = &Provider<int*>::Instance;
+  }
+
+}

@@ -373,22 +373,30 @@ void Sema::ActOnEndOfTranslationUnit() {
       }
     }
 
-    // If DefinedUsedVTables ends up marking any virtual member functions it
-    // might lead to more pending template instantiations, which we then need
-    // to instantiate.
-    DefineUsedVTables();
+    bool SomethingChanged;
+    do {
+      SomethingChanged = false;
+      
+      // If DefinedUsedVTables ends up marking any virtual member functions it
+      // might lead to more pending template instantiations, which we then need
+      // to instantiate.
+      if (DefineUsedVTables())
+        SomethingChanged = true;
 
-    // C++: Perform implicit template instantiations.
-    //
-    // FIXME: When we perform these implicit instantiations, we do not
-    // carefully keep track of the point of instantiation (C++ [temp.point]).
-    // This means that name lookup that occurs within the template
-    // instantiation will always happen at the end of the translation unit,
-    // so it will find some names that should not be found. Although this is
-    // common behavior for C++ compilers, it is technically wrong. In the
-    // future, we either need to be able to filter the results of name lookup
-    // or we need to perform template instantiations earlier.
-    PerformPendingInstantiations();
+      // C++: Perform implicit template instantiations.
+      //
+      // FIXME: When we perform these implicit instantiations, we do not
+      // carefully keep track of the point of instantiation (C++ [temp.point]).
+      // This means that name lookup that occurs within the template
+      // instantiation will always happen at the end of the translation unit,
+      // so it will find some names that should not be found. Although this is
+      // common behavior for C++ compilers, it is technically wrong. In the
+      // future, we either need to be able to filter the results of name lookup
+      // or we need to perform template instantiations earlier.
+      if (PerformPendingInstantiations())
+        SomethingChanged = true;
+      
+    } while (SomethingChanged);
   }
   
   // Remove file scoped decls that turned out to be used.
