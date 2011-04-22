@@ -1580,6 +1580,81 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       return RetVal;
     break;
   }
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: {
+    // For operations of the form (x << C1) op C2, check if we can use a smaller
+    // encoding for C2 by transforming it into (x op (C2>>C1)) << C1.
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+
+    if (N0->getOpcode() != ISD::SHL || !N0->hasOneUse())
+      break;
+
+    // i8 is unshrinkable, i16 should be promoted to i32.
+    if (NVT != MVT::i32 && NVT != MVT::i64)
+      break;
+
+    ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(N1);
+    ConstantSDNode *ShlCst = dyn_cast<ConstantSDNode>(N0->getOperand(1));
+    if (!Cst || !ShlCst)
+      break;
+
+    int64_t Val = Cst->getSExtValue();
+    uint64_t ShlVal = ShlCst->getZExtValue();
+
+    // Make sure that we don't change the operation by removing bits.
+    // This only matters for OR and XOR, AND is unaffected.
+    if (Opcode != ISD::AND && ((Val >> ShlVal) << ShlVal) != Val)
+      break;
+
+    unsigned ShlOp, Op;
+    EVT CstVT = NVT;
+
+    // Check the minimum bitwidth for the new constant.
+    // TODO: AND32ri is the same as AND64ri32 with zext imm.
+    // TODO: MOV32ri+OR64r is cheaper than MOV64ri64+OR64rr
+    // TODO: Using 16 and 8 bit operations is also possible for or32 & xor32.
+    if (!isInt<8>(Val) && isInt<8>(Val >> ShlVal))
+      CstVT = MVT::i8;
+    else if (!isInt<32>(Val) && isInt<32>(Val >> ShlVal))
+      CstVT = MVT::i32;
+
+    // Bail if there is no smaller encoding.
+    if (NVT == CstVT)
+      break;
+
+    switch (NVT.getSimpleVT().SimpleTy) {
+    default: llvm_unreachable("Unsupported VT!");
+    case MVT::i32:
+      assert(CstVT == MVT::i8);
+      ShlOp = X86::SHL32ri;
+
+      switch (Opcode) {
+      case ISD::AND: Op = X86::AND32ri8; break;
+      case ISD::OR:  Op =  X86::OR32ri8; break;
+      case ISD::XOR: Op = X86::XOR32ri8; break;
+      }
+      break;
+    case MVT::i64:
+      assert(CstVT == MVT::i8 || CstVT == MVT::i32);
+      ShlOp = X86::SHL64ri;
+
+      switch (Opcode) {
+      case ISD::AND: Op = CstVT==MVT::i8? X86::AND64ri8 : X86::AND64ri32; break;
+      case ISD::OR:  Op = CstVT==MVT::i8?  X86::OR64ri8 :  X86::OR64ri32; break;
+      case ISD::XOR: Op = CstVT==MVT::i8? X86::XOR64ri8 : X86::XOR64ri32; break;
+      }
+      break;
+    }
+
+    // Emit the smaller op and the shift.
+    SDValue NewCst = CurDAG->getTargetConstant(Val >> ShlVal, CstVT);
+    SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, N0->getOperand(0),NewCst);
+    return CurDAG->SelectNodeTo(Node, ShlOp, NVT, SDValue(New, 0),
+                                getI8Imm(ShlVal));
+    break;
+  }
   case X86ISD::UMUL: {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
