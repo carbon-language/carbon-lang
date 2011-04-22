@@ -23,7 +23,7 @@ class ConnectRemoteTestCase(TestBase):
         if self.TraceOn():
             fakeserver.logfile = sys.stdout
 
-        # Schedule the fake debugserver to be shut down during teardown.
+        # Schedule the fake debugserver to be shutting down during teardown.
         def shutdown_fakeserver():
             fakeserver.close()
         self.addTearDownHook(shutdown_fakeserver)
