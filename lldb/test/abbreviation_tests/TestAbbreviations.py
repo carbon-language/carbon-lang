@@ -112,6 +112,12 @@ class AbbreviationsTestCase(TestBase):
                     startstr = "1 breakpoints cleared:",
                     substrs = ["3: file ='main.cpp', line = 32, locations = 1"])
 
+        # Add a future to terminate the current process being debugged.
+        #
+        # The test framework relies on detecting either "run" or "process launch"
+        # command to automatically kill the inferior upon tear down.
+        # But we'll be using "pro la" command to launch the inferior.
+        self.addTearDownHook(lambda: self.runCmd("process kill"))
         self.expect("pro la",
                     patterns = [ "Process .* launched: "])
 
@@ -151,11 +157,6 @@ class AbbreviationsTestCase(TestBase):
                                 '/usr/lib/libstdc++',
                                 '/usr/lib/libSystem.B.dylib',
                                 '/usr/lib/system/libmathCommon.A.dylib'])
-
-        # Terminate the current process being debugged.
-        # The test framework was relying on detecting either "run" or
-        # "process launch" command to automatically kill the inferior.
-        self.runCmd("process kill")
 
 
 if __name__ == '__main__':
