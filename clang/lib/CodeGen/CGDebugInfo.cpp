@@ -1797,15 +1797,17 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   }
   
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
-  if (Align > CharUnits::fromQuantity(
-        CGM.getContext().Target.getPointerAlign(0) / 8)) {
-    unsigned AlignedOffsetInBytes
-      = llvm::RoundUpToAlignment(FieldOffset/8, Align.getQuantity());
-    unsigned NumPaddingBytes
-      = AlignedOffsetInBytes - FieldOffset/8;
+  if (Align > CGM.getContext().toCharUnitsFromBits(
+        CGM.getContext().Target.getPointerAlign(0))) {
+    CharUnits FieldOffsetInBytes 
+      = CGM.getContext().toCharUnitsFromBits(FieldOffset);
+    CharUnits AlignedOffsetInBytes
+      = FieldOffsetInBytes.RoundUpToAlignment(Align);
+    CharUnits NumPaddingBytes
+      = AlignedOffsetInBytes - FieldOffsetInBytes;
     
-    if (NumPaddingBytes > 0) {
-      llvm::APInt pad(32, NumPaddingBytes);
+    if (NumPaddingBytes.isPositive()) {
+      llvm::APInt pad(32, NumPaddingBytes.getQuantity());
       FType = CGM.getContext().getConstantArrayType(CGM.getContext().CharTy,
                                                     pad, ArrayType::Normal, 0);
       EltTys.push_back(CreateMemberType(Unit, FType, "", &FieldOffset));
@@ -1815,7 +1817,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   FType = Type;
   llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
   FieldSize = CGM.getContext().getTypeSize(FType);
-  FieldAlign = Align.getQuantity()*8;
+  FieldAlign = CGM.getContext().toBits(Align);
 
   *XOffset = FieldOffset;  
   FieldTy = DBuilder.createMemberType(VD->getName(), Unit,
