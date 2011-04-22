@@ -64,6 +64,9 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
         else
           return svalBuilder.makeIntVal(cast<IntegerLiteral>(E));
       }
+      // For special C0xx nullptr case, make a null pointer SVal.
+      case Stmt::CXXNullPtrLiteralExprClass:
+        return svalBuilder.makeNull();
       case Stmt::ImplicitCastExprClass:
       case Stmt::CXXFunctionalCastExprClass:
       case Stmt::CStyleCastExprClass: {

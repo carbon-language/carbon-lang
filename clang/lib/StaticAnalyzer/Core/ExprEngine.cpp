@@ -424,7 +424,6 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXForRangeStmtClass:
-    case Stmt::CXXNullPtrLiteralExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTemporaryObjectExprClass:
     case Stmt::CXXThrowExprClass:
@@ -523,6 +522,7 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
     case Stmt::ExprWithCleanupsClass:
     case Stmt::FloatingLiteralClass:
     case Stmt::SizeOfPackExprClass:
+    case Stmt::CXXNullPtrLiteralExprClass:
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
       break;
 
