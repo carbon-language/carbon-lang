@@ -1884,13 +1884,13 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       const llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of __forwarding field
-      offset = 
-        CharUnits::fromQuantity(CGM.getContext().Target.getPointerWidth(0)/8);
+      offset = CGM.getContext().toCharUnitsFromBits(
+        CGM.getContext().Target.getPointerWidth(0));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of x field
-      offset = CharUnits::fromQuantity(XOffset/8);
+      offset = CGM.getContext().toCharUnitsFromBits(XOffset);
       addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
 
       // Create the descriptor for the variable.
@@ -1991,12 +1991,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of __forwarding field
-    offset = CharUnits::fromQuantity(target.getPointerSize()/8);
+    offset = CGM.getContext().toCharUnitsFromBits(target.getPointerSize());
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of x field
-    offset = CharUnits::fromQuantity(XOffset/8);
+    offset = CGM.getContext().toCharUnitsFromBits(XOffset);
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   }
 
