@@ -250,8 +250,8 @@ protected:
                            unsigned Op0, bool Op0IsKill,
                            unsigned Op1, bool Op1IsKill);
 
-  /// FastEmitInst_ri - Emit a MachineInstr with two register operands
-  /// and a result register in the given register class.
+  /// FastEmitInst_ri - Emit a MachineInstr with a register operand,
+  /// an immediate, and a result register in the given register class.
   ///
   unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
                            const TargetRegisterClass *RC,
@@ -288,7 +288,7 @@ protected:
   unsigned FastEmitInst_i(unsigned MachineInstrOpcode,
                           const TargetRegisterClass *RC,
                           uint64_t Imm);
-
+  
   /// FastEmitInst_extractsubreg - Emit a MachineInstr for an extract_subreg
   /// from a specified index of a superregister to a specified type.
   unsigned FastEmitInst_extractsubreg(MVT RetVT,
