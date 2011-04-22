@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -std=gnu++0x %s -Wno-unreachable-code
 
 namespace test0 {
   struct D { ~D(); };
@@ -149,5 +150,24 @@ namespace test8 {
     goto l2;     // expected-error {{goto into protected scope}}
   l1: int x = 5; // expected-note {{jump bypasses variable initialization}}
   l2: x++;
+  }
+}
+
+namespace test9 {
+  struct S { int i; };
+  void test1() {
+    goto foo;
+    S s;
+  foo:
+    return;
+  }
+  unsigned test2(unsigned x, unsigned y) {
+    switch (x) {
+    case 2:
+      S s;
+      if (y > 42) return x + y;
+    default:
+      return x - 2;
+    }
   }
 }

@@ -5235,7 +5235,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
 
     const RecordType *Record
       = Context.getBaseElementType(Type)->getAs<RecordType>();
-    if (Record && getLangOptions().CPlusPlus && !getLangOptions().CPlusPlus0x &&
+    if (Record && getLangOptions().CPlusPlus &&
         cast<CXXRecordDecl>(Record->getDecl())->isPOD()) {
       // C++03 [dcl.init]p9:
       //   If no initializer is specified for an object, and the
@@ -5248,7 +5248,6 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       //   any, have an indeterminate initial value); if the object
       //   or any of its subobjects are of const-qualified type, the
       //   program is ill-formed.
-      // FIXME: DPG thinks it is very fishy that C++0x disables this.
     } else {
       // Check for jumps past the implicit initializer.  C++0x
       // clarifies that this applies to a "variable with automatic
