@@ -29,7 +29,7 @@ ClangExpressionVariable::ClangExpressionVariable(ExecutionContextScope *exe_scop
     m_parser_vars(),
     m_jit_vars (),
     m_flags (EVNone),
-    m_frozen_sp (new ValueObjectConstResult(exe_scope, byte_order, addr_byte_size))
+    m_frozen_sp (ValueObjectConstResult::Create (exe_scope, byte_order, addr_byte_size))
 {
 }
 

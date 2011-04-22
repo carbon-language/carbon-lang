@@ -351,6 +351,8 @@ SBValue
 SBFrame::FindVariable (const char *name, bool use_dynamic)
 {
     VariableSP var_sp;
+    SBValue sb_value;
+    
     if (m_opaque_sp && name && name[0])
     {
         VariableList variable_list;
@@ -372,8 +374,6 @@ SBFrame::FindVariable (const char *name, bool use_dynamic)
             }
         }
     }
-    
-    SBValue sb_value;
     
     if (var_sp)
         *sb_value = ValueObjectSP (m_opaque_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic));
@@ -452,7 +452,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, bool use_dynamic)
                             ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
                              (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectRegister (m_opaque_sp.get(), reg_ctx, reg_idx));
+                            *sb_value = ValueObjectRegister::Create (m_opaque_sp.get(), reg_ctx, reg_idx);
                         }
                     }
                 }
@@ -472,7 +472,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, bool use_dynamic)
                             ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
                              (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectSP (new ValueObjectRegisterSet (m_opaque_sp.get(), reg_ctx, set_idx));
+                            *sb_value = ValueObjectRegisterSet::Create (m_opaque_sp.get(), reg_ctx, set_idx);
                         }
                     }
                 }
@@ -677,7 +677,7 @@ SBFrame::GetRegisters ()
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
             for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
             {
-                value_list.Append(ValueObjectSP (new ValueObjectRegisterSet (m_opaque_sp.get(), reg_ctx, set_idx)));
+                value_list.Append(ValueObjectRegisterSet::Create (m_opaque_sp.get(), reg_ctx, set_idx));
             }
         }
     }

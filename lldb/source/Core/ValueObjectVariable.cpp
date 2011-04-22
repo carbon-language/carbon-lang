@@ -32,6 +32,12 @@
 
 using namespace lldb_private;
 
+lldb::ValueObjectSP
+ValueObjectVariable::Create (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp)
+{
+    return (new ValueObjectVariable (exe_scope, var_sp))->GetSP();
+}
+
 ValueObjectVariable::ValueObjectVariable (ExecutionContextScope *exe_scope, const lldb::VariableSP &var_sp) :
     ValueObject(exe_scope),
     m_variable_sp(var_sp)

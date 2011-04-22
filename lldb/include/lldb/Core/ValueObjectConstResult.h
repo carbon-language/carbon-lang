@@ -24,35 +24,40 @@ namespace lldb_private {
 class ValueObjectConstResult : public ValueObject
 {
 public:
-    ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            lldb::ByteOrder byte_order, 
-                            uint32_t addr_byte_size);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            lldb::ByteOrder byte_order, 
+            uint32_t addr_byte_size);
 
-    ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
-                            const ConstString &name,
-                            const DataExtractor &data);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            clang::ASTContext *clang_ast,
+            void *clang_type,
+            const ConstString &name,
+            const DataExtractor &data);
 
-    ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
-                            const ConstString &name,
-                            const lldb::DataBufferSP &result_data_sp,
-                            lldb::ByteOrder byte_order, 
-                            uint8_t addr_size);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            clang::ASTContext *clang_ast,
+            void *clang_type,
+            const ConstString &name,
+            const lldb::DataBufferSP &result_data_sp,
+            lldb::ByteOrder byte_order, 
+            uint8_t addr_size);
 
-    ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
-                            const ConstString &name,
-                            lldb::addr_t address,
-                            AddressType address_type,
-                            uint8_t addr_byte_size);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            clang::ASTContext *clang_ast,
+            void *clang_type,
+            const ConstString &name,
+            lldb::addr_t address,
+            AddressType address_type,
+            uint8_t addr_byte_size);
 
     // When an expression fails to evaluate, we return an error
-    ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            const Error& error);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            const Error& error);
 
     virtual ~ValueObjectConstResult();
 
@@ -102,6 +107,35 @@ protected:
     uint32_t m_byte_size;
 
 private:
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            lldb::ByteOrder byte_order, 
+                            uint32_t addr_byte_size);
+
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
+                            void *clang_type,
+                            const ConstString &name,
+                            const DataExtractor &data);
+
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
+                            void *clang_type,
+                            const ConstString &name,
+                            const lldb::DataBufferSP &result_data_sp,
+                            lldb::ByteOrder byte_order, 
+                            uint8_t addr_size);
+
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
+                            void *clang_type,
+                            const ConstString &name,
+                            lldb::addr_t address,
+                            AddressType address_type,
+                            uint8_t addr_byte_size);
+
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            const Error& error);
+
     DISALLOW_COPY_AND_ASSIGN (ValueObjectConstResult);
 };
 

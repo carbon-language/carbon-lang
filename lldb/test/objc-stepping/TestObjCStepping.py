@@ -86,6 +86,10 @@ class TestObjCStepping(TestBase):
         self.assertTrue(mySource_isa.IsValid(), "Found mySource->isa local variable.")
         mySource_isa.GetValue (thread.GetFrameAtIndex(0))
 
+        # Lets delete mySource so we can check that after stepping a child variable
+        # with no parent persists and is useful.
+        del (mySource)
+
         # Now step in, that should leave us in the Source randomMethod:
         thread.StepInto()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()

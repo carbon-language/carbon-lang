@@ -931,7 +931,7 @@ Target::EvaluateExpression
         {
             if (fetch_dynamic_value)
             {
-                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(true, result_valobj_sp);
+                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(true);
                 if (dynamic_sp)
                     result_valobj_sp = dynamic_sp;
             }

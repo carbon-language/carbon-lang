@@ -95,20 +95,28 @@ ValueObjectRegisterContext::UpdateValue ()
     return m_error.Success();
 }
 
-ValueObjectSP
+ValueObject *
 ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
-    ValueObjectSP valobj_sp;
-
+    ValueObject *new_valobj = NULL;
+    
     const uint32_t num_children = GetNumChildren();
     if (idx < num_children)
-        valobj_sp.reset (new ValueObjectRegisterSet(GetExecutionContextScope(), m_reg_ctx_sp, idx));
-    return valobj_sp;
+        new_valobj = new ValueObjectRegisterSet(GetExecutionContextScope(), m_reg_ctx_sp, idx);
+    
+    return new_valobj;
 }
 
 
 #pragma mark -
 #pragma mark ValueObjectRegisterSet
+
+ValueObjectSP
+ValueObjectRegisterSet::Create (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx)
+{
+    return (new ValueObjectRegisterSet (exe_scope, reg_ctx_sp, set_idx))->GetSP();
+}
+
 
 ValueObjectRegisterSet::ValueObjectRegisterSet (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx, uint32_t reg_set_idx) :
     ValueObject (exe_scope),
@@ -199,30 +207,33 @@ ValueObjectRegisterSet::UpdateValue ()
 }
 
 
-ValueObjectSP
+ValueObject *
 ValueObjectRegisterSet::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
-    ValueObjectSP valobj_sp;
+    ValueObject *valobj;
     if (m_reg_ctx_sp && m_reg_set)
     {
         const uint32_t num_children = GetNumChildren();
         if (idx < num_children)
-            valobj_sp.reset (new ValueObjectRegister(*this, m_reg_ctx_sp, m_reg_set->registers[idx]));
+            valobj = new ValueObjectRegister(*this, m_reg_ctx_sp, m_reg_set->registers[idx]);
     }
-    return valobj_sp;
+    return valobj;
 }
 
 lldb::ValueObjectSP
 ValueObjectRegisterSet::GetChildMemberWithName (const ConstString &name, bool can_create)
 {
-    ValueObjectSP valobj_sp;
+    ValueObject *valobj = NULL;
     if (m_reg_ctx_sp && m_reg_set)
     {
         const RegisterInfo *reg_info = m_reg_ctx_sp->GetRegisterInfoByName (name.AsCString());
         if (reg_info != NULL)
-            valobj_sp.reset (new ValueObjectRegister(*this, m_reg_ctx_sp, reg_info->kinds[eRegisterKindLLDB]));
+            valobj = new ValueObjectRegister(*this, m_reg_ctx_sp, reg_info->kinds[eRegisterKindLLDB]);
     }
-    return valobj_sp;
+    if (valobj)
+        return valobj->GetSP();
+    else
+        return ValueObjectSP();
 }
 
 uint32_t
@@ -263,6 +274,12 @@ ValueObjectRegister::ValueObjectRegister (ValueObject &parent, lldb::RegisterCon
 {
     assert (reg_ctx);
     ConstructObject();
+}
+
+ValueObjectSP
+ValueObjectRegister::Create (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num)
+{
+    return (new ValueObjectRegister (exe_scope, reg_ctx_sp, reg_num))->GetSP();
 }
 
 ValueObjectRegister::ValueObjectRegister (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx, uint32_t reg_num) :

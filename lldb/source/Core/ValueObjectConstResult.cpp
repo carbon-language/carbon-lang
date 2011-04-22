@@ -26,6 +26,19 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ValueObjectSP
+ValueObjectConstResult::Create
+(
+    ExecutionContextScope *exe_scope,
+    ByteOrder byte_order, 
+    uint32_t addr_byte_size
+)
+{
+    return (new ValueObjectConstResult (exe_scope,
+                                        byte_order,
+                                        addr_byte_size))->GetSP();
+}
+
 ValueObjectConstResult::ValueObjectConstResult
 (
     ExecutionContextScope *exe_scope,
@@ -42,6 +55,23 @@ ValueObjectConstResult::ValueObjectConstResult
     m_data.SetByteOrder(byte_order);
     m_data.SetAddressByteSize(addr_byte_size);
     m_pointers_point_to_load_addrs = true;
+}
+
+ValueObjectSP
+ValueObjectConstResult::Create
+(
+    ExecutionContextScope *exe_scope,
+    clang::ASTContext *clang_ast,
+    void *clang_type,
+    const ConstString &name,
+    const DataExtractor &data
+)
+{
+    return (new ValueObjectConstResult (exe_scope,
+                                        clang_ast,
+                                        clang_type,
+                                        name,
+                                        data))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult
@@ -65,6 +95,27 @@ ValueObjectConstResult::ValueObjectConstResult
     SetIsConstant ();
     SetValueIsValid(true);
     m_pointers_point_to_load_addrs = true;
+}
+
+ValueObjectSP
+ValueObjectConstResult::Create
+(
+    ExecutionContextScope *exe_scope,
+    clang::ASTContext *clang_ast,
+    void *clang_type,
+    const ConstString &name,
+    const lldb::DataBufferSP &data_sp,
+    lldb::ByteOrder data_byte_order, 
+    uint8_t data_addr_size
+)
+{
+    return (new ValueObjectConstResult (exe_scope,
+                                        clang_ast,
+                                        clang_type,
+                                        name,
+                                        data_sp,
+                                        data_byte_order,
+                                        data_addr_size))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult
@@ -92,6 +143,27 @@ ValueObjectConstResult::ValueObjectConstResult
     SetIsConstant ();
     SetValueIsValid(true);
     m_pointers_point_to_load_addrs = true;
+}
+
+ValueObjectSP
+ValueObjectConstResult::Create
+(
+    ExecutionContextScope *exe_scope,
+    clang::ASTContext *clang_ast,
+    void *clang_type,
+    const ConstString &name,
+    lldb::addr_t address,
+    AddressType address_type,
+    uint8_t addr_byte_size
+)
+{
+    return (new ValueObjectConstResult (exe_scope,
+                                        clang_ast,
+                                        clang_type,
+                                        name,
+                                        address,
+                                        address_type,
+                                        addr_byte_size))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult 
@@ -126,6 +198,17 @@ ValueObjectConstResult::ValueObjectConstResult
     SetIsConstant ();
     SetValueIsValid(true);
     m_pointers_point_to_load_addrs = true;
+}
+
+ValueObjectSP
+ValueObjectConstResult::Create
+(
+    ExecutionContextScope *exe_scope,
+    const Error& error
+)
+{
+    return (new ValueObjectConstResult (exe_scope,
+                                        error))->GetSP();
 }
 
 ValueObjectConstResult::ValueObjectConstResult (

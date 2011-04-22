@@ -39,14 +39,6 @@ ValueObjectDynamicValue::ValueObjectDynamicValue (ValueObject &parent) :
     m_address (),
     m_type_sp()
 {
-    // THINK ABOUT: It looks ugly to doctor up the name like this.  But if
-    // people find it confusing to tell the difference, we may want to do something...
-    
-//    std::string dynamic_name ("<dynamic value for \"");
-//    dynamic_name.append(parent.GetName().AsCString());
-//    dynamic_name.append("\">");
-//    
-//    SetName (dynamic_name.c_str()); 
     SetName (parent.GetName().AsCString());
 }
 

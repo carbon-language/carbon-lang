@@ -30,8 +30,17 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
-
+using namespace lldb;
 using namespace lldb_private;
+
+ValueObjectSP
+ValueObjectMemory::Create (ExecutionContextScope *exe_scope, 
+                           const char *name,
+                           const Address &address, 
+                           lldb::TypeSP &type_sp)
+{
+    return (new ValueObjectMemory (exe_scope, name, address, type_sp))->GetSP();
+}
 
 ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
                                       const char *name, 

@@ -27,10 +27,12 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/StackID.h"
+#include "lldb/Utility/SharedCluster.h"
 
 namespace lldb_private {
 
 /// ValueObject:
+///
 /// This abstract class provides an interface to a particular value, be it a register, a local or global variable,
 /// that is evaluated in some particular scope.  The ValueObject also has the capibility of being the "child" of
 /// some other variable object, and in turn of having children.  
@@ -38,6 +40,27 @@ namespace lldb_private {
 /// particular ExecutionContextScope.  If it is a child, it inherits the ExecutionContextScope from its parent.
 /// The ValueObject will update itself if necessary before fetching its value, summary, object description, etc.
 /// But it will always update itself in the ExecutionContextScope with which it was originally created.
+
+/// A brief note on life cycle management for ValueObjects.  This is a little tricky because a ValueObject can contain
+/// various other ValueObjects - the Dynamic Value, its children, the dereference value, etc.  Any one of these can be
+/// handed out as a shared pointer, but for that contained value object to be valid, the root object and potentially other
+/// of the value objects need to stay around.  
+/// We solve this problem by handing out shared pointers to the Value Object and any of its dependents using a shared
+/// ClusterManager.  This treats each shared pointer handed out for the entire cluster as a reference to the whole
+/// cluster.  The whole cluster will stay around until the last reference is released.
+///
+/// The ValueObject mostly handle this automatically, if a value object is made with a Parent ValueObject, then it adds
+/// itself to the ClusterManager of the parent.
+
+/// It does mean that external to the ValueObjects we should only ever make available ValueObjectSP's, never ValueObjects 
+/// or pointers to them.  So all the "Root level" ValueObject derived constructors should be private, and 
+/// should implement a Create function that new's up object and returns a Shared Pointer that it gets from the GetSP() method.
+///
+/// However, if you are making an derived ValueObject that will be contained in a parent value object, you should just
+/// hold onto a pointer to it internally, and by virtue of passing the parent ValueObject into its constructor, it will
+/// be added to the ClusterManager for the parent.  Then if you ever hand out a Shared Pointer to the contained ValueObject,
+/// just do so by calling GetSP() on the contained object.
+
 class ValueObject : public UserID
 {
 public:
@@ -189,8 +212,6 @@ public:
         return m_update_point.GetExecutionContextScope();
     }
     
-    friend class ValueObjectList;
-
     virtual ~ValueObject();
 
     //------------------------------------------------------------------
@@ -331,10 +352,17 @@ public:
     bool
     Write ();
 
+    lldb::ValueObjectSP
+    GetSP ()
+    {
+        return m_manager->GetSharedPointer(this);
+    }
+    
+protected:
     void
     AddSyntheticChild (const ConstString &key,
-                       lldb::ValueObjectSP& valobj_sp);
-
+                       ValueObject *valobj);
+public:
     lldb::ValueObjectSP
     GetSyntheticChild (const ConstString &key) const;
 
@@ -343,9 +371,6 @@ public:
     
     lldb::ValueObjectSP
     GetDynamicValue (bool can_create);
-    
-    lldb::ValueObjectSP
-    GetDynamicValue (bool can_create, lldb::ValueObjectSP &owning_valobj_sp);
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
@@ -437,6 +462,8 @@ public:
     }
 
 protected:
+    typedef ClusterManager<ValueObject> ValueObjectManager;
+
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
@@ -454,12 +481,19 @@ protected:
     std::string         m_summary_str;  // Cached summary string that will get cleared if/when the value is updated.
     std::string         m_object_desc_str; // Cached result of the "object printer".  This differs from the summary
                                               // in that the summary is consed up by us, the object_desc_string is builtin.
-    std::vector<lldb::ValueObjectSP> m_children;
-    std::map<ConstString, lldb::ValueObjectSP> m_synthetic_children;
-    lldb::ValueObjectSP m_dynamic_value_sp;
-    lldb::ValueObjectSP m_addr_of_valobj_sp; // These two shared pointers help root the ValueObject shared pointers that
-    lldb::ValueObjectSP m_deref_valobj_sp;   // we hand out, so that we can use them in their dynamic types and ensure
-                                             // they will last as long as this ValueObject...
+
+    ValueObjectManager *m_manager;      // This object is managed by the root object (any ValueObject that gets created
+                                        // without a parent.)  The manager gets passed through all the generations of
+                                        // dependent objects, and will keep the whole cluster of objects alive as long
+                                        // as a shared pointer to any of them has been handed out.  Shared pointers to
+                                        // value objects must always be made with the GetSP method.
+
+    std::vector<ValueObject *> m_children;
+    std::map<ConstString, ValueObject *> m_synthetic_children;
+    ValueObject *m_dynamic_value;
+    lldb::ValueObjectSP m_addr_of_valobj_sp; // We have to hold onto a shared pointer to this one because it is created
+                                             // as an independent ValueObjectConstResult, which isn't managed by us.
+    ValueObject *m_deref_valobj;
 
     lldb::Format        m_format;
     bool                m_value_is_valid:1,
@@ -469,11 +503,10 @@ protected:
                         m_pointers_point_to_load_addrs:1,
                         m_is_deref_of_parent:1;
     
-    friend class CommandObjectExpression;
-    friend class ClangExpressionVariable;
-    friend class ClangExpressionDeclMap;  // For GetValue...
-    friend class Target;
-    friend class ValueObjectChild;
+    friend class ClangExpressionDeclMap;  // For GetValue
+    friend class ClangExpressionVariable; // For SetName
+    friend class Target;                  // For SetName
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
@@ -492,6 +525,12 @@ protected:
     
     ValueObject (ValueObject &parent);
 
+    ValueObjectManager *
+    GetManager()
+    {
+        return m_manager;
+    }
+    
     virtual bool
     UpdateValue () = 0;
 
@@ -499,7 +538,8 @@ protected:
     CalculateDynamicValue ();
     
     // Should only be called by ValueObject::GetChildAtIndex()
-    virtual lldb::ValueObjectSP
+    // Returns a ValueObject managed by this ValueObject's manager.
+    virtual ValueObject *
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
     // Should only be called by ValueObject::GetNumChildren()

@@ -628,7 +628,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
                             var_path.erase(0, child_name.GetLength());
                             if (dynamic_value)
                             {
-                                ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true, child_valobj_sp));
+                                ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true));
                                 if (dynamic_value_sp)
                                     child_valobj_sp = dynamic_value_sp;
                             }
@@ -690,7 +690,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
                                 separator_idx = var_path.find_first_of(".-[");
                                 if (dynamic_value)
                                 {
-                                    ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true, child_valobj_sp));
+                                    ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true));
                                     if (dynamic_value_sp)
                                         child_valobj_sp = dynamic_value_sp;
                                 }
@@ -825,14 +825,14 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, bool 
             {
                 if (m_variable_list_value_objects.GetSize() < num_variables)
                     m_variable_list_value_objects.Resize(num_variables);
-                valobj_sp.reset (new ValueObjectVariable (this, variable_sp));
+                valobj_sp = ValueObjectVariable::Create (this, variable_sp);
                 m_variable_list_value_objects.SetValueObjectAtIndex (var_idx, valobj_sp);
             }
         }
     }
     if (use_dynamic && valobj_sp)
     {
-        ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue (true, valobj_sp);
+        ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue (true);
         if (dynamic_sp)
             return dynamic_sp;
     }

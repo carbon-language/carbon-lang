@@ -987,13 +987,13 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                 // If the reference comes from the program, then the ClangExpressionVariable's
                 // live variable data hasn't been set up yet.  Do this now.
                 
-                var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope (),
-                                                                                 var_sp->GetTypeFromUser().GetASTContext(),
-                                                                                 var_sp->GetTypeFromUser().GetOpaqueQualType(),
-                                                                                 var_sp->GetName(),
-                                                                                 mem,
-                                                                                 eAddressTypeLoad,
-                                                                                 pvar_byte_size));
+                var_sp->m_live_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope (),
+                                                                    var_sp->GetTypeFromUser().GetASTContext(),
+                                                                    var_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                    var_sp->GetName(),
+                                                                    mem,
+                                                                    eAddressTypeLoad,
+                                                                    pvar_byte_size);
             }
             
             if (!var_sp->m_live_sp)
@@ -1082,13 +1082,13 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             
             // Put the location of the spare memory into the live data of the ValueObject.
             
-            var_sp->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope(),
-                                                                             var_sp->GetTypeFromUser().GetASTContext(),
-                                                                             var_sp->GetTypeFromUser().GetOpaqueQualType(),
-                                                                             var_sp->GetName(),
-                                                                             mem,
-                                                                             eAddressTypeLoad,
-                                                                             pvar_byte_size));
+            var_sp->m_live_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                                var_sp->GetTypeFromUser().GetASTContext(),
+                                                                var_sp->GetTypeFromUser().GetOpaqueQualType(),
+                                                                var_sp->GetName(),
+                                                                mem,
+                                                                eAddressTypeLoad,
+                                                                pvar_byte_size);
             
             // Clear the flag if the variable will never be deallocated.
             
@@ -1347,13 +1347,13 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                 
                 // Put the location of the spare memory into the live data of the ValueObject.
                 
-                expr_var->m_live_sp.reset(new lldb_private::ValueObjectConstResult(exe_ctx.GetBestExecutionContextScope(),
-                                                                                   type.GetASTContext(),
-                                                                                   type.GetOpaqueQualType(),
-                                                                                   name,
-                                                                                   mem,
-                                                                                   eAddressTypeLoad,
-                                                                                   value_byte_size));
+                expr_var->m_live_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                                      type.GetASTContext(),
+                                                                      type.GetOpaqueQualType(),
+                                                                      name,
+                                                                      mem,
+                                                                      eAddressTypeLoad,
+                                                                      value_byte_size);
                 
                 // Now write the location of the area into the struct.
                 

@@ -119,6 +119,7 @@ private:
 public:
     SharingPtr();
     template<class Y> explicit SharingPtr(Y* p);
+    template<class Y> explicit SharingPtr(Y* p, imp::shared_count *ctrl_block);
     template<class Y> SharingPtr(const SharingPtr<Y>& r, element_type *p); 
     SharingPtr(const SharingPtr& r);
     template<class Y>
@@ -180,6 +181,13 @@ SharingPtr<T>::SharingPtr(Y* p)
     typedef imp::shared_ptr_pointer<Y*> _CntrlBlk;
     cntrl_ = new _CntrlBlk(p);
     hold.release();
+}
+
+template<class T>
+template<class Y>
+SharingPtr<T>::SharingPtr(Y* p, imp::shared_count *cntrl_block)
+    : ptr_(p), cntrl_(cntrl_block)
+{
 }
 
 template<class T>

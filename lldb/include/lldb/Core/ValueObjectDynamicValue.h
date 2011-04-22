@@ -25,8 +25,6 @@ namespace lldb_private {
 class ValueObjectDynamicValue : public ValueObject
 {
 public:
-    ValueObjectDynamicValue (ValueObject &parent);
-
     virtual
     ~ValueObjectDynamicValue();
 
@@ -94,6 +92,9 @@ protected:
     lldb::ValueObjectSP m_owning_valobj_sp;
 
 private:
+    friend class ValueObject;
+    ValueObjectDynamicValue (ValueObject &parent);
+
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

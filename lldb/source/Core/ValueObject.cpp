@@ -59,9 +59,11 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_location_str (),
     m_summary_str (),
     m_object_desc_str (),
+    m_manager(parent.GetManager()),
     m_children (),
     m_synthetic_children (),
-    m_dynamic_value_sp (),
+    m_dynamic_value (NULL),
+    m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_value_is_valid (false),
     m_value_did_change (false),
@@ -70,6 +72,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false)
 {
+    m_manager->ManageObject(this);
 }
 
 //----------------------------------------------------------------------
@@ -88,9 +91,11 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_location_str (),
     m_summary_str (),
     m_object_desc_str (),
+    m_manager(),
     m_children (),
     m_synthetic_children (),
-    m_dynamic_value_sp (),
+    m_dynamic_value (NULL),
+    m_deref_valobj(NULL),
     m_format (eFormatDefault),
     m_value_is_valid (false),
     m_value_did_change (false),
@@ -99,6 +104,8 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false)
 {
+    m_manager = new ValueObjectManager();
+    m_manager->ManageObject (this);
 }
 
 //----------------------------------------------------------------------
@@ -282,14 +289,15 @@ ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
         if (idx < GetNumChildren())
         {
             // Check if we have already made the child value object?
-            if (can_create && m_children[idx].get() == NULL)
+            if (can_create && m_children[idx] == NULL)
             {
                 // No we haven't created the child at this index, so lets have our
                 // subclass do it and cache the result for quick future access.
                 m_children[idx] = CreateChildAtIndex (idx, false, 0);
             }
-
-            child_sp = m_children[idx];
+            
+            if (m_children[idx] != NULL)
+                return m_children[idx]->GetSP();
         }
     }
     return child_sp;
@@ -377,10 +385,10 @@ ValueObject::SetName (const ConstString &name)
     m_name = name;
 }
 
-ValueObjectSP
+ValueObject *
 ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
-    ValueObjectSP valobj_sp;
+    ValueObject *valobj;
     
     if (UpdateValueIfNeeded())
     {
@@ -420,22 +428,22 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
             if (!child_name_str.empty())
                 child_name.SetCString (child_name_str.c_str());
 
-            valobj_sp.reset (new ValueObjectChild (*this,
-                                                   clang_ast,
-                                                   child_clang_type,
-                                                   child_name,
-                                                   child_byte_size,
-                                                   child_byte_offset,
-                                                   child_bitfield_bit_size,
-                                                   child_bitfield_bit_offset,
-                                                   child_is_base_class,
-                                                   child_is_deref_of_parent));
+            valobj = new ValueObjectChild (*this,
+                                           clang_ast,
+                                           child_clang_type,
+                                           child_name,
+                                           child_byte_size,
+                                           child_byte_offset,
+                                           child_bitfield_bit_size,
+                                           child_bitfield_bit_offset,
+                                           child_is_base_class,
+                                           child_is_deref_of_parent);            
             if (m_pointers_point_to_load_addrs)
-                valobj_sp->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
+                valobj->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
         }
     }
     
-    return valobj_sp;
+    return valobj;
 }
 
 const char *
@@ -913,18 +921,18 @@ ValueObject::GetObjectRuntimeLanguage ()
 }
 
 void
-ValueObject::AddSyntheticChild (const ConstString &key, ValueObjectSP& valobj_sp)
+ValueObject::AddSyntheticChild (const ConstString &key, ValueObject *valobj)
 {
-    m_synthetic_children[key] = valobj_sp;
+    m_synthetic_children[key] = valobj;
 }
 
 ValueObjectSP
 ValueObject::GetSyntheticChild (const ConstString &key) const
 {
     ValueObjectSP synthetic_child_sp;
-    std::map<ConstString, ValueObjectSP>::const_iterator pos = m_synthetic_children.find (key);
+    std::map<ConstString, ValueObject *>::const_iterator pos = m_synthetic_children.find (key);
     if (pos != m_synthetic_children.end())
-        synthetic_child_sp = pos->second;
+        synthetic_child_sp = pos->second->GetSP();
     return synthetic_child_sp;
 }
 
@@ -960,13 +968,17 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
         synthetic_child_sp = GetSyntheticChild (index_const_str);
         if (!synthetic_child_sp)
         {
+            ValueObject *synthetic_child;
             // We haven't made a synthetic array member for INDEX yet, so
             // lets make one and cache it for any future reference.
-            synthetic_child_sp = CreateChildAtIndex(0, true, index);
+            synthetic_child = CreateChildAtIndex(0, true, index);
 
             // Cache the value if we got one back...
-            if (synthetic_child_sp)
-                AddSyntheticChild(index_const_str, synthetic_child_sp);
+            if (synthetic_child)
+            {
+                AddSyntheticChild(index_const_str, synthetic_child);
+                synthetic_child_sp = synthetic_child->GetSP();
+            }
         }
     }
     return synthetic_child_sp;
@@ -975,7 +987,7 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
 void
 ValueObject::CalculateDynamicValue ()
 {
-    if (!m_dynamic_value_sp && !IsDynamic())
+    if (!m_dynamic_value && !IsDynamic())
     {
         Process *process = m_update_point.GetProcess();
         bool worth_having_dynamic_value = false;
@@ -1005,33 +1017,25 @@ ValueObject::CalculateDynamicValue ()
         }
         
         if (worth_having_dynamic_value)
-            m_dynamic_value_sp.reset (new ValueObjectDynamicValue (*this));
+            m_dynamic_value = new ValueObjectDynamicValue (*this);
+            
+//        if (worth_having_dynamic_value)
+//            printf ("Adding dynamic value %s (%p) to (%p) - manager %p.\n", m_name.GetCString(), m_dynamic_value, this, m_manager);
+
     }
 }
 
-lldb::ValueObjectSP
+ValueObjectSP
 ValueObject::GetDynamicValue (bool can_create)
 {
-    if (!IsDynamic() && m_dynamic_value_sp == NULL && can_create)
+    if (!IsDynamic() && m_dynamic_value == NULL && can_create)
     {
         CalculateDynamicValue();
     }
-    return m_dynamic_value_sp;
-}
-
-lldb::ValueObjectSP
-ValueObject::GetDynamicValue (bool can_create, lldb::ValueObjectSP &owning_valobj_sp)
-{
-    if (!IsDynamic() && m_dynamic_value_sp == NULL && can_create)
-    {
-        CalculateDynamicValue();
-        if (m_dynamic_value_sp)
-        {
-            ValueObjectDynamicValue *as_dynamic_value = static_cast<ValueObjectDynamicValue *>(m_dynamic_value_sp.get());
-            as_dynamic_value->SetOwningSP (owning_valobj_sp);
-        }
-    }
-    return m_dynamic_value_sp;
+    if (m_dynamic_value)
+        return m_dynamic_value->GetSP();
+    else
+        return ValueObjectSP();
 }
 
 bool
@@ -1352,17 +1356,17 @@ ValueObject::CreateConstantValue (const ConstString &name)
 
             m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0);
 
-            valobj_sp.reset (new ValueObjectConstResult (exe_scope, 
-                                                         ast,
-                                                         GetClangType(),
-                                                         name,
-                                                         data));
+            valobj_sp = ValueObjectConstResult::Create (exe_scope, 
+                                                        ast,
+                                                        GetClangType(),
+                                                        name,
+                                                        data);
         }
     }
     
     if (!valobj_sp)
     {
-        valobj_sp.reset (new ValueObjectConstResult (NULL, m_error));
+        valobj_sp = ValueObjectConstResult::Create (NULL, m_error);
     }
     return valobj_sp;
 }
@@ -1370,8 +1374,8 @@ ValueObject::CreateConstantValue (const ConstString &name)
 lldb::ValueObjectSP
 ValueObject::Dereference (Error &error)
 {
-    if (m_deref_valobj_sp)
-        return m_deref_valobj_sp;
+    if (m_deref_valobj)
+        return m_deref_valobj->GetSP();
         
     const bool is_pointer_type = IsPointerType();
     if (is_pointer_type)
@@ -1408,22 +1412,23 @@ ValueObject::Dereference (Error &error)
             if (!child_name_str.empty())
                 child_name.SetCString (child_name_str.c_str());
 
-            m_deref_valobj_sp.reset (new ValueObjectChild (*this,
-                                                           clang_ast,
-                                                           child_clang_type,
-                                                           child_name,
-                                                           child_byte_size,
-                                                           child_byte_offset,
-                                                           child_bitfield_bit_size,
-                                                           child_bitfield_bit_offset,
-                                                           child_is_base_class,
-                                                           child_is_deref_of_parent));
+            m_deref_valobj = new ValueObjectChild (*this,
+                                                   clang_ast,
+                                                   child_clang_type,
+                                                   child_name,
+                                                   child_byte_size,
+                                                   child_byte_offset,
+                                                   child_bitfield_bit_size,
+                                                   child_bitfield_bit_offset,
+                                                   child_is_base_class,
+                                                   child_is_deref_of_parent);
         }
     }
 
-    if (m_deref_valobj_sp)
+    if (m_deref_valobj)
     {
         error.Clear();
+        return m_deref_valobj->GetSP();
     }
     else
     {
@@ -1434,9 +1439,8 @@ ValueObject::Dereference (Error &error)
             error.SetErrorStringWithFormat("dereference failed: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
         else
             error.SetErrorStringWithFormat("not a pointer type: (%s) %s", GetTypeName().AsCString("<invalid type>"), strm.GetString().c_str());
+        return ValueObjectSP();
     }
-
-    return m_deref_valobj_sp;
 }
 
 lldb::ValueObjectSP
@@ -1472,13 +1476,13 @@ ValueObject::AddressOf (Error &error)
                 {
                     std::string name (1, '&');
                     name.append (m_name.AsCString(""));
-                    m_addr_of_valobj_sp.reset (new ValueObjectConstResult (GetExecutionContextScope(),
-                                                                           ast, 
-                                                                           ClangASTContext::CreatePointerType (ast, clang_type),
-                                                                           ConstString (name.c_str()),
-                                                                           addr, 
-                                                                           eAddressTypeInvalid,
-                                                                           m_data.GetAddressByteSize()));
+                    m_addr_of_valobj_sp = ValueObjectConstResult::Create (GetExecutionContextScope(),
+                                                                          ast, 
+                                                                          ClangASTContext::CreatePointerType (ast, clang_type),
+                                                                          ConstString (name.c_str()),
+                                                                          addr, 
+                                                                          eAddressTypeInvalid,
+                                                                          m_data.GetAddressByteSize());
                 }
             }
             break;

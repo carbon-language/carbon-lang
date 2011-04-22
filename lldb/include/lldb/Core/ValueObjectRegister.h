@@ -26,7 +26,6 @@ namespace lldb_private {
 class ValueObjectRegisterContext : public ValueObject
 {
 public:
-    ValueObjectRegisterContext (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp);
 
     virtual
     ~ValueObjectRegisterContext();
@@ -52,7 +51,7 @@ public:
     virtual uint32_t
     CalculateNumChildren();
 
-    virtual lldb::ValueObjectSP
+    virtual ValueObject *
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
 protected:
@@ -62,6 +61,7 @@ protected:
     lldb::RegisterContextSP m_reg_ctx_sp;
 
 private:
+    ValueObjectRegisterContext (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp);
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------
@@ -71,7 +71,8 @@ private:
 class ValueObjectRegisterSet : public ValueObject
 {
 public:
-    ValueObjectRegisterSet (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
 
     virtual
     ~ValueObjectRegisterSet();
@@ -97,7 +98,7 @@ public:
     virtual uint32_t
     CalculateNumChildren();
 
-    virtual lldb::ValueObjectSP
+    virtual ValueObject *
     CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index);
     
     virtual lldb::ValueObjectSP
@@ -116,6 +117,9 @@ protected:
     uint32_t m_reg_set_idx;
 
 private:
+    friend class ValueObjectRegisterContext;
+    ValueObjectRegisterSet (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t set_idx);
+
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------
@@ -125,8 +129,8 @@ private:
 class ValueObjectRegister : public ValueObject
 {
 public:
-    ValueObjectRegister (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
-    ValueObjectRegister (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
 
     virtual
     ~ValueObjectRegister();
@@ -165,6 +169,11 @@ protected:
 private:
     void
     ConstructObject ();
+    
+    friend class ValueObjectRegisterSet;
+    ValueObjectRegister (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
+    ValueObjectRegister (ExecutionContextScope *exe_scope, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);
+
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

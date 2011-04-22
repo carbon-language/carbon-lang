@@ -357,7 +357,7 @@ SBValue::GetChildAtIndex (uint32_t idx, bool use_dynamic_value)
     {
         if (child_sp)
         {
-            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true, child_sp);
+            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true);
             if (dynamic_sp)
                 child_sp = dynamic_sp;
         }
@@ -410,7 +410,7 @@ SBValue::GetChildMemberWithName (const char *name, bool use_dynamic_value)
     {
         if (child_sp)
         {
-            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true, child_sp);
+            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue(true);
             if (dynamic_sp)
                 child_sp = dynamic_sp;
         }

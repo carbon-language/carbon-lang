@@ -570,7 +570,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     {
         error.SetErrorString ("Must have a process to evaluate expressions.");
             
-        result_valobj_sp.reset (new ValueObjectConstResult (NULL, error));
+        result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
         return eExecutionSetupError;
     }
     
@@ -590,7 +590,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
             else
                 error.SetErrorString (install_errors.GetString().c_str());
             
-            result_valobj_sp.reset (new ValueObjectConstResult (NULL, error));
+            result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
             return eExecutionSetupError;
         }
             
@@ -672,7 +672,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     }
     
     if (result_valobj_sp.get() == NULL)
-        result_valobj_sp.reset (new ValueObjectConstResult (NULL, error));
+        result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
 
     return execution_results;
 }

@@ -24,18 +24,6 @@ namespace lldb_private {
 class ValueObjectChild : public ValueObject
 {
 public:
-    ValueObjectChild (ValueObject &parent,
-                      clang::ASTContext *clang_ast,
-                      void *clang_type,
-                      const ConstString &name,
-                      uint32_t byte_size,
-                      int32_t byte_offset,
-                      uint32_t bitfield_bit_size,
-                      uint32_t bitfield_bit_offset,
-                      bool is_base_class,
-                      bool is_deref_of_parent);
-
-
     virtual ~ValueObjectChild();
 
     virtual size_t
@@ -117,6 +105,18 @@ protected:
 //  ReadValueFromMemory (ValueObject* parent, lldb::addr_t address);
 
 private:
+    friend class ValueObject;
+    ValueObjectChild (ValueObject &parent,
+                      clang::ASTContext *clang_ast,
+                      void *clang_type,
+                      const ConstString &name,
+                      uint32_t byte_size,
+                      int32_t byte_offset,
+                      uint32_t bitfield_bit_size,
+                      uint32_t bitfield_bit_offset,
+                      bool is_base_class,
+                      bool is_deref_of_parent);
+
     DISALLOW_COPY_AND_ASSIGN (ValueObjectChild);
 };
 

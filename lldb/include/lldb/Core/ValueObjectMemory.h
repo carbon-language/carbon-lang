@@ -25,10 +25,11 @@ namespace lldb_private {
 class ValueObjectMemory : public ValueObject
 {
 public:
-    ValueObjectMemory (ExecutionContextScope *exe_scope, 
-                       const char *name,
-                       const Address &address, 
-                       lldb::TypeSP &type_sp);
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope, 
+            const char *name,
+            const Address &address, 
+            lldb::TypeSP &type_sp);
 
     virtual
     ~ValueObjectMemory();
@@ -62,6 +63,11 @@ protected:
     lldb::TypeSP m_type_sp;
 
 private:
+    ValueObjectMemory (ExecutionContextScope *exe_scope, 
+                       const char *name,
+                       const Address &address, 
+                       lldb::TypeSP &type_sp);
+
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

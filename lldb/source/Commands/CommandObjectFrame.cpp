@@ -649,13 +649,6 @@ public:
                             valobj_sp = exe_ctx.frame->GetValueForVariableExpressionPath (name_cstr, expr_path_options, error);
                             if (valobj_sp)
                             {
-//                                if (use_dynamic)
-//                                {
-//                                    lldb::ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue(true, valobj_sp);
-//                                    if (dynamic_sp != NULL)
-//                                        valobj_sp = dynamic_sp;
-//                                }
-//
                                 if (m_options.format != eFormatDefault)
                                     valobj_sp->SetFormat (m_options.format);
                                 
