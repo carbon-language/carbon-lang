@@ -462,9 +462,34 @@ static std::string MangleName(const std::string &name, StringRef typestr,
   return s;
 }
 
+/// UseMacro - Examine the prototype string to determine if the intrinsic
+/// should be defined as a preprocessor macro instead of an inline function.
+static bool UseMacro(const std::string &proto) {
+  // If this builtin takes an immediate argument, we need to #define it rather
+  // than use a standard declaration, so that SemaChecking can range check
+  // the immediate passed by the user.
+  if (proto.find('i') != std::string::npos)
+    return true;
+
+  // Pointer arguments need to use macros to avoid hiding aligned attributes
+  // from the pointer type.
+  if (proto.find('p') != std::string::npos ||
+      proto.find('c') != std::string::npos)
+    return true;
+
+  return false;
+}
+
+/// MacroArgUsedDirectly - Return true if argument i for an intrinsic that is
+/// defined as a macro should be accessed directly instead of being first
+/// assigned to a local temporary.
+static bool MacroArgUsedDirectly(const std::string &proto, unsigned i) {
+  return (proto[i] == 'i' || proto[i] == 'p' || proto[i] == 'c');
+}
+
 // Generate the string "(argtype a, argtype b, ...)"
 static std::string GenArgs(const std::string &proto, StringRef typestr) {
-  bool define = proto.find('i') != std::string::npos;
+  bool define = UseMacro(proto);
   char arg = 'a';
 
   std::string s;
@@ -472,10 +497,10 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
 
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     if (define) {
-      // Immediate macro arguments are used directly instead of being assigned
+      // Some macro arguments are used directly instead of being assigned
       // to local temporaries; prepend an underscore prefix to make their
       // names consistent with the local temporaries.
-      if (proto[i] == 'i')
+      if (MacroArgUsedDirectly(proto, i))
         s += "__";
     } else {
       s += TypeString(proto[i], typestr) + " __";
@@ -494,11 +519,28 @@ static std::string GenArgs(const std::string &proto, StringRef typestr) {
 static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
   char arg = 'a';
   std::string s;
+  bool generatedLocal = false;
 
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     // Do not create a temporary for an immediate argument.
     // That would defeat the whole point of using a macro!
-    if (proto[i] == 'i') continue;
+    if (proto[i] == 'i')
+      continue;
+    generatedLocal = true;
+
+    // For other (non-immediate) arguments that are used directly, a local
+    // temporary is still needed to get the correct type checking, even though
+    // that temporary is not used for anything.
+    if (MacroArgUsedDirectly(proto, i)) {
+      s += TypeString(proto[i], typestr) + " __";
+      s.push_back(arg);
+      s += "_ = (__";
+      s.push_back(arg);
+      s += "); (void)__";
+      s.push_back(arg);
+      s += "_; ";
+      continue;
+    }
 
     s += TypeString(proto[i], typestr) + " __";
     s.push_back(arg);
@@ -507,7 +549,8 @@ static std::string GenMacroLocals(const std::string &proto, StringRef typestr) {
     s += "); ";
   }
 
-  s += "\\\n  ";
+  if (generatedLocal)
+    s += "\\\n  ";
   return s;
 }
 
@@ -568,11 +611,7 @@ static std::string GenOpString(OpKind op, const std::string &proto,
                                StringRef typestr) {
   bool quad;
   unsigned nElts = GetNumElements(typestr, quad);
-
-  // If this builtin takes an immediate argument, we need to #define it rather
-  // than use a standard declaration, so that SemaChecking can range check
-  // the immediate passed by the user.
-  bool define = proto.find('i') != std::string::npos;
+  bool define = UseMacro(proto);
 
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
@@ -858,10 +897,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   // sret-like argument.
   bool sret = (proto[0] >= '2' && proto[0] <= '4');
 
-  // If this builtin takes an immediate argument, we need to #define it rather
-  // than use a standard declaration, so that SemaChecking can range check
-  // the immediate passed by the user.
-  bool define = proto.find('i') != std::string::npos;
+  bool define = UseMacro(proto);
 
   // Check if the prototype has a scalar operand with the type of the vector
   // elements.  If not, bitcasting the args will take care of arg checking.
@@ -999,7 +1035,7 @@ static std::string GenIntrinsic(const std::string &name,
                                 StringRef outTypeStr, StringRef inTypeStr,
                                 OpKind kind, ClassKind classKind) {
   assert(!proto.empty() && "");
-  bool define = proto.find('i') != std::string::npos;
+  bool define = UseMacro(proto);
   std::string s;
 
   // static always inline + return type
