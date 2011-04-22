@@ -92,15 +92,21 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
       }
       break;
 
+      // The two magic numbers for mach-o are:
+      // 0xfeedface - 32-bit mach-o
+      // 0xfeedfacf - 64-bit mach-o
     case 0xFE:
-    case 0xCE: {
+    case 0xCE:
+    case 0xCF: {
       uint16_t type = 0;
       if (magic[0] == char(0xFE) && magic[1] == char(0xED) &&
-          magic[2] == char(0xFA) && magic[3] == char(0xCE)) {
+          magic[2] == char(0xFA) && 
+          (magic[3] == char(0xCE) || magic[3] == char(0xCF))) {
         /* Native endian */
         if (length >= 16) type = magic[14] << 8 | magic[15];
-      } else if (magic[0] == char(0xCE) && magic[1] == char(0xFA) &&
-                 magic[2] == char(0xED) && magic[3] == char(0xFE)) {
+      } else if ((magic[0] == char(0xCE) || magic[0] == char(0xCF)) &&
+                 magic[1] == char(0xFA) && magic[2] == char(0xED) &&
+                 magic[3] == char(0xFE)) {
         /* Reverse endian */
         if (length >= 14) type = magic[13] << 8 | magic[12];
       }
