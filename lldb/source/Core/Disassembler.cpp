@@ -21,7 +21,9 @@
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -502,6 +504,187 @@ Instruction::DumpEmulation (const ArchSpec &arch)
     return false;
 }
 
+OptionValueSP
+Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type data_type)
+{
+    bool done = false;
+    char buffer[1024];
+    
+    OptionValueSP option_value_sp (new OptionValueArray (1u << data_type));
+    
+    int idx = 0;
+    while (!done)
+    {
+        if (!fgets (buffer, 1023, in_file))
+        {
+            out_stream->Printf ("Instruction::ReadArray:  Erroe reading file (fgets).\n");
+            option_value_sp.reset ();
+            return option_value_sp;
+        }
+
+        std::string line (buffer);
+        
+        int len = line.size();
+        if (line[len-1] == '\n')
+        {
+            line[len-1] = '\0';
+            line.resize (len-1);
+        }
+
+        if ((line.size() == 1) && line[0] == ']')
+        {
+            done = true;
+            line.clear();
+        }
+
+        if (line.size() > 0)
+        {
+            std::string value;
+            RegularExpression reg_exp ("^[ \t]*([^ \t]+)[ \t]*$");
+            bool reg_exp_success = reg_exp.Execute (line.c_str(), 1);
+            if (reg_exp_success)
+                reg_exp.GetMatchAtIndex (line.c_str(), 1, value);
+            else
+                value = line;
+                
+            OptionValueSP data_value_sp;
+            switch (data_type)
+            {
+            case OptionValue::eTypeUInt64:
+                data_value_sp.reset (new OptionValueUInt64 (0, 0));
+                data_value_sp->SetValueFromCString (value.c_str());
+                break;
+            // Other types can be added later as needed.
+            default:
+                data_value_sp.reset (new OptionValueString (value.c_str(), ""));
+                break;
+            }
+
+            option_value_sp->GetAsArrayValue()->InsertValue (idx, data_value_sp);
+            ++idx;
+        }
+    }
+    
+    return option_value_sp;
+}
+
+OptionValueSP 
+Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
+{
+    bool done = false;
+    char buffer[1024];
+    
+    OptionValueSP option_value_sp (new OptionValueDictionary());
+    static ConstString encoding_key ("data_encoding");
+    OptionValue::Type data_type = OptionValue::eTypeInvalid;
+
+    
+    while (!done)
+    {
+        // Read the next line in the file
+        if (!fgets (buffer, 1023, in_file))
+        {
+            out_stream->Printf ("Instruction::ReadDictionary: Error reading file (fgets).\n");
+            option_value_sp.reset ();
+            return option_value_sp;
+        }
+        
+        // Check to see if the line contains the end-of-dictionary marker ("}")
+        std::string line (buffer);
+
+        int len = line.size();
+        if (line[len-1] == '\n')
+        {
+            line[len-1] = '\0';
+            line.resize (len-1);
+        }
+        
+        if ((line.size() == 1) && (line[0] == '}'))
+        {
+            done = true;
+            line.clear();
+        }
+        
+        // Try to find a key-value pair in the current line and add it to the dictionary.
+        if (line.size() > 0)
+        {
+            RegularExpression reg_exp ("^[ \t]*([a-zA-Z_][a-zA-Z0-9_]*)[ \t]*=[ \t]*(.*)[ \t]*$");
+            bool reg_exp_success = reg_exp.Execute (line.c_str(), 2);
+            std::string key;
+            std::string value;
+            if (reg_exp_success)
+            {
+                reg_exp.GetMatchAtIndex (line.c_str(), 1, key);
+                reg_exp.GetMatchAtIndex (line.c_str(), 2, value);
+            }
+            else 
+            {
+                out_stream->Printf ("Instruction::ReadDictionary: Failure executing regular expression.\n");
+                option_value_sp.reset();
+                return option_value_sp;
+            }
+            
+            ConstString const_key (key.c_str());
+            // Check value to see if it's the start of an array or dictionary.
+            
+            lldb::OptionValueSP value_sp;
+            assert (value.empty() == false);
+            assert (key.empty() == false);            
+
+            if (value[0] == '{')
+            {
+                assert (value.size() == 1);
+                // value is a dictionary
+                value_sp = ReadDictionary (in_file, out_stream);
+                if (value_sp.get() == NULL)
+                {
+                    option_value_sp.reset ();
+                    return option_value_sp;
+                }
+            }
+            else if (value[0] == '[')
+            {
+                assert (value.size() == 1);
+                // value is an array
+                value_sp = ReadArray (in_file, out_stream, data_type);
+                if (value_sp.get() == NULL)
+                {
+                    option_value_sp.reset ();
+                    return option_value_sp;
+                }
+                // We've used the data_type to read an array; re-set the type to Invalid
+                data_type = OptionValue::eTypeInvalid;
+            }
+            else if ((value[0] == '0') && (value[1] == 'x'))
+            {
+                value_sp.reset (new OptionValueUInt64 (0, 0));
+                value_sp->SetValueFromCString (value.c_str());
+            }
+            else
+            {
+                int len = value.size();
+                if ((value[0] == '"') && (value[len-1] == '"'))
+                    value = value.substr (1, len-2);
+                value_sp.reset (new OptionValueString (value.c_str(), ""));
+            }
+
+         
+
+            if (const_key == encoding_key)
+            {
+                // A 'data_encoding=..." is NOT a normal key-value pair; it is meta-data indicating the
+                // data type of an upcoming array (usually the next bit of data to be read in).
+                if (strcmp (value.c_str(), "uint32_t") == 0)
+                    data_type = OptionValue::eTypeUInt64;
+            }
+            else
+                option_value_sp->GetAsDictionaryValue()->SetValueForKey (const_key, value_sp, false);
+        }
+    }
+    
+    return option_value_sp;
+}
+
 bool
 Instruction::TestEmulation (Stream *out_stream, const char *file_name)
 {
@@ -521,33 +704,63 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
         return false;
     }
 
-    ArchSpec arch;
     char buffer[256];
-    if (!fgets (buffer,255, test_file)) // Read/skip first line of file, which should be a comment line (description).
+    if (!fgets (buffer, 255, test_file))
     {
-        out_stream->Printf ("Instruction::TestEmulation: Read comment line failed.");
-        fclose (test_file);
-        return false;
-    }
-    SetDescription (buffer);
-            
-    if (fscanf (test_file, "%s", buffer) != 1) // Read the arch or arch-triple from the file
-    {
-        out_stream->Printf ("Instruction::TestEmulation: Read arch failed.");
+        out_stream->Printf ("Instruction::TestEmulation: Error reading first line of test file.\n");
         fclose (test_file);
         return false;
     }
     
-    const char *cptr = buffer;
-    arch.SetTriple (llvm::Triple (cptr));
+    if (strncmp (buffer, "InstructionEmulationState={", 27) != 0)
+    {
+        out_stream->Printf ("Instructin::TestEmulation: Test file does not contain emulation state dictionary\n");
+        fclose (test_file);
+        return false;
+    }
+
+    // Read all the test information from the test file into an OptionValueDictionary.
+
+    OptionValueSP data_dictionary_sp (ReadDictionary (test_file, out_stream));
+    if (data_dictionary_sp.get() == NULL)
+    {
+        out_stream->Printf ("Instruction::TestEmulation:  Error reading Dictionary Object.\n");
+        fclose (test_file);
+        return false;
+    }
+
+    fclose (test_file);
+
+    OptionValueDictionary *data_dictionary = data_dictionary_sp->GetAsDictionaryValue();
+    static ConstString description_key ("assembly_string");
+    static ConstString triple_key ("triple");
+
+    OptionValueSP value_sp = data_dictionary->GetValueForKey (description_key);
+    
+    if (value_sp.get() == NULL)
+    {
+        out_stream->Printf ("Instruction::TestEmulation:  Test file does not contain description string.\n");
+        return false;
+    }
+
+    SetDescription (value_sp->GetStringValue());
+            
+            
+    value_sp = data_dictionary->GetValueForKey (triple_key);
+    if (value_sp.get() == NULL)
+    {
+        out_stream->Printf ("Instruction::TestEmulation: Test file does not contain triple.\n");
+        return false;
+    }
+    
+    ArchSpec arch;
+    arch.SetTriple (llvm::Triple (value_sp->GetStringValue()));
 
     bool success = false;
     std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
     if (insn_emulator_ap.get())
-        success = insn_emulator_ap->TestEmulation (out_stream, test_file, arch);
+        success = insn_emulator_ap->TestEmulation (out_stream, arch, data_dictionary);
 
-    fclose (test_file);
-    
     if (success)
         out_stream->Printf ("Emulation test succeeded.");
     else

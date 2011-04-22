@@ -22,6 +22,7 @@
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Opcode.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 
 namespace lldb_private {
 
@@ -71,6 +72,12 @@ public:
     virtual void
     SetDescription (const char *) {};  // May be overridden in sub-classes that have descriptions.
     
+    lldb::OptionValueSP
+    ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type data_type);
+
+    lldb::OptionValueSP
+    ReadDictionary (FILE *in_file, Stream *out_stream);
+
     bool
     DumpEmulation (const ArchSpec &arch);
     

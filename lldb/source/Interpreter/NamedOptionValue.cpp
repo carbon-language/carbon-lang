@@ -102,6 +102,21 @@ OptionValue::GetAsDictionaryValue ()
     return NULL;
 }
 
+const char *
+OptionValue::GetStringValue ()
+{
+    if (GetType () == OptionValue::eTypeString)
+        return static_cast<OptionValueString *>(this)->GetCurrentValue();
+    return NULL;
+}
+
+uint64_t
+OptionValue::GetUInt64Value ()
+{
+    if (GetType () == OptionValue::eTypeUInt64)
+        return static_cast<OptionValueUInt64 *>(this)->GetCurrentValue();
+    return 0;
+}
 
 //-------------------------------------------------------------------------
 // OptionValueCollection

@@ -315,82 +315,6 @@ EmulationStateARM::WritePseudoRegister (void *baton,
 }
                          
 bool
-EmulationStateARM::LoadState (FILE *test_file)
-{
-    if (!test_file)
-        return false;
-        
-    uint32_t num_regs;
-    uint32_t value32;
-    uint64_t value64;
-    
-    /* Load general register state */
-    if (fscanf (test_file, "%d", &num_regs) != 1)
-        return false;
-        
-        
-    for (int i = 0; i < num_regs; ++i)
-    {
-        if (fscanf (test_file, "%x", &value32) == 1)
-        {
-            if (i < 17)  // We only have 17 general registers, but if for some reason the file contains more
-                         // we need to read them all, to get to the next set of register values.
-                m_gpr[i] = value32;
-        }
-        else
-            return false;
-    }
-    
-    /* Load d register state  */
-    if (fscanf (test_file, "%d", &num_regs) != 1)
-        return false;
-    
-    for (int i = 0; i < num_regs; ++i)
-    {
-        if (fscanf (test_file, "%x", &value64) == 1)
-        {
-            if (i < 32)
-            {
-                if (i < 16)
-                    m_vfp_regs.sd_regs[i].d_reg = value64;
-                else
-                    m_vfp_regs.d_regs[i - 16] = value64;
-            }
-        }
-        else
-            return false;
-    }
-        
-    /* Load s register state */
-    if (fscanf (test_file, "%d", &num_regs) != 1)
-        return false;
-
-    for (int i = 0; i < num_regs; ++i)
-    {
-        if (fscanf (test_file, "%x", &value32) == 1)
-            m_vfp_regs.sd_regs[i / 2].s_reg[i % 2] = value32;
-        else
-            return false;
-    }
-    
-    return true;
-}
-
-bool
-EmulationStateARM::LoadRegisterStatesFromTestFile (FILE *test_file, 
-                                                   EmulationStateARM &before_state, 
-                                                   EmulationStateARM &after_state)
-{
-    if (test_file)
-    {
-        if (before_state.LoadState (test_file))
-            return after_state.LoadState (test_file);
-    }
-        
-    return false;
-}
-                                                   
-bool
 EmulationStateARM::CompareState (EmulationStateARM &other_state)
 {
     bool match = true;
@@ -426,3 +350,93 @@ EmulationStateARM::CompareState (EmulationStateARM &other_state)
     
     return match;
 }
+
+bool
+EmulationStateARM::LoadStateFromDictionary (OptionValueDictionary *test_data)
+{
+    static ConstString memory_key ("memory");
+    static ConstString registers_key ("registers");
+    
+    if (!test_data)
+        return false;
+    
+    OptionValueSP value_sp = test_data->GetValueForKey (memory_key);
+    
+    // Load memory, if present.
+    
+    if (value_sp.get() != NULL)
+    {
+        static ConstString address_key ("address");
+        static ConstString data_key ("data");
+        uint64_t start_address = 0;
+        
+        OptionValueDictionary *mem_dict = value_sp->GetAsDictionaryValue();
+        value_sp = mem_dict->GetValueForKey (address_key);
+        if (value_sp.get() == NULL)
+            return false;
+        else
+            start_address = value_sp->GetUInt64Value ();
+        
+        value_sp = mem_dict->GetValueForKey (data_key);
+        OptionValueArray *mem_array = value_sp->GetAsArrayValue();
+        if (!mem_array)
+            return false;
+
+        uint32_t num_elts = mem_array->GetSize();
+        uint32_t address = (uint32_t) start_address;
+        
+        for (int i = 0; i < num_elts; ++i)
+        {
+            value_sp = mem_array->GetValueAtIndex (i);
+            if (value_sp.get() == NULL)
+                return false;
+            uint64_t value = value_sp->GetUInt64Value();
+            StoreToPseudoAddress (address, value, 4);
+            address = address + 4;
+        }
+    }
+    
+    value_sp = test_data->GetValueForKey (registers_key);
+    if (value_sp.get() == NULL)
+        return false;
+
+        
+    // Load General Registers
+   
+    OptionValueDictionary *reg_dict = value_sp->GetAsDictionaryValue ();
+   
+    StreamString sstr;
+    for (int i = 0; i < 16; ++i)
+    {
+        sstr.Clear();
+        sstr.Printf ("r%d", i);
+        ConstString reg_name (sstr.GetData());
+        value_sp = reg_dict->GetValueForKey (reg_name);
+        if (value_sp.get() == NULL)
+            return false;
+        uint64_t reg_value = value_sp->GetUInt64Value();
+        StorePseudoRegisterValue (dwarf_r0 + i, reg_value);
+    }
+    
+    static ConstString cpsr_name ("cpsr");
+    value_sp = reg_dict->GetValueForKey (cpsr_name);
+    if (value_sp.get() == NULL)
+        return false;
+    StorePseudoRegisterValue (dwarf_cpsr, value_sp->GetUInt64Value());
+    
+    // Load s/d Registers
+    for (int i = 0; i < 32; ++i)
+    {
+        sstr.Clear();
+        sstr.Printf ("s%d", i);
+        ConstString reg_name (sstr.GetData());
+        value_sp = reg_dict->GetValueForKey (reg_name);
+        if (value_sp.get() == NULL)
+            return false;
+        uint64_t reg_value = value_sp->GetUInt64Value();
+        StorePseudoRegisterValue (dwarf_s0 + i, reg_value);
+    }
+
+    return true;
+}
+

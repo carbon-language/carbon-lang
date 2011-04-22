@@ -12,6 +12,7 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 #include "Plugins/Process/Utility/ARMDefines.h"
 
 namespace lldb_private {
@@ -150,7 +151,7 @@ public:
     EvaluateInstruction ();
     
     virtual bool
-    TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch);
+    TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data);
 
     uint32_t
     ArchVersion();

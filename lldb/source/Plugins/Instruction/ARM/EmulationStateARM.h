@@ -14,6 +14,7 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Opcode.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 
 namespace lldb_private {
 
@@ -47,11 +48,8 @@ public:
     LoadPseudoRegistersFromFrame (StackFrame &frame);
     
     bool
-    LoadState (FILE *test_file);
-    
-    static bool
-    LoadRegisterStatesFromTestFile (FILE *test_file, EmulationStateARM &before_state, EmulationStateARM &after_state);
-    
+    LoadStateFromDictionary (OptionValueDictionary *test_data);
+
     bool
     CompareState (EmulationStateARM &other_state);
 

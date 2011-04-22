@@ -16,6 +16,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/Opcode.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 
 //----------------------------------------------------------------------
 /// @class EmulateInstruction EmulateInstruction.h "lldb/Core/EmulateInstruction.h"
@@ -418,7 +419,7 @@ public:
     EvaluateInstruction () = 0;
     
     virtual bool
-    TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch) = 0;
+    TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data) = 0;
     
     bool
     GetAdvancePC () { return m_advance_pc; }

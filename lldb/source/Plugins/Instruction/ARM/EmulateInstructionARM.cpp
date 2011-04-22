@@ -13309,25 +13309,31 @@ EmulateInstructionARM::EvaluateInstruction ()
 }
 
 bool
-EmulateInstructionARM::TestEmulation (Stream *out_stream, FILE *test_file, ArchSpec &arch)
+EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data)
 {
-    if (!test_file)
+    if (!test_data)
     {
-        out_stream->Printf ("TestEmulation: Missing test file.\n");
+        out_stream->Printf ("TestEmulation: Missing test data.\n");
         return false;
     }
+    
+    static ConstString opcode_key ("opcode");
+    static ConstString before_key ("before_state");
+    static ConstString after_key ("after_state");
+        
+    OptionValueSP value_sp = test_data->GetValueForKey (opcode_key);
         
     uint32_t test_opcode;
-    if (fscanf (test_file, "%x", &test_opcode) != 1)
+    if ((value_sp.get() == NULL) || (value_sp->GetType() != OptionValue::eTypeUInt64))
     {
-        out_stream->Printf ("Test Emulation: Error reading opcode from test file.\n");
+        out_stream->Printf ("TestEmulation: Error reading opcode from test file.\n");
         return false;
     }
+    test_opcode = value_sp->GetUInt64Value ();
 
-    char buffer[256];
-    fgets (buffer, 255, test_file); // consume the newline after reading the opcode.
-    
-    SetAdvancePC (true);
+    // If the instruction emulation does not directly update the PC, advance the PC to the next instruction after
+    // performing the emulation.
+    SetAdvancePC (true); 
 
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
@@ -13345,60 +13351,41 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, FILE *test_file, ArchS
     }
     else
     {
-        out_stream->Printf ("Test Emulation:  Invalid arch.\n");
+        out_stream->Printf ("TestEmulation:  Invalid arch.\n");
         return false;
     }
-
 
     EmulationStateARM before_state;
     EmulationStateARM after_state;
     
-    // Read Memory info & load into before_state
-    if (!fgets (buffer, 255, test_file))
+    value_sp = test_data->GetValueForKey (before_key);
+    if ((value_sp.get() == NULL) || (value_sp->GetType() != OptionValue::eTypeDictionary))
     {
-        out_stream->Printf ("Test Emulation: Error attempting to read from test file.\n");
+        out_stream->Printf ("TestEmulation:  Failed to find 'before' state.\n");
         return false;
     }
-        
-    if (strncmp (buffer, "Memory-Begin", 12) != 0)
+    
+    OptionValueDictionary *state_dictionary = value_sp->GetAsDictionaryValue ();
+    if (!before_state.LoadStateFromDictionary (state_dictionary))
     {
-        out_stream->Printf ("Test Emulation: Cannot find Memory-Begin in test file.\n");
+        out_stream->Printf ("TestEmulation:  Failed loading 'before' state.\n");
         return false;
     }
 
-    bool done = false;
-    while (!done)
+    value_sp = test_data->GetValueForKey (after_key);
+    if ((value_sp.get() == NULL) || (value_sp->GetType() != OptionValue::eTypeDictionary))
     {
-        if (fgets (buffer, 255, test_file))
-        {
-            if (strncmp (buffer, "Memory-End", 10) == 0)
-                done = true;
-            else
-            {
-                uint32_t addr;
-                uint32_t value;
-                if (sscanf (buffer, "%x  %x", &addr, &value) == 2)
-                    before_state.StoreToPseudoAddress ((addr_t) addr, (uint64_t) value, 4);
-                else
-                {    
-                    out_stream->Printf ("Test Emulation:  Error attempting to sscanf address/value pair.\n");
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            out_stream->Printf ("Test Emulation:  Error attemping to read test file.\n");
-            return false;
-        }
-    }
-    
-    if (!EmulationStateARM::LoadRegisterStatesFromTestFile (test_file, before_state, after_state))
-    {
-        out_stream->Printf ("Test Emulation:  Error occurred while attempting to load the register data.\n");
+        out_stream->Printf ("TestEmulation:  Failed to find 'after' state.\n");
         return false;
     }
-    
+
+    state_dictionary = value_sp->GetAsDictionaryValue ();
+    if (!after_state.LoadStateFromDictionary (state_dictionary))
+    {
+        out_stream->Printf ("TestEmulation: Failed loading 'after' state.\n");
+        return false;
+    }
+
     SetBaton ((void *) &before_state);
     SetCallbacks (&EmulationStateARM::ReadPseudoMemory,
                   &EmulationStateARM::WritePseudoMemory,
@@ -13408,11 +13395,14 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, FILE *test_file, ArchS
     bool success = EvaluateInstruction ();
     if (!success)
     {
-        out_stream->Printf ("Test Emulation:  EvaluateInstruction() failed.\n");
+        out_stream->Printf ("TestEmulation:  EvaluateInstruction() failed.\n");
         return false;
     }
         
     success = before_state.CompareState (after_state);
+    if (!success)
+        out_stream->Printf ("TestEmulation:  'before' and 'after' states do not match.\n");
+        
     return success;
 }
 

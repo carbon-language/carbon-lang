@@ -109,6 +109,12 @@ namespace lldb_private {
         OptionValueDictionary *
         GetAsDictionaryValue();
 
+        const char *
+        GetStringValue ();
+
+        uint64_t
+        GetUInt64Value ();
+                
     protected:
         bool m_value_was_set; // This can be used to see if a value has been set
                               // by a call to SetValueFromCString(). It is often
@@ -116,6 +122,7 @@ namespace lldb_private {
                               // the command line or as a setting, versus if we
                               // just have the default value that was already
                               // populated in the option value.
+        
     };
     
     
