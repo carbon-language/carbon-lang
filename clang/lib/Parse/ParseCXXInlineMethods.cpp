@@ -65,6 +65,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
         FD = FunTmpl->getTemplatedDecl();
       else
         FD = cast<FunctionDecl>(FnD);
+      Actions.CheckForFunctionRedefinition(FD);
 
       LateParsedTemplateMap[FD] = LPT;
       Actions.MarkAsLateParsedTemplate(FD);

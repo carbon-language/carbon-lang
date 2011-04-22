@@ -821,6 +821,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
         FnD = FunTmpl->getTemplatedDecl();
       else
         FnD = cast<FunctionDecl>(DP);
+      Actions.CheckForFunctionRedefinition(FnD);
 
       LateParsedTemplateMap[FnD] = LPT;
       Actions.MarkAsLateParsedTemplate(FnD);

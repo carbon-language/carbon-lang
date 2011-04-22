@@ -5729,6 +5729,22 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
   return MissingPrototype;
 }
 
+void Sema::CheckForFunctionRedefinition(FunctionDecl *FD) {
+  // Don't complain if we're in GNU89 mode and the previous definition
+  // was an extern inline function.
+  const FunctionDecl *Definition;
+  if (FD->hasBody(Definition) &&
+      !canRedefineFunction(Definition, getLangOptions())) {
+    if (getLangOptions().GNUMode && Definition->isInlineSpecified() &&
+        Definition->getStorageClass() == SC_Extern)
+      Diag(FD->getLocation(), diag::err_redefinition_extern_inline)
+        << FD->getDeclName() << getLangOptions().CPlusPlus;
+    else
+      Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
+    Diag(Definition->getLocation(), diag::note_previous_definition);
+  }
+}
+
 Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // Clear the last template instantiation error context.
   LastTemplateInstantiationErrorContext = ActiveTemplateInstantiation();
@@ -5746,24 +5762,8 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   PushFunctionScope();
 
   // See if this is a redefinition.
-  // But don't complain if we're in GNU89 mode and the previous definition
-  // was an extern inline function.
-
-  // FIXME: This code doesn't complain about multiple definition for late
-  // parsed template function.
-  bool IsLateParsingRedefinition = LateTemplateParser &&
-                                   FD->isLateTemplateParsed();
-  const FunctionDecl *Definition;
-  if (FD->hasBody(Definition) && !IsLateParsingRedefinition &&
-      !canRedefineFunction(Definition, getLangOptions())) {
-    if (getLangOptions().GNUMode && Definition->isInlineSpecified() &&
-        Definition->getStorageClass() == SC_Extern)
-      Diag(FD->getLocation(), diag::err_redefinition_extern_inline)
-        << FD->getDeclName() << getLangOptions().CPlusPlus;
-    else
-      Diag(FD->getLocation(), diag::err_redefinition) << FD->getDeclName();
-    Diag(Definition->getLocation(), diag::note_previous_definition);
-  }
+  if (!FD->isLateTemplateParsed())
+    CheckForFunctionRedefinition(FD);
 
   // Builtin functions cannot be defined.
   if (unsigned BuiltinID = FD->getBuiltinID()) {
