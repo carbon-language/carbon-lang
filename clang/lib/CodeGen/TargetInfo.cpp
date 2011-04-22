@@ -2540,6 +2540,74 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 }
 
 //===----------------------------------------------------------------------===//
+// PTX ABI Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class PTXABIInfo : public ABIInfo {
+public:
+  PTXABIInfo(CodeGenTypes &CGT) : ABIInfo(CGT) {}
+
+  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType Ty) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI) const;
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CFG) const;
+};
+
+class PTXTargetCodeGenInfo : public TargetCodeGenInfo {
+public:
+  PTXTargetCodeGenInfo(CodeGenTypes &CGT)
+    : TargetCodeGenInfo(new PTXABIInfo(CGT)) {}
+};
+
+ABIArgInfo PTXABIInfo::classifyReturnType(QualType RetTy) const {
+  if (RetTy->isVoidType())
+    return ABIArgInfo::getIgnore();
+  if (isAggregateTypeForABI(RetTy))
+    return ABIArgInfo::getIndirect(0);
+  return ABIArgInfo::getDirect();
+}
+
+ABIArgInfo PTXABIInfo::classifyArgumentType(QualType Ty) const {
+  if (isAggregateTypeForABI(Ty))
+    return ABIArgInfo::getIndirect(0);
+
+  return ABIArgInfo::getDirect();
+}
+
+void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+  for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+       it != ie; ++it)
+    it->info = classifyArgumentType(it->type);
+
+  // Always honor user-specified calling convention.
+  if (FI.getCallingConvention() != llvm::CallingConv::C)
+    return;
+
+  // Calling convention as default by an ABI.
+  llvm::CallingConv::ID DefaultCC;
+  llvm::StringRef Env = getContext().Target.getTriple().getEnvironmentName();
+  if (Env == "device")
+    DefaultCC = llvm::CallingConv::PTX_Device;
+  else
+    DefaultCC = llvm::CallingConv::PTX_Kernel;
+
+  FI.setEffectiveCallingConvention(DefaultCC);
+}
+
+llvm::Value *PTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                   CodeGenFunction &CFG) const {
+  llvm_unreachable("PTX does not support varargs");
+  return 0;
+}
+
+}
+
+//===----------------------------------------------------------------------===//
 // SystemZ ABI Implementation
 //===----------------------------------------------------------------------===//
 
@@ -2852,6 +2920,10 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
+
+  case llvm::Triple::ptx32:
+  case llvm::Triple::ptx64:
+    return *(TheTargetCodeGenInfo = new PTXTargetCodeGenInfo(Types));
 
   case llvm::Triple::systemz:
     return *(TheTargetCodeGenInfo = new SystemZTargetCodeGenInfo(Types));
