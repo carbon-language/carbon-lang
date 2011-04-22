@@ -58,6 +58,10 @@ public:
     return TLOF->getEHFrameSection();
   }
 
+  const unsigned getFDEEncoding() const {
+    return TLOF->getFDEEncoding();
+  }
+
   unsigned getDwarfRARegNum(bool isEH) const {
     return TRI->getDwarfRegNum(TRI->getRARegister(), isEH);
   }

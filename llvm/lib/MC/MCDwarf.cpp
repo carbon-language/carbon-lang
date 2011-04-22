@@ -439,33 +439,35 @@ static int getDataAlignmentFactor(MCStreamer &streamer) {
    return -size;
 }
 
-static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
-                       unsigned symbolEncoding) {
+static unsigned getSizeForEncoding(MCStreamer &streamer,
+                                   unsigned symbolEncoding) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   unsigned format = symbolEncoding & 0x0f;
-  unsigned application = symbolEncoding & 0x70;
-  unsigned size;
   switch (format) {
   default:
     assert(0 && "Unknown Encoding");
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
-    size = asmInfo.getPointerSize();
-    break;
+    return asmInfo.getPointerSize();
   case dwarf::DW_EH_PE_udata2:
   case dwarf::DW_EH_PE_sdata2:
-    size = 2;
-    break;
+    return 2;
   case dwarf::DW_EH_PE_udata4:
   case dwarf::DW_EH_PE_sdata4:
-    size = 4;
-    break;
+    return 4;
   case dwarf::DW_EH_PE_udata8:
   case dwarf::DW_EH_PE_sdata8:
-    size = 8;
-    break;
+    return 8;
   }
+}
+
+static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
+                       unsigned symbolEncoding) {
+  MCContext &context = streamer.getContext();
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  unsigned size = getSizeForEncoding(streamer, symbolEncoding);
+  unsigned application = symbolEncoding & 0x70;
   switch (application) {
   default:
     assert(0 && "Unknown Encoding");
@@ -678,7 +680,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     streamer.EmitIntValue(lsdaEncoding, 1);
   }
   // Encoding of the FDE pointers
-  streamer.EmitIntValue(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4, 1);
+  streamer.EmitIntValue(asmInfo.getFDEEncoding(), 1);
   streamer.EmitLabel(augmentationEnd);
 
   // Initial Instructions
@@ -711,6 +713,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
@@ -721,14 +724,16 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                0);
   streamer.EmitValue(offset, 4);
+  unsigned fdeEncoding = asmInfo.getFDEEncoding();
+  unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
-  streamer.EmitPCRelSymbolValue(frame.Begin, 4);
+  streamer.EmitPCRelSymbolValue(frame.Begin, size);
 
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,
                                               *frame.End, 0);
-  streamer.EmitValue(Range, 4);
+  streamer.EmitValue(Range, size);
 
   // Augmentation Data Length
   MCSymbol *augmentationStart = streamer.getContext().CreateTempSymbol();

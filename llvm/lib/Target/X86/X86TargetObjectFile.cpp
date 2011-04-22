@@ -92,16 +92,7 @@ unsigned X8664_ELFTargetObjectFile::getLSDAEncoding() const {
 }
 
 unsigned X8664_ELFTargetObjectFile::getFDEEncoding() const {
-  CodeModel::Model Model = TM.getCodeModel();
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    return DW_EH_PE_pcrel | (Model == CodeModel::Small ||
-                             Model == CodeModel::Medium ?
-                             DW_EH_PE_sdata4 : DW_EH_PE_sdata8);
-
-  if (Model == CodeModel::Small || Model == CodeModel::Medium)
-    return DW_EH_PE_udata4;
-
-  return DW_EH_PE_absptr;
+  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 }
 
 unsigned X8664_ELFTargetObjectFile::getTTypeEncoding() const {
