@@ -286,7 +286,7 @@ def err_missing_id_definition : Error<"cannot find definition of 'id'">;
 def err_missing_proto_definition : Error<
   "cannot find definition of 'Protocol'">;
 def err_missing_class_definition : Error<"cannot find definition of 'Class'">;
-def warn_expected_implementation : Warning<
+def err_expected_implementation : Error<
   "@end must appear in an @implementation context">;
 def error_property_ivar_decl : Error<
   "property synthesize requires specification of an ivar">;

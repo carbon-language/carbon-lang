@@ -1536,7 +1536,7 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
     SourceLocation L = ClassDecl->getLocation();
     AtEnd.setBegin(L);
     AtEnd.setEnd(L);
-    Diag(L, diag::warn_missing_atend);
+    Diag(L, diag::err_missing_atend);
   }
   
   // FIXME: Remove these and use the ObjCContainerDecl/DeclContext.

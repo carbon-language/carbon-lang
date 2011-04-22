@@ -2069,6 +2069,8 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                       4, true);
   DefinedCategories.push_back(GV);
   DefinedCategoryNames.insert(ExtName.str());
+  // method definition entries must be clear for next implementation.
+  MethodDefinitions.clear();
 }
 
 // FIXME: Get from somewhere?
@@ -2196,6 +2198,8 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   else
     GV = CreateMetadataVar(Name, Init, Section, 4, true);
   DefinedClasses.push_back(GV);
+  // method definition entries must be clear for next implementation.
+  MethodDefinitions.clear();
 }
 
 llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
@@ -4978,6 +4982,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   // Force the definition of the EHType if necessary.
   if (flags & CLS_EXCEPTION)
     GetInterfaceEHType(ID->getClassInterface(), true);
+  // Make sure method definition entries are all clear for next implementation.
+  MethodDefinitions.clear();
 }
 
 /// GenerateProtocolRef - This routine is called to generate code for
@@ -5106,6 +5112,8 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Determine if this category is also "non-lazy".
   if (ImplementationIsNonLazy(OCD))
     DefinedNonLazyCategories.push_back(GCATV);
+  // method definition entries must be clear for next implementation.
+  MethodDefinitions.clear();
 }
 
 /// GetMethodConstant - Return a struct objc_method constant for the

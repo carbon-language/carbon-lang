@@ -1387,7 +1387,7 @@ Decl *Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   }
   else {
     // missing @implementation
-    Diag(atEnd.getBegin(), diag::warn_expected_implementation);
+    Diag(atEnd.getBegin(), diag::err_expected_implementation);
   }
   return Result;
 }
