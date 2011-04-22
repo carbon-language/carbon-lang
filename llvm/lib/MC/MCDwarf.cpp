@@ -464,7 +464,6 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
 
 static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
                        unsigned symbolEncoding) {
-  MCContext &context = streamer.getContext();
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
   unsigned application = symbolEncoding & 0x70;
   switch (application) {
