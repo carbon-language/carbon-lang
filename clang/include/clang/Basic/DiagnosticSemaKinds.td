@@ -560,7 +560,7 @@ def err_incomplete_in_exception_spec : Error<
   "in exception specification">;
 def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;
-def war_mismatched_exception_spec : ExtWarn<
+def warn_mismatched_exception_spec : ExtWarn<
   "exception specification in declaration does not match previous declaration">;
 def err_override_exception_spec : Error<
   "exception specification of overriding function is more lax than "
@@ -1332,7 +1332,7 @@ def err_param_default_argument : Error<
   "C does not support default arguments">;
 def err_param_default_argument_redefinition : Error<
   "redefinition of default argument">;
-def war_param_default_argument_redefinition : ExtWarn<
+def warn_param_default_argument_redefinition : ExtWarn<
   "redefinition of default argument">;
 def err_param_default_argument_missing : Error<
   "missing default argument on parameter">;
@@ -1975,7 +1975,7 @@ def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
 def err_typename_missing : Error<
   "missing 'typename' prior to dependent type name '%0%1'">;
-def war_typename_missing : ExtWarn<
+def warn_typename_missing : ExtWarn<
   "missing 'typename' prior to dependent type name '%0%1'">;
 def ext_typename_outside_of_template : ExtWarn<
   "'typename' occurs outside of a template">, InGroup<CXX0x>;

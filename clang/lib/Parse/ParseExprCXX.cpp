@@ -394,7 +394,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         // before 'getAs' and treat this as a dependent template name.
         unsigned DiagID = diag::err_missing_dependent_template_keyword;
         if (getLang().Microsoft)
-          DiagID = diag::war_missing_dependent_template_keyword;
+          DiagID = diag::warn_missing_dependent_template_keyword;
         
         Diag(Tok.getLocation(), DiagID)
           << II.getName()

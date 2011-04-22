@@ -102,7 +102,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   bool MissingEmptyExceptionSpecification = false;
   unsigned DiagID = diag::err_mismatched_exception_spec;
   if (getLangOptions().Microsoft)
-    DiagID = diag::war_mismatched_exception_spec; 
+    DiagID = diag::warn_mismatched_exception_spec; 
   
   if (!CheckEquivalentExceptionSpec(PDiag(DiagID),
                                     PDiag(diag::note_previous_declaration),
@@ -265,7 +265,7 @@ bool Sema::CheckEquivalentExceptionSpec(
     const FunctionProtoType *New, SourceLocation NewLoc) {
   unsigned DiagID = diag::err_mismatched_exception_spec;
   if (getLangOptions().Microsoft)
-    DiagID = diag::war_mismatched_exception_spec; 
+    DiagID = diag::warn_mismatched_exception_spec; 
   return CheckEquivalentExceptionSpec(
                                       PDiag(DiagID),
                                       PDiag(diag::note_previous_declaration),
