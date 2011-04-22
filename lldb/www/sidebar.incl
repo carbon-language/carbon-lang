@@ -4,7 +4,7 @@
     <h1 class="headerbar">Goals and Status</h1>
     <ul>
       <li><a href="index.html">About</a></li>
-      <li><a href="blog.html">Blog</a></li>
+      <li><a href="http://blog.llvm.org/search/label/LLDB">Blog</a></li>
       <li><a href="goals.html">Goals</a></li>
       <li><a href="features.html">Features</a></li>
       <li><a href="status.html">Status</a></li>
