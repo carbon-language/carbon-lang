@@ -445,8 +445,7 @@ ARMFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
 
 int
 ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
-                                             int FI,
-                                             unsigned &FrameReg,
+                                             int FI, unsigned &FrameReg,
                                              int SPAdj) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMBaseRegisterInfo *RegInfo =
@@ -490,19 +489,23 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
       return FPOffset;
     } else if (MFI->hasVarSizedObjects()) {
       assert(RegInfo->hasBasePointer(MF) && "missing base pointer!");
-      // Try to use the frame pointer if we can, else use the base pointer
-      // since it's available. This is handy for the emergency spill slot, in
-      // particular.
       if (AFI->isThumb2Function()) {
+        // Try to use the frame pointer if we can, else use the base pointer
+        // since it's available. This is handy for the emergency spill slot, in
+        // particular.
         if (FPOffset >= -255 && FPOffset < 0) {
           FrameReg = RegInfo->getFrameRegister(MF);
           return FPOffset;
         }
-      } else
-        FrameReg = RegInfo->getBaseRegister();
+      }
     } else if (AFI->isThumb2Function()) {
+      // Use  add <rd>, sp, #<imm8> 
+      //      ldr <rd>, [sp, #<imm8>]
+      // if at all possible to save space.
+      if (Offset >= 0 && (Offset & 3) == 0 && Offset <= 1020)
+        return Offset;
       // In Thumb2 mode, the negative offset is very limited. Try to avoid
-      // out of range references.
+      // out of range references. ldr <rt>,[<rn>, #-<imm8>]
       if (FPOffset >= -255 && FPOffset < 0) {
         FrameReg = RegInfo->getFrameRegister(MF);
         return FPOffset;

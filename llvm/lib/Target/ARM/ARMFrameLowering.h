@@ -51,7 +51,8 @@ public:
   bool canSimplifyCallFramePseudos(const MachineFunction &MF) const;
   int getFrameIndexReference(const MachineFunction &MF, int FI,
                              unsigned &FrameReg) const;
-  int ResolveFrameIndexReference(const MachineFunction &MF, int FI,
+  int ResolveFrameIndexReference(const MachineFunction &MF,
+                                 int FI,
                                  unsigned &FrameReg, int SPAdj) const;
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
