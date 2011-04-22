@@ -123,13 +123,15 @@ class AbbreviationsTestCase(TestBase):
                                  "at main.cpp\:25", 
                                  "stop reason = breakpoint 2.1" ])
 
-        self.expect("dis -f",
-                    startstr = "a.out`sum(int, int):",
-                    substrs = [' push',
-                               ' mov',
-                               ' addl ',
-                               'ret'],
-                    patterns = ['(leave|popq|popl)'])                               
+        # ARCH, if not specified, defaults to x86_64.
+        if self.getArchitecture() in ["", 'x86_64', 'i386']:
+            self.expect("dis -f",
+                        startstr = "a.out`sum(int, int):",
+                        substrs = [' push',
+                                   ' mov',
+                                   ' addl ',
+                                   'ret'],
+                        patterns = ['(leave|popq|popl)'])                               
 
         self.expect("i d l main.cpp",
                     patterns = ["Line table for .*main.cpp in `a.out"])
