@@ -92,3 +92,13 @@ define void @load_store_i1(i1* %p, i1* %q) nounwind {
   store i1 %t, i1* %q
   ret void
 }
+
+
+@crash_test1x = external global <2 x i32>, align 8
+
+define void @crash_test1() nounwind ssp {
+  %tmp = load <2 x i32>* @crash_test1x, align 8
+  %neg = xor <2 x i32> %tmp, <i32 -1, i32 -1>
+  ret void
+}
+
