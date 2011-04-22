@@ -97,7 +97,7 @@ namespace {
       // immediately without checking aliases.
       regFree,
 
-      // A reserved register has been assigned expolicitly (e.g., setting up a
+      // A reserved register has been assigned explicitly (e.g., setting up a
       // call parameter), and it remains reserved until it is used.
       regReserved
 
