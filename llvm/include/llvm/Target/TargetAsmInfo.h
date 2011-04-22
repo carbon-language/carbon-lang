@@ -58,7 +58,7 @@ public:
     return TLOF->getEHFrameSection();
   }
 
-  const unsigned getFDEEncoding() const {
+  unsigned getFDEEncoding() const {
     return TLOF->getFDEEncoding();
   }
 
