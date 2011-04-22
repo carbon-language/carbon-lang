@@ -22,6 +22,8 @@ class CommandRegexTestCase(TestBase):
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             child.logfile_read = sys.stdout
+        # So that the spawned lldb session gets shutdown durng teardown.
+        self.child = child
 
         # Substitute 'Help!' with 'help' using the 'commands regex' mechanism.
         child.expect(prompt)
@@ -33,7 +35,7 @@ class CommandRegexTestCase(TestBase):
         # Help!
         child.sendline('Help!')
         # If we see the familiar 'help' output, the test is done.
-        child.expect('The following is a list of built-in, permanent debugger commands:')        
+        child.expect('The following is a list of built-in, permanent debugger commands:')
 
 if __name__ == '__main__':
     import atexit

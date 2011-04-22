@@ -2,9 +2,10 @@
 Test lldb 'process connect' command.
 """
 
-import os, time
+import os
 import unittest2
 import lldb
+import pexpect
 from lldbtest import *
 
 class ConnectRemoteTestCase(TestBase):
@@ -16,14 +17,21 @@ class ConnectRemoteTestCase(TestBase):
         """Test "process connect connect:://localhost:12345"."""
 
         # First, we'll start a fake debugserver (a simple echo server).
-        import subprocess
-        fakeserver = subprocess.Popen('./EchoServer.py')
-        # This does the cleanup afterwards.
-        def cleanup_fakeserver():
-            fakeserver.kill()
-            fakeserver.wait()
-        self.addTearDownHook(cleanup_fakeserver)
+        fakeserver = pexpect.spawn('./EchoServer.py')
 
+        # Turn on logging for what the child sends back.
+        if self.TraceOn():
+            fakeserver.logfile = sys.stdout
+
+        # Schedule the fake debugserver to be shut down during teardown.
+        def shutdown_fakeserver():
+            fakeserver.close()
+        self.addTearDownHook(shutdown_fakeserver)
+
+        # Wait until we receive the server ready message before continuing.
+        fakeserver.expect('Listening on localhost:12345')
+
+        # Connect to the fake server....
         self.runCmd("process connect connect://localhost:12345")
 
 
