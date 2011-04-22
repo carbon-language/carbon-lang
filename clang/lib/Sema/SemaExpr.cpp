@@ -8788,14 +8788,13 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
 /// in parentheses.
 static void
 EmitDiagnosticForLogicalAndInLogicalOr(Sema &Self, SourceLocation OpLoc,
-                                       Expr *E) {
-  assert(isa<BinaryOperator>(E) &&
-         cast<BinaryOperator>(E)->getOpcode() == BO_LAnd);
-  SuggestParentheses(Self, OpLoc,
+                                       BinaryOperator *Bop) {
+  assert(Bop->getOpcode() == BO_LAnd);
+  SuggestParentheses(Self, Bop->getOperatorLoc(),
     Self.PDiag(diag::warn_logical_and_in_logical_or)
-        << E->getSourceRange(),
+        << Bop->getSourceRange() << OpLoc,
     Self.PDiag(diag::note_logical_and_in_logical_or_silence),
-    E->getSourceRange(),
+    Bop->getSourceRange(),
     Self.PDiag(0), SourceRange());
 }
 
