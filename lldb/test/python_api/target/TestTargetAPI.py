@@ -14,6 +14,19 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_get_description_with_dsym(self):
+        """Exercise SBTaget.GetDescription() API."""
+        self.buildDsym()
+        self.get_description()
+
+    @python_api_test
+    def test_get_description_with_dwarf(self):
+        """Exercise SBTarget.GetDescription() API."""
+        self.buildDwarf()
+        self.get_description()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_launch_new_process_and_redirect_stdout_with_dsym(self):
         """Exercise SBTaget.Launch() API."""
         self.buildDsym()
@@ -44,6 +57,29 @@ class TargetAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
+
+    def get_description(self):
+        """Exercise SBTaget.GetDescription() API."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        stream = lldb.SBStream()
+        if not target.GetDescription(stream, lldb.eDescriptionLevelBrief):
+            self.fail("SBTarget.GetDescription() failed")
+        self.expect(stream.GetData(), exe=False,
+            substrs = ['a.out'])
+        self.expect(stream.GetData(), exe=False, matching=False,
+            substrs = ['Target', 'Module', 'Breakpoint'])
+
+        stream.Clear()
+        if not target.GetDescription(stream, lldb.eDescriptionLevelFull):
+            self.fail("SBTarget.GetDescription() failed")
+        self.expect(stream.GetData(), exe=False,
+            substrs = ['a.out', 'Target', 'Module', 'Breakpoint'])
+
 
     def launch_new_process_and_redirect_stdout(self):
         """Exercise SBTaget.Launch() API with redirected stdout."""
