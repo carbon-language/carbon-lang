@@ -1327,9 +1327,18 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     //   same effect as the conversion *reinterpret_cast<T*>(&x) with the
     //   built-in & and * operators.
 
-    // Cannot get address of a bitfield.
-    if (SrcExpr.get()->getObjectKind() == OK_BitField) {
-      msg = diag::err_bad_reinterpret_cast_bitfield;
+    const char *inappropriate = 0;
+    switch (SrcExpr.get()->getObjectKind()) {
+    default: break;
+    case OK_BitField:        inappropriate = "bit-field";           break;
+    case OK_VectorComponent: inappropriate = "vector element";      break;
+    case OK_ObjCProperty:    inappropriate = "property expression"; break;
+    }
+    if (inappropriate) {
+      Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_reference)
+          << inappropriate << DestType
+          << OpRange << SrcExpr.get()->getSourceRange();
+      msg = 0; SrcExpr = ExprError();
       return TC_NotApplicable;
     }
 

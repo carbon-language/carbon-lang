@@ -111,5 +111,8 @@ void const_arrays() {
 
 namespace PR9564 {
   struct a { int a : 10; }; a x;
-  int *y = &reinterpret_cast<int&>(x.a); // expected-error {{reinterpret_cast of a bit-field to 'int &' needs its address which is not allowed}}
+  int *y = &reinterpret_cast<int&>(x.a); // expected-error {{not allowed}}
+
+  __attribute((ext_vector_type(4))) typedef float v4;
+  float& w(v4 &a) { return reinterpret_cast<float&>(a[1]); } // expected-error {{not allowed}}
 }

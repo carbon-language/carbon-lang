@@ -2879,8 +2879,8 @@ def err_bad_cxx_cast_member_pointer_size : Error<
   "cannot %select{||reinterpret_cast||C-style cast|}0 from member pointer "
   "type %1 to member pointer type %2 of different size">;
 def err_bad_static_cast_incomplete : Error<"%0 is an incomplete type">;
-def err_bad_reinterpret_cast_bitfield : Error<
-  "reinterpret_cast of a bit-field to %2 needs its address which is not allowed">;
+def err_bad_reinterpret_cast_reference : Error<
+  "reinterpret_cast of a %0 to %1 needs its address which is not allowed">;
 
 // These messages don't adhere to the pattern.
 // FIXME: Display the path somehow better.
