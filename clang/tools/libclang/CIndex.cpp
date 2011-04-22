@@ -582,8 +582,9 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
 }
 
 bool CursorVisitor::VisitBlockDecl(BlockDecl *B) {
-  if (Visit(B->getSignatureAsWritten()->getTypeLoc()))
-    return true;
+  if (TypeSourceInfo *TSInfo = B->getSignatureAsWritten())
+    if (Visit(TSInfo->getTypeLoc()))
+        return true;
 
   if (Stmt *Body = B->getBody())
     return Visit(MakeCXCursor(Body, StmtParent, TU));
