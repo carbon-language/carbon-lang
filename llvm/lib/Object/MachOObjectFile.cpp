@@ -17,6 +17,7 @@
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/MachO.h"
 
 #include <cctype>
 #include <cstring>
@@ -280,26 +281,26 @@ uint8_t MachOObjectFile::getBytesInAddress() const {
 StringRef MachOObjectFile::getFileFormatName() const {
   if (!MachOObj->is64Bit()) {
     switch (MachOObj->getHeader().CPUType) {
-    case 0x00000007:
+    case llvm::MachO::CPUTypeI386:
       return "Mach-O 32-bit i386";
-    case 0x0000000c:
+    case llvm::MachO::CPUTypeARM:
       return "Mach-O arm";
-    case 0x00000012:
+    case llvm::MachO::CPUTypePowerPC:
       return "Mach-O 32-bit ppc";
     default:
-      assert((MachOObj->getHeader().CPUType & 0x01000000) == 0 &&
+      assert((MachOObj->getHeader().CPUType & llvm::MachO::CPUArchABI64) == 0 &&
              "64-bit object file when we're not 64-bit?");
       return "Mach-O 32-bit unknown";
     }
   }
 
   switch (MachOObj->getHeader().CPUType) {
-  case 0x01000007:
+  case llvm::MachO::CPUTypeX86_64:
     return "Mach-O 64-bit x86-64";
-  case 0x01000012:
+  case llvm::MachO::CPUTypePowerPC64:
     return "Mach-O 64-bit ppc64";
   default:
-    assert((MachOObj->getHeader().CPUType & 0x01000000) == 1 &&
+    assert((MachOObj->getHeader().CPUType & llvm::MachO::CPUArchABI64) == 1 &&
            "32-bit object file when we're 64-bit?");
     return "Mach-O 64-bit unknown";
   }
@@ -307,15 +308,15 @@ StringRef MachOObjectFile::getFileFormatName() const {
 
 unsigned MachOObjectFile::getArch() const {
   switch (MachOObj->getHeader().CPUType) {
-  case 0x00000007:
+  case llvm::MachO::CPUTypeI386:
     return Triple::x86;
-  case 0x01000007:
+  case llvm::MachO::CPUTypeX86_64:
     return Triple::x86_64;
-  case 0x0000000c:
+  case llvm::MachO::CPUTypeARM:
     return Triple::arm;
-  case 0x00000012:
+  case llvm::MachO::CPUTypePowerPC:
     return Triple::ppc;
-  case 0x01000012:
+  case llvm::MachO::CPUTypePowerPC64:
     return Triple::ppc64;
   default:
     return Triple::UnknownArch;
