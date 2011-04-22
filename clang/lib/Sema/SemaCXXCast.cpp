@@ -1326,6 +1326,13 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // C++ 5.2.10p10: [...] a reference cast reinterpret_cast<T&>(x) has the
     //   same effect as the conversion *reinterpret_cast<T*>(&x) with the
     //   built-in & and * operators.
+
+    // Cannot get address of a bitfield.
+    if (SrcExpr.get()->getObjectKind() == OK_BitField) {
+      msg = diag::err_bad_reinterpret_cast_bitfield;
+      return TC_NotApplicable;
+    }
+
     // This code does this transformation for the checked types.
     DestType = Self.Context.getPointerType(DestTypeTmp->getPointeeType());
     SrcType = Self.Context.getPointerType(SrcType);

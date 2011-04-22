@@ -108,3 +108,8 @@ void const_arrays() {
   (void)reinterpret_cast<char *>(s); // expected-error {{reinterpret_cast from 'const STRING *' (aka 'char const (*)[10]') to 'char *' casts away qualifiers}}
   (void)reinterpret_cast<const STRING *>(c);
 }
+
+namespace PR9564 {
+  struct a { int a : 10; }; a x;
+  int *y = &reinterpret_cast<int&>(x.a); // expected-error {{reinterpret_cast of a bit-field to 'int &' needs its address which is not allowed}}
+}
