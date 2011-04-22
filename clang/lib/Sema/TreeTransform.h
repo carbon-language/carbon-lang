@@ -7216,8 +7216,10 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
       // This can happen because of dependent hiding.
       if (isa<UsingShadowDecl>(*I))
         continue;
-      else
+      else {
+        R.clear();
         return ExprError();
+      }
     }
 
     // Expand using declarations.
