@@ -109,13 +109,11 @@ class DisasmAPITestCase(TestBase):
         #ea2 = function.GetEndAddress()
         #print "ea2:", ea2
 
-        stream1 = lldb.SBStream()
-        sa1.GetDescription(stream1)
-        stream2 = lldb.SBStream()
-        sa2.GetDescription(stream2)
-
-        self.expect(stream1.GetData(), "The two starting addresses should be the same", exe=False,
-            startstr = stream2.GetData())
+        from lldbutil import get_description
+        desc1 = get_description(sa1)
+        desc2 = get_description(sa2)
+        self.assertTrue(desc1 and desc2 and desc1 == desc2,
+                        "The two starting addresses should be the same")
 
         
 if __name__ == '__main__':

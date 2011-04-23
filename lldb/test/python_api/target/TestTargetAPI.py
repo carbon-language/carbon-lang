@@ -189,13 +189,11 @@ class TargetAPITestCase(TestBase):
         #print "symbol1:", symbol1
         #print "symbol2:", symbol2
 
-        stream1 = lldb.SBStream()
-        symbol1.GetDescription(stream1)
-        stream2 = lldb.SBStream()
-        symbol2.GetDescription(stream2)
-        
-        self.expect(stream1.GetData(), "The two addresses should resolve to the same symbol", exe=False,
-            startstr = stream2.GetData())
+        from lldbutil import get_description
+        desc1 = get_description(symbol1)
+        desc2 = get_description(symbol2)
+        self.assertTrue(desc1 and desc2 and desc1 == desc2,
+                        "The two addresses should resolve to the same symbol")
 
         
 if __name__ == '__main__':

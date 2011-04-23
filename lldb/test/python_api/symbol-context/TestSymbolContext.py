@@ -65,9 +65,8 @@ class SymbolContextAPITestCase(TestBase):
 
         # Get the description of this module.
         module = context.GetModule()
-        stream = lldb.SBStream()
-        module.GetDescription(stream)
-        self.expect(stream.GetData(), "The module should match", exe=False,
+        desc = lldbutil.get_description(module)
+        self.expect(desc, "The module should match", exe=False,
             substrs = [os.path.join(self.mydir, 'a.out')])
 
         compileUnit = context.GetCompileUnit()

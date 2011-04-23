@@ -165,11 +165,9 @@ class EventAPITestCase(TestBase):
                                                                    broadcaster,
                                                                    lldb.SBProcess.eBroadcastBitStateChanged,
                                                                    event):
-                        stream = lldb.SBStream()
-                        event.GetDescription(stream)
-                        description = stream.GetData()
-                        #print "Event description:", description
-                        match = pattern.search(description)
+                        desc = lldbutil.get_description(event)
+                        #print "Event description:", desc
+                        match = pattern.search(desc)
                         if not match:
                             break;
                         if self.context.state == 0 and match.group(1) == 'running':
