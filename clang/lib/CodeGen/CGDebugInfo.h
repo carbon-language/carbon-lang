@@ -258,6 +258,10 @@ private:
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
                                 llvm::StringRef Name, uint64_t *Offset);
 
+  /// getFunctionDeclaration - Return debug info descriptor to describe method
+  /// declaration for the given method definition.
+  llvm::DISubprogram getFunctionDeclaration(const Decl *D);
+
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructred on demand (e.g. C++ destructor) then the name
   /// is stored on the side.

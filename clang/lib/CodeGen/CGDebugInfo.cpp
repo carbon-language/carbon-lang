@@ -764,7 +764,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
   
   // Don't cache ctors or dtors since we have to emit multiple functions for
   // a single ctor or dtor.
-  if (!IsCtorOrDtor && Method->isThisDeclarationADefinition())
+  if (!IsCtorOrDtor)
     SPCache[Method] = llvm::WeakVH(SP);
 
   return SP;
@@ -1579,6 +1579,29 @@ llvm::DIType CGDebugInfo::CreateMemberType(llvm::DIFile Unit, QualType FType,
   return Ty;
 }
 
+/// getFunctionDeclaration - Return debug info descriptor to describe method
+/// declaration for the given method definition.
+llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD) return llvm::DISubprogram();
+
+  // Setup context.
+  getContextDescriptor(cast<Decl>(D->getDeclContext()));
+
+  for (FunctionDecl::redecl_iterator I = FD->redecls_begin(),
+         E = FD->redecls_end(); I != E; ++I) {
+    const FunctionDecl *NextFD = *I;
+    llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
+      MI = SPCache.find(NextFD);
+    if (MI != SPCache.end()) {
+      llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(&*MI->second));
+      if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
+        return SP;
+    }
+  }
+  return llvm::DISubprogram();
+}
+
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
 void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
@@ -1639,12 +1662,14 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   unsigned LineNo = getLineNumber(CurLoc);
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
+  llvm::DIType SPTy = getOrCreateType(FnType, Unit);
+  llvm::DISubprogram SPDecl = getFunctionDeclaration(D);
   llvm::DISubprogram SP =
     DBuilder.createFunction(FDContext, Name, LinkageName, Unit,
-                            LineNo, getOrCreateType(FnType, Unit),
+                            LineNo, SPTy,
                             Fn->hasInternalLinkage(), true/*definition*/,
                             Flags, CGM.getLangOptions().Optimize, Fn,
-                            TParamsArray);
+                            TParamsArray, SPDecl);
 
   // Push function on region stack.
   llvm::MDNode *SPN = SP;
