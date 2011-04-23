@@ -1329,7 +1329,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 
     const char *inappropriate = 0;
     switch (SrcExpr.get()->getObjectKind()) {
-    default: break;
+    case OK_Ordinary:
+      break;
     case OK_BitField:        inappropriate = "bit-field";           break;
     case OK_VectorComponent: inappropriate = "vector element";      break;
     case OK_ObjCProperty:    inappropriate = "property expression"; break;
