@@ -1608,7 +1608,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     if (Opcode != ISD::AND && ((Val >> ShlVal) << ShlVal) != Val)
       break;
 
-    unsigned ShlOp, Op;
+    unsigned ShlOp, Op = 0;
     EVT CstVT = NVT;
 
     // Check the minimum bitwidth for the new constant.
