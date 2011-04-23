@@ -16,7 +16,7 @@ if.then:
 if.end:
   ret void
 ; CHECK: test1:
-; CHECK: cmpb $47, (%rdi)
+; CHECK: cmpb $47, (%{{rdi|rcx}})
 }
 
 define void @test2(i32 %X) nounwind {
@@ -32,5 +32,5 @@ if.then:
 if.end:
   ret void
 ; CHECK: test2:
-; CHECK: cmpb $47, %dil
+; CHECK: cmpb $47, %{{dil|cl}}
 }
