@@ -902,6 +902,33 @@ bool Type::isLiteralType() const {
   }
 }
 
+bool Type::isTrivialType() const {
+  if (isIncompleteType())
+    return false;
+
+  // C++0x [basic.types]p9:
+  //   Scalar types, trivial class types, arrays of such types, and
+  //   cv-qualified versions of these types are collectively called trivial
+  //   types.
+  const Type *BaseTy = getBaseElementTypeUnsafe();
+  assert(BaseTy && "NULL element type");
+  if (BaseTy->isScalarType()) return true;
+  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
+    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+
+    // C++0x [class]p5:
+    //   A trivial class is a class that has a trivial default constructor
+    if (!ClassDecl->hasTrivialConstructor()) return false;
+    //   and is trivially copyable.
+    if (!ClassDecl->isTriviallyCopyable()) return false;
+
+    return true;
+  }
+
+  // No other types can match.
+  return false;
+}
+
 bool Type::isPromotableIntegerType() const {
   if (const BuiltinType *BT = getAs<BuiltinType>())
     switch (BT->getKind()) {

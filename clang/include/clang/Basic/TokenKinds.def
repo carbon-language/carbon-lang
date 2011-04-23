@@ -340,6 +340,7 @@ KEYWORD(__is_enum                   , KEYCXX)
 KEYWORD(__is_literal                , KEYCXX)
 KEYWORD(__is_pod                    , KEYCXX)
 KEYWORD(__is_polymorphic            , KEYCXX)
+KEYWORD(__is_trivial                , KEYCXX)
 KEYWORD(__is_union                  , KEYCXX)
 
 // Apple Extension.

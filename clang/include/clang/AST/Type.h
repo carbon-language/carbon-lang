@@ -1171,6 +1171,10 @@ public:
   /// (C++0x [basic.types]p10)
   bool isLiteralType() const;
 
+  /// isTrivialType - Return true if this is a literal type
+  /// (C++0x [basic.types]p9)
+  bool isTrivialType() const;
+
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
 

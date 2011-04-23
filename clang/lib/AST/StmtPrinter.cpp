@@ -1266,6 +1266,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsEnum:                return "__is_enum";
   case UTT_IsPOD:                 return "__is_pod";
   case UTT_IsPolymorphic:         return "__is_polymorphic";
+  case UTT_IsTrivial:             return "__is_trivial";
   case UTT_IsUnion:               return "__is_union";
   }
   return "";

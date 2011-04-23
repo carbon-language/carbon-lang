@@ -741,6 +741,10 @@ public:
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
 
+  // isTriviallyCopyable - Whether this class is considered trivially copyable
+  // (C++0x [class]p5).
+  bool isTriviallyCopyable() const;
+
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.
   ///

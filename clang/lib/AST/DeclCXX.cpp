@@ -217,6 +217,23 @@ bool CXXRecordDecl::hasConstCopyConstructor(const ASTContext &Context) const {
   return getCopyConstructor(Context, Qualifiers::Const) != 0;
 }
 
+bool CXXRecordDecl::isTriviallyCopyable() const {
+  // C++0x [class]p5:
+  //   A trivially copyable class is a class that:
+  //   -- has no non-trivial copy constructors,
+  if (!hasTrivialCopyConstructor()) return false;
+  //   -- has no non-trivial move constructors,
+  // FIXME: C++0x: Track and check trivial move constructors.
+  //   -- has no non-trivial copy assignment operators,
+  if (!hasTrivialCopyAssignment()) return false;
+  //   -- has no non-trivial move assignment operators, and
+  // FIXME: C++0x: Track and check trivial move assignment operators.
+  //   -- has a trivial destructor.
+  if (!hasTrivialDestructor()) return false;
+
+  return true;
+}
+
 /// \brief Perform a simplistic form of overload resolution that only considers
 /// cv-qualifiers on a single parameter, and return the best overload candidate
 /// (if there is one).

@@ -33,6 +33,7 @@ namespace clang {
     UTT_IsLiteral,
     UTT_IsPOD,
     UTT_IsPolymorphic,
+    UTT_IsTrivial,
     UTT_IsUnion
   };
 

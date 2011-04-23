@@ -2362,6 +2362,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   default: assert(false && "Unknown type trait or not implemented");
   case UTT_IsPOD: return T->isPODType();
   case UTT_IsLiteral: return T->isLiteralType();
+  case UTT_IsTrivial: return T->isTrivialType();
   case UTT_IsClass: // Fallthrough
   case UTT_IsUnion:
     if (const RecordType *Record = T->getAs<RecordType>()) {

@@ -1929,6 +1929,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_literal:              return UTT_IsLiteral;
   case tok::kw___is_pod:                  return UTT_IsPOD;
   case tok::kw___is_polymorphic:          return UTT_IsPolymorphic;
+  case tok::kw___is_trivial:              return UTT_IsTrivial;
   case tok::kw___is_union:                return UTT_IsUnion;
   }
 }

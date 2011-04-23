@@ -548,3 +548,37 @@ void is_convertible_to() {
   int t22[F(__is_convertible_to(PrivateCopy, PrivateCopy))];
   int t23[T(__is_convertible_to(X0<int>, X0<float>))];
 }
+
+void is_trivial()
+{
+  int t01[T(__is_trivial(int))];
+  int t02[T(__is_trivial(Enum))];
+  int t03[T(__is_trivial(POD))];
+  int t04[T(__is_trivial(Int))];
+  int t05[T(__is_trivial(IntAr))];
+  int t06[T(__is_trivial(Statics))];
+  int t07[T(__is_trivial(Empty))];
+  int t08[T(__is_trivial(EmptyUnion))];
+  int t09[T(__is_trivial(Union))];
+  int t10[T(__is_trivial(HasFunc))];
+  int t11[T(__is_trivial(HasOp))];
+  int t12[T(__is_trivial(HasConv))];
+  int t13[T(__is_trivial(HasAssign))];
+  int t15[T(__is_trivial(HasAnonymousUnion))];
+  int t16[T(__is_trivial(Derives))];
+  int t17[T(__is_trivial(DerivesEmpty))];
+  int t18[T(__is_trivial(NonPODAr))];
+  int t19[T(__is_trivial(HasPriv))];
+  int t20[T(__is_trivial(HasProt))];
+
+  int f01[F(__is_trivial(IntArNB))];
+  int f02[F(__is_trivial(HasCons))];
+  int f03[F(__is_trivial(HasCopyAssign))];
+  int f04[F(__is_trivial(HasDest))];
+  int f05[F(__is_trivial(HasRef))];
+  int f06[F(__is_trivial(HasNonPOD))];
+  int f07[F(__is_trivial(HasVirt))];
+  int f08[F(__is_trivial(void))];
+  int f09[F(__is_trivial(cvoid))];
+  int f10[F(__is_trivial(NonPODArNB))];
+}

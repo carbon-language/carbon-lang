@@ -536,6 +536,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__is_enum'
 ///                   '__is_pod'
 ///                   '__is_polymorphic'
+///                   '__is_trivial'
 ///                   '__is_union'
 ///
 ///       binary-type-trait:
@@ -990,6 +991,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_literal:
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
+  case tok::kw___is_trivial:
   case tok::kw___is_union:
   case tok::kw___has_trivial_constructor:
   case tok::kw___has_trivial_copy:
