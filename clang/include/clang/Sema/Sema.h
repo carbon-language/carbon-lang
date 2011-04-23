@@ -308,7 +308,7 @@ public:
   llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
   /// \brief Callback to the parser to parse templated functions when needed.
-  typedef void LateTemplateParserCB(void *P, FunctionDecl *FD);
+  typedef void LateTemplateParserCB(void *P, const FunctionDecl *FD);
   LateTemplateParserCB *LateTemplateParser;
   void *OpaqueParser; 
 

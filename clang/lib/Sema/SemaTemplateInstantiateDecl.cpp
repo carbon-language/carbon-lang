@@ -2273,7 +2273,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // a templated function definition. 
   if (!Pattern && PatternDecl && PatternDecl->isLateTemplateParsed() &&
       LateTemplateParser) {
-    LateTemplateParser(OpaqueParser, (FunctionDecl*)PatternDecl);
+    LateTemplateParser(OpaqueParser, PatternDecl);
     Pattern = PatternDecl->getBody(PatternDecl);
   }
 

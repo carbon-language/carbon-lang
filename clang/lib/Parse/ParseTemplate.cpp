@@ -1128,12 +1128,12 @@ SourceRange Parser::ParsedTemplateInfo::getSourceRange() const {
   return R;
 }
 
-void Parser::LateTemplateParserCallback(void *P, FunctionDecl *FD) {
+void Parser::LateTemplateParserCallback(void *P, const FunctionDecl *FD) {
   ((Parser*)P)->LateTemplateParser(FD);
 }
 
 
-void Parser::LateTemplateParser(FunctionDecl *FD) {
+void Parser::LateTemplateParser(const FunctionDecl *FD) {
   LateParsedTemplatedFunction *LPT = LateParsedTemplateMap[FD];
   if (LPT) {
     ParseLateTemplatedFuncDef(*LPT);
