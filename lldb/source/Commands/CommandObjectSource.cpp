@@ -429,7 +429,8 @@ public:
                 m_breakpoint_locations.Clear();
 
             result.AppendMessageWithFormat("File: %s.\n", path_buf);
-            m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (start_file,
+            m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (target,
+                                                                                              start_file,
                                                                                               line_no,
                                                                                               0,
                                                                                               m_options.num_lines,
@@ -580,7 +581,8 @@ public:
                     else
                         m_breakpoint_locations.Clear();
 
-                    m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
+                    m_interpreter.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (target,
+                                                                                                      sc.comp_unit,
                                                                                                       m_options.start_line,
                                                                                                       0,
                                                                                                       m_options.num_lines,

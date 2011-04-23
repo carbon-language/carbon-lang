@@ -170,7 +170,7 @@ public:
                 {
                     for (uint32_t i=0; i<set_array_size; ++i)
                     {
-                        set_idx = m_options.set_indexes.GetUInt64ValueAtIndex (i, UINT32_MAX, NULL);
+                        set_idx = m_options.set_indexes[i]->GetUInt64Value (UINT32_MAX, NULL);
                         if (set_idx != UINT32_MAX)
                         {
                             if (!DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx))

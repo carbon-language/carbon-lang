@@ -893,10 +893,13 @@ Args::StringToFormat
         case 'c': format = eFormatChar;             break;
         case 'C': format = eFormatCharPrintable;    break;
         case 'o': format = eFormatOctal;            break;
+        case 'O': format = eFormatOSType;           break;
         case 'i':
         case 'd': format = eFormatDecimal;          break;
+        case 'I': format = eFormatComplexInteger;   break;
         case 'u': format = eFormatUnsigned;         break;
         case 'x': format = eFormatHex;              break;
+        case 'X': format = eFormatComplex;          break;
         case 'f':
         case 'e':
         case 'g': format = eFormatFloat;            break;
@@ -913,10 +916,14 @@ Args::StringToFormat
                                             "  f - float\n"
                                             "  g - float\n"
                                             "  i - signed decimal\n"
+                                            "  i - complex integer\n"
                                             "  o - octal\n"
+                                            "  O - OSType\n"
+                                            "  p - pointer\n"
                                             "  s - c-string\n"
                                             "  u - unsigned decimal\n"
                                             "  x - hex\n"
+                                            "  X - complex float\n"
                                             "  y - bytes\n"
                                             "  Y - bytes with ASCII\n", s[0]);
             break;

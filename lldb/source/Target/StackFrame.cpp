@@ -1013,7 +1013,9 @@ StackFrame::GetStatus (Stream& strm,
     
         if (m_sc.comp_unit && m_sc.line_entry.IsValid())
         {
-            GetThread().GetProcess().GetTarget().GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
+            Target &target = GetThread().GetProcess().GetTarget();
+            target.GetDebugger().GetSourceManager().DisplaySourceLinesWithLineNumbers (
+                &target,
                 m_sc.line_entry.file,
                 m_sc.line_entry.line,
                 3,

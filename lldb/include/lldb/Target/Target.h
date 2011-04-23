@@ -23,6 +23,7 @@
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -78,6 +79,12 @@ public:
         return m_skip_prologue;
     }
 
+    PathMappingList &
+    GetSourcePathMap ()
+    {
+        return m_source_map;
+    }
+    
 protected:
 
     void
@@ -87,10 +94,11 @@ protected:
     const ConstString
     CreateInstanceName ();
     
-    std::string m_expr_prefix_path;
-    std::string m_expr_prefix_contents;
-    bool        m_prefer_dynamic_value;
-    bool        m_skip_prologue;
+    OptionValueFileSpec m_expr_prefix_file;
+    lldb::DataBufferSP m_expr_prefix_contents_sp;
+    OptionValueBoolean m_prefer_dynamic_value;
+    OptionValueBoolean m_skip_prologue;
+    PathMappingList m_source_map;
 
 };
 

@@ -737,8 +737,15 @@ UserSettingsController::CreateDefaultInstanceSettings ()
         if (entry.var_type == eSetVarTypeEnum)
             value = entry.enum_values[0].string_value;
   
-        m_default_settings->UpdateInstanceSettingsVariable (var_name, NULL, value, default_name, entry, 
-                                                            eVarSetOperationAssign, err, true);
+        if (value != NULL)
+            m_default_settings->UpdateInstanceSettingsVariable (var_name, 
+                                                                NULL, 
+                                                                value, 
+                                                                default_name, 
+                                                                entry, 
+                                                                eVarSetOperationAssign, 
+                                                                err, 
+                                                                true);
     } 
 }
 
@@ -2026,6 +2033,75 @@ UserSettingsController::UpdateStringVariable (VarSetOperationType op,
         err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
 }
 
+Error
+UserSettingsController::UpdateStringOptionValue (const char *value,
+                                                 VarSetOperationType op, 
+                                                 OptionValueString &option_value)
+{
+    Error error;
+    if (op == eVarSetOperationAssign)
+    {
+        option_value.SetCurrentValue (value);
+    }
+    else if (op == eVarSetOperationAppend)
+    {
+        option_value.AppendToCurrentValue (value);
+    }
+    else if (op == eVarSetOperationClear)
+    {
+        option_value.Clear();
+    }
+    else
+    {
+        error.SetErrorString ("Unrecognized operation. Cannot update value.\n");
+    }
+    return error;
+}
+
+Error
+UserSettingsController::UpdateFileSpecOptionValue (const char *value,
+                                                   VarSetOperationType op, 
+                                                   OptionValueFileSpec &option_value)
+{
+    Error error;
+    if (op == eVarSetOperationAssign)
+    {
+        option_value.GetCurrentValue().SetFile (value, false);
+    }
+    else if (op == eVarSetOperationAppend)
+    {
+        char path[PATH_MAX];
+        if (option_value.GetCurrentValue().GetPath (path, sizeof(path)))
+        {
+            int path_len = ::strlen (path);
+            int value_len = ::strlen (value);
+            if (value_len + 1  > sizeof(path) - path_len)
+            {
+                error.SetErrorString("path too long.");
+            }
+            else
+            {
+                ::strncat (path, value, sizeof(path) - path_len - 1);
+                option_value.GetCurrentValue().SetFile (path, false);
+            }
+        }
+        else
+        {
+            error.SetErrorString("path too long.");
+        }
+    }
+    else if (op == eVarSetOperationClear)
+    {
+        option_value.Clear();
+    }
+    else
+    {
+        error.SetErrorString ("operation not supported for FileSpec option value type.");
+    }
+    return error;
+}
+
+
 void
 UserSettingsController::UpdateBooleanVariable (VarSetOperationType op,
                                                bool &bool_value,
@@ -2073,6 +2149,53 @@ UserSettingsController::UpdateBooleanVariable (VarSetOperationType op,
         }
         break;
     }
+}
+Error
+UserSettingsController::UpdateBooleanOptionValue (const char *value,
+                                                  VarSetOperationType op,
+                                                  OptionValueBoolean &option_value)
+{
+    Error error;
+    switch (op)
+    {
+    case eVarSetOperationReplace:
+    case eVarSetOperationInsertBefore:
+    case eVarSetOperationInsertAfter:
+    case eVarSetOperationRemove:
+    case eVarSetOperationAppend:
+    case eVarSetOperationInvalid:
+    default:
+        error.SetErrorString ("Invalid operation for Boolean variable.  Cannot update value.\n");
+        break;
+
+    case eVarSetOperationClear:
+        option_value.Clear();
+        break;
+        
+    case eVarSetOperationAssign:
+        {
+            bool success = false;
+            error = option_value.SetValueFromCString(value);
+            
+            if (value == NULL)
+                error.SetErrorStringWithFormat ("invalid boolean string value (NULL)\n", value);
+            else if (value[0] == '\0')
+                error.SetErrorStringWithFormat ("invalid boolean string value (empty)\n", value);
+            else
+            {
+                bool new_value = Args::StringToBoolean (value, false, &success);
+                if (success)
+                {
+                    error.Clear();
+                    option_value = new_value;
+                }
+                else
+                    error.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value);
+            }
+        }
+        break;
+    }
+    return error;
 }
 
 void

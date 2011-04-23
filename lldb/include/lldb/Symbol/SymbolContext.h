@@ -172,10 +172,29 @@ public:
     /// Get the address range contained within a symbol context.
     ///
     /// Address range priority is as follows:
-    ///     - line_entry address range if line_entry is valid
-    ///     - function address range if function is not NULL
-    ///     - symbol address range if symbol is not NULL
+    ///     - line_entry address range if line_entry is valid and eSymbolContextLineEntry is set in \a scope
+    ///     - block address range if block is not NULL and eSymbolContextBlock is set in \a scope
+    ///     - function address range if function is not NULL and eSymbolContextFunction is set in \a scope
+    ///     - symbol address range if symbol is not NULL and eSymbolContextSymbol is set in \a scope
     ///
+    /// @param[in] scope
+    ///     A mask of symbol context bits telling this function which
+    ///     address ranges it can use when trying to extract one from
+    ///     the valid (non-NULL) symbol context classes.
+    ///
+    /// @param[in] range_idx
+    ///     The address range index to grab. Since many functions and 
+    ///     blocks are not always contiguous, they may have more than
+    ///     one address range.
+    ///
+    /// @param[in] use_inline_block_range
+    ///     If \a scope has the eSymbolContextBlock bit set, and there
+    ///     is a valid block in the symbol context, return the block 
+    ///     address range for the containing inline function block, not
+    ///     the deepest most block. This allows us to extract information
+    ///     for the address range of the inlined function block, not
+    ///     the deepest lexical block.
+    /// 
     /// @param[out] range
     ///     An address range object that will be filled in if \b true
     ///     is returned.
@@ -185,7 +204,10 @@ public:
     ///     an address range, \b false otherwise.
     //------------------------------------------------------------------
     bool
-    GetAddressRange (uint32_t scope, AddressRange &range) const;
+    GetAddressRange (uint32_t scope, 
+                     uint32_t range_idx, 
+                     bool use_inline_block_range,
+                     AddressRange &range) const;
 
 
     void

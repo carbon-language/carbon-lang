@@ -34,8 +34,13 @@ public:
     PathMappingList (ChangedCallback callback,
                      void *callback_baton);
 
+    PathMappingList (const PathMappingList &rhs);
+
     virtual
     ~PathMappingList ();
+
+    const PathMappingList &
+    operator =(const PathMappingList &rhs);
 
     void
     Append (const ConstString &path, const ConstString &replacement, bool notify);
@@ -49,6 +54,9 @@ public:
     size_t
     GetSize ();
 
+    bool
+    GetPathsAtIndex (uint32_t idx, ConstString &path, ConstString &new_path) const;
+    
     void
     Insert (const ConstString &path, 
             const ConstString &replacement, 
@@ -59,7 +67,18 @@ public:
     Remove (off_t index, bool notify);
 
     bool
+    Remove (const ConstString &path, bool notify);
+
+    bool
+    Replace (const ConstString &path, 
+             const ConstString &new_path, 
+             bool notify);
+    
+    bool
     RemapPath (const ConstString &path, ConstString &new_path);
+
+    uint32_t
+    FindIndexForPath (const ConstString &path) const;
 
 protected:
     typedef std::pair <ConstString, ConstString> pair;
@@ -67,14 +86,15 @@ protected:
     typedef collection::iterator iterator;
     typedef collection::const_iterator const_iterator;
 
+    iterator
+    FindIteratorForPath (const ConstString &path);
+    
+    const_iterator
+    FindIteratorForPath (const ConstString &path) const;
+
     collection m_pairs;
     ChangedCallback m_callback;
     void * m_callback_baton;
-private:
-    //------------------------------------------------------------------
-    // For PathMappingList only
-    //------------------------------------------------------------------
-    DISALLOW_COPY_AND_ASSIGN (PathMappingList);
 };
 
 } // namespace lldb_private

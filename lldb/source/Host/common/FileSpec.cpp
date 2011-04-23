@@ -39,7 +39,7 @@ static bool
 GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
 {
     char resolved_path[PATH_MAX];
-    if (file_spec->GetPath(&resolved_path[0], sizeof(resolved_path)))
+    if (file_spec->GetPath (resolved_path, sizeof(resolved_path)))
         return ::stat (resolved_path, stats_ptr) == 0;
     return false;
 }

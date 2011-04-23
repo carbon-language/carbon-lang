@@ -94,7 +94,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     }
 
     AddressRange range;
-    if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range) || !range.GetBaseAddress().IsValid())
+    if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
         if (m_eh_frame == NULL || !m_eh_frame->GetAddressRange (addr, range))

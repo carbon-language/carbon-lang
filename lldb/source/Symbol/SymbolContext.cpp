@@ -343,36 +343,61 @@ lldb_private::operator!= (const SymbolContext& lhs, const SymbolContext& rhs)
 }
 
 bool
-SymbolContext::GetAddressRange (uint32_t scope, AddressRange &range) const
+SymbolContext::GetAddressRange (uint32_t scope, 
+                                uint32_t range_idx, 
+                                bool use_inline_block_range,
+                                AddressRange &range) const
 {
     if ((scope & eSymbolContextLineEntry) && line_entry.IsValid())
     {
         range = line_entry.range;
         return true;
     }
-    else if ((scope & eSymbolContextFunction) && function != NULL)
+    
+    if ((scope & eSymbolContextBlock) && (block != NULL))
     {
-        range = function->GetAddressRange();
-        return true;
-    }
-    else if ((scope & eSymbolContextSymbol) && symbol != NULL && symbol->GetAddressRangePtr())
-    {
-        range = *symbol->GetAddressRangePtr();
-
-        if (range.GetByteSize() == 0)
+        if (use_inline_block_range)
         {
-            if (module_sp)
+            Block *inline_block = block->GetContainingInlinedBlock();
+            if (inline_block)
+                return inline_block->GetRangeAtIndex (range_idx, range);
+        }
+        else
+        {
+            return block->GetRangeAtIndex (range_idx, range);
+        }
+    }
+
+    if ((scope & eSymbolContextFunction) && (function != NULL))
+    {
+        if (range_idx == 0)
+        {
+            range = function->GetAddressRange();
+            return true;
+        }            
+    } 
+    
+    if ((scope & eSymbolContextSymbol) && (symbol != NULL) && (symbol->GetAddressRangePtr() != NULL))
+    {
+        if (range_idx == 0)
+        {
+            range = *symbol->GetAddressRangePtr();
+
+            if (range.GetByteSize() == 0)
             {
-                ObjectFile *objfile = module_sp->GetObjectFile();
-                if (objfile)
+                if (module_sp)
                 {
-                    Symtab *symtab = objfile->GetSymtab();
-                    if (symtab)
-                        range.SetByteSize(symtab->CalculateSymbolSize (symbol));
+                    ObjectFile *objfile = module_sp->GetObjectFile();
+                    if (objfile)
+                    {
+                        Symtab *symtab = objfile->GetSymtab();
+                        if (symtab)
+                            range.SetByteSize(symtab->CalculateSymbolSize (symbol));
+                    }
                 }
             }
+            return true;
         }
-        return true;
     }
     range.Clear();
     return false;

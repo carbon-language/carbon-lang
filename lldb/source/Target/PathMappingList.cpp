@@ -33,6 +33,28 @@ PathMappingList::PathMappingList
 {
 }
 
+
+PathMappingList::PathMappingList (const PathMappingList &rhs) :
+    m_pairs (rhs.m_pairs),
+    m_callback (NULL),
+    m_callback_baton (NULL)
+{
+    
+}
+
+const PathMappingList &
+PathMappingList::operator =(const PathMappingList &rhs)
+{
+    if (this != &rhs)
+    {
+        m_pairs = rhs.m_pairs;
+        m_callback = NULL;
+        m_callback_baton = NULL;
+    }
+    return *this;
+}
+
+
 //----------------------------------------------------------------------
 // Destructor
 //----------------------------------------------------------------------
@@ -124,3 +146,91 @@ PathMappingList::RemapPath (const ConstString &path, ConstString &new_path)
     }
     return false;
 }
+
+bool
+PathMappingList::Replace (const ConstString &path, const ConstString &new_path, bool notify)
+{
+    uint32_t idx = FindIndexForPath (path);
+    if (idx < m_pairs.size())
+    {
+        m_pairs[idx].second = new_path;
+        if (notify && m_callback)
+            m_callback (*this, m_callback_baton);
+        return true;
+    }
+    return false;
+}
+
+bool
+PathMappingList::Remove (const ConstString &path, bool notify)
+{
+    iterator pos = FindIteratorForPath (path);
+    if (pos != m_pairs.end())
+    {
+        m_pairs.erase (pos);
+        if (notify && m_callback)
+            m_callback (*this, m_callback_baton);
+        return true;        
+    }
+    return false;
+}
+
+PathMappingList::const_iterator
+PathMappingList::FindIteratorForPath (const ConstString &path) const
+{
+    const_iterator pos;
+    const_iterator begin = m_pairs.begin();
+    const_iterator end = m_pairs.end();
+    
+    for (pos = begin; pos != end; ++pos)
+    {
+        if (pos->first == path)
+            break;
+    }
+    return pos;
+}
+
+PathMappingList::iterator
+PathMappingList::FindIteratorForPath (const ConstString &path)
+{
+    iterator pos;
+    iterator begin = m_pairs.begin();
+    iterator end = m_pairs.end();
+    
+    for (pos = begin; pos != end; ++pos)
+    {
+        if (pos->first == path)
+            break;
+    }
+    return pos;
+}
+
+bool
+PathMappingList::GetPathsAtIndex (uint32_t idx, ConstString &path, ConstString &new_path) const
+{
+    if (idx < m_pairs.size())
+    {
+        path = m_pairs[idx].first;
+        new_path = m_pairs[idx].second;
+        return true;
+    }
+    return false;
+}
+
+
+
+uint32_t
+PathMappingList::FindIndexForPath (const ConstString &path) const
+{
+    const_iterator pos;
+    const_iterator begin = m_pairs.begin();
+    const_iterator end = m_pairs.end();
+    
+    for (pos = begin; pos != end; ++pos)
+    {
+        if (pos->first == path)
+            return std::distance (begin, pos);
+    }
+    return UINT32_MAX;
+}
+

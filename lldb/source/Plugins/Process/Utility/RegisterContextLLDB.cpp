@@ -92,7 +92,7 @@ RegisterContextLLDB::InitializeZerothFrame()
     m_sym_ctx = frame_sp->GetSymbolContext (eSymbolContextFunction | eSymbolContextSymbol);
     m_sym_ctx_valid = true;
     AddressRange addr_range;
-    m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range);
+    m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range);
     
     m_current_pc = frame_sp->GetFrameCodeAddress();
 
@@ -302,7 +302,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     }
 
     AddressRange addr_range;
-    if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range))
+    if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range))
     {
         m_sym_ctx_valid = false;
     }
@@ -339,7 +339,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         {
             m_sym_ctx_valid = true;
         }
-        if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, addr_range))
+        if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false,  addr_range))
         {
             m_sym_ctx_valid = false;
         }

@@ -192,6 +192,13 @@ namespace lldb_private {
         {
             return m_current_value;
         }
+        
+        const bool &
+        operator = (bool b)
+        {
+            m_current_value = b;
+            return m_current_value;
+        }
 
         bool
         GetCurrentValue() const
@@ -274,6 +281,13 @@ namespace lldb_private {
         // Subclass specific functions
         //---------------------------------------------------------------------
         
+        const int64_t &
+        operator = (int64_t value)
+        {
+            m_current_value = value;
+            return m_current_value;
+        }
+
         int64_t
         GetCurrentValue() const
         {
@@ -363,6 +377,13 @@ namespace lldb_private {
         // Subclass specific functions
         //---------------------------------------------------------------------
         
+        const uint64_t &
+        operator = (uint64_t value)
+        {
+            m_current_value = value;
+            return m_current_value;
+        }
+
         uint64_t
         GetCurrentValue() const
         {
@@ -449,6 +470,16 @@ namespace lldb_private {
         //---------------------------------------------------------------------
         
         const char *
+        operator = (const char *value)
+        {
+            if (value && value[0])
+                m_current_value.assign (value);
+            else
+                m_current_value.clear();
+            return m_current_value.c_str();
+        }
+
+        const char *
         GetCurrentValue() const
         {
             return m_current_value.c_str();
@@ -468,7 +499,14 @@ namespace lldb_private {
             else
                 m_current_value.clear();
         }
-        
+
+        void
+        AppendToCurrentValue (const char *value)
+        {
+            if (value && value[0])
+                m_current_value.append (value);
+        }
+
         void
         SetDefaultValue (const char *value)
         {
@@ -541,8 +579,8 @@ namespace lldb_private {
         // Subclass specific functions
         //---------------------------------------------------------------------
         
-        const FileSpec &
-        GetCurrentValue() const
+        FileSpec &
+        GetCurrentValue()
         {
             return m_current_value;
         }
@@ -622,6 +660,15 @@ namespace lldb_private {
         }
 
         lldb::OptionValueSP
+        operator[](uint32_t idx) const
+        {
+            lldb::OptionValueSP value_sp;
+            if (idx < m_values.size())
+                value_sp = m_values[idx];
+            return value_sp;
+        }
+
+        lldb::OptionValueSP
         GetValueAtIndex (uint32_t idx) const
         {
             lldb::OptionValueSP value_sp;
@@ -630,11 +677,6 @@ namespace lldb_private {
             return value_sp;
         }
         
-        uint64_t
-        GetUInt64ValueAtIndex (uint32_t idx, 
-                               uint64_t fail_value, 
-                               bool *success_ptr) const;
-
         bool
         AppendValue (const lldb::OptionValueSP &value_sp)
         {

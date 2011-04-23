@@ -25,6 +25,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Interpreter/NamedOptionValue.h"
 
 namespace lldb_private {
 
@@ -230,6 +231,21 @@ public:
                         int *enum_var,
                         const char *new_value,
                         Error &err);
+
+    static Error
+    UpdateStringOptionValue (const char *new_value_cstr,
+                             VarSetOperationType op, 
+                             OptionValueString &option_value);
+    
+    static Error
+    UpdateBooleanOptionValue (const char *new_value_cstr,
+                              VarSetOperationType op,
+                              OptionValueBoolean &option_value);
+
+    static Error
+    UpdateFileSpecOptionValue (const char *new_value_cstr,
+                               VarSetOperationType op, 
+                               OptionValueFileSpec &option_value);
 
     static bool
     InitializeSettingsController (lldb::UserSettingsControllerSP &controller_sp,

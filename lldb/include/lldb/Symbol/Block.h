@@ -420,6 +420,14 @@ public:
     bool
     GetRangeContainingAddress (const Address& addr, AddressRange &range);
 
+    //------------------------------------------------------------------
+    // Since blocks might have multiple discontiguous addresss ranges,
+    // we need to be able to get at any of the address ranges in a block.
+    //------------------------------------------------------------------
+    bool
+    GetRangeAtIndex (uint32_t range_idx, 
+                     AddressRange &range);
+
     bool
     GetStartAddress (Address &addr);
     

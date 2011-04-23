@@ -877,7 +877,9 @@ Target::UpdateInstanceName ()
 const char *
 Target::GetExpressionPrefixContentsAsCString ()
 {
-    return m_expr_prefix_contents.c_str();
+    if (m_expr_prefix_contents_sp)
+        return (const char *)m_expr_prefix_contents_sp->GetBytes();
+    return NULL;
 }
 
 ExecutionResults
@@ -1291,13 +1293,13 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_EXPR_PREFIX       "expr-prefix"
 #define TSC_PREFER_DYNAMIC    "prefer-dynamic-value"
 #define TSC_SKIP_PROLOGUE     "skip-prologue"
+#define TSC_SOURCE_MAP        "source-map"
 
 
 static const ConstString &
 GetSettingNameForDefaultArch ()
 {
     static ConstString g_const_string (TSC_DEFAULT_ARCH);
-
     return g_const_string;
 }
 
@@ -1315,6 +1317,12 @@ GetSettingNameForPreferDynamicValue ()
     return g_const_string;
 }
 
+static const ConstString &
+GetSettingNameForSourcePathMap ()
+{
+    static ConstString g_const_string (TSC_SOURCE_MAP);
+    return g_const_string;
+}
 
 static const ConstString &
 GetSettingNameForSkipPrologue ()
@@ -1372,10 +1380,11 @@ TargetInstanceSettings::TargetInstanceSettings
     const char *name
 ) :
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
-    m_expr_prefix_path (),
-    m_expr_prefix_contents (),
-    m_prefer_dynamic_value (true),
-    m_skip_prologue (true)
+    m_expr_prefix_file (),
+    m_expr_prefix_contents_sp (),
+    m_prefer_dynamic_value (true, true),
+    m_skip_prologue (true, true),
+    m_source_map (NULL, NULL)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for TargetInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -1396,7 +1405,12 @@ TargetInstanceSettings::TargetInstanceSettings
 }
 
 TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rhs) :
-    InstanceSettings (*Target::GetSettingsController(), CreateInstanceName().AsCString())
+    InstanceSettings (*Target::GetSettingsController(), CreateInstanceName().AsCString()),
+    m_expr_prefix_file (rhs.m_expr_prefix_file),
+    m_expr_prefix_contents_sp (rhs.m_expr_prefix_contents_sp),
+    m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
+    m_skip_prologue (rhs.m_skip_prologue),
+    m_source_map (rhs.m_source_map)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
@@ -1431,53 +1445,100 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
 {
     if (var_name == GetSettingNameForExpressionPrefix ())
     {
-        switch (op)
+        err = UserSettingsController::UpdateFileSpecOptionValue (value, op, m_expr_prefix_file);
+        if (err.Success())
         {
-        default:
-            err.SetErrorToGenericError ();
-            err.SetErrorString ("Unrecognized operation. Cannot update value.\n");
-            return;
-        case eVarSetOperationAssign:
+            switch (op)
             {
-                FileSpec file_spec(value, true);
-                
-                if (!file_spec.Exists())
+            default:
+                break;
+            case eVarSetOperationAssign:
+            case eVarSetOperationAppend:
                 {
-                    err.SetErrorToGenericError ();
-                    err.SetErrorStringWithFormat ("%s does not exist.\n", value);
-                    return;
+                    if (!m_expr_prefix_file.GetCurrentValue().Exists())
+                    {
+                        err.SetErrorToGenericError ();
+                        err.SetErrorStringWithFormat ("%s does not exist.\n", value);
+                        return;
+                    }
+            
+                    m_expr_prefix_contents_sp = m_expr_prefix_file.GetCurrentValue().ReadFileContents();
+            
+                    if (!m_expr_prefix_contents_sp && m_expr_prefix_contents_sp->GetByteSize() == 0)
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't read data from '%s'\n", value);
+                        m_expr_prefix_contents_sp.reset();
+                    }
                 }
-                
-                DataBufferSP data_sp (file_spec.ReadFileContents());
-                
-                if (!data_sp && data_sp->GetByteSize() == 0)
-                {
-                    err.SetErrorToGenericError ();
-                    err.SetErrorStringWithFormat ("Couldn't read from %s\n", value);
-                    return;
-                }
-                
-                m_expr_prefix_path = value;
-                m_expr_prefix_contents.assign(reinterpret_cast<const char *>(data_sp->GetBytes()), data_sp->GetByteSize());
+                break;
+            case eVarSetOperationClear:
+                m_expr_prefix_contents_sp.reset();
             }
-            return;
-        case eVarSetOperationAppend:
-            err.SetErrorToGenericError ();
-            err.SetErrorString ("Cannot append to a path.\n");
-            return;
-        case eVarSetOperationClear:
-            m_expr_prefix_path.clear ();
-            m_expr_prefix_contents.clear ();
-            return;
         }
     }
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
-        UserSettingsController::UpdateBooleanVariable (op, m_prefer_dynamic_value, value, true, err);
+        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_prefer_dynamic_value);
     }
     else if (var_name == GetSettingNameForSkipPrologue())
     {
-        UserSettingsController::UpdateBooleanVariable (op, m_skip_prologue, value, true, err);
+        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_skip_prologue);
+    }
+    else if (var_name == GetSettingNameForSourcePathMap ())
+    {
+        switch (op)
+        {
+            case eVarSetOperationReplace:
+            case eVarSetOperationInsertBefore:
+            case eVarSetOperationInsertAfter:
+            case eVarSetOperationRemove:
+            default:
+                break;
+            case eVarSetOperationAssign:
+                m_source_map.Clear(true);
+                // Fall through to append....
+            case eVarSetOperationAppend:
+                {   
+                    Args args(value);
+                    const uint32_t argc = args.GetArgumentCount();
+                    if (argc & 1 || argc == 0)
+                    {
+                        err.SetErrorStringWithFormat ("an even number of paths must be supplied to to the source-map setting: %u arguments given", argc);
+                    }
+                    else
+                    {
+                        char resolved_new_path[PATH_MAX];
+                        FileSpec file_spec;
+                        const char *old_path;
+                        for (uint32_t idx = 0; (old_path = args.GetArgumentAtIndex(idx)) != NULL; idx += 2)
+                        {
+                            const char *new_path = args.GetArgumentAtIndex(idx+1);
+                            assert (new_path); // We have an even number of paths, this shouldn't happen!
+
+                            file_spec.SetFile(new_path, true);
+                            if (file_spec.Exists())
+                            {
+                                if (file_spec.GetPath (resolved_new_path, sizeof(resolved_new_path)) >= sizeof(resolved_new_path))
+                                {
+                                    err.SetErrorStringWithFormat("new path '%s' is too long", new_path);
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                err.SetErrorStringWithFormat("new path '%s' doesn't exist", new_path);
+                                return;
+                            }
+                            m_source_map.Append(ConstString (old_path), ConstString (resolved_new_path), true);
+                        }
+                    }
+                }
+                break;
+
+            case eVarSetOperationClear:
+                m_source_map.Clear(true);
+                break;
+        }        
     }
 }
 
@@ -1489,9 +1550,10 @@ TargetInstanceSettings::CopyInstanceSettings (const lldb::InstanceSettingsSP &ne
     if (!new_settings_ptr)
         return;
     
-    m_expr_prefix_path      = new_settings_ptr->m_expr_prefix_path;
-    m_expr_prefix_contents  = new_settings_ptr->m_expr_prefix_contents;
-    m_prefer_dynamic_value  = new_settings_ptr->m_prefer_dynamic_value;
+    m_expr_prefix_file          = new_settings_ptr->m_expr_prefix_file;
+    m_expr_prefix_contents_sp   = new_settings_ptr->m_expr_prefix_contents_sp;
+    m_prefer_dynamic_value      = new_settings_ptr->m_prefer_dynamic_value;
+    m_skip_prologue             = new_settings_ptr->m_skip_prologue;
 }
 
 bool
@@ -1502,7 +1564,10 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
 {
     if (var_name == GetSettingNameForExpressionPrefix ())
     {
-        value.AppendString (m_expr_prefix_path.c_str(), m_expr_prefix_path.size());
+        char path[PATH_MAX];
+        const size_t path_len = m_expr_prefix_file.GetCurrentValue().GetPath (path, sizeof(path));
+        if (path_len > 0)
+            value.AppendString (path, path_len);
     }
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
@@ -1517,6 +1582,9 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("true");
         else
             value.AppendString ("false");
+    }
+    else if (var_name == GetSettingNameForSourcePathMap ())
+    {
     }
     else 
     {
@@ -1562,5 +1630,6 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL      , NULL, false, false, "Path to a file containing expressions to be prepended to all expressions." },
     { TSC_PREFER_DYNAMIC, eSetVarTypeBoolean ,"true"    , NULL, false, false, "Should printed values be shown as their dynamic value." },
     { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean ,"true"    , NULL, false, false, "Skip function prologues when setting breakpoints by name." },
+    { TSC_SOURCE_MAP    , eSetVarTypeArray   ,NULL      , NULL, false, false, "Source path remappings to use when locating source files from debug information." },
     { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
 };

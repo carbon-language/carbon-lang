@@ -119,12 +119,13 @@ Disassembler::Disassemble
     const size_t count = sc_list.GetSize();
     SymbolContext sc;
     AddressRange range;
-    
+    const uint32_t scope = eSymbolContextBlock | eSymbolContextFunction | eSymbolContextSymbol;
+    const bool use_inline_block_range = true;
     for (size_t i=0; i<count; ++i)
     {
         if (sc_list.GetContextAtIndex(i, sc) == false)
             break;
-        if (sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, range))
+        for (uint32_t range_idx = 0; sc.GetAddressRange(scope, range_idx, use_inline_block_range, range); ++range_idx)
         {
             if (Disassemble (debugger, 
                              arch, 
@@ -340,8 +341,11 @@ Disassembler::PrintInstructions
     SymbolContext prev_sc;
     AddressRange sc_range;
     Address *pc_addr_ptr = NULL;
+    ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
     if (exe_ctx.frame)
         pc_addr_ptr = &exe_ctx.frame->GetFrameCodeAddress();
+    const uint32_t scope = eSymbolContextLineEntry | eSymbolContextFunction | eSymbolContextSymbol;
+    const bool use_inline_block_range = false;
 
     for (size_t i=0; i<num_instructions_found; ++i)
     {
@@ -363,7 +367,7 @@ Disassembler::PrintInstructions
                     {
                         if (!sc_range.ContainsFileAddress (addr))
                         {
-                            sc.GetAddressRange (eSymbolContextEverything, sc_range);
+                            sc.GetAddressRange (scope, 0, use_inline_block_range, sc_range);
                             
                             if (sc != prev_sc)
                             {
@@ -375,7 +379,8 @@ Disassembler::PrintInstructions
                                 
                                 if (sc.comp_unit && sc.line_entry.IsValid())
                                 {
-                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
+                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (debugger.GetTargetList().GetSelectedTarget().get(),
+                                                                                                   sc.line_entry.file,
                                                                                                    sc.line_entry.line,
                                                                                                    num_mixed_context_lines,
                                                                                                    num_mixed_context_lines,
@@ -390,12 +395,16 @@ Disassembler::PrintInstructions
                         if (prev_sc.function || prev_sc.symbol)
                             strm.EOL();
 
-                        strm << sc.module_sp->GetFileSpec().GetFilename();
+                        bool show_fullpaths = false;
+                        bool show_module = true;
+                        bool show_inlined_frames = true;
+                        sc.DumpStopContext (&strm, 
+                                            exe_scope, 
+                                            addr, 
+                                            show_fullpaths,
+                                            show_module,
+                                            show_inlined_frames);
                         
-                        if (sc.function)
-                            strm << '`' << sc.function->GetMangled().GetName();
-                        else if (sc.symbol)
-                            strm << '`' << sc.symbol->GetMangled().GetName();
                         strm << ":\n";
                     }
                 }

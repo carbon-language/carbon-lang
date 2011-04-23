@@ -160,9 +160,15 @@ Block::DumpStopContext
     bool show_fullpaths,
     bool show_inline_blocks)
 {
-    Block* parent_block = GetParent();
+    const InlineFunctionInfo* inline_info = NULL;
+    Block* inlined_block;
+    if (sc_ptr)
+        inlined_block = GetContainingInlinedBlock ();
+    else
+        inlined_block = GetInlinedParent();
 
-    const InlineFunctionInfo* inline_info = GetInlinedFunctionInfo ();
+    if (inlined_block)
+        inline_info = inlined_block->GetInlinedFunctionInfo();
     const Declaration *inline_call_site = child_inline_call_site;
     if (inline_info)
     {
@@ -176,7 +182,10 @@ Block::DumpStopContext
             s->EOL();
         else
             s->PutChar(' ');
-            
+        
+        if (sc_ptr == NULL)
+            s->Indent();
+
         s->PutCString(inline_info->GetName ().AsCString());
 
         if (child_inline_call_site && child_inline_call_site->IsValid())
@@ -186,6 +195,12 @@ Block::DumpStopContext
         }
     }
 
+    // The first call to this function from something that has a symbol
+    // context will pass in a valid sc_ptr. Subsequent calls to this function
+    // from this function for inline purposes will NULL out sc_ptr. So on the
+    // first time through we dump the line table entry (which is always at the
+    // deepest inline code block). And subsequent calls to this function we
+    // will use hte inline call site information to print line numbers.
     if (sc_ptr)
     {
         // If we have any inlined functions, this will be the deepest most
@@ -199,13 +214,13 @@ Block::DumpStopContext
 
     if (show_inline_blocks)
     {
-        if (parent_block)
+        if (inlined_block)
         {
-            parent_block->Block::DumpStopContext (s, 
-                                                  NULL, 
-                                                  inline_call_site, 
-                                                  show_fullpaths, 
-                                                  show_inline_blocks);
+            inlined_block->Block::DumpStopContext (s, 
+                                                   NULL, 
+                                                   inline_call_site, 
+                                                   show_fullpaths, 
+                                                   show_inline_blocks);
         }
         else if (child_inline_call_site)
         {
@@ -358,6 +373,23 @@ Block::GetRangeContainingAddress (const Address& addr, AddressRange &range)
     return false;
 }
 
+bool
+Block::GetRangeAtIndex (uint32_t range_idx, AddressRange &range)
+{
+    if (range_idx < m_ranges.size())
+    {
+        SymbolContext sc;
+        CalculateSymbolContext(&sc);
+        if (sc.function)
+        {
+            range.GetBaseAddress() = sc.function->GetAddressRange().GetBaseAddress();
+            range.GetBaseAddress().Slide(m_ranges[range_idx].GetBaseAddress ());
+            range.SetByteSize (m_ranges[range_idx].GetByteSize());
+            return true;
+        }
+    }
+    return false;
+}
 
 bool
 Block::GetStartAddress (Address &addr)

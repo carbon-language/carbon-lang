@@ -156,7 +156,12 @@ OptionValueBoolean::SetValueFromCString (const char *value_cstr)
     }
     else
     {
-        error.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value_cstr);
+        if (value_cstr == NULL)
+            error.SetErrorString ("invalid boolean string value: NULL\n");
+        else if (value_cstr[0] == '\0')
+            error.SetErrorString ("invalid boolean string value <empty>\n");
+        else
+            error.SetErrorStringWithFormat ("invalid boolean string value: '%s'\n", value_cstr);
     }
     return error;
 }
@@ -302,17 +307,6 @@ OptionValueArray::SetValueFromCString (const char *value_cstr)
     error.SetErrorStringWithFormat ("array option values don't yet support being set by string: '%s'\n", value_cstr);
     return error;
 }
-
-
-uint64_t
-OptionValueArray::GetUInt64ValueAtIndex (uint32_t idx, uint64_t fail_value, bool *success_ptr) const
-{
-    if (idx < m_values.size())
-        return m_values[idx]->GetUInt64Value (fail_value, success_ptr);
-    return fail_value;
-}
-
-
 
 //-------------------------------------------------------------------------
 // OptionValueDictionary

@@ -16,6 +16,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb_private;
 
@@ -47,6 +48,7 @@ SourceManager::~SourceManager()
 size_t
 SourceManager::DisplaySourceLines
 (
+    Target *target,
     const FileSpec &file_spec,
     uint32_t line,
     uint32_t context_before,
@@ -54,7 +56,7 @@ SourceManager::DisplaySourceLines
     Stream *s
 )
 {
-    m_last_file_sp = GetFile (file_spec);
+    m_last_file_sp = GetFile (file_spec, target);
     m_last_file_line = line + context_after + 1;
     m_last_file_context_before = context_before;
     m_last_file_context_after = context_after;
@@ -65,7 +67,7 @@ SourceManager::DisplaySourceLines
 }
 
 SourceManager::FileSP
-SourceManager::GetFile (const FileSpec &file_spec)
+SourceManager::GetFile (const FileSpec &file_spec, Target *target)
 {
     FileSP file_sp;
     FileCache::iterator pos = m_file_cache.find(file_spec);
@@ -73,7 +75,7 @@ SourceManager::GetFile (const FileSpec &file_spec)
         file_sp = pos->second;
     else
     {
-        file_sp.reset (new File (file_spec));
+        file_sp.reset (new File (file_spec, target));
         m_file_cache[file_spec] = file_sp;
     }
     return file_sp;
@@ -149,6 +151,7 @@ SourceManager::DisplaySourceLinesWithLineNumbersUsingLastFile
 size_t
 SourceManager::DisplaySourceLinesWithLineNumbers
 (
+    Target *target,
     const FileSpec &file_spec,
     uint32_t line,
     uint32_t context_before,
@@ -161,7 +164,7 @@ SourceManager::DisplaySourceLinesWithLineNumbers
     bool same_as_previous = m_last_file_sp && m_last_file_sp->FileSpecMatches (file_spec);
 
     if (!same_as_previous)
-        m_last_file_sp = GetFile (file_spec);
+        m_last_file_sp = GetFile (file_spec, target);
 
     if (line == 0)
     {
@@ -186,12 +189,21 @@ SourceManager::DisplayMoreWithLineNumbers (Stream *s, const SymbolContextList *b
 
 
 
-SourceManager::File::File(const FileSpec &file_spec) :
+SourceManager::File::File(const FileSpec &file_spec, Target *target) :
+    m_file_spec_orig (file_spec),
     m_file_spec(file_spec),
-    m_mod_time (m_file_spec.GetModificationTime()),
-    m_data_sp(file_spec.ReadFileContents ()),
+    m_mod_time (file_spec.GetModificationTime()),
+    m_data_sp(),
     m_offsets()
 {
+    if (!m_mod_time.IsValid())
+    {
+        if (target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
+            m_mod_time = file_spec.GetModificationTime();
+    }
+    
+    if (m_mod_time.IsValid())
+        m_data_sp = m_file_spec.ReadFileContents ();
 }
 
 SourceManager::File::~File()

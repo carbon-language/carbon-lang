@@ -29,7 +29,7 @@ public:
     class File
     {
     public:
-        File (const FileSpec &file_spec);
+        File (const FileSpec &file_spec, Target *target);
         ~File();
 
         size_t
@@ -58,8 +58,9 @@ public:
         bool
         CalculateLineOffsets (uint32_t line = UINT32_MAX);
 
-        FileSpec m_file_spec;
-        TimeValue m_mod_time;   // Keep the modification time that this file data is valid for
+        FileSpec m_file_spec_orig;  // The original file spec that was used (can be different from m_file_spec)
+        FileSpec m_file_spec;       // The actualy file spec being used (if the target has source mappings, this might be different from m_file_spec_orig)
+        TimeValue m_mod_time;       // Keep the modification time that this file data is valid for
         lldb::DataBufferSP m_data_sp;
         typedef std::vector<uint32_t> LineOffsets;
         LineOffsets m_offsets;
@@ -77,23 +78,22 @@ public:
     typedef lldb::SharedPtr<File>::Type FileSP;
 
     FileSP
-    GetFile (const FileSpec &file_spec);
-
-    FileSP
     GetLastFile () 
     {
         return m_last_file_sp;
     }
 
     size_t
-    DisplaySourceLines (const FileSpec &file,
+    DisplaySourceLines (Target *target,
+                        const FileSpec &file,
                         uint32_t line,
                         uint32_t context_before,
                         uint32_t context_after,
                         Stream *s);
 
     size_t
-    DisplaySourceLinesWithLineNumbers (const FileSpec &file,
+    DisplaySourceLinesWithLineNumbers (Target *target,
+                                       const FileSpec &file,
                                        uint32_t line,
                                        uint32_t context_before,
                                        uint32_t context_after,
@@ -115,6 +115,11 @@ public:
                                 const SymbolContextList *bp_locs = NULL);
 
 protected:
+
+    FileSP
+    GetFile (const FileSpec &file_spec, Target *target);
+    
+
     //------------------------------------------------------------------
     // Classes that inherit from SourceManager can see and modify these
     //------------------------------------------------------------------

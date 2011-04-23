@@ -1215,7 +1215,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                     AddressRange addr_range;
                     if (target_symbols.GetContextAtIndex(0, context))
                     {
-                        context.GetAddressRange (eSymbolContextEverything, addr_range);
+                        context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
                         thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addr_range.GetBaseAddress(), stop_others));
                     }
                     else
@@ -1234,7 +1234,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                         AddressRange addr_range;
                         if (target_symbols.GetContextAtIndex(i, context))
                         {
-                            context.GetAddressRange (eSymbolContextEverything, addr_range);
+                            context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
                             lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
                             addresses[i] = load_addr;
                         }
