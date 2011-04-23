@@ -54,7 +54,7 @@ define i64 @f6(i64 %a) {
 
 ; Example from numerics code that manually computes wider-than-64 values.
 ;
-; CHECK: _livecarry:
+; CHECK: livecarry:
 ; CHECK: adds
 ; CHECK: adcs
 ; CHECK: adc
