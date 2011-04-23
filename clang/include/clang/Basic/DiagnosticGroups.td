@@ -173,7 +173,10 @@ def VariadicMacros : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VLA : DiagGroup<"vla">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
-def : DiagGroup<"write-strings">;
+
+// GCC calls -Wdeprecated-writable-strings -Wwrite-strings.
+def GCCWriteStrings : DiagGroup<"write-strings" , [DeprecatedWritableStr]>;
+
 def CharSubscript : DiagGroup<"char-subscripts">;
 def LargeByValueCopy : DiagGroup<"large-by-value-copy">;
 def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
