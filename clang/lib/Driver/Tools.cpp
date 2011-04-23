@@ -1353,6 +1353,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
   }
 
+  // Map the bizarre '-Wwrite-strings' flag to a more sensible
+  // '-fconst-strings'; this better indicates its actual behavior.
+  if (Args.hasFlag(options::OPT_Wwrite_strings, options::OPT_Wno_write_strings,
+                   false)) {
+    // For perfect compatibility with GCC, we do this even in the presence of
+    // '-w'. This flag names something other than a warning for GCC.
+    CmdArgs.push_back("-fconst-strings");
+  }
+
   // Translate GCC's misnamer '-fasm' arguments to '-fgnu-keywords'.
   if (Arg *Asm = Args.getLastArg(options::OPT_fasm, options::OPT_fno_asm)) {
     if (Asm->getOption().matches(options::OPT_fasm))

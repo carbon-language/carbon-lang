@@ -577,7 +577,7 @@ static void LangOptsToArgs(const LangOptions &Opts,
   if (Opts.WritableStrings)
     Res.push_back("-fwritable-strings");
   if (Opts.ConstStrings)
-    Res.push_back("-Wwrite-strings");
+    Res.push_back("-fconst-strings");
   if (!Opts.LaxVectorConversions)
     Res.push_back("-fno-lax-vector-conversions");
   if (Opts.AltiVec)
@@ -1475,7 +1475,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MSCVersion = Args.getLastArgIntValue(OPT_fmsc_version, 0, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
-  Opts.ConstStrings = Args.hasArg(OPT_Wwrite_strings);
+  Opts.ConstStrings = Args.hasFlag(OPT_fconst_strings, OPT_fno_const_strings,
+                                   Opts.ConstStrings);
   if (Args.hasArg(OPT_fno_lax_vector_conversions))
     Opts.LaxVectorConversions = 0;
   if (Args.hasArg(OPT_fno_threadsafe_statics))

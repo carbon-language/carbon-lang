@@ -12,3 +12,10 @@
 // CHECK-OPTIONS2: -fshort-wchar
 // CHECK-OPTIONS2: -fno-common
 // CHECK-OPTIONS2: -fno-show-source-location
+
+// RUN: %clang -### -S -Wwrite-strings %s 2>&1 | FileCheck -check-prefix=WRITE-STRINGS1 %s
+// WRITE-STRINGS1: -fconst-strings
+// RUN: %clang -### -S -Wwrite-strings -Wno-write-strings %s 2>&1 | FileCheck -check-prefix=WRITE-STRINGS2 %s
+// WRITE-STRINGS2-NOT: -fconst-strings
+// RUN: %clang -### -S -Wwrite-strings -w %s 2>&1 | FileCheck -check-prefix=WRITE-STRINGS3 %s
+// WRITE-STRINGS3: -fconst-strings

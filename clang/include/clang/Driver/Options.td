@@ -175,6 +175,8 @@ def Wnonportable_cfstrings : Joined<"-Wnonportable-cfstrings">, Group<W_Group>;
 def Wp_COMMA : CommaJoined<"-Wp,">,
   HelpText<"Pass the comma separated arguments in <arg> to the preprocessor">,
   MetaVarName<"<arg>">;
+def Wwrite_strings : Flag<"-Wwrite-strings">, Group<W_Group>;
+def Wno_write_strings : Flag<"-Wno-write-strings">, Group<W_Group>;
 def W_Joined : Joined<"-W">, Group<W_Group>;
 def Xanalyzer : Separate<"-Xanalyzer">,
   HelpText<"Pass <arg> to the static analyzer">, MetaVarName<"<arg>">;
