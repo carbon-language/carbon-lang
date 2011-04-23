@@ -32,7 +32,6 @@
 #endif
 
 using namespace llvm;
-using namespace std;
 
 static fatal_error_handler_t ErrorHandler = 0;
 static void *ErrorHandlerUserData = 0;

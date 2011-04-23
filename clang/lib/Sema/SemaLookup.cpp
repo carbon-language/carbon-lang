@@ -2863,8 +2863,6 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
 }
 
 void TypoCorrectionConsumer::FoundName(llvm::StringRef Name) {
-  using namespace std;
-
   // Use a simple length-based heuristic to determine the minimum possible
   // edit distance. If the minimum isn't good enough, bail out early.
   unsigned MinED = abs((int)Name.size() - (int)Typo.size());
@@ -2873,7 +2871,8 @@ void TypoCorrectionConsumer::FoundName(llvm::StringRef Name) {
 
   // Compute an upper bound on the allowable edit distance, so that the
   // edit-distance algorithm can short-circuit.
-  unsigned UpperBound = min(unsigned((Typo.size() + 2) / 3), BestEditDistance);
+  unsigned UpperBound =
+    std::min(unsigned((Typo.size() + 2) / 3), BestEditDistance);
 
   // Compute the edit distance between the typo and the name of this
   // entity. If this edit distance is not worse than the best edit

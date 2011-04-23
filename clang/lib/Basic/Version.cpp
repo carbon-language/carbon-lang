@@ -17,8 +17,6 @@
 #include <cstring>
 #include <cstdlib>
 
-using namespace std;
-
 namespace clang {
   
 std::string getClangRepositoryPath() {
