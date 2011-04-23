@@ -5040,6 +5040,72 @@ MachineBasicBlock *OtherSucc(MachineBasicBlock *MBB, MachineBasicBlock *Succ) {
   llvm_unreachable("Expecting a BB with two successors!");
 }
 
+// FIXME: This opcode table should obviously be expressed in the target
+// description. We probably just need a "machine opcode" value in the pseudo
+// instruction. But the ideal solution maybe to simply remove the "S" version
+// of the opcode altogether.
+struct AddSubFlagsOpcodePair {
+  unsigned PseudoOpc;
+  unsigned MachineOpc;
+};
+
+static AddSubFlagsOpcodePair AddSubFlagsOpcodeMap[] = {
+  {ARM::ADCSri, ARM::ADCri},
+  {ARM::ADCSrr, ARM::ADCrr},
+  {ARM::ADCSrs, ARM::ADCrs},
+  {ARM::SBCSri, ARM::SBCri},
+  {ARM::SBCSrr, ARM::SBCrr},
+  {ARM::SBCSrs, ARM::SBCrs},
+  {ARM::RSBSri, ARM::RSBri},
+  {ARM::RSBSrr, ARM::RSBrr},
+  {ARM::RSBSrs, ARM::RSBrs},
+  {ARM::RSCSri, ARM::RSCri},
+  {ARM::RSCSrs, ARM::RSCrs},
+  {ARM::t2ADCSri, ARM::t2ADCri},
+  {ARM::t2ADCSrr, ARM::t2ADCrr},
+  {ARM::t2ADCSrs, ARM::t2ADCrs},
+  {ARM::t2SBCSri, ARM::t2SBCri},
+  {ARM::t2SBCSrr, ARM::t2SBCrr},
+  {ARM::t2SBCSrs, ARM::t2SBCrs},
+  {ARM::t2RSBSri, ARM::t2RSBri},
+  {ARM::t2RSBSrs, ARM::t2RSBrs},
+};
+
+// Convert and Add or Subtract with Carry and Flags to a generic opcode with
+// CPSR<def> operand. e.g. ADCS (...) -> ADC (... CPSR<def>).
+//
+// FIXME: Somewhere we should assert that CPSR<def> is in the correct
+// position to be recognized by the target descrition as the 'S' bit.
+bool ARMTargetLowering::RemapAddSubWithFlags(MachineInstr *MI,
+                                             MachineBasicBlock *BB) const {
+  unsigned OldOpc = MI->getOpcode();
+  unsigned NewOpc = 0;
+
+  // This is only called for instructions that need remapping, so iterating over
+  // the tiny opcode table is not costly.
+  static const int NPairs =
+    sizeof(AddSubFlagsOpcodeMap) / sizeof(AddSubFlagsOpcodePair);
+  for (AddSubFlagsOpcodePair *Pair = &AddSubFlagsOpcodeMap[0],
+         *End = &AddSubFlagsOpcodeMap[NPairs]; Pair != End; ++Pair) {
+    if (OldOpc == Pair->PseudoOpc) {
+      NewOpc = Pair->MachineOpc;
+      break;
+    }
+  }
+  if (!NewOpc)
+    return false;
+
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(NewOpc));
+  for (unsigned i = 0; i < MI->getNumOperands(); ++i)
+    MIB.addOperand(MI->getOperand(i));
+  AddDefaultPred(MIB);
+  MIB.addReg(ARM::CPSR, RegState::Define); // S bit
+  MI->eraseFromParent();
+  return true;
+}
+
 MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
@@ -5047,10 +5113,13 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   bool isThumb2 = Subtarget->isThumb2();
   switch (MI->getOpcode()) {
-  default:
+  default: {
+    if (RemapAddSubWithFlags(MI, BB))
+      return BB;
+
     MI->dump();
     llvm_unreachable("Unexpected instr type to insert");
-
+  }
   case ARM::ATOMIC_LOAD_ADD_I8:
      return EmitAtomicBinary(MI, BB, 1, isThumb2 ? ARM::t2ADDrr : ARM::ADDrr);
   case ARM::ATOMIC_LOAD_ADD_I16:
@@ -5100,68 +5169,6 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case ARM::ATOMIC_CMP_SWAP_I8:  return EmitAtomicCmpSwap(MI, BB, 1);
   case ARM::ATOMIC_CMP_SWAP_I16: return EmitAtomicCmpSwap(MI, BB, 2);
   case ARM::ATOMIC_CMP_SWAP_I32: return EmitAtomicCmpSwap(MI, BB, 4);
-
-  case ARM::ADCSSri:
-  case ARM::ADCSSrr:
-  case ARM::ADCSSrs:
-  case ARM::SBCSSri:
-  case ARM::SBCSSrr:
-  case ARM::SBCSSrs:
-  case ARM::RSBSri:
-  case ARM::RSBSrr:
-  case ARM::RSBSrs:
-  case ARM::RSCSri:
-  case ARM::RSCSrs: {
-    unsigned OldOpc = MI->getOpcode();
-    unsigned Opc = 0;
-    switch (OldOpc) {
-      case ARM::ADCSSrr:
-        Opc = ARM::ADCrr;
-        break;
-      case ARM::ADCSSri:
-        Opc = ARM::ADCri;
-        break;
-      case ARM::ADCSSrs:
-        Opc = ARM::ADCrs;
-        break;
-      case ARM::SBCSSrr:
-        Opc = ARM::SBCrr;
-        break;
-      case ARM::SBCSSri:
-        Opc = ARM::SBCri;
-        break;
-      case ARM::SBCSSrs:
-        Opc = ARM::SBCrs;
-        break;
-      case ARM::RSBSri:
-        Opc = ARM::RSBri;
-        break;
-      case ARM::RSBSrr:
-        Opc = ARM::RSBrr;
-        break;
-      case ARM::RSBSrs:
-        Opc = ARM::RSBrs;
-        break;
-      case ARM::RSCSri:
-        Opc = ARM::RSCri;
-        break;
-      case ARM::RSCSrs:
-        Opc = ARM::RSCrs;
-        break;
-      default:
-        llvm_unreachable("Unknown opcode?");
-    }
-
-    MachineInstrBuilder MIB =
-      BuildMI(*BB, MI, MI->getDebugLoc(), TII->get(Opc));
-    for (unsigned i = 0; i < MI->getNumOperands(); ++i)
-      MIB.addOperand(MI->getOperand(i));
-    AddDefaultPred(MIB);
-    MIB.addReg(ARM::CPSR, RegState::Define); // S bit
-    MI->eraseFromParent();
-    return BB;
-  }
-
 
   case ARM::tMOVCCr_pseudo: {
     // To "insert" a SELECT_CC instruction, we actually have to insert the
@@ -5474,7 +5481,7 @@ static SDValue PerformANDCombine(SDNode *N,
 
   if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
     return SDValue();
-  
+
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
   bool HasAnyUndefs;
@@ -5510,7 +5517,7 @@ static SDValue PerformORCombine(SDNode *N,
 
   if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
     return SDValue();
-  
+
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
   bool HasAnyUndefs;

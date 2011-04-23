@@ -681,49 +681,27 @@ multiclass T2I_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
      let Inst{24-21} = opcod;
    }
 }
+}
 
 // Carry setting variants
-let isCodeGenOnly = 1, Defs = [CPSR] in {
-multiclass T2I_adde_sube_s_irs<bits<4> opcod, string opc, PatFrag opnode,
-                               bit Commutable = 0> {
+// NOTE: CPSR def omitted because it will be handled by the custom inserter.
+let usesCustomInserter = 1 in {
+multiclass T2I_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
    // shifted imm
-   def ri : T2sTwoRegImm<
-                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm), IIC_iALUi,
-                 opc, "\t$Rd, $Rn, $imm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_imm:$imm))]>,
-                 Requires<[IsThumb2]> {
-     let Inst{31-27} = 0b11110;
-     let Inst{25} = 0;
-     let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
-     let Inst{15} = 0;
-   }
+   def ri : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm),
+                Size4Bytes, IIC_iALUi,
+                [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_imm:$imm))]>;
    // register
-   def rr : T2sThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUr,
-                 opc, ".w\t$Rd, $Rn, $Rm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]>,
-                 Requires<[IsThumb2]> {
+   def rr : t2PseudoInst<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm),
+                Size4Bytes, IIC_iALUr,
+                [(set rGPR:$Rd, (opnode rGPR:$Rn, rGPR:$Rm))]> {
      let isCommutable = Commutable;
-     let Inst{31-27} = 0b11101;
-     let Inst{26-25} = 0b01;
-     let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
-     let Inst{14-12} = 0b000; // imm3
-     let Inst{7-6} = 0b00; // imm2
-     let Inst{5-4} = 0b00; // type
    }
    // shifted register
-   def rs : T2sTwoRegShiftedReg<
-                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
-                 IIC_iALUsi, opc, ".w\t$Rd, $Rn, $ShiftedRm",
-                 [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>,
-                 Requires<[IsThumb2]> {
-     let Inst{31-27} = 0b11101;
-     let Inst{26-25} = 0b01;
-     let Inst{24-21} = opcod;
-     let Inst{20} = 1; // The S bit.
-   }
-}
+   def rs : t2PseudoInst<
+                (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
+                Size4Bytes, IIC_iALUsi,
+                [(set rGPR:$Rd, (opnode rGPR:$Rn, t2_so_reg:$ShiftedRm))]>;
 }
 }
 
@@ -1803,10 +1781,8 @@ defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
                           BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
 defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
                           BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
-defm t2ADCS : T2I_adde_sube_s_irs<0b1010, "adc",
-                          BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
-defm t2SBCS : T2I_adde_sube_s_irs<0b1011, "sbc",
-                          BinOpFrag<(sube_live_carry node:$LHS, node:$RHS)>>;
+defm t2ADCS : T2I_adde_sube_s_irs<BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
+defm t2SBCS : T2I_adde_sube_s_irs<BinOpFrag<(sube_live_carry node:$LHS, node:$RHS)>>;
 
 // RSB
 defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
@@ -1837,9 +1813,14 @@ def : T2Pat<(addc       rGPR:$src, t2_so_imm_neg:$imm),
 // Effectively, the inverse interpretation of the carry flag already accounts
 // for part of the negation.
 let AddedComplexity = 1 in
-def : T2Pat<(adde       rGPR:$src, imm0_255_not:$imm),
+def : T2Pat<(adde_dead_carry       rGPR:$src, imm0_255_not:$imm),
+            (t2SBCri    rGPR:$src, imm0_255_not:$imm)>;
+def : T2Pat<(adde_dead_carry       rGPR:$src, t2_so_imm_not:$imm),
+            (t2SBCri    rGPR:$src, t2_so_imm_not:$imm)>;
+let AddedComplexity = 1 in
+def : T2Pat<(adde_live_carry       rGPR:$src, imm0_255_not:$imm),
             (t2SBCSri   rGPR:$src, imm0_255_not:$imm)>;
-def : T2Pat<(adde       rGPR:$src, t2_so_imm_not:$imm),
+def : T2Pat<(adde_live_carry       rGPR:$src, t2_so_imm_not:$imm),
             (t2SBCSri   rGPR:$src, t2_so_imm_not:$imm)>;
 
 // Select Bytes -- for disassembly only

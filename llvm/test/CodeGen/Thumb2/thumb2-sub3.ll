@@ -4,7 +4,7 @@
 define i64 @f1(i64 %a) {
 ; CHECK: f1
 ; CHECK: subs  r0, #171
-; CHECK: adc r1, r1, #-1
+; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 171
     ret i64 %tmp
 }
@@ -13,7 +13,7 @@ define i64 @f1(i64 %a) {
 define i64 @f2(i64 %a) {
 ; CHECK: f2
 ; CHECK: subs.w  r0, r0, #1179666
-; CHECK: adc r1, r1, #-1
+; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 1179666
     ret i64 %tmp
 }
@@ -22,7 +22,7 @@ define i64 @f2(i64 %a) {
 define i64 @f3(i64 %a) {
 ; CHECK: f3
 ; CHECK: subs.w  r0, r0, #872428544
-; CHECK: adc r1, r1, #-1
+; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 872428544
     ret i64 %tmp
 }
@@ -31,7 +31,7 @@ define i64 @f3(i64 %a) {
 define i64 @f4(i64 %a) {
 ; CHECK: f4
 ; CHECK: subs.w  r0, r0, #1448498774
-; CHECK: adc r1, r1, #-1
+; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 1448498774
     ret i64 %tmp
 }
@@ -40,7 +40,7 @@ define i64 @f4(i64 %a) {
 define i64 @f5(i64 %a) {
 ; CHECK: f5
 ; CHECK: subs.w  r0, r0, #66846720
-; CHECK: adc r1, r1, #-1
+; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 66846720
     ret i64 %tmp
 }

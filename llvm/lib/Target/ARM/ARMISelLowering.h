@@ -485,6 +485,7 @@ namespace llvm {
                                         unsigned Size,
                                         unsigned BinOpcode) const;
 
+    bool RemapAddSubWithFlags(MachineInstr *MI, MachineBasicBlock *BB) const;
   };
 
   enum NEONModImmType {

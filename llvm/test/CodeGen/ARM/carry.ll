@@ -19,3 +19,20 @@ entry:
 	%tmp2 = sub i64 %tmp1, %b
 	ret i64 %tmp2
 }
+
+; add with live carry
+define i64 @f3(i32 %al, i32 %bl) {
+; CHECK: f3:
+; CHECK: adds r
+; CHECK: adcs r
+; CHECK: adc r
+entry:
+        ; unsigned wide add
+        %aw = zext i32 %al to i64
+        %bw = zext i32 %bl to i64
+        %cw = add i64 %aw, %bw
+        ; ch == carry bit
+        %ch = lshr i64 %cw, 32
+	%dw = add i64 %ch, %bw
+	ret i64 %dw
+}

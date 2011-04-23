@@ -940,16 +940,16 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
 // NOTE: CPSR def omitted because it will be handled by the custom inserter.
 let usesCustomInserter = 1 in {
 multiclass AI1_adde_sube_s_irs<PatFrag opnode, bit Commutable = 0> {
-  def Sri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
-                Size4Bytes, IIC_iALUi,
+  def ri : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_imm:$imm),
+               Size4Bytes, IIC_iALUi,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_imm:$imm))]>;
-  def Srr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-                Size4Bytes, IIC_iALUr,
+  def rr : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
+               Size4Bytes, IIC_iALUr,
                [(set GPR:$Rd, (opnode GPR:$Rn, GPR:$Rm))]> {
     let isCommutable = Commutable;
   }
-  def Srs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
-                Size4Bytes, IIC_iALUsr,
+  def rs : ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, so_reg:$shift),
+               Size4Bytes, IIC_iALUsr,
                [(set GPR:$Rd, (opnode GPR:$Rn, so_reg:$shift))]>;
 }
 }
@@ -2330,8 +2330,10 @@ def : ARMPat<(addc   GPR:$src, so_imm_neg:$imm),
 // The with-carry-in form matches bitwise not instead of the negation.
 // Effectively, the inverse interpretation of the carry flag already accounts
 // for part of the negation.
-def : ARMPat<(adde   GPR:$src, so_imm_not:$imm),
+def : ARMPat<(adde_dead_carry   GPR:$src, so_imm_not:$imm),
              (SBCri  GPR:$src, so_imm_not:$imm)>;
+def : ARMPat<(adde_live_carry   GPR:$src, so_imm_not:$imm),
+             (SBCSri GPR:$src, so_imm_not:$imm)>;
 
 // Note: These are implemented in C++ code, because they have to generate
 // ADD/SUBrs instructions, which use a complex pattern that a xform function
