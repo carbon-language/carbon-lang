@@ -540,9 +540,9 @@ def fdelayed_template_parsing : Flag<"-fdelayed-template-parsing">,
 def funknown_anytype : Flag<"-funknown-anytype">,
   HelpText<"Enable parser support for the __unknown_anytype type; for testing purposes only">;
 def fdeprecated_macro : Flag<"-fdeprecated-macro">,
-  HelpText<"Defines the __DEPRECATED macro in C++ compilations">;
+  HelpText<"Defines the __DEPRECATED macro">;
 def fno_deprecated_macro : Flag<"-fno-deprecated-macro">,
-  HelpText<"Undefines the __DEPRECATED macro in C++ compilations">;
+  HelpText<"Undefines the __DEPRECATED macro">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options

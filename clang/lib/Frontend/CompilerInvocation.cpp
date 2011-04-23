@@ -694,8 +694,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-funknown-anytype");
   if (Opts.DelayedTemplateParsing)
     Res.push_back("-fdelayed-template-parsing");
-  if (!Opts.Deprecated)
-    Res.push_back("-fno-deprecated-macro");
+  if (Opts.Deprecated)
+    Res.push_back("-fdeprecated-macro");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,

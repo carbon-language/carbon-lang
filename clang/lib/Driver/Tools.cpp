@@ -1363,14 +1363,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // GCC provides a macro definition '__DEPRECATED' when -Wdeprecated is active
-  // during C++ compilation. CC1 uses '-fdeprecated-macro' to control this.
-  // Both '-Wdeprecated' and '-fdeprecated-macro' default to on, so the flag
-  // logic here is inverted.
-  if (Args.hasFlag(options::OPT_Wno_deprecated, options::OPT_Wdeprecated,
-                   false)) {
-    // GCC keeps this define even in the presence of '-w', match this behavior
-    // bug-for-bug.
-    CmdArgs.push_back("-fno-deprecated-macro");
+  // during C++ compilation, which it is by default. GCC keeps this define even
+  // in the presence of '-w', match this behavior bug-for-bug.
+  if (types::isCXX(InputType) &&
+      Args.hasFlag(options::OPT_Wdeprecated, options::OPT_Wno_deprecated,
+                   true)) {
+    CmdArgs.push_back("-fdeprecated-macro");
   }
 
   // Translate GCC's misnamer '-fasm' arguments to '-fgnu-keywords'.

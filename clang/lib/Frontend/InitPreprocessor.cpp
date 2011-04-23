@@ -318,9 +318,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.SjLjExceptions)
     Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
 
+  if (LangOpts.Deprecated)
+    Builder.defineMacro("__DEPRECATED");
+
   if (LangOpts.CPlusPlus) {
-    if (LangOpts.Deprecated)
-      Builder.defineMacro("__DEPRECATED");
     Builder.defineMacro("__GNUG__", "4");
     Builder.defineMacro("__GXX_WEAK__");
     if (LangOpts.GNUMode)

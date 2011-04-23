@@ -215,7 +215,7 @@ public:
     GNUInline = 0;
     NoInline = 0;
 
-    Deprecated = 1;  // -Wdeprecated defaults to "on".
+    Deprecated = 0;
 
     CharIsSigned = 1;
     ShortWChar = 0;
