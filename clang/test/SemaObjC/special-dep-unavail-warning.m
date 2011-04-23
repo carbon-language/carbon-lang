@@ -27,7 +27,7 @@
 @end
 
 
-@class C;
+@class C;	// expected-note 5 {{forward class is declared here}}
 
 void test(C *c) {
   [c depInA]; // expected-warning {{'depInA' maybe deprecated because receiver type is unknown}}

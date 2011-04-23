@@ -1923,7 +1923,8 @@ public:
   }
 
   void EmitDeprecationWarning(NamedDecl *D, llvm::StringRef Message,
-                              SourceLocation Loc, bool UnknownObjCClass=false);
+                              SourceLocation Loc, 
+                              const ObjCInterfaceDecl *UnknownObjCClass=0);
 
   void HandleDelayedDeprecationCheck(sema::DelayedDiagnostic &DD, Decl *Ctx);
 
@@ -1931,7 +1932,7 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc, 
-                         bool UnknownObjCClass=false);
+                         const ObjCInterfaceDecl *UnknownObjCClass=0);
   std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
