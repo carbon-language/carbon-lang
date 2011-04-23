@@ -129,6 +129,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(PICLevel, diag::warn_pch_pic_level);
   PARSE_LANGOPT_IMPORTANT(GNUInline, diag::warn_pch_gnu_inline);
   PARSE_LANGOPT_IMPORTANT(NoInline, diag::warn_pch_no_inline);
+  PARSE_LANGOPT_IMPORTANT(Deprecated, diag::warn_pch_deprecated);
   PARSE_LANGOPT_IMPORTANT(AccessControl, diag::warn_pch_access_control);
   PARSE_LANGOPT_IMPORTANT(CharIsSigned, diag::warn_pch_char_signed);
   PARSE_LANGOPT_IMPORTANT(ShortWChar, diag::warn_pch_short_wchar);
@@ -2838,6 +2839,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(PICLevel);
     PARSE_LANGOPT(GNUInline);
     PARSE_LANGOPT(NoInline);
+    PARSE_LANGOPT(Deprecated);
     PARSE_LANGOPT(AccessControl);
     PARSE_LANGOPT(CharIsSigned);
     PARSE_LANGOPT(ShortWChar);

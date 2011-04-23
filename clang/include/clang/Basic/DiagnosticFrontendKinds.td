@@ -235,6 +235,9 @@ def warn_pch_gnu_inline : Error<
 def warn_pch_no_inline : Error<
     "the macro '__NO_INLINE__' was %select{not defined|defined}0 in "
     "the PCH file but is currently %select{undefined|defined}1">;
+def warn_pch_deprecated : Error<
+    "the macro '__DEPRECATED' was %select{not defined|defined}0 in "
+    "the PCH file but is currently %select{undefined|defined}1">;
 def warn_pch_gc_mode : Error<
     "the PCH file was built with %select{no||hybrid}0 garbage collection but "
     "the current translation unit will compiled with %select{no||hybrid}1 "
