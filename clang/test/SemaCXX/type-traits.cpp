@@ -33,7 +33,6 @@ struct Derives : POD {};
 typedef Derives DerivesAr[10];
 typedef Derives DerivesArNB[];
 struct DerivesEmpty : Empty {};
-struct DerivesNonPOD : NonPOD {};
 struct HasCons { HasCons(int); };
 struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
 struct HasDest { ~HasDest(); };
@@ -46,6 +45,13 @@ typedef NonPOD NonPODAr[10];
 typedef HasVirt VirtAr[10];
 typedef NonPOD NonPODArNB[];
 union NonPODUnion { int i; Derives n; };
+struct DerivesHasCons : HasCons {};
+struct DerivesHasCopyAssign : HasCopyAssign {};
+struct DerivesHasDest : HasDest {};
+struct DerivesHasPriv : HasPriv {};
+struct DerivesHasProt : HasProt {};
+struct DerivesHasRef : HasRef {};
+struct DerivesHasVirt : HasVirt {};
 
 struct HasNoThrowCopyAssign {
   void operator =(const HasNoThrowCopyAssign&) throw();
@@ -100,7 +106,6 @@ void is_pod()
   { int arr[F(__is_pod(DerivesAr))]; }
   { int arr[F(__is_pod(DerivesArNB))]; }
   { int arr[F(__is_pod(DerivesEmpty))]; }
-  { int arr[F(__is_pod(DerivesNonPOD))]; }
   { int arr[F(__is_pod(HasCons))]; }
   { int arr[F(__is_pod(HasCopyAssign))]; }
   { int arr[F(__is_pod(HasDest))]; }
@@ -108,6 +113,13 @@ void is_pod()
   { int arr[F(__is_pod(HasProt))]; }
   { int arr[F(__is_pod(HasRef))]; }
   { int arr[F(__is_pod(HasVirt))]; }
+  { int arr[F(__is_pod(DerivesHasCons))]; }
+  { int arr[F(__is_pod(DerivesHasCopyAssign))]; }
+  { int arr[F(__is_pod(DerivesHasDest))]; }
+  { int arr[F(__is_pod(DerivesHasPriv))]; }
+  { int arr[F(__is_pod(DerivesHasProt))]; }
+  { int arr[F(__is_pod(DerivesHasRef))]; }
+  { int arr[F(__is_pod(DerivesHasVirt))]; }
   { int arr[F(__is_pod(NonPOD))]; }
   { int arr[F(__is_pod(HasNonPOD))]; }
   { int arr[F(__is_pod(NonPODAr))]; }
@@ -582,6 +594,8 @@ void is_trivial()
   { int arr[T(__is_trivial(HasAnonymousUnion))]; }
   { int arr[T(__is_trivial(HasPriv))]; }
   { int arr[T(__is_trivial(HasProt))]; }
+  { int arr[T(__is_trivial(DerivesHasPriv))]; }
+  { int arr[T(__is_trivial(DerivesHasProt))]; }
 
   { int arr[F(__is_trivial(HasCons))]; }
   { int arr[F(__is_trivial(HasCopyAssign))]; }
@@ -589,9 +603,13 @@ void is_trivial()
   { int arr[F(__is_trivial(HasRef))]; }
   { int arr[F(__is_trivial(HasNonPOD))]; }
   { int arr[F(__is_trivial(HasVirt))]; }
+  { int arr[F(__is_trivial(DerivesHasCons))]; }
+  { int arr[F(__is_trivial(DerivesHasCopyAssign))]; }
+  { int arr[F(__is_trivial(DerivesHasDest))]; }
+  { int arr[F(__is_trivial(DerivesHasRef))]; }
+  { int arr[F(__is_trivial(DerivesHasVirt))]; }
   { int arr[F(__is_trivial(IntArNB))]; }
   { int arr[F(__is_trivial(DerivesArNB))]; }
-  { int arr[F(__is_trivial(DerivesNonPOD))]; }
   { int arr[F(__is_trivial(void))]; }
   { int arr[F(__is_trivial(cvoid))]; }
 }
