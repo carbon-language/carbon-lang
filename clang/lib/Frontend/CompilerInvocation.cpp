@@ -694,6 +694,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-funknown-anytype");
   if (Opts.DelayedTemplateParsing)
     Res.push_back("-fdelayed-template-parsing");
+  if (!Opts.Deprecated)
+    Res.push_back("-fno-deprecated-macro");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -1527,6 +1529,11 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MRTD = Args.hasArg(OPT_mrtd);
   Opts.FakeAddressSpaceMap = Args.hasArg(OPT_ffake_address_space_map);
   Opts.ParseUnknownAnytype = Args.hasArg(OPT_funknown_anytype);
+
+  // Record whether the __DEPRECATED define was requested.
+  Opts.Deprecated = Args.hasFlag(OPT_fdeprecated_macro,
+                                 OPT_fno_deprecated_macro,
+                                 Opts.Deprecated);
 
   // FIXME: Eliminate this dependency.
   unsigned Opt = getOptimizationLevel(Args, IK, Diags);

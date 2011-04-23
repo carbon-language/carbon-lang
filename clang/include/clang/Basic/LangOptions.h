@@ -89,6 +89,8 @@ public:
                                   // used (instead of C99 semantics).
   unsigned NoInline          : 1; // Should __NO_INLINE__ be defined.
 
+  unsigned Deprecated        : 1; // Should __DEPRECATED be defined.
+
   unsigned ObjCGCBitmapPrint : 1; // Enable printing of gc's bitmap layout
                                   // for __weak/__strong ivars.
 
@@ -212,6 +214,8 @@ public:
 
     GNUInline = 0;
     NoInline = 0;
+
+    Deprecated = 1;  // -Wdeprecated defaults to "on".
 
     CharIsSigned = 1;
     ShortWChar = 0;

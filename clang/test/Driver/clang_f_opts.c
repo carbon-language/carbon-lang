@@ -19,3 +19,11 @@
 // WRITE-STRINGS2-NOT: -fconst-strings
 // RUN: %clang -### -S -Wwrite-strings -w %s 2>&1 | FileCheck -check-prefix=WRITE-STRINGS3 %s
 // WRITE-STRINGS3: -fconst-strings
+
+// RUN: %clang -### -c %s 2>&1 | FileCheck -check-prefix=DEPRECATED-ON-CHECK %s
+// RUN: %clang -### -c -Wdeprecated %s 2>&1 | FileCheck -check-prefix=DEPRECATED-ON-CHECK %s
+// RUN: %clang -### -c -Wno-deprecated %s 2>&1 | FileCheck -check-prefix=DEPRECATED-OFF-CHECK %s
+// RUN: %clang -### -c -Wno-deprecated -Wdeprecated %s 2>&1 | FileCheck -check-prefix=DEPRECATED-ON-CHECK %s
+// RUN: %clang -### -c -w %s 2>&1 | FileCheck -check-prefix=DEPRECATED-ON-CHECK %s
+// DEPRECATED-OFF-CHECK: -fno-deprecated-macro
+// DEPRECATED-ON-CHECK-NOT: -fno-deprecated-macro

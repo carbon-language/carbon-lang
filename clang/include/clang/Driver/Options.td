@@ -166,6 +166,8 @@ def Wa_COMMA : CommaJoined<"-Wa,">,
   HelpText<"Pass the comma separated arguments in <arg> to the assembler">,
   MetaVarName<"<arg>">;
 def Wall : Flag<"-Wall">, Group<W_Group>;
+def Wdeprecated : Flag<"-Wdeprecated">, Group<W_Group>;
+def Wno_deprecated : Flag<"-Wno-deprecated">, Group<W_Group>;
 def Wextra : Flag<"-Wextra">, Group<W_Group>;
 def Wl_COMMA : CommaJoined<"-Wl,">, Flags<[LinkerInput, RenderAsInput]>,
   HelpText<"Pass the comma separated arguments in <arg> to the linker">,
