@@ -1803,17 +1803,9 @@ Decl *Sema::ActOnMethodDeclaration(
       ? DI->getTypeLoc().getBeginLoc()
       : ArgInfo[i].NameLoc;
 
-    ParmVarDecl* Param
-      = ParmVarDecl::Create(Context, ObjCMethod,
-                            StartLoc, ArgInfo[i].NameLoc, ArgInfo[i].Name,
-                            ArgType, DI, SC_None, SC_None, 0);
-
-    if (ArgType->isObjCObjectType()) {
-      Diag(ArgInfo[i].NameLoc,
-           diag::err_object_cannot_be_passed_returned_by_value)
-        << 1 << ArgType;
-      Param->setInvalidDecl();
-    }
+    ParmVarDecl* Param = CheckParameter(ObjCMethod, StartLoc,
+                                        ArgInfo[i].NameLoc, ArgInfo[i].Name,
+                                        ArgType, DI, SC_None, SC_None);
 
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgInfo[i].DeclSpec.getObjCDeclQualifier()));
