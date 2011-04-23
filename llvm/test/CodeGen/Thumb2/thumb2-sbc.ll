@@ -39,7 +39,7 @@ define i64 @f5(i64 %a) {
 ; CHECK: f5
 ; CHECK: subs  r0, #2
 ; CHECK: adc r1, r1, #-1448498775
-    %tmp = sub i64 %a, 6221254862626095106 
+    %tmp = sub i64 %a, 6221254862626095106
     ret i64 %tmp
 }
 
@@ -48,7 +48,7 @@ define i64 @f6(i64 %a) {
 ; CHECK: f6
 ; CHECK: subs  r0, #2
 ; CHECK: sbc r1, r1, #66846720
-    %tmp = sub i64 %a, 287104476244869122 
+    %tmp = sub i64 %a, 287104476244869122
     ret i64 %tmp
 }
 
