@@ -33,6 +33,7 @@ struct Derives : POD {};
 typedef Derives DerivesAr[10];
 typedef Derives DerivesArNB[];
 struct DerivesEmpty : Empty {};
+struct DerivesNonPOD : NonPOD {};
 struct HasCons { HasCons(int); };
 struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
 struct HasDest { ~HasDest(); };
@@ -99,6 +100,7 @@ void is_pod()
   { int arr[F(__is_pod(DerivesAr))]; }
   { int arr[F(__is_pod(DerivesArNB))]; }
   { int arr[F(__is_pod(DerivesEmpty))]; }
+  { int arr[F(__is_pod(DerivesNonPOD))]; }
   { int arr[F(__is_pod(HasCons))]; }
   { int arr[F(__is_pod(HasCopyAssign))]; }
   { int arr[F(__is_pod(HasDest))]; }
@@ -589,6 +591,7 @@ void is_trivial()
   { int arr[F(__is_trivial(HasVirt))]; }
   { int arr[F(__is_trivial(IntArNB))]; }
   { int arr[F(__is_trivial(DerivesArNB))]; }
+  { int arr[F(__is_trivial(DerivesNonPOD))]; }
   { int arr[F(__is_trivial(void))]; }
   { int arr[F(__is_trivial(cvoid))]; }
 }
