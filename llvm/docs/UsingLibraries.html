@@ -31,7 +31,7 @@
 
 <!-- ======================================================================= -->
 <h2><a name="abstract">Abstract</a></h2>
-<div class="doc_text">
+<div>
   <p>Amongst other things, LLVM is a toolkit for building compilers, linkers,
   runtime executives, virtual machines, and other program execution related
   tools. In addition to the LLVM tool set, the functionality of LLVM is
@@ -46,7 +46,7 @@
 
 <!-- ======================================================================= -->
 <h2><a name="introduction">Introduction</a></h2>
-<div class="doc_text">
+<div>
   <p>If you're writing a compiler, virtual machine, or any other utility based 
   on LLVM, you'll need to figure out which of the many libraries files you will 
   need to link with to be successful. An understanding of the contents of these 
@@ -75,7 +75,7 @@
 </div>
 <!-- ======================================================================= -->
 <h2><a name="descriptions">Library Descriptions</a></h2>
-<div class="doc_text">
+<div>
   <p>The table below categorizes each library
 <table style="text-align:left">
   <tr><th>Library</th><th>Forms</th><th>Description</th></tr>
@@ -153,7 +153,7 @@
 
 <!-- ======================================================================= -->
 <h2><a name="dependencies">Using llvm-config</a></h2>
-<div class="doc_text">
+<div>
   <p>The <tt>llvm-config</tt> tool is a perl script that produces on its output
   various kinds of information. For example, the source or object directories 
   used to build LLVM can be accessed by passing options to <tt>llvm-config</tt>.
@@ -402,15 +402,14 @@
 
 <!-- ======================================================================= -->
 <h2><a name="rot">Linkage Rules Of Thumb</a></h2>
-<div class="doc_text">
+<div>
 	<p>This section contains various "rules of thumb" about what files you
 	should link into your programs.</p>
-</div>
 <!-- ======================================================================= -->
 <h3>
   <a name="always">Always Link LLVMCore, LLVMSupport, and LLVMSystem</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>No matter what you do with LLVM, the last three entries in the value of 
   your LLVMLIBS make variable should always be: 
   <tt>LLVMCore LLVMSupport.a LLVMSystem.a</tt>. There are no <tt>LLVM</tt> 
@@ -420,13 +419,16 @@
 <h3>
   <a name="onlyone">Never link both archive and re-linked library</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>There is never any point to linking both the re-linked (<tt>.o</tt>) and
   the archive (<tt>.a</tt>) versions of a library. Since the re-linked version
   includes the entire library, the archive version will not resolve any symbols.
   You could even end up with link error if you place the archive version before
   the re-linked version on the linker's command line.</p>
 </div>
+
+</div>
+
 <!-- ======================================================================= -->
 <hr>
 <div class="doc_footer">

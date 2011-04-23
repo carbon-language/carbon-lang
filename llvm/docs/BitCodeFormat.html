@@ -50,7 +50,7 @@
 <h2><a name="abstract">Abstract</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document describes the LLVM bitstream file format and the encoding of
 the LLVM IR into it.</p>
@@ -61,7 +61,7 @@ the LLVM IR into it.</p>
 <h2><a name="overview">Overview</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 What is commonly known as the LLVM bitcode file format (also, sometimes
@@ -91,7 +91,7 @@ wrapper format, then describes the record structure used by LLVM IR files.
 <h2><a name="bitstream">Bitstream Format</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 The bitstream format is literally a stream of bits, with a very simple
@@ -114,14 +114,12 @@ href="CommandGuide/html/llvm-bcanalyzer.html">llvm-bcanalyzer</a> tool can be
 used to dump and inspect arbitrary bitstreams, which is very useful for
 understanding the encoding.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="magic">Magic Numbers</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The first two bytes of a bitcode file are 'BC' (0x42, 0x43).
 The second two bytes are an application-specific magic number.  Generic
@@ -135,7 +133,7 @@ bitcode, while application-specific programs will want to look at all four.</p>
   <a name="primitives">Primitives</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 A bitstream literally consists of a stream of bits, which are read in order
@@ -146,14 +144,12 @@ Width Integers</a> or as <a href="#variablewidth">Variable Width
 Integers</a>.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="fixedwidth">Fixed Width Integers</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Fixed-width integer values have their low bits emitted directly to the file.
    For example, a 3-bit integer value encodes 1 as 001.  Fixed width integers
@@ -168,7 +164,7 @@ Integers</a>.
   <a name="variablewidth">Variable Width Integers</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Variable-width integer (VBR) values encode values of arbitrary size,
 optimizing for the case where the values are small.  Given a 4-bit VBR field,
@@ -188,7 +184,7 @@ value of 24 (011 << 3) with no continuation.  The sum (3+24) yields the value
 <!-- _______________________________________________________________________ -->
 <h4><a name="char6">6-bit characters</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>6-bit characters encode common characters into a fixed 6-bit field.  They
 represent the following characters with the following 6-bit values:</p>
@@ -212,7 +208,7 @@ characters not in the set.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="wordalign">Word Alignment</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Occasionally, it is useful to emit zero bits until the bitstream is a
 multiple of 32 bits.  This ensures that the bit position in the stream can be
@@ -220,13 +216,14 @@ represented as a multiple of 32-bit words.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="abbrevid">Abbreviation IDs</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 A bitstream is a sequential series of <a href="#blocks">Blocks</a> and
@@ -262,7 +259,7 @@ an <a href="#abbrev_records">abbreviated record encoding</a>.</p>
   <a name="blocks">Blocks</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 Blocks in a bitstream denote nested regions of the stream, and are identified by
@@ -303,12 +300,10 @@ its own set of abbreviations, and its own abbrev id width.  When a sub-block is
 popped, the saved values are restored.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="ENTER_SUBBLOCK">ENTER_SUBBLOCK Encoding</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[ENTER_SUBBLOCK, blockid<sub>vbr8</sub>, newabbrevlen<sub>vbr4</sub>,
      &lt;align32bits&gt;, blocklen<sub>32</sub>]</tt></p>
@@ -329,7 +324,7 @@ reader to skip over the entire block in one jump.
 <!-- _______________________________________________________________________ -->
 <h4><a name="END_BLOCK">END_BLOCK Encoding</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[END_BLOCK, &lt;align32bits&gt;]</tt></p>
 
@@ -341,14 +336,14 @@ an even multiple of 32-bits.
 
 </div>
 
-
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="datarecord">Data Records</a>
 </h3>
 
-<div class="doc_text">
+<div>
 <p>
 Data records consist of a record code and a number of (up to) 64-bit
 integer values.  The interpretation of the code and values is
@@ -360,12 +355,10 @@ which encodes the target triple of a module.  The code is
 ASCII codes for the characters in the string.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="UNABBREV_RECORD">UNABBREV_RECORD Encoding</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[UNABBREV_RECORD, code<sub>vbr6</sub>, numops<sub>vbr6</sub>,
        op0<sub>vbr6</sub>, op1<sub>vbr6</sub>, ...]</tt></p>
@@ -391,7 +384,7 @@ bits.  This is not an efficient encoding, but it is fully general.
 <!-- _______________________________________________________________________ -->
 <h4><a name="abbrev_records">Abbreviated Record Encoding</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[&lt;abbrevid&gt;, fields...]</tt></p>
 
@@ -412,12 +405,14 @@ operand value).</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="abbreviations">Abbreviations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 <p>
 Abbreviations are an important form of compression for bitstreams.  The idea is
 to specify a dense encoding for a class of records once, then use that encoding
@@ -435,12 +430,11 @@ As a concrete example, LLVM IR files usually emit an abbreviation
 for binary operators.  If a specific LLVM module contained no or few binary
 operators, the abbreviation does not need to be emitted.
 </p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4><a name="DEFINE_ABBREV">DEFINE_ABBREV  Encoding</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[DEFINE_ABBREV, numabbrevops<sub>vbr5</sub>, abbrevop0, abbrevop1,
  ...]</tt></p>
@@ -555,12 +549,14 @@ used for any other string value.
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="stdblocks">Standard Blocks</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 In addition to the basic block structure and record encodings, the bitstream
@@ -569,12 +565,10 @@ stream is to be decoded or other metadata.  In the future, new standard blocks
 may be added.  Block IDs 0-7 are reserved for standard blocks.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="BLOCKINFO">#0 - BLOCKINFO Block</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 The <tt>BLOCKINFO</tt> block allows the description of metadata for other
@@ -623,11 +617,15 @@ from the corresponding blocks.  It is not safe to skip them.
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="wrapper">Bitcode Wrapper Format</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 Bitcode files for LLVM IR may optionally be wrapped in a simple wrapper
@@ -658,7 +656,7 @@ value that can be used to encode the CPU of the target.
 <h2><a name="llvmir">LLVM IR Encoding</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 LLVM IR is encoded into a bitstream by defining blocks and records.  It uses
@@ -669,17 +667,17 @@ that the writer uses, as these are fully self-described in the file, and the
 reader is not allowed to build in any knowledge of this.
 </p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="basics">Basics</a>
 </h3>
 
+<div>
+
 <!-- _______________________________________________________________________ -->
 <h4><a name="ir_magic">LLVM IR Magic Number</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 The magic number for LLVM IR files is:
@@ -701,7 +699,7 @@ When combined with the bitcode magic number and viewed as bytes, this is
 <!-- _______________________________________________________________________ -->
 <h4><a name="ir_signed_vbr">Signed VBRs</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 <a href="#variablewidth">Variable Width Integer</a> encoding is an efficient way to
@@ -734,7 +732,7 @@ within <tt>CONSTANTS_BLOCK</tt> blocks.
 <!-- _______________________________________________________________________ -->
 <h4><a name="ir_blocks">LLVM IR Blocks</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 LLVM IR is defined with the following blocks:
@@ -762,12 +760,14 @@ LLVM IR is defined with the following blocks:
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="MODULE_BLOCK">MODULE_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>MODULE_BLOCK</tt> block (id 8) is the top-level block for LLVM
 bitcode files, and each bitcode file must contain exactly one. In
@@ -787,12 +787,10 @@ following sub-blocks:
 <li><a href="#METADATA_BLOCK"><tt>METADATA_BLOCK</tt></a></li>
 </ul>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_VERSION">MODULE_CODE_VERSION Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[VERSION, version#]</tt></p>
 
@@ -804,7 +802,7 @@ time.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_TRIPLE">MODULE_CODE_TRIPLE Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[TRIPLE, ...string...]</tt></p>
 
 <p>The <tt>TRIPLE</tt> record (code 2) contains a variable number of
@@ -815,7 +813,7 @@ specification string.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_DATALAYOUT">MODULE_CODE_DATALAYOUT Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[DATALAYOUT, ...string...]</tt></p>
 
 <p>The <tt>DATALAYOUT</tt> record (code 3) contains a variable number of
@@ -826,7 +824,7 @@ specification string.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_ASM">MODULE_CODE_ASM Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[ASM, ...string...]</tt></p>
 
 <p>The <tt>ASM</tt> record (code 4) contains a variable number of
@@ -837,7 +835,7 @@ individual assembly blocks separated by newline (ASCII 10) characters.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_SECTIONNAME">MODULE_CODE_SECTIONNAME Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[SECTIONNAME, ...string...]</tt></p>
 
 <p>The <tt>SECTIONNAME</tt> record (code 5) contains a variable number
@@ -852,7 +850,7 @@ referenced by the 1-based index in the <i>section</i> fields of
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_DEPLIB">MODULE_CODE_DEPLIB Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[DEPLIB, ...string...]</tt></p>
 
 <p>The <tt>DEPLIB</tt> record (code 6) contains a variable number of
@@ -865,7 +863,7 @@ library name referenced.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_GLOBALVAR">MODULE_CODE_GLOBALVAR Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[GLOBALVAR, pointer type, isconst, initid, linkage, alignment, section, visibility, threadlocal]</tt></p>
 
 <p>The <tt>GLOBALVAR</tt> record (code 7) marks the declaration or
@@ -929,7 +927,7 @@ has <tt>unnamed_addr</tt></li>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_FUNCTION">MODULE_CODE_FUNCTION Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc]</tt></p>
 
@@ -985,7 +983,7 @@ has <tt>unnamed_addr</tt></li>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_ALIAS">MODULE_CODE_ALIAS Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[ALIAS, alias type, aliasee val#, linkage, visibility]</tt></p>
 
@@ -1009,7 +1007,7 @@ for this alias</li>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_PURGEVALS">MODULE_CODE_PURGEVALS Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[PURGEVALS, numvals]</tt></p>
 
 <p>The <tt>PURGEVALS</tt> record (code 10) resets the module-level
@@ -1022,7 +1020,7 @@ new value indices will start from the given <i>numvals</i> value.</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="MODULE_CODE_GCNAME">MODULE_CODE_GCNAME Record</a></h4>
 
-<div class="doc_text">
+<div>
 <p><tt>[GCNAME, ...string...]</tt></p>
 
 <p>The <tt>GCNAME</tt> record (code 11) contains a variable number of
@@ -1033,12 +1031,14 @@ the module. These records can be referenced by 1-based index in the <i>gc</i>
 fields of <tt>FUNCTION</tt> records.</p>
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="PARAMATTR_BLOCK">PARAMATTR_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>PARAMATTR_BLOCK</tt> block (id 9) contains a table of
 entries describing the attributes of function parameters. These
@@ -1052,13 +1052,10 @@ href="#FUNC_CODE_INST_CALL"><tt>INST_CALL</tt></a> records.</p>
 that each is unique (i.e., no two indicies represent equivalent
 attribute lists). </p>
 
-</div>
-
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="PARAMATTR_CODE_ENTRY">PARAMATTR_CODE_ENTRY Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[ENTRY, paramidx0, attr0, paramidx1, attr1...]</tt></p>
 
@@ -1099,12 +1096,14 @@ the logarithm base 2 of the requested alignment, plus 1</li>
 </ul>
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="TYPE_BLOCK">TYPE_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TYPE_BLOCK</tt> block (id 10) contains records which
 constitute a table of type operator entries used to represent types
@@ -1119,12 +1118,10 @@ type operator records.
 each entry is unique (i.e., no two indicies represent structurally
 equivalent types). </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_NUMENTRY">TYPE_CODE_NUMENTRY Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[NUMENTRY, numentries]</tt></p>
 
@@ -1138,7 +1135,7 @@ in the block.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_VOID">TYPE_CODE_VOID Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[VOID]</tt></p>
 
@@ -1150,7 +1147,7 @@ type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_FLOAT">TYPE_CODE_FLOAT Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[FLOAT]</tt></p>
 
@@ -1162,7 +1159,7 @@ floating point) type to the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_DOUBLE">TYPE_CODE_DOUBLE Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[DOUBLE]</tt></p>
 
@@ -1174,7 +1171,7 @@ floating point) type to the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_LABEL">TYPE_CODE_LABEL Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[LABEL]</tt></p>
 
@@ -1186,7 +1183,7 @@ the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_OPAQUE">TYPE_CODE_OPAQUE Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[OPAQUE]</tt></p>
 
@@ -1199,7 +1196,7 @@ unified.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_INTEGER">TYPE_CODE_INTEGER  Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[INTEGER, width]</tt></p>
 
@@ -1212,7 +1209,7 @@ integer type.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_POINTER">TYPE_CODE_POINTER Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[POINTER, pointee type, address space]</tt></p>
 
@@ -1232,7 +1229,7 @@ default address space is zero.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_FUNCTION">TYPE_CODE_FUNCTION Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[FUNCTION, vararg, ignored, retty, ...paramty... ]</tt></p>
 
@@ -1256,7 +1253,7 @@ parameter types of the function</li>
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_STRUCT">TYPE_CODE_STRUCT Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[STRUCT, ispacked, ...eltty...]</tt></p>
 
@@ -1274,7 +1271,7 @@ types of the structure</li>
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_ARRAY">TYPE_CODE_ARRAY Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[ARRAY, numelts, eltty]</tt></p>
 
@@ -1291,7 +1288,7 @@ table.  The operand fields are</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_VECTOR">TYPE_CODE_VECTOR Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[VECTOR, numelts, eltty]</tt></p>
 
@@ -1308,7 +1305,7 @@ table.  The operand fields are</p>
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_X86_FP80">TYPE_CODE_X86_FP80 Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[X86_FP80]</tt></p>
 
@@ -1320,7 +1317,7 @@ floating point) type to the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_FP128">TYPE_CODE_FP128 Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[FP128]</tt></p>
 
@@ -1332,7 +1329,7 @@ floating point) type to the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_PPC_FP128">TYPE_CODE_PPC_FP128 Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[PPC_FP128]</tt></p>
 
@@ -1344,7 +1341,7 @@ floating point) type to the type table.
 <!-- _______________________________________________________________________ -->
 <h4><a name="TYPE_CODE_METADATA">TYPE_CODE_METADATA Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[METADATA]</tt></p>
 
@@ -1353,12 +1350,14 @@ type to the type table.
 </p>
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="CONSTANTS_BLOCK">CONSTANTS_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>CONSTANTS_BLOCK</tt> block (id 11) ...
 </p>
@@ -1371,7 +1370,7 @@ type to the type table.
   <a name="FUNCTION_BLOCK">FUNCTION_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>FUNCTION_BLOCK</tt> block (id 12) ...
 </p>
@@ -1394,19 +1393,17 @@ type to the type table.
   <a name="TYPE_SYMTAB_BLOCK">TYPE_SYMTAB_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TYPE_SYMTAB_BLOCK</tt> block (id 13) contains entries which
 map between module-level named types and their corresponding type
 indices.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4><a name="TST_CODE_ENTRY">TST_CODE_ENTRY Record</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>[ENTRY, typeid, ...string...]</tt></p>
 
@@ -1417,13 +1414,14 @@ name. Each entry corresponds to a single named type.
 </p>
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="VALUE_SYMTAB_BLOCK">VALUE_SYMTAB_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>VALUE_SYMTAB_BLOCK</tt> block (id 14) ... 
 </p>
@@ -1436,7 +1434,7 @@ name. Each entry corresponds to a single named type.
   <a name="METADATA_BLOCK">METADATA_BLOCK Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>METADATA_BLOCK</tt> block (id 15) ...
 </p>
@@ -1449,13 +1447,14 @@ name. Each entry corresponds to a single named type.
   <a name="METADATA_ATTACHMENT">METADATA_ATTACHMENT Contents</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>METADATA_ATTACHMENT</tt> block (id 16) ...
 </p>
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <hr>

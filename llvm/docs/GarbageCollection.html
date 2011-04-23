@@ -84,7 +84,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Garbage collection is a widely used technique that frees the programmer from
 having to know the lifetimes of heap objects, making software easier to produce
@@ -124,14 +124,12 @@ techniques dominates any low-level losses.</p>
 <p>This document describes the mechanisms and interfaces provided by LLVM to
 support accurate garbage collection.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="feature">Goals and non-goals</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM's intermediate representation provides <a href="#intrinsics">garbage
 collection intrinsics</a> that offer support for a broad class of
@@ -198,13 +196,15 @@ compiler matures.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="quickstart">Getting started</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Using a GC with LLVM implies many things, for example:</p>
 
@@ -246,14 +246,12 @@ compiler matures.</p>
 includes a highly portable, built-in ShadowStack code generator. It is compiled
 into <tt>llc</tt> and works even with the interpreter and C backends.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="quickstart-compiler">In your compiler</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>To turn the shadow stack on for your functions, first call:</p>
 
@@ -280,7 +278,7 @@ switching to a more advanced GC.</p>
   <a name="quickstart-runtime">In your runtime</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The shadow stack doesn't imply a memory allocation algorithm. A semispace
 collector or building atop <tt>malloc</tt> are great places to start, and can
@@ -347,7 +345,7 @@ void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
   <a name="shadow-stack">About the shadow stack</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Unlike many GC algorithms which rely on a cooperative code generator to
 compile stack maps, this algorithm carefully maintains a linked list of stack
@@ -372,13 +370,15 @@ in order to improve performance.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="core">IR features</a><a name="intrinsics"></a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This section describes the garbage collection facilities provided by the
 <a href="LangRef.html">LLVM intermediate representation</a>. The exact behavior
@@ -390,8 +390,6 @@ intended to be a complete interface to any garbage collector. A program will
 need to interface with the GC library using the facilities provided by that
 program.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="gcattr">Specifying GC code generation: <tt>gc "..."</tt></a>
@@ -401,7 +399,7 @@ program.</p>
   define <i>ty</i> @<i>name</i>(...) <span style="text-decoration: underline">gc "<i>name</i>"</span> { ...
 </tt></div>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>gc</tt> function attribute is used to specify the desired GC style
 to the compiler. Its programmatic equivalent is the <tt>setGC</tt> method of
@@ -426,7 +424,7 @@ programs that use different garbage collection algorithms (or none at all).</p>
   void @llvm.gcroot(i8** %ptrloc, i8* %metadata)
 </tt></div>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM that a stack
 variable references an object on the heap and is to be tracked for garbage
@@ -498,7 +496,7 @@ CodeBlock:
   <a name="barriers">Reading and writing references in the heap</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Some collectors need to be informed when the mutator (the program that needs
 garbage collection) either reads a pointer from or writes a pointer to a field
@@ -534,8 +532,6 @@ require the corresponding barrier. Such a GC plugin will replace the intrinsic
 calls with the corresponding <tt>load</tt> or <tt>store</tt> instruction if they
 are used.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h4>
   <a name="gcwrite">Write barrier: <tt>llvm.gcwrite</tt></a>
@@ -545,7 +541,7 @@ are used.</p>
 void @llvm.gcwrite(i8* %value, i8* %object, i8** %derived)
 </tt></div>
 
-<div class="doc_text">
+<div>
 
 <p>For write barriers, LLVM provides the <tt>llvm.gcwrite</tt> intrinsic
 function. It has exactly the same semantics as a non-volatile <tt>store</tt> to
@@ -567,7 +563,7 @@ implement reference counting.</p>
 i8* @llvm.gcread(i8* %object, i8** %derived)<br>
 </tt></div>
 
-<div class="doc_text">
+<div>
 
 <p>For read barriers, LLVM provides the <tt>llvm.gcread</tt> intrinsic function.
 It has exactly the same semantics as a non-volatile <tt>load</tt> from the
@@ -580,13 +576,17 @@ writes.</p>
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="plugin">Implementing a collector plugin</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>User code specifies which GC code generation to use with the <tt>gc</tt>
 function attribute or, equivalently, with the <tt>setGC</tt> method of
@@ -666,14 +666,12 @@ $ llvm-as &lt; sample.ll | llc -load=MyGC.so</pre></blockquote>
 <p>It is also possible to statically link the collector plugin into tools, such
 as a language-specific compiler front-end.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="collector-algos">Overview of available features</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p><tt>GCStrategy</tt> provides a range of features through which a plugin
 may do useful work. Some of these are callbacks, some are algorithms that can
@@ -962,7 +960,7 @@ interest.</p>
   <a name="stack-map">Computing stack maps</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM automatically computes a stack map. One of the most important features
 of a <tt>GCStrategy</tt> is to compile this information into the executable in
@@ -1018,7 +1016,7 @@ for collector plugins which implement reference counting or a shadow stack.</p>
   <a name="init-roots">Initializing roots to null: <tt>InitRoots</tt></a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <blockquote><pre
 >MyGC::MyGC() {
@@ -1044,7 +1042,7 @@ this feature should be used by all GC plugins. It is enabled by default.</p>
     <tt>CustomReadBarriers</tt>, and <tt>CustomWriteBarriers</tt></a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>For GCs which use barriers or unusual treatment of stack roots, these
 flags allow the collector to perform arbitrary transformations of the LLVM
@@ -1133,7 +1131,7 @@ bool MyGC::performCustomLowering(Function &amp;F) {
   <a name="safe-points">Generating safe points: <tt>NeededSafePoints</tt></a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM can compute four kinds of safe points:</p>
 
@@ -1197,7 +1195,7 @@ safe point (because only the topmost function has been patched).</p>
   <a name="assembly">Emitting assembly code: <tt>GCMetadataPrinter</tt></a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM allows a plugin to print arbitrary assembly code before and after the
 rest of a module's assembly code. At the end of the module, the GC can compile
@@ -1341,6 +1339,7 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -1348,7 +1347,7 @@ void MyGCPrinter::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><a name="appel89">[Appel89]</a> Runtime Tags Aren't Necessary. Andrew
 W. Appel. Lisp and Symbolic Computation 19(7):703-705, July 1989.</p>

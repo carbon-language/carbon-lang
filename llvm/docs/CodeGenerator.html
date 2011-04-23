@@ -132,7 +132,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM target-independent code generator is a framework that provides a
    suite of reusable components for translating the LLVM internal representation
@@ -188,14 +188,12 @@
    depend on the target-description and machine code representation classes,
    ensuring that it is portable.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
  <a name="required">Required components in the code generator</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The two pieces of the LLVM code generator are the high-level interface to the
    code generator and the set of reusable components that can be used to build
@@ -227,7 +225,7 @@
  <a name="high-level-design">The high-level design of the code generator</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM target-independent code generator is designed to support efficient
    and quality code generation for standard register-based microprocessors.
@@ -301,7 +299,7 @@
  <a name="tablegen">Using TableGen for target description</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The target description classes require a detailed description of the target
    architecture.  These target descriptions often have a large amount of common
@@ -324,13 +322,15 @@
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="targetdesc">Target description classes</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM target description classes (located in the
    <tt>include/llvm/Target</tt> directory) provide an abstract description of
@@ -346,14 +346,12 @@
    <tt><a href="#targetmachine">TargetMachine</a></tt> class provides accessors
    that should be implemented by the target.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="targetmachine">The <tt>TargetMachine</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetMachine</tt> class provides virtual methods that are used to
    access the target-specific implementations of the various target description
@@ -373,7 +371,7 @@
   <a name="targetdata">The <tt>TargetData</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetData</tt> class is the only required target description class,
    and it is the only class that is not extensible (you cannot derived a new
@@ -389,7 +387,7 @@
   <a name="targetlowering">The <tt>TargetLowering</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetLowering</tt> class is used by SelectionDAG based instruction
    selectors primarily to describe how LLVM code should be lowered to
@@ -415,7 +413,7 @@
   <a name="targetregisterinfo">The <tt>TargetRegisterInfo</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetRegisterInfo</tt> class is used to describe the register file
    of the target and any interactions between the registers.</p>
@@ -449,7 +447,7 @@
   <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetInstrInfo</tt> class is used to describe the machine
    instructions supported by the target. It is essentially an array of
@@ -467,7 +465,7 @@
   <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetFrameInfo</tt> class is used to provide information about the
    stack frame layout of the target. It holds the direction of stack growth, the
@@ -483,7 +481,7 @@
   <a name="targetsubtarget">The <tt>TargetSubtarget</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetSubtarget</tt> class is used to provide information about the
    specific chip set being targeted.  A sub-target informs code generation of
@@ -499,7 +497,7 @@
   <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>TargetJITInfo</tt> class exposes an abstract interface used by the
    Just-In-Time code generator to perform target-specific activities, such as
@@ -509,13 +507,15 @@
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="codegendesc">Machine code description classes</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>At the high-level, LLVM code is translated to a machine specific
    representation formed out of
@@ -528,14 +528,12 @@
    SSA representation for machine code, as well as a register allocated, non-SSA
    form.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="machineinstr">The <tt>MachineInstr</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Target machine instructions are represented as instances of the
    <tt>MachineInstr</tt> class.  This class is an extremely abstract way of
@@ -576,14 +574,12 @@
 <p>Also if the first operand is a def, it is easier to <a href="#buildmi">create
    instructions</a> whose only def is the first operand.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="buildmi">Using the <tt>MachineInstrBuilder.h</tt> functions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Machine instructions are created by using the <tt>BuildMI</tt> functions,
    located in the <tt>include/llvm/CodeGen/MachineInstrBuilder.h</tt> file.  The
@@ -634,7 +630,7 @@ MI.addReg(Reg, RegState::Define);
   <a name="fixedregs">Fixed (preassigned) registers</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>One important issue that the code generator needs to be aware of is the
    presence of fixed registers.  In particular, there are often places in the
@@ -706,7 +702,7 @@ ret
   <a name="ssa">Machine code in SSA form</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>MachineInstr</tt>'s are initially selected in SSA-form, and are
    maintained in SSA-form until register allocation happens.  For the most part,
@@ -719,12 +715,14 @@ ret
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="machinebasicblock">The <tt>MachineBasicBlock</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>MachineBasicBlock</tt> class contains a list of machine instructions
    (<tt><a href="#machineinstr">MachineInstr</a></tt> instances).  It roughly
@@ -741,7 +739,7 @@ ret
   <a name="machinefunction">The <tt>MachineFunction</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>MachineFunction</tt> class contains a list of machine basic blocks
    (<tt><a href="#machinebasicblock">MachineBasicBlock</a></tt> instances).  It
@@ -754,6 +752,7 @@ ret
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -761,7 +760,7 @@ ret
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 The MC Layer is used to represent and process code at the raw machine code
@@ -779,15 +778,12 @@ of important subsystems that interact at this layer, they are described later
 in this manual.
 </p>
 
-</div>
-
-
 <!-- ======================================================================= -->
 <h3>
   <a name="mcstreamer">The <tt>MCStreamer</tt> API</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 MCStreamer is best thought of as an assembler API.  It is an abstract API which
@@ -821,7 +817,7 @@ MCObjectStreamer implements a full assembler.
   <a name="mccontext">The <tt>MCContext</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The MCContext class is the owner of a variety of uniqued data structures at the
@@ -836,7 +832,7 @@ interact with to create symbols and sections.  This class can not be subclassed.
   <a name="mcsymbol">The <tt>MCSymbol</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The MCSymbol class represents a symbol (aka label) in the assembly file.  There
@@ -868,7 +864,7 @@ like this to the .s file:<p>
   <a name="mcsection">The <tt>MCSection</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The MCSection class represents an object-file specific section. It is subclassed
@@ -886,7 +882,7 @@ directive in a .s file).
   <a name="mcinst">The <tt>MCInst</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The MCInst class is a target-independent representation of an instruction.  It
@@ -904,6 +900,7 @@ printer, and the type generated by the assembly parser and disassembler.
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -911,20 +908,18 @@ printer, and the type generated by the assembly parser and disassembler.
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This section documents the phases described in the
    <a href="#high-level-design">high-level design of the code generator</a>.
    It explains how they work and some of the rationale behind their design.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="instselect">Instruction Selection</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Instruction Selection is the process of translating LLVM code presented to
    the code generator into target-specific machine instructions.  There are
@@ -936,14 +931,12 @@ printer, and the type generated by the assembly parser and disassembler.
    selector to be generated from these <tt>.td</tt> files, though currently
    there are still things that require custom C++ code.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="selectiondag_intro">Introduction to SelectionDAGs</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The SelectionDAG provides an abstraction for code representation in a way
    that is amenable to instruction selection using automatic techniques
@@ -1005,7 +998,7 @@ printer, and the type generated by the assembly parser and disassembler.
   <a name="selectiondag_process">SelectionDAG Instruction Selection Process</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>SelectionDAG-based instruction selection consists of the following steps:</p>
 
@@ -1086,7 +1079,7 @@ printer, and the type generated by the assembly parser and disassembler.
   <a name="selectiondag_build">Initial SelectionDAG Construction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The initial SelectionDAG is na&iuml;vely peephole expanded from the LLVM
    input by the <tt>SelectionDAGLowering</tt> class in the
@@ -1106,7 +1099,7 @@ printer, and the type generated by the assembly parser and disassembler.
   <a name="selectiondag_legalize_types">SelectionDAG LegalizeTypes Phase</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The Legalize phase is in charge of converting a DAG to only use the types
    that are natively supported by the target.</p>
@@ -1139,7 +1132,7 @@ printer, and the type generated by the assembly parser and disassembler.
   <a name="selectiondag_legalize">SelectionDAG Legalize Phase</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The Legalize phase is in charge of converting a DAG to only use the
    operations that are natively supported by the target.</p>
@@ -1173,7 +1166,7 @@ printer, and the type generated by the assembly parser and disassembler.
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The SelectionDAG optimization phase is run multiple times for code
    generation, immediately after the DAG is built and once after each
@@ -1207,7 +1200,7 @@ printer, and the type generated by the assembly parser and disassembler.
   <a name="selectiondag_select">SelectionDAG Select Phase</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The Select phase is the bulk of the target-specific code for instruction
    selection.  This phase takes a legal SelectionDAG as input, pattern matches
@@ -1368,7 +1361,7 @@ def : Pat&lt;(i32 imm:$imm),
   <a name="selectiondag_sched">SelectionDAG Scheduling and Formation Phase</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The scheduling phase takes the DAG of target instructions from the selection
    phase and assigns an order.  The scheduler can pick an order depending on
@@ -1389,7 +1382,7 @@ def : Pat&lt;(i32 imm:$imm),
   <a name="selectiondag_future">Future directions for the SelectionDAG</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <ol>
   <li>Optional function-at-a-time selection.</li>
@@ -1399,18 +1392,20 @@ def : Pat&lt;(i32 imm:$imm),
 
 </div>
  
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="ssamco">SSA-based Machine Code Optimizations</a>
 </h3>
-<div class="doc_text"><p>To Be Written</p></div>
+<div><p>To Be Written</p></div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="liveintervals">Live Intervals</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Live Intervals are the ranges (intervals) where a variable is <i>live</i>.
    They are used by some <a href="#regalloc">register allocator</a> passes to
@@ -1418,14 +1413,12 @@ def : Pat&lt;(i32 imm:$imm),
    register are live at the same point in the program (i.e., they conflict).
    When this situation occurs, one virtual register must be <i>spilled</i>.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="livevariable_analysis">Live Variable Analysis</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The first step in determining the live intervals of variables is to calculate
    the set of registers that are immediately dead after the instruction (i.e.,
@@ -1471,7 +1464,7 @@ def : Pat&lt;(i32 imm:$imm),
   <a name="liveintervals_analysis">Live Intervals Analysis</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>We now have the information available to perform the live intervals analysis
    and build the live intervals themselves.  We start off by numbering the basic
@@ -1486,12 +1479,14 @@ def : Pat&lt;(i32 imm:$imm),
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="regalloc">Register Allocation</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <i>Register Allocation problem</i> consists in mapping a program
    <i>P<sub>v</sub></i>, that can use an unbounded number of virtual registers,
@@ -1501,15 +1496,13 @@ def : Pat&lt;(i32 imm:$imm),
    accommodate all the virtual registers, some of them will have to be mapped
    into memory. These virtuals are called <i>spilled virtuals</i>.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 
 <h4>
   <a name="regAlloc_represent">How registers are represented in LLVM</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>In LLVM, physical registers are denoted by integer numbers that normally
    range from 1 to 1023. To see how this numbering is defined for a particular
@@ -1622,7 +1615,7 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
   <a name="regAlloc_howTo">Mapping virtual registers to physical registers</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>There are two ways to map virtual registers to physical registers (or to
    memory slots). The first way, that we will call <i>direct mapping</i>, is
@@ -1672,7 +1665,7 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
   <a name="regAlloc_twoAddr">Handling two address instructions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>With very rare exceptions (e.g., function calls), the LLVM machine code
    instructions are three address instructions. That is, each instruction is
@@ -1708,7 +1701,7 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
   <a name="regAlloc_ssaDecon">The SSA deconstruction phase</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>An important transformation that happens during register allocation is called
    the <i>SSA Deconstruction Phase</i>. The SSA form simplifies many analyses
@@ -1732,7 +1725,7 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
   <a name="regAlloc_fold">Instruction folding</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p><i>Instruction folding</i> is an optimization performed during register
    allocation that removes unnecessary copy instructions. For instance, a
@@ -1769,7 +1762,7 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
   <a name="regAlloc_builtIn">Built in register allocators</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM infrastructure provides the application developer with three
    different register allocators:</p>
@@ -1806,23 +1799,25 @@ $ llc -regalloc=pbqp file.bc -o pbqp.s;
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="proepicode">Prolog/Epilog Code Insertion</a>
 </h3>
-<div class="doc_text"><p>To Be Written</p></div>
+<div><p>To Be Written</p></div>
 <!-- ======================================================================= -->
 <h3>
   <a name="latemco">Late Machine Code Optimizations</a>
 </h3>
-<div class="doc_text"><p>To Be Written</p></div>
+<div><p>To Be Written</p></div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="codeemit">Code Emission</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The code emission step of code generation is responsible for lowering from
 the code generator abstractions (like <a 
@@ -1881,6 +1876,7 @@ to implement an assembler for your target.</p>
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -1888,7 +1884,7 @@ to implement an assembler for your target.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Though you're probably reading this because you want to write or maintain a
 compiler backend, LLVM also fully supports building a native assemblers too.
@@ -1897,12 +1893,10 @@ We've tried hard to automate the generation of the assembler from the .td files
 part of the manual and repetitive data entry can be factored and shared with the
 compiler.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3 id="na_instparsing">Instruction Parsing</h3>
 
-<div class="doc_text"><p>To Be Written</p></div>
+<div><p>To Be Written</p></div>
 
 
 <!-- ======================================================================= -->
@@ -1910,7 +1904,7 @@ compiler.</p>
   Instruction Alias Processing
 </h3>
 
-<div class="doc_text">
+<div>
 <p>Once the instruction is parsed, it enters the MatchInstructionImpl function.
 The MatchInstructionImpl function performs alias processing and then does
 actual matching.</p>
@@ -1923,12 +1917,10 @@ complex/powerful).  Generally you want to use the first alias mechanism that
 meets the needs of your instruction, because it will allow a more concise
 description.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>Mnemonic Aliases</h4>
 
-<div class="doc_text">
+<div>
 
 <p>The first phase of alias processing is simple instruction mnemonic
 remapping for classes of instructions which are allowed with two different
@@ -1968,7 +1960,7 @@ on the current instruction set.</p>
 <!-- _______________________________________________________________________ -->
 <h4>Instruction Aliases</h4>
 
-<div class="doc_text">
+<div>
 
 <p>The most general phase of alias processing occurs while matching is
 happening: it provides new forms for the matcher to match along with a specific
@@ -2029,15 +2021,14 @@ subtarget specific.</p>
 
 </div>
 
-
+</div>
 
 <!-- ======================================================================= -->
 <h3 id="na_matching">Instruction Matching</h3>
 
-<div class="doc_text"><p>To Be Written</p></div>
+<div><p>To Be Written</p></div>
 
-
-
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -2045,20 +2036,18 @@ subtarget specific.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This section of the document explains features or design decisions that are
    specific to the code generator for a particular target.  First we start
    with a table that summarizes what features are supported by each target.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="targetfeatures">Target Feature Matrix</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Note that this table does not include the C backend or Cpp backends, since
 they do not use the target independent code generator infrastructure.  It also
@@ -2229,12 +2218,10 @@ is the key:</p>
 
 </table>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_reliable">Is Generally Reliable</h4>
 
-<div class="doc_text">
+<div>
 <p>This box indicates whether the target is considered to be production quality.
 This indicates that the target has been used as a static compiler to
 compile large amounts of code by a variety of different people and is in
@@ -2244,7 +2231,7 @@ continuous use.</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_asmparser">Assembly Parser</h4>
 
-<div class="doc_text">
+<div>
 <p>This box indicates whether the target supports parsing target specific .s
 files by implementing the MCAsmParser interface.  This is required for llvm-mc
 to be able to act as a native assembler and is required for inline assembly
@@ -2256,7 +2243,7 @@ support in the native .o file writer.</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_disassembler">Disassembler</h4>
 
-<div class="doc_text">
+<div>
 <p>This box indicates whether the target supports the MCDisassembler API for
 disassembling machine opcode bytes into MCInst's.</p>
 
@@ -2265,7 +2252,7 @@ disassembling machine opcode bytes into MCInst's.</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_inlineasm">Inline Asm</h4>
 
-<div class="doc_text">
+<div>
 <p>This box indicates whether the target supports most popular inline assembly
 constraints and modifiers.</p>
 
@@ -2277,7 +2264,7 @@ constraints relating to the X86 floating point stack.</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_jit">JIT Support</h4>
 
-<div class="doc_text">
+<div>
 <p>This box indicates whether the target supports the JIT compiler through
 the ExecutionEngine interface.</p>
 
@@ -2289,7 +2276,7 @@ in ARM codegen mode, but lacks NEON and full Thumb support.</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_objectwrite">.o File Writing</h4>
 
-<div class="doc_text">
+<div>
 
 <p>This box indicates whether the target supports writing .o files (e.g. MachO,
 ELF, and/or COFF) files directly from the target.  Note that the target also
@@ -2305,7 +2292,7 @@ file to a .o file (as is the case for many C compilers).</p>
 <!-- _______________________________________________________________________ -->
 <h4 id="feat_tailcall">Tail Calls</h4>
 
-<div class="doc_text">
+<div>
 
 <p>This box indicates whether the target supports guaranteed tail calls.  These
 are calls marked "<a href="LangRef.html#i_call">tail</a>" and use the fastcc
@@ -2314,15 +2301,14 @@ more more details</a>.</p>
 
 </div>
 
-
-
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="tailcallopt">Tail call optimization</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Tail call optimization, callee reusing the stack of the caller, is currently
    supported on x86/x86-64 and PowerPC. It is performed if:</p>
@@ -2388,7 +2374,7 @@ define fastcc i32 @tailcaller(i32 %in1, i32 %in2) {
   <a name="sibcallopt">Sibling call optimization</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Sibling call optimization is a restricted form of tail call optimization.
    Unlike tail call optimization described in the previous section, it can be
@@ -2432,20 +2418,18 @@ entry:
   <a name="x86">The X86 backend</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The X86 code generator lives in the <tt>lib/Target/X86</tt> directory.  This
    code generator is capable of targeting a variety of x86-32 and x86-64
    processors, and includes support for ISA extensions such as MMX and SSE.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="x86_tt">X86 Target Triples supported</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The following are the known target triples that are supported by the X86
    backend.  This is not an exhaustive list, and it would be useful to add those
@@ -2475,7 +2459,7 @@ entry:
 </h4>
 
 
-<div class="doc_text">
+<div>
 
 <p>The following target-specific calling conventions are known to backend:</p>
 
@@ -2494,7 +2478,7 @@ entry:
   <a name="x86_memory">Representing X86 addressing modes in MachineInstrs</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The x86 has a very flexible way of accessing memory.  It is capable of
    forming memory addresses of the following expression directly in integer
@@ -2531,7 +2515,7 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm  PhysReg
   <a name="x86_memory">X86 address spaces supported</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>x86 has a feature which provides
    the ability to perform loads and stores to different address spaces
@@ -2576,7 +2560,7 @@ OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm  PhysReg
   <a name="x86_names">Instruction naming</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>An instruction name consists of the base name, a default operand size, and a
    a character per operand with an optional special size. For example:</p>
@@ -2592,25 +2576,25 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="ppc">The PowerPC backend</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The PowerPC code generator lives in the lib/Target/PowerPC directory.  The
    code generation is retargetable to several variations or <i>subtargets</i> of
    the PowerPC ISA; including ppc32, ppc64 and altivec.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="ppc_abi">LLVM PowerPC ABI</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM follows the AIX PowerPC ABI, with two deviations. LLVM uses a PC
    relative (PIC) or static addressing for accessing global values, so no TOC
@@ -2630,7 +2614,7 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
   <a name="ppc_frame">Frame Layout</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The size of a PowerPC frame is usually fixed for the duration of a
    function's invocation.  Since the frame is fixed size, all references
@@ -2777,7 +2761,7 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
   <a name="ppc_prolog">Prolog/Epilog</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The llvm prolog and epilog are the same as described in the PowerPC ABI, with
    the following exceptions.  Callee saved registers are spilled after the frame
@@ -2794,12 +2778,15 @@ MOVSX32rm16 -&gt; movsx, 32-bit register, 16-bit memory
   <a name="ppc_dynamic">Dynamic Allocation</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p><i>TODO - More to come.</i></p>
 
 </div>
 
+</div>
+
+</div>
 
 <!-- *********************************************************************** -->
 <hr>

@@ -37,7 +37,7 @@
 
 <!-- *********************************************************************** -->
 <h2><a name="abstract">Abstract</a></h2>
-<div class="doc_text">
+<div>
   <p>This document provides some details on LLVM's System Library, located in
   the source at <tt>lib/System</tt> and <tt>include/llvm/System</tt>. The
   library's purpose is to shield LLVM from the differences between operating
@@ -66,17 +66,16 @@
 <h2>
   <a name="requirements">Keeping LLVM Portable</a>
 </h2>
-<div class="doc_text">
+<div>
   <p>In order to keep LLVM portable, LLVM developers should adhere to a set of
   portability rules associated with the System Library. Adherence to these rules
   should help the System Library achieve its goal of shielding LLVM from the
   variations in operating system interfaces and doing so efficiently.  The 
   following sections define the rules needed to fulfill this objective.</p>
-</div>
 
 <!-- ======================================================================= -->
 <h3><a name="headers">Don't Include System Headers</a></h3>
-<div class="doc_text">
+<div>
   <p>Except in <tt>lib/System</tt>, no LLVM source code should directly
   <tt>#include</tt> a system header. Care has been taken to remove all such
   <tt>#includes</tt> from LLVM while <tt>lib/System</tt> was being
@@ -91,7 +90,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="expose">Don't Expose System Headers</a></h3>
-<div class="doc_text">
+<div>
   <p>The System Library must shield LLVM from <em>all</em> system headers. To 
   obtain system level functionality, LLVM source must 
   <tt>#include "llvm/System/Thing.h"</tt> and nothing else. This means that 
@@ -102,7 +101,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="c_headers">Use Standard C Headers</a></h3>
-<div class="doc_text">
+<div>
   <p>The <em>standard</em> C headers (the ones beginning with "c") are allowed
   to be exposed through the <tt>lib/System</tt> interface. These headers and 
   the things they declare are considered to be platform agnostic. LLVM source 
@@ -112,7 +111,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="cpp_headers">Use Standard C++ Headers</a></h3>
-<div class="doc_text">
+<div>
   <p>The <em>standard</em> C++ headers from the standard C++ library and
   standard template library may be exposed through the <tt>lib/System</tt>
   interface. These headers and the things they declare are considered to be
@@ -122,7 +121,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="highlev">High Level Interface</a></h3>
-<div class="doc_text">
+<div>
   <p>The entry points specified in the interface of lib/System must be aimed at 
   completing some reasonably high level task needed by LLVM. We do not want to
   simply wrap each operating system call. It would be preferable to wrap several
@@ -141,7 +140,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="nounused">No Unused Functionality</a></h3>
-<div class="doc_text">
+<div>
   <p>There must be no functionality specified in the interface of lib/System 
   that isn't actually used by LLVM. We're not writing a general purpose
   operating system wrapper here, just enough to satisfy LLVM's needs. And, LLVM
@@ -151,7 +150,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="nodupl">No Duplicate Implementations</a></h3>
-<div class="doc_text">
+<div>
   <p>The implementation of a function for a given platform must be written
   exactly once. This implies that it must be possible to apply a function's 
   implementation to multiple operating systems if those operating systems can
@@ -162,7 +161,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="virtuals">No Virtual Methods</a></h3>
-<div class="doc_text">
+<div>
   <p>The System Library interfaces can be called quite frequently by LLVM. In
   order to make those calls as efficient as possible, we discourage the use of
   virtual methods. There is no need to use inheritance for implementation
@@ -172,7 +171,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="nofunc">No Exposed Functions</a></h3>
-<div class="doc_text">
+<div>
   <p>Any functions defined by system libraries (i.e. not defined by lib/System) 
   must not be exposed through the lib/System interface, even if the header file 
   for that function is not exposed. This prevents inadvertent use of system
@@ -188,7 +187,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="nodata">No Exposed Data</a></h3>
-<div class="doc_text">
+<div>
   <p>Any data defined by system libraries (i.e. not defined by lib/System) must
   not be exposed through the lib/System interface, even if the header file for
   that function is not exposed. As with functions, this prevents inadvertent use
@@ -197,7 +196,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="softerrors">Minimize Soft Errors</a></h3>
-<div class="doc_text">
+<div>
   <p>Operating system interfaces will generally provide error results for every
   little thing that could go wrong. In almost all cases, you can divide these
   error results into two groups: normal/good/soft and abnormal/bad/hard. That
@@ -236,7 +235,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="throw_spec">No throw Specifications</a></h3>
-<div class="doc_text">
+<div>
   <p>None of the lib/System interface functions may be declared with C++ 
   <tt>throw()</tt> specifications on them. This requirement makes sure that the
   compiler does not insert additional exception handling code into the interface
@@ -248,7 +247,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="organization">Code Organization</a></h3>
-<div class="doc_text">
+<div>
   <p>Implementations of the System Library interface are separated by their
   general class of operating system. Currently only Unix and Win32 classes are
   defined but more could be added for other operating system classifications.
@@ -277,7 +276,7 @@
 
 <!-- ======================================================================= -->
 <h3><a name="semantics">Consistent Semantics</a></h3>
-<div class="doc_text">
+<div>
   <p>The implementation of a lib/System interface can vary drastically between
   platforms. That's okay as long as the end result of the interface function 
   is the same. For example, a function to create a directory is pretty straight
@@ -292,9 +291,11 @@
 
 <!-- ======================================================================= -->
 <h3><a name="bug">Bug 351</a></h3>
-<div class="doc_text">
+<div>
   <p>See <a href="http://llvm.org/PR351">bug 351</a>
   for further details on the progress of this work</p>
+</div>
+
 </div>
 
 <!-- *********************************************************************** -->

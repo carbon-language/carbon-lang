@@ -9,7 +9,7 @@
 
 <h1>TableGen Fundamentals</h1>
 
-<div class="doc_text">
+<div>
 <ul>
   <li><a href="#introduction">Introduction</a>
   <ol>
@@ -53,7 +53,7 @@
 <h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>TableGen's purpose is to help a human develop and maintain records of
 domain-specific information.  Because there may be a large number of these
@@ -72,12 +72,10 @@ find an emacs "TableGen mode" and a vim language file in the
 <tt>llvm/utils/emacs</tt> and <tt>llvm/utils/vim</tt> directories of your LLVM
 distribution, respectively.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3><a name="concepts">Basic concepts</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen files consist of two key parts: 'classes' and 'definitions', both
 of which are considered 'records'.</p>
@@ -114,7 +112,7 @@ multiclass, as if they were declared in the current multiclass.</p>
 <!-- ======================================================================= -->
 <h3><a name="example">An example record</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>With no other arguments, TableGen parses the specified file and prints out
 all of the classes, then all of the definitions.  This is a good way to see what
@@ -214,7 +212,7 @@ abstractions they prefer to use when describing their information.</p>
 <!-- ======================================================================= -->
 <h3><a name="running">Running TableGen</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen runs just like any other LLVM tool.  The first (optional) argument
 specifies the file to read.  If a filename is not specified, <tt>tblgen</tt>
@@ -256,27 +254,28 @@ what you need and formats it in the appropriate way.</p>
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2><a name="syntax">TableGen syntax</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>TableGen doesn't care about the meaning of data (that is up to the backend to
 define), but it does care about syntax, and it enforces a simple type system.
 This section describes the syntax and the constructs allowed in a TableGen file.
 </p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3><a name="primitives">TableGen primitives</a></h3>
+
+<div>
 
 <!-- -------------------------------------------------------------------------->
 <h4><a name="comments">TableGen comments</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen supports BCPL style "<tt>//</tt>" comments, which run to the end of
 the line, and it also supports <b>nestable</b> "<tt>/* */</tt>" comments.</p>
@@ -288,7 +287,7 @@ the line, and it also supports <b>nestable</b> "<tt>/* */</tt>" comments.</p>
   <a name="types">The TableGen type system</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen files are strongly typed, in a simple (but complete) type-system.
 These types are used to perform automatic conversions, check for errors, and to
@@ -348,7 +347,7 @@ needed.</p>
   <a name="values">TableGen values and expressions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen allows for a pretty reasonable number of different expression forms
 when building up values.  These forms allow the TableGen file to be written in a
@@ -433,12 +432,14 @@ to a "<tt>bits&lt;4&gt;</tt>" value, for example.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="classesdefs">Classes and definitions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>As mentioned in the <a href="#concepts">intro</a>, classes and definitions
 (collectively known as 'records') in TableGen are the main high-level unit of
@@ -473,14 +474,12 @@ between a group of records and isolating it in a single place.  Also, classes
 permit the specification of default values for their subclasses, allowing the
 subclasses to override them as they wish.</p>
 
-</div>
-
 <!---------------------------------------------------------------------------->
 <h4>
   <a name="valuedef">Value definitions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Value definitions define named entries in records.  A value must be defined
 before it can be referred to as the operand for another value definition or
@@ -496,7 +495,7 @@ equal sign.  Value definitions require terminating semicolons.</p>
   <a name="recordlet">'let' expressions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>A record-level let expression is used to change the value of a value
 definition in a record.  This is primarily useful when a superclass defines a
@@ -523,7 +522,7 @@ because the <tt>D</tt> class overrode its value.</p>
   <a name="templateargs">Class template arguments</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>TableGen permits the definition of parameterized classes as well as normal
 concrete classes.  Parameterized TableGen classes specify a list of variable
@@ -614,7 +613,7 @@ X86 backend.</p>
   <a name="multiclass">Multiclass definitions and instances</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 While classes with template arguments are a good way to factor commonality
@@ -772,17 +771,21 @@ before them.
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="filescope">File scope entities</a>
 </h3>
+
+<div>
 
 <!-- -------------------------------------------------------------------------->
 <h4>
   <a name="include">File inclusion</a>
 </h4>
 
-<div class="doc_text">
+<div>
 <p>TableGen supports the '<tt>include</tt>' token, which textually substitutes
 the specified file in place of the include directive.  The filename should be
 specified as a double quoted string immediately after the '<tt>include</tt>'
@@ -801,7 +804,7 @@ keyword.  Example:</p>
   <a name="globallet">'let' expressions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>"Let" expressions at file scope are similar to <a href="#recordlet">"let"
 expressions within a record</a>, except they can specify a value binding for
@@ -864,11 +867,15 @@ several levels of multiclass instanciations. This also avoids the need of using
 </pre>
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="codegen">Code Generator backend info</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Expressions used by code generator to describe instructions and isel
 patterns:</p>
@@ -885,7 +892,7 @@ patterns:</p>
 <h2><a name="backends">TableGen backends</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>TODO: How they work, how to write one.  This section should not contain
 details about any particular backend, except maybe -print-enums as an example.

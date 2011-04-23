@@ -126,7 +126,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM Pass Framework is an important part of the LLVM system, because LLVM
 passes are where most of the interesting parts of the compiler exist.  Passes
@@ -161,7 +161,7 @@ more advanced features are discussed.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Here we describe how to write the "hello world" of passes.  The "Hello" pass
 is designed to simply print out the name of non-external functions that exist in
@@ -169,14 +169,12 @@ the program being compiled.  It does not modify the program at all, it just
 inspects it.  The source code and files for this pass are available in the LLVM
 source tree in the <tt>lib/Transforms/Hello</tt> directory.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="makefile">Setting up the build environment</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
   <p>First, configure and build LLVM.  This needs to be done directly inside the
   LLVM source tree rather than in a separate objects directory.
@@ -224,7 +222,7 @@ the pass itself.</p>
   <a name="basiccode">Basic code required</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Now that we have a way to compile our new pass, we just have to write it.
 Start out with:</p>
@@ -360,7 +358,7 @@ them) to be useful.</p>
   <a name="running">Running a pass with <tt>opt</tt></a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Now that you have a brand new shiny shared object file, we can use the
 <tt>opt</tt> command to run an LLVM program through your pass.  Because you
@@ -446,13 +444,15 @@ about some more details of how they work and how to use them.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="passtype">Pass classes and requirements</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>One of the first things that you should do when designing a new pass is to
 decide what class you should subclass for your pass.  The <a
@@ -467,14 +467,12 @@ listed.  This gives the LLVM Pass Infrastructure information necessary to
 optimize how passes are run, so that the resultant compiler isn't unnecessarily
 slow.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="ImmutablePass">The <tt>ImmutablePass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The most plain and boring type of pass is the "<tt><a
 href="http://llvm.org/doxygen/classllvm_1_1ImmutablePass.html">ImmutablePass</a></tt>"
@@ -497,7 +495,7 @@ invalidated, and are never "run".</p>
   <a name="ModulePass">The <tt>ModulePass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The "<tt><a
 href="http://llvm.org/doxygen/classllvm_1_1ModulePass.html">ModulePass</a></tt>"
@@ -519,14 +517,12 @@ DominatorTree for function definitions, not declarations.</p>
 <tt>ModulePass</tt> and overload the <tt>runOnModule</tt> method with the
 following signature:</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="runOnModule">The <tt>runOnModule</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnModule(Module &amp;M) = 0;
@@ -538,12 +534,14 @@ false otherwise.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="CallGraphSCCPass">The <tt>CallGraphSCCPass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The "<tt><a
 href="http://llvm.org/doxygen/classllvm_1_1CallGraphSCCPass.html">CallGraphSCCPass</a></tt>"
@@ -584,8 +582,6 @@ because it has to handle SCCs with more than one node in it.  All of the virtual
 methods described below should return true if they modified the program, or
 false if they didn't.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="doInitialization_scc">
@@ -593,7 +589,7 @@ false if they didn't.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(CallGraph &amp;CG);
@@ -614,7 +610,7 @@ fast).</p>
   <a name="runOnSCC">The <tt>runOnSCC</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnSCC(CallGraphSCC &amp;SCC) = 0;
@@ -633,7 +629,7 @@ otherwise.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(CallGraph &amp;CG);
@@ -646,12 +642,14 @@ program being compiled.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="FunctionPass">The <tt>FunctionPass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>In contrast to <tt>ModulePass</tt> subclasses, <tt><a
 href="http://llvm.org/doxygen/classllvm_1_1Pass.html">FunctionPass</a></tt>
@@ -676,8 +674,6 @@ href="#basiccode">Hello World</a> pass for example).  <tt>FunctionPass</tt>'s
 may overload three virtual methods to do their work.  All of these methods
 should return true if they modified the program, or false if they didn't.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="doInitialization_mod">
@@ -685,7 +681,7 @@ should return true if they modified the program, or false if they didn't.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Module &amp;M);
@@ -713,7 +709,7 @@ free functions that it needs, adding prototypes to the module if necessary.</p>
   <a name="runOnFunction">The <tt>runOnFunction</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnFunction(Function &amp;F) = 0;
@@ -732,7 +728,7 @@ be returned if the function is modified.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(Module &amp;M);
@@ -745,12 +741,14 @@ program being compiled.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="LoopPass">The <tt>LoopPass</tt> class </a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p> All <tt>LoopPass</tt> execute on each loop in the function independent of
 all of the other loops in the function. <tt>LoopPass</tt> processes loops in
@@ -761,7 +759,6 @@ loop nest order such that outer most loop is processed last. </p>
 straightforward. <tt>LoopPass</tt>'s may overload three virtual methods to
 do their work. All these methods should return true if they modified the 
 program, or false if they didn't. </p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -770,7 +767,7 @@ program, or false if they didn't. </p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Loop *, LPPassManager &amp;LPM);
@@ -791,7 +788,7 @@ information.</p>
   <a name="runOnLoop">The <tt>runOnLoop</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnLoop(Loop *, LPPassManager &amp;LPM) = 0;
@@ -809,7 +806,7 @@ should be used to update loop nest.</p>
   <a name="doFinalization_loop">The <tt>doFinalization()</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization();
@@ -822,12 +819,14 @@ program being compiled. </p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="RegionPass">The <tt>RegionPass</tt> class </a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p> <tt>RegionPass</tt> is similar to <a href="#LoopPass"><tt>LoopPass</tt></a>,
 but executes on each single entry single exit region in the function.
@@ -839,7 +838,6 @@ the <tt>RGPassManager</tt> interface. You may overload three virtual methods of
 <tt>RegionPass</tt> to implement your own region pass. All these
 methods should return true if they modified the program, or false if they didn not.
 </p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -848,7 +846,7 @@ methods should return true if they modified the program, or false if they didn n
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Region *, RGPassManager &amp;RGM);
@@ -869,7 +867,7 @@ information.</p>
   <a name="runOnRegion">The <tt>runOnRegion</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnRegion(Region *, RGPassManager &amp;RGM) = 0;
@@ -887,7 +885,7 @@ should be used to update region tree.</p>
   <a name="doFinalization_region">The <tt>doFinalization()</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization();
@@ -900,14 +898,14 @@ program being compiled. </p>
 
 </div>
 
-
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="BasicBlockPass">The <tt>BasicBlockPass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p><tt>BasicBlockPass</tt>'s are just like <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>'s, except that they must limit
@@ -929,8 +927,6 @@ href="#doInitialization_mod"><tt>doInitialization(Module &amp;)</tt></a> and <a
 href="#doFinalization_mod"><tt>doFinalization(Module &amp;)</tt></a> methods that <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the following virtual methods that may also be implemented:</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="doInitialization_fn">
@@ -938,7 +934,7 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s have, but also have the followi
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doInitialization(Function &amp;F);
@@ -959,7 +955,7 @@ fast).</p>
   <a name="runOnBasicBlock">The <tt>runOnBasicBlock</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnBasicBlock(BasicBlock &amp;BB) = 0;
@@ -979,7 +975,7 @@ if the basic block is modified.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> doFinalization(Function &amp;F);
@@ -993,12 +989,14 @@ finalization.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="MachineFunctionPass">The <tt>MachineFunctionPass</tt> class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>A <tt>MachineFunctionPass</tt> is a part of the LLVM code generator that
 executes on the machine-dependent representation of each LLVM function in the
@@ -1023,8 +1021,6 @@ href="#runOnMachineFunction"><tt>runOnMachineFunction</tt></a> (including global
 data)</li>
 </ol>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="runOnMachineFunction">
@@ -1032,7 +1028,7 @@ data)</li>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual bool</b> runOnMachineFunction(MachineFunction &amp;MF) = 0;
@@ -1053,13 +1049,17 @@ remember, you may not modify the LLVM <tt>Function</tt> or its contents from a
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="registration">Pass registration</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>In the <a href="#basiccode">Hello World</a> example pass we illustrated how
 pass registration works, and discussed some of the reasons that it is used and
@@ -1076,14 +1076,12 @@ well as for debug output generated by the <tt>--debug-pass</tt> option.</p>
 <p>If you want your pass to be easily dumpable, you should 
 implement the virtual <tt>print</tt> method:</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="print">The <tt>print</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual void</b> print(std::ostream &amp;O, <b>const</b> Module *M) <b>const</b>;
@@ -1103,13 +1101,15 @@ depended on.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="interaction">Specifying interactions between passes</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>One of the main responsibilities of the <tt>PassManager</tt> is to make sure
 that passes interact with each other correctly.  Because <tt>PassManager</tt>
@@ -1126,14 +1126,12 @@ specifies.  If a pass does not implement the <tt><a
 href="#getAnalysisUsage">getAnalysisUsage</a></tt> method, it defaults to not
 having any prerequisite passes, and invalidating <b>all</b> other passes.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="getAnalysisUsage">The <tt>getAnalysisUsage</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual void</b> getAnalysisUsage(AnalysisUsage &amp;Info) <b>const</b>;
@@ -1156,7 +1154,7 @@ object:</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 <p>
 If your pass requires a previous pass to be executed (an analysis for example),
 it can use one of these methods to arrange for it to be run before your pass.
@@ -1184,7 +1182,7 @@ pass is.
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 <p>
 One of the jobs of the PassManager is to optimize how and when analyses are run.
 In particular, it attempts to avoid recomputing data unless it needs to.  For
@@ -1221,7 +1219,7 @@ the fact that it hacks on the CFG.
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <i>// This example modifies the program, but does not modify the CFG</i>
@@ -1241,7 +1239,7 @@ the fact that it hacks on the CFG.
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>Pass::getAnalysis&lt;&gt;</tt> method is automatically inherited by
 your class, providing you with access to the passes that you declared that you
@@ -1293,13 +1291,15 @@ if it is active.  For example:</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="analysisgroup">Implementing Analysis Groups</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Now that we understand the basics of how passes are defined, how they are
 used, and how they are required from other passes, it's time to get a little bit
@@ -1318,14 +1318,12 @@ between these two extremes for other implementations).  To cleanly support
 situations like this, the LLVM Pass Infrastructure supports the notion of
 Analysis Groups.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="agconcepts">Analysis Group Concepts</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>An Analysis Group is a single simple interface that may be implemented by
 multiple different passes.  Analysis Groups can be given human readable names
@@ -1376,7 +1374,7 @@ hypothetical example) instead.</p>
   <a name="registerag">Using <tt>RegisterAnalysisGroup</tt></a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>RegisterAnalysisGroup</tt> template is used to register the analysis
 group itself, while the <tt>INITIALIZE_AG_PASS</tt> is used to add pass
@@ -1433,13 +1431,15 @@ pass is the default implementation for the interface.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="passStatistics">Pass Statistics</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 <p>The <a
 href="http://llvm.org/doxygen/Statistic_8h-source.html"><tt>Statistic</tt></a>
 class is designed to be an easy way to expose various success
@@ -1456,7 +1456,7 @@ line. See the <a href="http://llvm.org/docs/ProgrammersManual.html#Statistic">St
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The <a
 href="http://llvm.org/doxygen/PassManager_8h-source.html"><tt>PassManager</tt></a>
@@ -1623,14 +1623,12 @@ Hello: main
 <p>Which shows that we don't accidentally invalidate dominator information
 anymore, and therefore do not have to compute it twice.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="releaseMemory">The <tt>releaseMemory</tt> method</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <div class="doc_code"><pre>
   <b>virtual void</b> releaseMemory();
@@ -1651,13 +1649,15 @@ class, before the next call of <tt>run*</tt> in your pass.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="registering">Registering dynamically loaded passes</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><i>Size matters</i> when constructing production quality tools using llvm, 
 both for the purposes of distribution, and for regulating the resident code size
@@ -1684,14 +1684,12 @@ the static destructor <i>unregisters</i>. Thus a pass that is statically linked
 in the tool will be registered at start up. A dynamically loaded pass will
 register on load and unregister at unload.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h3>
   <a name="registering_existing">Using existing registries</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>There are predefined registries to track instruction scheduling
 (<tt>RegisterScheduler</tt>) and register allocation (<tt>RegisterRegAlloc</tt>)
@@ -1756,7 +1754,7 @@ call line to <tt>llvm/Codegen/LinkAllCodegenComponents.h</tt>.</p>
   <a name="registering_new">Creating new registries</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The easiest way to get started is to clone one of the existing registries; we
 recommend <tt>llvm/CodeGen/RegAllocRegistry.h</tt>.  The key things to modify
@@ -1784,13 +1782,15 @@ creator.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="debughints">Using GDB with dynamically loaded passes</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Unfortunately, using GDB with dynamically loaded passes is not as easy as it
 should be.  First of all, you can't set a breakpoint in a shared object that has
@@ -1802,14 +1802,12 @@ GDB.</p>
 transformation invoked by <tt>opt</tt>, although nothing described here depends
 on that.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="breakpoint">Setting a breakpoint in your pass</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>First thing you do is start <tt>gdb</tt> on the <tt>opt</tt> process:</p>
 
@@ -1854,7 +1852,7 @@ or do other standard debugging stuff.</p>
   <a name="debugmisc">Miscellaneous Problems</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Once you have the basics down, there are a couple of problems that GDB has,
 some with solutions, some without.</p>
@@ -1882,26 +1880,26 @@ href="mailto:sabre@nondot.org">Chris</a>.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="future">Future extensions planned</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Although the LLVM Pass Infrastructure is very capable as it stands, and does
 some nifty stuff, there are things we'd like to add in the future.  Here is
 where we are going:</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="SMP">Multithreaded LLVM</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Multiple CPU machines are becoming more common and compilation can never be
 fast enough: obviously we should allow for a multithreaded compiler.  Because of
@@ -1916,6 +1914,8 @@ multithreaded constructs, requiring only the LLVM core to have locking in a few
 places (for global resources).  Although this is a simple extension, we simply
 haven't had time (or multiprocessor machines, thus a reason) to implement this.
 Despite that, we have kept the LLVM passes SMP ready, and you should too.</p>
+
+</div>
 
 </div>
 

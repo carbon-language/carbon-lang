@@ -88,7 +88,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document attempts to describe a few coding standards that are being used
 in the LLVM source tree.  Although no coding standards should be regarded as
@@ -122,17 +122,21 @@ href="mailto:sabre@nondot.org">Chris</a>.</p>
 </h2>
 <!-- *********************************************************************** -->
 
+<div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="sourceformating">Source Code Formatting</a>
 </h3>
+
+<div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="scf_commenting">Commenting</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Comments are one critical part of readability and maintainability.  Everyone
 knows they should comment, so should you.  When writing comments, write them as
@@ -141,7 +145,9 @@ etc.  Although we all should probably
 comment our code more than we do, there are a few very critical places that
 documentation is very useful:</p>
 
-<b>File Headers</b>
+<h5>File Headers</h5>
+
+<div>
 
 <p>Every source file should have a header on it that describes the basic 
 purpose of the file.  If a file does not have a header, it should not be 
@@ -184,7 +190,9 @@ Here it's only two lines.  If an algorithm is being implemented or something
 tricky is going on, a reference to the paper where it is published should be
 included, as well as any notes or "gotchas" in the code to watch out for.</p>
 
-<b>Class overviews</b>
+</div>
+
+<h5>Class overviews</h5>
 
 <p>Classes are one fundamental part of a good object oriented design.  As such,
 a class definition should have a comment block that explains what the class is
@@ -193,7 +201,9 @@ could figure it out, it's probably safe to leave it out.  Naming classes
 something sane goes a long ways towards avoiding writing documentation.</p>
 
 
-<b>Method information</b>
+<h5>Method information</h5>
+
+<div>
 
 <p>Methods defined in a class (as well as any global functions) should also be
 documented properly.  A quick note about what it does and a description of the
@@ -207,12 +217,14 @@ happens: does the method return null?  Abort?  Format your hard disk?</p>
 
 </div>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="scf_commentformat">Comment Formatting</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>In general, prefer C++ style (<tt>//</tt>) comments.  They take less space,
 require less typing, don't have nesting problems, etc.  There are a few cases
@@ -237,7 +249,7 @@ These nest properly and are better behaved in general than C style comments.</p>
   <a name="scf_includes"><tt>#include</tt> Style</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Immediately after the <a href="#scf_commenting">header file comment</a> (and
 include guards if working on a header file), the <a
@@ -277,7 +289,7 @@ implements are defined.</p>
   <a name="scf_codewidth">Source Code Width</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Write your code to fit within 80 columns of text.  This helps those of us who
 like to print out code and look at your code in an xterm without resizing
@@ -302,7 +314,7 @@ for debate.</p>
   <a name="scf_spacestabs">Use Spaces Instead of Tabs</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>In all cases, prefer spaces to tabs in source files.  People have different
 preferred indentation levels, and different styles of indentation that they
@@ -323,7 +335,7 @@ makes for incredible diffs that are absolutely worthless.</p>
   <a name="scf_indentation">Indent Code Consistently</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Okay, in your first year of programming you were told that indentation is
 important.  If you didn't believe and internalize this then, now is the time.
@@ -331,19 +343,21 @@ Just do it.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="compilerissues">Compiler Issues</a>
 </h3>
 
+<div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="ci_warningerrors">Treat Compiler Warnings Like Errors</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>If your code has compiler warnings in it, something is wrong &mdash; you
 aren't casting values correctly, your have "questionable" constructs in your
@@ -397,7 +411,7 @@ be fixed by massaging the code appropriately.</p>
   <a name="ci_portable_code">Write Portable Code</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>In almost all cases, it is possible and within reason to write completely
 portable code.  If there are cases where it isn't possible to write portable
@@ -415,7 +429,7 @@ libSystem.</p>
 <h4>
 <a name="ci_rtti_exceptions">Do not use RTTI or Exceptions</a>
 </h4>
-<div class="doc_text">
+<div>
 
 <p>In an effort to reduce code and executable size, LLVM does not use RTTI
 (e.g. <tt>dynamic_cast&lt;&gt;</tt>) or exceptions.  These two language features
@@ -436,7 +450,7 @@ than <tt>dynamic_cast&lt;&gt;</tt>.</p>
 <h4>
 <a name="ci_class_struct">Use of <tt>class</tt> and <tt>struct</tt> Keywords</a>
 </h4>
-<div class="doc_text">
+<div>
 
 <p>In C++, the <tt>class</tt> and <tt>struct</tt> keywords can be used almost
 interchangeably. The only difference is when they are used to declare a class:
@@ -454,12 +468,17 @@ which case <tt>struct</tt> is allowed.</p>
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="styleissues">Style Issues</a>
 </h2>
 <!-- *********************************************************************** -->
 
+<div>
 
 <!-- ======================================================================= -->
 <h3>
@@ -467,13 +486,14 @@ which case <tt>struct</tt> is allowed.</p>
 </h3>
 <!-- ======================================================================= -->
 
+<div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="hl_module">A Public Header File <b>is</b> a Module</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>C++ doesn't do too well in the modularity department.  There is no real
 encapsulation or data hiding (unless you use expensive protocol classes), but it
@@ -503,7 +523,7 @@ translation unit.</p>
   <a name="hl_dontinclude"><tt>#include</tt> as Little as Possible</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>#include</tt> hurts compile time performance.  Don't do it unless you
 have to, especially in header files.</p>
@@ -532,7 +552,7 @@ dependencies that you'll find out about later.</p>
   <a name="hl_privateheaders">Keep "Internal" Headers Private</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Many modules have a complex implementation that causes them to use more than
 one implementation (<tt>.cpp</tt>) file.  It is often tempting to put the
@@ -553,7 +573,7 @@ class itself. Just make them private (or protected) and all is well.</p>
   <a name="hl_earlyexit">Use Early Exits and <tt>continue</tt> to Simplify Code</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>When reading code, keep in mind how much state and how many previous
 decisions have to be remembered by the reader to understand a block of code.
@@ -662,7 +682,7 @@ can be a big understandability win.</p>
   <a name="hl_else_after_return">Don't use <tt>else</tt> after a <tt>return</tt></a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>For similar reasons above (reduction of indentation and easier reading),
 please do not use '<tt>else</tt>' or '<tt>else if</tt>' after something that
@@ -745,7 +765,7 @@ track of when reading the code.</p>
   <a name="hl_predicateloops">Turn Predicate Loops into Predicate Functions</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>It is very common to write small loops that just compute a boolean value.
 There are a number of ways that people commonly write these, but an example of
@@ -802,6 +822,7 @@ locality.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
@@ -809,6 +830,7 @@ locality.</p>
 </h3>
 <!-- ======================================================================= -->
 
+<div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -817,7 +839,7 @@ locality.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Poorly-chosen names can mislead the reader and cause bugs. We cannot stress
 enough how important it is to use <em>descriptive</em> names.  Pick names that
@@ -900,7 +922,7 @@ Vehicle MakeVehicle(VehicleType Type) {
   <a name="ll_assert">Assert Liberally</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Use the "<tt>assert</tt>" macro to its fullest.  Check all of your
 preconditions and assumptions, you never know when a bug (not necessarily even
@@ -1003,7 +1025,7 @@ assert(NewToSet &amp;&amp; "The value shouldn't be in the set yet");
   <a name="ll_ns_std">Do Not Use '<tt>using namespace std</tt>'</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>In LLVM, we prefer to explicitly prefix all identifiers from the standard
 namespace with an "<tt>std::</tt>" prefix, rather than rely on
@@ -1043,7 +1065,7 @@ use any others.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>If a class is defined in a header file and has a v-table (either it has 
 virtual methods or it derives from classes with virtual methods), it must 
@@ -1059,7 +1081,7 @@ increasing link times.</p>
   <a name="ll_end">Don't evaluate <tt>end()</tt> every time through a loop</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Because C++ doesn't have a standard "<tt>foreach</tt>" loop (though it can be
 emulated with macros and may be coming in C++'0x) we end up writing a lot of
@@ -1121,7 +1143,7 @@ prefer it.</p>
   <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is Forbidden</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The use of <tt>#include &lt;iostream&gt;</tt> in library files is
 hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
@@ -1156,7 +1178,7 @@ the <tt>llvm::MemoryBuffer</tt> API for reading files.</b></p>
   <a name="ll_raw_ostream">Use <tt>raw_ostream</tt></a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM includes a lightweight, simple, and efficient stream implementation
 in <tt>llvm/Support/raw_ostream.h</tt>, which provides all of the common
@@ -1176,7 +1198,7 @@ declarations and constant references to <tt>raw_ostream</tt> instances.</p>
   <a name="ll_avoidendl">Avoid <tt>std::endl</tt></a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>std::endl</tt> modifier, when used with <tt>iostreams</tt> outputs a
 newline to the output stream specified.  In addition to doing this, however, it
@@ -1194,12 +1216,15 @@ it's better to use a literal <tt>'\n'</tt>.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="nano">Microscopic Details</a>
 </h3>
 <!-- ======================================================================= -->
+
+<div>
 
 <p>This section describes preferred low-level formatting guidelines along with
 reasoning on why we prefer them.</p>
@@ -1209,7 +1234,7 @@ reasoning on why we prefer them.</p>
   <a name="micro_spaceparen">Spaces Before Parentheses</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>We prefer to put a space before an open parenthesis only in control flow
 statements, but not in normal function call expressions and function-like
@@ -1267,7 +1292,7 @@ this misinterpretation.</p>
   <a name="micro_preincrement">Prefer Preincrement</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Hard fast rule: Preincrement (<tt>++X</tt>) may be no slower than
 postincrement (<tt>X++</tt>) and could very well be a lot faster than it.  Use
@@ -1287,7 +1312,7 @@ get in the habit of always using preincrement, and you won't have a problem.</p>
   <a name="micro_namespaceindent">Namespace Indentation</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 In general, we strive to reduce indentation wherever possible.  This is useful
@@ -1375,7 +1400,7 @@ the contents of the namespace.</p>
   <a name="micro_anonns">Anonymous Namespaces</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>After talking about namespaces in general, you may be wondering about
 anonymous namespaces in particular.
@@ -1455,7 +1480,9 @@ namespace just because it was declared there.
 
 </div>
 
+</div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -1463,7 +1490,7 @@ namespace just because it was declared there.
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>A lot of these comments and recommendations have been culled for other
 sources.  Two particularly important books for our work are:</p>

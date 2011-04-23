@@ -42,7 +42,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>If you're working with LLVM and run into a bug, we definitely want to know
 about it.  This document describes what you can do to increase the odds of
@@ -81,7 +81,7 @@ information:</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>More often than not, bugs in the compiler cause it to crash&mdash;often due
 to an assertion failure of some sort. The most important
@@ -109,14 +109,12 @@ with the following extra command line options:</p>
 
 </ul>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="front-end">Front-end bugs</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>If the problem is in the front-end, you should re-run the same
 <tt>llvm-gcc</tt> command that resulted in the crash, but add the
@@ -141,7 +139,7 @@ has instructions on the best way to use delta.</p>
   <a name="ct_optimizer">Compile-time optimization bugs</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>If you find that a bug crashes in the optimizer, compile your test-case to a
 <tt>.bc</tt> file by passing "<tt><b>-emit-llvm -O0 -c -o foo.bc</b></tt>".
@@ -175,7 +173,7 @@ that bugpoint emits.  If something goes wrong with bugpoint, please submit the
   <a name="ct_codegen">Code generator bugs</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>If you find a bug that crashes llvm-gcc in the code generator, compile your
 source file to a .bc file by passing "<tt><b>-emit-llvm -c -o foo.bc</b></tt>"
@@ -207,13 +205,15 @@ that bugpoint emits.  If something goes wrong with bugpoint, please submit the
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="miscompilations">Miscompilations</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>If llvm-gcc successfully produces an executable, but that executable doesn't
 run right, this is either a bug in the code or a bug in the
@@ -246,7 +246,7 @@ error.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Similarly to debugging incorrect compilation by mis-behaving passes, you can
 debug incorrect code generation by either LLC or the JIT, using

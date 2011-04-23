@@ -19,7 +19,7 @@
 <!--=========================================================================-->
 <h2><a name="overview">Overview</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
 
 <p>LLVM sets certain default configure options to make sure our developers don't
 break things for constrained platforms.  These settings are not optimal for most
@@ -36,7 +36,7 @@ developed against each.
 <!--=========================================================================-->
 <h2><a name="compilation">Compile Flags</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
 
 <p>LLVM runs much more quickly when it's optimized and assertions are removed.
 However, such a build is currently incompatible with users who build without
@@ -67,7 +67,7 @@ versions of LLVM in parallel.  The following configure flags are relevant:
 <!--=========================================================================-->
 <h2><a name="cxx-features">C++ Features</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
 
 <dl>
   <dt>RTTI</dt><dd>LLVM disables RTTI by default.  Add <tt>REQUIRES_RTTI=1</tt>
@@ -80,7 +80,7 @@ versions of LLVM in parallel.  The following configure flags are relevant:
 <!--=========================================================================-->
 <h2><a name="shared-library">Shared Library</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
 
 <p>Configure with <tt>--enable-shared</tt> to build
 <tt>libLLVM-<var>major</var>.<var>minor</var>.(so|dylib)</tt> and link the tools
@@ -91,7 +91,7 @@ against it.  This saves lots of binary size at the cost of some startup time.
 <!--=========================================================================-->
 <h2><a name="deps">Dependencies</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
 
 <dl>
 <dt><tt>--enable-libffi</tt></dt><dd>Depend on <a

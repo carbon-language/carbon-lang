@@ -41,7 +41,7 @@
 <h2><a name="intro">Chapter 7 Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Welcome to Chapter 7 of the "<a href="index.html">Implementing a language
 with LLVM</a>" tutorial.  In chapters 1 through 6, we've built a very
@@ -69,7 +69,7 @@ support for this, though the way it works is a bit unexpected for some.</p>
 <h2><a name="why">Why is this a hard problem?</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 To understand why mutable variables cause complexities in SSA construction, 
@@ -143,7 +143,7 @@ logic.</p>
 <h2><a name="memory">Memory in LLVM</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The 'trick' here is that while LLVM does require all register values to be
 in SSA form, it does not require (or permit) memory objects to be in SSA form.
@@ -324,7 +324,7 @@ variables now!
 <h2><a name="kalvars">Mutable Variables in Kaleidoscope</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Now that we know the sort of problem we want to tackle, lets see what this
 looks like in the context of our little Kaleidoscope language.  We're going to
@@ -380,7 +380,7 @@ Kaleidoscope to support new variable definitions.
 <h2><a name="adjustments">Adjusting Existing Variables for Mutation</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 The symbol table in Kaleidoscope is managed at code generation time by the 
@@ -649,7 +649,7 @@ we'll add the assignment operator.</p>
 <h2><a name="assignment">New Assignment Operator</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>With our current framework, adding a new assignment operator is really
 simple.  We will parse it just like any other binary operator, but handle it
@@ -746,7 +746,7 @@ add this next!
 <h2><a name="localvars">User-defined Local Variables</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Adding var/in is just like any other other extensions we made to 
 Kaleidoscope: we extend the lexer, the parser, the AST and the code generator.
@@ -979,7 +979,7 @@ anywhere in sight.</p>
 <h2><a name="code">Full Code Listing</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 Here is the complete code listing for our running example, enhanced with mutable

@@ -61,7 +61,7 @@
 <h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document is the central repository for all information pertaining to
    exception handling in LLVM.  It describes the format that LLVM exception
@@ -70,14 +70,12 @@
    provides specific examples of what exception handling information is used for
    in C/C++.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="itanium">Itanium ABI Zero-cost Exception Handling</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Exception handling for most programming languages is designed to recover from
    conditions that rarely occur during general use of an application.  To that
@@ -110,7 +108,7 @@
   <a name="sjlj">Setjmp/Longjmp Exception Handling</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Setjmp/Longjmp (SJLJ) based exception handling uses LLVM intrinsics
    <a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a> and
@@ -142,7 +140,7 @@
   <a name="overview">Overview</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>When an exception is thrown in LLVM code, the runtime does its best to find a
    handler suited to processing the circumstance.</p>
@@ -185,12 +183,14 @@
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h2>
   <a name="codegen">LLVM Code Generation</a>
 </h2>
 
-<div class="doc_text">
+<div>
 
 <p>At the time of this writing, only C++ exception handling support is available
    in LLVM.  So the remainder of this document will be somewhat C++-centric.</p>
@@ -200,14 +200,12 @@
    we will describe the implementation of LLVM exception handling in terms of
    C++ examples.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="throw">Throw</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Languages that support exception handling typically provide a <tt>throw</tt>
    operation to initiate the exception process.  Internally, a throw operation
@@ -229,7 +227,7 @@
   <a name="try_catch">Try/Catch</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>A call within the scope of a <i>try</i> statement can potentially raise an
    exception.  In those circumstances, the LLVM C++ front-end replaces the call
@@ -317,7 +315,7 @@
   <a name="cleanups">Cleanups</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>To handle destructors and cleanups in <tt>try</tt> code, control may not run
    directly from a landing pad to the first catch.  Control may actually flow
@@ -336,7 +334,7 @@
   <a name="throw_filters">Throw Filters</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>C++ allows the specification of which exception types can be thrown from a
    function.  To represent this a top level landing pad may exist to filter out
@@ -363,7 +361,7 @@
   <a name="restrictions">Restrictions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The semantics of the invoke instruction require that any exception that
    unwinds through an invoke call should result in a branch to the invoke's
@@ -384,25 +382,25 @@
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h2>
   <a name="format_common_intrinsics">Exception Handling Intrinsics</a>
 </h2>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM uses several intrinsic functions (name prefixed with "llvm.eh") to
    provide exception handling information at various points in generated
    code.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h4>
   <a name="llvm_eh_exception">llvm.eh.exception</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   i8* %<a href="#llvm_eh_exception">llvm.eh.exception</a>()
@@ -417,7 +415,7 @@
   <a name="llvm_eh_selector">llvm.eh.selector</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   i32 %<a href="#llvm_eh_selector">llvm.eh.selector</a>(i8*, i8*, ...)
@@ -449,7 +447,7 @@
   <a name="llvm_eh_typeid_for">llvm.eh.typeid.for</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   i32 %<a href="#llvm_eh_typeid_for">llvm.eh.typeid.for</a>(i8*)
@@ -467,7 +465,7 @@
   <a name="llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   i32 %<a href="#llvm_eh_sjlj_setjmp">llvm.eh.sjlj.setjmp</a>(i8*)
@@ -496,7 +494,7 @@
   <a name="llvm_eh_sjlj_longjmp">llvm.eh.sjlj.longjmp</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   void %<a href="#llvm_eh_sjlj_longjmp">llvm.eh.sjlj.setjmp</a>(i8*)
@@ -516,7 +514,7 @@
   <a name="llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   i8* %<a href="#llvm_eh_sjlj_lsda">llvm.eh.sjlj.lsda</a>()
@@ -535,7 +533,7 @@
   <a name="llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   void %<a href="#llvm_eh_sjlj_callsite">llvm.eh.sjlj.callsite</a>(i32)
@@ -553,7 +551,7 @@
   <a name="llvm_eh_sjlj_dispatchsetup">llvm.eh.sjlj.dispatchsetup</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <pre>
   void %<a href="#llvm_eh_sjlj_dispatchsetup">llvm.eh.sjlj.dispatchsetup</a>(i32)
@@ -565,24 +563,24 @@
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h2>
   <a name="asm">Asm Table Formats</a>
 </h2>
 
-<div class="doc_text">
+<div>
 
 <p>There are two tables that are used by the exception handling runtime to
    determine which actions should take place when an exception is thrown.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="unwind_tables">Exception Handling Frame</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>An exception handling frame <tt>eh_frame</tt> is very similar to the unwind
    frame used by dwarf debug info.  The frame contains all the information
@@ -600,7 +598,7 @@
   <a name="exception_tables">Exception Tables</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>An exception table contains information about what actions to take when an
    exception is thrown in a particular part of a function's code.  There is one
@@ -611,12 +609,14 @@
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h2>
   <a name="todo">ToDo</a>
 </h2>
 
-<div class="doc_text">
+<div>
 
 <ol>
 

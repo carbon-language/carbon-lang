@@ -32,7 +32,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><tt>bugpoint</tt> narrows down the source of problems in LLVM tools and
 passes.  It can be used to debug three types of failures: optimizer crashes,
@@ -55,7 +55,7 @@ href="HowToSubmitABug.html">How To Submit a Bug Report document</a>.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><tt>bugpoint</tt> is designed to be a useful tool without requiring any
 hooks into the LLVM infrastructure at all.  It works with any and all LLVM
@@ -68,14 +68,12 @@ is still worth it. Note that <tt>bugpoint</tt> is generally very quick unless
 debugging a miscompilation where each test of the program (which requires 
 executing it) takes a long time.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="autoselect">Automatic Debugger Selection</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p><tt>bugpoint</tt> reads each <tt>.bc</tt> or <tt>.ll</tt> file specified on
 the command line and links them together into a single module, called the test
@@ -108,7 +106,7 @@ Otherwise, there is no problem <tt>bugpoint</tt> can debug.</p>
   <a name="crashdebug">Crash debugger</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>If an optimizer or code generator crashes, <tt>bugpoint</tt> will try as hard
 as it can to reduce the list of passes (for optimizer crashes) and the size of
@@ -133,7 +131,7 @@ reproduce the failure with <tt>opt</tt> or <tt>llc</tt>.</p>
   <a name="codegendebug">Code generator debugger</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The code generator debugger attempts to narrow down the amount of code that
 is being miscompiled by the selected code generator.  To do this, it takes the
@@ -154,7 +152,7 @@ good code.</p>
   <a name="miscompilationdebug">Miscompilation debugger</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The miscompilation debugger works similarly to the code generator debugger.
 It works by splitting the test program into two pieces, running the
@@ -166,13 +164,15 @@ assumes that the selected code generator is working properly.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="advice">Advice for using bugpoint</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <tt>bugpoint</tt> can be a remarkably useful tool, but it sometimes works in
 non-obvious ways.  Here are some hints and tips:<p>

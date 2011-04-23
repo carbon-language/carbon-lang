@@ -66,7 +66,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 This document describes techniques for writing compiler backends that convert
@@ -91,13 +91,11 @@ characteristics, such as a RISC instruction set and straightforward calling
 conventions.
 </p>
 
-</div>
-
 <h3>
   <a name="Audience">Audience</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The audience for this document is anyone who needs to write an LLVM backend to
@@ -110,7 +108,7 @@ generate code for a specific hardware or software target.
   <a name="Prerequisite">Prerequisite Reading</a>
 </h3>
 
-<div class="doc_text">  
+<div>  
 
 <p>
 These essential documents must be read before reading this document:
@@ -159,7 +157,7 @@ machine dependent features.
   <a name="Basic">Basic Steps</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 To write a compiler backend for LLVM that converts the LLVM IR to code for a
@@ -224,7 +222,7 @@ that the class will need and which components will need to be subclassed.
   <a name="Preliminaries">Preliminaries</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 To actually create your compiler backend, you need to create and modify a few
@@ -281,13 +279,15 @@ regenerate configure by running <tt>./autoconf/AutoRegen.sh</tt>.
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="TargetMachine">Target Machine</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 <tt>LLVMTargetMachine</tt> is designed as a base class for targets implemented
@@ -360,11 +360,6 @@ public:
 </pre>
 </div>
 
-</div>
-
-
-<div class="doc_text">
-
 <ul>
 <li><tt>getInstrInfo()</tt></li>
 <li><tt>getRegisterInfo()</tt></li>
@@ -398,10 +393,6 @@ SparcTargetMachine::SparcTargetMachine(const Module &amp;M, const std::string &a
 </pre>
 </div>
 
-</div>
-
-<div class="doc_text">
-
 <p>Hyphens separate portions of the <tt>TargetDescription</tt> string.</p>
 
 <ul>
@@ -429,7 +420,7 @@ SparcTargetMachine::SparcTargetMachine(const Module &amp;M, const std::string &a
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 You must also register your target with the <tt>TargetRegistry</tt>, which is
@@ -485,7 +476,7 @@ For more information, see
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 You should describe a concrete target-specific class that represents the
@@ -514,14 +505,12 @@ input files and placed in <tt>XXXGenRegisterInfo.h.inc</tt> and
 implementation of <tt>XXXRegisterInfo</tt> requires hand-coding.
 </p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="RegisterDef">Defining a Register</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The <tt>XXXRegisterInfo.td</tt> file typically starts with register definitions
@@ -704,7 +693,7 @@ fields of a register's TargetRegisterDesc.
   <a name="RegisterClassDef">Defining a Register Class</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The <tt>RegisterClass</tt> class (specified in <tt>Target.td</tt>) is used to
@@ -899,7 +888,7 @@ namespace SP {   // Register class instances
   <a href="CodeGenerator.html#targetregisterinfo">TargetRegisterInfo</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The final step is to hand code portions of <tt>XXXRegisterInfo</tt>, which
@@ -933,13 +922,15 @@ implementation in <tt>SparcRegisterInfo.cpp</tt>:
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="InstructionSet">Instruction Set</a>
 </h2>
 
 <!-- *********************************************************************** -->
-<div class="doc_text">
+<div>
 
 <p>
 During the early stages of code generation, the LLVM IR code is converted to a
@@ -1188,14 +1179,12 @@ correspond to the values in <tt>SparcInstrInfo.td</tt>. I.e.,
 <tt>SPCC::ICC_NE = 9</tt>, <tt>SPCC::FCC_U = 23</tt> and so on.)
 </p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="operandMapping">Instruction Operand Mapping</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The code generator backend maps instruction operands to fields in the
@@ -1288,7 +1277,7 @@ the <tt>rd</tt>, <tt>rs1</tt>, and <tt>rs2</tt> fields respectively.
   <a href="CodeGenerator.html#targetinstrinfo">TargetInstrInfo</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The final step is to hand code portions of <tt>XXXInstrInfo</tt>, which
@@ -1330,7 +1319,7 @@ implementation in <tt>SparcInstrInfo.cpp</tt>:
 <h3>
   <a name="branchFolding">Branch Folding and If Conversion</a>
 </h3>
-<div class="doc_text">
+<div>
 
 <p>
 Performance can be improved by combining instructions or by eliminating
@@ -1485,13 +1474,15 @@ branch.
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="InstructionSelector">Instruction Selector</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 LLVM uses a <tt>SelectionDAG</tt> to represent LLVM IR instructions, and nodes
@@ -1642,14 +1633,12 @@ SDNode *Select_ISD_STORE(const SDValue &amp;N) {
 </pre>
 </div>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="LegalizePhase">The SelectionDAG Legalize Phase</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 The Legalize phase converts a DAG to use types and operations that are natively
@@ -1716,14 +1705,12 @@ a <tt>LegalAction</tt> type enum value: <tt>Promote</tt>, <tt>Expand</tt>,
 contains examples of all four <tt>LegalAction</tt> values.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="promote">Promote</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 For an operation without native support for a given type, the specified type may
@@ -1746,7 +1733,7 @@ setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
   <a name="expand">Expand</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 For a type without native support, a value may need to be broken down further,
@@ -1771,7 +1758,7 @@ setOperationAction(ISD::FCOS, MVT::f32, Expand);
   <a name="custom">Custom</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 For some operations, simple type promotion or operation expansion may be
@@ -1837,7 +1824,7 @@ static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &amp;DAG) {
   <a name="legal">Legal</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>
 The <tt>Legal</tt> LegalizeAction enum value simply indicates that an
@@ -1865,12 +1852,14 @@ if (TM.getSubtarget&lt;SparcSubtarget&gt;().isV9())
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="callingConventions">Calling Conventions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 To support target-specific calling conventions, <tt>XXXGenCallingConv.td</tt>
@@ -2015,13 +2004,15 @@ def RetCC_X86_32 : CallingConv&lt;[
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="assemblyPrinter">Assembly Printer</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 During the code emission stage, the code generator may utilize an LLVM pass to
@@ -2176,7 +2167,7 @@ output.
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 Subtarget support is used to inform the code generation process of instruction
@@ -2294,7 +2285,7 @@ XXXSubtarget::XXXSubtarget(const Module &amp;M, const std::string &amp;FS) {
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>
 The implementation of a target machine optionally includes a Just-In-Time (JIT)
@@ -2333,14 +2324,12 @@ Both <tt>XXXJITInfo.cpp</tt> and <tt>XXXCodeEmitter.cpp</tt> must include the
 that write data (in bytes, words, strings, etc.) to the output stream.
 </p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="mce">Machine Code Emitter</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 In <tt>XXXCodeEmitter.cpp</tt>, a target-specific of the <tt>Emitter</tt> class
@@ -2482,7 +2471,7 @@ enum RelocationType {
   <a name="targetJITInfo">Target JIT Info</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>
 <tt>XXXJITInfo.cpp</tt> implements the JIT interfaces for target-specific
@@ -2534,6 +2523,8 @@ values, incoming arguments, and frame and return address. The callback function
 needs low-level access to the registers or stack, so it is typically implemented
 with assembler.
 </p>
+
+</div>
 
 </div>
 

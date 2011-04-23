@@ -105,7 +105,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document describes the CommandLine argument processing library.  It will
 show you how to use it, and what it can do.  The CommandLine library uses a
@@ -189,7 +189,7 @@ href="mailto:sabre@nondot.org">Chris Lattner</a>.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This section of the manual runs through a simple CommandLine'ification of a
 basic compiler tool.  This is intended to show you how to jump into using the
@@ -321,14 +321,12 @@ OPTIONS:
 
 <p>... indicating that an input filename is expected.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="bool">Boolean Arguments</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>In addition to input and output filenames, we would like the compiler example
 to support three boolean flags: "<tt>-f</tt>" to force writing binary output to
@@ -410,7 +408,7 @@ and <a href="#list">lists</a> of options.</p>
   <a name="alias">Argument Aliases</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>So far, the example works well, except for the fact that we need to check the
 quiet condition like this now:</p>
@@ -461,7 +459,7 @@ uses.</p>
   possibilities</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>So far we have seen how the CommandLine library handles builtin types like
 <tt>std::string</tt>, <tt>bool</tt> and <tt>int</tt>, but how does it handle
@@ -571,7 +569,7 @@ which is when you would use it.</p>
   <a name="namedalternatives">Named Alternatives</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Another useful argument form is a named alternative style.  We shall use this
 style in our compiler to specify different debug levels that can be used.
@@ -633,7 +631,7 @@ that you can choose the form most appropriate for your application.</p>
   <a name="list">Parsing a list of options</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Now that we have the standard run-of-the-mill argument types out of the way,
 lets get a little wild and crazy.  Lets say that we want our optimizer to accept
@@ -703,7 +701,7 @@ checking we have to do.</p>
   <a name="bits">Collecting options as a set of flags</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Instead of collecting sets of options in a list, it is also possible to
 gather information for enum values in a <b>bit vector</b>.  The representation used by
@@ -762,7 +760,7 @@ href="#list"> <tt>cl::list</tt></a> option.</p>
   <a name="description">Adding freeform text to help output</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>As our program grows and becomes more mature, we may decide to put summary
 information about what it does into the help output.  The help output is styled
@@ -800,6 +798,7 @@ OPTIONS:
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
@@ -807,21 +806,19 @@ OPTIONS:
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Now that you know the basics of how to use the CommandLine library, this
 section will give you the detailed information you need to tune how command line
 options work, as well as information on more "advanced" command line option
 processing capabilities.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="positional">Positional Arguments</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Positional arguments are those arguments that are not named, and are not
 specified with a hyphen.  Positional arguments should be used when an option is
@@ -854,15 +851,12 @@ that command line options will be ordered according to how they are listed in a
 are defined in multiple .cpp files.  The fix for this problem is simply to
 define all of your positional arguments in one .cpp file.</p>
 
-</div>
-
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="--">Specifying positional options with hyphens</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Sometimes you may want to specify a value to your positional argument that
 starts with a hyphen (for example, searching for '<tt>-foo</tt>' in a file).  At
@@ -898,7 +892,7 @@ can use it like this:</p>
 <h4>
   <a name="getPosition">Determining absolute position with getPosition()</a>
 </h4>
-<div class="doc_text">
+<div>
   <p>Sometimes an option can affect or modify the meaning of another option. For
   example, consider <tt>gcc</tt>'s <tt>-x LANG</tt> option. This tells
   <tt>gcc</tt> to ignore the suffix of subsequent positional arguments and force
@@ -958,7 +952,7 @@ can use it like this:</p>
   <a name="cl::ConsumeAfter">The <tt>cl::ConsumeAfter</tt> modifier</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::ConsumeAfter</tt> <a href="#formatting">formatting option</a> is
 used to construct programs that use "interpreter style" option processing.  With
@@ -1006,12 +1000,14 @@ href="#cl::list">cl::list</a> option.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="storage">Internal vs External Storage</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>By default, all command line options automatically hold the value that they
 parse from the command line.  This is very convenient in the common case,
@@ -1080,7 +1076,7 @@ that <tt>DebugFlag</tt> is automatically set.</p>
   <a name="attributes">Option Attributes</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>This section describes the basic attributes that you can specify on
 options.</p>
@@ -1170,7 +1166,7 @@ obviously).</li>
   <a name="modifiers">Option Modifiers</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Option modifiers are the flags and expressions that you pass into the
 constructors for <tt><a href="#cl::opt">cl::opt</a></tt> and <tt><a
@@ -1196,14 +1192,12 @@ category.  The CommandLine library specifies defaults for all of these settings
 that are the most useful in practice and the most common, which mean that you
 usually shouldn't have to worry about these.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="hiding">Hiding an option from <tt>-help</tt> output</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::NotHidden</tt>, <tt>cl::Hidden</tt>, and
 <tt>cl::ReallyHidden</tt> modifiers are used to control whether or not an option
@@ -1235,7 +1229,7 @@ indicates that the option should not appear in any help output.</li>
   allowed</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>This group of options is used to control how many time an option is allowed
 (or required) to be specified on the command line of your program.  Specifying a
@@ -1283,7 +1277,7 @@ retained.</p>
   <a name="valrequired">Controlling whether or not a value must be specified</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>This group of options is used to control whether or not the option allows a
 value to be present.  In the case of the CommandLine library, a value is either
@@ -1332,7 +1326,7 @@ when <a href="#extensionguide">extending the library</a>.</p>
   <a name="formatting">Controlling other formatting options</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The formatting option group is used to specify that the command line option
 has special abilities and is otherwise different from other command line
@@ -1413,7 +1407,7 @@ strategy basically looks like this:</p>
   <a name="misc">Miscellaneous option modifiers</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The miscellaneous option modifiers are the only flags where you can specify
 more than one flag from the set: they are not mutually exclusive.  These flags
@@ -1457,7 +1451,7 @@ only makes sense with a <a href="#cl::list">cl::list</a> option.</li>
   <a name="response">Response files</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Some systems, such as certain variants of Microsoft Windows and
 some older Unices have a relatively low limit on command-line
@@ -1474,13 +1468,14 @@ and
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="toplevel">Top-Level Classes and Functions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Despite all of the built-in flexibility, the CommandLine option library
 really only consists of one function (<a
@@ -1490,15 +1485,13 @@ href="#cl::list"><tt>cl::list</tt></a>, and <a
 href="#cl::alias"><tt>cl::alias</tt></a>.  This section describes these three
 classes in detail.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="cl::ParseCommandLineOptions">The <tt>cl::ParseCommandLineOptions</tt>
   function</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::ParseCommandLineOptions</tt> function is designed to be called
 directly from <tt>main</tt>, and is used to fill in the values of all of the
@@ -1519,7 +1512,7 @@ which holds <a href="#description">additional extra text</a> to emit when the
   function</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::ParseEnvironmentOptions</tt> function has mostly the same effects
 as <a
@@ -1556,7 +1549,7 @@ input.</p>
   function</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::SetVersionPrinter</tt> function is designed to be called
 directly from <tt>main</tt> and <i>before</i>
@@ -1576,7 +1569,7 @@ called when the <tt>--version</tt> option is given by the user.</p>
   <a name="cl::opt">The <tt>cl::opt</tt> class</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::opt</tt> class is the class used to represent scalar command line
 options, and is the one used most of the time.  It is a templated class which
@@ -1611,7 +1604,7 @@ href="#customparser">custom parser</a>.</p>
   <a name="cl::list">The <tt>cl::list</tt> class</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::list</tt> class is the class used to represent a list of command
 line options.  It too is a templated class which can take up to three
@@ -1638,7 +1631,7 @@ be used.</p>
   <a name="cl::bits">The <tt>cl::bits</tt> class</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::bits</tt> class is the class used to represent a list of command
 line options in the form of a bit vector.  It is also a templated class which
@@ -1663,7 +1656,7 @@ must be of <b>type</b> <tt>unsigned</tt> if external storage is used.</p>
   <a name="cl::alias">The <tt>cl::alias</tt> class</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::alias</tt> class is a nontemplated class that is used to form
 aliases for other arguments.</p>
@@ -1686,7 +1679,7 @@ the conversion from string to data.</p>
   <a name="cl::extrahelp">The <tt>cl::extrahelp</tt> class</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>cl::extrahelp</tt> class is a nontemplated class that allows extra
 help text to be printed out for the <tt>-help</tt> option.</p>
@@ -1709,12 +1702,14 @@ single <tt>cl::extrahelp</tt> instance.</p>
 </pre></div>
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="builtinparsers">Builtin parsers</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Parsers control how the string value taken from the command line is
 translated into a typed value, suitable for use in a C++ program.  By default,
@@ -1773,27 +1768,27 @@ exponential notation (ex: <tt>1.7e15</tt>) and properly supports locales.
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2>
   <a name="extensionguide">Extension Guide</a>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Although the CommandLine library has a lot of functionality built into it
 already (as discussed previously), one of its true strengths lie in its
 extensibility.  This section discusses how the CommandLine library works under
 the covers and illustrates how to do some simple, common, extensions.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="customparser">Writing a custom parser</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>One of the simplest and most common extensions is the use of a custom parser.
 As <a href="#builtinparsers">discussed previously</a>, parsers are the portion
@@ -1936,7 +1931,7 @@ tutorial.</p>
   <a name="explotingexternal">Exploiting external storage</a>
 </h3>
 
-<div class="doc_text">
+<div>
   <p>Several of the LLVM libraries define static <tt>cl::opt</tt> instances that
   will automatically be included in any program that links with that library.
   This is a feature. However, sometimes it is necessary to know the value of the
@@ -1955,9 +1950,11 @@ tutorial.</p>
   <a name="dynamicopts">Dynamically adding command line options</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>TODO: fill in this section</p>
+
+</div>
 
 </div>
 

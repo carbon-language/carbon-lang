@@ -36,7 +36,7 @@
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>During the course of using LLVM, you may wish to customize it for your
 research project or for experimentation. At this point, you may realize that
@@ -73,7 +73,7 @@ effort by doing so.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>Adding a new intrinsic function to LLVM is much easier than adding a new
 instruction.  Almost all extensions to LLVM should start as an intrinsic
@@ -135,7 +135,7 @@ support for it.  Generally you must do the following steps:</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>As with intrinsics, adding a new SelectionDAG node to LLVM is much easier
 than adding a new instruction.  New nodes are often added to help represent
@@ -225,7 +225,7 @@ complicated behavior in a single node (rotate).</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><span class="doc_warning">WARNING: adding instructions changes the bitcode
 format, and it will take some effort to maintain compatibility with
@@ -282,20 +282,18 @@ to understand this new instruction.</p>
 </h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p><span class="doc_warning">WARNING: adding new types changes the bitcode
 format, and will break compatibility with currently-existing LLVM
 installations.</span> Only add new types if it is absolutely necessary.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="fund_type">Adding a fundamental type</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <ol>
 
@@ -321,7 +319,7 @@ installations.</span> Only add new types if it is absolutely necessary.</p>
   <a name="derived_type">Adding a derived type</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <ol>
 <li><tt>llvm/include/llvm/Type.h</tt>:
@@ -370,6 +368,8 @@ void calcTypeName(const Type *Ty,
  
 
 </ol>
+
+</div>
 
 </div>
 

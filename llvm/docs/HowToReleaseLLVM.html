@@ -26,7 +26,7 @@
 <h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document contains information about successfully releasing LLVM &mdash;
    including subprojects: e.g., <tt>llvm-gcc</tt> and <tt>clang</tt> &mdash; to
@@ -38,7 +38,7 @@
 <!-- *********************************************************************** -->
 <h2><a name="process">Release Timeline</a></h2>
 <!-- *********************************************************************** -->
-<div class="doc_text">
+<div>
 
 <p>LLVM is released on a time based schedule &mdash; roughly every 6 months. We
    do not normally have dot releases because of the nature of LLVM's incremental
@@ -79,7 +79,7 @@
 <h2><a name="process">Release Process</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <ol>
   <li><a href="#release-admin">Release Administrative Tasks</a>
@@ -119,12 +119,10 @@
   </li>
 </ol>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3><a name="release-admin">Release Administrative Tasks</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>This section describes a few administrative tasks that need to be done for
    the release process to begin. Specifically, it involves:</p>
@@ -135,12 +133,10 @@
   <li>Tagging release candidates for the release team to begin testing</li>
 </ul>
 
-</div>
-
 <!-- ======================================================================= -->
 <h4><a name="branch">Create Release Branch</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Branch the Subversion trunk using the following procedure:</p>
 
@@ -200,7 +196,7 @@ $ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> clang-
 <!-- ======================================================================= -->
 <h4><a name="verchanges">Update LLVM Version</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>After creating the LLVM release branch, update the release branches'
    <tt>autoconf</tt> and <tt>configure.ac</tt> versions from '<tt>X.Ysvn</tt>'
@@ -216,7 +212,7 @@ $ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_<i>XY</i> clang-
 <!-- ======================================================================= -->
 <h4><a name="dist">Build the LLVM Release Candidates</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Create release candidates for <tt>llvm</tt>, <tt>llvm-gcc</tt>,
    <tt>clang</tt>, and the LLVM <tt>test-suite</tt> by tagging the branch with
@@ -268,10 +264,12 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3><a name="release-build">Building the Release</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>The builds of <tt>llvm</tt>, <tt>llvm-gcc</tt>, and <tt>clang</tt>
    <em>must</em> be free of errors and warnings in Debug, Release+Asserts, and
@@ -287,12 +285,10 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
   <tr align="left"><td>Release</td><td><tt>ENABLE_OPTIMIZED=1 DISABLE_ASSERTIONS=1</tt></td></tr>
 </table>
 
-</div>
-
 <!-- ======================================================================= -->
 <h4><a name="build">Build LLVM</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Build <tt>Debug</tt>, <tt>Release+Asserts</tt>, and <tt>Release</tt> versions
    of <tt>llvm</tt> on all supported platforms. Directions to build
@@ -304,7 +300,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="llvmgccbin">Build the LLVM GCC Binary Distribution</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Creating the <tt>llvm-gcc</tt> binary distribution (Release/Optimized)
    requires performing the following steps for each supported platform:</p>
@@ -331,7 +327,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="clangbin">Build Clang Binary Distribution</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Creating the <tt>clang</tt> binary distribution
    (Debug/Release+Asserts/Release) requires performing the following steps for
@@ -352,7 +348,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="target-build">Target Specific Build Details</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>The table below specifies which compilers are used for each Arch/OS
    combination when qualifying the build of <tt>llvm</tt>, <tt>llvm-gcc</tt>,
@@ -371,10 +367,12 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3><a name="release-qualify">Building the Release</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>A release is qualified when it has no regressions from the previous release
    (or baseline). Regressions are related to correctness first and performance
@@ -390,12 +388,10 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
    criteria, but these are the criteria which we found to be most important and
    which must be satisfied before a release can go out</b></p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h4><a name="llvm-qualify">Qualify LLVM</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM is qualified when it has a clean test run without a front-end. And it
    has no regressions when using either <tt>llvm-gcc</tt> or <tt>clang</tt> with
@@ -406,7 +402,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="llvmgcc-qualify">Qualify LLVM-GCC</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>LLVM-GCC</tt> is qualified when front-end specific tests in the
    <tt>llvm</tt> regression test suite all pass and there are no regressions in
@@ -419,7 +415,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="clang-qualify">Qualify Clang</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p><tt>Clang</tt> is qualified when front-end specific tests in the 
    <tt>llvm</tt> dejagnu test suite all pass, clang's own test suite passes
@@ -430,7 +426,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="targets">Specific Target Qualification Details</a></h4>
 
-<div class="doc_text">
+<div>
 
 <table>
   <tr><th>Architecture</th><th>OS</th><th>llvm-gcc baseline</th><th>clang baseline</th><th>tests</th></tr>
@@ -444,9 +440,11 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3><a name="commTest">Community Testing</a></h3>
-<div class="doc_text">
+<div>
 
 <p>Once all testing has been completed and appropriate bugs filed, the release
    candidate tarballs are put on the website and the LLVM community is
@@ -484,7 +482,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h3><a name="release-patch">Release Patch Rules</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>Below are the rules regarding patching the release branch:</p>
 
@@ -508,19 +506,16 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h3><a name="release-final">Release Final Tasks</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>The final stages of the release process involves tagging the "final" release
    branch, updating documentation that refers to the release, and updating the
    demo page.</p>
 
-</div>
-
-
 <!-- ======================================================================= -->
 <h4><a name="updocs">Update Documentation</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Review the documentation and ensure that it is up to date. The "Release
    Notes" must be updated to reflect new features, bug fixes, new known issues,
@@ -534,7 +529,7 @@ $ tar -cvf - clang-<i>X.Y</i>rc1       | gzip &gt; clang-<i>X.Y</i>rc1.src.tar.g
 <!-- ======================================================================= -->
 <h4><a name="tag">Tag the LLVM Final Release</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Tag the final release sources using the following procedure:</p>
 
@@ -556,20 +551,20 @@ $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3><a name="updemo">Update the LLVM Demo Page</a></h3>
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM demo page must be updated to use the new release. This consists of
    using the new <tt>llvm-gcc</tt> binary and building LLVM.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h4><a name="webupdates">Update the LLVM Website</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>The website must be updated before the release announcement is sent out. Here
    is what to do:</p>
@@ -605,9 +600,13 @@ $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
 <!-- ======================================================================= -->
 <h4><a name="announce">Announce the Release</a></h4>
 
-<div class="doc_text">
+<div>
 
 <p>Have Chris send out the release announcement when everything is finished.</p>
+
+</div>
+
+</div>
 
 </div>
 

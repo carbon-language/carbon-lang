@@ -23,7 +23,7 @@
 <!--=========================================================================-->
 <h2><a name="introduction">Introduction</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>Building with link time optimization requires cooperation from the
 system linker. LTO support on Linux systems requires that you use
 the <a href="http://sourceware.org/binutils">gold linker</a> which supports
@@ -40,7 +40,7 @@ The same plugin can also be used by other tools such as <tt>ar</tt> and
 <!--=========================================================================-->
 <h2><a name="build">How to build it</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>You need to have gold with plugin support and build the LLVMgold
 plugin. Check whether you have gold running <tt>/usr/bin/ld -v</tt>. It will
 report &#8220;GNU gold&#8221; or else &#8220GNU ld&#8221; if not. If you have
@@ -74,7 +74,7 @@ placed.
 <!--=========================================================================-->
 <h2><a name="usage">Usage</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>The linker takes a <tt>-plugin</tt> option that points to the path of
   the plugin <tt>.so</tt> file. To find out what link command <tt>gcc</tt>
   would run in a given situation, run <tt>gcc -v <em>[...]</em></tt> and look
@@ -95,14 +95,13 @@ placed.
   own gold, be sure to install the <tt>ar</tt> and <tt>nm-new</tt> you built to
   <tt>/usr/bin</tt>.
   <p>
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="example1">Example of link time optimization</a>
 </h3>
 
-<div class="doc_text">
+<div>
   <p>The following example shows a worked example of the gold plugin mixing
   LLVM bitcode and native code.
 <pre class="doc_code">
@@ -149,6 +148,8 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
   example</a> gold does not currently eliminate foo4.</p>
 </div>
 
+</div>
+
 <!--=========================================================================-->
 <h2>
   <a name="lto_autotools">
@@ -156,7 +157,7 @@ $ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
   </a>
 </h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>Once your system <tt>ld</tt>, <tt>ar</tt> and <tt>nm</tt> all support LLVM
   bitcode, everything is in place for an easy to use LTO build of autotooled
   projects:</p>
@@ -195,7 +196,7 @@ export CFLAGS="-O4"
 <!--=========================================================================-->
 <h2><a name="licensing">Licensing</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>Gold is licensed under the GPLv3. LLVMgold uses the interface file
 <tt>plugin-api.h</tt> from gold which means that the resulting LLVMgold.so
 binary is also GPLv3. This can still be used to link non-GPLv3 programs just

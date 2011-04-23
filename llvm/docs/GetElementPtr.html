@@ -61,7 +61,7 @@
 <h2><a name="intro">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text"> 
+<div>
   <p>This document seeks to dispel the mystery and confusion surrounding LLVM's
   <a href="LangRef.html#i_getelementptr">GetElementPtr</a> (GEP) instruction.
   Questions about the wily GEP instruction are
@@ -74,19 +74,18 @@
 <!-- *********************************************************************** -->
 <h2><a name="addresses">Address Computation</a></h2>
 <!-- *********************************************************************** -->
-<div class="doc_text">
+<div>
   <p>When people are first confronted with the GEP instruction, they tend to
   relate it to known concepts from other programming paradigms, most notably C
   array indexing and field selection. GEP closely resembles C array indexing
   and field selection, however it's is a little different and this leads to
   the following questions.</p>
-</div>
 
 <!-- *********************************************************************** -->
 <h3>
   <a name="firstptr">What is the first index of the GEP instruction?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Quick answer: The index stepping through the first operand.</p> 
   <p>The confusion with the first index usually arises from thinking about 
   the GetElementPtr instruction as if it was a C index operator. They aren't the
@@ -209,7 +208,7 @@ idx3 = (char*) &amp;MyVar + 8
   <a name="extra_index">Why is the extra 0 index required?</a>
 </h3>
 <!-- *********************************************************************** -->
-<div class="doc_text">
+<div>
   <p>Quick answer: there are no superfluous indices.</p>
   <p>This question arises most often when the GEP instruction is applied to a
   global variable which is always a pointer type. For example, consider
@@ -250,7 +249,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="deref">What is dereferenced by GEP?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Quick answer: nothing.</p> 
   <p>The GetElementPtr instruction dereferences nothing. That is, it doesn't
   access memory in any way. That's what the Load and Store instructions are for.
@@ -305,7 +304,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="lead0">Why don't GEP x,0,0,1 and GEP x,1 alias?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Quick Answer: They compute different address locations.</p>
   <p>If you look at the first indices in these GEP
   instructions you find that they are different (0 and 1), therefore the address
@@ -334,7 +333,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="trail0">Why do GEP x,1,0,0 and GEP x,1 alias?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Quick Answer: They compute the same address location.</p>
   <p>These two GEP instructions will compute the same address because indexing
   through the 0th element does not change the address. However, it does change
@@ -358,7 +357,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="vectors">Can GEP index into vector elements?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>This hasn't always been forcefully disallowed, though it's not recommended.
      It leads to awkward special cases in the optimizers, and fundamental
      inconsistency in the IR. In the future, it will probably be outright
@@ -371,7 +370,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="addrspace">What effect do address spaces have on GEPs?</a>
 </h3>
-<div class="doc_text">
+<div>
    <p>None, except that the address space qualifier on the first operand pointer
       type always matches the address space qualifier on the result type.</p>
 
@@ -384,7 +383,7 @@ idx3 = (char*) &amp;MyVar + 8
     How is GEP different from ptrtoint, arithmetic, and inttoptr?
   </a>
 </h3>
-<div class="doc_text">
+<div>
   <p>It's very similar; there are only subtle differences.</p>
 
   <p>With ptrtoint, you have to pick an integer type. One approach is to pick i64;
@@ -416,7 +415,7 @@ idx3 = (char*) &amp;MyVar + 8
     How do I do this?
   </a>
 </h3>
-<div class="doc_text">
+<div>
   <p>You don't. The integer computation implied by a GEP is target-independent.
      Typically what you'll need to do is make your backend pattern-match
      expressions trees involving ADD, MUL, etc., which are what GEP is lowered
@@ -437,7 +436,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="vla">How does VLA addressing work with GEPs?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>GEPs don't natively support VLAs. LLVM's type system is entirely static,
      and GEP address computations are guided by an LLVM type.</p>
 
@@ -453,16 +452,18 @@ idx3 = (char*) &amp;MyVar + 8
      VLA and non-VLA indexing in the same manner.</p>
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="rules">Rules</a></h2>
 <!-- *********************************************************************** -->
-
+<div>
 <!-- *********************************************************************** -->
 
 <h3>
   <a name="bounds">What happens if an array index is out of bounds?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>There are two senses in which an array index can be out of bounds.</p>
 
   <p>First, there's the array type which comes from the (static) type of
@@ -504,7 +505,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="negative">Can array indices be negative?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Yes. This is basically a special case of array indices being out
      of bounds.</p>
 
@@ -514,7 +515,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="compare">Can I compare two values computed with GEPs?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Yes. If both addresses are within the same allocated object, or 
      one-past-the-end, you'll get the comparison result you expect. If either
      is outside of it, integer arithmetic wrapping may occur, so the
@@ -529,7 +530,7 @@ idx3 = (char*) &amp;MyVar + 8
     the underlying object?
   </a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Yes. There are no restrictions on bitcasting a pointer value to an arbitrary
      pointer type. The types in a GEP serve only to define the parameters for the
      underlying integer computation. They need not correspond with the actual
@@ -548,7 +549,7 @@ idx3 = (char*) &amp;MyVar + 8
     Can I cast an object's address to integer and add it to null?
   </a>
 </h3>
-<div class="doc_text">
+<div>
   <p>You can compute an address that way, but if you use GEP to do the add,
      you can't use that pointer to actually access the object, unless the
      object is managed outside of LLVM.</p>
@@ -574,7 +575,7 @@ idx3 = (char*) &amp;MyVar + 8
     that value to one address to compute the other address?
   </a>
 </h3>
-<div class="doc_text">
+<div>
   <p>As with arithmetic on null, You can use GEP to compute an address that
      way, but you can't use that pointer to actually access the object if you
      do, unless the object is managed outside of LLVM.</p>
@@ -588,7 +589,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="tbaa">Can I do type-based alias analysis on LLVM IR?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>You can't do type-based alias analysis using LLVM's built-in type system,
      because LLVM has no restrictions on mixing types in addressing, loads or
      stores.</p>
@@ -605,7 +606,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="overflow">What happens if a GEP computation overflows?</a>
 </h3>
-<div class="doc_text">
+<div>
    <p>If the GEP lacks the <tt>inbounds</tt> keyword, the value is the result
       from evaluating the implied two's complement integer computation. However,
       since there's no guarantee of where an object will be allocated in the
@@ -637,7 +638,7 @@ idx3 = (char*) &amp;MyVar + 8
     How can I tell if my front-end is following the rules?
   </a>
 </h3>
-<div class="doc_text">
+<div>
    <p>There is currently no checker for the getelementptr rules. Currently,
       the only way to do this is to manually check each place in your front-end
       where GetElementPtr operators are created.</p>
@@ -650,16 +651,18 @@ idx3 = (char*) &amp;MyVar + 8
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="rationale">Rationale</a></h2>
 <!-- *********************************************************************** -->
-
+<div>
 <!-- *********************************************************************** -->
 
 <h3>
   <a name="goals">Why is GEP designed this way?</a>
 </h3>
-<div class="doc_text">
+<div>
    <p>The design of GEP has the following goals, in rough unofficial
       order of priority:</p>
    <ul>
@@ -681,7 +684,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="i32">Why do struct member indices always use i32?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>The specific type i32 is probably just a historical artifact, however it's
      wide enough for all practical purposes, so there's been no need to change it.
      It doesn't necessarily imply i32 address arithmetic; it's just an identifier
@@ -696,7 +699,7 @@ idx3 = (char*) &amp;MyVar + 8
 <h3>
   <a name="uglygep">What's an uglygep?</a>
 </h3>
-<div class="doc_text">
+<div>
   <p>Some LLVM optimizers operate on GEPs by internally lowering them into
      more primitive integer expressions, which allows them to be combined
      with other integer expressions and/or split into multiple separate
@@ -713,11 +716,13 @@ idx3 = (char*) &amp;MyVar + 8
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="summary">Summary</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
   <p>In summary, here's some things to always remember about the GetElementPtr
   instruction:</p>
   <ol>

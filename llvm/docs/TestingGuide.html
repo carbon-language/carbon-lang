@@ -55,7 +55,7 @@
 <h2><a name="overview">Overview</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
 <p>This document is the reference manual for the LLVM testing infrastructure. It
 documents the structure of the LLVM testing infrastructure, the tools needed to
@@ -67,7 +67,7 @@ use it, and how to add and run tests.</p>
 <h2><a name="requirements">Requirements</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
 <p>In order to use the LLVM testing infrastructure, you will need all of the
 software required to build LLVM, as well
@@ -79,7 +79,7 @@ as <a href="http://python.org">Python</a> 2.4 or later.</p>
 <h2><a name="org">LLVM testing infrastructure organization</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM testing infrastructure contains two major categories of tests:
 regression tests and whole programs. The regression tests are contained inside
@@ -89,13 +89,11 @@ referred to as the "LLVM test suite" and are in the <tt>test-suite</tt> module
 in subversion.
 </p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h3><a name="regressiontests">Regression tests</a></h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 
 <p>The regression tests are small pieces of code that test a specific feature of
 LLVM or trigger a specific bug in LLVM.  They are usually written in LLVM
@@ -122,7 +120,7 @@ application or benchmark.</p>
 <h3><a name="testsuite">Test suite</a></h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 
 <p>The test suite contains whole programs, which are pieces of
 code which can be compiled and linked into a stand-alone program that can be
@@ -147,7 +145,7 @@ generates code.</p>
 <h3><a name="debuginfotests">Debugging Information tests</a></h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 
 <p>The test suite contains tests to check quality of debugging information.
 The test are written in C based languages or in LLVM assembly language. </p>
@@ -159,11 +157,13 @@ test suite for more information . This test suite is located in the
 
 </div>
 
+</div>
+
 <!--=========================================================================-->
 <h2><a name="quick">Quick start</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
   <p>The tests are located in two separate Subversion modules. The regressions
   tests are in the main "llvm" module under the directory
@@ -179,6 +179,7 @@ Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 
 <!-- _______________________________________________________________________ -->
 <h3><a name="quickregressiontests">Regression tests</a></h3>
+<div>
 <!-- _______________________________________________________________________ -->
 <p>To run all of the LLVM regression tests, use master Makefile in
  the <tt>llvm/test</tt> directory:</p>
@@ -238,9 +239,13 @@ script which is built as part of LLVM. For example, to run the
 <p>For more information on using the 'lit' tool, see 'llvm-lit --help' or the
 'lit' man page.</p>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
 <h3><a name="quicktestsuite">Test suite</a></h3>
 <!-- _______________________________________________________________________ -->
+
+<div>
 
 <p>To run the comprehensive test suite (tests that compile and execute whole 
 programs), first checkout and setup the <tt>test-suite</tt> module:</p>
@@ -292,8 +297,9 @@ that subdirectory.</p>
 
 <!-- _______________________________________________________________________ -->
 <h3><a name="quickdebuginfotests">Debugging Information tests</a></h3>
+<div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
 
 <p> To run debugging information tests simply checkout the tests inside
 clang/test directory. </p>
@@ -309,10 +315,14 @@ clang/test directory. </p>
 
 </div>
 
+</div>
+
+</div>
+
 <!--=========================================================================-->
 <h2><a name="rtstructure">Regression test structure</a></h2>
 <!--=========================================================================-->
-<div class="doc_text">
+<div>
   <p>The LLVM regression tests are driven by 'lit' and are located in
   the <tt>llvm/test</tt> directory.
 
@@ -334,12 +344,10 @@ clang/test directory. </p>
     <li><tt>Verifier</tt>: tests the IR verifier.</li>
   </ul>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h3><a name="rtcustom">Writing new regression tests</a></h3>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
   <p>The regression test structure is very simple, but does require some
   information to be set. This information is gathered via <tt>configure</tt> and
   is written to a file, <tt>lit.site.cfg</tt>
@@ -494,7 +502,7 @@ negatives).</p>
 <h3><a name="FileCheck">The FileCheck utility</a></h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 
 <p>A powerful feature of the RUN: lines is that it allows any arbitrary commands
    to be executed as part of the test harness.  While standard (portable) unix
@@ -560,14 +568,12 @@ is a "subl" in between those labels.  If it existed somewhere else in the file,
 that would not count: "grep subl" matches if subl exists anywhere in the
 file.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="FileCheck-check-prefix">The FileCheck -check-prefix option</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The FileCheck -check-prefix option allows multiple test configurations to be
 driven from one .ll file.  This is useful in many circumstances, for example,
@@ -602,7 +608,7 @@ both 32-bit and 64-bit code generation.</p>
   <a name="FileCheck-CHECK-NEXT">The "CHECK-NEXT:" directive</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Sometimes you want to match lines and would like to verify that matches
 happen on exactly consecutive lines with no other lines in between them.  In
@@ -643,7 +649,7 @@ directive in a file.</p>
   <a name="FileCheck-CHECK-NOT">The "CHECK-NOT:" directive</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The CHECK-NOT: directive is used to verify that a string doesn't occur
 between two matches (or the first match and the beginning of the file).  For
@@ -674,7 +680,7 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
   <a name="FileCheck-Matching">FileCheck Pattern Matching Syntax</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The CHECK: and CHECK-NOT: directives both take a pattern to match.  For most
 uses of FileCheck, fixed string matching is perfectly sufficient.  For some
@@ -707,7 +713,7 @@ braces explicitly from the input, you can use something ugly like
   <a name="FileCheck-Variables">FileCheck Variables</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>It is often useful to match a pattern and then verify that it occurs again
 later in the file.  For codegen tests, this can be useful to allow any register,
@@ -742,10 +748,12 @@ define two separate CHECK lines that match on the same line.
 
 </div>
 
+</div>
+
 <!-- _______________________________________________________________________ -->
 <h3><a name="rtvars">Variables and substitutions</a></h3>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
   <p>With a RUN line there are a number of substitutions that are permitted. In
   general, any Tcl variable that is available in the <tt>substitute</tt> 
   function (in <tt>test/lib/llvm.exp</tt>) can be substituted into a RUN line.
@@ -840,7 +848,7 @@ define two separate CHECK lines that match on the same line.
 <!-- _______________________________________________________________________ -->
 <h3><a name="rtfeatures">Other Features</a></h3>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
   <p>To make RUN line writing easier, there are several shell scripts located
   in the <tt>llvm/test/Scripts</tt> directory. This directory is in the PATH
   when running tests, so you can just call these scripts using their name. For
@@ -895,11 +903,13 @@ define two separate CHECK lines that match on the same line.
 
 </div>
 
+</div>
+
 <!--=========================================================================-->
 <h2><a name="testsuitestructure">Test suite Structure</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>test-suite</tt> module contains a number of programs that can be compiled 
 with LLVM and executed. These programs are compiled using the native compiler
@@ -967,7 +977,7 @@ will help you separate benign warnings from actual test failures.</p>
 <h2><a name="testsuiterun">Running the test suite</a></h2>
 <!--=========================================================================-->
 
-<div class="doc_text">
+<div>
 
 <p>First, all tests are executed within the LLVM object directory tree.  They
 <i>are not</i> executed inside of the LLVM source tree. This is because the
@@ -1022,15 +1032,13 @@ test suite creates temporary files during execution.</p>
 have the suite checked out and configured, you don't need to do it again (unless
 the test code or configure script changes).</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h3>
   <a name="testsuiteexternal">Configuring External Tests</a>
 </h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 <p>In order to run the External tests in the <tt>test-suite</tt>
   module, you must specify <i>--with-externals</i>.  This
   must be done during the <em>re-configuration</em> step (see above),
@@ -1062,7 +1070,7 @@ the test code or configure script changes).</p>
   <a name="testsuitetests">Running different tests</a>
 </h3>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
 <p>In addition to the regular "whole program" tests, the <tt>test-suite</tt>
 module also provides a mechanism for compiling the programs in different ways.
 If the variable TEST is defined on the <tt>gmake</tt> command line, the test system will
@@ -1086,7 +1094,7 @@ LLVM.</p>
   <a name="testsuiteoutput">Generating test output</a>
 </h3>
 <!-- _______________________________________________________________________ -->
-<div class="doc_text">
+<div>
   <p>There are a number of ways to run the tests and generate output. The most
   simple one is simply running <tt>gmake</tt> with no arguments. This will
   compile and run all programs in the tree using a number of different methods
@@ -1119,7 +1127,7 @@ LLVM.</p>
 </h3>
 <!-- _______________________________________________________________________ -->
 
-<div class="doc_text">
+<div>
 
 <p>Assuming you can run the test suite, (e.g. "<tt>gmake TEST=nightly report</tt>"
 should work), it is really easy to run optimizations or code generator
@@ -1182,6 +1190,8 @@ simple: the Makefile indicates how to run the test (in this case,
 each column of the output.  The first value is the header for the column and the
 second is the regex to grep the output of the command for.  There are lots of
 example reports that can do fancy stuff.</p>
+
+</div>
 
 </div>
 

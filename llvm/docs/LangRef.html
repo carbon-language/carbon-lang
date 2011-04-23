@@ -324,7 +324,7 @@
 <h2><a name="abstract">Abstract</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>This document is a reference manual for the LLVM assembly language. LLVM is
    a Static Single Assignment (SSA) based representation that provides type
@@ -338,7 +338,7 @@
 <h2><a name="introduction">Introduction</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM code representation is designed to be used in three different forms:
    as an in-memory compiler IR, as an on-disk bitcode representation (suitable
@@ -359,14 +359,12 @@
    variable is never accessed outside of the current function, allowing it to
    be promoted to a simple SSA value instead of a memory location.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="wellformed">Well-Formedness</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>It is important to note that this document describes 'well formed' LLVM
    assembly language.  There is a difference between what the parser accepts and
@@ -386,13 +384,15 @@
 
 </div>
 
+</div>
+
 <!-- Describe the typesetting conventions here. -->
 
 <!-- *********************************************************************** -->
 <h2><a name="identifiers">Identifiers</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>LLVM identifiers come in two basic types: global and local. Global
    identifiers (functions, global variables) begin with the <tt>'@'</tt>
@@ -479,13 +479,13 @@
 <!-- *********************************************************************** -->
 <h2><a name="highlevel">High Level Structure</a></h2>
 <!-- *********************************************************************** -->
-
+<div>
 <!-- ======================================================================= -->
 <h3>
   <a name="modulestructure">Module Structure</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM programs are composed of "Module"s, each of which is a translation unit
    of the input programs.  Each module consists of functions, global variables,
@@ -535,7 +535,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="linkage">Linkage Types</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>All Global Variables and Functions have one of the following types of
    linkage:</p>
@@ -684,7 +684,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="callingconv">Calling Conventions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM <a href="#functionstructure">functions</a>, <a href="#i_call">calls</a>
    and <a href="#i_invoke">invokes</a> can all have an optional calling
@@ -757,7 +757,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="visibility">Visibility Styles</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>All Global Variables and Functions have one of the following visibility
    styles:</p>
@@ -791,7 +791,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="namedtypes">Named Types</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM IR allows you to specify name aliases for certain types.  This can make
    it easier to read the IR and make the IR more condensed (particularly when
@@ -822,7 +822,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="globalvars">Global Variables</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Global variables define regions of memory allocated at compilation time
    instead of run-time.  Global variables may optionally be initialized, may
@@ -890,7 +890,7 @@ define i32 @main() {   <i>; i32()* </i>&nbsp;
   <a name="functionstructure">Functions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM function definitions consist of the "<tt>define</tt>" keyword, an
    optional <a href="#linkage">linkage type</a>, an optional
@@ -953,7 +953,7 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
   <a name="aliasstructure">Aliases</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Aliases act as "second name" for the aliasee value (which can be either
    function, global variable, another alias or bitcast of global value). Aliases
@@ -972,7 +972,7 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
   <a name="namedmetadatastructure">Named Metadata</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Named metadata is a collection of metadata. <a href="#metadata">Metadata
    nodes</a> (but not metadata strings) are the only valid operands for
@@ -995,7 +995,7 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
   <a name="paramattrs">Parameter Attributes</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The return type and each parameter of a function type may have a set of
    <i>parameter attributes</i> associated with them. Parameter attributes are
@@ -1106,7 +1106,7 @@ declare signext i8 @returns_signed_char()
   <a name="gc">Garbage Collector Names</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Each function may specify a garbage collector name, which is simply a
    string:</p>
@@ -1126,7 +1126,7 @@ define void @f() gc "name" { ... }
   <a name="fnattrs">Function Attributes</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Function attributes are set to communicate additional information about a
    function. Function attributes are considered to be part of the function, not
@@ -1249,7 +1249,7 @@ define void @f() optsize { ... }
   <a name="moduleasm">Module-Level Inline Assembly</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Modules may contain "module-level inline asm" blocks, which corresponds to
    the GCC "file scope inline asm" blocks.  These blocks are internally
@@ -1275,7 +1275,7 @@ module asm "more can go here"
   <a name="datalayout">Data Layout</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>A module may specify a target specific data layout string that specifies how
    data is to be laid out in memory. The syntax for the data layout is
@@ -1387,7 +1387,7 @@ target datalayout = "<i>layout specification</i>"
   <a name="pointeraliasing">Pointer Aliasing Rules</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Any memory access must be done through a pointer value associated
 with an address range of the memory access, otherwise the behavior
@@ -1451,7 +1451,7 @@ to implement type-based alias analysis.</p>
   <a name="volatile">Volatile Memory Accesses</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Certain memory accesses, such as <a href="#i_load"><tt>load</tt></a>s, <a
 href="#i_store"><tt>store</tt></a>s, and <a
@@ -1464,11 +1464,13 @@ synchronization behavior.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="typesystem">Type System</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM type system is one of the most important features of the
    intermediate representation.  Being typed enables a number of optimizations
@@ -1478,14 +1480,12 @@ synchronization behavior.</p>
    and transformations that are not feasible to perform on normal three address
    code representations.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="t_classifications">Type Classifications</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The types fall into a few useful classifications:</p>
 
@@ -1546,19 +1546,17 @@ synchronization behavior.</p>
   <a name="t_primitive">Primitive Types</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The primitive types are the fundamental building blocks of the LLVM
    system.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="t_integer">Integer Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The integer type is a very simple type that simply specifies an arbitrary
@@ -1596,7 +1594,7 @@ synchronization behavior.</p>
   <a name="t_floating">Floating Point Types</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <table>
   <tbody>
@@ -1616,7 +1614,7 @@ synchronization behavior.</p>
   <a name="t_x86mmx">X86mmx Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The x86mmx type represents a value held in an MMX register on an x86 machine.  The operations allowed on it are quite limited:  parameters and return values, load and store, and bitcast.  User-specified MMX instructions are represented as intrinsic or asm calls with arguments and/or results of this type.  There are no arrays, vectors or constants of this type.</p>
@@ -1633,7 +1631,7 @@ synchronization behavior.</p>
   <a name="t_void">Void Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The void type does not represent any value and has no size.</p>
@@ -1650,7 +1648,7 @@ synchronization behavior.</p>
   <a name="t_label">Label Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The label type represents code labels.</p>
@@ -1667,7 +1665,7 @@ synchronization behavior.</p>
   <a name="t_metadata">Metadata Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The metadata type represents embedded metadata. No derived types may be
@@ -1681,13 +1679,14 @@ synchronization behavior.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="t_derived">Derived Types</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The real power in LLVM comes from the derived types in the system.  This is
    what allows a programmer to represent arrays, functions, pointers, and other
@@ -1697,14 +1696,12 @@ synchronization behavior.</p>
    of another array.</p>
 
    
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="t_aggregate">Aggregate Types</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>Aggregate Types are a subset of derived types that can contain multiple
   member types. <a href="#t_array">Arrays</a>,
@@ -1718,7 +1715,7 @@ synchronization behavior.</p>
   <a name="t_array">Array Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The array type is a very simple derived type that arranges elements
@@ -1778,7 +1775,7 @@ synchronization behavior.</p>
   <a name="t_function">Function Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The function type can be thought of as a function signature.  It consists of
@@ -1833,7 +1830,7 @@ synchronization behavior.</p>
   <a name="t_struct">Structure Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The structure type is used to represent a collection of data members together
@@ -1873,7 +1870,7 @@ synchronization behavior.</p>
   <a name="t_pstruct">Packed Structure Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The packed structure type is used to represent a collection of data members
@@ -1912,7 +1909,7 @@ synchronization behavior.</p>
   <a name="t_pointer">Pointer Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>The pointer type is used to specify memory locations.
@@ -1958,7 +1955,7 @@ synchronization behavior.</p>
   <a name="t_vector">Vector Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>A vector type is a simple derived type that represents a vector of elements.
@@ -1999,7 +1996,7 @@ synchronization behavior.</p>
   <a name="t_opaque">Opaque Type</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>Opaque types are used to represent unknown types in the system.  This
@@ -2022,12 +2019,14 @@ synchronization behavior.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="t_uprefs">Type Up-references</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <h5>Overview:</h5>
 <p>An "up reference" allows you to refer to a lexically enclosing type without
@@ -2070,23 +2069,23 @@ synchronization behavior.</p>
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="constants">Constants</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>LLVM has several different basic types of constants.  This section describes
    them all and their syntax.</p>
-
-</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="simpleconstants">Simple Constants</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <dl>
   <dt><b>Boolean constants</b></dt>
@@ -2144,7 +2143,7 @@ synchronization behavior.</p>
 <a name="complexconstants">Complex Constants</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Complex constants are a (potentially recursive) combination of simple
    constants and smaller complex constants.</p>
@@ -2198,7 +2197,7 @@ synchronization behavior.</p>
   <a name="globalconstants">Global Variable and Function Addresses</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The addresses of <a href="#globalvars">global variables</a>
    and <a href="#functionstructure">functions</a> are always implicitly valid
@@ -2220,7 +2219,7 @@ synchronization behavior.</p>
   <a name="undefvalues">Undefined Values</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The string '<tt>undef</tt>' can be used anywhere a constant is expected, and
    indicates that the user of the value may receive an unspecified bit-pattern.
@@ -2363,7 +2362,7 @@ b: unreachable
   <a name="trapvalues">Trap Values</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Trap values are similar to <a href="#undefvalues">undef values</a>, however
    instead of representing an unspecified bit pattern, they represent the
@@ -2491,7 +2490,7 @@ second_end:
   <a name="blockaddress">Addresses of Basic Blocks</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p><b><tt>blockaddress(@function, %block)</tt></b></p>
 
@@ -2520,7 +2519,7 @@ second_end:
   <a name="constantexprs">Constant Expressions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Constant expressions are used to allow expressions involving other constants
    to be used as constants.  Constant expressions may be of
@@ -2646,16 +2645,18 @@ second_end:
 
 </div>
 
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="othervalues">Other Values</a></h2>
 <!-- *********************************************************************** -->
-
+<div>
 <!-- ======================================================================= -->
 <h3>
 <a name="inlineasm">Inline Assembler Expressions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM supports inline assembler expressions (as opposed
    to <a href="#moduleasm"> Module-Level Inline Assembly</a>) through the use of
@@ -2704,13 +2705,12 @@ call void asm alignstack "eieio", ""()
    documented here.  Constraints on what can be done (e.g. duplication, moving,
    etc need to be documented).  This is probably best done by reference to
    another document that covers inline asm from a holistic perspective.</p>
-</div>
 
 <h4>
 <a name="inlineasm_md">Inline Asm Metadata</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <p>The call instructions that wrap inline asm nodes may have a "!srcloc" MDNode
    attached to it that contains a list of constant integers.  If present, the
@@ -2731,12 +2731,14 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="metadata">Metadata Nodes and Metadata Strings</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM IR allows metadata to be attached to instructions in the program that
    can convey extra information about the code to the optimizers and code
@@ -2778,13 +2780,14 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2>
   <a name="intrinsic_globals">Intrinsic Global Variables</a>
 </h2>
 <!-- *********************************************************************** -->
-
+<div>
 <p>LLVM has a number of "magic" global variables that contain data that affect
 code generation or other IR semantics.  These are documented here.  All globals
 of this sort should have a section specified as "<tt>llvm.metadata</tt>".  This
@@ -2796,7 +2799,7 @@ by LLVM.</p>
 <a name="intg_used">The '<tt>llvm.used</tt>' Global Variable</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>@llvm.used</tt> global is an array with i8* element type which has <a
 href="#linkage_appending">appending linkage</a>.  This array contains a list of
@@ -2833,7 +2836,7 @@ object file to prevent the assembler and linker from molesting the symbol.</p>
   </a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The <tt>@llvm.compiler.used</tt> directive is the same as the
 <tt>@llvm.used</tt> directive, except that it only prevents the compiler from
@@ -2851,7 +2854,7 @@ should not be exposed to source languages.</p>
 <a name="intg_global_ctors">The '<tt>llvm.global_ctors</tt>' Global Variable</a>
 </h3>
 
-<div class="doc_text">
+<div>
 <pre>
 %0 = type { i32, void ()* }
 @llvm.global_ctors = appending global [1 x %0] [%0 { i32 65535, void ()* @ctor }]
@@ -2866,7 +2869,7 @@ should not be exposed to source languages.</p>
 <a name="intg_global_dtors">The '<tt>llvm.global_dtors</tt>' Global Variable</a>
 </h3>
 
-<div class="doc_text">
+<div>
 <pre>
 %0 = type { i32, void ()* }
 @llvm.global_dtors = appending global [1 x %0] [%0 { i32 65535, void ()* @dtor }]
@@ -2877,12 +2880,13 @@ should not be exposed to source languages.</p>
 
 </div>
 
+</div>
 
 <!-- *********************************************************************** -->
 <h2><a name="instref">Instruction Reference</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM instruction set consists of several different classifications of
    instructions: <a href="#terminators">terminator
@@ -2891,14 +2895,12 @@ should not be exposed to source languages.</p>
    <a href="#memoryops">memory instructions</a>, and
    <a href="#otherops">other instructions</a>.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="terminators">Terminator Instructions</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>As mentioned <a href="#functionstructure">previously</a>, every basic block
    in a program ends with a "Terminator" instruction, which indicates which
@@ -2916,14 +2918,12 @@ should not be exposed to source languages.</p>
    '<a href="#i_unwind"><tt>unwind</tt></a>' instruction, and the
    '<a href="#i_unreachable"><tt>unreachable</tt></a>' instruction.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="i_ret">'<tt>ret</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -2973,7 +2973,7 @@ should not be exposed to source languages.</p>
   <a name="i_br">'<tt>br</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3016,7 +3016,7 @@ IfUnequal:
    <a name="i_switch">'<tt>switch</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3071,7 +3071,7 @@ IfUnequal:
    <a name="i_indirectbr">'<tt>indirectbr</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3119,7 +3119,7 @@ IfUnequal:
   <a name="i_invoke">'<tt>invoke</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3209,7 +3209,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_unwind">'<tt>unwind</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3241,7 +3241,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_unreachable">'<tt>unreachable</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3259,12 +3259,14 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="binaryops">Binary Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Binary operators are used to do most of the computation in a program.  They
    require two operands of the same type, execute an operation on them, and
@@ -3274,14 +3276,12 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <p>There are several different binary operators:</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="i_add">'<tt>add</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3326,7 +3326,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_fadd">'<tt>fadd</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3356,7 +3356,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_sub">'<tt>sub</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3408,7 +3408,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_fsub">'<tt>fsub</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3444,7 +3444,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_mul">'<tt>mul</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3494,7 +3494,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_fmul">'<tt>fmul</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3524,7 +3524,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_udiv">'<tt>udiv</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3565,7 +3565,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_sdiv">'<tt>sdiv</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3608,7 +3608,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_fdiv">'<tt>fdiv</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3638,7 +3638,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_urem">'<tt>urem</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3676,7 +3676,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_srem">'<tt>srem</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3727,7 +3727,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_frem">'<tt>frem</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3754,12 +3754,14 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="bitwiseops">Bitwise Binary Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Bitwise binary operators are used to do various forms of bit-twiddling in a
    program.  They are generally very efficient instructions and can commonly be
@@ -3767,14 +3769,12 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    same type, execute an operation on them, and produce a single value.  The
    resulting value is the same type as its operands.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="i_shl">'<tt>shl</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3825,7 +3825,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_lshr">'<tt>lshr</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3872,7 +3872,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_ashr">'<tt>ashr</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3919,7 +3919,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_and">'<tt>and</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -3980,7 +3980,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_or">'<tt>or</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4043,7 +4043,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_xor">'<tt>xor</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4103,12 +4103,14 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="vectorops">Vector Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM supports several instructions to represent vector operations in a
    target-independent manner.  These instructions cover the element-access and
@@ -4117,14 +4119,12 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    will want to use target-specific intrinsics to take full advantage of a
    specific target.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
    <a name="i_extractelement">'<tt>extractelement</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4160,7 +4160,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_insertelement">'<tt>insertelement</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4196,7 +4196,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_shufflevector">'<tt>shufflevector</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4239,24 +4239,24 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="aggregateops">Aggregate Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM supports several instructions for working with
   <a href="#t_aggregate">aggregate</a> values.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
    <a name="i_extractvalue">'<tt>extractvalue</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4298,7 +4298,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_insertvalue">'<tt>insertvalue</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4332,27 +4332,26 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="memoryops">Memory Access and Addressing Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>A key design point of an SSA-based representation is how it represents
    memory.  In LLVM, no memory locations are in SSA form, which makes things
    very simple.  This section describes how to read, write, and allocate
    memory in LLVM.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="i_alloca">'<tt>alloca</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4403,7 +4402,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_load">'<tt>load</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4462,7 +4461,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   <a name="i_store">'<tt>store</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4524,7 +4523,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    <a name="i_getelementptr">'<tt>getelementptr</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4650,25 +4649,25 @@ entry:
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="convertops">Conversion Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The instructions in this category are the conversion instructions (casting)
    which all take a single operand and a type. They perform various bit
    conversions on the operand.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
    <a name="i_trunc">'<tt>trunc .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4708,7 +4707,7 @@ entry:
    <a name="i_zext">'<tt>zext .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4748,7 +4747,7 @@ entry:
    <a name="i_sext">'<tt>sext .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4787,7 +4786,7 @@ entry:
    <a name="i_fptrunc">'<tt>fptrunc .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4825,7 +4824,7 @@ entry:
    <a name="i_fpext">'<tt>fpext .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4862,7 +4861,7 @@ entry:
    <a name="i_fptoui">'<tt>fptoui .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4900,7 +4899,7 @@ entry:
    <a name="i_fptosi">'<tt>fptosi .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4939,7 +4938,7 @@ entry:
    <a name="i_uitofp">'<tt>uitofp .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -4976,7 +4975,7 @@ entry:
    <a name="i_sitofp">'<tt>sitofp .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5012,7 +5011,7 @@ entry:
    <a name="i_ptrtoint">'<tt>ptrtoint .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5050,7 +5049,7 @@ entry:
    <a name="i_inttoptr">'<tt>inttoptr .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5088,7 +5087,7 @@ entry:
    <a name="i_bitcast">'<tt>bitcast .. to</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5127,24 +5126,24 @@ entry:
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="otherops">Other Operations</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The instructions in this category are the "miscellaneous" instructions, which
    defy better classification.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="i_icmp">'<tt>icmp</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5247,7 +5246,7 @@ entry:
   <a name="i_fcmp">'<tt>fcmp</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5368,7 +5367,7 @@ entry:
   <a name="i_phi">'<tt>phi</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5416,7 +5415,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
    <a name="i_select">'<tt>select</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5459,7 +5458,7 @@ Loop:       ; Infinite loop that counts from 0 on up...
   <a name="i_call">'<tt>call</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5568,7 +5567,7 @@ freestanding environments and non-C-based languages.</p>
   <a name="i_va_arg">'<tt>va_arg</tt>' Instruction</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5609,11 +5608,15 @@ freestanding environments and non-C-based languages.</p>
 
 </div>
 
+</div>
+
+</div>
+
 <!-- *********************************************************************** -->
 <h2><a name="intrinsics">Intrinsic Functions</a></h2>
 <!-- *********************************************************************** -->
 
-<div class="doc_text">
+<div>
 
 <p>LLVM supports the notion of an "intrinsic function".  These functions have
    well known names and semantics and are required to follow certain
@@ -5656,14 +5659,12 @@ freestanding environments and non-C-based languages.</p>
 <p>To learn how to add an intrinsic function, please see the
    <a href="ExtendingLLVM.html">Extending LLVM Guide</a>.</p>
 
-</div>
-
 <!-- ======================================================================= -->
 <h3>
   <a name="int_varargs">Variable Argument Handling Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Variable argument support is defined in LLVM with
    the <a href="#i_va_arg"><tt>va_arg</tt></a> instruction and these three
@@ -5705,15 +5706,13 @@ declare void @llvm.va_copy(i8*, i8*)
 declare void @llvm.va_end(i8*)
 </pre>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_va_start">'<tt>llvm.va_start</tt>' Intrinsic</a>
 </h4>
 
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5743,7 +5742,7 @@ declare void @llvm.va_end(i8*)
  <a name="int_va_end">'<tt>llvm.va_end</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5774,7 +5773,7 @@ declare void @llvm.va_end(i8*)
   <a name="int_va_copy">'<tt>llvm.va_copy</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5800,12 +5799,14 @@ declare void @llvm.va_end(i8*)
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_gc">Accurate Garbage Collection Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM support for <a href="GarbageCollection.html">Accurate Garbage
 Collection</a> (GC) requires the implementation and generation of these
@@ -5820,14 +5821,12 @@ LLVM</a>.</p>
 <p>The garbage collection intrinsics only operate on objects in the generic
    address space (address space zero).</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_gcroot">'<tt>llvm.gcroot</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5858,7 +5857,7 @@ LLVM</a>.</p>
   <a name="int_gcread">'<tt>llvm.gcread</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5890,7 +5889,7 @@ LLVM</a>.</p>
   <a name="int_gcwrite">'<tt>llvm.gcwrite</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5917,24 +5916,24 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_codegen">Code Generator Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>These intrinsics are provided by LLVM to expose special features that may
    only be implemented with code generator support.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -5969,7 +5968,7 @@ LLVM</a>.</p>
   <a name="int_frameaddress">'<tt>llvm.frameaddress</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6003,7 +6002,7 @@ LLVM</a>.</p>
   <a name="int_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6033,7 +6032,7 @@ LLVM</a>.</p>
   <a name="int_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6058,7 +6057,7 @@ LLVM</a>.</p>
   <a name="int_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6091,7 +6090,7 @@ LLVM</a>.</p>
   <a name="int_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6122,7 +6121,7 @@ LLVM</a>.</p>
   <a name="int_readcyclecounter">'<tt>llvm.readcyclecounter</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -6144,26 +6143,26 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_libc">Standard C Library Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM provides intrinsics for a few important standard C library functions.
    These intrinsics allow source-language front-ends to pass information about
    the alignment of the pointer arguments to the code generator, providing
    opportunity for more efficient code generation.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_memcpy">'<tt>llvm.memcpy</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.memcpy</tt> on any
@@ -6217,7 +6216,7 @@ LLVM</a>.</p>
   <a name="int_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.memmove on any integer bit
@@ -6273,7 +6272,7 @@ LLVM</a>.</p>
   <a name="int_memset">'<tt>llvm.memset.*</tt>' Intrinsics</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.memset on any integer bit
@@ -6323,7 +6322,7 @@ LLVM</a>.</p>
   <a name="int_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sqrt</tt> on any
@@ -6361,7 +6360,7 @@ LLVM</a>.</p>
   <a name="int_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.powi</tt> on any
@@ -6397,7 +6396,7 @@ LLVM</a>.</p>
   <a name="int_sin">'<tt>llvm.sin.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sin</tt> on any
@@ -6431,7 +6430,7 @@ LLVM</a>.</p>
   <a name="int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.cos</tt> on any
@@ -6465,7 +6464,7 @@ LLVM</a>.</p>
   <a name="int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.pow</tt> on any
@@ -6495,24 +6494,24 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_manip">Bit Manipulation Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM provides intrinsics for a few important bit manipulation operations.
    These allow efficient code generation for some algorithms.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_bswap">'<tt>llvm.bswap.*</tt>' Intrinsics</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic function. You can use bswap on any integer
@@ -6547,7 +6546,7 @@ LLVM</a>.</p>
   <a name="int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.ctpop on any integer bit
@@ -6579,7 +6578,7 @@ LLVM</a>.</p>
   <a name="int_ctlz">'<tt>llvm.ctlz.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.ctlz</tt> on any
@@ -6613,7 +6612,7 @@ LLVM</a>.</p>
   <a name="int_cttz">'<tt>llvm.cttz.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.cttz</tt> on any
@@ -6642,16 +6641,16 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_overflow">Arithmetic with Overflow Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>LLVM provides intrinsics for some arithmetic with overflow operations.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -6660,7 +6659,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sadd.with.overflow</tt>
@@ -6708,7 +6707,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.uadd.with.overflow</tt>
@@ -6755,7 +6754,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.ssub.with.overflow</tt>
@@ -6803,7 +6802,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.usub.with.overflow</tt>
@@ -6851,7 +6850,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.smul.with.overflow</tt>
@@ -6900,7 +6899,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.umul.with.overflow</tt>
@@ -6941,12 +6940,14 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_fp16">Half Precision Floating Point Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>Half precision floating point is a storage-only format. This means that it is
    a dense encoding (in memory) but does not support computation in the
@@ -6960,7 +6961,6 @@ LLVM</a>.</p>
    float if needed, then converted to i16 with
    <a href="#int_convert_to_fp16"><tt>llvm.convert.to.fp16</tt></a>, then
    storing as an i16 value.</p>
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -6969,7 +6969,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7006,7 +7006,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7036,12 +7036,14 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_debugger">Debugger Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM debugger intrinsics (which all start with <tt>llvm.dbg.</tt>
    prefix), are described in
@@ -7055,7 +7057,7 @@ LLVM</a>.</p>
   <a name="int_eh">Exception Handling Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>The LLVM exception handling intrinsics (which all start with
    <tt>llvm.eh.</tt> prefix), are described in
@@ -7069,7 +7071,7 @@ LLVM</a>.</p>
   <a name="int_trampoline">Trampoline Intrinsic</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>This intrinsic makes it possible to excise one parameter, marked with
    the <a href="#nest"><tt>nest</tt></a> attribute, from a function.
@@ -7095,8 +7097,6 @@ LLVM</a>.</p>
 <p>The call <tt>%val = call i32 %fp(i32 %x, i32 %y)</tt> is then equivalent
    to <tt>%val = call i32 %f(i8* %nval, i32 %x, i32 %y)</tt>.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_it">
@@ -7104,7 +7104,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7141,12 +7141,14 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_atomics">Atomic Operations and Synchronization Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>These intrinsic functions expand the "universal IR" of LLVM to represent
    hardware constructs for atomic operations and memory synchronization.  This
@@ -7166,14 +7168,12 @@ LLVM</a>.</p>
    No one model or paradigm should be selected above others unless the hardware
    itself ubiquitously does so.</p>
 
-</div>
-
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_memory_barrier">'<tt>llvm.memory.barrier</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 <h5>Syntax:</h5>
 <pre>
   declare void @llvm.memory.barrier(i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, i1 &lt;ss&gt;, i1 &lt;device&gt;)
@@ -7245,7 +7245,7 @@ LLVM</a>.</p>
   <a name="int_atomic_cmp_swap">'<tt>llvm.atomic.cmp.swap.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.atomic.cmp.swap</tt> on
@@ -7305,7 +7305,7 @@ LLVM</a>.</p>
   <a name="int_atomic_swap">'<tt>llvm.atomic.swap.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 <h5>Syntax:</h5>
 
 <p>This is an overloaded intrinsic. You can use <tt>llvm.atomic.swap</tt> on any
@@ -7362,7 +7362,7 @@ LLVM</a>.</p>
   <a name="int_atomic_load_add">'<tt>llvm.atomic.load.add.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.atomic.load.add</tt> on
@@ -7411,7 +7411,7 @@ LLVM</a>.</p>
   <a name="int_atomic_load_sub">'<tt>llvm.atomic.load.sub.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.atomic.load.sub</tt> on
@@ -7476,7 +7476,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>These are overloaded intrinsics. You can
@@ -7567,7 +7567,7 @@ LLVM</a>.</p>
   </a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>These are overloaded intrinsics. You can use <tt>llvm.atomic.load_max</tt>,
@@ -7638,25 +7638,24 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
 
 <!-- ======================================================================= -->
 <h3>
   <a name="int_memorymarkers">Memory Use Markers</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>This class of intrinsics exists to information about the lifetime of memory
    objects and ranges where variables are immutable.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_lifetime_start">'<tt>llvm.lifetime.start</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7686,7 +7685,7 @@ LLVM</a>.</p>
   <a name="int_lifetime_end">'<tt>llvm.lifetime.end</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7715,7 +7714,7 @@ LLVM</a>.</p>
   <a name="int_invariant_start">'<tt>llvm.invariant.start</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7743,7 +7742,7 @@ LLVM</a>.</p>
   <a name="int_invariant_end">'<tt>llvm.invariant.end</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7765,24 +7764,24 @@ LLVM</a>.</p>
 
 </div>
 
+</div>
+
 <!-- ======================================================================= -->
 <h3>
   <a name="int_general">General Intrinsics</a>
 </h3>
 
-<div class="doc_text">
+<div>
 
 <p>This class of intrinsics is designed to be generic and has no specific
    purpose.</p>
-
-</div>
 
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="int_var_annotation">'<tt>llvm.var.annotation</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7810,7 +7809,7 @@ LLVM</a>.</p>
   <a name="int_annotation">'<tt>llvm.annotation.*</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use '<tt>llvm.annotation</tt>' on
@@ -7846,7 +7845,7 @@ LLVM</a>.</p>
   <a name="int_trap">'<tt>llvm.trap</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7871,7 +7870,7 @@ LLVM</a>.</p>
   <a name="int_stackprotector">'<tt>llvm.stackprotector</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7905,7 +7904,7 @@ LLVM</a>.</p>
   <a name="int_objectsize">'<tt>llvm.objectsize</tt>' Intrinsic</a>
 </h4>
 
-<div class="doc_text">
+<div>
 
 <h5>Syntax:</h5>
 <pre>
@@ -7932,6 +7931,10 @@ LLVM</a>.</p>
    representing the size of the object concerned, or <tt>i32/i64 -1 or 0</tt>,
    depending on the <tt>type</tt> argument, if the size cannot be determined at
    compile time.</p>
+
+</div>
+
+</div>
 
 </div>
 
