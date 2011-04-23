@@ -153,8 +153,9 @@ This option defines the command to use with the B<--compile-custom>
 option to compile the bitcode testcase. This can be useful for
 testing compiler output without running any link or execute stages. To
 generate a reduced unit test, you may add CHECK directives to the
-testcase and pass the name of a compile-command script in this form:
+testcase and pass the name of an executable compile-command script in this form:
 
+    #!/bin/sh
     llc "$@"
     not FileCheck [bugpoint input file].ll < bugpoint-test-program.s
 
