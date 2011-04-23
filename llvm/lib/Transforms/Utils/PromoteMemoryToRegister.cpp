@@ -46,7 +46,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
-#include <map>
 #include <queue>
 using namespace llvm;
 

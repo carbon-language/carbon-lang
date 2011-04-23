@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include <cstring>
-#include <string>
 
 namespace llvm {
   template<typename ValueT>

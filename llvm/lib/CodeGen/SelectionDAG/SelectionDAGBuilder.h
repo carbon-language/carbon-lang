@@ -23,7 +23,6 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>
-#include <set>
 
 namespace llvm {
 

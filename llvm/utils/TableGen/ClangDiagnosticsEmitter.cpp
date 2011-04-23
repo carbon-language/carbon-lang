@@ -19,7 +19,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/VectorExtras.h"
-#include <set>
 #include <map>
 #include <algorithm>
 #include <functional>

@@ -14,8 +14,6 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
-#include <string>
-
 namespace llvm {
   class raw_ostream;
   namespace sys { class Path; }

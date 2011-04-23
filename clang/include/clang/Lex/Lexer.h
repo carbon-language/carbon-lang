@@ -18,7 +18,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>
-#include <vector>
 #include <cassert>
 
 namespace clang {

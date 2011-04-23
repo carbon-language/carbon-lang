@@ -16,8 +16,6 @@
 #define CALLINGCONV_EMITTER_H
 
 #include "TableGenBackend.h"
-#include <map>
-#include <vector>
 #include <cassert>
 
 namespace llvm {

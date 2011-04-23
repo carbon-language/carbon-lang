@@ -21,7 +21,6 @@
 #include "../HeuristicSolver.h"
 #include "../HeuristicBase.h"
 
-#include <set>
 #include <limits>
 
 namespace PBQP {

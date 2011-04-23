@@ -37,8 +37,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/VectorExtras.h"
-#include <queue>
-#include <set>
 using namespace llvm;
 
 const char *XCoreTargetLowering::

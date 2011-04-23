@@ -29,7 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumInlined, "Number of functions inlined");

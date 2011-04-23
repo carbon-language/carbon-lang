@@ -20,7 +20,6 @@
 #include <cctype>
 #include <cstdio>
 #include <string>
-#include <vector>
 
 namespace llvm {
 template<typename T> class SmallVectorImpl;

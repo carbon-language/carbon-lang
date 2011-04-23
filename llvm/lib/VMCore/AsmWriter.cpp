@@ -39,7 +39,6 @@
 #include "llvm/Support/FormattedStream.h"
 #include <algorithm>
 #include <cctype>
-#include <map>
 using namespace llvm;
 
 // Make virtual table appear in this compilation unit.

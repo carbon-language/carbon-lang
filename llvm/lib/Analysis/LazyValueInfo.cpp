@@ -29,7 +29,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
-#include <set>
 #include <stack>
 using namespace llvm;
 

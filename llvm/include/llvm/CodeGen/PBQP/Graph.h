@@ -18,7 +18,6 @@
 #include "Math.h"
 
 #include <list>
-#include <vector>
 #include <map>
 
 namespace PBQP {

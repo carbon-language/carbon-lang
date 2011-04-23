@@ -30,8 +30,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <queue>
-#include <set>
 using namespace llvm;
 
 /// XCoreDAGToDAGISel - XCore specific code to select XCore machine

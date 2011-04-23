@@ -27,7 +27,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Mutex.h"
 #include <string>
-#include <vector>
 
 namespace llvm {
 

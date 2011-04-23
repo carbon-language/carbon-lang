@@ -17,7 +17,6 @@
 #include "clang/Lex/MultipleIncludeOpt.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
-#include <string>
 
 namespace clang {
 

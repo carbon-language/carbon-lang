@@ -15,7 +15,6 @@
 #define LLVM_CLANG_PTHLEXER_H
 
 #include "clang/Lex/PreprocessorLexer.h"
-#include <vector>
 
 namespace clang {
 

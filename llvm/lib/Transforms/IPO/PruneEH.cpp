@@ -27,7 +27,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
-#include <set>
 #include <algorithm>
 using namespace llvm;
 

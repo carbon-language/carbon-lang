@@ -17,7 +17,6 @@
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 #include "clang/Basic/IdentifierTable.h" // Selector
 #include "clang/AST/DeclObjC.h"
-#include <string>
 
 #include "CGBuilder.h"
 #include "CGCall.h"

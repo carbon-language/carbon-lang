@@ -30,7 +30,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdio>
-#include <vector>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

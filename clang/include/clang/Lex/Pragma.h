@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
-#include <vector>
 
 namespace clang {
   class Preprocessor;

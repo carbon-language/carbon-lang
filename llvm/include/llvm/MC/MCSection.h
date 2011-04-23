@@ -14,7 +14,6 @@
 #ifndef LLVM_MC_MCSECTION_H
 #define LLVM_MC_MCSECTION_H
 
-#include <string>
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Support/Casting.h"

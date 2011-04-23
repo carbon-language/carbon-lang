@@ -27,7 +27,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "MaximumSpanningTree.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumEdgesInserted, "The # of edges inserted.");

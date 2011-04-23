@@ -22,7 +22,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <stack>
-#include <list>
 
 namespace clang {
   class PragmaHandler;

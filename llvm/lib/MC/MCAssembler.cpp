@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 
-#include <vector>
 using namespace llvm;
 
 namespace {

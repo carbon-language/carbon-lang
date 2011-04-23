@@ -17,7 +17,6 @@
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
-#include <vector>
 #include <cassert>
 
 namespace clang {

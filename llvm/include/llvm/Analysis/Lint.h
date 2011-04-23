@@ -20,8 +20,6 @@
 #ifndef LLVM_ANALYSIS_LINT_H
 #define LLVM_ANALYSIS_LINT_H
 
-#include <string>
-
 namespace llvm {
 
 class FunctionPass;

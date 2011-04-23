@@ -16,7 +16,6 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Analysis/PathNumbering.h"
-#include <stack>
 
 namespace llvm {
 

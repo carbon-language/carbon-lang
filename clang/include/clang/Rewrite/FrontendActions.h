@@ -11,8 +11,6 @@
 #define LLVM_CLANG_REWRITE_FRONTENDACTIONS_H
 
 #include "clang/Frontend/FrontendAction.h"
-#include <string>
-#include <vector>
 
 namespace clang {
 class FixItRewriter;

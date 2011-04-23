@@ -19,8 +19,6 @@
 #include "clang/AST/Expr.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/DenseMap.h"
-#include <vector>
-#include <queue>
 
 using llvm::cast;
 using llvm::isa;

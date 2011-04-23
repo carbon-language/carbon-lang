@@ -36,7 +36,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetData.h"
 
-#include <map>
 #include <stdarg.h>
 
 

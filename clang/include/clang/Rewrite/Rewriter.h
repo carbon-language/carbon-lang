@@ -22,7 +22,6 @@
 #include <cstring>
 #include <map>
 #include <string>
-#include <vector>
 
 namespace llvm { class raw_ostream; }
 

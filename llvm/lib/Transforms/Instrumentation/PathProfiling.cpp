@@ -63,7 +63,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Instrumentation.h"
-#include <map>
 #include <vector>
 
 #define HASH_THRESHHOLD 100000

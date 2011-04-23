@@ -16,7 +16,6 @@
 
 #include "llvm/CodeGen/ValueTypes.h"
 #include <map>
-#include <vector>
 using namespace llvm;
 
 namespace llvm {

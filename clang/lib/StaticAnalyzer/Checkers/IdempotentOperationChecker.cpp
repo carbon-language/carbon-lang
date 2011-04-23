@@ -59,7 +59,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <deque>
 
 using namespace clang;
 using namespace ento;

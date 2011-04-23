@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include <vector>
 using namespace llvm;
 
 /// ContractNodes - Turn multiple matcher node patterns like 'MoveChild+Record'

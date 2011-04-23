@@ -19,7 +19,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstdlib>
-#include <map>
 using namespace llvm;
 
 // ByteSwap - Byteswap 'Var' if 'Really' is true.

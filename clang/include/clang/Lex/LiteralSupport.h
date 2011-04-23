@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 #include <cctype>
-#include <string>
 
 namespace clang {
 

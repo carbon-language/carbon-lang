@@ -45,7 +45,6 @@
 #include <cctype>
 #include <cerrno>
 #include <cstring>
-#include <vector>
 using namespace llvm;
 using namespace object;
 

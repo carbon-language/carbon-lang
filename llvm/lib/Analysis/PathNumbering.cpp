@@ -38,13 +38,10 @@
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <map>
 #include <queue>
-#include <set>
 #include <stack>
 #include <string>
 #include <utility>
-#include <vector>
 #include <sstream>
 
 using namespace llvm;

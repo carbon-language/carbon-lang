@@ -40,7 +40,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <set>
 #include <queue>
 #include <memory>
 #include <cmath>

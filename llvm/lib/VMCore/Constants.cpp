@@ -32,7 +32,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
-#include <map>
 #include <cstdarg>
 using namespace llvm;
 
