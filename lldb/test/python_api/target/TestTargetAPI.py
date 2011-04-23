@@ -66,18 +66,19 @@ class TargetAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
-        stream = lldb.SBStream()
-        if not target.GetDescription(stream, lldb.eDescriptionLevelBrief):
+        from lldbutil import get_description
+        desc = get_description(target, option=lldb.eDescriptionLevelBrief)
+        if not desc:
             self.fail("SBTarget.GetDescription() failed")
-        self.expect(stream.GetData(), exe=False,
+        self.expect(desc, exe=False,
             substrs = ['a.out'])
-        self.expect(stream.GetData(), exe=False, matching=False,
+        self.expect(desc, exe=False, matching=False,
             substrs = ['Target', 'Module', 'Breakpoint'])
 
-        stream.Clear()
-        if not target.GetDescription(stream, lldb.eDescriptionLevelFull):
+        desc = get_description(target, option=lldb.eDescriptionLevelFull)
+        if not desc:
             self.fail("SBTarget.GetDescription() failed")
-        self.expect(stream.GetData(), exe=False,
+        self.expect(desc, exe=False,
             substrs = ['a.out', 'Target', 'Module', 'Breakpoint'])
 
 

@@ -168,6 +168,24 @@ def get_stopped_thread(process, reason):
         return None
     return threads[0]
 
+# ==============================================================
+# Get the description of an lldb object or None if not available
+# ==============================================================
+def get_description(lldb_obj, option=None):
+    """Calls lldb_obj.GetDescription() and returns a string, or None."""
+    method = getattr(lldb_obj, 'GetDescription')
+    if not method:
+        return None
+    stream = lldb.SBStream()
+    if option is None:
+        success = method(stream)
+    else:
+        success = method(stream, option)
+    if not success:
+        return None
+    return stream.GetData()
+        
+
 # =================================================
 # Convert some enum value to its string counterpart
 # =================================================
