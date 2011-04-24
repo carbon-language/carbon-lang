@@ -742,17 +742,17 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// GetNumNonZeroBytesInInit - Get an approximate count of the number of
 /// non-zero bytes that will be stored when outputting the initializer for the
 /// specified initializer expression.
-static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
+static CharUnits GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
   E = E->IgnoreParens();
 
   // 0 and 0.0 won't require any non-zero stores!
-  if (isSimpleZero(E, CGF)) return 0;
+  if (isSimpleZero(E, CGF)) return CharUnits::Zero();
 
   // If this is an initlist expr, sum up the size of sizes of the (present)
   // elements.  If this is something weird, assume the whole thing is non-zero.
   const InitListExpr *ILE = dyn_cast<InitListExpr>(E);
   if (ILE == 0 || !CGF.getTypes().isZeroInitializable(ILE->getType()))
-    return CGF.getContext().getTypeSize(E->getType())/8;
+    return CGF.getContext().getTypeSizeInChars(E->getType());
   
   // InitListExprs for structs have to be handled carefully.  If there are
   // reference members, we need to consider the size of the reference, not the
@@ -760,7 +760,7 @@ static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
   if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
     if (!RT->isUnionType()) {
       RecordDecl *SD = E->getType()->getAs<RecordType>()->getDecl();
-      uint64_t NumNonZeroBytes = 0;
+      CharUnits NumNonZeroBytes = CharUnits::Zero();
       
       unsigned ILEElement = 0;
       for (RecordDecl::field_iterator Field = SD->field_begin(),
@@ -777,7 +777,8 @@ static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
         
         // Reference values are always non-null and have the width of a pointer.
         if (Field->getType()->isReferenceType())
-          NumNonZeroBytes += CGF.getContext().Target.getPointerWidth(0);
+          NumNonZeroBytes += CGF.getContext().toCharUnitsFromBits(
+              CGF.getContext().Target.getPointerWidth(0));
         else
           NumNonZeroBytes += GetNumNonZeroBytesInInit(E, CGF);
       }
@@ -787,7 +788,7 @@ static uint64_t GetNumNonZeroBytesInInit(const Expr *E, CodeGenFunction &CGF) {
   }
   
   
-  uint64_t NumNonZeroBytes = 0;
+  CharUnits NumNonZeroBytes = CharUnits::Zero();
   for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i)
     NumNonZeroBytes += GetNumNonZeroBytesInInit(ILE->getInit(i), CGF);
   return NumNonZeroBytes;
@@ -810,7 +811,7 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
 
   // Check to see if over 3/4 of the initializer are known to be zero.  If so,
   // we prefer to emit memset + individual stores for the rest.
-  uint64_t NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF);
+  uint64_t NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF).getQuantity();
   if (NumNonZeroBytes*4 > TypeInfo.first/8)
     return;
   
