@@ -182,9 +182,9 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 /// move will be performed.
 void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
   if (Dest.requiresGCollection()) {
-    uint64_t size = CGF.getContext().getTypeSize(E->getType())/8;
+    CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
     const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
-    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, Dest.getAddr(),
                                                     Src.getAggregateAddr(),
                                                     SizeVal);
@@ -213,9 +213,9 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   }
 
   if (Dest.requiresGCollection()) {
-    uint64_t size = CGF.getContext().getTypeSize(E->getType())/8;
+    CharUnits size = CGF.getContext().getTypeSizeInChars(E->getType());
     const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
-    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+    llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
                                                       Dest.getAddr(),
                                                       Src.getAggregateAddr(),
