@@ -708,11 +708,13 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     }
   }
 
-  if (Writer.hasChain() && D->isOriginalNamespace() &&
-      D->isAnonymousNamespace()) {
-    // This is an original anonymous namespace. If its parent is in a previous
-    // PCH (or is the TU), mark that parent for update.
-    Decl *Parent = cast<Decl>(D->getParent()->getPrimaryContext());
+  if (Writer.hasChain() && D->isAnonymousNamespace() && !D->getNextNamespace()){
+    // This is a most recent reopening of the anonymous namespace. If its parent
+    // is in a previous PCH (or is the TU), mark that parent for update, because
+    // the original namespace always points to the latest re-opening of its
+    // anonymous namespace.
+    Decl *Parent = cast<Decl>(
+        D->getParent()->getRedeclContext()->getPrimaryContext());
     if (Parent->getPCHLevel() > 0) {
       ASTWriter::UpdateRecord &Record = Writer.DeclUpdates[Parent];
       Record.push_back(UPD_CXX_ADDED_ANONYMOUS_NAMESPACE);

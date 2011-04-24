@@ -447,7 +447,7 @@ public:
 
   void setAnonymousNamespace(NamespaceDecl *D) {
     assert(!D || D->isAnonymousNamespace());
-    assert(!D || D->getParent() == this);
+    assert(!D || D->getParent()->getRedeclContext() == this);
     getOriginalNamespace()->OrigOrAnonNamespace.setPointer(D);
   }
 

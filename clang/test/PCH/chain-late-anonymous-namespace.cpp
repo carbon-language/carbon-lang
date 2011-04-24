@@ -6,6 +6,7 @@
 #define PASS1
 
 namespace ns {}
+namespace os {}
 
 #elif !defined(PASS2)
 #define PASS2
@@ -18,6 +19,16 @@ namespace ns {
 
 namespace {
   extern int y;
+}
+namespace {
+}
+
+namespace os {
+  extern "C" {
+    namespace {
+      extern int z;
+    }
+  }
 }
 
 #else
@@ -36,6 +47,15 @@ namespace {
 }
 void test() {
   (void)y;
+}
+
+namespace os {
+  namespace {
+    int z;
+  }
+  void test() {
+    (void)z;
+  }
 }
 
 #endif
