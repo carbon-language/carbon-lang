@@ -80,3 +80,5 @@ void test13b() {
 
 /* Make sure we allow *test14 as a "function designator" */
 int test14() { return (&*test14)(); }
+
+int test15[5] = { [2] = 1 }; /* expected-warning {{designated initializers are a C99 feature}} */
