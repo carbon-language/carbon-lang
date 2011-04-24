@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef CLANG_FRONTEND_MULTIPLEXCONSUMER_H
+#define CLANG_FRONTEND_MULTIPLEXCONSUMER_H
+
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <vector>
@@ -52,3 +55,5 @@ private:
 };
 
 }  // end namespace clang
+
+#endif
