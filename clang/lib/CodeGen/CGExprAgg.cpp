@@ -893,7 +893,8 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // safely handle this, we can add a target hook.
 
   // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
+  std::pair<CharUnits, CharUnits> TypeInfo = 
+    getContext().getTypeInfoInChars(Ty);
 
   // FIXME: Handle variable sized types.
 
@@ -923,9 +924,9 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   if (const RecordType *RecordTy = Ty->getAs<RecordType>()) {
     RecordDecl *Record = RecordTy->getDecl();
     if (Record->hasObjectMember()) {
-      unsigned long size = TypeInfo.first/8;
+      CharUnits size = TypeInfo.first;
       const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-      llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+      llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size.getQuantity());
       CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
                                                     SizeVal);
       return;
@@ -934,9 +935,10 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     QualType BaseType = getContext().getBaseElementType(Ty);
     if (const RecordType *RecordTy = BaseType->getAs<RecordType>()) {
       if (RecordTy->getDecl()->hasObjectMember()) {
-        unsigned long size = TypeInfo.first/8;
+        CharUnits size = TypeInfo.first;
         const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-        llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
+        llvm::Value *SizeVal = 
+          llvm::ConstantInt::get(SizeTy, size.getQuantity());
         CGM.getObjCRuntime().EmitGCMemmoveCollectable(*this, DestPtr, SrcPtr, 
                                                       SizeVal);
         return;
@@ -945,6 +947,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   }
   
   Builder.CreateMemCpy(DestPtr, SrcPtr,
-                       llvm::ConstantInt::get(IntPtrTy, TypeInfo.first/8),
-                       TypeInfo.second/8, isVolatile);
+                       llvm::ConstantInt::get(IntPtrTy, 
+                                              TypeInfo.first.getQuantity()),
+                       TypeInfo.second.getQuantity(), isVolatile);
 }
