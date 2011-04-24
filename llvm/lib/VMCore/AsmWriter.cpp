@@ -88,7 +88,7 @@ enum PrefixType {
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
 static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
-  assert(Name.data() && "Cannot get empty name!");
+  assert(!Name.empty() && "Cannot get empty name!");
   switch (Prefix) {
   default: llvm_unreachable("Bad prefix!");
   case NoPrefix: break;
