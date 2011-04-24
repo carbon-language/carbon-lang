@@ -88,15 +88,12 @@ template<typename> struct X3 { };
 inline template struct X3<int>; // expected-warning{{ignoring 'inline' keyword on explicit template instantiation}}
 static template struct X3<float>; // expected-warning{{ignoring 'static' keyword on explicit template instantiation}}
 
-namespace PR7622 { // expected-note{{to match this}}
+namespace PR7622 {
   template<typename,typename=int>
   struct basic_streambuf;
 
-  // FIXME: Very poor recovery here.
   template<typename,typename>
   struct basic_streambuf{friend bob<>()}; // expected-error{{unknown type name 'bob'}} \
   // expected-error{{ expected member name or ';' after declaration specifiers}}
-  template struct basic_streambuf<int>; // expected-error{{explicit instantiation of 'basic_streambuf' in class scope}}
-}  // expected-error{{expected ';' after struct}}
-  
-//expected-error{{expected '}'}}
+  template struct basic_streambuf<int>;
+}
