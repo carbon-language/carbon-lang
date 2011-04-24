@@ -3039,10 +3039,8 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (std::deque<Sema::PendingImplicitInstantiation>::iterator
          I = SemaRef.PendingInstantiations.begin(),
          N = SemaRef.PendingInstantiations.end(); I != N; ++I) {
-    if (I->first->getPCHLevel() == 0) {
-      AddDeclRef(I->first, PendingInstantiations);
-      AddSourceLocation(I->second, PendingInstantiations);
-    }
+    AddDeclRef(I->first, PendingInstantiations);
+    AddSourceLocation(I->second, PendingInstantiations);
   }
   assert(SemaRef.PendingLocalImplicitInstantiations.empty() &&
          "There are local ones at end of translation unit!");

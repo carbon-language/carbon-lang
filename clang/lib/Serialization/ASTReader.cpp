@@ -4118,21 +4118,21 @@ void ASTReader::InitializeSema(Sema &S) {
         SemaObj->ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
       }
     }
-
-    // If there were any pending implicit instantiations, deserialize them
-    // and add them to Sema's queue of such instantiations.
-    assert(F->PendingInstantiations.size() % 2 == 0 &&
-           "Expected pairs of entries");
-    for (unsigned Idx = 0, N = F->PendingInstantiations.size(); Idx < N;) {
-      ValueDecl *D=cast<ValueDecl>(GetDecl(F->PendingInstantiations[Idx++]));
-      SourceLocation Loc = ReadSourceLocation(*F, F->PendingInstantiations,Idx);
-      SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
-    }
   }
 
-  // The two special data sets below always come from the most recent PCH,
+  // The special data sets below always come from the most recent PCH,
   // which is at the front of the chain.
   PerFileData &F = *Chain.front();
+
+  // If there were any pending implicit instantiations, deserialize them
+  // and add them to Sema's queue of such instantiations.
+  assert(F.PendingInstantiations.size() % 2 == 0 &&
+         "Expected pairs of entries");
+  for (unsigned Idx = 0, N = F.PendingInstantiations.size(); Idx < N;) {
+    ValueDecl *D=cast<ValueDecl>(GetDecl(F.PendingInstantiations[Idx++]));
+    SourceLocation Loc = ReadSourceLocation(F, F.PendingInstantiations,Idx);
+    SemaObj->PendingInstantiations.push_back(std::make_pair(D, Loc));
+  }
 
   // If there were any weak undeclared identifiers, deserialize them and add to
   // Sema's list of weak undeclared identifiers.
