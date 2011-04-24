@@ -168,7 +168,7 @@ private:
 
   /// AppendTailPadding - Append enough tail padding so that the type will have
   /// the passed size.
-  void AppendTailPadding(uint64_t RecordSize);
+  void AppendTailPadding(CharUnits RecordSize);
 
   CharUnits getTypeAlignment(const llvm::Type *Ty) const;
 
@@ -765,29 +765,25 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   }
   
   // Append tail padding if necessary.
-  AppendTailPadding(Types.getContext().toBits(Layout.getSize()));
+  AppendTailPadding(Layout.getSize());
 
   return true;
 }
 
-void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
-  assert(RecordSize % 8 == 0 && "Invalid record size!");
+void CGRecordLayoutBuilder::AppendTailPadding(CharUnits RecordSize) {
+  ResizeLastBaseFieldIfNecessary(RecordSize);
 
-  CharUnits RecordSizeInBytes =
-    Types.getContext().toCharUnitsFromBits(RecordSize);
-  ResizeLastBaseFieldIfNecessary(RecordSizeInBytes);
-
-  assert(NextFieldOffset <= RecordSizeInBytes && "Size mismatch!");
+  assert(NextFieldOffset <= RecordSize && "Size mismatch!");
 
   CharUnits AlignedNextFieldOffset =
     NextFieldOffset.RoundUpToAlignment(getAlignmentAsLLVMStruct());
 
-  if (AlignedNextFieldOffset == RecordSizeInBytes) {
+  if (AlignedNextFieldOffset == RecordSize) {
     // We don't need any padding.
     return;
   }
 
-  CharUnits NumPadBytes = RecordSizeInBytes - NextFieldOffset;
+  CharUnits NumPadBytes = RecordSize - NextFieldOffset;
   AppendBytes(NumPadBytes);
 }
 
