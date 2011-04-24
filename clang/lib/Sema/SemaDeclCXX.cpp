@@ -18,6 +18,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
@@ -4969,6 +4970,10 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 
   Constructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(Constructor);
+  }
 }
 
 void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
@@ -5254,6 +5259,10 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
 
   Destructor->setUsed();
   MarkVTableUsed(CurrentLocation, ClassDecl);
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(Destructor);
+  }
 }
 
 /// \brief Builds a statement that copies the given entity from \p From to
@@ -5913,6 +5922,10 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                             /*isStmtExpr=*/false);
   assert(!Body.isInvalid() && "Compound statement creation cannot fail");
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(CopyAssignOperator);
+  }
 }
 
 CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
@@ -6113,6 +6126,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   }
   
   CopyConstructor->setUsed();
+
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(CopyConstructor);
+  }
 }
 
 ExprResult

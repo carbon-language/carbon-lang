@@ -89,7 +89,7 @@ public:
 
   /// \brief If the consumer is interested in entities getting modified after
   /// their initial creation, it should return a pointer to
-  /// a GetASTMutationListener here.
+  /// an ASTMutationListener here.
   virtual ASTMutationListener *GetASTMutationListener() { return 0; }
 
   /// \brief If the consumer is interested in entities being deserialized from

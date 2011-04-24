@@ -588,6 +588,7 @@ public:
                                     const ClassTemplateSpecializationDecl *D);
   virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                               const FunctionDecl *D);
+  virtual void CompletedImplicitDefinition(const FunctionDecl *D);
 };
 
 /// \brief AST and semantic-analysis consumer that generates a

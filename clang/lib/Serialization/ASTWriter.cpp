@@ -3955,4 +3955,13 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
   AddDeclRef(D, Record);
 }
 
+void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
+  if (D->getPCHLevel() == 0)
+    return; // Declaration not imported from PCH.
+
+  // Implicit decl from a PCH was defined.
+  // FIXME: Should implicit definition be a separate FunctionDecl?
+  RewriteDecl(D);
+}
+
 ASTSerializationListener::~ASTSerializationListener() { }

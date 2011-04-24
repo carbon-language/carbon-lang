@@ -201,6 +201,10 @@ Sema::~Sema() {
     ExternalSema->ForgetSema();
 }
 
+ASTMutationListener *Sema::getASTMutationListener() const {
+  return getASTConsumer().GetASTMutationListener();
+}
+
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast.
 /// If there is already an implicit cast, merge into the existing one.
 /// The result is of the given category.

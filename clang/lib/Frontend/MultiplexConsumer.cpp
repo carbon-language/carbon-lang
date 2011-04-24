@@ -97,6 +97,7 @@ public:
                                     const ClassTemplateSpecializationDecl *D);
   virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                               const FunctionDecl *D);
+  virtual void CompletedImplicitDefinition(const FunctionDecl *D);
 private:
   std::vector<ASTMutationListener*> Listeners;
 };
@@ -131,6 +132,11 @@ void MultiplexASTMutationListener::AddedCXXTemplateSpecialization(
     const FunctionTemplateDecl *TD, const FunctionDecl *D) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->AddedCXXTemplateSpecialization(TD, D);
+}
+void MultiplexASTMutationListener::CompletedImplicitDefinition(
+                                                        const FunctionDecl *D) {
+  for (size_t i = 0, e = Listeners.size(); i != e; ++i)
+    Listeners[i]->CompletedImplicitDefinition(D);
 }
 
 }  // end namespace clang

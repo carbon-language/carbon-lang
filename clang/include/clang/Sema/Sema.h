@@ -43,6 +43,7 @@ namespace clang {
   class ADLResult;
   class ASTConsumer;
   class ASTContext;
+  class ASTMutationListener;
   class ArrayType;
   class AttributeList;
   class BlockDecl;
@@ -657,6 +658,7 @@ public:
   Preprocessor &getPreprocessor() const { return PP; }
   ASTContext &getASTContext() const { return Context; }
   ASTConsumer &getASTConsumer() const { return Consumer; }
+  ASTMutationListener *getASTMutationListener() const;
   
   /// \brief Helper class that creates diagnostics with optional
   /// template instantiation stacks.
