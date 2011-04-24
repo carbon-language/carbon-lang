@@ -182,9 +182,7 @@ bool AggExprEmitter::TypeRequiresGCollection(QualType T) {
 /// move will be performed.
 void AggExprEmitter::EmitGCMove(const Expr *E, RValue Src) {
   if (Dest.requiresGCollection()) {
-    std::pair<uint64_t, unsigned> TypeInfo = 
-      CGF.getContext().getTypeInfo(E->getType());
-    unsigned long size = TypeInfo.first/8;
+    uint64_t size = CGF.getContext().getTypeSize(E->getType())/8;
     const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
     llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, Dest.getAddr(),
@@ -215,9 +213,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   }
 
   if (Dest.requiresGCollection()) {
-    std::pair<uint64_t, unsigned> TypeInfo = 
-    CGF.getContext().getTypeInfo(E->getType());
-    unsigned long size = TypeInfo.first/8;
+    uint64_t size = CGF.getContext().getTypeSize(E->getType())/8;
     const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
     llvm::Value *SizeVal = llvm::ConstantInt::get(SizeTy, size);
     CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF,
