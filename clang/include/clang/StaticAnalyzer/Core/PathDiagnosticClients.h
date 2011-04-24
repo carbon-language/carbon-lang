@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_GR_PATH_DIAGNOSTIC_CLIENTS_H
-#define LLVM_CLANG_GR_PATH_DIAGNOSTIC_CLiENTS_H
+#define LLVM_CLANG_GR_PATH_DIAGNOSTIC_CLIENTS_H
 
 #include <string>
 
