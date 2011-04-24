@@ -404,6 +404,8 @@ def err_out_of_line_type_names_constructor : Error<
 
 def err_expected_qualified_after_typename : Error<
   "expected a qualified name after 'typename'">;
+def warn_expected_qualified_after_typename : ExtWarn<
+  "expected a qualified name after 'typename'">;
 def err_expected_semi_after_tagdecl : Error<
   "expected ';' after %0">;
 

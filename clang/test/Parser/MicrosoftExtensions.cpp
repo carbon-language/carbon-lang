@@ -130,7 +130,19 @@ void f(){
   typename C1<T>:: /*template*/ Iterator<0> Mypos; // expected-warning {{use 'template' keyword to treat 'Iterator' as a dependent template name}}
 }
 
+
+
+class AAAA { };
+
+template <class T>
+void redundant_typename() {
+   typename T t;// expected-warning {{expected a qualified name after 'typename'}}
+   typename AAAA a;// expected-warning {{expected a qualified name after 'typename'}}
+   t = 3;
+}
+
 int main() {
+  redundant_typename<int>();
   f<int>();
 }
 
