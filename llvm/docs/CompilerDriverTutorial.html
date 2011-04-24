@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
 <title>Tutorial - Using LLVMC</title>
 <link rel="stylesheet" href="llvm.css" type="text/css" />
 </head>
@@ -18,7 +18,7 @@ The ReST source lives in the directory 'tools/llvmc/doc'. -->
 <p class="topic-title first">Contents</p>
 <ul class="simple">
 <li><a class="reference internal" href="#introduction" id="id1">Introduction</a></li>
-<li><a class="reference internal" href="#compiling-with-llvmc" id="id2">Compiling with LLVMC</a></li>
+<li><a class="reference internal" href="#using-the-llvmc-program" id="id2">Using the <tt class="docutils literal">llvmc</tt> program</a></li>
 <li><a class="reference internal" href="#using-llvmc-to-generate-toolchain-drivers" id="id3">Using LLVMC to generate toolchain drivers</a></li>
 </ul>
 </div>
@@ -26,51 +26,47 @@ The ReST source lives in the directory 'tools/llvmc/doc'. -->
 <p>Written by <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a></p>
 </div><div class="section" id="introduction">
 <h1><a class="toc-backref" href="#id1">Introduction</a></h1>
-<p>LLVMC is a generic compiler driver, which plays the same role for LLVM
-as the <tt class="docutils literal"><span class="pre">gcc</span></tt> program does for GCC - the difference being that LLVMC
-is designed to be more adaptable and easier to customize. Most of
-LLVMC functionality is implemented via plugins, which can be loaded
-dynamically or compiled in. This tutorial describes the basic usage
-and configuration of LLVMC.</p>
+<p>LLVMC is a generic compiler driver, which plays the same role for LLVM as the
+<tt class="docutils literal">gcc</tt> program does for GCC - the difference being that LLVMC is designed to be
+more adaptable and easier to customize. Most of LLVMC functionality is
+implemented via high-level TableGen code, from which a corresponding C++ source
+file is automatically generated. This tutorial describes the basic usage and
+configuration of LLVMC.</p>
 </div>
-<div class="section" id="compiling-with-llvmc">
-<h1><a class="toc-backref" href="#id2">Compiling with LLVMC</a></h1>
-<p>In general, LLVMC tries to be command-line compatible with <tt class="docutils literal"><span class="pre">gcc</span></tt> as
-much as possible, so most of the familiar options work:</p>
+<div class="section" id="using-the-llvmc-program">
+<h1><a class="toc-backref" href="#id2">Using the <tt class="docutils literal">llvmc</tt> program</a></h1>
+<p>In general, <tt class="docutils literal">llvmc</tt> tries to be command-line compatible with <tt class="docutils literal">gcc</tt> as much
+as possible, so most of the familiar options work:</p>
 <pre class="literal-block">
 $ llvmc -O3 -Wall hello.cpp
 $ ./a.out
 hello
 </pre>
-<p>This will invoke <tt class="docutils literal"><span class="pre">llvm-g++</span></tt> under the hood (you can see which
-commands are executed by using the <tt class="docutils literal"><span class="pre">-v</span></tt> option). For further help on
-command-line LLVMC usage, refer to the <tt class="docutils literal"><span class="pre">llvmc</span> <span class="pre">--help</span></tt> output.</p>
+<p>This will invoke <tt class="docutils literal"><span class="pre">llvm-g++</span></tt> under the hood (you can see which commands are
+executed by using the <tt class="docutils literal"><span class="pre">-v</span></tt> option). For further help on command-line LLVMC
+usage, refer to the <tt class="docutils literal">llvmc <span class="pre">--help</span></tt> output.</p>
 </div>
 <div class="section" id="using-llvmc-to-generate-toolchain-drivers">
 <h1><a class="toc-backref" href="#id3">Using LLVMC to generate toolchain drivers</a></h1>
-<p>LLVMC plugins are written mostly using <a class="reference external" href="http://llvm.org/docs/TableGenFundamentals.html">TableGen</a>, so you need to
-be familiar with it to get anything done.</p>
-<p>Start by compiling <tt class="docutils literal"><span class="pre">example/Simple</span></tt>, which is a primitive wrapper for
-<tt class="docutils literal"><span class="pre">gcc</span></tt>:</p>
+<p>LLVMC-based drivers are written mostly using <a class="reference external" href="http://llvm.org/docs/TableGenFundamentals.html">TableGen</a>, so you need to be
+familiar with it to get anything done.</p>
+<p>Start by compiling <tt class="docutils literal">example/Simple</tt>, which is a primitive wrapper for
+<tt class="docutils literal">gcc</tt>:</p>
 <pre class="literal-block">
-$ cd $LLVM_DIR/tools/llvmc
-$ cp -r example/Simple plugins/Simple
-
-  # NB: A less verbose way to compile standalone LLVMC-based drivers is
-  # described in the reference manual.
-
-$ make LLVMC_BASED_DRIVER_NAME=mygcc LLVMC_BUILTIN_PLUGINS=Simple
+$ cd $LLVM_OBJ_DIR/tools/examples/Simple
+$ make
 $ cat &gt; hello.c
-[...]
-$ mygcc hello.c
+#include &lt;stdio.h&gt;
+int main() { printf(&quot;Hello\n&quot;); }
+$ $LLVM_BIN_DIR/Simple -v hello.c
+gcc hello.c -o hello.out
 $ ./hello.out
 Hello
 </pre>
-<p>Here we link our plugin with the LLVMC core statically to form an executable
-file called <tt class="docutils literal"><span class="pre">mygcc</span></tt>. It is also possible to build our plugin as a dynamic
-library to be loaded by the <tt class="docutils literal"><span class="pre">llvmc</span></tt> executable (or any other LLVMC-based
-standalone driver); this is described in the reference manual.</p>
-<p>Contents of the file <tt class="docutils literal"><span class="pre">Simple.td</span></tt> look like this:</p>
+<p>We have thus produced a simple driver called, appropriately, <tt class="docutils literal">Simple</tt>, from
+the input TableGen file <tt class="docutils literal">Simple.td</tt>. The <tt class="docutils literal">llvmc</tt> program itself is generated
+using a similar process (see <tt class="docutils literal">llvmc/src</tt>). Contents of the file <tt class="docutils literal">Simple.td</tt>
+look like this:</p>
 <pre class="literal-block">
 // Include common definitions
 include &quot;llvm/CompilerDriver/Common.td&quot;
@@ -80,33 +76,36 @@ def gcc : Tool&lt;
 [(in_language &quot;c&quot;),
  (out_language &quot;executable&quot;),
  (output_suffix &quot;out&quot;),
- (cmd_line &quot;gcc $INFILE -o $OUTFILE&quot;),
- (sink)
+ (command &quot;gcc&quot;),
+ (sink),
+
+ // -o is what is used by default, out_file_option here is included for
+ // instructive purposes.
+ (out_file_option &quot;-o&quot;)
 ]&gt;;
 
 // Language map
-def LanguageMap : LanguageMap&lt;[LangToSuffixes&lt;&quot;c&quot;, [&quot;c&quot;]&gt;]&gt;;
+def LanguageMap : LanguageMap&lt;[(lang_to_suffixes &quot;c&quot;, &quot;c&quot;)]&gt;;
 
 // Compilation graph
-def CompilationGraph : CompilationGraph&lt;[Edge&lt;&quot;root&quot;, &quot;gcc&quot;&gt;]&gt;;
+def CompilationGraph : CompilationGraph&lt;[(edge &quot;root&quot;, &quot;gcc&quot;)]&gt;;
 </pre>
-<p>As you can see, this file consists of three parts: tool descriptions,
-language map, and the compilation graph definition.</p>
-<p>At the heart of LLVMC is the idea of a compilation graph: vertices in
-this graph are tools, and edges represent a transformation path
-between two tools (for example, assembly source produced by the
-compiler can be transformed into executable code by an assembler). The
-compilation graph is basically a list of edges; a special node named
-<tt class="docutils literal"><span class="pre">root</span></tt> is used to mark graph entry points.</p>
-<p>Tool descriptions are represented as property lists: most properties
-in the example above should be self-explanatory; the <tt class="docutils literal"><span class="pre">sink</span></tt> property
-means that all options lacking an explicit description should be
-forwarded to this tool.</p>
-<p>The <tt class="docutils literal"><span class="pre">LanguageMap</span></tt> associates a language name with a list of suffixes
-and is used for deciding which toolchain corresponds to a given input
-file.</p>
-<p>To learn more about LLVMC customization, refer to the reference
-manual and plugin source code in the <tt class="docutils literal"><span class="pre">plugins</span></tt> directory.</p>
+<p>As you can see, this file consists of three parts: tool descriptions, language
+map, and the compilation graph definition.</p>
+<p>At the heart of LLVMC is the idea of a compilation graph: vertices in this graph
+are tools, and edges represent a transformation path between two tools (for
+example, assembly source produced by the compiler can be transformed into
+executable code by an assembler). The compilation graph is basically a list of
+edges; a special node named <tt class="docutils literal">root</tt> is used to mark graph entry points.</p>
+<p>Tool descriptions are represented as property lists: most properties in the
+example above should be self-explanatory; the <tt class="docutils literal">sink</tt> property means that all
+options lacking an explicit description should be forwarded to this tool.</p>
+<p>The <tt class="docutils literal">LanguageMap</tt> associates a language name with a list of suffixes and is
+used for deciding which toolchain corresponds to a given input file.</p>
+<p>To learn more about writing your own drivers with LLVMC, refer to the reference
+manual and examples in the <tt class="docutils literal">examples</tt> directory. Of a particular interest is
+the <tt class="docutils literal">Skeleton</tt> example, which can serve as a template for your LLVMC-based
+drivers.</p>
 <hr />
 <address>
 <a href="http://jigsaw.w3.org/css-validator/check/referer">
@@ -117,7 +116,7 @@ manual and plugin source code in the <tt class="docutils literal"><span class="p
    alt="Valid XHTML 1.0 Transitional"/></a>
 
 <a href="mailto:foldr@codedgers.com">Mikhail Glushenkov</a><br />
-<a href="http://llvm.org/">LLVM Compiler Infrastructure</a><br />
+<a href="http://llvm.org">LLVM Compiler Infrastructure</a><br />
 
 Last modified: $Date: 2008-12-11 11:34:48 -0600 (Thu, 11 Dec 2008) $
 </address></div>
