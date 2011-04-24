@@ -989,6 +989,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_empty:
   case tok::kw___is_enum:
   case tok::kw___is_literal:
+  case tok::kw___is_literal_type:
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
   case tok::kw___is_trivial:

@@ -338,6 +338,9 @@ KEYWORD(__is_empty                  , KEYCXX)
 KEYWORD(__is_enum                   , KEYCXX)
 // Tentative name - there's no implementation of std::is_literal_type yet.
 KEYWORD(__is_literal                , KEYCXX)
+// Name for GCC 4.6 compatibility - people have already written libraries using
+// this name unfortunately.
+KEYWORD(__is_literal_type           , KEYCXX)
 KEYWORD(__is_pod                    , KEYCXX)
 KEYWORD(__is_polymorphic            , KEYCXX)
 KEYWORD(__is_trivial                , KEYCXX)
