@@ -76,13 +76,13 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context,
   return 0;
 }
 
-static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
+void Sema::FilterAcceptableTemplateNames(LookupResult &R) {
   // The set of class templates we've already seen.
   llvm::SmallPtrSet<ClassTemplateDecl *, 8> ClassTemplates;
   LookupResult::Filter filter = R.makeFilter();
   while (filter.hasNext()) {
     NamedDecl *Orig = filter.next();
-    NamedDecl *Repl = isAcceptableTemplateName(C, Orig);
+    NamedDecl *Repl = isAcceptableTemplateName(Context, Orig);
     if (!Repl)
       filter.erase();
     else if (Repl != Orig) {
@@ -112,6 +112,14 @@ static void FilterAcceptableTemplateNames(ASTContext &C, LookupResult &R) {
     }
   }
   filter.done();
+}
+
+bool Sema::hasAnyAcceptableTemplateNames(LookupResult &R) {
+  for (LookupResult::iterator I = R.begin(), IEnd = R.end(); I != IEnd; ++I)
+    if (isAcceptableTemplateName(Context, *I))
+      return true;
+  
+  return true;
 }
 
 TemplateNameKind Sema::isTemplateName(Scope *S,
@@ -289,7 +297,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     DeclarationName Name = Found.getLookupName();
     if (DeclarationName Corrected = CorrectTypo(Found, S, &SS, LookupCtx,
                                                 false, CTC_CXXCasts)) {
-      FilterAcceptableTemplateNames(Context, Found);
+      FilterAcceptableTemplateNames(Found);
       if (!Found.empty()) {
         if (LookupCtx)
           Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
@@ -311,7 +319,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     }
   }
 
-  FilterAcceptableTemplateNames(Context, Found);
+  FilterAcceptableTemplateNames(Found);
   if (Found.empty()) {
     if (isDependent)
       MemberOfUnknownSpecialization = true;
@@ -327,7 +335,7 @@ void Sema::LookupTemplateName(LookupResult &Found,
     LookupResult FoundOuter(*this, Found.getLookupName(), Found.getNameLoc(),
                             LookupOrdinaryName);
     LookupName(FoundOuter, S);
-    FilterAcceptableTemplateNames(Context, FoundOuter);
+    FilterAcceptableTemplateNames(FoundOuter);
 
     if (FoundOuter.empty()) {
       //   - if the name is not found, the name found in the class of the

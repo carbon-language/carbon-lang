@@ -1048,24 +1048,24 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
   
-  ExprResult ParseExpression();
+  ExprResult ParseExpression(ExprResult Primary = ExprResult());
   ExprResult ParseConstantExpression();
   // Expr that doesn't include commas.
-  ExprResult ParseAssignmentExpression();
+  ExprResult ParseAssignmentExpression(ExprResult Primary = ExprResult());
 
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
   ExprResult ParseExpressionWithLeadingExtension(SourceLocation ExtLoc);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS,
-                                              prec::Level MinPrec);
+                                        prec::Level MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression,
-                                       bool isAddressOfOperand,
-                                       bool &NotCastExpr,
-                                       ParsedType TypeOfCast);
+                                 bool isAddressOfOperand,
+                                 bool &NotCastExpr,
+                                 ParsedType TypeOfCast);
   ExprResult ParseCastExpression(bool isUnaryExpression,
-                                       bool isAddressOfOperand = false,
-                                       ParsedType TypeOfCast = ParsedType());
+                                 bool isAddressOfOperand = false,
+                                 ParsedType TypeOfCast = ParsedType());
 
   /// Returns true if the next token would start a postfix-expression
   /// suffix.
@@ -1257,13 +1257,14 @@ private:
   }
   StmtResult ParseStatementOrDeclaration(StmtVector& Stmts,
                                          bool OnlyStatement = false);
+  StmtResult ParseExprStatement(ParsedAttributes &Attrs, ExprResult Primary);
   StmtResult ParseLabeledStatement(ParsedAttributes &Attr);
   StmtResult ParseCaseStatement(ParsedAttributes &Attr,
                                 bool MissingCase = false,
                                 ExprResult Expr = ExprResult());
   StmtResult ParseDefaultStatement(ParsedAttributes &Attr);
   StmtResult ParseCompoundStatement(ParsedAttributes &Attr,
-                                          bool isStmtExpr = false);
+                                    bool isStmtExpr = false);
   StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   bool ParseParenExprOrCondition(ExprResult &ExprResult,
                                  Decl *&DeclResult,
@@ -1328,6 +1329,12 @@ private:
                                         unsigned Context,
                                         SourceLocation &DeclEnd,
                                         ParsedAttributes &attrs,
+                                        bool RequireSemi,
+                                        ForRangeInit *FRI = 0);
+  DeclGroupPtrTy ParseSimpleDeclaration(ParsingDeclSpec &DS,
+                                        StmtVector &Stmts,
+                                        unsigned Context,
+                                        SourceLocation &DeclEnd,
                                         bool RequireSemi,
                                         ForRangeInit *FRI = 0);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,

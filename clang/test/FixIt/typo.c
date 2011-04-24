@@ -2,6 +2,7 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -fsyntax-only -fixit -x c %t || true
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Werror -x c %t
+// RUN: grep "Rectangle" %t
 struct Point {
   float x, y;
 };
@@ -23,3 +24,14 @@ struct Window window = {
   topleft.x = 3.14, // expected-error{{field designator 'topleft' does not refer to any field in type 'struct Rectangle'; did you mean 'top_left'?}}
   2.71818, 5.0, 6.0, Red
 };
+
+void test() {
+  Rectangle r1; // expected-error{{must use 'struct' tag to refer to type 'Rectangle'}}
+  r1.top_left.x = 0;
+
+  typedef struct Rectangle Rectangle; // expected-note{{'Rectangle' declared here}}
+  rectangle *r2 = &r1; // expected-error{{use of undeclared identifier 'rectangle'; did you mean 'Rectangle'?}}
+  r2->top_left.y = 0;
+  unsinged *ptr = 0; // expected-error{{use of undeclared identifier 'unsinged'; did you mean 'unsigned'?}}
+  *ptr = 17;
+}

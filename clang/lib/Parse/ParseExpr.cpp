@@ -175,8 +175,10 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         assignment-expression ...[opt]
 ///         expression ',' assignment-expression ...[opt]
 ///
-ExprResult Parser::ParseExpression() {
-  ExprResult LHS(ParseAssignmentExpression());
+/// \param Primary if non-empty, an already-parsed expression that will be used
+/// as the first primary expression.
+ExprResult Parser::ParseExpression(ExprResult Primary) {
+  ExprResult LHS(ParseAssignmentExpression(Primary));
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
@@ -213,16 +215,26 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
-ExprResult Parser::ParseAssignmentExpression() {
+/// \param Primary if non-empty, an already-parsed expression that will be used
+/// as the first primary expression.
+ExprResult Parser::ParseAssignmentExpression(ExprResult Primary) {
   if (Tok.is(tok::code_completion)) {
-    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
+    if (Primary.isUsable())
+      Actions.CodeCompletePostfixExpression(getCurScope(), Primary);
+    else
+      Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
 
-  if (Tok.is(tok::kw_throw))
+  if (!Primary.isUsable() && Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  ExprResult LHS(ParseCastExpression(false));
+  ExprResult LHS;
+  if (Primary.get() || Primary.isInvalid())
+    LHS = ParsePostfixExpressionSuffix(Primary);
+  else
+    LHS = ParseCastExpression(false, false, ParsedType());
+  
   return ParseRHSOfBinaryExpression(move(LHS), prec::Assignment);
 }
 
@@ -415,8 +427,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
 /// due to member pointers.
 ///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
-                                                     bool isAddressOfOperand,
-                                                     ParsedType TypeOfCast) {
+                                       bool isAddressOfOperand,
+                                       ParsedType TypeOfCast) {
   bool NotCastExpr;
   ExprResult Res = ParseCastExpression(isUnaryExpression,
                                        isAddressOfOperand,

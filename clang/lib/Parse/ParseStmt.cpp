@@ -22,6 +22,10 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
+static bool isColonOrRSquareBracket(const Token &Tok) {
+  return Tok.is(tok::colon) || Tok.is(tok::r_square);
+}
+
 //===----------------------------------------------------------------------===//
 // C99 6.8: Statements and Blocks.
 //===----------------------------------------------------------------------===//
@@ -87,6 +91,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
   // or they directly 'return;' if not.
+Retry:
   tok::TokenKind Kind  = Tok.getKind();
   SourceLocation AtLoc;
   switch (Kind) {
@@ -101,13 +106,134 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
     ConsumeCodeCompletionToken();
     return ParseStatementOrDeclaration(Stmts, OnlyStatement);
       
-  case tok::identifier:
-    if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
+  case tok::identifier: {
+    Token Next = NextToken();
+    if (Next.is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
       return ParseLabeledStatement(attrs);
     }
-    // PASS THROUGH.
+    
+    if (!getLang().CPlusPlus) {
+      // FIXME: Temporarily enable this code only for C.
+      CXXScopeSpec SS;
+      IdentifierInfo *Name = Tok.getIdentifierInfo();
+      SourceLocation NameLoc = Tok.getLocation();
+      Sema::NameClassification Classification
+        = Actions.ClassifyName(getCurScope(), SS, Name, NameLoc, Next);
+      switch (Classification.getKind()) {
+      case Sema::NC_Keyword:
+        // The identifier was corrected to a keyword. Update the token
+        // to this keyword, and try again.
+        if (Name->getTokenID() != tok::identifier) {
+          Tok.setIdentifierInfo(Name);
+          Tok.setKind(Name->getTokenID());
+          goto Retry;
+        }
+          
+        // Fall through via the normal error path.
+        // FIXME: This seems like it could only happen for context-sensitive
+        // keywords.
+          
+      case Sema::NC_Error:
+        // Handle errors here by skipping up to the next semicolon or '}', and
+        // eat the semicolon if that's what stopped us.
+        SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+        if (Tok.is(tok::semi))
+          ConsumeToken();
+        return StmtError();
+                     
+      case Sema::NC_Unknown:
+        // Either we don't know anything about this identifier, or we know that
+        // we're in a syntactic context we haven't handled yet. 
+        break;     
+          
+      case Sema::NC_Type:
+        // We have a type.
+        // We have a type. In C, this means that we have a declaration.
+        if (!getLang().CPlusPlus) {
+          ParsedType Type = Classification.getType();
+          const char *PrevSpec = 0;
+          unsigned DiagID;
+          ConsumeToken(); // the identifier
+          ParsingDeclSpec DS(*this);
+          DS.takeAttributesFrom(attrs);
+          DS.SetTypeSpecType(DeclSpec::TST_typename, NameLoc, PrevSpec, DiagID,
+                             Type);
+          DS.SetRangeStart(NameLoc);
+          DS.SetRangeEnd(NameLoc);
+          
+          // In Objective-C, check whether this is the start of a class message
+          // send that is missing an opening square bracket ('[').
+          if (getLang().ObjC1 && Tok.is(tok::identifier) && 
+              Type.get()->isObjCObjectOrInterfaceType() &&
+              isColonOrRSquareBracket(NextToken())) {
+            // Fake up a Declarator to use with ActOnTypeName.
+            Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+            TypeResult Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
+            if (Ty.isInvalid()) {
+              SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+              if (Tok.is(tok::semi))
+                ConsumeToken();
+              return StmtError();
+            }
+            
+            ExprResult MsgExpr = ParseObjCMessageExpressionBody(SourceLocation(), 
+                                                                SourceLocation(),
+                                                                Ty.get(), 0);
+            return ParseExprStatement(attrs, MsgExpr);
+          }
+          
+          // Objective-C supports syntax of the form 'id<proto1,proto2>' where 
+          // 'id' is a specific typedef and 'itf<proto1,proto2>' where 'itf' is 
+          // an Objective-C interface. 
+          if (Tok.is(tok::less) && getLang().ObjC1)
+            ParseObjCProtocolQualifiers(DS);
 
+          SourceLocation DeclStart = NameLoc, DeclEnd;
+          DeclGroupPtrTy Decl = ParseSimpleDeclaration(DS, Stmts, 
+                                                       Declarator::BlockContext,
+                                                       DeclEnd, true);
+          return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
+        }
+          
+        // In C++, we might also have a functional-style cast.
+        // FIXME: Implement this!
+        break;
+          
+      case Sema::NC_Expression:
+        ConsumeToken(); // the identifier
+        return ParseExprStatement(attrs, Classification.getExpression());
+          
+      case Sema::NC_TypeTemplate:
+      case Sema::NC_FunctionTemplate: {
+        ConsumeToken(); // the identifier
+        UnqualifiedId Id;
+        Id.setIdentifier(Name, NameLoc);
+        if (AnnotateTemplateIdToken(
+                            TemplateTy::make(Classification.getTemplateName()), 
+                                    Classification.getTemplateNameKind(),
+                                    SS, Id)) {
+          // Handle errors here by skipping up to the next semicolon or '}', and
+          // eat the semicolon if that's what stopped us.
+          SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+          if (Tok.is(tok::semi))
+            ConsumeToken();
+          return StmtError();        
+        }
+        
+        // We've annotated a template-id, so try again now.
+        goto Retry;
+      }
+       
+      case Sema::NC_NestedNameSpecifier:
+        // FIXME: Implement this!
+        break;
+      }
+    }
+    
+    // Fall through
+  }
+      
   default: {
     if ((getLang().CPlusPlus || !OnlyStatement) && isDeclarationStatement()) {
       SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
@@ -121,36 +247,7 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
       return StmtError();
     }
 
-    // If a case keyword is missing, this is where it should be inserted.
-    Token OldToken = Tok;
-
-    // FIXME: Use the attributes
-    // expression[opt] ';'
-    ExprResult Expr(ParseExpression());
-    if (Expr.isInvalid()) {
-      // If the expression is invalid, skip ahead to the next semicolon or '}'.
-      // Not doing this opens us up to the possibility of infinite loops if
-      // ParseExpression does not consume any tokens.
-      SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
-      return StmtError();
-    }
-
-    if (Tok.is(tok::colon) && getCurScope()->isSwitchScope() &&
-        Actions.CheckCaseExpression(Expr.get())) {
-      // If a constant expression is followed by a colon inside a switch block,
-      // suggest a missing case keywork.
-      Diag(OldToken, diag::err_expected_case_before_expression)
-          << FixItHint::CreateInsertion(OldToken.getLocation(), "case ");
-
-      // Recover parsing as a case statement.
-      return ParseCaseStatement(attrs, /*MissingCase=*/true, Expr);
-    }
-
-    // Otherwise, eat the semicolon.
-    ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
-    return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
+    return ParseExprStatement(attrs, ExprResult());
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -223,6 +320,42 @@ Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
   }
 
   return move(Res);
+}
+
+/// \brief Parse an expression statement.
+StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs, 
+                                      ExprResult Primary) {
+  // If a case keyword is missing, this is where it should be inserted.
+  Token OldToken = Tok;
+  
+  // FIXME: Use the attributes
+  // expression[opt] ';'
+  ExprResult Expr(ParseExpression(Primary));
+  if (Expr.isInvalid()) {
+    // If the expression is invalid, skip ahead to the next semicolon or '}'.
+    // Not doing this opens us up to the possibility of infinite loops if
+    // ParseExpression does not consume any tokens.
+    SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+    if (Tok.is(tok::semi))
+      ConsumeToken();
+    return StmtError();
+  }
+  
+  if (Tok.is(tok::colon) && getCurScope()->isSwitchScope() &&
+      Actions.CheckCaseExpression(Expr.get())) {
+    // If a constant expression is followed by a colon inside a switch block,
+    // suggest a missing case keyword.
+    Diag(OldToken, diag::err_expected_case_before_expression)
+      << FixItHint::CreateInsertion(OldToken.getLocation(), "case ");
+    
+    // Recover parsing as a case statement.
+    return ParseCaseStatement(Attrs, /*MissingCase=*/true, Expr);
+  }
+  
+  // Otherwise, eat the semicolon.
+  ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
+  return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
+
 }
 
 /// ParseLabeledStatement - We have an identifier and a ':' after it.

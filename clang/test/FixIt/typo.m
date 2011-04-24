@@ -1,22 +1,16 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -x objective-c -E -P %s -o %t
+// RUN: cp %s %t
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
-// RUN: false
-// XFAIL: *
+// RUN: grep "@implementation Sub3" %t
 
-
-@interface NSString // expected-note{{'NSString' declared here}}
+@interface NSString // expected-note 2{{'NSString' declared here}}
 + (int)method:(int)x;
 @end
 
-#ifdef NON_FIXITS
 void test() {
-  // FIXME: not providing fix-its
-  NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}} \
-  // expected-error{{use of undeclared identifier 'str'}}
+  NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
 }
-#endif
 
 @protocol P1
 @optional
@@ -166,7 +160,7 @@ void f(A *a) {
 
 @implementation Sub3
 - (int)method3 {
-  int x = super; // expected-note{{use of undeclared identifier 'super'}}
+  int x = super; // expected-error{{use of undeclared identifier 'super'}}
   return 0;
 }
 @end

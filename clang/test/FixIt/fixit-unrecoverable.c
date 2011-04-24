@@ -5,6 +5,4 @@
 
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-// FIXME: Sadly, the following doesn't work within a function.
-
 unsinged x = 17; // expected-error{{unknown type name 'unsinged'; did you mean 'unsigned'?}}

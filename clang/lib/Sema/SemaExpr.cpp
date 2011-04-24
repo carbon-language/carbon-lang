@@ -1708,11 +1708,10 @@ bool Sema::canSynthesizeProvisionalIvar(ObjCPropertyDecl *Property) {
   return true;
 }
 
-static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
-                                               LookupResult &Lookup,
-                                               IdentifierInfo *II,
-                                               SourceLocation NameLoc) {
-  ObjCMethodDecl *CurMeth = SemaRef.getCurMethodDecl();
+ObjCIvarDecl *Sema::SynthesizeProvisionalIvar(LookupResult &Lookup,
+                                              IdentifierInfo *II,
+                                              SourceLocation NameLoc) {
+  ObjCMethodDecl *CurMeth = getCurMethodDecl();
   bool LookForIvars;
   if (Lookup.empty())
     LookForIvars = true;
@@ -1732,7 +1731,7 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
   if (!ClassImpDecl)
     return 0;
   bool DynamicImplSeen = false;
-  ObjCPropertyDecl *property = SemaRef.LookupPropertyDecl(IDecl, II);
+  ObjCPropertyDecl *property = LookupPropertyDecl(IDecl, II);
   if (!property)
     return 0;
   if (ObjCPropertyImplDecl *PIDecl = ClassImpDecl->FindPropertyImplDecl(II)) {
@@ -1744,8 +1743,8 @@ static ObjCIvarDecl *SynthesizeProvisionalIvar(Sema &SemaRef,
       return 0;
   }
   if (!DynamicImplSeen) {
-    QualType PropType = SemaRef.Context.getCanonicalType(property->getType());
-    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(SemaRef.Context, ClassImpDecl, 
+    QualType PropType = Context.getCanonicalType(property->getType());
+    ObjCIvarDecl *Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl, 
                                               NameLoc, NameLoc,
                                               II, PropType, /*Dinfo=*/0,
                                               ObjCIvarDecl::Private,
@@ -1848,7 +1847,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       // Synthesize ivars lazily.
       if (getLangOptions().ObjCDefaultSynthProperties &&
           getLangOptions().ObjCNonFragileABI2) {
-        if (SynthesizeProvisionalIvar(*this, R, II, NameLoc)) {
+        if (SynthesizeProvisionalIvar(R, II, NameLoc)) {
           if (const ObjCPropertyDecl *Property = 
                 canSynthesizeProvisionalIvar(II)) {
             Diag(NameLoc, diag::warn_synthesized_ivar_access) << II;

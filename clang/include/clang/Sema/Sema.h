@@ -818,6 +818,107 @@ public:
                                CXXScopeSpec *SS,
                                ParsedType &SuggestedType);
 
+  /// \brief Describes the result of the name lookup and resolution performed
+  /// by \c ClassifyName().
+  enum NameClassificationKind {
+    NC_Unknown,
+    NC_Error,
+    NC_Keyword,
+    NC_Type,
+    NC_Expression,
+    NC_NestedNameSpecifier,
+    NC_TypeTemplate,
+    NC_FunctionTemplate
+  };
+  
+  class NameClassification {
+    NameClassificationKind Kind;
+    ExprResult Expr;
+    TemplateName Template;
+    ParsedType Type;
+    const IdentifierInfo *Keyword;
+    
+    explicit NameClassification(NameClassificationKind Kind) : Kind(Kind) {}
+    
+  public:
+    NameClassification(ExprResult Expr) : Kind(NC_Expression), Expr(Expr) {}
+    
+    NameClassification(ParsedType Type) : Kind(NC_Type), Type(Type) {}
+    
+    NameClassification(const IdentifierInfo *Keyword) 
+      : Kind(NC_Keyword), Keyword(Keyword) { }
+    
+    static NameClassification Error() { 
+      return NameClassification(NC_Error); 
+    }
+    
+    static NameClassification Unknown() { 
+      return NameClassification(NC_Unknown); 
+    }
+    
+    static NameClassification NestedNameSpecifier() {
+      return NameClassification(NC_NestedNameSpecifier);
+    }
+    
+    static NameClassification TypeTemplate(TemplateName Name) {
+      NameClassification Result(NC_TypeTemplate);
+      Result.Template = Name;
+      return Result;
+    }
+
+    static NameClassification FunctionTemplate(TemplateName Name) {
+      NameClassification Result(NC_FunctionTemplate);
+      Result.Template = Name;
+      return Result;
+    }
+    
+    NameClassificationKind getKind() const { return Kind; }
+    
+    ParsedType getType() const {
+      assert(Kind == NC_Type);
+      return Type;
+    }
+    
+    ExprResult getExpression() const {
+      assert(Kind == NC_Expression);
+      return Expr;
+    }
+    
+    TemplateName getTemplateName() const {
+      assert(Kind == NC_TypeTemplate || Kind == NC_FunctionTemplate);
+      return Template;
+    }
+
+    TemplateNameKind getTemplateNameKind() const {
+      assert(Kind == NC_TypeTemplate || Kind == NC_FunctionTemplate);
+      return Kind == NC_TypeTemplate? TNK_Type_template : TNK_Function_template;
+    }
+};
+  
+  /// \brief Perform name lookup on the given name, classifying it based on
+  /// the results of name lookup and the following token.
+  ///
+  /// This routine is used by the parser to resolve identifiers and help direct
+  /// parsing. When the identifier cannot be found, this routine will attempt
+  /// to correct the typo and classify based on the resulting name.
+  ///
+  /// \param S The scope in which we're performing name lookup.
+  ///
+  /// \param SS The nested-name-specifier that precedes the name.
+  ///
+  /// \param Name The identifier. If typo correction finds an alternative name,
+  /// this pointer parameter will be updated accordingly.
+  ///
+  /// \param NameLoc The location of the identifier.
+  ///
+  /// \param NextToken The token following the identifier. Used to help 
+  /// disambiguate the name.
+  NameClassification ClassifyName(Scope *S,
+                                  CXXScopeSpec &SS,
+                                  IdentifierInfo *&Name,
+                                  SourceLocation NameLoc,
+                                  const Token &NextToken);
+  
   Decl *ActOnDeclarator(Scope *S, Declarator &D);
 
   Decl *HandleDeclarator(Scope *S, Declarator &D,
@@ -1961,6 +2062,10 @@ public:
   // Primary Expressions.
   SourceRange getExprRange(Expr *E) const;
 
+  ObjCIvarDecl *SynthesizeProvisionalIvar(LookupResult &Lookup,
+                                          IdentifierInfo *II,
+                                          SourceLocation NameLoc);
+  
   ExprResult ActOnIdExpression(Scope *S, CXXScopeSpec &SS, UnqualifiedId &Name,
                                bool HasTrailingLParen, bool IsAddressOfOperand);
 
@@ -3174,18 +3279,21 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Templates [C++ 14]
   //
+  void FilterAcceptableTemplateNames(LookupResult &R);
+  bool hasAnyAcceptableTemplateNames(LookupResult &R);
+  
   void LookupTemplateName(LookupResult &R, Scope *S, CXXScopeSpec &SS,
                           QualType ObjectType, bool EnteringContext,
                           bool &MemberOfUnknownSpecialization);
 
   TemplateNameKind isTemplateName(Scope *S,
-                                          CXXScopeSpec &SS,
-                                          bool hasTemplateKeyword,
-                                          UnqualifiedId &Name,
-                                          ParsedType ObjectType,
-                                          bool EnteringContext,
-                                          TemplateTy &Template,
-                                          bool &MemberOfUnknownSpecialization);
+                                  CXXScopeSpec &SS,
+                                  bool hasTemplateKeyword,
+                                  UnqualifiedId &Name,
+                                  ParsedType ObjectType,
+                                  bool EnteringContext,
+                                  TemplateTy &Template,
+                                  bool &MemberOfUnknownSpecialization);
 
   bool DiagnoseUnknownTemplateName(const IdentifierInfo &II,
                                    SourceLocation IILoc,
