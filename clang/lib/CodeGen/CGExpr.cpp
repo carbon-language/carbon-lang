@@ -740,8 +740,8 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
 
     // Perform the load.
     llvm::LoadInst *Load = Builder.CreateLoad(Ptr, LV.isVolatileQualified());
-    if (AI.AccessAlignment)
-      Load->setAlignment(AI.AccessAlignment);
+    if (!AI.AccessAlignment.isZero())
+      Load->setAlignment(AI.AccessAlignment.getQuantity());
 
     // Shift out unused low bits and mask out unused high bits.
     llvm::Value *Val = Load;
@@ -964,8 +964,8 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // If necessary, load and OR in bits that are outside of the bit-field.
     if (AI.TargetBitWidth != AI.AccessWidth) {
       llvm::LoadInst *Load = Builder.CreateLoad(Ptr, Dst.isVolatileQualified());
-      if (AI.AccessAlignment)
-        Load->setAlignment(AI.AccessAlignment);
+      if (!AI.AccessAlignment.isZero())
+        Load->setAlignment(AI.AccessAlignment.getQuantity());
 
       // Compute the mask for zeroing the bits that are part of the bit-field.
       llvm::APInt InvMask =
@@ -979,8 +979,8 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // Write the value.
     llvm::StoreInst *Store = Builder.CreateStore(Val, Ptr,
                                                  Dst.isVolatileQualified());
-    if (AI.AccessAlignment)
-      Store->setAlignment(AI.AccessAlignment);
+    if (!AI.AccessAlignment.isZero())
+      Store->setAlignment(AI.AccessAlignment.getQuantity());
   }
 }
 

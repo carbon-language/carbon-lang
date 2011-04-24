@@ -316,7 +316,8 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     }
     AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
     AI.AccessWidth = AccessWidth;
-    AI.AccessAlignment = llvm::MinAlign(ContainingTypeAlign, AccessStart) / 8;
+    AI.AccessAlignment = Types.getContext().toCharUnitsFromBits(
+        llvm::MinAlign(ContainingTypeAlign, AccessStart));
     AI.TargetBitOffset = AccessedTargetBits;
     AI.TargetBitWidth = AccessBitsInFieldSize;
 
@@ -1042,7 +1043,7 @@ void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
          << " FieldBitStart:" << AI.FieldBitStart
          << " AccessWidth:" << AI.AccessWidth << "\n";
       OS.indent(8 + strlen("<AccessInfo"));
-      OS << " AccessAlignment:" << AI.AccessAlignment
+      OS << " AccessAlignment:" << AI.AccessAlignment.getQuantity()
          << " TargetBitOffset:" << AI.TargetBitOffset
          << " TargetBitWidth:" << AI.TargetBitWidth
          << ">\n";

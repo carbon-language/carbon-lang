@@ -69,7 +69,7 @@ public:
     // FIXME: Remove use of 0 to encode default, instead have IRgen do the right
     // thing when it generates the code, if avoiding align directives is
     // desired.
-    unsigned AccessAlignment;
+    CharUnits AccessAlignment;
 
     /// Offset for the target value.
     unsigned TargetBitOffset;
