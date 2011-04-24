@@ -316,6 +316,11 @@ class CXXRecordDecl : public RecordDecl {
     ///   (or array thereof), each such class has a trivial constructor.
     bool HasTrivialConstructor : 1;
 
+    /// HasConstExprNonCopyMoveConstructor - True when this class has at least
+    /// one constexpr constructor which is neither the copy nor move
+    /// constructor.
+    bool HasConstExprNonCopyMoveConstructor : 1;
+
     /// HasTrivialCopyConstructor - True when this class has a trivial copy
     /// constructor.
     ///
@@ -385,6 +390,10 @@ class CXXRecordDecl : public RecordDecl {
     /// * for all of the non-static data members of its class that are of class
     ///   type (or array thereof), each such class has a trivial destructor.
     bool HasTrivialDestructor : 1;
+
+    /// HasNonLiteralTypeFieldsOrBases - True when this class contains at least
+    /// one non-static data member or base class of non literal type.
+    bool HasNonLiteralTypeFieldsOrBases : 1;
 
     /// ComputedVisibleConversions - True when visible conversion functions are
     /// already computed and are available.
@@ -760,6 +769,12 @@ public:
   // (C++ [class.ctor]p5)
   bool hasTrivialConstructor() const { return data().HasTrivialConstructor; }
 
+  // hasConstExprNonCopyMoveConstructor - Whether this class has at least one
+  // constexpr constructor other than the copy or move constructors
+  bool hasConstExprNonCopyMoveConstructor() const {
+    return data().HasConstExprNonCopyMoveConstructor;
+  }
+
   // hasTrivialCopyConstructor - Whether this class has a trivial copy
   // constructor (C++ [class.copy]p6, C++0x [class.copy]p13)
   bool hasTrivialCopyConstructor() const {
@@ -787,6 +802,12 @@ public:
   // hasTrivialDestructor - Whether this class has a trivial destructor
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
+
+  // hasNonLiteralTypeFieldsOrBases - Whether this class has a non-literal type
+  // non-static data member or base class.
+  bool hasNonLiteralTypeFieldsOrBases() const {
+    return data().HasNonLiteralTypeFieldsOrBases;
+  }
 
   // isTriviallyCopyable - Whether this class is considered trivially copyable
   // (C++0x [class]p5).

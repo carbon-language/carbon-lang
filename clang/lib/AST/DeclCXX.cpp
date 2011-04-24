@@ -32,9 +32,11 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), HasTrivialConstructor(true),
+    HasConstExprNonCopyMoveConstructor(false),
     HasTrivialCopyConstructor(true), HasTrivialMoveConstructor(true),
     HasTrivialCopyAssignment(true), HasTrivialMoveAssignment(true),
-    HasTrivialDestructor(true), ComputedVisibleConversions(false),
+    HasTrivialDestructor(true), HasNonLiteralTypeFieldsOrBases(false),
+    ComputedVisibleConversions(false),
     DeclaredDefaultConstructor(false), DeclaredCopyConstructor(false), 
     DeclaredCopyAssignment(false), DeclaredDestructor(false),
     NumBases(0), NumVBases(0), Bases(), VBases(),
@@ -117,6 +119,10 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     //   polymorphic class.
     if (BaseClassDecl->isPolymorphic())
       data().Polymorphic = true;
+
+    // Record if this base is the first non-literal field or base.
+    if (!hasNonLiteralTypeFieldsOrBases() && !BaseType->isLiteralType())
+      data().HasNonLiteralTypeFieldsOrBases = true;
     
     // Now go through all virtual bases of this base and add them.
     for (CXXRecordDecl::base_class_iterator VBase =
@@ -486,6 +492,12 @@ void CXXRecordDecl::addedMember(Decl *D) {
         data().HasTrivialMoveConstructor = false;
       }
     }
+    if (Constructor->isConstExpr() &&
+        !Constructor->isCopyOrMoveConstructor()) {
+      // Record if we see any constexpr constructors which are niether copy
+      // nor move constructors.
+      data().HasConstExprNonCopyMoveConstructor = true;
+    }
 
     return;
   }
@@ -620,7 +632,11 @@ void CXXRecordDecl::addedMember(Decl *D) {
       data().PlainOldData = false;
     if (T->isReferenceType())
       data().HasTrivialConstructor = false;
-    
+
+    // Record if this field is the first non-literal field or base.
+    if (!hasNonLiteralTypeFieldsOrBases() && !T->isLiteralType())
+      data().HasNonLiteralTypeFieldsOrBases = true;
+
     if (const RecordType *RecordTy = T->getAs<RecordType>()) {
       CXXRecordDecl* FieldRec = cast<CXXRecordDecl>(RecordTy->getDecl());
       if (FieldRec->getDefinition()) {

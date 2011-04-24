@@ -1479,6 +1479,10 @@ public:
   bool isPure() const { return IsPure; }
   void setPure(bool P = true);
 
+  /// Whether this is a constexpr function or constexpr constructor.
+  // FIXME: C++0x: Implement tracking of the constexpr specifier.
+  bool isConstExpr() const { return false; }
+
   /// Whether this templated function will be late parsed.
   bool isLateTemplateParsed() const { return IsLateTemplateParsed; }
   void setLateTemplateParsed(bool ILT = true) { IsLateTemplateParsed = ILT; }
