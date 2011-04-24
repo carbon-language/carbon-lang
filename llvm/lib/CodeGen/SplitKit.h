@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CODEGEN_SPLITKIT_H
+#define LLVM_CODEGEN_SPLITKIT_H
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -389,3 +392,5 @@ public:
 };
 
 }
+
+#endif
