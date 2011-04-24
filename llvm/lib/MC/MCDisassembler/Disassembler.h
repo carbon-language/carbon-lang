@@ -13,6 +13,10 @@
 // syntax.
 //
 //===----------------------------------------------------------------------===//
+
+#ifndef LLVM_MC_DISASSEMBLER_H
+#define LLVM_MC_DISASSEMBLER_H
+
 #include "llvm-c/Disassembler.h"
 #include <string>
 #include "llvm/ADT/OwningPtr.h"
@@ -88,3 +92,5 @@ public:
 };
 
 } // namespace llvm
+
+#endif
