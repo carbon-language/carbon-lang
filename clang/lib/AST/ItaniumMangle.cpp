@@ -553,11 +553,24 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
   addSubstitution(Template);
 }
 
-void CXXNameMangler::mangleFloat(const llvm::APFloat &F) {
-  // TODO: avoid this copy with careful stream management.
-  llvm::SmallString<20> Buffer;
-  F.bitcastToAPInt().toString(Buffer, 16, false);
-  Out.write(Buffer.data(), Buffer.size());
+void CXXNameMangler::mangleFloat(const llvm::APFloat &f) {
+  // ABI:
+  //   Floating-point literals are encoded using a fixed-length
+  //   lowercase hexadecimal string corresponding to the internal
+  //   representation (IEEE on Itanium), high-order bytes first,
+  //   without leading zeroes. For example: "Lf bf800000 E" is -1.0f
+  //   on Itanium.
+  // APInt::toString uses uppercase hexadecimal, and it's not really
+  // worth embellishing that interface for this use case, so we just
+  // do a second pass to lowercase things.
+  typedef llvm::SmallString<20> buffer_t;
+  buffer_t buffer;
+  f.bitcastToAPInt().toString(buffer, 16, false);
+
+  for (buffer_t::iterator i = buffer.begin(), e = buffer.end(); i != e; ++i)
+    if (isupper(*i)) *i = tolower(*i);
+
+  Out.write(buffer.data(), buffer.size());
 }
 
 void CXXNameMangler::mangleNumber(const llvm::APSInt &Value) {

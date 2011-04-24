@@ -348,7 +348,7 @@ namespace test0 {
     char buffer[sizeof(float)];
     g<float>(buffer);
   }
-  // CHECK: define linkonce_odr void @_ZN5test01gIfEEvRAszplcvT__ELf40A00000E_c(
+  // CHECK: define linkonce_odr void @_ZN5test01gIfEEvRAszplcvT__ELf40a00000E_c(
 
   template <class T> void h(char (&buffer)[sizeof(T() + 5.0)]) {}
   void test3() {
