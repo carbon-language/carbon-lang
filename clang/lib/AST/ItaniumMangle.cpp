@@ -2458,8 +2458,7 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     // an expression. We compensate for it here to produce the correct mangling.
     NamedDecl *D = cast<NamedDecl>(A.getAsDecl());
     const NonTypeTemplateParmDecl *Parameter = cast<NonTypeTemplateParmDecl>(P);
-    bool compensateMangling = D->isCXXClassMember() &&
-      !Parameter->getType()->isReferenceType();
+    bool compensateMangling = !Parameter->getType()->isReferenceType();
     if (compensateMangling) {
       Out << 'X';
       mangleOperatorName(OO_Amp, 1);

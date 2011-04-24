@@ -664,3 +664,15 @@ namespace test24 {
     foo();
   }
 }
+
+// rdar://problem/8806641
+namespace test25 {
+  template <void (*fn)()> struct A {
+    static void call() { fn(); }
+  };
+  void foo();
+  void test() {
+    // CHECK: call void @_ZN6test251AIXadL_ZNS_3fooEvEEE4callEv()
+    A<foo>::call();
+  }
+}
