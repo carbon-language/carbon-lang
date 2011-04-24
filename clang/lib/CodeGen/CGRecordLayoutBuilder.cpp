@@ -481,11 +481,12 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
       return 0;
 
     const llvm::Type *FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
-    unsigned NumBytesToAppend =
-      llvm::RoundUpToAlignment(FieldSize, 8) / 8;
+    CharUnits NumBytesToAppend = Types.getContext().toCharUnitsFromBits(
+      llvm::RoundUpToAlignment(FieldSize, 
+                               Types.getContext().Target.getCharAlign()));
 
-    if (NumBytesToAppend > 1)
-      FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend);
+    if (NumBytesToAppend > CharUnits::One())
+      FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend.getQuantity());
 
     // Add the bit field info.
     BitFields.insert(std::make_pair(Field,
