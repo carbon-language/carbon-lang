@@ -317,8 +317,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
       DBuilder.createMemberType("isa", getOrCreateMainFile(),
                                 0,Size, 0, 0, 0, ISATy);
     EltTys.push_back(FieldTy);
-    llvm::DIArray Elements =
-      DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+    llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
     
     return DBuilder.createStructType(TheCU, "objc_object", 
                                      getOrCreateMainFile(),
@@ -499,7 +498,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   EltTys.push_back(CreateMemberType(Unit, FType, "reserved", &FieldOffset));
   EltTys.push_back(CreateMemberType(Unit, FType, "Size", &FieldOffset));
 
-  Elements = DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  Elements = DBuilder.getOrCreateArray(EltTys);
   EltTys.clear();
 
   unsigned Flags = llvm::DIDescriptor::FlagAppleBlock;
@@ -533,7 +532,7 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   EltTys.push_back(FieldTy);
 
   FieldOffset += FieldSize;
-  Elements = DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  Elements = DBuilder.getOrCreateArray(EltTys);
 
   EltTy = DBuilder.createStructType(Unit, "__block_literal_generic",
                                     Unit, LineNo, FieldOffset, 0,
@@ -575,8 +574,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
       EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
   }
 
-  llvm::DIArray EltTypeArray =
-    DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
 
   llvm::DIType DbgTy = DBuilder.createSubroutineType(Unit, EltTypeArray);
   return DbgTy;
@@ -678,8 +676,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
     Elts.push_back(Args.getElement(i));
 
-  llvm::DIArray EltTypeArray =
-    DBuilder.getOrCreateArray(Elts.data(), Elts.size());
+  llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
 
   return DBuilder.createSubroutineType(Unit, EltTypeArray);
 }
@@ -869,7 +866,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
       TemplateParams.push_back(TVP);          
     }
   }
-  return DBuilder.getOrCreateArray(TemplateParams.data(), TemplateParams.size());
+  return DBuilder.getOrCreateArray(TemplateParams);
 }
 
 /// CollectFunctionTemplateParams - A helper function to collect debug
@@ -910,7 +907,7 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
 
   /* Function type */
   llvm::Value *STy = getOrCreateType(Context.IntTy, Unit);
-  llvm::DIArray SElements = DBuilder.getOrCreateArray(&STy, 1);
+  llvm::DIArray SElements = DBuilder.getOrCreateArray(STy);
   llvm::DIType SubTy = DBuilder.createSubroutineType(Unit, SElements);
   unsigned Size = Context.getTypeSize(Context.VoidPtrTy);
   llvm::DIType vtbl_ptr_type = DBuilder.createPointerType(SubTy, Size, 0,
@@ -1057,8 +1054,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   llvm::StringRef RDName = RD->getName();
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
-  llvm::DIArray Elements =
-    DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
   llvm::MDNode *RealDecl = NULL;
 
   if (RD->isUnion())
@@ -1221,8 +1217,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     EltTys.push_back(FieldTy);
   }
 
-  llvm::DIArray Elements =
-    DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
 
   RegionStack.pop_back();
   llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator RI = 
@@ -1269,7 +1264,7 @@ llvm::DIType CGDebugInfo::CreateType(const VectorType *Ty,
     --NumElems;
 
   llvm::Value *Subscript = DBuilder.getOrCreateSubrange(LowerBound, NumElems);
-  llvm::DIArray SubscriptArray = DBuilder.getOrCreateArray(&Subscript, 1);
+  llvm::DIArray SubscriptArray = DBuilder.getOrCreateArray(Subscript);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
@@ -1326,8 +1321,7 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
     }
   }
 
-  llvm::DIArray SubscriptArray =
-    DBuilder.getOrCreateArray(Subscripts.data(), Subscripts.size());
+  llvm::DIArray SubscriptArray = DBuilder.getOrCreateArray(Subscripts);
 
   llvm::DIType DbgTy = 
     DBuilder.createArrayType(Size, Align, getOrCreateType(EltTy, Unit),
@@ -1376,9 +1370,7 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
                               Info.first, Info.second, FieldOffset, 0,
                               PointerDiffDITy);
   
-  llvm::DIArray Elements = 
-    DBuilder.getOrCreateArray(&ElementTypes[0],
-                              llvm::array_lengthof(ElementTypes));
+  llvm::DIArray Elements = DBuilder.getOrCreateArray(ElementTypes);
 
   return DBuilder.createStructType(U, llvm::StringRef("test"), 
                                    U, 0, FieldOffset, 
@@ -1400,8 +1392,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
   }
 
   // Return a CompositeType for the enum itself.
-  llvm::DIArray EltArray =
-    DBuilder.getOrCreateArray(Enumerators.data(), Enumerators.size());
+  llvm::DIArray EltArray = DBuilder.getOrCreateArray(Enumerators);
 
   llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
   unsigned Line = getLineNumber(ED->getLocation());
@@ -1851,8 +1842,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const ValueDecl *VD,
   EltTys.push_back(FieldTy);
   FieldOffset += FieldSize;
   
-  llvm::DIArray Elements = 
-    DBuilder.getOrCreateArray(EltTys.data(), EltTys.size());
+  llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
   
   unsigned Flags = llvm::DIDescriptor::FlagBlockByrefStruct;
   
@@ -1923,7 +1913,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         DBuilder.createComplexVariable(Tag, 
                                        llvm::DIDescriptor(RegionStack.back()),
                                        VD->getName(), Unit, Line, Ty,
-                                       addr.data(), addr.size(), ArgNo);
+                                       addr, ArgNo);
       
       // Insert an llvm.dbg.declare into the current block.
       llvm::Instruction *Call =
@@ -2028,8 +2018,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   // Create the descriptor for the variable.
   llvm::DIVariable D =
     DBuilder.createComplexVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
-                                   VD->getName(), Unit, Line, Ty,
-                                   addr.data(), addr.size());
+                                   VD->getName(), Unit, Line, Ty, addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
     DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
@@ -2185,8 +2174,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   llvm::raw_svector_ostream(typeName)
     << "__block_literal_" << CGM.getUniqueBlockCount();
 
-  llvm::DIArray fieldsArray =
-    DBuilder.getOrCreateArray(fields.data(), fields.size());
+  llvm::DIArray fieldsArray = DBuilder.getOrCreateArray(fields);
 
   llvm::DIType type =
     DBuilder.createStructType(tunit, typeName.str(), tunit, line,

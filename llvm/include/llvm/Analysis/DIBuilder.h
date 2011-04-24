@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_DIBUILDER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
@@ -302,7 +303,7 @@ namespace llvm {
     DIDescriptor createUnspecifiedParameter();
 
     /// getOrCreateArray - Get a DIArray, create one if required.
-    DIArray getOrCreateArray(Value *const *Elements, unsigned NumElements);
+    DIArray getOrCreateArray(ArrayRef<Value *> Elements);
 
     /// getOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.
@@ -369,14 +370,13 @@ namespace llvm {
     /// @param File        File where this variable is defined.
     /// @param LineNo      Line number.
     /// @param Ty          Variable Type
-    /// @param Addr        A pointer to a vector of complex address operations.
-    /// @param NumAddr     Num of address operations in the vector.
+    /// @param Addr        An array of complex address operations.
     /// @param ArgNo       If this variable is an arugment then this argument's
     ///                    number. 1 indicates 1st argument.
     DIVariable createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                      StringRef Name, DIFile F, unsigned LineNo,
-                                     DIType Ty, Value *const *Addr,
-                                     unsigned NumAddr, unsigned ArgNo = 0);
+                                     DIType Ty, ArrayRef<Value *> Addr,
+                                     unsigned ArgNo = 0);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.

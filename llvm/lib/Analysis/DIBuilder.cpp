@@ -537,14 +537,12 @@ DIType DIBuilder::createTemporaryType(DIFile F) {
 }
 
 /// getOrCreateArray - Get a DIArray, create one if required.
-DIArray DIBuilder::getOrCreateArray(Value *const *Elements,
-                                    unsigned NumElements) {
-  if (NumElements == 0) {
+DIArray DIBuilder::getOrCreateArray(ArrayRef<Value *> Elements) {
+  if (Elements.empty()) {
     Value *Null = llvm::Constant::getNullValue(Type::getInt32Ty(VMContext));
     return DIArray(MDNode::get(VMContext, Null));
   }
-  return DIArray(MDNode::get(VMContext,
-                             ArrayRef<Value*>(Elements, NumElements)));
+  return DIArray(MDNode::get(VMContext, Elements));
 }
 
 /// getOrCreateSubrange - Create a descriptor for a value range.  This
@@ -649,8 +647,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
 DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                             StringRef Name, DIFile F,
                                             unsigned LineNo,
-                                            DIType Ty, Value *const *Addr,
-                                            unsigned NumAddr, unsigned ArgNo) {
+                                            DIType Ty, ArrayRef<Value *> Addr,
+                                            unsigned ArgNo) {
   SmallVector<Value *, 15> Elts;
   Elts.push_back(GetTagConstant(VMContext, Tag));
   Elts.push_back(Scope);
@@ -658,7 +656,7 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
   Elts.push_back(F);
   Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), (LineNo | (ArgNo << 24))));
   Elts.push_back(Ty);
-  Elts.append(Addr, Addr+NumAddr);
+  Elts.append(Addr.begin(), Addr.end());
 
   return DIVariable(MDNode::get(VMContext, Elts));
 }
