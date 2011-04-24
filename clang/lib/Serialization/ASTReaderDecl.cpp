@@ -1737,6 +1737,16 @@ void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
     case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
       // It will be added to the template's specializations set when loaded.
       Reader.GetDecl(Record[Idx++]);
+      break;
+
+    case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE: {
+      NamespaceDecl *Anon = cast<NamespaceDecl>(Reader.GetDecl(Record[Idx++]));
+      if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(D))
+        TU->setAnonymousNamespace(Anon);
+      else
+        cast<NamespaceDecl>(D)->OrigOrAnonNamespace.setPointer(Anon);
+      break;
+    }
     }
   }
 }

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Serialization/ASTWriter.h"
+#include "ASTCommon.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
@@ -21,6 +22,7 @@
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
+using namespace serialization;
 
 //===----------------------------------------------------------------------===//
 // Declaration serialization
@@ -703,6 +705,18 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
           ++Result.first;
         }
       }
+    }
+  }
+
+  if (Writer.hasChain() && D->isOriginalNamespace() &&
+      D->isAnonymousNamespace()) {
+    // This is an original anonymous namespace. If its parent is in a previous
+    // PCH (or is the TU), mark that parent for update.
+    Decl *Parent = cast<Decl>(D->getParent()->getPrimaryContext());
+    if (Parent->getPCHLevel() > 0) {
+      ASTWriter::UpdateRecord &Record = Writer.DeclUpdates[Parent];
+      Record.push_back(UPD_CXX_ADDED_ANONYMOUS_NAMESPACE);
+      Writer.AddDeclRef(D, Record);
     }
   }
 }
