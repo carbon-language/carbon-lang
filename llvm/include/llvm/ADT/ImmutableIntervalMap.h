@@ -10,6 +10,10 @@
 // This file defines the ImmutableIntervalMap class.
 //
 //===----------------------------------------------------------------------===//
+
+#ifndef LLVM_ADT_IMMUTABLE_INTERVAL_MAP_H
+#define LLVM_ADT_IMMUTABLE_INTERVAL_MAP_H
+
 #include "llvm/ADT/ImmutableMap.h"
 
 namespace llvm {
@@ -240,3 +244,5 @@ private:
 };
 
 } // end namespace llvm
+
+#endif
