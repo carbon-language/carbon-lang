@@ -309,9 +309,10 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     // in higher bits. But this also reverts the bytes, so fix this here by reverting
     // the byte offset on big-endian machines.
     if (Types.getTargetData().isBigEndian()) {
-      AI.FieldByteOffset = (ContainingTypeSizeInBits - AccessStart - AccessWidth )/8;
+      AI.FieldByteOffset = Types.getContext().toCharUnitsFromBits(
+          ContainingTypeSizeInBits - AccessStart - AccessWidth);
     } else {
-      AI.FieldByteOffset = AccessStart / 8;
+      AI.FieldByteOffset = Types.getContext().toCharUnitsFromBits(AccessStart);
     }
     AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
     AI.AccessWidth = AccessWidth;
@@ -978,7 +979,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
       // Verify that every component access is within the structure.
       uint64_t FieldOffset = SL->getElementOffsetInBits(AI.FieldIndex);
       uint64_t AccessBitOffset = FieldOffset +
-        getContext().toBits(CharUnits::fromQuantity(AI.FieldByteOffset));
+        getContext().toBits(AI.FieldByteOffset);
       assert(AccessBitOffset + AI.AccessWidth <= TypeSizeInBits &&
              "Invalid bit-field access (out of range)!");
     }
@@ -1037,7 +1038,7 @@ void CGBitFieldInfo::print(llvm::raw_ostream &OS) const {
       OS.indent(8);
       OS << "<AccessInfo"
          << " FieldIndex:" << AI.FieldIndex
-         << " FieldByteOffset:" << AI.FieldByteOffset
+         << " FieldByteOffset:" << AI.FieldByteOffset.getQuantity()
          << " FieldBitStart:" << AI.FieldBitStart
          << " AccessWidth:" << AI.AccessWidth << "\n";
       OS.indent(8 + strlen("<AccessInfo"));

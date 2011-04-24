@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DerivedTypes.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
 namespace llvm {
   class raw_ostream;
@@ -53,7 +54,7 @@ public:
     /// unused as the cleanest IR comes from having a well-constructed LLVM type
     /// with proper GEP instructions, but sometimes its use is required, for
     /// example if an access is intended to straddle an LLVM field boundary.
-    unsigned FieldByteOffset;
+    CharUnits FieldByteOffset;
 
     /// Bit offset in the accessed value to use. The width is implied by \see
     /// TargetBitWidth.

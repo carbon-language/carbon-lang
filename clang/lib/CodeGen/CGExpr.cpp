@@ -726,9 +726,10 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
       Ptr = Builder.CreateStructGEP(Ptr, AI.FieldIndex, "bf.field");
 
     // Offset by the byte offset, if used.
-    if (AI.FieldByteOffset) {
+    if (!AI.FieldByteOffset.isZero()) {
       Ptr = EmitCastToVoidPtr(Ptr);
-      Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset,"bf.field.offs");
+      Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset.getQuantity(),
+                                       "bf.field.offs");
     }
 
     // Cast to the access type.
@@ -929,9 +930,10 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
       Ptr = Builder.CreateStructGEP(Ptr, AI.FieldIndex, "bf.field");
 
     // Offset by the byte offset, if used.
-    if (AI.FieldByteOffset) {
+    if (!AI.FieldByteOffset.isZero()) {
       Ptr = EmitCastToVoidPtr(Ptr);
-      Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset,"bf.field.offs");
+      Ptr = Builder.CreateConstGEP1_32(Ptr, AI.FieldByteOffset.getQuantity(),
+                                       "bf.field.offs");
     }
 
     // Cast to the access type.
