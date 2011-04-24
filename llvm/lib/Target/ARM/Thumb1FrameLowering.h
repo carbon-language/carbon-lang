@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #ifndef __THUMB_FRAMEINFO_H_
-#define __THUMM_FRAMEINFO_H_
+#define __THUMB_FRAMEINFO_H_
 
 #include "ARM.h"
 #include "ARMFrameLowering.h"
