@@ -17,59 +17,54 @@ Tutorial - Using LLVMC
 Introduction
 ============
 
-LLVMC is a generic compiler driver, which plays the same role for LLVM
-as the ``gcc`` program does for GCC - the difference being that LLVMC
-is designed to be more adaptable and easier to customize. Most of
-LLVMC functionality is implemented via plugins, which can be loaded
-dynamically or compiled in. This tutorial describes the basic usage
-and configuration of LLVMC.
+LLVMC is a generic compiler driver, which plays the same role for LLVM as the
+``gcc`` program does for GCC - the difference being that LLVMC is designed to be
+more adaptable and easier to customize. Most of LLVMC functionality is
+implemented via high-level TableGen code, from which a corresponding C++ source
+file is automatically generated. This tutorial describes the basic usage and
+configuration of LLVMC.
 
 
-Compiling with LLVMC
-====================
+Using the ``llvmc`` program
+===========================
 
-In general, LLVMC tries to be command-line compatible with ``gcc`` as
-much as possible, so most of the familiar options work::
+In general, ``llvmc`` tries to be command-line compatible with ``gcc`` as much
+as possible, so most of the familiar options work::
 
      $ llvmc -O3 -Wall hello.cpp
      $ ./a.out
      hello
 
-This will invoke ``llvm-g++`` under the hood (you can see which
-commands are executed by using the ``-v`` option). For further help on
-command-line LLVMC usage, refer to the ``llvmc --help`` output.
+This will invoke ``llvm-g++`` under the hood (you can see which commands are
+executed by using the ``-v`` option). For further help on command-line LLVMC
+usage, refer to the ``llvmc --help`` output.
 
 
 Using LLVMC to generate toolchain drivers
 =========================================
 
-LLVMC plugins are written mostly using TableGen_, so you need to
-be familiar with it to get anything done.
+LLVMC-based drivers are written mostly using TableGen_, so you need to be
+familiar with it to get anything done.
 
 .. _TableGen: http://llvm.org/docs/TableGenFundamentals.html
 
 Start by compiling ``example/Simple``, which is a primitive wrapper for
 ``gcc``::
 
-    $ cd $LLVM_DIR/tools/llvmc
-    $ cp -r example/Simple plugins/Simple
-
-      # NB: A less verbose way to compile standalone LLVMC-based drivers is
-      # described in the reference manual.
-
-    $ make LLVMC_BASED_DRIVER_NAME=mygcc LLVMC_BUILTIN_PLUGINS=Simple
+    $ cd $LLVM_OBJ_DIR/tools/examples/Simple
+    $ make
     $ cat > hello.c
-    [...]
-    $ mygcc hello.c
+    #include <stdio.h>
+    int main() { printf("Hello\n"); }
+    $ $LLVM_BIN_DIR/Simple -v hello.c
+    gcc hello.c -o hello.out
     $ ./hello.out
     Hello
 
-Here we link our plugin with the LLVMC core statically to form an executable
-file called ``mygcc``. It is also possible to build our plugin as a dynamic
-library to be loaded by the ``llvmc`` executable (or any other LLVMC-based
-standalone driver); this is described in the reference manual.
-
-Contents of the file ``Simple.td`` look like this::
+We have thus produced a simple driver called, appropriately, ``Simple``, from
+the input TableGen file ``Simple.td``. The ``llvmc`` program itself is generated
+using a similar process (see ``llvmc/src``). Contents of the file ``Simple.td``
+look like this::
 
     // Include common definitions
     include "llvm/CompilerDriver/Common.td"
@@ -79,37 +74,40 @@ Contents of the file ``Simple.td`` look like this::
     [(in_language "c"),
      (out_language "executable"),
      (output_suffix "out"),
-     (cmd_line "gcc $INFILE -o $OUTFILE"),
-     (sink)
+     (command "gcc"),
+     (sink),
+
+     // -o is what is used by default, out_file_option here is included for
+     // instructive purposes.
+     (out_file_option "-o")
     ]>;
 
     // Language map
-    def LanguageMap : LanguageMap<[LangToSuffixes<"c", ["c"]>]>;
+    def LanguageMap : LanguageMap<[(lang_to_suffixes "c", "c")]>;
 
     // Compilation graph
-    def CompilationGraph : CompilationGraph<[Edge<"root", "gcc">]>;
+    def CompilationGraph : CompilationGraph<[(edge "root", "gcc")]>;
 
-As you can see, this file consists of three parts: tool descriptions,
-language map, and the compilation graph definition.
+As you can see, this file consists of three parts: tool descriptions, language
+map, and the compilation graph definition.
 
-At the heart of LLVMC is the idea of a compilation graph: vertices in
-this graph are tools, and edges represent a transformation path
-between two tools (for example, assembly source produced by the
-compiler can be transformed into executable code by an assembler). The
-compilation graph is basically a list of edges; a special node named
-``root`` is used to mark graph entry points.
+At the heart of LLVMC is the idea of a compilation graph: vertices in this graph
+are tools, and edges represent a transformation path between two tools (for
+example, assembly source produced by the compiler can be transformed into
+executable code by an assembler). The compilation graph is basically a list of
+edges; a special node named ``root`` is used to mark graph entry points.
 
-Tool descriptions are represented as property lists: most properties
-in the example above should be self-explanatory; the ``sink`` property
-means that all options lacking an explicit description should be
-forwarded to this tool.
+Tool descriptions are represented as property lists: most properties in the
+example above should be self-explanatory; the ``sink`` property means that all
+options lacking an explicit description should be forwarded to this tool.
 
-The ``LanguageMap`` associates a language name with a list of suffixes
-and is used for deciding which toolchain corresponds to a given input
-file.
+The ``LanguageMap`` associates a language name with a list of suffixes and is
+used for deciding which toolchain corresponds to a given input file.
 
-To learn more about LLVMC customization, refer to the reference
-manual and plugin source code in the ``plugins`` directory.
+To learn more about writing your own drivers with LLVMC, refer to the reference
+manual and examples in the ``examples`` directory. Of a particular interest is
+the ``Skeleton`` example, which can serve as a template for your LLVMC-based
+drivers.
 
 .. raw:: html
 
