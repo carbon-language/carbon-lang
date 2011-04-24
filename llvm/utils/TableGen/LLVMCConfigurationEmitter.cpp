@@ -3028,6 +3028,8 @@ void CheckDriverData(DriverData& Data) {
   FilterNotInGraph(Data.Edges, Data.ToolDescs);
 
   // Typecheck the compilation graph.
+  // TODO: use a genuine graph representation instead of a vector and check for
+  // multiple edges.
   TypecheckGraph(Data.Edges, Data.ToolDescs);
 
   // Check that there are no options without side effects (specified
