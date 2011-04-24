@@ -59,6 +59,8 @@ def err_variably_modified_new_type : Error<
 
 // C99 Designated Initializers
 def ext_designated_init : Extension<
+  "designated initializers are a C99 feature">;
+def ext_designated_init_cxx : Extension<
   "designated initializers are a C99 feature, accepted in C++ as an extension">;
 def err_array_designator_negative : Error<
   "array designator value '%0' is negative">;
