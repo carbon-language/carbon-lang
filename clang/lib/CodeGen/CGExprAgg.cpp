@@ -804,26 +804,27 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
   if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == 0) return;
   
   // If the type is 16-bytes or smaller, prefer individual stores over memset.
-  std::pair<uint64_t, unsigned> TypeInfo =
-    CGF.getContext().getTypeInfo(E->getType());
-  if (TypeInfo.first/8 <= 16)
+  std::pair<CharUnits, CharUnits> TypeInfo =
+    CGF.getContext().getTypeInfoInChars(E->getType());
+  if (TypeInfo.first <= CharUnits::fromQuantity(16))
     return;
 
   // Check to see if over 3/4 of the initializer are known to be zero.  If so,
   // we prefer to emit memset + individual stores for the rest.
-  uint64_t NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF).getQuantity();
-  if (NumNonZeroBytes*4 > TypeInfo.first/8)
+  CharUnits NumNonZeroBytes = GetNumNonZeroBytesInInit(E, CGF);
+  if (NumNonZeroBytes*4 > TypeInfo.first)
     return;
   
   // Okay, it seems like a good idea to use an initial memset, emit the call.
-  llvm::Constant *SizeVal = CGF.Builder.getInt64(TypeInfo.first/8);
-  unsigned Align = TypeInfo.second/8;
+  llvm::Constant *SizeVal = CGF.Builder.getInt64(TypeInfo.first.getQuantity());
+  CharUnits Align = TypeInfo.second;
 
   llvm::Value *Loc = Slot.getAddr();
   const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   
   Loc = CGF.Builder.CreateBitCast(Loc, BP);
-  CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, Align, false);
+  CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, 
+                           Align.getQuantity(), false);
   
   // Tell the AggExprEmitter that the slot is known zero.
   Slot.setZeroed();
