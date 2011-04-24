@@ -351,10 +351,12 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
     return;
 
   uint64_t nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
-  unsigned numBytesToAppend;
+  CharUnits numBytesToAppend;
+  unsigned charAlign = Types.getContext().Target.getCharAlign();
 
   if (fieldOffset < nextFieldOffsetInBits && !BitsAvailableInLastField) {
-    assert(fieldOffset % 8 == 0 && "Field offset not aligned correctly");
+    assert(fieldOffset % charAlign == 0 && 
+           "Field offset not aligned correctly");
 
     CharUnits fieldOffsetInCharUnits = 
       Types.getContext().toCharUnitsFromBits(fieldOffset);
@@ -369,27 +371,31 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
     assert(!NextFieldOffset.isZero() && "Must have laid out at least one byte");
 
     // The bitfield begins in the previous bit-field.
-    numBytesToAppend =
-      llvm::RoundUpToAlignment(fieldSize - BitsAvailableInLastField, 8) / 8;
+    numBytesToAppend = Types.getContext().toCharUnitsFromBits(
+      llvm::RoundUpToAlignment(fieldSize - BitsAvailableInLastField, 
+                               charAlign));
   } else {
-    assert(fieldOffset % 8 == 0 && "Field offset not aligned correctly");
+    assert(fieldOffset % charAlign == 0 && 
+           "Field offset not aligned correctly");
 
     // Append padding if necessary.
-    AppendPadding(CharUnits::fromQuantity(fieldOffset / 8), CharUnits::One());
+    AppendPadding(Types.getContext().toCharUnitsFromBits(fieldOffset), 
+                  CharUnits::One());
 
-    numBytesToAppend = llvm::RoundUpToAlignment(fieldSize, 8) / 8;
+    numBytesToAppend = Types.getContext().toCharUnitsFromBits(
+        llvm::RoundUpToAlignment(fieldSize, charAlign));
 
-    assert(numBytesToAppend && "No bytes to append!");
+    assert(!numBytesToAppend.isZero() && "No bytes to append!");
   }
 
   // Add the bit field info.
   BitFields.insert(std::make_pair(D,
                    CGBitFieldInfo::MakeInfo(Types, D, fieldOffset, fieldSize)));
 
-  AppendBytes(CharUnits::fromQuantity(numBytesToAppend));
+  AppendBytes(numBytesToAppend);
 
   BitsAvailableInLastField =
-    NextFieldOffset.getQuantity() * 8 - (fieldOffset + fieldSize);
+    Types.getContext().toBits(NextFieldOffset) - (fieldOffset + fieldSize);
 }
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
