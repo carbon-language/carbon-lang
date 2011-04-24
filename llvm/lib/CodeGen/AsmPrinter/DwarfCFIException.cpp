@@ -128,7 +128,7 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
 void DwarfCFIException::EndFunction() {
   if (!shouldEmitMoves && !shouldEmitTable) return;
 
-  if (shouldEmitMoves)
+  if (shouldEmitMoves || shouldEmitTable)
     Asm->OutStreamer.EmitCFIEndProc();
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
