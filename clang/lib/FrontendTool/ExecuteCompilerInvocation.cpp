@@ -149,8 +149,11 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
   if (!Clang->getDiagnostics().hasErrorOccurred()) {
     // Create and execute the frontend action.
     llvm::OwningPtr<FrontendAction> Act(CreateFrontendAction(*Clang));
-    if (Act)
+    if (Act) {
       Success = Clang->ExecuteAction(*Act);
+      if (Clang->getFrontendOpts().DisableFree)
+        Act.take();
+    }
   }
 
   return Success;
