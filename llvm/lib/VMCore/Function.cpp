@@ -328,7 +328,7 @@ unsigned Function::getIntrinsicID() const {
 
 std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) { 
   assert(id < num_intrinsics && "Invalid intrinsic ID!");
-  const char * const Table[] = {
+  static const char * const Table[] = {
     "not_intrinsic",
 #define GET_INTRINSIC_NAME_TABLE
 #include "llvm/Intrinsics.gen"
