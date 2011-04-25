@@ -108,7 +108,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
 
         # Frame#0 should be on main.c:37, frame#1 should be on main.c:25, and
         # frame#2 should be on main.c:48.
-        #lldbutil.PrintStackTraces(self.process)
+        #lldbutil.print_stacktraces(self.process)
         from lldbutil import get_stopped_thread
         thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")

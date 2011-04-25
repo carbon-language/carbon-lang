@@ -140,8 +140,8 @@ class ClassTypesTestCase(TestBase):
 
         # The filename of frame #0 should be 'main.cpp' and the line number
         # should be 93.
-        self.expect("%s:%d" % (lldbutil.GetFilenames(thread)[0],
-                               lldbutil.GetLineNumbers(thread)[0]),
+        self.expect("%s:%d" % (lldbutil.get_filenames(thread)[0],
+                               lldbutil.get_line_numbers(thread)[0]),
                     "Break correctly at main.cpp:%d" % self.line, exe=False,
             startstr = "main.cpp:")
             ### clang compiled code reported main.cpp:94?

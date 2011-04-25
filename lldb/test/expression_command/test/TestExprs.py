@@ -119,10 +119,10 @@ class BasicExprCommandsTestCase(TestBase):
                       StopReasonString(thread.GetStopReason()))
 
         # The filename of frame #0 should be 'main.cpp' and function is main.
-        self.expect(lldbutil.GetFilenames(thread)[0],
+        self.expect(lldbutil.get_filenames(thread)[0],
                     "Break correctly at main.cpp", exe=False,
             startstr = "main.cpp")
-        self.expect(lldbutil.GetFunctionNames(thread)[0],
+        self.expect(lldbutil.get_function_names(thread)[0],
                     "Break correctly at main()", exe=False,
             startstr = "main")
 

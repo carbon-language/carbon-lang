@@ -47,7 +47,7 @@ class ThreadsStackTracesTestCase(TestBase):
                       lldbutil.StateTypeString(self.process.GetState()))
 
         if self.TraceOn():
-            lldbutil.PrintStackTraces(self.process)
+            lldbutil.print_stacktraces(self.process)
 
 
 if __name__ == '__main__':

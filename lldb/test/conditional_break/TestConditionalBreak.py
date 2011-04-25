@@ -79,7 +79,7 @@ class ConditionalBreakTestCase(TestBase):
                 name0 = frame0.GetFunction().GetName()
                 frame1 = thread.GetFrameAtIndex(1)
                 name1 = frame1.GetFunction().GetName()
-                #lldbutil.PrintStackTrace(thread)
+                #lldbutil.print_stacktrace(thread)
                 self.assertTrue(name0 == "c", "Break on function c()")
                 if (name1 == "a"):
                     # By design, we know that a() calls c() only from main.c:27.

@@ -19,9 +19,9 @@ def stop_if_called_from_a():
     # command interpreter to continue execution.
 
     #print >> sys.stdout, "Checking call frames..."
-    #lldbutil.PrintStackTrace(thread)
+    #lldbutil.print_stacktrace(thread)
     if thread.GetNumFrames() >= 2:
-        funcs = lldbutil.GetFunctionNames(thread)
+        funcs = lldbutil.get_function_names(thread)
         #print >> sys.stdout, funcs[0], "called from", funcs[1]
         if (funcs[0] == 'c' and funcs[1] == 'a'):
             #print >> sys.stdout, "Stopped at c() with immediate caller as a()."

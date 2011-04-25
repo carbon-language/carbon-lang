@@ -273,6 +273,32 @@ def get_stopped_thread(process, reason):
         return None
     return threads[0]
 
+def get_threads_stopped_at_breakpoint (process, bkpt):
+    """ For a stopped process returns the thread stopped at the breakpoint passed in bkpt"""
+    stopped_threads = []
+    threads = []
+
+    stopped_threads = get_stopped_threads (process, lldb.eStopReasonBreakpoint)
+
+    if len(stopped_threads) == 0:
+        return threads
+    
+    for thread in stopped_threads:
+    # Make sure we've hit our breakpoint...
+        break_id = thread.GetStopReasonDataAtIndex (0)
+        if break_id == bkpt.GetID():
+            threads.append(thread)
+
+    return threads
+
+def continue_to_breakpoint (process, bkpt):
+    """ Continues the process, if it stops, returns the threads stopped at bkpt; otherwise, returns None"""
+    process.Continue()
+    if process.GetState() != lldb.eStateStopped:
+        return None
+    else:
+        return get_threads_stopped_at_breakpoint (process, bkpt)
+
 def get_caller_symbol(thread):
     """
     Returns the symbol name for the call site of the leaf function.
@@ -287,7 +313,7 @@ def get_caller_symbol(thread):
         return None
 
 
-def GetFunctionNames(thread):
+def get_function_names(thread):
     """
     Returns a sequence of function names from the stack frames of this thread.
     """
@@ -297,7 +323,7 @@ def GetFunctionNames(thread):
     return map(GetFuncName, range(thread.GetNumFrames()))
 
 
-def GetSymbolNames(thread):
+def get_symbol_names(thread):
     """
     Returns a sequence of symbols for this thread.
     """
@@ -307,7 +333,7 @@ def GetSymbolNames(thread):
     return map(GetSymbol, range(thread.GetNumFrames()))
 
 
-def GetPCAddresses(thread):
+def get_pc_addresses(thread):
     """
     Returns a sequence of pc addresses for this thread.
     """
@@ -317,7 +343,7 @@ def GetPCAddresses(thread):
     return map(GetPCAddress, range(thread.GetNumFrames()))
 
 
-def GetFilenames(thread):
+def get_filenames(thread):
     """
     Returns a sequence of file names from the stack frames of this thread.
     """
@@ -327,7 +353,7 @@ def GetFilenames(thread):
     return map(GetFilename, range(thread.GetNumFrames()))
 
 
-def GetLineNumbers(thread):
+def get_line_numbers(thread):
     """
     Returns a sequence of line numbers from the stack frames of this thread.
     """
@@ -337,7 +363,7 @@ def GetLineNumbers(thread):
     return map(GetLineNumber, range(thread.GetNumFrames()))
 
 
-def GetModuleNames(thread):
+def get_module_names(thread):
     """
     Returns a sequence of module names from the stack frames of this thread.
     """
@@ -347,7 +373,7 @@ def GetModuleNames(thread):
     return map(GetModuleName, range(thread.GetNumFrames()))
 
 
-def GetStackFrames(thread):
+def get_stack_frames(thread):
     """
     Returns a sequence of stack frames for this thread.
     """
@@ -357,7 +383,7 @@ def GetStackFrames(thread):
     return map(GetStackFrame, range(thread.GetNumFrames()))
 
 
-def PrintStackTrace(thread, string_buffer = False):
+def print_stacktrace(thread, string_buffer = False):
     """Prints a simple stack trace of this thread."""
 
     output = StringIO.StringIO() if string_buffer else sys.stdout
@@ -365,12 +391,12 @@ def PrintStackTrace(thread, string_buffer = False):
 
     depth = thread.GetNumFrames()
 
-    mods = GetModuleNames(thread)
-    funcs = GetFunctionNames(thread)
-    symbols = GetSymbolNames(thread)
-    files = GetFilenames(thread)
-    lines = GetLineNumbers(thread)
-    addrs = GetPCAddresses(thread)
+    mods = get_module_names(thread)
+    funcs = get_function_names(thread)
+    symbols = get_symbol_names(thread)
+    files = get_filenames(thread)
+    lines = get_line_numbers(thread)
+    addrs = get_pc_addresses(thread)
 
     if thread.GetStopReason() != lldb.eStopReasonInvalid:
         desc =  "stop reason=" + StopReasonString(thread.GetStopReason())
@@ -396,7 +422,7 @@ def PrintStackTrace(thread, string_buffer = False):
         return output.getvalue()
 
 
-def PrintStackTraces(process, string_buffer = False):
+def print_stacktraces(process, string_buffer = False):
     """Prints the stack traces of all the threads."""
 
     output = StringIO.StringIO() if string_buffer else sys.stdout
@@ -404,34 +430,7 @@ def PrintStackTraces(process, string_buffer = False):
     print >> output, "Stack traces for " + repr(process)
 
     for i in range(process.GetNumThreads()):
-        print >> output, PrintStackTrace(process.GetThreadAtIndex(i), string_buffer=True)
+        print >> output, print_stacktrace(process.GetThreadAtIndex(i), string_buffer=True)
 
     if string_buffer:
         return output.getvalue()
-
-def GetThreadsStoppedAtBreakpoint (process, bkpt):
-    """ For a stopped process returns the thread stopped at the breakpoint passed in bkpt"""
-    stopped_threads = []
-    threads = []
-
-    stopped_threads = get_stopped_threads (process, lldb.eStopReasonBreakpoint)
-
-    if len(stopped_threads) == 0:
-        return threads
-    
-    for thread in stopped_threads:
-    # Make sure we've hit our breakpoint...
-        break_id = thread.GetStopReasonDataAtIndex (0)
-        if break_id == bkpt.GetID():
-            threads.append(thread)
-
-    return threads
-
-def ContinueToBreakpoint (process, bkpt):
-    """ Continues the process, if it stops, returns the threads stopped at bkpt; otherwise, returns None"""
-    process.Continue()
-    if process.GetState() != lldb.eStateStopped:
-        return None
-    else:
-        return GetThreadsStoppedAtBreakpoint (process, bkpt)
-
