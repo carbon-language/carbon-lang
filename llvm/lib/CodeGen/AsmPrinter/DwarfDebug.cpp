@@ -644,7 +644,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
 
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(Tag);
-  CompileUnit *TheCU = getCompileUnit(DV->getVariable());
+  CompileUnit *VariableCU = getCompileUnit(DV->getVariable());
   DIE *AbsDIE = NULL;
   DenseMap<const DbgVariable *, const DbgVariable *>::iterator
     V2AVI = VarToAbstractVarMap.find(DV);
@@ -652,20 +652,23 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     AbsDIE = V2AVI->second->getDIE();
 
   if (AbsDIE)
-    TheCU->addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
+    VariableCU->addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
                        dwarf::DW_FORM_ref4, AbsDIE);
   else {
-    TheCU->addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
-    TheCU->addSourceLine(VariableDie, DV->getVariable());
+    VariableCU->addString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string,
+                          Name);
+    VariableCU->addSourceLine(VariableDie, DV->getVariable());
 
     // Add variable type.
-    TheCU->addType(VariableDie, DV->getType());
+    VariableCU->addType(VariableDie, DV->getType());
   }
 
   if (Tag == dwarf::DW_TAG_formal_parameter && DV->getType().isArtificial())
-    TheCU->addUInt(VariableDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial, 
+                        dwarf::DW_FORM_flag, 1);
   else if (DIVariable(DV->getVariable()).isArtificial())
-    TheCU->addUInt(VariableDie, dwarf::DW_AT_artificial, dwarf::DW_FORM_flag, 1);
+    VariableCU->addUInt(VariableDie, dwarf::DW_AT_artificial, 
+                        dwarf::DW_FORM_flag, 1);
 
   if (Scope->isAbstractScope()) {
     DV->setDIE(VariableDie);
@@ -676,7 +679,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
 
   unsigned Offset = DV->getDotDebugLocOffset();
   if (Offset != ~0U) {
-    TheCU->addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
+    VariableCU->addLabel(VariableDie, dwarf::DW_AT_location, dwarf::DW_FORM_data4,
              Asm->GetTempSymbol("debug_loc", Offset));
     DV->setDIE(VariableDie);
     UseDotDebugLocEntry.insert(VariableDie);
@@ -696,25 +699,26 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
         const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
         if (DVInsn->getOperand(1).isImm() &&
             TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
-          TheCU->addFrameVariableAddress(DV, VariableDie, 
-                                         DVInsn->getOperand(1).getImm());
+          VariableCU->addFrameVariableAddress(DV, VariableDie, 
+                                              DVInsn->getOperand(1).getImm());
           updated = true;
         } else
-          updated = TheCU->addRegisterAddress(VariableDie, RegOp);
+          updated = VariableCU->addRegisterAddress(VariableDie, RegOp);
       }
       else if (DVInsn->getOperand(0).isImm())
-        updated = TheCU->addConstantValue(VariableDie, DVInsn->getOperand(0));
+        updated = VariableCU->addConstantValue(VariableDie, 
+                                               DVInsn->getOperand(0));
       else if (DVInsn->getOperand(0).isFPImm())
         updated =
-          TheCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
+          VariableCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
     } else {
       MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
       if (Location.getReg()) {
         if (DV->getVariable().hasComplexAddress())
-          TheCU->addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, 
-                                   Location);
+          VariableCU->addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, 
+                                        Location);
         else
-          TheCU->addAddress(VariableDie, dwarf::DW_AT_location, Location);
+          VariableCU->addAddress(VariableDie, dwarf::DW_AT_location, Location);
         updated = true;
       }
     }
@@ -731,7 +735,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   // .. else use frame index, if available.
   int FI = 0;
   if (findVariableFrameIndex(DV, &FI))
-    TheCU->addFrameVariableAddress(DV, VariableDie, FI);
+    VariableCU->addFrameVariableAddress(DV, VariableDie, FI);
   
   DV->setDIE(VariableDie);
   return VariableDie;
