@@ -101,6 +101,12 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
     llvm::sys::Path P(*it);
     std::string Error;
 
+    // Don't try to remove files which we don't have write access to (but may be
+    // able to remove). Underlying tools may have intentionally not overwritten
+    // them.
+    if (!P.canWrite())
+      continue;
+
     if (P.eraseFromDisk(false, &Error)) {
       // Failure is only failure if the file exists and is "regular". There is
       // a race condition here due to the limited interface of
