@@ -64,7 +64,7 @@
 define ptx_device i16 @t1_u16(i16* %p) {
 entry:
 ;CHECK: ld.global.u16 rh0, [r1];
-;CHECK-NEXT; ret;
+;CHECK-NEXT: ret;
   %x = load i16* %p
   ret i16 %x
 }

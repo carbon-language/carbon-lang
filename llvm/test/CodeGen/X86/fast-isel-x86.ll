@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 -relocation-model=pic < %s
+; RUN: llc -fast-isel -O0 -march=x86 -relocation-model=pic < %s | FileCheck %s
 
 ; This should use flds to set the return value.
 ; CHECK: test0:

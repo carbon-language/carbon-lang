@@ -6,7 +6,7 @@ target triple = "thumbv7-apple-darwin"
 
 declare double @exp(double)
 
-; CHECK remat_subreg
+; CHECK: remat_subreg
 define void @remat_subreg(float* nocapture %x, i32* %y, i32 %n, i32 %z, float %c, float %lambda, float* nocapture %ret_f, float* nocapture %ret_df) nounwind {
 entry:
   %conv16 = fpext float %lambda to double

@@ -32,8 +32,8 @@ __label_000020:                                   ; preds = %__label_002001, %bb
 ; CHECK-NOT: =>
 ; CHECK: [0] entry => <Function Return>
 ; CHECK-NEXT:  [1] __label_002001.outer => __label_000020
-; CHECK-NEXT;      [2] bb197 => bb229
-; CHECK-NEXT;            [3] bb224 => bb229
+; CHECK-NEXT:      [2] bb197 => bb229
+; CHECK-NEXT:            [3] bb224 => bb229
 
 ; STAT: 4 region - The # of regions
 ; STAT: 1 region - The # of simple regions

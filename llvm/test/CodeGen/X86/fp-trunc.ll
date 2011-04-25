@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2,-avx
+; RUN: llc < %s -march=x86 -mattr=+sse2,-avx | FileCheck %s
 
 define <1 x float> @test1(<1 x double> %x) nounwind {
 ; CHECK: cvtsd2ss
