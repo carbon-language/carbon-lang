@@ -82,7 +82,7 @@ public:
     IsResolved ();
 
     bool
-    GetDescription (DescriptionLevel level, lldb::SBStream &description);
+    GetDescription (lldb::SBStream &description, DescriptionLevel level);
 
     SBBreakpoint
     GetBreakpoint ();

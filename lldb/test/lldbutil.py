@@ -171,11 +171,22 @@ def get_stopped_thread(process, reason):
 # ==============================================================
 # Get the description of an lldb object or None if not available
 # ==============================================================
-def get_description(lldb_obj, option=None):
-    """Calls lldb_obj.GetDescription() and returns a string, or None."""
-    method = getattr(lldb_obj, 'GetDescription')
+def get_description(obj, option=None):
+    """Calls lldb_obj.GetDescription() and returns a string, or None.
+
+    For SBTarget and SBBreakpointLocation lldb objects, an extra option can be
+    passed in to describe the detailed level of description desired:
+        o lldb.eDescriptionLevelBrief
+        o lldb.eDescriptionLevelFull
+        o lldb.eDescriptionLevelVerbose
+    """
+    method = getattr(obj, 'GetDescription')
     if not method:
         return None
+    if isinstance(obj, lldb.SBTarget) or isinstance(obj, lldb.SBBreakpointLocation):
+        if option is None:
+            option = lldb.eDescriptionLevelBrief
+
     stream = lldb.SBStream()
     if option is None:
         success = method(stream)

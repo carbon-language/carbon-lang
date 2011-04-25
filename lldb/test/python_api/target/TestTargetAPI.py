@@ -67,7 +67,10 @@ class TargetAPITestCase(TestBase):
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
         from lldbutil import get_description
-        desc = get_description(target, option=lldb.eDescriptionLevelBrief)
+
+        # get_description() allows no option to mean lldb.eDescriptionLevelBrief.
+        desc = get_description(target)
+        #desc = get_description(target, option=lldb.eDescriptionLevelBrief)
         if not desc:
             self.fail("SBTarget.GetDescription() failed")
         self.expect(desc, exe=False,

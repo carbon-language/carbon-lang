@@ -40,7 +40,7 @@ SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &br
     if (log)
     {
         SBStream sstr;
-        GetDescription (lldb::eDescriptionLevelBrief, sstr);
+        GetDescription (sstr, lldb::eDescriptionLevelBrief);
         log->Printf ("SBBreakpointLocation::SBBreakpointLocaiton (const lldb::BreakpointLocationsSP &break_loc_sp"
                      "=%p)  => this.sp = %p (%s)", break_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
     }
@@ -263,7 +263,7 @@ SBBreakpointLocation::SetLocation (const lldb::BreakpointLocationSP &break_loc_s
 }
 
 bool
-SBBreakpointLocation::GetDescription (DescriptionLevel level, SBStream &description)
+SBBreakpointLocation::GetDescription (SBStream &description, DescriptionLevel level)
 {
     if (m_opaque_sp)
     {
