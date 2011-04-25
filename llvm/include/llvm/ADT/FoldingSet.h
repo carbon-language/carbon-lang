@@ -310,6 +310,7 @@ public:
   void AddInteger(unsigned long long I);
   void AddBoolean(bool B) { AddInteger(B ? 1U : 0U); }
   void AddString(StringRef String);
+  void AddNodeID(const FoldingSetNodeID &ID);
 
   template <typename T>
   inline void Add(const T& x) { FoldingSetTrait<T>::Profile(x, *this); }
@@ -641,7 +642,7 @@ public:
   : data(a1,a2,a3,a4,a5) {}
 
 
-  void Profile(FoldingSetNodeID& ID) { FoldingSetTrait<T>::Profile(data, ID); }
+  void Profile(FoldingSetNodeID &ID) { FoldingSetTrait<T>::Profile(data, ID); }
 
   T& getValue() { return data; }
   const T& getValue() const { return data; }
@@ -661,7 +662,9 @@ class FastFoldingSetNode : public FoldingSetNode {
 protected:
   explicit FastFoldingSetNode(const FoldingSetNodeID &ID) : FastID(ID) {}
 public:
-  void Profile(FoldingSetNodeID& ID) const { ID = FastID; }
+  void Profile(FoldingSetNodeID& ID) const { 
+    ID.AddNodeID(FastID); 
+  }
 };
 
 //===----------------------------------------------------------------------===//

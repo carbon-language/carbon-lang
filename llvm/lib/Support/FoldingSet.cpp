@@ -147,6 +147,11 @@ void FoldingSetNodeID::AddString(StringRef String) {
   Bits.push_back(V);
 }
 
+// AddNodeID - Adds the Bit data of another ID to *this.
+void FoldingSetNodeID::AddNodeID(const FoldingSetNodeID &ID) {
+  Bits.append(ID.Bits.begin(), ID.Bits.end());
+}
+
 /// ComputeHash - Compute a strong hash value for this FoldingSetNodeID, used to 
 /// lookup the node in the FoldingSetImpl.
 unsigned FoldingSetNodeID::ComputeHash() const {
