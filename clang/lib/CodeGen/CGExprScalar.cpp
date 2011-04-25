@@ -367,6 +367,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
 
+  Value *VisitExpressionTraitExpr(const ExpressionTraitExpr *E) {
+    return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
+  }
+
   Value *VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *E) {
     // C++ [expr.pseudo]p1:
     //   The result shall only be used as the operand for the function call

@@ -1944,6 +1944,14 @@ static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   }
 }
 
+static ExpressionTrait ExpressionTraitFromTokKind(tok::TokenKind kind) {
+  switch(kind) {
+  default: assert(false && "Not a known unary expression trait.");
+  case tok::kw___is_lvalue_expr:             return ET_IsLValueExpr;
+  case tok::kw___is_rvalue_expr:             return ET_IsRValueExpr;
+  }
+}
+
 /// ParseUnaryTypeTrait - Parse the built-in unary type-trait
 /// pseudo-functions that allow implementation of the TR1/C++0x type traits
 /// templates.
@@ -2008,6 +2016,28 @@ ExprResult Parser::ParseBinaryTypeTrait() {
 
   return Actions.ActOnBinaryTypeTrait(BTT, Loc, LhsTy.get(), RhsTy.get(), RParen);
 }
+
+/// ParseExpressionTrait - Parse built-in expression-trait
+/// pseudo-functions like __is_lvalue_expr( xxx ).
+///
+///       primary-expression:
+/// [Embarcadero]     expression-trait '(' expression ')'
+///
+ExprResult Parser::ParseExpressionTrait() {
+  ExpressionTrait ET = ExpressionTraitFromTokKind(Tok.getKind());
+  SourceLocation Loc = ConsumeToken();
+
+  SourceLocation LParen = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return ExprError();
+
+  ExprResult Expr = ParseExpression();
+
+  SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+
+  return Actions.ActOnExpressionTrait(ET, Loc, Expr.get(), RParen);
+}
+
 
 /// ParseCXXAmbiguousParenExpression - We have parsed the left paren of a
 /// parenthesized ambiguous type-id. This uses tentative parsing to disambiguate

@@ -802,6 +802,12 @@ void StmtProfiler::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *S) {
   VisitType(S->getRhsType());
 }
 
+void StmtProfiler::VisitExpressionTraitExpr(ExpressionTraitExpr *S) {
+  VisitExpr(S);
+  ID.AddInteger(S->getTrait());
+  VisitExpr(S->getQueriedExpression());
+}
+
 void
 StmtProfiler::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *S) {
   VisitExpr(S);

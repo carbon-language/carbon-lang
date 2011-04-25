@@ -346,6 +346,10 @@ KEYWORD(__is_polymorphic            , KEYCXX)
 KEYWORD(__is_trivial                , KEYCXX)
 KEYWORD(__is_union                  , KEYCXX)
 
+// Embarcadero Expression Traits
+KEYWORD(__is_lvalue_expr            , KEYCXX)
+KEYWORD(__is_rvalue_expr            , KEYCXX)
+
 // Apple Extension.
 KEYWORD(__private_extern__          , KEYALL)
 

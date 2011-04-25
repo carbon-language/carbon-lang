@@ -555,6 +555,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [GNU]             '__is_base_of'       
 /// [MS]              '__is_convertible_to'
 ///
+/// [Embarcadero] expression-trait:
+///                   '__is_lvalue_expr'
+///                   '__is_rvalue_expr'
+///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
@@ -1021,6 +1025,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_convertible_to:
     return ParseBinaryTypeTrait();
 
+  case tok::kw___is_lvalue_expr:
+  case tok::kw___is_rvalue_expr:
+    return ParseExpressionTrait();
+      
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
     return ParseObjCAtExpression(AtLoc);

@@ -1803,6 +1803,10 @@ private:
   ExprResult ParseBinaryTypeTrait();
 
   //===--------------------------------------------------------------------===//
+  // Embarcadero: Expression Traits
+  ExprResult ParseExpressionTrait();
+
+  //===--------------------------------------------------------------------===//
   // Preprocessor code-completion pass-through
   virtual void CodeCompleteDirective(bool InConditional);
   virtual void CodeCompleteInConditionalExclusion();

@@ -38,6 +38,7 @@ public:
   void VisitDeclRefExpr(DeclRefExpr *E) { }
   void VisitOffsetOfExpr(OffsetOfExpr *E) { }
   void VisitUnaryExprOrTypeTraitExpr(UnaryExprOrTypeTraitExpr *E) { }
+  void VisitExpressionTraitExpr(ExpressionTraitExpr *E) { }
   void VisitBlockExpr(BlockExpr *E) { }
   void VisitCXXUuidofExpr(CXXUuidofExpr *E) { }  
   void VisitCXXNoexceptExpr(CXXNoexceptExpr *E) { }

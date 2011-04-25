@@ -1789,6 +1789,7 @@ public:
   void VisitWhileStmt(WhileStmt *W);
   void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
   void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
+  void VisitExpressionTraitExpr(ExpressionTraitExpr *E);
   void VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U);
   void VisitVAArgExpr(VAArgExpr *E);
   void VisitSizeOfPackExpr(SizeOfPackExpr *E);
@@ -2075,6 +2076,10 @@ void EnqueueVisitor::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
 void EnqueueVisitor::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
   AddTypeLoc(E->getRhsTypeSourceInfo());
   AddTypeLoc(E->getLhsTypeSourceInfo());
+}
+
+void EnqueueVisitor::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
+  EnqueueChildren(E);
 }
 
 void EnqueueVisitor::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *U) {

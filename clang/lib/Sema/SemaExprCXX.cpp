@@ -2739,6 +2739,45 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
                                                  ResultType));
 }
 
+ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
+                                     SourceLocation KWLoc,
+                                     Expr* Queried,
+                                     SourceLocation RParen) {
+  // If error parsing the expression, ignore.
+  if (!Queried)
+      return ExprError();
+
+  ExprResult Result
+    = BuildExpressionTrait(ET, KWLoc, Queried, RParen);
+
+  return move(Result);
+}
+
+ExprResult Sema::BuildExpressionTrait(ExpressionTrait ET,
+                                     SourceLocation KWLoc,
+                                     Expr* Queried,
+                                     SourceLocation RParen) {
+  if (Queried->isTypeDependent()) {
+    // Delay type-checking for type-dependent expressions.
+  } else if (Queried->getType()->isPlaceholderType()) {
+    ExprResult PE = CheckPlaceholderExpr(Queried);
+    if (PE.isInvalid()) return ExprError();
+    return BuildExpressionTrait(ET, KWLoc, PE.take(), RParen);
+  }
+
+  bool Value = false;
+  switch (ET) {
+  default: llvm_unreachable("Unknown or unimplemented expression trait");
+  case ET_IsLValueExpr:       Value = Queried->isLValue(); break;
+  case ET_IsRValueExpr:       Value = Queried->isRValue(); break;
+  }
+  
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return Owned(
+      new (Context) ExpressionTraitExpr(
+          KWLoc, ET, Queried, Value, RParen, Context.BoolTy));
+}
+
 QualType Sema::CheckPointerToMemberOperands(ExprResult &lex, ExprResult &rex,
                                             ExprValueKind &VK,
                                             SourceLocation Loc,

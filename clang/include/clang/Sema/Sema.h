@@ -27,6 +27,7 @@
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
+#include "clang/Basic/ExpressionTraits.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -2730,6 +2731,18 @@ public:
                                   SourceLocation KWLoc,
                                   TypeSourceInfo *LhsT,
                                   TypeSourceInfo *RhsT,
+                                  SourceLocation RParen);
+
+  /// ActOnExpressionTrait - Parsed one of the unary type trait support
+  /// pseudo-functions.
+  ExprResult ActOnExpressionTrait(ExpressionTrait OET,
+                                  SourceLocation KWLoc,
+                                  Expr *Queried,
+                                  SourceLocation RParen);
+
+  ExprResult BuildExpressionTrait(ExpressionTrait OET,
+                                  SourceLocation KWLoc,
+                                  Expr *Queried,
                                   SourceLocation RParen);
 
   ExprResult ActOnStartCXXMemberReference(Scope *S,

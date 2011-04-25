@@ -1281,6 +1281,15 @@ static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   return "";
 }
 
+static const char *getExpressionTraitName(ExpressionTrait ET) {
+  switch (ET) {
+  default: llvm_unreachable("Unknown expression trait");
+  case ET_IsLValueExpr:      return "__is_lvalue_expr";
+  case ET_IsRValueExpr:      return "__is_rvalue_expr";
+  }
+  return "";
+}
+
 void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
   OS << getTypeTraitName(E->getTrait()) << "("
      << E->getQueriedType().getAsString(Policy) << ")";
@@ -1290,6 +1299,12 @@ void StmtPrinter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
   OS << getTypeTraitName(E->getTrait()) << "("
      << E->getLhsType().getAsString(Policy) << ","
      << E->getRhsType().getAsString(Policy) << ")";
+}
+
+void StmtPrinter::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
+    OS << getExpressionTraitName(E->getTrait()) << "(";
+    PrintExpr(E->getQueriedExpression());
+    OS << ")";
 }
 
 void StmtPrinter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {

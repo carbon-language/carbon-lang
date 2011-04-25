@@ -1915,6 +1915,17 @@ public:
     return getSema().BuildBinaryTypeTrait(Trait, StartLoc, LhsT, RhsT, RParenLoc);
   }
 
+  /// \brief Build a new expression trait expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildExpressionTrait(ExpressionTrait Trait,
+                                   SourceLocation StartLoc,
+                                   Expr *Queried,
+                                   SourceLocation RParenLoc) {
+    return getSema().BuildExpressionTrait(Trait, StartLoc, Queried, RParenLoc);
+  }
+
   /// \brief Build a new (previously unresolved) declaration reference
   /// expression.
   ///
@@ -6907,6 +6918,24 @@ TreeTransform<Derived>::TransformBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
                                             E->getLocStart(),
                                             LhsT, RhsT,
                                             E->getLocEnd());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformExpressionTraitExpr(ExpressionTraitExpr *E) {
+  ExprResult SubExpr;
+  {
+    EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+    SubExpr = getDerived().TransformExpr(E->getQueriedExpression());
+    if (SubExpr.isInvalid())
+      return ExprError();
+
+    if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getQueriedExpression())
+      return SemaRef.Owned(E);
+  }
+
+  return getDerived().RebuildExpressionTrait(
+      E->getTrait(), E->getLocStart(), SubExpr.get(), E->getLocEnd());
 }
 
 template<typename Derived>

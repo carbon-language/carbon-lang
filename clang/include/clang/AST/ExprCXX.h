@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_EXPRCXX_H
 
 #include "clang/Basic/TypeTraits.h"
+#include "clang/Basic/ExpressionTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/TemplateBase.h"
@@ -1592,6 +1593,58 @@ public:
 
   friend class ASTStmtReader;
 };
+
+/// ExpressionTraitExpr - An expression trait intrinsic
+/// Example:
+/// __is_lvalue_expr(std::cout) == true
+/// __is_lvalue_expr(1) == false
+class ExpressionTraitExpr : public Expr {
+  /// ET - The trait. A ExpressionTrait enum in MSVC compat unsigned.
+  unsigned ET : 31;
+  /// The value of the type trait. Unspecified if dependent.
+  bool Value : 1;
+
+  /// Loc - The location of the type trait keyword.
+  SourceLocation Loc;
+
+  /// RParen - The location of the closing paren.
+  SourceLocation RParen;
+
+  Expr* QueriedExpression;
+public:
+  ExpressionTraitExpr(SourceLocation loc, ExpressionTrait et, 
+                     Expr *queried, bool value,
+                     SourceLocation rparen, QualType resultType)
+    : Expr(ExpressionTraitExprClass, resultType, VK_RValue, OK_Ordinary,
+           false, // Not type-dependent
+           // Value-dependent if the argument is type-dependent.
+           queried->isTypeDependent(),
+           queried->containsUnexpandedParameterPack()),
+      ET(et), Value(value), Loc(loc), RParen(rparen), QueriedExpression(queried) { }
+
+  explicit ExpressionTraitExpr(EmptyShell Empty)
+    : Expr(ExpressionTraitExprClass, Empty), ET(0), Value(false),
+      QueriedExpression() { }
+
+  SourceRange getSourceRange() const { return SourceRange(Loc, RParen);}
+
+  ExpressionTrait getTrait() const { return static_cast<ExpressionTrait>(ET); }
+
+  Expr *getQueriedExpression() const { return QueriedExpression; }
+
+  bool getValue() const { return Value; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ExpressionTraitExprClass;
+  }
+  static bool classof(const ExpressionTraitExpr *) { return true; }
+
+  // Iterators
+  child_range children() { return child_range(); }
+
+  friend class ASTStmtReader;
+};
+
 
 /// \brief A reference to an overloaded function set, either an
 /// \t UnresolvedLookupExpr or an \t UnresolvedMemberExpr.
