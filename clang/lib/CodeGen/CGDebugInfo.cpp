@@ -1969,17 +1969,22 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   }
 }
 
-/// EmitDeclare - Emit local variable declaration debug info.
-void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
-                              llvm::Value *Storage, CGBuilderTy &Builder,
-                              const CGBlockInfo &blockInfo) {
-  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
+                                            llvm::Value *Storage,
+                                            CGBuilderTy &Builder) {
+  EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
+}
 
+void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
+  const VarDecl *VD, llvm::Value *Storage, CGBuilderTy &Builder,
+  const CGBlockInfo &blockInfo) {
+  assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+  
   if (Builder.GetInsertBlock() == 0)
     return;
-
+  
   bool isByRef = VD->hasAttr<BlocksAttr>();
-
+  
   uint64_t XOffset = 0;
   llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
   llvm::DIType Ty;
@@ -2017,7 +2022,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
 
   // Create the descriptor for the variable.
   llvm::DIVariable D =
-    DBuilder.createComplexVariable(Tag, llvm::DIDescriptor(RegionStack.back()),
+    DBuilder.createComplexVariable(llvm::dwarf::DW_TAG_auto_variable, 
+                                   llvm::DIDescriptor(RegionStack.back()),
                                    VD->getName(), Unit, Line, Ty, addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
@@ -2025,19 +2031,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   
   llvm::MDNode *Scope = RegionStack.back();
   Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
-}
-
-void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
-                                            llvm::Value *Storage,
-                                            CGBuilderTy &Builder) {
-  EmitDeclare(VD, llvm::dwarf::DW_TAG_auto_variable, Storage, 0, Builder);
-}
-
-void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
-  const VarDecl *variable, llvm::Value *Storage, CGBuilderTy &Builder,
-  const CGBlockInfo &blockInfo) {
-  EmitDeclare(variable, llvm::dwarf::DW_TAG_auto_variable, Storage, Builder,
-              blockInfo);
 }
 
 /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
