@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon -O0 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -disable-arm-fast-isel -O0 | FileCheck %s
 
 define void @vst3i8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vst3i8:
