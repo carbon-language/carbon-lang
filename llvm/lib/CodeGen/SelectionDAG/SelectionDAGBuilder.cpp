@@ -4033,10 +4033,6 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   if (DV.isInlinedFnArgument(MF.getFunction()))
     return false;
 
-  MachineBasicBlock *MBB = FuncInfo.MBB;
-  if (MBB != &MF.front())
-    return false;
-
   unsigned Reg = 0;
   if (Arg->hasByValAttr()) {
     // Byval arguments' frame index is recorded during argument lowering.
