@@ -11,7 +11,6 @@
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
-		2630BFA91365F28C0070C534 /* UnwindAssemblyProfiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2630BFA81365F28C0070C534 /* UnwindAssemblyProfiler.cpp */; };
 		2630BFAF1365F3220070C534 /* ArchDefaultUnwindPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2630BFAD1365F3220070C534 /* ArchDefaultUnwindPlan.cpp */; };
 		2630BFB01365F3220070C534 /* ArchVolatileRegs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2630BFAE1365F3220070C534 /* ArchVolatileRegs.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
@@ -19,6 +18,7 @@
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */; };
+		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
 		26651A16133BF9CD005B64B7 /* Opcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A15133BF9CC005B64B7 /* Opcode.h */; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
@@ -634,8 +634,6 @@
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		26217930133BC8640083B112 /* lldb-private-types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-types.h"; path = "include/lldb/lldb-private-types.h"; sourceTree = "<group>"; };
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
-		2630BFA81365F28C0070C534 /* UnwindAssemblyProfiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindAssemblyProfiler.cpp; path = source/Target/UnwindAssemblyProfiler.cpp; sourceTree = "<group>"; };
-		2630BFAA1365F2BA0070C534 /* UnwindAssemblyProfiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnwindAssemblyProfiler.h; path = include/lldb/Target/UnwindAssemblyProfiler.h; sourceTree = "<group>"; };
 		2630BFAB1365F3140070C534 /* ArchDefaultUnwindPlan.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArchDefaultUnwindPlan.h; path = include/lldb/Target/ArchDefaultUnwindPlan.h; sourceTree = "<group>"; };
 		2630BFAC1365F3140070C534 /* ArchVolatileRegs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArchVolatileRegs.h; path = include/lldb/Target/ArchVolatileRegs.h; sourceTree = "<group>"; };
 		2630BFAD1365F3220070C534 /* ArchDefaultUnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchDefaultUnwindPlan.cpp; path = source/Target/ArchDefaultUnwindPlan.cpp; sourceTree = "<group>"; };
@@ -657,6 +655,8 @@
 		264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlatformRemoteGDBServer.h; path = "gdb-server/PlatformRemoteGDBServer.h"; sourceTree = "<group>"; };
 		264AD83711095BA600E0B039 /* CommandObjectLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectLog.cpp; path = source/Commands/CommandObjectLog.cpp; sourceTree = "<group>"; };
 		264AD83911095BBD00E0B039 /* CommandObjectLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectLog.h; path = source/Commands/CommandObjectLog.h; sourceTree = "<group>"; };
+		264D8D4E13661BCC003A368F /* UnwindAssembly.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UnwindAssembly.h; path = include/lldb/Target/UnwindAssembly.h; sourceTree = "<group>"; };
+		264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindAssembly.cpp; path = source/Target/UnwindAssembly.cpp; sourceTree = "<group>"; };
 		26579F68126A25920007C5CB /* darwin-debug */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "darwin-debug"; sourceTree = BUILT_PRODUCTS_DIR; };
 		265ABF6210F42EE900531910 /* DebugSymbols.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DebugSymbols.framework; path = /System/Library/PrivateFrameworks/DebugSymbols.framework; sourceTree = "<absolute>"; };
 		265E9BE1115C2BAA00D0DCCB /* debugserver.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = debugserver.xcodeproj; path = tools/debugserver/debugserver.xcodeproj; sourceTree = "<group>"; };
@@ -2340,8 +2340,8 @@
 				4C00986F11500B4300F316B0 /* UnixSignals.h */,
 				4C00987011500B4300F316B0 /* UnixSignals.cpp */,
 				26E3EEBD11A9870400FBADB6 /* Unwind.h */,
-				2630BFAA1365F2BA0070C534 /* UnwindAssemblyProfiler.h */,
-				2630BFA81365F28C0070C534 /* UnwindAssemblyProfiler.cpp */,
+				264D8D4E13661BCC003A368F /* UnwindAssembly.h */,
+				264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */,
 			);
 			name = Target;
 			sourceTree = "<group>";
@@ -3224,13 +3224,13 @@
 				26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
-				2630BFA91365F28C0070C534 /* UnwindAssemblyProfiler.cpp in Sources */,
 				2630BFAF1365F3220070C534 /* ArchDefaultUnwindPlan.cpp in Sources */,
 				2630BFB01365F3220070C534 /* ArchVolatileRegs.cpp in Sources */,
 				2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */,
 				2692BA1F136614D800F9E14D /* ArchDefaultUnwindPlan-x86.cpp in Sources */,
 				2692BA231366150100F9E14D /* ArchVolatileRegs-x86.cpp in Sources */,
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
+				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

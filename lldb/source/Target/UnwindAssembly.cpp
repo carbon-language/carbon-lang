@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyProfiler.cpp ------------------------------*- C++ -*-===//
+//===-- UnwindAssembly.cpp ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,31 +10,31 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/PluginInterface.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
-UnwindAssemblyProfiler*
-UnwindAssemblyProfiler::FindPlugin (const ArchSpec &arch)
+UnwindAssembly*
+UnwindAssembly::FindPlugin (const ArchSpec &arch)
 {
-    UnwindAssemblyProfilerCreateInstance create_callback;
+    UnwindAssemblyCreateInstance create_callback;
 
     for (uint32_t idx = 0;
-         (create_callback = PluginManager::GetUnwindAssemblyProfilerCreateCallbackAtIndex(idx)) != NULL;
+         (create_callback = PluginManager::GetUnwindAssemblyCreateCallbackAtIndex(idx)) != NULL;
          ++idx)
     {
-        std::auto_ptr<UnwindAssemblyProfiler> assembly_profiler_ap (create_callback (arch));
+        std::auto_ptr<UnwindAssembly> assembly_profiler_ap (create_callback (arch));
         if (assembly_profiler_ap.get ())
             return assembly_profiler_ap.release ();
     }
     return NULL;
 }
 
-UnwindAssemblyProfiler::UnwindAssemblyProfiler ()
+UnwindAssembly::UnwindAssembly ()
 {
 }
 
-UnwindAssemblyProfiler::~UnwindAssemblyProfiler ()
+UnwindAssembly::~UnwindAssembly ()
 {
 }

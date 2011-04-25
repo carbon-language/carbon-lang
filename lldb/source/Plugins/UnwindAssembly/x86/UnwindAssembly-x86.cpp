@@ -21,7 +21,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -839,7 +839,7 @@ UnwindAssembly_x86::FirstNonPrologueInsn (AddressRange& func, Target& target, Th
     return asm_parse.find_first_non_prologue_insn (first_non_prologue_insn);
 }
 
-UnwindAssemblyProfiler *
+UnwindAssembly *
 UnwindAssembly_x86::CreateInstance (const ArchSpec &arch)
 {
     const llvm::Triple::ArchType cpu = arch.GetMachine ();

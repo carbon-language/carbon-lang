@@ -31,7 +31,7 @@ namespace lldb_private
     typedef bool (*BreakpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
     typedef bool (*WatchpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t watch_id, uint32_t type);
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);
-    typedef UnwindAssemblyProfiler* (*UnwindAssemblyProfilerCreateInstance) (const ArchSpec &arch);
+    typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);
     typedef ArchDefaultUnwindPlan* (*ArchDefaultUnwindPlanCreateInstance) (const ArchSpec &arch);
     typedef ArchVolatileRegs* (*ArchVolatileRegsCreateInstance) (const ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);

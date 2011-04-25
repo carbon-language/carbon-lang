@@ -104,4 +104,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // liblldb_UnwindAssemblyProfiler_x86_h_
+#endif // liblldb_UnwindAssembly_x86_h_

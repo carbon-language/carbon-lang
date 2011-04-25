@@ -11,12 +11,12 @@
 #define liblldb_UnwindAssembly_x86_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 #include "lldb/Target/Thread.h"
 
 namespace lldb_private {
     
-class UnwindAssembly_x86 : public lldb_private::UnwindAssemblyProfiler
+class UnwindAssembly_x86 : public lldb_private::UnwindAssembly
 {
 public:
 
@@ -32,7 +32,7 @@ public:
     virtual bool
     FirstNonPrologueInsn (AddressRange& func, lldb_private::Target& target, lldb_private::Thread* thread, Address& first_non_prologue_insn);
 
-    static lldb_private::UnwindAssemblyProfiler *
+    static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
 
 
@@ -62,7 +62,7 @@ public:
     
 private:
     UnwindAssembly_x86(int cpu) : 
-          lldb_private::UnwindAssemblyProfiler(), m_cpu(cpu) { } // Call CreateInstance instead.
+          lldb_private::UnwindAssembly(), m_cpu(cpu) { } // Call CreateInstance instead.
 
     int m_cpu;
 };

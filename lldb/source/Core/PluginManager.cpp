@@ -1558,11 +1558,11 @@ PluginManager::GetSymbolVendorCreateCallbackForPluginName (const char *name)
 }
 
 
-#pragma mark UnwindAssemblyProfiler
+#pragma mark UnwindAssembly
 
-struct UnwindAssemblyProfilerInstance
+struct UnwindAssemblyInstance
 {
-    UnwindAssemblyProfilerInstance() :
+    UnwindAssemblyInstance() :
         name(),
         description(),
         create_callback(NULL)
@@ -1571,22 +1571,22 @@ struct UnwindAssemblyProfilerInstance
 
     std::string name;
     std::string description;
-    UnwindAssemblyProfilerCreateInstance create_callback;
+    UnwindAssemblyCreateInstance create_callback;
 };
 
-typedef std::vector<UnwindAssemblyProfilerInstance> UnwindAssemblyProfilerInstances;
+typedef std::vector<UnwindAssemblyInstance> UnwindAssemblyInstances;
 
 static Mutex &
-GetUnwindAssemblyProfilerMutex ()
+GetUnwindAssemblyMutex ()
 {
     static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
     return g_instances_mutex;
 }
 
-static UnwindAssemblyProfilerInstances &
-GetUnwindAssemblyProfilerInstances ()
+static UnwindAssemblyInstances &
+GetUnwindAssemblyInstances ()
 {
-    static UnwindAssemblyProfilerInstances g_instances;
+    static UnwindAssemblyInstances g_instances;
     return g_instances;
 }
 
@@ -1595,32 +1595,32 @@ PluginManager::RegisterPlugin
 (
     const char *name,
     const char *description,
-    UnwindAssemblyProfilerCreateInstance create_callback
+    UnwindAssemblyCreateInstance create_callback
 )
 {
     if (create_callback)
     {
-        UnwindAssemblyProfilerInstance instance;
+        UnwindAssemblyInstance instance;
         assert (name && name[0]);
         instance.name = name;
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
-        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
-        GetUnwindAssemblyProfilerInstances ().push_back (instance);
+        Mutex::Locker locker (GetUnwindAssemblyMutex ());
+        GetUnwindAssemblyInstances ().push_back (instance);
     }
     return false;
 }
 
 bool
-PluginManager::UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_callback)
+PluginManager::UnregisterPlugin (UnwindAssemblyCreateInstance create_callback)
 {
     if (create_callback)
     {
-        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
-        UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+        Mutex::Locker locker (GetUnwindAssemblyMutex ());
+        UnwindAssemblyInstances &instances = GetUnwindAssemblyInstances ();
         
-        UnwindAssemblyProfilerInstances::iterator pos, end = instances.end();
+        UnwindAssemblyInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
             if (pos->create_callback == create_callback)
@@ -1633,27 +1633,27 @@ PluginManager::UnregisterPlugin (UnwindAssemblyProfilerCreateInstance create_cal
     return false;
 }
 
-UnwindAssemblyProfilerCreateInstance
-PluginManager::GetUnwindAssemblyProfilerCreateCallbackAtIndex (uint32_t idx)
+UnwindAssemblyCreateInstance
+PluginManager::GetUnwindAssemblyCreateCallbackAtIndex (uint32_t idx)
 {
-    Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
-    UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+    Mutex::Locker locker (GetUnwindAssemblyMutex ());
+    UnwindAssemblyInstances &instances = GetUnwindAssemblyInstances ();
     if (idx < instances.size())
         return instances[idx].create_callback;
     return NULL;
 }
 
 
-UnwindAssemblyProfilerCreateInstance
-PluginManager::GetUnwindAssemblyProfilerCreateCallbackForPluginName (const char *name)
+UnwindAssemblyCreateInstance
+PluginManager::GetUnwindAssemblyCreateCallbackForPluginName (const char *name)
 {
     if (name && name[0])
     {
         llvm::StringRef name_sref(name);
-        Mutex::Locker locker (GetUnwindAssemblyProfilerMutex ());
-        UnwindAssemblyProfilerInstances &instances = GetUnwindAssemblyProfilerInstances ();
+        Mutex::Locker locker (GetUnwindAssemblyMutex ());
+        UnwindAssemblyInstances &instances = GetUnwindAssemblyInstances ();
         
-        UnwindAssemblyProfilerInstances::iterator pos, end = instances.end();
+        UnwindAssemblyInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
             if (name_sref.equals (pos->name))

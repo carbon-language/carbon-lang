@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyProfiler.h --------------------------------*- C++ -*-===//
+//===-- UnwindAssembly.h --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,23 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef utility_UnwindAssemblyProfiler_h_
-#define utility_UnwindAssemblyProfiler_h_
+#ifndef utility_UnwindAssembly_h_
+#define utility_UnwindAssembly_h_
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {
 
-class UnwindAssemblyProfiler :
+class UnwindAssembly :
    public PluginInterface
 {
 public:
-    static UnwindAssemblyProfiler*
+    static UnwindAssembly*
     FindPlugin (const ArchSpec &arch);
 
     virtual
-    ~UnwindAssemblyProfiler();
+    ~UnwindAssembly();
 
     virtual bool
     GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, 
@@ -43,13 +43,13 @@ public:
                           Address& first_non_prologue_insn) = 0;
 
 protected:
-    UnwindAssemblyProfiler();
+    UnwindAssembly();
 private:
-    DISALLOW_COPY_AND_ASSIGN (UnwindAssemblyProfiler);
+    DISALLOW_COPY_AND_ASSIGN (UnwindAssembly);
 };
 
 } // namespace lldb_private
 
-#endif //utility_UnwindAssemblyProfiler_h_
+#endif //utility_UnwindAssembly_h_
 
 

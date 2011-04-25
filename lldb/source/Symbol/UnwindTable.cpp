@@ -17,7 +17,7 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 
 // There is one UnwindTable object per ObjectFile.
 // It contains a list of Unwind objects -- one per function, populated lazily -- for the ObjectFile.
@@ -57,7 +57,7 @@ UnwindTable::Initialize ()
     ArchSpec arch;
     if (m_object_file.GetArchitecture (arch))
     {
-        m_assembly_profiler = UnwindAssemblyProfiler::FindPlugin (arch);
+        m_assembly_profiler = UnwindAssembly::FindPlugin (arch);
         m_initialized = true;
     }
 }

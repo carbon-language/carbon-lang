@@ -17,7 +17,7 @@
 #include "lldb/Target/ArchDefaultUnwindPlan.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -26,7 +26,7 @@ using namespace lldb_private;
 FuncUnwinders::FuncUnwinders
 (
     UnwindTable& unwind_table, 
-    UnwindAssemblyProfiler *assembly_profiler, 
+    UnwindAssembly *assembly_profiler, 
     AddressRange range
 ) : 
     m_unwind_table(unwind_table), 

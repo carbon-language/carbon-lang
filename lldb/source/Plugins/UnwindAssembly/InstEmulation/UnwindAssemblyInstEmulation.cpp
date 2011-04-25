@@ -21,7 +21,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -50,7 +50,7 @@ UnwindAssemblyInstEmulation::FirstNonPrologueInsn (AddressRange& func, Target& t
     return false;
 }
 
-UnwindAssemblyProfiler *
+UnwindAssembly *
 UnwindAssemblyInstEmulation::CreateInstance (const ArchSpec &arch)
 {
     return NULL;

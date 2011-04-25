@@ -11,10 +11,10 @@
 #define liblldb_UnwindAssemblyInstEmulation_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Target/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssembly.h"
 #include "lldb/Target/Thread.h"
 
-class UnwindAssemblyInstEmulation : public lldb_private::UnwindAssemblyProfiler
+class UnwindAssemblyInstEmulation : public lldb_private::UnwindAssembly
 {
 public:
 
@@ -40,7 +40,7 @@ public:
                           lldb_private::Thread* thread, 
                           lldb_private::Address& first_non_prologue_insn);
 
-    static lldb_private::UnwindAssemblyProfiler *
+    static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
 
 
@@ -72,7 +72,7 @@ private:
 
     // Call CreateInstance to get an instance of this class
     UnwindAssemblyInstEmulation(int cpu) : 
-          lldb_private::UnwindAssemblyProfiler(), m_cpu(cpu) 
+          lldb_private::UnwindAssembly(), m_cpu(cpu) 
     {
     }
 

@@ -158,7 +158,7 @@ class   Type;
 class   TypeList;
 class   UUID;
 class   Unwind;
-class   UnwindAssemblyProfiler;
+class   UnwindAssembly;
 class   UnwindPlan;
 class   UnwindTable;
 class   UserSettingsController;
