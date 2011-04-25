@@ -128,46 +128,6 @@ def bytearray_to_int(bytes, bytesize):
     return unpacked[0]
 
 
-# ===========================================================
-# Returns the list of stopped thread(s) given an lldb process
-# ===========================================================
-
-def get_stopped_threads(process, reason):
-    """Returns the thread(s) with the specified stop reason in a list."""
-    threads = []
-    for t in lldb_iter(process, 'GetNumThreads', 'GetThreadAtIndex'):
-        if t.GetStopReason() == reason:
-            threads.append(t)
-    return threads
-
-def get_stopped_thread(process, reason):
-    """A convenience function which returns the first thread with the given stop
-    reason or None.
-
-    Example usages:
-
-    1. Get the stopped thread due to a breakpoint condition
-
-    ...
-        from lldbutil import get_stopped_thread
-        thread = get_stopped_thread(self.process, lldb.eStopReasonPlanComplete)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
-    ...
-
-    2. Get the thread stopped due to a breakpoint
-
-    ...
-        from lldbutil import get_stopped_thread
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
-        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
-    ...
-
-    """
-    threads = get_stopped_threads(process, reason)
-    if len(threads) == 0:
-        return None
-    return threads[0]
-
 # ==============================================================
 # Get the description of an lldb object or None if not available
 # ==============================================================
@@ -276,6 +236,42 @@ def ValueTypeString(enum):
 # ==================================================
 # Utility functions related to Threads and Processes
 # ==================================================
+
+def get_stopped_threads(process, reason):
+    """Returns the thread(s) with the specified stop reason in a list."""
+    threads = []
+    for t in lldb_iter(process, 'GetNumThreads', 'GetThreadAtIndex'):
+        if t.GetStopReason() == reason:
+            threads.append(t)
+    return threads
+
+def get_stopped_thread(process, reason):
+    """A convenience function which returns the first thread with the given stop
+    reason or None.
+
+    Example usages:
+
+    1. Get the stopped thread due to a breakpoint condition
+
+    ...
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonPlanComplete)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+    ...
+
+    2. Get the thread stopped due to a breakpoint
+
+    ...
+        from lldbutil import get_stopped_thread
+        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
+    ...
+
+    """
+    threads = get_stopped_threads(process, reason)
+    if len(threads) == 0:
+        return None
+    return threads[0]
 
 def get_caller_symbol(thread):
     """
