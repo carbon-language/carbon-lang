@@ -48,7 +48,7 @@ def CC_MipsEABI : CallingConv<[
   CCIfType<[f32], CCIfSubtarget<"isNotSingleFloat()",
                   CCAssignToReg<[F12, F14, F16, F18]>>>,
 
-  // The first 4 doubl fp arguments are passed in single fp registers.
+  // The first 4 double fp arguments are passed in single fp registers.
   CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()",
                   CCAssignToReg<[D6, D7, D8, D9]>>>,
 
