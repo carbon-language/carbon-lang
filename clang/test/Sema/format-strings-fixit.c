@@ -1,6 +1,7 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -pedantic -Wall -fixit %t || true
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Wall -Werror %t
+// RUN: %clang_cc1 -E -o - %t | FileCheck %s
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
@@ -41,4 +42,29 @@ void test() {
   // Bad length modifiers
   printf("%hhs", "foo");
   printf("%1$zp", (void *)0);
+  
+  // Perserve the original formatting for unsigned integers.
+  unsigned long val = 42;
+  printf("%X", val);
 }
+
+// Validate the fixes...
+// CHECK: printf("%d", (int) 123);
+// CHECK: printf("abc%s", "testing testing 123");
+// CHECK: printf("%ld", (long) -12);
+// CHECK: printf("%d", 123);
+// CHECK: printf("%s\n", "x");
+// CHECK: printf("%f\n", 1.23);
+// CHECK: printf("%.2llu", (unsigned long long) 123456);
+// CHECK: printf("%1Lf", (long double) 1.23);
+// CHECK: printf("%0u", (unsigned) 31337);
+// CHECK: printf("%p", (void *) 0);
+// CHECK: printf("%+f", 1.23);
+// CHECK: printf("%-f", 1.23);
+// CHECK: printf("%1$d:%2$.*3$d:%4$.*3$d\n", 1, 2, 3, 4);
+// CHECK: printf("%10.5ld", 1l);
+// CHECK: printf("%c", 'a');
+// CHECK: printf("%-f", 1.23);
+// CHECK: printf("%s", "foo");
+// CHECK: printf("%1$p", (void *)0);
+// CHECK: printf("%lX", val);

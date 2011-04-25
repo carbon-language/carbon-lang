@@ -441,7 +441,9 @@ bool PrintfSpecifier::fixType(QualType QT) {
     HasAlternativeForm = 0;
   }
   else if (QT->isUnsignedIntegerType()) {
-    CS.setKind(ConversionSpecifier::uArg);
+    // Preserve the original formatting, e.g. 'X', 'o'.
+    if (!cast<PrintfConversionSpecifier>(CS).isUIntArg())
+      CS.setKind(ConversionSpecifier::uArg);
     HasAlternativeForm = 0;
     HasPlusPrefix = 0;
   }
