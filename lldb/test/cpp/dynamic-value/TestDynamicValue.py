@@ -93,7 +93,7 @@ class DynamicValueTestCase(TestBase):
 
         # Create a target from the debugger.
 
-        target = self.dbg.CreateTargetWithFileAndArch (exe, lldb.LLDB_ARCH_DEFAULT)
+        target = self.dbg.CreateTarget (exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
         # Set up our breakpoints:
