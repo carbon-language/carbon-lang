@@ -1297,6 +1297,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-manbo-linux-gnu",
              Exists) && Exists)
       GccTriple = "x86_64-manbo-linux-gnu";
+    else if (!llvm::sys::fs::exists("/usr/lib/x86_64-linux-gnu/gcc",
+             Exists) && Exists)
+      GccTriple = "x86_64-linux-gnu";
   } else if (Arch == llvm::Triple::x86) {
     if (!llvm::sys::fs::exists("/usr/lib/gcc/i686-linux-gnu", Exists) && Exists)
       GccTriple = "i686-linux-gnu";
@@ -1382,7 +1385,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  if (IsFedora(Distro) || Distro == UbuntuMaverick)
+  if (IsFedora(Distro) || Distro == UbuntuMaverick || Distro == UbuntuNatty)
     ExtraOpts.push_back("--hash-style=gnu");
 
   if (IsDebian(Distro) || Distro == UbuntuLucid || Distro == UbuntuJaunty ||
@@ -1394,7 +1397,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
 
   if (Distro == DebianSqueeze || IsOpenSuse(Distro) ||
       IsFedora(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick ||
-      Distro == UbuntuKarmic)
+      Distro == UbuntuKarmic || Distro == UbuntuNatty)
     ExtraOpts.push_back("--build-id");
 
   if (Distro == ArchLinux)
