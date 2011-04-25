@@ -411,11 +411,7 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
   // unqualified lookup mechanism.
   if (!SS.isSet() && CurMethod && !isResultTypeOrTemplate(Result, NextToken)) {
     ExprResult E = LookupInObjCMethod(Result, S, Name, true);
-
-    if (E.isInvalid())
-      return NameClassification::Error();
-    
-    if (E.get())
+    if (E.get() || E.isInvalid())
       return E;
     
     // Synthesize ivars lazily.
@@ -430,12 +426,8 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
 
         // FIXME: This is strange. Shouldn't we just take the ivar returned
         // from SynthesizeProvisionalIvar and continue with that?
-        E = LookupInObjCMethod(Result, S, Name, true);
-        
-        if (E.isInvalid())
-          return NameClassification::Error();
-        
-        if (E.get())
+        E = LookupInObjCMethod(Result, S, Name, true);   
+        if (E.get() || E.isInvalid())
           return E;
       }
     }

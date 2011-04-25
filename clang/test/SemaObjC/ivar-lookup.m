@@ -35,3 +35,15 @@ extern struct foo x;
 }
 @end
 
+@interface TwoIvars {
+  int a;
+  int b;
+}
+@end
+
+@implementation TwoIvars
++ (int)classMethod {
+  return a + b; // expected-error{{instance variable 'a' accessed in class method}} \
+  // expected-error{{instance variable 'b' accessed in class method}}
+}
+@end

@@ -148,7 +148,6 @@ Retry:
         break;     
           
       case Sema::NC_Type:
-        // We have a type.
         // We have a type. In C, this means that we have a declaration.
         if (!getLang().CPlusPlus) {
           ParsedType Type = Classification.getType();
