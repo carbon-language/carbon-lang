@@ -1,4 +1,4 @@
-//===---------------------ArchVolatileRegs.h----- ---------------*- C++ -*-===//
+//===-- ArchVolatileRegs.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

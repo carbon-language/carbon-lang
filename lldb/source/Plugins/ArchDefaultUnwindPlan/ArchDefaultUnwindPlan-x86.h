@@ -11,7 +11,7 @@
 #define liblldb_ArchDefaultUnwindPlan_x86_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Utility/ArchDefaultUnwindPlan.h"
+#include "lldb/Target/ArchDefaultUnwindPlan.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Symbol/UnwindPlan.h"
 

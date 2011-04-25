@@ -11,7 +11,7 @@
 #define liblldb_UnwindAssemblyProfiler_x86_h_
 
 #include "lldb/lldb-private.h"
-#include "lldb/Utility/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssemblyProfiler.h"
 #include "lldb/Target/Thread.h"
 
 namespace lldb_private {

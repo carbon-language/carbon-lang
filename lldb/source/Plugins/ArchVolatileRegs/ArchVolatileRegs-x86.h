@@ -12,7 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Utility/ArchVolatileRegs.h"
+#include "lldb/Target/ArchVolatileRegs.h"
 #include <set>
 
 namespace lldb_private {

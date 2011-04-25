@@ -1,4 +1,4 @@
-//===---------------------UnwindAssemblyProfiler.h --------------------------*- C++ -*-===//
+//===-- UnwindAssemblyProfiler.h --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,22 +19,28 @@ class UnwindAssemblyProfiler :
    public PluginInterface
 {
 public:
+    static UnwindAssemblyProfiler*
+    FindPlugin (const ArchSpec &arch);
 
     virtual
     ~UnwindAssemblyProfiler();
 
     virtual bool
-    GetNonCallSiteUnwindPlanFromAssembly (lldb_private::AddressRange& func, Thread& thread, lldb_private::UnwindPlan& unwind_plan) = 0;
+    GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, 
+                                          Thread& thread, 
+                                          UnwindPlan& unwind_plan) = 0;
 
     virtual bool
-    GetFastUnwindPlan (lldb_private::AddressRange& func, Thread& thread, lldb_private::UnwindPlan &unwind_plan) = 0;
+    GetFastUnwindPlan (AddressRange& func, 
+                       Thread& thread, 
+                       UnwindPlan &unwind_plan) = 0;
 
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
     virtual bool
-    FirstNonPrologueInsn (lldb_private::AddressRange& func, Target& target, Thread* thread, lldb_private::Address& first_non_prologue_insn) = 0;
-
-    static UnwindAssemblyProfiler*
-    FindPlugin (const ArchSpec &arch);
+    FirstNonPrologueInsn (AddressRange& func, 
+                          Target& target, 
+                          Thread* thread, 
+                          Address& first_non_prologue_insn) = 0;
 
 protected:
     UnwindAssemblyProfiler();

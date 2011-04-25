@@ -30,9 +30,9 @@
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
-#include "Plugins/Process/Utility/UnwindAssemblyProfiler-x86.h"
-#include "Plugins/Process/Utility/ArchDefaultUnwindPlan-x86.h"
-#include "Plugins/Process/Utility/ArchVolatileRegs-x86.h"
+#include "Plugins/UnwindAssembly/UnwindAssemblyProfiler-x86.h"
+#include "Plugins/ArchDefaultUnwindPlan/ArchDefaultUnwindPlan-x86.h"
+#include "Plugins/ArchVolatileRegs/ArchVolatileRegs-x86.h"
 
 #if defined (__APPLE__)
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"

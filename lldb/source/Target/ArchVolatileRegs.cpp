@@ -10,7 +10,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/PluginInterface.h"
-#include "lldb/Utility/ArchVolatileRegs.h"
+#include "lldb/Target/ArchVolatileRegs.h"
 
 using namespace lldb;
 using namespace lldb_private;

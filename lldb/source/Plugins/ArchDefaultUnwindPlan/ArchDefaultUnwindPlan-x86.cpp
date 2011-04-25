@@ -10,7 +10,7 @@
 #include "ArchDefaultUnwindPlan-x86.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/Utility/ArchDefaultUnwindPlan.h"
+#include "lldb/Target/ArchDefaultUnwindPlan.h"
 
 using namespace lldb;
 using namespace lldb_private;

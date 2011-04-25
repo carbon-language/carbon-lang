@@ -8,15 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchVolatileRegs-x86.h"
+
+#include <set>
+
 #include "llvm/Support/MachO.h"
-#include "lldb/lldb-private.h"
-#include "lldb/Utility/ArchVolatileRegs.h"
+
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/lldb-enumerations.h"
+#include "lldb/Target/ArchVolatileRegs.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/RegisterContext.h"
-#include <set>
+
 
 using namespace lldb;
 using namespace lldb_private;

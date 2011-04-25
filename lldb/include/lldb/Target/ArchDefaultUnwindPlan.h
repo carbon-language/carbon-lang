@@ -1,4 +1,4 @@
-//===---------------------ArchDefaultUnwindPlan.h ---------------*- C++ -*-===//
+//===-- ArchDefaultUnwindPlan.h ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

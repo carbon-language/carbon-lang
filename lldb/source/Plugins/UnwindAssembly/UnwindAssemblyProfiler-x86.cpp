@@ -9,24 +9,19 @@
 
 #include "UnwindAssemblyProfiler-x86.h"
 
-#include "lldb/lldb-private.h"
-#include "lldb/Utility/UnwindAssemblyProfiler.h"
+#include "llvm-c/EnhancedDisassembly.h"
+
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Symbol/UnwindPlan.h"
-
-#include "lldb/lldb-enumerations.h"
-#include "llvm-c/EnhancedDisassembly.h"
-
-#include "UnwindAssemblyProfiler-x86.h"
-
+#include "lldb/Target/UnwindAssemblyProfiler.h"
 
 using namespace lldb;
 using namespace lldb_private;

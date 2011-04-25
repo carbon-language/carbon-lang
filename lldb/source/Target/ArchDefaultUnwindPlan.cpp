@@ -14,7 +14,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Host/Mutex.h"
-#include "lldb/Utility/ArchDefaultUnwindPlan.h"
+#include "lldb/Target/ArchDefaultUnwindPlan.h"
 
 using namespace lldb;
 using namespace lldb_private;

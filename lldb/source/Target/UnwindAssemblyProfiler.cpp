@@ -10,7 +10,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/PluginInterface.h"
-#include "lldb/Utility/UnwindAssemblyProfiler.h"
+#include "lldb/Target/UnwindAssemblyProfiler.h"
 
 using namespace lldb;
 using namespace lldb_private;
