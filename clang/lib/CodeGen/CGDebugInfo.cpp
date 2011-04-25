@@ -2027,7 +2027,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
                                    VD->getName(), Unit, Line, Ty, addr);
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = 
-    DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
+    DBuilder.insertDeclare(Storage, D, Builder.GetInsertPoint());
   
   llvm::MDNode *Scope = RegionStack.back();
   Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
