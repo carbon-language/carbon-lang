@@ -1210,16 +1210,18 @@ _mm_movemask_epi8(__m128i a)
 }
 
 #define _mm_shuffle_epi32(a, imm) \
-  ((__m128i)__builtin_shufflevector((__v4si)(a), (__v4si) {0}, \
+  ((__m128i)__builtin_shufflevector((__v4si)(a), (__v4si) _mm_set1_epi32(0), \
                                     (imm) & 0x3, ((imm) & 0xc) >> 2, \
                                     ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6))
+
+
 #define _mm_shufflelo_epi16(a, imm) \
-  ((__m128i)__builtin_shufflevector((__v8hi)(a), (__v8hi) {0}, \
+  ((__m128i)__builtin_shufflevector((__v8hi)(a), (__v8hi) _mm_set1_epi16(0), \
                                     (imm) & 0x3, ((imm) & 0xc) >> 2, \
                                     ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
                                     4, 5, 6, 7))
 #define _mm_shufflehi_epi16(a, imm) \
-  ((__m128i)__builtin_shufflevector((__v8hi)(a), (__v8hi) {0}, 0, 1, 2, 3, \
+  ((__m128i)__builtin_shufflevector((__v8hi)(a), (__v8hi) _mm_set1_epi16(0), 0, 1, 2, 3, \
                                     4 + (((imm) & 0x03) >> 0), \
                                     4 + (((imm) & 0x0c) >> 2), \
                                     4 + (((imm) & 0x30) >> 4), \
