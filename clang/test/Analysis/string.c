@@ -682,3 +682,109 @@ void strcmp_diff_length_3() {
     (void)*(char*)0; // no-warning
 }
 
+//===----------------------------------------------------------------------===
+// strncmp()
+//===----------------------------------------------------------------------===
+
+#define strncmp BUILTIN(strncmp)
+int strncmp(const char *restrict s1, const char *restrict s2, size_t n);
+
+void strncmp_constant0() {
+  if (strncmp("123", "123", 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_constant_and_var_0() {
+  char *x = "123";
+  if (strncmp(x, "123", 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_constant_and_var_1() {
+  char *x = "123";
+  if (strncmp("123", x, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_0() {
+  char *x = "123";
+  char *y = "123";
+  if (strncmp(x, y, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_1() {
+  char *x = "234";
+  char *y = "123";
+  if (strncmp(x, y, 3) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_2() {
+  char *x = "123";
+  char *y = "234";
+  if (strncmp(x, y, 3) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_null_0() {
+  char *x = NULL;
+  char *y = "123";
+  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strncmp_null_1() {
+  char *x = "123";
+  char *y = NULL;
+  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strncmp_diff_length_0() {
+  char *x = "12345";
+  char *y = "234";
+  if (strncmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_1() {
+  char *x = "123";
+  char *y = "23456";
+  if (strncmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_2() {
+  char *x = "12345";
+  char *y = "123";
+  if (strncmp(x, y, 5) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_3() {
+  char *x = "123";
+  char *y = "12345";
+  if (strncmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_4() {
+  char *x = "123";
+  char *y = "12345";
+  if (strncmp(x, y, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_5() {
+  char *x = "012";
+  char *y = "12345";
+  if (strncmp(x, y, 3) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncmp_diff_length_6() {
+  char *x = "234";
+  char *y = "12345";
+  if (strncmp(x, y, 3) != 1)
+    (void)*(char*)0; // no-warning
+}
+

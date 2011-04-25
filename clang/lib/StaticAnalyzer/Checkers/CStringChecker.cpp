@@ -75,6 +75,9 @@ public:
   void evalStrncat(CheckerContext &C, const CallExpr *CE) const;
 
   void evalStrcmp(CheckerContext &C, const CallExpr *CE) const;
+  void evalStrncmp(CheckerContext &C, const CallExpr *CE) const;
+  void evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
+                        bool isBounded = false) const;
 
   // Utility methods
   std::pair<const GRState*, const GRState*>
@@ -1103,7 +1106,16 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 
 void CStringChecker::evalStrcmp(CheckerContext &C, const CallExpr *CE) const {
   //int strcmp(const char *restrict s1, const char *restrict s2);
+  evalStrcmpCommon(C, CE, /* isBounded = */ false);
+}
 
+void CStringChecker::evalStrncmp(CheckerContext &C, const CallExpr *CE) const {
+  //int strncmp(const char *restrict s1, const char *restrict s2, size_t n);
+  evalStrcmpCommon(C, CE, /* isBounded = */ true);
+}
+
+void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
+                                      bool isBounded) const {
   const GRState *state = C.getState();
 
   // Check that the first string is non-null
@@ -1142,8 +1154,25 @@ void CStringChecker::evalStrcmp(CheckerContext &C, const CallExpr *CE) const {
     return;
   llvm::StringRef s2StrRef = s2StrLiteral->getString();
 
-  // Compare string 1 to string 2 the same way strcmp() does.
-  int result = s1StrRef.compare(s2StrRef);
+  int result;
+  if (isBounded) {
+    // Get the max number of characters to compare.
+    const Expr *lenExpr = CE->getArg(2);
+    SVal lenVal = state->getSVal(lenExpr);
+
+    // Dynamically cast the length to a ConcreteInt. If it is not a ConcreteInt
+    // then give up, otherwise get the value and use it as the bounds.
+    nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&lenVal);
+    if (!CI)
+      return;
+    llvm::APSInt lenInt(CI->getValue());
+
+    // Compare using the bounds provided like strncmp() does.
+    result = s1StrRef.compare(s2StrRef, (size_t)lenInt.getLimitedValue());
+  } else {
+    // Compare string 1 to string 2 the same way strcmp() does.
+    result = s1StrRef.compare(s2StrRef);
+  }
   
   // Build the SVal of the comparison to bind the return value.
   SValBuilder &svalBuilder = C.getSValBuilder();
@@ -1191,6 +1220,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     .Case("strlen", &CStringChecker::evalstrLength)
     .Case("strnlen", &CStringChecker::evalstrnLength)
     .Case("strcmp", &CStringChecker::evalStrcmp)
+    .Case("strncmp", &CStringChecker::evalStrncmp)
     .Case("bcopy", &CStringChecker::evalBcopy)
     .Default(NULL);
 
