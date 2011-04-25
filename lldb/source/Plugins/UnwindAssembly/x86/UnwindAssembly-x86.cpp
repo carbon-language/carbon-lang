@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyx86.cpp -----------------------------------*- C++ -*-===//
+//===-- UnwindAssembly-x86.cpp ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "UnwindAssemblyx86.h"
+#include "UnwindAssembly-x86.h"
 
 #include "llvm-c/EnhancedDisassembly.h"
 

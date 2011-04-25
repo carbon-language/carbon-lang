@@ -30,7 +30,7 @@
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
-#include "Plugins/UnwindAssembly/x86/UnwindAssemblyx86.h"
+#include "Plugins/UnwindAssembly/x86/UnwindAssembly-x86.h"
 #include "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h"
 #include "Plugins/ArchDefaultUnwindPlan/x86/ArchDefaultUnwindPlan-x86.h"
 #include "Plugins/ArchVolatileRegs/x86/ArchVolatileRegs-x86.h"

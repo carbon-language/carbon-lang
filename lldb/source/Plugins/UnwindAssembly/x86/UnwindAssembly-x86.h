@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyx86.h -------------------------------------*- C++ -*-===//
+//===-- UnwindAssembly-x86.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_UnwindAssemblyx86_h_
-#define liblldb_UnwindAssemblyx86_h_
+#ifndef liblldb_UnwindAssembly_x86_h_
+#define liblldb_UnwindAssembly_x86_h_
 
 #include "lldb/lldb-private.h"
 #include "lldb/Target/UnwindAssemblyProfiler.h"
@@ -70,4 +70,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // liblldb_UnwindAssemblyx86_h_
+#endif // liblldb_UnwindAssembly_x86_h_
