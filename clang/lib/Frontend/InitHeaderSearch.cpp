@@ -761,6 +761,13 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                 "i686-pc-linux-gnu", "", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
                                 "x86_64-unknown-linux-gnu", "", "", triple);
+
+    // Arch Linux gcc 4.6
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
+                                "i686-pc-linux-gnu", "", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
+                                "x86_64-unknown-linux-gnu", "", "", triple);
+
     // Gentoo x86 gcc 4.5.2
     AddGnuCPlusPlusIncludePaths(
       "/usr/lib/gcc/i686-pc-linux-gnu/4.5.2/include/g++-v4",
