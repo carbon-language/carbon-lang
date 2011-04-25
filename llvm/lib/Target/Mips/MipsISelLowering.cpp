@@ -801,24 +801,30 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
 
 SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
                                               SelectionDAG &DAG) const {
+  const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
+  // FIXME there isn't actually debug info here
+  DebugLoc dl = Op.getDebugLoc();
+
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
-    assert(false && "implement LowerBlockAddress for -static");
-    return SDValue(0, 0);
+    // %hi/%lo relocation
+    SDValue BAHi = DAG.getBlockAddress(BA, MVT::i32, true,
+                                       MipsII::MO_ABS_HI);
+    SDValue BALo = DAG.getBlockAddress(BA, MVT::i32, true,
+                                       MipsII::MO_ABS_LO);
+    SDValue Hi = DAG.getNode(MipsISD::Hi, dl, MVT::i32, BAHi);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALo);
+    return DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, Lo);
   }
-  else {
-    // FIXME there isn't actually debug info here
-    DebugLoc dl = Op.getDebugLoc();
-    const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-    SDValue BAGOTOffset = DAG.getBlockAddress(BA, MVT::i32, true,
-                                              MipsII::MO_GOT);
-    SDValue BALOOffset = DAG.getBlockAddress(BA, MVT::i32, true,
-                                             MipsII::MO_ABS_LO);
-    SDValue Load = DAG.getLoad(MVT::i32, dl,
-                               DAG.getEntryNode(), BAGOTOffset,
-                               MachinePointerInfo(), false, false, 0);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALOOffset);
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
-  }
+
+  SDValue BAGOTOffset = DAG.getBlockAddress(BA, MVT::i32, true,
+                                            MipsII::MO_GOT);
+  SDValue BALOOffset = DAG.getBlockAddress(BA, MVT::i32, true,
+                                           MipsII::MO_ABS_LO);
+  SDValue Load = DAG.getLoad(MVT::i32, dl,
+                             DAG.getEntryNode(), BAGOTOffset,
+                             MachinePointerInfo(), false, false, 0);
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, BALOOffset);
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, Load, Lo);
 }
 
 SDValue MipsTargetLowering::

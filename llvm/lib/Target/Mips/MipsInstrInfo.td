@@ -557,6 +557,7 @@ def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
 
 // hi/lo relocs
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
+def : Pat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tblockaddress:$lo)),
