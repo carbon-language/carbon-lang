@@ -2305,3 +2305,50 @@ Not having this is blocking resolving PR6627.
 
 //===---------------------------------------------------------------------===//
 
+This code:
+
+typedef struct {
+int f1:1;
+int f2:1;
+int f3:1;
+int f4:29;
+} t1;
+
+typedef struct {
+int f1:1;
+int f2:1;
+int f3:30;
+} t2;
+
+t1 s1;
+t2 s2;
+
+void func1(void)
+{
+s1.f1 = s2.f1;
+s1.f2 = s2.f2;
+}
+
+Compiles into this IR (on x86-64 at least):
+
+%struct.t1 = type { i8, [3 x i8] }
+@s2 = global %struct.t1 zeroinitializer, align 4
+@s1 = global %struct.t1 zeroinitializer, align 4
+define void @func1() nounwind ssp noredzone {
+entry:
+  %0 = load i32* bitcast (%struct.t1* @s2 to i32*), align 4
+  %bf.val.sext5 = and i32 %0, 1
+  %1 = load i32* bitcast (%struct.t1* @s1 to i32*), align 4
+  %2 = and i32 %1, -4
+  %3 = or i32 %2, %bf.val.sext5
+  %bf.val.sext26 = and i32 %0, 2
+  %4 = or i32 %3, %bf.val.sext26
+  store i32 %4, i32* bitcast (%struct.t1* @s1 to i32*), align 4
+  ret void
+}
+
+The two or/and's should be merged into one each.
+
+//===---------------------------------------------------------------------===//
+
+
