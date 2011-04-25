@@ -709,7 +709,11 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
     } else {
       MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
       if (Location.getReg()) {
-        TheCU->addAddress(VariableDie, dwarf::DW_AT_location, Location);
+        if (DV->getVariable().hasComplexAddress())
+          TheCU->addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, 
+                                   Location);
+        else
+          TheCU->addAddress(VariableDie, dwarf::DW_AT_location, Location);
         updated = true;
       }
     }
