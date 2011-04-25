@@ -209,10 +209,10 @@ template<typename T> struct FoldingSetTrait;
 /// for FoldingSetTrait implementations.
 ///
 template<typename T> struct DefaultFoldingSetTrait {
-  static void Profile(const T& X, FoldingSetNodeID& ID) {
+  static void Profile(const T &X, FoldingSetNodeID &ID) {
     X.Profile(ID);
   }
-  static void Profile(T& X, FoldingSetNodeID& ID) {
+  static void Profile(T &X, FoldingSetNodeID &ID) {
     X.Profile(ID);
   }
 
@@ -267,7 +267,7 @@ template<typename T, typename Ctx> struct ContextualFoldingSetTrait
 /// is often much larger than necessary, and the possibility of heap
 /// allocation means it requires a non-trivial destructor call.
 class FoldingSetNodeIDRef {
-  const unsigned* Data;
+  const unsigned *Data;
   size_t Size;
 public:
   FoldingSetNodeIDRef() : Data(0), Size(0) {}
@@ -313,7 +313,7 @@ public:
   void AddNodeID(const FoldingSetNodeID &ID);
 
   template <typename T>
-  inline void Add(const T& x) { FoldingSetTrait<T>::Profile(x, *this); }
+  inline void Add(const T &x) { FoldingSetTrait<T>::Profile(x, *this); }
 
   /// clear - Clear the accumulated profile, allowing this FoldingSetNodeID
   /// object to be used to compute a new profile.
@@ -549,7 +549,7 @@ public:
     return static_cast<T*>(NodePtr);
   }
 
-  inline FoldingSetIterator& operator++() {          // Preincrement
+  inline FoldingSetIterator &operator++() {          // Preincrement
     advance();
     return *this;
   }
@@ -597,10 +597,10 @@ public:
   FoldingSetBucketIterator(void **Bucket, bool) :
     FoldingSetBucketIteratorImpl(Bucket, true) {}
 
-  T& operator*() const { return *static_cast<T*>(Ptr); }
-  T* operator->() const { return static_cast<T*>(Ptr); }
+  T &operator*() const { return *static_cast<T*>(Ptr); }
+  T *operator->() const { return static_cast<T*>(Ptr); }
 
-  inline FoldingSetBucketIterator& operator++() { // Preincrement
+  inline FoldingSetBucketIterator &operator++() { // Preincrement
     advance();
     return *this;
   }
@@ -616,36 +616,36 @@ template <typename T>
 class FoldingSetNodeWrapper : public FoldingSetNode {
   T data;
 public:
-  explicit FoldingSetNodeWrapper(const T& x) : data(x) {}
+  explicit FoldingSetNodeWrapper(const T &x) : data(x) {}
   virtual ~FoldingSetNodeWrapper() {}
 
   template<typename A1>
-  explicit FoldingSetNodeWrapper(const A1& a1)
+  explicit FoldingSetNodeWrapper(const A1 &a1)
     : data(a1) {}
 
   template <typename A1, typename A2>
-  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2)
+  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2)
     : data(a1,a2) {}
 
   template <typename A1, typename A2, typename A3>
-  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3)
+  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3)
     : data(a1,a2,a3) {}
 
   template <typename A1, typename A2, typename A3, typename A4>
-  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3,
-                                 const A4& a4)
+  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3,
+                                 const A4 &a4)
     : data(a1,a2,a3,a4) {}
 
   template <typename A1, typename A2, typename A3, typename A4, typename A5>
-  explicit FoldingSetNodeWrapper(const A1& a1, const A2& a2, const A3& a3,
-                                 const A4& a4, const A5& a5)
+  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3,
+                                 const A4 &a4, const A5 &a5)
   : data(a1,a2,a3,a4,a5) {}
 
 
   void Profile(FoldingSetNodeID &ID) { FoldingSetTrait<T>::Profile(data, ID); }
 
-  T& getValue() { return data; }
-  const T& getValue() const { return data; }
+  T &getValue() { return data; }
+  const T &getValue() const { return data; }
 
   operator T&() { return data; }
   operator const T&() const { return data; }
@@ -662,7 +662,7 @@ class FastFoldingSetNode : public FoldingSetNode {
 protected:
   explicit FastFoldingSetNode(const FoldingSetNodeID &ID) : FastID(ID) {}
 public:
-  void Profile(FoldingSetNodeID& ID) const { 
+  void Profile(FoldingSetNodeID &ID) const { 
     ID.AddNodeID(FastID); 
   }
 };
@@ -671,13 +671,13 @@ public:
 // Partial specializations of FoldingSetTrait.
 
 template<typename T> struct FoldingSetTrait<T*> {
-  static inline void Profile(const T* X, FoldingSetNodeID& ID) {
+  static inline void Profile(const T *X, FoldingSetNodeID &ID) {
     ID.AddPointer(X);
   }
 };
 
 template<typename T> struct FoldingSetTrait<const T*> {
-  static inline void Profile(const T* X, FoldingSetNodeID& ID) {
+  static inline void Profile(const T *X, FoldingSetNodeID &ID) {
     ID.AddPointer(X);
   }
 };
