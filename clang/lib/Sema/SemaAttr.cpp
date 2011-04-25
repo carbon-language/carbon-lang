@@ -263,6 +263,10 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   }
 }
 
+void Sema::ActOnPragmaMSStruct(PragmaMSStructKind Kind) { 
+  MSStructPragmaOn = (Kind == PMSST_ON);
+}
+
 void Sema::ActOnPragmaUnused(const Token &IdTok, Scope *curScope,
                              SourceLocation PragmaLoc) {
 

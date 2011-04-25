@@ -141,7 +141,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     LangOpts(pp.getLangOptions()), PP(pp), Context(ctxt), Consumer(consumer),
     Diags(PP.getDiagnostics()), SourceMgr(PP.getSourceManager()),
     ExternalSource(0), CodeCompleter(CodeCompleter), CurContext(0), 
-    PackContext(0), VisContext(0),
+    PackContext(0), MSStructPragmaOn(false), VisContext(0),
     LateTemplateParser(0), OpaqueParser(0),
     IdResolver(pp.getLangOptions()), CXXTypeInfoDecl(0), MSVCGuidDecl(0),
     GlobalNewDeleteDeclared(false), 
@@ -184,7 +184,7 @@ Sema::~Sema() {
   if (PackContext) FreePackedContext();
   if (VisContext) FreeVisContext();
   delete TheTargetAttributesSema;
-
+  MSStructPragmaOn = false;
   // Kill all the active scopes.
   for (unsigned I = 1, E = FunctionScopes.size(); I != E; ++I)
     delete FunctionScopes[I];

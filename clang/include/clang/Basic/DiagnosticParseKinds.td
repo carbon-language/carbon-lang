@@ -485,6 +485,8 @@ def warn_pragma_expected_rparen : Warning<
   "missing ')' after '#pragma %0' - ignoring">;
 def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">;  
+def warn_pragma_ms_struct : Warning<
+  "incorrect use of '#pragma ms_struct on|off' - ignored">;  
 def warn_pragma_extra_tokens_at_eol : Warning<
   "extra tokens at end of '#pragma %0' - ignored">; 
 // - #pragma options

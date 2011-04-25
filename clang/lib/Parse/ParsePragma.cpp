@@ -177,6 +177,38 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
                           LParenLoc, RParenLoc);
 }
 
+// #pragma ms_struct on
+// #pragma ms_struct off
+void PragmaMSStructHandler::HandlePragma(Preprocessor &PP, 
+                                         PragmaIntroducerKind Introducer,
+                                         Token &MSStructTok) {
+  Sema::PragmaMSStructKind Kind = Sema::PMSST_OFF;
+  
+  Token Tok;
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_ms_struct);
+    return;
+  }
+  const IdentifierInfo *II = Tok.getIdentifierInfo();
+  if (II->isStr("on")) {
+    Kind = Sema::PMSST_ON;
+    PP.Lex(Tok);
+  }
+  else if (II->isStr("off") || II->isStr("reset"))
+    PP.Lex(Tok);
+  else {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_ms_struct);
+    return;
+  }
+  
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "ms_struct";
+    return;
+  }
+  Actions.ActOnPragmaMSStruct(Kind);
+}
+
 // #pragma 'align' '=' {'native','natural','mac68k','power','reset'}
 // #pragma 'options 'align' '=' {'native','natural','mac68k','power','reset'}
 static void ParseAlignPragma(Sema &Actions, Preprocessor &PP, Token &FirstTok,

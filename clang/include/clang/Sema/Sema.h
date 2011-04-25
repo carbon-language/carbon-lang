@@ -240,6 +240,8 @@ public:
   /// PackContext - Manages the stack for #pragma pack. An alignment
   /// of 0 indicates default alignment.
   void *PackContext; // Really a "PragmaPackStack*"
+    
+  bool MSStructPragmaOn; // True when #pragma ms_struct on
 
   /// VisContext - Manages the stack for #pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
@@ -4855,6 +4857,11 @@ public:
     PPK_Pop      // #pragma pack(pop, [identifier], [n])
   };
 
+  enum PragmaMSStructKind {
+    PMSST_OFF,  // #pragms ms_struct off
+    PMSST_ON    // #pragms ms_struct on
+  };
+
   /// ActOnPragmaPack - Called on well formed #pragma pack(...).
   void ActOnPragmaPack(PragmaPackKind Kind,
                        IdentifierInfo *Name,
@@ -4862,6 +4869,9 @@ public:
                        SourceLocation PragmaLoc,
                        SourceLocation LParenLoc,
                        SourceLocation RParenLoc);
+    
+  /// ActOnPragmaMSStruct - Called on well formed #pragms ms_struct [on|off].
+  void ActOnPragmaMSStruct(PragmaMSStructKind Kind);
 
   /// ActOnPragmaUnused - Called on well-formed '#pragma unused'.
   void ActOnPragmaUnused(const Token &Identifier,

@@ -58,6 +58,16 @@ public:
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &FirstToken);
 };
+  
+class PragmaMSStructHandler : public PragmaHandler {
+  Sema &Actions;
+public:
+  explicit PragmaMSStructHandler(Sema &A) : PragmaHandler("ms_struct"),
+  Actions(A) {}
+    
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
 
 class PragmaUnusedHandler : public PragmaHandler {
   Sema &Actions;

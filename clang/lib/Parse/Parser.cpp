@@ -45,6 +45,9 @@ Parser::Parser(Preprocessor &pp, Sema &actions)
 
   PackHandler.reset(new PragmaPackHandler(actions));
   PP.AddPragmaHandler(PackHandler.get());
+    
+  MSStructHandler.reset(new PragmaMSStructHandler(actions));
+  PP.AddPragmaHandler(MSStructHandler.get());
 
   UnusedHandler.reset(new PragmaUnusedHandler(actions, *this));
   PP.AddPragmaHandler(UnusedHandler.get());
@@ -377,6 +380,8 @@ Parser::~Parser() {
   OptionsHandler.reset();
   PP.RemovePragmaHandler(PackHandler.get());
   PackHandler.reset();
+  PP.RemovePragmaHandler(MSStructHandler.get());
+  MSStructHandler.reset();
   PP.RemovePragmaHandler(UnusedHandler.get());
   UnusedHandler.reset();
   PP.RemovePragmaHandler(WeakHandler.get());
