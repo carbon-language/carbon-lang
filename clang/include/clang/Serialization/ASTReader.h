@@ -811,7 +811,9 @@ private:
   ///
   /// This routine should only be used for fatal errors that have to
   /// do with non-routine failures (e.g., corrupted AST file).
-  void Error(const char *Msg);
+  void Error(llvm::StringRef Msg);
+  void Error(unsigned DiagID, llvm::StringRef Arg1 = llvm::StringRef(),
+             llvm::StringRef Arg2 = llvm::StringRef());
 
   ASTReader(const ASTReader&); // do not implement
   ASTReader &operator=(const ASTReader &); // do not implement

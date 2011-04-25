@@ -957,8 +957,16 @@ bool ASTReader::ReadDeclContextStorage(llvm::BitstreamCursor &Cursor,
   return false;
 }
 
-void ASTReader::Error(const char *Msg) {
-  Diag(diag::err_fe_pch_malformed) << Msg;
+void ASTReader::Error(llvm::StringRef Msg) {
+  Error(diag::err_fe_pch_malformed, Msg);
+}
+
+void ASTReader::Error(unsigned DiagID,
+                      llvm::StringRef Arg1, llvm::StringRef Arg2) {
+  if (Diags.isDiagnosticInFlight())
+    Diags.SetDelayedDiagnostic(DiagID, Arg1, Arg2);
+  else
+    Diag(DiagID) << Arg1 << Arg2;
 }
 
 /// \brief Tell the AST listener about the predefines buffers in the chain.
@@ -1310,8 +1318,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(unsigned ID) {
          || (time_t)Record[5] != File->getModificationTime()
 #endif
         )) {
-      Diag(diag::err_fe_pch_file_modified)
-        << Filename;
+      Error(diag::err_fe_pch_file_modified, Filename);
       return Failure;
     }
 
