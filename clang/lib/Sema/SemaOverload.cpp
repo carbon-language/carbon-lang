@@ -2171,21 +2171,24 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
     // unwrap.
     UnwrappedAnyPointer = true;
 
+    Qualifiers FromQuals = FromType.getQualifiers();
+    Qualifiers ToQuals = ToType.getQualifiers();
+    
     //   -- for every j > 0, if const is in cv 1,j then const is in cv
     //      2,j, and similarly for volatile.
-    if (!CStyle && !ToType.isAtLeastAsQualifiedAs(FromType))
+    if (!CStyle && !ToQuals.compatiblyIncludes(FromQuals))
       return false;
 
     //   -- if the cv 1,j and cv 2,j are different, then const is in
     //      every cv for 0 < k < j.
-    if (!CStyle && FromType.getCVRQualifiers() != ToType.getCVRQualifiers()
+    if (!CStyle && FromQuals.getCVRQualifiers() != ToQuals.getCVRQualifiers()
         && !PreviousToQualsIncludeConst)
       return false;
 
     // Keep track of whether all prior cv-qualifiers in the "to" type
     // include const.
     PreviousToQualsIncludeConst
-      = PreviousToQualsIncludeConst && ToType.isConstQualified();
+      = PreviousToQualsIncludeConst && ToQuals.hasConst();
   }
 
   // We are left with FromType and ToType being the pointee types
