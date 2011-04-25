@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyProfiler-x86.cpp --------------------------*- C++ -*-===//
+//===-- UnwindAssemblyx86.cpp -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "UnwindAssemblyProfiler-x86.h"
+#include "UnwindAssemblyx86.h"
 
 #include "llvm-c/EnhancedDisassembly.h"
 
@@ -819,34 +819,34 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 //-----------------------------------------------------------------------------------------------
 
 bool
-UnwindAssemblyProfiler_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
+UnwindAssembly_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
 {
     AssemblyParse_x86 asm_parse(thread.GetProcess().GetTarget(), &thread, m_cpu, func);
     return asm_parse.get_non_call_site_unwind_plan (unwind_plan);
 }
 
 bool
-UnwindAssemblyProfiler_x86::GetFastUnwindPlan (AddressRange& func, Thread& thread, UnwindPlan &unwind_plan)
+UnwindAssembly_x86::GetFastUnwindPlan (AddressRange& func, Thread& thread, UnwindPlan &unwind_plan)
 {
     AssemblyParse_x86 asm_parse(thread.GetProcess().GetTarget(), &thread, m_cpu, func);
     return asm_parse.get_fast_unwind_plan (func, unwind_plan);
 }
 
 bool
-UnwindAssemblyProfiler_x86::FirstNonPrologueInsn (AddressRange& func, Target& target, Thread* thread, Address& first_non_prologue_insn)
+UnwindAssembly_x86::FirstNonPrologueInsn (AddressRange& func, Target& target, Thread* thread, Address& first_non_prologue_insn)
 {
     AssemblyParse_x86 asm_parse(target, thread, m_cpu, func);
     return asm_parse.find_first_non_prologue_insn (first_non_prologue_insn);
 }
 
 UnwindAssemblyProfiler *
-UnwindAssemblyProfiler_x86::CreateInstance (const ArchSpec &arch)
+UnwindAssembly_x86::CreateInstance (const ArchSpec &arch)
 {
     const llvm::Triple::ArchType cpu = arch.GetMachine ();
     if (cpu == llvm::Triple::x86)
-        return new UnwindAssemblyProfiler_x86 (k_i386);
+        return new UnwindAssembly_x86 (k_i386);
     else if (cpu == llvm::Triple::x86_64)
-        return new UnwindAssemblyProfiler_x86 (k_x86_64);
+        return new UnwindAssembly_x86 (k_x86_64);
     return NULL;
 }
 
@@ -856,26 +856,26 @@ UnwindAssemblyProfiler_x86::CreateInstance (const ArchSpec &arch)
 //------------------------------------------------------------------
 
 const char *
-UnwindAssemblyProfiler_x86::GetPluginName()
+UnwindAssembly_x86::GetPluginName()
 {
-    return "UnwindAssemblyProfiler_x86";
+    return "UnwindAssembly_x86";
 }
 
 const char *
-UnwindAssemblyProfiler_x86::GetShortPluginName()
+UnwindAssembly_x86::GetShortPluginName()
 {
-    return "unwindassemblyprofiler.x86";
+    return "unwindassembly.x86";
 }
 
 
 uint32_t
-UnwindAssemblyProfiler_x86::GetPluginVersion()
+UnwindAssembly_x86::GetPluginVersion()
 {
     return 1;
 }
 
 void
-UnwindAssemblyProfiler_x86::Initialize()
+UnwindAssembly_x86::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
@@ -883,20 +883,20 @@ UnwindAssemblyProfiler_x86::Initialize()
 }
 
 void
-UnwindAssemblyProfiler_x86::Terminate()
+UnwindAssembly_x86::Terminate()
 {
     PluginManager::UnregisterPlugin (CreateInstance);
 }
 
 
 const char *
-UnwindAssemblyProfiler_x86::GetPluginNameStatic()
+UnwindAssembly_x86::GetPluginNameStatic()
 {
-    return "UnwindAssemblyProfiler_x86";
+    return "UnwindAssembly_x86";
 }
 
 const char *
-UnwindAssemblyProfiler_x86::GetPluginDescriptionStatic()
+UnwindAssembly_x86::GetPluginDescriptionStatic()
 {
     return "i386 and x86_64 assembly language profiler plugin.";
 }

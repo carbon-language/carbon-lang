@@ -1,4 +1,4 @@
-//===-- UnwindAssemblyProfiler-x86.h ----------------------------*- C++ -*-===//
+//===-- UnwindAssemblyx86.h -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_UnwindAssemblyProfiler_x86_h_
-#define liblldb_UnwindAssemblyProfiler_x86_h_
+#ifndef liblldb_UnwindAssemblyx86_h_
+#define liblldb_UnwindAssemblyx86_h_
 
 #include "lldb/lldb-private.h"
 #include "lldb/Target/UnwindAssemblyProfiler.h"
@@ -16,11 +16,11 @@
 
 namespace lldb_private {
     
-class UnwindAssemblyProfiler_x86 : public lldb_private::UnwindAssemblyProfiler
+class UnwindAssembly_x86 : public lldb_private::UnwindAssemblyProfiler
 {
 public:
 
-    ~UnwindAssemblyProfiler_x86 () { }
+    ~UnwindAssembly_x86 () { }
 
     virtual bool
     GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, lldb_private::Thread& thread, UnwindPlan& unwind_plan);
@@ -61,7 +61,7 @@ public:
     GetPluginVersion();
     
 private:
-    UnwindAssemblyProfiler_x86(int cpu) : 
+    UnwindAssembly_x86(int cpu) : 
           lldb_private::UnwindAssemblyProfiler(), m_cpu(cpu) { } // Call CreateInstance instead.
 
     int m_cpu;
@@ -70,4 +70,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // liblldb_UnwindAssemblyProfiler_x86_h_
+#endif // liblldb_UnwindAssemblyx86_h_

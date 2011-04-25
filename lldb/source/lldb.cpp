@@ -30,9 +30,10 @@
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARF.h"
 #include "Plugins/SymbolFile/DWARF/SymbolFileDWARFDebugMap.h"
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
-#include "Plugins/UnwindAssembly/UnwindAssemblyProfiler-x86.h"
-#include "Plugins/ArchDefaultUnwindPlan/ArchDefaultUnwindPlan-x86.h"
-#include "Plugins/ArchVolatileRegs/ArchVolatileRegs-x86.h"
+#include "Plugins/UnwindAssembly/x86/UnwindAssemblyx86.h"
+#include "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h"
+#include "Plugins/ArchDefaultUnwindPlan/x86/ArchDefaultUnwindPlan-x86.h"
+#include "Plugins/ArchVolatileRegs/x86/ArchVolatileRegs-x86.h"
 
 #if defined (__APPLE__)
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
@@ -82,7 +83,8 @@ lldb_private::Initialize ()
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
         SymbolFileSymtab::Initialize();
-        UnwindAssemblyProfiler_x86::Initialize();
+        UnwindAssembly_x86::Initialize();
+        UnwindAssemblyInstEmulation::Initialize();
         ArchDefaultUnwindPlan_x86_64::Initialize();
         ArchDefaultUnwindPlan_i386::Initialize();
         ArchVolatileRegs_x86::Initialize();
@@ -150,7 +152,8 @@ lldb_private::Terminate ()
     ObjectFileELF::Terminate();
     SymbolFileDWARF::Terminate();
     SymbolFileSymtab::Terminate();
-    UnwindAssemblyProfiler_x86::Terminate();
+    UnwindAssembly_x86::Terminate();
+    UnwindAssemblyInstEmulation::Terminate();
     ArchDefaultUnwindPlan_i386::Terminate();
     ArchDefaultUnwindPlan_x86_64::Terminate();
     ArchVolatileRegs_x86::Terminate();
