@@ -8763,23 +8763,23 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
       Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(lhs->getLocStart(), OpLoc)
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
-      Self.PDiag(diag::note_precedence_bitwise_first)
-          << BinOp::getOpcodeStr(Opc),
-      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()),
       Self.PDiag(diag::note_precedence_bitwise_silence)
           << BinOp::getOpcodeStr(lhsopc),
-                       lhs->getSourceRange());
+      lhs->getSourceRange(),
+      Self.PDiag(diag::note_precedence_bitwise_first)
+          << BinOp::getOpcodeStr(Opc),
+      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
   else if (BinOp::isComparisonOp(rhsopc))
     SuggestParentheses(Self, OpLoc,
       Self.PDiag(diag::warn_precedence_bitwise_rel)
           << SourceRange(OpLoc, rhs->getLocEnd())
           << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
+      Self.PDiag(diag::note_precedence_bitwise_silence)
+          << BinOp::getOpcodeStr(rhsopc),
+      rhs->getSourceRange(),
       Self.PDiag(diag::note_precedence_bitwise_first)
         << BinOp::getOpcodeStr(Opc),
-      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()),
-      Self.PDiag(diag::note_precedence_bitwise_silence)
-        << BinOp::getOpcodeStr(rhsopc),
-                       rhs->getSourceRange());
+      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
 }
 
 /// \brief It accepts a '&&' expr that is inside a '||' one.
@@ -10251,18 +10251,18 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
 
   Diag(Loc, diagnostic) << E->getSourceRange();
 
+  SourceLocation Open = E->getSourceRange().getBegin();
+  SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
+  Diag(Loc, diag::note_condition_assign_silence)
+        << FixItHint::CreateInsertion(Open, "(")
+        << FixItHint::CreateInsertion(Close, ")");
+
   if (IsOrAssign)
     Diag(Loc, diag::note_condition_or_assign_to_comparison)
       << FixItHint::CreateReplacement(Loc, "!=");
   else
     Diag(Loc, diag::note_condition_assign_to_comparison)
       << FixItHint::CreateReplacement(Loc, "==");
-
-  SourceLocation Open = E->getSourceRange().getBegin();
-  SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
-  Diag(Loc, diag::note_condition_assign_silence)
-        << FixItHint::CreateInsertion(Open, "(")
-        << FixItHint::CreateInsertion(Close, ")");
 }
 
 /// \brief Redundant parentheses over an equality comparison can indicate
@@ -10285,11 +10285,11 @@ void Sema::DiagnoseEqualityWithExtraParens(ParenExpr *parenE) {
       SourceLocation Loc = opE->getOperatorLoc();
       
       Diag(Loc, diag::warn_equality_with_extra_parens) << E->getSourceRange();
-      Diag(Loc, diag::note_equality_comparison_to_assign)
-        << FixItHint::CreateReplacement(Loc, "=");
       Diag(Loc, diag::note_equality_comparison_silence)
         << FixItHint::CreateRemoval(parenE->getSourceRange().getBegin())
         << FixItHint::CreateRemoval(parenE->getSourceRange().getEnd());
+      Diag(Loc, diag::note_equality_comparison_to_assign)
+        << FixItHint::CreateReplacement(Loc, "=");
     }
 }
 
