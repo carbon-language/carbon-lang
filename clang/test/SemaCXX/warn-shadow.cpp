@@ -70,3 +70,14 @@ struct S {
   }
 };
 }
+
+extern int bob; // expected-note {{previous declaration is here}}
+
+// rdar://8883302
+void rdar8883302() {
+  extern int bob; // don't warn for shadowing.
+}
+
+void test8() {
+  int bob; // expected-warning {{declaration shadows a variable in the global namespace}}
+}

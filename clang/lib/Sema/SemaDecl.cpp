@@ -3664,10 +3664,11 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
     return;
 
   // Don't diagnose declarations at file scope.
-  DeclContext *NewDC = D->getDeclContext();
-  if (NewDC->isFileContext())
+  if (D->hasGlobalStorage())
     return;
-  
+
+  DeclContext *NewDC = D->getDeclContext();
+
   // Only diagnose if we're shadowing an unambiguous field or variable.
   if (R.getResultKind() != LookupResult::Found)
     return;
@@ -3684,17 +3685,6 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
 
   if (VarDecl *shadowedVar = dyn_cast<VarDecl>(ShadowedDecl))
     if (shadowedVar->isExternC()) {
-      // Don't warn for this case:
-      //
-      // @code
-      // extern int bob;
-      // void f() {
-      //   extern int bob;
-      // }
-      // @endcode
-      if (D->isExternC())
-        return;
-
       // For shadowing external vars, make sure that we point to the global
       // declaration, not a locally scoped extern declaration.
       for (VarDecl::redecl_iterator
