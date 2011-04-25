@@ -177,6 +177,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   // See if we can constant fold this builtin.  If so, don't emit it at all.
   Expr::EvalResult Result;
   if (E->Evaluate(Result, CGM.getContext())) {
+    // Short circuiting the __builtin_expect on its 1st argument
+    // must still IR-gen the 1st and 2nd argument's side-effect.
+    if (BuiltinID == Builtin::BI__builtin_expect) {
+      if (E->getArg(0)->HasSideEffects(getContext()))
+        (void)EmitScalarExpr(E->getArg(0));
+      if (E->getArg(1)->HasSideEffects(getContext()))
+        (void)EmitScalarExpr(E->getArg(1));
+    }
+    
     if (Result.Val.isInt())
       return RValue::get(llvm::ConstantInt::get(getLLVMContext(),
                                                 Result.Val.getInt()));
