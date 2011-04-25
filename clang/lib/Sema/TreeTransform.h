@@ -2819,8 +2819,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     Expr *InputExpr = Input.getSourceExpression();
     if (!InputExpr) InputExpr = Input.getArgument().getAsExpr();
 
-    ExprResult E
-      = getDerived().TransformExpr(InputExpr);
+    ExprResult E = getDerived().TransformExpr(InputExpr);
     if (E.isInvalid()) return true;
     Output = TemplateArgumentLoc(TemplateArgument(E.take()), E.take());
     return false;

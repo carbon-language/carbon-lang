@@ -3840,18 +3840,18 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   if (T->isCharType() || T->isWideCharType())
     return Owned(new (Context) CharacterLiteral(
                                              Arg.getAsIntegral()->getZExtValue(),
-                                             T->isWideCharType(),
-                                             T,
-                                             Loc));
+                                             T->isWideCharType(), T, Loc));
   if (T->isBooleanType())
     return Owned(new (Context) CXXBoolLiteralExpr(
                                             Arg.getAsIntegral()->getBoolValue(),
-                                            T,
-                                            Loc));
+                                            T, Loc));
 
+  // If this is an enum type that we're instantiating, we need to use an integer
+  // type the same size as the enumerator.  We don't want to build an
+  // IntegerLiteral with enum type.
   QualType BT;
   if (const EnumType *ET = T->getAs<EnumType>())
-    BT = ET->getDecl()->getPromotionType();
+    BT = ET->getDecl()->getIntegerType();
   else
     BT = T;
 
@@ -3859,10 +3859,9 @@ Sema::BuildExpressionFromIntegralTemplateArgument(const TemplateArgument &Arg,
   if (T->isEnumeralType()) {
     // FIXME: This is a hack. We need a better way to handle substituted
     // non-type template parameters.
-    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast,
-                                      E, 0, 
-                                      Context.getTrivialTypeSourceInfo(T, Loc),
-                                      Loc, Loc);
+    E = CStyleCastExpr::Create(Context, T, VK_RValue, CK_IntegralCast, E, 0, 
+                               Context.getTrivialTypeSourceInfo(T, Loc),
+                               Loc, Loc);
   }
   
   return Owned(E);
