@@ -390,7 +390,7 @@ SBDebugger::GetVersionString ()
 const char *
 SBDebugger::StateAsCString (StateType state)
 {
-    return StateAsCString (state);
+    return lldb_private::StateAsCString (state);
 }
 
 bool
@@ -398,7 +398,7 @@ SBDebugger::StateIsRunningState (StateType state)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    const bool result = StateIsRunningState (state);
+    const bool result = lldb_private::StateIsRunningState (state);
     if (log)
         log->Printf ("SBDebugger::StateIsRunningState (state=%s) => %i", 
                      StateAsCString (state), result);
@@ -411,7 +411,7 @@ SBDebugger::StateIsStoppedState (StateType state)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    const bool result = StateIsStoppedState (state);
+    const bool result = lldb_private::StateIsStoppedState (state);
     if (log)
         log->Printf ("SBDebugger::StateIsStoppedState (state=%s) => %i", 
                      StateAsCString (state), result);
