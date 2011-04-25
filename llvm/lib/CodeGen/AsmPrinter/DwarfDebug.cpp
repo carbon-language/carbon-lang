@@ -696,7 +696,8 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
         const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
         if (DVInsn->getOperand(1).isImm() &&
             TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
-          TheCU->addVariableAddress(DV, VariableDie, DVInsn->getOperand(1).getImm());
+          TheCU->addFrameVariableAddress(DV, VariableDie, 
+                                         DVInsn->getOperand(1).getImm());
           updated = true;
         } else
           updated = TheCU->addRegisterAddress(VariableDie, RegOp);
@@ -730,7 +731,7 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
   // .. else use frame index, if available.
   int FI = 0;
   if (findVariableFrameIndex(DV, &FI))
-    TheCU->addVariableAddress(DV, VariableDie, FI);
+    TheCU->addFrameVariableAddress(DV, VariableDie, FI);
   
   DV->setDIE(VariableDie);
   return VariableDie;

@@ -192,9 +192,10 @@ void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/// addVariableAddress - Add DW_AT_location attribute for a DbgVariable based
-/// on provided frame index.
-void CompileUnit::addVariableAddress(DbgVariable *&DV, DIE *Die, int64_t FI) {
+/// addFrameVariableAddress - Add DW_AT_location attribute for a 
+/// DbgVariable based on provided frame index.
+void CompileUnit::addFrameVariableAddress(DbgVariable *&DV, DIE *Die, 
+                                          int64_t FI) {
   MachineLocation Location;
   unsigned FrameReg;
   const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
