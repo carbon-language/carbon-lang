@@ -2235,7 +2235,7 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
     }
   }
 
-  // Prioritize by Seith-Ulmann number and push CopyToReg nodes down.
+  // Prioritize by Sethi-Ulmann number and push CopyToReg nodes down.
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
   if (LPriority != RPriority) {
