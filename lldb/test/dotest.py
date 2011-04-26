@@ -325,22 +325,14 @@ def parseOptionsAndInitTestdirs():
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
-            archSpec = sys.argv[index]
-            if archSpec.find('^') != -1:
-                archs = archSpec.split('^')
-            else:
-                os.environ["ARCH"] = archSpec
+            archs = sys.argv[index].split('^')
             index += 1
         elif sys.argv[index].startswith('-C'):
             # Increment by 1 to fetch the CC spec.
             index += 1
             if index >= len(sys.argv) or sys.argv[index].startswith('-'):
                 usage()
-            ccSpec = sys.argv[index]
-            if ccSpec.find('^') != -1:
-                compilers = ccSpec.split('^')
-            else:
-                os.environ["CC"] = ccSpec
+            compilers = sys.argv[index].split('^')
             index += 1
         elif sys.argv[index].startswith('-D'):
             dumpSysPath = True
