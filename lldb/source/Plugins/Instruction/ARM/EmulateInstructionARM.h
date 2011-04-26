@@ -75,8 +75,28 @@ public:
     GetPluginDescriptionStatic ();
     
     static lldb_private::EmulateInstruction *
-    CreateInstance (const lldb_private::ArchSpec &arch);
+    CreateInstance (const lldb_private::ArchSpec &arch, 
+                    InstructionType inst_type);
     
+    static bool
+    SupportsEmulatingIntructionsOfTypeStatic (InstructionType inst_type)
+    {
+        switch (inst_type)
+        {
+            case eInstructionTypeAny:
+            case eInstructionTypePrologueEpilogue:
+            case eInstructionTypePCModifying:
+                return true;
+                
+            case eInstructionTypeAll:
+                return false;
+                
+            default:
+                break;
+        }
+        return false;
+    }
+
     virtual const char *
     GetPluginName()
     {
@@ -106,38 +126,43 @@ public:
     };
     
     EmulateInstructionARM (const ArchSpec &arch) :
-        EmulateInstruction (lldb::eByteOrderLittle,
-                            4,
-                            arch),
+        EmulateInstruction (arch),
         m_arm_isa (0),
         m_opcode_mode (eModeInvalid),
         m_opcode_cpsr (0),
-        m_it_session ()
+        m_it_session (),
+        m_ignore_conditions (false)
     {
+        SetArchitecture (arch);
     }
 
-    EmulateInstructionARM (const ArchSpec &arch,
-                           void *baton,
-                           ReadMemory read_mem_callback,
-                           WriteMemory write_mem_callback,
-                           ReadRegister read_reg_callback,
-                           WriteRegister write_reg_callback) :
-        EmulateInstruction (lldb::eByteOrderLittle, // Byte order for ARM
-                            4,                      // Address size in byte
-                            arch,
-                            baton,
-                            read_mem_callback,
-                            write_mem_callback,
-                            read_reg_callback,
-                            write_reg_callback),
-        m_arm_isa (0),
-        m_opcode_mode (eModeInvalid),
-        m_opcode_cpsr (0),
-        m_it_session ()
+//    EmulateInstructionARM (const ArchSpec &arch,
+//                           bool ignore_conditions,
+//                           void *baton,
+//                           ReadMemory read_mem_callback,
+//                           WriteMemory write_mem_callback,
+//                           ReadRegister read_reg_callback,
+//                           WriteRegister write_reg_callback) :
+//        EmulateInstruction (arch,
+//                            ignore_conditions,
+//                            baton,
+//                            read_mem_callback,
+//                            write_mem_callback,
+//                            read_reg_callback,
+//                            write_reg_callback),
+//        m_arm_isa (0),
+//        m_opcode_mode (eModeInvalid),
+//        m_opcode_cpsr (0),
+//        m_it_session ()
+//    {
+//    }
+    
+    virtual bool
+    SupportsEmulatingIntructionsOfType (InstructionType inst_type)
     {
+        return SupportsEmulatingIntructionsOfTypeStatic (inst_type);
     }
-    
-    
+
     virtual bool
     SetArchitecture (const ArchSpec &arch);
 
@@ -145,13 +170,16 @@ public:
     ReadInstruction ();
     
     virtual bool
-    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr);
+    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target);
 
     virtual bool
-    EvaluateInstruction ();
+    EvaluateInstruction (uint32_t evaluate_options);
     
     virtual bool
     TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data);
+
+    virtual const char *
+    GetRegisterName (uint32_t reg_kind, uint32_t reg_num);
 
     uint32_t
     ArchVersion();
@@ -340,10 +368,10 @@ protected:
     
 
     static ARMOpcode*
-    GetARMOpcodeForInstruction (const uint32_t opcode);
+    GetARMOpcodeForInstruction (const uint32_t opcode, uint32_t isa_mask);
 
     static ARMOpcode*
-    GetThumbOpcodeForInstruction (const uint32_t opcode);
+    GetThumbOpcodeForInstruction (const uint32_t opcode, uint32_t isa_mask);
 
     // A8.6.123 PUSH
     bool
@@ -948,6 +976,7 @@ protected:
     uint32_t m_opcode_cpsr;
     uint32_t m_new_inst_cpsr; // This can get updated by the opcode.
     ITSession m_it_session;
+    bool m_ignore_conditions;
 };
 
 }   // namespace lldb_private

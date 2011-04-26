@@ -9,6 +9,7 @@
 
 #include "lldb/Core/EmulateInstruction.h"
 
+#include "lldb/Core/Address.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
@@ -17,6 +18,7 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
@@ -25,7 +27,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 EmulateInstruction*
-EmulateInstruction::FindPlugin (const ArchSpec &arch, const char *plugin_name)
+EmulateInstruction::FindPlugin (const ArchSpec &arch, InstructionType supported_inst_type, const char *plugin_name)
 {
     EmulateInstructionCreateInstance create_callback = NULL;
     if (plugin_name)
@@ -33,7 +35,7 @@ EmulateInstruction::FindPlugin (const ArchSpec &arch, const char *plugin_name)
         create_callback  = PluginManager::GetEmulateInstructionCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-           	EmulateInstruction *emulate_insn_ptr = create_callback(arch);
+           	EmulateInstruction *emulate_insn_ptr = create_callback(arch, supported_inst_type);
             if (emulate_insn_ptr)
                 return emulate_insn_ptr;
         }
@@ -42,7 +44,7 @@ EmulateInstruction::FindPlugin (const ArchSpec &arch, const char *plugin_name)
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetEmulateInstructionCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            EmulateInstruction *emulate_insn_ptr = create_callback(arch);
+            EmulateInstruction *emulate_insn_ptr = create_callback(arch, supported_inst_type);
             if (emulate_insn_ptr)
                 return emulate_insn_ptr;
         }
@@ -50,47 +52,14 @@ EmulateInstruction::FindPlugin (const ArchSpec &arch, const char *plugin_name)
     return NULL;
 }
 
-EmulateInstruction::EmulateInstruction 
-(
-    lldb::ByteOrder byte_order,
-    uint32_t addr_byte_size,
-    const ArchSpec &arch,
-    void *baton,
-    ReadMemory read_mem_callback,
-    WriteMemory write_mem_callback,
-    ReadRegister read_reg_callback,
-    WriteRegister write_reg_callback
-) :
-    m_byte_order (endian::InlHostByteOrder()),
-    m_addr_byte_size (addr_byte_size),
-    m_arch (arch),
-    m_baton (baton),
-    m_read_mem_callback (read_mem_callback),
-    m_write_mem_callback (write_mem_callback),
-    m_read_reg_callback (read_reg_callback),
-    m_write_reg_callback (write_reg_callback),
-    m_opcode_pc (LLDB_INVALID_ADDRESS),
-    m_opcode (),
-    m_advance_pc (false)
-{
-}
-
-EmulateInstruction::EmulateInstruction 
-(
-    lldb::ByteOrder byte_order,
-    uint32_t addr_byte_size,
-    const ArchSpec &arch
-) :
-    m_byte_order (endian::InlHostByteOrder()),
-    m_addr_byte_size (addr_byte_size),
+EmulateInstruction::EmulateInstruction (const ArchSpec &arch) :
     m_arch (arch),
     m_baton (NULL),
     m_read_mem_callback (&ReadMemoryDefault),
     m_write_mem_callback (&WriteMemoryDefault),
     m_read_reg_callback (&ReadRegisterDefault),
     m_write_reg_callback (&WriteRegisterDefault),
-    m_opcode_pc (LLDB_INVALID_ADDRESS),
-    m_advance_pc (false)
+    m_opcode_pc (LLDB_INVALID_ADDRESS)
 {
     ::memset (&m_opcode, 0, sizeof (m_opcode));
 }
@@ -99,7 +68,7 @@ uint64_t
 EmulateInstruction::ReadRegisterUnsigned (uint32_t reg_kind, uint32_t reg_num, uint64_t fail_value, bool *success_ptr)
 {
     uint64_t uval64 = 0;
-    bool success = m_read_reg_callback (m_baton, reg_kind, reg_num, uval64);
+    bool success = m_read_reg_callback (this, m_baton, reg_kind, reg_num, uval64);
     if (success_ptr)
         *success_ptr = success;
     if (!success)
@@ -110,7 +79,7 @@ EmulateInstruction::ReadRegisterUnsigned (uint32_t reg_kind, uint32_t reg_num, u
 bool
 EmulateInstruction::WriteRegisterUnsigned (const Context &context, uint32_t reg_kind, uint32_t reg_num, uint64_t reg_value)
 {
-    return m_write_reg_callback (m_baton, context, reg_kind, reg_num, reg_value);    
+    return m_write_reg_callback (this, m_baton, context, reg_kind, reg_num, reg_value);    
 }
 
 uint64_t
@@ -121,11 +90,11 @@ EmulateInstruction::ReadMemoryUnsigned (const Context &context, lldb::addr_t add
     if (byte_size <= 8)
     {
         uint8_t buf[sizeof(uint64_t)];
-        size_t bytes_read = m_read_mem_callback (m_baton, context, addr, buf, byte_size);
+        size_t bytes_read = m_read_mem_callback (this, m_baton, context, addr, buf, byte_size);
         if (bytes_read == byte_size)
         {
             uint32_t offset = 0;
-            DataExtractor data (buf, byte_size, m_byte_order, m_addr_byte_size);
+            DataExtractor data (buf, byte_size, GetByteOrder(), GetAddressByteSize());
             uval64 = data.GetMaxU64 (&offset, byte_size);
             success = true;
         }
@@ -149,7 +118,7 @@ EmulateInstruction::WriteMemoryUnsigned (const Context &context,
     StreamString strm(Stream::eBinary, GetAddressByteSize(), GetByteOrder());
     strm.PutMaxHex64 (uval, uval_byte_size);
     
-    size_t bytes_written = m_write_mem_callback (m_baton, context, addr, strm.GetData(), uval_byte_size);
+    size_t bytes_written = m_write_mem_callback (this, m_baton, context, addr, strm.GetData(), uval_byte_size);
     if (bytes_written == uval_byte_size)
         return true;
     return false;
@@ -208,7 +177,8 @@ EmulateInstruction::SetWriteRegCallback (WriteRegister write_reg_callback)
 //
 
 size_t 
-EmulateInstruction::ReadMemoryFrame (void *baton,
+EmulateInstruction::ReadMemoryFrame (EmulateInstruction *instruction,
+                                     void *baton,
                                      const Context &context, 
                                      lldb::addr_t addr, 
                                      void *dst,
@@ -233,7 +203,8 @@ EmulateInstruction::ReadMemoryFrame (void *baton,
 }
 
 size_t 
-EmulateInstruction::WriteMemoryFrame (void *baton,
+EmulateInstruction::WriteMemoryFrame (EmulateInstruction *instruction,
+                                      void *baton,
                                       const Context &context, 
                                       lldb::addr_t addr, 
                                       const void *dst,
@@ -262,7 +233,8 @@ EmulateInstruction::WriteMemoryFrame (void *baton,
 }
 
 bool   
-EmulateInstruction::ReadRegisterFrame  (void *baton,
+EmulateInstruction::ReadRegisterFrame  (EmulateInstruction *instruction,
+                                        void *baton,
                                         uint32_t reg_kind, 
                                         uint32_t reg_num,
                                         uint64_t &reg_value)
@@ -289,7 +261,8 @@ EmulateInstruction::ReadRegisterFrame  (void *baton,
 }
 
 bool   
-EmulateInstruction::WriteRegisterFrame (void *baton,
+EmulateInstruction::WriteRegisterFrame (EmulateInstruction *instruction,
+                                        void *baton,
                                         const Context &context, 
                                         uint32_t reg_kind, 
                                         uint32_t reg_num,
@@ -310,7 +283,8 @@ EmulateInstruction::WriteRegisterFrame (void *baton,
 }
 
 size_t 
-EmulateInstruction::ReadMemoryDefault (void *baton,
+EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
+                                       void *baton,
                                        const Context &context, 
                                        lldb::addr_t addr, 
                                        void *dst,
@@ -324,7 +298,8 @@ EmulateInstruction::ReadMemoryDefault (void *baton,
 }
 
 size_t 
-EmulateInstruction::WriteMemoryDefault (void *baton,
+EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
+                                        void *baton,
                                         const Context &context, 
                                         lldb::addr_t addr, 
                                         const void *dst,
@@ -336,7 +311,8 @@ EmulateInstruction::WriteMemoryDefault (void *baton,
 }
 
 bool   
-EmulateInstruction::ReadRegisterDefault  (void *baton,
+EmulateInstruction::ReadRegisterDefault  (EmulateInstruction *instruction,
+                                          void *baton,
                                           uint32_t reg_kind, 
                                           uint32_t reg_num,
                                           uint64_t &reg_value)
@@ -350,7 +326,8 @@ EmulateInstruction::ReadRegisterDefault  (void *baton,
 }
 
 bool   
-EmulateInstruction::WriteRegisterDefault (void *baton,
+EmulateInstruction::WriteRegisterDefault (EmulateInstruction *instruction,
+                                          void *baton,
                                           const Context &context, 
                                           uint32_t reg_kind, 
                                           uint32_t reg_num,
@@ -601,54 +578,69 @@ EmulateInstruction::PrintContext (const char *context_type, const Context &conte
     }
 }
 
-void
-EmulateInstruction::TranslateRegister (uint32_t kind, uint32_t num, std::string &name)
+bool
+EmulateInstruction::SetInstruction (const Opcode &opcode, const Address &inst_addr, Target *target)
 {
-    if (kind == eRegisterKindDWARF)
+    m_opcode = opcode;
+    m_opcode_pc = LLDB_INVALID_ADDRESS;
+    if (inst_addr.IsValid())
     {
-        if (num == 13) //dwarf_sp  NOTE:  This is ARM-SPECIFIC
-            name = "sp";
-        else if (num == 14) //dwarf_lr  NOTE:  This is ARM-SPECIFIC
-            name = "lr";
-        else if (num == 15) //dwarf_pc  NOTE:  This is ARM-SPECIFIC
-            name = "pc";
-        else if (num == 16) //dwarf_cpsr  NOTE:  This is ARM-SPECIFIC
-            name = "cpsr";
-        else
-        {
-            StreamString sstr;
-            
-            sstr.Printf ("r%d", num);
-            name = sstr.GetData();
-        }
-            
+        if (target)
+            m_opcode_pc = inst_addr.GetLoadAddress (target);
+        if (m_opcode_pc == LLDB_INVALID_ADDRESS)
+            m_opcode_pc = inst_addr.GetFileAddress ();
     }
-    else if (kind == eRegisterKindGeneric)
-    {
-        if (num == LLDB_REGNUM_GENERIC_SP)
-            name = "sp";
-        else if (num == LLDB_REGNUM_GENERIC_FLAGS)
-            name = "cpsr";
-        else if (num == LLDB_REGNUM_GENERIC_PC)
-            name = "pc";
-        else if (num == LLDB_REGNUM_GENERIC_RA)
-            name = "lr";
-        else
-        {
-            StreamString sstr;
-            
-            sstr.Printf ("r%d", num);
-            name = sstr.GetData();
-        }
-    }
-    else
-    {
-        StreamString sstr;
-            
-        sstr.Printf ("r%d", num);
-        name = sstr.GetData();
-    }
+    return true;
 }
 
+
+const char *
+EmulateInstruction::TranslateRegister (uint32_t kind, uint32_t num, std::string &name)
+{
+    if (kind == eRegisterKindGeneric)
+    {
+        switch (num)
+        {
+            case LLDB_REGNUM_GENERIC_PC:    name = "pc";    break;
+            case LLDB_REGNUM_GENERIC_SP:    name = "sp";    break;
+            case LLDB_REGNUM_GENERIC_FP:    name = "fp";    break;
+            case LLDB_REGNUM_GENERIC_RA:    name = "ra";    break;
+            case LLDB_REGNUM_GENERIC_FLAGS: name = "flags"; break;
+            default:                        name.clear();   break;
+        }
+        if (!name.empty())
+            return name.c_str();
+    }
+    const char *kind_cstr = NULL;
+    
+    switch (kind)
+    {
+        case eRegisterKindGCC:        // the register numbers seen in eh_frame
+            kind_cstr = "gcc";
+            break;
+
+        case eRegisterKindDWARF:      // the register numbers seen DWARF
+            kind_cstr = "dwarf";
+            break;
+            
+        case eRegisterKindGeneric:    // insn ptr reg, stack ptr reg, etc not specific to any particular target
+            kind_cstr = "generic";
+            break;
+            
+        case eRegisterKindGDB:        // the register numbers gdb uses (matches stabs numbers?)
+            kind_cstr = "gdb";
+            break;
+            
+        case eRegisterKindLLDB:       // lldb's internal register numbers
+            kind_cstr = "lldb";
+            break;
+    }
+    
+    
+    StreamString sstr;
+    sstr.Printf ("%s(%u)", kind_cstr, num);
+    name.swap (sstr.GetString());
+    return name.c_str();
+}
 
 

@@ -11,6 +11,7 @@
 #define utility_UnwindAssembly_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 
 namespace lldb_private {
@@ -43,8 +44,11 @@ public:
                           Address& first_non_prologue_insn) = 0;
 
 protected:
-    UnwindAssembly();
+    UnwindAssembly (const ArchSpec &arch);
+    ArchSpec m_arch;
+
 private:
+    UnwindAssembly(); // Outlaw default constructor
     DISALLOW_COPY_AND_ASSIGN (UnwindAssembly);
 };
 

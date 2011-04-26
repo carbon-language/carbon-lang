@@ -15,8 +15,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-lldb_private::ArchDefaultUnwindPlan *
-ArchDefaultUnwindPlan_x86_64::CreateInstance (const lldb_private::ArchSpec &arch)
+ArchDefaultUnwindPlan *
+ArchDefaultUnwindPlan_x86_64::CreateInstance (const ArchSpec &arch)
 {
     if (arch.GetMachine () == llvm::Triple::x86_64)
         return new ArchDefaultUnwindPlan_x86_64 ();
@@ -24,7 +24,7 @@ ArchDefaultUnwindPlan_x86_64::CreateInstance (const lldb_private::ArchSpec &arch
 }
 
 ArchDefaultUnwindPlan_x86_64::ArchDefaultUnwindPlan_x86_64() :
-                lldb_private::ArchDefaultUnwindPlan(), 
+                ArchDefaultUnwindPlan(), 
                 m_unwind_plan_sp (new UnwindPlan)
 { 
     UnwindPlan::Row row;
@@ -96,15 +96,16 @@ ArchDefaultUnwindPlan_x86_64::GetPluginDescriptionStatic()
 }
 
 UnwindPlanSP
-ArchDefaultUnwindPlan_x86_64::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
+ArchDefaultUnwindPlan_x86_64::GetArchDefaultUnwindPlan (Thread& thread, 
+                                                        const Address &current_pc)
 {
     return m_unwind_plan_sp;
 }
 
 
 
-lldb_private::ArchDefaultUnwindPlan *
-ArchDefaultUnwindPlan_i386::CreateInstance (const lldb_private::ArchSpec &arch)
+ArchDefaultUnwindPlan *
+ArchDefaultUnwindPlan_i386::CreateInstance (const ArchSpec &arch)
 {
     if (arch.GetMachine () == llvm::Triple::x86)
         return new ArchDefaultUnwindPlan_i386 ();
@@ -112,7 +113,7 @@ ArchDefaultUnwindPlan_i386::CreateInstance (const lldb_private::ArchSpec &arch)
 }
 
 ArchDefaultUnwindPlan_i386::ArchDefaultUnwindPlan_i386() :
-                lldb_private::ArchDefaultUnwindPlan(), 
+                ArchDefaultUnwindPlan(), 
                 m_unwind_plan_sp (new UnwindPlan)
 { 
     UnwindPlan::Row row;
@@ -185,7 +186,7 @@ ArchDefaultUnwindPlan_i386::GetPluginDescriptionStatic()
 }
 
 UnwindPlanSP
-ArchDefaultUnwindPlan_i386::GetArchDefaultUnwindPlan (Thread& thread, Address current_pc)
+ArchDefaultUnwindPlan_i386::GetArchDefaultUnwindPlan (Thread& thread, const Address &current_pc)
 {
     return m_unwind_plan_sp;
 }

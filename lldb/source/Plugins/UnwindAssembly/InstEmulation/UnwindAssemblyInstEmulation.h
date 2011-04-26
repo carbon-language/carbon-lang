@@ -11,8 +11,8 @@
 #define liblldb_UnwindAssemblyInstEmulation_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Target/UnwindAssembly.h"
-#include "lldb/Target/Thread.h"
 
 class UnwindAssemblyInstEmulation : public lldb_private::UnwindAssembly
 {
@@ -43,7 +43,6 @@ public:
     static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
 
-
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -69,14 +68,83 @@ public:
     GetPluginVersion();
     
 private:
+    
+    static size_t
+    ReadMemory (lldb_private::EmulateInstruction *instruction,
+                void *baton,
+                const lldb_private::EmulateInstruction::Context &context, 
+                lldb::addr_t addr, 
+                void *dst,
+                size_t length);
+
+    static size_t
+    WriteMemory (lldb_private::EmulateInstruction *instruction,
+                 void *baton,
+                 const lldb_private::EmulateInstruction::Context &context, 
+                 lldb::addr_t addr, 
+                 const void *dst,
+                 size_t length);
+    
+    static bool
+    ReadRegister (lldb_private::EmulateInstruction *instruction,
+                  void *baton,
+                  uint32_t reg_kind, 
+                  uint32_t reg_num,
+                  uint64_t &reg_value);
+    
+    static bool
+    WriteRegister (lldb_private::EmulateInstruction *instruction,
+                   void *baton,
+                   const lldb_private::EmulateInstruction::Context &context, 
+                   uint32_t reg_kind, 
+                   uint32_t reg_num,
+                   uint64_t reg_value);
+
 
     // Call CreateInstance to get an instance of this class
-    UnwindAssemblyInstEmulation(int cpu) : 
-          lldb_private::UnwindAssembly(), m_cpu(cpu) 
+    UnwindAssemblyInstEmulation (const lldb_private::ArchSpec &arch,
+                                 lldb_private::EmulateInstruction *inst_emulator) :
+        UnwindAssembly (arch),
+        m_inst_emulator_ap (inst_emulator),
+        m_range_ptr (NULL),
+        m_thread_ptr (NULL),
+        m_unwind_plan_ptr (NULL)
     {
+        if (m_inst_emulator_ap.get())
+        {
+            m_inst_emulator_ap->SetBaton (this);
+            m_inst_emulator_ap->SetCallbacks (ReadMemory, WriteMemory, ReadRegister, WriteRegister);
+        }
     }
 
-    int m_cpu;
+    static uint64_t 
+    MakeRegisterKindValuePair (uint32_t reg_kind, uint32_t reg_num)
+    {
+        return (uint64_t)reg_kind << 32 | reg_num;
+    }
+    
+    void
+    SetRegisterValue (uint32_t reg_kind, uint32_t reg_num, uint64_t reg_value)
+    {
+        m_register_values[MakeRegisterKindValuePair (reg_kind, reg_num)] = reg_value;
+    }
+
+    uint64_t
+    GetRegisterValue (uint32_t reg_kind, uint32_t reg_num)
+    {
+        const uint64_t reg_id = MakeRegisterKindValuePair (reg_kind, reg_num);
+        RegisterValueMap::const_iterator pos = m_register_values.find(reg_id);
+        if (pos != m_register_values.end())
+            return pos->second;
+        return (uint64_t)reg_kind << 24 | (uint64_t)reg_num;
+    }
+
+    std::auto_ptr<lldb_private::EmulateInstruction> m_inst_emulator_ap;    
+    lldb_private::AddressRange* m_range_ptr; 
+    lldb_private::Thread* m_thread_ptr;
+    lldb_private::UnwindPlan* m_unwind_plan_ptr;
+    typedef std::map<uint64_t, uint64_t> RegisterValueMap;
+    RegisterValueMap m_register_values;
 };
 
 #endif // liblldb_UnwindAssemblyInstEmulation_h_

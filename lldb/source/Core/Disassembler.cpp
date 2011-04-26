@@ -503,11 +503,11 @@ Instruction::GetAddressClass ()
 bool
 Instruction::DumpEmulation (const ArchSpec &arch)
 {
-	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
 	if (insn_emulator_ap.get())
 	{
-        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress());
-        return insn_emulator_ap->EvaluateInstruction ();
+        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress(), NULL);
+        return insn_emulator_ap->EvaluateInstruction (0);
 	}
 
     return false;
@@ -766,7 +766,7 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
     arch.SetTriple (llvm::Triple (value_sp->GetStringValue()));
 
     bool success = false;
-    std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+    std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
     if (insn_emulator_ap.get())
         success = insn_emulator_ap->TestEmulation (out_stream, arch, data_dictionary);
 
@@ -780,21 +780,20 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
 
 bool
 Instruction::Emulate (const ArchSpec &arch,
-                      bool auto_advance_pc,
+                      uint32_t evaluate_options,
                       void *baton,
                       EmulateInstruction::ReadMemory read_mem_callback,
                       EmulateInstruction::WriteMemory write_mem_callback,
                       EmulateInstruction::ReadRegister read_reg_callback,
                       EmulateInstruction::WriteRegister write_reg_callback)
 {
-	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, NULL));
+	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
 	if (insn_emulator_ap.get())
 	{
 		insn_emulator_ap->SetBaton (baton);
 		insn_emulator_ap->SetCallbacks (read_mem_callback, write_mem_callback, read_reg_callback, write_reg_callback);
-        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress());
-        insn_emulator_ap->SetAdvancePC (auto_advance_pc);
-        return insn_emulator_ap->EvaluateInstruction ();
+        insn_emulator_ap->SetInstruction (GetOpcode(), GetAddress(), NULL);
+        return insn_emulator_ap->EvaluateInstruction (evaluate_options);
 	}
 
     return false;

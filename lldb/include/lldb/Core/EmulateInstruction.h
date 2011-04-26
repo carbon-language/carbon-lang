@@ -86,7 +86,9 @@ class EmulateInstruction :
 public:
 
     static EmulateInstruction*
-    FindPlugin (const ArchSpec &arch, const char *plugin_name);
+    FindPlugin (const ArchSpec &arch, 
+                InstructionType supported_inst_type,
+                const char *plugin_name);
 
     enum ContextType
     {
@@ -366,45 +368,43 @@ public:
     static void
     PrintContext (const char *context_type, const Context &context);
     
-    typedef size_t (*ReadMemory) (void *baton,
+    typedef size_t (*ReadMemory) (EmulateInstruction *instruction,
+                                  void *baton,
                                   const Context &context, 
                                   lldb::addr_t addr, 
                                   void *dst,
                                   size_t length);
     
-    typedef size_t (*WriteMemory) (void *baton,
+    typedef size_t (*WriteMemory) (EmulateInstruction *instruction,
+                                   void *baton,
                                    const Context &context, 
                                    lldb::addr_t addr, 
                                    const void *dst,
                                    size_t length);
     
-    typedef bool   (*ReadRegister)  (void *baton,
+    typedef bool   (*ReadRegister)  (EmulateInstruction *instruction,
+                                     void *baton,
                                      uint32_t reg_kind, 
                                      uint32_t reg_num,
                                      uint64_t &reg_value);
 
-    typedef bool   (*WriteRegister) (void *baton,
+    typedef bool   (*WriteRegister) (EmulateInstruction *instruction,
+                                     void *baton,
                                      const Context &context, 
                                      uint32_t reg_kind, 
                                      uint32_t reg_num,
                                      uint64_t reg_value);
 
-    EmulateInstruction (lldb::ByteOrder byte_order,
-                        uint32_t addr_byte_size,
-                        const ArchSpec &arch,
-                        void *baton,
-                        ReadMemory read_mem_callback,
-                        WriteMemory write_mem_callback,
-                        ReadRegister read_reg_callback,
-                        WriteRegister write_reg_callback);
-                        
-    EmulateInstruction (lldb::ByteOrder byte_order,
-                        uint32_t addr_byte_size,
-                        const ArchSpec &arch);
+    EmulateInstruction (const ArchSpec &arch);
 
     virtual ~EmulateInstruction()
     {
     }
+    //----------------------------------------------------------------------
+    // Mandatory overrides
+    //----------------------------------------------------------------------    
+    virtual bool
+    SupportsEmulatingIntructionsOfType (InstructionType inst_type) = 0;
     
     virtual bool
     SetTargetTriple (const ArchSpec &arch) = 0;
@@ -413,21 +413,20 @@ public:
     ReadInstruction () = 0;
 
     virtual bool
-    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr) = 0;
-
-    virtual bool
-    EvaluateInstruction () = 0;
+    EvaluateInstruction (uint32_t evaluate_options) = 0;
     
     virtual bool
     TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data) = 0;
+
+    virtual const char *
+    GetRegisterName (uint32_t reg_kind, uint32_t reg_num) = 0;
+    //----------------------------------------------------------------------
+    // Optional overrides
+    //----------------------------------------------------------------------
+    virtual bool
+    SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target);
     
-    bool
-    GetAdvancePC () { return m_advance_pc; }
-    
-    void
-    SetAdvancePC (bool value) { m_advance_pc = value; }
-    
-    static void
+    static const char *
     TranslateRegister (uint32_t reg_kind, uint32_t reg_num, std::string &reg_name);
     
     uint64_t
@@ -458,13 +457,13 @@ public:
     uint32_t
     GetAddressByteSize () const
     {
-        return m_addr_byte_size;
+        return m_arch.GetAddressByteSize();
     }
 
     lldb::ByteOrder
     GetByteOrder () const
     {
-        return m_byte_order;
+        return m_arch.GetByteOrder();
     }
 
     const Opcode &
@@ -472,59 +471,73 @@ public:
     {
         return m_opcode;
     }
+    
+    const ArchSpec &
+    GetArchitecture () const
+    {
+        return m_arch;
+    }
 
 
     static size_t 
-    ReadMemoryFrame (void *baton,
+    ReadMemoryFrame (EmulateInstruction *instruction,
+                     void *baton,
                      const Context &context, 
                      lldb::addr_t addr, 
                      void *dst,
                      size_t length);
     
     static size_t 
-    WriteMemoryFrame (void *baton,
+    WriteMemoryFrame (EmulateInstruction *instruction,
+                      void *baton,
                       const Context &context, 
                       lldb::addr_t addr, 
                       const void *dst,
                       size_t length);
     
     static bool   
-    ReadRegisterFrame  (void *baton,
+    ReadRegisterFrame  (EmulateInstruction *instruction,
+                        void *baton,
                         uint32_t reg_kind, 
                         uint32_t reg_num,
                         uint64_t &reg_value);
     
     
     static bool   
-    WriteRegisterFrame (void *baton,
+    WriteRegisterFrame (EmulateInstruction *instruction,
+                        void *baton,
                         const Context &context, 
                         uint32_t reg_kind, 
                         uint32_t reg_num,
                         uint64_t reg_value);
                           
     static size_t 
-    ReadMemoryDefault (void *baton,
+    ReadMemoryDefault (EmulateInstruction *instruction,
+                       void *baton,
                        const Context &context, 
                        lldb::addr_t addr, 
                        void *dst,
                        size_t length);
     
     static size_t 
-    WriteMemoryDefault (void *baton,
+    WriteMemoryDefault (EmulateInstruction *instruction,
+                        void *baton,
                         const Context &context, 
                         lldb::addr_t addr, 
                         const void *dst,
                         size_t length);
     
     static bool   
-    ReadRegisterDefault  (void *baton,
+    ReadRegisterDefault  (EmulateInstruction *instruction,
+                          void *baton,
                           uint32_t reg_kind, 
                           uint32_t reg_num,
                           uint64_t &reg_value);
     
     
     static bool   
-    WriteRegisterDefault (void *baton,
+    WriteRegisterDefault (EmulateInstruction *instruction,
+                          void *baton,
                           const Context &context, 
                           uint32_t reg_kind, 
                           uint32_t reg_num,
@@ -553,8 +566,6 @@ public:
     
 
 protected:
-    lldb::ByteOrder     m_byte_order;
-    uint32_t            m_addr_byte_size;
     ArchSpec            m_arch;
     void *              m_baton;
     ReadMemory          m_read_mem_callback;
@@ -563,7 +574,6 @@ protected:
     WriteRegister       m_write_reg_callback;
     lldb::addr_t        m_opcode_pc;
     Opcode              m_opcode;
-    bool                m_advance_pc;
     //------------------------------------------------------------------
     // For EmulateInstruction only
     //------------------------------------------------------------------

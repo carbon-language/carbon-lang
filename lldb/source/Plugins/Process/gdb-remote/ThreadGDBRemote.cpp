@@ -143,16 +143,21 @@ ThreadGDBRemote::GetUnwinder ()
     {
         const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
         const llvm::Triple::ArchType machine = target_arch.GetMachine();
-        if (machine == llvm::Triple::x86_64 || machine == llvm::Triple::x86)
+        switch (machine)
         {
-            m_unwinder_ap.reset (new UnwindLLDB (*this));
-        }
+            case llvm::Triple::x86_64:
+            case llvm::Triple::x86:
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                m_unwinder_ap.reset (new UnwindLLDB (*this));
+                break;
+
+            default:
 #if defined(__APPLE__)
-        else
-        {
-            m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
-        }
+                m_unwinder_ap.reset (new UnwindMacOSXFrameBackchain (*this));
 #endif
+                break;
+        }
     }
     return m_unwinder_ap.get();
 }

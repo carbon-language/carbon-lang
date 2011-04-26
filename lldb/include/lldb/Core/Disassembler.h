@@ -86,7 +86,7 @@ public:
     
     bool
     Emulate (const ArchSpec &arch,
-             bool auto_advance_pc,
+             uint32_t evaluate_options,
              void *baton,
              EmulateInstruction::ReadMemory read_mem_callback,
              EmulateInstruction::WriteMemory write_mem_calback,

@@ -24,7 +24,8 @@ public:
     ~ArchDefaultUnwindPlan();
 
     virtual lldb::UnwindPlanSP
-    GetArchDefaultUnwindPlan (Thread& thread, Address current_pc) = 0;
+    GetArchDefaultUnwindPlan (Thread& thread, 
+                              const Address &current_pc) = 0;
 
     static lldb::ArchDefaultUnwindPlanSP
     FindPlugin (const ArchSpec &arch);

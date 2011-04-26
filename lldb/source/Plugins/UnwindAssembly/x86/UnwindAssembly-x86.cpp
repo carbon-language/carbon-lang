@@ -818,6 +818,17 @@ AssemblyParse_x86::find_first_non_prologue_insn (Address &address)
 //  UnwindAssemblyParser_x86 method definitions 
 //-----------------------------------------------------------------------------------------------
 
+UnwindAssembly_x86::UnwindAssembly_x86 (const ArchSpec &arch, int cpu) : 
+    lldb_private::UnwindAssembly(arch), 
+    m_cpu(cpu)
+{
+}
+
+
+UnwindAssembly_x86::~UnwindAssembly_x86 ()
+{
+}
+
 bool
 UnwindAssembly_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
 {
@@ -844,9 +855,9 @@ UnwindAssembly_x86::CreateInstance (const ArchSpec &arch)
 {
     const llvm::Triple::ArchType cpu = arch.GetMachine ();
     if (cpu == llvm::Triple::x86)
-        return new UnwindAssembly_x86 (k_i386);
+        return new UnwindAssembly_x86 (arch, k_i386);
     else if (cpu == llvm::Triple::x86_64)
-        return new UnwindAssembly_x86 (k_x86_64);
+        return new UnwindAssembly_x86 (arch, k_x86_64);
     return NULL;
 }
 

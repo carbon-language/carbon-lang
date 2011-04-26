@@ -187,11 +187,12 @@ EmulationStateARM::ReadFromPseudoAddress (lldb::addr_t p_address, uint32_t size,
 }
 
 size_t
-EmulationStateARM::ReadPseudoMemory (void *baton,
-                                   const EmulateInstruction::Context &context,
-                                   lldb::addr_t addr,
-                                   void *dst,
-                                   size_t length)
+EmulationStateARM::ReadPseudoMemory (EmulateInstruction *instruction,
+                                     void *baton,
+                                     const EmulateInstruction::Context &context,
+                                     lldb::addr_t addr,
+                                     void *dst,
+                                     size_t length)
 {
     if (!baton)
         return 0;
@@ -230,11 +231,12 @@ EmulationStateARM::ReadPseudoMemory (void *baton,
 }
     
 size_t
-EmulationStateARM::WritePseudoMemory (void *baton,
-                                    const EmulateInstruction::Context &context,
-                                    lldb::addr_t addr,
-                                    const void *dst,
-                                    size_t length)
+EmulationStateARM::WritePseudoMemory (EmulateInstruction *instruction,
+                                      void *baton,
+                                      const EmulateInstruction::Context &context,
+                                      lldb::addr_t addr,
+                                      const void *dst,
+                                      size_t length)
 {
     if (!baton)
         return 0;
@@ -250,10 +252,11 @@ EmulationStateARM::WritePseudoMemory (void *baton,
 }
     
 bool
-EmulationStateARM::ReadPseudoRegister (void *baton,
-                                     uint32_t reg_kind,
-                                     uint32_t reg_num,
-                                     uint64_t &reg_value)
+EmulationStateARM::ReadPseudoRegister (EmulateInstruction *instruction,
+                                       void *baton,
+                                       uint32_t reg_kind,
+                                       uint32_t reg_num,
+                                       uint64_t &reg_value)
 {
     if (!baton)
         return false;
@@ -284,11 +287,12 @@ EmulationStateARM::ReadPseudoRegister (void *baton,
 }
     
 bool
-EmulationStateARM::WritePseudoRegister (void *baton,
-                                      const EmulateInstruction::Context &context,
-                                      uint32_t reg_kind,
-                                      uint32_t reg_num,
-                                      uint64_t reg_value)
+EmulationStateARM::WritePseudoRegister (EmulateInstruction *instruction,
+                                        void *baton,
+                                        const EmulateInstruction::Context &context,
+                                        uint32_t reg_kind,
+                                        uint32_t reg_num,
+                                        uint64_t reg_value)
 {
     if (!baton)
         return false;

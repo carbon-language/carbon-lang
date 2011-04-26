@@ -12,25 +12,29 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Target/UnwindAssembly.h"
-#include "lldb/Target/Thread.h"
 
-namespace lldb_private {
-    
 class UnwindAssembly_x86 : public lldb_private::UnwindAssembly
 {
 public:
 
-    ~UnwindAssembly_x86 () { }
+    ~UnwindAssembly_x86 ();
 
     virtual bool
-    GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, lldb_private::Thread& thread, UnwindPlan& unwind_plan);
+    GetNonCallSiteUnwindPlanFromAssembly (lldb_private::AddressRange& func, 
+                                          lldb_private::Thread& thread, 
+                                          lldb_private::UnwindPlan& unwind_plan);
 
     virtual bool
-    GetFastUnwindPlan (AddressRange& func, lldb_private::Thread& thread, UnwindPlan &unwind_plan);
+    GetFastUnwindPlan (lldb_private::AddressRange& func, 
+                       lldb_private::Thread& thread, 
+                       lldb_private::UnwindPlan &unwind_plan);
 
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
     virtual bool
-    FirstNonPrologueInsn (AddressRange& func, lldb_private::Target& target, lldb_private::Thread* thread, Address& first_non_prologue_insn);
+    FirstNonPrologueInsn (lldb_private::AddressRange& func, 
+                          lldb_private::Target& target, 
+                          lldb_private::Thread* thread, 
+                          lldb_private::Address& first_non_prologue_insn);
 
     static lldb_private::UnwindAssembly *
     CreateInstance (const lldb_private::ArchSpec &arch);
@@ -61,13 +65,10 @@ public:
     GetPluginVersion();
     
 private:
-    UnwindAssembly_x86(int cpu) : 
-          lldb_private::UnwindAssembly(), m_cpu(cpu) { } // Call CreateInstance instead.
+    UnwindAssembly_x86 (const lldb_private::ArchSpec &arch, int cpu);
 
     int m_cpu;
 };
 
-
-} // namespace lldb_private
 
 #endif // liblldb_UnwindAssembly_x86_h_

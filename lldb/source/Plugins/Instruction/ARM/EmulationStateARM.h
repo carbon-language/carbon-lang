@@ -16,8 +16,6 @@
 #include "lldb/Core/Opcode.h"
 #include "lldb/Interpreter/NamedOptionValue.h"
 
-namespace lldb_private {
-
 class EmulationStateARM {
 public: 
     
@@ -45,37 +43,41 @@ public:
     ClearPseudoMemory ();
     
     bool
-    LoadPseudoRegistersFromFrame (StackFrame &frame);
+    LoadPseudoRegistersFromFrame (lldb_private::StackFrame &frame);
     
     bool
-    LoadStateFromDictionary (OptionValueDictionary *test_data);
+    LoadStateFromDictionary (lldb_private::OptionValueDictionary *test_data);
 
     bool
     CompareState (EmulationStateARM &other_state);
 
     static size_t
-    ReadPseudoMemory (void *baton,
-                      const EmulateInstruction::Context &context,
+    ReadPseudoMemory (lldb_private::EmulateInstruction *instruction,
+                      void *baton,
+                      const lldb_private::EmulateInstruction::Context &context,
                       lldb::addr_t addr,
                       void *dst,
                       size_t length);
     
     static size_t
-    WritePseudoMemory (void *baton,
-                       const EmulateInstruction::Context &context,
+    WritePseudoMemory (lldb_private::EmulateInstruction *instruction,
+                       void *baton,
+                       const lldb_private::EmulateInstruction::Context &context,
                        lldb::addr_t addr,
                        const void *dst,
                        size_t length);
     
     static bool
-    ReadPseudoRegister (void *baton,
+    ReadPseudoRegister (lldb_private::EmulateInstruction *instruction,
+                        void *baton,
                         uint32_t reg_kind,
                         uint32_t reg_num,
                         uint64_t &reg_value);
     
     static bool
-    WritePseudoRegister (void *baton,
-                         const EmulateInstruction::Context &context,
+    WritePseudoRegister (lldb_private::EmulateInstruction *instruction,
+                         void *baton,
+                         const lldb_private::EmulateInstruction::Context &context,
                          uint32_t reg_kind,
                          uint32_t reg_num,
                          uint64_t reg_value);
@@ -97,7 +99,5 @@ private:
     
     DISALLOW_COPY_AND_ASSIGN (EmulationStateARM);
 };
- 
-}   // namespace lldb_private
 
 #endif  // lldb_EmulationStateARM_h_

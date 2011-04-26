@@ -15,8 +15,6 @@
 #include "lldb/Target/ArchVolatileRegs.h"
 #include <set>
 
-namespace lldb_private {
-    
 class ArchVolatileRegs_x86 : public lldb_private::ArchVolatileRegs
 {
 public:
@@ -61,8 +59,5 @@ private:
     llvm::Triple::ArchType m_cpu;
     std::set<int> m_non_volatile_regs;
 };
-
-
-} // namespace lldb_private
 
 #endif // liblldb_ArchVolatileRegs_x86_h_

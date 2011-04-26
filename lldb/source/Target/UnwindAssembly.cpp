@@ -31,7 +31,8 @@ UnwindAssembly::FindPlugin (const ArchSpec &arch)
     return NULL;
 }
 
-UnwindAssembly::UnwindAssembly ()
+UnwindAssembly::UnwindAssembly (const ArchSpec &arch) :
+    m_arch (arch)
 {
 }
 

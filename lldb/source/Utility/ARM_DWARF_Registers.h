@@ -186,5 +186,16 @@ enum
     dwarf_d31
 };
 
+#if defined(__cplusplus)
+extern "C" {
+#endif 
+
+const char *
+GetARMDWARFRegisterName (unsigned reg_num);
+
+#if defined(__cplusplus)
+}
+#endif 
+
 #endif // utility_ARM_DWARF_Registers_h_
 

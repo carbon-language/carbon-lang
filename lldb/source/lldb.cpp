@@ -83,8 +83,8 @@ lldb_private::Initialize ()
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
         SymbolFileSymtab::Initialize();
-        UnwindAssembly_x86::Initialize();
         UnwindAssemblyInstEmulation::Initialize();
+        UnwindAssembly_x86::Initialize();
         ArchDefaultUnwindPlan_x86_64::Initialize();
         ArchDefaultUnwindPlan_i386::Initialize();
         ArchVolatileRegs_x86::Initialize();

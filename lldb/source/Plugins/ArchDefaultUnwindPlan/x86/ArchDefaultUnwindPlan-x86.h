@@ -15,8 +15,6 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Symbol/UnwindPlan.h"
 
-namespace lldb_private {
-    
 class ArchDefaultUnwindPlan_x86_64 : public lldb_private::ArchDefaultUnwindPlan
 {
 public:
@@ -24,7 +22,8 @@ public:
     ~ArchDefaultUnwindPlan_x86_64 () { }
 
     virtual lldb::UnwindPlanSP
-    GetArchDefaultUnwindPlan (Thread& thread, Address current_pc);
+    GetArchDefaultUnwindPlan (lldb_private::Thread& thread, 
+                              const lldb_private::Address &current_pc);
 
     static lldb_private::ArchDefaultUnwindPlan *
     CreateInstance (const lldb_private::ArchSpec &arch);
@@ -66,7 +65,8 @@ public:
     ~ArchDefaultUnwindPlan_i386 () { }
 
     virtual lldb::UnwindPlanSP
-    GetArchDefaultUnwindPlan (Thread& thread, Address current_pc);
+    GetArchDefaultUnwindPlan (lldb_private::Thread& thread, 
+                              const lldb_private::Address& current_pc);
 
     static lldb_private::ArchDefaultUnwindPlan *
     CreateInstance (const lldb_private::ArchSpec &arch);
@@ -100,8 +100,5 @@ private:
 
     lldb::UnwindPlanSP m_unwind_plan_sp;
 };
-
-
-} // namespace lldb_private
 
 #endif // liblldb_UnwindAssembly_x86_h_

@@ -457,6 +457,13 @@ namespace lldb {
         
     } SectionType;
 
+    typedef enum EmulateInstructionOptions
+    {
+        eEmulateInstructionOptionNone               = (0u),
+        eEmulateInstructionOptionAutoAdvancePC      = (1u << 0),
+        eEmulateInstructionOptionIgnoreConditions   = (1u << 1)
+    } EmulateInstructionOptions;
+
 } // namespace lldb
 
 

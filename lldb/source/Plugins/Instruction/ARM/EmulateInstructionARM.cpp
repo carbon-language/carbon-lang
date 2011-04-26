@@ -181,21 +181,24 @@ EmulateInstructionARM::GetPluginDescriptionStatic ()
 }
 
 EmulateInstruction *
-EmulateInstructionARM::CreateInstance (const ArchSpec &arch)
+EmulateInstructionARM::CreateInstance (const ArchSpec &arch, InstructionType inst_type)
 {
-    if (arch.GetTriple().getArch() == llvm::Triple::arm)
+    if (EmulateInstructionARM::SupportsEmulatingIntructionsOfTypeStatic(inst_type))
     {
-        std::auto_ptr<EmulateInstructionARM> emulate_insn_ap (new EmulateInstructionARM (arch));
-        
-        if (emulate_insn_ap.get())
-            return emulate_insn_ap.release();
-    }
-    else if (arch.GetTriple().getArch() == llvm::Triple::thumb)
-    {
-        std::auto_ptr<EmulateInstructionARM> emulate_insn_ap (new EmulateInstructionARM (arch));
-        
-        if (emulate_insn_ap.get())
-            return emulate_insn_ap.release();
+        if (arch.GetTriple().getArch() == llvm::Triple::arm)
+        {
+            std::auto_ptr<EmulateInstructionARM> emulate_insn_ap (new EmulateInstructionARM (arch));
+            
+            if (emulate_insn_ap.get())
+                return emulate_insn_ap.release();
+        }
+        else if (arch.GetTriple().getArch() == llvm::Triple::thumb)
+        {
+            std::auto_ptr<EmulateInstructionARM> emulate_insn_ap (new EmulateInstructionARM (arch));
+            
+            if (emulate_insn_ap.get())
+                return emulate_insn_ap.release();
+        }
     }
     
     return NULL;
@@ -340,7 +343,7 @@ EmulateInstructionARM::EmulatePUSH (const uint32_t opcode, const ARMEncoding enc
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         for (i=0; i<15; ++i)
         {
             if (BitIsSet (registers, i))
@@ -1247,7 +1250,7 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAdjustStackPointer;
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         context.SetRegisterPlusOffset (sp_reg, sp_offset);
     
         if (d == 15)
@@ -1312,7 +1315,7 @@ EmulateInstructionARM::EmulateADDSPRm (const uint32_t opcode, const ARMEncoding 
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextAddition;
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         Register other_reg;
         other_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + Rm);
         context.SetRegisterRegisterOperands (sp_reg, other_reg);
@@ -1849,7 +1852,7 @@ EmulateInstructionARM::EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding 
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextPushRegisterOnStack;
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         context.SetRegisterPlusOffset (sp_reg, addr - sp);
         if (Rt != 15)
         {
@@ -1952,7 +1955,7 @@ EmulateInstructionARM::EmulateVPUSH (const uint32_t opcode, const ARMEncoding en
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         for (i=0; i<regs; ++i)
         {
             dwarf_reg.num = start_reg + d + i;
@@ -2047,7 +2050,7 @@ EmulateInstructionARM::EmulateVPOP (const uint32_t opcode, const ARMEncoding enc
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, 0);
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         for (i=0; i<regs; ++i)
         {
             dwarf_reg.num = start_reg + d + i;
@@ -9330,7 +9333,7 @@ EmulateInstructionARM::EmulateSUBSPReg (const uint32_t opcode, const ARMEncoding
         EmulateInstruction::Context context;
         context.type = eContextSubtraction;
         Register sp_reg;
-        sp_reg.SetRegister (eRegisterKindDWARF, dwarf_sp);
+        sp_reg.SetRegister (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
         Register dwarf_reg;
         dwarf_reg.SetRegister (eRegisterKindDWARF, dwarf_r0 + m);
         context.SetRegisterRegisterOperands (sp_reg, dwarf_reg);
@@ -10604,7 +10607,7 @@ EmulateInstructionARM::EmulateVLDM (const uint32_t opcode, const ARMEncoding enc
                 // // Combine the word-aligned words in the correct order for current endianness.
                 // D[d+r] = if BigEndian() then word1:word2 else word2:word1;
                 uint64_t data;
-                if (m_byte_order == eByteOrderBig)
+                if (GetByteOrder() == eByteOrderBig)
                 {
                     data = word1;
                     data = (data << 32) | word2;
@@ -10791,7 +10794,7 @@ EmulateInstructionARM::EmulateVSTM (const uint32_t opcode, const ARMEncoding enc
                     
                 data_reg.num = start_reg + d + r;
                 
-                if (m_byte_order == eByteOrderBig)
+                if (GetByteOrder() == eByteOrderBig)
                 {
                     context.SetRegisterToRegisterPlusOffset (data_reg, base_reg, address - Rn);
                     if (!MemAWrite (context, address, Bits64 (data, 63, 32), addr_byte_size))
@@ -10931,7 +10934,7 @@ EmulateInstructionARM::EmulateVLDR (const uint32_t opcode, ARMEncoding encoding)
             // // Combine the word-aligned words in the correct order for current endianness.
             // D[d] = if BigEndian() then word1:word2 else word2:word1;
             uint64_t data64;
-            if (m_byte_order == eByteOrderBig)
+            if (GetByteOrder() == eByteOrderBig)
             {
                 data64 = word1;
                 data64 = (data64 << 32) | word2;
@@ -11059,7 +11062,7 @@ EmulateInstructionARM::EmulateVSTR (const uint32_t opcode, ARMEncoding encoding)
             if (!success)
                 return false;
                 
-            if (m_byte_order == eByteOrderBig)
+            if (GetByteOrder() == eByteOrderBig)
             {
                 if (!MemAWrite (context, address, Bits64 (data, 63, 32), addr_byte_size))
                     return false;
@@ -12064,7 +12067,7 @@ EmulateInstructionARM::EmulateSUBSPcLrEtc (const uint32_t opcode, const ARMEncod
 }
     
 EmulateInstructionARM::ARMOpcode*
-EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
+EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode, uint32_t arm_isa)
 {
     static ARMOpcode 
     g_arm_opcodes[] = 
@@ -12289,7 +12292,8 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
                   
     for (size_t i=0; i<k_num_arm_opcodes; ++i)
     {
-        if ((g_arm_opcodes[i].mask & opcode) == g_arm_opcodes[i].value)
+        if ((g_arm_opcodes[i].mask & opcode) == g_arm_opcodes[i].value &&
+            (g_arm_opcodes[i].variants & arm_isa) != 0)
             return &g_arm_opcodes[i];
     }
     return NULL;
@@ -12297,7 +12301,7 @@ EmulateInstructionARM::GetARMOpcodeForInstruction (const uint32_t opcode)
 
     
 EmulateInstructionARM::ARMOpcode*
-EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
+EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode, uint32_t arm_isa)
 {
 
     static ARMOpcode 
@@ -12607,7 +12611,8 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode)
     const size_t k_num_thumb_opcodes = sizeof(g_thumb_opcodes)/sizeof(ARMOpcode);
     for (size_t i=0; i<k_num_thumb_opcodes; ++i)
     {
-        if ((g_thumb_opcodes[i].mask & opcode) == g_thumb_opcodes[i].value)
+        if ((g_thumb_opcodes[i].mask & opcode) == g_thumb_opcodes[i].value &&
+            (g_thumb_opcodes[i].variants & arm_isa) != 0)
             return &g_thumb_opcodes[i];
     }
     return NULL;
@@ -12636,24 +12641,30 @@ EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
 }
 
 bool
-EmulateInstructionARM::SetInstruction (const Opcode &insn_opcode, const Address &inst_addr)
+EmulateInstructionARM::SetInstruction (const Opcode &insn_opcode, const Address &inst_addr, Target *target)
 {
-    m_opcode = insn_opcode;
+    if (EmulateInstruction::SetInstruction (insn_opcode, inst_addr, target))
+    {
+        if (m_arch.GetTriple().getArch() == llvm::Triple::thumb)
+            m_opcode_mode = eModeThumb;
+        else
+        {
+            AddressClass addr_class = inst_addr.GetAddressClass();
 
-    if (m_arch.GetTriple().getArch() == llvm::Triple::thumb)
-        m_opcode_mode = eModeThumb;
-	else
-	{
-		AddressClass addr_class = inst_addr.GetAddressClass();
-
-    	if ((addr_class == eAddressClassCode) || (addr_class == eAddressClassUnknown))
-        	m_opcode_mode = eModeARM;
-    	else if (addr_class == eAddressClassCodeAlternateISA)
-        	m_opcode_mode = eModeThumb;
-    	else
-        	return false;
-	}    
-    return true;
+            if ((addr_class == eAddressClassCode) || (addr_class == eAddressClassUnknown))
+                m_opcode_mode = eModeARM;
+            else if (addr_class == eAddressClassCodeAlternateISA)
+                m_opcode_mode = eModeThumb;
+            else
+                return false;
+        }
+        if (m_opcode_mode == eModeThumb)
+            m_opcode_cpsr = CPSR_MODE_USR | MASK_CPSR_T;
+        else
+            m_opcode_cpsr = CPSR_MODE_USR;
+        return true;
+    }
+    return false;
 }
 
 bool 
@@ -12711,6 +12722,12 @@ EmulateInstructionARM::ArchVersion ()
 bool
 EmulateInstructionARM::ConditionPassed (const uint32_t opcode)
 {
+   // If we are ignoring conditions, then always return true.
+   // this allows us to iterate over disassembly code and still
+   // emulate an instruction even if we don't have all the right
+   // bits set in the CPSR register...
+    if (m_ignore_conditions)
+        return true;
 
     const uint32_t cond = CurrentCond (opcode);
     
@@ -12855,7 +12872,7 @@ EmulateInstructionARM::CurrentModeIsPrivileged ()
         return false;
                   
     if (mode == 16)
-                  return false;
+        return false;
                 
     return true;
 }
@@ -13188,123 +13205,72 @@ EmulateInstructionARM::WriteFlags (Context &context,
 }
 
 bool
-EmulateInstructionARM::EvaluateInstruction ()
+EmulateInstructionARM::EvaluateInstruction (uint32_t evaluate_options)
 {
     // Advance the ITSTATE bits to their values for the next instruction.
     if (m_opcode_mode == eModeThumb && m_it_session.InITBlock())
         m_it_session.ITAdvance();
 
-        
-    ARMOpcode *opcode_data;
+    ARMOpcode *opcode_data = NULL;
    
     if (m_opcode_mode == eModeThumb)
-        opcode_data = GetThumbOpcodeForInstruction (m_opcode.GetOpcode32());
+        opcode_data = GetThumbOpcodeForInstruction (m_opcode.GetOpcode32(), m_arm_isa);
     else if (m_opcode_mode == eModeARM)
-        opcode_data = GetARMOpcodeForInstruction (m_opcode.GetOpcode32());
-    else    
+        opcode_data = GetARMOpcodeForInstruction (m_opcode.GetOpcode32(), m_arm_isa);
+        
+    if (opcode_data == NULL)
         return false;
-        
-    if (!opcode_data)
-        return false;
-    // Verify that we're the right arch for this opcode
     
-    switch (m_arm_isa)
-    {
-    case ARMv4:
-        if (opcode_data->variants != ARMvAll)
-            return false;
-        break;
-        
-    case ARMv4T:
-        if ((opcode_data->variants!= ARMvAll) 
-            && (opcode_data->variants != ARMV4T_ABOVE))
-            return false;
-        break;
-                  
-    case ARMv5T:
-    case ARMv5TE:
-        if ((opcode_data->variants != ARMvAll) 
-            && (opcode_data->variants != ARMV4T_ABOVE)
-            && (opcode_data->variants != ARMV5_ABOVE))
-            return false;
-        break;
-                  
-    case ARMv5TEJ:
-        if ((opcode_data->variants != ARMvAll) 
-            && (opcode_data->variants != ARMV4T_ABOVE)
-            && (opcode_data->variants != ARMV5_ABOVE)
-            && (opcode_data->variants != ARMV5J_ABOVE))
-            return false;
-        break;
-        
-    case ARMv6:
-    case ARMv6K:
-        if ((opcode_data->variants != ARMvAll) 
-            && (opcode_data->variants != ARMV4T_ABOVE)
-            && (opcode_data->variants != ARMV5_ABOVE)
-            && (opcode_data->variants != ARMV5J_ABOVE)
-            && (opcode_data->variants != ARMV6_ABOVE))
-            return false;
-        break;
-        
-    case ARMv6T2:
-    case ARMv7:
-    case ARMv8:
-        if ((opcode_data->variants != ARMvAll) 
-            && (opcode_data->variants != ARMV4T_ABOVE)
-            && (opcode_data->variants != ARMV5_ABOVE)
-            && (opcode_data->variants != ARMV5J_ABOVE)
-            && (opcode_data->variants != ARMV6_ABOVE)
-            && (opcode_data->variants != ARMV6T2_ABOVE))
-            return false;
-        break;
-        
-    default:
-//            if (opcode_data->variants != ARMvAll)
-//                return false;
-        break;
-    }
-    
-    // Just for now, for testing purposes.
-    if (m_baton == NULL)
-        fprintf (stdout, "\nEvaluateInstruction, opcode (0x%x), found = '%s'\n", m_opcode.GetOpcode32(), 
-                 opcode_data->name);
+    const bool auto_advance_pc = evaluate_options & eEmulateInstructionOptionAutoAdvancePC;
+    m_ignore_conditions = evaluate_options & eEmulateInstructionOptionIgnoreConditions;
                  
-    bool success;
-    if (m_baton)
+    bool success = false;
+    if (m_opcode_cpsr == 0 || m_ignore_conditions == false)
     {
-        uint32_t cpsr_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_cpsr, 0, &success);
-        if (success)
-            m_opcode_cpsr = cpsr_value;
-    }
-    
-    uint32_t orig_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
-    if (!success)
-        return false;
-    
-    success = (this->*opcode_data->callback) (m_opcode.GetOpcode32(), opcode_data->encoding);  // Call the Emulate... function.
-    if (!success)
-        return false;
-        
-    uint32_t after_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
-    if (!success)
-        return false;
-        
-    if (m_advance_pc && (after_pc_value == orig_pc_value))
-    {
-        if (opcode_data->size == eSize32)
-            after_pc_value += 4;
-        else if (opcode_data->size == eSize16)
-            after_pc_value += 2;
-            
-        EmulateInstruction::Context context;
-        context.type = eContextAdvancePC;
-        context.SetNoArgs();
-        if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc, after_pc_value))
-            return false;
-            
+        m_opcode_cpsr = ReadRegisterUnsigned (eRegisterKindDWARF, 
+                                              dwarf_cpsr, 
+                                              0,
+                                              &success);
     }
 
+    // Only return false if we are unable to read the CPSR if we care about conditions
+    if (success == false && m_ignore_conditions == false)
+        return false;
+    
+    uint32_t orig_pc_value = 0;
+    if (auto_advance_pc)
+    {
+        orig_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
+        if (!success)
+            return false;
+    }
+    
+    // Call the Emulate... function.
+    success = (this->*opcode_data->callback) (m_opcode.GetOpcode32(), opcode_data->encoding);  
+    if (!success)
+        return false;
+        
+    if (auto_advance_pc)
+    {
+        uint32_t after_pc_value = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_pc, 0, &success);
+        if (!success)
+            return false;
+            
+        if (auto_advance_pc && (after_pc_value == orig_pc_value))
+        {
+            if (opcode_data->size == eSize32)
+                after_pc_value += 4;
+            else if (opcode_data->size == eSize16)
+                after_pc_value += 2;
+                
+            EmulateInstruction::Context context;
+            context.type = eContextAdvancePC;
+            context.SetNoArgs();
+            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_pc, after_pc_value))
+                return false;
+                
+        }
+    }
     return true;
 }
 
@@ -13330,10 +13296,6 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
         return false;
     }
     test_opcode = value_sp->GetUInt64Value ();
-
-    // If the instruction emulation does not directly update the PC, advance the PC to the next instruction after
-    // performing the emulation.
-    SetAdvancePC (true); 
 
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
@@ -13392,7 +13354,7 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
                   &EmulationStateARM::ReadPseudoRegister,
                   &EmulationStateARM::WritePseudoRegister);
                   
-    bool success = EvaluateInstruction ();
+    bool success = EvaluateInstruction (eEmulateInstructionOptionAutoAdvancePC);
     if (!success)
     {
         out_stream->Printf ("TestEmulation:  EvaluateInstruction() failed.\n");
@@ -13404,5 +13366,28 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
         out_stream->Printf ("TestEmulation:  'before' and 'after' states do not match.\n");
         
     return success;
+}
+
+                                           
+const char *
+EmulateInstructionARM::GetRegisterName (uint32_t reg_kind, uint32_t reg_num)
+{
+    if (reg_kind == eRegisterKindGeneric)
+    {
+        switch (reg_num)
+        {
+        case LLDB_REGNUM_GENERIC_PC:    return "pc";
+        case LLDB_REGNUM_GENERIC_SP:    return "sp";
+        case LLDB_REGNUM_GENERIC_FP:    return "fp";
+        case LLDB_REGNUM_GENERIC_RA:    return "lr";
+        case LLDB_REGNUM_GENERIC_FLAGS: return "cpsr";
+        default: return NULL;
+        }
+    }
+    else if (reg_kind == eRegisterKindDWARF)
+    {
+        return GetARMDWARFRegisterName (reg_num);
+    }
+    return NULL;
 }
 
