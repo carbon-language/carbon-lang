@@ -753,7 +753,8 @@ getDebugValueLocation(const MachineInstr *MI) const {
 }
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
-void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
+void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
+                                unsigned ExtraExprSize) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
   unsigned Reg = RI->getDwarfRegNum(MLoc.getReg(), false);
   if (int Offset =  MLoc.getOffset()) {
@@ -761,7 +762,7 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
     // use DW_OP_fbreg.
     unsigned OffsetSize = Offset ? MCAsmInfo::getSLEB128Size(Offset) : 1;
     OutStreamer.AddComment("Loc expr size");
-    EmitInt16(1 + OffsetSize);
+    EmitInt16(1 + OffsetSize + ExtraExprSize);
     OutStreamer.AddComment(
       dwarf::OperationEncodingString(dwarf::DW_OP_fbreg));
     EmitInt8(dwarf::DW_OP_fbreg);
@@ -776,7 +777,7 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
       EmitInt8(dwarf::DW_OP_reg0 + Reg);
     } else {
       OutStreamer.AddComment("Loc expr size");
-      EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
+      EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg) + ExtraExprSize);
       OutStreamer.AddComment(
         dwarf::OperationEncodingString(dwarf::DW_OP_regx));
       EmitInt8(dwarf::DW_OP_regx);

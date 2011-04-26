@@ -90,7 +90,8 @@ public:
   MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
 
   /// EmitDwarfRegOp - Emit dwarf register operation.
-  virtual void EmitDwarfRegOp(const MachineLocation &MLoc) const;
+  virtual void EmitDwarfRegOp(const MachineLocation &MLoc,
+                              unsigned ExtraExprSize = 0) const;
 
   virtual unsigned getISAEncoding() {
     // ARM/Darwin adds ISA to the DWARF info for each function.
