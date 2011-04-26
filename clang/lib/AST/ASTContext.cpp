@@ -724,6 +724,7 @@ ASTContext::getTypeInfo(const Type *T) const {
     std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
     Width = EltInfo.first*CAT->getSize().getZExtValue();
     Align = EltInfo.second;
+    Width = llvm::RoundUpToAlignment(Width, Align);
     break;
   }
   case Type::ExtVector:
