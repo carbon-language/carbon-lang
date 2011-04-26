@@ -289,12 +289,6 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (GVKind.isCommon() || GVKind.isBSSLocal()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-    if (isVerbose()) {
-      WriteAsOperand(OutStreamer.GetCommentOS(), GV,
-                     /*PrintType=*/false, GV->getParent());
-      OutStreamer.GetCommentOS() << '\n';
-    }
-
     // Handle common symbols.
     if (GVKind.isCommon()) {
       unsigned Align = 1 << AlignLog;

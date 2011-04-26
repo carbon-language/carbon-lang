@@ -10,7 +10,7 @@
 @STRIDE = internal global i32 8
 
 ; ASM:          .type   array00,%object         @ @array00
-; ASM-NEXT:     .lcomm  array00,80              @ @array00
+; ASM-NEXT:     .lcomm  array00,80
 ; ASM-NEXT:     .type   _MergedGlobals,%object  @ @_MergedGlobals
 
 
