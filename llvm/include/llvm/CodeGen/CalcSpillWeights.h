@@ -40,14 +40,14 @@ namespace llvm {
   /// VirtRegAuxInfo - Calculate auxiliary information for a virtual
   /// register such as its spill weight and allocation hint.
   class VirtRegAuxInfo {
-    MachineFunction &mf_;
-    LiveIntervals &lis_;
-    const MachineLoopInfo &loops_;
-    DenseMap<unsigned, float> hint_;
+    MachineFunction &MF;
+    LiveIntervals &LIS;
+    const MachineLoopInfo &Loops;
+    DenseMap<unsigned, float> Hint;
   public:
     VirtRegAuxInfo(MachineFunction &mf, LiveIntervals &lis,
                    const MachineLoopInfo &loops) :
-      mf_(mf), lis_(lis), loops_(loops) {}
+      MF(mf), LIS(lis), Loops(loops) {}
 
     /// CalculateRegClass - recompute the register class for reg from its uses.
     /// Since the register class can affect the allocation hint, this function
