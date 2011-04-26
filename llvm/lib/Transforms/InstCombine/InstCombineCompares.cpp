@@ -1384,9 +1384,9 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           
           if (Value *NegVal = dyn_castNegVal(BOp1))
             return new ICmpInst(ICI.getPredicate(), BOp0, NegVal);
-          else if (Value *NegVal = dyn_castNegVal(BOp0))
+          if (Value *NegVal = dyn_castNegVal(BOp0))
             return new ICmpInst(ICI.getPredicate(), NegVal, BOp1);
-          else if (BO->hasOneUse()) {
+          if (BO->hasOneUse()) {
             Value *Neg = Builder->CreateNeg(BOp1);
             Neg->takeName(BO);
             return new ICmpInst(ICI.getPredicate(), BOp0, Neg);
@@ -2483,9 +2483,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     }
 
     // (X&Z) == (Y&Z) -> (X^Y) & Z == 0
-    if (Op0->hasOneUse() && Op1->hasOneUse() &&
-        match(Op0, m_And(m_Value(A), m_Value(B))) && 
-        match(Op1, m_And(m_Value(C), m_Value(D)))) {
+    if (match(Op0, m_OneUse(m_And(m_Value(A), m_Value(B)))) && 
+        match(Op1, m_OneUse(m_And(m_Value(C), m_Value(D))))) {
       Value *X = 0, *Y = 0, *Z = 0;
       
       if (A == C) {
@@ -2506,6 +2505,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return &I;
       }
     }
+    
   }
   
   {
