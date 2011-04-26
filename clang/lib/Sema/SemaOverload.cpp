@@ -1205,6 +1205,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // Pointer conversions (C++ 4.10).
     SCS.Second = ICK_Pointer_Conversion;
     SCS.IncompatibleObjC = IncompatibleObjC;
+    FromType = FromType.getUnqualifiedType();
   } else if (S.IsMemberPointerConversion(From, FromType, ToType,
                                          InOverloadResolution, FromType)) {
     // Pointer to member conversions (4.11).
@@ -1671,6 +1672,20 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   
   return false;
 }
+ 
+/// \brief Adopt the given qualifiers for the given type.
+static QualType AdoptQualifiers(ASTContext &Context, QualType T, Qualifiers Qs){
+  Qualifiers TQs = T.getQualifiers();
+  
+  // Check whether qualifiers already match.
+  if (TQs == Qs)
+    return T;
+  
+  if (Qs.compatiblyIncludes(TQs))
+    return Context.getQualifiedType(T, Qs);
+  
+  return Context.getQualifiedType(T.getUnqualifiedType(), Qs);
+}
 
 /// isObjCPointerConversion - Determines whether this is an
 /// Objective-C pointer conversion. Subroutine of IsPointerConversion,
@@ -1681,6 +1696,9 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   if (!getLangOptions().ObjC1)
     return false;
 
+  // The set of qualifiers on the type we're converting from.
+  Qualifiers FromQualifiers = FromType.getQualifiers();
+  
   // First, we handle all conversions on ObjC object pointer types.
   const ObjCObjectPointerType* ToObjCPtr =
     ToType->getAs<ObjCObjectPointerType>();
@@ -1694,10 +1712,11 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
                                        FromObjCPtr->getPointeeType()))
       return false;
 
+    // Check for compatible 
     // Objective C++: We're able to convert between "id" or "Class" and a
     // pointer to any interface (in both directions).
     if (ToObjCPtr->isObjCBuiltinType() && FromObjCPtr->isObjCBuiltinType()) {
-      ConvertedType = ToType;
+      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
       return true;
     }
     // Conversions with Objective-C's id<...>.
@@ -1705,7 +1724,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
          ToObjCPtr->isObjCQualifiedIdType()) &&
         Context.ObjCQualifiedIdTypesAreCompatible(ToType, FromType,
                                                   /*compare=*/false)) {
-      ConvertedType = ToType;
+      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
       return true;
     }
     // Objective C++: We're able to convert from a pointer to an
@@ -1720,6 +1739,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
       ConvertedType = BuildSimilarlyQualifiedPointerType(FromObjCPtr,
                                                    ToObjCPtr->getPointeeType(),
                                                          ToType, Context);
+      ConvertedType = AdoptQualifiers(Context, ConvertedType, FromQualifiers);
       return true;
     }
 
@@ -1731,6 +1751,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
       ConvertedType = BuildSimilarlyQualifiedPointerType(FromObjCPtr,
                                                    ToObjCPtr->getPointeeType(),
                                                          ToType, Context);
+      ConvertedType = AdoptQualifiers(Context, ConvertedType, FromQualifiers);
       return true;
     }
   }
@@ -1743,7 +1764,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     // Objective C++: We're able to convert from a pointer to any object
     // to a block pointer type.
     if (FromObjCPtr && FromObjCPtr->isObjCBuiltinType()) {
-      ConvertedType = ToType;
+      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
       return true;
     }
     ToPointeeType = ToBlockPtr->getPointeeType();
@@ -1752,7 +1773,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
            ToObjCPtr && ToObjCPtr->isObjCBuiltinType()) {
     // Objective C++: We're able to convert from a block pointer type to a
     // pointer to any object.
-    ConvertedType = ToType;
+    ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
     return true;
   }
   else
@@ -1775,6 +1796,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     // We always complain about this conversion.
     IncompatibleObjC = true;
     ConvertedType = Context.getPointerType(ConvertedType);
+    ConvertedType = AdoptQualifiers(Context, ConvertedType, FromQualifiers);
     return true;
   }
   // Allow conversion of pointee being objective-c pointer to another one;
@@ -1784,6 +1806,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
       isObjCPointerConversion(FromPointeeType, ToPointeeType, ConvertedType,
                               IncompatibleObjC)) {
     ConvertedType = Context.getPointerType(ConvertedType);
+    ConvertedType = AdoptQualifiers(Context, ConvertedType, FromQualifiers);
     return true;
   }
 
@@ -1844,7 +1867,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     if (HasObjCConversion) {
       // We had an Objective-C conversion. Allow this pointer
       // conversion, but complain about it.
-      ConvertedType = ToType;
+      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
       IncompatibleObjC = true;
       return true;
     }
@@ -6537,6 +6560,17 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
         << FromTy
         << FromQs.getAddressSpace() << ToQs.getAddressSpace()
         << (unsigned) isObjectArgument << I+1;
+      MaybeEmitInheritedConstructorNote(S, Fn);
+      return;
+    }
+
+    if (FromQs.getObjCGCAttr() != ToQs.getObjCGCAttr()) {
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_gc)
+      << (unsigned) FnKind << FnDesc
+      << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
+      << FromTy
+      << FromQs.getObjCGCAttr() << ToQs.getObjCGCAttr()
+      << (unsigned) isObjectArgument << I+1;
       MaybeEmitInheritedConstructorNote(S, Fn);
       return;
     }
