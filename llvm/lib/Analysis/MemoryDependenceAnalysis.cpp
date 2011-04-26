@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "memdep"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
@@ -221,6 +222,75 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
   return MemDepResult::getClobber(ScanIt);
 }
 
+/// isLoadLoadClobberIfExtendedToFullWidth - Return true if LI is a load that
+/// would fully overlap MemLoc if done as a wider legal integer load.
+///
+/// MemLocBase, MemLocOffset are lazily computed here the first time the
+/// base/offs of memloc is needed.
+static bool 
+isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
+                                       const Value *&MemLocBase,
+                                       int64_t &MemLocOffs,
+                                       const LoadInst *LI, TargetData *TD) {
+  // If we have no target data, we can't do this.
+  if (TD == 0) return false;
+
+  // If we haven't already computed the base/offset of MemLoc, do so now.
+  if (MemLocBase == 0)
+    MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, *TD);
+
+  // Get the base of this load.
+  int64_t LIOffs = 0;
+  const Value *LIBase = 
+    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, *TD);
+  
+  // If the two pointers are not based on the same pointer, we can't tell that
+  // they are related.
+  if (LIBase != MemLocBase) return false;
+  
+  // Okay, the two values are based on the same pointer, but returned as
+  // no-alias.  This happens when we have things like two byte loads at "P+1"
+  // and "P+3".  Check to see if increasing the size of the "LI" load up to its
+  // alignment (or the largest native integer type) will allow us to load all
+  // the bits required by MemLoc.
+  
+  // If MemLoc is before LI, then no widening of LI will help us out.
+  if (MemLocOffs < LIOffs) return false;
+  
+  // Get the alignment of the load in bytes.  We assume that it is safe to load
+  // any legal integer up to this size without a problem.  For example, if we're
+  // looking at an i8 load on x86-32 that is known 1024 byte aligned, we can
+  // widen it up to an i32 load.  If it is known 2-byte aligned, we can widen it
+  // to i16.
+  unsigned LoadAlign = LI->getAlignment();
+
+  int64_t MemLocEnd = MemLocOffs+MemLoc.Size;
+  
+  // If no amount of rounding up will let MemLoc fit into LI, then bail out.
+  if (LIOffs+LoadAlign < MemLocEnd) return false;
+  
+  // This is the size of the load to try.  Start with the next larger power of
+  // two.
+  unsigned NewLoadByteSize = LI->getType()->getPrimitiveSizeInBits()/8U;
+  NewLoadByteSize = NextPowerOf2(NewLoadByteSize);
+  
+  while (1) {
+    // If this load size is bigger than our known alignment or would not fit
+    // into a native integer register, then we fail.
+    if (NewLoadByteSize > LoadAlign ||
+        !TD->fitsInLegalInteger(NewLoadByteSize*8))
+      return false;
+
+    // If a load of this width would include all of MemLoc, then we succeed.
+    if (LIOffs+NewLoadByteSize >= MemLocEnd)
+      return true;
+    
+    NewLoadByteSize <<= 1;
+  }
+  
+  return false;
+}
+
 /// getPointerDependencyFrom - Return the instruction on which a memory
 /// location depends.  If isLoad is true, this routine ignores may-aliases with
 /// read-only operations.  If isLoad is false, this routine ignores may-aliases
@@ -229,6 +299,9 @@ MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
 
+  const Value *MemLocBase = 0;
+  int64_t MemLocOffset = 0;
+  
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
@@ -242,7 +315,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
         // FIXME: This only considers queries directly on the invariant-tagged
         // pointer, not on query pointers that are indexed off of them.  It'd
-        // be nice to handle that at some point.
+        // be nice to handle that at some point (the right approach is to use
+        // GetPointerBaseWithConstantOffset).
         if (AA->isMustAlias(AliasAnalysis::Location(II->getArgOperand(1)),
                             MemLoc))
           return MemDepResult::getDef(II);
@@ -257,10 +331,24 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
-      if (R == AliasAnalysis::NoAlias)
-        continue;
       
       if (isLoad) {
+        if (R == AliasAnalysis::NoAlias) {
+          // If this is an over-aligned integer load (for example,
+          // "load i8* %P, align 4") see if it would obviously overlap with the
+          // queried location if widened to a larger load (e.g. if the queried
+          // location is 1 byte at P+1).  If so, return it as a load/load
+          // clobber result, allowing the client to decide to widen the load if
+          // it wants to.
+          if (const IntegerType *ITy = dyn_cast<IntegerType>(LI->getType()))
+            if (LI->getAlignment()*8 > ITy->getPrimitiveSizeInBits() &&
+                isLoadLoadClobberIfExtendedToFullWidth(MemLoc, MemLocBase,
+                                                       MemLocOffset, LI, TD))
+              return MemDepResult::getClobber(Inst);
+          
+          continue;
+        }
+        
         // Must aliased loads are defs of each other.
         if (R == AliasAnalysis::MustAlias)
           return MemDepResult::getDef(Inst);
@@ -274,6 +362,10 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         // dependence.
         continue;
       }
+
+      // Stores don't depend on other no-aliased accesses.
+      if (R == AliasAnalysis::NoAlias)
+        continue;
 
       // Stores don't alias loads from read-only memory.
       if (AA->pointsToConstantMemory(LoadLoc))
