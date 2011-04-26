@@ -12636,6 +12636,8 @@ EmulateInstructionARM::SetArchitecture (const ArchSpec &arch)
         else if (0 == ::strcasecmp(arch_cstr, "armv6t2"))   m_arm_isa = ARMv6T2;
         else if (0 == ::strcasecmp(arch_cstr, "armv7"))     m_arm_isa = ARMv7;
         else if (0 == ::strcasecmp(arch_cstr, "armv8"))     m_arm_isa = ARMv8;
+        else if (0 == ::strcasecmp(arch_cstr, "arm"))       m_arm_isa = ARMvAll;
+        else if (0 == ::strcasecmp(arch_cstr, "thumb"))     m_arm_isa = ARMvAll;
     }
     return m_arm_isa != 0;
 }
