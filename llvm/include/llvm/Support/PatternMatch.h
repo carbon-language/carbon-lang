@@ -40,6 +40,23 @@ bool match(Val *V, const Pattern &P) {
   return const_cast<Pattern&>(P).match(V);
 }
 
+  
+template<typename SubPattern_t>
+struct OneUse_match {
+  SubPattern_t SubPattern;
+  
+  OneUse_match(const SubPattern_t &SP) : SubPattern(SP) {}
+  
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    return V->hasOneUse() && SubPattern.match(V);
+  }
+};
+
+template<typename T>
+inline OneUse_match<T> m_OneUse(const T &SubPattern) { return SubPattern; }
+  
+  
 template<typename Class>
 struct class_match {
   template<typename ITy>
@@ -227,7 +244,25 @@ struct specificval_ty {
 /// m_Specific - Match if we have a specific specified value.
 inline specificval_ty m_Specific(const Value *V) { return V; }
 
+struct bind_const_intval_ty {
+  uint64_t &VR;
+  bind_const_intval_ty(uint64_t &V) : VR(V) {}
+  
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (ConstantInt *CV = dyn_cast<ConstantInt>(V))
+      if (CV->getBitWidth() <= 64) {
+        VR = CV->getZExtValue();
+        return true;
+      }
+    return false;
+  }
+};
 
+/// m_ConstantInt - Match a ConstantInt and bind to its value.  This does not
+/// match ConstantInts wider than 64-bits.
+inline bind_const_intval_ty m_ConstantInt(uint64_t &V) { return V; }
+  
 //===----------------------------------------------------------------------===//
 // Matchers for specific binary operators.
 //
