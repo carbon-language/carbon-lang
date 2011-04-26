@@ -10,6 +10,8 @@
 #ifndef utility_ARM_DWARF_Registers_h_
 #define utility_ARM_DWARF_Registers_h_
 
+#include "lldb/lldb-private.h"
+
 enum
 {
     dwarf_r0 = 0,
@@ -186,16 +188,12 @@ enum
     dwarf_d31
 };
 
-#if defined(__cplusplus)
-extern "C" {
-#endif 
-
 const char *
 GetARMDWARFRegisterName (unsigned reg_num);
-
-#if defined(__cplusplus)
-}
-#endif 
+    
+bool
+GetARMDWARFRegisterInfo (unsigned reg_num, 
+                         lldb_private::RegisterInfo &reg_info);
 
 #endif // utility_ARM_DWARF_Registers_h_
 

@@ -120,7 +120,7 @@ public:
     
     enum Mode
     {
-        eModeInvalid,
+        eModeInvalid = -1,
         eModeARM,
         eModeThumb
     };
@@ -178,8 +178,12 @@ public:
     virtual bool
     TestEmulation (Stream *out_stream, ArchSpec &arch, OptionValueDictionary *test_data);
 
-    virtual const char *
-    GetRegisterName (uint32_t reg_kind, uint32_t reg_num);
+    virtual bool
+    GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, RegisterInfo &reg_info);
+    
+
+    virtual bool
+    CreateFunctionEntryUnwind (UnwindPlan &unwind_plan);
 
     uint32_t
     ArchVersion();

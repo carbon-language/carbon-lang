@@ -147,8 +147,8 @@ ThreadGDBRemote::GetUnwinder ()
         {
             case llvm::Triple::x86_64:
             case llvm::Triple::x86:
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
+//            case llvm::Triple::arm:
+//            case llvm::Triple::thumb:
                 m_unwinder_ap.reset (new UnwindLLDB (*this));
                 break;
 

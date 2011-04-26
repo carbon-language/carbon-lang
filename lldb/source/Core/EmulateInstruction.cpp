@@ -16,12 +16,11 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
-
-#include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -64,11 +63,23 @@ EmulateInstruction::EmulateInstruction (const ArchSpec &arch) :
     ::memset (&m_opcode, 0, sizeof (m_opcode));
 }
 
+
 uint64_t
 EmulateInstruction::ReadRegisterUnsigned (uint32_t reg_kind, uint32_t reg_num, uint64_t fail_value, bool *success_ptr)
 {
+    RegisterInfo reg_info;
+    if (GetRegisterInfo(reg_kind, reg_num, reg_info))
+        return ReadRegisterUnsigned (reg_info, fail_value, success_ptr);
+    if (success_ptr)
+        *success_ptr = false;
+    return fail_value;
+}
+
+uint64_t
+EmulateInstruction::ReadRegisterUnsigned (const RegisterInfo &reg_info, uint64_t fail_value, bool *success_ptr)
+{
     uint64_t uval64 = 0;
-    bool success = m_read_reg_callback (this, m_baton, reg_kind, reg_num, uval64);
+    bool success = m_read_reg_callback (this, m_baton, reg_info, uval64);
     if (success_ptr)
         *success_ptr = success;
     if (!success)
@@ -79,7 +90,16 @@ EmulateInstruction::ReadRegisterUnsigned (uint32_t reg_kind, uint32_t reg_num, u
 bool
 EmulateInstruction::WriteRegisterUnsigned (const Context &context, uint32_t reg_kind, uint32_t reg_num, uint64_t reg_value)
 {
-    return m_write_reg_callback (this, m_baton, context, reg_kind, reg_num, reg_value);    
+    RegisterInfo reg_info;
+    if (GetRegisterInfo(reg_kind, reg_num, reg_info))
+        return WriteRegisterUnsigned (context, reg_info, reg_value);
+    return false;
+}
+
+bool
+EmulateInstruction::WriteRegisterUnsigned (const Context &context, const RegisterInfo &reg_info, uint64_t reg_value)
+{
+    return m_write_reg_callback (this, m_baton, context, reg_info, reg_value);    
 }
 
 uint64_t
@@ -235,28 +255,26 @@ EmulateInstruction::WriteMemoryFrame (EmulateInstruction *instruction,
 bool   
 EmulateInstruction::ReadRegisterFrame  (EmulateInstruction *instruction,
                                         void *baton,
-                                        uint32_t reg_kind, 
-                                        uint32_t reg_num,
+                                        const RegisterInfo &reg_info,
                                         uint64_t &reg_value)
 {
     if (!baton)
         return false;
         
     StackFrame *frame = (StackFrame *) baton;
-    RegisterContext *reg_context = frame->GetRegisterContext().get();
+    RegisterContext *reg_ctx = frame->GetRegisterContext().get();
     Scalar value;
     
-    uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
+    const uint32_t internal_reg_num = GetInternalRegisterNumber (reg_ctx, reg_info);
     
-    if (internal_reg_num == LLDB_INVALID_REGNUM)
-        return false;
-    
-    if (reg_context->ReadRegisterValue (internal_reg_num, value))
+    if (internal_reg_num != LLDB_INVALID_REGNUM)
     {
-        reg_value = value.GetRawBits64 (0);
-        return true;
+        if (reg_ctx->ReadRegisterValue (internal_reg_num, value))
+        {
+            reg_value = value.GetRawBits64 (0);
+            return true;
+        }
     }
-    
     return false;
 }
 
@@ -264,22 +282,19 @@ bool
 EmulateInstruction::WriteRegisterFrame (EmulateInstruction *instruction,
                                         void *baton,
                                         const Context &context, 
-                                        uint32_t reg_kind, 
-                                        uint32_t reg_num,
+                                        const RegisterInfo &reg_info,
                                         uint64_t reg_value)
 {
     if (!baton)
         return false;
         
     StackFrame *frame = (StackFrame *) baton;
-    RegisterContext *reg_context = frame->GetRegisterContext().get();
+    RegisterContext *reg_ctx = frame->GetRegisterContext().get();
     Scalar value (reg_value);
-    
-    uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
+    const uint32_t internal_reg_num = GetInternalRegisterNumber (reg_ctx, reg_info);    
     if (internal_reg_num != LLDB_INVALID_REGNUM)
-        return reg_context->WriteRegisterValue (internal_reg_num, value);
-    else
-        return false;
+        return reg_ctx->WriteRegisterValue (internal_reg_num, value);
+    return false;
 }
 
 size_t 
@@ -290,9 +305,8 @@ EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
                                        void *dst,
                                        size_t length)
 {
-    PrintContext ("Read from memory", context);
-    fprintf (stdout, "    Read from Memory (address = %p, length = %d)\n",(void *) addr, (uint32_t) length);
-    
+    fprintf (stdout, "    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, (uint32_t) length);
+    context.Dump (stdout, instruction);    
     *((uint64_t *) dst) = 0xdeadbeef;
     return length;
 }
@@ -305,23 +319,24 @@ EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
                                         const void *dst,
                                         size_t length)
 {
-    PrintContext ("Write to memory", context);
-    fprintf (stdout, "    Write to Memory (address = %p, length = %d)\n",  (void *) addr, (uint32_t) length);
+    fprintf (stdout, "    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, (uint32_t) length);
+    context.Dump (stdout, instruction);    
     return length;
 }
 
 bool   
 EmulateInstruction::ReadRegisterDefault  (EmulateInstruction *instruction,
                                           void *baton,
-                                          uint32_t reg_kind, 
-                                          uint32_t reg_num,
+                                          const RegisterInfo &reg_info,
                                           uint64_t &reg_value)
 {
-    std::string reg_name;
-    TranslateRegister (reg_kind, reg_num, reg_name);
-    fprintf (stdout, "  Read Register (%s)\n", reg_name.c_str());
-    
-    reg_value = 24;
+    fprintf (stdout, "  Read Register (%s)\n", reg_info.name);
+    uint32_t reg_kind, reg_num;
+    if (GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
+        reg_value = (uint64_t)reg_kind << 24 | reg_num;
+    else
+        reg_value = 0;
+
     return true;
 }
 
@@ -329,252 +344,191 @@ bool
 EmulateInstruction::WriteRegisterDefault (EmulateInstruction *instruction,
                                           void *baton,
                                           const Context &context, 
-                                          uint32_t reg_kind, 
-                                          uint32_t reg_num,
+                                          const RegisterInfo &reg_info,
                                           uint64_t reg_value)
 {
-    PrintContext ("Write to register", context);
-    std::string reg_name;
-    TranslateRegister (reg_kind, reg_num, reg_name);
-    fprintf (stdout, "    Write to Register (%s),  value = 0x%llx\n", reg_name.c_str(), reg_value);
+    fprintf (stdout, "    Write to Register (name = %s, value = 0x%llx, context = ", reg_info.name, reg_value);
+    context.Dump (stdout, instruction);        
     return true;
 }
 
 void
-EmulateInstruction::PrintContext (const char *context_type, const Context &context)
+EmulateInstruction::Context::Dump (FILE *fh, 
+                                   EmulateInstruction *instruction) const
 {
-    switch (context.type)
+    switch (type)
     {
         case eContextReadOpcode:
-            fprintf (stdout, "  %s context: Reading an Opcode\n", context_type);
+            fprintf (fh, "reading opcode");
             break;
             
         case eContextImmediate:
-            fprintf (stdout, "  %s context:  Immediate\n", context_type);
+            fprintf (fh, "immediate");
             break;
             
         case eContextPushRegisterOnStack:
-            fprintf (stdout, "  %s context:  Pushing a register onto the stack.\n", context_type);
+            fprintf (fh, "push register");
             break;
             
         case eContextPopRegisterOffStack:
-            fprintf (stdout, "  %s context: Popping a register off the stack.\n", context_type);
+            fprintf (fh, "pop register");
             break;
             
         case eContextAdjustStackPointer:
-            fprintf (stdout, "  %s context:  Adjusting the stack pointer.\n", context_type);
+            fprintf (fh, "adjust sp");
             break;
             
         case eContextAdjustBaseRegister:
-            fprintf (stdout, "  %s context:  Adjusting (writing value back to) a base register.\n", context_type);
+            fprintf (fh, "adjusting (writing value back to) a base register");
             break;
             
         case eContextRegisterPlusOffset:
-            fprintf (stdout, "  %s context: Register plus offset\n", context_type);
+            fprintf (fh, "register + offset");
             break;
             
         case eContextRegisterStore:
-            fprintf (stdout, "  %s context:  Storing a register.\n", context_type);
+            fprintf (fh, "store register");
             break;
             
         case eContextRegisterLoad:
-            fprintf (stdout, "  %s context:  Loading a register.\n", context_type);
+            fprintf (fh, "load register");
             break;
             
         case eContextRelativeBranchImmediate:
-            fprintf (stdout, "  %s context: Relative branch immediate\n", context_type);
+            fprintf (fh, "relative branch immediate");
             break;
             
         case eContextAbsoluteBranchRegister:
-            fprintf (stdout, "  %s context:  Absolute branch register\n", context_type);
+            fprintf (fh, "absolute branch register");
             break;
             
         case eContextSupervisorCall:
-            fprintf (stdout, "  %s context:  Performing a supervisor call.\n", context_type);
+            fprintf (fh, "supervisor call");
             break;
             
         case eContextTableBranchReadMemory:
-            fprintf (stdout, "  %s context:  Table branch read memory\n", context_type);
+            fprintf (fh, "table branch read memory");
             break;
             
         case eContextWriteRegisterRandomBits:
-            fprintf (stdout, "  %s context:  Write random bits to a register\n", context_type);
+            fprintf (fh, "write random bits to a register");
             break;
             
         case eContextWriteMemoryRandomBits:
-            fprintf (stdout, "  %s context:  Write random bits to a memory address\n", context_type);
+            fprintf (fh, "write random bits to a memory address");
             break;
             
-        case eContextMultiplication:
-            fprintf (stdout, "  %s context:  Performing a multiplication\n", context_type);
-            break;
-            
-        case eContextAddition:
-            fprintf (stdout, "  %s context:  Performing an addition\n", context_type);
+        case eContextArithmetic:
+            fprintf (fh, "arithmetic");
             break;
             
         case eContextReturnFromException:
-            fprintf (stdout, "  %s context:  Returning from an exception\n", context_type);
+            fprintf (fh, "return from exception");
             break;
             
         default:
-            fprintf (stdout, "  %s context:  Unrecognized context.\n", context_type);
+            fprintf (fh, "unrecognized context.");
             break;
     }
     
-    switch (context.info_type)
+    switch (info_type)
     {
-        case eInfoTypeRegisterPlusOffset:
+    case eInfoTypeRegisterPlusOffset:
         {
-            std::string reg_name;
-            TranslateRegister (context.info.RegisterPlusOffset.reg.kind, 
-                               context.info.RegisterPlusOffset.reg.num,
-                               reg_name);
-            fprintf (stdout, "    Info type:  Register plus offset (%s  +/- %lld)\n", reg_name.c_str(),
-                    context.info.RegisterPlusOffset.signed_offset);
+            fprintf (fh, 
+                     " (reg_plus_offset = %s%+lld)\n",
+                     info.RegisterPlusOffset.reg.name,
+                     info.RegisterPlusOffset.signed_offset);
         }
-            break;
-        case eInfoTypeRegisterPlusIndirectOffset:
+        break;
+
+    case eInfoTypeRegisterPlusIndirectOffset:
         {
-            std::string base_reg_name;
-            std::string offset_reg_name;
-            TranslateRegister (context.info.RegisterPlusIndirectOffset.base_reg.kind, 
-                                context.info.RegisterPlusIndirectOffset.base_reg.num,
-                                base_reg_name);
-            TranslateRegister (context.info.RegisterPlusIndirectOffset.offset_reg.kind, 
-                                context.info.RegisterPlusIndirectOffset.offset_reg.num,
-                                offset_reg_name);
-            fprintf (stdout, "    Info type:  Register plus indirect offset (%s  +/- %s)\n", 
-                     base_reg_name.c_str(),
-                     offset_reg_name.c_str());
+            fprintf (fh, " (reg_plus_reg = %s + %s)\n",
+                     info.RegisterPlusIndirectOffset.base_reg.name,
+                     info.RegisterPlusIndirectOffset.offset_reg.name);
         }
-            break;
-        case eInfoTypeRegisterToRegisterPlusOffset:
+        break;
+
+    case eInfoTypeRegisterToRegisterPlusOffset:
         {
-            std::string base_reg_name;
-            std::string data_reg_name;
-            TranslateRegister (context.info.RegisterToRegisterPlusOffset.base_reg.kind, 
-                                context.info.RegisterToRegisterPlusOffset.base_reg.num,
-                                base_reg_name);
-            TranslateRegister (context.info.RegisterToRegisterPlusOffset.data_reg.kind, 
-                                context.info.RegisterToRegisterPlusOffset.data_reg.num,
-                                data_reg_name);
-            fprintf (stdout, "    Info type:  Register plus offset (%s  +/- %lld) and data register (%s)\n", 
-                     base_reg_name.c_str(), context.info.RegisterToRegisterPlusOffset.offset,
-                     data_reg_name.c_str());
+            fprintf (fh, " (base_and_imm_offset = %s%+lld, data_reg = %s)\n", 
+                     info.RegisterToRegisterPlusOffset.base_reg.name, 
+                     info.RegisterToRegisterPlusOffset.offset,
+                     info.RegisterToRegisterPlusOffset.data_reg.name);
         }
-            break;
-        case eInfoTypeRegisterToRegisterPlusIndirectOffset:
+        break;
+
+    case eInfoTypeRegisterToRegisterPlusIndirectOffset:
         {
-            std::string base_reg_name;
-            std::string offset_reg_name;
-            std::string data_reg_name;
-            TranslateRegister (context.info.RegisterToRegisterPlusIndirectOffset.base_reg.kind, 
-                                context.info.RegisterToRegisterPlusIndirectOffset.base_reg.num,
-                                base_reg_name);
-            TranslateRegister (context.info.RegisterToRegisterPlusIndirectOffset.offset_reg.kind, 
-                                context.info.RegisterToRegisterPlusIndirectOffset.offset_reg.num,
-                                offset_reg_name);
-            TranslateRegister (context.info.RegisterToRegisterPlusIndirectOffset.data_reg.kind, 
-                                context.info.RegisterToRegisterPlusIndirectOffset.data_reg.num,
-                                data_reg_name);
-            fprintf (stdout, "    Info type:  Register plus indirect offset (%s +/- %s) and data register (%s)\n",
-                     base_reg_name.c_str(), offset_reg_name.c_str(), data_reg_name.c_str());
+            fprintf (fh, " (base_and_reg_offset = %s + %s, data_reg = %s)\n",
+                     info.RegisterToRegisterPlusIndirectOffset.base_reg.name, 
+                     info.RegisterToRegisterPlusIndirectOffset.offset_reg.name, 
+                     info.RegisterToRegisterPlusIndirectOffset.data_reg.name);
         }
-            break;
+        break;
+    
+    case eInfoTypeRegisterRegisterOperands:
+        {
+            fprintf (fh, " (register to register binary op: %s and %s)\n", 
+                     info.RegisterRegisterOperands.operand1.name,
+                     info.RegisterRegisterOperands.operand2.name);
+        }
+        break;
+
+    case eInfoTypeOffset:
+        fprintf (fh, " (signed_offset = %+lld)\n", info.signed_offset);
+        break;
         
-        case eInfoTypeRegisterRegisterOperands:
-        {
-            std::string op1_reg_name;
-            std::string op2_reg_name;
-            TranslateRegister (context.info.RegisterRegisterOperands.operand1.kind, 
-                                context.info.RegisterRegisterOperands.operand1.num,
-                                op1_reg_name);
-            TranslateRegister (context.info.RegisterRegisterOperands.operand2.kind, 
-                                context.info.RegisterRegisterOperands.operand2.num,
-                                op2_reg_name);
-            fprintf (stdout, "    Info type:  Register operands for binary op (%s, %s)\n", 
-                     op1_reg_name.c_str(),
-                     op2_reg_name.c_str());
-        }
-            break;
-        case eInfoTypeOffset:
-            fprintf (stdout, "    Info type: signed offset (%lld)\n", context.info.signed_offset);
-            break;
-            
-        case eInfoTypeRegister:
-        {
-            std::string reg_name;
-            TranslateRegister (context.info.reg.kind, context.info.reg.num, reg_name);
-            fprintf (stdout, "    Info type:  Register (%s)\n", reg_name.c_str());
-        }
-            break;
-            
-        case eInfoTypeImmediate:
-            fprintf (stdout, "    Info type:  Immediate (%lld)\n", context.info.immediate);
-            break;
+    case eInfoTypeRegister:
+        fprintf (fh, " (reg = %s)\n", info.reg.name);
+        break;
+        
+    case eInfoTypeImmediate:
+        fprintf (fh, 
+                 " (unsigned_immediate = %llu (0x%16.16llx))\n", 
+                 info.unsigned_immediate, 
+                 info.unsigned_immediate);
+        break;
 
-        case eInfoTypeImmediateSigned:
-            fprintf (stdout, "    Info type:  Signed immediate (%lld)\n", context.info.signed_immediate);
-            break;
-            
-        case eInfoTypeAddress:
-            fprintf (stdout, "    Info type:  Address (%p)\n", (void *) context.info.address);
-            break;
-            
-        case eInfoTypeModeAndImmediate:
-        {
-            std::string mode_name;
-            
-            if (context.info.ModeAndImmediate.mode == EmulateInstructionARM::eModeARM)
-                mode_name = "ARM";
-            else if (context.info.ModeAndImmediate.mode == EmulateInstructionARM::eModeThumb)
-                mode_name = "Thumb";
-            else
-                mode_name = "Unknown mode";
+    case eInfoTypeImmediateSigned:
+        fprintf (fh, 
+                 " (signed_immediate = %+lld (0x%16.16llx))\n", 
+                 info.signed_immediate, 
+                 info.signed_immediate);
+        break;
+        
+    case eInfoTypeAddress:
+        fprintf (fh, " (address = 0x%llx)\n", info.address);
+        break;
+        
+    case eInfoTypeISAAndImmediate:
+        fprintf (fh, 
+                 " (isa = %u, unsigned_immediate = %u (0x%8.8x))\n", 
+                 info.ISAAndImmediate.isa,
+                 info.ISAAndImmediate.unsigned_data32,
+                 info.ISAAndImmediate.unsigned_data32);
+        break;
+        
+    case eInfoTypeISAAndImmediateSigned:
+        fprintf (fh,
+                 " (isa = %u, signed_immediate = %i (0x%8.8x))\n", 
+                 info.ISAAndImmediateSigned.isa,
+                 info.ISAAndImmediateSigned.signed_data32,
+                 info.ISAAndImmediateSigned.signed_data32);
+        break;
+        
+    case eInfoTypeISA:
+        fprintf (fh, " (isa = %u)\n", info.isa);
+        break;
+        
+    case eInfoTypeNoArgs:
+        fprintf (fh, " \n");
+        break;
 
-            fprintf (stdout, "    Info type:  Mode (%s) and immediate (%d)\n", mode_name.c_str(),
-                     context.info.ModeAndImmediate.data_value);
-        }
-            break;
-            
-        case eInfoTypeModeAndImmediateSigned:
-        {
-            std::string mode_name;
-            
-            if (context.info.ModeAndImmediateSigned.mode == EmulateInstructionARM::eModeARM)
-                mode_name = "ARM";
-            else if (context.info.ModeAndImmediateSigned.mode == EmulateInstructionARM::eModeThumb)
-                mode_name = "Thumb";
-            else
-                mode_name = "Unknown mode";
-
-            fprintf (stdout, "    Info type:  Mode (%s) and signed immediate (%d)\n", mode_name.c_str(),
-                     context.info.ModeAndImmediateSigned.signed_data_value);
-        }
-            break;
-            
-        case eInfoTypeMode:
-        {
-            std::string mode_name;
-            
-            if (context.info.mode == EmulateInstructionARM::eModeARM)
-                mode_name = "ARM";
-            else if (context.info.mode == EmulateInstructionARM::eModeThumb)
-                mode_name = "Thumb";
-            else
-                mode_name = "Unknown mode";
-
-            fprintf (stdout, "    Info type:  Mode (%s)\n", mode_name.c_str());
-        }
-            break;
-            
-        case eInfoTypeNoArgs:
-            fprintf (stdout, "    Info type:  no arguments\n");
-            break;
-
-        default:
-            break;
+    default:
+        fprintf (fh, " (unknown <info_type>)\n");
+        break;
     }
 }
 
@@ -593,54 +547,65 @@ EmulateInstruction::SetInstruction (const Opcode &opcode, const Address &inst_ad
     return true;
 }
 
-
-const char *
-EmulateInstruction::TranslateRegister (uint32_t kind, uint32_t num, std::string &name)
+bool
+EmulateInstruction::GetBestRegisterKindAndNumber (const RegisterInfo &reg_info, 
+                                                  uint32_t &reg_kind,
+                                                  uint32_t &reg_num)
 {
-    if (kind == eRegisterKindGeneric)
+    // Generic and DWARF should be the two most popular register kinds when
+    // emulating instructions since they are the most platform agnostic...
+    reg_num = reg_info.kinds[eRegisterKindGeneric];
+    if (reg_num != LLDB_INVALID_REGNUM)
     {
-        switch (num)
-        {
-            case LLDB_REGNUM_GENERIC_PC:    name = "pc";    break;
-            case LLDB_REGNUM_GENERIC_SP:    name = "sp";    break;
-            case LLDB_REGNUM_GENERIC_FP:    name = "fp";    break;
-            case LLDB_REGNUM_GENERIC_RA:    name = "ra";    break;
-            case LLDB_REGNUM_GENERIC_FLAGS: name = "flags"; break;
-            default:                        name.clear();   break;
-        }
-        if (!name.empty())
-            return name.c_str();
+        reg_kind = eRegisterKindGeneric;
+        return true;
     }
-    const char *kind_cstr = NULL;
     
-    switch (kind)
+    reg_num = reg_info.kinds[eRegisterKindDWARF];
+    if (reg_num != LLDB_INVALID_REGNUM)
     {
-        case eRegisterKindGCC:        // the register numbers seen in eh_frame
-            kind_cstr = "gcc";
-            break;
+        reg_kind = eRegisterKindDWARF;
+        return true;
+    }
 
-        case eRegisterKindDWARF:      // the register numbers seen DWARF
-            kind_cstr = "dwarf";
-            break;
-            
-        case eRegisterKindGeneric:    // insn ptr reg, stack ptr reg, etc not specific to any particular target
-            kind_cstr = "generic";
-            break;
-            
-        case eRegisterKindGDB:        // the register numbers gdb uses (matches stabs numbers?)
-            kind_cstr = "gdb";
-            break;
-            
-        case eRegisterKindLLDB:       // lldb's internal register numbers
-            kind_cstr = "lldb";
-            break;
+    reg_num = reg_info.kinds[eRegisterKindLLDB];
+    if (reg_num != LLDB_INVALID_REGNUM)
+    {
+        reg_kind = eRegisterKindLLDB;
+        return true;
     }
-    
-    
-    StreamString sstr;
-    sstr.Printf ("%s(%u)", kind_cstr, num);
-    name.swap (sstr.GetString());
-    return name.c_str();
+
+    reg_num = reg_info.kinds[eRegisterKindGCC];
+    if (reg_num != LLDB_INVALID_REGNUM)
+    {
+        reg_kind = eRegisterKindGCC;
+        return true;
+    }
+
+    reg_num = reg_info.kinds[eRegisterKindGDB];
+    if (reg_num != LLDB_INVALID_REGNUM)
+    {
+        reg_kind = eRegisterKindGDB;
+        return true;
+    }
+    return false;
+}
+
+uint32_t
+EmulateInstruction::GetInternalRegisterNumber (RegisterContext *reg_ctx, const RegisterInfo &reg_info)
+{
+    uint32_t reg_kind, reg_num;
+    if (reg_ctx && GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
+        return reg_ctx->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
+    return LLDB_INVALID_REGNUM;
+}
+
+
+bool
+EmulateInstruction::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
+{
+    unwind_plan.Clear();
+    return false;
 }
 
 

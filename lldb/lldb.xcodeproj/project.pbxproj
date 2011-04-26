@@ -404,7 +404,7 @@
 		26DE20611161902700A093E2 /* SBBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20601161902600A093E2 /* SBBlock.cpp */; };
 		26DE20631161904200A093E2 /* SBLineEntry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20621161904200A093E2 /* SBLineEntry.cpp */; };
 		26DE20651161904E00A093E2 /* SBSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DE20641161904E00A093E2 /* SBSymbol.cpp */; };
-		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.c in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.c */; };
+		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C27810F3D9E4009D5894 /* IOChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27510F3D9E4009D5894 /* IOChannel.cpp */; };
 		26F5C32510F3DF23009D5894 /* libpython.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32410F3DF23009D5894 /* libpython.dylib */; };
@@ -1044,7 +1044,7 @@
 		26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMacOSXFrameBackchain.h; path = Utility/RegisterContextMacOSXFrameBackchain.h; sourceTree = "<group>"; };
 		26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExternalASTSourceCallbacks.h; path = include/lldb/Symbol/ClangExternalASTSourceCallbacks.h; sourceTree = "<group>"; };
 		26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExternalASTSourceCallbacks.cpp; path = source/Symbol/ClangExternalASTSourceCallbacks.cpp; sourceTree = "<group>"; };
-		26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ARM_DWARF_Registers.c; path = source/Utility/ARM_DWARF_Registers.c; sourceTree = "<group>"; };
+		26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ARM_DWARF_Registers.cpp; path = source/Utility/ARM_DWARF_Registers.cpp; sourceTree = "<group>"; };
 		26F5C26A10F3D9A4009D5894 /* lldb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lldb; sourceTree = BUILT_PRODUCTS_DIR; };
 		26F5C27210F3D9E4009D5894 /* lldb-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "lldb-Info.plist"; path = "tools/driver/lldb-Info.plist"; sourceTree = "<group>"; };
 		26F5C27310F3D9E4009D5894 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = tools/driver/Driver.cpp; sourceTree = "<group>"; };
@@ -1763,7 +1763,7 @@
 				4C2FAE2E135E3A70001EDE44 /* SharedCluster.h */,
 				261B5A5311C3F2AD00AABD0A /* SharingPtr.h */,
 				26F996A7119B79C300412154 /* ARM_DWARF_Registers.h */,
-				26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.c */,
+				26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */,
 				26F996A8119B79C300412154 /* ARM_GCC_Registers.h */,
 				2660D9F611922A1300958FBD /* StringExtractor.cpp */,
 				2660D9F711922A1300958FBD /* StringExtractor.h */,
@@ -3234,7 +3234,7 @@
 				2692BA231366150100F9E14D /* ArchVolatileRegs-x86.cpp in Sources */,
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
 				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
-				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.c in Sources */,
+				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

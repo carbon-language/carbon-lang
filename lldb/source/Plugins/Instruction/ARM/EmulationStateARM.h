@@ -70,16 +70,14 @@ public:
     static bool
     ReadPseudoRegister (lldb_private::EmulateInstruction *instruction,
                         void *baton,
-                        uint32_t reg_kind,
-                        uint32_t reg_num,
+                        const lldb_private::RegisterInfo &reg_info,
                         uint64_t &reg_value);
     
     static bool
     WritePseudoRegister (lldb_private::EmulateInstruction *instruction,
                          void *baton,
                          const lldb_private::EmulateInstruction::Context &context,
-                         uint32_t reg_kind,
-                         uint32_t reg_num,
+                         const lldb_private::RegisterInfo &reg_info,
                          uint64_t reg_value);
 private:
     uint32_t m_gpr[17];

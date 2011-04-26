@@ -254,8 +254,7 @@ EmulationStateARM::WritePseudoMemory (EmulateInstruction *instruction,
 bool
 EmulationStateARM::ReadPseudoRegister (EmulateInstruction *instruction,
                                        void *baton,
-                                       uint32_t reg_kind,
-                                       uint32_t reg_num,
+                                       const RegisterInfo &reg_info,
                                        uint64_t &reg_value)
 {
     if (!baton)
@@ -264,23 +263,8 @@ EmulationStateARM::ReadPseudoRegister (EmulateInstruction *instruction,
     bool success = true;
     EmulationStateARM *pseudo_state = (EmulationStateARM *) baton;
     
-    if (reg_kind == eRegisterKindGeneric)
-    {
-        switch (reg_num)
-        {
-            case LLDB_REGNUM_GENERIC_PC:
-                reg_num = dwarf_pc; break;
-            case LLDB_REGNUM_GENERIC_SP:
-                reg_num = dwarf_sp; break;
-            case LLDB_REGNUM_GENERIC_FLAGS:
-                reg_num = dwarf_cpsr; break;
-            case LLDB_REGNUM_GENERIC_RA:
-                reg_num = dwarf_lr; break;
-            default:
-                break;
-        }
-    }
-    reg_value = pseudo_state->ReadPseudoRegisterValue (reg_num, success);
+    assert (reg_info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM);
+    reg_value = pseudo_state->ReadPseudoRegisterValue (reg_info.kinds[eRegisterKindDWARF], success);
     
     return success;
     
@@ -290,32 +274,15 @@ bool
 EmulationStateARM::WritePseudoRegister (EmulateInstruction *instruction,
                                         void *baton,
                                         const EmulateInstruction::Context &context,
-                                        uint32_t reg_kind,
-                                        uint32_t reg_num,
+                                        const RegisterInfo &reg_info,
                                         uint64_t reg_value)
 {
     if (!baton)
         return false;
 
-    if (reg_kind == eRegisterKindGeneric)
-    {
-        switch (reg_num)
-        {
-            case LLDB_REGNUM_GENERIC_PC:
-                reg_num = dwarf_pc; break;
-            case LLDB_REGNUM_GENERIC_SP:
-                reg_num = dwarf_sp; break;
-            case LLDB_REGNUM_GENERIC_FLAGS:
-                reg_num = dwarf_cpsr; break;
-            case LLDB_REGNUM_GENERIC_RA:
-                reg_num = dwarf_lr; break;
-            default:
-                break;
-        }
-    }
-       
+    assert (reg_info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM);
     EmulationStateARM *pseudo_state = (EmulationStateARM *) baton;
-    return pseudo_state->StorePseudoRegisterValue (reg_num, reg_value);
+    return pseudo_state->StorePseudoRegisterValue (reg_info.kinds[eRegisterKindDWARF], reg_value);
 }
                          
 bool

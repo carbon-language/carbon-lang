@@ -18,6 +18,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -101,7 +102,9 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             // Initialize the stack pointer with a known value. In the 32 bit case
             // it will be 0x80000000, and in the 64 bit case 0x8000000000000000.
             // We use the address byte size to be safe for any future addresss sizes
-            SetRegisterValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, (1ull << ((addr_byte_size * 8) - 1)));
+            RegisterInfo sp_reg_info;
+            m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp_reg_info);
+            SetRegisterValue(sp_reg_info, (1ull << ((addr_byte_size * 8) - 1)));
                 
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();
@@ -201,6 +204,31 @@ UnwindAssemblyInstEmulation::GetPluginDescriptionStatic()
 }
 
 
+uint64_t 
+UnwindAssemblyInstEmulation::MakeRegisterKindValuePair (const lldb_private::RegisterInfo &reg_info)
+{
+    uint32_t reg_kind, reg_num;
+    if (EmulateInstruction::GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
+        return (uint64_t)reg_kind << 24 | reg_num;
+    return 0ull;
+}
+
+void
+UnwindAssemblyInstEmulation::SetRegisterValue (const lldb_private::RegisterInfo &reg_info, uint64_t reg_value)
+{
+    m_register_values[MakeRegisterKindValuePair (reg_info)] = reg_value;
+}
+
+uint64_t
+UnwindAssemblyInstEmulation::GetRegisterValue (const lldb_private::RegisterInfo &reg_info)
+{
+    const uint64_t reg_id = MakeRegisterKindValuePair (reg_info);
+    RegisterValueMap::const_iterator pos = m_register_values.find(reg_id);
+    if (pos != m_register_values.end())
+        return pos->second;
+    return MakeRegisterKindValuePair (reg_info);
+}
+
 
 size_t
 UnwindAssemblyInstEmulation::ReadMemory (EmulateInstruction *instruction,
@@ -211,12 +239,11 @@ UnwindAssemblyInstEmulation::ReadMemory (EmulateInstruction *instruction,
                                          size_t dst_len)
 {
     //UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
-    printf ("UnwindAssemblyInstEmulation::ReadMemory    (context.type = %i, context.info_type = %i, addr = 0x%16.16llx, dst = %p, dst_len = %zu)\n", 
-            context.type,
-            context.info_type,
+    printf ("UnwindAssemblyInstEmulation::ReadMemory    (addr = 0x%16.16llx, dst = %p, dst_len = %zu, context = ", 
             addr,
             dst,
             dst_len);
+    context.Dump(stdout, instruction);
     return dst_len;
 }
 
@@ -236,27 +263,23 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                         instruction->GetArchitecture ().GetAddressByteSize());
     StreamFile strm(stdout, false);
 
-    strm.Printf ("UnwindAssemblyInstEmulation::WriteMemory   (context.type = %i, context.info_type = %i, ",
-                 context.type,
-                 context.info_type);
+    strm.PutCString ("UnwindAssemblyInstEmulation::WriteMemory   (");
     data.Dump(&strm, 0, eFormatBytes, 1, dst_len, UINT32_MAX, addr, 0, 0);
-    strm.EOL();
+    strm.PutCString (", context = ");
+    context.Dump(stdout, instruction);
     return dst_len;
 }
 
 bool
 UnwindAssemblyInstEmulation::ReadRegister (EmulateInstruction *instruction,
                                            void *baton,
-                                           uint32_t reg_kind, 
-                                           uint32_t reg_num,
+                                           const RegisterInfo &reg_info,
                                            uint64_t &reg_value)
 {
     UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
-    const char *reg_name = instruction->GetRegisterName (reg_kind, reg_num);
+    reg_value = inst_emulator->GetRegisterValue (reg_info);
 
-    reg_value = inst_emulator->GetRegisterValue (reg_kind, reg_num);
-
-    printf ("UnwindAssemblyInstEmulation::ReadRegister  (name = \"%s\") => value = 0x%16.16llx\n", reg_name, reg_value);
+    printf ("UnwindAssemblyInstEmulation::ReadRegister  (name = \"%s\") => value = 0x%16.16llx\n", reg_info.name, reg_value);
 
     return true;
 }
@@ -265,20 +288,19 @@ bool
 UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                                             void *baton,
                                             const EmulateInstruction::Context &context, 
-                                            uint32_t reg_kind, 
-                                            uint32_t reg_num,
+                                            const RegisterInfo &reg_info,
                                             uint64_t reg_value)
 {
     UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
-    const char *reg_name = instruction->GetRegisterName (reg_kind, reg_num);
     
-    printf ("UnwindAssemblyInstEmulation::WriteRegister (name = \"%s\", value = 0x%16.16llx, context.type = %i, context.info_type = %i)\n", 
-            reg_name,
-            reg_value,
-            context.type,
-            context.info_type);
+    printf ("UnwindAssemblyInstEmulation::WriteRegister (name = \"%s\", value = 0x%16.16llx, context =", 
+            reg_info.name,
+            reg_value);
+    context.Dump(stdout, instruction);
 
-    inst_emulator->SetRegisterValue (reg_kind, reg_num, reg_value);
+    inst_emulator->SetRegisterValue (reg_info, reg_value);
+
+    UnwindPlan::Row::RegisterLocation regloc;
 
     switch (context.type)
     {
@@ -296,9 +318,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextTableBranchReadMemory:
         case EmulateInstruction::eContextWriteRegisterRandomBits:
         case EmulateInstruction::eContextWriteMemoryRandomBits:
-        case EmulateInstruction::eContextMultiplication:
-        case EmulateInstruction::eContextAddition:
-        case EmulateInstruction::eContextSubtraction:
+        case EmulateInstruction::eContextArithmetic:
         case EmulateInstruction::eContextAdvancePC:    
         case EmulateInstruction::eContextReturnFromException:
             break;

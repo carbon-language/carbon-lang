@@ -88,16 +88,14 @@ private:
     static bool
     ReadRegister (lldb_private::EmulateInstruction *instruction,
                   void *baton,
-                  uint32_t reg_kind, 
-                  uint32_t reg_num,
+                  const lldb_private::RegisterInfo &reg_info,
                   uint64_t &reg_value);
     
     static bool
     WriteRegister (lldb_private::EmulateInstruction *instruction,
                    void *baton,
                    const lldb_private::EmulateInstruction::Context &context, 
-                   uint32_t reg_kind, 
-                   uint32_t reg_num,
+                   const lldb_private::RegisterInfo &reg_info,
                    uint64_t reg_value);
 
 
@@ -118,26 +116,13 @@ private:
     }
 
     static uint64_t 
-    MakeRegisterKindValuePair (uint32_t reg_kind, uint32_t reg_num)
-    {
-        return (uint64_t)reg_kind << 32 | reg_num;
-    }
+    MakeRegisterKindValuePair (const lldb_private::RegisterInfo &reg_info);
     
     void
-    SetRegisterValue (uint32_t reg_kind, uint32_t reg_num, uint64_t reg_value)
-    {
-        m_register_values[MakeRegisterKindValuePair (reg_kind, reg_num)] = reg_value;
-    }
+    SetRegisterValue (const lldb_private::RegisterInfo &reg_info, uint64_t reg_value);
 
     uint64_t
-    GetRegisterValue (uint32_t reg_kind, uint32_t reg_num)
-    {
-        const uint64_t reg_id = MakeRegisterKindValuePair (reg_kind, reg_num);
-        RegisterValueMap::const_iterator pos = m_register_values.find(reg_id);
-        if (pos != m_register_values.end())
-            return pos->second;
-        return (uint64_t)reg_kind << 24 | (uint64_t)reg_num;
-    }
+    GetRegisterValue (const lldb_private::RegisterInfo &reg_info);
 
     std::auto_ptr<lldb_private::EmulateInstruction> m_inst_emulator_ap;    
     lldb_private::AddressRange* m_range_ptr; 

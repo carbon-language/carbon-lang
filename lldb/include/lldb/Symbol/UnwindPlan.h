@@ -59,7 +59,11 @@ public:
                     isDWARFExpression   // reg = eval(dwarf_expr)
                 };
     
-            RegisterLocation() : m_type(unspecified), m_location() { }
+            RegisterLocation() : 
+                m_type(unspecified), 
+                m_location() 
+            {
+            }
     
             bool
             operator == (const RegisterLocation& rhs) const;
@@ -258,6 +262,15 @@ public:
 
     int
     GetRowCount () const;
+
+    void
+    Clear()
+    {
+        m_row_list.clear();
+        m_plan_valid_address_range.Clear();
+        m_register_kind = UINT32_MAX;
+        m_source_name.Clear();
+    }
 
 private:
 
