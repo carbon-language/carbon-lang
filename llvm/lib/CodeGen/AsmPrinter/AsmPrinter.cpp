@@ -607,16 +607,16 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   const MachineFunction &MF = *MI.getParent()->getParent();
   MachineModuleInfo &MMI = MF.getMMI();
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-  const MachineMove *Move = NULL;
+  bool FoundOne = false;
+  (void)FoundOne;
   for (std::vector<MachineMove>::iterator I = Moves.begin(),
          E = Moves.end(); I != E; ++I) {
     if (I->getLabel() == Label) {
-      Move = &*I;
-      break;
+      EmitCFIFrameMove(*I);
+      FoundOne = true;
     }
   }
-  assert(Move);
-  EmitCFIFrameMove(*Move);
+  assert(FoundOne);
 }
 
 /// EmitFunctionBody - This method emits the body and trailer for a

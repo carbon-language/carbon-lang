@@ -300,7 +300,7 @@ void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
   } else {
     assert(!Dst.isReg() && "Machine move not supported yet.");
     OutStreamer.EmitCFIOffset(RI->getDwarfRegNum(Src.getReg(), true),
-                              -Dst.getOffset());
+                              Dst.getOffset());
   }
 }
 
