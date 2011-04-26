@@ -564,6 +564,8 @@ protected:
   unsigned IsUnion : 1;
 
   unsigned IsMac68kAlign : 1;
+  
+  unsigned IsMsStruct : 1;
 
   /// UnfilledBitsInLastByte - If the last field laid out was a bitfield,
   /// this contains the number of bits in the last byte that can be used for
@@ -612,7 +614,8 @@ protected:
                       *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(Alignment),
-      Packed(false), IsUnion(false), IsMac68kAlign(false), 
+      Packed(false), IsUnion(false), 
+      IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), PrimaryBase(0), 
@@ -1148,6 +1151,8 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
     IsUnion = RD->isUnion();
 
   Packed = D->hasAttr<PackedAttr>();
+  
+  IsMsStruct = D->hasAttr<MsStructAttr>();
 
   // mac68k alignment supersedes maximum field alignment and attribute aligned,
   // and forces all structures to have 2-byte alignment. The IBM docs on it
@@ -1249,9 +1254,21 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
+  const FieldDecl *LastFD = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(),
-         FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
+       FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are
+      // ignored:
+      const FieldDecl *FD =  (*Field);
+      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
+          FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue() == 0) {
+        continue;
+      }
+      LastFD = FD;
+    }
     LayoutField(*Field);
+  }
 }
 
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,

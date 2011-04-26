@@ -77,6 +77,9 @@ public:
 
   /// Packed - Whether the resulting LLVM struct will be packed or not.
   bool Packed;
+  
+  /// IsMsStruct - Whether ms_struct is in effect or not
+  bool IsMsStruct;
 
 private:
   CodeGenTypes &Types;
@@ -184,7 +187,8 @@ public:
   CGRecordLayoutBuilder(CodeGenTypes &Types)
     : BaseSubobjectType(0),
       IsZeroInitializable(true), IsZeroInitializableAsBase(true),
-      Packed(false), Types(Types), BitsAvailableInLastField(0) { }
+      Packed(false), IsMsStruct(false),
+      Types(Types), BitsAvailableInLastField(0) { }
 
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
@@ -195,6 +199,8 @@ public:
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   Alignment = Types.getContext().getASTRecordLayout(D).getAlignment();
   Packed = D->hasAttr<PackedAttr>();
+  
+  IsMsStruct = D->hasAttr<MsStructAttr>();
 
   if (D->isUnion()) {
     LayoutUnion(D);
@@ -739,9 +745,24 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
     LayoutNonVirtualBases(RD, Layout);
 
   unsigned FieldNo = 0;
-
+  const FieldDecl *LastFD = 0;
+  
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are
+      // ignored:
+      const FieldDecl *FD =  (*Field);
+      // FIXME. Refactor into common code as it is used in several places.
+      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
+          FD->getBitWidth()->
+            EvaluateAsInt(Types.getContext()).getZExtValue() == 0) {
+        --FieldNo;
+        continue;
+      }
+      LastFD = FD;
+    }
+    
     if (!LayoutField(*Field, Layout.getFieldOffset(FieldNo))) {
       assert(!Packed &&
              "Could not layout fields even with a packed LLVM struct!");
@@ -960,6 +981,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
 
   const ASTRecordLayout &AST_RL = getContext().getASTRecordLayout(D);
   RecordDecl::field_iterator it = D->field_begin();
+  const FieldDecl *LastFD = 0;
+  bool IsMsStruct = D->hasAttr<MsStructAttr>();
   for (unsigned i = 0, e = AST_RL.getFieldCount(); i != e; ++i, ++it) {
     const FieldDecl *FD = *it;
 
@@ -969,13 +992,28 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
       unsigned FieldNo = RL->getLLVMFieldNo(FD);
       assert(AST_RL.getFieldOffset(i) == SL->getElementOffsetInBits(FieldNo) &&
              "Invalid field offset!");
+      LastFD = FD;
       continue;
     }
 
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are
+      // ignored:
+      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
+          FD->getBitWidth()->
+          EvaluateAsInt(getContext()).getZExtValue() == 0) {
+        --i;
+        continue;
+      }
+      LastFD = FD;
+    }
+    
     // Ignore unnamed bit-fields.
-    if (!FD->getDeclName())
+    if (!FD->getDeclName()) {
+      LastFD = FD;
       continue;
-
+    }
+    
     const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
     for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
       const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
