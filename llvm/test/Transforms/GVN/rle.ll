@@ -570,4 +570,27 @@ entry:
 }
 
 
+; Cross block partial alias case.
+define i32 @load_load_partial_alias_cross_block(i8* %P) nounwind ssp {
+entry:
+  %xx = bitcast i8* %P to i32*
+  %x1 = load i32* %xx, align 4
+  %cmp = icmp eq i32 %x1, 127
+  br i1 %cmp, label %land.lhs.true, label %if.end
+
+land.lhs.true:                                    ; preds = %entry
+  %arrayidx4 = getelementptr inbounds i8* %P, i64 1
+  %tmp5 = load i8* %arrayidx4, align 1
+  %conv6 = zext i8 %tmp5 to i32
+  ret i32 %conv6
+
+if.end:
+  ret i32 52
+; CHECK: @load_load_partial_alias_cross_block
+; CHECK: land.lhs.true:
+; CHECK-NOT: load i8
+; CHECK: ret i32 %conv6
+}
+
+
 

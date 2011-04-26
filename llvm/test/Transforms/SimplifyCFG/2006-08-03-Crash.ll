@@ -1,7 +1,5 @@
-; RUN: opt < %s -gvn -simplifycfg \
-; RUN:   -disable-output
+; RUN: opt < %s -gvn -simplifycfg -disable-output
 ; PR867
-; END.
 
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8"

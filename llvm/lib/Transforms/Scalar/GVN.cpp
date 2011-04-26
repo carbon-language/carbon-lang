@@ -1103,7 +1103,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   // If we had a phi translation failure, we'll have a single entry which is a
   // clobber in the current block.  Reject this early.
-  if (Deps.size() == 1 && Deps[0].getResult().isClobber()) {
+  if (Deps.size() == 1 && Deps[0].getResult().isClobber() &&
+      Deps[0].getResult().getInst()->getParent() == LI->getParent()) {
     DEBUG(
       dbgs() << "GVN: non-local load ";
       WriteAsOperand(dbgs(), LI);
