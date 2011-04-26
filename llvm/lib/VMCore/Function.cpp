@@ -363,7 +363,7 @@ const FunctionType *Intrinsic::getType(LLVMContext &Context,
 }
 
 bool Intrinsic::isOverloaded(ID id) {
-  const bool OTable[] = {
+  static const bool OTable[] = {
     false,
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "llvm/Intrinsics.gen"
