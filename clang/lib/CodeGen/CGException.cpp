@@ -266,7 +266,7 @@ static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
 /// when it really needs it.
 void CodeGenModule::SimplifyPersonality() {
   // For now, this is really a Darwin-specific operation.
-  if (Context.Target.getTriple().isOSDarwin())
+  if (!Context.Target.getTriple().isOSDarwin())
     return;
 
   // If we're not in ObjC++ -fexceptions, there's nothing to do.
