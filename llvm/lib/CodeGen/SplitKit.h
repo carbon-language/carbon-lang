@@ -150,6 +150,11 @@ public:
   /// getThroughBlocks - Return the set of through blocks.
   const BitVector &getThroughBlocks() const { return ThroughBlocks; }
 
+  /// countLiveBlocks - Return the number of blocks where li is live.
+  /// This is guaranteed to return the same number as getNumThroughBlocks() +
+  /// getUseBlocks().size() after calling analyze(li).
+  unsigned countLiveBlocks(const LiveInterval *li) const;
+
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
 
   /// getMultiUseBlocks - Add basic blocks to Blocks that may benefit from

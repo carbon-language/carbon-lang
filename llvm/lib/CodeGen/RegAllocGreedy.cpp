@@ -921,6 +921,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
   LRStage.resize(MRI->getNumVirtRegs());
+  unsigned OrigBlocks = SA->getNumThroughBlocks() + SA->getUseBlocks().size();
 
   // Sort out the new intervals created by splitting. We get four kinds:
   // - Remainder intervals should not be split again.
@@ -941,9 +942,20 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       continue;
     }
 
-    // Other intervals are treated as new. This includes the main interval,
-    // local intervals created for blocks with multiple uses, and anything
-    // created by DCE.
+    // Main interval. Allow repeated splitting as long as the number of live
+    // blocks is strictly decreasing.
+    if (IntvMap[i] == MainIntv) {
+      if (SA->countLiveBlocks(LREdit.get(i)) >= OrigBlocks) {
+        DEBUG(dbgs() << "Main interval covers the same " << OrigBlocks
+                     << " blocks as original.\n");
+        // Don't allow repeated splitting as a safe guard against looping.
+        LRStage[Reg] = RS_Global;
+      }
+      continue;
+    }
+
+    // Other intervals are treated as new. This includes local intervals created
+    // for blocks with multiple uses, and anything created by DCE.
   }
 
   if (VerifyEnabled)

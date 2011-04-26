@@ -221,6 +221,29 @@ bool SplitAnalysis::calcLiveBlockInfo() {
   return true;
 }
 
+unsigned SplitAnalysis::countLiveBlocks(const LiveInterval *cli) const {
+  if (cli->empty())
+    return 0;
+  LiveInterval *li = const_cast<LiveInterval*>(cli);
+  LiveInterval::iterator LVI = li->begin();
+  LiveInterval::iterator LVE = li->end();
+  unsigned Count = 0;
+
+  // Loop over basic blocks where li is live.
+  MachineFunction::const_iterator MFI = LIS.getMBBFromIndex(LVI->start);
+  SlotIndex Stop = LIS.getMBBEndIdx(MFI);
+  for (;;) {
+    ++Count;
+    LVI = li->advanceTo(LVI, Stop);
+    if (LVI == LVE)
+      return Count;
+    do {
+      ++MFI;
+      Stop = LIS.getMBBEndIdx(MFI);
+    } while (Stop <= LVI->start);
+  }
+}
+
 bool SplitAnalysis::isOriginalEndpoint(SlotIndex Idx) const {
   unsigned OrigReg = VRM.getOriginal(CurLI->reg);
   const LiveInterval &Orig = LIS.getInterval(OrigReg);
