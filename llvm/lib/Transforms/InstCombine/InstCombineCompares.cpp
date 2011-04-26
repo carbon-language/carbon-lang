@@ -2506,6 +2506,31 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
     }
     
+    // Transform "icmp eq (trunc (lshr(X, cst1)), cst" to
+    // "icmp (and X, mask), cst"
+    uint64_t ShAmt = 0;
+    ConstantInt *Cst1;
+    if (Op0->hasOneUse() &&
+        match(Op0, m_Trunc(m_OneUse(m_LShr(m_Value(A),
+                                           m_ConstantInt(ShAmt))))) &&
+        match(Op1, m_ConstantInt(Cst1)) &&
+        // Only do this when A has multiple uses.  This is most important to do
+        // when it exposes other optimizations.
+        !A->hasOneUse()) {
+      unsigned ASize =cast<IntegerType>(A->getType())->getPrimitiveSizeInBits();
+      
+      if (ShAmt < ASize) {
+        APInt MaskV =
+          APInt::getLowBitsSet(ASize, Op0->getType()->getPrimitiveSizeInBits());
+        MaskV <<= ShAmt;
+        
+        APInt CmpV = Cst1->getValue().zext(ASize);
+        CmpV <<= ShAmt;
+        
+        Value *Mask = Builder->CreateAnd(A, Builder->getInt(MaskV));
+        return new ICmpInst(I.getPredicate(), Mask, Builder->getInt(CmpV));
+      }
+    }
   }
   
   {

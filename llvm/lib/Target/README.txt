@@ -2259,52 +2259,6 @@ icmp transform.
 
 //===---------------------------------------------------------------------===//
 
-We should optimize this:
-
-  %tmp = load i16* %arrayidx, align 4, !tbaa !0
-  %A = trunc i16 %tmp to i8
-  %cmp = icmp eq i8 %A, 127
-  %B.mask = and i16 %tmp, -256
-  %cmp7 = icmp eq i16 %B.mask, 17664
-  %or.cond = and i1 %cmp, %cmp7
-  br i1 %or.cond, label %land.lhs.true9, label %if.end
-
-into:
-
-  %tmp = load i16* %arrayidx, align 4, !tbaa !0
-  %0 = icmp eq i16 %tmp, 17791
-  br i1 %0, label %land.lhs.true9, label %if.end
-
-with this patch:
-Index: InstCombine/InstCombineCompares.cpp
-===================================================================
---- InstCombine/InstCombineCompares.cpp	(revision 129500)
-+++ InstCombine/InstCombineCompares.cpp	(working copy)
-@@ -2506,6 +2506,18 @@
-         return &I;
-       }
-     }
-+    
-+    // Transform "icmp eq (trunc X), cst" to "icmp (and X, mask), cst"
-+    if (Op0->hasOneUse() && match(Op0, m_Trunc(m_Value(A))) &&
-+        isa<ConstantInt>(Op1)) {
-+      APInt MaskV = APInt::getLowBitsSet(A->getType()->getPrimitiveSizeInBits(),
-+                                      Op0->getType()->getPrimitiveSizeInBits());
-+      Value *Mask =
-+        Builder->CreateAnd(A, ConstantInt::get(A->getContext(), MaskV));
-+      return new ICmpInst(I.getPredicate(), Mask,
-+                          ConstantExpr::getZExt(cast<ConstantInt>(Op1),
-+                                                Mask->getType()));
-+    }
-   }
-   
-   {
-
-
-Not having this is blocking resolving PR6627.
-
-//===---------------------------------------------------------------------===//
-
 This code:
 
 typedef struct {

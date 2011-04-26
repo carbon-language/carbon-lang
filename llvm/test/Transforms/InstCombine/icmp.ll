@@ -494,3 +494,19 @@ define i1 @test51(i32 %X, i32 %Y) {
   %C = icmp sgt i32 %B, -1
   ret i1 %C
 }
+
+; CHECK: @test52
+; CHECK-NEXT: and i32 %x1, 16711935
+; CHECK-NEXT: icmp eq i32 {{.*}}, 4980863
+; CHECK-NEXT: ret i1
+define i1 @test52(i32 %x1) nounwind {
+  %conv = and i32 %x1, 255
+  %cmp = icmp eq i32 %conv, 127
+  %tmp2 = lshr i32 %x1, 16
+  %tmp3 = trunc i32 %tmp2 to i8
+  %cmp15 = icmp eq i8 %tmp3, 76
+
+  %A = and i1 %cmp, %cmp15
+  ret i1 %A
+}
+
