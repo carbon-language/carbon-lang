@@ -227,6 +227,13 @@ if( LLVM_INCLUDE_TOOLS )
   add_subdirectory(tools)
 endif()
 
+option(LLVM_BUILD_RUNTIME
+  "Build the LLVM runtime libraries. If OFF, just generate build targets." OFF)
+option(LLVM_INCLUDE_RUNTIME "Generate build targets for the LLVM runtimes" ON)
+if( LLVM_INCLUDE_RUNTIME )
+  add_subdirectory(runtime)
+endif()
+
 option(LLVM_BUILD_EXAMPLES
   "Build the LLVM example programs. If OFF, just generate build targets." OFF)
 option(LLVM_INCLUDE_EXAMPLES "Generate build targets for the LLVM examples" ON)
@@ -235,7 +242,7 @@ if( LLVM_INCLUDE_EXAMPLES )
 endif()
 
 option(LLVM_BUILD_TESTS
-  "Build LLVM unit tests. If OFF, just generate build targes." OFF)
+  "Build LLVM unit tests. If OFF, just generate build targets." OFF)
 if( LLVM_INCLUDE_TESTS )
   add_subdirectory(test)
   add_subdirectory(utils/unittest)
