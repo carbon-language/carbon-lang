@@ -484,6 +484,11 @@ namespace llvm {
                                         MachineBasicBlock *BB,
                                         unsigned Size,
                                         unsigned BinOpcode) const;
+    MachineBasicBlock * EmitAtomicBinaryMinMax(MachineInstr *MI,
+                                               MachineBasicBlock *BB,
+                                               unsigned Size,
+                                               bool signExtend,
+                                               ARMCC::CondCodes Cond) const;
 
     bool RemapAddSubWithFlags(MachineInstr *MI, MachineBasicBlock *BB) const;
   };
