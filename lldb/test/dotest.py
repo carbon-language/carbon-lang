@@ -24,10 +24,11 @@ import os, signal, sys, time
 import unittest2
 
 def is_exe(fpath):
+    """Return true if fpath is an executable."""
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-# Find the full path to a program, or return None.
 def which(program):
+    """Find the full path to a program; return None otherwise."""
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):

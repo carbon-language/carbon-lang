@@ -6,11 +6,16 @@ import lldb
 import os, sys
 import StringIO
 
+# ====================================================
+# Utilities for locating/checking executable programs.
+# ====================================================
+
 def is_exe(fpath):
+    """Return true if fpath is an executable."""
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 def which(program):
-    """Find the full path to a program, or return None."""
+    """Find the full path to a program; return None otherwise."""
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):
