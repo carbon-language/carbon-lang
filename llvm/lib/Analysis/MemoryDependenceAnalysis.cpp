@@ -229,37 +229,14 @@ MemDepResult MemoryDependenceAnalysis::
 getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
 
-  Value *InvariantTag = 0;
-
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
 
-    // If we're in an invariant region, no dependencies can be found before
-    // we pass an invariant-begin marker.
-    if (InvariantTag == Inst) {
-      InvariantTag = 0;
-      continue;
-    }
-    
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       // Debug intrinsics don't (and can't) cause dependences.
       if (isa<DbgInfoIntrinsic>(II)) continue;
       
-      // If we pass an invariant-end marker, then we've just entered an
-      // invariant region and can start ignoring dependencies.
-      if (II->getIntrinsicID() == Intrinsic::invariant_end) {
-        // FIXME: This only considers queries directly on the invariant-tagged
-        // pointer, not on query pointers that are indexed off of them.  It'd
-        // be nice to handle that at some point.
-        AliasAnalysis::AliasResult R =
-          AA->alias(AliasAnalysis::Location(II->getArgOperand(2)), MemLoc);
-        if (R == AliasAnalysis::MustAlias)
-          InvariantTag = II->getArgOperand(0);
-
-        continue;
-      }
-
       // If we reach a lifetime begin or end marker, then the query ends here
       // because the value is undefined.
       if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
@@ -273,13 +250,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         continue;
       }
     }
-
-    // If we're querying on a load and we're in an invariant region, we're done
-    // at this point. Nothing a load depends on can live in an invariant region.
-    //
-    // FIXME: this will prevent us from returning load/load must-aliases, so GVN
-    // won't remove redundant loads.
-    if (isLoad && InvariantTag) continue;
 
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
@@ -315,10 +285,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     }
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      // There can't be stores to the value we care about inside an 
-      // invariant region.
-      if (InvariantTag) continue;
-      
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
       // the query pointer points to constant memory etc.
@@ -363,9 +329,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       // If the call has no effect on the queried pointer, just ignore it.
       continue;
     case AliasAnalysis::Mod:
-      // If we're in an invariant region, we can ignore calls that ONLY
-      // modify the pointer.
-      if (InvariantTag) continue;
       return MemDepResult::getClobber(Inst);
     case AliasAnalysis::Ref:
       // If the call is known to never store to the pointer, and if this is a
