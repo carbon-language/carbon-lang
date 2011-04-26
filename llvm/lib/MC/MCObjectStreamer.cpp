@@ -124,12 +124,23 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setOffset(F->getContents().size());
 }
 
+static const MCExpr *ForceExpAbs(MCObjectStreamer *Streamer,
+                                  MCContext &Context, const MCExpr* Expr) {
+ if (Context.getAsmInfo().hasAggressiveSymbolFolding())
+   return Expr;
+
+ MCSymbol *ABS = Context.CreateTempSymbol();
+ Streamer->EmitAssignment(ABS, Expr);
+ return MCSymbolRefExpr::Create(ABS, Context);
+}
+
 void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
     EmitULEB128IntValue(IntValue);
     return;
   }
+  Value = ForceExpAbs(this, getContext(), Value);
   new MCLEBFragment(*Value, false, getCurrentSectionData());
 }
 
@@ -139,6 +150,7 @@ void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value) {
     EmitSLEB128IntValue(IntValue);
     return;
   }
+  Value = ForceExpAbs(this, getContext(), Value);
   new MCLEBFragment(*Value, true, getCurrentSectionData());
 }
 
@@ -206,16 +218,6 @@ static const MCExpr *BuildSymbolDiff(MCContext &Context,
   const MCExpr *AddrDelta =
     MCBinaryExpr::Create(MCBinaryExpr::Sub, ARef, BRef, Context);
   return AddrDelta;
-}
-
-static const MCExpr *ForceExpAbs(MCObjectStreamer *Streamer,
-                                  MCContext &Context, const MCExpr* Expr) {
- if (Context.getAsmInfo().hasAggressiveSymbolFolding())
-   return Expr;
-
- MCSymbol *ABS = Context.CreateTempSymbol();
- Streamer->EmitAssignment(ABS, Expr);
- return MCSymbolRefExpr::Create(ABS, Context);
 }
 
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
