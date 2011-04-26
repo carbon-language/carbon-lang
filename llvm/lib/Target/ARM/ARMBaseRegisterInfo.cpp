@@ -342,6 +342,25 @@ ARMBaseRegisterInfo::canCombineSubRegIndices(const TargetRegisterClass *RC,
   return false;
 }
 
+const TargetRegisterClass*
+ARMBaseRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
+                                                                         const {
+  const TargetRegisterClass *Super = RC;
+  TargetRegisterClass::sc_iterator I = RC->superclasses_begin();
+  do {
+    switch (Super->getID()) {
+    case ARM::GPRRegClassID:
+    case ARM::SPRRegClassID:
+    case ARM::DPRRegClassID:
+    case ARM::QPRRegClassID:
+    case ARM::QQPRRegClassID:
+    case ARM::QQQQPRRegClassID:
+      return Super;
+    }
+    Super = *I++;
+  } while (Super);
+  return RC;
+}
 
 const TargetRegisterClass *
 ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {

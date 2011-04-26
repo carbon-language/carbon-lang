@@ -128,6 +128,9 @@ public:
 
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
+  const TargetRegisterClass*
+  getLargestLegalSuperClass(const TargetRegisterClass *RC) const;
+
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const;
 

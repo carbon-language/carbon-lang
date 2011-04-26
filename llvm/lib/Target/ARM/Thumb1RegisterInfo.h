@@ -28,6 +28,9 @@ struct Thumb1RegisterInfo : public ARMBaseRegisterInfo {
 public:
   Thumb1RegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
 
+  const TargetRegisterClass*
+  getLargestLegalSuperClass(const TargetRegisterClass *RC) const;
+
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
   /// emitLoadConstPool - Emits a load from constpool to materialize the

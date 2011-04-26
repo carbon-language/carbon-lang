@@ -308,6 +308,33 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   return 0;
 }
 
+const TargetRegisterClass*
+X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC) const{
+  const TargetRegisterClass *Super = RC;
+  TargetRegisterClass::sc_iterator I = RC->superclasses_begin();
+  do {
+    switch (Super->getID()) {
+    case X86::GR8RegClassID:
+    case X86::GR16RegClassID:
+    case X86::GR32RegClassID:
+    case X86::GR64RegClassID:
+    case X86::FR32RegClassID:
+    case X86::FR64RegClassID:
+    case X86::RFP32RegClassID:
+    case X86::RFP64RegClassID:
+    case X86::RFP80RegClassID:
+    case X86::VR128RegClassID:
+    case X86::VR256RegClassID:
+      // Don't return a super-class that would shrink the spill size.
+      // That can happen with the vector and float classes.
+      if (Super->getSize() == RC->getSize())
+        return Super;
+    }
+    Super = *I++;
+  } while (Super);
+  return RC;
+}
+
 const TargetRegisterClass *
 X86RegisterInfo::getPointerRegClass(unsigned Kind) const {
   switch (Kind) {

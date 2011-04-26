@@ -46,6 +46,14 @@ Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
   : ARMBaseRegisterInfo(tii, sti) {
 }
 
+const TargetRegisterClass*
+Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
+                                                                         const {
+  if (RC == ARM::tGPRRegisterClass || RC->hasSuperClass(ARM::tGPRRegisterClass))
+    return ARM::tGPRRegisterClass;
+  return ARMBaseRegisterInfo::getLargestLegalSuperClass(RC);
+}
+
 const TargetRegisterClass *
 Thumb1RegisterInfo::getPointerRegClass(unsigned Kind) const {
   return ARM::tGPRRegisterClass;
