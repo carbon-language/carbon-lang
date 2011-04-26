@@ -593,10 +593,13 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
 
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   MCSymbol *Label = MI.getOperand(0).getMCSymbol();
-  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI) {
+
+  if (MAI->doesDwarfRequireFrameSection() ||
+      MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     OutStreamer.EmitLabel(Label);
+
+  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     return;
-  }
 
   const MachineFunction &MF = *MI.getParent()->getParent();
   MachineModuleInfo &MMI = MF.getMMI();
