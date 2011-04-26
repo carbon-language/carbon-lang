@@ -474,7 +474,8 @@ const FileEntry *Preprocessor::LookupFile(
     bool isAngled,
     const DirectoryLookup *FromDir,
     const DirectoryLookup *&CurDir,
-    llvm::SmallVectorImpl<char> *RawPath) {
+    llvm::SmallVectorImpl<char> *SearchPath,
+    llvm::SmallVectorImpl<char> *RelativePath) {
   // If the header lookup mechanism may be relative to the current file, pass in
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
@@ -497,7 +498,8 @@ const FileEntry *Preprocessor::LookupFile(
   // Do a standard file entry lookup.
   CurDir = CurDirLookup;
   const FileEntry *FE = HeaderInfo.LookupFile(
-      Filename, isAngled, FromDir, CurDir, CurFileEnt, RawPath);
+      Filename, isAngled, FromDir, CurDir, CurFileEnt,
+      SearchPath, RelativePath);
   if (FE) return FE;
 
   // Otherwise, see if this is a subframework header.  If so, this is relative
@@ -506,7 +508,7 @@ const FileEntry *Preprocessor::LookupFile(
   if (IsFileLexer()) {
     if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
       if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
-                                                    RawPath)))
+                                                    SearchPath, RelativePath)))
         return FE;
   }
 
@@ -515,8 +517,8 @@ const FileEntry *Preprocessor::LookupFile(
     if (IsFileLexer(ISEntry)) {
       if ((CurFileEnt =
            SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID())))
-        if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
-                                                      RawPath)))
+        if ((FE = HeaderInfo.LookupSubframeworkHeader(
+                Filename, CurFileEnt, SearchPath, RelativePath)))
           return FE;
     }
   }
@@ -1171,11 +1173,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  llvm::SmallString<1024> RawPath;
+  llvm::SmallString<1024> SearchPath;
+  llvm::SmallString<1024> RelativePath;
   // We get the raw path only if we have 'Callbacks' to which we later pass
   // the path.
   const FileEntry *File = LookupFile(
-      Filename, isAngled, LookupFrom, CurDir, Callbacks ? &RawPath : NULL);
+      Filename, isAngled, LookupFrom, CurDir,
+      Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL);
   if (File == 0) {
     Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
     return;
@@ -1184,7 +1188,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // Notify the callback object that we've seen an inclusion directive.
   if (Callbacks)
     Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
-                                  End, RawPath);
+                                  End, SearchPath, RelativePath);
 
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include

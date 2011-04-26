@@ -153,7 +153,8 @@ void PreprocessingRecord::InclusionDirective(
     bool IsAngled,
     const FileEntry *File,
     clang::SourceLocation EndLoc,
-    const llvm::SmallVectorImpl<char> &RawPath) {
+    llvm::StringRef SearchPath,
+    llvm::StringRef RelativePath) {
   InclusionDirective::InclusionKind Kind = InclusionDirective::Include;
   
   switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {

@@ -200,8 +200,7 @@ void HeaderMap::dump() const {
 /// LookupFile - Check to see if the specified relative filename is located in
 /// this HeaderMap.  If so, open it and return its FileEntry.
 const FileEntry *HeaderMap::LookupFile(
-    llvm::StringRef Filename, FileManager &FM,
-    llvm::SmallVectorImpl<char> *RawPath) const {
+    llvm::StringRef Filename, FileManager &FM) const {
   const HMapHeader &Hdr = getHeader();
   unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
 
@@ -224,8 +223,6 @@ const FileEntry *HeaderMap::LookupFile(
     llvm::SmallString<1024> DestPath;
     DestPath += getString(B.Prefix);
     DestPath += getString(B.Suffix);
-    if (RawPath != NULL)
-      *RawPath = DestPath;
     return FM.getFile(DestPath.str());
   }
 }

@@ -52,8 +52,7 @@ public:
   /// raw path at which the file was found in the file system. For example,
   /// for a search path ".." and a filename "../file.h" this would be
   /// "../../file.h".
-  const FileEntry *LookupFile(llvm::StringRef Filename, FileManager &FM,
-                              llvm::SmallVectorImpl<char> *RawPath) const;
+  const FileEntry *LookupFile(llvm::StringRef Filename, FileManager &FM) const;
 
   /// getFileName - Return the filename of the headermap.
   const char *getFileName() const;

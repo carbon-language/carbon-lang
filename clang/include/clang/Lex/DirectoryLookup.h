@@ -122,17 +122,26 @@ public:
 
   /// LookupFile - Lookup the specified file in this search path, returning it
   /// if it exists or returning null if not.
-  /// If RawPath is not NULL and the file is found, RawPath will be set to the
-  /// raw path at which the file was found in the file system. For example,
-  /// for a search path ".." and a filename "../file.h" this would be
-  /// "../../file.h".
+  ///
+  /// \param Filename The file to look up relative to the search paths.
+  ///
+  /// \param HS The header search instance to search with.
+  ///
+  /// \param SearchPath If not NULL, will be set to the search path relative
+  /// to which the file was found.
+  ///
+  /// \param RelativePath If not NULL, will be set to the path relative to
+  /// SearchPath at which the file was found. This only differs from the
+  /// Filename for framework includes.
   const FileEntry *LookupFile(llvm::StringRef Filename, HeaderSearch &HS,
-                              llvm::SmallVectorImpl<char> *RawPath) const;
+                              llvm::SmallVectorImpl<char> *SearchPath,
+                              llvm::SmallVectorImpl<char> *RelativePath) const;
 
 private:
   const FileEntry *DoFrameworkLookup(
       llvm::StringRef Filename, HeaderSearch &HS,
-      llvm::SmallVectorImpl<char> *RawPath) const;
+      llvm::SmallVectorImpl<char> *SearchPath,
+      llvm::SmallVectorImpl<char> *RelativePath) const;
 
 };
 

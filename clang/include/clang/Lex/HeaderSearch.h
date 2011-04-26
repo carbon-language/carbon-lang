@@ -182,18 +182,32 @@ public:
   }
   
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
-  /// return null on failure.  isAngled indicates whether the file reference is
-  /// a <> reference.  If successful, this returns 'UsedDir', the
-  /// DirectoryLookup member the file was found in, or null if not applicable.
-  /// If CurDir is non-null, the file was found in the specified directory
-  /// search location.  This is used to implement #include_next.  CurFileEnt, if
-  /// non-null, indicates where the #including file is, in case a relative
-  /// search is needed.
+  /// return null on failure.
+  ///
+  /// \returns If successful, this returns 'UsedDir', the DirectoryLookup member
+  /// the file was found in, or null if not applicable.
+  ///
+  /// \param isAngled indicates whether the file reference is a <> reference.
+  ///
+  /// \param CurDir If non-null, the file was found in the specified directory
+  /// search location.  This is used to implement #include_next.
+  ///
+  /// \param CurFileEnt If non-null, indicates where the #including file is, in
+  /// case a relative search is needed.
+  ///
+  /// \param SearchPath If non-null, will be set to the search path relative
+  /// to which the file was found. If the include path is absolute, SearchPath
+  /// will be set to an empty string.
+  ///
+  /// \param RelativePath If non-null, will be set to the path relative to
+  /// SearchPath at which the file was found. This only differs from the
+  /// Filename for framework includes.
   const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt,
-                              llvm::SmallVectorImpl<char> *RawPath);
+                              llvm::SmallVectorImpl<char> *SearchPath,
+                              llvm::SmallVectorImpl<char> *RelativePath);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
@@ -203,7 +217,8 @@ public:
   const FileEntry *LookupSubframeworkHeader(
       llvm::StringRef Filename,
       const FileEntry *RelativeFileEnt,
-      llvm::SmallVectorImpl<char> *RawPath);
+      llvm::SmallVectorImpl<char> *SearchPath,
+      llvm::SmallVectorImpl<char> *RelativePath);
 
   /// LookupFrameworkCache - Look up the specified framework name in our
   /// framework cache, returning the DirectoryEntry it is in if we know,

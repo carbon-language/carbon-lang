@@ -834,7 +834,8 @@ public:
   const FileEntry *LookupFile(llvm::StringRef Filename,
                               bool isAngled, const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
-                              llvm::SmallVectorImpl<char> *RawPath);
+                              llvm::SmallVectorImpl<char> *SearchPath,
+                              llvm::SmallVectorImpl<char> *RelativePath);
 
   /// GetCurLookup - The DirectoryLookup structure used to find the current
   /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to

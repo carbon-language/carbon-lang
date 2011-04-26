@@ -76,16 +76,25 @@ public:
   /// \param EndLoc The location of the last token within the inclusion
   /// directive.
   ///
-  /// \param RawPath Contains the raw path at which the file was found in the
-  /// file system. For example, for a search path ".." and a filename
-  /// "../file.h" this would be "../../file.h".
+  /// \param SearchPath Contains the search path which was used to find the file
+  /// in the file system. If the file was found via an absolute include path,
+  /// SearchPath will be empty. For framework includes, the SearchPath and
+  /// RelativePath will be split up. For example, if an include of "Some/Some.h"
+  /// is found via the framework path
+  /// "path/to/Frameworks/Some.framework/Headers/Some.h", SearchPath will be
+  /// "path/to/Frameworks/Some.framework/Headers" and RelativePath will be
+  /// "Some.h".
+  ///
+  /// \param RelativePath The path relative to SearchPath, at which the include
+  /// file was found. This is equal to FileName except for framework includes.
   virtual void InclusionDirective(SourceLocation HashLoc,
                                   const Token &IncludeTok,
                                   llvm::StringRef FileName,
                                   bool IsAngled,
                                   const FileEntry *File,
                                   SourceLocation EndLoc,
-                                  const llvm::SmallVectorImpl<char> &RawPath) {
+                                  llvm::StringRef SearchPath,
+                                  llvm::StringRef RelativePath) {
   }
 
   /// EndOfMainFile - This callback is invoked when the end of the main file is
@@ -194,11 +203,12 @@ public:
                                   bool IsAngled,
                                   const FileEntry *File,
                                   SourceLocation EndLoc,
-                                  const llvm::SmallVectorImpl<char> &RawPath) {
+                                  llvm::StringRef SearchPath,
+                                  llvm::StringRef RelativePath) {
     First->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
-                              EndLoc, RawPath);
+                              EndLoc, SearchPath, RelativePath);
     Second->InclusionDirective(HashLoc, IncludeTok, FileName, IsAngled, File,
-                               EndLoc, RawPath);
+                               EndLoc, SearchPath, RelativePath);
   }
 
   virtual void EndOfMainFile() {
