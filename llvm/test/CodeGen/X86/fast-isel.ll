@@ -20,6 +20,7 @@ fast:
   %t6 = add i32 %t5, 2
   %t7 = getelementptr i32* %y, i32 1
   %t8 = getelementptr i32* %t7, i32 %t6
+  call void asm sideeffect "hello world", ""()
   br label %exit
 
 exit:

@@ -482,14 +482,35 @@ bool FastISel::SelectGetElementPtr(const User *I) {
 }
 
 bool FastISel::SelectCall(const User *I) {
-  const Function *F = cast<CallInst>(I)->getCalledFunction();
+  const CallInst *Call = cast<CallInst>(I);
+
+  // Handle simple inline asms.
+  if (const InlineAsm *IA = dyn_cast<InlineAsm>(Call->getArgOperand(0))) {
+    // Don't attempt to handle constraints.
+    if (!IA->getConstraintString().empty())
+      return false;
+
+    unsigned ExtraInfo = 0;
+    if (IA->hasSideEffects())
+      ExtraInfo |= InlineAsm::Extra_HasSideEffects;
+    if (IA->isAlignStack())
+      ExtraInfo |= InlineAsm::Extra_IsAlignStack;
+
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+            TII.get(TargetOpcode::INLINEASM))
+      .addExternalSymbol(IA->getAsmString().c_str())
+      .addImm(ExtraInfo);
+    return true;
+  }
+
+  const Function *F = Call->getCalledFunction();
   if (!F) return false;
 
   // Handle selected intrinsic function calls.
   switch (F->getIntrinsicID()) {
   default: break;
   case Intrinsic::dbg_declare: {
-    const DbgDeclareInst *DI = cast<DbgDeclareInst>(I);
+    const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
     if (!DIVariable(DI->getVariable()).Verify() ||
         !FuncInfo.MF->getMMI().hasDebugInfo())
       return true;
@@ -521,7 +542,7 @@ bool FastISel::SelectCall(const User *I) {
   }
   case Intrinsic::dbg_value: {
     // This form of DBG_VALUE is target-independent.
-    const DbgValueInst *DI = cast<DbgValueInst>(I);
+    const DbgValueInst *DI = cast<DbgValueInst>(Call);
     const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     const Value *V = DI->getValue();
     if (!V) {
@@ -550,7 +571,7 @@ bool FastISel::SelectCall(const User *I) {
     return true;
   }
   case Intrinsic::eh_exception: {
-    EVT VT = TLI.getValueType(I->getType());
+    EVT VT = TLI.getValueType(Call->getType());
     if (TLI.getOperationAction(ISD::EXCEPTIONADDR, VT)!=TargetLowering::Expand)
       break;
 
@@ -561,18 +582,18 @@ bool FastISel::SelectCall(const User *I) {
     unsigned ResultReg = createResultReg(RC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             ResultReg).addReg(Reg);
-    UpdateValueMap(I, ResultReg);
+    UpdateValueMap(Call, ResultReg);
     return true;
   }
   case Intrinsic::eh_selector: {
-    EVT VT = TLI.getValueType(I->getType());
+    EVT VT = TLI.getValueType(Call->getType());
     if (TLI.getOperationAction(ISD::EHSELECTION, VT) != TargetLowering::Expand)
       break;
     if (FuncInfo.MBB->isLandingPad())
-      AddCatchInfo(*cast<CallInst>(I), &FuncInfo.MF->getMMI(), FuncInfo.MBB);
+      AddCatchInfo(*Call, &FuncInfo.MF->getMMI(), FuncInfo.MBB);
     else {
 #ifndef NDEBUG
-      FuncInfo.CatchInfoLost.insert(cast<CallInst>(I));
+      FuncInfo.CatchInfoLost.insert(Call);
 #endif
       // FIXME: Mark exception selector register as live in.  Hack for PR1508.
       unsigned Reg = TLI.getExceptionSelectorRegister();
@@ -586,7 +607,7 @@ bool FastISel::SelectCall(const User *I) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
             ResultReg).addReg(Reg);
 
-    bool ResultRegIsKill = hasTrivialKill(I);
+    bool ResultRegIsKill = hasTrivialKill(Call);
 
     // Cast the register to the type of the selector.
     if (SrcVT.bitsGT(MVT::i32))
@@ -599,7 +620,7 @@ bool FastISel::SelectCall(const User *I) {
       // Unhandled operand. Halt "fast" selection and bail.
       return false;
 
-    UpdateValueMap(I, ResultReg);
+    UpdateValueMap(Call, ResultReg);
 
     return true;
   }
