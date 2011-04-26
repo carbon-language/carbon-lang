@@ -6,9 +6,9 @@ import lldb
 import os, sys
 import StringIO
 
-# ====================================================
-# Utilities for locating/checking executable programs.
-# ====================================================
+# ===================================================
+# Utilities for locating/checking executable programs
+# ===================================================
 
 def is_exe(fpath):
     """Return true if fpath is an executable."""
