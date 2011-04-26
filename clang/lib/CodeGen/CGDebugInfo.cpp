@@ -2011,7 +2011,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
     // offset of __forwarding field
-    offset = CGM.getContext().toCharUnitsFromBits(target.getPointerSize());
+    offset = CGM.getContext().toCharUnitsFromBits(target.getPointerSizeInBits());
     addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpDeref));
     addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
