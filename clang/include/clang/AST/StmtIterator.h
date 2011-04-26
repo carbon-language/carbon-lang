@@ -18,6 +18,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iterator>
+#include <utility>
 
 namespace clang {
 
