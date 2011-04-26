@@ -57,9 +57,13 @@ ${name} ignored.")
         LINK_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
     endif()
 
-    install(TARGETS ${name}
-      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+    if( EXCLUDE_FROM_ALL )
+      set_target_properties(profile_rt PROPERTIES EXCLUDE_FROM_ALL ON)
+    else()
+      install(TARGETS ${name}
+	LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+	ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+    endif()
   endif()
 
   set_target_properties(${name} PROPERTIES FOLDER "Loadable modules")
