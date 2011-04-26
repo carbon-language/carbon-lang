@@ -636,10 +636,9 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   
   // If the store and reload are the same size, we can always reuse it.
   if (StoreSize == LoadSize) {
-    if (StoredValTy->isPointerTy() && LoadedTy->isPointerTy()) {
-      // Pointer to Pointer -> use bitcast.
+    // Pointer to Pointer -> use bitcast.
+    if (StoredValTy->isPointerTy() && LoadedTy->isPointerTy())
       return new BitCastInst(StoredVal, LoadedTy, "", InsertPt);
-    }
     
     // Convert source pointers to integers, which can be bitcast.
     if (StoredValTy->isPointerTy()) {
@@ -795,6 +794,22 @@ static int AnalyzeLoadFromClobberingStore(const Type *LoadTy, Value *LoadPtr,
   return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr,
                                         StorePtr, StoreSize, TD);
 }
+
+/// AnalyzeLoadFromClobberingLoad - This function is called when we have a
+/// memdep query of a load that ends up being clobbered by another load.  See if
+/// the other load can feed into the second load.
+static int AnalyzeLoadFromClobberingLoad(const Type *LoadTy, Value *LoadPtr,
+                                         LoadInst *DepLI, const TargetData &TD){
+  // Cannot handle reading from store of first-class aggregate yet.
+  if (DepLI->getType()->isStructTy() || DepLI->getType()->isArrayTy())
+    return -1;
+  
+  Value *DepPtr = DepLI->getPointerOperand();
+  uint64_t DepSize = TD.getTypeSizeInBits(DepLI->getType());
+  return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr, DepPtr, DepSize, TD);
+}
+
+
 
 static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
                                             MemIntrinsic *MI,
@@ -1129,6 +1144,26 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
           }
         }
       }
+      
+      // Check to see if we have something like this:
+      //    load i32* P
+      //    load i8* (P+1)
+      // if we have this, replace the later with an extraction from the former.
+      if (LoadInst *DepLI = dyn_cast<LoadInst>(DepInfo.getInst())) {
+        // If this is a clobber and L is the first instruction in its block, then
+        // we have the first instruction in the entry block.
+        if (DepLI != LI && Address && TD) {
+          int Offset = AnalyzeLoadFromClobberingLoad(LI->getType(),
+                                                     LI->getPointerOperand(),
+                                                     DepLI, *TD);
+          
+          if (Offset != -1) {
+            ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB, DepLI,
+                                                                Offset));
+            continue;
+          }
+        }
+      }
 
       // If the clobbering value is a memset/memcpy/memmove, see if we can
       // forward a value on from it.
@@ -1454,8 +1489,9 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // ... to a pointer that has been loaded from before...
   MemDepResult Dep = MD->getDependency(L);
 
-  // If the value isn't available, don't do anything!
-  if (Dep.isClobber()) {
+  // If we have a clobber and target data is around, see if this is a clobber
+  // that we can fix up through code synthesis.
+  if (Dep.isClobber() && TD) {
     // Check to see if we have something like this:
     //   store i32 123, i32* %P
     //   %A = bitcast i32* %P to i8*
@@ -1467,26 +1503,40 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // completely covers this load.  This sort of thing can happen in bitfield
     // access code.
     Value *AvailVal = 0;
-    if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
-      if (TD) {
-        int Offset = AnalyzeLoadFromClobberingStore(L->getType(),
-                                                    L->getPointerOperand(),
-                                                    DepSI, *TD);
-        if (Offset != -1)
-          AvailVal = GetStoreValueForLoad(DepSI->getValueOperand(), Offset,
-                                          L->getType(), L, *TD);
-      }
+    if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst())) {
+      int Offset = AnalyzeLoadFromClobberingStore(L->getType(),
+                                                  L->getPointerOperand(),
+                                                  DepSI, *TD);
+      if (Offset != -1)
+        AvailVal = GetStoreValueForLoad(DepSI->getValueOperand(), Offset,
+                                        L->getType(), L, *TD);
+    }
+    
+    // Check to see if we have something like this:
+    //    load i32* P
+    //    load i8* (P+1)
+    // if we have this, replace the later with an extraction from the former.
+    if (LoadInst *DepLI = dyn_cast<LoadInst>(Dep.getInst())) {
+      // If this is a clobber and L is the first instruction in its block, then
+      // we have the first instruction in the entry block.
+      if (DepLI == L)
+        return false;
+      
+      int Offset = AnalyzeLoadFromClobberingLoad(L->getType(),
+                                                 L->getPointerOperand(),
+                                                 DepLI, *TD);
+      if (Offset != -1)
+        AvailVal = GetStoreValueForLoad(DepLI, Offset, L->getType(), L, *TD);
+    }
     
     // If the clobbering value is a memset/memcpy/memmove, see if we can forward
     // a value on from it.
     if (MemIntrinsic *DepMI = dyn_cast<MemIntrinsic>(Dep.getInst())) {
-      if (TD) {
-        int Offset = AnalyzeLoadFromClobberingMemInst(L->getType(),
-                                                      L->getPointerOperand(),
-                                                      DepMI, *TD);
-        if (Offset != -1)
-          AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L,*TD);
-      }
+      int Offset = AnalyzeLoadFromClobberingMemInst(L->getType(),
+                                                    L->getPointerOperand(),
+                                                    DepMI, *TD);
+      if (Offset != -1)
+        AvailVal = GetMemInstValueForLoad(DepMI, Offset, L->getType(), L, *TD);
     }
         
     if (AvailVal) {
@@ -1502,9 +1552,12 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
       ++NumGVNLoad;
       return true;
     }
-        
+  }
+  
+  // If the value isn't available, don't do anything!
+  if (Dep.isClobber()) {
     DEBUG(
-      // fast print dep, using operator<< on instruction would be too slow
+      // fast print dep, using operator<< on instruction is too slow.
       dbgs() << "GVN: load ";
       WriteAsOperand(dbgs(), L);
       Instruction *I = Dep.getInst();
@@ -1556,7 +1609,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // (depending on its type).
     if (DepLI->getType() != L->getType()) {
       if (TD) {
-        AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L,*TD);
+        AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(),
+                                                      L, *TD);
         if (AvailableVal == 0)
           return false;
       

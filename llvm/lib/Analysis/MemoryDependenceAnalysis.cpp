@@ -291,16 +291,26 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       if (R == AliasAnalysis::NoAlias)
         continue;
       
-      // May-alias loads don't depend on each other without a dependence.
-      if (isLoad && R != AliasAnalysis::MustAlias)
+      if (isLoad) {
+        // Must aliased loads are defs of each other.
+        if (R == AliasAnalysis::MustAlias)
+          return MemDepResult::getDef(Inst);
+
+        // If we have a partial alias, then return this as a clobber for the
+        // client to handle.
+        if (R == AliasAnalysis::PartialAlias)
+          return MemDepResult::getClobber(Inst);
+        
+        // Random may-alias loads don't depend on each other without a
+        // dependence.
         continue;
+      }
 
       // Stores don't alias loads from read-only memory.
-      if (!isLoad && AA->pointsToConstantMemory(LoadLoc))
+      if (AA->pointsToConstantMemory(LoadLoc))
         continue;
 
-      // Stores depend on may and must aliased loads, loads depend on must-alias
-      // loads.
+      // Stores depend on may/must aliased loads.
       return MemDepResult::getDef(Inst);
     }
     

@@ -544,3 +544,30 @@ entry:
 ; CHECK: ret i32 0
 }
 
+
+;;===----------------------------------------------------------------------===;;
+;; Load -> Load forwarding in partial alias case.
+;;===----------------------------------------------------------------------===;;
+
+define i32 @load_load_partial_alias(i8* %P) nounwind ssp {
+entry:
+  %0 = bitcast i8* %P to i32*
+  %tmp2 = load i32* %0
+  %add.ptr = getelementptr inbounds i8* %P, i64 1
+  %tmp5 = load i8* %add.ptr
+  %conv = zext i8 %tmp5 to i32
+  %add = add nsw i32 %tmp2, %conv
+  ret i32 %add
+
+; CHECK: @load_load_partial_alias
+; CHECK: load i32*
+; CHECK-NOT: load
+; CHECK: lshr i32 {{.*}}, 8
+; CHECK-NOT: load
+; CHECK: trunc i32 {{.*}} to i8
+; CHECK-NOT: load
+; CHECK: ret i32
+}
+
+
+

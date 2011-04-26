@@ -48,6 +48,11 @@ namespace llvm {
       /// this occurs when we see a may-aliased store to the memory location we
       /// care about.
       ///
+      /// There are several cases that may be interesting here:
+      ///   1. Loads are clobbered by may-alias stores.
+      ///   2. Loads are considered clobbered by partially-aliased loads.  The
+      ///      client may choose to analyze deeper into these cases.
+      ///
       /// A dependence query on the first instruction of the entry block will
       /// return a clobber(self) result.
       Clobber,
