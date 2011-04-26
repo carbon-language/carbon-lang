@@ -2341,34 +2341,23 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
 
   // Otherwise, pass by coercing to a structure of the appropriate size.
   //
+  // FIXME: This is kind of nasty... but there isn't much choice because the ARM
+  // backend doesn't support byval.
   // FIXME: This doesn't handle alignment > 64 bits.
   const llvm::Type* ElemTy;
   unsigned SizeRegs;
-  if (getContext().getTypeSize(Ty) <= 32) {
-    ElemTy = llvm::Type::getInt32Ty(getVMContext());
-    SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-    llvm::SmallVector<const llvm::Type*, 8> LLVMFields;
-    LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
-    const llvm::Type* STy = llvm::StructType::get(getVMContext(), LLVMFields,
-                                                  true);
-    return ABIArgInfo::getDirect(STy);
-  }
-
-  if (getABIKind() == ARMABIInfo::APCS) {
-    // Initial ARM ByVal support is APCS-only.
-    return ABIArgInfo::getIndirect(0, /*ByVal=*/true);
-  } else {
-    // FIXME: This is kind of nasty... but there isn't much choice
-    // because most of the ARM calling conventions don't yet support
-    // byval.
+  if (getContext().getTypeAlign(Ty) > 32) {
     ElemTy = llvm::Type::getInt64Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
-    llvm::SmallVector<const llvm::Type*, 8> LLVMFields;
-    LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
-    const llvm::Type* STy = llvm::StructType::get(getVMContext(), LLVMFields,
-                                                  true);
-    return ABIArgInfo::getDirect(STy);
+  } else {
+    ElemTy = llvm::Type::getInt32Ty(getVMContext());
+    SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
   }
+  std::vector<const llvm::Type*> LLVMFields;
+  LLVMFields.push_back(llvm::ArrayType::get(ElemTy, SizeRegs));
+  const llvm::Type* STy = llvm::StructType::get(getVMContext(), LLVMFields,
+                                                true);
+  return ABIArgInfo::getDirect(STy);
 }
 
 static bool isIntegerLikeType(QualType Ty, ASTContext &Context,
