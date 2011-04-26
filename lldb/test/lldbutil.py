@@ -11,11 +11,11 @@ import StringIO
 # ===================================================
 
 def is_exe(fpath):
-    """Return true if fpath is an executable."""
+    """Returns True if fpath is an executable."""
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 def which(program):
-    """Find the full path to a program; return None otherwise."""
+    """Returns the full path to a program; None otherwise."""
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):
