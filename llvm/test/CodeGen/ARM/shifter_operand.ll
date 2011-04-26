@@ -58,7 +58,7 @@ entry:
 ; A8: str r2, [r0, r1, lsl #2]
 
 ; A9: test4:
-; A9: add r0, r0, r4, lsl #2
+; A9: add r0, r0, r{{[0-9]+}}, lsl #2
 ; A9: ldr r1, [r0]
 ; A9: str r1, [r0]
   %0 = tail call i8* (...)* @malloc(i32 undef) nounwind

@@ -1732,7 +1732,17 @@ unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
     // If SU does not have a register def, schedule it close to its uses
     // because it does not lengthen any live ranges.
     return 0;
+#if 1
   return SethiUllmanNumbers[SU->NodeNum];
+#else
+  unsigned Priority = SethiUllmanNumbers[SU->NodeNum];
+  if (SU->isCallOp) {
+    // FIXME: This assumes all of the defs are used as call operands.
+    int NP = (int)Priority - SU->getNode()->getNumValues();
+    return (NP > 0) ? NP : 0;
+  }
+  return Priority;
+#endif
 }
 
 //===----------------------------------------------------------------------===//
@@ -2238,9 +2248,33 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   // Prioritize by Sethi-Ulmann number and push CopyToReg nodes down.
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
+
+  // Be really careful about hoisting call operands above previous calls.
+  // Only allows it if it would reduce register pressure.
+  if (left->isCall && right->isCallOp) {
+    unsigned RNumVals = right->getNode()->getNumValues();
+    RPriority = (RPriority > RNumVals) ? (RPriority - RNumVals) : 0;
+  }
+  if (right->isCall && left->isCallOp) {
+    unsigned LNumVals = left->getNode()->getNumValues();
+    LPriority = (LPriority > LNumVals) ? (LPriority - LNumVals) : 0;
+  }
+
   if (LPriority != RPriority) {
     DEBUG(++FactorCount[FactStatic]);
     return LPriority > RPriority;
+  }
+
+  // One or both of the nodes are calls and their sethi-ullman numbers are the
+  // same, then keep source order.
+  if (left->isCall || right->isCall) {
+    unsigned LOrder = SPQ->getNodeOrdering(left);
+    unsigned ROrder = SPQ->getNodeOrdering(right);
+
+    // Prefer an ordering where the lower the non-zero order number, the higher
+    // the preference.
+    if ((LOrder || ROrder) && LOrder != ROrder)
+      return LOrder != 0 && (LOrder < ROrder || ROrder == 0);
   }
 
   // Try schedule def + use closer when Sethi-Ullman numbers are the same.
@@ -2275,7 +2309,14 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
     return LScratch > RScratch;
   }
 
-  if (!DisableSchedCycles) {
+  // Comparing latency against a call makes little sense unless the node
+  // is register pressure-neutral.
+  if ((left->isCall && RPriority > 0) || (right->isCall && LPriority > 0))
+    return (left->NodeQueueId > right->NodeQueueId);
+
+  // Do not compare latencies when one or both of the nodes are calls.
+  if (!DisableSchedCycles &&
+      !(left->isCall || right->isCall)) {
     int result = BUCompareLatency(left, right, false /*checkPref*/, SPQ);
     if (result != 0)
       return result > 0;

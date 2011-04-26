@@ -252,6 +252,7 @@ namespace llvm {
     unsigned short Latency;             // Node latency.
     bool isVRegCycle      : 1;          // May use and def the same vreg.
     bool isCall           : 1;          // Is a function call.
+    bool isCallOp         : 1;          // Is a function call operand.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
     bool hasPhysRegDefs   : 1;          // Has physreg defs that are being used.
@@ -280,7 +281,7 @@ namespace llvm {
       : Node(node), Instr(0), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
@@ -294,7 +295,7 @@ namespace llvm {
       : Node(0), Instr(instr), OrigNode(0), NodeNum(nodenum),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
@@ -307,7 +308,7 @@ namespace llvm {
       : Node(0), Instr(0), OrigNode(0), NodeNum(~0u),
         NodeQueueId(0), NumPreds(0), NumSuccs(0), NumPredsLeft(0),
         NumSuccsLeft(0), NumRegDefsLeft(0), Latency(0),
-        isVRegCycle(false), isCall(false), isTwoAddress(false),
+        isVRegCycle(false), isCall(false), isCallOp(false), isTwoAddress(false),
         isCommutable(false), hasPhysRegDefs(false), hasPhysRegClobbers(false),
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),

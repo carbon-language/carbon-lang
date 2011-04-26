@@ -79,8 +79,8 @@ entry:
 ; LINUX-NEXT: .L3$pb:
 ; LINUX: 	popl
 ; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L3$pb), %[[REG3:e..]]
-; LINUX: 	movl	pfoo@GOT(%[[REG3]]),
 ; LINUX: 	calll	afoo@PLT
+; LINUX: 	movl	pfoo@GOT(%[[REG3]]),
 ; LINUX: 	calll	*
 }
 

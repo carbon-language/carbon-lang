@@ -83,6 +83,7 @@ SUnit *ScheduleDAGSDNodes::Clone(SUnit *Old) {
   SU->Latency = Old->Latency;
   SU->isVRegCycle = Old->isVRegCycle;
   SU->isCall = Old->isCall;
+  SU->isCallOp = Old->isCallOp;
   SU->isTwoAddress = Old->isTwoAddress;
   SU->isCommutable = Old->isCommutable;
   SU->hasPhysRegDefs = Old->hasPhysRegDefs;
@@ -285,6 +286,7 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
   Worklist.push_back(DAG->getRoot().getNode());
   Visited.insert(DAG->getRoot().getNode());
 
+  SmallVector<SUnit*, 8> CallSUnits;
   while (!Worklist.empty()) {
     SDNode *NI = Worklist.pop_back_val();
 
@@ -337,6 +339,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
       if (!HasGlueUse) break;
     }
 
+    if (NodeSUnit->isCall)
+      CallSUnits.push_back(NodeSUnit);
+
     // Schedule zero-latency TokenFactor below any nodes that may increase the
     // schedule height. Otherwise, ancestors of the TokenFactor may appear to
     // have false stalls.
@@ -355,6 +360,20 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
 
     // Assign the Latency field of NodeSUnit using target-provided information.
     ComputeLatency(NodeSUnit);
+  }
+
+  // Find all call operands.
+  while (!CallSUnits.empty()) {
+    SUnit *SU = CallSUnits.pop_back_val();
+    for (const SDNode *SUNode = SU->getNode(); SUNode;
+         SUNode = SUNode->getGluedNode()) {
+      if (SUNode->getOpcode() != ISD::CopyToReg)
+        continue;
+      SDNode *SrcN = SUNode->getOperand(2).getNode();
+      if (isPassiveNode(SrcN)) continue;   // Not scheduled.
+      SUnit *SrcSU = &SUnits[SrcN->getNodeId()];
+      SrcSU->isCallOp = true;
+    }
   }
 }
 
