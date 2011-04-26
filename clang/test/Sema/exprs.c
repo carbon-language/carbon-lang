@@ -174,6 +174,12 @@ void test19() {
   *(int*)0 = 0;   // expected-warning {{indirection of non-volatile null pointer}} \
                   // expected-note {{consider using __builtin_trap}}
   *(volatile int*)0 = 0;  // Ok.
+
+  // rdar://9269271
+  int x = *(int*)0;  // expected-warning {{indirection of non-volatile null pointer}} \
+                     // expected-note {{consider using __builtin_trap}}
+  int x2 = *(volatile int*)0; // Ok.
+  int *p = &(*(int*)0); // Ok;
 }
 
 int test20(int x) {

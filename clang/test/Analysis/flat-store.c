@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=flat -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store=flat -Wno-null-dereference -verify %s
 #define FAIL ((void)*(char*)0)
 struct simple { int x; };
 

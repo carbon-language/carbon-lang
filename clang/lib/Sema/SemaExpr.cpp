@@ -282,6 +282,25 @@ ExprResult Sema::DefaultFunctionArrayConversion(Expr *E) {
   return Owned(E);
 }
 
+static void CheckForNullPointerDereference(Sema &S, Expr *E) {
+  // Check to see if we are dereferencing a null pointer.  If so,
+  // and if not volatile-qualified, this is undefined behavior that the
+  // optimizer will delete, so warn about it.  People sometimes try to use this
+  // to get a deterministic trap and are surprised by clang's behavior.  This
+  // only handles the pattern "*null", which is a very syntactic check.
+  if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E->IgnoreParenCasts()))
+    if (UO->getOpcode() == UO_Deref &&
+        UO->getSubExpr()->IgnoreParenCasts()->
+          isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull) &&
+        !UO->getType().isVolatileQualified()) {
+    S.DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
+                          S.PDiag(diag::warn_indirection_through_null)
+                            << UO->getSubExpr()->getSourceRange());
+    S.DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
+                        S.PDiag(diag::note_indirection_through_null));
+  }
+}
+
 ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   // C++ [conv.lval]p1:
   //   A glvalue of a non-function, non-array type T can be
@@ -316,6 +335,8 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   // 'void' type are never l-values, but qualified void can be.
   if (T->isVoidType())
     return Owned(E);
+
+  CheckForNullPointerDereference(*this, E);
 
   // C++ [conv.lval]p1:
   //   [...] If T is a non-class type, the type of the prvalue is the
@@ -7993,25 +8014,7 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
                                RHS.get(), AA_Assigning))
     return QualType();
 
-  
-  // Check to see if the destination operand is a dereferenced null pointer.  If
-  // so, and if not volatile-qualified, this is undefined behavior that the
-  // optimizer will delete, so warn about it.  People sometimes try to use this
-  // to get a deterministic trap and are surprised by clang's behavior.  This
-  // only handles the pattern "*null = whatever", which is a very syntactic
-  // check.
-  if (UnaryOperator *UO = dyn_cast<UnaryOperator>(LHS->IgnoreParenCasts()))
-    if (UO->getOpcode() == UO_Deref &&
-        UO->getSubExpr()->IgnoreParenCasts()->
-          isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNotNull) &&
-        !UO->getType().isVolatileQualified()) {
-    DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
-                        PDiag(diag::warn_indirection_through_null)
-                          << UO->getSubExpr()->getSourceRange());
-    DiagRuntimeBehavior(UO->getOperatorLoc(), UO,
-                        PDiag(diag::note_indirection_through_null));
-  }
-  
+  CheckForNullPointerDereference(*this, LHS);
   // Check for trivial buffer overflows.
   CheckArrayAccess(LHS->IgnoreParenCasts());
   
