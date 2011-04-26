@@ -72,6 +72,7 @@ namespace llvm {
                                                 Pass *InliningPass) {
     createStandardAliasAnalysisPasses(PM);
 
+    // If all optimizations are disabled, just run the always-inline pass.
     if (OptimizationLevel == 0) {
       if (InliningPass)
         PM->add(InliningPass);
@@ -83,9 +84,10 @@ namespace llvm {
       
       PM->add(createIPSCCPPass());              // IP SCCP
       PM->add(createDeadArgEliminationPass());  // Dead argument elimination
+      
+      PM->add(createInstructionCombiningPass());// Clean up after IPCP & DAE
+      PM->add(createCFGSimplificationPass());   // Clean up after IPCP & DAE
     }
-    PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
-    PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
     
     // Start of CallGraph SCC passes.
     if (UnitAtATime && HaveExceptions)
@@ -120,7 +122,6 @@ namespace llvm {
     PM->add(createLoopDeletionPass());          // Delete dead loops
     if (UnrollLoops)
       PM->add(createLoopUnrollPass());          // Unroll small loops
-    PM->add(createInstructionCombiningPass());  // Clean up after the unroller
     if (OptimizationLevel > 1)
       PM->add(createGVNPass());                 // Remove redundancies
     PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
@@ -134,6 +135,7 @@ namespace llvm {
     PM->add(createDeadStoreEliminationPass());  // Delete dead stores
     PM->add(createAggressiveDCEPass());         // Delete dead instructions
     PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+    PM->add(createInstructionCombiningPass());  // Clean up after everything.
 
     if (UnitAtATime) {
       PM->add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
