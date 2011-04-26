@@ -194,6 +194,12 @@ public:
   /// addTemplateParams - Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DIArray TParams);
 
+  /// addRegisterOp - Add register operand.
+  void addRegisterOp(DIE *TheDie, unsigned Reg);
+
+  /// addRegisterOffset - Add register offset.
+  void addRegisterOffset(DIE *TheDie, unsigned Reg, int64_t Offset);
+
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable
   /// (navigating the extra location information encoded in the type) based on
