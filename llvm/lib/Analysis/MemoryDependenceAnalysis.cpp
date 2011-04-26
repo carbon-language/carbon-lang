@@ -243,9 +243,8 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         // FIXME: This only considers queries directly on the invariant-tagged
         // pointer, not on query pointers that are indexed off of them.  It'd
         // be nice to handle that at some point.
-        AliasAnalysis::AliasResult R =
-          AA->alias(AliasAnalysis::Location(II->getArgOperand(1)), MemLoc);
-        if (R == AliasAnalysis::MustAlias)
+        if (AA->isMustAlias(AliasAnalysis::Location(II->getArgOperand(1)),
+                            MemLoc))
           return MemDepResult::getDef(II);
         continue;
       }
@@ -317,8 +316,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         (isa<CallInst>(Inst) && extractMallocCall(Inst))) {
       const Value *AccessPtr = GetUnderlyingObject(MemLoc.Ptr, TD);
       
-      if (AccessPtr == Inst ||
-          AA->alias(Inst, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
+      if (AccessPtr == Inst || AA->isMustAlias(Inst, AccessPtr))
         return MemDepResult::getDef(Inst);
       continue;
     }
