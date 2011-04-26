@@ -402,6 +402,9 @@ void ASTContext::InitBuiltinTypes() {
   // Placeholder type for functions.
   InitBuiltinType(OverloadTy,          BuiltinType::Overload);
 
+  // Placeholder type for bound members.
+  InitBuiltinType(BoundMemberTy,       BuiltinType::BoundMember);
+
   // "any" type; useful for debugger-like clients.
   InitBuiltinType(UnknownAnyTy,        BuiltinType::UnknownAny);
 

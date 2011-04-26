@@ -1412,6 +1412,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::LongDouble:
   case BuiltinType::NullPtr:
   case BuiltinType::Overload:
+  case BuiltinType::BoundMember:
   case BuiltinType::Dependent:
   case BuiltinType::UnknownAny:
     break;

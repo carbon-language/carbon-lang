@@ -1169,6 +1169,7 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case Char32:            return "char32_t";
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
+  case BoundMember:       return "<bound member function type>";
   case Dependent:         return "<dependent type>";
   case UnknownAny:        return "<unknown type>";
   case ObjCId:            return "id";

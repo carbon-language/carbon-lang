@@ -289,10 +289,10 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   const Expr *MemFnExpr = BO->getRHS();
   
   const MemberPointerType *MPT = 
-    MemFnExpr->getType()->getAs<MemberPointerType>();
+    MemFnExpr->getType()->castAs<MemberPointerType>();
 
   const FunctionProtoType *FPT = 
-    MPT->getPointeeType()->getAs<FunctionProtoType>();
+    MPT->getPointeeType()->castAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
 
@@ -321,8 +321,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
   
   // And the rest of the call args
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
-  const FunctionType *BO_FPT = BO->getType()->getAs<FunctionProtoType>();
-  return EmitCall(CGM.getTypes().getFunctionInfo(Args, BO_FPT), Callee, 
+  return EmitCall(CGM.getTypes().getFunctionInfo(Args, FPT), Callee, 
                   ReturnValue, Args);
 }
 

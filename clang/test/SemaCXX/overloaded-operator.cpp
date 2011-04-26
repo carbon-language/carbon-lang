@@ -387,15 +387,15 @@ void test_lookup_through_using() {
 
 namespace rdar9136502 {
   struct X {
-    int i(); // expected-note {{candidate function}}
-    int i(int); // expected-note {{candidate function}}
+    int i();
+    int i(int);
   };
 
   struct Y {
-    Y &operator<<(int); // expected-note{{candidate function not viable: no overload of 'i' matching 'int' for 1st argument}}
+    Y &operator<<(int); // expected-note{{candidate function not viable: no known conversion from '<bound member function type>' to 'int'}}
   };
 
   void f(X x, Y y) {
-    y << x.i; // expected-error{{cannot resolve overloaded function 'i' from context}}
+    y << x.i; // expected-error{{a bound member function may only be called}}
   }
 }

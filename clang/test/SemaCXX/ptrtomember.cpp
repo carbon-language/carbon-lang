@@ -27,8 +27,7 @@ void f3(S3* p, void (S3::*m)()) {
     (void)(void*)(p->*m); // expected-error {{a bound member function may only be called}}
     (void)reinterpret_cast<void*>(p->*m); // expected-error {{a bound member function may only be called}}
     if (p->*m) {} // expected-error {{a bound member function may only be called}}
-    if (!p->*m) {} // FIXME: xpected-error {{a bound member function may only be called}} \
-    // expected-error{{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'bool'}}
+    if (!(p->*m)) {} // expected-error {{a bound member function may only be called}}
     if (p->m) {}; // expected-error {{a bound member function may only be called}}
-    if (!p->m) {}; // FIXME: xpected-error {{a bound member function may only be called}}
+    if (!p->m) {}; // expected-error {{a bound member function may only be called}}
 }

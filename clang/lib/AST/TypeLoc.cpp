@@ -234,6 +234,7 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
     case BuiltinType::NullPtr:
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
+    case BuiltinType::BoundMember:
     case BuiltinType::UnknownAny:
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:

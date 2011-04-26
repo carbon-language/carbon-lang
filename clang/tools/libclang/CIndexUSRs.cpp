@@ -570,6 +570,7 @@ void USRGenerator::VisitType(QualType T) {
         case BuiltinType::NullPtr:
           c = 'n'; break;
         case BuiltinType::Overload:
+        case BuiltinType::BoundMember:
         case BuiltinType::Dependent:
         case BuiltinType::UnknownAny:
           IgnoreResults = true;

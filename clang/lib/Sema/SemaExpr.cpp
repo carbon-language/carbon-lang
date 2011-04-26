@@ -3934,12 +3934,20 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
   }
 
   if (CXXMethodDecl *MemberFn = dyn_cast<CXXMethodDecl>(MemberDecl)) {
+    ExprValueKind valueKind;
+    QualType type;
+    if (MemberFn->isInstance()) {
+      valueKind = VK_RValue;
+      type = Context.BoundMemberTy;
+    } else {
+      valueKind = VK_LValue;
+      type = MemberFn->getType();
+    }
+
     MarkDeclarationReferenced(MemberLoc, MemberDecl);
     return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS,
                                  MemberFn, FoundDecl, MemberNameInfo,
-                                 MemberFn->getType(),
-                                 MemberFn->isInstance() ? VK_RValue : VK_LValue,
-                                 OK_Ordinary));
+                                 type, valueKind, OK_Ordinary));
   }
   assert(!isa<FunctionDecl>(MemberDecl) && "member function not C++ method?");
 
@@ -4051,6 +4059,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
         << FixItHint::CreateReplacement(OpLoc, ".");
       IsArrow = false;
+    } else if (BaseType == Context.BoundMemberTy) {
+      goto fail;
     } else {
       Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr.get()->getSourceRange();
@@ -4424,6 +4434,16 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       }
     } else if ((Fun = BaseType->getAs<FunctionType>())) {
       TryCall = true;
+    } else if (BaseType == Context.BoundMemberTy) {
+      // Look for the bound-member type.  If it's still overloaded,
+      // give up, although we probably should have fallen into the
+      // OverloadExpr case above if we actually have an overloaded
+      // bound member.
+      QualType fnType = Expr::findBoundMemberType(BaseExpr.get());
+      if (!fnType.isNull()) {
+        TryCall = true;
+        Fun = fnType->castAs<FunctionType>();
+      }
     }
 
     if (TryCall) {
@@ -4858,91 +4878,33 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
       Fn = result.take();
     }
 
-    Expr *NakedFn = Fn->IgnoreParens();
-
-    // Determine whether this is a call to an unresolved member function.
-    if (UnresolvedMemberExpr *MemE = dyn_cast<UnresolvedMemberExpr>(NakedFn)) {
-      // If lookup was unresolved but not dependent (i.e. didn't find
-      // an unresolved using declaration), it has to be an overloaded
-      // function set, which means it must contain either multiple
-      // declarations (all methods or method templates) or a single
-      // method template.
-      assert((MemE->getNumDecls() > 1) ||
-             isa<FunctionTemplateDecl>(
-                                 (*MemE->decls_begin())->getUnderlyingDecl()));
-      (void)MemE;
-
+    if (Fn->getType() == Context.BoundMemberTy) {
       return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
                                        RParenLoc);
     }
+  }
 
-    // Determine whether this is a call to a member function.
-    if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(NakedFn)) {
-      NamedDecl *MemDecl = MemExpr->getMemberDecl();
-      if (isa<CXXMethodDecl>(MemDecl))
+  // Check for overloaded calls.  This can happen even in C due to extensions.
+  if (Fn->getType() == Context.OverloadTy) {
+    OverloadExpr::FindResult find = OverloadExpr::find(Fn);
+
+    // We aren't supposed to apply this logic if there's an '&' involved.
+    if (!find.IsAddressOfOperand) {
+      OverloadExpr *ovl = find.Expression;
+      if (isa<UnresolvedLookupExpr>(ovl)) {
+        UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(ovl);
+        return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, Args, NumArgs,
+                                       RParenLoc, ExecConfig);
+      } else {
         return BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
                                          RParenLoc);
-    }
-
-    // Determine whether this is a call to a pointer-to-member function.
-    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(NakedFn)) {
-      if (BO->getOpcode() == BO_PtrMemD ||
-          BO->getOpcode() == BO_PtrMemI) {
-        if (const FunctionProtoType *FPT
-                                = BO->getType()->getAs<FunctionProtoType>()) {
-          QualType ResultTy = FPT->getCallResultType(Context);
-          ExprValueKind VK = Expr::getValueKindForType(FPT->getResultType());
-
-          // Check that the object type isn't more qualified than the
-          // member function we're calling.
-          Qualifiers FuncQuals = Qualifiers::fromCVRMask(FPT->getTypeQuals());
-          Qualifiers ObjectQuals 
-            = BO->getOpcode() == BO_PtrMemD
-                ? BO->getLHS()->getType().getQualifiers()
-                : BO->getLHS()->getType()->getAs<PointerType>()
-                                            ->getPointeeType().getQualifiers();
-
-          Qualifiers Difference = ObjectQuals - FuncQuals;
-          Difference.removeObjCGCAttr();
-          Difference.removeAddressSpace();
-          if (Difference) {
-            std::string QualsString = Difference.getAsString();
-            Diag(LParenLoc, diag::err_pointer_to_member_call_drops_quals)
-              << BO->getType().getUnqualifiedType()
-              << QualsString
-              << (QualsString.find(' ') == std::string::npos? 1 : 2);
-          }
-              
-          CXXMemberCallExpr *TheCall
-            = new (Context) CXXMemberCallExpr(Context, Fn, Args,
-                                              NumArgs, ResultTy, VK,
-                                              RParenLoc);
-
-          if (CheckCallReturnType(FPT->getResultType(),
-                                  BO->getRHS()->getSourceRange().getBegin(),
-                                  TheCall, 0))
-            return ExprError();
-
-          if (ConvertArgumentsForCall(TheCall, BO, 0, FPT, Args, NumArgs,
-                                      RParenLoc))
-            return ExprError();
-
-          return MaybeBindToTemporary(TheCall);
-        }
       }
     }
   }
 
   // If we're directly calling a function, get the appropriate declaration.
-  // Also, in C++, keep track of whether we should perform argument-dependent
-  // lookup and whether there were any explicitly-specified template arguments.
 
   Expr *NakedFn = Fn->IgnoreParens();
-  if (isa<UnresolvedLookupExpr>(NakedFn)) {
-    UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(NakedFn);
-    return BuildOverloadedCallExpr(S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                   RParenLoc, ExecConfig);
-  }
 
   NamedDecl *NDecl = 0;
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(NakedFn))
@@ -4951,6 +4913,8 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   
   if (isa<DeclRefExpr>(NakedFn))
     NDecl = cast<DeclRefExpr>(NakedFn)->getDecl();
+  else if (isa<MemberExpr>(NakedFn))
+    NDecl = cast<MemberExpr>(NakedFn)->getMemberDecl();
 
   return BuildResolvedCallExpr(Fn, NDecl, LParenLoc, Args, NumArgs, RParenLoc,
                                ExecConfig);
@@ -8282,6 +8246,11 @@ static QualType CheckAddressOfOperand(Sema &S, Expr *OrigOp,
     return S.Context.OverloadTy;
   if (OrigOp->getType() == S.Context.UnknownAnyTy)
     return S.Context.UnknownAnyTy;
+  if (OrigOp->getType() == S.Context.BoundMemberTy) {
+    S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+      << OrigOp->getSourceRange();
+    return QualType();
+  }
 
   assert(!OrigOp->getType()->isPlaceholderType());
 
@@ -10301,13 +10270,11 @@ ExprResult Sema::CheckBooleanCondition(Expr *E, SourceLocation Loc) {
   if (ParenExpr *parenE = dyn_cast<ParenExpr>(E))
     DiagnoseEqualityWithExtraParens(parenE);
 
-  if (!E->isTypeDependent()) {
-    if (E->isBoundMemberFunction(Context)) {
-      Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
-        << E->getSourceRange();
-      return ExprError();
-    }
+  ExprResult result = CheckPlaceholderExpr(E);
+  if (result.isInvalid()) return ExprError();
+  E = result.take();
 
+  if (!E->isTypeDependent()) {
     if (getLangOptions().CPlusPlus)
       return CheckCXXBooleanCondition(E); // C++ 6.4p4
 
@@ -10727,6 +10694,13 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
                                                            E->getSourceRange(),
                                                              QualType(),
                                                    diag::err_ovl_unresolvable);
+
+  // Bound member functions.
+  if (type == Context.BoundMemberTy) {
+    Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
+      << E->getSourceRange();
+    return ExprError();
+  }    
 
   // Expressions of unknown type.
   if (type == Context.UnknownAnyTy)

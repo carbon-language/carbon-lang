@@ -1190,6 +1190,9 @@ public:
   /// BuiltinTypes.
   bool isPlaceholderType() const;
 
+  /// isSpecificPlaceholderType - Test for a specific placeholder type.
+  bool isSpecificPlaceholderType(unsigned K) const;
+
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
@@ -1488,32 +1491,52 @@ public:
 
     NullPtr,  // This is the type of C++0x 'nullptr'.
 
+    /// The primitive Objective C 'id' type.  The user-visible 'id'
+    /// type is a typedef of an ObjCObjectPointerType to an
+    /// ObjCObjectType with this as its base.  In fact, this only ever
+    /// shows up in an AST as the base type of an ObjCObjectType.
+    ObjCId,
+
+    /// The primitive Objective C 'Class' type.  The user-visible
+    /// 'Class' type is a typedef of an ObjCObjectPointerType to an
+    /// ObjCObjectType with this as its base.  In fact, this only ever
+    /// shows up in an AST as the base type of an ObjCObjectType.
+    ObjCClass,
+
+    /// The primitive Objective C 'SEL' type.  The user-visible 'SEL'
+    /// type is a typedef of a PointerType to this.
+    ObjCSel,
+
     /// This represents the type of an expression whose type is
     /// totally unknown, e.g. 'T::foo'.  It is permitted for this to
     /// appear in situations where the structure of the type is
     /// theoretically deducible.
     Dependent,
 
-    /// The type of an unresolved overload set.
+    /// The type of an unresolved overload set.  A placeholder type.
+    /// Expressions with this type have one of the following basic
+    /// forms, with parentheses generally permitted:
+    ///   foo          # possibly qualified, not if an implicit access
+    ///   foo          # possibly qualified, not if an implicit access
+    ///   &foo         # possibly qualified, not if an implicit access
+    ///   x->foo       # only if might be a static member function
+    ///   &x->foo      # only if might be a static member function
+    ///   &Class::foo  # when a pointer-to-member; sub-expr also has this type
+    /// OverloadExpr::find can be used to analyze the expression.
     Overload,
 
-    /// __builtin_any_type.  Useful for clients like debuggers
-    /// that don't know what type to give something.  Only a small
-    /// number of operations are valid on expressions of unknown type;
-    /// notable among them, calls and explicit casts.
-    UnknownAny,
+    /// The type of a bound C++ non-static member function.
+    /// A placeholder type.  Expressions with this type have one of the
+    /// following basic forms:
+    ///   foo          # if an implicit access
+    ///   x->foo       # if only contains non-static members
+    BoundMember,
 
-    /// The primitive Objective C 'id' type.  The type pointed to by the
-    /// user-visible 'id' type.  Only ever shows up in an AST as the base
-    /// type of an ObjCObjectType.
-    ObjCId,
-
-    /// The primitive Objective C 'Class' type.  The type pointed to by the
-    /// user-visible 'Class' type.  Only ever shows up in an AST as the
-    /// base type of an ObjCObjectType.
-    ObjCClass,
-
-    ObjCSel    // This represents the ObjC 'SEL' type.
+    /// __builtin_any_type.  A placeholder type.  Useful for clients
+    /// like debuggers that don't know what type to give something.
+    /// Only a small number of operations are valid on expressions of
+    /// unknown type, most notably explicit casts.
+    UnknownAny
   };
 
 public:
@@ -1546,11 +1569,11 @@ public:
     return getKind() >= Float && getKind() <= LongDouble;
   }
 
-  /// Determines whether this type is a "forbidden" placeholder type,
-  /// i.e. a type which cannot appear in arbitrary positions in a
-  /// fully-formed expression.
+  /// Determines whether this type is a placeholder type, i.e. a type
+  /// which cannot appear in arbitrary positions in a fully-formed
+  /// expression.
   bool isPlaceholderType() const {
-    return getKind() == Overload || getKind() == UnknownAny;
+    return getKind() >= Overload;
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
@@ -4297,6 +4320,12 @@ inline bool Type::isSpecificBuiltinType(unsigned K) const {
 inline bool Type::isPlaceholderType() const {
   if (const BuiltinType *BT = getAs<BuiltinType>())
     return BT->isPlaceholderType();
+  return false;
+}
+
+inline bool Type::isSpecificPlaceholderType(unsigned K) const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(this))
+    return (BT->getKind() == (BuiltinType::Kind) K);
   return false;
 }
 

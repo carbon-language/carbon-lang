@@ -1471,6 +1471,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
 
   case BuiltinType::Overload:
   case BuiltinType::Dependent:
+  case BuiltinType::BoundMember:
   case BuiltinType::UnknownAny:
     assert(false &&
            "Overloaded and dependent types shouldn't get to name mangling");

@@ -820,11 +820,11 @@ QualType CallExpr::getCallReturnType() const {
     CalleeType = FnTypePtr->getPointeeType();
   else if (const BlockPointerType *BPT = CalleeType->getAs<BlockPointerType>())
     CalleeType = BPT->getPointeeType();
-  else if (const MemberPointerType *MPT
-                                      = CalleeType->getAs<MemberPointerType>())
-    CalleeType = MPT->getPointeeType();
+  else if (CalleeType->isSpecificPlaceholderType(BuiltinType::BoundMember))
+    // This should never be overloaded and so should never return null.
+    CalleeType = Expr::findBoundMemberType(getCallee());
     
-  const FunctionType *FnType = CalleeType->getAs<FunctionType>();
+  const FunctionType *FnType = CalleeType->castAs<FunctionType>();
   return FnType->getResultType();
 }
 
@@ -1621,6 +1621,30 @@ bool Expr::isBoundMemberFunction(ASTContext &Ctx) const {
   if (isTypeDependent())
     return false;
   return ClassifyLValue(Ctx) == Expr::LV_MemberFunction;
+}
+
+QualType Expr::findBoundMemberType(const Expr *expr) {
+  assert(expr->getType()->isSpecificPlaceholderType(BuiltinType::BoundMember));
+
+  // Bound member expressions are always one of these possibilities:
+  //   x->m      x.m      x->*y      x.*y
+  // (possibly parenthesized)
+
+  expr = expr->IgnoreParens();
+  if (const MemberExpr *mem = dyn_cast<MemberExpr>(expr)) {
+    assert(isa<CXXMethodDecl>(mem->getMemberDecl()));
+    return mem->getMemberDecl()->getType();
+  }
+
+  if (const BinaryOperator *op = dyn_cast<BinaryOperator>(expr)) {
+    QualType type = op->getRHS()->getType()->castAs<MemberPointerType>()
+                      ->getPointeeType();
+    assert(type->isFunctionType());
+    return type;
+  }
+
+  assert(isa<UnresolvedMemberExpr>(expr));
+  return QualType();
 }
 
 static Expr::CanThrowResult MergeCanThrow(Expr::CanThrowResult CT1,

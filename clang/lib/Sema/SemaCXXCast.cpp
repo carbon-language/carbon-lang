@@ -160,10 +160,6 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
   // FIXME: should we check this in a more fine-grained manner?
   bool TypeDependent = DestType->isDependentType() || Ex.get()->isTypeDependent();
 
-  if (Ex.get()->isBoundMemberFunction(Context))
-    Diag(Ex.get()->getLocStart(), diag::err_invalid_use_of_bound_member_func)
-      << Ex.get()->getSourceRange();
-
   ExprValueKind VK = VK_RValue;
   if (TypeDependent)
     VK = Expr::getValueKindForType(DestType);
@@ -305,6 +301,11 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
 /// Diagnose a failed cast.
 static void diagnoseBadCast(Sema &S, unsigned msg, CastType castType,
                             SourceRange opRange, Expr *src, QualType destType) {
+  if (src->getType() == S.Context.BoundMemberTy) {
+    (void) S.CheckPlaceholderExpr(src); // will always fail
+    return;
+  }
+
   if (msg == diag::err_bad_cxx_cast_generic &&
       tryDiagnoseOverloadedCast(S, castType, opRange, src, destType))
     return;
@@ -1540,12 +1541,6 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
                          Expr *CastExpr, CastKind &Kind, 
                          CXXCastPath &BasePath,
                          bool FunctionalStyle) {
-  if (CastExpr->isBoundMemberFunction(Context)) {
-    Diag(CastExpr->getLocStart(), diag::err_invalid_use_of_bound_member_func)
-        << CastExpr->getSourceRange();
-    return ExprError();
-  }
-
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
@@ -1556,6 +1551,9 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     if (CastExprRes.isInvalid())
       return ExprError();
     CastExpr = CastExprRes.take();
+
+    if (CastExpr->getType() == Context.BoundMemberTy)
+      return CheckPlaceholderExpr(CastExpr); // will always fail
 
     if (CastExpr->getType() == Context.OverloadTy) {
       ExprResult SingleFunctionExpr = 

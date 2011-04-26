@@ -112,6 +112,7 @@ namespace clang {
   class ObjCPropertyDecl;
   class ObjCProtocolDecl;
   class OverloadCandidateSet;
+  class OverloadExpr;
   class ParenListExpr;
   class ParmVarDecl;
   class Preprocessor;
@@ -1413,7 +1414,7 @@ public:
                                                    bool Complain,
                                                    DeclAccessPair &Found);
 
-  FunctionDecl *ResolveSingleFunctionTemplateSpecialization(Expr *From,
+  FunctionDecl *ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
                                                    bool Complain = false,
                                                    DeclAccessPair* Found = 0);
 

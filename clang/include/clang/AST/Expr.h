@@ -486,6 +486,11 @@ public:
   /// \brief Returns true if this expression is a bound member function.
   bool isBoundMemberFunction(ASTContext &Ctx) const;
 
+  /// \brief Given an expression of bound-member type, find the type
+  /// of the member.  Returns null if this is an *overloaded* bound
+  /// member expression.
+  static QualType findBoundMemberType(const Expr *expr);
+
   /// \brief Result type of CanThrow().
   enum CanThrowResult {
     CT_Cannot,

@@ -57,11 +57,12 @@ struct B
 
 struct C {
   C &getC() {
-    return makeAC; // expected-error{{address of overloaded function 'makeAC'}}
+    // FIXME: this error message is terrible
+    return makeAC; // expected-error{{cannot bind to a value of unrelated type}}
   }
 
-  C &makeAC();  //expected-note{{candidate function}}
-  const C &makeAC() const; //expected-note{{candidate function}}
+  C &makeAC();
+  const C &makeAC() const;
 
   static void f(); // expected-note{{candidate function}}
   static void f(int); // expected-note{{candidate function}}

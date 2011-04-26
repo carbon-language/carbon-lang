@@ -77,12 +77,6 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   if (!E)
     return;
 
-  if (E->isBoundMemberFunction(Context)) {
-    Diag(E->getLocStart(), diag::err_invalid_use_of_bound_member_func)
-      << E->getSourceRange();
-    return;
-  }
-
   SourceLocation Loc;
   SourceRange R1, R2;
   if (!E->isUnusedResultAWarning(Loc, R1, R2, Context))

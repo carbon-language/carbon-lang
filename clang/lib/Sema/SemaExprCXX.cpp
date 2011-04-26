@@ -2857,13 +2857,6 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &lex, ExprResult &rex,
   //   second operand.
   // The cv qualifiers are the union of those in the pointer and the left side,
   // in accordance with 5.5p5 and 5.2.5.
-  // FIXME: This returns a dereferenced member function pointer as a normal
-  // function type. However, the only operation valid on such functions is
-  // calling them. There's also a GCC extension to get a function pointer to the
-  // thing, which is another complication, because this type - unlike the type
-  // that is the result of this expression - takes the class as the first
-  // argument.
-  // We probably need a "MemberFunctionClosureType" or something like that.
   QualType Result = MemPtr->getPointeeType();
   Result = Context.getCVRQualifiedType(Result, LType.getCVRQualifiers());
 
@@ -2900,12 +2893,14 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &lex, ExprResult &rex,
   //   operand is a pointer to a member function is a prvalue. The
   //   result of an ->* expression is an lvalue if its second operand
   //   is a pointer to data member and a prvalue otherwise.
-  if (Result->isFunctionType())
+  if (Result->isFunctionType()) {
     VK = VK_RValue;
-  else if (isIndirect)
+    return Context.BoundMemberTy;
+  } else if (isIndirect) {
     VK = VK_LValue;
-  else
+  } else {
     VK = lex.get()->getValueKind();
+  }
 
   return Result;
 }

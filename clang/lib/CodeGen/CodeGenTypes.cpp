@@ -229,7 +229,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Non-canonical or dependent types aren't possible.");
+    llvm_unreachable("Non-canonical or dependent types aren't possible.");
     break;
 
   case Type::Builtin: {
@@ -283,8 +283,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
+    case BuiltinType::BoundMember:
     case BuiltinType::UnknownAny:
-      llvm_unreachable("Unexpected builtin type!");
+      llvm_unreachable("Unexpected placeholder builtin type!");
       break;
     }
     llvm_unreachable("Unknown builtin type!");

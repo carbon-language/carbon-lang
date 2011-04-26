@@ -196,8 +196,9 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
       
     case BuiltinType::Overload:
     case BuiltinType::Dependent:
+    case BuiltinType::BoundMember:
     case BuiltinType::UnknownAny:
-      assert(false && "Should not see this type here!");
+      llvm_unreachable("asking for RRTI for a placeholder type!");
       
     case BuiltinType::ObjCId:
     case BuiltinType::ObjCClass:

@@ -3623,8 +3623,8 @@ ExprResult Sema::PerformContextuallyConvertToBool(Expr *From) {
     return PerformImplicitConversion(From, Context.BoolTy, ICS, AA_Converting);
 
   if (!DiagnoseMultipleUserDefinedConversion(From, Context.BoolTy))
-    return  Diag(From->getSourceRange().getBegin(),
-                 diag::err_typecheck_bool_condition)
+    return Diag(From->getSourceRange().getBegin(),
+                diag::err_typecheck_bool_condition)
                   << From->getType() << From->getSourceRange();
   return ExprError();
 }
@@ -7202,7 +7202,7 @@ public:
     if (!TargetFunctionType->isFunctionType()) {        
       if (OvlExpr->hasExplicitTemplateArgs()) {
         DeclAccessPair dap;
-        if( FunctionDecl* Fn = S.ResolveSingleFunctionTemplateSpecialization(
+        if (FunctionDecl* Fn = S.ResolveSingleFunctionTemplateSpecialization(
                                             OvlExpr, false, &dap) ) {
 
           if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
@@ -7502,32 +7502,29 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr, QualType TargetTyp
 /// template, where that template-id refers to a single template whose template
 /// arguments are either provided by the template-id or have defaults,
 /// as described in C++0x [temp.arg.explicit]p3.
-FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From, 
-                                                                bool Complain,
-                                                  DeclAccessPair* FoundResult) {
+FunctionDecl *
+Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl, 
+                                                  bool Complain,
+                                                  DeclAccessPair *FoundResult) {
   // C++ [over.over]p1:
   //   [...] [Note: any redundant set of parentheses surrounding the
   //   overloaded function name is ignored (5.1). ]
   // C++ [over.over]p1:
   //   [...] The overloaded function name can be preceded by the &
   //   operator.
-  if (From->getType() != Context.OverloadTy)
-    return 0;
-
-  OverloadExpr *OvlExpr = OverloadExpr::find(From).Expression;
 
   // If we didn't actually find any template-ids, we're done.
-  if (!OvlExpr->hasExplicitTemplateArgs())
+  if (!ovl->hasExplicitTemplateArgs())
     return 0;
 
   TemplateArgumentListInfo ExplicitTemplateArgs;
-  OvlExpr->getExplicitTemplateArgs().copyInto(ExplicitTemplateArgs);
+  ovl->getExplicitTemplateArgs().copyInto(ExplicitTemplateArgs);
 
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   FunctionDecl *Matched = 0;
-  for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
-         E = OvlExpr->decls_end(); I != E; ++I) {
+  for (UnresolvedSetIterator I = ovl->decls_begin(),
+         E = ovl->decls_end(); I != E; ++I) {
     // C++0x [temp.arg.explicit]p3:
     //   [...] In contexts where deduction is done and fails, or in contexts
     //   where deduction is not done, if a template argument list is
@@ -7544,7 +7541,7 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From,
     //   function template specialization, which is added to the set of
     //   overloaded functions considered.
     FunctionDecl *Specialization = 0;
-    TemplateDeductionInfo Info(Context, OvlExpr->getNameLoc());
+    TemplateDeductionInfo Info(Context, ovl->getNameLoc());
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(FunctionTemplate, &ExplicitTemplateArgs,
                                     Specialization, Info)) {
@@ -7553,21 +7550,20 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From,
       continue;
     }
 
+    assert(Specialization && "no specialization and no error?");
+
     // Multiple matches; we can't resolve to a single declaration.
     if (Matched) {
-      if (FoundResult) 
-          *FoundResult = DeclAccessPair();
-      
       if (Complain) {
-        Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
-          << OvlExpr->getName();
-        NoteAllOverloadCandidates(OvlExpr);
+        Diag(ovl->getExprLoc(), diag::err_addr_ovl_ambiguous)
+          << ovl->getName();
+        NoteAllOverloadCandidates(ovl);
       }
       return 0;
-    }   
+    }
     
-    if ((Matched = Specialization) && FoundResult) 
-      *FoundResult = I.getPair();    
+    Matched = Specialization;
+    if (FoundResult) *FoundResult = I.getPair();    
   }
 
   return Matched;
@@ -7581,39 +7577,65 @@ FunctionDecl *Sema::ResolveSingleFunctionTemplateSpecialization(Expr *From,
 // template specialization
 // Last three arguments should only be supplied if Complain = true
 ExprResult Sema::ResolveAndFixSingleFunctionTemplateSpecialization(
-             Expr *SrcExpr, bool DoFunctionPointerConverion, bool Complain,
+             Expr *SrcExpr, bool doFunctionPointerConverion, bool complain,
                                   const SourceRange& OpRangeForComplaining, 
                                            QualType DestTypeForComplaining, 
-                                            unsigned DiagIDForComplaining ) {
+                                            unsigned DiagIDForComplaining) {
+  assert(SrcExpr->getType() == Context.OverloadTy);
 
-    assert(SrcExpr->getType() == Context.OverloadTy);
+  OverloadExpr::FindResult ovl = OverloadExpr::find(SrcExpr);
 
-    DeclAccessPair Found;
-    ExprResult SingleFunctionExpression;
-    if (FunctionDecl* Fn = ResolveSingleFunctionTemplateSpecialization(
-      SrcExpr, false, // false -> Complain 
-      &Found)) {
-        if (!DiagnoseUseOfDecl(Fn, SrcExpr->getSourceRange().getBegin())) {
-          // mark the expression as resolved to Fn
-          SingleFunctionExpression = Owned(FixOverloadedFunctionReference(SrcExpr, 
-            Found, Fn));
-          if (DoFunctionPointerConverion)
-            SingleFunctionExpression =
-              DefaultFunctionArrayLvalueConversion(SingleFunctionExpression.take());
-        }      
-    }
-    if (!SingleFunctionExpression.isUsable()) {
-      if (Complain) {
-        OverloadExpr* oe = OverloadExpr::find(SrcExpr).Expression;
-        Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
-          << oe->getName() << DestTypeForComplaining << OpRangeForComplaining 
-          << oe->getQualifierLoc().getSourceRange();
-        NoteAllOverloadCandidates(SrcExpr);
-      }      
+  DeclAccessPair found;
+  ExprResult SingleFunctionExpression;
+  if (FunctionDecl *fn = ResolveSingleFunctionTemplateSpecialization(
+                           ovl.Expression, /*complain*/ false, &found)) {
+    if (DiagnoseUseOfDecl(fn, SrcExpr->getSourceRange().getBegin()))
+      return ExprError();
+
+    // It is only correct to resolve to an instance method if we're
+    // resolving a form that's permitted to be a pointer to member.
+    // Otherwise we'll end up making a bound member expression, which
+    // is illegal in all the contexts we resolve like this.
+    if (!ovl.HasFormOfMemberPointer &&
+        isa<CXXMethodDecl>(fn) &&
+        cast<CXXMethodDecl>(fn)->isInstance()) {
+      if (complain) {
+        Diag(ovl.Expression->getExprLoc(),
+             diag::err_invalid_use_of_bound_member_func)
+          << ovl.Expression->getSourceRange();
+        // TODO: I believe we only end up here if there's a mix of
+        // static and non-static candidates (otherwise the expression
+        // would have 'bound member' type, not 'overload' type).
+        // Ideally we would note which candidate was chosen and why
+        // the static candidates were rejected.
+      }
+      
       return ExprError();
     }
 
-    return SingleFunctionExpression;
+    // Fix the expresion to refer to 'fn'.
+    SingleFunctionExpression =
+      Owned(FixOverloadedFunctionReference(SrcExpr, found, fn));
+
+    // If desired, do function-to-pointer decay.
+    if (doFunctionPointerConverion)
+      SingleFunctionExpression =
+        DefaultFunctionArrayLvalueConversion(SingleFunctionExpression.take());
+  }
+
+  if (!SingleFunctionExpression.isUsable()) {
+    if (complain) {
+      Diag(OpRangeForComplaining.getBegin(), DiagIDForComplaining)
+        << ovl.Expression->getName()
+        << DestTypeForComplaining
+        << OpRangeForComplaining 
+        << ovl.Expression->getQualifierLoc().getSourceRange();
+      NoteAllOverloadCandidates(SrcExpr);
+    }      
+    return ExprError();
+  }
+
+  return SingleFunctionExpression;
 }
 
 /// \brief Add a single candidate to the overload set.
@@ -8499,15 +8521,65 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
 /// function (and includes the object parameter), Args/NumArgs are the
 /// arguments to the function call (not including the object
 /// parameter). The caller needs to validate that the member
-/// expression refers to a member function or an overloaded member
-/// function.
+/// expression refers to a non-static member function or an overloaded
+/// member function.
 ExprResult
 Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                 SourceLocation LParenLoc, Expr **Args,
                                 unsigned NumArgs, SourceLocation RParenLoc) {
+  assert(MemExprE->getType() == Context.BoundMemberTy ||
+         MemExprE->getType() == Context.OverloadTy);
+
   // Dig out the member expression. This holds both the object
   // argument and the member function we're referring to.
   Expr *NakedMemExpr = MemExprE->IgnoreParens();
+
+  // Determine whether this is a call to a pointer-to-member function.
+  if (BinaryOperator *op = dyn_cast<BinaryOperator>(NakedMemExpr)) {
+    assert(op->getType() == Context.BoundMemberTy);
+    assert(op->getOpcode() == BO_PtrMemD || op->getOpcode() == BO_PtrMemI);
+
+    QualType fnType =
+      op->getRHS()->getType()->castAs<MemberPointerType>()->getPointeeType();
+
+    const FunctionProtoType *proto = fnType->castAs<FunctionProtoType>();
+    QualType resultType = proto->getCallResultType(Context);
+    ExprValueKind valueKind = Expr::getValueKindForType(proto->getResultType());
+
+    // Check that the object type isn't more qualified than the
+    // member function we're calling.
+    Qualifiers funcQuals = Qualifiers::fromCVRMask(proto->getTypeQuals());
+
+    QualType objectType = op->getLHS()->getType();
+    if (op->getOpcode() == BO_PtrMemI)
+      objectType = objectType->castAs<PointerType>()->getPointeeType();
+    Qualifiers objectQuals = objectType.getQualifiers();
+
+    Qualifiers difference = objectQuals - funcQuals;
+    difference.removeObjCGCAttr();
+    difference.removeAddressSpace();
+    if (difference) {
+      std::string qualsString = difference.getAsString();
+      Diag(LParenLoc, diag::err_pointer_to_member_call_drops_quals)
+        << fnType.getUnqualifiedType()
+        << qualsString
+        << (qualsString.find(' ') == std::string::npos ? 1 : 2);
+    }
+              
+    CXXMemberCallExpr *call
+      = new (Context) CXXMemberCallExpr(Context, MemExprE, Args, NumArgs,
+                                        resultType, valueKind, RParenLoc);
+
+    if (CheckCallReturnType(proto->getResultType(),
+                            op->getRHS()->getSourceRange().getBegin(),
+                            call, 0))
+      return ExprError();
+
+    if (ConvertArgumentsForCall(call, op, 0, proto, Args, NumArgs, RParenLoc))
+      return ExprError();
+
+    return MaybeBindToTemporary(call);
+  }
 
   MemberExpr *MemExpr;
   CXXMethodDecl *Method = 0;

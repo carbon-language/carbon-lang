@@ -837,6 +837,28 @@ bool CXXDependentScopeMemberExpr::isImplicitAccess() const {
   return cast<Expr>(Base)->isImplicitCXXThis();
 }
 
+static bool hasOnlyNonStaticMemberFunctions(UnresolvedSetIterator begin,
+                                            UnresolvedSetIterator end) {
+  do {
+    NamedDecl *decl = *begin;
+    if (isa<UnresolvedUsingValueDecl>(decl))
+      return false;
+    if (isa<UsingShadowDecl>(decl))
+      decl = cast<UsingShadowDecl>(decl)->getUnderlyingDecl();
+
+    // Unresolved member expressions should only contain methods and
+    // method templates.
+    assert(isa<CXXMethodDecl>(decl) || isa<FunctionTemplateDecl>(decl));
+
+    if (isa<FunctionTemplateDecl>(decl))
+      decl = cast<FunctionTemplateDecl>(decl)->getTemplatedDecl();
+    if (cast<CXXMethodDecl>(decl)->isStatic())
+      return false;
+  } while (++begin != end);
+
+  return true;
+}
+
 UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C, 
                                            bool HasUnresolvedUsing,
                                            Expr *Base, QualType BaseType,
@@ -857,6 +879,11 @@ UnresolvedMemberExpr::UnresolvedMemberExpr(ASTContext &C,
                   BaseType->containsUnexpandedParameterPack())),
     IsArrow(IsArrow), HasUnresolvedUsing(HasUnresolvedUsing),
     Base(Base), BaseType(BaseType), OperatorLoc(OperatorLoc) {
+
+  // Check whether all of the members are non-static member functions,
+  // and if so, mark give this bound-member type instead of overload type.
+  if (hasOnlyNonStaticMemberFunctions(Begin, End))
+    setType(C.BoundMemberTy);
 }
 
 bool UnresolvedMemberExpr::isImplicitAccess() const {

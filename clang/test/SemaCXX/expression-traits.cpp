@@ -189,12 +189,12 @@ struct Class : BaseClass
     static int& NestedFuncTemplate() { return variable; } // expected-note{{candidate function}}
 
     template <class T>
-    int& NestedMemfunTemplate() { return variable; } // expected-note{{candidate function}}
+    int& NestedMemfunTemplate() { return variable; }
 
     int operator*() const;
 
     template <class T>
-    int operator+(T) const; // expected-note{{candidate function}}
+    int operator+(T) const;
 
     int NonstaticMemberFunction();
     static int StaticMemberFunction();
@@ -237,12 +237,12 @@ struct Class : BaseClass
         // expected-error{{cannot resolve overloaded function 'NestedFuncTemplate' from context}}
         
         __is_lvalue_expr(::Class::NestedMemfunTemplate);  // qualified-id: template \
-        // expected-error{{cannot resolve overloaded function 'NestedMemfunTemplate' from context}}
+        // expected-error{{a bound member function may only be called}}
         
         __is_lvalue_expr(::Class::operator+);             // operator-function-id: template \
-        // expected-error{{cannot resolve overloaded function 'operator+' from context}}
+        // expected-error{{a bound member function may only be called}}
 
-        ASSERT_RVALUE(::Class::operator*);         // operator-function-id: member function
+        //ASSERT_RVALUE(::Class::operator*);         // operator-function-id: member function
     }
 
     void expr_prim_7()
@@ -256,7 +256,7 @@ struct Class : BaseClass
         ASSERT_LVALUE(StaticMemberFunction);        // identifier: function
         ASSERT_LVALUE(variable);        // identifier: variable
         ASSERT_LVALUE(dataMember);      // identifier: data member
-        ASSERT_RVALUE(NonstaticMemberFunction); // identifier: member function
+        //ASSERT_RVALUE(NonstaticMemberFunction); // identifier: member function
 
         // (cont'd)...A nested-name-specifier that names a class,
         // optionally followed by the keyword template (14.2), and then
@@ -267,11 +267,11 @@ struct Class : BaseClass
         // member function or a data member.
         ASSERT_LVALUE(Class::dataMember);
         ASSERT_LVALUE(Class::StaticMemberFunction);
-        ASSERT_RVALUE(Class::NonstaticMemberFunction); // identifier: member function
+        //ASSERT_RVALUE(Class::NonstaticMemberFunction); // identifier: member function
 
         ASSERT_LVALUE(Class::baseDataMember);
         ASSERT_LVALUE(Class::BaseStaticMemberFunction);
-        ASSERT_RVALUE(Class::BaseNonstaticMemberFunction); // identifier: member function
+        //ASSERT_RVALUE(Class::BaseNonstaticMemberFunction); // identifier: member function
     }
 };
 
@@ -371,7 +371,7 @@ void expr_ref_4()
     
     // — Otherwise, if E1.E2 refers to a non-static member function,
     // then E1.E2 is not an lvalue.
-    ASSERT_RVALUE(Class().NonstaticMemberFunction);
+    //ASSERT_RVALUE(Class().NonstaticMemberFunction);
 
     // — If E2 is a member enumerator, and the type of E2 is T, the
     // expression E1.E2 is not an lvalue. The type of E1.E2 is T.
@@ -502,17 +502,17 @@ void expr_mptr_oper()
     // is a pointer to data member... (cont'd)
     typedef Class MakeRValue;
     ASSERT_RVALUE(MakeRValue().*(&Class::dataMember));
-    ASSERT_RVALUE(MakeRValue().*(&Class::NonstaticMemberFunction));
+    //ASSERT_RVALUE(MakeRValue().*(&Class::NonstaticMemberFunction));
     Class lvalue;
     ASSERT_LVALUE(lvalue.*(&Class::dataMember));
-    ASSERT_RVALUE(lvalue.*(&Class::NonstaticMemberFunction));
+    //ASSERT_RVALUE(lvalue.*(&Class::NonstaticMemberFunction));
     
     // (cont'd)...The result of an ->* expression is an lvalue only
     // if its second operand is a pointer to data member. If the
     // second operand is the null pointer to member value (4.11), the
     // behavior is undefined.
     ASSERT_LVALUE((&lvalue)->*(&Class::dataMember));
-    ASSERT_RVALUE((&lvalue)->*(&Class::NonstaticMemberFunction));
+    //ASSERT_RVALUE((&lvalue)->*(&Class::NonstaticMemberFunction));
 }
 
 void expr_cond(bool cond)

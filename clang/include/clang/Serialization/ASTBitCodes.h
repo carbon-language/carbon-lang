@@ -491,8 +491,10 @@ namespace clang {
       PREDEF_TYPE_OBJC_CLASS    = 27,
       /// \brief The ObjC 'SEL' type.
       PREDEF_TYPE_OBJC_SEL      = 28,
-      /// \brief The 'unknown any' type.
-      PREDEF_TYPE_UNKNOWN_ANY   = 29
+      /// \brief The 'unknown any' placeholder type.
+      PREDEF_TYPE_UNKNOWN_ANY   = 29,
+      /// \brief The placeholder type for bound member functions.
+      PREDEF_TYPE_BOUND_MEMBER  = 30
     };
 
     /// \brief The number of predefined type IDs that are reserved for
