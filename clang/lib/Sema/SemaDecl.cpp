@@ -7094,6 +7094,8 @@ CreateNewDecl:
     // the #pragma tokens are effectively skipped over during the
     // parsing of the struct).
     AddAlignmentAttributesForRecord(RD);
+    
+    AddMsStructLayoutForRecord(RD);
   }
 
   // If this is a specialization of a member class (of a class template),

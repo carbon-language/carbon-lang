@@ -202,5 +202,6 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("opencl_kernel_function", AT_opencl_kernel_function)
     .Case("uuid", AT_uuid)
     .Case("pcs", AT_pcs)
+    .Case("ms_struct", AT_MsStruct)
     .Default(UnknownAttribute);
 }

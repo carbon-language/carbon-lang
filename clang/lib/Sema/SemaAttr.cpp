@@ -129,6 +129,12 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
   }
 }
 
+void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
+  if (!MSStructPragmaOn)
+    return;
+  RD->addAttr(::new (Context) MsStructAttr(SourceLocation(), Context));
+}
+
 void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
                                    SourceLocation PragmaLoc,
                                    SourceLocation KindLoc) {

@@ -261,6 +261,13 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
 }
 
+static void HandleMsStructAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  if (TagDecl *TD = dyn_cast<TagDecl>(d))
+    TD->addAttr(::new (S.Context) MsStructAttr(Attr.getLoc(), S.Context));
+  else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+}
+
 static void HandleIBAction(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
@@ -2890,6 +2897,7 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
       HandleInitPriorityAttr(D, Attr, S); break;
       
   case AttributeList::AT_packed:      HandlePackedAttr      (D, Attr, S); break;
+  case AttributeList::AT_MsStruct:    HandleMsStructAttr    (D, Attr, S); break;
   case AttributeList::AT_section:     HandleSectionAttr     (D, Attr, S); break;
   case AttributeList::AT_unavailable: HandleUnavailableAttr (D, Attr, S); break;
   case AttributeList::AT_unused:      HandleUnusedAttr      (D, Attr, S); break;

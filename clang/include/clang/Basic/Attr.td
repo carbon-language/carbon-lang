@@ -255,6 +255,10 @@ def Final : InheritableAttr {
   let Spellings = [];
 }
 
+def MsStruct : InheritableAttr {
+  let Spellings = ["__ms_struct__"];
+}
+
 def Format : InheritableAttr {
   let Spellings = ["format"];
   let Args = [StringArgument<"Type">, IntArgument<"FormatIdx">,

@@ -4905,6 +4905,9 @@ public:
   /// a the record decl, to handle '#pragma pack' and '#pragma options align'.
   void AddAlignmentAttributesForRecord(RecordDecl *RD);
 
+  /// AddMsStructLayoutForRecord - Adds ms_struct layout attribute to record.
+  void AddMsStructLayoutForRecord(RecordDecl *RD);
+
   /// FreePackedContext - Deallocate and null out PackContext.
   void FreePackedContext();
 
