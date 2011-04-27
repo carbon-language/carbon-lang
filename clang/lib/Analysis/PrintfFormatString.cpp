@@ -381,8 +381,32 @@ bool PrintfSpecifier::fixType(QualType QT) {
 
   // Set length modifier
   switch (BT->getKind()) {
-  default:
-    // The rest of the conversions are either optional or for non-builtin types
+  case BuiltinType::Bool:
+  case BuiltinType::WChar_U:
+  case BuiltinType::WChar_S:
+  case BuiltinType::Char16:
+  case BuiltinType::Char32:
+  case BuiltinType::UInt128:
+  case BuiltinType::Int128:
+    // Integral types which are non-trivial to correct.
+    return false;
+
+  case BuiltinType::Void:
+  case BuiltinType::NullPtr:
+  case BuiltinType::ObjCId:
+  case BuiltinType::ObjCClass:
+  case BuiltinType::ObjCSel:
+  case BuiltinType::Dependent:
+  case BuiltinType::Overload:
+  case BuiltinType::BoundMember:
+  case BuiltinType::UnknownAny:
+    // Misc other stuff which doesn't make sense here.
+    return false;
+
+  case BuiltinType::UInt:
+  case BuiltinType::Int:
+  case BuiltinType::Float:
+  case BuiltinType::Double:
     LM.setKind(LengthModifier::None);
     break;
 
@@ -398,8 +422,6 @@ bool PrintfSpecifier::fixType(QualType QT) {
     LM.setKind(LengthModifier::AsShort);
     break;
 
-  case BuiltinType::WChar_S:
-  case BuiltinType::WChar_U:
   case BuiltinType::Long:
   case BuiltinType::ULong:
     LM.setKind(LengthModifier::AsLong);
@@ -429,13 +451,6 @@ bool PrintfSpecifier::fixType(QualType QT) {
   else if (QT->isRealFloatingType()) {
     CS.setKind(ConversionSpecifier::fArg);
   }
-  else if (QT->isPointerType()) {
-    CS.setKind(ConversionSpecifier::pArg);
-    Precision.setHowSpecified(OptionalAmount::NotSpecified);
-    HasAlternativeForm = 0;
-    HasLeadingZeroes = 0;
-    HasPlusPrefix = 0;
-  }
   else if (QT->isSignedIntegerType()) {
     CS.setKind(ConversionSpecifier::dArg);
     HasAlternativeForm = 0;
@@ -448,7 +463,7 @@ bool PrintfSpecifier::fixType(QualType QT) {
     HasPlusPrefix = 0;
   }
   else {
-    return false;
+    assert(0 && "Unexpected type");
   }
 
   return true;
