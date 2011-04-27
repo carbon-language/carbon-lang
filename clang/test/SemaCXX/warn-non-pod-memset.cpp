@@ -32,7 +32,16 @@ void test_warn() {
       // expected-note {{explicitly cast the pointer to silence this warning}}
 }
 
-void test_nowarn() {
+void test_nowarn(void *void_ptr) {
+  int i, *iptr;
+  float y;
+  char c;
+
+  memset(&i, 0, sizeof i);
+  memset(&iptr, 0, sizeof iptr);
+  memset(&y, 0, sizeof y);
+  memset(&c, 0, sizeof c);
+  memset(void_ptr, 0, 42);
   memset(&s1, 0, sizeof s1);
   memset(&s2, 0, sizeof s2);
   memset(&s3, 0, sizeof s3);

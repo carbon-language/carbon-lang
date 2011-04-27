@@ -1810,7 +1810,7 @@ void Sema::CheckMemsetArguments(const CallExpr *Call) {
   QualType DestTy = Dest->getType();
   if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
     QualType PointeeTy = DestPtrTy->getPointeeType();
-    if (!PointeeTy->isPODType()) {
+    if (!PointeeTy->isPODType() && !PointeeTy->isVoidType()) {
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,
         PDiag(diag::warn_non_pod_memset)
