@@ -650,6 +650,9 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
         if (AS != AS_none)
           Print(AS);
         Out << " " << Base->getType().getAsString(Policy);
+
+        if (Base->isPackExpansion())
+          Out << "...";
       }
     }
 
