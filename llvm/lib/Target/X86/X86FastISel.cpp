@@ -132,6 +132,9 @@ private:
   }
 
   bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
+
+  bool TryEmitSmallMemcpy(X86AddressMode DestAM,
+                          X86AddressMode SrcAM, uint64_t Len);
 };
 
 } // end anonymous namespace.
@@ -1323,6 +1326,40 @@ bool X86FastISel::X86SelectExtractValue(const Instruction *I) {
   return false;
 }
 
+bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
+                                     X86AddressMode SrcAM, uint64_t Len) {
+  // Make sure we don't bloat code by inlining very large memcpy's.
+  bool i64Legal = TLI.isTypeLegal(MVT::i64);
+  if (Len > (i64Legal ? 32 : 16)) return false;
+
+  // We don't care about alignment here since we just emit integer accesses.
+  while (Len) {
+    MVT VT;
+    if (Len >= 8 && i64Legal)
+      VT = MVT::i64;
+    else if (Len >= 4)
+      VT = MVT::i32;
+    else if (Len >= 2)
+      VT = MVT::i16;
+    else {
+      assert(Len == 1);
+      VT = MVT::i8;
+    }
+
+    unsigned Reg;
+    bool RV = X86FastEmitLoad(VT, SrcAM, Reg);
+    RV &= X86FastEmitStore(VT, Reg, DestAM);
+    assert(RV && "Failed to emit load or store??");
+
+    unsigned Size = VT.getSizeInBits()/8;
+    Len -= Size;
+    DestAM.Disp += Size;
+    SrcAM.Disp += Size;
+  }
+
+  return true;
+}
+
 bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
   switch (I.getIntrinsicID()) {
@@ -1332,45 +1369,16 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     // Don't handle volatile or variable length memcpys.
     if (MCI.isVolatile() || !isa<ConstantInt>(MCI.getLength()))
       return false;
-    
-    // Don't inline super long memcpys.  We could lower these to a memcpy call,
-    // but we might as well bail out.
+
     uint64_t Len = cast<ConstantInt>(MCI.getLength())->getZExtValue();
-    bool i64Legal = TLI.isTypeLegal(MVT::i64);
-    if (Len > (i64Legal ? 32 : 16)) return false;
     
     // Get the address of the dest and source addresses.
     X86AddressMode DestAM, SrcAM;
     if (!X86SelectAddress(MCI.getRawDest(), DestAM) ||
         !X86SelectAddress(MCI.getRawSource(), SrcAM))
       return false;
-    
-    // We don't care about alignment here since we just emit integer accesses.
-    while (Len) {
-      MVT VT;
-      if (Len >= 8 && i64Legal)
-        VT = MVT::i64;
-      else if (Len >= 4)
-        VT = MVT::i32;
-      else if (Len >= 2)
-        VT = MVT::i16;
-      else {
-        assert(Len == 1);
-        VT = MVT::i8;
-      }
-      
-      unsigned Reg;
-      bool RV = X86FastEmitLoad(VT, SrcAM, Reg);
-      RV &= X86FastEmitStore(VT, Reg, DestAM);
-      assert(RV && "Failed to emit load or store??");
-      
-      unsigned Size = VT.getSizeInBits()/8;
-      Len -= Size;
-      DestAM.Disp += Size;
-      SrcAM.Disp += Size;
-    }
-    
-    return true;
+
+    return TryEmitSmallMemcpy(DestAM, SrcAM, Len);
   }
       
   case Intrinsic::stackprotector: {
