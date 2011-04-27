@@ -86,14 +86,20 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 
   if (onlyAccessesArgPointees(MRB)) {
     bool doesAlias = false;
-    if (doesAccessArgPointees(MRB))
+    if (doesAccessArgPointees(MRB)) {
+      MDNode *CSTag = CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa);
       for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(), AE = CS.arg_end();
-           AI != AE; ++AI)
-        if (!isNoAlias(Location(*AI), Loc)) {
+           AI != AE; ++AI) {
+        const Value *Arg = *AI;
+        if (!Arg->getType()->isPointerTy())
+          continue;
+        Location CSLoc(Arg, UnknownSize, CSTag);
+        if (!isNoAlias(CSLoc, Loc)) {
           doesAlias = true;
           break;
         }
-
+      }
+    }
     if (!doesAlias)
       return NoModRef;
   }
@@ -138,13 +144,19 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
   // CS2's arguments.
   if (onlyAccessesArgPointees(CS2B)) {
     AliasAnalysis::ModRefResult R = NoModRef;
-    if (doesAccessArgPointees(CS2B))
+    if (doesAccessArgPointees(CS2B)) {
+      MDNode *CS2Tag = CS2.getInstruction()->getMetadata(LLVMContext::MD_tbaa);
       for (ImmutableCallSite::arg_iterator
            I = CS2.arg_begin(), E = CS2.arg_end(); I != E; ++I) {
-        R = ModRefResult((R | getModRefInfo(CS1, *I, UnknownSize)) & Mask);
+        const Value *Arg = *I;
+        if (!Arg->getType()->isPointerTy())
+          continue;
+        Location CS2Loc(Arg, UnknownSize, CS2Tag);
+        R = ModRefResult((R | getModRefInfo(CS1, CS2Loc)) & Mask);
         if (R == Mask)
           break;
       }
+    }
     return R;
   }
 
@@ -152,13 +164,20 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
   // any of the memory referenced by CS1's arguments. If not, return NoModRef.
   if (onlyAccessesArgPointees(CS1B)) {
     AliasAnalysis::ModRefResult R = NoModRef;
-    if (doesAccessArgPointees(CS1B))
+    if (doesAccessArgPointees(CS1B)) {
+      MDNode *CS1Tag = CS1.getInstruction()->getMetadata(LLVMContext::MD_tbaa);
       for (ImmutableCallSite::arg_iterator
-           I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I)
-        if (getModRefInfo(CS2, *I, UnknownSize) != NoModRef) {
+           I = CS1.arg_begin(), E = CS1.arg_end(); I != E; ++I) {
+        const Value *Arg = *I;
+        if (!Arg->getType()->isPointerTy())
+          continue;
+        Location CS1Loc(Arg, UnknownSize, CS1Tag);
+        if (getModRefInfo(CS2, CS1Loc) != NoModRef) {
           R = Mask;
           break;
         }
+      }
+    }
     if (R == NoModRef)
       return R;
   }

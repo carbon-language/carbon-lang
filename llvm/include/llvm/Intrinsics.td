@@ -30,7 +30,7 @@ class IntrinsicProperty;
 def IntrNoMem : IntrinsicProperty;
 
 // IntrReadArgMem - This intrinsic reads only from memory that one of its
-// arguments points to, but may read an unspecified amount.
+// pointer-typed arguments points to, but may read an unspecified amount.
 def IntrReadArgMem : IntrinsicProperty;
 
 // IntrReadMem - This intrinsic reads from unspecified memory, so it cannot be
