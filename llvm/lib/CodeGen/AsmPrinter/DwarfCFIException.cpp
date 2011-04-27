@@ -109,8 +109,7 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   if (PerEncoding == dwarf::DW_EH_PE_omit || !Per)
     return;
 
-  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, PerEncoding,
-                                                     Asm->Mang, MMI);
+  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, Asm->Mang, MMI);
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 }
 

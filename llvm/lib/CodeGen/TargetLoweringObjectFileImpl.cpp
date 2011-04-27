@@ -179,9 +179,9 @@ const MCSection *TargetLoweringObjectFileELF::getEHFrameSection() const {
 
 MCSymbol *
 TargetLoweringObjectFileELF::getCFIPersonalitySymbol(const GlobalValue *GV,
-                                                     unsigned Encoding,
                                                      Mangler *Mang,
                                                 MachineModuleInfo *MMI) const {
+  unsigned Encoding = getPersonalityEncoding();
   switch (Encoding & 0x70) {
   default:
     report_fatal_error("We do not support this DWARF encoding yet!");
@@ -849,7 +849,7 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 }
 
 MCSymbol *TargetLoweringObjectFileMachO::
-getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
   // The mach-o version of this method defaults to returning a stub reference.
   MachineModuleInfoMachO &MachOMMI =

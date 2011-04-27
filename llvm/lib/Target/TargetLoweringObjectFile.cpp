@@ -121,7 +121,7 @@ static bool IsNullTerminatedString(const Constant *C) {
 }
 
 MCSymbol *TargetLoweringObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
   return Mang->getSymbol(GV);
 }

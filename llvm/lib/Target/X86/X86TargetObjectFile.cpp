@@ -39,7 +39,7 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
 }
 
 MCSymbol *X8664_MachoTargetObjectFile::
-getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding, Mangler *Mang,
+getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                         MachineModuleInfo *MMI) const {
   return Mang->getSymbol(GV);
 }
