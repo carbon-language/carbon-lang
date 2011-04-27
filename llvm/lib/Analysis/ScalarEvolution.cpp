@@ -4705,8 +4705,9 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
         getAddRecExpr(NewOps, AddRec->getLoop(),
                       AddRec->getNoWrapFlags(SCEV::FlagNW));
       AddRec = dyn_cast<SCEVAddRecExpr>(FoldedRec);
-      // In cases with "undef" values, a loop's own recurrence may
-      // fold into a constant. Go ahead and return the optimistic value.
+      // The addrec may be folded to a nonrecurrence, for example, if the
+      // induction variable is multiplied by zero after constant folding. Go
+      // ahead and return the folded value.
       if (!AddRec)
         return FoldedRec;
       break;
