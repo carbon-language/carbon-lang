@@ -394,6 +394,11 @@ public:
   FieldDecl *getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field);
 
   void setInstantiatedFromUnnamedFieldDecl(FieldDecl *Inst, FieldDecl *Tmpl);
+  
+  /// ZeroBitfieldFollowsNonBitfield - return 'true" if 'FD' is a zero-length
+  /// bitfield which follows the non-bitfield 'LastFD'.
+  bool ZeroBitfieldFollowsNonBitfield(const FieldDecl *FD, 
+                                      const FieldDecl *LastFD) const;
 
   // Access to the set of methods overridden by the given C++ method.
   typedef CXXMethodVector::iterator overridden_cxx_method_iterator;

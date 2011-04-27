@@ -753,10 +753,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
       const FieldDecl *FD =  (*Field);
-      // FIXME. Refactor into common code as it is used in several places.
-      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
-          FD->getBitWidth()->
-            EvaluateAsInt(Types.getContext()).getZExtValue() == 0) {
+      if (Types.getContext().ZeroBitfieldFollowsNonBitfield(FD, LastFD)) {
         --FieldNo;
         continue;
       }
@@ -999,9 +996,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D) {
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
-          FD->getBitWidth()->
-          EvaluateAsInt(getContext()).getZExtValue() == 0) {
+      if (getContext().ZeroBitfieldFollowsNonBitfield(FD, LastFD)) {
         --i;
         continue;
       }

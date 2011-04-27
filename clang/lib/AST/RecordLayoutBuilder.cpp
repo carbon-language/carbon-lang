@@ -1261,10 +1261,8 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
       const FieldDecl *FD =  (*Field);
-      if (FD->isBitField() && LastFD && !LastFD->isBitField() &&
-          FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue() == 0) {
+      if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
         continue;
-      }
       LastFD = FD;
     }
     LayoutField(*Field);
