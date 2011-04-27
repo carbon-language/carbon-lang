@@ -127,7 +127,12 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(CheckerContext &C,
 
     ExplodedNode *N = *I;
     const GRState *stateLoad = N->getState();
-    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr);
+
+    // Use direct bindings from the environment since we are forcing a load
+    // from a location that the Environment would typically not be used
+    // to bind a value.
+    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr, true);
+
     SVal oldValueVal_untested = stateLoad->getSVal(oldValueExpr);
 
     // FIXME: Issue an error.

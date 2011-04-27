@@ -27,7 +27,17 @@ SVal Environment::lookupExpr(const Stmt* E) const {
   return UnknownVal();
 }
 
-SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder) const {
+SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
+			  bool useOnlyDirectBindings) const {
+
+  if (useOnlyDirectBindings) {
+    // This branch is rarely taken, but can be exercised by
+    // checkers that explicitly bind values to arbitrary
+    // expressions.  It is crucial that we do not ignore any
+    // expression here, and do a direct lookup.
+    return lookupExpr(E);
+  }
+
   for (;;) {
     switch (E->getStmtClass()) {
       case Stmt::AddrLabelExprClass:

@@ -51,9 +51,10 @@ public:
   iterator end() const { return ExprBindings.end(); }
 
 
-  /// GetSVal - Fetches the current binding of the expression in the
+  /// getSVal - Fetches the current binding of the expression in the
   ///  Environment.
-  SVal getSVal(const Stmt* Ex, SValBuilder& svalBuilder) const;
+  SVal getSVal(const Stmt* Ex, SValBuilder& svalBuilder,
+	       bool useOnlyDirectBindings = false) const;
 
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
