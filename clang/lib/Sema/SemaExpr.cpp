@@ -10478,16 +10478,17 @@ ExprResult RebuildUnknownAnyExpr::VisitCallExpr(CallExpr *call) {
   Expr *callee = call->getCallee();
 
   enum FnKind {
-    FK_Function,
+    FK_MemberFunction,
     FK_FunctionPointer,
     FK_BlockPointer
   };
 
   FnKind kind;
   QualType type = callee->getType();
-  if (type->isFunctionType()) {
-    assert(isa<CXXMemberCallExpr>(call) || isa<CXXOperatorCallExpr>(call));
-    kind = FK_Function;
+  if (type == S.Context.BoundMemberTy) {
+    assert(isa<CXXMemberCallExpr>(call) || isa<CXXOperatorCallExpr>(call));    
+    kind = FK_MemberFunction;
+    type = Expr::findBoundMemberType(callee);
   } else if (const PointerType *ptr = type->getAs<PointerType>()) {
     type = ptr->getPointeeType();
     kind = FK_FunctionPointer;
@@ -10525,7 +10526,7 @@ ExprResult RebuildUnknownAnyExpr::VisitCallExpr(CallExpr *call) {
 
   // Rebuild the appropriate pointer-to-function type.
   switch (kind) {
-  case FK_Function:
+  case FK_MemberFunction:
     // Nothing to do.
     break;
 
@@ -10594,12 +10595,15 @@ ExprResult RebuildUnknownAnyExpr::resolveDecl(Expr *expr, ValueDecl *decl) {
 
   //  - functions
   if (FunctionDecl *fn = dyn_cast<FunctionDecl>(decl)) {
-    if (CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(fn))
-      if (method->isInstance()) valueKind = VK_RValue;
-
     // This is true because FunctionDecls must always have function
     // type, so we can't be resolving the entire thing at once.
     assert(type->isFunctionType());
+
+    if (CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(fn))
+      if (method->isInstance()) {
+        valueKind = VK_RValue;
+        type = S.Context.BoundMemberTy;
+      }
 
     // Function references aren't l-values in C.
     if (!S.getLangOptions().CPlusPlus)

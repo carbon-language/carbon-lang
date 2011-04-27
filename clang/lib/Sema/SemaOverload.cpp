@@ -9274,6 +9274,16 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     } else
       Base = MemExpr->getBase();
 
+    ExprValueKind valueKind;
+    QualType type;
+    if (cast<CXXMethodDecl>(Fn)->isStatic()) {
+      valueKind = VK_LValue;
+      type = Fn->getType();
+    } else {
+      valueKind = VK_RValue;
+      type = Context.BoundMemberTy;
+    }
+
     return MemberExpr::Create(Context, Base,
                               MemExpr->isArrow(),
                               MemExpr->getQualifierLoc(),
@@ -9281,10 +9291,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                               Found,
                               MemExpr->getMemberNameInfo(),
                               TemplateArgs,
-                              Fn->getType(),
-                              cast<CXXMethodDecl>(Fn)->isStatic()
-                                ? VK_LValue : VK_RValue,
-                              OK_Ordinary);
+                              type, valueKind, OK_Ordinary);
   }
 
   llvm_unreachable("Invalid reference to overloaded function");
