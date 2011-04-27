@@ -1035,53 +1035,6 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
                      MaterialReg, /*Kill=*/true);
 }
 
-/// FastEmit_rf_ - This method is a wrapper of FastEmit_ri. It first tries
-/// to emit an instruction with a floating-point immediate operand using
-/// FastEmit_rf. If that fails, it materializes the immediate into a register
-/// and try FastEmit_rr instead.
-unsigned FastISel::FastEmit_rf_(MVT VT, unsigned Opcode,
-                                unsigned Op0, bool Op0IsKill,
-                                const ConstantFP *FPImm, MVT ImmType) {
-  // First check if immediate type is legal. If not, we can't use the rf form.
-  unsigned ResultReg = FastEmit_rf(VT, VT, Opcode, Op0, Op0IsKill, FPImm);
-  if (ResultReg != 0)
-    return ResultReg;
-
-  // Materialize the constant in a register.
-  unsigned MaterialReg = FastEmit_f(ImmType, ImmType, ISD::ConstantFP, FPImm);
-  if (MaterialReg == 0) {
-    // If the target doesn't have a way to directly enter a floating-point
-    // value into a register, use an alternate approach.
-    // TODO: The current approach only supports floating-point constants
-    // that can be constructed by conversion from integer values. This should
-    // be replaced by code that creates a load from a constant-pool entry,
-    // which will require some target-specific work.
-    const APFloat &Flt = FPImm->getValueAPF();
-    EVT IntVT = TLI.getPointerTy();
-
-    uint64_t x[2];
-    uint32_t IntBitWidth = IntVT.getSizeInBits();
-    bool isExact;
-    (void) Flt.convertToInteger(x, IntBitWidth, /*isSigned=*/true,
-                             APFloat::rmTowardZero, &isExact);
-    if (!isExact)
-      return 0;
-    APInt IntVal(IntBitWidth, 2, x);
-
-    unsigned IntegerReg = FastEmit_i(IntVT.getSimpleVT(), IntVT.getSimpleVT(),
-                                     ISD::Constant, IntVal.getZExtValue());
-    if (IntegerReg == 0)
-      return 0;
-    MaterialReg = FastEmit_r(IntVT.getSimpleVT(), VT,
-                             ISD::SINT_TO_FP, IntegerReg, /*Kill=*/true);
-    if (MaterialReg == 0)
-      return 0;
-  }
-  return FastEmit_rr(VT, VT, Opcode,
-                     Op0, Op0IsKill,
-                     MaterialReg, /*Kill=*/true);
-}
-
 unsigned FastISel::createResultReg(const TargetRegisterClass* RC) {
   return MRI.createVirtualRegister(RC);
 }
