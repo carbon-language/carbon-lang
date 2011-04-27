@@ -468,8 +468,6 @@ public:
 
   const Stmt *getLoopTarget() const { return LoopTarget; }
 
-  bool hasBinaryBranchTerminator() const;
-
   Stmt* getLabel() { return Label; }
   const Stmt* getLabel() const { return Label; }
 
