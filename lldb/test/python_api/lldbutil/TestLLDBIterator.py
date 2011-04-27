@@ -16,21 +16,27 @@ class LLDBIteratorTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line number to break inside main().
-        self.line = line_number('main.cpp', '// Set break point at this line.')
+        # Find the line numbers to break inside main().
+        self.line1 = line_number('main.cpp', '// Set break point at this line.')
+        self.line2 = line_number('main.cpp', '// And that line.')
 
-    def test_lldb_iter(self):
-        """Test lldb_iter works correctly."""
+    def test_lldb_iter_1(self):
+        """Test lldb_iter works correctly for SBTarget -> SBModule."""
         self.buildDefault()
-        self.lldb_iter_test()
+        self.lldb_iter_1()
 
-    def lldb_iter_test(self):
+    def test_lldb_iter_2(self):
+        """Test lldb_iter works correctly for SBTarget -> SBBreakpoint."""
+        self.buildDefault()
+        self.lldb_iter_2()
+
+    def lldb_iter_1(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target.IsValid(), VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line1)
         self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
@@ -55,6 +61,35 @@ class LLDBIteratorTestCase(TestBase):
                 print "mine[%d]='%s'" % (i, get_description(mine[i]))
             self.assertTrue(yours[i].GetUUIDString() == mine[i].GetUUIDString(),
                             "UUID of yours[%d] and mine[%d] matches" % (i, i))
+
+    def lldb_iter_2(self):
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line1)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line2)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        self.assertTrue(target.GetNumBreakpoints() == 2)
+
+        from lldbutil import lldb_iter, get_description
+        yours = []
+        for i in range(target.GetNumBreakpoints()):
+            yours.append(target.GetBreakpointAtIndex(i))
+        mine = []
+        for m in lldb_iter(target, 'GetNumBreakpoints', 'GetBreakpointAtIndex'):
+            mine.append(m)
+
+        self.assertTrue(len(yours) == len(mine))
+        for i in range(len(yours)):
+            if self.TraceOn():
+                print "yours[%d]='%s'" % (i, get_description(yours[i]))
+                print "mine[%d]='%s'" % (i, get_description(mine[i]))
+            self.assertTrue(yours[i].GetID() == mine[i].GetID(),
+                            "ID of yours[%d] and mine[%d] matches" % (i, i))
 
 
 if __name__ == '__main__':

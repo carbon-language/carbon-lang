@@ -82,7 +82,7 @@ int main (int argc, char const *argv[])
     uint32_t thread_mask_3 = (1u << thread_index_3);
 
     // Make a mask that will keep all threads alive
-    mask_access (eAssign, thread_mask_1 | thread_mask_2 | thread_mask_3);
+    mask_access (eAssign, thread_mask_1 | thread_mask_2 | thread_mask_3); // And that line.
 
     // Create 3 threads
     err = ::pthread_create (&g_thread_1, NULL, thread_func, &thread_index_1);
