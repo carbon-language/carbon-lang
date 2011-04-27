@@ -22,10 +22,6 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
-static bool isColonOrRSquareBracket(const Token &Tok) {
-  return Tok.is(tok::colon) || Tok.is(tok::r_square);
-}
-
 //===----------------------------------------------------------------------===//
 // C99 6.8: Statements and Blocks.
 //===----------------------------------------------------------------------===//

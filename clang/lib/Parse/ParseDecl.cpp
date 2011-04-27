@@ -724,29 +724,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(StmtVector &Stmts,
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this);
   DS.takeAttributesFrom(attrs);
-  return ParseSimpleDeclaration(DS, Stmts, Context, DeclEnd, RequireSemi, FRI);
-}
 
-///       simple-declaration: [C99 6.7: declaration] [C++ 7p1: dcl.dcl]
-///         declaration-specifiers init-declarator-list[opt] ';'
-///[C90/C++]init-declarator-list ';'                             [TODO]
-/// [OMP]   threadprivate-directive                              [TODO]
-///
-///       for-range-declaration: [C++0x 6.5p1: stmt.ranged]
-///         attribute-specifier-seq[opt] type-specifier-seq declarator
-///
-/// If RequireSemi is false, this does not check for a ';' at the end of the
-/// declaration.  If it is true, it checks for and eats it.
-///
-/// If FRI is non-null, we might be parsing a for-range-declaration instead
-/// of a simple-declaration. If we find that we are, we also parse the
-/// for-range-initializer, and place it here.
-Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(ParsingDeclSpec &DS,
-                                                      StmtVector &Stmts,
-                                                      unsigned Context,
-                                                      SourceLocation &DeclEnd,
-                                                      bool RequireSemi,
-                                                      ForRangeInit *FRI) {
   ParseDeclarationSpecifiers(DS, ParsedTemplateInfo(), AS_none,
                              getDeclSpecContextFromDeclaratorContext(Context));
   StmtResult R = Actions.ActOnVlaStmt(DS);

@@ -1332,12 +1332,6 @@ private:
                                         ParsedAttributes &attrs,
                                         bool RequireSemi,
                                         ForRangeInit *FRI = 0);
-  DeclGroupPtrTy ParseSimpleDeclaration(ParsingDeclSpec &DS,
-                                        StmtVector &Stmts,
-                                        unsigned Context,
-                                        SourceLocation &DeclEnd,
-                                        bool RequireSemi,
-                                        ForRangeInit *FRI = 0);
   DeclGroupPtrTy ParseDeclGroup(ParsingDeclSpec &DS, unsigned Context,
                                 bool AllowFunctionDefinitions,
                                 SourceLocation *DeclEnd = 0,
