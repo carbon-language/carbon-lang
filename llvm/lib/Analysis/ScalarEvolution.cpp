@@ -2015,7 +2015,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
           }
       }
       // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
-      if (const SCEVAddRecExpr *A = dyn_cast<SCEVAddRecExpr>(LHS)) {
+      if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(LHS)) {
         SmallVector<const SCEV *, 4> Operands;
         for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i)
           Operands.push_back(getZeroExtendExpr(A->getOperand(i), ExtTy));
