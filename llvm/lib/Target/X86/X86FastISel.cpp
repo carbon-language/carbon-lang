@@ -1098,11 +1098,13 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   }
 
   // Otherwise do a clumsy setcc and re-test it.
+  // Note that i1 essentially gets ANY_EXTEND'ed to i8 where it isn't used
+  // in an explicit cast, so make sure to handle that correctly.
   unsigned OpReg = getRegForValue(BI->getCondition());
   if (OpReg == 0) return false;
 
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::TEST8rr))
-    .addReg(OpReg).addReg(OpReg);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::TEST8ri))
+    .addReg(OpReg).addImm(1);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::JNE_4))
     .addMBB(TrueMBB);
   FastEmitBranch(FalseMBB, DL);
