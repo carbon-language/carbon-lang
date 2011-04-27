@@ -119,7 +119,7 @@ bool Sema::hasAnyAcceptableTemplateNames(LookupResult &R) {
     if (isAcceptableTemplateName(Context, *I))
       return true;
   
-  return true;
+  return false;
 }
 
 TemplateNameKind Sema::isTemplateName(Scope *S,

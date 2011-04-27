@@ -43,8 +43,7 @@ void j() {
   (void)sizeof(auto); // expected-error{{'auto' not allowed here}}
   (void)__alignof(auto); // expected-error{{'auto' not allowed here}}
 
-  // FIXME: don't issue the second diagnostic for this error.
-  U<auto> v; // expected-error{{'auto' not allowed in template argument}} unexpected-error{{C++ requires a type specifier}}
+  U<auto> v; // expected-error{{'auto' not allowed in template argument}}
 
   int n;
   (void)dynamic_cast<auto&>(S()); // expected-error{{'auto' not allowed here}}

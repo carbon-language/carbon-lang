@@ -113,7 +113,7 @@ Retry:
       return ParseLabeledStatement(attrs);
     }
     
-    if (!getLang().CPlusPlus) {
+    if (Next.isNot(tok::coloncolon)) {
       // FIXME: Temporarily enable this code only for C.
       CXXScopeSpec SS;
       IdentifierInfo *Name = Tok.getIdentifierInfo();
@@ -147,7 +147,7 @@ Retry:
         // we're in a syntactic context we haven't handled yet. 
         break;     
           
-      case Sema::NC_Type:
+      case Sema::NC_Type: {
         // We have a type. In C, this means that we have a declaration.
         if (!getLang().CPlusPlus) {
           ParsedType Type = Classification.getType();
@@ -195,9 +195,15 @@ Retry:
           return Actions.ActOnDeclStmt(Decl, DeclStart, DeclEnd);
         }
           
-        // In C++, we might also have a functional-style cast.
-        // FIXME: Implement this!
+        // In C++, we might also have a functional-style cast. Just annotate
+        // this as a type token.
+        Tok.setKind(tok::annot_typename);
+        setTypeAnnotation(Tok, Classification.getType());
+        Tok.setAnnotationEndLoc(NameLoc);
+        Tok.setLocation(NameLoc);
+        PP.AnnotateCachedTokens(Tok);
         break;
+      }
           
       case Sema::NC_Expression:
         ConsumeToken(); // the identifier
@@ -211,7 +217,20 @@ Retry:
         if (AnnotateTemplateIdToken(
                             TemplateTy::make(Classification.getTemplateName()), 
                                     Classification.getTemplateNameKind(),
-                                    SS, Id)) {
+                                    SS, Id, SourceLocation(),
+                                    /*AllowTypeAnnotation=*/false)) {
+          // Handle errors here by skipping up to the next semicolon or '}', and
+          // eat the semicolon if that's what stopped us.
+          SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);
+          if (Tok.is(tok::semi))
+            ConsumeToken();
+          return StmtError();        
+        }
+        
+        // If the next token is '::', jump right into parsing a 
+        // nested-name-specifier. We don't want to leave the template-id
+        // hanging.
+        if (NextToken().is(tok::coloncolon) && TryAnnotateCXXScopeToken(false)){
           // Handle errors here by skipping up to the next semicolon or '}', and
           // eat the semicolon if that's what stopped us.
           SkipUntil(tok::r_brace, /*StopAtSemi=*/true, /*DontConsume=*/true);

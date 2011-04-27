@@ -1255,7 +1255,8 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext) {
 bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   assert(getLang().CPlusPlus &&
          "Call sites of this function should be guarded by checking for C++");
-  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) &&
+  assert((Tok.is(tok::identifier) || Tok.is(tok::coloncolon) ||
+          (Tok.is(tok::annot_template_id) && NextToken().is(tok::coloncolon)))&&
          "Cannot be a type or scope token!");
 
   CXXScopeSpec SS;

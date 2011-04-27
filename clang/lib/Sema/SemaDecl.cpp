@@ -514,15 +514,16 @@ Corrected:
         unsigned QualifiedDiag = diag::err_no_member_suggest;
         
         NamedDecl *FirstDecl = Result.empty()? 0 : *Result.begin();
-
+        NamedDecl *UnderlyingFirstDecl
+          = FirstDecl? FirstDecl->getUnderlyingDecl() : 0;
         if (getLangOptions().CPlusPlus && NextToken.is(tok::less) &&
-            FirstDecl && isa<TemplateDecl>(FirstDecl)) {
+            UnderlyingFirstDecl && isa<TemplateDecl>(UnderlyingFirstDecl)) {
           UnqualifiedDiag = diag::err_no_template_suggest;
           QualifiedDiag = diag::err_no_member_template_suggest;
-        } else if (FirstDecl && 
-                   (isa<TypeDecl>(FirstDecl) || 
-                    isa<ObjCInterfaceDecl>(FirstDecl) ||
-                    isa<ObjCCompatibleAliasDecl>(FirstDecl))) {
+        } else if (UnderlyingFirstDecl && 
+                   (isa<TypeDecl>(UnderlyingFirstDecl) || 
+                    isa<ObjCInterfaceDecl>(UnderlyingFirstDecl) ||
+                    isa<ObjCCompatibleAliasDecl>(UnderlyingFirstDecl))) {
            UnqualifiedDiag = diag::err_unknown_typename_suggest;
            QualifiedDiag = diag::err_unknown_nested_typename_suggest;
          }
@@ -588,7 +589,8 @@ Corrected:
     break;
       
   case LookupResult::Ambiguous:
-    if (getLangOptions().CPlusPlus && NextToken.is(tok::less)) {
+    if (getLangOptions().CPlusPlus && NextToken.is(tok::less) &&
+        hasAnyAcceptableTemplateNames(Result)) {
       // C++ [temp.local]p3:
       //   A lookup that finds an injected-class-name (10.2) can result in an
       //   ambiguity in certain cases (for example, if it is found in more than
@@ -622,37 +624,40 @@ Corrected:
     if (!IsFilteredTemplateName)
       FilterAcceptableTemplateNames(Result);
     
-    bool IsFunctionTemplate;
-    TemplateName Template;
-    if (Result.end() - Result.begin() > 1) {
-      IsFunctionTemplate = true;
-      Template = Context.getOverloadedTemplateName(Result.begin(), 
-                                                   Result.end());
-    } else {
-      TemplateDecl *TD = cast<TemplateDecl>(Result.getFoundDecl());
-      IsFunctionTemplate = isa<FunctionTemplateDecl>(TD);
-      
-      if (SS.isSet() && !SS.isInvalid())
-        Template = Context.getQualifiedTemplateName(SS.getScopeRep(), 
+    if (!Result.empty()) {
+      bool IsFunctionTemplate;
+      TemplateName Template;
+      if (Result.end() - Result.begin() > 1) {
+        IsFunctionTemplate = true;
+        Template = Context.getOverloadedTemplateName(Result.begin(), 
+                                                     Result.end());
+      } else {
+        TemplateDecl *TD
+          = cast<TemplateDecl>((*Result.begin())->getUnderlyingDecl());
+        IsFunctionTemplate = isa<FunctionTemplateDecl>(TD);
+        
+        if (SS.isSet() && !SS.isInvalid())
+          Template = Context.getQualifiedTemplateName(SS.getScopeRep(), 
                                                     /*TemplateKeyword=*/false,
-                                                    TD);
-      else
-        Template = TemplateName(TD);
-    }
-    
-    if (IsFunctionTemplate) {
-      // Function templates always go through overload resolution, at which
-      // point we'll perform the various checks (e.g., accessibility) we need
-      // to based on which function we selected.
-      Result.suppressDiagnostics();
+                                                      TD);
+        else
+          Template = TemplateName(TD);
+      }
       
-      return NameClassification::FunctionTemplate(Template);
+      if (IsFunctionTemplate) {
+        // Function templates always go through overload resolution, at which
+        // point we'll perform the various checks (e.g., accessibility) we need
+        // to based on which function we selected.
+        Result.suppressDiagnostics();
+        
+        return NameClassification::FunctionTemplate(Template);
+      }
+      
+      return NameClassification::TypeTemplate(Template);
     }
-    
-    return NameClassification::TypeTemplate(Template);
   }
   
-  NamedDecl *FirstDecl = *Result.begin();
+  NamedDecl *FirstDecl = (*Result.begin())->getUnderlyingDecl();
   if (TypeDecl *Type = dyn_cast<TypeDecl>(FirstDecl)) {
     DiagnoseUseOfDecl(Type, NameLoc);
     QualType T = Context.getTypeDeclType(Type);
@@ -681,6 +686,9 @@ Corrected:
     return ParsedType::make(T);
   }
   
+  if (!Result.empty() && (*Result.begin())->isCXXClassMember())
+    return BuildPossibleImplicitMemberExpr(SS, Result, 0);
+
   bool ADL = UseArgumentDependentLookup(SS, Result, NextToken.is(tok::l_paren));
   return BuildDeclarationNameExpr(SS, Result, ADL);
 }
