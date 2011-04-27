@@ -164,8 +164,12 @@ unsigned FastISel::materializeRegForValue(const Value *V, MVT VT) {
     Reg =
       getRegForValue(Constant::getNullValue(TD.getIntPtrType(V->getContext())));
   } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
-    // Try to emit the constant directly.
-    Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
+    if (CF->isZero()) {
+      Reg = TargetMaterializeFloatZero(CF);
+    } else {
+      // Try to emit the constant directly.
+      Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
+    }
 
     if (!Reg) {
       // Try to emit the constant by using an integer constant with a cast.

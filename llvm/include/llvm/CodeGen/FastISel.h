@@ -317,6 +317,10 @@ protected:
     return 0;
   }
 
+  virtual unsigned TargetMaterializeFloatZero(const ConstantFP* CF) {
+    return 0;
+  }
+
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
 

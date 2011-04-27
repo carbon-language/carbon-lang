@@ -124,6 +124,8 @@ private:
 
   unsigned TargetMaterializeAlloca(const AllocaInst *C);
 
+  unsigned TargetMaterializeFloatZero(const ConstantFP *CF);
+
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.
   bool isScalarFPTypeInSSEReg(EVT VT) const {
@@ -2048,6 +2050,45 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
                          TII.get(Opc), ResultReg), AM);
   return ResultReg;
 }
+
+unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
+  MVT VT;
+  if (!isTypeLegal(CF->getType(), VT))
+    return false;
+
+  // Get opcode and regclass for the given zero.
+  unsigned Opc = 0;
+  const TargetRegisterClass *RC = NULL;
+  switch (VT.SimpleTy) {
+    default: return false;
+    case MVT::f32:
+      if (Subtarget->hasSSE1()) {
+        Opc = X86::FsFLD0SS;
+        RC  = X86::FR32RegisterClass;
+      } else {
+        Opc = X86::LD_Fp032;
+        RC  = X86::RFP32RegisterClass;
+      }
+      break;
+    case MVT::f64:
+      if (Subtarget->hasSSE2()) {
+        Opc = X86::FsFLD0SD;
+        RC  = X86::FR64RegisterClass;
+      } else {
+        Opc = X86::LD_Fp064;
+        RC  = X86::RFP64RegisterClass;
+      }
+      break;
+    case MVT::f80:
+      // No f80 support yet.
+      return false;
+  }
+
+  unsigned ResultReg = createResultReg(RC);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg);
+  return ResultReg;
+}
+
 
 /// TryToFoldLoad - The specified machine instr operand is a vreg, and that
 /// vreg is being provided by the specified load instruction.  If possible,
