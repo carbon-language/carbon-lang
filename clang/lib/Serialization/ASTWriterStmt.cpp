@@ -180,7 +180,7 @@ void ASTStmtWriter::VisitStmt(Stmt *S) {
 void ASTStmtWriter::VisitNullStmt(NullStmt *S) {
   VisitStmt(S);
   Writer.AddSourceLocation(S->getSemiLoc(), Record);
-  Record.push_back(S->LeadingEmptyMacro);
+  Writer.AddSourceLocation(S->LeadingEmptyMacro, Record);
   Code = serialization::STMT_NULL;
 }
 

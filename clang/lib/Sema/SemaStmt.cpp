@@ -46,8 +46,9 @@ StmtResult Sema::ActOnExprStmt(FullExprArg expr) {
 }
 
 
-StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc, bool LeadingEmptyMacro) {
-  return Owned(new (Context) NullStmt(SemiLoc, LeadingEmptyMacro));
+StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc,
+                               SourceLocation LeadingEmptyMacroLoc) {
+  return Owned(new (Context) NullStmt(SemiLoc, LeadingEmptyMacroLoc));
 }
 
 StmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg, SourceLocation StartLoc,

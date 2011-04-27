@@ -276,8 +276,10 @@ Retry:
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement(attrs);
   case tok::semi: {                 // C99 6.8.3p3: expression[opt] ';'
-    bool LeadingEmptyMacro = Tok.hasLeadingEmptyMacro();
-    return Actions.ActOnNullStmt(ConsumeToken(), LeadingEmptyMacro);
+    SourceLocation LeadingEmptyMacroLoc;
+    if (Tok.hasLeadingEmptyMacro())
+      LeadingEmptyMacroLoc = PP.getLastEmptyMacroInstantiationLoc();
+    return Actions.ActOnNullStmt(ConsumeToken(), LeadingEmptyMacroLoc);
   }
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement

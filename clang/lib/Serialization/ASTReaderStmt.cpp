@@ -211,7 +211,7 @@ void ASTStmtReader::VisitStmt(Stmt *S) {
 void ASTStmtReader::VisitNullStmt(NullStmt *S) {
   VisitStmt(S);
   S->setSemiLoc(ReadSourceLocation(Record, Idx));
-  S->LeadingEmptyMacro = Record[Idx++];
+  S->LeadingEmptyMacro = ReadSourceLocation(Record, Idx);
 }
 
 void ASTStmtReader::VisitCompoundStmt(CompoundStmt *S) {

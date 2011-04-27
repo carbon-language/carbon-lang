@@ -218,6 +218,10 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// previous macro value.
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
+  /// \brief Instantiation source location for the last macro that expanded
+  /// to no tokens.
+  SourceLocation LastEmptyMacroInstantiationLoc;
+
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
@@ -365,6 +369,12 @@ public:
                          MacroInfo*>::const_iterator macro_iterator;
   macro_iterator macro_begin(bool IncludeExternalMacros = true) const;
   macro_iterator macro_end(bool IncludeExternalMacros = true) const;
+
+  /// \brief Instantiation source location for the last macro that expanded
+  /// to no tokens.
+  SourceLocation getLastEmptyMacroInstantiationLoc() const {
+    return LastEmptyMacroInstantiationLoc;
+  }
 
   const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These

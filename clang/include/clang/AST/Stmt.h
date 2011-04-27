@@ -383,14 +383,15 @@ public:
 class NullStmt : public Stmt {
   SourceLocation SemiLoc;
 
-  /// \brief Whether the null statement was preceded by an empty macro, e.g:
+  /// \brief If the null statement was preceded by an empty macro this is
+  /// its instantiation source location, e.g:
   /// @code
   ///   #define CALL(x)
   ///   CALL(0);
   /// @endcode
-  bool LeadingEmptyMacro;
+  SourceLocation LeadingEmptyMacro;
 public:
-  NullStmt(SourceLocation L, bool LeadingEmptyMacro = false)
+  NullStmt(SourceLocation L, SourceLocation LeadingEmptyMacro =SourceLocation())
     : Stmt(NullStmtClass), SemiLoc(L), LeadingEmptyMacro(LeadingEmptyMacro) {}
 
   /// \brief Build an empty null statement.
@@ -399,7 +400,8 @@ public:
   SourceLocation getSemiLoc() const { return SemiLoc; }
   void setSemiLoc(SourceLocation L) { SemiLoc = L; }
 
-  bool hasLeadingEmptyMacro() const { return LeadingEmptyMacro; }
+  bool hasLeadingEmptyMacro() const { return LeadingEmptyMacro.isValid(); }
+  SourceLocation getLeadingEmptyMacroLoc() const { return LeadingEmptyMacro; }
 
   SourceRange getSourceRange() const { return SourceRange(SemiLoc); }
 

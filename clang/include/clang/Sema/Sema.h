@@ -1882,7 +1882,7 @@ public:
   StmtResult ActOnExprStmt(FullExprArg Expr);
 
   StmtResult ActOnNullStmt(SourceLocation SemiLoc,
-                           bool LeadingEmptyMacro = false);
+                        SourceLocation LeadingEmptyMacroLoc = SourceLocation());
   StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        MultiStmtArg Elts,
                                        bool isStmtExpr);

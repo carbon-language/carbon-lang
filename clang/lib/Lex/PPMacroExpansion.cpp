@@ -227,6 +227,9 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If we started lexing a macro, enter the macro expansion body.
 
+  // Remember where the token is instantiated.
+  SourceLocation InstantiateLoc = Identifier.getLocation();
+
   // If this macro expands to no tokens, don't bother to push it onto the
   // expansion stack, only to take it right back off.
   if (MI->getNumTokens() == 0) {
@@ -249,6 +252,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       if (HadLeadingSpace) Identifier.setFlag(Token::LeadingSpace);
     }
     Identifier.setFlag(Token::LeadingEmptyMacro);
+    LastEmptyMacroInstantiationLoc = InstantiateLoc;
     ++NumFastMacroExpanded;
     return false;
 
@@ -266,9 +270,6 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // identifier to the expanded token.
     bool isAtStartOfLine = Identifier.isAtStartOfLine();
     bool hasLeadingSpace = Identifier.hasLeadingSpace();
-
-    // Remember where the token is instantiated.
-    SourceLocation InstantiateLoc = Identifier.getLocation();
 
     // Replace the result token.
     Identifier = MI->getReplacementToken(0);
