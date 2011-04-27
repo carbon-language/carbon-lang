@@ -278,12 +278,10 @@ void MCAsmStreamer::ChangeSection(const MCSection *Section) {
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
-  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
-  assert(getCurrentSection() && "Cannot emit before setting section!");
+  MCStreamer::EmitLabel(Symbol);
 
   OS << *Symbol << MAI.getLabelSuffix();
   EmitEOL();
-  Symbol->setSection(*getCurrentSection());
 }
 
 void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {

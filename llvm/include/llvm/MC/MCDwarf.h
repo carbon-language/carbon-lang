@@ -263,12 +263,13 @@ namespace llvm {
 
   struct MCDwarfFrameInfo {
     MCDwarfFrameInfo() : Begin(0), End(0), Personality(0), Lsda(0),
-                         Instructions(), PersonalityEncoding(0),
+                         Function(0), Instructions(), PersonalityEncoding(),
                          LsdaEncoding(0) {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *Personality;
     const MCSymbol *Lsda;
+    const MCSymbol *Function;
     std::vector<MCCFIInstruction> Instructions;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;

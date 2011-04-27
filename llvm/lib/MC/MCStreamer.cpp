@@ -12,6 +12,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallString.h"
@@ -153,12 +154,23 @@ void MCStreamer::EnsureValidFrame() {
     report_fatal_error("No open frame");
 }
 
+void MCStreamer::EmitLabel(MCSymbol *Symbol) {
+  assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
+  assert(getCurrentSection() && "Cannot emit before setting section!");
+  Symbol->setSection(*getCurrentSection());
+
+  StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
+  if (!Symbol->getName().startswith(Prefix))
+    LastNonPrivate = Symbol;
+}
+
 void MCStreamer::EmitCFIStartProc() {
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a frame before finishing the previous one!");
   MCDwarfFrameInfo Frame;
   Frame.Begin = getContext().CreateTempSymbol();
+  Frame.Function = LastNonPrivate;
   EmitLabel(Frame.Begin);
   FrameInfos.push_back(Frame);
 }
