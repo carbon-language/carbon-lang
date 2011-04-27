@@ -3800,8 +3800,12 @@ bool ARMBasicMCBuilder::tryAddingSymbolicOperand(uint64_t Value,
       Expr = MCBinaryExpr::CreateAdd(Add, Off, *Ctx);
     else
       Expr = Add;
-  } else
-    Expr = Off;
+  } else {
+    if (Off != 0)
+      Expr = Off;
+    else
+      Expr = MCConstantExpr::Create(0, *Ctx);
+  }
 
   if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_ARM_HI16)
     MI.addOperand(MCOperand::CreateExpr(ARMMCExpr::CreateUpper16(Expr, *Ctx)));
