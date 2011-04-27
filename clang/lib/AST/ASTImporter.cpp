@@ -4077,7 +4077,46 @@ NestedNameSpecifier *ASTImporter::Import(NestedNameSpecifier *FromNNS) {
   if (!FromNNS)
     return 0;
 
-  // FIXME: Implement!
+  NestedNameSpecifier *prefix = Import(FromNNS->getPrefix());
+
+  switch (FromNNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    if (IdentifierInfo *II = Import(FromNNS->getAsIdentifier())) {
+      return NestedNameSpecifier::Create(ToContext, prefix, II);
+    }
+    return 0;
+
+  case NestedNameSpecifier::Namespace:
+    if (NamespaceDecl *NS = 
+          cast<NamespaceDecl>(Import(FromNNS->getAsNamespace()))) {
+      return NestedNameSpecifier::Create(ToContext, prefix, NS);
+    }
+    return 0;
+
+  case NestedNameSpecifier::NamespaceAlias:
+    if (NamespaceAliasDecl *NSAD = 
+          cast<NamespaceAliasDecl>(Import(FromNNS->getAsNamespaceAlias()))) {
+      return NestedNameSpecifier::Create(ToContext, prefix, NSAD);
+    }
+    return 0;
+
+  case NestedNameSpecifier::Global:
+    return NestedNameSpecifier::GlobalSpecifier(ToContext);
+
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate: {
+      QualType T = Import(QualType(FromNNS->getAsType(), 0u));
+      if (!T.isNull()) {
+        bool bTemplate = FromNNS->getKind() == 
+                         NestedNameSpecifier::TypeSpecWithTemplate;
+        return NestedNameSpecifier::Create(ToContext, prefix, 
+                                           bTemplate, T.getTypePtr());
+      }
+    }
+    return 0;
+  }
+
+  llvm_unreachable("Invalid nested name specifier kind");
   return 0;
 }
 
