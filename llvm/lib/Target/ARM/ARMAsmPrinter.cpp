@@ -173,11 +173,10 @@ getDebugValueLocation(const MachineInstr *MI) const {
 }
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
-void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
-                                   unsigned ExtraExprSize) const {
+void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
   if (RI->getDwarfRegNum(MLoc.getReg(), false) != -1)
-    AsmPrinter::EmitDwarfRegOp(MLoc, ExtraExprSize);
+    AsmPrinter::EmitDwarfRegOp(MLoc);
   else {
     unsigned Reg = MLoc.getReg();
     if (Reg >= ARM::S0 && Reg <= ARM::S31) {
@@ -192,7 +191,7 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
       OutStreamer.AddComment("Loc expr size");
       // DW_OP_regx + ULEB + DW_OP_bit_piece + ULEB + ULEB
       //   1 + ULEB(Rx) + 1 + 1 + 1
-      EmitInt16(4 + MCAsmInfo::getULEB128Size(Rx) + ExtraExprSize);
+      EmitInt16(4 + MCAsmInfo::getULEB128Size(Rx));
 
       OutStreamer.AddComment("DW_OP_regx for S register");
       EmitInt8(dwarf::DW_OP_regx);
@@ -224,8 +223,7 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
       // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8) +
       // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8);
       //   6 + ULEB(D1) + ULEB(D2)
-      EmitInt16(6 + MCAsmInfo::getULEB128Size(D1) 
-                + MCAsmInfo::getULEB128Size(D2) + ExtraExprSize);
+      EmitInt16(6 + MCAsmInfo::getULEB128Size(D1) + MCAsmInfo::getULEB128Size(D2));
 
       OutStreamer.AddComment("DW_OP_regx for Q register: D1");
       EmitInt8(dwarf::DW_OP_regx);
