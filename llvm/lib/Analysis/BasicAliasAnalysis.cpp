@@ -779,6 +779,26 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
         return NoModRef;
       break;
     }
+    case Intrinsic::arm_neon_vld1: {
+      // LLVM's vld1 and vst1 intrinsics currently only support a single
+      // vector register.
+      uint64_t Size =
+        TD ? TD->getTypeStoreSize(II->getType()) : UnknownSize;
+      if (isNoAlias(Location(II->getArgOperand(0), Size,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
+    case Intrinsic::arm_neon_vst1: {
+      uint64_t Size =
+        TD ? TD->getTypeStoreSize(II->getArgOperand(1)->getType()) : UnknownSize;
+      if (isNoAlias(Location(II->getArgOperand(0), Size,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
     }
 
   // The AliasAnalysis base class has some smarts, lets use them.

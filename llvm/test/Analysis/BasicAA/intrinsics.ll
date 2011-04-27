@@ -19,5 +19,21 @@ entry:
   ret <8 x i16> %c
 }
 
+; CHECK:      define <8 x i16> @test1(i8* %p, <8 x i16> %y) {
+; CHECK-NEXT: entry:
+; CHECK-NEXT:   %q = getelementptr i8* %p, i64 16
+; CHECK-NEXT:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
+; CHECK-NEXT:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
+; CHECK-NEXT:   %c = add <8 x i16> %a, %a
+define <8 x i16> @test1(i8* %p, <8 x i16> %y) {
+entry:
+  %q = getelementptr i8* %p, i64 16
+  %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
+  call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
+  %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
+  %c = add <8 x i16> %a, %b
+  ret <8 x i16> %c
+}
+
 declare <8 x i16> @llvm.arm.neon.vld1.v8i16(i8*, i32) nounwind readonly
 declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>, i32) nounwind
