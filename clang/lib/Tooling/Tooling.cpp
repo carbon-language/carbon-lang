@@ -29,13 +29,40 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-
-#include <string>
+#include "JsonCompileCommandLineDatabase.h"
 #include <map>
-#include <vector>
+#include <cstdio>
 
 namespace clang {
 namespace tooling {
+
+namespace {
+
+// Checks that the input conforms to the argv[] convention as in
+// main().  Namely:
+//   - it must contain at least a program path,
+//   - argv[0], ..., and argv[argc - 1] mustn't be NULL, and
+//   - argv[argc] must be NULL.
+void ValidateArgv(int argc, char* argv[]) {
+  if (argc < 1) {
+    fprintf(stderr, "ERROR: argc is %d.  It must be >= 1.\n", argc);
+    abort();
+  }
+
+  for (int i = 0; i < argc; ++i) {
+    if (argv[i] == NULL) {
+      fprintf(stderr, "ERROR: argv[%d] is NULL.\n", i);
+      abort();
+    }
+  }
+
+  if (argv[argc] != NULL) {
+    fprintf(stderr, "ERROR: argv[argc] isn't NULL.\n");
+    abort();
+  }
+}
+
+} // end namespace
 
 // FIXME: This file contains structural duplication with other parts of the
 // code that sets up a compiler to run tools on it, and we should refactor
@@ -156,6 +183,25 @@ std::vector<char*> CommandLineToArgv(const std::vector<std::string>* Command) {
   return Result;
 }
 
+bool RunToolWithFlags(
+    clang::FrontendAction* ToolAction, int Args, char* Argv[]) {
+  ValidateArgv(Args, Argv);
+  const llvm::OwningPtr<clang::Diagnostic> Diagnostics(NewTextDiagnostics());
+  const llvm::OwningPtr<clang::driver::Driver> Driver(
+      NewDriver(Diagnostics.get(), Argv[0]));
+  const llvm::OwningPtr<clang::driver::Compilation> Compilation(
+      Driver->BuildCompilation(llvm::ArrayRef<const char*>(Argv, Args)));
+  const clang::driver::ArgStringList* const CC1Args = GetCC1Arguments(
+      Diagnostics.get(), Compilation.get());
+  if (CC1Args == NULL) {
+    return false;
+  }
+  llvm::OwningPtr<clang::CompilerInvocation> Invocation(
+      NewInvocation(Diagnostics.get(), *CC1Args));
+  return RunInvocation(Argv[0], Compilation.get(), Invocation.take(),
+                       *CC1Args, ToolAction);
+}
+
 /// \brief Runs 'ToolAction' on the code specified by 'FileContents'.
 ///
 /// \param FileContents A mapping from file name to source code. For each
@@ -211,6 +257,64 @@ bool RunSyntaxOnlyToolOnCode(
           CommandLine,
           CommandLine + sizeof(CommandLine)/sizeof(CommandLine[0])),
       FileContents, ToolAction);
+}
+
+namespace {
+
+// A CompileCommandHandler implementation that finds compile commands for a
+// specific input file.
+//
+// FIXME: Implement early exit when JsonCompileCommandLineParser supports it.
+class FindHandler : public clang::tooling::CompileCommandHandler {
+ public:
+  explicit FindHandler(llvm::StringRef File)
+      : FileToMatch(File), FoundMatchingCommand(false) {};
+
+  virtual void EndTranslationUnits() {
+    if (!FoundMatchingCommand && ErrorMessage.empty()) {
+      ErrorMessage = "ERROR: No matching command found.";
+    }
+  }
+
+  virtual void EndTranslationUnit() {
+    if (File == FileToMatch) {
+      FoundMatchingCommand = true;
+      MatchingCommand.Directory = Directory;
+      MatchingCommand.CommandLine = UnescapeJsonCommandLine(Command);
+    }
+  }
+
+  virtual void HandleKeyValue(llvm::StringRef Key, llvm::StringRef Value) {
+    if (Key == "directory") { Directory = Value; }
+    else if (Key == "file") { File = Value; }
+    else if (Key == "command") { Command = Value; }
+    else {
+      ErrorMessage = (llvm::Twine("Unknown key: \"") + Key + "\"").str();
+    }
+  }
+
+  const llvm::StringRef FileToMatch;
+  bool FoundMatchingCommand;
+  CompileCommand MatchingCommand;
+  std::string ErrorMessage;
+
+  llvm::StringRef Directory;
+  llvm::StringRef File;
+  llvm::StringRef Command;
+};
+
+} // end namespace
+
+CompileCommand FindCompileArgsInJsonDatabase(
+    llvm::StringRef FileName, llvm::StringRef JsonDatabase,
+    std::string &ErrorMessage) {
+  FindHandler find_handler(FileName);
+  JsonCompileCommandLineParser parser(JsonDatabase, &find_handler);
+  if (!parser.Parse()) {
+    ErrorMessage = parser.GetErrorMessage();
+    return CompileCommand();
+  }
+  return find_handler.MatchingCommand;
 }
 
 } // end namespace tooling
