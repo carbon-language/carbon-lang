@@ -64,7 +64,7 @@ class CrashingInferiorTestCase(TestBase):
         if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.StateTypeString(self.process.GetState()))
+                      lldbutil.state_type_to_str(self.process.GetState()))
 
         thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonException)
         if not thread:

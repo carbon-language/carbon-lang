@@ -166,7 +166,7 @@ def get_description(obj, option=None):
 # Convert some enum value to its string counterpart
 # =================================================
 
-def StateTypeString(enum):
+def state_type_to_str(enum):
     """Returns the stateType string given an enum."""
     if enum == lldb.eStateInvalid:
         return "invalid"
@@ -195,7 +195,7 @@ def StateTypeString(enum):
     else:
         raise Exception("Unknown StateType enum")
 
-def StopReasonString(enum):
+def stop_reason_to_str(enum):
     """Returns the stopReason string given an enum."""
     if enum == lldb.eStopReasonInvalid:
         return "invalid"
@@ -216,7 +216,7 @@ def StopReasonString(enum):
     else:
         raise Exception("Unknown StopReason enum")
 
-def ValueTypeString(enum):
+def value_type_to_str(enum):
     """Returns the valueType string given an enum."""
     if enum == lldb.eValueTypeInvalid:
         return "invalid"
@@ -404,7 +404,7 @@ def print_stacktrace(thread, string_buffer = False):
     addrs = get_pc_addresses(thread)
 
     if thread.GetStopReason() != lldb.eStopReasonInvalid:
-        desc =  "stop reason=" + StopReasonString(thread.GetStopReason())
+        desc =  "stop reason=" + stop_reason_to_str(thread.GetStopReason())
     else:
         desc = ""
     print >> output, "Stack trace for thread id={0:#x} name={1} queue={2} ".format(

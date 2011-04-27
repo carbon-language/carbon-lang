@@ -129,14 +129,14 @@ class ClassTypesTestCase(TestBase):
         if self.process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.StateTypeString(self.process.GetState()))
+                      lldbutil.state_type_to_str(self.process.GetState()))
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import StopReasonString
+            from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
-                      StopReasonString(thread.GetStopReason()))
+                      stop_reason_to_str(thread.GetStopReason()))
 
         # The filename of frame #0 should be 'main.cpp' and the line number
         # should be 93.

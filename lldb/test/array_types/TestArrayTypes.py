@@ -124,9 +124,9 @@ class ArrayTypesTestCase(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import StopReasonString
+            from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
-                      StopReasonString(thread.GetStopReason()))
+                      stop_reason_to_str(thread.GetStopReason()))
 
         # Sanity check the print representation of thread.
         thr = repr(thread)
@@ -201,15 +201,15 @@ class ArrayTypesTestCase(TestBase):
 
         # Last, check that "long_6" has a value type of eValueTypeVariableLocal
         # and "argc" has eValueTypeVariableArgument.
-        from lldbutil import ValueTypeString
+        from lldbutil import value_type_to_str
         self.assertTrue(variable.GetValueType() == lldb.eValueTypeVariableLocal,
                         "Variable 'long_6' should have '%s' value type." %
-                        ValueTypeString(lldb.eValueTypeVariableLocal))
+                        value_type_to_str(lldb.eValueTypeVariableLocal))
         argc = frame.FindVariable("argc")
         self.DebugSBValue(frame, argc)
         self.assertTrue(argc.GetValueType() == lldb.eValueTypeVariableArgument,
                         "Variable 'argc' should have '%s' value type." %
-                        ValueTypeString(lldb.eValueTypeVariableArgument))
+                        value_type_to_str(lldb.eValueTypeVariableArgument))
 
 
 if __name__ == '__main__':

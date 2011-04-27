@@ -71,9 +71,9 @@ class TestObjCStepping(TestBase):
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
-            from lldbutil import StopReasonString
+            from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
-                      StopReasonString(thread.GetStopReason()))
+                      stop_reason_to_str(thread.GetStopReason()))
 
         # Make sure we stopped at the first breakpoint.
 

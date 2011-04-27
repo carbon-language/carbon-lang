@@ -863,7 +863,7 @@ class TestBase(unittest2.TestCase):
             thread = process.GetThreadAtIndex(0)
             SR = thread.GetStopReason()
             with recording(self, trace) as sbuf:
-                print >> sbuf, "StopReason =", StopReasonString(SR)
+                print >> sbuf, "StopReason =", stop_reason_to_str(SR)
 
             if SR == StopReasonEnum("Breakpoint"):
                 frame = thread.GetFrameAtIndex(0)
@@ -932,7 +932,7 @@ class TestBase(unittest2.TestCase):
 
     def DebugSBValue(self, frame, val):
         """Debug print a SBValue object, if traceAlways is True."""
-        from lldbutil import ValueTypeString
+        from lldbutil import value_type_to_str
 
         if not traceAlways:
             return
@@ -943,7 +943,7 @@ class TestBase(unittest2.TestCase):
         err.write('\t' + "ByteSize      -> " + str(val.GetByteSize())       + '\n')
         err.write('\t' + "NumChildren   -> " + str(val.GetNumChildren())    + '\n')
         err.write('\t' + "Value         -> " + str(val.GetValue(frame))     + '\n')
-        err.write('\t' + "ValueType     -> " + ValueTypeString(val.GetValueType()) + '\n')
+        err.write('\t' + "ValueType     -> " + value_type_to_str(val.GetValueType()) + '\n')
         err.write('\t' + "Summary       -> " + str(val.GetSummary(frame))   + '\n')
         err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
         err.write('\t' + "Location      -> " + val.GetLocation(frame)       + '\n')

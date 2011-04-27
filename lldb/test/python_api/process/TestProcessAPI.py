@@ -5,7 +5,7 @@ Test SBProcess APIs, including ReadMemory(), WriteMemory(), and others.
 import os, time
 import unittest2
 import lldb
-from lldbutil import get_stopped_thread, StateTypeString
+from lldbutil import get_stopped_thread, state_type_to_str
 from lldbtest import *
 
 class ProcessAPITestCase(TestBase):
@@ -258,7 +258,7 @@ class ProcessAPITestCase(TestBase):
         process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         if self.TraceOn():
-            print "process state:", StateTypeString(process.GetState())
+            print "process state:", state_type_to_str(process.GetState())
         self.assertTrue(process.GetState() != lldb.eStateConnected)
 
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
