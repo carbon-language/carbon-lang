@@ -192,16 +192,10 @@ void CompileUnit::addSourceLine(DIE *Die, DINameSpace NS) {
   addUInt(Die, dwarf::DW_AT_decl_line, 0, Line);
 }
 
-/// addFrameVariableAddress - Add DW_AT_location attribute for a 
-/// DbgVariable based on provided frame index.
-void CompileUnit::addFrameVariableAddress(DbgVariable *&DV, DIE *Die, 
-                                          int64_t FI) {
-  MachineLocation Location;
-  unsigned FrameReg;
-  const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-  int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-  Location.set(FrameReg, Offset);
-
+/// addVariableAddress - Add DW_AT_location attribute for a 
+/// DbgVariable based on provided MachineLocation.
+void CompileUnit::addVariableAddress(DbgVariable *&DV, DIE *Die, 
+                                     MachineLocation Location) {
   if (DV->variableHasComplexAddress())
     addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
   else if (DV->isBlockByrefVariable())
@@ -253,17 +247,6 @@ void CompileUnit::addAddress(DIE *Die, unsigned Attribute,
 
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, 0, Block);
-}
-
-/// addRegisterAddress - Add register location entry in variable DIE.
-bool CompileUnit::addRegisterAddress(DIE *Die, const MachineOperand &MO) {
-  assert (MO.isReg() && "Invalid machine operand!");
-  if (!MO.getReg())
-    return false;
-  MachineLocation Location;
-  Location.set(MO.getReg());
-  addAddress(Die, dwarf::DW_AT_location, Location);
-  return true;
 }
 
 /// addComplexAddress - Start with the address based on the location provided,

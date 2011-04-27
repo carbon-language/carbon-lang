@@ -699,11 +699,19 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
         const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
         if (DVInsn->getOperand(1).isImm() &&
             TRI->getFrameRegister(*Asm->MF) == RegOp.getReg()) {
-          VariableCU->addFrameVariableAddress(DV, VariableDie, 
-                                              DVInsn->getOperand(1).getImm());
-          updated = true;
-        } else
-          updated = VariableCU->addRegisterAddress(VariableDie, RegOp);
+          unsigned FrameReg = 0;
+          const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+          int Offset = 
+            TFI->getFrameIndexReference(*Asm->MF, 
+                                        DVInsn->getOperand(1).getImm(), 
+                                        FrameReg);
+          MachineLocation Location(FrameReg, Offset);
+          VariableCU->addVariableAddress(DV, VariableDie, Location);
+          
+        } else if (RegOp.getReg())
+          VariableCU->addVariableAddress(DV, VariableDie, 
+                                         MachineLocation(RegOp.getReg()));
+        updated = true;
       }
       else if (DVInsn->getOperand(0).isImm())
         updated = VariableCU->addConstantValue(VariableDie, 
@@ -712,15 +720,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
         updated =
           VariableCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
     } else {
-      MachineLocation Location = Asm->getDebugValueLocation(DVInsn);
-      if (Location.getReg()) {
-        if (DV->getVariable().hasComplexAddress())
-          VariableCU->addComplexAddress(DV, VariableDie, dwarf::DW_AT_location, 
-                                        Location);
-        else
-          VariableCU->addAddress(VariableDie, dwarf::DW_AT_location, Location);
-        updated = true;
-      }
+      VariableCU->addVariableAddress(DV, VariableDie, 
+                                     Asm->getDebugValueLocation(DVInsn));
+      updated = true;
     }
     if (!updated) {
       // If variableDie is not updated then DBG_VALUE instruction does not
@@ -734,9 +736,15 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
 
   // .. else use frame index, if available.
   int FI = 0;
-  if (findVariableFrameIndex(DV, &FI))
-    VariableCU->addFrameVariableAddress(DV, VariableDie, FI);
-  
+  if (findVariableFrameIndex(DV, &FI)) {
+    unsigned FrameReg = 0;
+    const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+    int Offset = 
+      TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+    MachineLocation Location(FrameReg, Offset);
+    VariableCU->addVariableAddress(DV, VariableDie, Location);
+  }
+
   DV->setDIE(VariableDie);
   return VariableDie;
 

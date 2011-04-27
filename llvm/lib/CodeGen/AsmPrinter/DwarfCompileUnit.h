@@ -181,9 +181,6 @@ public:
   void addAddress(DIE *Die, unsigned Attribute,
                   const MachineLocation &Location);
 
-  /// addRegisterAddress - Add register location entry in variable DIE.
-  bool addRegisterAddress(DIE *Die, const MachineOperand &MO);
-
   /// addConstantValue - Add constant value entry in variable DIE.
   bool addConstantValue(DIE *Die, const MachineOperand &MO);
   bool addConstantValue(DIE *Die, ConstantInt *CI, bool Unsigned);
@@ -218,9 +215,9 @@ public:
   void addBlockByrefAddress(DbgVariable *&DV, DIE *Die, unsigned Attribute,
                             const MachineLocation &Location);
 
-  /// addFrameVariableAddress - Add DW_AT_location attribute for a DbgVariable 
-  /// based on provided frame index.
-  void addFrameVariableAddress(DbgVariable *&DV, DIE *Die, int64_t FI);
+  /// addVariableAddress - Add DW_AT_location attribute for a 
+  /// DbgVariable based on provided MachineLocation.
+  void addVariableAddress(DbgVariable *&DV, DIE *Die, MachineLocation Location);
 
   /// addToContextOwner - Add Die into the list of its context owner's children.
   void addToContextOwner(DIE *Die, DIDescriptor Context);
