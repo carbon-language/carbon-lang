@@ -146,13 +146,15 @@ Retry:
         Tok.setKind(tok::annot_typename);
         setTypeAnnotation(Tok, Classification.getType());
         Tok.setAnnotationEndLoc(NameLoc);
-        Tok.setLocation(NameLoc);
         PP.AnnotateCachedTokens(Tok);
         break;
           
       case Sema::NC_Expression:
-        ConsumeToken(); // the identifier
-        return ParseExprStatement(attrs, Classification.getExpression());
+        Tok.setKind(tok::annot_primary_expr);
+        setExprAnnotation(Tok, Classification.getExpression());
+        Tok.setAnnotationEndLoc(NameLoc);
+        PP.AnnotateCachedTokens(Tok);
+        break;
           
       case Sema::NC_TypeTemplate:
       case Sema::NC_FunctionTemplate: {
@@ -210,7 +212,7 @@ Retry:
       return StmtError();
     }
 
-    return ParseExprStatement(attrs, ExprResult());
+    return ParseExprStatement(attrs);
   }
 
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -288,14 +290,13 @@ Retry:
 }
 
 /// \brief Parse an expression statement.
-StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs, 
-                                      ExprResult Primary) {
+StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs) {
   // If a case keyword is missing, this is where it should be inserted.
   Token OldToken = Tok;
   
   // FIXME: Use the attributes
   // expression[opt] ';'
-  ExprResult Expr(ParseExpression(Primary));
+  ExprResult Expr(ParseExpression());
   if (Expr.isInvalid()) {
     // If the expression is invalid, skip ahead to the next semicolon or '}'.
     // Not doing this opens us up to the possibility of infinite loops if

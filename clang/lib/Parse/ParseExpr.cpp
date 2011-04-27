@@ -174,11 +174,8 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///       expression: [C99 6.5.17]
 ///         assignment-expression ...[opt]
 ///         expression ',' assignment-expression ...[opt]
-///
-/// \param Primary if non-empty, an already-parsed expression that will be used
-/// as the first primary expression.
-ExprResult Parser::ParseExpression(ExprResult Primary) {
-  ExprResult LHS(ParseAssignmentExpression(Primary));
+ExprResult Parser::ParseExpression() {
+  ExprResult LHS(ParseAssignmentExpression());
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
@@ -214,27 +211,16 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 }
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
-///
-/// \param Primary if non-empty, an already-parsed expression that will be used
-/// as the first primary expression.
-ExprResult Parser::ParseAssignmentExpression(ExprResult Primary) {
+ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::code_completion)) {
-    if (Primary.isUsable())
-      Actions.CodeCompletePostfixExpression(getCurScope(), Primary);
-    else
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
+    Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
   }
 
-  if (!Primary.isUsable() && Tok.is(tok::kw_throw))
+  if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  ExprResult LHS;
-  if (Primary.get() || Primary.isInvalid())
-    LHS = ParsePostfixExpressionSuffix(Primary);
-  else
-    LHS = ParseCastExpression(false, false, ParsedType());
-  
+  ExprResult LHS = ParseCastExpression(false, false, ParsedType());
   return ParseRHSOfBinaryExpression(move(LHS), prec::Assignment);
 }
 
@@ -628,6 +614,12 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_nullptr:
     return Actions.ActOnCXXNullPtrLiteral(ConsumeToken());
 
+  case tok::annot_primary_expr:
+    assert(Res.get() == 0 && "Stray primary-expression annotation?");
+    Res = getExprAnnotation(Tok);
+    ConsumeToken();
+    break;
+      
   case tok::identifier: {      // primary-expression: identifier
                                // unqualified-id: identifier
                                // constant: enumeration-constant

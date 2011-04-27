@@ -483,6 +483,7 @@ ANNOTATION(typename)     // annotation for a C typedef name, a C++ (possibly
 ANNOTATION(template_id)  // annotation for a C++ template-id that names a
                          // function template specialization (not a type),
                          // e.g., "std::swap<int>"
+ANNOTATION(primary_expr) // annotation for a primary expression
 
 // Annotation for #pragma unused(...)
 // For each argument inside the parentheses the pragma handler will produce
