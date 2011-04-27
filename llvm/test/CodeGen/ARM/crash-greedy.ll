@@ -1,4 +1,4 @@
-; RUN: llc < %s -regalloc=greedy -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -regalloc=greedy -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim -verify-machineinstrs | FileCheck %s
 ;
 ; ARM tests that crash or fail with the greedy register allocator.
 
@@ -59,3 +59,26 @@ for.end:                                          ; preds = %cond.end
   ret void
 }
 
+; CHECK: insert_elem
+; This test has a sub-register copy with a kill flag:
+;   %vreg6:ssub_3<def> = COPY %vreg6:ssub_2<kill>; QPR_VFP2:%vreg6
+; The rewriter must do something sensible with that, or the scavenger crashes.
+define void @insert_elem() nounwind {
+entry:
+  br i1 undef, label %if.end251, label %if.then84
+
+if.then84:                                        ; preds = %entry
+  br i1 undef, label %if.end251, label %if.then195
+
+if.then195:                                       ; preds = %if.then84
+  %div = fdiv float 1.000000e+00, undef
+  %vecinit207 = insertelement <4 x float> undef, float %div, i32 1
+  %vecinit208 = insertelement <4 x float> %vecinit207, float 1.000000e+00, i32 2
+  %vecinit209 = insertelement <4 x float> %vecinit208, float 1.000000e+00, i32 3
+  %mul216 = fmul <4 x float> zeroinitializer, %vecinit209
+  store <4 x float> %mul216, <4 x float>* undef, align 16
+  br label %if.end251
+
+if.end251:                                        ; preds = %if.then195, %if.then84, %entry
+  ret void
+}

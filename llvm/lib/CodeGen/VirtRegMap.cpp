@@ -260,6 +260,8 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
                << "********** Function: "
                << MF->getFunction()->getName() << '\n');
   DEBUG(dump());
+  SmallVector<unsigned, 8> SuperDeads;
+  SmallVector<unsigned, 8> SuperDefs;
   SmallVector<unsigned, 8> SuperKills;
 
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
@@ -283,12 +285,13 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
         if (MO.getSubReg()) {
           // A virtual register kill refers to the whole register, so we may
           // have to add <imp-use,kill> operands for the super-register.
-          if (MO.isUse() && MO.isKill() && !MO.isUndef())
-            SuperKills.push_back(PhysReg);
-
-          // We don't have to deal with sub-register defs because
-          // LiveIntervalAnalysis already added the necessary <imp-def>
-          // operands.
+          if (MO.isUse()) {
+            if (MO.isKill() && !MO.isUndef())
+              SuperKills.push_back(PhysReg);
+          } else if (MO.isDead())
+            SuperDeads.push_back(PhysReg);
+          else
+            SuperDefs.push_back(PhysReg);
 
           // PhysReg operands cannot have subregister indexes.
           PhysReg = TRI->getSubReg(PhysReg, MO.getSubReg());
@@ -304,6 +307,12 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
       // instruction.
       while (!SuperKills.empty())
         MI->addRegisterKilled(SuperKills.pop_back_val(), TRI, true);
+
+      while (!SuperDeads.empty())
+        MI->addRegisterDead(SuperDeads.pop_back_val(), TRI, true);
+
+      while (!SuperDefs.empty())
+        MI->addRegisterDefined(SuperDefs.pop_back_val(), TRI);
 
       DEBUG(dbgs() << "> " << *MI);
 
