@@ -120,16 +120,15 @@ static bool IsNullTerminatedString(const Constant *C) {
   return false;
 }
 
-MCSymbol *
-TargetLoweringObjectFile::getPersonalityPICSymbol(StringRef Name) const {
-  assert(0 && "Not Available in this format.");
-  return 0;
+MCSymbol *TargetLoweringObjectFile::
+getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding, Mangler *Mang,
+                        MachineModuleInfo *MMI) const {
+  return Mang->getSymbol(GV);
 }
 
 void TargetLoweringObjectFile::emitPersonalityValue(MCStreamer &Streamer,
                                                     const TargetMachine &TM,
                                                     const MCSymbol *Sym) const {
-  assert(0 && "Not Available in this format.");
 }
 
 

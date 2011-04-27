@@ -58,7 +58,6 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
-  virtual MCSymbol *getPersonalityPICSymbol(StringRef Name) const;
 
   virtual void emitPersonalityValue(MCStreamer &Streamer,
                                     const TargetMachine &TM,
@@ -86,6 +85,11 @@ public:
   getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                  MachineModuleInfo *MMI, unsigned Encoding,
                                  MCStreamer &Streamer) const;
+
+  // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
+  virtual MCSymbol *
+  getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding,
+                          Mangler *Mang, MachineModuleInfo *MMI) const;
 };
 
 
@@ -176,6 +180,11 @@ public:
   getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                  MachineModuleInfo *MMI, unsigned Encoding,
                                  MCStreamer &Streamer) const;
+
+  // getCFIPersonalitySymbol - The symbol that gets passed to .cfi_personality.
+  virtual MCSymbol *
+  getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding,
+                          Mangler *Mang, MachineModuleInfo *MMI) const;
 
   virtual unsigned getPersonalityEncoding() const;
   virtual unsigned getLSDAEncoding() const;

@@ -38,6 +38,12 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, Streamer);
 }
 
+MCSymbol *X8664_MachoTargetObjectFile::
+getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding, Mangler *Mang,
+                        MachineModuleInfo *MMI) const {
+  return Mang->getSymbol(GV);
+}
+
 unsigned X8632_ELFTargetObjectFile::getPersonalityEncoding() const {
   if (TM.getRelocationModel() == Reloc::PIC_)
     return DW_EH_PE_indirect | DW_EH_PE_pcrel | DW_EH_PE_sdata4;

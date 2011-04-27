@@ -109,17 +109,8 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   if (PerEncoding == dwarf::DW_EH_PE_omit || !Per)
     return;
 
-  const MCSymbol *Sym;
-  switch (PerEncoding & 0x70) {
-  default:
-    report_fatal_error("We do not support this DWARF encoding yet!");
-  case dwarf::DW_EH_PE_absptr:
-    Sym = Asm->Mang->getSymbol(Per);
-    break;
-  case dwarf::DW_EH_PE_pcrel:
-    Sym = TLOF.getPersonalityPICSymbol(Per->getName());
-    break;
-  }
+  const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, PerEncoding,
+                                                     Asm->Mang, MMI);
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 }
 

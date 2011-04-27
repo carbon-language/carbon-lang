@@ -25,6 +25,12 @@ namespace llvm {
     getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
                                    MachineModuleInfo *MMI, unsigned Encoding,
                                    MCStreamer &Streamer) const;
+
+    // getCFIPersonalitySymbol - The symbol that gets passed to
+    // .cfi_personality.
+    virtual MCSymbol *
+    getCFIPersonalitySymbol(const GlobalValue *GV, unsigned Encoding,
+                            Mangler *Mang, MachineModuleInfo *MMI) const;
   };
 
   class X8632_ELFTargetObjectFile : public TargetLoweringObjectFileELF {
