@@ -60,7 +60,7 @@ class LLDBIteratorTestCase(TestBase):
                 print "yours[%d]='%s'" % (i, get_description(yours[i]))
                 print "mine[%d]='%s'" % (i, get_description(mine[i]))
             self.assertTrue(yours[i].GetUUIDString() == mine[i].GetUUIDString(),
-                            "UUID of yours[%d] and mine[%d] matches" % (i, i))
+                            "UUID of yours[{0}] and mine[{0}] matches".format(i))
 
     def lldb_iter_2(self):
         exe = os.path.join(os.getcwd(), "a.out")
@@ -89,7 +89,7 @@ class LLDBIteratorTestCase(TestBase):
                 print "yours[%d]='%s'" % (i, get_description(yours[i]))
                 print "mine[%d]='%s'" % (i, get_description(mine[i]))
             self.assertTrue(yours[i].GetID() == mine[i].GetID(),
-                            "ID of yours[%d] and mine[%d] matches" % (i, i))
+                            "ID of yours[{0}] and mine[{0}] matches".format(i))
 
 
 if __name__ == '__main__':
