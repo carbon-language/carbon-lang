@@ -186,27 +186,27 @@ TargetLoweringObjectFileELF::getPersonalityPICSymbol(StringRef Name) const {
 void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
                                                        const TargetMachine &TM,
                                                    const MCSymbol *Sym) const {
-    MCSymbol *Label = getPersonalityPICSymbol(Sym->getName());
-    Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
-    Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
-    Twine SectionName = StringRef(".data.") + Label->getName();
-    SmallString<64> NameData;
-    SectionName.toVector(NameData);
-    unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_GROUP;
-    const MCSection *Sec = getContext().getELFSection(NameData,
-                                                      ELF::SHT_PROGBITS,
-                                                      Flags,
-                                                      SectionKind::getDataRel(),
-                                                      0, Label->getName());
-    Streamer.SwitchSection(Sec);
-    Streamer.EmitValueToAlignment(8);
-    Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
-    const MCExpr *E = MCConstantExpr::Create(8, getContext());
-    Streamer.EmitELFSize(Label, E);
-    Streamer.EmitLabel(Label);
+  MCSymbol *Label = getPersonalityPICSymbol(Sym->getName());
+  Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
+  Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
+  Twine SectionName = StringRef(".data.") + Label->getName();
+  SmallString<64> NameData;
+  SectionName.toVector(NameData);
+  unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_GROUP;
+  const MCSection *Sec = getContext().getELFSection(NameData,
+                                                    ELF::SHT_PROGBITS,
+                                                    Flags,
+                                                    SectionKind::getDataRel(),
+                                                    0, Label->getName());
+  Streamer.SwitchSection(Sec);
+  Streamer.EmitValueToAlignment(8);
+  Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
+  const MCExpr *E = MCConstantExpr::Create(8, getContext());
+  Streamer.EmitELFSize(Label, E);
+  Streamer.EmitLabel(Label);
 
-    unsigned Size = TM.getTargetData()->getPointerSize();
-    Streamer.EmitSymbolValue(Sym, Size);
+  unsigned Size = TM.getTargetData()->getPointerSize();
+  Streamer.EmitSymbolValue(Sym, Size);
 }
 
 static SectionKind
