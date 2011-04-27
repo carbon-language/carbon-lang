@@ -26,7 +26,7 @@ basic_string<_CharT,_Traits,_Alloc>::basic_string(const _CharT*,const _Alloc&)
 :us(_S_construct)
 {string a;}
 
-struct runtime_error{runtime_error(string);};
+struct runtime_error{runtime_error(string);}; // expected-note 2 {{candidate constructor}}
 
 struct system_error:runtime_error{ // expected-note {{to match}} expected-note {{specified here}}
-system_error():time_error("" // expected-error 4 {{expected}} expected-error {{initializer}} expected-note {{to match}}
+system_error():time_error("" // expected-error 4 {{expected}} expected-error {{initializer}} expected-note {{to match}} expected-error {{no matching constructor}}

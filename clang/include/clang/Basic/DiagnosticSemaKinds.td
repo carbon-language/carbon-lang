@@ -1863,6 +1863,9 @@ def err_template_recursion_depth_exceeded : Error<
 def note_template_recursion_depth : Note<
   "use -ftemplate-depth-N to increase recursive template instantiation depth">;
 
+def err_template_instantiate_within_definition : Error<
+  "%select{implicit|explicit}0 instantiation of template %1 within its"
+  " own definition">;
 def err_template_instantiate_undefined : Error<
   "%select{implicit|explicit}0 instantiation of undefined template %1">;
 def err_implicit_instantiate_member_undefined : Error<

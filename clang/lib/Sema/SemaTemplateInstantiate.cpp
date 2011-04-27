@@ -1650,9 +1650,18 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   CXXRecordDecl *PatternDef
     = cast_or_null<CXXRecordDecl>(Pattern->getDefinition());
-  if (!PatternDef) {
-    if (!Complain) {
+  if (!PatternDef || PatternDef->isBeingDefined()) {
+    if (!Complain || (PatternDef && PatternDef->isInvalidDecl())) {
       // Say nothing
+    } else if (PatternDef) {
+      assert(PatternDef->isBeingDefined());
+      Diag(PointOfInstantiation,
+           diag::err_template_instantiate_within_definition)
+        << (TSK != TSK_ImplicitInstantiation)
+        << Context.getTypeDeclType(Instantiation);
+      // Not much point in noting the template declaration here, since
+      // we're lexically inside it.
+      Instantiation->setInvalidDecl();
     } else if (Pattern == Instantiation->getInstantiatedFromMemberClass()) {
       Diag(PointOfInstantiation,
            diag::err_implicit_instantiate_member_undefined)
