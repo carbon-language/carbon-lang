@@ -1383,7 +1383,7 @@ if ($AnalyzeHeaders) {
   push @AnalysesToRun,"-analyzer-opt-analyze-headers";  
 }
 if ($AnalyzerStats) {
-  push @AnalysesToRun, '-analyzer-stats';
+  push @AnalysesToRun, '-analyzer-checker', 'debug.Stats';
 }
 if ($MaxLoop > 0) {
   push @AnalysesToRun, '-analyzer-max-loop ' . $MaxLoop;
