@@ -350,6 +350,35 @@ KEYWORD(__is_union                  , KEYCXX)
 KEYWORD(__is_lvalue_expr            , KEYCXX)
 KEYWORD(__is_rvalue_expr            , KEYCXX)
 
+// Embarcadero Unary Type Traits
+KEYWORD(__is_arithmetic             , KEYCXX)
+KEYWORD(__is_floating_point         , KEYCXX)
+KEYWORD(__is_integral               , KEYCXX)
+KEYWORD(__is_complete_type          , KEYCXX)
+KEYWORD(__is_void                   , KEYCXX)
+KEYWORD(__is_array                  , KEYCXX)
+KEYWORD(__is_function               , KEYCXX)
+KEYWORD(__is_reference              , KEYCXX)
+KEYWORD(__is_lvalue_reference       , KEYCXX)
+KEYWORD(__is_rvalue_reference       , KEYCXX)
+KEYWORD(__is_fundamental            , KEYCXX)
+KEYWORD(__is_object                 , KEYCXX)
+KEYWORD(__is_scalar                 , KEYCXX)
+KEYWORD(__is_compound               , KEYCXX)
+KEYWORD(__is_pointer                , KEYCXX)
+KEYWORD(__is_member_object_pointer  , KEYCXX)
+KEYWORD(__is_member_function_pointer, KEYCXX)
+KEYWORD(__is_member_pointer         , KEYCXX)
+KEYWORD(__is_const                  , KEYCXX)
+KEYWORD(__is_volatile               , KEYCXX)
+KEYWORD(__is_standard_layout        , KEYCXX)
+KEYWORD(__is_signed                 , KEYCXX)
+KEYWORD(__is_unsigned               , KEYCXX)
+
+// Embarcadero Binary Type Traits
+KEYWORD(__is_same                   , KEYCXX)
+KEYWORD(__is_convertible            , KEYCXX)
+
 // Apple Extension.
 KEYWORD(__private_extern__          , KEYALL)
 

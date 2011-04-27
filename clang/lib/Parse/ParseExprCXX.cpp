@@ -1912,25 +1912,50 @@ Parser::ParseCXXDeleteExpression(bool UseGlobal, SourceLocation Start) {
 
 static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
-  default: llvm_unreachable("Not a known unary type trait");
+  default: assert(false && "Not a known unary type trait.");
   case tok::kw___has_nothrow_assign:      return UTT_HasNothrowAssign;
-  case tok::kw___has_nothrow_copy:        return UTT_HasNothrowCopy;
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
+  case tok::kw___has_nothrow_copy:           return UTT_HasNothrowCopy;
   case tok::kw___has_trivial_assign:      return UTT_HasTrivialAssign;
-  case tok::kw___has_trivial_copy:        return UTT_HasTrivialCopy;
   case tok::kw___has_trivial_constructor: return UTT_HasTrivialConstructor;
+  case tok::kw___has_trivial_copy:           return UTT_HasTrivialCopy;
   case tok::kw___has_trivial_destructor:  return UTT_HasTrivialDestructor;
   case tok::kw___has_virtual_destructor:  return UTT_HasVirtualDestructor;
   case tok::kw___is_abstract:             return UTT_IsAbstract;
+  case tok::kw___is_arithmetic:              return UTT_IsArithmetic;
+  case tok::kw___is_array:                   return UTT_IsArray;
   case tok::kw___is_class:                return UTT_IsClass;
+  case tok::kw___is_complete_type:           return UTT_IsCompleteType;
+  case tok::kw___is_compound:                return UTT_IsCompound;
+  case tok::kw___is_const:                   return UTT_IsConst;
   case tok::kw___is_empty:                return UTT_IsEmpty;
   case tok::kw___is_enum:                 return UTT_IsEnum;
+  case tok::kw___is_floating_point:          return UTT_IsFloatingPoint;
+  case tok::kw___is_function:                return UTT_IsFunction;
+  case tok::kw___is_fundamental:             return UTT_IsFundamental;
+  case tok::kw___is_integral:                return UTT_IsIntegral;
+  case tok::kw___is_lvalue_expr:             return UTT_IsLvalueExpr;
+  case tok::kw___is_lvalue_reference:        return UTT_IsLvalueReference;
+  case tok::kw___is_member_function_pointer: return UTT_IsMemberFunctionPointer;
+  case tok::kw___is_member_object_pointer:   return UTT_IsMemberObjectPointer;
+  case tok::kw___is_member_pointer:          return UTT_IsMemberPointer;
+  case tok::kw___is_object:                  return UTT_IsObject;
   case tok::kw___is_literal:              return UTT_IsLiteral;
   case tok::kw___is_literal_type:         return UTT_IsLiteral;
   case tok::kw___is_pod:                  return UTT_IsPOD;
+  case tok::kw___is_pointer:                 return UTT_IsPointer;
   case tok::kw___is_polymorphic:          return UTT_IsPolymorphic;
-  case tok::kw___is_trivial:              return UTT_IsTrivial;
+  case tok::kw___is_reference:               return UTT_IsReference;
+  case tok::kw___is_rvalue_expr:             return UTT_IsRvalueExpr;
+  case tok::kw___is_rvalue_reference:        return UTT_IsRvalueReference;
+  case tok::kw___is_scalar:                  return UTT_IsScalar;
+  case tok::kw___is_signed:                  return UTT_IsSigned;
+  case tok::kw___is_standard_layout:         return UTT_IsStandardLayout;
+  case tok::kw___is_trivial:                 return UTT_IsTrivial;
   case tok::kw___is_union:                return UTT_IsUnion;
+  case tok::kw___is_unsigned:                return UTT_IsUnsigned;
+  case tok::kw___is_void:                    return UTT_IsVoid;
+  case tok::kw___is_volatile:                return UTT_IsVolatile;
   }
 }
 
@@ -1938,6 +1963,8 @@ static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
   default: llvm_unreachable("Not a known binary type trait");
   case tok::kw___is_base_of:                 return BTT_IsBaseOf;
+  case tok::kw___is_convertible:             return BTT_IsConvertible;
+  case tok::kw___is_same:                    return BTT_IsSame;
   case tok::kw___builtin_types_compatible_p: return BTT_TypeCompatible;
   case tok::kw___is_convertible_to:          return BTT_IsConvertibleTo;
   }

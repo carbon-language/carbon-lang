@@ -731,22 +731,19 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // styles of attributes?
   MaybeParseCXX0XAttributes(attrs);
 
-  if (TagType == DeclSpec::TST_struct && Tok.is(tok::kw___is_pod)) {
-    // GNU libstdc++ 4.2 uses __is_pod as the name of a struct template, but
-    // __is_pod is a keyword in GCC >= 4.3. Therefore, when we see the
-    // token sequence "struct __is_pod", make __is_pod into a normal
-    // identifier rather than a keyword, to allow libstdc++ 4.2 to work
-    // properly.
-    Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
-    Tok.setKind(tok::identifier);
-  }
-
-  if (TagType == DeclSpec::TST_struct && Tok.is(tok::kw___is_empty)) {
-    // GNU libstdc++ 4.2 uses __is_empty as the name of a struct template, but
-    // __is_empty is a keyword in GCC >= 4.3. Therefore, when we see the
-    // token sequence "struct __is_empty", make __is_empty into a normal
-    // identifier rather than a keyword, to allow libstdc++ 4.2 to work
-    // properly.
+  if (TagType == DeclSpec::TST_struct &&
+      (Tok.is(tok::kw___is_pod) ||
+       Tok.is(tok::kw___is_empty) ||
+       Tok.is(tok::kw___is_void) ||
+       Tok.is(tok::kw___is_pointer) ||
+       Tok.is(tok::kw___is_arithmetic) ||
+       Tok.is(tok::kw___is_fundamental) ||
+       Tok.is(tok::kw___is_scalar))) {
+    // GNU libstdc++ 4.2 uses certain intrinsic names as the name of
+    // struct templates, but these are keywords in GCC >= 4.3 and
+    // Clang. Therefore, when we see the token sequence "struct X", make
+    // X into a normal identifier rather than a keyword, to allow
+    // libstdc++ 4.2 to work properly.
     Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
     Tok.setKind(tok::identifier);
   }

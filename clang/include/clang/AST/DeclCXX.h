@@ -306,6 +306,21 @@ class CXXRecordDecl : public RecordDecl {
     /// one pure virtual function, (that can come from a base class).
     bool Abstract : 1;
 
+    /// HasStandardLayout - True when this class has standard layout.
+    ///
+    /// C++0x [class]p7.  A standard-layout class is a class that:
+    /// * has no non-static data members of type non-standard-layout class (or
+    ///   array of such types) or reference,
+    /// * has no virtual functions (10.3) and no virtual base classes (10.1),
+    /// * has the same access control (Clause 11) for all non-static data members
+    /// * has no non-standard-layout base classes,
+    /// * either has no non-static data members in the most derived class and at
+    ///   most one base class with non-static data members, or has no base
+    ///   classes with non-static data members, and
+    /// * has no base classes of the same type as the first non-static data
+    ///   member.
+    bool HasStandardLayout : 1;
+
     /// HasTrivialConstructor - True when this class has a trivial constructor.
     ///
     /// C++ [class.ctor]p5.  A constructor is trivial if it is an
@@ -764,6 +779,10 @@ public:
   /// isAbstract - Whether this class is abstract (C++ [class.abstract]),
   /// which means that the class contains or inherits a pure virtual function.
   bool isAbstract() const { return data().Abstract; }
+
+   // hasStandardLayout - Whether this class has standard layout
+   // (C++ [class]p7)
+  bool hasStandardLayout() const { return data().HasStandardLayout; }
 
   // hasTrivialConstructor - Whether this class has a trivial constructor
   // (C++ [class.ctor]p5)

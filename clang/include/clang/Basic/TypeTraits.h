@@ -27,21 +27,48 @@ namespace clang {
     UTT_HasTrivialDestructor,
     UTT_HasVirtualDestructor,
     UTT_IsAbstract,
+    UTT_IsArithmetic,
+    UTT_IsArray,
     UTT_IsClass,
+    UTT_IsCompleteType,
+    UTT_IsCompound,
+    UTT_IsConst,
     UTT_IsEmpty,
     UTT_IsEnum,
+    UTT_IsFloatingPoint,
+    UTT_IsFunction,
+    UTT_IsFundamental,
+    UTT_IsIntegral,
     UTT_IsLiteral,
+    UTT_IsLvalueExpr,
+    UTT_IsLvalueReference,
+    UTT_IsMemberFunctionPointer,
+    UTT_IsMemberObjectPointer,
+    UTT_IsMemberPointer,
+    UTT_IsObject,
     UTT_IsPOD,
+    UTT_IsPointer,
     UTT_IsPolymorphic,
+    UTT_IsReference,
+    UTT_IsRvalueExpr,
+    UTT_IsRvalueReference,
+    UTT_IsScalar,
+    UTT_IsSigned,
+    UTT_IsStandardLayout,
     UTT_IsTrivial,
-    UTT_IsUnion
+    UTT_IsUnion,
+    UTT_IsUnsigned,
+    UTT_IsVoid,
+    UTT_IsVolatile
   };
 
   /// BinaryTypeTrait - Names for the binary type traits.
   enum BinaryTypeTrait {
     BTT_IsBaseOf,
-    BTT_TypeCompatible,
-    BTT_IsConvertibleTo
+    BTT_IsConvertible,
+    BTT_IsConvertibleTo,
+    BTT_IsSame,
+    BTT_TypeCompatible
   };
 
   /// UnaryExprOrTypeTrait - Names for the "expression or type" traits.

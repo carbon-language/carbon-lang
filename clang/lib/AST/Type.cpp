@@ -1385,6 +1385,109 @@ bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
 }
 
+static uint64_t countBasesWithFields(QualType BaseType) {
+  uint64_t BasesWithFields = 0;
+  if (const RecordType *T = BaseType->getAs<RecordType>()) {
+    CXXRecordDecl *RD = cast<CXXRecordDecl>(T->getDecl());
+    for (CXXRecordDecl::field_iterator Field = RD->field_begin(),
+           E = RD->field_end(); Field != E; ++Field)
+      BasesWithFields = 1;
+    for (CXXRecordDecl::base_class_const_iterator B = RD->bases_begin(),
+           BE = RD->bases_end(); B != BE; ++B)
+      BasesWithFields += countBasesWithFields(B->getType());
+  }
+  return BasesWithFields;
+}
+
+bool RecordType::hasStandardLayout(ASTContext& Context) const {
+  CXXRecordDecl *RD = cast<CXXRecordDecl>(getDecl());
+  if (! RD) {
+    assert(cast<RecordDecl>(getDecl()) &&
+           "RecordType does not have a corresponding RecordDecl");
+    return true;
+  }
+
+  // A standard-layout class is a class that:
+
+  for (CXXRecordDecl::method_iterator M = RD->method_begin(), 
+       ME = RD->method_end(); M != ME; ++M) {
+    CXXMethodDecl *Method = *M;
+
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- has no virtual functions (10.3) [...]
+    if (Method->isVirtual())
+      return false;
+  }
+
+  AccessSpecifier AS = AS_none;
+  QualType FirstFieldType;
+  bool FirstFieldType_set = false;
+  uint64_t FieldCount = 0;
+
+  for (CXXRecordDecl::field_iterator Field = RD->field_begin(),
+         E = RD->field_end(); Field != E; ++Field, ++FieldCount) {
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- has no non-static data members of type non-standard-layout class
+    //       (or array of such types) or reference [...]
+    QualType FieldType = Context.getBaseElementType((*Field)->getType());
+    if (const RecordType *T =
+        Context.getBaseElementType(FieldType)->getAs<RecordType>()) {
+      if (! T->hasStandardLayout(Context) || T->isReferenceType())
+        return false;
+    }
+    if (! FirstFieldType_set) {
+      FirstFieldType = FieldType;
+      FirstFieldType_set = true;
+    }
+  
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- has the same access control (Clause 11) for all non-static data
+    //       members [...]
+    if (AS == AS_none)
+      AS = (*Field)->getAccess();
+    else if (AS != (*Field)->getAccess())
+      return false;
+  }
+
+  for (CXXRecordDecl::base_class_const_iterator B = RD->bases_begin(),
+           BE = RD->bases_end(); B != BE; ++B) {
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- no virtual base classes (10.1) [...]
+    if (B->isVirtual())
+      return false;
+
+    QualType BT = B->getType();
+
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- has no non-standard-layout base classes [...]
+    if (const RecordType *T = BT->getAs<RecordType>())
+      if (! T->hasStandardLayout(Context))
+        return false;
+
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- has no base classes of the same type as the first non-static data
+    //       member.
+    if (BT == FirstFieldType)
+      return false;
+
+    // C++0x [class]p7:
+    //   A standard-layout class is a class that [...]
+    //    -- either has no non-static data members in the most derived class
+    //       and at most one base class with non-static data members, or has
+    //       no base classes with non-static data members [...]
+    if (countBasesWithFields(BT) > (FieldCount == 0 ? 1 : 0))
+      return false;
+  }
+
+  return true;
+}
+
 bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }

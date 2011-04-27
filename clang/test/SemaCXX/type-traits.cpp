@@ -244,6 +244,773 @@ void is_polymorphic()
   { int arr[F(__is_polymorphic(IntArNB))]; }
 }
 
+void is_integral()
+{
+  int t01[T(__is_integral(bool))];
+  int t02[T(__is_integral(char))];
+  int t03[T(__is_integral(signed char))];
+  int t04[T(__is_integral(unsigned char))];
+  //int t05[T(__is_integral(char16_t))];
+  //int t06[T(__is_integral(char32_t))];
+  int t07[T(__is_integral(wchar_t))];
+  int t08[T(__is_integral(short))];
+  int t09[T(__is_integral(unsigned short))];
+  int t10[T(__is_integral(int))];
+  int t11[T(__is_integral(unsigned int))];
+  int t12[T(__is_integral(long))];
+  int t13[T(__is_integral(unsigned long))];
+
+  int t21[F(__is_integral(float))];
+  int t22[F(__is_integral(double))];
+  int t23[F(__is_integral(long double))];
+  int t24[F(__is_integral(Union))];
+  int t25[F(__is_integral(UnionAr))];
+  int t26[F(__is_integral(Derives))];
+  int t27[F(__is_integral(ClassType))];
+  int t28[F(__is_integral(Enum))];
+  int t29[F(__is_integral(void))];
+  int t30[F(__is_integral(cvoid))];
+  int t31[F(__is_integral(IntArNB))];
+}
+
+void is_floating_point()
+{
+  int t01[T(__is_floating_point(float))];
+  int t02[T(__is_floating_point(double))];
+  int t03[T(__is_floating_point(long double))];
+
+  int t11[F(__is_floating_point(bool))];
+  int t12[F(__is_floating_point(char))];
+  int t13[F(__is_floating_point(signed char))];
+  int t14[F(__is_floating_point(unsigned char))];
+  //int t15[F(__is_floating_point(char16_t))];
+  //int t16[F(__is_floating_point(char32_t))];
+  int t17[F(__is_floating_point(wchar_t))];
+  int t18[F(__is_floating_point(short))];
+  int t19[F(__is_floating_point(unsigned short))];
+  int t20[F(__is_floating_point(int))];
+  int t21[F(__is_floating_point(unsigned int))];
+  int t22[F(__is_floating_point(long))];
+  int t23[F(__is_floating_point(unsigned long))];
+  int t24[F(__is_floating_point(Union))];
+  int t25[F(__is_floating_point(UnionAr))];
+  int t26[F(__is_floating_point(Derives))];
+  int t27[F(__is_floating_point(ClassType))];
+  int t28[F(__is_floating_point(Enum))];
+  int t29[F(__is_floating_point(void))];
+  int t30[F(__is_floating_point(cvoid))];
+  int t31[F(__is_floating_point(IntArNB))];
+}
+
+void is_arithmetic()
+{
+  int t01[T(__is_arithmetic(float))];
+  int t02[T(__is_arithmetic(double))];
+  int t03[T(__is_arithmetic(long double))];
+  int t11[T(__is_arithmetic(bool))];
+  int t12[T(__is_arithmetic(char))];
+  int t13[T(__is_arithmetic(signed char))];
+  int t14[T(__is_arithmetic(unsigned char))];
+  //int t15[T(__is_arithmetic(char16_t))];
+  //int t16[T(__is_arithmetic(char32_t))];
+  int t17[T(__is_arithmetic(wchar_t))];
+  int t18[T(__is_arithmetic(short))];
+  int t19[T(__is_arithmetic(unsigned short))];
+  int t20[T(__is_arithmetic(int))];
+  int t21[T(__is_arithmetic(unsigned int))];
+  int t22[T(__is_arithmetic(long))];
+  int t23[T(__is_arithmetic(unsigned long))];
+
+  int t24[F(__is_arithmetic(Union))];
+  int t25[F(__is_arithmetic(UnionAr))];
+  int t26[F(__is_arithmetic(Derives))];
+  int t27[F(__is_arithmetic(ClassType))];
+  int t28[F(__is_arithmetic(Enum))];
+  int t29[F(__is_arithmetic(void))];
+  int t30[F(__is_arithmetic(cvoid))];
+  int t31[F(__is_arithmetic(IntArNB))];
+}
+
+struct ACompleteType {};
+struct AnIncompleteType;
+
+void is_complete_type()
+{
+  int t01[T(__is_complete_type(float))];
+  int t02[T(__is_complete_type(double))];
+  int t03[T(__is_complete_type(long double))];
+  int t11[T(__is_complete_type(bool))];
+  int t12[T(__is_complete_type(char))];
+  int t13[T(__is_complete_type(signed char))];
+  int t14[T(__is_complete_type(unsigned char))];
+  //int t15[T(__is_complete_type(char16_t))];
+  //int t16[T(__is_complete_type(char32_t))];
+  int t17[T(__is_complete_type(wchar_t))];
+  int t18[T(__is_complete_type(short))];
+  int t19[T(__is_complete_type(unsigned short))];
+  int t20[T(__is_complete_type(int))];
+  int t21[T(__is_complete_type(unsigned int))];
+  int t22[T(__is_complete_type(long))];
+  int t23[T(__is_complete_type(unsigned long))];
+  int t24[T(__is_complete_type(ACompleteType))];
+
+  int t30[F(__is_complete_type(AnIncompleteType))];
+}
+
+void is_void()
+{
+  int t01[T(__is_void(void))];
+  int t02[T(__is_void(cvoid))];
+
+  int t10[F(__is_void(float))];
+  int t11[F(__is_void(double))];
+  int t12[F(__is_void(long double))];
+  int t13[F(__is_void(bool))];
+  int t14[F(__is_void(char))];
+  int t15[F(__is_void(signed char))];
+  int t16[F(__is_void(unsigned char))];
+  int t17[F(__is_void(wchar_t))];
+  int t18[F(__is_void(short))];
+  int t19[F(__is_void(unsigned short))];
+  int t20[F(__is_void(int))];
+  int t21[F(__is_void(unsigned int))];
+  int t22[F(__is_void(long))];
+  int t23[F(__is_void(unsigned long))];
+  int t24[F(__is_void(Union))];
+  int t25[F(__is_void(UnionAr))];
+  int t26[F(__is_void(Derives))];
+  int t27[F(__is_void(ClassType))];
+  int t28[F(__is_void(Enum))];
+  int t29[F(__is_void(IntArNB))];
+  int t30[F(__is_void(void*))];
+  int t31[F(__is_void(cvoid*))];
+}
+
+void is_array()
+{
+  int t01[T(__is_array(IntAr))];
+  int t02[T(__is_array(IntArNB))];
+  int t03[T(__is_array(UnionAr))];
+
+  int t10[F(__is_array(void))];
+  int t11[F(__is_array(cvoid))];
+  int t12[F(__is_array(float))];
+  int t13[F(__is_array(double))];
+  int t14[F(__is_array(long double))];
+  int t15[F(__is_array(bool))];
+  int t16[F(__is_array(char))];
+  int t17[F(__is_array(signed char))];
+  int t18[F(__is_array(unsigned char))];
+  int t19[F(__is_array(wchar_t))];
+  int t20[F(__is_array(short))];
+  int t21[F(__is_array(unsigned short))];
+  int t22[F(__is_array(int))];
+  int t23[F(__is_array(unsigned int))];
+  int t24[F(__is_array(long))];
+  int t25[F(__is_array(unsigned long))];
+  int t26[F(__is_array(Union))];
+  int t27[F(__is_array(Derives))];
+  int t28[F(__is_array(ClassType))];
+  int t29[F(__is_array(Enum))];
+  int t30[F(__is_array(void*))];
+  int t31[F(__is_array(cvoid*))];
+}
+
+template <typename T> void tmpl_func(T&) {}
+
+template <typename T> struct type_wrapper {
+  typedef T type;
+  typedef T* ptrtype;
+  typedef T& reftype;
+};
+
+void is_function()
+{
+  int t01[T(__is_function(type_wrapper<void(void)>::type))];
+  int t02[T(__is_function(typeof(tmpl_func<int>)))];
+
+  typedef void (*ptr_to_func_type)(void);
+
+  int t10[F(__is_function(void))];
+  int t11[F(__is_function(cvoid))];
+  int t12[F(__is_function(float))];
+  int t13[F(__is_function(double))];
+  int t14[F(__is_function(long double))];
+  int t15[F(__is_function(bool))];
+  int t16[F(__is_function(char))];
+  int t17[F(__is_function(signed char))];
+  int t18[F(__is_function(unsigned char))];
+  int t19[F(__is_function(wchar_t))];
+  int t20[F(__is_function(short))];
+  int t21[F(__is_function(unsigned short))];
+  int t22[F(__is_function(int))];
+  int t23[F(__is_function(unsigned int))];
+  int t24[F(__is_function(long))];
+  int t25[F(__is_function(unsigned long))];
+  int t26[F(__is_function(Union))];
+  int t27[F(__is_function(Derives))];
+  int t28[F(__is_function(ClassType))];
+  int t29[F(__is_function(Enum))];
+  int t30[F(__is_function(void*))];
+  int t31[F(__is_function(cvoid*))];
+  int t32[F(__is_function(void(*)()))];
+  int t33[F(__is_function(ptr_to_func_type))];
+  int t34[F(__is_function(type_wrapper<void(void)>::ptrtype))];
+  int t35[F(__is_function(type_wrapper<void(void)>::reftype))];
+}
+
+void is_reference()
+{
+  int t01[T(__is_reference(int&))];
+  int t02[T(__is_reference(const int&))];
+  int t03[T(__is_reference(void *&))];
+
+  int t10[F(__is_reference(int))];
+  int t11[F(__is_reference(const int))];
+  int t12[F(__is_reference(void *))];
+}
+
+void is_lvalue_reference()
+{
+  int t01[T(__is_lvalue_reference(int&))];
+  int t02[T(__is_lvalue_reference(void *&))];
+  int t03[T(__is_lvalue_reference(const int&))];
+  int t04[T(__is_lvalue_reference(void * const &))];
+
+  int t10[F(__is_lvalue_reference(int))];
+  int t11[F(__is_lvalue_reference(const int))];
+  int t12[F(__is_lvalue_reference(void *))];
+}
+
+#if __has_feature(cxx_rvalue_references)
+
+void is_rvalue_reference()
+{
+  int t01[T(__is_rvalue_reference(const int&&))];
+  int t02[T(__is_rvalue_reference(void * const &&))];
+
+  int t10[F(__is_rvalue_reference(int&))];
+  int t11[F(__is_rvalue_reference(void *&))];
+  int t12[F(__is_rvalue_reference(const int&))];
+  int t13[F(__is_rvalue_reference(void * const &))];
+  int t14[F(__is_rvalue_reference(int))];
+  int t15[F(__is_rvalue_reference(const int))];
+  int t16[F(__is_rvalue_reference(void *))];
+}
+
+#endif
+
+void is_fundamental()
+{
+  int t01[T(__is_fundamental(float))];
+  int t02[T(__is_fundamental(double))];
+  int t03[T(__is_fundamental(long double))];
+  int t11[T(__is_fundamental(bool))];
+  int t12[T(__is_fundamental(char))];
+  int t13[T(__is_fundamental(signed char))];
+  int t14[T(__is_fundamental(unsigned char))];
+  //int t15[T(__is_fundamental(char16_t))];
+  //int t16[T(__is_fundamental(char32_t))];
+  int t17[T(__is_fundamental(wchar_t))];
+  int t18[T(__is_fundamental(short))];
+  int t19[T(__is_fundamental(unsigned short))];
+  int t20[T(__is_fundamental(int))];
+  int t21[T(__is_fundamental(unsigned int))];
+  int t22[T(__is_fundamental(long))];
+  int t23[T(__is_fundamental(unsigned long))];
+  int t24[T(__is_fundamental(void))];
+  int t25[T(__is_fundamental(cvoid))];
+
+  int t30[F(__is_fundamental(Union))];
+  int t31[F(__is_fundamental(UnionAr))];
+  int t32[F(__is_fundamental(Derives))];
+  int t33[F(__is_fundamental(ClassType))];
+  int t34[F(__is_fundamental(Enum))];
+  int t35[F(__is_fundamental(IntArNB))];
+}
+
+void is_object()
+{
+  int t01[T(__is_object(int))];
+  int t02[T(__is_object(int *))];
+  int t03[T(__is_object(void *))];
+  int t04[T(__is_object(Union))];
+  int t05[T(__is_object(UnionAr))];
+  int t06[T(__is_object(ClassType))];
+  int t07[T(__is_object(Enum))];
+
+  int t10[F(__is_object(type_wrapper<void(void)>::type))];
+  int t11[F(__is_object(int&))];
+  int t12[F(__is_object(void))];
+}
+
+void is_scalar()
+{
+  int t01[T(__is_scalar(float))];
+  int t02[T(__is_scalar(double))];
+  int t03[T(__is_scalar(long double))];
+  int t04[T(__is_scalar(bool))];
+  int t05[T(__is_scalar(char))];
+  int t06[T(__is_scalar(signed char))];
+  int t07[T(__is_scalar(unsigned char))];
+  int t08[T(__is_scalar(wchar_t))];
+  int t09[T(__is_scalar(short))];
+  int t10[T(__is_scalar(unsigned short))];
+  int t11[T(__is_scalar(int))];
+  int t12[T(__is_scalar(unsigned int))];
+  int t13[T(__is_scalar(long))];
+  int t14[T(__is_scalar(unsigned long))];
+  int t15[T(__is_scalar(Enum))];
+  int t16[T(__is_scalar(void*))];
+  int t17[T(__is_scalar(cvoid*))];
+
+  int t20[F(__is_scalar(void))];
+  int t21[F(__is_scalar(cvoid))];
+  int t22[F(__is_scalar(Union))];
+  int t23[F(__is_scalar(UnionAr))];
+  int t24[F(__is_scalar(Derives))];
+  int t25[F(__is_scalar(ClassType))];
+  int t26[F(__is_scalar(IntArNB))];
+}
+
+struct StructWithMembers {
+  int member;
+  void method() {}
+};
+
+void is_compound()
+{
+  int t01[T(__is_compound(void*))];
+  int t02[T(__is_compound(cvoid*))];
+  int t03[T(__is_compound(void (*)()))];
+  int t04[T(__is_compound(int StructWithMembers::*))];
+  int t05[T(__is_compound(void (StructWithMembers::*)()))];
+  int t06[T(__is_compound(int&))];
+  int t07[T(__is_compound(Union))];
+  int t08[T(__is_compound(UnionAr))];
+  int t09[T(__is_compound(Derives))];
+  int t10[T(__is_compound(ClassType))];
+  int t11[T(__is_compound(IntArNB))];
+  int t12[T(__is_compound(Enum))];
+
+  int t20[F(__is_compound(float))];
+  int t21[F(__is_compound(double))];
+  int t22[F(__is_compound(long double))];
+  int t23[F(__is_compound(bool))];
+  int t24[F(__is_compound(char))];
+  int t25[F(__is_compound(signed char))];
+  int t26[F(__is_compound(unsigned char))];
+  int t27[F(__is_compound(wchar_t))];
+  int t28[F(__is_compound(short))];
+  int t29[F(__is_compound(unsigned short))];
+  int t30[F(__is_compound(int))];
+  int t31[F(__is_compound(unsigned int))];
+  int t32[F(__is_compound(long))];
+  int t33[F(__is_compound(unsigned long))];
+  int t34[F(__is_compound(void))];
+  int t35[F(__is_compound(cvoid))];
+}
+
+void is_pointer()
+{
+  StructWithMembers x;
+
+  int t01[T(__is_pointer(void*))];
+  int t02[T(__is_pointer(cvoid*))];
+  int t03[T(__is_pointer(cvoid*))];
+  int t04[T(__is_pointer(char*))];
+  int t05[T(__is_pointer(int*))];
+  int t06[T(__is_pointer(int**))];
+  int t07[T(__is_pointer(ClassType*))];
+  int t08[T(__is_pointer(Derives*))];
+  int t09[T(__is_pointer(Enum*))];
+  int t10[T(__is_pointer(IntArNB*))];
+  int t11[T(__is_pointer(Union*))];
+  int t12[T(__is_pointer(UnionAr*))];
+  int t13[T(__is_pointer(StructWithMembers*))];
+  int t14[T(__is_pointer(void (*)()))];
+
+  int t20[F(__is_pointer(void))];
+  int t21[F(__is_pointer(cvoid))];
+  int t22[F(__is_pointer(cvoid))];
+  int t23[F(__is_pointer(char))];
+  int t24[F(__is_pointer(int))];
+  int t25[F(__is_pointer(int))];
+  int t26[F(__is_pointer(ClassType))];
+  int t27[F(__is_pointer(Derives))];
+  int t28[F(__is_pointer(Enum))];
+  int t29[F(__is_pointer(IntArNB))];
+  int t30[F(__is_pointer(Union))];
+  int t31[F(__is_pointer(UnionAr))];
+  int t32[F(__is_pointer(StructWithMembers))];
+  int t33[F(__is_pointer(int StructWithMembers::*))];
+  int t34[F(__is_pointer(void (StructWithMembers::*) ()))];
+}
+
+void is_member_object_pointer()
+{
+  StructWithMembers x;
+
+  int t01[T(__is_member_object_pointer(int StructWithMembers::*))];
+
+  int t10[F(__is_member_object_pointer(void (StructWithMembers::*) ()))];
+  int t11[F(__is_member_object_pointer(void*))];
+  int t12[F(__is_member_object_pointer(cvoid*))];
+  int t13[F(__is_member_object_pointer(cvoid*))];
+  int t14[F(__is_member_object_pointer(char*))];
+  int t15[F(__is_member_object_pointer(int*))];
+  int t16[F(__is_member_object_pointer(int**))];
+  int t17[F(__is_member_object_pointer(ClassType*))];
+  int t18[F(__is_member_object_pointer(Derives*))];
+  int t19[F(__is_member_object_pointer(Enum*))];
+  int t20[F(__is_member_object_pointer(IntArNB*))];
+  int t21[F(__is_member_object_pointer(Union*))];
+  int t22[F(__is_member_object_pointer(UnionAr*))];
+  int t23[F(__is_member_object_pointer(StructWithMembers*))];
+  int t24[F(__is_member_object_pointer(void))];
+  int t25[F(__is_member_object_pointer(cvoid))];
+  int t26[F(__is_member_object_pointer(cvoid))];
+  int t27[F(__is_member_object_pointer(char))];
+  int t28[F(__is_member_object_pointer(int))];
+  int t29[F(__is_member_object_pointer(int))];
+  int t30[F(__is_member_object_pointer(ClassType))];
+  int t31[F(__is_member_object_pointer(Derives))];
+  int t32[F(__is_member_object_pointer(Enum))];
+  int t33[F(__is_member_object_pointer(IntArNB))];
+  int t34[F(__is_member_object_pointer(Union))];
+  int t35[F(__is_member_object_pointer(UnionAr))];
+  int t36[F(__is_member_object_pointer(StructWithMembers))];
+  int t37[F(__is_member_object_pointer(void (*)()))];
+}
+
+void is_member_function_pointer()
+{
+  StructWithMembers x;
+
+  int t01[T(__is_member_function_pointer(void (StructWithMembers::*) ()))];
+
+  int t10[F(__is_member_function_pointer(int StructWithMembers::*))];
+  int t11[F(__is_member_function_pointer(void*))];
+  int t12[F(__is_member_function_pointer(cvoid*))];
+  int t13[F(__is_member_function_pointer(cvoid*))];
+  int t14[F(__is_member_function_pointer(char*))];
+  int t15[F(__is_member_function_pointer(int*))];
+  int t16[F(__is_member_function_pointer(int**))];
+  int t17[F(__is_member_function_pointer(ClassType*))];
+  int t18[F(__is_member_function_pointer(Derives*))];
+  int t19[F(__is_member_function_pointer(Enum*))];
+  int t20[F(__is_member_function_pointer(IntArNB*))];
+  int t21[F(__is_member_function_pointer(Union*))];
+  int t22[F(__is_member_function_pointer(UnionAr*))];
+  int t23[F(__is_member_function_pointer(StructWithMembers*))];
+  int t24[F(__is_member_function_pointer(void))];
+  int t25[F(__is_member_function_pointer(cvoid))];
+  int t26[F(__is_member_function_pointer(cvoid))];
+  int t27[F(__is_member_function_pointer(char))];
+  int t28[F(__is_member_function_pointer(int))];
+  int t29[F(__is_member_function_pointer(int))];
+  int t30[F(__is_member_function_pointer(ClassType))];
+  int t31[F(__is_member_function_pointer(Derives))];
+  int t32[F(__is_member_function_pointer(Enum))];
+  int t33[F(__is_member_function_pointer(IntArNB))];
+  int t34[F(__is_member_function_pointer(Union))];
+  int t35[F(__is_member_function_pointer(UnionAr))];
+  int t36[F(__is_member_function_pointer(StructWithMembers))];
+  int t37[F(__is_member_function_pointer(void (*)()))];
+}
+
+void is_member_pointer()
+{
+  StructWithMembers x;
+
+  int t01[T(__is_member_pointer(int StructWithMembers::*))];
+  int t02[T(__is_member_pointer(void (StructWithMembers::*) ()))];
+
+  int t10[F(__is_member_pointer(void*))];
+  int t11[F(__is_member_pointer(cvoid*))];
+  int t12[F(__is_member_pointer(cvoid*))];
+  int t13[F(__is_member_pointer(char*))];
+  int t14[F(__is_member_pointer(int*))];
+  int t15[F(__is_member_pointer(int**))];
+  int t16[F(__is_member_pointer(ClassType*))];
+  int t17[F(__is_member_pointer(Derives*))];
+  int t18[F(__is_member_pointer(Enum*))];
+  int t19[F(__is_member_pointer(IntArNB*))];
+  int t20[F(__is_member_pointer(Union*))];
+  int t21[F(__is_member_pointer(UnionAr*))];
+  int t22[F(__is_member_pointer(StructWithMembers*))];
+  int t23[F(__is_member_pointer(void))];
+  int t24[F(__is_member_pointer(cvoid))];
+  int t25[F(__is_member_pointer(cvoid))];
+  int t26[F(__is_member_pointer(char))];
+  int t27[F(__is_member_pointer(int))];
+  int t28[F(__is_member_pointer(int))];
+  int t29[F(__is_member_pointer(ClassType))];
+  int t30[F(__is_member_pointer(Derives))];
+  int t31[F(__is_member_pointer(Enum))];
+  int t32[F(__is_member_pointer(IntArNB))];
+  int t33[F(__is_member_pointer(Union))];
+  int t34[F(__is_member_pointer(UnionAr))];
+  int t35[F(__is_member_pointer(StructWithMembers))];
+  int t36[F(__is_member_pointer(void (*)()))];
+}
+
+void is_const()
+{
+  int t01[T(__is_const(cvoid))];
+  int t02[T(__is_const(const char))];
+  int t03[T(__is_const(const int))];
+  int t04[T(__is_const(const long))];
+  int t05[T(__is_const(const short))];
+  int t06[T(__is_const(const signed char))];
+  int t07[T(__is_const(const wchar_t))];
+  int t08[T(__is_const(const bool))];
+  int t09[T(__is_const(const float))];
+  int t10[T(__is_const(const double))];
+  int t11[T(__is_const(const long double))];
+  int t12[T(__is_const(const unsigned char))];
+  int t13[T(__is_const(const unsigned int))];
+  int t14[T(__is_const(const unsigned long long))];
+  int t15[T(__is_const(const unsigned long))];
+  int t16[T(__is_const(const unsigned short))];
+  int t17[T(__is_const(const void))];
+  int t18[T(__is_const(const ClassType))];
+  int t19[T(__is_const(const Derives))];
+  int t20[T(__is_const(const Enum))];
+  int t21[T(__is_const(const IntArNB))];
+  int t22[T(__is_const(const Union))];
+  int t23[T(__is_const(const UnionAr))];
+
+  int t30[F(__is_const(char))];
+  int t31[F(__is_const(int))];
+  int t32[F(__is_const(long))];
+  int t33[F(__is_const(short))];
+  int t34[F(__is_const(signed char))];
+  int t35[F(__is_const(wchar_t))];
+  int t36[F(__is_const(bool))];
+  int t37[F(__is_const(float))];
+  int t38[F(__is_const(double))];
+  int t39[F(__is_const(long double))];
+  int t40[F(__is_const(unsigned char))];
+  int t41[F(__is_const(unsigned int))];
+  int t42[F(__is_const(unsigned long long))];
+  int t43[F(__is_const(unsigned long))];
+  int t44[F(__is_const(unsigned short))];
+  int t45[F(__is_const(void))];
+  int t46[F(__is_const(ClassType))];
+  int t47[F(__is_const(Derives))];
+  int t48[F(__is_const(Enum))];
+  int t49[F(__is_const(IntArNB))];
+  int t50[F(__is_const(Union))];
+  int t51[F(__is_const(UnionAr))];
+}
+
+void is_volatile()
+{
+  int t02[T(__is_volatile(volatile char))];
+  int t03[T(__is_volatile(volatile int))];
+  int t04[T(__is_volatile(volatile long))];
+  int t05[T(__is_volatile(volatile short))];
+  int t06[T(__is_volatile(volatile signed char))];
+  int t07[T(__is_volatile(volatile wchar_t))];
+  int t08[T(__is_volatile(volatile bool))];
+  int t09[T(__is_volatile(volatile float))];
+  int t10[T(__is_volatile(volatile double))];
+  int t11[T(__is_volatile(volatile long double))];
+  int t12[T(__is_volatile(volatile unsigned char))];
+  int t13[T(__is_volatile(volatile unsigned int))];
+  int t14[T(__is_volatile(volatile unsigned long long))];
+  int t15[T(__is_volatile(volatile unsigned long))];
+  int t16[T(__is_volatile(volatile unsigned short))];
+  int t17[T(__is_volatile(volatile void))];
+  int t18[T(__is_volatile(volatile ClassType))];
+  int t19[T(__is_volatile(volatile Derives))];
+  int t20[T(__is_volatile(volatile Enum))];
+  int t21[T(__is_volatile(volatile IntArNB))];
+  int t22[T(__is_volatile(volatile Union))];
+  int t23[T(__is_volatile(volatile UnionAr))];
+
+  int t30[F(__is_volatile(char))];
+  int t31[F(__is_volatile(int))];
+  int t32[F(__is_volatile(long))];
+  int t33[F(__is_volatile(short))];
+  int t34[F(__is_volatile(signed char))];
+  int t35[F(__is_volatile(wchar_t))];
+  int t36[F(__is_volatile(bool))];
+  int t37[F(__is_volatile(float))];
+  int t38[F(__is_volatile(double))];
+  int t39[F(__is_volatile(long double))];
+  int t40[F(__is_volatile(unsigned char))];
+  int t41[F(__is_volatile(unsigned int))];
+  int t42[F(__is_volatile(unsigned long long))];
+  int t43[F(__is_volatile(unsigned long))];
+  int t44[F(__is_volatile(unsigned short))];
+  int t45[F(__is_volatile(void))];
+  int t46[F(__is_volatile(ClassType))];
+  int t47[F(__is_volatile(Derives))];
+  int t48[F(__is_volatile(Enum))];
+  int t49[F(__is_volatile(IntArNB))];
+  int t50[F(__is_volatile(Union))];
+  int t51[F(__is_volatile(UnionAr))];
+}
+
+struct TrivialStruct {
+  int member;
+};
+
+struct NonTrivialStruct {
+  int member;
+  NonTrivialStruct() {
+    member = 0;
+  }
+};
+
+void is_trivial2()
+{
+  int t01[T(__is_trivial(char))];
+  int t02[T(__is_trivial(int))];
+  int t03[T(__is_trivial(long))];
+  int t04[T(__is_trivial(short))];
+  int t05[T(__is_trivial(signed char))];
+  int t06[T(__is_trivial(wchar_t))];
+  int t07[T(__is_trivial(bool))];
+  int t08[T(__is_trivial(float))];
+  int t09[T(__is_trivial(double))];
+  int t10[T(__is_trivial(long double))];
+  int t11[T(__is_trivial(unsigned char))];
+  int t12[T(__is_trivial(unsigned int))];
+  int t13[T(__is_trivial(unsigned long long))];
+  int t14[T(__is_trivial(unsigned long))];
+  int t15[T(__is_trivial(unsigned short))];
+  int t16[T(__is_trivial(ClassType))];
+  int t17[T(__is_trivial(Derives))];
+  int t18[T(__is_trivial(Enum))];
+  int t19[T(__is_trivial(IntAr))];
+  int t20[T(__is_trivial(Union))];
+  int t21[T(__is_trivial(UnionAr))];
+  int t22[T(__is_trivial(TrivialStruct))];
+
+  int t30[F(__is_trivial(void))];
+  int t31[F(__is_trivial(NonTrivialStruct))];
+}
+
+struct CStruct {
+  int one;
+  int two;
+};
+
+struct CEmptyStruct {};
+
+struct CppEmptyStruct : CStruct {};
+struct CppStructStandard : CEmptyStruct {
+  int three;
+  int four;
+};
+struct CppStructNonStandardByBase : CStruct {
+  int three;
+  int four;
+};
+struct CppStructNonStandardByVirt : CStruct {
+  virtual void method() {}
+};
+struct CppStructNonStandardByMemb : CStruct {
+  CppStructNonStandardByVirt member;
+};
+struct CppStructNonStandardByProt : CStruct {
+  int five;
+protected:
+  int six;
+};
+struct CppStructNonStandardByVirtBase : virtual CStruct {
+};
+struct CppStructNonStandardBySameBase : CEmptyStruct {
+  CEmptyStruct member;
+};
+struct CppStructNonStandardBy2ndVirtBase : CEmptyStruct {
+  CEmptyStruct member;
+};
+
+void is_standard_layout()
+{
+  typedef const int ConstInt;
+  typedef ConstInt ConstIntAr[4];
+  typedef CppStructStandard CppStructStandardAr[4];
+
+  int t01[T(__is_standard_layout(int))];
+  int t02[T(__is_standard_layout(ConstInt))];
+  int t03[T(__is_standard_layout(ConstIntAr))];
+  int t04[T(__is_standard_layout(CStruct))];
+  int t05[T(__is_standard_layout(CppStructStandard))];
+  int t06[T(__is_standard_layout(CppStructStandardAr))];
+
+  typedef CppStructNonStandardByBase CppStructNonStandardByBaseAr[4];
+
+  int t10[F(__is_standard_layout(CppStructNonStandardByVirt))];
+  int t11[F(__is_standard_layout(CppStructNonStandardByMemb))];
+  int t12[F(__is_standard_layout(CppStructNonStandardByProt))];
+  int t13[F(__is_standard_layout(CppStructNonStandardByVirtBase))];
+  int t14[F(__is_standard_layout(CppStructNonStandardByBase))];
+  int t15[F(__is_standard_layout(CppStructNonStandardByBaseAr))];
+  int t16[F(__is_standard_layout(CppStructNonStandardBySameBase))];
+  int t17[F(__is_standard_layout(CppStructNonStandardBy2ndVirtBase))];
+}
+
+void is_signed()
+{
+  //int t01[T(__is_signed(char))];
+  int t02[T(__is_signed(int))];
+  int t03[T(__is_signed(long))];
+  int t04[T(__is_signed(short))];
+  int t05[T(__is_signed(signed char))];
+  int t06[T(__is_signed(wchar_t))];
+
+  int t10[F(__is_signed(bool))];
+  int t11[F(__is_signed(cvoid))];
+  int t12[F(__is_signed(float))];
+  int t13[F(__is_signed(double))];
+  int t14[F(__is_signed(long double))];
+  int t15[F(__is_signed(unsigned char))];
+  int t16[F(__is_signed(unsigned int))];
+  int t17[F(__is_signed(unsigned long long))];
+  int t18[F(__is_signed(unsigned long))];
+  int t19[F(__is_signed(unsigned short))];
+  int t20[F(__is_signed(void))];
+  int t21[F(__is_signed(ClassType))];
+  int t22[F(__is_signed(Derives))];
+  int t23[F(__is_signed(Enum))];
+  int t24[F(__is_signed(IntArNB))];
+  int t25[F(__is_signed(Union))];
+  int t26[F(__is_signed(UnionAr))];
+}
+
+void is_unsigned()
+{
+  int t01[T(__is_unsigned(bool))];
+  int t02[T(__is_unsigned(unsigned char))];
+  int t03[T(__is_unsigned(unsigned short))];
+  int t04[T(__is_unsigned(unsigned int))];
+  int t05[T(__is_unsigned(unsigned long))];
+  int t06[T(__is_unsigned(unsigned long long))];
+  int t07[T(__is_unsigned(Enum))];
+
+  int t10[F(__is_unsigned(void))];
+  int t11[F(__is_unsigned(cvoid))];
+  int t12[F(__is_unsigned(float))];
+  int t13[F(__is_unsigned(double))];
+  int t14[F(__is_unsigned(long double))];
+  int t16[F(__is_unsigned(char))];
+  int t17[F(__is_unsigned(signed char))];
+  int t18[F(__is_unsigned(wchar_t))];
+  int t19[F(__is_unsigned(short))];
+  int t20[F(__is_unsigned(int))];
+  int t21[F(__is_unsigned(long))];
+  int t22[F(__is_unsigned(Union))];
+  int t23[F(__is_unsigned(UnionAr))];
+  int t24[F(__is_unsigned(Derives))];
+  int t25[F(__is_unsigned(ClassType))];
+  int t26[F(__is_unsigned(IntArNB))];
+}
+
 typedef Int& IntRef;
 typedef const IntAr ConstIntAr;
 typedef ConstIntAr ConstIntArAr[4];
@@ -554,6 +1321,64 @@ void is_base_of() {
 
   isBaseOfT<BaseA<int>, DerivedB<int> >();
   isBaseOfF<DerivedB<int>, BaseA<int> >();
+}
+
+#if 0
+template<class T, class U>
+class TemplateClass {};
+
+template<class T>
+using TemplateAlias = TemplateClass<T, int>;
+#endif
+
+typedef class Base BaseTypedef;
+
+void is_same()
+{
+  int t01[T(__is_same(Base, Base))];
+  int t02[T(__is_same(Base, BaseTypedef))];
+#if 0
+  int t03[T(__is_same(TemplateClass<int, int>, TemplateAlias<int>))];
+#endif
+
+  int t10[F(__is_same(Base, const Base))];
+  int t11[F(__is_same(Base, Base&))];
+  int t12[F(__is_same(Base, Derived))];
+}
+
+struct IntWrapper
+{
+  int value;
+  IntWrapper(int _value) : value(_value) {}
+  operator int() const {
+    return value;
+  }
+};
+
+struct FloatWrapper
+{
+  float value;
+  FloatWrapper(float _value) : value(_value) {}
+  FloatWrapper(const IntWrapper& obj)
+    : value(static_cast<float>(obj.value)) {}
+  operator float() const {
+    return value;
+  }
+  operator IntWrapper() const {
+    return IntWrapper(static_cast<int>(value));
+  }
+};
+
+void is_convertible()
+{
+  int t01[T(__is_convertible(IntWrapper, IntWrapper))];
+  int t02[T(__is_convertible(IntWrapper, const IntWrapper))];
+  int t03[T(__is_convertible(IntWrapper, int))];
+  int t04[T(__is_convertible(int, IntWrapper))];
+  int t05[T(__is_convertible(IntWrapper, FloatWrapper))];
+  int t06[T(__is_convertible(FloatWrapper, IntWrapper))];
+  int t07[T(__is_convertible(FloatWrapper, float))];
+  int t08[T(__is_convertible(float, FloatWrapper))];
 }
 
 struct FromInt { FromInt(int); };

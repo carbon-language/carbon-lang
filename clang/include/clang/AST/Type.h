@@ -1171,7 +1171,7 @@ public:
   /// (C++0x [basic.types]p10)
   bool isLiteralType() const;
 
-  /// isTrivialType - Return true if this is a literal type
+  /// isTrivialType - Return true if this is a trivial type
   /// (C++0x [basic.types]p9)
   bool isTrivialType() const;
 
@@ -2831,6 +2831,9 @@ public:
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false.
   bool hasConstFields() const { return false; }
+
+  /// \brief Whether this class has standard layout
+  bool hasStandardLayout(ASTContext& Ctx) const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

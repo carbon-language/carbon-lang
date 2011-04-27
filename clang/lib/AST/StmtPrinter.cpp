@@ -1251,23 +1251,48 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
 
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
-  default: llvm_unreachable("Unknown unary type trait");
+  default: assert(false && "Unknown type trait");
   case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
-  case UTT_HasNothrowCopy:        return "__has_nothrow_copy";
   case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
+  case UTT_HasNothrowCopy:          return "__has_nothrow_copy";
   case UTT_HasTrivialAssign:      return "__has_trivial_assign";
-  case UTT_HasTrivialCopy:        return "__has_trivial_copy";
   case UTT_HasTrivialConstructor: return "__has_trivial_constructor";
+  case UTT_HasTrivialCopy:          return "__has_trivial_copy";
   case UTT_HasTrivialDestructor:  return "__has_trivial_destructor";
   case UTT_HasVirtualDestructor:  return "__has_virtual_destructor";
   case UTT_IsAbstract:            return "__is_abstract";
+  case UTT_IsArithmetic:            return "__is_arithmetic";
+  case UTT_IsArray:                 return "__is_array";
   case UTT_IsClass:               return "__is_class";
+  case UTT_IsCompleteType:          return "__is_complete_type";
+  case UTT_IsCompound:              return "__is_compound";
+  case UTT_IsConst:                 return "__is_const";
   case UTT_IsEmpty:               return "__is_empty";
   case UTT_IsEnum:                return "__is_enum";
+  case UTT_IsFloatingPoint:         return "__is_floating_point";
+  case UTT_IsFunction:              return "__is_function";
+  case UTT_IsFundamental:           return "__is_fundamental";
+  case UTT_IsIntegral:              return "__is_integral";
+  case UTT_IsLvalueExpr:            return "__is_lvalue_expr";
+  case UTT_IsLvalueReference:       return "__is_lvalue_reference";
+  case UTT_IsMemberFunctionPointer: return "__is_member_function_pointer";
+  case UTT_IsMemberObjectPointer:   return "__is_member_object_pointer";
+  case UTT_IsMemberPointer:         return "__is_member_pointer";
+  case UTT_IsObject:                return "__is_object";
   case UTT_IsPOD:                 return "__is_pod";
+  case UTT_IsPointer:               return "__is_pointer";
   case UTT_IsPolymorphic:         return "__is_polymorphic";
-  case UTT_IsTrivial:             return "__is_trivial";
+  case UTT_IsReference:             return "__is_reference";
+  case UTT_IsRvalueExpr:            return "__is_rvalue_expr";
+  case UTT_IsRvalueReference:       return "__is_rvalue_reference";
+  case UTT_IsScalar:                return "__is_scalar";
+  case UTT_IsSigned:                return "__is_signed";
+  case UTT_IsStandardLayout:        return "__is_standard_layout";
+  case UTT_IsTrivial:               return "__is_trivial";
   case UTT_IsUnion:               return "__is_union";
+  case UTT_IsUnsigned:              return "__is_unsigned";
+  case UTT_IsVoid:                  return "__is_void";
+  case UTT_IsVolatile:              return "__is_volatile";
   }
   return "";
 }
@@ -1275,6 +1300,8 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
 static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   switch (BTT) {
   case BTT_IsBaseOf:         return "__is_base_of";
+  case BTT_IsConvertible:    return "__is_convertible";
+  case BTT_IsSame:           return "__is_same";
   case BTT_TypeCompatible:   return "__builtin_types_compatible_p";
   case BTT_IsConvertibleTo:  return "__is_convertible_to";
   }

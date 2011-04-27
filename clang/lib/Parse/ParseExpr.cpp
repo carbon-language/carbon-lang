@@ -519,6 +519,34 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '::'[opt] 'delete' cast-expression
 ///                   '::'[opt] 'delete' '[' ']' cast-expression
 ///
+/// [GNU/Embarcadero] unary-type-trait:
+///                   '__is_arithmetic'
+///                   '__is_floating_point'
+///                   '__is_integral'
+///                   '__is_lvalue_expr'
+///                   '__is_rvalue_expr'
+///                   '__is_complete_type'
+///                   '__is_void'
+///                   '__is_array'
+///                   '__is_function'
+///                   '__is_reference'
+///                   '__is_lvalue_reference'
+///                   '__is_rvalue_reference'
+///                   '__is_fundamental'
+///                   '__is_object'
+///                   '__is_scalar'
+///                   '__is_compound'
+///                   '__is_pointer'
+///                   '__is_member_object_pointer'
+///                   '__is_member_function_pointer'
+///                   '__is_member_pointer'
+///                   '__is_const'
+///                   '__is_volatile'
+///                   '__is_trivial'
+///                   '__is_standard_layout'
+///                   '__is_signed'
+///                   '__is_unsigned'
+///
 /// [GNU] unary-type-trait:
 ///                   '__has_nothrow_assign'
 ///                   '__has_nothrow_copy'
@@ -540,6 +568,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///       binary-type-trait:
 /// [GNU]             '__is_base_of'       
 /// [MS]              '__is_convertible_to'
+///                   '__is_convertible'
+///                   '__is_same'
 ///
 /// [Embarcadero] expression-trait:
 ///                   '__is_lvalue_expr'
@@ -997,6 +1027,29 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_empty:
   case tok::kw___is_enum:
   case tok::kw___is_literal:
+  case tok::kw___is_arithmetic:
+  case tok::kw___is_integral:
+  case tok::kw___is_floating_point:
+  case tok::kw___is_complete_type:
+  case tok::kw___is_void:
+  case tok::kw___is_array:
+  case tok::kw___is_function:
+  case tok::kw___is_reference:
+  case tok::kw___is_lvalue_reference:
+  case tok::kw___is_rvalue_reference:
+  case tok::kw___is_fundamental:
+  case tok::kw___is_object:
+  case tok::kw___is_scalar:
+  case tok::kw___is_compound:
+  case tok::kw___is_pointer:
+  case tok::kw___is_member_object_pointer:
+  case tok::kw___is_member_function_pointer:
+  case tok::kw___is_member_pointer:
+  case tok::kw___is_const:
+  case tok::kw___is_volatile:
+  case tok::kw___is_standard_layout:
+  case tok::kw___is_signed:
+  case tok::kw___is_unsigned:
   case tok::kw___is_literal_type:
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
@@ -1014,6 +1067,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
   case tok::kw___builtin_types_compatible_p:
   case tok::kw___is_base_of:
+  case tok::kw___is_same:
+  case tok::kw___is_convertible:
   case tok::kw___is_convertible_to:
     return ParseBinaryTypeTrait();
 

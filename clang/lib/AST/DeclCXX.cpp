@@ -926,6 +926,10 @@ CXXDestructorDecl *CXXRecordDecl::getDestructor() const {
 
 void CXXRecordDecl::completeDefinition() {
   completeDefinition(0);
+
+  ASTContext &Context = getASTContext();
+  if (const RecordType *RT = getTypeForDecl()->getAs<RecordType>())
+    data().HasStandardLayout = RT->hasStandardLayout(Context);
 }
 
 void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {

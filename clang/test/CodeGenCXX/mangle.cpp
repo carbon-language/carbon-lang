@@ -183,7 +183,7 @@ template <typename T> typename T::U ft6(const T&) { return 0; }
 // CHECK: @_Z3ft6I1SENT_1UERKS1_
 template int ft6<S>(const S&);
 
-template<typename> struct __is_scalar {
+template<typename> struct __is_scalar_type {
   enum { __value = 1 };
 };
 
@@ -194,11 +194,11 @@ template<typename T> struct __enable_if<true, T> {
 };
 
 // PR5063
-template<typename T> typename __enable_if<__is_scalar<T>::__value, void>::__type ft7() { }
+template<typename T> typename __enable_if<__is_scalar_type<T>::__value, void>::__type ft7() { }
 
-// CHECK: @_Z3ft7IiEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft7IiEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
 template void ft7<int>();
-// CHECK: @_Z3ft7IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft7IPvEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
 template void ft7<void*>();
 
 // PR5144
@@ -225,15 +225,15 @@ struct S7 {
 S7::S7() {}
 
 // PR5063
-template<typename T> typename __enable_if<(__is_scalar<T>::__value), void>::__type ft8() { }
-// CHECK: @_Z3ft8IiEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+template<typename T> typename __enable_if<(__is_scalar_type<T>::__value), void>::__type ft8() { }
+// CHECK: @_Z3ft8IiEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
 template void ft8<int>();
-// CHECK: @_Z3ft8IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft8IPvEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
 template void ft8<void*>();
 
 // PR5796
 namespace PR5796 {
-template<typename> struct __is_scalar {
+template<typename> struct __is_scalar_type {
   enum { __value = 0 };
 };
 
@@ -241,8 +241,8 @@ template<bool, typename> struct __enable_if {};
 template<typename T> struct __enable_if<true, T> { typedef T __type; };
 template<typename T>
 
-// CHECK: define linkonce_odr void @_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_11__is_scalarIT_EE7__valueEvE6__typeEv
-typename __enable_if<!__is_scalar<T>::__value, void>::__type __fill_a() { };
+// CHECK: define linkonce_odr void @_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_16__is_scalar_typeIT_EE7__valueEvE6__typeEv
+typename __enable_if<!__is_scalar_type<T>::__value, void>::__type __fill_a() { };
 
 void f() { __fill_a<int>(); }
 }
