@@ -27,6 +27,7 @@ namespace lldb_private {
     class OptionValueUInt64;
     class OptionValueString;
     class OptionValueFileSpec;
+    class OptionValueFormat;
     class OptionValueArray;
     class OptionValueDictionary;
 
@@ -43,6 +44,7 @@ namespace lldb_private {
             eTypeDictionary,
             eTypeEnum,
             eTypeFileSpec,
+            eTypeFormat,
             eTypeSInt64,
             eTypeUInt64,
             eTypeString
@@ -89,32 +91,38 @@ namespace lldb_private {
         GetUInt64Value (uint64_t fail_value, bool *success_ptr);
 
         OptionValueBoolean *
-        GetAsBooleanValue ();
+        GetAsBoolean ();
         
         OptionValueSInt64 *
-        GetAsSInt64Value ();
+        GetAsSInt64 ();
         
         OptionValueUInt64 *
-        GetAsUInt64Value ();        
+        GetAsUInt64 ();        
         
         OptionValueString *
-        GetAsStringValue ();
+        GetAsString ();
         
         OptionValueFileSpec *
-        GetAsFileSpecValue();
+        GetAsFileSpec ();
+        
+        OptionValueFormat *
+        GetAsFormat ();
         
         OptionValueArray *
-        GetAsArrayValue();
+        GetAsArray ();
         
         OptionValueDictionary *
-        GetAsDictionaryValue();
+        GetAsDictionary ();
 
         const char *
-        GetStringValue ();
+        GetStringValue (const char *fail_value = NULL);
 
         uint64_t
-        GetUInt64Value ();
+        GetUInt64Value (uint64_t fail_value = 0);
                 
+        lldb::Format
+        GetFormatValue (lldb::Format fail_value = lldb::eFormatDefault);
+
     protected:
         bool m_value_was_set; // This can be used to see if a value has been set
                               // by a call to SetValueFromCString(). It is often
@@ -532,13 +540,13 @@ namespace lldb_private {
             m_default_value ()
         {
         }
-
+        
         OptionValueFileSpec (const FileSpec &current_value) :
             m_current_value (current_value),
             m_default_value ()
         {
         }
-
+        
         OptionValueFileSpec (const FileSpec &current_value, 
                              const FileSpec &default_value) :
             m_current_value (current_value),
@@ -584,7 +592,13 @@ namespace lldb_private {
         {
             return m_current_value;
         }
-        
+
+        const FileSpec &
+        GetCurrentValue() const
+        {
+            return m_current_value;
+        }
+
         const FileSpec &
         GetDefaultValue() const
         {
@@ -606,6 +620,93 @@ namespace lldb_private {
     protected:
         FileSpec m_current_value;
         FileSpec m_default_value;
+    };
+    
+    //---------------------------------------------------------------------
+    // OptionValueFormat
+    //---------------------------------------------------------------------
+    class OptionValueFormat : public OptionValue
+    {
+    public:
+        OptionValueFormat () :
+            m_current_value (lldb::eFormatInvalid),
+            m_default_value (lldb::eFormatDefault)
+        {
+        }
+        
+        OptionValueFormat (lldb::Format current_value) :
+            m_current_value (current_value),
+            m_default_value (lldb::eFormatDefault)
+        {
+        }
+        
+        OptionValueFormat (lldb::Format current_value, 
+                           lldb::Format default_value) :
+            m_current_value (current_value),
+            m_default_value (default_value)
+        {
+        }
+        
+        virtual 
+        ~OptionValueFormat()
+        {
+        }
+        
+        //---------------------------------------------------------------------
+        // Virtual subclass pure virtual overrides
+        //---------------------------------------------------------------------
+        
+        virtual OptionValue::Type
+        GetType ()
+        {
+            return eTypeFormat;
+        }
+        
+        virtual void
+        DumpValue (Stream &strm);
+        
+        virtual Error
+        SetValueFromCString (const char *value);
+        
+        virtual bool
+        Clear ()
+        {
+            m_current_value = m_default_value;
+            m_value_was_set = false;
+            return true;
+        }
+        
+        //---------------------------------------------------------------------
+        // Subclass specific functions
+        //---------------------------------------------------------------------
+        
+        lldb::Format
+        GetCurrentValue()
+        {
+            return m_current_value;
+        }
+        
+        lldb::Format 
+        GetDefaultValue() const
+        {
+            return m_default_value;
+        }
+        
+        void
+        SetCurrentValue (lldb::Format value)
+        {
+            m_current_value = value;
+        }
+        
+        void
+        SetDefaultValue (lldb::Format value)
+        {
+            m_default_value = value;
+        }
+        
+    protected:
+        lldb::Format m_current_value;
+        lldb::Format m_default_value;
     };
     
     //---------------------------------------------------------------------

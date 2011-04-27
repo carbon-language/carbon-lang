@@ -392,6 +392,20 @@ protected:
         {
         }
         
+        
+        //----------------------------------------------------------------------
+        /// Append options from a OptionGroup class.
+        ///
+        /// Append all options from \a group using the exact same option groups
+        /// that each option is defined with.
+        ///
+        /// @param[in] group
+        ///     A group of options to take option values from and copy their 
+        ///     definitions into this class.
+        //----------------------------------------------------------------------
+        void
+        Append (OptionGroup* group);
+
         //----------------------------------------------------------------------
         /// Append options from a OptionGroup class.
         ///

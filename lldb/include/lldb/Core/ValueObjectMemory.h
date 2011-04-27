@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 namespace lldb_private {
 
@@ -30,6 +31,12 @@ public:
             const char *name,
             const Address &address, 
             lldb::TypeSP &type_sp);
+
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope, 
+            const char *name,
+            const Address &address, 
+            const ClangASTType &ast_type);
 
     virtual
     ~ValueObjectMemory();
@@ -61,6 +68,7 @@ protected:
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;
+    ClangASTType m_clang_type;
 
 private:
     ValueObjectMemory (ExecutionContextScope *exe_scope, 
@@ -68,6 +76,10 @@ private:
                        const Address &address, 
                        lldb::TypeSP &type_sp);
 
+    ValueObjectMemory (ExecutionContextScope *exe_scope,
+                       const char *name, 
+                       const Address &address,
+                       const ClangASTType &ast_type);
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------

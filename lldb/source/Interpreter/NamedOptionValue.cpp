@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Interpreter/Args.h"
 
@@ -47,7 +48,7 @@ OptionValue::GetUInt64Value (uint64_t fail_value, bool *success_ptr)
 
 
 OptionValueBoolean *
-OptionValue::GetAsBooleanValue ()
+OptionValue::GetAsBoolean ()
 {
     if (GetType () == OptionValue::eTypeBoolean)
         return static_cast<OptionValueBoolean *>(this);
@@ -55,7 +56,7 @@ OptionValue::GetAsBooleanValue ()
 }
 
 OptionValueSInt64 *
-OptionValue::GetAsSInt64Value ()
+OptionValue::GetAsSInt64 ()
 {
     if (GetType () == OptionValue::eTypeSInt64)
         return static_cast<OptionValueSInt64 *>(this);
@@ -63,7 +64,7 @@ OptionValue::GetAsSInt64Value ()
 }
 
 OptionValueUInt64 *
-OptionValue::GetAsUInt64Value ()
+OptionValue::GetAsUInt64 ()
 {
     if (GetType () == OptionValue::eTypeUInt64)
         return static_cast<OptionValueUInt64 *>(this);
@@ -71,7 +72,7 @@ OptionValue::GetAsUInt64Value ()
 }
 
 OptionValueString *
-OptionValue::GetAsStringValue ()
+OptionValue::GetAsString ()
 {
     if (GetType () == OptionValue::eTypeString)
         return static_cast<OptionValueString *>(this);
@@ -79,15 +80,24 @@ OptionValue::GetAsStringValue ()
 }
 
 OptionValueFileSpec *
-OptionValue::GetAsFileSpecValue ()
+OptionValue::GetAsFileSpec ()
 {
     if (GetType () == OptionValue::eTypeFileSpec)
         return static_cast<OptionValueFileSpec *>(this);
     return NULL;
+
+}
+
+OptionValueFormat *
+OptionValue::GetAsFormat ()
+{
+    if (GetType () == OptionValue::eTypeFormat)
+        return static_cast<OptionValueFormat *>(this);
+    return NULL;
 }
 
 OptionValueArray *
-OptionValue::GetAsArrayValue ()
+OptionValue::GetAsArray ()
 {
     if (GetType () == OptionValue::eTypeArray)
         return static_cast<OptionValueArray *>(this);
@@ -95,7 +105,7 @@ OptionValue::GetAsArrayValue ()
 }
 
 OptionValueDictionary *
-OptionValue::GetAsDictionaryValue ()
+OptionValue::GetAsDictionary ()
 {
     if (GetType () == OptionValue::eTypeDictionary)
         return static_cast<OptionValueDictionary *>(this);
@@ -103,19 +113,30 @@ OptionValue::GetAsDictionaryValue ()
 }
 
 const char *
-OptionValue::GetStringValue ()
+OptionValue::GetStringValue (const char *fail_value)
 {
-    if (GetType () == OptionValue::eTypeString)
-        return static_cast<OptionValueString *>(this)->GetCurrentValue();
-    return NULL;
+    OptionValueString *option_value = GetAsString ();
+    if (option_value)
+        return option_value->GetCurrentValue();
+    return fail_value;
 }
 
 uint64_t
-OptionValue::GetUInt64Value ()
+OptionValue::GetUInt64Value (uint64_t fail_value)
 {
-    if (GetType () == OptionValue::eTypeUInt64)
-        return static_cast<OptionValueUInt64 *>(this)->GetCurrentValue();
-    return 0;
+    OptionValueUInt64 *option_value = GetAsUInt64 ();
+    if (option_value)
+        return option_value->GetCurrentValue();
+    return fail_value;
+}
+
+lldb::Format
+OptionValue::GetFormatValue (lldb::Format fail_value)
+{
+    OptionValueFormat *option_value = GetAsFormat ();
+    if (option_value)
+        return option_value->GetCurrentValue();
+    return fail_value;
 }
 
 //-------------------------------------------------------------------------
@@ -250,8 +271,6 @@ OptionValueString::SetValueFromCString (const char *value_cstr)
     return Error ();
 }
 
-
-
 //-------------------------------------------------------------------------
 // OptionValueFileSpec
 //-------------------------------------------------------------------------
@@ -283,6 +302,29 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr)
         m_current_value.Clear();
     m_value_was_set = true;
     return Error();
+}
+
+
+//-------------------------------------------------------------------------
+// OptionValueFormat
+//-------------------------------------------------------------------------
+void
+OptionValueFormat::DumpValue (Stream &strm)
+{
+    strm.PutCString (GetFormatAsCString (m_current_value));
+}
+
+Error
+OptionValueFormat::SetValueFromCString (const char *value_cstr)
+{
+    Format new_format;
+    Error error (Args::StringToFormat(value_cstr, new_format));
+    if (error.Success())
+    {
+        m_value_was_set = true;
+        m_current_value = new_format;
+    }
+    return error;
 }
 
 

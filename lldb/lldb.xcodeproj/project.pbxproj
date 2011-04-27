@@ -73,6 +73,8 @@
 		26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */; };
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
 		26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EF01338317700EF765A /* GDBRemoteCommunicationServer.h */; };
+		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
+		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
 		2689000013353DB600698AC0 /* BreakpointResolverAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */; };
 		2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */; };
 		2689000213353DB600698AC0 /* BreakpointResolverFileLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */; };
@@ -379,6 +381,7 @@
 		26B1FCBD13381071002886E2 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		26B1FCC21338115F002886E2 /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
@@ -695,6 +698,8 @@
 		2675F6FF1332BE690067997B /* PlatformRemoteiOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformRemoteiOS.h; sourceTree = "<group>"; };
 		2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorGDBRemote.cpp; path = source/Utility/StringExtractorGDBRemote.cpp; sourceTree = "<group>"; };
 		2676A094119C93C8008A98EF /* StringExtractorGDBRemote.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractorGDBRemote.h; path = source/Utility/StringExtractorGDBRemote.h; sourceTree = "<group>"; };
+		267C0128136880C7006E963E /* OptionGroupValueObjectDisplay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupValueObjectDisplay.h; path = include/lldb/Interpreter/OptionGroupValueObjectDisplay.h; sourceTree = "<group>"; };
+		267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupValueObjectDisplay.cpp; path = source/Interpreter/OptionGroupValueObjectDisplay.cpp; sourceTree = "<group>"; };
 		2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PseudoTerminal.cpp; path = source/Utility/PseudoTerminal.cpp; sourceTree = "<group>"; };
 		2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PseudoTerminal.h; path = include/lldb/Utility/PseudoTerminal.h; sourceTree = "<group>"; };
 		2682F284115EF3A700CCFF99 /* SBError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBError.cpp; path = source/API/SBError.cpp; sourceTree = "<group>"; };
@@ -988,6 +993,10 @@
 		26BC7F3E10F1B90C00F91463 /* ThreadList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadList.cpp; path = source/Target/ThreadList.cpp; sourceTree = "<group>"; };
 		26BC7F3F10F1B90C00F91463 /* ThreadPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlan.cpp; path = source/Target/ThreadPlan.cpp; sourceTree = "<group>"; };
 		26BC7F4C10F1BC1A00F91463 /* ObjectFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ObjectFile.cpp; path = source/Symbol/ObjectFile.cpp; sourceTree = "<group>"; };
+		26BCFC4F1368ADF7006DC050 /* OptionGroupFormat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupFormat.h; path = include/lldb/Interpreter/OptionGroupFormat.h; sourceTree = "<group>"; };
+		26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupFormat.cpp; path = source/Interpreter/OptionGroupFormat.cpp; sourceTree = "<group>"; };
+		26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupOutputFile.cpp; path = source/Interpreter/OptionGroupOutputFile.cpp; sourceTree = "<group>"; };
+		26BCFC541368B4B8006DC050 /* OptionGroupOutputFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupOutputFile.h; path = include/lldb/Interpreter/OptionGroupOutputFile.h; sourceTree = "<group>"; };
 		26BD407D135D2AC400237D80 /* FileLineResolver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileLineResolver.h; path = include/lldb/Core/FileLineResolver.h; sourceTree = "<group>"; };
 		26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileLineResolver.cpp; path = source/Core/FileLineResolver.cpp; sourceTree = "<group>"; };
 		26C5577B132575AD008FD8FE /* PlatformMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformMacOSX.cpp; sourceTree = "<group>"; };
@@ -2248,8 +2257,14 @@
 				26BC7E8610F1B85900F91463 /* Options.cpp */,
 				26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */,
 				26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */,
+				26BCFC4F1368ADF7006DC050 /* OptionGroupFormat.h */,
+				26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */,
+				26BCFC541368B4B8006DC050 /* OptionGroupOutputFile.h */,
+				26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */,
 				26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */,
 				26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */,
+				267C0128136880C7006E963E /* OptionGroupValueObjectDisplay.h */,
+				267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */,
 				26BC7DE510F1B7F900F91463 /* ScriptInterpreter.h */,
 				9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */,
 				9A2771FB1135A35C00E6ADB6 /* ScriptInterpreterNone.h */,
@@ -3235,6 +3250,9 @@
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
 				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
 				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */,
+				267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */,
+				26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */,
+				267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -42,18 +42,65 @@ ValueObjectMemory::Create (ExecutionContextScope *exe_scope,
     return (new ValueObjectMemory (exe_scope, name, address, type_sp))->GetSP();
 }
 
+ValueObjectSP
+ValueObjectMemory::Create (ExecutionContextScope *exe_scope, 
+                           const char *name,
+                           const Address &address, 
+                           const ClangASTType &ast_type)
+{
+    return (new ValueObjectMemory (exe_scope, name, address, ast_type))->GetSP();
+}
+
 ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
                                       const char *name, 
                                       const Address &address,
                                       lldb::TypeSP &type_sp) :
     ValueObject(exe_scope),
     m_address (address),
-    m_type_sp(type_sp)
+    m_type_sp(type_sp),
+    m_clang_type()
 {
     // Do not attempt to construct one of these objects with no variable!
     assert (m_type_sp.get() != NULL);
     SetName (name);
     m_value.SetContext(Value::eContextTypeLLDBType, m_type_sp.get());
+    lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTarget());
+    if (load_address != LLDB_INVALID_ADDRESS)
+    {
+        m_value.SetValueType(Value::eValueTypeLoadAddress);
+        m_value.GetScalar() = load_address;
+    }
+    else
+    {
+        lldb::addr_t file_address = m_address.GetFileAddress();
+        if (file_address != LLDB_INVALID_ADDRESS)
+        {
+            m_value.SetValueType(Value::eValueTypeFileAddress);
+            m_value.GetScalar() = file_address;
+        }
+        else
+        {
+            m_value.GetScalar() = m_address.GetOffset();
+            m_value.SetValueType (Value::eValueTypeScalar);
+        }
+    }
+}
+
+ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
+                                      const char *name, 
+                                      const Address &address,
+                                      const ClangASTType &ast_type) :
+    ValueObject(exe_scope),
+    m_address (address),
+    m_type_sp(),
+    m_clang_type(ast_type)
+{
+    // Do not attempt to construct one of these objects with no variable!
+    assert (m_clang_type.GetASTContext());
+    assert (m_clang_type.GetOpaqueQualType());
+    
+    SetName (name);
+    m_value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
     lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTarget());
     if (load_address != LLDB_INVALID_ADDRESS)
     {
@@ -83,31 +130,48 @@ ValueObjectMemory::~ValueObjectMemory()
 lldb::clang_type_t
 ValueObjectMemory::GetClangType ()
 {
-    return m_type_sp->GetClangForwardType();
+    if (m_type_sp)
+        return m_type_sp->GetClangForwardType();
+    return m_clang_type.GetOpaqueQualType();
 }
 
 ConstString
 ValueObjectMemory::GetTypeName()
 {
-    return m_type_sp->GetName();
+    if (m_type_sp)
+        return m_type_sp->GetName();
+    ConstString name;
+    std::string type_name (ClangASTContext::GetTypeName (m_clang_type.GetOpaqueQualType()));
+    if (!type_name.empty())
+        name.SetCString (type_name.c_str());
+    return name;
 }
 
 uint32_t
 ValueObjectMemory::CalculateNumChildren()
 {
-    return m_type_sp->GetNumChildren(true);
+    if (m_type_sp)
+        return m_type_sp->GetNumChildren(true);
+    const bool omit_empty_base_classes = true;
+    return ClangASTContext::GetNumChildren (m_clang_type.GetASTContext(),
+                                            m_clang_type.GetOpaqueQualType(), 
+                                            omit_empty_base_classes);
 }
 
 clang::ASTContext *
 ValueObjectMemory::GetClangAST ()
 {
-    return m_type_sp->GetClangAST();
+    if (m_type_sp)
+        return m_type_sp->GetClangAST();
+    return m_clang_type.GetASTContext();
 }
 
 size_t
 ValueObjectMemory::GetByteSize()
 {
-    return m_type_sp->GetByteSize();
+    if (m_type_sp)
+        return m_type_sp->GetByteSize();
+    return (m_clang_type.GetClangTypeBitWidth () + 7) / 8;
 }
 
 lldb::ValueType
@@ -182,7 +246,11 @@ ValueObjectMemory::UpdateValue ()
                 // Copy the Value and set the context to use our Variable
                 // so it can extract read its value into m_data appropriately
                 Value value(m_value);
-                value.SetContext(Value::eContextTypeLLDBType, m_type_sp.get());
+                if (m_type_sp)
+                    value.SetContext(Value::eContextTypeLLDBType, m_type_sp.get());
+                else
+                    value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
+
                 m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
             }
             break;

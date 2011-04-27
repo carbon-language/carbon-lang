@@ -569,7 +569,7 @@ Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type dat
                 break;
             }
 
-            option_value_sp->GetAsArrayValue()->InsertValue (idx, data_value_sp);
+            option_value_sp->GetAsArray()->InsertValue (idx, data_value_sp);
             ++idx;
         }
     }
@@ -687,7 +687,7 @@ Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
                     data_type = OptionValue::eTypeUInt64;
             }
             else
-                option_value_sp->GetAsDictionaryValue()->SetValueForKey (const_key, value_sp, false);
+                option_value_sp->GetAsDictionary()->SetValueForKey (const_key, value_sp, false);
         }
     }
     
@@ -740,7 +740,7 @@ Instruction::TestEmulation (Stream *out_stream, const char *file_name)
 
     fclose (test_file);
 
-    OptionValueDictionary *data_dictionary = data_dictionary_sp->GetAsDictionaryValue();
+    OptionValueDictionary *data_dictionary = data_dictionary_sp->GetAsDictionary();
     static ConstString description_key ("assembly_string");
     static ConstString triple_key ("triple");
 

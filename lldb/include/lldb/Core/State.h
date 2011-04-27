@@ -38,6 +38,9 @@ StateIsRunningState (lldb::StateType state);
 bool
 StateIsStoppedState (lldb::StateType state);
 
+const char *
+GetFormatAsCString (lldb::Format format);
+    
 } // namespace lldb_private
 
 #endif  // liblldb_State_h_

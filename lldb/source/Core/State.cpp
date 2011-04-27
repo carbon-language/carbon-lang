@@ -40,6 +40,50 @@ lldb_private::StateAsCString (StateType state)
     return unknown_state_string;
 }
 
+const char *
+lldb_private::GetFormatAsCString (lldb::Format format)
+{
+    switch (format)
+    {
+        case eFormatDefault:        return "default";
+        case eFormatBoolean:        return "boolean";
+        case eFormatBinary:         return "binary";
+        case eFormatBytes:          return "bytes";
+        case eFormatBytesWithASCII: return "bytes with ASCII";
+        case eFormatChar:           return "character";
+        case eFormatCharPrintable:  return "printable character";
+        case eFormatComplexFloat:   return "complet float";
+        case eFormatCString:        return "c-string";
+        case eFormatDecimal:        return "signed decimal";
+        case eFormatEnum:           return "enumeration";
+        case eFormatHex:            return "hex";
+        case eFormatFloat:          return "float";
+        case eFormatOctal:          return "octal";
+        case eFormatOSType:         return "OSType";
+        case eFormatUnicode16:      return "Unicode16";
+        case eFormatUnicode32:      return "Unicode32";
+        case eFormatUnsigned:       return "unsigned decimal";
+        case eFormatPointer:        return "pointer";
+        case eFormatVectorOfChar:   return "vector of characters";
+        case eFormatVectorOfSInt8:  return "vector of int8_t";
+        case eFormatVectorOfUInt8:  return "vector of uint8_t";
+        case eFormatVectorOfSInt16: return "vector of int16_t";
+        case eFormatVectorOfUInt16: return "vector of uint16_t";
+        case eFormatVectorOfSInt32: return "vector of int32_t";
+        case eFormatVectorOfUInt32: return "vector of uint32_t";
+        case eFormatVectorOfSInt64: return "vector of int64_t";
+        case eFormatVectorOfUInt64: return "vector of uint64_t";
+        case eFormatVectorOfFloat32:return "vector of float32";
+        case eFormatVectorOfFloat64:return "vector of float64";
+        case eFormatVectorOfUInt128:return "vector of uint128_t";
+        case eFormatComplexInteger: return "complex integer";
+        default: break;
+    }
+    static char unknown_format_string[64];
+    snprintf(unknown_format_string, sizeof (unknown_format_string), "Format = %u", format);
+    return unknown_format_string;
+}
+
 bool
 lldb_private::StateIsRunningState (StateType state)
 {

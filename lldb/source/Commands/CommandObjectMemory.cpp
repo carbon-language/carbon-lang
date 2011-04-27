@@ -17,14 +17,194 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
+#include "lldb/Interpreter/OptionGroupOutputFile.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/StackFrame.h"
 
 using namespace lldb;
 using namespace lldb_private;
+
+OptionDefinition
+g_option_table[] =
+{
+    { LLDB_OPT_SET_1|
+      LLDB_OPT_SET_2, false, "size"         ,'s', required_argument, NULL, 0, eArgTypeByteSize      ,"The size in bytes to use when displaying with the selected format."},
+    { LLDB_OPT_SET_1|
+      LLDB_OPT_SET_3, false, "count"        ,'c', required_argument, NULL, 0, eArgTypeCount         ,"The number of total items to display."},
+    { LLDB_OPT_SET_1, false, "num-per-line" ,'l', required_argument, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
+    { LLDB_OPT_SET_2, false, "binary"       ,'b', no_argument      , NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
+    { LLDB_OPT_SET_3, true , "view-as"      ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
+};
+
+
+
+class OptionGroupReadMemory : public OptionGroup
+{
+public:
+
+    OptionGroupReadMemory () :
+        m_byte_size (0,0),
+        m_count (0,0),
+        m_num_per_line (0,0),
+        m_output_as_binary (false),
+        m_view_as_type()
+    {
+    }
+
+    virtual
+    ~OptionGroupReadMemory ()
+    {
+    }
+    
+    
+    virtual uint32_t
+    GetNumDefinitions ()
+    {
+        return sizeof (g_option_table) / sizeof (OptionDefinition);
+    }
+    
+    virtual const OptionDefinition*
+    GetDefinitions ()
+    {
+        return g_option_table;
+    }
+    
+    virtual Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_arg)
+    {
+        Error error;
+        char short_option = (char) g_option_table[option_idx].short_option;
+        
+        switch (short_option)
+        {
+            case 'l':
+                error = m_num_per_line.SetValueFromCString (option_arg);
+                if (m_num_per_line.GetCurrentValue() == 0)
+                    error.SetErrorStringWithFormat("Invalid value for --num-per-line option '%s'. Must be positive integer value.\n", option_arg);
+                break;
+                
+            case 'c':
+                error = m_count.SetValueFromCString (option_arg);
+                if (m_count.GetCurrentValue() == 0)
+                    error.SetErrorStringWithFormat("Invalid value for --count option '%s'. Must be positive integer value.\n", option_arg);
+                break;
+                
+            case 's':
+                error = m_byte_size.SetValueFromCString (option_arg);
+                if (m_byte_size.GetCurrentValue() == 0)
+                    error.SetErrorStringWithFormat("Invalid value for --size option '%s'. Must be positive integer value.\n", option_arg);
+                break;
+                
+            case 'b':
+                m_output_as_binary = true;
+                break;
+                
+            case 't':
+                error = m_view_as_type.SetValueFromCString (option_arg);
+                break;
+                
+            default:
+                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+                break;
+        }
+        return error;
+    }
+    
+    virtual void
+    OptionParsingStarting (CommandInterpreter &interpreter)
+    {
+        m_byte_size.Clear();
+        m_count.Clear();
+        m_num_per_line.Clear();
+        m_output_as_binary = false;
+        m_view_as_type.Clear();
+    }
+    
+    void
+    FinalizeSettings (lldb::Format format)
+    {
+        if (m_num_per_line.GetCurrentValue() == 0)
+            m_num_per_line.SetCurrentValue(1);
+
+        switch (format)
+        {
+            default:
+                break;
+                
+            case eFormatBoolean:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 1;
+                break;
+                
+            case eFormatCString:
+                break;
+                
+            case eFormatPointer:
+                break;
+                
+            case eFormatBinary:
+            case eFormatFloat:
+            case eFormatOctal:
+            case eFormatDecimal:
+            case eFormatEnum:
+            case eFormatUnicode16:
+            case eFormatUnicode32:
+            case eFormatUnsigned:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 4;
+                break;
+                
+            case eFormatBytes:
+            case eFormatBytesWithASCII:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 1;
+                break;
+            case eFormatChar:
+            case eFormatCharPrintable:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 1;
+                break;
+            case eFormatComplex:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 8;
+                break;
+            case eFormatHex:
+                if (m_byte_size.GetCurrentValue() == 0)
+                    m_byte_size = 4;
+                break;
+                
+            case eFormatVectorOfChar:
+            case eFormatVectorOfSInt8:
+            case eFormatVectorOfUInt8:
+            case eFormatVectorOfSInt16:
+            case eFormatVectorOfUInt16:
+            case eFormatVectorOfSInt32:
+            case eFormatVectorOfUInt32:
+            case eFormatVectorOfSInt64:
+            case eFormatVectorOfUInt64:
+            case eFormatVectorOfFloat32:
+            case eFormatVectorOfFloat64:
+            case eFormatVectorOfUInt128:
+                break;
+        }
+    }
+
+    OptionValueUInt64 m_byte_size;
+    OptionValueUInt64 m_count;
+    OptionValueUInt64 m_num_per_line;
+    bool m_output_as_binary;
+    OptionValueString m_view_as_type;
+};
+
+
 
 //----------------------------------------------------------------------
 // Read memory from the inferior process
@@ -33,165 +213,171 @@ class CommandObjectMemoryRead : public CommandObject
 {
 public:
 
-    class CommandOptions : public Options
-    {
-    public:
-        CommandOptions (CommandInterpreter &interpreter) :
-            Options(interpreter)
-        {
-            OptionParsingStarting();
-        }
-
-        virtual
-        ~CommandOptions ()
-        {
-        }
-
-        virtual Error
-        SetOptionValue (uint32_t option_idx, const char *option_arg)
-        {
-            Error error;
-            char short_option = (char) m_getopt_table[option_idx].val;
-
-            switch (short_option)
-            {
-            case 'f':
-                error = Args::StringToFormat (option_arg, m_format);
-
-                switch (m_format)
-                {
-                default:
-                    break;
-
-                case eFormatBoolean:
-                    if (m_byte_size == 0)
-                        m_byte_size = 1;
-                    if (m_num_per_line == 0)
-                        m_num_per_line = 1;
-                    break;
-
-                case eFormatCString:
-                    if (m_num_per_line == 0)
-                        m_num_per_line = 1;
-                    break;
-
-                case eFormatPointer:
-                    break;
-
-                case eFormatBinary:
-                case eFormatFloat:
-                case eFormatOctal:
-                case eFormatDecimal:
-                case eFormatEnum:
-                case eFormatUnicode16:
-                case eFormatUnicode32:
-                case eFormatUnsigned:
-                    if (m_byte_size == 0)
-                        m_byte_size = 4;
-                    if (m_num_per_line == 0)
-                        m_num_per_line = 1;
-                    break;
-
-                case eFormatBytes:
-                case eFormatBytesWithASCII:
-                case eFormatChar:
-                case eFormatCharPrintable:
-                    if (m_byte_size == 0)
-                        m_byte_size = 1;
-                    break;
-                case eFormatComplex:
-                    if (m_byte_size == 0)
-                        m_byte_size = 8;
-                    break;
-                case eFormatHex:
-                    if (m_byte_size == 0)
-                        m_byte_size = 4;
-                    break;
-
-                case eFormatVectorOfChar:
-                case eFormatVectorOfSInt8:
-                case eFormatVectorOfUInt8:
-                case eFormatVectorOfSInt16:
-                case eFormatVectorOfUInt16:
-                case eFormatVectorOfSInt32:
-                case eFormatVectorOfUInt32:
-                case eFormatVectorOfSInt64:
-                case eFormatVectorOfUInt64:
-                case eFormatVectorOfFloat32:
-                case eFormatVectorOfFloat64:
-                case eFormatVectorOfUInt128:
-                    break;
-                }
-                break;
-
-            case 'l':
-                m_num_per_line = Args::StringToUInt32 (option_arg, 0);
-                if (m_num_per_line == 0)
-                    error.SetErrorStringWithFormat("Invalid value for --num-per-line option '%s'. Must be positive integer value.\n", option_arg);
-                break;
-
-            case 'c':
-                m_count = Args::StringToUInt32 (option_arg, 0);
-                if (m_count == 0)
-                    error.SetErrorStringWithFormat("Invalid value for --count option '%s'. Must be positive integer value.\n", option_arg);
-                break;
-
-            case 's':
-                m_byte_size = Args::StringToUInt32 (option_arg, 0);
-                if (m_byte_size == 0)
-                    error.SetErrorStringWithFormat("Invalid value for --size option '%s'. Must be positive integer value.\n", option_arg);
-                break;
-
-            case 'o':
-                m_outfile_filespec.SetFile (option_arg, true);
-                break;
-
-            case 'b':
-                m_output_as_binary = true;
-                break;
-
-            case 'a':
-                m_append_to_outfile = true;
-                break;
-            
-            default:
-                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
-                break;
-            }
-            return error;
-        }
-
-        void
-        OptionParsingStarting ()
-        {
-            m_format = eFormatBytesWithASCII;
-            m_byte_size = 0;
-            m_count = 0;
-            m_num_per_line = 0;
-            m_outfile_filespec.Clear();
-            m_append_to_outfile = false;
-            m_output_as_binary = false;
-        }
-
-        const OptionDefinition*
-        GetDefinitions ()
-        {
-            return g_option_table;
-        }
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-
-        // Instance variables to hold the values for command options.
-        lldb::Format m_format;
-        uint32_t m_byte_size;
-        uint32_t m_count;
-        uint32_t m_num_per_line;
-        FileSpec m_outfile_filespec;
-        bool m_append_to_outfile;
-        bool m_output_as_binary;
-    };
+//    class CommandOptions : public Options
+//    {
+//    public:
+//        CommandOptions (CommandInterpreter &interpreter) :
+//            Options(interpreter)
+//        {
+//            OptionParsingStarting();
+//        }
+//
+//        virtual
+//        ~CommandOptions ()
+//        {
+//        }
+//
+//        virtual Error
+//        SetOptionValue (uint32_t option_idx, const char *option_arg)
+//        {
+//            Error error;
+//            char short_option = (char) m_getopt_table[option_idx].val;
+//
+//            switch (short_option)
+//            {
+//            case 'f':
+//                error = Args::StringToFormat (option_arg, m_format);
+//
+//                switch (m_format)
+//                {
+//                default:
+//                    break;
+//
+//                case eFormatBoolean:
+//                    if (m_byte_size == 0)
+//                        m_byte_size = 1;
+//                    if (m_num_per_line == 0)
+//                        m_num_per_line = 1;
+//                    break;
+//
+//                case eFormatCString:
+//                    if (m_num_per_line == 0)
+//                        m_num_per_line = 1;
+//                    break;
+//
+//                case eFormatPointer:
+//                    break;
+//
+//                case eFormatBinary:
+//                case eFormatFloat:
+//                case eFormatOctal:
+//                case eFormatDecimal:
+//                case eFormatEnum:
+//                case eFormatUnicode16:
+//                case eFormatUnicode32:
+//                case eFormatUnsigned:
+//                    if (m_byte_size == 0)
+//                        m_byte_size = 4;
+//                    if (m_num_per_line == 0)
+//                        m_num_per_line = 1;
+//                    break;
+//
+//                case eFormatBytes:
+//                case eFormatBytesWithASCII:
+//                case eFormatChar:
+//                case eFormatCharPrintable:
+//                    if (m_byte_size == 0)
+//                        m_byte_size = 1;
+//                    break;
+//                case eFormatComplex:
+//                    if (m_byte_size == 0)
+//                        m_byte_size = 8;
+//                    break;
+//                case eFormatHex:
+//                    if (m_byte_size == 0)
+//                        m_byte_size = 4;
+//                    break;
+//
+//                case eFormatVectorOfChar:
+//                case eFormatVectorOfSInt8:
+//                case eFormatVectorOfUInt8:
+//                case eFormatVectorOfSInt16:
+//                case eFormatVectorOfUInt16:
+//                case eFormatVectorOfSInt32:
+//                case eFormatVectorOfUInt32:
+//                case eFormatVectorOfSInt64:
+//                case eFormatVectorOfUInt64:
+//                case eFormatVectorOfFloat32:
+//                case eFormatVectorOfFloat64:
+//                case eFormatVectorOfUInt128:
+//                    break;
+//                }
+//                break;
+//
+//            case 'l':
+//                m_num_per_line = Args::StringToUInt32 (option_arg, 0);
+//                if (m_num_per_line == 0)
+//                    error.SetErrorStringWithFormat("Invalid value for --num-per-line option '%s'. Must be positive integer value.\n", option_arg);
+//                break;
+//
+//            case 'c':
+//                m_count = Args::StringToUInt32 (option_arg, 0);
+//                if (m_count == 0)
+//                    error.SetErrorStringWithFormat("Invalid value for --count option '%s'. Must be positive integer value.\n", option_arg);
+//                break;
+//
+//            case 's':
+//                m_byte_size = Args::StringToUInt32 (option_arg, 0);
+//                if (m_byte_size == 0)
+//                    error.SetErrorStringWithFormat("Invalid value for --size option '%s'. Must be positive integer value.\n", option_arg);
+//                break;
+//
+//            case 'o':
+//                m_outfile_filespec.SetFile (option_arg, true);
+//                break;
+//
+//            case 'b':
+//                m_output_as_binary = true;
+//                break;
+//
+//            case 'a':
+//                m_append_to_outfile = true;
+//                break;
+//            
+//            case 't':
+//                m_view_as_type.assign (option_arg);
+//                break;
+//
+//            default:
+//                error.SetErrorStringWithFormat("Unrecognized short option '%c'.\n", short_option);
+//                break;
+//            }
+//            return error;
+//        }
+//
+//        void
+//        OptionParsingStarting ()
+//        {
+//            m_format = eFormatBytesWithASCII;
+//            m_byte_size = 0;
+//            m_count = 0;
+//            m_num_per_line = 0;
+//            m_outfile_filespec.Clear();
+//            m_view_as_type.clear();
+//            m_append_to_outfile = false;
+//            m_output_as_binary = false;
+//        }
+//
+//        const OptionDefinition*
+//        GetDefinitions ()
+//        {
+//            return g_option_table;
+//        }
+//
+//        // Options table: Required for subclasses of Options.
+//
+//        static OptionDefinition g_option_table[];
+//
+//        // Instance variables to hold the values for command options.
+//        lldb::Format m_format;
+//        uint32_t m_byte_size;
+//        uint32_t m_count;
+//        uint32_t m_num_per_line;
+//        FileSpec m_outfile_filespec;
+//        std::string m_view_as_type;
+//        bool m_append_to_outfile;
+//        bool m_output_as_binary;
+//    };
 
     CommandObjectMemoryRead (CommandInterpreter &interpreter) :
         CommandObject (interpreter,
@@ -199,7 +385,10 @@ public:
                        "Read from the memory of the process being debugged.",
                        NULL,
                        eFlagProcessMustBeLaunched),
-        m_options (interpreter)
+        m_option_group (interpreter),
+        m_format_options (eFormatBytesWithASCII),
+        m_memory_options (),
+        m_outfile_options ()
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -223,6 +412,12 @@ public:
         // Push the data for the first argument into the m_arguments vector.
         m_arguments.push_back (arg1);
         m_arguments.push_back (arg2);
+        
+        m_option_group.Append (&m_format_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1 | LLDB_OPT_SET_3);
+        m_option_group.Append (&m_memory_options);
+        m_option_group.Append (&m_outfile_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
+        m_option_group.Finalize();
+
     }
 
     virtual
@@ -233,15 +428,15 @@ public:
     Options *
     GetOptions ()
     {
-        return &m_options;
+        return &m_option_group;
     }
 
     virtual bool
     Execute (Args& command,
              CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().process;
-        if (process == NULL)
+        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+        if (exe_ctx.process == NULL)
         {
             result.AppendError("need a process to read memory");
             result.SetStatus(eReturnStatusFailed);
@@ -249,6 +444,7 @@ public:
         }
         const size_t argc = command.GetArgumentCount();
 
+        
         if (argc == 0 || argc > 2)
         {
             result.AppendErrorWithFormat ("%s takes 1 or two args.\n", m_cmd_name.c_str());
@@ -256,26 +452,162 @@ public:
             return false;
         }
 
-        size_t item_byte_size = m_options.m_byte_size;
-        if (item_byte_size == 0)
+        size_t item_byte_size = m_memory_options.m_byte_size.GetCurrentValue();
+        ClangASTType clang_ast_type;
+        
+        const char *view_as_type_cstr = m_memory_options.m_view_as_type.GetCurrentValue();
+        if (view_as_type_cstr && view_as_type_cstr[0])
         {
-            if (m_options.m_format == eFormatPointer)
-                item_byte_size = process->GetTarget().GetArchitecture().GetAddressByteSize();
-            else
-                item_byte_size = 1;
+            // We are viewing memory as a type
+            SymbolContext sc;
+            const bool append = true;
+            TypeList type_list;
+            uint32_t reference_count = 0;
+            uint32_t pointer_count = 0;
+            size_t idx;
+            static const char *g_keywords[] = { "const", "volatile", "restrict", "struct", "class", "union"};
+            static size_t g_num_keywords = sizeof(g_keywords)/sizeof(const char *);
+            std::string type_str(view_as_type_cstr);
+            
+            // Remove all instances of g_keywords that are followed by spaces
+            for (size_t i = 0; i < g_num_keywords; ++i)
+            {
+                const char *keyword = g_keywords[i];
+                int keyword_len = ::strlen (keyword);
+                while ((idx = type_str.find (keyword)) != std::string::npos)
+                {
+                    if (type_str[idx + keyword_len] == ' ' || type_str[idx + keyword_len] == '\t')
+                        type_str.erase(idx, keyword_len+1);
+                }
+            }
+            bool done = type_str.empty();
+            // 
+            idx = type_str.find_first_not_of (" \t");
+            if (idx > 0 && idx != std::string::npos)
+                type_str.erase (0, idx);
+            while (!done)
+            {
+                // Strip trailing spaces
+                if (type_str.empty())
+                    done = true;
+                else
+                {
+                    switch (type_str[type_str.size()-1])
+                    {
+                    case '*':
+                        ++pointer_count;
+                        // fall through...
+                    case ' ':
+                    case '\t':
+                        type_str.erase(type_str.size()-1);
+                        break;
+
+                    case '&':
+                        if (reference_count == 0)
+                        {
+                            reference_count = 1;
+                            type_str.erase(type_str.size()-1);
+                        }
+                        else
+                        {
+                            result.AppendErrorWithFormat ("invalid type string: '%s'\n", view_as_type_cstr);
+                            result.SetStatus(eReturnStatusFailed);
+                            return false;
+                        }
+                        break;
+
+                    default:
+                        done = true;
+                        break;
+                    }
+                }
+            }
+                    
+            ConstString lookup_type_name(type_str.c_str());
+            if (exe_ctx.frame)
+            {
+                sc = exe_ctx.frame->GetSymbolContext (eSymbolContextModule);
+                if (sc.module_sp)
+                {
+                    sc.module_sp->FindTypes (sc, 
+                                             lookup_type_name, 
+                                             append, 
+                                             1, 
+                                             type_list);
+                }
+            }
+            if (type_list.GetSize() == 0)
+            {
+                exe_ctx.target->GetImages().FindTypes (sc, 
+                                                       lookup_type_name, 
+                                                       append, 
+                                                       1, 
+                                                       type_list);
+            }
+            
+            if (type_list.GetSize() == 0)
+            {
+                result.AppendErrorWithFormat ("unable to find any types that match the raw type '%s' for full type '%s'\n", 
+                                              lookup_type_name.GetCString(), 
+                                              view_as_type_cstr);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            
+            TypeSP type_sp (type_list.GetTypeAtIndex(0));
+            clang_ast_type.SetClangType (type_sp->GetClangAST(), type_sp->GetClangFullType());
+            
+            while (pointer_count > 0)
+            {
+                clang_type_t pointer_type = ClangASTContext::CreatePointerType (clang_ast_type.GetASTContext(), clang_ast_type.GetOpaqueQualType());
+                if (pointer_type)
+                    clang_ast_type.SetClangType (clang_ast_type.GetASTContext(), pointer_type);
+                else
+                {
+                    result.AppendError ("unable make a pointer type\n");
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                --pointer_count;
+            }
+
+            item_byte_size = (clang_ast_type.GetClangTypeBitWidth () + 7) / 8;
+            
+            if (item_byte_size == 0)
+            {
+                result.AppendErrorWithFormat ("unable to get the byte size of the type '%s'\n", 
+                                              view_as_type_cstr);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+        }
+        else
+        {
+            if (item_byte_size == 0)
+            {
+                if (m_format_options.GetFormat() == eFormatPointer)
+                    item_byte_size = exe_ctx.target->GetArchitecture().GetAddressByteSize();
+                else
+                    item_byte_size = 1;
+            }
         }
 
-        size_t item_count = m_options.m_count;
+        size_t item_count = m_memory_options.m_count.GetCurrentValue();
 
-        size_t num_per_line = m_options.m_num_per_line;
+        size_t num_per_line = m_memory_options.m_num_per_line.GetCurrentValue();
         if (num_per_line == 0)
         {
-            num_per_line = (16/item_byte_size);
-            if (num_per_line == 0)
+            if (clang_ast_type.GetOpaqueQualType())
                 num_per_line = 1;
+            else
+            {
+                num_per_line = (16/item_byte_size);
+                if (num_per_line == 0)
+                    num_per_line = 1;
+            }
         }
 
-        size_t total_byte_size = m_options.m_count * item_byte_size;
+        size_t total_byte_size = item_count * item_byte_size;
         if (total_byte_size == 0)
             total_byte_size = 32;
 
@@ -316,49 +648,56 @@ public:
         else
         {
             if (item_count == 0)
-                item_count = 32;
+            {
+                if (clang_ast_type.GetOpaqueQualType())
+                    item_count = 1;
+                else
+                    item_count = 32;
+            }
         }
-
-        DataBufferSP data_sp(new DataBufferHeap (total_byte_size, '\0'));
+        
+        DataBufferSP data_sp;
         Error error;
-        size_t bytes_read = process->ReadMemory(addr, data_sp->GetBytes (), data_sp->GetByteSize(), error);
-        if (bytes_read == 0)
+        size_t bytes_read = 0;
+        if (!clang_ast_type.GetOpaqueQualType())
         {
-            result.AppendWarningWithFormat("Read from 0x%llx failed.\n", addr);
-            result.AppendError(error.AsCString());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
+            data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
+            bytes_read = exe_ctx.process->ReadMemory(addr, data_sp->GetBytes (), data_sp->GetByteSize(), error);
+            if (bytes_read == 0)
+            {
+                result.AppendWarningWithFormat("Read from 0x%llx failed.\n", addr);
+                result.AppendError(error.AsCString());
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+            
+            if (bytes_read < total_byte_size)
+                result.AppendWarningWithFormat("Not all bytes (%u/%u) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
         }
-
-        if (bytes_read < total_byte_size)
-            result.AppendWarningWithFormat("Not all bytes (%u/%u) were able to be read from 0x%llx.\n", bytes_read, total_byte_size, addr);
-
-        result.SetStatus(eReturnStatusSuccessFinishResult);
-        DataExtractor data (data_sp, 
-                            process->GetTarget().GetArchitecture().GetByteOrder(), 
-                            process->GetTarget().GetArchitecture().GetAddressByteSize());
 
         StreamFile outfile_stream;
         Stream *output_stream = NULL;
-
-        if (m_options.m_outfile_filespec)
+        const FileSpec &outfile_spec = m_outfile_options.GetFile().GetCurrentValue();
+        if (outfile_spec)
         {
             char path[PATH_MAX];
-            m_options.m_outfile_filespec.GetPath (path, sizeof(path));
-            char mode[16] = { 'w', '\0' };
-            if (m_options.m_append_to_outfile)
-                mode[0] = 'a';
-                
-            if (outfile_stream.GetFile ().Open (path, File::eOpenOptionWrite | File::eOpenOptionCanCreate).Success())
+            outfile_spec.GetPath (path, sizeof(path));
+            
+            uint32_t open_options = File::eOpenOptionWrite | File::eOpenOptionCanCreate;
+            const bool append = m_outfile_options.GetAppend().GetCurrentValue();
+            if (append)
+                open_options |= File::eOpenOptionAppend;
+            
+            if (outfile_stream.GetFile ().Open (path, open_options).Success())
             {
-                if (m_options.m_output_as_binary)
+                if (m_memory_options.m_output_as_binary)
                 {
                     int bytes_written = outfile_stream.Write (data_sp->GetBytes(), bytes_read);
                     if (bytes_written > 0)
                     {
                         result.GetOutputStream().Printf ("%i bytes %s to '%s'\n", 
                                                          bytes_written, 
-                                                         m_options.m_append_to_outfile ? "appended" : "written", 
+                                                         append ? "appended" : "written", 
                                                          path);
                         return true;
                     }
@@ -378,7 +717,7 @@ public:
             }
             else 
             {
-                result.AppendErrorWithFormat("Failed to open file '%s' with a mode of '%s'.\n", path, mode);
+                result.AppendErrorWithFormat("Failed to open file '%s' for %s.\n", path, append ? "append" : "write");
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
@@ -388,10 +727,66 @@ public:
             output_stream = &result.GetOutputStream();
         }
 
+
+        if (clang_ast_type.GetOpaqueQualType())
+        {
+            for (uint32_t i = 0; i<item_count; ++i)
+            {
+                addr_t item_addr = addr + (i * item_byte_size);
+                Address address (NULL, item_addr);
+                StreamString name_strm;
+                name_strm.Printf ("0x%llx", item_addr);
+                ValueObjectSP valobj_sp (ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(), 
+                                                                    name_strm.GetString().c_str(), 
+                                                                    address, 
+                                                                    clang_ast_type));
+                if (valobj_sp)
+                {
+                    uint32_t ptr_depth = 0;
+                    uint32_t curr_depth = 0;
+                    uint32_t max_depth = UINT32_MAX;
+                    bool show_types = false;
+                    bool show_location = false;
+                    bool use_objc = false;
+                    bool use_dynamic = false;
+                    bool scope_already_checked = false;
+                    bool flat_output = false;
+                    
+                    ValueObject::DumpValueObject (*output_stream,
+                                                  valobj_sp.get(),
+                                                  NULL,
+                                                  ptr_depth,
+                                                  curr_depth,
+                                                  max_depth,
+                                                  show_types,
+                                                  show_location,
+                                                  use_objc,
+                                                  use_dynamic,
+                                                  scope_already_checked,
+                                                  flat_output);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("failed to create a value object for: (%s) %s\n", 
+                                                  view_as_type_cstr, 
+                                                  name_strm.GetString().c_str());
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        result.SetStatus(eReturnStatusSuccessFinishResult);
+        DataExtractor data (data_sp, 
+                            exe_ctx.target->GetArchitecture().GetByteOrder(), 
+                            exe_ctx.target->GetArchitecture().GetAddressByteSize());
+
+
         assert (output_stream);
         data.Dump (output_stream,
                    0,
-                   m_options.m_format,
+                   m_format_options.GetFormat(),
                    item_byte_size,
                    item_count,
                    num_per_line,
@@ -403,27 +798,33 @@ public:
     }
 
 protected:
-    CommandOptions m_options;
+//    CommandOptions m_options;
+    OptionGroupOptions m_option_group;
+    OptionGroupFormat m_format_options;
+    OptionGroupReadMemory m_memory_options;
+    OptionGroupOutputFile m_outfile_options;
+
 };
 
-#define SET1 LLDB_OPT_SET_1
-#define SET2 LLDB_OPT_SET_2
-
-OptionDefinition
-CommandObjectMemoryRead::CommandOptions::g_option_table[] =
-{
-{ SET1       , false, "format",       'f', required_argument, NULL, 0, eArgTypeFormat,       "The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
-{ SET1       , false, "size",         's', required_argument, NULL, 0, eArgTypeByteSize,     "The size in bytes to use when displaying with the selected format."},
-{ SET1       , false, "num-per-line", 'l', required_argument, NULL, 0, eArgTypeNumberPerLine,"The number of items per line to display."},
-{ SET1 | SET2, false, "count",        'c', required_argument, NULL, 0, eArgTypeCount,        "The number of total items to display."},
-{ SET1 | SET2, false, "outfile",      'o', required_argument, NULL, 0, eArgTypeFilename,     "Dump memory read results into a file."},
-{ SET1 | SET2, false, "append",       'a', no_argument,       NULL, 0, eArgTypeNone,         "Append memory read results to 'outfile'."},
-{        SET2, false, "binary",       'b', no_argument,       NULL, 0, eArgTypeNone,         "If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
-{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
-};
-
-#undef SET1
-#undef SET2
+//OptionDefinition
+//CommandObjectMemoryRead::CommandOptions::g_option_table[] =
+//{
+//{ LLDB_OPT_SET_1, false, "format"       ,'f', required_argument, NULL, 0, eArgTypeFormat        ,"The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
+//{ LLDB_OPT_SET_1, false, "size"         ,'s', required_argument, NULL, 0, eArgTypeByteSize      ,"The size in bytes to use when displaying with the selected format."},
+//{ LLDB_OPT_SET_1, false, "num-per-line" ,'l', required_argument, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
+//{ LLDB_OPT_SET_1|
+//  LLDB_OPT_SET_2|
+//  LLDB_OPT_SET_3, false, "count"        ,'c', required_argument, NULL, 0, eArgTypeCount         ,"The number of total items to display."},
+//{ LLDB_OPT_SET_1|
+//  LLDB_OPT_SET_2|
+//  LLDB_OPT_SET_3, false, "outfile"      ,'o', required_argument, NULL, 0, eArgTypeFilename      ,"Dump memory read results into a file."},
+//{ LLDB_OPT_SET_1|
+//  LLDB_OPT_SET_2|
+//  LLDB_OPT_SET_3, false, "append"       ,'a', no_argument      , NULL, 0, eArgTypeNone          ,"Append memory read results to 'outfile'."},
+//{ LLDB_OPT_SET_2, false, "binary"       ,'b', no_argument      , NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
+//{ LLDB_OPT_SET_3, true , "view-as"      ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
+//{ 0             , false, NULL           , 0 , 0                , NULL, 0, eArgTypeNone          , NULL }
+//};
 
 //----------------------------------------------------------------------
 // Write memory to the inferior process

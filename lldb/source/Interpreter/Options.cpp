@@ -907,6 +907,18 @@ Options::HandleOptionArgumentCompletion
 
 
 void
+OptionGroupOptions::Append (OptionGroup* group)
+{
+    const OptionDefinition* group_option_defs = group->GetDefinitions ();
+    const uint32_t group_option_count = group->GetNumDefinitions();
+    for (uint32_t i=0; i<group_option_count; ++i)
+    {
+        m_option_infos.push_back (OptionInfo (group, i));
+        m_option_defs.push_back (group_option_defs[i]);
+    }
+}
+
+void
 OptionGroupOptions::Append (OptionGroup* group, 
                             uint32_t src_mask, 
                             uint32_t dst_mask)

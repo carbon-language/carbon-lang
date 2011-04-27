@@ -341,7 +341,7 @@ EmulationStateARM::LoadStateFromDictionary (OptionValueDictionary *test_data)
         static ConstString data_key ("data");
         uint64_t start_address = 0;
         
-        OptionValueDictionary *mem_dict = value_sp->GetAsDictionaryValue();
+        OptionValueDictionary *mem_dict = value_sp->GetAsDictionary();
         value_sp = mem_dict->GetValueForKey (address_key);
         if (value_sp.get() == NULL)
             return false;
@@ -349,7 +349,7 @@ EmulationStateARM::LoadStateFromDictionary (OptionValueDictionary *test_data)
             start_address = value_sp->GetUInt64Value ();
         
         value_sp = mem_dict->GetValueForKey (data_key);
-        OptionValueArray *mem_array = value_sp->GetAsArrayValue();
+        OptionValueArray *mem_array = value_sp->GetAsArray();
         if (!mem_array)
             return false;
 
@@ -374,7 +374,7 @@ EmulationStateARM::LoadStateFromDictionary (OptionValueDictionary *test_data)
         
     // Load General Registers
    
-    OptionValueDictionary *reg_dict = value_sp->GetAsDictionaryValue ();
+    OptionValueDictionary *reg_dict = value_sp->GetAsDictionary ();
    
     StreamString sstr;
     for (int i = 0; i < 16; ++i)

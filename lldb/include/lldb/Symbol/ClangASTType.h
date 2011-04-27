@@ -27,7 +27,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 class ClangASTType
 {
-protected:
+public:
     ClangASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
         m_type (type),
         m_ast  (ast_context) 
@@ -56,7 +56,6 @@ protected:
         return *this;
     }
     
-public:
     lldb::clang_type_t
     GetOpaqueQualType() const
     { 
@@ -218,6 +217,13 @@ public:
                         const Scalar &value,
                         Stream &strm);
 
+    void
+    SetClangType (clang::ASTContext *ast, lldb::clang_type_t type)
+    {
+        m_type = type;
+        m_ast = ast;
+    }
+
     bool
     ReadFromMemory (ExecutionContext *exe_ctx,
                     lldb::addr_t addr,
@@ -256,8 +262,8 @@ public:
     RemoveFastQualifiers (lldb::clang_type_t);
 
 private:
-    void               *m_type;
-    clang::ASTContext  *m_ast;
+    lldb::clang_type_t m_type;
+    clang::ASTContext *m_ast;
 };
     
     

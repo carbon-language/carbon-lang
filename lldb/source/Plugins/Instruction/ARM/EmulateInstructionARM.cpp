@@ -13348,7 +13348,7 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
         return false;
     }
     
-    OptionValueDictionary *state_dictionary = value_sp->GetAsDictionaryValue ();
+    OptionValueDictionary *state_dictionary = value_sp->GetAsDictionary ();
     if (!before_state.LoadStateFromDictionary (state_dictionary))
     {
         out_stream->Printf ("TestEmulation:  Failed loading 'before' state.\n");
@@ -13362,7 +13362,7 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
         return false;
     }
 
-    state_dictionary = value_sp->GetAsDictionaryValue ();
+    state_dictionary = value_sp->GetAsDictionary ();
     if (!after_state.LoadStateFromDictionary (state_dictionary))
     {
         out_stream->Printf ("TestEmulation: Failed loading 'after' state.\n");

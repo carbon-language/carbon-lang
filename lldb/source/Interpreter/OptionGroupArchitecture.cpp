@@ -26,11 +26,13 @@ OptionGroupArchitecture::~OptionGroupArchitecture ()
 {
 }
 
-OptionDefinition g_file_option_table[] =
+static OptionDefinition
+g_option_table[] =
 {
-    { LLDB_OPT_SET_1 , false, "arch"    , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
+{ LLDB_OPT_SET_1 , false, "arch"    , 'a', required_argument, NULL, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
 };
-const uint32_t k_num_file_options = sizeof(g_file_option_table)/sizeof(OptionDefinition);
+
+const uint32_t k_num_file_options = sizeof(g_option_table)/sizeof(OptionDefinition);
 
 uint32_t
 OptionGroupArchitecture::GetNumDefinitions ()
@@ -41,7 +43,7 @@ OptionGroupArchitecture::GetNumDefinitions ()
 const OptionDefinition *
 OptionGroupArchitecture::GetDefinitions ()
 {
-    return g_file_option_table;
+    return g_option_table;
 }
 
 bool
@@ -61,7 +63,7 @@ OptionGroupArchitecture::SetOptionValue (CommandInterpreter &interpreter,
                                  const char *option_arg)
 {
     Error error;
-    char short_option = (char) g_file_option_table[option_idx].short_option;
+    char short_option = (char) g_option_table[option_idx].short_option;
 
     switch (short_option)
     {
