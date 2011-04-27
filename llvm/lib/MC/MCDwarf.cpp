@@ -622,14 +622,14 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = *asmInfo.getEHFrameSection();
   streamer.SwitchSection(&section);
-  MCSymbol *sectionStart = streamer.getContext().CreateTempSymbol();
+  MCSymbol *sectionStart = context.CreateTempSymbol();
   MCSymbol *sectionEnd = streamer.getContext().CreateTempSymbol();
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *sectionStart,
                                                *sectionEnd, 4);
   streamer.EmitLabel(sectionStart);
-  streamer.EmitValue(Length, 4);
+  streamer.EmitAbsValue(Length, 4);
 
   // CIE ID
   streamer.EmitIntValue(0, 4);
@@ -715,13 +715,13 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
-  streamer.EmitValue(Length, 4);
+  streamer.EmitAbsValue(Length, 4);
 
   streamer.EmitLabel(fdeStart);
   // CIE Pointer
   const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                0);
-  streamer.EmitValue(offset, 4);
+  streamer.EmitAbsValue(offset, 4);
   unsigned fdeEncoding = asmInfo.getFDEEncoding();
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
@@ -731,7 +731,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,
                                               *frame.End, 0);
-  streamer.EmitValue(Range, size);
+  streamer.EmitAbsValue(Range, size);
 
   // Augmentation Data Length
   MCSymbol *augmentationStart = streamer.getContext().CreateTempSymbol();
@@ -751,7 +751,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   EmitCFIInstructions(streamer, frame.Instructions, frame.Begin);
 
   // Padding
-  streamer.EmitValueToAlignment(4);
+  streamer.EmitValueToAlignment(size);
 
   return fdeEnd;
 }
