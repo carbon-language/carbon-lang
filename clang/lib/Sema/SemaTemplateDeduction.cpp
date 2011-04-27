@@ -949,7 +949,6 @@ DeduceTemplateArguments(Sema &S,
 
     // If the argument type is an array type, move the qualifiers up to the
     // top level, so they can be matched with the qualifiers on the parameter.
-    // FIXME: address spaces, ObjC GC qualifiers
     if (isa<ArrayType>(Arg)) {
       Qualifiers Quals;
       Arg = S.Context.getUnqualifiedArrayType(Arg, Quals);
@@ -2455,8 +2454,8 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
   // C++0x [temp.deduct.call]p3:
   //   If P is a cv-qualified type, the top level cv-qualifiers of P's type
   //   are ignored for type deduction.
-  if (ParamType.getCVRQualifiers())
-    ParamType = ParamType.getLocalUnqualifiedType();
+  if (ParamType.hasQualifiers())
+    ParamType = ParamType.getUnqualifiedType();
   const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>();
   if (ParamRefType) {
     QualType PointeeType = ParamRefType->getPointeeType();
@@ -2512,8 +2511,7 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     else {
       // - If A is a cv-qualified type, the top level cv-qualifiers of A's
       //   type are ignored for type deduction.
-      if (ArgType.getCVRQualifiers())
-        ArgType = ArgType.getUnqualifiedType();
+      ArgType = ArgType.getUnqualifiedType();
     }
   }
 
