@@ -501,8 +501,24 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
   DefinedOrUnknownSVal PtrEQ =
     svalBuilder.evalEQ(state, arg0Val, svalBuilder.makeNull());
 
-  // If the ptr is NULL, the call is equivalent to malloc(size).
-  if (const GRState *stateEqual = state->assume(PtrEQ, true)) {
+  // Get the size argument. If there is no size arg then give up.
+  const Expr *Arg1 = CE->getArg(1);
+  if (!Arg1)
+    return;
+
+  // Get the value of the size argument.
+  DefinedOrUnknownSVal Arg1Val = 
+    cast<DefinedOrUnknownSVal>(state->getSVal(Arg1));
+
+  // Compare the size argument to 0.
+  DefinedOrUnknownSVal SizeZero =
+    svalBuilder.evalEQ(state, Arg1Val,
+                       svalBuilder.makeIntValWithPtrWidth(0, false));
+
+  // If the ptr is NULL and the size is not 0, the call is equivalent to 
+  // malloc(size).
+  const GRState *stateEqual = state->assume(PtrEQ, true);
+  if (stateEqual && state->assume(SizeZero, false)) {
     // Hack: set the NULL symbolic region to released to suppress false warning.
     // In the future we should add more states for allocated regions, e.g., 
     // CheckedNull, CheckedNonNull.
@@ -517,17 +533,17 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
   }
 
   if (const GRState *stateNotEqual = state->assume(PtrEQ, false)) {
-    const Expr *Arg1 = CE->getArg(1);
-    DefinedOrUnknownSVal Arg1Val = 
-      cast<DefinedOrUnknownSVal>(stateNotEqual->getSVal(Arg1));
-    DefinedOrUnknownSVal SizeZero =
-      svalBuilder.evalEQ(stateNotEqual, Arg1Val,
-                         svalBuilder.makeIntValWithPtrWidth(0, false));
-
+    // If the size is 0, free the memory.
     if (const GRState *stateSizeZero = stateNotEqual->assume(SizeZero, true))
-      if (const GRState *stateFree = FreeMemAux(C, CE, stateSizeZero, 0, false))
-        C.addTransition(stateFree->BindExpr(CE, UndefinedVal(), true));
+      if (const GRState *stateFree = 
+          FreeMemAux(C, CE, stateSizeZero, 0, false)) {
 
+        // Add the state transition to set input pointer argument to be free.
+        C.addTransition(stateFree);
+
+        // Bind the return value to UndefinedVal because it is now free.
+        C.addTransition(stateFree->BindExpr(CE, UndefinedVal(), true));
+      }
     if (const GRState *stateSizeNotZero = stateNotEqual->assume(SizeZero,false))
       if (const GRState *stateFree = FreeMemAux(C, CE, stateSizeNotZero,
                                                 0, false)) {
