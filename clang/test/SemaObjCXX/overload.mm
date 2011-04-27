@@ -159,3 +159,15 @@ namespace PR9735 {
     int &ir2 = f3(bc);
   }
 }
+
+@interface D : B
+@end
+
+namespace rdar9327203 {
+  int &f(void* const&, int);
+  float &f(void* const&, long);
+  
+  void g(id x) { 
+    int &fr = (f)(x, 0); 
+  }
+}

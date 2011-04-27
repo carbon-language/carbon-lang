@@ -2631,7 +2631,8 @@ CompareStandardConversionSequences(Sema &S,
     if (ImplicitConversionSequence::CompareKind DerivedCK
           = CompareDerivedToBaseConversions(S, SCS1, SCS2))
       return DerivedCK;
-  } else if (SCS1ConvertsToVoid && SCS2ConvertsToVoid) {
+  } else if (SCS1ConvertsToVoid && SCS2ConvertsToVoid &&
+             !S.Context.hasSameType(SCS1.getFromType(), SCS2.getFromType())) {
     // Both conversion sequences are conversions to void
     // pointers. Compare the source types to determine if there's an
     // inheritance relationship in their sources.
@@ -2645,10 +2646,8 @@ CompareStandardConversionSequences(Sema &S,
     if (SCS2.First == ICK_Array_To_Pointer)
       FromType2 = S.Context.getArrayDecayedType(FromType2);
 
-    QualType FromPointee1
-      = FromType1->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
-    QualType FromPointee2
-      = FromType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
+    QualType FromPointee1 = FromType1->getPointeeType().getUnqualifiedType();
+    QualType FromPointee2 = FromType2->getPointeeType().getUnqualifiedType();
 
     if (S.IsDerivedFrom(FromPointee2, FromPointee1))
       return ImplicitConversionSequence::Better;
@@ -2657,13 +2656,19 @@ CompareStandardConversionSequences(Sema &S,
 
     // Objective-C++: If one interface is more specific than the
     // other, it is the better one.
-    const ObjCObjectType* FromIface1 = FromPointee1->getAs<ObjCObjectType>();
-    const ObjCObjectType* FromIface2 = FromPointee2->getAs<ObjCObjectType>();
-    if (FromIface1 && FromIface1) {
-      if (S.Context.canAssignObjCInterfaces(FromIface2, FromIface1))
-        return ImplicitConversionSequence::Better;
-      else if (S.Context.canAssignObjCInterfaces(FromIface1, FromIface2))
-        return ImplicitConversionSequence::Worse;
+    const ObjCObjectPointerType* FromObjCPtr1
+      = FromType1->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType* FromObjCPtr2
+      = FromType2->getAs<ObjCObjectPointerType>();
+    if (FromObjCPtr1 && FromObjCPtr2) {
+      bool AssignLeft = S.Context.canAssignObjCInterfaces(FromObjCPtr1, 
+                                                          FromObjCPtr2);
+      bool AssignRight = S.Context.canAssignObjCInterfaces(FromObjCPtr2, 
+                                                           FromObjCPtr1);
+      if (AssignLeft != AssignRight) {
+        return AssignLeft? ImplicitConversionSequence::Better
+                         : ImplicitConversionSequence::Worse;
+      }
     }
   }
 
