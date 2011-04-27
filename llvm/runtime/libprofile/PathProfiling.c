@@ -104,7 +104,7 @@ void writeArrayTable(uint32_t fNumber, ftEntry_t* ft, uint32_t* funcCount) {
   }
 }
 
-inline uint32_t hash (uint32_t key) {
+static inline uint32_t hash (uint32_t key) {
   /* this may benefit from a proper hash function */
   return key%ARBITRARY_HASH_BIN_COUNT;
 }
@@ -147,7 +147,8 @@ void writeHashTable(uint32_t functionNumber, pathHashTable_t* hashTable) {
 }
 
 /* Return a pointer to this path's specific path counter */
-inline uint32_t* getPathCounter(uint32_t functionNumber, uint32_t pathNumber) {
+static inline uint32_t* getPathCounter(uint32_t functionNumber,
+                                       uint32_t pathNumber) {
   pathHashTable_t* hashTable;
   pathHashEntry_t* hashEntry;
   uint32_t index = hash(pathNumber);
