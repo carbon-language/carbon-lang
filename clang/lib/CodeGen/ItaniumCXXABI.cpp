@@ -1066,10 +1066,18 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   // global initialization is always single-threaded.
   bool ThreadsafeStatics = (getContext().getLangOptions().ThreadsafeStatics &&
                             D.isLocalVarDecl());
-  
-  // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
-  const llvm::IntegerType *GuardTy
-    = (IsARM ? Builder.getInt32Ty() : Builder.getInt64Ty());
+
+  const llvm::IntegerType *GuardTy;
+
+  // If we have a global variable with internal linkage and thread-safe statics
+  // are disabled, we can just let the guard variable be of type i8.
+  bool UseInt8GuardVariable = !ThreadsafeStatics && GV->hasInternalLinkage();
+  if (UseInt8GuardVariable)
+    GuardTy = Builder.getInt8Ty();
+  else {
+    // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
+    GuardTy = (IsARM ? Builder.getInt32Ty() : Builder.getInt64Ty());
+  }
   const llvm::PointerType *GuardPtrTy = GuardTy->getPointerTo();
 
   // Create the guard variable.
@@ -1100,7 +1108,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   //       if (__cxa_guard_acquire(&obj_guard))
   //         ...
   //     }
-  if (IsARM) {
+  if (IsARM && !UseInt8GuardVariable) {
     llvm::Value *V = Builder.CreateLoad(GuardVariable);
     V = Builder.CreateAnd(V, Builder.getInt32(1));
     IsInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
