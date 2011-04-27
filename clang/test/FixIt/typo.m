@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -DNON_FIXITS -verify %s
 // RUN: cp %s %t
-// RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t  || true
+// RUN: not %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fixit %t
 // RUN: %clang_cc1 -x objective-c -fsyntax-only -fobjc-nonfragile-abi -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -pedantic -Werror %t
 // RUN: grep "@implementation Sub3" %t
 
@@ -9,7 +9,7 @@
 @end
 
 void test() {
-  NSstring *str = @"A string"; // expected-error{{use of undeclared identifier 'NSstring'; did you mean 'NSString'?}}
+  NSstring *str = @"A string"; // expected-error{{unknown type name 'NSstring'; did you mean 'NSString'?}}
 }
 
 @protocol P1
