@@ -318,6 +318,10 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
+  // Memset handling
+  if (FnInfo->isStr("memset"))
+    CheckMemsetArguments(TheCall);
+
   return false;
 }
 
@@ -1788,6 +1792,36 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
     
     if (!analyze_format_string::ParseScanfString(H, Str, Str + StrLen))
       H.DoneProcessing();
+  }
+}
+
+//===--- CHECK: Standard memory functions ---------------------------------===//
+
+/// \brief Check for dangerous or invalid arguments to memset().
+///
+/// This issues warnings on known problematic or dangerous or unspecified
+/// arguments to the standard 'memset' function call.
+///
+/// \param Call The call expression to diagnose.
+void Sema::CheckMemsetArguments(const CallExpr *Call) {
+  assert(Call->getNumArgs() == 3 && "Unexpected number of arguments to memset");
+  const Expr *Dest = Call->getArg(0)->IgnoreParenImpCasts();
+
+  QualType DestTy = Dest->getType();
+  if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
+    QualType PointeeTy = DestPtrTy->getPointeeType();
+    if (!PointeeTy->isPODType()) {
+      DiagRuntimeBehavior(
+        Dest->getExprLoc(), Dest,
+        PDiag(diag::warn_non_pod_memset)
+          << PointeeTy << Call->getCallee()->getSourceRange());
+
+      SourceRange ArgRange = Call->getArg(0)->getSourceRange();
+      DiagRuntimeBehavior(
+        Dest->getExprLoc(), Dest,
+        PDiag(diag::note_non_pod_memset_silence)
+          << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
+    }
   }
 }
 

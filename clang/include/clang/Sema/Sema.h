@@ -5516,6 +5516,8 @@ private:
                                  unsigned format_idx, unsigned firstDataArg,
                                  bool isPrintf);
 
+  void CheckMemsetArguments(const CallExpr *Call);
+
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
