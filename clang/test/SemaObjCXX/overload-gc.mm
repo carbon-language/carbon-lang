@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-gc -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -triple i386-apple-darwin9 -fobjc-gc -verify %s
 
 void f0(__weak id *); // expected-note{{candidate function not viable: 1st argument ('id *') has no lifetime, but parameter has __weak lifetime}}
 
