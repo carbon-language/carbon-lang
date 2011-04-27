@@ -1,6 +1,6 @@
 """
-Test lldbutil.lldb_iter() which returns an iterator object for lldb's aggregate
-data structures.
+Test lldb_iter/smart_iter() which returns an iterator object for lldb container
+objects.
 """
 
 import os, time
@@ -29,6 +29,11 @@ class LLDBIteratorTestCase(TestBase):
         """Test lldb_iter works correctly for SBTarget -> SBBreakpoint."""
         self.buildDefault()
         self.lldb_iter_2()
+
+    def test_smart_iter_1(self):
+        """Test smart_iter works correctly for SBProcess->SBThread->SBFrame."""
+        self.buildDefault()
+        self.smart_iter_1()
 
     def lldb_iter_1(self):
         exe = os.path.join(os.getcwd(), "a.out")
@@ -91,6 +96,36 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i].GetID() == mine[i].GetID(),
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
+    def smart_iter_1(self):
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target.IsValid(), VALID_TARGET)
+
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line1)
+        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at entry point.
+        rc = lldb.SBError()
+        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
+
+        if not rc.Success() or not self.process.IsValid():
+            self.fail("SBTarget.LaunchProcess() failed")
+
+        from lldbutil import smart_iter, print_stacktrace
+        stopped_due_to_breakpoint = False
+        for thread in smart_iter(self.process):
+            if self.TraceOn():
+                print_stacktrace(thread)
+            ID = thread.GetThreadID()
+            if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+                stopped_due_to_breakpoint = True
+            for frame in smart_iter(thread):
+                self.assertTrue(frame.GetThread().GetThreadID() == ID)
+                if self.TraceOn():
+                    print frame
+
+        self.assertTrue(stopped_due_to_breakpoint)
 
 if __name__ == '__main__':
     import atexit

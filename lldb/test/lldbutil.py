@@ -56,11 +56,55 @@ def lldb_iter(obj, getsize, getelem):
         name = symbol.GetName()
         ...
     """
+    #import traceback
+    #traceback.print_stack()
     size = getattr(obj, getsize)
     elem = getattr(obj, getelem)
     for i in range(size()):
         yield elem(i)
 
+def smart_iter(obj):
+    """Returns an iterator for eligible lldb objects, or None otherwise.
+
+    An example of eligible lldb container object is SBModule, which contains
+    SBSymbols.  While SBTarget contains SBModules and SBBreakpoints, because it
+    is ambiguous which containee type to iterate on, the best we can do is to
+    return None.  API clients can use lldb_iter() to clarify their intentions.
+
+    SBSymbol does not have the notion of containee objects and is not eligible
+    for smart iterator.
+
+    Example usage:
+
+    from lldb_util import smart_iter
+    for thread in smart_iter(process):
+        ID = thread.GetThreadID()
+        if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+            stopped_due_to_breakpoint = True
+        for frame in smart_iter(thread):
+            self.assertTrue(frame.GetThread().GetThreadID() == ID)
+        ...
+    """
+    d = { lldb.SBBreakpoint:  ('GetNumLocations',   'GetLocationAtIndex'),
+          lldb.SBCompileUnit: ('GetNumLineEntries', 'GetLineEntryAtIndex'),
+          lldb.SBDebugger:    ('GetNumTargets',     'GetTargetAtIndex'),
+          lldb.SBModule:      ('GetNumSymbols',     'GetSymbolAtIndex'),
+          lldb.SBProcess:     ('GetNumThreads',     'GetThreadAtIndex'),
+          lldb.SBThread:      ('GetNumFrames',      'GetFrameAtIndex'),
+
+          lldb.SBInstructionList:   ('GetSize', 'GetInstructionAtIndex'),
+          lldb.SBStringList:        ('GetSize', 'GetStringAtIndex',),
+          lldb.SBSymbolContextList: ('GetSize', 'GetContextAtIndex'),
+          lldb.SBValueList:         ('GetSize',  'GetValueAtIndex'),
+
+          lldb.SBType:  ('GetNumberChildren', 'GetChildAtIndex'),
+          lldb.SBValue: ('GetNumChildren',    'GetChildAtIndex')
+          }
+    if obj.__class__ in d:
+        val = d.get(obj.__class__)
+        return lldb_iter(obj, val[0], val[1])
+    else:
+        return None
 
 # ===================================================
 # Disassembly for an SBFunction or an SBSymbol object
