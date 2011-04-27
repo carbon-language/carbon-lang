@@ -956,8 +956,7 @@ bool Parser::isCXXSimpleTypeSpecifier() const {
   case tok::kw_char16_t:
   case tok::kw_char32_t:
   case tok::kw_bool:
-    // FIXME: C++0x decltype support.
-  // GNU typeof support.
+  case tok::kw_decltype:
   case tok::kw_typeof:
     return true;
 

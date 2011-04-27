@@ -2954,9 +2954,6 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_virtual:
   case tok::kw_explicit:
 
-    // typedef-name
-  case tok::annot_typename:
-
     // static_assert-declaration
   case tok::kw__Static_assert:
 
@@ -2971,6 +2968,11 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::less:
     return getLang().ObjC1;
 
+    // typedef-name
+  case tok::annot_typename:
+    return !DisambiguatingWithExpression ||
+           !isStartOfObjCClassMessageMissingOpenBracket();
+      
   case tok::kw___declspec:
   case tok::kw___cdecl:
   case tok::kw___stdcall:

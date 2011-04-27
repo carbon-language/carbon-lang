@@ -149,7 +149,7 @@ class Parser : public CodeCompletionHandler {
   /// ColonProtectionRAIIObject RAII object.
   bool ColonIsSacred;
 
-  /// \brief When true, we are directly inside an Ojective-C messsage 
+  /// \brief When true, we are directly inside an Objective-C messsage 
   /// send expression.
   ///
   /// This is managed by the \c InMessageExpressionRAIIObject class, and
