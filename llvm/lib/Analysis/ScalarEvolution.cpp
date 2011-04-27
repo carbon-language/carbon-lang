@@ -4701,9 +4701,14 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
       for (++i; i != e; ++i)
         NewOps.push_back(getSCEVAtScope(AddRec->getOperand(i), L));
 
-      AddRec = cast<SCEVAddRecExpr>(
+      const SCEV *FoldedRec =
         getAddRecExpr(NewOps, AddRec->getLoop(),
-                      AddRec->getNoWrapFlags(SCEV::FlagNW)));
+                      AddRec->getNoWrapFlags(SCEV::FlagNW));
+      AddRec = dyn_cast<SCEVAddRecExpr>(FoldedRec);
+      // In cases with "undef" values, a loop's own recurrence may
+      // fold into a constant. Go ahead and return the optimistic value.
+      if (!AddRec)
+        return FoldedRec;
       break;
     }
 
