@@ -1,7 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: cp %s %t
-// RUN: %clang_cc1 -fsyntax-only -fixit -x c++ %t || true
+// RUN: not %clang_cc1 -fsyntax-only -fixit -x c++ %t
 // RUN: %clang_cc1 -fsyntax-only -pedantic -Werror -x c++ %t
+// RUN: grep test_string %t
 
 namespace std {
   template<typename T> class basic_string { // expected-note 2{{'basic_string' declared here}}

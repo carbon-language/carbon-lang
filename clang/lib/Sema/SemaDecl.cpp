@@ -510,12 +510,29 @@ Corrected:
     // close to this name.
     if (!SecondTry) {
       if (DeclarationName Corrected = CorrectTypo(Result, S, &SS)) {
+        unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
+        unsigned QualifiedDiag = diag::err_no_member_suggest;
+        
+        NamedDecl *FirstDecl = Result.empty()? 0 : *Result.begin();
+
+        if (getLangOptions().CPlusPlus && NextToken.is(tok::less) &&
+            FirstDecl && isa<TemplateDecl>(FirstDecl)) {
+          UnqualifiedDiag = diag::err_no_template_suggest;
+          QualifiedDiag = diag::err_no_member_template_suggest;
+        } else if (FirstDecl && 
+                   (isa<TypeDecl>(FirstDecl) || 
+                    isa<ObjCInterfaceDecl>(FirstDecl) ||
+                    isa<ObjCCompatibleAliasDecl>(FirstDecl))) {
+           UnqualifiedDiag = diag::err_unknown_typename_suggest;
+           QualifiedDiag = diag::err_unknown_nested_typename_suggest;
+         }
+        
         if (SS.isEmpty())
-          Diag(NameLoc, diag::err_undeclared_var_use_suggest)
+          Diag(NameLoc, UnqualifiedDiag)
             << Name << Corrected
             << FixItHint::CreateReplacement(NameLoc, Corrected.getAsString());
         else
-          Diag(NameLoc, diag::err_no_member_suggest)
+          Diag(NameLoc, QualifiedDiag)
             << Name << computeDeclContext(SS, false) << Corrected
             << SS.getRange()
             << FixItHint::CreateReplacement(NameLoc, Corrected.getAsString());
@@ -527,7 +544,6 @@ Corrected:
         if (Result.empty())
           return Corrected.getAsIdentifierInfo();
         
-        NamedDecl *FirstDecl = *Result.begin();
         Diag(FirstDecl->getLocation(), diag::note_previous_decl)
           << FirstDecl->getDeclName();
 
