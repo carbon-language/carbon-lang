@@ -121,7 +121,6 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
       if (Triple.getEnvironmentName() == "iphoneos") {
         PlatformName = "ios";
       } else {
-        assert(Rev == 0 && "invalid triple, unexpected micro version!");
         PlatformName = "macosx";
         Rev = Min;
         Min = Maj - 4;
