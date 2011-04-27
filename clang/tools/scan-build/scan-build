@@ -290,7 +290,7 @@ sub AddStatLine {
   print $Line . "\n";
 
   my $Regex = qr/(.*?)\ :\ (.*?)\ ->\ Total\ CFGBlocks:\ (\d+)\ \|\ Unreachable
-      \ CFGBlocks:\ (\d+)\ \|\ Aborted\ Block:\ (yes|no)\ \|\ Empty\ WorkList:
+      \ CFGBlocks:\ (\d+)\ \|\ Exhausted\ Block:\ (yes|no)\ \|\ Empty\ WorkList:
       \ (yes|no)/x;
 
   if ($Line !~ $Regex) {
