@@ -370,9 +370,34 @@ H2 {
 H3 {
  font-size: 100%;
 }
+
+H2, H3 {
+  border-bottom: 2px solid;
+  margin-top: 2em;
+}
+
 A.qindex {}
 A.qindexRef {}
 A.el { text-decoration: none; font-weight: bold }
 A.elRef { font-weight: bold }
 A.code { text-decoration: none; font-weight: normal; color: #4444ee }
 A.codeRef { font-weight: normal; color: #4444ee }
+
+div.memitem {
+  border: 1px solid #999999;
+  margin-top: 1.0em;
+  margin-bottom: 1.0em;
+  -webkit-border-radius: 0.5em;
+  -webkit-box-shadow: 3px 3px 6px #777777;
+  -moz-border-radius: 0.5em;
+  -moz-box-shadow: black 3px 3px 3px;
+}
+
+div.memproto {
+  background-color: #E3E4E5;
+  padding: 0.25em 0.5em;
+  -webkit-border-top-left-radius: 0.5em;
+  -webkit-border-top-right-radius: 0.5em;
+  -moz-border-radius-topleft: 0.5em;
+  -moz-border-radius-topright: 0.5em;
+}
