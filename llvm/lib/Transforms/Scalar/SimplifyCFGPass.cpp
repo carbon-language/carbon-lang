@@ -73,7 +73,8 @@ static void ChangeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   if (UseLLVMTrap) {
     Function *TrapFn =
       Intrinsic::getDeclaration(BB->getParent()->getParent(), Intrinsic::trap);
-    CallInst::Create(TrapFn, "", I);
+    CallInst *CallTrap = CallInst::Create(TrapFn, "", I);
+    CallTrap->setDebugLoc(I->getDebugLoc());
   }
   new UnreachableInst(I->getContext(), I);
   
