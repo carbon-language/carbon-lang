@@ -70,7 +70,6 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
                              : public FunctionPass,
                                public InstVisitor<InstCombiner, Instruction*> {
   TargetData *TD;
-  bool MustPreserveLCSSA;
   bool MadeIRChange;
 public:
   /// Worklist - All of the instructions that need to be simplified.

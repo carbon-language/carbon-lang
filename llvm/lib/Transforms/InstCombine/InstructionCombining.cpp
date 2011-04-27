@@ -76,7 +76,6 @@ INITIALIZE_PASS(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreservedID(LCSSAID);
   AU.setPreservesCFG();
 }
 
@@ -1637,7 +1636,6 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
 
 bool InstCombiner::runOnFunction(Function &F) {
-  MustPreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
   TD = getAnalysisIfAvailable<TargetData>();
 
   

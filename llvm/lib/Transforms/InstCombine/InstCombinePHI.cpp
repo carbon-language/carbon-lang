@@ -774,9 +774,6 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  // If LCSSA is around, don't mess with Phi nodes
-  if (MustPreserveLCSSA) return 0;
-
   if (Value *V = SimplifyInstruction(&PN, TD))
     return ReplaceInstUsesWith(PN, V);
 
