@@ -622,6 +622,13 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     QualType ElementType = CGF.getContext().getCanonicalType(E->getType());
     ElementType = CGF.getContext().getAsArrayType(ElementType)->getElementType();
 
+    bool hasNonTrivialCXXConstructor = false;
+    if (CGF.getContext().getLangOptions().CPlusPlus)
+      if (const RecordType *RT = ElementType->getAs<RecordType>()) {
+        const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+        hasNonTrivialCXXConstructor = !RD->hasTrivialConstructor();
+      }
+
     // FIXME: were we intentionally ignoring address spaces and GC attributes?
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
@@ -629,7 +636,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       // then we're done.
       if (i == NumInitElements &&
           Dest.isZeroed() &&
-          CGF.getTypes().isZeroInitializable(ElementType))
+          CGF.getTypes().isZeroInitializable(ElementType) &&
+          !hasNonTrivialCXXConstructor)
         break;
 
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");

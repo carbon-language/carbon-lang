@@ -83,6 +83,47 @@ namespace ptrmem {
   }
 }
 
+namespace PR9801 {
+
+struct Test {
+  Test() : i(10) {}
+  Test(int i) : i(i) {}
+  int i;
+private:
+  int j;
+};
+
+struct Test2 {
+  Test t;
+};
+
+struct Test3 : public Test { };
+
+// CHECK: define void @_ZN6PR98011fEv
+void f() {
+  // CHECK: call void @_ZN6PR98014TestC1Ei
+  // CHECK: call void @_ZN6PR98014TestC1Ev
+  // CHECK: call void @_ZN6PR98014TestC1Ev
+  Test partial[3] = { 1 };
+
+  // CHECK: call void @_ZN6PR98014TestC1Ev
+  // CHECK: call void @_ZN6PR98014TestC1Ev
+  // CHECK: call void @_ZN6PR98014TestC1Ev
+  Test empty[3] = {};
+
+  // CHECK: call void @_ZN6PR98015Test2C1Ev
+  // CHECK: call void @_ZN6PR98015Test2C1Ev
+  // CHECK: call void @_ZN6PR98015Test2C1Ev
+  Test2 empty2[3] = {};
+
+  // CHECK: call void @_ZN6PR98015Test3C1Ev
+  // CHECK: call void @_ZN6PR98015Test3C1Ev
+  // CHECK: call void @_ZN6PR98015Test3C1Ev
+  Test3 empty3[3] = {};
+}
+
+}
+
 namespace zeroinit {
   struct S { int i; };
 
