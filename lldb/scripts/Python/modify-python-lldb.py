@@ -1,5 +1,5 @@
 #
-# finish-lldb-python.py
+# modify-lldb-python.py
 #
 # This script modifies the lldb module (which was automatically generated via
 # running swig) to support iteration for certain lldb objects, adds a global
