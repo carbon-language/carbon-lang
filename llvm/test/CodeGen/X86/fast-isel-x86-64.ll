@@ -251,3 +251,12 @@ entry:
 ; CHECK: callq _test20sret
 }
 declare void @test20sret(%struct.a* sret)
+
+; Check that -0.0 is not materialized using pxor
+define void @test21(double* %p1) {
+  store double -0.0, double* %p1
+  ret void
+; CHECK: test21:
+; CHECK-NOT: pxor
+; CHECK: movsd	LCPI
+}
