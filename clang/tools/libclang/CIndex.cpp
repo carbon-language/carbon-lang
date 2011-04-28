@@ -5220,6 +5220,9 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_GlobalCompletionResults:
       str = "Code completion: cached global results";
       break;
+    case CXTUResourceUsage_SourceManagerContentCache:
+      str = "SourceManager: content cache allocator";
+      break;
   }
   return str;
 }
@@ -5252,8 +5255,14 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
       astUnit->getCachedCompletionAllocator().getPtr()) {
     completionBytes = completionAllocator-> getTotalMemory();
   }
-  createCXTUResourceUsageEntry(*entries, CXTUResourceUsage_GlobalCompletionResults,
-    completionBytes);
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_GlobalCompletionResults,
+                               completionBytes);
+  
+  // How much memory is being used by SourceManager's content cache?
+  createCXTUResourceUsageEntry(*entries,
+          CXTUResourceUsage_SourceManagerContentCache,
+          (unsigned long) astContext.getSourceManager().getContentCacheSize());
 
 
   CXTUResourceUsage usage = { (void*) entries.get(),

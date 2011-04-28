@@ -850,6 +850,16 @@ public:
   LineTableInfo &getLineTable();
 
   //===--------------------------------------------------------------------===//
+  // Queries for performance analysis.
+  //===--------------------------------------------------------------------===//
+
+  /// Return the total amount of physical memory allocated by the
+  /// ContentCache allocator.
+  size_t getContentCacheSize() const {
+    return ContentCacheAlloc.getTotalMemory();
+  }
+
+  //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
   //===--------------------------------------------------------------------===//
 
