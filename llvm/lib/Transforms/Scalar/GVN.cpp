@@ -418,6 +418,8 @@ namespace {
     DenseMap<uint32_t, LeaderTableEntry> LeaderTable;
     BumpPtrAllocator TableAllocator;
     
+    SmallVector<Instruction*, 8> InstrsToErase;
+    
     /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
     void addToLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
@@ -477,16 +479,13 @@ namespace {
 
     // Helper fuctions
     // FIXME: eliminate or document these better
-    bool processLoad(LoadInst* L,
-                     SmallVectorImpl<Instruction*> &toErase);
-    bool processInstruction(Instruction *I,
-                            SmallVectorImpl<Instruction*> &toErase);
-    bool processNonLocalLoad(LoadInst* L,
-                             SmallVectorImpl<Instruction*> &toErase);
+    bool processLoad(LoadInst *L);
+    bool processInstruction(Instruction *I);
+    bool processNonLocalLoad(LoadInst *L);
     bool processBlock(BasicBlock *BB);
-    void dump(DenseMap<uint32_t, Value*>& d);
+    void dump(DenseMap<uint32_t, Value*> &d);
     bool iterateOnFunction(Function &F);
-    bool performPRE(Function& F);
+    bool performPRE(Function &F);
     Value *findLeader(BasicBlock *BB, uint32_t num);
     void cleanupGlobalSets();
     void verifyRemoved(const Instruction *I) const;
@@ -1189,8 +1188,7 @@ static bool isLifetimeStart(const Instruction *Inst) {
 
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
-bool GVN::processNonLocalLoad(LoadInst *LI,
-                              SmallVectorImpl<Instruction*> &toErase) {
+bool GVN::processNonLocalLoad(LoadInst *LI) {
   // Find the non-local dependencies of the load.
   SmallVector<NonLocalDepResult, 64> Deps;
   AliasAnalysis::Location Loc = VN.getAliasAnalysis()->getLocation(LI);
@@ -1354,7 +1352,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     if (V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
     VN.erase(LI);
-    toErase.push_back(LI);
+    InstrsToErase.push_back(LI);
     ++NumGVNLoad;
     return true;
   }
@@ -1576,14 +1574,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   if (V->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(V);
   VN.erase(LI);
-  toErase.push_back(LI);
+  InstrsToErase.push_back(LI);
   ++NumPRELoad;
   return true;
 }
 
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
-bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
+bool GVN::processLoad(LoadInst *L) {
   if (!MD)
     return false;
 
@@ -1652,7 +1650,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
       if (AvailVal->getType()->isPointerTy())
         MD->invalidateCachedPointerInfo(AvailVal);
       VN.erase(L);
-      toErase.push_back(L);
+      InstrsToErase.push_back(L);
       ++NumGVNLoad;
       return true;
     }
@@ -1672,7 +1670,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 
   // If it is defined in another block, try harder.
   if (Dep.isNonLocal())
-    return processNonLocalLoad(L, toErase);
+    return processNonLocalLoad(L);
 
   Instruction *DepInst = Dep.getInst();
   if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {
@@ -1700,7 +1698,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     if (StoredVal->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(StoredVal);
     VN.erase(L);
-    toErase.push_back(L);
+    InstrsToErase.push_back(L);
     ++NumGVNLoad;
     return true;
   }
@@ -1730,7 +1728,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     if (DepLI->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(DepLI);
     VN.erase(L);
-    toErase.push_back(L);
+    InstrsToErase.push_back(L);
     ++NumGVNLoad;
     return true;
   }
@@ -1741,7 +1739,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
     VN.erase(L);
-    toErase.push_back(L);
+    InstrsToErase.push_back(L);
     ++NumGVNLoad;
     return true;
   }
@@ -1752,7 +1750,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
       L->replaceAllUsesWith(UndefValue::get(L->getType()));
       VN.erase(L);
-      toErase.push_back(L);
+      InstrsToErase.push_back(L);
       ++NumGVNLoad;
       return true;
     }
@@ -1792,8 +1790,7 @@ Value *GVN::findLeader(BasicBlock *BB, uint32_t num) {
 
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
-bool GVN::processInstruction(Instruction *I,
-                             SmallVectorImpl<Instruction*> &toErase) {
+bool GVN::processInstruction(Instruction *I) {
   // Ignore dbg info intrinsics.
   if (isa<DbgInfoIntrinsic>(I))
     return false;
@@ -1807,19 +1804,17 @@ bool GVN::processInstruction(Instruction *I,
     if (MD && V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
     VN.erase(I);
-    toErase.push_back(I);
+    InstrsToErase.push_back(I);
     return true;
   }
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    bool Changed = processLoad(LI, toErase);
+    if (processLoad(LI))
+      return true;
 
-    if (!Changed) {
-      unsigned Num = VN.lookup_or_add(LI);
-      addToLeaderTable(Num, LI, LI->getParent());
-    }
-
-    return Changed;
+    unsigned Num = VN.lookup_or_add(LI);
+    addToLeaderTable(Num, LI, LI->getParent());
+    return false;
   }
 
   // For conditions branches, we can perform simple conditional propagation on
@@ -1882,7 +1877,7 @@ bool GVN::processInstruction(Instruction *I,
   I->replaceAllUsesWith(repl);
   if (MD && repl->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(repl);
-  toErase.push_back(I);
+  InstrsToErase.push_back(I);
   return true;
 }
 
@@ -1939,35 +1934,36 @@ bool GVN::runOnFunction(Function& F) {
 
 
 bool GVN::processBlock(BasicBlock *BB) {
-  // FIXME: Kill off toErase by doing erasing eagerly in a helper function (and
-  // incrementing BI before processing an instruction).
-  SmallVector<Instruction*, 8> toErase;
+  // FIXME: Kill off InstrsToErase by doing erasing eagerly in a helper function
+  // (and incrementing BI before processing an instruction).
+  assert(InstrsToErase.empty() &&
+         "We expect InstrsToErase to be empty across iterations");
   bool ChangedFunction = false;
 
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
        BI != BE;) {
-    ChangedFunction |= processInstruction(BI, toErase);
-    if (toErase.empty()) {
+    ChangedFunction |= processInstruction(BI);
+    if (InstrsToErase.empty()) {
       ++BI;
       continue;
     }
 
     // If we need some instructions deleted, do it now.
-    NumGVNInstr += toErase.size();
+    NumGVNInstr += InstrsToErase.size();
 
     // Avoid iterator invalidation.
     bool AtStart = BI == BB->begin();
     if (!AtStart)
       --BI;
 
-    for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-         E = toErase.end(); I != E; ++I) {
+    for (SmallVector<Instruction*, 4>::iterator I = InstrsToErase.begin(),
+         E = InstrsToErase.end(); I != E; ++I) {
       DEBUG(dbgs() << "GVN removed: " << **I << '\n');
       if (MD) MD->removeInstruction(*I);
       (*I)->eraseFromParent();
       DEBUG(verifyRemoved(*I));
     }
-    toErase.clear();
+    InstrsToErase.clear();
 
     if (AtStart)
       BI = BB->begin();
