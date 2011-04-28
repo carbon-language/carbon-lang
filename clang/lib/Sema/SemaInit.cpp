@@ -1795,11 +1795,15 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
   // Pre-allocate storage for the structured initializer list.
   unsigned NumElements = 0;
   unsigned NumInits = 0;
-  if (!StructuredList)
+  bool GotNumInits = false;
+  if (!StructuredList) {
     NumInits = IList->getNumInits();
-  else if (Index < IList->getNumInits()) {
-    if (InitListExpr *SubList = dyn_cast<InitListExpr>(IList->getInit(Index)))
+    GotNumInits = true;
+  } else if (Index < IList->getNumInits()) {
+    if (InitListExpr *SubList = dyn_cast<InitListExpr>(IList->getInit(Index))) {
       NumInits = SubList->getNumInits();
+      GotNumInits = true;
+    }
   }
 
   if (const ArrayType *AType
@@ -1808,7 +1812,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
       NumElements = CAType->getSize().getZExtValue();
       // Simple heuristic so that we don't allocate a very large
       // initializer with many empty entries at the end.
-      if (NumInits && NumElements > NumInits)
+      if (GotNumInits && NumElements > NumInits)
         NumElements = 0;
     }
   } else if (const VectorType *VType = CurrentObjectType->getAs<VectorType>())
