@@ -86,6 +86,10 @@ public:
      // The name is stored after the class itself.
     return reinterpret_cast<const char*>(this + 1);
   }
+  
+  virtual BufferKind getBufferKind() const {
+    return MemoryBuffer_Malloc;
+  }
 };
 }
 
@@ -190,6 +194,10 @@ public:
 
     sys::Path::UnMapFilePages(reinterpret_cast<const char*>(RealStart),
                               RealSize);
+  }
+  
+  virtual BufferKind getBufferKind() const {
+    return MemoryBuffer_MMap;
   }
 };
 }
