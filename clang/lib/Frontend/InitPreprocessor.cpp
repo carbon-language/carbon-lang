@@ -335,12 +335,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   }
 
   if (LangOpts.Microsoft) {
-    // Filter out some microsoft extensions when trying to parse in ms-compat
-    // mode.
-    Builder.defineMacro("__int8", "__INT8_TYPE__");
-    Builder.defineMacro("__int16", "__INT16_TYPE__");
-    Builder.defineMacro("__int32", "__INT32_TYPE__");
-    Builder.defineMacro("__int64", "__INT64_TYPE__");
     // Both __PRETTY_FUNCTION__ and __FUNCTION__ are GCC extensions, however
     // VC++ appears to only like __FUNCTION__.
     Builder.defineMacro("__PRETTY_FUNCTION__", "__FUNCTION__");

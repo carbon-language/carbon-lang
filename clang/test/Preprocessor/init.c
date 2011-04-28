@@ -80,10 +80,6 @@
 //
 // MSEXT-NOT:#define __STDC__
 // MSEXT:#define _INTEGRAL_MAX_BITS 64
-// MSEXT:#define __int16 __INT16_TYPE__
-// MSEXT:#define __int32 __INT32_TYPE__
-// MSEXT:#define __int64 __INT64_TYPE__
-// MSEXT:#define __int8 __INT8_TYPE__
 //
 // 
 // RUN: %clang_cc1 -x objective-c -E -dM < /dev/null | FileCheck -check-prefix OBJC %s
