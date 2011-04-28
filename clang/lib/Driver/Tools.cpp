@@ -2247,10 +2247,6 @@ void darwin::CC1::AddCC1Args(const ArgList &Args,
       CmdArgs.push_back("-fno-builtin-strcpy");
   }
 
-  // gcc has some code here to deal with when no -mmacosx-version-min
-  // and no -miphoneos-version-min is present, but this never happens
-  // due to tool chain specific argument translation.
-
   if (Args.hasArg(options::OPT_g_Flag) &&
       !Args.hasArg(options::OPT_fno_eliminate_unused_debug_symbols))
     CmdArgs.push_back("-feliminate-unused-debug-symbols");
@@ -2717,6 +2713,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
                                const ArgList &Args,
                                ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
+  const toolchains::Darwin &DarwinTC = getDarwinToolChain();
 
   unsigned Version[3] = { 0, 0, 0 };
   if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
@@ -2736,7 +2733,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   // will match the linker version detected at configure time. We need the
   // universal driver.
   if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle) &&
-      !getDarwinToolChain().isTargetIPhoneOS()) {
+      !DarwinTC.isTargetIPhoneOS()) {
     // Don't pass -demangle to ld_classic.
     //
     // FIXME: This is a temporary workaround, ld should be handling this.
@@ -2811,7 +2808,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddLastArg(CmdArgs, options::OPT_all__load);
   Args.AddAllArgs(CmdArgs, options::OPT_allowable__client);
   Args.AddLastArg(CmdArgs, options::OPT_bind__at__load);
-  if (getDarwinToolChain().isTargetIPhoneOS())
+  if (DarwinTC.isTargetIPhoneOS())
     Args.AddLastArg(CmdArgs, options::OPT_arch__errors__fatal);
   Args.AddLastArg(CmdArgs, options::OPT_dead__strip);
   Args.AddLastArg(CmdArgs, options::OPT_no__dead__strip__inits__and__terms);
@@ -2823,15 +2820,15 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddAllArgs(CmdArgs, options::OPT_image__base);
   Args.AddAllArgs(CmdArgs, options::OPT_init);
 
-  // Adding all arguments doesn't make sense here but this is what gcc does. One
-  // of this should always be present thanks to argument translation.
-  assert((Args.hasArg(options::OPT_mmacosx_version_min_EQ) ||
-          Args.hasArg(options::OPT_miphoneos_version_min_EQ)) &&
-         "Missing version argument (lost in translation)?");
-  Args.AddAllArgsTranslated(CmdArgs, options::OPT_mmacosx_version_min_EQ,
-                            "-macosx_version_min");
-  Args.AddAllArgsTranslated(CmdArgs, options::OPT_miphoneos_version_min_EQ,
-                            "-iphoneos_version_min");
+  // Add the deployment target.
+  unsigned TargetVersion[3];
+  DarwinTC.getTargetVersion(TargetVersion);
+  CmdArgs.push_back(DarwinTC.isTargetIPhoneOS() ? "-iphoneos_version_min" :
+                    "-macosx_version_min");
+  CmdArgs.push_back(Args.MakeArgString(llvm::Twine(TargetVersion[0]) + "." +
+                                       llvm::Twine(TargetVersion[1]) + "." +
+                                       llvm::Twine(TargetVersion[2])));
+
   Args.AddLastArg(CmdArgs, options::OPT_nomultidefs);
   Args.AddLastArg(CmdArgs, options::OPT_multi__module);
   Args.AddLastArg(CmdArgs, options::OPT_single__module);
