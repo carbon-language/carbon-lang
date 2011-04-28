@@ -182,6 +182,26 @@ def PTXcopyaddress
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
+//===- Floating-Point Instructions - 2 Operand Form -----------------------===//
+multiclass PTX_FLOAT_2OP<string opcstr, SDNode opnode> {
+  def rr32 : InstPTX<(outs RRegf32:$d),
+                     (ins RRegf32:$a),
+                     !strconcat(opcstr, ".f32\t$d, $a"),
+                     [(set RRegf32:$d, (opnode RRegf32:$a))]>;
+  def ri32 : InstPTX<(outs RRegf32:$d),
+                     (ins f32imm:$a),
+                     !strconcat(opcstr, ".f32\t$d, $a"),
+                     [(set RRegf32:$d, (opnode fpimm:$a))]>;
+  def rr64 : InstPTX<(outs RRegf64:$d),
+                     (ins RRegf64:$a),
+                     !strconcat(opcstr, ".f64\t$d, $a"),
+                     [(set RRegf64:$d, (opnode RRegf64:$a))]>;
+  def ri64 : InstPTX<(outs RRegf64:$d),
+                     (ins f64imm:$a),
+                     !strconcat(opcstr, ".f64\t$d, $a"),
+                     [(set RRegf64:$d, (opnode fpimm:$a))]>;
+}
+
 //===- Floating-Point Instructions - 3 Operand Form -----------------------===//
 multiclass PTX_FLOAT_3OP<string opcstr, SDNode opnode> {
   def rr32 : InstPTX<(outs RRegf32:$d),
@@ -546,6 +566,9 @@ defm DIV : INT3<"div", udiv>;
 defm REM : INT3<"rem", urem>;
 
 ///===- Floating-Point Arithmetic Instructions ----------------------------===//
+
+// Standard Unary Operations
+defm FNEG : PTX_FLOAT_2OP<"neg", fneg>;
 
 // Standard Binary Operations
 defm FADD : PTX_FLOAT_3OP<"add", fadd>;
