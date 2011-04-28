@@ -2032,3 +2032,31 @@ clamp_float:                            # @clamp_float
 with -ffast-math.
 
 //===---------------------------------------------------------------------===//
+
+This function (from PR9803):
+
+int clamp2(int a) {
+        if (a > 5)
+                a = 5;
+        if (a < 0) 
+                return 0;
+        return a;
+}
+
+Compiles to:
+
+_clamp2:                                ## @clamp2
+        pushq   %rbp
+        movq    %rsp, %rbp
+        cmpl    $5, %edi
+        movl    $5, %ecx
+        cmovlel %edi, %ecx
+        testl   %ecx, %ecx
+        movl    $0, %eax
+        cmovnsl %ecx, %eax
+        popq    %rbp
+        ret
+
+The move of 0 could be scheduled above the test to make it is xor reg,reg.
+
+//===---------------------------------------------------------------------===//
