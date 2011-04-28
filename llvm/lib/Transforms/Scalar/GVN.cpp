@@ -392,20 +392,13 @@ void ValueTable::verifyRemoved(const Value *V) const {
 namespace {
 
   class GVN : public FunctionPass {
-    bool runOnFunction(Function &F);
-  public:
-    static char ID; // Pass identification, replacement for typeid
-    explicit GVN(bool noloads = false)
-        : FunctionPass(ID), NoLoads(noloads), MD(0) {
-      initializeGVNPass(*PassRegistry::getPassRegistry());
-    }
-
-  private:
     bool NoLoads;
+    public:
     MemoryDependenceAnalysis *MD;
+    private:
     DominatorTree *DT;
-    const TargetData* TD;
-
+    const TargetData *TD;
+    
     ValueTable VN;
     
     /// LeaderTable - A mapping from value numbers to lists of Value*'s that
@@ -419,7 +412,26 @@ namespace {
     BumpPtrAllocator TableAllocator;
     
     SmallVector<Instruction*, 8> InstrsToErase;
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    explicit GVN(bool noloads = false)
+        : FunctionPass(ID), NoLoads(noloads), MD(0) {
+      initializeGVNPass(*PassRegistry::getPassRegistry());
+    }
+
+    bool runOnFunction(Function &F);
     
+    /// markInstructionForDeletion - This removes the specified instruction from
+    /// our various maps and marks it for deletion.
+    void markInstructionForDeletion(Instruction *I) {
+      VN.erase(I);
+      InstrsToErase.push_back(I);
+    }
+    
+    const TargetData *getTargetData() const { return TD; }
+    DominatorTree &getDominatorTree() const { return *DT; }
+    AliasAnalysis *getAliasAnalysis() const { return VN.getAliasAnalysis(); }
+  private:
     /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
     void addToLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
@@ -476,6 +488,7 @@ namespace {
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<AliasAnalysis>();
     }
+    
 
     // Helper fuctions
     // FIXME: eliminate or document these better
@@ -916,9 +929,9 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
 /// because the pointers don't mustalias.  Check this case to see if there is
 /// anything more we can do before we give up.
 static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
-                                  const Type *LoadTy,
-                                  Instruction *InsertPt, const TargetData &TD,
-                                  MemoryDependenceAnalysis &MD) {
+                                  const Type *LoadTy, Instruction *InsertPt,
+                                  GVN &gvn) {
+  const TargetData &TD = *gvn.getTargetData();
   // If Offset+LoadTy exceeds the size of SrcVal, then we must be wanting to
   // widen SrcVal out to a larger load.
   unsigned SrcValSize = TD.getTypeStoreSize(SrcVal->getType());
@@ -956,7 +969,8 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
                     NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
     SrcVal->replaceAllUsesWith(RV);
-    MD.removeInstruction(SrcVal);
+    gvn.MD->removeInstruction(SrcVal);
+    //gvn.markInstructionForDeletion(SrcVal);
     SrcVal = NewLoad;
   }
   
@@ -1087,13 +1101,12 @@ struct AvailableValueInBlock {
   
   /// MaterializeAdjustedValue - Emit code into this block to adjust the value
   /// defined here to the specified type.  This handles various coercion cases.
-  Value *MaterializeAdjustedValue(const Type *LoadTy,
-                                  const TargetData *TD,
-                                  MemoryDependenceAnalysis &MD) const {
+  Value *MaterializeAdjustedValue(const Type *LoadTy, GVN &gvn) const {
     Value *Res;
     if (isSimpleValue()) {
       Res = getSimpleValue();
       if (Res->getType() != LoadTy) {
+        const TargetData *TD = gvn.getTargetData();
         assert(TD && "Need target data to handle type mismatch case");
         Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(),
                                    *TD);
@@ -1107,15 +1120,16 @@ struct AvailableValueInBlock {
       if (Load->getType() == LoadTy && Offset == 0) {
         Res = Load;
       } else {
-        assert(TD && "Need target data to handle type mismatch case");
         Res = GetLoadValueForLoad(Load, Offset, LoadTy, BB->getTerminator(),
-                                  *TD, MD);
+                                  gvn);
         
         DEBUG(dbgs() << "GVN COERCED NONLOCAL LOAD:\nOffset: " << Offset << "  "
                      << *getCoercedLoadValue() << '\n'
                      << *Res << '\n' << "\n\n\n");
       }
     } else {
+      const TargetData *TD = gvn.getTargetData();
+      assert(TD && "Need target data to handle type mismatch case");
       Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
                                    LoadTy, BB->getTerminator(), *TD);
       DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
@@ -1133,15 +1147,13 @@ struct AvailableValueInBlock {
 /// that should be used at LI's definition site.
 static Value *ConstructSSAForLoadSet(LoadInst *LI, 
                          SmallVectorImpl<AvailableValueInBlock> &ValuesPerBlock,
-                                     const TargetData *TD,
-                                     const DominatorTree &DT,
-                                     AliasAnalysis *AA,
-                                     MemoryDependenceAnalysis &MD) {
+                                     GVN &gvn) {
   // Check for the fully redundant, dominating load case.  In this case, we can
   // just use the dominating value directly.
   if (ValuesPerBlock.size() == 1 && 
-      DT.properlyDominates(ValuesPerBlock[0].BB, LI->getParent()))
-    return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), TD, MD);
+      gvn.getDominatorTree().properlyDominates(ValuesPerBlock[0].BB,
+                                               LI->getParent()))
+    return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), gvn);
 
   // Otherwise, we have to construct SSA form.
   SmallVector<PHINode*, 8> NewPHIs;
@@ -1157,14 +1169,16 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
     if (SSAUpdate.HasValueForBlock(BB))
       continue;
 
-    SSAUpdate.AddAvailableValue(BB, AV.MaterializeAdjustedValue(LoadTy, TD,MD));
+    SSAUpdate.AddAvailableValue(BB, AV.MaterializeAdjustedValue(LoadTy, gvn));
   }
   
   // Perform PHI construction.
   Value *V = SSAUpdate.GetValueInMiddleOfBlock(LI->getParent());
   
   // If new PHI nodes were created, notify alias analysis.
-  if (V->getType()->isPointerTy())
+  if (V->getType()->isPointerTy()) {
+    AliasAnalysis *AA = gvn.getAliasAnalysis();
+    
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
       AA->copyValue(LI, NewPHIs[i]);
     
@@ -1176,6 +1190,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
       for (unsigned ii = 0, ee = P->getNumIncomingValues(); ii != ee; ++ii)
         AA->addEscapingUse(P->getOperandUse(2*ii));
     }
+  }
 
   return V;
 }
@@ -1343,16 +1358,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     DEBUG(dbgs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
     
     // Perform PHI construction.
-    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
-                                      VN.getAliasAnalysis(), *MD);
+    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, *this);
     LI->replaceAllUsesWith(V);
 
     if (isa<PHINode>(V))
       V->takeName(LI);
     if (V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
-    VN.erase(LI);
-    InstrsToErase.push_back(LI);
+    markInstructionForDeletion(LI);
     ++NumGVNLoad;
     return true;
   }
@@ -1566,15 +1579,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   }
 
   // Perform PHI construction.
-  Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
-                                    VN.getAliasAnalysis(), *MD);
+  Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, *this);
   LI->replaceAllUsesWith(V);
   if (isa<PHINode>(V))
     V->takeName(LI);
   if (V->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(V);
-  VN.erase(LI);
-  InstrsToErase.push_back(LI);
+  markInstructionForDeletion(LI);
   ++NumPRELoad;
   return true;
 }
@@ -1628,7 +1639,7 @@ bool GVN::processLoad(LoadInst *L) {
                                                  L->getPointerOperand(),
                                                  DepLI, *TD);
       if (Offset != -1)
-        AvailVal = GetLoadValueForLoad(DepLI, Offset, L->getType(), L, *TD, *MD);
+        AvailVal = GetLoadValueForLoad(DepLI, Offset, L->getType(), L, *this);
     }
     
     // If the clobbering value is a memset/memcpy/memmove, see if we can forward
@@ -1649,8 +1660,7 @@ bool GVN::processLoad(LoadInst *L) {
       L->replaceAllUsesWith(AvailVal);
       if (AvailVal->getType()->isPointerTy())
         MD->invalidateCachedPointerInfo(AvailVal);
-      VN.erase(L);
-      InstrsToErase.push_back(L);
+      markInstructionForDeletion(L);
       ++NumGVNLoad;
       return true;
     }
@@ -1697,8 +1707,7 @@ bool GVN::processLoad(LoadInst *L) {
     L->replaceAllUsesWith(StoredVal);
     if (StoredVal->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(StoredVal);
-    VN.erase(L);
-    InstrsToErase.push_back(L);
+    markInstructionForDeletion(L);
     ++NumGVNLoad;
     return true;
   }
@@ -1727,8 +1736,7 @@ bool GVN::processLoad(LoadInst *L) {
     L->replaceAllUsesWith(AvailableVal);
     if (DepLI->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(DepLI);
-    VN.erase(L);
-    InstrsToErase.push_back(L);
+    markInstructionForDeletion(L);
     ++NumGVNLoad;
     return true;
   }
@@ -1738,19 +1746,17 @@ bool GVN::processLoad(LoadInst *L) {
   // intervening stores, for example.
   if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
-    VN.erase(L);
-    InstrsToErase.push_back(L);
+    markInstructionForDeletion(L);
     ++NumGVNLoad;
     return true;
   }
   
   // If this load occurs either right after a lifetime begin,
   // then the loaded value is undefined.
-  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(DepInst)) {
     if (II->getIntrinsicID() == Intrinsic::lifetime_start) {
       L->replaceAllUsesWith(UndefValue::get(L->getType()));
-      VN.erase(L);
-      InstrsToErase.push_back(L);
+      markInstructionForDeletion(L);
       ++NumGVNLoad;
       return true;
     }
@@ -1803,8 +1809,7 @@ bool GVN::processInstruction(Instruction *I) {
     I->replaceAllUsesWith(V);
     if (MD && V->getType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
-    VN.erase(I);
-    InstrsToErase.push_back(I);
+    markInstructionForDeletion(I);
     return true;
   }
 
@@ -1873,11 +1878,10 @@ bool GVN::processInstruction(Instruction *I) {
   }
   
   // Remove it!
-  VN.erase(I);
   I->replaceAllUsesWith(repl);
   if (MD && repl->getType()->isPointerTy())
     MD->invalidateCachedPointerInfo(repl);
-  InstrsToErase.push_back(I);
+  markInstructionForDeletion(I);
   return true;
 }
 
