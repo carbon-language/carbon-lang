@@ -466,6 +466,15 @@ private:
 
     NumEntries = 0;
   }
+  
+public:
+  /// Return the approximate size (in bytes) of the actual map.
+  /// This is just the raw memory used by DenseMap.
+  /// If entries are pointers to objects, the size of the referenced objects
+  /// are not included.
+  size_t getMemorySize() const {
+    return NumBuckets * sizeof(BucketT);
+  }
 };
 
 template<typename KeyT, typename ValueT,
