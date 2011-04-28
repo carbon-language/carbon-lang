@@ -2,7 +2,7 @@
 // RUN: %clangxx %t.o -o %t.out
 // RUN: %test_debuginfo %s %t.out 
 // Radar 8775834
-// DEBUGGER: break 60
+// DEBUGGER: break 61
 // DEBUGGER: r
 // DEBUGGER: p a
 // CHECK: $1 = (A &)
@@ -38,6 +38,7 @@ const A &
 A::operator =(const A& rhs)
 {
     m_int = rhs.m_int;
+    return *this;
 }
 
 int A::get_int()
