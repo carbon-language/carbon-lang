@@ -2358,9 +2358,9 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
   }
 
-  const llvm::Type* LLVMField[1] = { llvm::ArrayType::get(ElemTy, SizeRegs) };
-  const llvm::Type* STy = llvm::StructType::get(getVMContext(), LLVMField,
-                                                true);
+  const llvm::Type *STy =
+    llvm::StructType::get(getVMContext(),
+                          llvm::ArrayType::get(ElemTy, SizeRegs), NULL, NULL);
   return ABIArgInfo::getDirect(STy);
 }
 
