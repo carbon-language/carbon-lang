@@ -483,6 +483,13 @@ multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
               [(set Preds:$p, (xor (setcc RC:$a, RC:$b, ocmp), (not Preds:$c)))]>;
 }
 
+multiclass PTX_SELP<RegisterClass RC, string regclsname> {
+  def rr
+    : InstPTX<(outs RC:$r), (ins Preds:$a, RC:$b, RC:$c),
+              !strconcat("selp.", regclsname, "\t$r, $b, $c, $a"),
+              [(set RC:$r, (select Preds:$a, RC:$b, RC:$c))]>;
+}
+
 multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
   def rr32 : InstPTX<(outs RC:$d),
                      (ins MEMri32:$a),
@@ -702,6 +709,14 @@ defm SETPLTf64 : PTX_SETP_FP<RRegf64, "f64", SETULT, SETOLT, "lt">;
 defm SETPLEf64 : PTX_SETP_FP<RRegf64, "f64", SETULE, SETOLE, "le">;
 defm SETPGTf64 : PTX_SETP_FP<RRegf64, "f64", SETUGT, SETOGT, "gt">;
 defm SETPGEf64 : PTX_SETP_FP<RRegf64, "f64", SETUGE, SETOGE, "ge">;
+
+// .selp
+
+defm PTX_SELPu16 : PTX_SELP<RRegu16, "u16">;
+defm PTX_SELPu32 : PTX_SELP<RRegu32, "u32">;
+defm PTX_SELPu64 : PTX_SELP<RRegu64, "u64">;
+defm PTX_SELPf32 : PTX_SELP<RRegf32, "f32">;
+defm PTX_SELPf64 : PTX_SELP<RRegf64, "f64">;
 
 ///===- Logic and Shift Instructions --------------------------------------===//
 
