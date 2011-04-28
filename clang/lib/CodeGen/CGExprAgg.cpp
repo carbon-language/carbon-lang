@@ -624,7 +624,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     bool hasNonTrivialCXXConstructor = false;
     if (CGF.getContext().getLangOptions().CPlusPlus)
-      if (const RecordType *RT = ElementType->getAs<RecordType>()) {
+      if (const RecordType *RT = CGF.getContext()
+                        .getBaseElementType(ElementType)->getAs<RecordType>()) {
         const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
         hasNonTrivialCXXConstructor = !RD->hasTrivialConstructor();
       }
