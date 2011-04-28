@@ -203,13 +203,13 @@ def so_imm_not_XFORM : SDNodeXForm<imm, [{
 }]>;
 
 /// imm1_15 predicate - True if the 32-bit immediate is in the range [1,15].
-def imm1_15 : PatLeaf<(i32 imm), [{
-  return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 16;
+def imm1_15 : ImmLeaf<i32, [{
+  return (int32_t)Imm >= 1 && (int32_t)Imm < 16;
 }]>;
 
 /// imm16_31 predicate - True if the 32-bit immediate is in the range [16,31].
-def imm16_31 : PatLeaf<(i32 imm), [{
-  return (int32_t)N->getZExtValue() >= 16 && (int32_t)N->getZExtValue() < 32;
+def imm16_31 : ImmLeaf<i32, [{
+  return (int32_t)Imm >= 16 && (int32_t)Imm < 32;
 }]>;
 
 def so_imm_neg :
@@ -239,8 +239,8 @@ def lo16AllZero : PatLeaf<(i32 imm), [{
 
 /// imm0_65535 predicate - True if the 32-bit immediate is in the range
 /// [0.65535].
-def imm0_65535 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() < 65536;
+def imm0_65535 : ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 65536;
 }]>;
 
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
@@ -375,8 +375,8 @@ def neon_vcvt_imm32 : Operand<i32> {
 }
 
 // rot_imm: An integer that encodes a rotate amount. Must be 8, 16, or 24.
-def rot_imm : Operand<i32>, PatLeaf<(i32 imm), [{
-    int32_t v = (int32_t)N->getZExtValue();
+def rot_imm : Operand<i32>, ImmLeaf<i32, [{
+    int32_t v = (int32_t)Imm;
     return v == 8 || v == 16 || v == 24; }]> {
   let EncoderMethod = "getRotImmOpValue";
 }
@@ -433,13 +433,13 @@ def arm_i32imm : PatLeaf<(imm), [{
 }]>;
 
 /// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
-def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
-  return (int32_t)N->getZExtValue() < 32;
+def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 32;
 }]>;
 
 /// imm0_31_m1 - Matches and prints like imm0_31, but encodes as 'value - 1'.
-def imm0_31_m1 : Operand<i32>, PatLeaf<(imm), [{
-  return (int32_t)N->getZExtValue() < 32;
+def imm0_31_m1 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 32;
 }]> {
   let EncoderMethod = "getImmMinusOneOpValue";
 }
@@ -462,13 +462,13 @@ def bf_inv_mask_imm : Operand<i32>,
 }
 
 /// lsb_pos_imm - position of the lsb bit, used by BFI4p and t2BFI4p
-def lsb_pos_imm : Operand<i32>, PatLeaf<(imm), [{
-  return isInt<5>(N->getSExtValue());
+def lsb_pos_imm : Operand<i32>, ImmLeaf<i32, [{
+  return isInt<5>(Imm);
 }]>;
 
 /// width_imm - number of bits to be copied, used by BFI4p and t2BFI4p
-def width_imm : Operand<i32>, PatLeaf<(imm), [{
-  return N->getSExtValue() > 0 &&  N->getSExtValue() <= 32;
+def width_imm : Operand<i32>, ImmLeaf<i32, [{
+  return Imm > 0 &&  Imm <= 32;
 }] > {
   let EncoderMethod = "getMsbOpValue";
 }
@@ -3021,8 +3021,8 @@ def lsl_shift_imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(Sh, MVT::i32);
 }]>;
 
-def lsl_amt : PatLeaf<(i32 imm), [{
-  return (N->getZExtValue() < 32);
+def lsl_amt : ImmLeaf<i32, [{
+  return Imm > 0 && Imm < 32;
 }], lsl_shift_imm>;
 
 def PKHBT : APKHI<0b01101000, 0, (outs GPR:$Rd),
@@ -3044,8 +3044,8 @@ def asr_shift_imm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(Sh, MVT::i32);
 }]>;
 
-def asr_amt : PatLeaf<(i32 imm), [{
-  return (N->getZExtValue() <= 32);
+def asr_amt : ImmLeaf<i32, [{
+  return Imm > 0 && Imm <= 32;
 }], asr_shift_imm>;
 
 // Note: Shifts of 1-15 bits will be transformed to srl instead of sra and

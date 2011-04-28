@@ -27,22 +27,22 @@ def imm_comp_XFORM : SDNodeXForm<imm, [{
 }]>;
 
 /// imm0_7 predicate - True if the 32-bit immediate is in the range [0,7].
-def imm0_7 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() < 8;
+def imm0_7 : ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 8;
 }]>;
 def imm0_7_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)-N->getZExtValue() < 8;
 }], imm_neg_XFORM>;
 
-def imm0_255 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() < 256;
+def imm0_255 : ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 256;
 }]>;
 def imm0_255_comp : PatLeaf<(i32 imm), [{
   return ~((uint32_t)N->getZExtValue()) < 256;
 }]>;
 
-def imm8_255 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() >= 8 && (uint32_t)N->getZExtValue() < 256;
+def imm8_255 : ImmLeaf<i32, [{
+  return Imm >= 8 && Imm < 256;
 }]>;
 def imm8_255_neg : PatLeaf<(i32 imm), [{
   unsigned Val = -N->getZExtValue();

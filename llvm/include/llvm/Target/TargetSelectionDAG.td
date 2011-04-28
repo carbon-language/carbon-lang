@@ -543,8 +543,8 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 // If FastIsel should ignore all instructions that have an operand of this type,
 // the FastIselShouldIgnore flag can be set.  This is an optimization to reduce
 // the code size of the generated fast instruction selector.
-class ImmLeaf<ValueType vt, code pred>
-  : PatFrag<(ops), (vt imm)> {
+class ImmLeaf<ValueType vt, code pred, SDNodeXForm xform = NOOP_SDNodeXForm>
+  : PatFrag<(ops), (vt imm), [{}], xform> {
   let ImmediateCode = pred;
   bit FastIselShouldIgnore = 0;
 }

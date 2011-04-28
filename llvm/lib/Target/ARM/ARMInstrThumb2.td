@@ -62,14 +62,14 @@ def t2_so_imm_neg : Operand<i32>,
 }], t2_so_imm_neg_XFORM>;
 
 /// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
-def imm1_31 : PatLeaf<(i32 imm), [{
-  return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 32;
+def imm1_31 : ImmLeaf<i32, [{
+  return (int32_t)Imm >= 1 && (int32_t)Imm < 32;
 }]>;
 
 /// imm0_4095 predicate - True if the 32-bit immediate is in the range [0.4095].
 def imm0_4095 : Operand<i32>,
-                PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() < 4096;
+                ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 4096;
 }]>;
 
 def imm0_4095_neg : PatLeaf<(i32 imm), [{
