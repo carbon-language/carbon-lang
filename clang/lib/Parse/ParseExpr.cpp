@@ -490,6 +490,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [C++]   'this'          [C++ 9.3.2]
 /// [G++]   unary-type-trait '(' type-id ')'
 /// [G++]   binary-type-trait '(' type-id ',' type-id ')'           [TODO]
+/// [EMBT]  array-type-trait '(' type-id ',' integer ')'
 /// [clang] '^' block-literal
 ///
 ///       constant: [C99 6.4.4]
@@ -570,6 +571,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [MS]              '__is_convertible_to'
 ///                   '__is_convertible'
 ///                   '__is_same'
+///
+/// [Embarcadero] array-type-trait:
+///                   '__array_rank'
+///                   '__array_extent'
 ///
 /// [Embarcadero] expression-trait:
 ///                   '__is_lvalue_expr'
@@ -1071,6 +1076,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_convertible:
   case tok::kw___is_convertible_to:
     return ParseBinaryTypeTrait();
+
+  case tok::kw___array_rank:
+  case tok::kw___array_extent:
+    return ParseArrayTypeTrait();
 
   case tok::kw___is_lvalue_expr:
   case tok::kw___is_rvalue_expr:

@@ -2736,6 +2736,20 @@ public:
                                   TypeSourceInfo *RhsT,
                                   SourceLocation RParen);
 
+  /// ActOnArrayTypeTrait - Parsed one of the bianry type trait support
+  /// pseudo-functions.
+  ExprResult ActOnArrayTypeTrait(ArrayTypeTrait ATT,
+                                 SourceLocation KWLoc,
+                                 ParsedType LhsTy,
+                                 Expr *DimExpr,
+                                 SourceLocation RParen);
+
+  ExprResult BuildArrayTypeTrait(ArrayTypeTrait ATT,
+                                 SourceLocation KWLoc,
+                                 TypeSourceInfo *TSInfo,
+                                 Expr *DimExpr,
+                                 SourceLocation RParen);
+
   /// ActOnExpressionTrait - Parsed one of the unary type trait support
   /// pseudo-functions.
   ExprResult ActOnExpressionTrait(ExpressionTrait OET,

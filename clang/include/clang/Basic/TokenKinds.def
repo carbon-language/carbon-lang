@@ -378,6 +378,8 @@ KEYWORD(__is_unsigned               , KEYCXX)
 // Embarcadero Binary Type Traits
 KEYWORD(__is_same                   , KEYCXX)
 KEYWORD(__is_convertible            , KEYCXX)
+KEYWORD(__array_rank                , KEYCXX)
+KEYWORD(__array_extent              , KEYCXX)
 
 // Apple Extension.
 KEYWORD(__private_extern__          , KEYALL)

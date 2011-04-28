@@ -1816,7 +1816,8 @@ private:
   ExprResult ParseBinaryTypeTrait();
 
   //===--------------------------------------------------------------------===//
-  // Embarcadero: Expression Traits
+  // Embarcadero: Arary and Expression Traits
+  ExprResult ParseArrayTypeTrait();
   ExprResult ParseExpressionTrait();
 
   //===--------------------------------------------------------------------===//

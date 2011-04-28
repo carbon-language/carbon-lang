@@ -367,6 +367,10 @@ public:
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
 
+  Value *VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E) {
+    return llvm::ConstantInt::get(Builder.getInt32Ty(), E->getValue());
+  }
+
   Value *VisitExpressionTraitExpr(const ExpressionTraitExpr *E) {
     return llvm::ConstantInt::get(Builder.getInt1Ty(), E->getValue());
   }

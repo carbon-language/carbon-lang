@@ -1061,6 +1061,10 @@ public:
     return Success(E->getValue(), E);
   }
 
+  bool VisitArrayTypeTraitExpr(const ArrayTypeTraitExpr *E) {
+    return Success(E->getValue(), E);
+  }
+
   bool VisitExpressionTraitExpr(const ExpressionTraitExpr *E) {
     return Success(E->getValue(), E);
   }
@@ -2879,6 +2883,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXScalarValueInitExprClass:
   case Expr::UnaryTypeTraitExprClass:
   case Expr::BinaryTypeTraitExprClass:
+  case Expr::ArrayTypeTraitExprClass:
   case Expr::ExpressionTraitExprClass:
   case Expr::CXXNoexceptExprClass:
     return NoDiag();

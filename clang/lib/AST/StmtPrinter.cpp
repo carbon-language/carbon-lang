@@ -1308,6 +1308,14 @@ static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   return "";
 }
 
+static const char *getTypeTraitName(ArrayTypeTrait ATT) {
+  switch (ATT) {
+  case ATT_ArrayRank:        return "__array_rank";
+  case ATT_ArrayExtent:      return "__array_extent";
+  }
+  return "";
+}
+
 static const char *getExpressionTraitName(ExpressionTrait ET) {
   switch (ET) {
   default: llvm_unreachable("Unknown expression trait");
@@ -1326,6 +1334,11 @@ void StmtPrinter::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
   OS << getTypeTraitName(E->getTrait()) << "("
      << E->getLhsType().getAsString(Policy) << ","
      << E->getRhsType().getAsString(Policy) << ")";
+}
+
+void StmtPrinter::VisitArrayTypeTraitExpr(ArrayTypeTraitExpr *E) {
+  OS << getTypeTraitName(E->getTrait()) << "("
+     << E->getQueriedType().getAsString(Policy) << ")";
 }
 
 void StmtPrinter::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {

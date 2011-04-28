@@ -1594,6 +1594,68 @@ public:
   friend class ASTStmtReader;
 };
 
+/// ArrayTypeTraitExpr - An Embarcadero array type trait, as used in the
+/// implementation of __array_rank and __array_extent.
+/// Example:
+/// __array_rank(int[10][20]) == 2
+/// __array_extent(int, 1)    == 20
+class ArrayTypeTraitExpr : public Expr {
+  /// ATT - The trait. An ArrayTypeTrait enum in MSVC compat unsigned.
+  unsigned ATT : 2;
+
+  /// The value of the type trait. Unspecified if dependent.
+  uint64_t Value;
+
+  /// The array dimension being queried, or -1 if not used
+  Expr *Dimension;
+
+  /// Loc - The location of the type trait keyword.
+  SourceLocation Loc;
+
+  /// RParen - The location of the closing paren.
+  SourceLocation RParen;
+
+  /// The type being queried.
+  TypeSourceInfo *QueriedType;
+
+public:
+  ArrayTypeTraitExpr(SourceLocation loc, ArrayTypeTrait att,
+                     TypeSourceInfo *queried, uint64_t value,
+                     Expr *dimension, SourceLocation rparen, QualType ty)
+    : Expr(ArrayTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
+           false, queried->getType()->isDependentType(),
+           queried->getType()->containsUnexpandedParameterPack()),
+      ATT(att), Value(value), Dimension(dimension),
+      Loc(loc), RParen(rparen), QueriedType(queried) { }
+
+
+  explicit ArrayTypeTraitExpr(EmptyShell Empty)
+    : Expr(ArrayTypeTraitExprClass, Empty), ATT(0), Value(false),
+      QueriedType() { }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen); }
+
+  ArrayTypeTrait getTrait() const { return static_cast<ArrayTypeTrait>(ATT); }
+
+  QualType getQueriedType() const { return QueriedType->getType(); }
+
+  TypeSourceInfo *getQueriedTypeSourceInfo() const { return QueriedType; }
+
+  uint64_t getValue() const { assert(!isTypeDependent()); return Value; }
+
+  Expr *getDimensionExpression() const { return Dimension; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ArrayTypeTraitExprClass;
+  }
+  static bool classof(const ArrayTypeTraitExpr *) { return true; }
+
+  // Iterators
+  child_range children() { return child_range(); }
+
+  friend class ASTStmtReader;
+};
+
 /// ExpressionTraitExpr - An expression trait intrinsic
 /// Example:
 /// __is_lvalue_expr(std::cout) == true

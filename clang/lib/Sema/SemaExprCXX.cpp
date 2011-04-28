@@ -2812,6 +2812,94 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
                                                  ResultType));
 }
 
+ExprResult Sema::ActOnArrayTypeTrait(ArrayTypeTrait ATT,
+                                     SourceLocation KWLoc,
+                                     ParsedType Ty,
+                                     Expr* DimExpr,
+                                     SourceLocation RParen) {
+  TypeSourceInfo *TSInfo;
+  QualType T = GetTypeFromParser(Ty, &TSInfo);
+  if (!TSInfo)
+    TSInfo = Context.getTrivialTypeSourceInfo(T);
+
+  return BuildArrayTypeTrait(ATT, KWLoc, TSInfo, DimExpr, RParen);
+}
+
+static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
+                                           QualType T, Expr *DimExpr,
+                                           SourceLocation KeyLoc) {
+  assert((!T->isDependentType()) &&
+         "Cannot evaluate traits for dependent types.");
+
+  switch(ATT) {
+  case ATT_ArrayRank:
+    if (T->isArrayType()) {
+      unsigned Dim = 0;
+      while (const ArrayType *AT = Self.Context.getAsArrayType(T)) {
+        ++Dim;
+        T = AT->getElementType();
+      }
+      return Dim;
+    } else {
+      assert(! "Array type trait applied to non-array type");
+    }
+  case ATT_ArrayExtent: {
+    llvm::APSInt Value;
+    uint64_t Dim;
+    if (DimExpr->isIntegerConstantExpr(Value, Self.Context, 0, false))
+      Dim = Value.getLimitedValue();
+    else
+      assert(! "Dimension expression did not evaluate to a constant integer");
+
+    if (T->isArrayType()) {
+      unsigned D = 0;
+      bool Matched = false;
+      while (const ArrayType *AT = Self.Context.getAsArrayType(T)) {
+        if (Dim == D) {
+          Matched = true;
+          break;
+        }
+        ++D;
+        T = AT->getElementType();
+      }
+
+      assert(Matched && T->isArrayType() &&
+             "__array_extent does not refer to an array dimension");
+
+      llvm::APInt size = Self.Context.getAsConstantArrayType(T)->getSize();
+      return size.getLimitedValue();
+    } else {
+      assert(! "Array type trait applied to non-array type");
+    }
+  }
+  }
+  llvm_unreachable("Unknown type trait or not implemented");
+}
+
+ExprResult Sema::BuildArrayTypeTrait(ArrayTypeTrait ATT,
+                                     SourceLocation KWLoc,
+                                     TypeSourceInfo *TSInfo,
+                                     Expr* DimExpr,
+                                     SourceLocation RParen) {
+  QualType T = TSInfo->getType();
+
+  uint64_t Value;
+  if (!T->isDependentType())
+    Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
+  else
+    return ExprError();
+
+  // Select trait result type.
+  QualType ResultType;
+  switch (ATT) {
+  case ATT_ArrayRank:    ResultType = Context.IntTy; break;
+  case ATT_ArrayExtent:  ResultType = Context.IntTy; break;
+  }
+
+  return Owned(new (Context) ArrayTypeTraitExpr(KWLoc, ATT, TSInfo, Value,
+                                                DimExpr, RParen, ResultType));
+}
+
 ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
                                      SourceLocation KWLoc,
                                      Expr* Queried,

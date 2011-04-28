@@ -1849,6 +1849,10 @@ DEF_TRAVERSE_STMT(BinaryTypeTraitExpr, {
     TRY_TO(TraverseTypeLoc(S->getRhsTypeSourceInfo()->getTypeLoc()));
   })
 
+DEF_TRAVERSE_STMT(ArrayTypeTraitExpr, {
+    TRY_TO(TraverseTypeLoc(S->getQueriedTypeSourceInfo()->getTypeLoc()));
+  })
+
 DEF_TRAVERSE_STMT(ExpressionTraitExpr, {
     TRY_TO(TraverseStmt(S->getQueriedExpression()));
   })

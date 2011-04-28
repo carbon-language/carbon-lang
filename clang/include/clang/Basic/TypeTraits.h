@@ -71,6 +71,12 @@ namespace clang {
     BTT_TypeCompatible
   };
 
+  /// ArrayTypeTrait - Names for the array type traits.
+  enum ArrayTypeTrait {
+    ATT_ArrayRank,
+    ATT_ArrayExtent
+  };
+
   /// UnaryExprOrTypeTrait - Names for the "expression or type" traits.
   enum UnaryExprOrTypeTrait {
     UETT_SizeOf,

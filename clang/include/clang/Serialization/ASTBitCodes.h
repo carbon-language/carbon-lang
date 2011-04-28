@@ -978,6 +978,7 @@ namespace clang {
       EXPR_OPAQUE_VALUE,          // OpaqueValueExpr
       EXPR_BINARY_CONDITIONAL_OPERATOR,  // BinaryConditionalOperator
       EXPR_BINARY_TYPE_TRAIT,     // BinaryTypeTraitExpr
+      EXPR_ARRAY_TYPE_TRAIT,      // ArrayTypeTraitIntExpr
       
       EXPR_PACK_EXPANSION,        // PackExpansionExpr
       EXPR_SIZEOF_PACK,           // SizeOfPackExpr

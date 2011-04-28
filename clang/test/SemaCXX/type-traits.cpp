@@ -1464,3 +1464,14 @@ void is_trivial()
   { int arr[F(__is_trivial(void))]; }
   { int arr[F(__is_trivial(cvoid))]; }
 }
+
+void array_rank() {
+  int t01[T(__array_rank(IntAr) == 1)];
+  int t02[T(__array_rank(ConstIntArAr) == 2)];
+}
+
+void array_extent() {
+  int t01[T(__array_extent(IntAr, 0) == 10)];
+  int t02[T(__array_extent(ConstIntArAr, 0) == 4)];
+  int t03[T(__array_extent(ConstIntArAr, 1) == 10)];
+}

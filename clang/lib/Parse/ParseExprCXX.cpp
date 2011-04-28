@@ -1970,6 +1970,14 @@ static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   }
 }
 
+static ArrayTypeTrait ArrayTypeTraitFromTokKind(tok::TokenKind kind) {
+  switch(kind) {
+  default: llvm_unreachable("Not a known binary type trait");
+  case tok::kw___array_rank:                 return ATT_ArrayRank;
+  case tok::kw___array_extent:               return ATT_ArrayExtent;
+  }
+}
+
 static ExpressionTrait ExpressionTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
   default: assert(false && "Not a known unary expression trait.");
@@ -2041,6 +2049,50 @@ ExprResult Parser::ParseBinaryTypeTrait() {
   SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
 
   return Actions.ActOnBinaryTypeTrait(BTT, Loc, LhsTy.get(), RhsTy.get(), RParen);
+}
+
+/// ParseArrayTypeTrait - Parse the built-in array type-trait
+/// pseudo-functions.
+///
+///       primary-expression:
+/// [Embarcadero]     '__array_rank' '(' type-id ')'
+/// [Embarcadero]     '__array_extent' '(' type-id ',' expression ')'
+///
+ExprResult Parser::ParseArrayTypeTrait() {
+  ArrayTypeTrait ATT = ArrayTypeTraitFromTokKind(Tok.getKind());
+  SourceLocation Loc = ConsumeToken();
+
+  SourceLocation LParen = Tok.getLocation();
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen))
+    return ExprError();
+
+  TypeResult Ty = ParseTypeName();
+  if (Ty.isInvalid()) {
+    SkipUntil(tok::comma);
+    SkipUntil(tok::r_paren);
+    return ExprError();
+  }
+
+  switch (ATT) {
+  case ATT_ArrayRank: {
+    SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+    return Actions.ActOnArrayTypeTrait(ATT, Loc, Ty.get(), NULL, RParen);
+  }
+  case ATT_ArrayExtent: {
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma)) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+
+    ExprResult DimExpr = ParseExpression();
+    SourceLocation RParen = MatchRHSPunctuation(tok::r_paren, LParen);
+
+    return Actions.ActOnArrayTypeTrait(ATT, Loc, Ty.get(), DimExpr.get(), RParen);
+  }
+  default:
+    break;
+  }
+  return ExprError();
 }
 
 /// ParseExpressionTrait - Parse built-in expression-trait

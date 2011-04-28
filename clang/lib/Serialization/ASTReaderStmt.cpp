@@ -179,6 +179,7 @@ namespace clang {
 
     void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E);
     void VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E);
+    void VisitArrayTypeTraitExpr(ArrayTypeTraitExpr *E);
     void VisitExpressionTraitExpr(ExpressionTraitExpr *E);
     void VisitCXXNoexceptExpr(CXXNoexceptExpr *E);
     void VisitPackExpansionExpr(PackExpansionExpr *E);
@@ -1344,6 +1345,16 @@ void ASTStmtReader::VisitBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
   E->RhsType = GetTypeSourceInfo(Record, Idx);
 }
 
+void ASTStmtReader::VisitArrayTypeTraitExpr(ArrayTypeTraitExpr *E) {
+  VisitExpr(E);
+  E->ATT = (ArrayTypeTrait)Record[Idx++];
+  E->Value = (unsigned int)Record[Idx++];
+  SourceRange Range = ReadSourceRange(Record, Idx);
+  E->Loc = Range.getBegin();
+  E->RParen = Range.getEnd();
+  E->QueriedType = GetTypeSourceInfo(Record, Idx);
+}
+
 void ASTStmtReader::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
   VisitExpr(E);
   E->ET = (ExpressionTrait)Record[Idx++];
@@ -1944,6 +1955,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
     case EXPR_BINARY_TYPE_TRAIT:
       S = new (Context) BinaryTypeTraitExpr(Empty);
+      break;
+
+    case EXPR_ARRAY_TYPE_TRAIT:
+      S = new (Context) ArrayTypeTraitExpr(Empty);
       break;
 
     case EXPR_CXX_EXPRESSION_TRAIT:
