@@ -58,14 +58,28 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   // Expand BR_CC into BRCOND
   setOperationAction(ISD::BR_CC, MVT::Other, Expand);
 
+  // Expand SELECT_CC into SETCC
+  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
+  
+  // need to lower SETCC of Preds into bitwise logic
+  setOperationAction(ISD::SETCC, MVT::i1, Custom);
+  
   // Compute derived properties from the register classes
   computeRegisterProperties();
+}
+
+MVT::SimpleValueType PTXTargetLowering::getSetCCResultType(EVT VT) const {
+  return MVT::i1;
 }
 
 SDValue PTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
     default:
       llvm_unreachable("Unimplemented operand");
+    case ISD::SETCC:
+      return LowerSETCC(Op, DAG);
     case ISD::GlobalAddress:
       return LowerGlobalAddress(Op, DAG);
   }
@@ -89,6 +103,28 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
 //===----------------------------------------------------------------------===//
 //                      Custom Lower Operation
 //===----------------------------------------------------------------------===//
+
+SDValue PTXTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  assert(Op.getValueType() == MVT::i1 && "SetCC type must be 1-bit integer");
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue Op2 = Op.getOperand(2);
+  DebugLoc dl = Op.getDebugLoc();
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  
+  // Look for X == 0, X == 1, X != 0, or X != 1  
+  // We can simplify these to bitwise logic
+  
+  if (Op1.getOpcode() == ISD::Constant &&
+      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
+       cast<ConstantSDNode>(Op1)->isNullValue()) &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+
+	  return DAG.getNode(ISD::AND, dl, MVT::i1, Op0, Op1);
+  }
+  
+  return DAG.getNode(ISD::SETCC, dl, MVT::i1, Op0, Op1, Op2);
+}
 
 SDValue PTXTargetLowering::
 LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
