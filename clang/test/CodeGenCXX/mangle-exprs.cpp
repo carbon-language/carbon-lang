@@ -49,3 +49,19 @@ namespace Casts {
   // CHECK: define weak_odr void @_ZN5Casts5auto_IiEEvDTnw_DapicvT__EEE(
   template void auto_<int>(int*);
 }
+
+namespace test1 {
+  short foo(short);
+  int foo(int);
+
+  // CHECK: define linkonce_odr signext i16 @_ZN5test11aIsEEDTcl3foocvT__EEES1_(
+  template <class T> auto a(T t) -> decltype(foo(T())) { return foo(t); }
+
+  // CHECK: define linkonce_odr signext i16 @_ZN5test11bIsEEDTcp3foocvT__EEES1_(
+  template <class T> auto b(T t) -> decltype((foo)(T())) { return (foo)(t); }
+
+  void test(short s) {
+    a(s);
+    b(s);
+  }
+}

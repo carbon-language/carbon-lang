@@ -1849,11 +1849,41 @@ void CXXNameMangler::mangleMemberExpr(const Expr *base,
   mangleUnresolvedName(qualifier, firstQualifierLookup, member, arity);
 }
 
+/// Look at the callee of the given call expression and determine if
+/// it's a parenthesized id-expression which would have triggered ADL
+/// otherwise.
+static bool isParenthesizedADLCallee(const CallExpr *call) {
+  const Expr *callee = call->getCallee();
+  const Expr *fn = callee->IgnoreParens();
+
+  // Must be parenthesized.  IgnoreParens() skips __extension__ nodes,
+  // too, but for those to appear in the callee, it would have to be
+  // parenthesized.
+  if (callee == fn) return false;
+
+  // Must be an unresolved lookup.
+  const UnresolvedLookupExpr *lookup = dyn_cast<UnresolvedLookupExpr>(fn);
+  if (!lookup) return false;
+
+  assert(!lookup->requiresADL());
+
+  // Must be an unqualified lookup.
+  if (lookup->getQualifier()) return false;
+
+  // Must not have found a class member.  Note that if one is a class
+  // member, they're all class members.
+  if (lookup->getNumDecls() > 0 &&
+      (*lookup->decls_begin())->isCXXClassMember())
+    return false;
+
+  // Otherwise, ADL would have been triggered.
+  return true;
+}
+
 void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   // <expression> ::= <unary operator-name> <expression>
   //              ::= <binary operator-name> <expression> <expression>
   //              ::= <trinary operator-name> <expression> <expression> <expression>
-  //              ::= cl <expression>* E             # call
   //              ::= cv <type> expression           # conversion with one argument
   //              ::= cv <type> _ <expression>* E # conversion with a different number of arguments
   //              ::= st <type>                      # sizeof (a type)
@@ -1948,7 +1978,22 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::CXXMemberCallExprClass: // fallthrough
   case Expr::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
-    Out << "cl";
+
+    // <expression> ::= cp <simple-id> <expression>* E
+    // We use this mangling only when the call would use ADL except
+    // for being parenthesized.  Per discussion with David
+    // Vandervoorde, 2011.04.25.
+    if (isParenthesizedADLCallee(CE)) {
+      Out << "cp";
+      // The callee here is a parenthesized UnresolvedLookupExpr with
+      // no qualifier and should always get mangled as a <simple-id>
+      // anyway.
+
+    // <expression> ::= cl <expression>* E
+    } else {
+      Out << "cl";
+    }
+
     mangleExpression(CE->getCallee(), CE->getNumArgs());
     for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
       mangleExpression(CE->getArg(I));
