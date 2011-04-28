@@ -769,6 +769,42 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       return Builder->CreateICmp(LHSCC, NewOr, LHSCst);
     }
   }
+
+  // (trunc x) == C1 & (and x, CA) == C2 -> (and CA|CMAX) == C1|C2
+  // where CMAX is the all ones value for the truncated type,
+  // iff the lower bits of CA are zero.
+  if (LHSCC == RHSCC && ICmpInst::isEquality(LHSCC) &&
+      LHS->hasOneUse() && RHS->hasOneUse()) {
+    Value *V;
+    ConstantInt *AndCst, *SmallCst = 0, *BigCst = 0;
+
+    // (trunc x) == C1 & (and x, CA) == C2
+    if (match(Val2, m_Trunc(m_Value(V))) &&
+        match(Val, m_And(m_Specific(V), m_ConstantInt(AndCst)))) {
+      SmallCst = RHSCst;
+      BigCst = LHSCst;
+    }
+    // (and x, CA) == C2 & (trunc x) == C1
+    else if (match(Val, m_Trunc(m_Value(V))) &&
+             match(Val2, m_And(m_Specific(V), m_ConstantInt(AndCst)))) {
+      SmallCst = LHSCst;
+      BigCst = RHSCst;
+    }
+
+    if (SmallCst && BigCst) {
+      unsigned BigBitSize = BigCst->getType()->getBitWidth();
+      unsigned SmallBitSize = SmallCst->getType()->getBitWidth();
+
+      // Check that the low bits are zero.
+      APInt Low = APInt::getLowBitsSet(BigBitSize, SmallBitSize);
+      if ((Low & AndCst->getValue()) == 0) {
+        Value *NewAnd = Builder->CreateAnd(V, Low | AndCst->getValue());
+        APInt N = SmallCst->getValue().zext(BigBitSize) | BigCst->getValue();
+        Value *NewVal = ConstantInt::get(AndCst->getType()->getContext(), N);
+        return Builder->CreateICmp(LHSCC, NewAnd, NewVal);
+      }
+    }
+  }
   
   // From here on, we only handle:
   //    (icmp1 A, C1) & (icmp2 A, C2) --> something simpler.
