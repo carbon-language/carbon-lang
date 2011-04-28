@@ -618,18 +618,31 @@ void CGDebugInfo::
 CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                     llvm::SmallVectorImpl<llvm::Value *> &elements) {
   unsigned fieldNo = 0;
+  const FieldDecl *LastFD = 0;
+  bool IsMsStruct = record->hasAttr<MsStructAttr>();
+  
   const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
   for (RecordDecl::field_iterator I = record->field_begin(),
                                   E = record->field_end();
        I != E; ++I, ++fieldNo) {
     FieldDecl *field = *I;
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are ignored
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD)) {
+        --fieldNo;
+        continue;
+      }
+      LastFD = field;
+    }
 
     llvm::StringRef name = field->getName();
     QualType type = field->getType();
 
     // Ignore unnamed fields unless they're anonymous structs/unions.
-    if (name.empty() && !type->isRecordType())
+    if (name.empty() && !type->isRecordType()) {
+      LastFD = field;
       continue;
+    }
 
     llvm::DIType fieldType
       = createFieldType(name, type, field->getBitWidth(),
