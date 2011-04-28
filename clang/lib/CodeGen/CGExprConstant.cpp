@@ -344,16 +344,30 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
 
   unsigned FieldNo = 0;
   unsigned ElementNo = 0;
+  const FieldDecl *LastFD = 0;
+  bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  
   for (RecordDecl::field_iterator Field = RD->field_begin(),
        FieldEnd = RD->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are
+      // ignored:
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((*Field), LastFD)) {
+        --FieldNo;
+        continue;
+      }
+      LastFD = (*Field);
+    }
     
     // If this is a union, skip all the fields that aren't being initialized.
     if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
       continue;
 
     // Don't emit anonymous bitfields, they just affect layout.
-    if (Field->isBitField() && !Field->getIdentifier())
+    if (Field->isBitField() && !Field->getIdentifier()) {
+      LastFD = (*Field);
       continue;
+    }
 
     // Get the initializer.  A struct can include fields without initializers,
     // we just use explicit null values for them.

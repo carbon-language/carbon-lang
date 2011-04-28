@@ -2047,13 +2047,24 @@ unsigned FieldDecl::getFieldIndex() const {
   if (CachedFieldIndex) return CachedFieldIndex - 1;
 
   unsigned index = 0;
-  RecordDecl::field_iterator
-    i = getParent()->field_begin(), e = getParent()->field_end();
+  const RecordDecl *RD = getParent();
+  const FieldDecl *LastFD = 0;
+  bool IsMsStruct = RD->hasAttr<MsStructAttr>();
+  
+  RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
   while (true) {
     assert(i != e && "failed to find field in parent!");
     if (*i == this)
       break;
 
+    if (IsMsStruct) {
+      // Zero-length bitfields following non-bitfield members are ignored.
+      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*i), LastFD)) {
+        ++i;
+        continue;
+      }
+      LastFD = (*i);
+    }
     ++i;
     ++index;
   }
