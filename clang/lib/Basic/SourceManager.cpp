@@ -46,6 +46,19 @@ unsigned ContentCache::getSizeBytesMapped() const {
   return Buffer.getPointer() ? Buffer.getPointer()->getBufferSize() : 0;
 }
 
+/// Returns the kind of memory used to back the memory buffer for
+/// this content cache.  This is used for performance analysis.
+llvm::MemoryBuffer::BufferKind ContentCache::getMemoryBufferKind() const {
+  assert(Buffer.getPointer());
+
+  // Should be unreachable, but keep for sanity.
+  if (!Buffer.getPointer())
+    return llvm::MemoryBuffer::MemoryBuffer_Malloc;
+  
+  const llvm::MemoryBuffer *buf = Buffer.getPointer();
+  return buf->getBufferKind();
+}
+
 /// getSize - Returns the size of the content encapsulated by this ContentCache.
 ///  This can be the size of the source file or the size of an arbitrary
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
@@ -1493,3 +1506,24 @@ void SourceManager::PrintStats() const {
 }
 
 ExternalSLocEntrySource::~ExternalSLocEntrySource() { }
+
+/// Return the amount of memory used by memory buffers, breaking down
+/// by heap-backed versus mmap'ed memory.
+SourceManager::MemoryBufferSizes SourceManager::getMemoryBufferSizes() const {
+  size_t malloc_bytes = 0;
+  size_t mmap_bytes = 0;
+  
+  for (unsigned i = 0, e = MemBufferInfos.size(); i != e; ++i)
+    if (size_t sized_mapped = MemBufferInfos[i]->getSizeBytesMapped())
+      switch (MemBufferInfos[i]->getMemoryBufferKind()) {
+        case llvm::MemoryBuffer::MemoryBuffer_MMap:
+          mmap_bytes += sized_mapped;
+          break;
+        case llvm::MemoryBuffer::MemoryBuffer_Malloc:
+          malloc_bytes += sized_mapped;
+          break;
+      }
+  
+  return MemoryBufferSizes(malloc_bytes, mmap_bytes);
+}
+

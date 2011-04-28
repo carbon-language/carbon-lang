@@ -5226,6 +5226,12 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_AST_SideTables:
       str = "ASTContext: side tables";
       break;
+    case CXTUResourceUsage_SourceManager_Membuffer_Malloc:
+      str = "SourceManager: malloc'ed memory buffers";
+      break;
+    case CXTUResourceUsage_SourceManager_Membuffer_MMap:
+      str = "SourceManager: mmap'ed memory buffers";
+      break;
   }
   return str;
 }
@@ -5270,7 +5276,17 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   createCXTUResourceUsageEntry(*entries,
           CXTUResourceUsage_SourceManagerContentCache,
           (unsigned long) astContext.getSourceManager().getContentCacheSize());
-
+  
+  // How much memory is being used by the MemoryBuffer's in SourceManager?
+  const SourceManager::MemoryBufferSizes &srcBufs =
+    astUnit->getSourceManager().getMemoryBufferSizes();
+  
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_SourceManager_Membuffer_Malloc,
+                               (unsigned long) srcBufs.malloc_bytes);
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_SourceManager_Membuffer_MMap,
+                               (unsigned long) srcBufs.mmap_bytes);
 
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),

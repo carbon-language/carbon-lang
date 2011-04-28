@@ -21,11 +21,11 @@
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <vector>
 #include <cassert>
 
 namespace llvm {
-class MemoryBuffer;
 class StringRef;
 }
 
@@ -111,6 +111,10 @@ namespace SrcMgr {
     ///  this ContentCache.  This can be 0 if the MemBuffer was not actually
     ///  instantiated.
     unsigned getSizeBytesMapped() const;
+    
+    /// Returns the kind of memory used to back the memory buffer for
+    /// this content cache.  This is used for performance analysis.
+    llvm::MemoryBuffer::BufferKind getMemoryBufferKind() const;
 
     void setBuffer(const llvm::MemoryBuffer *B) {
       assert(!Buffer.getPointer() && "MemoryBuffer already set.");
@@ -858,6 +862,18 @@ public:
   size_t getContentCacheSize() const {
     return ContentCacheAlloc.getTotalMemory();
   }
+  
+  struct MemoryBufferSizes {
+    const size_t malloc_bytes;
+    const size_t mmap_bytes;
+    
+    MemoryBufferSizes(size_t malloc_bytes, size_t mmap_bytes)
+      : malloc_bytes(malloc_bytes), mmap_bytes(mmap_bytes) {}
+  };
+
+  /// Return the amount of memory used by memory buffers, breaking down
+  /// by heap-backed versus mmap'ed memory.
+  MemoryBufferSizes getMemoryBufferSizes() const;
 
   //===--------------------------------------------------------------------===//
   // Other miscellaneous methods.
