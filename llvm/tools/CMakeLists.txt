@@ -51,13 +51,6 @@ if( NOT WIN32 )
   add_subdirectory(lto)
 endif()
 
-if( LLVM_ENABLE_PIC )
-  # TODO: support other systems:
-  if( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
-    add_subdirectory(gold)
-  endif()
-endif()
-
 if( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/clang/CMakeLists.txt )
   add_subdirectory( ${CMAKE_CURRENT_SOURCE_DIR}/clang )
 endif( EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/clang/CMakeLists.txt )
