@@ -1190,7 +1190,14 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
       // For now, give up.
       return;
     } else {
-      result = s1StrRef.compare(s2StrRef, (size_t)lenInt.getLimitedValue());
+      // Create substrings of each to compare the prefix.
+      llvm::StringRef s1SubStr = 
+        s1StrRef.substr(0, (size_t)lenInt.getLimitedValue());
+      llvm::StringRef s2SubStr = 
+        s2StrRef.substr(0, (size_t)lenInt.getLimitedValue());
+
+      // Compare the substrings.
+      result = s1SubStr.compare(s2SubStr);
     }
   } else {
     // Compare string 1 to string 2 the same way strcmp() does.
