@@ -260,3 +260,16 @@ define void @test21(double* %p1) {
 ; CHECK-NOT: pxor
 ; CHECK: movsd	LCPI
 }
+
+; Check that we fast-isel sret
+%struct.a = type { i64, i64, i64 }
+define void @test20() nounwind ssp {
+entry:
+  %tmp = alloca %struct.a, align 8
+  call void @test20sret(%struct.a* sret %tmp)
+  ret void
+; CHECK: test20:
+; CHECK: leaq (%rsp), %rdi
+; CHECK: callq _test20sret
+}
+declare void @test20sret(%struct.a* sret)
