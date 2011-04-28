@@ -1132,9 +1132,16 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
                   .addReg(CmpReg).addImm(1));
 
+  
+  unsigned CCMode = ARMCC::NE;
+  if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
+    std::swap(TBB, FBB);
+    CCMode = ARMCC::EQ;
+  }
+
   unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
-                  .addMBB(TBB).addImm(ARMCC::NE).addReg(ARM::CPSR);
+                  .addMBB(TBB).addImm(CCMode).addReg(ARM::CPSR);
   FastEmitBranch(FBB, DL);
   FuncInfo.MBB->addSuccessor(TBB);
   return true;
