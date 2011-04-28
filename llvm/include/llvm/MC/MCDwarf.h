@@ -23,6 +23,7 @@
 #include <vector>
 
 namespace llvm {
+  class TargetAsmInfo;
   class MachineMove;
   class MCContext;
   class MCExpr;
@@ -282,7 +283,8 @@ namespace llvm {
     //
     static void Emit(MCStreamer &streamer);
     static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
-    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS);
+    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS,
+                                 const TargetAsmInfo &AsmInfo);
   };
 } // end namespace llvm
 

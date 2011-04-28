@@ -732,7 +732,8 @@ bool MCAssembler::RelaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
-  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OSE);
+  const TargetAsmInfo &AsmInfo = getContext().getTargetAsmInfo();
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OSE, AsmInfo);
   OSE.flush();
   return OldSize != Data.size();
 }
