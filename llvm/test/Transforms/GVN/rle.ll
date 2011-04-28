@@ -1,7 +1,7 @@
 ; RUN: opt < %s -basicaa -gvn -S | FileCheck %s
 
 ; 32-bit little endian target.
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
 
 ;; Trivial RLE test.
 define i32 @test0(i32 %V, i32* %P) {
@@ -592,5 +592,28 @@ if.end:
 ; CHECK: ret i32 %conv6
 }
 
+
+;;===----------------------------------------------------------------------===;;
+;; Load Widening
+;;===----------------------------------------------------------------------===;;
+
+%widening1 = type { i32, i8, i8 }
+
+@f = global %widening1 zeroinitializer, align 4
+
+define i32 @test_widening1() nounwind ssp noredzone {
+entry:
+  %tmp = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 1), align 4
+  %conv = zext i8 %tmp to i32
+  %tmp1 = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 2), align 1
+  %conv2 = zext i8 %tmp1 to i32
+  %add = add nsw i32 %conv, %conv2
+  ret i32 %add
+; CHECK: @test_widening1
+; CHECK-NOT: load
+; CHECK: load i16*
+; CHECK-NOT: load
+; CHECK-ret i32
+}
 
 

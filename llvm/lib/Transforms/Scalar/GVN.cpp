@@ -629,10 +629,11 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   if (!CanCoerceMustAliasedValueToLoad(StoredVal, LoadedTy, TD))
     return 0;
   
+  // If this is already the right type, just return it.
   const Type *StoredValTy = StoredVal->getType();
   
   uint64_t StoreSize = TD.getTypeStoreSizeInBits(StoredValTy);
-  uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
+  uint64_t LoadSize = TD.getTypeStoreSizeInBits(LoadedTy);
   
   // If the store and reload are the same size, we can always reuse it.
   if (StoreSize == LoadSize) {
@@ -806,7 +807,21 @@ static int AnalyzeLoadFromClobberingLoad(const Type *LoadTy, Value *LoadPtr,
   
   Value *DepPtr = DepLI->getPointerOperand();
   uint64_t DepSize = TD.getTypeSizeInBits(DepLI->getType());
-  return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr, DepPtr, DepSize, TD);
+  int R = AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr, DepPtr, DepSize, TD);
+  if (R != -1) return R;
+  
+  // If we have a load/load clobber an DepLI can be widened to cover this load,
+  // then we should widen it!
+  int64_t LoadOffs = 0;
+  const Value *LoadBase =
+    GetPointerBaseWithConstantOffset(LoadPtr, LoadOffs, TD);
+  unsigned LoadSize = TD.getTypeStoreSize(LoadTy);
+  
+  unsigned Size = MemoryDependenceAnalysis::
+    getLoadLoadClobberFullWidthSize(LoadBase, LoadOffs, LoadSize, DepLI, TD);
+  if (Size == 0) return -1;
+  
+  return AnalyzeLoadFromClobberingWrite(LoadTy, LoadPtr, DepPtr, Size*8, TD);
 }
 
 
@@ -858,9 +873,9 @@ static int AnalyzeLoadFromClobberingMemInst(const Type *LoadTy, Value *LoadPtr,
 
 /// GetStoreValueForLoad - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.  This means
-/// that the store *may* provide bits used by the load but we can't be sure
-/// because the pointers don't mustalias.  Check this case to see if there is
-/// anything more we can do before we give up.
+/// that the store provides bits used by the load but we the pointers don't
+/// mustalias.  Check this case to see if there is anything more we can do
+/// before we give up.
 static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
                                    const Type *LoadTy,
                                    Instruction *InsertPt, const TargetData &TD){
@@ -895,6 +910,60 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, TD);
 }
+
+/// GetStoreValueForLoad - This function is called when we have a
+/// memdep query of a load that ends up being a clobbering load.  This means
+/// that the load *may* provide bits used by the load but we can't be sure
+/// because the pointers don't mustalias.  Check this case to see if there is
+/// anything more we can do before we give up.
+static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
+                                  const Type *LoadTy,
+                                  Instruction *InsertPt, const TargetData &TD,
+                                  MemoryDependenceAnalysis &MD) {
+  // If Offset+LoadTy exceeds the size of SrcVal, then we must be wanting to
+  // widen SrcVal out to a larger load.
+  unsigned SrcValSize = TD.getTypeStoreSize(SrcVal->getType());
+  unsigned LoadSize = TD.getTypeStoreSize(LoadTy);
+  if (Offset+LoadSize > SrcValSize) {
+    assert(!SrcVal->isVolatile() && "Cannot widen volatile load!");
+    assert(isa<IntegerType>(SrcVal->getType())&&"Can't widen non-integer load");
+    // If we have a load/load clobber an DepLI can be widened to cover this
+    // load, then we should widen it to the next power of 2 size big enough!
+    unsigned NewLoadSize = Offset+LoadSize;
+    if (!isPowerOf2_32(NewLoadSize))
+      NewLoadSize = NextPowerOf2(NewLoadSize);
+
+    Value *PtrVal = SrcVal->getPointerOperand();
+    
+    IRBuilder<> Builder(SrcVal->getParent(), SrcVal);
+    const Type *DestPTy = 
+      IntegerType::get(LoadTy->getContext(), NewLoadSize*8);
+    DestPTy = PointerType::get(DestPTy, 
+                       cast<PointerType>(PtrVal->getType())->getAddressSpace());
+    
+    PtrVal = Builder.CreateBitCast(PtrVal, DestPTy);
+    LoadInst *NewLoad = Builder.CreateLoad(PtrVal);
+    NewLoad->takeName(SrcVal);
+    NewLoad->setAlignment(SrcVal->getAlignment());
+    
+    DEBUG(dbgs() << "GVN WIDENED LOAD: " << *SrcVal << "\n");
+    DEBUG(dbgs() << "TO: " << *NewLoad << "\n");
+    
+    // Replace uses of the original load with the wider load.  On a big endian
+    // system, we need to shift down to get the relevant bits.
+    Value *RV = NewLoad;
+    if (TD.isBigEndian())
+      RV = Builder.CreateLShr(RV,
+                    NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
+    RV = Builder.CreateTrunc(RV, SrcVal->getType());
+    SrcVal->replaceAllUsesWith(RV);
+    MD.removeInstruction(SrcVal);
+    SrcVal = NewLoad;
+  }
+  
+  return GetStoreValueForLoad(SrcVal, Offset, LoadTy, InsertPt, TD);
+}
+
 
 /// GetMemInstValueForLoad - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering mem intrinsic.
@@ -958,11 +1027,12 @@ struct AvailableValueInBlock {
   BasicBlock *BB;
   enum ValType {
     SimpleVal,  // A simple offsetted value that is accessed.
+    LoadVal,    // A value produced by a load.
     MemIntrin   // A memory intrinsic which is loaded from.
   };
   
   /// V - The value that is live out of the block.
-  PointerIntPair<Value *, 1, ValType> Val;
+  PointerIntPair<Value *, 2, ValType> Val;
   
   /// Offset - The byte offset in Val that is interesting for the load query.
   unsigned Offset;
@@ -987,21 +1057,40 @@ struct AvailableValueInBlock {
     return Res;
   }
   
+  static AvailableValueInBlock getLoad(BasicBlock *BB, LoadInst *LI,
+                                       unsigned Offset = 0) {
+    AvailableValueInBlock Res;
+    Res.BB = BB;
+    Res.Val.setPointer(LI);
+    Res.Val.setInt(LoadVal);
+    Res.Offset = Offset;
+    return Res;
+  }
+
   bool isSimpleValue() const { return Val.getInt() == SimpleVal; }
+  bool isCoercedLoadValue() const { return Val.getInt() == LoadVal; }
+  bool isMemIntrinValue() const { return Val.getInt() == MemIntrin; }
+
   Value *getSimpleValue() const {
     assert(isSimpleValue() && "Wrong accessor");
     return Val.getPointer();
   }
   
+  LoadInst *getCoercedLoadValue() const {
+    assert(isCoercedLoadValue() && "Wrong accessor");
+    return cast<LoadInst>(Val.getPointer());
+  }
+  
   MemIntrinsic *getMemIntrinValue() const {
-    assert(!isSimpleValue() && "Wrong accessor");
+    assert(isMemIntrinValue() && "Wrong accessor");
     return cast<MemIntrinsic>(Val.getPointer());
   }
   
   /// MaterializeAdjustedValue - Emit code into this block to adjust the value
   /// defined here to the specified type.  This handles various coercion cases.
   Value *MaterializeAdjustedValue(const Type *LoadTy,
-                                  const TargetData *TD) const {
+                                  const TargetData *TD,
+                                  MemoryDependenceAnalysis &MD) const {
     Value *Res;
     if (isSimpleValue()) {
       Res = getSimpleValue();
@@ -1010,14 +1099,27 @@ struct AvailableValueInBlock {
         Res = GetStoreValueForLoad(Res, Offset, LoadTy, BB->getTerminator(),
                                    *TD);
         
-        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
+        DEBUG(dbgs() << "GVN COERCED NONLOCAL VAL:\nOffset: " << Offset << "  "
                      << *getSimpleValue() << '\n'
+                     << *Res << '\n' << "\n\n\n");
+      }
+    } else if (isCoercedLoadValue()) {
+      LoadInst *Load = getCoercedLoadValue();
+      if (Load->getType() == LoadTy && Offset == 0) {
+        Res = Load;
+      } else {
+        assert(TD && "Need target data to handle type mismatch case");
+        Res = GetLoadValueForLoad(Load, Offset, LoadTy, BB->getTerminator(),
+                                  *TD, MD);
+        
+        DEBUG(dbgs() << "GVN COERCED NONLOCAL LOAD:\nOffset: " << Offset << "  "
+                     << *getCoercedLoadValue() << '\n'
                      << *Res << '\n' << "\n\n\n");
       }
     } else {
       Res = GetMemInstValueForLoad(getMemIntrinValue(), Offset,
                                    LoadTy, BB->getTerminator(), *TD);
-      DEBUG(errs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
+      DEBUG(dbgs() << "GVN COERCED NONLOCAL MEM INTRIN:\nOffset: " << Offset
                    << "  " << *getMemIntrinValue() << '\n'
                    << *Res << '\n' << "\n\n\n");
     }
@@ -1025,7 +1127,7 @@ struct AvailableValueInBlock {
   }
 };
 
-}
+} // end anonymous namespace
 
 /// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
 /// construct SSA form, allowing us to eliminate LI.  This returns the value
@@ -1034,12 +1136,13 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
                          SmallVectorImpl<AvailableValueInBlock> &ValuesPerBlock,
                                      const TargetData *TD,
                                      const DominatorTree &DT,
-                                     AliasAnalysis *AA) {
+                                     AliasAnalysis *AA,
+                                     MemoryDependenceAnalysis &MD) {
   // Check for the fully redundant, dominating load case.  In this case, we can
   // just use the dominating value directly.
   if (ValuesPerBlock.size() == 1 && 
       DT.properlyDominates(ValuesPerBlock[0].BB, LI->getParent()))
-    return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), TD);
+    return ValuesPerBlock[0].MaterializeAdjustedValue(LI->getType(), TD, MD);
 
   // Otherwise, we have to construct SSA form.
   SmallVector<PHINode*, 8> NewPHIs;
@@ -1055,7 +1158,7 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
     if (SSAUpdate.HasValueForBlock(BB))
       continue;
 
-    SSAUpdate.AddAvailableValue(BB, AV.MaterializeAdjustedValue(LoadTy, TD));
+    SSAUpdate.AddAvailableValue(BB, AV.MaterializeAdjustedValue(LoadTy, TD,MD));
   }
   
   // Perform PHI construction.
@@ -1159,8 +1262,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                                                      DepLI, *TD);
           
           if (Offset != -1) {
-            ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB, DepLI,
-                                                                Offset));
+            ValuesPerBlock.push_back(AvailableValueInBlock::getLoad(DepBB,DepLI,
+                                                                    Offset));
             continue;
           }
         }
@@ -1223,7 +1326,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
           continue;
         }          
       }
-      ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB, LD));
+      ValuesPerBlock.push_back(AvailableValueInBlock::getLoad(DepBB, LD));
       continue;
     }
     
@@ -1243,7 +1346,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     
     // Perform PHI construction.
     Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
-                                      VN.getAliasAnalysis());
+                                      VN.getAliasAnalysis(), *MD);
     LI->replaceAllUsesWith(V);
 
     if (isa<PHINode>(V))
@@ -1466,7 +1569,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   // Perform PHI construction.
   Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD, *DT,
-                                    VN.getAliasAnalysis());
+                                    VN.getAliasAnalysis(), *MD);
   LI->replaceAllUsesWith(V);
   if (isa<PHINode>(V))
     V->takeName(LI);
@@ -1527,7 +1630,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
                                                  L->getPointerOperand(),
                                                  DepLI, *TD);
       if (Offset != -1)
-        AvailVal = GetStoreValueForLoad(DepLI, Offset, L->getType(), L, *TD);
+        AvailVal = GetLoadValueForLoad(DepLI, Offset, L->getType(), L, *TD, *MD);
     }
     
     // If the clobbering value is a memset/memcpy/memmove, see if we can forward

@@ -231,7 +231,8 @@ static bool
 isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
                                        const Value *&MemLocBase,
                                        int64_t &MemLocOffs,
-                                       const LoadInst *LI, TargetData *TD) {
+                                       const LoadInst *LI,
+                                       const TargetData *TD) {
   // If we have no target data, we can't do this.
   if (TD == 0) return false;
 
@@ -239,14 +240,34 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
   if (MemLocBase == 0)
     MemLocBase = GetPointerBaseWithConstantOffset(MemLoc.Ptr, MemLocOffs, *TD);
 
+  unsigned Size = MemoryDependenceAnalysis::
+    getLoadLoadClobberFullWidthSize(MemLocBase, MemLocOffs, MemLoc.Size,
+                                    LI, *TD);
+  return Size != 0;
+}
+
+/// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that
+/// looks at a memory location for a load (specified by MemLocBase, Offs,
+/// and Size) and compares it against a load.  If the specified load could
+/// be safely widened to a larger integer load that is 1) still efficient,
+/// 2) safe for the target, and 3) would provide the specified memory
+/// location value, then this function returns the size in bytes of the
+/// load width to use.  If not, this returns zero.
+unsigned MemoryDependenceAnalysis::
+getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
+                                unsigned MemLocSize, const LoadInst *LI,
+                                const TargetData &TD) {
+  // We can only extend non-volatile integer loads.
+  if (!isa<IntegerType>(LI->getType()) || LI->isVolatile()) return 0;
+  
   // Get the base of this load.
   int64_t LIOffs = 0;
   const Value *LIBase = 
-    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, *TD);
+    GetPointerBaseWithConstantOffset(LI->getPointerOperand(), LIOffs, TD);
   
   // If the two pointers are not based on the same pointer, we can't tell that
   // they are related.
-  if (LIBase != MemLocBase) return false;
+  if (LIBase != MemLocBase) return 0;
   
   // Okay, the two values are based on the same pointer, but returned as
   // no-alias.  This happens when we have things like two byte loads at "P+1"
@@ -255,7 +276,7 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
   // the bits required by MemLoc.
   
   // If MemLoc is before LI, then no widening of LI will help us out.
-  if (MemLocOffs < LIOffs) return false;
+  if (MemLocOffs < LIOffs) return 0;
   
   // Get the alignment of the load in bytes.  We assume that it is safe to load
   // any legal integer up to this size without a problem.  For example, if we're
@@ -264,10 +285,10 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
   // to i16.
   unsigned LoadAlign = LI->getAlignment();
 
-  int64_t MemLocEnd = MemLocOffs+MemLoc.Size;
+  int64_t MemLocEnd = MemLocOffs+MemLocSize;
   
   // If no amount of rounding up will let MemLoc fit into LI, then bail out.
-  if (LIOffs+LoadAlign < MemLocEnd) return false;
+  if (LIOffs+LoadAlign < MemLocEnd) return 0;
   
   // This is the size of the load to try.  Start with the next larger power of
   // two.
@@ -278,17 +299,17 @@ isLoadLoadClobberIfExtendedToFullWidth(const AliasAnalysis::Location &MemLoc,
     // If this load size is bigger than our known alignment or would not fit
     // into a native integer register, then we fail.
     if (NewLoadByteSize > LoadAlign ||
-        !TD->fitsInLegalInteger(NewLoadByteSize*8))
-      return false;
+        !TD.fitsInLegalInteger(NewLoadByteSize*8))
+      return 0;
 
     // If a load of this width would include all of MemLoc, then we succeed.
     if (LIOffs+NewLoadByteSize >= MemLocEnd)
-      return true;
+      return NewLoadByteSize;
     
     NewLoadByteSize <<= 1;
   }
   
-  return false;
+  return 0;
 }
 
 /// getPointerDependencyFrom - Return the instruction on which a memory
