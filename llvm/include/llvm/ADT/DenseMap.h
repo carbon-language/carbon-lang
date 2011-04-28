@@ -252,7 +252,7 @@ private:
 
     if (NumBuckets) {
 #ifndef NDEBUG
-      memset(Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
+      memset((void*)Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
 #endif
       operator delete(Buckets);
     }
@@ -459,7 +459,7 @@ private:
     }
 
 #ifndef NDEBUG
-    memset(OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
+    memset((void*)OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
 #endif
     // Free the old table.
     operator delete(OldBuckets);
