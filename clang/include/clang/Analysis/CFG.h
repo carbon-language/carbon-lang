@@ -264,6 +264,8 @@ public:
 ///     ? operator      LHS expression;  RHS expression
 ///     &&, ||          expression that uses result of && or ||, RHS
 ///
+/// But note that any of that may be NULL in case of optimized-out edges.
+///
 class CFGBlock {
   class ElementList {
     typedef BumpVector<CFGElement> ImplTy;
