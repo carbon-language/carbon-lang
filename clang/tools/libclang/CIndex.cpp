@@ -5232,6 +5232,12 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_SourceManager_Membuffer_MMap:
       str = "SourceManager: mmap'ed memory buffers";
       break;
+    case CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc:
+      str = "ExternalASTSource: malloc'ed memory buffers";
+      break;
+    case CXTUResourceUsage_ExternalASTSource_Membuffer_MMap:
+      str = "ExternalASTSource: mmap'ed memory buffers";
+      break;
   }
   return str;
 }
@@ -5284,9 +5290,22 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_SourceManager_Membuffer_Malloc,
                                (unsigned long) srcBufs.malloc_bytes);
-  createCXTUResourceUsageEntry(*entries,
+    createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_SourceManager_Membuffer_MMap,
                                (unsigned long) srcBufs.mmap_bytes);
+  
+  // How much memory is being used by the ExternalASTSource?
+  if (ExternalASTSource *esrc = astContext.getExternalSource()) {
+    const ExternalASTSource::MemoryBufferSizes &sizes =
+      esrc->getMemoryBufferSizes();
+    
+    createCXTUResourceUsageEntry(*entries,
+      CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc,
+                                 (unsigned long) sizes.malloc_bytes);
+    createCXTUResourceUsageEntry(*entries,
+      CXTUResourceUsage_ExternalASTSource_Membuffer_MMap,
+                                 (unsigned long) sizes.mmap_bytes);
+  }
 
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),

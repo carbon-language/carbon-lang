@@ -208,6 +208,16 @@ void ChainedIncludesSource::StartTranslationUnit(ASTConsumer *Consumer) {
 void ChainedIncludesSource::PrintStats() {
   return getFinalReader().PrintStats();
 }
+void ChainedIncludesSource::getMemoryBufferSizes(MemoryBufferSizes &sizes)const{
+  for (unsigned i = 0, e = CIs.size(); i != e; ++i) {
+    if (const ExternalASTSource *eSrc =
+        CIs[i]->getASTContext().getExternalSource()) {
+      eSrc->getMemoryBufferSizes(sizes);
+    }
+  }
+
+  getFinalReader().getMemoryBufferSizes(sizes);
+}
 
 void ChainedIncludesSource::InitializeSema(Sema &S) {
   return getFinalReader().InitializeSema(S);

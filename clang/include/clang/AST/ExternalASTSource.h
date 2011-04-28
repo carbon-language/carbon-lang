@@ -190,6 +190,28 @@ public:
   ///
   /// The default implementation of this method is a no-op.
   virtual void PrintStats();
+  
+  //===--------------------------------------------------------------------===//
+  // Queries for performance analysis.
+  //===--------------------------------------------------------------------===//
+  
+  struct MemoryBufferSizes {
+    size_t malloc_bytes;
+    size_t mmap_bytes;
+    
+    MemoryBufferSizes(size_t malloc_bytes, size_t mmap_bytes)
+    : malloc_bytes(malloc_bytes), mmap_bytes(mmap_bytes) {}
+  };
+  
+  /// Return the amount of memory used by memory buffers, breaking down
+  /// by heap-backed versus mmap'ed memory.
+  MemoryBufferSizes getMemoryBufferSizes() const {
+    MemoryBufferSizes sizes(0, 0);
+    getMemoryBufferSizes(sizes);
+    return sizes;
+  }
+
+  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const = 0;
 
 protected:
   static DeclContextLookupResult

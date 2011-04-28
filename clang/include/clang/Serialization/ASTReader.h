@@ -1066,6 +1066,10 @@ public:
   /// \brief Print some statistics about AST usage.
   virtual void PrintStats();
 
+  /// Return the amount of memory used by memory buffers, breaking down
+  /// by heap-backed versus mmap'ed memory.
+  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const;
+
   /// \brief Initialize the semantic source with the Sema instance
   /// being used to perform semantic analysis on the abstract syntax
   /// tree.

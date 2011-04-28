@@ -57,6 +57,10 @@ protected:
   virtual void StartTranslationUnit(ASTConsumer *Consumer);
   virtual void PrintStats();
 
+  /// Return the amount of memory used by memory buffers, breaking down
+  /// by heap-backed versus mmap'ed memory.
+  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const;
+
 //===----------------------------------------------------------------------===//
 // ExternalSemaSource interface.
 //===----------------------------------------------------------------------===//
@@ -65,7 +69,6 @@ protected:
   virtual void ForgetSema();
   virtual std::pair<ObjCMethodList,ObjCMethodList> ReadMethodPool(Selector Sel);
   virtual bool LookupUnqualified(LookupResult &R, Scope *S);
-
 };
 
 }

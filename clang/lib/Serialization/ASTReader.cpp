@@ -4053,6 +4053,23 @@ void ASTReader::PrintStats() {
   std::fprintf(stderr, "\n");
 }
 
+/// Return the amount of memory used by memory buffers, breaking down
+/// by heap-backed versus mmap'ed memory.
+void ASTReader::getMemoryBufferSizes(MemoryBufferSizes &sizes) const {
+  for (unsigned i = 0, e = Chain.size(); i != e; ++i)
+    if (llvm::MemoryBuffer *buf = Chain[i]->Buffer.get()) {
+      size_t bytes = buf->getBufferSize();
+      switch (buf->getBufferKind()) {
+        case llvm::MemoryBuffer::MemoryBuffer_Malloc:
+          sizes.malloc_bytes += bytes;
+          break;
+        case llvm::MemoryBuffer::MemoryBuffer_MMap:
+          sizes.mmap_bytes += bytes;
+          break;
+      }
+    }
+}
+
 void ASTReader::InitializeSema(Sema &S) {
   SemaObj = &S;
   S.ExternalSource = this;

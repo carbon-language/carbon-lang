@@ -1024,14 +1024,15 @@ enum CXTUResourceUsageKind {
   CXTUResourceUsage_SourceManagerContentCache = 5,
   CXTUResourceUsage_AST_SideTables = 6,
   CXTUResourceUsage_SourceManager_Membuffer_Malloc = 7,
-  CXTUResourceUsage_SourceManager_Membuffer_MMap = 8,  
-
+  CXTUResourceUsage_SourceManager_Membuffer_MMap = 8,
+  CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc = 9, 
+  CXTUResourceUsage_ExternalASTSource_Membuffer_MMap = 10, 
   CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN = CXTUResourceUsage_AST,
   CXTUResourceUsage_MEMORY_IN_BYTES_END =
-    CXTUResourceUsage_SourceManager_Membuffer_MMap,
+    CXTUResourceUsage_ExternalASTSource_Membuffer_MMap,
 
   CXTUResourceUsage_First = CXTUResourceUsage_AST,
-  CXTUResourceUsage_Last = CXTUResourceUsage_SourceManager_Membuffer_MMap
+  CXTUResourceUsage_Last = CXTUResourceUsage_ExternalASTSource_Membuffer_MMap
 };
 
 /**
