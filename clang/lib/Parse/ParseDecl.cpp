@@ -1479,6 +1479,24 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       continue;
     }
 
+    case tok::kw___is_signed:
+      // GNU libstdc++ 4.4 uses __is_signed as an identifier, but Clang
+      // typically treats it as a trait. If we see __is_signed as it appears
+      // in libstdc++, e.g.,
+      //
+      //   static const bool __is_signed;
+      //
+      // then treat __is_signed as an identifier rather than as a keyword.
+      if (DS.getTypeSpecType() == TST_bool &&
+          DS.getTypeQualifiers() == DeclSpec::TQ_const &&
+          DS.getStorageClassSpec() == DeclSpec::SCS_static) {
+        Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
+        Tok.setKind(tok::identifier);
+      }
+
+      // We're done with the declaration-specifiers.
+      goto DoneWithDeclSpec;
+        
       // typedef-name
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
