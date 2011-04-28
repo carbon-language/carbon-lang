@@ -87,3 +87,20 @@ namespace test2 {
   // CHECK: define internal void @__Block_byref_object_dispose
   // CHECK: call void @_ZN5test21BD1Ev(
 }
+
+// rdar://problem/9334739
+// Make sure we mark destructors for parameters captured in blocks.
+namespace test3 {
+  struct A {
+    A(const A&);
+    ~A();
+  };
+
+  struct B : A {
+  };
+
+  void test(B b) {
+    extern void consume(void(^)());
+    consume(^{ (void) b; });
+  }
+}

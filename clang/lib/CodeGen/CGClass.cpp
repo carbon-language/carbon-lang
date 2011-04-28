@@ -1305,6 +1305,7 @@ void CodeGenFunction::PushDestructorCleanup(QualType T, llvm::Value *Addr) {
   if (ClassDecl->hasTrivialDestructor()) return;
 
   const CXXDestructorDecl *D = ClassDecl->getDestructor();
+  assert(D && D->isUsed() && "destructor not marked as used!");
   PushDestructorCleanup(D, Addr);
 }
 

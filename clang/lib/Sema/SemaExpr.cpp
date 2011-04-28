@@ -1124,8 +1124,18 @@ static CaptureResult shouldCaptureValueReference(Sema &S, SourceLocation loc,
 
   // Build a copy expression.
   Expr *copyExpr = 0;
-  if (!byRef && S.getLangOptions().CPlusPlus &&
-      !type->isDependentType() && type->isStructureOrClassType()) {
+  const RecordType *rtype;
+  if (!byRef && S.getLangOptions().CPlusPlus && !type->isDependentType() &&
+      (rtype = type->getAs<RecordType>())) {
+
+    // The capture logic needs the destructor, so make sure we mark it.
+    // Usually this is unnecessary because most local variables have
+    // their destructors marked at declaration time, but parameters are
+    // an exception because it's technically only the call site that
+    // actually requires the destructor.
+    if (isa<ParmVarDecl>(var))
+      S.FinalizeVarWithDestructor(var, rtype);
+
     // According to the blocks spec, the capture of a variable from
     // the stack requires a const copy constructor.  This is not true
     // of the copy/move done to move a __block variable to the heap.
