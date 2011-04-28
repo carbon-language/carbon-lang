@@ -44,6 +44,8 @@ public:
 
   virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
+                                   MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -99,6 +101,16 @@ void MCMachOStreamer::InitSections() {
                                     MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                     0, SectionKind::getText()));
 
+}
+
+void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
+                                          MCSymbol *EHSymbol) {
+  MCSymbolData &SD =
+    getAssembler().getOrCreateSymbolData(*Symbol);
+  if (SD.isExternal())
+    EmitSymbolAttribute(EHSymbol, MCSA_Global);
+  if (SD.getFlags() & SF_WeakDefinition)
+    EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {

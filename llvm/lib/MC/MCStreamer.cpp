@@ -154,6 +154,10 @@ void MCStreamer::EnsureValidFrame() {
     report_fatal_error("No open frame");
 }
 
+void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
+                                     MCSymbol *EHSymbol) {
+}
+
 void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(!Symbol->isVariable() && "Cannot emit a variable symbol!");
   assert(getCurrentSection() && "Cannot emit before setting section!");

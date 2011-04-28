@@ -184,6 +184,9 @@ namespace llvm {
     /// used in an assignment.
     virtual void EmitLabel(MCSymbol *Symbol);
 
+    virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
+                                     MCSymbol *EHSymbol);
+
     /// EmitAssemblerFlag - Note in the output the specified @p Flag
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
 
