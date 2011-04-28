@@ -838,14 +838,18 @@ bool llvm::LowerDbgDeclare(Function &F) {
          E = Dbgs.end(); I != E; ++I) {
     DbgDeclareInst *DDI = *I;
     if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress())) {
+      bool RemoveDDI = true;
       for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
            UI != E; ++UI)
         if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
           ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
         else if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
           ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
+        else
+          RemoveDDI = false;
+      if (RemoveDDI)
+        DDI->eraseFromParent();
     }
-    DDI->eraseFromParent();
   }
   return true;
 }
