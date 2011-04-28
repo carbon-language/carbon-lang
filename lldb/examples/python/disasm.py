@@ -14,8 +14,8 @@ import sys
 import time
 
 def disassemble_instructions (insts):
-    for i in range(insts.GetSize()):
-        print insts.GetInstructionAtIndex(i)
+    for i in insts:
+        print i
 
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
@@ -74,17 +74,13 @@ if target.IsValid():
                             insts = symbol.GetInstructions(target)
                             disassemble_instructions (insts)
 
-                    print "Frame registers:"
                     registerList = frame.GetRegisters()
-                    numRegisterSets = registerList.GetSize()
-                    for i in range (0, numRegisterSets):
-                        value = registerList.GetValueAtIndex(i)
-                        print value
-                        numChildren = value.GetNumChildren()
-                        if numChildren > 0:
-                            for j in range (0, numChildren):
-                                child = value.GetChildAtIndex(j)
-                                print "Name: ", child.GetName(), " Value: ", child.GetValue(frame)
+                    print "Frame registers (size of register set = %d):" % registerList.GetSize()
+                    for value in registerList:
+                        #print value
+                        print "%s (number of children = %d):" % (value.GetName(), value.GetNumChildren())
+                        for child in value:
+                            print "Name: ", child.GetName(), " Value: ", child.GetValue(frame)
 
             print "Hit the breakpoint at main, continue and wait for program to exit..."
             # Now continue to the program exit
