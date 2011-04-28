@@ -21,12 +21,20 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Object/MachOFormat.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 using namespace llvm;
+
+// Option to allow disabling arithmetic relaxation to workaround PR9807, which
+// is useful when running bitwise comparison experiments on Darwin. We should be
+// able to remove this once PR9807 is resolved.
+static cl::opt<bool>
+MCDisableArithRelaxation("mc-x86-disable-arith-relaxation",
+         cl::desc("Disable relaxation of arithmetic instruction for X86"));
 
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
@@ -200,6 +208,9 @@ bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
   // Branches can always be relaxed.
   if (getRelaxedOpcodeBranch(Inst.getOpcode()) != Inst.getOpcode())
     return true;
+
+  if (MCDisableArithRelaxation)
+    return false;
 
   // Check if this instruction is ever relaxable.
   if (getRelaxedOpcodeArith(Inst.getOpcode()) == Inst.getOpcode())
