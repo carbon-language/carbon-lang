@@ -494,9 +494,10 @@ static const MachineLocation TranslateMachineLocation(
 namespace {
   class FrameEmitterImpl {
     int CFAOffset;
+    int CIENum;
 
   public:
-    FrameEmitterImpl() : CFAOffset(0) {
+    FrameEmitterImpl() : CFAOffset(0), CIENum(0) {
     }
 
     const MCSymbol &EmitCIE(MCStreamer &streamer,
@@ -623,7 +624,15 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = *asmInfo.getEHFrameSection();
   streamer.SwitchSection(&section);
-  MCSymbol *sectionStart = context.CreateTempSymbol();
+
+  MCSymbol *sectionStart;
+  if (asmInfo.isFunctionEHFrameSymbolPrivate())
+    sectionStart = context.CreateTempSymbol();
+  else
+    sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
+
+  CIENum++;
+
   MCSymbol *sectionEnd = streamer.getContext().CreateTempSymbol();
 
   // Length
