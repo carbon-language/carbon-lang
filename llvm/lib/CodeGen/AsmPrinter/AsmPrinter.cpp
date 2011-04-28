@@ -749,33 +749,49 @@ getDebugValueLocation(const MachineInstr *MI) const {
   return MachineLocation();
 }
 
+/// getDwarfRegOpSize - get size required to emit given machine location using
+/// dwarf encoding.
+unsigned AsmPrinter::getDwarfRegOpSize(const MachineLocation &MLoc) const {
+  const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  unsigned DWReg = RI->getDwarfRegNum(MLoc.getReg(), false);
+  if (int Offset = MLoc.getOffset()) {
+    // If the value is at a certain offset from frame register then
+    // use DW_OP_breg.
+    if (DWReg < 32)
+      return 1 + MCAsmInfo::getSLEB128Size(Offset);
+    else
+      return 1 + MCAsmInfo::getULEB128Size(MLoc.getReg()) 
+        + MCAsmInfo::getSLEB128Size(Offset);
+  }
+  if (DWReg < 32)
+    return 1;
+
+  return 1 + MCAsmInfo::getULEB128Size(DWReg);
+}
+
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
-  const TargetRegisterInfo *RI = TM.getRegisterInfo();
-  unsigned Reg = RI->getDwarfRegNum(MLoc.getReg(), false);
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  unsigned Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
   if (int Offset =  MLoc.getOffset()) {
-    // If the value is at a certain offset from frame register then
-    // use DW_OP_fbreg.
-    unsigned OffsetSize = Offset ? MCAsmInfo::getSLEB128Size(Offset) : 1;
-    OutStreamer.AddComment("Loc expr size");
-    EmitInt16(1 + OffsetSize);
-    OutStreamer.AddComment(
-      dwarf::OperationEncodingString(dwarf::DW_OP_fbreg));
-    EmitInt8(dwarf::DW_OP_fbreg);
-    OutStreamer.AddComment("Offset");
+    if (Reg < 32) {
+      OutStreamer.AddComment(
+        dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
+      EmitInt8(dwarf::DW_OP_breg0 + Reg);
+    } else {
+      OutStreamer.AddComment("DW_OP_bregx");
+      EmitInt8(dwarf::DW_OP_bregx);
+      OutStreamer.AddComment(Twine(Reg));
+      EmitULEB128(Reg);
+    }
     EmitSLEB128(Offset);
   } else {
     if (Reg < 32) {
-      OutStreamer.AddComment("Loc expr size");
-      EmitInt16(1);
       OutStreamer.AddComment(
         dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
       EmitInt8(dwarf::DW_OP_reg0 + Reg);
     } else {
-      OutStreamer.AddComment("Loc expr size");
-      EmitInt16(1 + MCAsmInfo::getULEB128Size(Reg));
-      OutStreamer.AddComment(
-        dwarf::OperationEncodingString(dwarf::DW_OP_regx));
+      OutStreamer.AddComment("DW_OP_regx");
       EmitInt8(dwarf::DW_OP_regx);
       OutStreamer.AddComment(Twine(Reg));
       EmitULEB128(Reg);

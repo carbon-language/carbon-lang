@@ -1466,7 +1466,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       }
 
       // The value is valid until the next DBG_VALUE or clobber.
-      DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc));
+      DotDebugLocEntries.push_back(DotDebugLocEntry(FLabel, SLabel, MLoc, Var));
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
   }
@@ -2721,7 +2721,39 @@ void DwarfDebug::emitDebugLoc() {
     } else {
       Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
       Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
-      Asm->EmitDwarfRegOp(Entry.Loc);
+      DIVariable DV(Entry.Variable);
+      if (DV.hasComplexAddress()) {
+        unsigned N = DV.getNumAddrElements();
+        unsigned i = 0;
+        Asm->OutStreamer.AddComment("Loc expr size");
+        if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
+          // If first address element is OpPlus then emit
+          // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
+          MachineLocation Loc(Entry.Loc.getReg(), DV.getAddrElement(1));
+          Asm->EmitInt16(Asm->getDwarfRegOpSize(Loc) + N - 2);
+          Asm->EmitDwarfRegOp(Loc);
+//          Asm->EmitULEB128(DV.getAddrElement(1));
+          i = 2;
+        } else {
+          Asm->EmitInt16(Asm->getDwarfRegOpSize(Entry.Loc) + N);
+          Asm->EmitDwarfRegOp(Entry.Loc);
+        }
+
+        // Emit remaining complex address elements.
+        for (; i < N; ++i) {
+          uint64_t Element = DV.getAddrElement(i);
+          if (Element == DIBuilder::OpPlus) {
+            Asm->EmitInt8(dwarf::DW_OP_plus_uconst);
+            Asm->EmitULEB128(DV.getAddrElement(++i));
+          } else if (Element == DIBuilder::OpDeref)
+            Asm->EmitInt8(dwarf::DW_OP_deref);
+          else llvm_unreachable("unknown Opcode found in complex address");
+        }
+      } else {
+        Asm->OutStreamer.AddComment("Loc expr size");
+        Asm->EmitInt16(Asm->getDwarfRegOpSize(Entry.Loc));
+        Asm->EmitDwarfRegOp(Entry.Loc);
+      }
     }
   }
 }

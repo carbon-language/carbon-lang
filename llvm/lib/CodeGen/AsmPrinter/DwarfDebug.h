@@ -66,10 +66,12 @@ typedef struct DotDebugLocEntry {
   const MCSymbol *Begin;
   const MCSymbol *End;
   MachineLocation Loc;
+  const MDNode *Variable;
   bool Merged;
-  DotDebugLocEntry() : Begin(0), End(0), Merged(false) {}
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L) 
-    : Begin(B), End(E), Loc(L), Merged(false) {}
+  DotDebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {}
+  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
+                   const MDNode *V) 
+    : Begin(B), End(E), Loc(L), Variable(V), Merged(false) {}
   /// Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() { return Begin == 0 && End == 0; }

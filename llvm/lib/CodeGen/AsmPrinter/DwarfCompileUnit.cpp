@@ -258,15 +258,22 @@ void CompileUnit::addComplexAddress(DbgVariable *&DV, DIE *Die,
                                     unsigned Attribute,
                                     const MachineLocation &Location) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-
-  if (Location.isReg())
-    addRegisterOp(Block, Location.getReg());
+  unsigned N = DV->getNumAddrElements();
+  unsigned i = 0;
+  if (Location.isReg()) {
+    if (N >= 2 && DV->getAddrElement(0) == DIBuilder::OpPlus) {
+      // If first address element is OpPlus then emit
+      // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
+      addRegisterOffset(Block, Location.getReg(), DV->getAddrElement(1));
+      i = 2;
+    } else
+      addRegisterOp(Block, Location.getReg());
+  }
   else
     addRegisterOffset(Block, Location.getReg(), Location.getOffset());
 
-  for (unsigned i = 0, N = DV->getNumAddrElements(); i < N; ++i) {
+  for (;i < N; ++i) {
     uint64_t Element = DV->getAddrElement(i);
-
     if (Element == DIBuilder::OpPlus) {
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
       addUInt(Block, 0, dwarf::DW_FORM_udata, DV->getAddrElement(++i));

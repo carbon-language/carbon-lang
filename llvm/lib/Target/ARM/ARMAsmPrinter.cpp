@@ -172,6 +172,47 @@ getDebugValueLocation(const MachineInstr *MI) const {
   return Location;
 }
 
+/// getDwarfRegOpSize - get size required to emit given machine location using
+/// dwarf encoding.
+unsigned ARMAsmPrinter::getDwarfRegOpSize(const MachineLocation &MLoc) const {
+ const TargetRegisterInfo *RI = TM.getRegisterInfo();
+  if (RI->getDwarfRegNum(MLoc.getReg(), false) != -1)
+    return AsmPrinter::getDwarfRegOpSize(MLoc);
+  else {
+    unsigned Reg = MLoc.getReg();
+    if (Reg >= ARM::S0 && Reg <= ARM::S31) {
+      assert(ARM::S0 + 31 == ARM::S31 && "Unexpected ARM S register numbering");
+      // S registers are described as bit-pieces of a register
+      // S[2x] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 0)
+      // S[2x+1] = DW_OP_regx(256 + (x>>1)) DW_OP_bit_piece(32, 32)
+      
+      unsigned SReg = Reg - ARM::S0;
+      unsigned Rx = 256 + (SReg >> 1);
+      OutStreamer.AddComment("Loc expr size");
+      // DW_OP_regx + ULEB + DW_OP_bit_piece + ULEB + ULEB
+      //   1 + ULEB(Rx) + 1 + 1 + 1
+      return 4 + MCAsmInfo::getULEB128Size(Rx);
+    } 
+    
+    if (Reg >= ARM::Q0 && Reg <= ARM::Q15) {
+      assert(ARM::Q0 + 15 == ARM::Q15 && "Unexpected ARM Q register numbering");
+      // Q registers Q0-Q15 are described by composing two D registers together.
+      // Qx = DW_OP_regx(256+2x) DW_OP_piece(8) DW_OP_regx(256+2x+1) DW_OP_piece(8)
+
+      unsigned QReg = Reg - ARM::Q0;
+      unsigned D1 = 256 + 2 * QReg;
+      unsigned D2 = D1 + 1;
+      
+      OutStreamer.AddComment("Loc expr size");
+      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8) +
+      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8);
+      //   6 + ULEB(D1) + ULEB(D2)
+      return 6 + MCAsmInfo::getULEB128Size(D1) + MCAsmInfo::getULEB128Size(D2);
+    }
+  }
+  return 0;
+}
+
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
