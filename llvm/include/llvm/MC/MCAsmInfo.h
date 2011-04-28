@@ -328,6 +328,9 @@ namespace llvm {
     getExprForPersonalitySymbol(const MCSymbol *Sym,
                                 MCStreamer &Streamer) const;
 
+    virtual const MCExpr *
+    getExprForFDESymbol(const MCSymbol *Sym, MCStreamer &Streamer) const;
+
     bool usesSunStyleELFSectionSwitchSyntax() const {
       return SunStyleELFSectionSwitchSyntax;
     }

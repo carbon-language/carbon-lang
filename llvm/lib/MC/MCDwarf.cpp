@@ -465,19 +465,16 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
 
 static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
                        unsigned symbolEncoding) {
+  MCContext &context = streamer.getContext();
+  const MCAsmInfo &asmInfo = context.getAsmInfo();
+  const MCExpr *v = asmInfo.getExprForFDESymbol(&symbol,
+                                                streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
   unsigned application = symbolEncoding & 0x70;
-  switch (application) {
-  default:
-    assert(0 && "Unknown Encoding");
-    break;
-  case 0:
-    streamer.EmitSymbolValue(&symbol, size);
-    break;
-  case dwarf::DW_EH_PE_pcrel:
-    streamer.EmitPCRelSymbolValue(&symbol, size);
-    break;
-  }
+  if (isa<MCSymbolRefExpr>(v) && application == dwarf::DW_EH_PE_pcrel)
+    streamer.EmitPCRelValue(v, size);
+  else
+    streamer.EmitAbsValue(v, size);
 }
 
 static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
@@ -756,7 +753,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
-  streamer.EmitPCRelSymbolValue(frame.Begin, size);
+  EmitSymbol(streamer, *frame.Begin, fdeEncoding);
 
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,

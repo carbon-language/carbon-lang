@@ -112,5 +112,11 @@ unsigned MCAsmInfo::getSLEB128Size(int Value) {
 const MCExpr *
 MCAsmInfo::getExprForPersonalitySymbol(const MCSymbol *Sym,
                                        MCStreamer &Streamer) const {
+  return getExprForFDESymbol(Sym, Streamer);
+}
+
+const MCExpr *
+MCAsmInfo::getExprForFDESymbol(const MCSymbol *Sym,
+                               MCStreamer &Streamer) const {
   return MCSymbolRefExpr::Create(Sym, Streamer.getContext());
 }

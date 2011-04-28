@@ -61,8 +61,8 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
 }
 
 const MCExpr *
-MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
-                                             MCStreamer &Streamer) const {
+MCAsmInfoDarwin::getExprForFDESymbol(const MCSymbol *Sym,
+                                     MCStreamer &Streamer) const {
   MCContext &Context = Streamer.getContext();
   const MCExpr *Res = MCSymbolRefExpr::Create(Sym, Context);
   MCSymbol *PCSym = Context.CreateTempSymbol();
