@@ -1017,8 +1017,15 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     const Expr *lenExpr = CE->getArg(2);
     SVal lenVal = state->getSVal(lenExpr);
 
+    // Cast the length to a NonLoc SVal. If it is not a NonLoc then give up.
     NonLoc *strLengthNL = dyn_cast<NonLoc>(&strLength);
+    if (!strLengthNL)
+      return;
+
+    // Cast the max length to a NonLoc SVal. If it is not a NonLoc then give up.
     NonLoc *lenValNL = dyn_cast<NonLoc>(&lenVal);
+    if (!lenValNL)
+      return;
 
     QualType cmpTy = C.getSValBuilder().getContext().IntTy;
     const GRState *stateTrue, *stateFalse;
