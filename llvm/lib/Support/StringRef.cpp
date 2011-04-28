@@ -29,27 +29,6 @@ static bool ascii_isdigit(char x) {
   return x >= '0' && x <= '9';
 }
 
-/// compare - Compare two strings; the result is -1, 0, or 1 if this string
-/// is lexicographically less than, equal to, or greater than the \arg RHS.
-/// This is different than compare with no size specified as it only 
-/// compares at most the first n bytes.
-int StringRef::compare(StringRef RHS, size_t n) const {
-  // Check the prefix for a mismatch.
-  size_t maxToCmp = min(Length, RHS.Length);
-  maxToCmp = min(maxToCmp, n);
-  if (int Res = memcmp(Data, RHS.Data, maxToCmp))
-    return Res < 0 ? -1 : 1;
-  
-  // Otherwise the prefixes match, so we only need to check the lengths.
-  // Be mindful that if the n is less than or equal to the length of either
-  // string, that is the same as the strings matching because in that case
-  // we only care about the prefix.
-  if (((n <= Length) && (n <= RHS.Length)) || 
-      (Length == RHS.Length))
-    return 0;
-  return Length < RHS.Length ? -1 : 1;
-}
-
 /// compare_lower - Compare strings, ignoring case.
 int StringRef::compare_lower(StringRef RHS) const {
   for (size_t I = 0, E = min(Length, RHS.Length); I != E; ++I) {
