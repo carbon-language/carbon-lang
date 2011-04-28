@@ -2355,8 +2355,12 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
                                    SourceLocation KeyLoc) {
   // FIXME: For many of these traits, we need a complete type before we can 
   // check these properties.
-  assert(!T->isDependentType() &&
-         "Cannot evaluate traits for dependent types.");
+
+  if (T->isDependentType()) {
+    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << T;
+    return false;
+  }
+
   ASTContext &C = Self.Context;
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
@@ -2653,7 +2657,16 @@ ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
     QualType E = T;
     if (T->isIncompleteArrayType())
       E = Context.getAsArrayType(T)->getElementType();
-    if (!T->isVoidType() && ! LangOpts.Borland &&
+    if (!T->isVoidType() &&
+        (! LangOpts.Borland ||
+         UTT == UTT_HasNothrowAssign ||
+         UTT == UTT_HasNothrowCopy ||
+         UTT == UTT_HasNothrowConstructor ||
+         UTT == UTT_HasTrivialAssign ||
+         UTT == UTT_HasTrivialCopy ||
+         UTT == UTT_HasTrivialConstructor ||
+         UTT == UTT_HasTrivialDestructor ||
+         UTT == UTT_HasVirtualDestructor) &&
         RequireCompleteType(KWLoc, E,
                             diag::err_incomplete_type_used_in_type_trait_expr))
       return ExprError();
@@ -2688,8 +2701,14 @@ ExprResult Sema::ActOnBinaryTypeTrait(BinaryTypeTrait BTT,
 static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
                                     QualType LhsT, QualType RhsT,
                                     SourceLocation KeyLoc) {
-  assert((!LhsT->isDependentType() || RhsT->isDependentType()) &&
-         "Cannot evaluate traits for dependent types.");
+  if (LhsT->isDependentType()) {
+    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << LhsT;
+    return false;
+  }
+  else if (RhsT->isDependentType()) {
+    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << RhsT;
+    return false;
+  }
 
   switch(BTT) {
   case BTT_IsBaseOf: {
@@ -2828,8 +2847,10 @@ ExprResult Sema::ActOnArrayTypeTrait(ArrayTypeTrait ATT,
 static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
                                            QualType T, Expr *DimExpr,
                                            SourceLocation KeyLoc) {
-  assert((!T->isDependentType()) &&
-         "Cannot evaluate traits for dependent types.");
+  if (T->isDependentType()) {
+    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << T;
+    return false;
+  }
 
   switch(ATT) {
   case ATT_ArrayRank:
@@ -2840,16 +2861,24 @@ static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
         T = AT->getElementType();
       }
       return Dim;
-    } else {
-      assert(! "Array type trait applied to non-array type");
     }
+    return 0;
+
   case ATT_ArrayExtent: {
     llvm::APSInt Value;
     uint64_t Dim;
-    if (DimExpr->isIntegerConstantExpr(Value, Self.Context, 0, false))
+    if (DimExpr->isIntegerConstantExpr(Value, Self.Context, 0, false)) {
+      if (Value < llvm::APSInt(Value.getBitWidth(), Value.isUnsigned())) {
+        Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer) <<
+          DimExpr->getSourceRange();
+        return false;
+      }
       Dim = Value.getLimitedValue();
-    else
-      assert(! "Dimension expression did not evaluate to a constant integer");
+    } else {
+      Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer) <<
+        DimExpr->getSourceRange();
+      return false;
+    }
 
     if (T->isArrayType()) {
       unsigned D = 0;
@@ -2863,14 +2892,12 @@ static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
         T = AT->getElementType();
       }
 
-      assert(Matched && T->isArrayType() &&
-             "__array_extent does not refer to an array dimension");
-
-      llvm::APInt size = Self.Context.getAsConstantArrayType(T)->getSize();
-      return size.getLimitedValue();
-    } else {
-      assert(! "Array type trait applied to non-array type");
+      if (Matched && T->isArrayType()) {
+        if (const ConstantArrayType *CAT = Self.Context.getAsConstantArrayType(T))
+          return CAT->getSize().getLimitedValue();
+      }
     }
+    return 0;
   }
   }
   llvm_unreachable("Unknown type trait or not implemented");

@@ -3335,6 +3335,10 @@ def warn_unused_call : Warning<
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;
+def err_dependent_type_used_in_type_trait_expr : Error<
+  "dependent type %0 used in type trait expression">;
+def err_dimension_expr_not_constant_integer : Error<
+  "dimension expression does not evaluate to a constant unsigned int">;
 def err_expected_ident_or_lparen : Error<"expected identifier or '('">;
 
 def err_typecheck_cond_incompatible_operands_null : Error<
