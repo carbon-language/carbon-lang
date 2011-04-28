@@ -27,85 +27,6 @@ def which(program):
                 return exe_file
     return None
 
-# ===========================================
-# Iterator for lldb aggregate data structures
-# ===========================================
-
-def lldb_iter(obj, getsize, getelem):
-    """A generator adaptor for lldb aggregate data structures.
-
-    API clients pass in an aggregate object or a container of it, the name of
-    the method to get the size of the aggregate, and the name of the method to
-    get the element by index.
-
-    Example usages:
-
-    1. Pass an aggregate as the first argument:
-
-    def disassemble_instructions (insts):
-        from lldbutil import lldb_iter
-        for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
-            print i
-
-    2. Pass a container of aggregate which provides APIs to get to the size and
-       the element of the aggregate:
-
-    # Module is a container of symbol table 
-    module = target.FindModule(filespec)
-    for symbol in lldb_iter(module, 'GetNumSymbols', 'GetSymbolAtIndex'):
-        name = symbol.GetName()
-        ...
-    """
-    #import traceback
-    #traceback.print_stack()
-    size = getattr(obj, getsize)
-    elem = getattr(obj, getelem)
-    for i in range(size()):
-        yield elem(i)
-
-def smart_iter(obj):
-    """Returns an iterator for eligible lldb objects, or None otherwise.
-
-    An example of eligible lldb container object is SBModule, which contains
-    SBSymbols.  While SBTarget contains SBModules and SBBreakpoints, because it
-    is ambiguous which containee type to iterate on, the best we can do is to
-    return None.  API clients can use lldb_iter() to clarify their intentions.
-
-    SBSymbol does not have the notion of containee objects and is not eligible
-    for smart iterator.
-
-    Example usage:
-
-    from lldb_util import smart_iter
-    for thread in smart_iter(process):
-        ID = thread.GetThreadID()
-        if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
-            stopped_due_to_breakpoint = True
-        for frame in smart_iter(thread):
-            self.assertTrue(frame.GetThread().GetThreadID() == ID)
-        ...
-    """
-    d = { lldb.SBBreakpoint:  ('GetNumLocations',   'GetLocationAtIndex'),
-          lldb.SBCompileUnit: ('GetNumLineEntries', 'GetLineEntryAtIndex'),
-          lldb.SBDebugger:    ('GetNumTargets',     'GetTargetAtIndex'),
-          lldb.SBModule:      ('GetNumSymbols',     'GetSymbolAtIndex'),
-          lldb.SBProcess:     ('GetNumThreads',     'GetThreadAtIndex'),
-          lldb.SBThread:      ('GetNumFrames',      'GetFrameAtIndex'),
-
-          lldb.SBInstructionList:   ('GetSize', 'GetInstructionAtIndex'),
-          lldb.SBStringList:        ('GetSize', 'GetStringAtIndex',),
-          lldb.SBSymbolContextList: ('GetSize', 'GetContextAtIndex'),
-          lldb.SBValueList:         ('GetSize',  'GetValueAtIndex'),
-
-          lldb.SBType:  ('GetNumberChildren', 'GetChildAtIndex'),
-          lldb.SBValue: ('GetNumChildren',    'GetChildAtIndex')
-          }
-    if obj.__class__ in d:
-        val = d.get(obj.__class__)
-        return lldb_iter(obj, val[0], val[1])
-    else:
-        return None
-
 # ===================================================
 # Disassembly for an SBFunction or an SBSymbol object
 # ===================================================
@@ -117,7 +38,7 @@ def disassemble(target, function_or_symbol):
     """
     buf = StringIO.StringIO()
     insts = function_or_symbol.GetInstructions(target)
-    for i in lldb_iter(insts, 'GetSize', 'GetInstructionAtIndex'):
+    for i in insts:
         print >> buf, i
     return buf.getvalue()
 
@@ -289,7 +210,7 @@ def value_type_to_str(enum):
 def get_stopped_threads(process, reason):
     """Returns the thread(s) with the specified stop reason in a list."""
     threads = []
-    for t in lldb_iter(process, 'GetNumThreads', 'GetThreadAtIndex'):
+    for t in process:
         if t.GetStopReason() == reason:
             threads.append(t)
     return threads

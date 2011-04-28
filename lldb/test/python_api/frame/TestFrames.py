@@ -80,8 +80,7 @@ class FrameAPITestCase(TestBase):
                 # in_scope_only => True
                 valList = frame.GetVariables(True, False, False, True)
                 argList = []
-                from lldbutil import lldb_iter
-                for val in lldb_iter(valList, 'GetSize', 'GetValueAtIndex'):
+                for val in valList:
                     #self.DebugSBValue(frame, val)
                     argList.append("(%s)%s=%s" % (val.GetTypeName(),
                                                   val.GetName(),

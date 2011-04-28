@@ -60,8 +60,7 @@ class FoundationSymtabTestCase(TestBase):
         # Create the set of known symbols.  As we iterate through the symbol
         # table, remove the symbol from the set if it is a known symbol.
         expected_symbols = set(self.symbols_list)
-        from lldbutil import lldb_iter
-        for symbol in lldb_iter(module, 'GetNumSymbols', 'GetSymbolAtIndex'):
+        for symbol in module:
             self.assertTrue(symbol.IsValid(), VALID_SYMBOL)
             #print "symbol:", symbol
             name = symbol.GetName()

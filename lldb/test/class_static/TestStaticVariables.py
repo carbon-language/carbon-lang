@@ -101,8 +101,7 @@ class StaticVariableTestCase(TestBase):
         # in_scope_only => False
         valList = frame.GetVariables(False, False, True, False)
 
-        from lldbutil import lldb_iter
-        for val in lldb_iter(valList, 'GetSize', 'GetValueAtIndex'):
+        for val in valList:
             self.DebugSBValue(frame, val)
             self.assertTrue(val.GetValueType() == lldb.eValueTypeVariableGlobal)
             name = val.GetName()

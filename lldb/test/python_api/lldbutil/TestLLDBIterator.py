@@ -1,6 +1,5 @@
 """
-Test lldb_iter/smart_iter() which returns an iterator object for lldb container
-objects.
+Test the iteration protocol for some lldb container objects.
 """
 
 import os, time
