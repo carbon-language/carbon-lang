@@ -217,6 +217,7 @@ static Instruction *LowerNegateToMultiply(Instruction *Neg,
   ValueRankMap.erase(Neg);
   Res->takeName(Neg);
   Neg->replaceAllUsesWith(Res);
+  Res->setDebugLoc(Neg->getDebugLoc());
   Neg->eraseFromParent();
   return Res;
 }
@@ -506,6 +507,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
   // Everyone now refers to the add instruction.
   ValueRankMap.erase(Sub);
   Sub->replaceAllUsesWith(New);
+  New->setDebugLoc(Sub->getDebugLoc());
   Sub->eraseFromParent();
 
   DEBUG(dbgs() << "Negated: " << *New << '\n');
@@ -531,6 +533,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl,
     ValueRankMap.erase(Shl);
     Mul->takeName(Shl);
     Shl->replaceAllUsesWith(Mul);
+    Mul->setDebugLoc(Shl->getDebugLoc());
     Shl->eraseFromParent();
     return Mul;
   }
@@ -1052,6 +1055,8 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
     // eliminate it.
     DEBUG(dbgs() << "Reassoc to scalar: " << *V << '\n');
     I->replaceAllUsesWith(V);
+    if (Instruction *VI = dyn_cast<Instruction>(V))
+      VI->setDebugLoc(I->getDebugLoc());
     RemoveDeadBinaryOp(I);
     ++NumAnnihil;
     return V;
@@ -1075,6 +1080,8 @@ Value *Reassociate::ReassociateExpression(BinaryOperator *I) {
     // This expression tree simplified to something that isn't a tree,
     // eliminate it.
     I->replaceAllUsesWith(Ops[0].Op);
+    if (Instruction *OI = dyn_cast<Instruction>(Ops[0].Op))
+      OI->setDebugLoc(I->getDebugLoc());
     RemoveDeadBinaryOp(I);
     return Ops[0].Op;
   }
