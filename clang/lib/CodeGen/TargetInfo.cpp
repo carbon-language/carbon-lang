@@ -2344,7 +2344,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
   // FIXME: This doesn't handle alignment > 64 bits.
   const llvm::Type* ElemTy;
   unsigned SizeRegs;
-  if (getContext().getTypeSizeInChars(Ty) <= CharUnits::fromQuantity(32)) {
+  if (getContext().getTypeSizeInChars(Ty) <= CharUnits::fromQuantity(64)) {
     ElemTy = llvm::Type::getInt32Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
   } else if (getABIKind() == ARMABIInfo::APCS) {
