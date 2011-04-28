@@ -740,7 +740,7 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVU32ri
     : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
               [(set RRegu32:$d, imm:$a)]>;
-  def MOVU164ri
+  def MOVU64ri
     : InstPTX<(outs RRegu64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
               [(set RRegu64:$d, imm:$a)]>;
   def MOVF32ri
@@ -802,11 +802,11 @@ def CVT_pred_u64
             [(set Preds:$d, (trunc RRegu64:$a))]>;
 
 def CVT_pred_f32
-  : InstPTX<(outs Preds:$d), (ins RRegf32:$a), "cvt.pred.f32\t$d, $a",
+  : InstPTX<(outs Preds:$d), (ins RRegf32:$a), "cvt.rni.pred.f32\t$d, $a",
             [(set Preds:$d, (fp_to_uint RRegf32:$a))]>;
 
 def CVT_pred_f64
-  : InstPTX<(outs Preds:$d), (ins RRegf64:$a), "cvt.pred.f64\t$d, $a",
+  : InstPTX<(outs Preds:$d), (ins RRegf64:$a), "cvt.rni.pred.f64\t$d, $a",
             [(set Preds:$d, (fp_to_uint RRegf64:$a))]>;
 
 // Conversion to u16
@@ -824,11 +824,11 @@ def CVT_u16_u64
             [(set RRegu16:$d, (trunc RRegu64:$a))]>;
 
 def CVT_u16_f32
-  : InstPTX<(outs RRegu16:$d), (ins RRegf32:$a), "cvt.u16.f32\t$d, $a",
+  : InstPTX<(outs RRegu16:$d), (ins RRegf32:$a), "cvt.rni.u16.f32\t$d, $a",
             [(set RRegu16:$d, (fp_to_uint RRegf32:$a))]>;
 
 def CVT_u16_f64
-  : InstPTX<(outs RRegu16:$d), (ins RRegf64:$a), "cvt.u16.f64\t$d, $a",
+  : InstPTX<(outs RRegu16:$d), (ins RRegf64:$a), "cvt.rni.u16.f64\t$d, $a",
             [(set RRegu16:$d, (fp_to_uint RRegf64:$a))]>;
 
 // Conversion to u32
@@ -846,11 +846,11 @@ def CVT_u32_u64
             [(set RRegu32:$d, (trunc RRegu64:$a))]>;
 
 def CVT_u32_f32
-  : InstPTX<(outs RRegu32:$d), (ins RRegf32:$a), "cvt.u32.f32\t$d, $a",
+  : InstPTX<(outs RRegu32:$d), (ins RRegf32:$a), "cvt.rni.u32.f32\t$d, $a",
             [(set RRegu32:$d, (fp_to_uint RRegf32:$a))]>;
 
 def CVT_u32_f64
-  : InstPTX<(outs RRegu32:$d), (ins RRegf64:$a), "cvt.u32.f64\t$d, $a",
+  : InstPTX<(outs RRegu32:$d), (ins RRegf64:$a), "cvt.rni.u32.f64\t$d, $a",
             [(set RRegu32:$d, (fp_to_uint RRegf64:$a))]>;
 
 // Conversion to u64
@@ -868,51 +868,51 @@ def CVT_u64_u32
             [(set RRegu64:$d, (zext RRegu32:$a))]>;
 
 def CVT_u64_f32
-  : InstPTX<(outs RRegu64:$d), (ins RRegf32:$a), "cvt.u64.f32\t$d, $a",
+  : InstPTX<(outs RRegu64:$d), (ins RRegf32:$a), "cvt.rni.u64.f32\t$d, $a",
             [(set RRegu64:$d, (fp_to_uint RRegf32:$a))]>;
 
 def CVT_u64_f64
-  : InstPTX<(outs RRegu64:$d), (ins RRegf64:$a), "cvt.u64.f32\t$d, $a",
+  : InstPTX<(outs RRegu64:$d), (ins RRegf64:$a), "cvt.rni.u64.f64\t$d, $a",
             [(set RRegu64:$d, (fp_to_uint RRegf64:$a))]>;
 
 // Conversion to f32
 
 def CVT_f32_pred
-  : InstPTX<(outs RRegf32:$d), (ins Preds:$a), "cvt.f32.pred\t$d, $a",
+  : InstPTX<(outs RRegf32:$d), (ins Preds:$a), "cvt.rn.f32.pred\t$d, $a",
             [(set RRegf32:$d, (uint_to_fp Preds:$a))]>;
 
 def CVT_f32_u16
-  : InstPTX<(outs RRegf32:$d), (ins RRegu16:$a), "cvt.f32.u16\t$d, $a",
+  : InstPTX<(outs RRegf32:$d), (ins RRegu16:$a), "cvt.rn.f32.u16\t$d, $a",
             [(set RRegf32:$d, (uint_to_fp RRegu16:$a))]>;
 
 def CVT_f32_u32
-  : InstPTX<(outs RRegf32:$d), (ins RRegu32:$a), "cvt.f32.u32\t$d, $a",
+  : InstPTX<(outs RRegf32:$d), (ins RRegu32:$a), "cvt.rn.f32.u32\t$d, $a",
             [(set RRegf32:$d, (uint_to_fp RRegu32:$a))]>;
 
 def CVT_f32_u64
-  : InstPTX<(outs RRegf32:$d), (ins RRegu64:$a), "cvt.f32.u64\t$d, $a",
+  : InstPTX<(outs RRegf32:$d), (ins RRegu64:$a), "cvt.rn.f32.u64\t$d, $a",
             [(set RRegf32:$d, (uint_to_fp RRegu64:$a))]>;
 
 def CVT_f32_f64
-  : InstPTX<(outs RRegf32:$d), (ins RRegf64:$a), "cvt.f32.f64\t$d, $a",
+  : InstPTX<(outs RRegf32:$d), (ins RRegf64:$a), "cvt.rn.f32.f64\t$d, $a",
             [(set RRegf32:$d, (fround RRegf64:$a))]>;
 
 // Conversion to f64
 
 def CVT_f64_pred
-  : InstPTX<(outs RRegf64:$d), (ins Preds:$a), "cvt.f64.pred\t$d, $a",
+  : InstPTX<(outs RRegf64:$d), (ins Preds:$a), "cvt.rn.f64.pred\t$d, $a",
             [(set RRegf64:$d, (uint_to_fp Preds:$a))]>;
 
 def CVT_f64_u16
-  : InstPTX<(outs RRegf64:$d), (ins RRegu16:$a), "cvt.f64.u16\t$d, $a",
+  : InstPTX<(outs RRegf64:$d), (ins RRegu16:$a), "cvt.rn.f64.u16\t$d, $a",
             [(set RRegf64:$d, (uint_to_fp RRegu16:$a))]>;
 
 def CVT_f64_u32
-  : InstPTX<(outs RRegf64:$d), (ins RRegu32:$a), "cvt.f64.u32\t$d, $a",
+  : InstPTX<(outs RRegf64:$d), (ins RRegu32:$a), "cvt.rn.f64.u32\t$d, $a",
             [(set RRegf64:$d, (uint_to_fp RRegu32:$a))]>;
 
 def CVT_f64_u64
-  : InstPTX<(outs RRegf64:$d), (ins RRegu64:$a), "cvt.f64.u64\t$d, $a",
+  : InstPTX<(outs RRegf64:$d), (ins RRegu64:$a), "cvt.rn.f64.u64\t$d, $a",
             [(set RRegf64:$d, (uint_to_fp RRegu64:$a))]>;
 
 def CVT_f64_f32
