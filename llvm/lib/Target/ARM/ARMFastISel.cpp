@@ -822,9 +822,26 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT) {
   // Since the offset is too large for the load/store instruction
   // get the reg+offset into a register.
   if (needsLowering) {
-    Addr.Base.Reg = FastEmit_ri_(MVT::i32, ISD::ADD, Addr.Base.Reg,
-                                 /*Op0IsKill*/false, Addr.Offset, MVT::i32);
+    ARMCC::CondCodes Pred = ARMCC::AL;
+    unsigned PredReg = 0;
+
+    TargetRegisterClass *RC = isThumb ? ARM::tGPRRegisterClass :
+      ARM::GPRRegisterClass;
+    unsigned BaseReg = createResultReg(RC);
+
+    if (!isThumb)
+      emitARMRegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              BaseReg, Addr.Base.Reg, Addr.Offset,
+                              Pred, PredReg,
+                              static_cast<const ARMBaseInstrInfo&>(TII));
+    else {
+      assert(AFI->isThumb2Function());
+      emitT2RegPlusImmediate(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                             BaseReg, Addr.Base.Reg, Addr.Offset, Pred, PredReg,
+                             static_cast<const ARMBaseInstrInfo&>(TII));
+    }
     Addr.Offset = 0;
+    Addr.Base.Reg = BaseReg;
   }
 }
 
