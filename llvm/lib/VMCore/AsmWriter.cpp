@@ -32,6 +32,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -40,6 +41,11 @@
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
+
+static cl::opt<bool>
+EnableDebugInfoComment("enable-debug-info-comment", cl::Hidden,
+                       cl::desc("Enable debug info comments"));
+
 
 // Make virtual table appear in this compilation unit.
 AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
@@ -1729,6 +1735,18 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (AnnotationWriter) AnnotationWriter->emitBasicBlockEndAnnot(BB, Out);
 }
 
+/// printDebugLoc - Print DebugLoc.
+static void printDebugLoc(const DebugLoc &DL, formatted_raw_ostream &OS) {
+  OS << DL.getLine() << ":" << DL.getCol();
+  if (MDNode *N = DL.getInlinedAt(getGlobalContext())) {
+    DebugLoc IDL = DebugLoc::getFromDILocation(N);
+    if (!IDL.isUnknown()) {
+      OS << "@";
+      printDebugLoc(IDL,OS);
+    }
+  }
+}
+
 /// printInfoComment - Print a little comment after the instruction indicating
 /// which slot it occupies.
 ///
@@ -1736,6 +1754,43 @@ void AssemblyWriter::printInfoComment(const Value &V) {
   if (AnnotationWriter) {
     AnnotationWriter->printInfoComment(V, Out);
     return;
+  } else if (EnableDebugInfoComment) {
+    bool Padded = false;
+    if (const Instruction *I = dyn_cast<Instruction>(&V)) {
+      const DebugLoc &DL = I->getDebugLoc();
+      if (!DL.isUnknown()) {
+        if (!Padded) {
+          Out.PadToColumn(50);
+          Padded = true;
+          Out << ";";
+        }
+        Out << " [debug line = ";
+        printDebugLoc(DL,Out);
+        Out << "]";
+      }
+      if (const DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I)) {
+        const MDNode *Var = DDI->getVariable();
+        if (!Padded) {
+          Out.PadToColumn(50);
+          Padded = true;
+          Out << ";";
+        }
+        if (Var && Var->getNumOperands() >= 2)
+          if (MDString *MDS = dyn_cast_or_null<MDString>(Var->getOperand(2)))
+            Out << " [debug variable = " << MDS->getString() << "]";
+      }
+      else if (const DbgValueInst *DVI = dyn_cast<DbgValueInst>(I)) {
+        const MDNode *Var = DVI->getVariable();
+        if (!Padded) {
+          Out.PadToColumn(50);
+          Padded = true;
+          Out << ";";
+        }
+        if (Var && Var->getNumOperands() >= 2)
+          if (MDString *MDS = dyn_cast_or_null<MDString>(Var->getOperand(2)))
+            Out << " [debug variable = " << MDS->getString() << "]";
+      }
+    }
   }
 }
 
