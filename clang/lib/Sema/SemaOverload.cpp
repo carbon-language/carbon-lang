@@ -3071,7 +3071,12 @@ Sema::CompareReferenceRelationship(SourceLocation Loc,
   //   overload resolution, cases for which cv1 is greater
   //   cv-qualification than cv2 are identified as
   //   reference-compatible with added qualification (see 13.3.3.2).
-  if (T1Quals.getCVRQualifiers() == T2Quals.getCVRQualifiers())
+  //
+  // Note that we also require equivalence of Objective-C GC and address-space
+  // qualifiers when performing these computations, so that e.g., an int in
+  // address space 1 is not reference-compatible with an int in address
+  // space 2.
+  if (T1Quals == T2Quals)
     return Ref_Compatible;
   else if (T1.isMoreQualifiedThan(T2))
     return Ref_Compatible_With_Added_Qualification;
