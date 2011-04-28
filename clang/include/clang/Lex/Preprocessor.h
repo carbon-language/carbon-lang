@@ -783,6 +783,38 @@ public:
   /// updating the token kind accordingly.
   IdentifierInfo *LookUpIdentifierInfo(Token &Identifier) const;
 
+private:
+  llvm::DenseMap<IdentifierInfo*,unsigned> PoisonReasons;
+
+public:
+
+  // SetPoisonReason - Call this function to indicate the reason for
+  // poisoning an identifier. If that identifier is accessed while
+  // poisoned, then this reason will be used instead of the default
+  // "poisoned" diagnostic.
+  void SetPoisonReason(IdentifierInfo *II, unsigned DiagID);
+
+  // HandlePoisonedIdentifier - Display reason for poisoned
+  // identifier.
+  void HandlePoisonedIdentifier(Token & Tok);
+
+  void MaybeHandlePoisonedIdentifier(Token & Identifier) {
+    if(IdentifierInfo * II = Identifier.getIdentifierInfo()) {
+      if(II->isPoisoned()) {
+        HandlePoisonedIdentifier(Identifier);
+      }
+    }
+  }
+
+private:
+  /// Identifiers used for SEH handling in Borland. These are only
+  /// allowed in particular circumstances
+  IdentifierInfo *Ident__exception_code, *Ident___exception_code, *Ident_GetExceptionCode; // __except block
+  IdentifierInfo *Ident__exception_info, *Ident___exception_info, *Ident_GetExceptionInfo; // __except filter expression
+  IdentifierInfo *Ident__abnormal_termination, *Ident___abnormal_termination, *Ident_AbnormalTermination; // __finally
+public:
+  void PoisonSEHIdentifiers(bool Poison = true); // Borland
+
   /// HandleIdentifier - This callback is invoked when the lexer reads an
   /// identifier and has filled in the tokens IdentifierInfo member.  This
   /// callback potentially macro expands it or turns it into a named token (like

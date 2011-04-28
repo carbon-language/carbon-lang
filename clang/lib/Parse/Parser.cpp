@@ -438,6 +438,32 @@ void Parser::Initialize() {
   Ident_deprecated = 0;
   Ident_obsoleted = 0;
   Ident_unavailable = 0;
+
+  Ident__exception_code = Ident__exception_info = Ident__abnormal_termination = 0;
+  Ident___exception_code = Ident___exception_info = Ident___abnormal_termination = 0;
+  Ident_GetExceptionCode = Ident_GetExceptionInfo = Ident_AbnormalTermination = 0;
+
+  if(getLang().Borland) {
+    Ident__exception_info        = PP.getIdentifierInfo("_exception_info");
+    Ident___exception_info       = PP.getIdentifierInfo("__exception_info");
+    Ident_GetExceptionInfo       = PP.getIdentifierInfo("GetExceptionInformation");
+    Ident__exception_code        = PP.getIdentifierInfo("_exception_code");
+    Ident___exception_code       = PP.getIdentifierInfo("__exception_code");
+    Ident_GetExceptionCode       = PP.getIdentifierInfo("GetExceptionCode");
+    Ident__abnormal_termination  = PP.getIdentifierInfo("_abnormal_termination");
+    Ident___abnormal_termination = PP.getIdentifierInfo("__abnormal_termination");
+    Ident_AbnormalTermination    = PP.getIdentifierInfo("AbnormalTermination");
+
+    PP.SetPoisonReason(Ident__exception_code,diag::err_seh___except_block);
+    PP.SetPoisonReason(Ident___exception_code,diag::err_seh___except_block);
+    PP.SetPoisonReason(Ident_GetExceptionCode,diag::err_seh___except_block);
+    PP.SetPoisonReason(Ident__exception_info,diag::err_seh___except_filter);
+    PP.SetPoisonReason(Ident___exception_info,diag::err_seh___except_filter);
+    PP.SetPoisonReason(Ident_GetExceptionInfo,diag::err_seh___except_filter);
+    PP.SetPoisonReason(Ident__abnormal_termination,diag::err_seh___finally_block);
+    PP.SetPoisonReason(Ident___abnormal_termination,diag::err_seh___finally_block);
+    PP.SetPoisonReason(Ident_AbnormalTermination,diag::err_seh___finally_block);
+  }
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
@@ -766,6 +792,8 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributes &attrs,
 ///
 Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
                                       const ParsedTemplateInfo &TemplateInfo) {
+  // Poison the SEH identifiers so they are flagged as illegal in function bodies
+  PoisonSEHIdentifiersRAIIObject PoisonSEHIdentifiers(*this, true);
   const DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
   // If this is C90 and the declspecs were completely missing, fudge in an

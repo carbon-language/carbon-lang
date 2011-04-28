@@ -32,8 +32,9 @@ namespace clang {
   class PragmaUnusedHandler;
   class ColonProtectionRAIIObject;
   class InMessageExpressionRAIIObject;
+  class PoisonSEHIdentifiersRAIIObject;
   class VersionTuple;
-
+  
 /// PrettyStackTraceParserEntry - If a crash happens while the parser is active,
 /// an entry is printed for it.
 class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
@@ -75,6 +76,7 @@ class Parser : public CodeCompletionHandler {
   friend class PragmaUnusedHandler;
   friend class ColonProtectionRAIIObject;
   friend class InMessageExpressionRAIIObject;
+  friend class PoisonSEHIdentifiersRAIIObject;
   friend class ParenBraceBracketBalancer;
 
   Preprocessor &PP;
@@ -101,6 +103,12 @@ class Parser : public CodeCompletionHandler {
   enum { ScopeCacheSize = 16 };
   unsigned NumCachedScopes;
   Scope *ScopeCache[ScopeCacheSize];
+
+  /// Identifiers used for SEH handling in Borland. These are only
+  /// allowed in particular circumstances
+  IdentifierInfo *Ident__exception_code, *Ident___exception_code, *Ident_GetExceptionCode; // __except block
+  IdentifierInfo *Ident__exception_info, *Ident___exception_info, *Ident_GetExceptionInfo; // __except filter expression
+  IdentifierInfo *Ident__abnormal_termination, *Ident___abnormal_termination, *Ident_AbnormalTermination; // __finally
 
   /// Ident_super - IdentifierInfo for "super", to support fast
   /// comparison.
@@ -1310,6 +1318,14 @@ private:
   StmtResult ParseCXXTryBlock(ParsedAttributes &Attr);
   StmtResult ParseCXXTryBlockCommon(SourceLocation TryLoc);
   StmtResult ParseCXXCatchBlock();
+
+  //===--------------------------------------------------------------------===//
+  // MS: SEH Statements and Blocks
+
+  StmtResult ParseSEHTryBlock(ParsedAttributes &Attr);
+  StmtResult ParseSEHTryBlockCommon(SourceLocation Loc);
+  StmtResult ParseSEHExceptBlock(SourceLocation Loc);
+  StmtResult ParseSEHFinallyBlock(SourceLocation Loc);
 
   //===--------------------------------------------------------------------===//
   // Objective-C Statements

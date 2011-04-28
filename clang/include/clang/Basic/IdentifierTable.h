@@ -255,6 +255,25 @@ private:
   }
 };
 
+/// \brief an RAII object for [un]poisoning an identifier
+/// within a certain scope. II is allowed to be null, in
+/// which case, objects of this type have no effect.
+class PoisonIdentifierRAIIObject {
+  IdentifierInfo *const II;
+  const bool OldValue;
+public:
+  PoisonIdentifierRAIIObject(IdentifierInfo *II, bool NewValue)
+    : II(II), OldValue(II ? II->isPoisoned() : false) {
+    if(II)
+      II->setIsPoisoned(NewValue);
+  }
+
+  ~PoisonIdentifierRAIIObject() {
+    if(II)
+      II->setIsPoisoned(OldValue);
+  }
+};
+
 /// \brief An iterator that walks over all of the known identifiers
 /// in the lookup table.
 ///

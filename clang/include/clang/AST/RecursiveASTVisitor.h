@@ -1933,6 +1933,10 @@ DEF_TRAVERSE_STMT(UnresolvedMemberExpr, {
   }
 })
 
+DEF_TRAVERSE_STMT(SEHTryStmt, {})
+DEF_TRAVERSE_STMT(SEHExceptStmt, {})
+DEF_TRAVERSE_STMT(SEHFinallyStmt,{})
+
 DEF_TRAVERSE_STMT(CXXOperatorCallExpr, { })
 DEF_TRAVERSE_STMT(OpaqueValueExpr, { })
 DEF_TRAVERSE_STMT(CUDAKernelCallExpr, { })

@@ -40,6 +40,7 @@ using namespace clang;
 ///         jump-statement
 /// [C++]   declaration-statement
 /// [C++]   try-block
+/// [MS]    seh-try-block
 /// [OBC]   objc-throw-statement
 /// [OBC]   objc-try-catch-statement
 /// [OBC]   objc-synchronized-statement
@@ -272,6 +273,9 @@ Retry:
 
   case tok::kw_try:                 // C++ 15: try-block
     return ParseCXXTryBlock(attrs);
+
+  case tok::kw___try:
+    return ParseSEHTryBlock(attrs);
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -321,7 +325,106 @@ StmtResult Parser::ParseExprStatement(ParsedAttributes &Attrs) {
   // Otherwise, eat the semicolon.
   ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
   return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
+}
 
+StmtResult Parser::ParseSEHTryBlock(ParsedAttributes & Attrs) {
+  assert(Tok.is(tok::kw___try) && "Expected '__try'");
+  SourceLocation Loc = ConsumeToken();
+  return ParseSEHTryBlockCommon(Loc);
+}
+
+/// ParseSEHTryBlockCommon
+///
+/// seh-try-block:
+///   '__try' compound-statement seh-handler
+///
+/// seh-handler:
+///   seh-except-block
+///   seh-finally-block
+///
+StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
+  if(Tok.isNot(tok::l_brace))
+    return StmtError(Diag(Tok,diag::err_expected_lbrace));
+
+  ParsedAttributesWithRange attrs(AttrFactory);
+  StmtResult TryBlock(ParseCompoundStatement(attrs));
+  if(TryBlock.isInvalid())
+    return move(TryBlock);
+
+  StmtResult Handler;
+  if(Tok.is(tok::kw___except)) {
+    SourceLocation Loc = ConsumeToken();
+    Handler = ParseSEHExceptBlock(Loc);
+  } else if (Tok.is(tok::kw___finally)) {
+    SourceLocation Loc = ConsumeToken();
+    Handler = ParseSEHFinallyBlock(Loc);
+  } else {
+    return StmtError(Diag(Tok,diag::err_seh_expected_handler));
+  }
+
+  if(Handler.isInvalid())
+    return move(Handler);
+
+  return Actions.ActOnSEHTryBlock(false /* IsCXXTry */,
+                                  TryLoc,
+                                  TryBlock.take(),
+                                  Handler.take());
+}
+
+/// ParseSEHExceptBlock - Handle __except
+///
+/// seh-except-block:
+///   '__except' '(' seh-filter-expression ')' compound-statement
+///
+StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
+  PoisonIdentifierRAIIObject raii(Ident__exception_code, false),
+    raii2(Ident___exception_code, false),
+    raii3(Ident_GetExceptionCode, false);
+
+  if(ExpectAndConsume(tok::l_paren,diag::err_expected_lparen))
+    return StmtError();
+
+  ParseScope ExpectScope(this, Scope::DeclScope | Scope::ControlScope);
+
+  Ident__exception_info->setIsPoisoned(false);
+  Ident___exception_info->setIsPoisoned(false);
+  Ident_GetExceptionInfo->setIsPoisoned(false);
+  ExprResult FilterExpr(ParseExpression());
+  Ident__exception_info->setIsPoisoned(true);
+  Ident___exception_info->setIsPoisoned(true);
+  Ident_GetExceptionInfo->setIsPoisoned(true);
+
+  if(FilterExpr.isInvalid())
+    return StmtError();
+
+  if(ExpectAndConsume(tok::r_paren,diag::err_expected_rparen))
+    return StmtError();
+
+  ParsedAttributesWithRange attrs(AttrFactory);
+  StmtResult Block(ParseCompoundStatement(attrs));
+
+  if(Block.isInvalid())
+    return move(Block);
+
+  return Actions.ActOnSEHExceptBlock(ExceptLoc, FilterExpr.take(), Block.take());
+}
+
+/// ParseSEHFinallyBlock - Handle __finally
+///
+/// seh-finally-block:
+///   '__finally' compound-statement
+///
+StmtResult Parser::ParseSEHFinallyBlock(SourceLocation FinallyBlock) {
+  PoisonIdentifierRAIIObject raii(Ident__abnormal_termination, false),
+    raii2(Ident___abnormal_termination, false),
+    raii3(Ident_AbnormalTermination, false);
+
+  ParsedAttributesWithRange attrs(AttrFactory);
+  StmtResult Block(ParseCompoundStatement(attrs));
+  if(Block.isInvalid())
+    return move(Block);
+
+  return Actions.ActOnSEHFinallyBlock(FinallyBlock,Block.take());
 }
 
 /// ParseLabeledStatement - We have an identifier and a ':' after it.
@@ -1786,6 +1889,10 @@ StmtResult Parser::ParseCXXTryBlock(ParsedAttributes &attrs) {
 ///       handler-seq:
 ///         handler handler-seq[opt]
 ///
+///       [Borland] try-block:
+///         'try' compound-statement seh-except-block
+///         'try' compound-statment  seh-finally-block
+///
 StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
@@ -1795,23 +1902,45 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
   if (TryBlock.isInvalid())
     return move(TryBlock);
 
-  StmtVector Handlers(Actions);
-  MaybeParseCXX0XAttributes(attrs);
-  ProhibitAttributes(attrs);
+  // Borland allows SEH-handlers with 'try'
+  if(Tok.is(tok::kw___except) || Tok.is(tok::kw___finally)) {
+    // TODO: Factor into common return ParseSEHHandlerCommon(...)
+    StmtResult Handler;
+    if(Tok.is(tok::kw___except)) {
+      SourceLocation Loc = ConsumeToken();
+      Handler = ParseSEHExceptBlock(Loc);
+    }
+    else {
+      SourceLocation Loc = ConsumeToken();
+      Handler = ParseSEHFinallyBlock(Loc);
+    }
+    if(Handler.isInvalid())
+      return move(Handler);
 
-  if (Tok.isNot(tok::kw_catch))
-    return StmtError(Diag(Tok, diag::err_expected_catch));
-  while (Tok.is(tok::kw_catch)) {
-    StmtResult Handler(ParseCXXCatchBlock());
-    if (!Handler.isInvalid())
-      Handlers.push_back(Handler.release());
+    return Actions.ActOnSEHTryBlock(true /* IsCXXTry */,
+                                    TryLoc,
+                                    TryBlock.take(),
+                                    Handler.take());
   }
-  // Don't bother creating the full statement if we don't have any usable
-  // handlers.
-  if (Handlers.empty())
-    return StmtError();
+  else {
+    StmtVector Handlers(Actions);
+    MaybeParseCXX0XAttributes(attrs);
+    ProhibitAttributes(attrs);
 
-  return Actions.ActOnCXXTryBlock(TryLoc, TryBlock.take(), move_arg(Handlers));
+    if (Tok.isNot(tok::kw_catch))
+      return StmtError(Diag(Tok, diag::err_expected_catch));
+    while (Tok.is(tok::kw_catch)) {
+      StmtResult Handler(ParseCXXCatchBlock());
+      if (!Handler.isInvalid())
+        Handlers.push_back(Handler.release());
+    }
+    // Don't bother creating the full statement if we don't have any usable
+    // handlers.
+    if (Handlers.empty())
+      return StmtError();
+
+    return Actions.ActOnCXXTryBlock(TryLoc, TryBlock.take(), move_arg(Handlers));
+  }
 }
 
 /// ParseCXXCatchBlock - Parse a C++ catch block, called handler in the standard

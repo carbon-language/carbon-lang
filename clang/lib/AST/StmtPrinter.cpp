@@ -66,6 +66,8 @@ namespace  {
     void PrintRawIfStmt(IfStmt *If);
     void PrintRawCXXCatchStmt(CXXCatchStmt *Catch);
     void PrintCallArgs(CallExpr *E);
+    void PrintRawSEHExceptHandler(SEHExceptStmt *S);
+    void PrintRawSEHFinallyStmt(SEHFinallyStmt *S);
 
     void PrintExpr(Expr *E) {
       if (E)
@@ -470,6 +472,46 @@ void StmtPrinter::VisitCXXTryStmt(CXXTryStmt *Node) {
     OS << " ";
     PrintRawCXXCatchStmt(Node->getHandler(i));
   }
+  OS << "\n";
+}
+
+void StmtPrinter::VisitSEHTryStmt(SEHTryStmt *Node) {
+  Indent() << (Node->getIsCXXTry() ? "try " : "__try ");
+  PrintRawCompoundStmt(Node->getTryBlock());
+  SEHExceptStmt *E = Node->getExceptHandler();
+  SEHFinallyStmt *F = Node->getFinallyHandler();
+  if(E)
+    PrintRawSEHExceptHandler(E);
+  else {
+    assert(F && "Must have a finally block...");
+    PrintRawSEHFinallyStmt(F);
+  }
+  OS << "\n";
+}
+
+void StmtPrinter::PrintRawSEHFinallyStmt(SEHFinallyStmt *Node) {
+  OS << "__finally ";
+  PrintRawCompoundStmt(Node->getBlock());
+  OS << "\n";
+}
+
+void StmtPrinter::PrintRawSEHExceptHandler(SEHExceptStmt *Node) {
+  OS << "__except (";
+  VisitExpr(Node->getFilterExpr());
+  OS << ")\n";
+  PrintRawCompoundStmt(Node->getBlock());
+  OS << "\n";
+}
+
+void StmtPrinter::VisitSEHExceptStmt(SEHExceptStmt *Node) {
+  Indent();
+  PrintRawSEHExceptHandler(Node);
+  OS << "\n";
+}
+
+void StmtPrinter::VisitSEHFinallyStmt(SEHFinallyStmt *Node) {
+  Indent();
+  PrintRawSEHFinallyStmt(Node);
   OS << "\n";
 }
 

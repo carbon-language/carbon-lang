@@ -3946,6 +3946,9 @@ def err_unknown_any_addrof : Error<
 def err_unknown_any_var_function_type : Error<
   "variable %0 with unknown type cannot be given a function type">;
 
+def err_filter_expression_integral : Error<
+  "filter expression type should be an integral value not %0">;
+
 } // end of sema category
 
 } // end of sema component.

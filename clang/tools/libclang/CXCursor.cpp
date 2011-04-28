@@ -96,6 +96,9 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::CXXCatchStmtClass:
   case Stmt::CXXTryStmtClass:  
   case Stmt::CXXForRangeStmtClass:        
+  case Stmt::SEHTryStmtClass:
+  case Stmt::SEHExceptStmtClass:
+  case Stmt::SEHFinallyStmtClass:
     K = CXCursor_UnexposedStmt;
     break;
       

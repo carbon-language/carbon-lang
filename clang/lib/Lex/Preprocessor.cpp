@@ -89,6 +89,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
+  SetPoisonReason(Ident__VA_ARGS__,diag::ext_pp_bad_vaargs_use);
 
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(llvm::StringRef());
@@ -96,6 +97,23 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
   // Initialize builtin macros like __LINE__ and friends.
   RegisterBuiltinMacros();
+
+  if(Features.Borland) {
+    Ident__exception_info        = getIdentifierInfo("_exception_info");
+    Ident___exception_info       = getIdentifierInfo("__exception_info");
+    Ident_GetExceptionInfo       = getIdentifierInfo("GetExceptionInformation");
+    Ident__exception_code        = getIdentifierInfo("_exception_code");
+    Ident___exception_code       = getIdentifierInfo("__exception_code");
+    Ident_GetExceptionCode       = getIdentifierInfo("GetExceptionCode");
+    Ident__abnormal_termination  = getIdentifierInfo("_abnormal_termination");
+    Ident___abnormal_termination = getIdentifierInfo("__abnormal_termination");
+    Ident_AbnormalTermination    = getIdentifierInfo("AbnormalTermination");
+  } else {
+    Ident__exception_info = Ident__exception_code = Ident__abnormal_termination = 0;
+    Ident___exception_info = Ident___exception_code = Ident___abnormal_termination = 0;
+    Ident_GetExceptionInfo = Ident_GetExceptionCode = Ident_AbnormalTermination = 0;
+  }
+
 }
 
 Preprocessor::~Preprocessor() {
@@ -399,6 +417,34 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
   return II;
 }
 
+void Preprocessor::SetPoisonReason(IdentifierInfo *II, unsigned DiagID) {
+  PoisonReasons[II] = DiagID;
+}
+
+void Preprocessor::PoisonSEHIdentifiers(bool Poison) {
+  assert(Ident__exception_code && Ident__exception_info);
+  assert(Ident___exception_code && Ident___exception_info);
+  Ident__exception_code->setIsPoisoned(Poison);
+  Ident___exception_code->setIsPoisoned(Poison);
+  Ident_GetExceptionCode->setIsPoisoned(Poison);
+  Ident__exception_info->setIsPoisoned(Poison);
+  Ident___exception_info->setIsPoisoned(Poison);
+  Ident_GetExceptionInfo->setIsPoisoned(Poison);
+  Ident__abnormal_termination->setIsPoisoned(Poison);
+  Ident___abnormal_termination->setIsPoisoned(Poison);
+  Ident_AbnormalTermination->setIsPoisoned(Poison);
+}
+
+void Preprocessor::HandlePoisonedIdentifier(Token & Identifier) {
+  assert(Identifier.getIdentifierInfo() &&
+         "Can't handle identifiers without identifier info!");
+  llvm::DenseMap<IdentifierInfo*,unsigned>::const_iterator it =
+    PoisonReasons.find(Identifier.getIdentifierInfo());
+  if(it == PoisonReasons.end())
+    Diag(Identifier, diag::err_pp_used_poisoned_id);
+  else
+    Diag(Identifier,it->second) << Identifier.getIdentifierInfo();
+}
 
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
@@ -417,10 +463,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // If this identifier was poisoned, and if it was not produced from a macro
   // expansion, emit an error.
   if (II.isPoisoned() && CurPPLexer) {
-    if (&II != Ident__VA_ARGS__)   // We warn about __VA_ARGS__ with poisoning.
-      Diag(Identifier, diag::err_pp_used_poisoned_id);
-    else
-      Diag(Identifier, diag::ext_pp_bad_vaargs_use);
+    HandlePoisonedIdentifier(Identifier);
   }
 
   // If this is a macro to be expanded, do it.

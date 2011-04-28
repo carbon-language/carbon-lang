@@ -1915,6 +1915,8 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
 void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
   assert(Tok.is(tok::colon) && "Constructor initializer always starts with ':'");
 
+  // Poison the SEH identifiers so they are flagged as illegal in constructor initializers
+  PoisonSEHIdentifiersRAIIObject PoisonSEHIdentifiers(*this, true);
   SourceLocation ColonLoc = ConsumeToken();
 
   llvm::SmallVector<CXXCtorInitializer*, 4> MemInitializers;

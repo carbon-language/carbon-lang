@@ -2231,3 +2231,36 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   return Owned(CXXTryStmt::Create(Context, TryLoc, TryBlock,
                                   Handlers, NumHandlers));
 }
+
+StmtResult
+Sema::ActOnSEHTryBlock(bool IsCXXTry,
+                       SourceLocation TryLoc,
+                       Stmt *TryBlock,
+                       Stmt *Handler) {
+  assert(TryBlock && Handler);
+
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return Owned(SEHTryStmt::Create(Context,IsCXXTry,TryLoc,TryBlock,Handler));
+}
+
+StmtResult
+Sema::ActOnSEHExceptBlock(SourceLocation Loc,
+                          Expr *FilterExpr,
+                          Stmt *Block) {
+  assert(FilterExpr && Block);
+
+  if(!FilterExpr->getType()->isIntegerType()) {
+    return StmtError(Diag(FilterExpr->getExprLoc(), diag::err_filter_expression_integral) << FilterExpr->getType());
+  }
+
+  return Owned(SEHExceptStmt::Create(Context,Loc,FilterExpr,Block));
+}
+
+StmtResult
+Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
+                           Stmt *Block) {
+  assert(Block);
+  return Owned(SEHFinallyStmt::Create(Context,Loc,Block));
+}
+

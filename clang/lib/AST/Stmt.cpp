@@ -710,3 +710,61 @@ const Expr* ReturnStmt::getRetValue() const {
 Expr* ReturnStmt::getRetValue() {
   return cast_or_null<Expr>(RetExpr);
 }
+
+SEHTryStmt::SEHTryStmt(bool IsCXXTry,
+                       SourceLocation TryLoc,
+                       Stmt *TryBlock,
+                       Stmt *Handler)
+  : Stmt(SEHTryStmtClass),
+    IsCXXTry(IsCXXTry),
+    TryLoc(TryLoc)
+{
+  Children[TRY]     = TryBlock;
+  Children[HANDLER] = Handler;
+}
+
+SEHTryStmt* SEHTryStmt::Create(ASTContext &C,
+                               bool IsCXXTry,
+                               SourceLocation TryLoc,
+                               Stmt *TryBlock,
+                               Stmt *Handler) {
+  return new(C) SEHTryStmt(IsCXXTry,TryLoc,TryBlock,Handler);
+}
+
+SEHExceptStmt* SEHTryStmt::getExceptHandler() const {
+  return dyn_cast<SEHExceptStmt>(getHandler());
+}
+
+SEHFinallyStmt* SEHTryStmt::getFinallyHandler() const {
+  return dyn_cast<SEHFinallyStmt>(getHandler());
+}
+
+SEHExceptStmt::SEHExceptStmt(SourceLocation Loc,
+                             Expr *FilterExpr,
+                             Stmt *Block)
+  : Stmt(SEHExceptStmtClass),
+    Loc(Loc)
+{
+  Children[FILTER_EXPR] = reinterpret_cast<Stmt*>(FilterExpr);
+  Children[BLOCK]       = Block;
+}
+
+SEHExceptStmt* SEHExceptStmt::Create(ASTContext &C,
+                                     SourceLocation Loc,
+                                     Expr *FilterExpr,
+                                     Stmt *Block) {
+  return new(C) SEHExceptStmt(Loc,FilterExpr,Block);
+}
+
+SEHFinallyStmt::SEHFinallyStmt(SourceLocation Loc,
+                               Stmt *Block)
+  : Stmt(SEHFinallyStmtClass),
+    Loc(Loc),
+    Block(Block)
+{}
+
+SEHFinallyStmt* SEHFinallyStmt::Create(ASTContext &C,
+                                       SourceLocation Loc,
+                                       Stmt *Block) {
+  return new(C)SEHFinallyStmt(Loc,Block);
+}

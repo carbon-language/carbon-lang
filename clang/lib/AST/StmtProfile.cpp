@@ -181,6 +181,18 @@ void StmtProfiler::VisitCXXForRangeStmt(CXXForRangeStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitSEHTryStmt(SEHTryStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitSEHFinallyStmt(SEHFinallyStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitSEHExceptStmt(SEHExceptStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   VisitStmt(S);
 }
