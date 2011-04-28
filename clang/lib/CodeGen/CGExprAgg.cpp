@@ -811,7 +811,16 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
   // If the slot is already known to be zeroed, nothing to do.  Don't mess with
   // volatile stores.
   if (Slot.isZeroed() || Slot.isVolatile() || Slot.getAddr() == 0) return;
-  
+
+  // C++ objects with a user-declared constructor don't need zero'ing.
+  if (CGF.getContext().getLangOptions().CPlusPlus)
+    if (const RecordType *RT = CGF.getContext()
+                       .getBaseElementType(E->getType())->getAs<RecordType>()) {
+      const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+      if (RD->hasUserDeclaredConstructor())
+        return;
+    }
+
   // If the type is 16-bytes or smaller, prefer individual stores over memset.
   std::pair<CharUnits, CharUnits> TypeInfo =
     CGF.getContext().getTypeInfoInChars(E->getType());

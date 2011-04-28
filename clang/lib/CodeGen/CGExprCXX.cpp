@@ -370,8 +370,9 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   
   // If we require zero initialization before (or instead of) calling the
   // constructor, as can be the case with a non-user-provided default
-  // constructor, emit the zero initialization now.
-  if (E->requiresZeroInitialization())
+  // constructor, emit the zero initialization now, unless destination is
+  // already zeroed.
+  if (E->requiresZeroInitialization() && !Dest.isZeroed())
     EmitNullInitialization(Dest.getAddr(), E->getType());
   
   // If this is a call to a trivial default constructor, do nothing.
