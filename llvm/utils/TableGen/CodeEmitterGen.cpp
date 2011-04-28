@@ -63,10 +63,14 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 // return the variable bit position.  Otherwise return -1.
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
                                    BitsInit *BI, int bit) {
-  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit)))
+  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
     if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getVariable()))
       if (VI->getName() == VarName)
         return VBI->getBitNum();
+  } else if (VarInit *VI = dynamic_cast<VarInit*>(BI->getBit(bit))) {
+    if (VI->getName() == VarName)
+      return 0;
+  }
 
   return -1;
 }
