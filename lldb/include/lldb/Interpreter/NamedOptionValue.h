@@ -123,6 +123,12 @@ namespace lldb_private {
         lldb::Format
         GetFormatValue (lldb::Format fail_value = lldb::eFormatDefault);
 
+        bool
+        OptionWasSet () const
+        {
+            return m_value_was_set;
+        }
+
     protected:
         bool m_value_was_set; // This can be used to see if a value has been set
                               // by a call to SetValueFromCString(). It is often
@@ -392,6 +398,11 @@ namespace lldb_private {
             return m_current_value;
         }
 
+        operator uint64_t () const
+        {
+            return m_current_value;
+        }
+
         uint64_t
         GetCurrentValue() const
         {
@@ -628,22 +639,16 @@ namespace lldb_private {
     class OptionValueFormat : public OptionValue
     {
     public:
-        OptionValueFormat () :
-            m_current_value (lldb::eFormatInvalid),
-            m_default_value (lldb::eFormatDefault)
-        {
-        }
-        
-        OptionValueFormat (lldb::Format current_value) :
+        OptionValueFormat (lldb::Format current_value = lldb::eFormatDefault, 
+                           lldb::Format default_value = lldb::eFormatDefault,
+                           uint32_t current_byte_size = 0,
+                           uint32_t default_byte_size = 0,
+                           bool byte_size_prefix_ok = false) :
             m_current_value (current_value),
-            m_default_value (lldb::eFormatDefault)
-        {
-        }
-        
-        OptionValueFormat (lldb::Format current_value, 
-                           lldb::Format default_value) :
-            m_current_value (current_value),
-            m_default_value (default_value)
+            m_default_value (default_value),
+            m_current_byte_size (current_byte_size),
+            m_default_byte_size (default_byte_size),
+            m_byte_size_prefix_ok (byte_size_prefix_ok)
         {
         }
         
@@ -681,7 +686,7 @@ namespace lldb_private {
         //---------------------------------------------------------------------
         
         lldb::Format
-        GetCurrentValue()
+        GetCurrentValue() const
         {
             return m_current_value;
         }
@@ -704,9 +709,36 @@ namespace lldb_private {
             m_default_value = value;
         }
         
+        uint32_t 
+        GetCurrentByteSize () const
+        {
+            return m_current_byte_size;
+        }
+
+        uint32_t 
+        GetDefaultByteSize () const
+        {
+            return m_default_byte_size;
+        }
+        
+        void
+        SetCurrentByteSize (uint32_t byte_size)
+        {
+            m_current_byte_size = byte_size;
+        }
+        
+        void
+        SetDefaultByteSize (uint32_t byte_size)
+        {
+            m_default_byte_size = byte_size;
+        }
+
     protected:
         lldb::Format m_current_value;
         lldb::Format m_default_value;
+        uint32_t m_current_byte_size;
+        uint32_t m_default_byte_size;
+        bool m_byte_size_prefix_ok;
     };
     
     //---------------------------------------------------------------------

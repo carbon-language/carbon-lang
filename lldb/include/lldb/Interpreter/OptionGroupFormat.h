@@ -27,7 +27,9 @@ class OptionGroupFormat : public OptionGroup
 {
 public:
     
-    OptionGroupFormat (lldb::Format default_format);
+    OptionGroupFormat (lldb::Format default_format, 
+                       uint32_t default_byte_size,
+                       bool byte_size_prefix_ok);
     
     virtual
     ~OptionGroupFormat ();
@@ -48,11 +50,16 @@ public:
     OptionParsingStarting (CommandInterpreter &interpreter);
     
     lldb::Format
-    GetFormat ()
+    GetFormat () const
     {
         return m_format.GetCurrentValue();
     }
 
+    uint32_t
+    GetByteSize() const
+    {
+        return m_format.GetCurrentByteSize();
+    }
     
 protected:
 

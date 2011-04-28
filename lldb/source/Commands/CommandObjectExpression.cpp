@@ -70,7 +70,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (uint32_t option_idx, co
         break;
 
     case 'f':
-        error = Args::StringToFormat(option_arg, format);
+        error = Args::StringToFormat(option_arg, format, NULL);
         break;
         
     case 'o':

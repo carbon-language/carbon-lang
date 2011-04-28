@@ -360,7 +360,9 @@ public:
     StringToScriptLanguage (const char *s, lldb::ScriptLanguage fail_value, bool *success_ptr);
 
     static Error
-    StringToFormat (const char *s, lldb::Format &format);
+    StringToFormat (const char *s,
+                    lldb::Format &format,
+                    uint32_t *byte_size_ptr); // If non-NULL, then a byte size can precede the format character
 
     static const char *
     StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update);

@@ -17,8 +17,14 @@
 using namespace lldb;
 using namespace lldb_private;
 
-OptionGroupFormat::OptionGroupFormat(lldb::Format default_format) :
-    m_format (default_format, default_format)
+OptionGroupFormat::OptionGroupFormat(lldb::Format default_format,
+                                     uint32_t default_byte_size,
+                                     bool byte_size_prefix_ok) :
+    m_format (default_format, 
+              default_format,
+              default_byte_size,
+              default_byte_size,
+              byte_size_prefix_ok)
 {
 }
 
@@ -47,8 +53,8 @@ OptionGroupFormat::GetDefinitions ()
 
 Error
 OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
-                                         uint32_t option_idx,
-                                         const char *option_arg)
+                                   uint32_t option_idx,
+                                   const char *option_arg)
 {
     Error error;
     char short_option = (char) g_option_table[option_idx].short_option;

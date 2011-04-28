@@ -674,13 +674,14 @@ ValueObject::GetValueAsCString ()
                         if (clang_type)
                         {
                             StreamString sstr;
-                            if (m_format == eFormatDefault)
-                                m_format = ClangASTType::GetFormat(clang_type);
+                            Format format = GetFormat();
+                            if (format == eFormatDefault)
+                                format = ClangASTType::GetFormat(clang_type);
 
                             if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
                                                              clang_type,               // The clang type to display
                                                              &sstr,
-                                                             m_format,                 // Format to display this type with
+                                                             format,                   // Format to display this type with
                                                              m_data,                   // Data to extract from
                                                              0,                        // Byte offset into "m_data"
                                                              GetByteSize(),            // Byte size of item in "m_data"

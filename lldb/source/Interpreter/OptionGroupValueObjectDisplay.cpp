@@ -25,17 +25,16 @@ OptionGroupValueObjectDisplay::~OptionGroupValueObjectDisplay ()
 {
 }
 
-OptionDefinition
+static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "depth",           'd', required_argument, NULL, 0, eArgTypeCount,     "Set the max recurse depth when dumping aggregate types (default is infinity)."},
-    { LLDB_OPT_SET_1, false, "format",          'f', required_argument, NULL, 0, eArgTypeExprFormat,"Specify the format that the variable output should use."},
+    { LLDB_OPT_SET_1, false, "depth",           'D', required_argument, NULL, 0, eArgTypeCount,     "Set the max recurse depth when dumping aggregate types (default is infinity)."},
     { LLDB_OPT_SET_1, false, "flat",            'F', no_argument,       NULL, 0, eArgTypeNone,      "Display results in a flat format that uses expression paths for each variable or member."},
     { LLDB_OPT_SET_1, false, "location",        'L', no_argument,       NULL, 0, eArgTypeNone,      "Show variable location information."},
-    { LLDB_OPT_SET_1, false, "objc",            'o', no_argument,       NULL, 0, eArgTypeNone,      "Print as an Objective-C object."},
-    { LLDB_OPT_SET_1, false, "ptr-depth",       'p', required_argument, NULL, 0, eArgTypeCount,     "The number of pointers to be traversed when dumping values (default is zero)."},
-    { LLDB_OPT_SET_1, false, "show-types",      't', no_argument,       NULL, 0, eArgTypeNone,      "Show variable types when dumping values."},
-    { LLDB_OPT_SET_1, false, "no-summary",      'y', no_argument,       NULL, 0, eArgTypeNone,      "Omit summary information."},
+    { LLDB_OPT_SET_1, false, "objc",            'O', no_argument,       NULL, 0, eArgTypeNone,      "Print as an Objective-C object."},
+    { LLDB_OPT_SET_1, false, "ptr-depth",       'P', required_argument, NULL, 0, eArgTypeCount,     "The number of pointers to be traversed when dumping values (default is zero)."},
+    { LLDB_OPT_SET_1, false, "show-types",      'T', no_argument,       NULL, 0, eArgTypeNone,      "Show variable types when dumping values."},
+    { LLDB_OPT_SET_1, false, "no-summary",      'Y', no_argument,       NULL, 0, eArgTypeNone,      "Omit summary information."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 
@@ -65,19 +64,18 @@ OptionGroupValueObjectDisplay::SetOptionValue (CommandInterpreter &interpreter,
 
     switch (short_option)
     {
-        case 't':   show_types   = true;  break;
-        case 'y':   show_summary = false; break;
+        case 'T':   show_types   = true;  break;
+        case 'Y':   show_summary = false; break;
         case 'L':   show_location= true;  break;
         case 'F':   flat_output  = true;  break;
-        case 'f':   error = Args::StringToFormat(option_arg, format); break;
-        case 'o':   use_objc = true;      break;
-        case 'd':
+        case 'O':   use_objc = true;      break;
+        case 'D':
             max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);
             if (!success)
                 error.SetErrorStringWithFormat("Invalid max depth '%s'.\n", option_arg);
             break;
             
-        case 'p':
+        case 'P':
             ptr_depth = Args::StringToUInt32 (option_arg, 0, 0, &success);
             if (!success)
                 error.SetErrorStringWithFormat("Invalid pointer depth '%s'.\n", option_arg);
@@ -101,6 +99,5 @@ OptionGroupValueObjectDisplay::OptionParsingStarting (CommandInterpreter &interp
     use_objc      = false;
     max_depth     = UINT32_MAX;
     ptr_depth     = 0;
-    format        = eFormatDefault;
 }
 

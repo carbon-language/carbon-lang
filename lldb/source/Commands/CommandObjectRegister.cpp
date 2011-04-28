@@ -265,7 +265,7 @@ protected:
             switch (short_option)
             {
                 case 'f':
-                    error = Args::StringToFormat (option_arg, format);
+                    error = Args::StringToFormat (option_arg, format, NULL);
                     break;
 
                 case 's':

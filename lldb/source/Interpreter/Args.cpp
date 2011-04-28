@@ -876,7 +876,8 @@ Error
 Args::StringToFormat
 (
     const char *s,
-    lldb::Format &format
+    lldb::Format &format,
+    uint32_t *byte_size_ptr
 )
 {
     format = eFormatInvalid;
@@ -884,29 +885,51 @@ Args::StringToFormat
 
     if (s && s[0])
     {
-        switch (s[0])
+        if (byte_size_ptr)
         {
-        case 'y': format = eFormatBytes;            break;
-        case 'Y': format = eFormatBytesWithASCII;   break;
-        case 'b': format = eFormatBinary;           break;
-        case 'B': format = eFormatBoolean;          break;
-        case 'c': format = eFormatChar;             break;
-        case 'C': format = eFormatCharPrintable;    break;
-        case 'o': format = eFormatOctal;            break;
-        case 'O': format = eFormatOSType;           break;
-        case 'i':
-        case 'd': format = eFormatDecimal;          break;
-        case 'I': format = eFormatComplexInteger;   break;
-        case 'u': format = eFormatUnsigned;         break;
-        case 'x': format = eFormatHex;              break;
-        case 'X': format = eFormatComplex;          break;
-        case 'f':
-        case 'e':
-        case 'g': format = eFormatFloat;            break;
-        case 'p': format = eFormatPointer;          break;
-        case 's': format = eFormatCString;          break;
-        default:
-            error.SetErrorStringWithFormat("Invalid format character '%c'. Valid values are:\n"
+            if (isdigit (s[0]))
+            {
+                char *format_char = NULL;
+                unsigned long byte_size = ::strtoul (s, &format_char, 0);
+                if (byte_size != ULONG_MAX)
+                    *byte_size_ptr = byte_size;
+                s = format_char;
+            }
+            else
+                *byte_size_ptr = 0;
+        }
+
+        bool success = s[1] == '\0';
+        if (success)
+        {
+            switch (s[0])
+            {
+            case 'y': format = eFormatBytes;            break;
+            case 'Y': format = eFormatBytesWithASCII;   break;
+            case 'b': format = eFormatBinary;           break;
+            case 'B': format = eFormatBoolean;          break;
+            case 'c': format = eFormatChar;             break;
+            case 'C': format = eFormatCharPrintable;    break;
+            case 'o': format = eFormatOctal;            break;
+            case 'O': format = eFormatOSType;           break;
+            case 'i':
+            case 'd': format = eFormatDecimal;          break;
+            case 'I': format = eFormatComplexInteger;   break;
+            case 'u': format = eFormatUnsigned;         break;
+            case 'x': format = eFormatHex;              break;
+            case 'X': format = eFormatComplex;          break;
+            case 'f':
+            case 'e':
+            case 'g': format = eFormatFloat;            break;
+            case 'p': format = eFormatPointer;          break;
+            case 's': format = eFormatCString;          break;
+            default:
+                success = false;
+                break;
+            }
+        }
+        if (!success)
+            error.SetErrorStringWithFormat ("Invalid format specification '%s'. Valid values are:\n"
                                             "  b - binary\n"
                                             "  B - boolean\n"
                                             "  c - char\n"
@@ -925,9 +948,10 @@ Args::StringToFormat
                                             "  x - hex\n"
                                             "  X - complex float\n"
                                             "  y - bytes\n"
-                                            "  Y - bytes with ASCII\n", s[0]);
-            break;
-        }
+                                            "  Y - bytes with ASCII\n%s",
+                                            s, 
+                                            byte_size_ptr ? "An optional byte size can precede the format character.\n" : "");
+
 
         if (error.Fail())
             return error;

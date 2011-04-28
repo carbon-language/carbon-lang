@@ -334,7 +334,7 @@ public:
             case 'L':   show_location= true;  break;
             case 'c':   show_decl    = true;  break;
             case 'D':   debug        = true;  break;
-            case 'f':   error = Args::StringToFormat(option_arg, format); break;
+            case 'f':   error = Args::StringToFormat(option_arg, format, NULL); break;
             case 'F':   flat_output  = true;  break;
             case 'A':
                 max_depth = Args::StringToUInt32 (option_arg, UINT32_MAX, 0, &success);

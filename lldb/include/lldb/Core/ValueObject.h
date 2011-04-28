@@ -426,6 +426,8 @@ public:
     lldb::Format
     GetFormat () const
     {
+        if (m_parent && m_format == lldb::eFormatDefault)
+            return m_parent->GetFormat();
         return m_format;
     }
     
@@ -467,8 +469,8 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from ValueObject can see and modify these
     //------------------------------------------------------------------
-    ValueObject  *m_parent;       // The parent value object, or NULL if this has no parent
-    EvaluationPoint      m_update_point; // Stores both the stop id and the full context at which this value was last 
+    ValueObject  *      m_parent;       // The parent value object, or NULL if this has no parent
+    EvaluationPoint     m_update_point; // Stores both the stop id and the full context at which this value was last 
                                         // updated.  When we are asked to update the value object, we check whether
                                         // the context & stop id are the same before updating.
     ConstString         m_name;         // The name of this object

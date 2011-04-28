@@ -1446,24 +1446,20 @@ DataExtractor::Dump
             {
                 assert (item_bit_size == 0 && item_bit_offset == 0);
                 s->PutCString("0x");
-                int32_t start_idx, end_idx, delta;
-                if (m_byte_order == eByteOrderBig)
-                {
-                    start_idx = offset;
-                    end_idx = offset + item_byte_size;
-                    delta = 1;
-                }
-                else
-                {
-                    start_idx = offset + item_byte_size - 1;
-                    end_idx = -1;
-                    delta = -1;
-                }
                 const uint8_t *bytes = (const uint8_t* )GetData(&offset, item_byte_size);
                 if (bytes)
                 {
-                    for (int32_t idx = start_idx; idx != end_idx; idx += delta)
-                        s->Printf("%2.2x", bytes[idx]);
+                    uint32_t idx;
+                    if (m_byte_order == eByteOrderBig)
+                    {
+                        for (idx = 0; idx < item_byte_size; ++idx)
+                            s->Printf("%2.2x", bytes[idx]);
+                    }
+                    else
+                    {
+                        for (idx = 0; idx < item_byte_size; ++idx)
+                            s->Printf("%2.2x", bytes[item_byte_size - 1 - idx]);
+                    }
                 }
             }
             break;
