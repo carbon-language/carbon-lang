@@ -176,8 +176,6 @@ bool Preprocessor::isNextPPTokenLParen() {
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
 bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
                                                  MacroInfo *MI) {
-  if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
-
   // If this is a macro expansion in the "#if !defined(x)" line for the file,
   // then the macro could expand to different things in other contexts, we need
   // to disable the optimization in this case.
@@ -185,6 +183,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
 
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
   if (MI->isBuiltinMacro()) {
+    if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
     ExpandBuiltinMacro(Identifier);
     return false;
   }
@@ -225,6 +224,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // Notice that this macro has been used.
   markMacroAsUsed(MI);
 
+  if (Callbacks) Callbacks->MacroExpands(Identifier, MI);
+  
   // If we started lexing a macro, enter the macro expansion body.
 
   // Remember where the token is instantiated.
