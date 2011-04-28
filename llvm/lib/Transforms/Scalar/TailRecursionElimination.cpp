@@ -573,7 +573,9 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
 
   // Now that all of the PHI nodes are in place, remove the call and
   // ret instructions, replacing them with an unconditional branch.
-  BranchInst::Create(OldEntry, Ret);
+  BranchInst *NewBI = BranchInst::Create(OldEntry, Ret);
+  NewBI->setDebugLoc(CI->getDebugLoc());
+
   BB->getInstList().erase(Ret);  // Remove return.
   BB->getInstList().erase(CI);   // Remove call.
   ++NumEliminated;
