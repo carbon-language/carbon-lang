@@ -770,7 +770,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     }
   }
 
-  // (trunc x) == C1 & (and x, CA) == C2 -> (and CA|CMAX) == C1|C2
+  // (trunc x) == C1 & (and x, CA) == C2 -> (and x, CA|CMAX) == C1|C2
   // where CMAX is the all ones value for the truncated type,
   // iff the lower bits of CA are zero.
   if (LHSCC == RHSCC && ICmpInst::isEquality(LHSCC) &&
