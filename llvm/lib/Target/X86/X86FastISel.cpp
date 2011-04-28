@@ -1618,7 +1618,6 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
     // FIXME: Only handle *easy* calls for now.
     if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
-        CS.paramHasAttr(AttrInd, Attribute::StructRet) ||
         CS.paramHasAttr(AttrInd, Attribute::Nest) ||
         CS.paramHasAttr(AttrInd, Attribute::ByVal))
       return false;
@@ -1811,8 +1810,11 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  unsigned NumBytesCallee = 0;
+  if (!Subtarget->is64Bit() && CS.paramHasAttr(1, Attribute::StructRet))
+    NumBytesCallee = 4;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
-    .addImm(NumBytes).addImm(0);
+    .addImm(NumBytes).addImm(NumBytesCallee);
 
   // Now handle call return value (if any).
   SmallVector<unsigned, 4> UsedRegs;

@@ -31,3 +31,18 @@ define i32 @test2() nounwind {
   %t = load i32* @HHH
   ret i32 %t
 }
+
+; Check that we fast-isel sret, and handle the callee-pops behavior correctly.
+%struct.a = type { i64, i64, i64 }
+define void @test3() nounwind ssp {
+entry:
+  %tmp = alloca %struct.a, align 8
+  call void @test3sret(%struct.a* sret %tmp)
+  ret void
+; CHECK: test3:
+; CHECK: subl $44
+; CHECK: leal 16(%esp)
+; CHECK: calll _test3sret
+; CHECK: addl $40
+}
+declare void @test3sret(%struct.a* sret)
