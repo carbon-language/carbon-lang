@@ -46,6 +46,24 @@ static void write_int64(uint64_t i) {
   write_int32(hi);
 }
 
+static char *mangle_filename(const char *orig_filename) {
+  /* TODO: handle GCOV_PREFIX_STRIP */
+  const char *prefix;
+  char *filename = 0;
+
+  prefix = getenv("GCOV_PREFIX");
+
+  if (!prefix)
+    return strdup(filename);
+
+  filename = malloc(strlen(prefix) + 1 + strlen(orig_filename) + 1);
+  strcpy(filename, prefix);
+  strcat(filename, "/");
+  strcat(filename, orig_filename);
+
+  return filename;
+}
+
 /*
  * --- LLVM line counter API ---
  */
@@ -54,15 +72,19 @@ static void write_int64(uint64_t i) {
  * profiling enabled will emit to a different file. Only one file may be
  * started at a time.
  */
-void llvm_gcda_start_file(const char *filename) {
-  output_file = fopen(filename, "w+");
+void llvm_gcda_start_file(const char *orig_filename) {
+  char *filename;
+  filename = mangle_filename(orig_filename);
+  output_file = fopen(filename, "wb");
 
   /* gcda file, version 404*, stamp LLVM. */
   fwrite("adcg*404MVLL", 12, 1, output_file);
 
 #ifdef DEBUG_GCDAPROFILING
-  printf("llvmgcda: [%s]\n", filename);
+  printf("llvmgcda: [%s]\n", orig_filename);
 #endif
+
+  free(filename);
 }
 
 /* Given an array of pointers to counters (counters), increment the n-th one,
@@ -71,12 +93,16 @@ void llvm_gcda_start_file(const char *filename) {
 void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
                                           uint64_t **counters) {
   uint64_t *counter;
-  if (*predecessor == 0xffffffff)
+  uint32_t pred;
+
+  pred = *predecessor;
+  if (pred == 0xffffffff)
     return;
+  counter = counters[pred];
 
   /* Don't crash if the pred# is out of sync. This can happen due to threads,
      or because of a TODO in GCOVProfiling.cpp buildEdgeLookupTable(). */
-  if ((counter = counters[*predecessor]))
+  if (counter)
     ++*counter;
 #ifdef DEBUG_GCDAPROFILING
   else

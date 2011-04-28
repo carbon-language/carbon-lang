@@ -146,9 +146,9 @@ namespace {
       writeBytes(s.data(), s.size());
 
       // Write 1 to 4 bytes of NUL padding.
-      assert((unsigned)(5 - ((s.size() + 1) % 4)) > 0);
-      assert((unsigned)(5 - ((s.size() + 1) % 4)) <= 4);
-      writeBytes("\0\0\0\0", 5 - ((s.size() + 1) % 4));
+      assert((unsigned)(4 - (s.size() % 4)) > 0);
+      assert((unsigned)(4 - (s.size() % 4)) <= 4);
+      writeBytes("\0\0\0\0", 4 - (s.size() % 4));
     }
 
     raw_ostream *os;
@@ -263,7 +263,7 @@ namespace {
       write(BlockLen);
       uint32_t Ident = reinterpret_cast<intptr_t>((MDNode*)SP);
       write(Ident);
-      write(0); // checksum
+      write(0);  // checksum
       writeGCOVString(SP.getName());
       writeGCOVString(SP.getFilename());
       write(SP.getLineNumber());
@@ -356,8 +356,10 @@ void GCOVProfiler::emitGCNO(DebugInfoFinder &DIF) {
     DISubprogram SP(*SPI);
     raw_fd_ostream *&os = GcnoFiles[SP.getCompileUnit()];
 
-    GCOVFunction Func(SP, os);
     Function *F = SP.getFunction();
+    if (!F) continue;
+    GCOVFunction Func(SP, os);
+
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       GCOVBlock &Block = Func.getBlock(BB);
       TerminatorInst *TI = BB->getTerminator();
@@ -402,6 +404,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
            SPE = DIF.subprogram_end(); SPI != SPE; ++SPI) {
     DISubprogram SP(*SPI);
     Function *F = SP.getFunction();
+    if (!F) continue;
 
     unsigned Edges = 0;
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
@@ -471,7 +474,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
       const Type *Int32Ty = Type::getInt32Ty(*Ctx);
       for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
         IRBuilder<> Builder(ComplexEdgePreds[i+1]->getTerminator());
-        Builder.CreateStore(ConstantInt::get(Int32Ty, i+1), EdgeState);
+        Builder.CreateStore(ConstantInt::get(Int32Ty, i), EdgeState);
       }
       for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
         // call runtime to perform increment
@@ -517,7 +520,7 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     TerminatorInst *TI = BB->getTerminator();
     int Successors = isa<ReturnInst>(TI) ? 1 : TI->getNumSuccessors();
-    if (Successors && !isa<BranchInst>(TI) && !isa<ReturnInst>(TI)) {
+    if (Successors > 1 && !isa<BranchInst>(TI) && !isa<ReturnInst>(TI)) {
       for (int i = 0; i != Successors; ++i) {
         BasicBlock *Succ = TI->getSuccessor(i);
         IRBuilder<> builder(Succ);
