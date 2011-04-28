@@ -270,11 +270,11 @@ GetBestOverloadCandidateSimple(
   
   unsigned Best = 0, N = Cands.size();
   for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.isSupersetOf(Cands[I].second))
+    if (Cands[Best].second.compatiblyIncludes(Cands[I].second))
       Best = I;
   
   for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.isSupersetOf(Cands[I].second))
+    if (Cands[Best].second.compatiblyIncludes(Cands[I].second))
       return 0;
   
   return Cands[Best].first;
