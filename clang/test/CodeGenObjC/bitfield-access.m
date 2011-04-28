@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin10 -emit-llvm -o %t %s
-// RUN: FileCheck -check-prefix=CHECK-I386 < %t %s
-// RUN: %clang_cc1 -triple armv6-apple-darwin10 -target-abi apcs-gnu -emit-llvm -o %t %s
-// RUN: FileCheck -check-prefix=CHECK-ARM < %t %s
+// RUN: %clang_cc1 -triple i386-apple-darwin10 -emit-llvm -o %t1 %s
+// RUN: FileCheck -check-prefix=CHECK-I386 < %t1 %s
+
+// RUN: %clang_cc1 -triple armv6-apple-darwin10 -target-abi apcs-gnu -emit-llvm -o %t2 %s
+// RUN: FileCheck -check-prefix=CHECK-ARM < %t2 %s
 
 @interface I0 { 
 @public
