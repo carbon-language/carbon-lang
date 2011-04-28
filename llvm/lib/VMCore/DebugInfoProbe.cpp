@@ -168,12 +168,13 @@ void DebugInfoProbeImpl::finalize(Function &F) {
       DEBUG(dbgs() 
             << "DebugInfoProbe("
             << PassName
-            << "): Losing dbg info for variable: ");
-      if (MDString *MDS = dyn_cast_or_null<MDString>((*I)->getOperand(2)))
-        DEBUG(dbgs() << MDS->getString());
-      else
-        DEBUG(dbgs() << "...");
-      DEBUG(dbgs() << "\n");
+            << "): Losing dbg info for variable: ";
+            if (MDString *MDS = dyn_cast_or_null<MDString>(
+                (*I)->getOperand(2)))
+              dbgs() << MDS->getString();
+            else
+              dbgs() << "...";
+            dbgs() << "\n");
       ++NumDbgValueLost;
     }
   }
