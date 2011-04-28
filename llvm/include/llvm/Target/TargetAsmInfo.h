@@ -62,6 +62,10 @@ public:
     return TLOF->getFDEEncoding();
   }
 
+  bool isFunctionEHFrameSymbolPrivate() const {
+    return TLOF->isFunctionEHFrameSymbolPrivate();
+  }
+
   unsigned getDwarfRARegNum(bool isEH) const {
     return TRI->getDwarfRegNum(TRI->getRARegister(), isEH);
   }

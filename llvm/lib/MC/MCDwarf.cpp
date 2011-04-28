@@ -17,6 +17,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -712,6 +713,12 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+
+  if (!asmInfo.isFunctionEHFrameSymbolPrivate()) {
+    Twine EHName = frame.Function->getName() + Twine(".eh");
+    MCSymbol *EHSym = context.GetOrCreateSymbol(EHName);
+    streamer.EmitLabel(EHSym);
+  }
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
