@@ -226,7 +226,7 @@ void PTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       OS << *Mang->getSymbol(MO.getGlobal());
       break;
     case MachineOperand::MO_Immediate:
-      OS << (int) MO.getImm();
+      OS << (long) MO.getImm();
       break;
     case MachineOperand::MO_MachineBasicBlock:
       OS << *MO.getMBB()->getSymbol();
@@ -308,34 +308,59 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     const PointerType* pointerTy = dyn_cast<const PointerType>(gv->getType());
     const Type* elementTy = pointerTy->getElementType();
 
-    assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
-
-    const ArrayType* arrayTy = dyn_cast<const ArrayType>(elementTy);
-    elementTy = arrayTy->getElementType();
-
-    unsigned numElements = arrayTy->getNumElements();
-
-    while (elementTy->isArrayTy()) {
-
-      arrayTy = dyn_cast<const ArrayType>(elementTy);
-      elementTy = arrayTy->getElementType();
-
-      numElements *= arrayTy->getNumElements();
-    }
-
-    // FIXME: isPrimitiveType() == false for i16?
-    assert(elementTy->isSingleValueType() &&
-           "Non-primitive types are not handled");
-
-    // Compute the size of the array, in bytes.
-    uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
-                       * numElements;
-
     decl += ".b8 ";
     decl += gvsym->getName();
     decl += "[";
-    decl += utostr(arraySize);
+    
+    if (elementTy->isArrayTy())
+    {
+      assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
+
+      const ArrayType* arrayTy = dyn_cast<const ArrayType>(elementTy);
+      elementTy = arrayTy->getElementType();
+
+      unsigned numElements = arrayTy->getNumElements();
+      
+      while (elementTy->isArrayTy()) {
+
+        arrayTy = dyn_cast<const ArrayType>(elementTy);
+        elementTy = arrayTy->getElementType();
+
+        numElements *= arrayTy->getNumElements();
+      }
+
+      // FIXME: isPrimitiveType() == false for i16?
+      assert(elementTy->isSingleValueType() &&
+              "Non-primitive types are not handled");
+
+      // Compute the size of the array, in bytes.
+      uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
+                        * numElements;
+  
+      decl += utostr(arraySize);
+    }
+    
     decl += "]";
+    
+    // handle string constants (assume ConstantArray means string)
+    
+    if (gv->hasInitializer())
+    {
+      Constant *C = gv->getInitializer();  
+      if (const ConstantArray *CA = dyn_cast<ConstantArray>(C))
+      {
+        decl += " = {";
+
+        for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
+        {
+          if (i > 0)   decl += ",";
+      
+          decl += "0x" + utohexstr(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
+        }
+      
+        decl += "}";
+      }
+    }
   }
   else {
     // Note: this is currently the fall-through case and most likely generates
