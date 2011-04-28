@@ -25,6 +25,13 @@ namespace llvm {
     explicit X86MCAsmInfoDarwin(const Triple &Triple);
   };
 
+  struct X86_64MCAsmInfoDarwin : public X86MCAsmInfoDarwin {
+    explicit X86_64MCAsmInfoDarwin(const Triple &Triple);
+    virtual const MCExpr *
+    getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                MCStreamer &Streamer) const;
+  };
+
   struct X86ELFMCAsmInfo : public MCAsmInfo {
     explicit X86ELFMCAsmInfo(const Triple &Triple);
     virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const;

@@ -13,6 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmInfoDarwin.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCStreamer.h"
 using namespace llvm;
 
 MCAsmInfoDarwin::MCAsmInfoDarwin() {
@@ -57,3 +60,13 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   DwarfUsesLabelOffsetForRanges = false;
 }
 
+const MCExpr *
+MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                             MCStreamer &Streamer) const {
+  MCContext &Context = Streamer.getContext();
+  const MCExpr *Res = MCSymbolRefExpr::Create(Sym, Context);
+  MCSymbol *PCSym = Context.CreateTempSymbol();
+  Streamer.EmitLabel(PCSym);
+  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, Context);
+  return MCBinaryExpr::CreateSub(Res, PC, Context);
+}

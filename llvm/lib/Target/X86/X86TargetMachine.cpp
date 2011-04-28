@@ -27,8 +27,12 @@ using namespace llvm;
 static MCAsmInfo *createMCAsmInfo(const Target &T, StringRef TT) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO)
-    return new X86MCAsmInfoDarwin(TheTriple);
+  if (TheTriple.isOSDarwin() || TheTriple.getEnvironment() == Triple::MachO) {
+    if (TheTriple.getArch() == Triple::x86_64)
+      return new X86_64MCAsmInfoDarwin(TheTriple);
+    else
+      return new X86MCAsmInfoDarwin(TheTriple);
+  }
 
   if (TheTriple.isOSWindows())
     return new X86MCAsmInfoCOFF(TheTriple);

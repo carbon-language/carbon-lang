@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/DataTypes.h"
 #include <cctype>
 #include <cstring>
@@ -105,4 +107,10 @@ unsigned MCAsmInfo::getSLEB128Size(int Value) {
     Size += sizeof(int8_t);
   } while (IsMore);
   return Size;
+}
+
+const MCExpr *
+MCAsmInfo::getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                       MCStreamer &Streamer) const {
+  return MCSymbolRefExpr::Create(Sym, Streamer.getContext());
 }

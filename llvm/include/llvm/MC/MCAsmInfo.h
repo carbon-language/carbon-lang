@@ -20,7 +20,10 @@
 #include <cassert>
 
 namespace llvm {
+  class MCExpr;
   class MCSection;
+  class MCStreamer;
+  class MCSymbol;
   class MCContext;
 
   /// MCAsmInfo - This class is intended to be used as a base class for asm
@@ -320,6 +323,10 @@ namespace llvm {
     virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const{
       return 0;
     }
+
+    virtual const MCExpr *
+    getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                MCStreamer &Streamer) const;
 
     bool usesSunStyleELFSectionSwitchSyntax() const {
       return SunStyleELFSectionSwitchSyntax;
