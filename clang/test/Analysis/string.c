@@ -788,3 +788,87 @@ void strncmp_diff_length_6() {
     (void)*(char*)0; // no-warning
 }
 
+//===----------------------------------------------------------------------===
+// strcasecmp()
+//===----------------------------------------------------------------------===
+
+#define strcasecmp BUILTIN(strcasecmp)
+int strcasecmp(const char *restrict s1, const char *restrict s2);
+
+void strcasecmp_constant0() {
+  if (strcasecmp("abc", "Abc") != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_constant_and_var_0() {
+  char *x = "abc";
+  if (strcasecmp(x, "Abc") != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_constant_and_var_1() {
+  char *x = "abc";
+    if (strcasecmp("Abc", x) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_0() {
+  char *x = "abc";
+  char *y = "Abc";
+  if (strcasecmp(x, y) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_1() {
+  char *x = "Bcd";
+  char *y = "abc";
+  if (strcasecmp(x, y) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_2() {
+  char *x = "abc";
+  char *y = "Bcd";
+  if (strcasecmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_null_0() {
+  char *x = NULL;
+  char *y = "123";
+  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcasecmp_null_1() {
+  char *x = "123";
+  char *y = NULL;
+  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strcasecmp_diff_length_0() {
+  char *x = "abcde";
+  char *y = "aBd";
+  if (strcasecmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_diff_length_1() {
+  char *x = "abc";
+  char *y = "aBdef";
+  if (strcasecmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_diff_length_2() {
+  char *x = "aBcDe";
+  char *y = "abc";
+  if (strcasecmp(x, y) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strcasecmp_diff_length_3() {
+  char *x = "aBc";
+  char *y = "abcde";
+  if (strcasecmp(x, y) != -1)
+    (void)*(char*)0; // no-warning
+}
