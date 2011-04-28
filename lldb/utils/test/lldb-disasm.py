@@ -78,7 +78,6 @@ def run_command(ci, cmd, res, echoInput=True, echoOutput=True):
 
 def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, symbols_to_disassemble):
     import lldb, atexit, re
-    from lldbutil import lldb_iter
 
     # Create the debugger instance now.
     dbg = lldb.SBDebugger.Create()
@@ -127,9 +126,9 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
             if limited:
                 count = 0
             stream = lldb.SBStream()
-            for m in lldb_iter(target, 'GetNumModules', 'GetModuleAtIndex'):
+            for m in target.module_iter():
                 print "module:", m
-                for s in lldb_iter(m, 'GetNumSymbols', 'GetSymbolAtIndex'):
+                for s in m:
                     if limited and count >= num:
                         return
                     print "symbol:", s.GetName()
