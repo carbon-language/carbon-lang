@@ -63,50 +63,48 @@ static cl::opt<bool> EnableLoadPRE("enable-load-pre", cl::init(true));
 namespace {
   struct Expression {
     uint32_t opcode;
-    const Type* type;
+    const Type *type;
     SmallVector<uint32_t, 4> varargs;
 
-    Expression() { }
-    Expression(uint32_t o) : opcode(o) { }
+    Expression(uint32_t o = ~2U) : opcode(o) { }
 
     bool operator==(const Expression &other) const {
       if (opcode != other.opcode)
         return false;
-      else if (opcode == ~0U || opcode == ~1U)
+      if (opcode == ~0U || opcode == ~1U)
         return true;
-      else if (type != other.type)
+      if (type != other.type)
         return false;
-      else if (varargs != other.varargs)
+      if (varargs != other.varargs)
         return false;
       return true;
     }
   };
 
   class ValueTable {
-    private:
-      DenseMap<Value*, uint32_t> valueNumbering;
-      DenseMap<Expression, uint32_t> expressionNumbering;
-      AliasAnalysis* AA;
-      MemoryDependenceAnalysis* MD;
-      DominatorTree* DT;
+    DenseMap<Value*, uint32_t> valueNumbering;
+    DenseMap<Expression, uint32_t> expressionNumbering;
+    AliasAnalysis *AA;
+    MemoryDependenceAnalysis *MD;
+    DominatorTree *DT;
 
-      uint32_t nextValueNumber;
+    uint32_t nextValueNumber;
 
-      Expression create_expression(Instruction* I);
-      uint32_t lookup_or_add_call(CallInst* C);
-    public:
-      ValueTable() : nextValueNumber(1) { }
-      uint32_t lookup_or_add(Value *V);
-      uint32_t lookup(Value *V) const;
-      void add(Value *V, uint32_t num);
-      void clear();
-      void erase(Value *v);
-      void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
-      AliasAnalysis *getAliasAnalysis() const { return AA; }
-      void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
-      void setDomTree(DominatorTree* D) { DT = D; }
-      uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
-      void verifyRemoved(const Value *) const;
+    Expression create_expression(Instruction* I);
+    uint32_t lookup_or_add_call(CallInst* C);
+  public:
+    ValueTable() : nextValueNumber(1) { }
+    uint32_t lookup_or_add(Value *V);
+    uint32_t lookup(Value *V) const;
+    void add(Value *V, uint32_t num);
+    void clear();
+    void erase(Value *v);
+    void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
+    AliasAnalysis *getAliasAnalysis() const { return AA; }
+    void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
+    void setDomTree(DominatorTree* D) { DT = D; }
+    uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
+    void verifyRemoved(const Value *) const;
   };
 }
 
@@ -364,14 +362,14 @@ uint32_t ValueTable::lookup(Value *V) const {
   return VI->second;
 }
 
-/// clear - Remove all entries from the ValueTable
+/// clear - Remove all entries from the ValueTable.
 void ValueTable::clear() {
   valueNumbering.clear();
   expressionNumbering.clear();
   nextValueNumber = 1;
 }
 
-/// erase - Remove a value from the value numbering
+/// erase - Remove a value from the value numbering.
 void ValueTable::erase(Value *V) {
   valueNumbering.erase(V);
 }
@@ -393,9 +391,7 @@ namespace {
 
   class GVN : public FunctionPass {
     bool NoLoads;
-    public:
     MemoryDependenceAnalysis *MD;
-    private:
     DominatorTree *DT;
     const TargetData *TD;
     
@@ -431,6 +427,7 @@ namespace {
     const TargetData *getTargetData() const { return TD; }
     DominatorTree &getDominatorTree() const { return *DT; }
     AliasAnalysis *getAliasAnalysis() const { return VN.getAliasAnalysis(); }
+    MemoryDependenceAnalysis &getMemDep() const { return *MD; }
   private:
     /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
@@ -969,8 +966,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
                     NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
     SrcVal->replaceAllUsesWith(RV);
-    gvn.MD->removeInstruction(SrcVal);
-    //gvn.markInstructionForDeletion(SrcVal);
+    gvn.getMemDep().removeInstruction(SrcVal);
     SrcVal = NewLoad;
   }
   
