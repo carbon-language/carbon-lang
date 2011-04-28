@@ -969,8 +969,13 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
                     NewLoadSize*8-SrcVal->getType()->getPrimitiveSizeInBits());
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
     SrcVal->replaceAllUsesWith(RV);
+    
+    // We would like to use gvn.markInstructionForDeletion here, but we can't
+    // because the load is already memoized into the leader map table that GVN
+    // tracks.  It is potentially possible to remove the load from the table,
+    // but then there all of the operations based on it would need to be
+    // rehashed.  Just leave the dead load around.
     gvn.getMemDep().removeInstruction(SrcVal);
-    //gvn.markInstructionForDeletion(SrcVal);
     SrcVal = NewLoad;
   }
   
