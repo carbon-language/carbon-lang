@@ -258,6 +258,14 @@ multiclass INT3<string opcstr, SDNode opnode> {
 }
 
 multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
+  def ripreds : InstPTX<(outs Preds:$d),
+                     (ins Preds:$a, i1imm:$b),
+                     !strconcat(opcstr, ".pred\t$d, $a, $b"),
+                     [(set Preds:$d, (opnode Preds:$a, imm:$b))]>;
+  def rrpreds : InstPTX<(outs Preds:$d),
+                     (ins Preds:$a, Preds:$b),
+                     !strconcat(opcstr, ".pred\t$d, $a, $b"),
+                     [(set Preds:$d, (opnode Preds:$a, Preds:$b))]>;
   def rr16 : InstPTX<(outs RRegu16:$d),
                      (ins RRegu16:$a, RRegu16:$b),
                      !strconcat(opcstr, ".b16\t$d, $a, $b"),
