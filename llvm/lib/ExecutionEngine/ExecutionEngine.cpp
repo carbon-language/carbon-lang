@@ -839,7 +839,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
   case Type::PointerTyID:
     // Ensure 64 bit target pointers are fully initialized on 32 bit hosts.
     if (StoreBytes != sizeof(PointerTy))
-      memset(Ptr, 0, StoreBytes);
+      memset(&(Ptr->PointerVal), 0, StoreBytes);
 
     *((PointerTy*)Ptr) = Val.PointerVal;
     break;
