@@ -275,7 +275,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   // update the branch to use the new comparison; in the common case this
   // will make old comparison dead.
   BI->setCondition(Cond);
-  RecursivelyDeleteTriviallyDeadInstructions(OrigCond);
+  DeadInsts.push_back(OrigCond);
 
   ++NumLFTR;
   Changed = true;
