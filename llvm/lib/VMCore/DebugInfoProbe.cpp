@@ -136,7 +136,9 @@ void DebugInfoProbeImpl::finalize(Function &F) {
     unsigned LineNo = *I;
     if (LineNos2.count(LineNo) == 0) {
       DEBUG(dbgs() 
-            << "DebugInfoProbe: Losing dbg info for source line " 
+            << "DebugInfoProbe("
+            << PassName
+            << "): Losing dbg info for source line " 
             << LineNo << "\n");
       ++NumDbgLineLost;
     }
@@ -162,9 +164,16 @@ void DebugInfoProbeImpl::finalize(Function &F) {
 
   for (std::set<MDNode *>::iterator I = DbgVariables.begin(), 
          E = DbgVariables.end(); I != E; ++I) {
-    if (DbgVariables2.count(*I) == 0) {
-      DEBUG(dbgs() << "DebugInfoProbe: Losing dbg info for variable: ");
-      DEBUG((*I)->print(dbgs()));
+    if (DbgVariables2.count(*I) == 0 && (*I)->getNumOperands() >= 2) {
+      DEBUG(dbgs() 
+            << "DebugInfoProbe("
+            << PassName
+            << "): Losing dbg info for variable: ");
+      if (MDString *MDS = dyn_cast_or_null<MDString>((*I)->getOperand(2)))
+        DEBUG(dbgs() << MDS->getString());
+      else
+        DEBUG(dbgs() << "...");
+      DEBUG(dbgs() << "\n");
       ++NumDbgValueLost;
     }
   }
