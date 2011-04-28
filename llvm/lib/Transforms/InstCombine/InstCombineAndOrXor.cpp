@@ -772,7 +772,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
 
   // (trunc x) == C1 & (and x, CA) == C2 -> (and x, CA|CMAX) == C1|C2
   // where CMAX is the all ones value for the truncated type,
-  // iff the lower bits of CA are zero.
+  // iff the lower bits of C2 and CA are zero.
   if (LHSCC == RHSCC && ICmpInst::isEquality(LHSCC) &&
       LHS->hasOneUse() && RHS->hasOneUse()) {
     Value *V;
@@ -797,7 +797,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
 
       // Check that the low bits are zero.
       APInt Low = APInt::getLowBitsSet(BigBitSize, SmallBitSize);
-      if ((Low & AndCst->getValue()) == 0) {
+      if ((Low & AndCst->getValue()) == 0 && (Low & BigCst->getValue()) == 0) {
         Value *NewAnd = Builder->CreateAnd(V, Low | AndCst->getValue());
         APInt N = SmallCst->getValue().zext(BigBitSize) | BigCst->getValue();
         Value *NewVal = ConstantInt::get(AndCst->getType()->getContext(), N);
