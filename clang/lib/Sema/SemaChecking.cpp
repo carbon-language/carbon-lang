@@ -1804,7 +1804,12 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
 ///
 /// \param Call The call expression to diagnose.
 void Sema::CheckMemsetArguments(const CallExpr *Call) {
-  assert(Call->getNumArgs() == 3 && "Unexpected number of arguments to memset");
+  // It is possible to have a non-standard definition of memset.  Validate
+  // we have the proper number of arguments, and if not, abort further
+  // checking.
+  if (Call->getNumArgs() != 3)
+    return;
+
   const Expr *Dest = Call->getArg(0)->IgnoreParenImpCasts();
 
   QualType DestTy = Dest->getType();
