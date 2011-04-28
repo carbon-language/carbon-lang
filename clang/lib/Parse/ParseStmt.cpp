@@ -386,13 +386,18 @@ StmtResult Parser::ParseSEHExceptBlock(SourceLocation ExceptLoc) {
 
   ParseScope ExpectScope(this, Scope::DeclScope | Scope::ControlScope);
 
-  Ident__exception_info->setIsPoisoned(false);
-  Ident___exception_info->setIsPoisoned(false);
-  Ident_GetExceptionInfo->setIsPoisoned(false);
+  if (getLang().Borland) {
+    Ident__exception_info->setIsPoisoned(false);
+    Ident___exception_info->setIsPoisoned(false);
+    Ident_GetExceptionInfo->setIsPoisoned(false);
+  }
   ExprResult FilterExpr(ParseExpression());
-  Ident__exception_info->setIsPoisoned(true);
-  Ident___exception_info->setIsPoisoned(true);
-  Ident_GetExceptionInfo->setIsPoisoned(true);
+
+  if (getLang().Borland) {
+    Ident__exception_info->setIsPoisoned(true);
+    Ident___exception_info->setIsPoisoned(true);
+    Ident_GetExceptionInfo->setIsPoisoned(true);
+  }
 
   if(FilterExpr.isInvalid())
     return StmtError();
