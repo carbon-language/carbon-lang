@@ -21,19 +21,19 @@ class LLDBIteratorTestCase(TestBase):
         self.line2 = line_number('main.cpp', '// And that line.')
 
     def test_lldb_iter_1(self):
-        """Test lldb_iter works correctly for SBTarget -> SBModule."""
+        """Test module_iter works correctly for SBTarget -> SBModule."""
         self.buildDefault()
         self.lldb_iter_1()
 
     def test_lldb_iter_2(self):
-        """Test lldb_iter works correctly for SBTarget -> SBBreakpoint."""
+        """Test breakpoint_iter works correctly for SBTarget -> SBBreakpoint."""
         self.buildDefault()
         self.lldb_iter_2()
 
-    def test_smart_iter_1(self):
-        """Test smart_iter works correctly for SBProcess->SBThread->SBFrame."""
+    def test_lldb_iter_3(self):
+        """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
         self.buildDefault()
-        self.smart_iter_1()
+        self.lldb_iter_3()
 
     def lldb_iter_1(self):
         exe = os.path.join(os.getcwd(), "a.out")
@@ -51,12 +51,12 @@ class LLDBIteratorTestCase(TestBase):
         if not rc.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")
 
-        from lldbutil import lldb_iter, get_description
+        from lldbutil import get_description
         yours = []
         for i in range(target.GetNumModules()):
             yours.append(target.GetModuleAtIndex(i))
         mine = []
-        for m in lldb_iter(target, 'GetNumModules', 'GetModuleAtIndex'):
+        for m in target.module_iter():
             mine.append(m)
 
         self.assertTrue(len(yours) == len(mine))
@@ -80,12 +80,12 @@ class LLDBIteratorTestCase(TestBase):
 
         self.assertTrue(target.GetNumBreakpoints() == 2)
 
-        from lldbutil import lldb_iter, get_description
+        from lldbutil import get_description
         yours = []
         for i in range(target.GetNumBreakpoints()):
             yours.append(target.GetBreakpointAtIndex(i))
         mine = []
-        for m in lldb_iter(target, 'GetNumBreakpoints', 'GetBreakpointAtIndex'):
+        for m in target.breakpoint_iter():
             mine.append(m)
 
         self.assertTrue(len(yours) == len(mine))
@@ -96,7 +96,7 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i].GetID() == mine[i].GetID(),
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
-    def smart_iter_1(self):
+    def lldb_iter_3(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -112,15 +112,15 @@ class LLDBIteratorTestCase(TestBase):
         if not rc.Success() or not self.process.IsValid():
             self.fail("SBTarget.LaunchProcess() failed")
 
-        from lldbutil import smart_iter, print_stacktrace
+        from lldbutil import print_stacktrace
         stopped_due_to_breakpoint = False
-        for thread in smart_iter(self.process):
+        for thread in self.process:
             if self.TraceOn():
                 print_stacktrace(thread)
             ID = thread.GetThreadID()
             if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
                 stopped_due_to_breakpoint = True
-            for frame in smart_iter(thread):
+            for frame in thread:
                 self.assertTrue(frame.GetThread().GetThreadID() == ID)
                 if self.TraceOn():
                     print frame

@@ -173,12 +173,13 @@ fi
 
 $SWIG -c++ -shadow -python -I"/usr/include" -I"${SRC_ROOT}/include" -I./. -outdir "${CONFIG_BUILD_DIR}" -o "${swig_output_file}" "${swig_input_file}"
 
+# Implement the iterator protocol for some lldb objects.
 # Append global variable to lldb Python module.
-
+# And initialize the lldb debugger subsystem.
 current_dir=`pwd`
-if [ -f "${current_dir}/append-debugger-id.py" ]
+if [ -f "${current_dir}/modify-python-lldb.py" ]
 then
-    python ${current_dir}/append-debugger-id.py ${CONFIG_BUILD_DIR}
+    python ${current_dir}/modify-python-lldb.py ${CONFIG_BUILD_DIR}
 fi
 
 # Fix the "#include" statement in the swig output file
