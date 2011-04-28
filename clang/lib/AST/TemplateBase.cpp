@@ -338,7 +338,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
 //===----------------------------------------------------------------------===//
 
 TemplateArgumentLocInfo::TemplateArgumentLocInfo() {
-  memset(this, 0, sizeof(TemplateArgumentLocInfo));
+  memset((void*)this, 0, sizeof(TemplateArgumentLocInfo));
 }
 
 SourceRange TemplateArgumentLoc::getSourceRange() const {

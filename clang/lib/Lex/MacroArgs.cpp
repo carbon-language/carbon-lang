@@ -284,7 +284,7 @@ const Token &MacroArgs::getStringifiedArgument(unsigned ArgNo,
   assert(ArgNo < NumUnexpArgTokens && "Invalid argument number!");
   if (StringifiedArgs.empty()) {
     StringifiedArgs.resize(getNumArguments());
-    memset(&StringifiedArgs[0], 0,
+    memset((void*)&StringifiedArgs[0], 0,
            sizeof(StringifiedArgs[0])*getNumArguments());
   }
   if (StringifiedArgs[ArgNo].isNot(tok::string_literal))

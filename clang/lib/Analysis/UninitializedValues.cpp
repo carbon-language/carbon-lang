@@ -173,7 +173,7 @@ CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {
   if (!n)
     return;
   vals = new std::pair<ValueVector*, ValueVector*>[n];
-  memset(vals, 0, sizeof(*vals) * n);
+  memset((void*)vals, 0, sizeof(*vals) * n);
 }
 
 CFGBlockValues::~CFGBlockValues() {
