@@ -344,9 +344,11 @@ public:
   
   /// Return the total amount of physical memory allocated for representing
   /// AST nodes and type information.
-  size_t getTotalAllocatedMemory() const {
+  size_t getASTAllocatedMemory() const {
     return BumpAlloc.getTotalMemory();
   }
+  /// Return the total memory used for various side tables.
+  size_t getSideTableAllocatedMemory() const;
   
   PartialDiagnostic::StorageAllocator &getDiagAllocator() {
     return DiagAllocator;

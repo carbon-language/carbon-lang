@@ -1022,13 +1022,14 @@ enum CXTUResourceUsageKind {
   CXTUResourceUsage_Selectors = 3,
   CXTUResourceUsage_GlobalCompletionResults = 4,
   CXTUResourceUsage_SourceManagerContentCache = 5,
+  CXTUResourceUsage_AST_SideTables = 6,
 
   CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN = CXTUResourceUsage_AST,
   CXTUResourceUsage_MEMORY_IN_BYTES_END =
-    CXTUResourceUsage_SourceManagerContentCache,
+    CXTUResourceUsage_AST_SideTables,
 
   CXTUResourceUsage_First = CXTUResourceUsage_AST,
-  CXTUResourceUsage_Last = CXTUResourceUsage_SourceManagerContentCache
+  CXTUResourceUsage_Last = CXTUResourceUsage_AST_SideTables
 };
 
 /**

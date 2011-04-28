@@ -6139,3 +6139,19 @@ MangleContext *ASTContext::createMangleContext() {
 }
 
 CXXABI::~CXXABI() {}
+
+size_t ASTContext::getSideTableAllocatedMemory() const {
+  size_t bytes = 0;
+  bytes += ASTRecordLayouts.getMemorySize();
+  bytes += ObjCLayouts.getMemorySize();
+  bytes += KeyFunctions.getMemorySize();
+  bytes += ObjCImpls.getMemorySize();
+  bytes += BlockVarCopyInits.getMemorySize();
+  bytes += DeclAttrs.getMemorySize();
+  bytes += InstantiatedFromStaticDataMember.getMemorySize();
+  bytes += InstantiatedFromUsingDecl.getMemorySize();
+  bytes += InstantiatedFromUsingShadowDecl.getMemorySize();
+  bytes += InstantiatedFromUnnamedFieldDecl.getMemorySize();
+  return bytes;
+}
+
