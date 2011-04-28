@@ -95,6 +95,13 @@ void template_uuid()
 }
 
 
+template <class T, const GUID* g = &__uuidof(T)>
+class COM_CLASS_TEMPLATE  { };
+
+typedef COM_CLASS_TEMPLATE<struct_with_uuid, &__uuidof(struct_with_uuid)> COM_TYPE_1;
+typedef COM_CLASS_TEMPLATE<struct_with_uuid> COM_TYPE_2;
+
+
 
 class CtorCall { 
 public:
