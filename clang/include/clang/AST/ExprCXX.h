@@ -1633,6 +1633,8 @@ public:
     : Expr(ArrayTypeTraitExprClass, Empty), ATT(0), Value(false),
       QueriedType() { }
 
+  virtual ~ArrayTypeTraitExpr() { }
+
   virtual SourceRange getSourceRange() const { return SourceRange(Loc, RParen); }
 
   ArrayTypeTrait getTrait() const { return static_cast<ArrayTypeTrait>(ATT); }
