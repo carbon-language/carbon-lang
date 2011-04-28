@@ -34,11 +34,23 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, PTX::RRegf32RegisterClass);
   addRegisterClass(MVT::f64, PTX::RRegf64RegisterClass);
 
+  setBooleanContents(ZeroOrOneBooleanContent);
+  
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  
+  // Turn i16 (z)extload into load + (z)extend
+  setLoadExtAction(ISD::EXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
 
+  // Turn f32 extload into load + fextend
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  
+  // Turn f64 truncstore into trunc + store.
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
