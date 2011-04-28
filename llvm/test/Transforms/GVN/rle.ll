@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -gvn -S | FileCheck %s
+; RUN: opt < %s -basicaa -gvn -S -die | FileCheck %s
 
 ; 32-bit little endian target.
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
@@ -597,11 +597,11 @@ if.end:
 ;; Load Widening
 ;;===----------------------------------------------------------------------===;;
 
-%widening1 = type { i32, i8, i8 }
+%widening1 = type { i32, i8, i8, i8, i8 }
 
 @f = global %widening1 zeroinitializer, align 4
 
-define i32 @test_widening1() nounwind ssp noredzone {
+define i32 @test_widening1(i8* %P) nounwind ssp noredzone {
 entry:
   %tmp = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 1), align 4
   %conv = zext i8 %tmp to i32
@@ -616,4 +616,27 @@ entry:
 ; CHECK-ret i32
 }
 
+define i32 @test_widening2() nounwind ssp noredzone {
+entry:
+  %tmp = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 1), align 4
+  %conv = zext i8 %tmp to i32
+  %tmp1 = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 2), align 1
+  %conv2 = zext i8 %tmp1 to i32
+  %add = add nsw i32 %conv, %conv2
+
+  %tmp2 = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 3), align 2
+  %conv3 = zext i8 %tmp2 to i32
+  %add2 = add nsw i32 %add, %conv3
+
+  %tmp3 = load i8* getelementptr inbounds (%widening1* @f, i64 0, i32 4), align 1
+  %conv4 = zext i8 %tmp3 to i32
+  %add3 = add nsw i32 %add2, %conv3
+
+  ret i32 %add3
+; CHECK: @test_widening2
+; CHECK-NOT: load
+; CHECK: load i32*
+; CHECK-NOT: load
+; CHECK-ret i32
+}
 

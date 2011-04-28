@@ -432,14 +432,14 @@ namespace {
     /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
     /// its value number.
     void addToLeaderTable(uint32_t N, Value *V, BasicBlock *BB) {
-      LeaderTableEntry& Curr = LeaderTable[N];
+      LeaderTableEntry &Curr = LeaderTable[N];
       if (!Curr.Val) {
         Curr.Val = V;
         Curr.BB = BB;
         return;
       }
       
-      LeaderTableEntry* Node = TableAllocator.Allocate<LeaderTableEntry>();
+      LeaderTableEntry *Node = TableAllocator.Allocate<LeaderTableEntry>();
       Node->Val = V;
       Node->BB = BB;
       Node->Next = Curr.Next;
@@ -944,7 +944,10 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
 
     Value *PtrVal = SrcVal->getPointerOperand();
     
-    IRBuilder<> Builder(SrcVal->getParent(), SrcVal);
+    // Insert the new load after the old load.  This ensures that subsequent
+    // memdep queries will find the new load.  We can't easily remove the old
+    // load completely because it is already in the value numbering table.
+    IRBuilder<> Builder(SrcVal->getParent(), ++BasicBlock::iterator(SrcVal));
     const Type *DestPTy = 
       IntegerType::get(LoadTy->getContext(), NewLoadSize*8);
     DestPTy = PointerType::get(DestPTy, 
@@ -967,6 +970,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
     RV = Builder.CreateTrunc(RV, SrcVal->getType());
     SrcVal->replaceAllUsesWith(RV);
     gvn.getMemDep().removeInstruction(SrcVal);
+    //gvn.markInstructionForDeletion(SrcVal);
     SrcVal = NewLoad;
   }
   
