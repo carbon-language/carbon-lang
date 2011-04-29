@@ -84,6 +84,11 @@ def imm0_255_not : PatLeaf<(i32 imm), [{
   return (uint32_t)(~N->getZExtValue()) < 255;
 }], imm_comp_XFORM>;
 
+def lo5AllOne : PatLeaf<(i32 imm), [{
+  // Returns true if all low 5-bits are 1.
+  return (((uint32_t)N->getZExtValue()) & 0x1FUL) == 0x1FUL;
+}]>;
+
 // Define Thumb2 specific addressing modes.
 
 // t2addrmode_imm12  := reg + imm12
@@ -2022,6 +2027,10 @@ defm t2LSL  : T2I_sh_ir<0b00, "lsl", BinOpFrag<(shl  node:$LHS, node:$RHS)>>;
 defm t2LSR  : T2I_sh_ir<0b01, "lsr", BinOpFrag<(srl  node:$LHS, node:$RHS)>>;
 defm t2ASR  : T2I_sh_ir<0b10, "asr", BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
 defm t2ROR  : T2I_sh_ir<0b11, "ror", BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
+
+// (rotr x, (and y, 0x...1f)) ==> (ROR x, y)
+def : Pat<(rotr rGPR:$lhs, (and rGPR:$rhs, lo5AllOne)),
+          (t2RORrr rGPR:$lhs, rGPR:$rhs)>;
 
 let Uses = [CPSR] in {
 def t2RRX : T2sTwoReg<(outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iMOVsi,

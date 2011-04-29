@@ -11,11 +11,13 @@ define i32 @f1(i32 %a) {
 }
 
 ; CHECK: f2:
+; CHECK-NOT: and
 ; CHECK: ror
 define i32 @f2(i32 %v, i32 %nbits) {
 entry:
-  %shr = lshr i32 %v, %nbits
-  %sub = sub i32 32, %nbits
+  %and = and i32 %nbits, 31
+  %shr = lshr i32 %v, %and
+  %sub = sub i32 32, %and
   %shl = shl i32 %v, %sub
   %or = or i32 %shl, %shr
   ret i32 %or
