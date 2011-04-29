@@ -19,6 +19,7 @@ class MCAsmInfo;
 class MCAsmLayout;
 class MCAssembler;
 class MCContext;
+class MCSection;
 class MCSectionData;
 class MCSymbol;
 class MCValue;
@@ -91,6 +92,12 @@ public:
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
   bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout &Layout) const;
+
+  /// FindAssociatedSection - Find the "associated section" for this expression,
+  /// which is currently defined as the absolute section for constants, or
+  /// otherwise the section associated with the first defined symbol in the
+  /// expression.
+  const MCSection *FindAssociatedSection() const;
 
   /// @}
 
@@ -420,6 +427,7 @@ public:
   virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const = 0;
   virtual void AddValueSymbols(MCAssembler *) const = 0;
+  virtual const MCSection *FindAssociatedSection() const = 0;
 
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;

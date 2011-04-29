@@ -56,6 +56,7 @@ namespace llvm {
     mutable unsigned IsUsed : 1;
 
   private:  // MCContext creates and uniques these.
+    friend class MCExpr;
     friend class MCContext;
     MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(0), Value(0),

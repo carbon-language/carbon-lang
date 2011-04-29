@@ -60,6 +60,9 @@ public:
   bool EvaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAsmLayout *Layout) const;
   void AddValueSymbols(MCAssembler *) const;
+  const MCSection *FindAssociatedSection() const {
+    return getSubExpr()->FindAssociatedSection();
+  }
 
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;
