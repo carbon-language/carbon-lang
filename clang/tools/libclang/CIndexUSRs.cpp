@@ -470,6 +470,12 @@ bool USRGenerator::GenLoc(const Decl *D) {
   if (generatedLoc)
     return IgnoreResults;
   generatedLoc = true;
+  
+  // Guard against null declarations in invalid code.
+  if (!D) {
+    IgnoreResults = true;
+    return true;
+  }
 
   const SourceManager &SM = AU->getSourceManager();
   SourceLocation L = D->getLocStart();
