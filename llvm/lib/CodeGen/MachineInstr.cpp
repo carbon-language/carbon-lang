@@ -441,6 +441,10 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
     OS << ")";
   }
 
+  // Print nontemporal info.
+  if (MMO.isNonTemporal())
+    OS << "(nontemporal)";
+
   return OS;
 }
 
