@@ -19,6 +19,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 
@@ -180,6 +181,10 @@ BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
 /// predecessor.
 ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
                                        BasicBlock *Pred);
+
+/// GetFirstDebugLocInBasicBlock - Return first valid DebugLoc entry in a 
+/// given basic block.
+DebugLoc GetFirstDebugLocInBasicBlock(const BasicBlock *BB);
 
 } // End llvm namespace
 

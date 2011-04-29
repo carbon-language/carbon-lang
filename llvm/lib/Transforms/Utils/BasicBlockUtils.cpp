@@ -538,3 +538,15 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   UncondBranch->eraseFromParent();
   return cast<ReturnInst>(NewRet);
 }
+
+/// GetFirstDebugLocInBasicBlock - Return first valid DebugLoc entry in a 
+/// given basic block.
+DebugLoc llvm::GetFirstDebugLocInBasicBlock(const BasicBlock *BB) {
+  for (BasicBlock::const_iterator BI = BB->begin(), BE = BB->end(); 
+       BI != BE; ++BI) {
+    DebugLoc DL = BI->getDebugLoc();
+    if (!DL.isUnknown())
+      return DL;
+  }
+  return DebugLoc();
+}

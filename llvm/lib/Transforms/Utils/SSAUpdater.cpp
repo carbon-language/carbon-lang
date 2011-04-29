@@ -21,8 +21,10 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Transforms/Utils/SSAUpdaterImpl.h"
+
 using namespace llvm;
 
 typedef DenseMap<BasicBlock*, Value*> AvailableValsTy;
@@ -184,6 +186,9 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
     InsertedPHI->eraseFromParent();
     return V;
   }
+
+  // Set DebugLoc.
+  InsertedPHI->setDebugLoc(GetFirstDebugLocInBasicBlock(BB));
 
   // If the client wants to know about all new instructions, tell it.
   if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
