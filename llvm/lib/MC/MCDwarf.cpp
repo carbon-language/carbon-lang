@@ -679,15 +679,23 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   streamer.EmitULEB128IntValue(asmInfo.getDwarfRARegNum(true));
 
   // Augmentation Data Length (optional)
-  MCSymbol *augmentationStart = streamer.getContext().CreateTempSymbol();
-  MCSymbol *augmentationEnd = streamer.getContext().CreateTempSymbol();
-  const MCExpr *augmentationLength = MakeStartMinusEndExpr(streamer,
-                                                           *augmentationStart,
-                                                           *augmentationEnd, 0);
-  streamer.EmitULEB128Value(augmentationLength);
+
+  unsigned augmentationLength = 0;
+  if (personality) {
+    // Personality Encoding
+    augmentationLength += 1;
+    // Personality
+    augmentationLength += getSizeForEncoding(streamer, personalityEncoding);
+  }
+  if (lsda) {
+    augmentationLength += 1;
+  }
+  // Encoding of the FDE pointers
+  augmentationLength += 1;
+
+  streamer.EmitULEB128IntValue(augmentationLength);
 
   // Augmentation Data (optional)
-  streamer.EmitLabel(augmentationStart);
   if (personality) {
     // Personality Encoding
     streamer.EmitIntValue(personalityEncoding, 1);
@@ -700,7 +708,6 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   }
   // Encoding of the FDE pointers
   streamer.EmitIntValue(asmInfo.getFDEEncoding(), 1);
-  streamer.EmitLabel(augmentationEnd);
 
   // Initial Instructions
 
@@ -763,15 +770,14 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   streamer.EmitAbsValue(Range, size);
 
   // Augmentation Data Length
-  MCSymbol *augmentationStart = streamer.getContext().CreateTempSymbol();
-  MCSymbol *augmentationEnd = streamer.getContext().CreateTempSymbol();
-  const MCExpr *augmentationLength = MakeStartMinusEndExpr(streamer,
-                                                           *augmentationStart,
-                                                           *augmentationEnd, 0);
-  streamer.EmitULEB128Value(augmentationLength);
+  unsigned augmentationLength = 0;
+
+  if (frame.Lsda || forceLsda)
+    augmentationLength += getSizeForEncoding(streamer, frame.LsdaEncoding);
+
+  streamer.EmitULEB128IntValue(augmentationLength);
 
   // Augmentation Data
-  streamer.EmitLabel(augmentationStart);
 
   // When running in "CodeGen compatibility mode" a FDE with no LSDA can be
   // assigned to a CIE that requires one. In that case we output a 0 (as does
@@ -779,9 +785,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   if (frame.Lsda)
     EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
   else if (forceLsda)
-    streamer.EmitIntValue(0, size);
+    streamer.EmitIntValue(0, getSizeForEncoding(streamer, frame.LsdaEncoding));
 
-  streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
 
   EmitCFIInstructions(streamer, frame.Instructions, frame.Begin);
