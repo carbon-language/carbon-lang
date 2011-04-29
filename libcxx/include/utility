@@ -211,6 +211,13 @@ struct _LIBCPP_VISIBLE pair
     _LIBCPP_INLINE_VISIBILITY pair(const _T1& __x, const _T2& __y)
         : first(__x), second(__y) {}
 
+    template<class _U1, class _U2>
+        _LIBCPP_INLINE_VISIBILITY
+        pair(const pair<_U1, _U2>& __p,
+                 typename enable_if<is_convertible<_U1, _T1>::value &&
+                                    is_convertible<_U2, _T2>::value>::type* = 0)
+            : first(__p.first), second(__p.second) {}
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     template <class _U1, class _U2,
@@ -221,6 +228,14 @@ struct _LIBCPP_VISIBLE pair
             : first(_STD::forward<_U1>(__u1)),
               second(_STD::forward<_U2>(__u2))
             {}
+
+    template<class _U1, class _U2>
+        _LIBCPP_INLINE_VISIBILITY
+        pair(pair<_U1, _U2>&& __p,
+                 typename enable_if<is_convertible<_U1, _T1>::value &&
+                                    is_convertible<_U2, _T2>::value>::type* = 0)
+            : first(_STD::forward<_U1>(__p.first)),
+              second(_STD::forward<_U2>(__p.second)) {}
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
@@ -261,10 +276,6 @@ struct _LIBCPP_VISIBLE pair
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template<class _U1, class _U2>
-        _LIBCPP_INLINE_VISIBILITY pair(const pair<_U1, _U2>& __p)
-            : first(__p.first), second(__p.second) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void _LIBCPP_INLINE_VISIBILITY swap(pair& __p) {_STD::swap(*this, __p);}
 private:
