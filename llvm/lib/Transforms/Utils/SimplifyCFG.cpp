@@ -201,11 +201,20 @@ static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
 /// which works well enough for us.
 ///
 /// If AggressiveInsts is non-null, and if V does not dominate BB, we check to
-/// see if V (which must be an instruction) is cheap to compute and is
-/// non-trapping.  If both are true, the instruction is inserted into the set
-/// and true is returned.
+/// see if V (which must be an instruction) and its recursive operands
+/// that do not dominate BB have a combined cost lower than CostRemaining and
+/// are non-trapping.  If both are true, the instruction is inserted into the
+/// set and true is returned.
+///
+/// The cost for most non-trapping instructions is defined as 1 except for
+/// Select whose cost is 2.
+///
+/// After this function returns, CostRemaining is decreased by the cost of
+/// V plus its non-dominating operands.  If that cost is greater than
+/// CostRemaining, false is returned and CostRemaining is undefined.
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
-                                SmallPtrSet<Instruction*, 4> *AggressiveInsts) {
+                                SmallPtrSet<Instruction*, 4> *AggressiveInsts,
+                                unsigned &CostRemaining) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) {
     // Non-instructions all dominate instructions, but not all constantexprs
@@ -232,11 +241,16 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   // instructions in the 'if region'.
   if (AggressiveInsts == 0) return false;
   
+  // If we have seen this instruction before, don't count it again.
+  if (AggressiveInsts->count(I)) return true;
+
   // Okay, it looks like the instruction IS in the "condition".  Check to
   // see if it's a cheap instruction to unconditionally compute, and if it
   // only uses stuff defined outside of the condition.  If so, hoist it out.
   if (!I->isSafeToSpeculativelyExecute())
     return false;
+
+  unsigned Cost = 0;
 
   switch (I->getOpcode()) {
   default: return false;  // Cannot hoist this out safely.
@@ -246,11 +260,13 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
     // predecessor.
     if (PBB->getFirstNonPHIOrDbg() != I)
       return false;
+    Cost = 1;
     break;
   case Instruction::GetElementPtr:
     // GEPs are cheap if all indices are constant.
     if (!cast<GetElementPtrInst>(I)->hasAllConstantIndices())
       return false;
+    Cost = 1;
     break;
   case Instruction::Add:
   case Instruction::Sub:
@@ -264,13 +280,23 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
+    Cost = 1;
     break;   // These are all cheap and non-trapping instructions.
+
+  case Instruction::Select:
+    Cost = 2;
+    break;
   }
 
-  // Okay, we can only really hoist these out if their operands are not
-  // defined in the conditional region.
+  if (Cost > CostRemaining)
+    return false;
+
+  CostRemaining -= Cost;
+
+  // Okay, we can only really hoist these out if their operands do
+  // not take us over the cost threshold.
   for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-    if (!DominatesMergePoint(*i, BB, 0))
+    if (!DominatesMergePoint(*i, BB, AggressiveInsts, CostRemaining))
       return false;
   // Okay, it's safe to do this!  Remember this instruction.
   AggressiveInsts->insert(I);
@@ -1220,6 +1246,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // instructions.  While we are at it, keep track of the instructions
   // that need to be moved to the dominating block.
   SmallPtrSet<Instruction*, 4> AggressiveInsts;
+  unsigned MaxCostVal0 = 1, MaxCostVal1 = 1;
   
   for (BasicBlock::iterator II = BB->begin(); isa<PHINode>(II);) {
     PHINode *PN = cast<PHINode>(II++);
@@ -1229,8 +1256,10 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
       continue;
     }
     
-    if (!DominatesMergePoint(PN->getIncomingValue(0), BB, &AggressiveInsts) ||
-        !DominatesMergePoint(PN->getIncomingValue(1), BB, &AggressiveInsts))
+    if (!DominatesMergePoint(PN->getIncomingValue(0), BB, &AggressiveInsts,
+                             MaxCostVal0) ||
+        !DominatesMergePoint(PN->getIncomingValue(1), BB, &AggressiveInsts,
+                             MaxCostVal1))
       return false;
   }
   

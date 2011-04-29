@@ -6,6 +6,7 @@
 define i32 @test(i1 %a, i1 %b) {
 ; CHECK: br i1 %a
         br i1 %a, label %M, label %O
+; CHECK: O:
 O:              ; preds = %0
 ; CHECK: select i1 %b, i32 0, i32 1
 ; CHECK-NOT: phi
