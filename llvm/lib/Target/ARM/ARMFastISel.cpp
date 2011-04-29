@@ -1731,9 +1731,6 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   else if (!isTypeLegal(RetTy, RetVT))
     return false;
 
-  // For now we're using BLX etc on the assumption that we have v5t ops.
-  if (!Subtarget->hasV5TOps()) return false;
-
   // TODO: For now if we have long calls specified we don't handle the call.
   if (EnableARMLongCalls) return false;
 
@@ -1771,7 +1768,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
+  // Issue the call, BLr9 for darwin, BL otherwise.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(NULL);
@@ -1832,10 +1829,6 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   else if (!isTypeLegal(RetTy, RetVT))
     return false;
 
-  // For now we're using BLX etc on the assumption that we have v5t ops.
-  // TODO: Maybe?
-  if (!Subtarget->hasV5TOps()) return false;
-
   // TODO: For now if we have long calls specified we don't handle the call.
   if (EnableARMLongCalls) return false;
 
@@ -1887,7 +1880,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLXr9 for darwin, BLX otherwise. This uses V5 ops.
+  // Issue the call, BLr9 for darwin, BL otherwise.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(GV);
