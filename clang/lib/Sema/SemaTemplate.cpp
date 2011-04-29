@@ -3106,9 +3106,13 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
       AddressTaken = true;
       AddrOpLoc = UnOp->getOperatorLoc();
     }
-  } else
+  } else {
+    if (S.getLangOptions().Microsoft && isa<CXXUuidofExpr>(Arg)) {
+      Converted = TemplateArgument(ArgIn);
+      return false;
+    }
     DRE = dyn_cast<DeclRefExpr>(Arg);
-
+  }
   if (!DRE) {
     S.Diag(Arg->getLocStart(), diag::err_template_arg_not_decl_ref)
       << Arg->getSourceRange();

@@ -101,6 +101,9 @@ class COM_CLASS_TEMPLATE  { };
 typedef COM_CLASS_TEMPLATE<struct_with_uuid, &__uuidof(struct_with_uuid)> COM_TYPE_1;
 typedef COM_CLASS_TEMPLATE<struct_with_uuid> COM_TYPE_2;
 
+template <class T, const GUID& g>
+class COM_CLASS_TEMPLATE_REF  { };
+typedef COM_CLASS_TEMPLATE<struct_with_uuid, __uuidof(struct_with_uuid)> COM_TYPE_REF;
 
 
 class CtorCall { 
