@@ -38,14 +38,22 @@ define void @test2(i32 %tmp, i32* %ptr) nounwind {
 ; ARM: test2:
 
 b1:
-  %b = add i32 %tmp, 4096
-  store i32 %b, i32* %ptr
+  %a = add i32 %tmp, 4096
+  store i32 %a, i32* %ptr
   br label %b2
 
 ; THUMB: add.w {{.*}} #4096
 ; ARM: add {{.*}} #1, #20
 
 b2:
+  %b = add i32 %tmp, 4095
+  store i32 %b, i32* %ptr
+  br label %b3
+; THUMB: addw {{.*}} #4095
+; ARM: movw {{.*}} #4095
+; ARM: add
+
+b3:
   %c = or i32 %tmp, 4
   store i32 %c, i32* %ptr
   ret void

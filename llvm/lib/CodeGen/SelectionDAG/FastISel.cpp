@@ -1032,8 +1032,13 @@ unsigned FastISel::FastEmit_ri_(MVT VT, unsigned Opcode,
   if (ResultReg != 0)
     return ResultReg;
   unsigned MaterialReg = FastEmit_i(ImmType, ImmType, ISD::Constant, Imm);
-  if (MaterialReg == 0)
-    return 0;
+  if (MaterialReg == 0) {
+    // This is a bit ugly/slow, but failing here means falling out of
+    // fast-isel, which would be very slow.
+    const IntegerType *ITy = IntegerType::get(FuncInfo.Fn->getContext(),
+                                              VT.getSizeInBits());
+    MaterialReg = getRegForValue(ConstantInt::get(ITy, Imm));
+  }
   return FastEmit_rr(VT, VT, Opcode,
                      Op0, Op0IsKill,
                      MaterialReg, /*Kill=*/true);
