@@ -92,7 +92,7 @@ class LLDBIteratorTestCase(TestBase):
             if self.TraceOn():
                 print "yours[%d]='%s'" % (i, get_description(yours[i]))
                 print "mine[%d]='%s'" % (i, get_description(mine[i]))
-            self.assertTrue(yours[i].GetID() == mine[i].GetID(),
+            self.assertTrue(yours[i] == mine[i],
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
     def lldb_iter_3(self):
