@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wnon-pod-memset -verify %s
 
 extern void *memset(void *, int, unsigned);
 

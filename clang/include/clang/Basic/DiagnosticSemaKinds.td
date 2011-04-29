@@ -263,7 +263,7 @@ def err_types_compatible_p_in_cplusplus : Error<
 def warn_builtin_unknown : Warning<"use of unknown builtin %0">, DefaultError;
 def warn_non_pod_memset : Warning<
   "destination for this memset call is a pointer to a non-POD type %0">,
-  InGroup<DiagGroup<"non-pod-memset">>;
+  InGroup<DiagGroup<"non-pod-memset">>, DefaultIgnore;
 def note_non_pod_memset_silence : Note<
   "explicitly cast the pointer to silence this warning">;
 
