@@ -14,3 +14,18 @@ entry:
   %add = add nsw i32 %tmp, %tmp1
   ret i32 %add
 }
+
+define void @test1(i32 %tmp) nounwind {
+entry:
+%tobool = trunc i32 %tmp to i1
+br i1 %tobool, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+call void @test1(i32 0)
+br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+ret void
+; CHECK: test1:
+; CHECK: tst	r0, #1
+}

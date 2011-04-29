@@ -1116,6 +1116,30 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       FuncInfo.MBB->addSuccessor(TBB);
       return true;
     }
+  } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
+    MVT SourceVT;
+    if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
+        (isTypeLegal(TI->getOperand(0)->getType(), SourceVT))) {
+      unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
+      unsigned OpReg = getRegForValue(TI->getOperand(0));
+      AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                              TII.get(TstOpc))
+                      .addReg(OpReg).addImm(1));
+
+      unsigned CCMode = ARMCC::NE;
+      if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
+        std::swap(TBB, FBB);
+        CCMode = ARMCC::EQ;
+      }
+
+      unsigned BrOpc = isThumb ? ARM::t2Bcc : ARM::Bcc;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(BrOpc))
+      .addMBB(TBB).addImm(CCMode).addReg(ARM::CPSR);
+
+      FastEmitBranch(FBB, DL);
+      FuncInfo.MBB->addSuccessor(TBB);
+      return true;
+    }
   }
 
   unsigned CmpReg = getRegForValue(BI->getCondition());
@@ -1131,7 +1155,6 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
                   .addReg(CmpReg).addImm(1));
-
 
   unsigned CCMode = ARMCC::NE;
   if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
