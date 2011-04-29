@@ -7,6 +7,14 @@ struct S1 {} s1;
 struct S2 { int x; } s2;
 struct S3 { float x, y; S1 s[4]; void (*f)(S1**); } s3;
 
+// We use the C++11 concept of POD for this warning, so ensure a non-aggregate
+// still warns.
+class C1 {
+  int x, y, z;
+public:
+  void foo() {}
+} c1;
+
 // Non-POD types that should warn.
 struct X1 { X1(); } x1;
 struct X2 { ~X2(); } x2;
@@ -45,6 +53,7 @@ void test_nowarn(void *void_ptr) {
   memset(&s1, 0, sizeof s1);
   memset(&s2, 0, sizeof s2);
   memset(&s3, 0, sizeof s3);
+  memset(&c1, 0, sizeof c1);
 
   // Unevaluated code shouldn't warn.
   (void)sizeof memset(&x1, 0, sizeof x1);

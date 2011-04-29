@@ -1179,6 +1179,12 @@ public:
   /// (C++0x [basic.types]p9)
   bool isTrivialType() const;
 
+  /// isCXX11PODType() - Return true if this is a POD type according to the
+  /// more relaxed rules of the C++11 standard, regardless of the current
+  /// compilation's language.
+  /// (C++0x [basic.types]p9)
+  bool isCXX11PODType() const;
+
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
 

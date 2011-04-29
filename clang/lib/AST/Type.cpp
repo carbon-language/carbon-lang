@@ -943,6 +943,52 @@ bool Type::isTrivialType() const {
   return false;
 }
 
+// This is effectively the intersection of isTrivialType and hasStandardLayout.
+// We implement it dircetly to avoid redundant conversions from a type to
+// a CXXRecordDecl.
+bool Type::isCXX11PODType() const {
+  if (isIncompleteType())
+    return false;
+
+  // C++11 [basic.types]p9:
+  //   Scalar types, POD classes, arrays of such types, and cv-qualified
+  //   versions of these types are collectively called trivial types.
+  const Type *BaseTy = getBaseElementTypeUnsafe();
+  assert(BaseTy && "NULL element type");
+  if (BaseTy->isScalarType()) return true;
+  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      // C++11 [class]p10:
+      //   A POD struct is a non-union class that is both a trivial class [...]
+      // C++11 [class]p5:
+      //   A trivial class is a class that has a trivial default constructor
+      if (!ClassDecl->hasTrivialConstructor()) return false;
+      //   and is trivially copyable.
+      if (!ClassDecl->isTriviallyCopyable()) return false;
+
+      // C++11 [class]p10:
+      //   A POD struct is a non-union class that is both a trivial class and
+      //   a standard-layout class [...]
+      if (!ClassDecl->hasStandardLayout()) return false;
+
+      // C++11 [class]p10:
+      //   A POD struct is a non-union class that is both a trivial class and
+      //   a standard-layout class, and has no non-static data members of type
+      //   non-POD struct, non-POD union (or array of such types). [...]
+      //
+      // We don't directly query the recursive aspect as the requiremets for
+      // both standard-layout classes and trivial classes apply recursively
+      // already.
+    }
+
+    return true;
+  }
+
+  // No other types can match.
+  return false;
+}
+
 bool Type::isPromotableIntegerType() const {
   if (const BuiltinType *BT = getAs<BuiltinType>())
     switch (BT->getKind()) {

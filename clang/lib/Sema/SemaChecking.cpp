@@ -1812,21 +1812,34 @@ void Sema::CheckMemsetArguments(const CallExpr *Call) {
 
   const Expr *Dest = Call->getArg(0)->IgnoreParenImpCasts();
 
+  // The type checking for this warning is moderately expensive, only do it
+  // when enabled.
+  if (getDiagnostics().getDiagnosticLevel(diag::warn_non_pod_memset,
+                                          Dest->getExprLoc()) ==
+      Diagnostic::Ignored)
+    return;
+
   QualType DestTy = Dest->getType();
   if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
     QualType PointeeTy = DestPtrTy->getPointeeType();
-    if (!PointeeTy->isPODType() && !PointeeTy->isVoidType()) {
-      DiagRuntimeBehavior(
-        Dest->getExprLoc(), Dest,
-        PDiag(diag::warn_non_pod_memset)
-          << PointeeTy << Call->getCallee()->getSourceRange());
+    if (PointeeTy->isVoidType())
+      return;
 
-      SourceRange ArgRange = Call->getArg(0)->getSourceRange();
-      DiagRuntimeBehavior(
-        Dest->getExprLoc(), Dest,
-        PDiag(diag::note_non_pod_memset_silence)
-          << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
-    }
+    // Check the C++11 POD definition regardless of language mode; it is more
+    // relaxed than earlier definitions and we don't want spurrious warnings.
+    if (PointeeTy->isCXX11PODType())
+      return;
+
+    DiagRuntimeBehavior(
+      Dest->getExprLoc(), Dest,
+      PDiag(diag::warn_non_pod_memset)
+        << PointeeTy << Call->getCallee()->getSourceRange());
+
+    SourceRange ArgRange = Call->getArg(0)->getSourceRange();
+    DiagRuntimeBehavior(
+      Dest->getExprLoc(), Dest,
+      PDiag(diag::note_non_pod_memset_silence)
+        << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
   }
 }
 
