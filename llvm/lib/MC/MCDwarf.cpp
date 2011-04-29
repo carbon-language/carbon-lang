@@ -517,7 +517,8 @@ namespace {
                             unsigned lsdaEncoding);
     MCSymbol *EmitFDE(MCStreamer &streamer,
                       const MCSymbol &cieStart,
-                      const MCDwarfFrameInfo &frame);
+                      const MCDwarfFrameInfo &frame,
+                      bool forceLsda);
     void EmitCFIInstructions(MCStreamer &streamer,
                              const std::vector<MCCFIInstruction> &Instrs,
                              MCSymbol *BaseLabel);
@@ -727,7 +728,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
 MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
                                     const MCSymbol &cieStart,
-                                    const MCDwarfFrameInfo &frame) {
+                                    const MCDwarfFrameInfo &frame,
+                                    bool forceLsda) {
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
@@ -770,8 +772,15 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
   // Augmentation Data
   streamer.EmitLabel(augmentationStart);
+
+  // When running in "CodeGen compatibility mode" a FDE with no LSDA can be
+  // assigned to a CIE that requires one. In that case we output a 0 (as does
+  // CodeGen).
   if (frame.Lsda)
     EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
+  else if (forceLsda)
+    streamer.EmitIntValue(0, size);
+
   streamer.EmitLabel(augmentationEnd);
   // Call Frame Instructions
 
@@ -862,10 +871,16 @@ void MCDwarfFrameEmitter::EmitDarwin(MCStreamer &streamer) {
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
     const MCSymbol *cieStart = Personalities[frame.Personality];
-    if (!cieStart)
+    bool hasLSDA;
+    if (!cieStart) {
       cieStart = aCIE;
+      hasLSDA = aFrame->Lsda;
+    } else {
+      hasLSDA = true;
+    }
 
-    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame);
+    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame,
+                             hasLSDA);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);
   }
@@ -898,7 +913,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer) {
       cieStart = &Emitter.EmitCIE(streamer, frame.Personality,
                                   frame.PersonalityEncoding, frame.Lsda,
                                   frame.LsdaEncoding);
-    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame);
+    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame, false);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);
   }
