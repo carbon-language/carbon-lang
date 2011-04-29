@@ -53,6 +53,14 @@ void DwarfCFIException::EndModule() {
     return;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+
+  if (!TLOF.isFunctionEHFrameSymbolPrivate()) {
+    // This is a temporary hack to keep sections in the same order they
+    // were before. This lets us produce bit identical outputs while
+    // transitioning to CFI.
+    Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
+  }
+
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
 
   if ((PerEncoding & 0x70) != dwarf::DW_EH_PE_pcrel)
