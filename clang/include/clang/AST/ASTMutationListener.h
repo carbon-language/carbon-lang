@@ -51,6 +51,9 @@ public:
 
   /// \brief An implicit member got a definition.
   virtual void CompletedImplicitDefinition(const FunctionDecl *D) {}
+
+  /// \brief A static data member was implicitly instantiated.
+  virtual void StaticDataMemberInstantiated(const VarDecl *D) {}
 };
 
 } // end namespace clang

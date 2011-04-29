@@ -82,7 +82,8 @@ namespace clang {
 
     void Visit(Decl *D);
 
-    void UpdateDecl(Decl *D, const RecordData &Record);
+    void UpdateDecl(Decl *D, ASTReader::PerFileData &Module,
+                    const RecordData &Record);
 
     void VisitDecl(Decl *D);
     void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
@@ -1703,7 +1704,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
       unsigned RecCode = Cursor.ReadRecord(Code, Record);
       (void)RecCode;
       assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
-      Reader.UpdateDecl(D, Record);
+      Reader.UpdateDecl(D, *F, Record);
     }
   }
 
@@ -1717,7 +1718,8 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   return D;
 }
 
-void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
+void ASTDeclReader::UpdateDecl(Decl *D, ASTReader::PerFileData &Module,
+                               const RecordData &Record) {
   unsigned Idx = 0;
   while (Idx < Record.size()) {
     switch ((DeclUpdateKind)Record[Idx++]) {
@@ -1752,6 +1754,11 @@ void ASTDeclReader::UpdateDecl(Decl *D, const RecordData &Record) {
       }
       break;
     }
+
+    case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
+      cast<VarDecl>(D)->getMemberSpecializationInfo()->setPointOfInstantiation(
+          Reader.ReadSourceLocation(Module, Record, Idx));
+      break;
     }
   }
 }

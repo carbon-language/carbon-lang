@@ -3955,4 +3955,16 @@ void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
   RewriteDecl(D);
 }
 
+void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
+  if (D->getPCHLevel() == 0)
+    return;
+
+  // Since the actual instantiation is delayed, this really means that we need
+  // to update the instantiation location.
+  UpdateRecord &Record = DeclUpdates[D];
+  Record.push_back(UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER);
+  AddSourceLocation(
+      D->getMemberSpecializationInfo()->getPointOfInstantiation(), Record);
+}
+
 ASTSerializationListener::~ASTSerializationListener() { }

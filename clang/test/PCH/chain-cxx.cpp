@@ -35,9 +35,23 @@ typedef TS2<int> TS2int;
 template <typename T> struct TestBaseSpecifiers { };
 template<typename T> struct TestBaseSpecifiers2 : TestBaseSpecifiers<T> { };
 
+template <typename T>
+struct TS3 {
+  static const int value = 0;
+};
+template <typename T>
+const int TS3<T>::value;
+// Instantiate struct, but not value.
+struct instantiate : TS3<int> {};
+
+
 //===----------------------------------------------------------------------===//
 #elif not defined(HEADER2)
 #define HEADER2
+#if !defined(HEADER1)
+#error Header inclusion order messed up
+#endif
+
 //===----------------------------------------------------------------------===//
 // Dependent header for C++ chained PCH test
 
@@ -80,6 +94,9 @@ struct TestBaseSpecifiers4 : TestBaseSpecifiers3 { };
 struct A { };
 struct B : A { };
 
+// Instantiate TS3's member.
+static const int ts3m1 = TS3<int>::value;
+
 //===----------------------------------------------------------------------===//
 #else
 //===----------------------------------------------------------------------===//
@@ -106,6 +123,9 @@ void test() {
 
   B b;
 }
+
+// Should have remembered that there is a definition.
+static const int ts3m2 = TS3<int>::value;
 
 //===----------------------------------------------------------------------===//
 #endif
