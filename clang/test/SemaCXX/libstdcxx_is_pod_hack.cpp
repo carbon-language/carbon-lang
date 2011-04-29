@@ -12,6 +12,13 @@ struct __is_pod {
 
 __is_pod<int> ipi;
 
+// Ditto for __is_same.
+template<typename T>
+struct __is_same {
+};
+
+__is_same<int> ipi;
+
 // Another, similar egregious hack for __is_signed, which is a type
 // trait in Embarcadero's compiler but is used as an identifier in
 // libstdc++.

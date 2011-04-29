@@ -738,7 +738,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
        Tok.is(tok::kw___is_pointer) ||
        Tok.is(tok::kw___is_arithmetic) ||
        Tok.is(tok::kw___is_fundamental) ||
-       Tok.is(tok::kw___is_scalar))) {
+       Tok.is(tok::kw___is_scalar) ||
+       Tok.is(tok::kw___is_same))) {
     // GNU libstdc++ 4.2 uses certain intrinsic names as the name of
     // struct templates, but these are keywords in GCC >= 4.3 and
     // Clang. Therefore, when we see the token sequence "struct X", make
