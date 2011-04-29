@@ -2,8 +2,8 @@
 # modify-lldb-python.py
 #
 # This script modifies the lldb module (which was automatically generated via
-# running swig) to support iteration for certain lldb objects, adds a global
-# variable 'debugger_unique_id' and initializes it to 0.
+# running swig) to support iteration and/or equality operations for certain lldb
+# objects, adds a global variable 'debugger_unique_id' and initializes it to 0.
 #
 # It also calls SBDebugger.Initialize() to initialize the lldb debugger
 # subsystem.
