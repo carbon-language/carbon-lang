@@ -550,7 +550,7 @@ public:
         // Add the local offset, if needed.
         if (Base != &SD)
           Value += Layout.getSymbolOffset(&SD) - Layout.getSymbolOffset(Base);
-      } else if (Symbol->isInSection()) {
+      } else if (Symbol->isInSection() && !Symbol->isVariable()) {
         // The index is the section ordinal (1-based).
         Index = SD.getFragment()->getParent()->getOrdinal() + 1;
         IsExtern = 0;
@@ -1028,17 +1028,17 @@ public:
       // FIXME!
       report_fatal_error("FIXME: relocations to absolute targets "
                          "not yet implemented");
-    } else if (SD->getSymbol().isVariable()) {
-      int64_t Res;
-      if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
-            Res, Layout, SectionAddress)) {
-        FixedValue = Res;
-        return;
+    } else {
+      // Resolve constant variables.
+      if (SD->getSymbol().isVariable()) {
+        int64_t Res;
+        if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
+              Res, Layout, SectionAddress)) {
+          FixedValue = Res;
+          return;
+        }
       }
 
-      report_fatal_error("unsupported relocation of variable '" +
-                         SD->getSymbol().getName() + "'");
-    } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
         IsExtern = 1;
@@ -1129,17 +1129,17 @@ public:
       // FIXME: Currently, these are never generated (see code below). I cannot
       // find a case where they are actually emitted.
       Type = macho::RIT_Vanilla;
-    } else if (SD->getSymbol().isVariable()) {
-      int64_t Res;
-      if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
-            Res, Layout, SectionAddress)) {
-        FixedValue = Res;
-        return;
+    } else {
+      // Resolve constant variables.
+      if (SD->getSymbol().isVariable()) {
+        int64_t Res;
+        if (SD->getSymbol().getVariableValue()->EvaluateAsAbsolute(
+              Res, Layout, SectionAddress)) {
+          FixedValue = Res;
+          return;
+        }
       }
 
-      report_fatal_error("unsupported relocation of variable '" +
-                         SD->getSymbol().getName() + "'");
-    } else {
       // Check whether we need an external or internal relocation.
       if (doesSymbolRequireExternRelocation(SD)) {
         IsExtern = 1;
