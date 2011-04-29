@@ -261,6 +261,9 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   case Instruction::LShr:
   case Instruction::AShr:
   case Instruction::ICmp:
+  case Instruction::Trunc:
+  case Instruction::ZExt:
+  case Instruction::SExt:
     break;   // These are all cheap and non-trapping instructions.
   }
 
