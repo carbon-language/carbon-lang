@@ -676,12 +676,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   //                 ::= M  # float
   //                 ::= N  # double
   //                 ::= O  # long double (__float80 is mangled differently)
-  //                 ::= _D # __int8 (yup, it's a distinct type in MSVC)
-  //                 ::= _E # unsigned __int8
-  //                 ::= _F # __int16
-  //                 ::= _G # unsigned __int16
-  //                 ::= _H # __int32
-  //                 ::= _I # unsigned __int32
   //                 ::= _J # long long, __int64
   //                 ::= _K # unsigned long long, __int64
   //                 ::= _L # __int128
@@ -706,7 +700,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Double: Out << 'N'; break;
   // TODO: Determine size and mangle accordingly
   case BuiltinType::LongDouble: Out << 'O'; break;
-  // TODO: __int8 and friends
   case BuiltinType::LongLong: Out << "_J"; break;
   case BuiltinType::ULongLong: Out << "_K"; break;
   case BuiltinType::Int128: Out << "_L"; break;
