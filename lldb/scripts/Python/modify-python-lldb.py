@@ -124,8 +124,9 @@ for line in content.splitlines():
                 if (state & DEFINING_EQUALITY):
                     print >> new_content, eq_def % (cls, e[cls], e[cls])
                     print >> new_content, ne_def
-                # Next state will be NORMAL.
-                state = NORMAL
+
+            # Next state will be NORMAL.
+            state = NORMAL
 
     # Pass the original line of content to the ew_content.
     print >> new_content, line
