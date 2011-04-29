@@ -1,7 +1,7 @@
 // no PCH
-// RUN: %clang_cc1 -emit-llvm -o /dev/null -include %s -include %s %s
+// RUN: %clang_cc1 -emit-llvm-only -include %s -include %s %s
 // with PCH
-// RUN: %clang_cc1 -emit-llvm -o /dev/null -chain-include %s -chain-include %s %s
+// RUN: %clang_cc1 -emit-llvm-only -chain-include %s -chain-include %s %s
 #if !defined(PASS1)
 #define PASS1
 
