@@ -1021,7 +1021,7 @@ reMaterialize(MachineBasicBlock &MBB,
     MachineInstrBuilder MIB = BuildMI(MBB, I, Orig->getDebugLoc(), get(Opcode),
                                       DestReg)
       .addConstantPoolIndex(CPI).addImm(PCLabelId);
-    (*MIB).setMemRefs(Orig->memoperands_begin(), Orig->memoperands_end());
+    MIB->setMemRefs(Orig->memoperands_begin(), Orig->memoperands_end());
     break;
   }
   }

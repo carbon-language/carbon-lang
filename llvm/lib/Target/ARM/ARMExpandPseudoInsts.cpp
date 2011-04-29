@@ -457,7 +457,7 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
   TransferImpOps(MI, MIB, MIB);
 
   // Transfer memoperands.
-  (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+  MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
 
   MI.eraseFromParent();
 }
@@ -500,13 +500,12 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
 
-  if (SrcIsKill)
-    // Add an implicit kill for the super-reg.
-    (*MIB).addRegisterKilled(SrcReg, TRI, true);
+  if (SrcIsKill) // Add an implicit kill for the super-reg.
+    MIB->addRegisterKilled(SrcReg, TRI, true);
   TransferImpOps(MI, MIB, MIB);
 
   // Transfer memoperands.
-  (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+  MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
 
   MI.eraseFromParent();
 }
@@ -630,9 +629,8 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MIB.addOperand(MI.getOperand(OpIdx++));
   MIB.addOperand(MI.getOperand(OpIdx++));
 
-  if (SrcIsKill)
-    // Add an implicit kill for the super-reg.
-    (*MIB).addRegisterKilled(SrcReg, TRI, true);
+  if (SrcIsKill)  // Add an implicit kill for the super-reg.
+    MIB->addRegisterKilled(SrcReg, TRI, true);
   TransferImpOps(MI, MIB, MIB);
   MI.eraseFromParent();
 }
@@ -663,8 +661,8 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
     unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
     LO16 = LO16.addImm(SOImmValV1);
     HI16 = HI16.addImm(SOImmValV2);
-    (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-    (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+    LO16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+    HI16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
     LO16.addImm(Pred).addReg(PredReg).addReg(0);
     HI16.addImm(Pred).addReg(PredReg).addReg(0);
     TransferImpOps(MI, LO16, HI16);
@@ -700,8 +698,8 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
     HI16 = HI16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_HI16);
   }
 
-  (*LO16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-  (*HI16).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+  LO16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+  HI16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
   LO16.addImm(Pred).addReg(PredReg);
   HI16.addImm(Pred).addReg(PredReg);
 
@@ -864,7 +862,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                 TII->get(ARM::BL))
         .addExternalSymbol("__aeabi_read_tp", 0);
 
-      (*MIB).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       TransferImpOps(MI, MIB, MIB);
       MI.eraseFromParent();
       return true;
@@ -879,7 +877,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
         AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                TII->get(NewLdOpc), DstReg)
                        .addOperand(MI.getOperand(1)));
-      (*MIB1).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+      MIB1->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(ARM::tPICADD))
         .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
@@ -935,7 +933,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       if (isARM) {
         AddDefaultPred(MIB3);
         if (Opcode == ARM::MOV_ga_pcrel_ldr)
-          (*MIB2).setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
+          MIB2->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       }
       TransferImpOps(MI, MIB1, MIB3);
       MI.eraseFromParent();
@@ -1027,9 +1025,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned D1 = TRI->getSubReg(SrcReg, ARM::dsub_1);
       MIB.addReg(D0).addReg(D1);
 
-      if (SrcIsKill)
-        // Add an implicit kill for the Q register.
-        (*MIB).addRegisterKilled(SrcReg, TRI, true);
+      if (SrcIsKill)      // Add an implicit kill for the Q register.
+        MIB->addRegisterKilled(SrcReg, TRI, true);
 
       TransferImpOps(MI, MIB, MIB);
       MI.eraseFromParent();
