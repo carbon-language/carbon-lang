@@ -1787,7 +1787,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = __move_and_check(next(__b), __b + __pos, __b, __vt);
+                __b = __move_and_check(_STD::next(__b), __b + __pos, __b, __vt);
             *__b = *__vt;
         }
     }
@@ -1847,7 +1847,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, value_type&& __v)
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = _STD::move(next(__b), __b + __pos, __b);
+                __b = _STD::move(_STD::next(__b), __b + __pos, __b);
             *__b = _STD::move(__v);
         }
     }
@@ -1905,7 +1905,7 @@ deque<_Tp, _Allocator>::emplace(const_iterator __p, _Args&&... __args)
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = _STD::move(next(__b), __b + __pos, __b);
+                __b = _STD::move(_STD::next(__b), __b + __pos, __b);
             *__b = value_type(_STD::forward<_Args>(__args)...);
         }
     }
@@ -2621,7 +2621,7 @@ deque<_Tp, _Allocator>::erase(const_iterator __f)
     }
     else
     {   // erase from back
-        iterator __i = _STD::move(next(__p), __base::end(), __p);
+        iterator __i = _STD::move(_STD::next(__p), __base::end(), __p);
         __alloc_traits::destroy(__a, _STD::addressof(*__i));
         --__base::size();
         if (__back_spare() >= 2 * __base::__block_size)

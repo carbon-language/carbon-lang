@@ -1609,7 +1609,7 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
         const_iterator __next = _STD::next(__hint);
         if (__next == end() || value_comp()(__v, *__next))
         {
-            // *__hint < __v < *next(__hint)
+            // *__hint < __v < *_STD::next(__hint)
             if (__hint.__ptr_->__right_ == nullptr)
             {
                 __parent = const_cast<__node_pointer&>(__hint.__ptr_);
