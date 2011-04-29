@@ -78,8 +78,7 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   shouldEmitTable = !MMI->getLandingPads().empty();
 
   // See if we need frame move info.
-  shouldEmitMoves = MMI->hasDebugInfo() ||
-    !Asm->MF->getFunction()->doesNotThrow() || UnwindTablesMandatory;
+  shouldEmitMoves = Asm->needsCFIMoves();
 
   if (shouldEmitMoves || shouldEmitTable)
     // Assumes in correct section after the entry point.

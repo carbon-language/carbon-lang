@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/SmallString.h"
@@ -591,6 +592,19 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   return true;
 }
 
+bool AsmPrinter::needsCFIMoves() {
+  if (UnwindTablesMandatory)
+    return true;
+
+  if (MMI->hasDebugInfo() && !MAI->doesDwarfRequireFrameSection())
+    return true;
+
+  if (MF->getFunction()->doesNotThrow())
+    return false;
+
+  return true;
+}
+
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 
@@ -601,8 +615,10 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     return;
 
-  const MachineFunction &MF = *MI.getParent()->getParent();
-  MachineModuleInfo &MMI = MF.getMMI();
+  if (!needsCFIMoves())
+    return;
+
+  MachineModuleInfo &MMI = MF->getMMI();
   std::vector<MachineMove> &Moves = MMI.getFrameMoves();
   bool FoundOne = false;
   (void)FoundOne;
