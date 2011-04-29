@@ -2377,9 +2377,9 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
     // to their spots on the stack so that they may be loaded by deferencing
     // the result of va_next.
     AFI->setVarArgsRegSaveSize(VARegSaveSize);
-    AFI->setVarArgsFrameIndex(
-                              MFI->CreateFixedObject(VARegSaveSize,
-                                                     ArgOffset + VARegSaveSize - VARegSize,
+    AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(VARegSaveSize,
+                                                     ArgOffset + VARegSaveSize
+                                                     - VARegSize,
                                                      false));
     SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
                                     getPointerTy());
@@ -2396,7 +2396,7 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
       SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
       SDValue Store =
         DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                     MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
+                 MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
                      false, false, 0);
       MemOps.push_back(Store);
       FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
@@ -2525,10 +2525,11 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       if (index != lastInsIndex)
         {
           ISD::ArgFlagsTy Flags = Ins[index].Flags;
-          // FIXME: For now, all byval parameter objects are marked mutable. This can be
-          // changed with more analysis.
-          // In case of tail call optimization mark all arguments mutable. Since they
-          // could be overwritten by lowering of arguments in case of a tail call.
+          // FIXME: For now, all byval parameter objects are marked mutable. 
+          // This can be changed with more analysis.
+          // In case of tail call optimization mark all arguments mutable.
+          // Since they could be overwritten by lowering of arguments in case of
+          // a tail call.
           if (Flags.isByVal()) {
             unsigned VARegSize, VARegSaveSize;
             computeRegArea(CCInfo, MF, VARegSize, VARegSaveSize);
