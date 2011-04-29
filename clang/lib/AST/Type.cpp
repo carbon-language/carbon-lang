@@ -891,22 +891,24 @@ bool Type::isLiteralType() const {
   if (BaseTy->isReferenceType()) return true;
   //    -- a class type that has all of the following properties:
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
-    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-    //      -- a trivial destructor,
-    if (!ClassDecl->hasTrivialDestructor()) return false;
-    //      -- every constructor call and full-expression in the
-    //         brace-or-equal-initializers for non-static data members (if any)
-    //         is a constant expression,
-    // FIXME: C++0x: Clang doesn't yet support non-static data member
-    // declarations with initializers, or constexprs.
-    //      -- it is an aggregate type or has at least one constexpr
-    //         constructor or constructor template that is not a copy or move
-    //         constructor, and
-    if (!ClassDecl->isAggregate() &&
-        !ClassDecl->hasConstExprNonCopyMoveConstructor())
-      return false;
-    //      -- all non-static data members and base classes of literal types
-    if (ClassDecl->hasNonLiteralTypeFieldsOrBases()) return false;
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      //    -- a trivial destructor,
+      if (!ClassDecl->hasTrivialDestructor()) return false;
+      //    -- every constructor call and full-expression in the
+      //       brace-or-equal-initializers for non-static data members (if any)
+      //       is a constant expression,
+      // FIXME: C++0x: Clang doesn't yet support non-static data member
+      // declarations with initializers, or constexprs.
+      //    -- it is an aggregate type or has at least one constexpr
+      //       constructor or constructor template that is not a copy or move
+      //       constructor, and
+      if (!ClassDecl->isAggregate() &&
+          !ClassDecl->hasConstExprNonCopyMoveConstructor())
+        return false;
+      //    -- all non-static data members and base classes of literal types
+      if (ClassDecl->hasNonLiteralTypeFieldsOrBases()) return false;
+    }
 
     return true;
   }
@@ -925,13 +927,14 @@ bool Type::isTrivialType() const {
   assert(BaseTy && "NULL element type");
   if (BaseTy->isScalarType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
-    const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-
-    // C++0x [class]p5:
-    //   A trivial class is a class that has a trivial default constructor
-    if (!ClassDecl->hasTrivialConstructor()) return false;
-    //   and is trivially copyable.
-    if (!ClassDecl->isTriviallyCopyable()) return false;
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      // C++0x [class]p5:
+      //   A trivial class is a class that has a trivial default constructor
+      if (!ClassDecl->hasTrivialConstructor()) return false;
+      //   and is trivially copyable.
+      if (!ClassDecl->isTriviallyCopyable()) return false;
+    }
 
     return true;
   }
