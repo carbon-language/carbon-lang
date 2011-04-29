@@ -15,6 +15,7 @@
 
 #include "Profiling.h"
 #include "llvm/Analysis/ProfileInfoTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <sys/types.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
@@ -23,7 +24,6 @@
 #endif
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdio.h>
 
 // Must use __inline in Microsoft C
