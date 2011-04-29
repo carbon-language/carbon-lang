@@ -19,7 +19,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
+#else
+#include <io.h>
+#endif
 #include <stdlib.h>
 
 static char *SavedArgs = 0;

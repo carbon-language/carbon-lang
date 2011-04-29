@@ -16,12 +16,20 @@
 #include "Profiling.h"
 #include "llvm/Analysis/ProfileInfoTypes.h"
 #include <sys/types.h>
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
+#else
+#include <io.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
+
+// Must use __inline in Microsoft C
+#if defined(_MSC_VER)
+#define inline __inline
+#endif
 
 /* note that this is used for functions with large path counts,
          but it is unlikely those paths will ALL be executed */
@@ -215,7 +223,7 @@ void llvm_decrement_path_count (uint32_t functionNumber, uint32_t pathNumber) {
  *      +-----------------+-----------------+
  *
  */
-static void pathProfAtExitHandler() {
+static void pathProfAtExitHandler(void) {
   int outFile = getOutFile();
   uint32_t i;
   uint32_t header[2] = { PathInfo, 0 };
