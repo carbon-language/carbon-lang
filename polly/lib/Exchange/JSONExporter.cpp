@@ -16,9 +16,6 @@
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
 
-#include "json/reader.h"
-#include "json/writer.h"
-
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -26,7 +23,9 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Assembly/Writer.h"
 
-#include "stdio.h"
+#include "json/reader.h"
+#include "json/writer.h"
+
 #include "isl/set.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
@@ -40,8 +39,10 @@ using namespace polly;
 namespace {
 static cl::opt<std::string>
 ImportDir("polly-import-jscop-dir",
-          cl::desc("The directory to import the .jscop files from."), cl::Hidden,
-          cl::value_desc("Directory path"), cl::ValueRequired, cl::init("."));
+          cl::desc("The directory to import the .jscop files from."),
+          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
+          cl::init("."));
+
 static cl::opt<std::string>
 ImportPostfix("polly-import-jscop-postfix",
               cl::desc("Postfix to append to the import .jsop files."),
@@ -59,6 +60,7 @@ struct JSONExporter : public ScopPass {
   void printScop(raw_ostream &OS) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
+
 struct JSONImporter : public ScopPass {
   static char ID;
   Scop *S;
@@ -179,6 +181,7 @@ std::string JSONImporter::getFileName(Scop *S) const {
 
   return FileName;
 }
+
 void JSONImporter::printScop(raw_ostream &OS) const {
   S->print(OS);
 }
@@ -189,7 +192,6 @@ bool JSONImporter::runOnScop(Scop &scop) {
   S = &scop;
   Region &R = S->getRegion();
   Dependences *D = &getAnalysis<Dependences>();
-
 
   std::string FileName = ImportDir + "/" + getFileName(S);
 
@@ -217,6 +219,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
   StatementToIslMapTy &NewScattering = *(new StatementToIslMapTy());
 
   int index = 0;
+
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     ScopStmt *Stmt = *SI;
 
@@ -239,7 +242,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
      ScopStmt *Stmt = *SI;
 
      if (NewScattering.find(Stmt) != NewScattering.end())
-       Stmt->setScattering((NewScattering)[Stmt]);
+       Stmt->setScattering(NewScattering[Stmt]);
   }
 
   return false;
