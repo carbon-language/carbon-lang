@@ -137,6 +137,9 @@ class ARMFastISel : public FastISel {
     virtual unsigned FastEmitInst_i(unsigned MachineInstOpcode,
                                     const TargetRegisterClass *RC,
                                     uint64_t Imm);
+    virtual unsigned FastEmitInst_ii(unsigned MachineInstOpcode,
+                                     const TargetRegisterClass *RC,
+                                     uint64_t Imm1, uint64_t Imm2);
 
     virtual unsigned FastEmitInst_extractsubreg(MVT RetVT,
                                                 unsigned Op0, bool Op0IsKill,
@@ -430,6 +433,26 @@ unsigned ARMFastISel::FastEmitInst_i(unsigned MachineInstOpcode,
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                            TII.get(TargetOpcode::COPY), ResultReg)
                    .addReg(II.ImplicitDefs[0]));
+  }
+  return ResultReg;
+}
+
+unsigned ARMFastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
+                                      const TargetRegisterClass *RC,
+                                      uint64_t Imm1, uint64_t Imm2) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  
+  if (II.getNumDefs() >= 1)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
+                    .addImm(Imm1).addImm(Imm2));
+  else {
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+                    .addImm(Imm1).addImm(Imm2));
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, 
+                            TII.get(TargetOpcode::COPY),
+                            ResultReg)
+                    .addReg(II.ImplicitDefs[0]));
   }
   return ResultReg;
 }
