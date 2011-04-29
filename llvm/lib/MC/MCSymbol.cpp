@@ -58,9 +58,13 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
          "Invalid redefinition!");
   this->Value = Value;
 
-  // Mark the variable as absolute as appropriate.
-  if (isa<MCConstantExpr>(Value))
-    setAbsolute();
+  // Variables should always be marked as in the same "section" as the value.
+  const MCSection *Section = Value->FindAssociatedSection();
+  if (Section) {
+    setSection(*Section);
+  } else {
+    setUndefined();
+  }
 }
 
 void MCSymbol::print(raw_ostream &OS) const {
