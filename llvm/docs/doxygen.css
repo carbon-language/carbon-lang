@@ -401,3 +401,8 @@ div.memproto {
   -moz-border-radius-topleft: 0.5em;
   -moz-border-radius-topright: 0.5em;
 }
+
+div.memdoc {
+  padding-left: 1em;
+  padding-right: 1em;
+}
