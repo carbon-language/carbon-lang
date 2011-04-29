@@ -146,7 +146,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       Filename, HS.getFileMgr());
   if (Result) {
     if (SearchPath != NULL) {
-      llvm::StringRef SearchPathRef(getDir()->getName());
+      llvm::StringRef SearchPathRef(getName());
       SearchPath->clear();
       SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
     }
