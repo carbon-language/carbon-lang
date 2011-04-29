@@ -1728,26 +1728,6 @@ are functionally identical.
 //===---------------------------------------------------------------------===//
 
 Take the following C code:
-int x(int y) { return (y & 63) << 14; }
-
-Code produced by gcc:
-	andl	$63, %edi
-	sall	$14, %edi
-	movl	%edi, %eax
-	ret
-
-Code produced by clang:
-	shll	$14, %edi
-	movl	%edi, %eax
-	andl	$1032192, %eax
-	ret
-
-The code produced by gcc is 3 bytes shorter.  This sort of construct often
-shows up with bitfields.
-
-//===---------------------------------------------------------------------===//
-
-Take the following C code:
 int f(int a, int b) { return (unsigned char)a == (unsigned char)b; }
 
 We generate the following IR with clang:
