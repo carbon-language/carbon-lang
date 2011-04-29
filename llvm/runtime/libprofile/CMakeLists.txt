@@ -1,4 +1,4 @@
-add_llvm_loadable_module( profile_rt
+set(SOURCES
   BasicBlockTracing.c
   CommonProfiling.c
   GCDAProfiling.c
@@ -7,3 +7,13 @@ add_llvm_loadable_module( profile_rt
   OptimalEdgeProfiling.c
   Profiling.h
   )
+
+add_llvm_library( profile_rt-static ${SOURCES} )
+set_target_properties( profile_rt-static
+  PROPERTIES
+  OUTPUT_NAME "profile_rt" )
+
+add_llvm_loadable_module( profile_rt-shared ${SOURCES} )
+set_target_properties( profile_rt-shared
+  PROPERTIES
+  OUTPUT_NAME "profile_rt" )

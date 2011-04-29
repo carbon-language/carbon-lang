@@ -13,9 +13,9 @@ include $(LEVEL)/Makefile.config
 ifneq ($(strip $(LLVMCC)),)
 BYTECODE_LIBRARY = 1
 endif
-SHARED_LIBRARY = 1
-LOADABLE_MODULE = 1
 LIBRARYNAME = profile_rt
+LINK_LIBS_IN_SHARED = 1
+SHARED_LIBRARY = 1
 EXTRA_DIST = libprofile.exports
 EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libprofile.exports
 

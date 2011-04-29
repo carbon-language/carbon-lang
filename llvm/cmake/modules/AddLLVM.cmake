@@ -17,9 +17,13 @@ macro(add_llvm_library name)
   # list. Without this, linking the unit tests on MinGW fails.
   link_system_libs( ${name} )
 
-  install(TARGETS ${name}
-    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  if( EXCLUDE_FROM_ALL )
+    set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
+  else()
+    install(TARGETS ${name}
+      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+  endif()
   # The LLVM Target library shall be built before its sublibraries
   # (asmprinter, etc) because those may use tablegenned files which
   # generation is triggered by the main LLVM target library. Necessary
@@ -58,7 +62,7 @@ ${name} ignored.")
     endif()
 
     if( EXCLUDE_FROM_ALL )
-      set_target_properties(profile_rt PROPERTIES EXCLUDE_FROM_ALL ON)
+      set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
     else()
       install(TARGETS ${name}
 	LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}

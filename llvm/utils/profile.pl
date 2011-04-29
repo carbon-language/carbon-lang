@@ -65,7 +65,7 @@ shift @ARGV;
 my $libdir = `llvm-config --libdir`;
 chomp $libdir;
 
-my $LibProfPath = $libdir . "/profile_rt.so";
+my $LibProfPath = $libdir . "/libprofile_rt.so";
 
 system "opt -q -f $ProfilePass $BytecodeFile -o $BytecodeFile.inst";
 system "lli -fake-argv0 '$BytecodeFile' -load $LibProfPath " .

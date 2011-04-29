@@ -228,7 +228,7 @@ if( LLVM_INCLUDE_TOOLS )
 endif()
 
 option(LLVM_BUILD_RUNTIME
-  "Build the LLVM runtime libraries. If OFF, just generate build targets." OFF)
+  "Build the LLVM runtime libraries. If OFF, just generate build targets." ON)
 option(LLVM_INCLUDE_RUNTIME "Generate build targets for the LLVM runtimes" ON)
 if( LLVM_INCLUDE_RUNTIME )
   add_subdirectory(runtime)
