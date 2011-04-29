@@ -393,7 +393,24 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
                                                  E->getRHS()->getType())
          && "Invalid assignment");
 
-  // FIXME:  __block variables need the RHS evaluated first!
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->getLHS()))
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      if (VD->hasAttr<BlocksAttr>() &&
+          E->getRHS()->HasSideEffects(CGF.getContext())) {
+        // When __block variable on LHS, the RHS must be evaluated first 
+        // as it may change the 'forwarding' field via call to Block_copy.
+        LValue RHS = CGF.EmitLValue(E->getRHS());
+        LValue LHS = CGF.EmitLValue(E->getLHS());
+        bool GCollection = false;
+        if (CGF.getContext().getLangOptions().getGCMode())
+          GCollection = TypeRequiresGCollection(E->getLHS()->getType());
+        // Codegen the RHS so that it stores directly into the LHS.
+        Dest = AggValueSlot::forLValue(LHS, true, GCollection);
+        EmitFinalDestCopy(E, RHS, true);
+        return;
+      }
+    }
+  
   LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // We have to special case property setters, otherwise we must have
