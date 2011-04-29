@@ -216,7 +216,7 @@ private:
 
   /// \brief AST buffers for chained PCHs created and stored in memory.
   /// First (not depending on another) PCH in chain is in front.
-  std::deque<llvm::MemoryBuffer *> ASTBuffers;
+  std::vector<llvm::MemoryBuffer *> ASTBuffers;
 
   /// \brief Information that is needed for every module.
   struct PerFileData {
