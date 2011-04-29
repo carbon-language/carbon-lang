@@ -741,7 +741,10 @@ void MCAsmStreamer::EmitCFIEndProc() {
 }
 
 void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
-  abort();
+  MCStreamer::EmitCFIDefCfa(Register, Offset);
+
+  OS << ".cfi_def_cfa " << Register << ", " << Offset;
+  EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
