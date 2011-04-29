@@ -1050,8 +1050,10 @@ public:
           FixedValue -= Layout.getSymbolOffset(SD);
       } else {
         // The index is the section ordinal (1-based).
-        Index = SD->getFragment()->getParent()->getOrdinal() + 1;
-        FixedValue += getSectionAddress(SD->getFragment()->getParent());
+        const MCSectionData &SymSD = Asm.getSectionData(
+          SD->getSymbol().getSection());
+        Index = SymSD.getOrdinal() + 1;
+        FixedValue += getSectionAddress(&SymSD);
       }
       if (IsPCRel)
         FixedValue -= getSectionAddress(Fragment->getParent());
@@ -1149,8 +1151,10 @@ public:
           FixedValue -= Layout.getSymbolOffset(SD);
       } else {
         // The index is the section ordinal (1-based).
-        Index = SD->getFragment()->getParent()->getOrdinal() + 1;
-        FixedValue += getSectionAddress(SD->getFragment()->getParent());
+        const MCSectionData &SymSD = Asm.getSectionData(
+          SD->getSymbol().getSection());
+        Index = SymSD.getOrdinal() + 1;
+        FixedValue += getSectionAddress(&SymSD);
       }
       if (IsPCRel)
         FixedValue -= getSectionAddress(Fragment->getParent());
