@@ -326,7 +326,8 @@ bool LoopRotate::rotateLoop(Loop *L) {
     // We can fold the conditional branch in the preheader, this makes things
     // simpler. The first step is to remove the extra edge to the Exit block.
     Exit->removePredecessor(OrigPreheader, true /*preserve LCSSA*/);
-    BranchInst::Create(NewHeader, PHBI);
+    BranchInst *NewBI = BranchInst::Create(NewHeader, PHBI);
+    NewBI->setDebugLoc(PHBI->getDebugLoc());
     PHBI->eraseFromParent();
     
     // With our CFG finalized, update DomTree if it is available.
