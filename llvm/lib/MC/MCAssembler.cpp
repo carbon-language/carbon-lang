@@ -102,6 +102,33 @@ uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
 }
 
 uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
+  const MCSymbol &S = SD->getSymbol();
+
+  // If this is a variable, then recursively evaluate now.
+  if (S.isVariable()) {
+    MCValue Target;
+    if (!S.getVariableValue()->EvaluateAsRelocatable(Target, *this))
+      report_fatal_error("unable to evaluate offset for variable '" +
+                         S.getName() + "'");
+
+    // Verify that any used symbols are defined.
+    if (Target.getSymA() && Target.getSymA()->getSymbol().isUndefined())
+      report_fatal_error("unable to evaluate offset to undefined symbol '" +
+                         Target.getSymA()->getSymbol().getName() + "'");
+    if (Target.getSymB() && Target.getSymB()->getSymbol().isUndefined())
+      report_fatal_error("unable to evaluate offset to undefined symbol '" +
+                         Target.getSymB()->getSymbol().getName() + "'");
+      
+    uint64_t Offset = Target.getConstant();
+    if (Target.getSymA())
+      Offset += getSymbolOffset(&Assembler.getSymbolData(
+                                  Target.getSymA()->getSymbol()));
+    if (Target.getSymB())
+      Offset -= getSymbolOffset(&Assembler.getSymbolData(
+                                  Target.getSymB()->getSymbol()));
+    return Offset;
+  }
+
   assert(SD->getFragment() && "Invalid getOffset() on undefined symbol!");
   return getFragmentOffset(SD->getFragment()) + SD->getOffset();
 }
