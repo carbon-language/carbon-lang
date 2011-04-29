@@ -772,10 +772,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
                           Virtuality, VIndex, ContainingType,
                           Flags, CGM.getLangOptions().Optimize);
   
-  // Don't cache ctors or dtors since we have to emit multiple functions for
-  // a single ctor or dtor.
-  if (!IsCtorOrDtor)
-    SPCache[Method] = llvm::WeakVH(SP);
+  SPCache[Method] = llvm::WeakVH(SP);
 
   return SP;
 }
@@ -1591,6 +1588,14 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
 
   // Setup context.
   getContextDescriptor(cast<Decl>(D->getDeclContext()));
+
+  llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
+    MI = SPCache.find(FD);
+  if (MI != SPCache.end()) {
+    llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(&*MI->second));
+    if (SP.isSubprogram() && !llvm::DISubprogram(SP).isDefinition())
+      return SP;
+  }
 
   for (FunctionDecl::redecl_iterator I = FD->redecls_begin(),
          E = FD->redecls_end(); I != E; ++I) {
