@@ -179,6 +179,7 @@ def mms_bitfields : Flag<"-mms-bitfields">,
   HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard.">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
+def Oz : Flag<"-Oz">, HelpText<"Optimize for size, regardless of performance">;
 def pg : Flag<"-pg">, HelpText<"Enable mcount instrumentation">;
 
 //===----------------------------------------------------------------------===//

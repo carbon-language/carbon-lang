@@ -1309,10 +1309,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else if (A->getOption().matches(options::OPT_O) &&
              A->getValue(Args)[0] == '\0')
       CmdArgs.push_back("-O2");
-    else if (A->getOption().matches(options::OPT_O) &&
-             A->getValue(Args)[0] == 'z' &&
-             A->getValue(Args)[1] == '\0')
-      CmdArgs.push_back("-Os");
     else
       A->render(Args, CmdArgs);
   }

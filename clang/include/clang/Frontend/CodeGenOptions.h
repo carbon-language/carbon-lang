@@ -76,7 +76,7 @@ public:
   unsigned OmitLeafFramePointer : 1; /// Set when -momit-leaf-frame-pointer is
                                      /// enabled.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
-  unsigned OptimizeSize      : 1; /// If -Os is specified.
+  unsigned OptimizeSize      : 2; /// If -Os (==1) or -Oz (==2) is specified.
   unsigned RelaxAll          : 1; /// Relax all machine code instructions.
   unsigned RelaxedAliasing   : 1; /// Set when -fno-strict-aliasing is enabled.
   unsigned SaveTempLabels    : 1; /// Save temporary labels.

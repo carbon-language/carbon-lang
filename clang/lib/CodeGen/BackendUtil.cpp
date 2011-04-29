@@ -134,8 +134,10 @@ void EmitAssemblyHelper::CreatePasses() {
     //
     // FIXME: Derive these constants in a principled fashion.
     unsigned Threshold = 225;
-    if (CodeGenOpts.OptimizeSize)
+    if (CodeGenOpts.OptimizeSize == 1) //-Os
       Threshold = 75;
+    else if (CodeGenOpts.OptimizeSize == 2) //-Oz
+      Threshold = 25;
     else if (OptLevel > 2)
       Threshold = 275;
     InliningPass = createFunctionInliningPass(Threshold);
