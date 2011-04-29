@@ -44,7 +44,9 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // t2_so_imm - Match a 32-bit immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits, or an 8-bit
 // immediate splatted into multiple bytes of the word.
-def t2_so_imm : Operand<i32>, PatLeaf<(imm), [{ return Pred_t2_so_imm(N); }]> {
+def t2_so_imm : Operand<i32>, ImmLeaf<i32, [{
+    return ARM_AM::getT2SOImmVal(Imm) != -1;
+  }]> {
   let EncoderMethod = "getT2SOImmOpValue";
 }
 

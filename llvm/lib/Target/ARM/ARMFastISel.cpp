@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
+#include "ARMAddressingModes.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMCallingConv.h"
 #include "ARMRegisterInfo.h"
