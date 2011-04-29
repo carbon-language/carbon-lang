@@ -185,10 +185,11 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 // Aggregation warning settings.
 
 // -Widiomatic-parentheses contains warnings about 'idiomatic'
-// missing parentheses;  it is off by default.
+// missing parentheses;  it is off by default.  We do not include it
+// in -Wparentheses because most users who use -Wparentheses explicitly
+// do not want these warnings.
 def Parentheses : DiagGroup<"parentheses",
-                            [LogicalOpParentheses,
-                             DiagGroup<"idiomatic-parentheses">]>;
+                            [LogicalOpParentheses]>;
 
 // -Wconversion has its own warnings, but we split a few out for
 // legacy reasons:

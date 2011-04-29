@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wparentheses %s
 
-// Don't warn about some common ObjC idioms unless we have -Wparentheses on.
+// Don't warn about some common ObjC idioms unless we have -Widiomatic-parentheses on.
 // <rdar://problem/7382435>
 
 @interface Object 
