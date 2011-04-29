@@ -644,7 +644,14 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
       return &I;
     }
   }
-  
+
+  // (C1 << A) << C2) -> (C1 << C2) << A)
+  Constant *C1, *C2;
+  Value *A;
+  if (match(I.getOperand(0), m_OneUse(m_Shl(m_Constant(C1), m_Value(A)))) &&
+      match(I.getOperand(1), m_Constant(C2)))
+    return BinaryOperator::CreateShl(ConstantExpr::getShl(C1, C2), A);
+
   return 0;    
 }
 

@@ -485,3 +485,24 @@ entry:
 ; CHECK: ret i8 %tmp551
   ret i8 %tmp55
 }
+
+; PR9809
+define i32 @test40(i32 %a, i32 %b) nounwind {
+  %shl1 = shl i32 1, %b
+  %shl2 = shl i32 %shl1, 2
+  %div = udiv i32 %a, %shl2
+  ret i32 %div
+; CHECK: @test40
+; CHECK-NEXT: add i32 %b, 2
+; CHECK-NEXT: lshr i32 %a
+; CHECK-NEXT: ret i32
+}
+
+define i32 @test41(i32 %a, i32 %b) nounwind {
+  %1 = shl i32 1, %b
+  %2 = shl i32 %1, 3
+  ret i32 %2
+; CHECK: @test41
+; CHECK-NEXT: shl i32 8, %b
+; CHECK-NEXT: ret i32
+}
