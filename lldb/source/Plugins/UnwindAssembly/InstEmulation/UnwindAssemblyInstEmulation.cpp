@@ -18,7 +18,6 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
-#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
@@ -108,16 +107,27 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                 
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();
-            for (size_t idx=0; idx<num_instructions; ++idx)
+            if (num_instructions > 0)
             {
-                Instruction *inst = inst_list.GetInstructionAtIndex (idx).get();
-                if (inst)
-                {
-                    inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, &exe_ctx, raw);
-                    strm.EOL();
+                Instruction *inst = inst_list.GetInstructionAtIndex (0).get();
+                const addr_t base_addr = inst->GetAddress().GetFileAddress();
 
-                    m_inst_emulator_ap->SetInstruction (inst->GetOpcode(), inst->GetAddress(), exe_ctx.target);
-                    m_inst_emulator_ap->EvaluateInstruction (eEmulateInstructionOptionIgnoreConditions);
+                for (size_t idx=0; idx<num_instructions; ++idx)
+                {
+                    inst = inst_list.GetInstructionAtIndex (idx).get();
+                    if (inst)
+                    {
+                        m_curr_row.Clear();
+                        inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, &exe_ctx, raw);
+                        strm.EOL();
+
+                        m_inst_emulator_ap->SetInstruction (inst->GetOpcode(), 
+                                                            inst->GetAddress(), 
+                                                            exe_ctx.target);
+                        m_curr_row.SetOffset (inst->GetAddress().GetFileAddress() + inst->GetOpcode().GetByteSize() - base_addr);
+
+                        m_inst_emulator_ap->EvaluateInstruction (eEmulateInstructionOptionIgnoreConditions);
+                    }
                 }
             }
         }
@@ -255,7 +265,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                                           const void *dst,
                                           size_t dst_len)
 {
-    // UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
+    UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
     
     DataExtractor data (dst, 
                         dst_len, 
@@ -267,6 +277,53 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
     data.Dump(&strm, 0, eFormatBytes, 1, dst_len, UINT32_MAX, addr, 0, 0);
     strm.PutCString (", context = ");
     context.Dump(stdout, instruction);
+    
+    switch (context.type)
+    {
+        case EmulateInstruction::eContextInvalid:
+        case EmulateInstruction::eContextReadOpcode:
+        case EmulateInstruction::eContextImmediate:
+        case EmulateInstruction::eContextAdjustBaseRegister:
+        case EmulateInstruction::eContextRegisterPlusOffset:
+        case EmulateInstruction::eContextAdjustPC:
+        case EmulateInstruction::eContextRegisterStore:
+        case EmulateInstruction::eContextRegisterLoad:  
+        case EmulateInstruction::eContextRelativeBranchImmediate:
+        case EmulateInstruction::eContextAbsoluteBranchRegister:
+        case EmulateInstruction::eContextSupervisorCall:
+        case EmulateInstruction::eContextTableBranchReadMemory:
+        case EmulateInstruction::eContextWriteRegisterRandomBits:
+        case EmulateInstruction::eContextWriteMemoryRandomBits:
+        case EmulateInstruction::eContextArithmetic:
+        case EmulateInstruction::eContextAdvancePC:    
+        case EmulateInstruction::eContextReturnFromException:
+        case EmulateInstruction::eContextPopRegisterOffStack:
+        case EmulateInstruction::eContextAdjustStackPointer:
+            break;
+            
+        case EmulateInstruction::eContextPushRegisterOnStack:
+            switch (context.info_type)
+            {
+                case EmulateInstruction::eInfoTypeRegisterToRegisterPlusOffset:
+                    {
+                        UnwindPlan::Row::RegisterLocation regloc;
+                        const uint32_t dwarf_reg_num = context.info.RegisterToRegisterPlusOffset.data_reg.kinds[eRegisterKindDWARF];
+                        const addr_t reg_cfa_offset = inst_emulator->m_curr_row.GetCFAOffset() + context.info.RegisterToRegisterPlusOffset.offset;
+                        regloc.SetIsCFAPlusOffset (reg_cfa_offset);
+                        inst_emulator->m_curr_row.SetRegisterInfo (dwarf_reg_num, regloc);
+                    }
+                    break;
+                    
+                default:
+                    assert (!"unhandled case, add code to handle this!");
+                    break;
+            }
+            break;
+            
+            break;
+            
+    }
+
     return dst_len;
 }
 
@@ -300,8 +357,6 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 
     inst_emulator->SetRegisterValue (reg_info, reg_value);
 
-    UnwindPlan::Row::RegisterLocation regloc;
-
     switch (context.type)
     {
         case EmulateInstruction::eContextInvalid:
@@ -321,15 +376,40 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextArithmetic:
         case EmulateInstruction::eContextAdvancePC:    
         case EmulateInstruction::eContextReturnFromException:
-            break;
-
         case EmulateInstruction::eContextPushRegisterOnStack:
             break;
-            
+
         case EmulateInstruction::eContextPopRegisterOffStack:
+            {
+                switch (context.info_type)
+                {
+                    case EmulateInstruction::eInfoTypeRegisterPlusOffset:
+                        {
+                            const uint32_t dwarf_reg_num = reg_info.kinds[eRegisterKindDWARF];
+                            UnwindPlan::Row::RegisterLocation regloc;
+                            regloc.SetSame();
+                            inst_emulator->m_curr_row.SetRegisterInfo (dwarf_reg_num, regloc);
+                        }
+                        break;
+                        
+                    default:
+                        assert (!"unhandled case, add code to handle this!");
+                        break;
+                }
+            }
             break;
 
         case EmulateInstruction::eContextAdjustStackPointer:
+            switch (context.info_type)
+            {
+                case EmulateInstruction::eInfoTypeImmediateSigned:
+                    inst_emulator->m_curr_row.SetCFAOffset (inst_emulator->m_curr_row.GetCFAOffset() + context.info.signed_immediate);
+                    break;
+
+                default:
+                    assert (!"unhandled case, add code to handle this!");
+                    break;
+            }
             break;
     }
     return true;

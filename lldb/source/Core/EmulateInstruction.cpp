@@ -58,7 +58,7 @@ EmulateInstruction::EmulateInstruction (const ArchSpec &arch) :
     m_write_mem_callback (&WriteMemoryDefault),
     m_read_reg_callback (&ReadRegisterDefault),
     m_write_reg_callback (&WriteRegisterDefault),
-    m_opcode_pc (LLDB_INVALID_ADDRESS)
+    m_addr (LLDB_INVALID_ADDRESS)
 {
     ::memset (&m_opcode, 0, sizeof (m_opcode));
 }
@@ -536,13 +536,13 @@ bool
 EmulateInstruction::SetInstruction (const Opcode &opcode, const Address &inst_addr, Target *target)
 {
     m_opcode = opcode;
-    m_opcode_pc = LLDB_INVALID_ADDRESS;
+    m_addr = LLDB_INVALID_ADDRESS;
     if (inst_addr.IsValid())
     {
         if (target)
-            m_opcode_pc = inst_addr.GetLoadAddress (target);
-        if (m_opcode_pc == LLDB_INVALID_ADDRESS)
-            m_opcode_pc = inst_addr.GetFileAddress ();
+            m_addr = inst_addr.GetLoadAddress (target);
+        if (m_addr == LLDB_INVALID_ADDRESS)
+            m_addr = inst_addr.GetFileAddress ();
     }
     return true;
 }

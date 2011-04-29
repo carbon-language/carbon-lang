@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/EmulateInstruction.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/UnwindAssembly.h"
 
 class UnwindAssemblyInstEmulation : public lldb_private::UnwindAssembly
@@ -128,6 +129,7 @@ private:
     lldb_private::AddressRange* m_range_ptr; 
     lldb_private::Thread* m_thread_ptr;
     lldb_private::UnwindPlan* m_unwind_plan_ptr;
+    lldb_private::UnwindPlan::Row m_curr_row;
     typedef std::map<uint64_t, uint64_t> RegisterValueMap;
     RegisterValueMap m_register_values;
 };

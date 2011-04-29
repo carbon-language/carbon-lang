@@ -12729,7 +12729,7 @@ EmulateInstructionARM::ReadInstruction ()
     if (!success)
     {
         m_opcode_mode = eModeInvalid;
-        m_opcode_pc = LLDB_INVALID_ADDRESS;
+        m_addr = LLDB_INVALID_ADDRESS;
     }
     return success;
 }

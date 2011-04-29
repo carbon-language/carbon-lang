@@ -467,6 +467,12 @@ public:
         return m_opcode;
     }
     
+    lldb::addr_t
+    GetAddress () const
+    {
+        return m_addr;
+    }
+    
     const ArchSpec &
     GetArchitecture () const
     {
@@ -571,7 +577,7 @@ protected:
     WriteMemory         m_write_mem_callback;
     ReadRegister        m_read_reg_callback;
     WriteRegister       m_write_reg_callback;
-    lldb::addr_t        m_opcode_pc;
+    lldb::addr_t        m_addr;
     Opcode              m_opcode;
     
 
