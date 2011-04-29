@@ -20,6 +20,7 @@ D: Co-founder, design of the overall architecture
 
 N: Andreas Simbuerger
 E: simbuerg@fim.uni-passau.de
+W: http://www.infosun.fim.uni-passau.de/cl/staff/simbuerger/
 D: Profiling infrastructure
 
 N: Hongbin Zheng
