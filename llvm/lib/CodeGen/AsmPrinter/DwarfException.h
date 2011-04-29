@@ -140,17 +140,18 @@ public:
 };
 
 class DwarfCFIException : public DwarfException {
-  /// shouldEmitTable - Per-function flag to indicate if EH tables should
-  /// be emitted.
-  bool shouldEmitTable;
+  /// shouldEmitPersonality - Per-function flag to indicate if .cfi_personality
+  /// should be emitted.
+  bool shouldEmitPersonality;
+
+  /// shouldEmitLSDA - Per-function flag to indicate if .cfi_lsda
+  /// should be emitted.
+  bool shouldEmitLSDA;
 
   /// shouldEmitMoves - Per-function flag to indicate if frame moves info
   /// should be emitted.
   bool shouldEmitMoves;
 
-  /// shouldEmitTableModule - Per-module flag to indicate if EH tables
-  /// should be emitted.
-  bool shouldEmitTableModule;
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.

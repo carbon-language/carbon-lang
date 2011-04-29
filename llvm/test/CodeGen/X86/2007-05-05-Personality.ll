@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=i686-pc-linux-gnu -o - | FileCheck %s
 
-; CHECK: .cfi_lsda 0, .Lexception0
 ; CHECK: .cfi_personality 0, __gnat_eh_personality
+; CHECK: .cfi_lsda 0, .Lexception0
 
 @error = external global i8		; <i8*> [#uses=2]
 
