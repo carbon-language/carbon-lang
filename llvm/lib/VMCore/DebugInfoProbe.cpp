@@ -53,6 +53,7 @@ namespace llvm {
     Function *TheFn;
     std::set<unsigned> LineNos;
     std::set<MDNode *> DbgVariables;
+    std::set<Instruction *> MissingDebugLoc;
   };
 }
 
@@ -89,6 +90,8 @@ void DebugInfoProbeImpl::initialize(StringRef PName, Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
          BI != BE; ++BI) {
+      if (BI->getDebugLoc().isUnknown())
+        MissingDebugLoc.insert(BI);
       if (!isa<DbgInfoIntrinsic>(BI)) continue;
       Value *Addr = NULL;
       MDNode *Node = NULL;
@@ -148,6 +151,12 @@ void DebugInfoProbeImpl::finalize(Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
          BI != BE; ++BI) {
+      if (BI->getDebugLoc().isUnknown() &&
+          MissingDebugLoc.count(BI) == 0) {
+        DEBUG(dbgs() << "DebugInfoProbe(" << PassName << "): --- ");
+        DEBUG(BI->print(dbgs()));
+        DEBUG(dbgs() << "\n");
+      }
       if (!isa<DbgInfoIntrinsic>(BI)) continue;
       Value *Addr = NULL;
       MDNode *Node = NULL;
