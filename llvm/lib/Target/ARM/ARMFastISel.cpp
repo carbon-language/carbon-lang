@@ -231,16 +231,16 @@ bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
 
 bool ARMFastISel::isARMNEONPred(const MachineInstr *MI) {
   const TargetInstrDesc &TID = MI->getDesc();
-  
+
   // If we're a thumb2 or not NEON function we were handled via isPredicable.
   if ((TID.TSFlags & ARMII::DomainMask) != ARMII::DomainNEON ||
        AFI->isThumb2Function())
     return false;
-  
+
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i)
     if (TID.OpInfo[i].isPredicate())
       return true;
-  
+
   return false;
 }
 
@@ -258,7 +258,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
   // we're not predicable but add it anyways.
   if (TII.isPredicable(MI) || isARMNEONPred(MI))
     AddDefaultPred(MIB);
-  
+
   // Do we optionally set a predicate?  Preds is size > 0 iff the predicate
   // defines CPSR. All other OptionalDefines in ARM are the CCR register.
   bool CPSR = false;
@@ -728,7 +728,7 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
                  FuncInfo.MBBMap[cast<Instruction>(Op)->getParent()]
                  == FuncInfo.MBB) &&
                 isa<ConstantInt>(cast<AddOperator>(Op)->getOperand(1))) {
-              // An add (in the same block) with a constant operand. Fold the 
+              // An add (in the same block) with a constant operand. Fold the
               // constant.
               ConstantInt *CI =
               cast<ConstantInt>(cast<AddOperator>(Op)->getOperand(1));
@@ -736,7 +736,7 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
               // Iterate on the other operand.
               Op = cast<AddOperator>(Op)->getOperand(0);
               continue;
-            } 
+            }
             // Unsupported
             goto unsupported_gep;
           }
@@ -852,7 +852,7 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
   if (VT.getSimpleVT().SimpleTy == MVT::f32 ||
       VT.getSimpleVT().SimpleTy == MVT::f64)
     Addr.Offset /= 4;
-    
+
   // Frame base works a bit differently. Handle it separately.
   if (Addr.BaseType == Address::FrameIndexBase) {
     int FI = Addr.Base.FI;
@@ -874,7 +874,7 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
   } else {
     // Now add the rest of the operands.
     MIB.addReg(Addr.Base.Reg);
-  
+
     // ARM halfword load/stores need an additional operand.
     if (!isThumb && VT.getSimpleVT().SimpleTy == MVT::i16) MIB.addReg(0);
 
@@ -1132,7 +1132,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TstOpc))
                   .addReg(CmpReg).addImm(1));
 
-  
+
   unsigned CCMode = ARMCC::NE;
   if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
     std::swap(TBB, FBB);
@@ -1838,7 +1838,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
   // TODO: For now if we have long calls specified we don't handle the call.
   if (EnableARMLongCalls) return false;
-  
+
   // Set up the argument vectors.
   SmallVector<Value*, 8> Args;
   SmallVector<unsigned, 8> ArgRegs;
@@ -1902,7 +1902,7 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
     MIB = AddDefaultPred(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(CallOpc))
           .addGlobalAddress(GV, 0, 0));
-  
+
   // Add implicit physical register uses to the call.
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
