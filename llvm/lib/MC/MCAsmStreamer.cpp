@@ -957,9 +957,6 @@ void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(getCurrentSection() && "Cannot emit contents before setting section!");
 
-  if (!UseLoc)
-    MCLineEntry::Make(this, getCurrentSection());
-
   // Show the encoding in a comment if we have a code emitter.
   if (Emitter)
     AddEncodingComment(Inst);
