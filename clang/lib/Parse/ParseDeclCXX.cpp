@@ -732,19 +732,29 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   MaybeParseCXX0XAttributes(attrs);
 
   if (TagType == DeclSpec::TST_struct &&
-      (Tok.is(tok::kw___is_pod) ||
+      !Tok.is(tok::identifier) &&
+      Tok.getIdentifierInfo() &&
+      (Tok.is(tok::kw___is_arithmetic) ||
+       Tok.is(tok::kw___is_convertible) ||
        Tok.is(tok::kw___is_empty) ||
-       Tok.is(tok::kw___is_void) ||
-       Tok.is(tok::kw___is_pointer) ||
-       Tok.is(tok::kw___is_arithmetic) ||
+       Tok.is(tok::kw___is_floating_point) ||
+       Tok.is(tok::kw___is_function) ||
        Tok.is(tok::kw___is_fundamental) ||
+       Tok.is(tok::kw___is_integral) ||
+       Tok.is(tok::kw___is_member_function_pointer) ||
+       Tok.is(tok::kw___is_member_pointer) ||
+       Tok.is(tok::kw___is_pod) ||
+       Tok.is(tok::kw___is_pointer) ||
+       Tok.is(tok::kw___is_same) ||
        Tok.is(tok::kw___is_scalar) ||
-       Tok.is(tok::kw___is_same))) {
-    // GNU libstdc++ 4.2 uses certain intrinsic names as the name of
-    // struct templates, but these are keywords in GCC >= 4.3 and
-    // Clang. Therefore, when we see the token sequence "struct X", make
-    // X into a normal identifier rather than a keyword, to allow
-    // libstdc++ 4.2 to work properly.
+       Tok.is(tok::kw___is_signed) ||
+       Tok.is(tok::kw___is_unsigned) ||
+       Tok.is(tok::kw___is_void))) {
+    // GNU libstdc++ 4.2 and libc++ uaw certain intrinsic names as the
+    // name of struct templates, but some are keywords in GCC >= 4.3
+    // and Clang. Therefore, when we see the token sequence "struct
+    // X", make X into a normal identifier rather than a keyword, to
+    // allow libstdc++ 4.2 and libc++ to work properly.
     Tok.getIdentifierInfo()->RevertTokenIDToIdentifier();
     Tok.setKind(tok::identifier);
   }
