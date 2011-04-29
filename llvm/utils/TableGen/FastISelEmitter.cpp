@@ -393,6 +393,33 @@ FastISelMap::FastISelMap(std::string instns)
   : InstNS(instns) {
 }
 
+static std::string PhyRegForNode(TreePatternNode *Op,
+                                 const CodeGenTarget &Target) {
+  std::string PhysReg;
+
+  if (!Op->isLeaf())
+    return PhysReg;
+
+  DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
+  Record *OpLeafRec = OpDI->getDef();
+  if (!OpLeafRec->isSubClassOf("Register"))
+    return PhysReg;
+
+  PhysReg += static_cast<StringInit*>(OpLeafRec->getValue( \
+             "Namespace")->getValue())->getValue();
+  PhysReg += "::";
+
+  std::vector<CodeGenRegister> Regs = Target.getRegisters();
+  for (unsigned i = 0; i < Regs.size(); ++i) {
+    if (Regs[i].TheDef == OpLeafRec) {
+      PhysReg += Regs[i].getName();
+      break;
+    }
+  }
+
+  return PhysReg;
+}
+
 void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
   const CodeGenTarget &Target = CGP.getTargetInfo();
 
@@ -470,11 +497,6 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
       assert(InstPatNode->getChild(0)->getNumTypes() == 1);
       VT = InstPatNode->getChild(0)->getType(0);
     }
-    
-    // For now, filter out instructions which just set a register to
-    // an Operand or an immediate, like MOV32ri.
-    if (InstPatOp->isSubClassOf("Operand"))
-      continue;
 
     // For now, filter out any instructions with predicates.
     if (!InstPatNode->getPredicateFns().empty())
@@ -486,39 +508,35 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
       continue;
 
     std::vector<std::string>* PhysRegInputs = new std::vector<std::string>();
-    if (!InstPatNode->isLeaf() &&
-        (InstPatNode->getOperator()->getName() == "imm" ||
-         InstPatNode->getOperator()->getName() == "fpimmm"))
+    if (InstPatNode->getOperator()->getName() == "imm" ||
+        InstPatNode->getOperator()->getName() == "fpimmm")
       PhysRegInputs->push_back("");
-    else if (!InstPatNode->isLeaf()) {
+    else {
+      // Compute the PhysRegs used by the given pattern, and check that
+      // the mapping from the src to dst patterns is simple.
+      bool FoundNonSimplePattern = false;
+      unsigned DstIndex = 0;
       for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
-        TreePatternNode *Op = InstPatNode->getChild(i);
-        if (!Op->isLeaf()) {
-          PhysRegInputs->push_back("");
-          continue;
-        }
-
-        DefInit *OpDI = dynamic_cast<DefInit*>(Op->getLeafValue());
-        Record *OpLeafRec = OpDI->getDef();
-        std::string PhysReg;
-        if (OpLeafRec->isSubClassOf("Register")) {
-          PhysReg += static_cast<StringInit*>(OpLeafRec->getValue( \
-                     "Namespace")->getValue())->getValue();
-          PhysReg += "::";
-
-          std::vector<CodeGenRegister> Regs = Target.getRegisters();
-          for (unsigned i = 0; i < Regs.size(); ++i) {
-            if (Regs[i].TheDef == OpLeafRec) {
-              PhysReg += Regs[i].getName();
-              break;
-            }
+        std::string PhysReg = PhyRegForNode(InstPatNode->getChild(i), Target);
+        if (PhysReg.empty()) {
+          if (DstIndex >= Dst->getNumChildren() ||
+              Dst->getChild(DstIndex)->getName() !=
+              InstPatNode->getChild(i)->getName()) {
+            FoundNonSimplePattern = true;
+            break;
           }
+          ++DstIndex;
         }
 
         PhysRegInputs->push_back(PhysReg);
       }
-    } else
-      PhysRegInputs->push_back("");
+
+      if (Op->getName() != "EXTRACT_SUBREG" && DstIndex < Dst->getNumChildren())
+        FoundNonSimplePattern = true;
+
+      if (FoundNonSimplePattern)
+        continue;
+    }
 
     // Get the predicate that guards this pattern.
     std::string PredicateCheck = Pattern.getPredicateCheck();
