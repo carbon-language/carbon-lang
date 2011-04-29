@@ -125,7 +125,6 @@ bool JSONExporter::runOnScop(Scop &scop) {
   Region &R = S->getRegion();
 
   std::string FileName = ImportDir + "/" + getFileName(S);
-  char *text;
 
   Json::Value jscop = getJSON(scop);
   Json::StyledWriter writer;
