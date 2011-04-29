@@ -1045,18 +1045,16 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   // behavior.
   // TODO: Factor this out.
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
-    if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
-      MVT VT;
-      const Type *Ty = CI->getOperand(0)->getType();
-      if (!isTypeLegal(Ty, VT))
-        return false;
-
+    MVT SourceVT;
+    const Type *Ty = CI->getOperand(0)->getType();
+    if (CI->hasOneUse() && (CI->getParent() == I->getParent())
+        && isTypeLegal(Ty, SourceVT)) {
       bool isFloat = (Ty->isDoubleTy() || Ty->isFloatTy());
       if (isFloat && !Subtarget->hasVFP2())
         return false;
 
       unsigned CmpOpc;
-      switch (VT.SimpleTy) {
+      switch (SourceVT.SimpleTy) {
         default: return false;
         // TODO: Verify compares.
         case MVT::f32:
@@ -1071,7 +1069,14 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       }
 
       // Get the compare predicate.
-      ARMCC::CondCodes ARMPred = getComparePred(CI->getPredicate());
+      // Try to take advantage of fallthrough opportunities.
+      CmpInst::Predicate Predicate = CI->getPredicate();
+      if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
+        std::swap(TBB, FBB);
+        Predicate = CmpInst::getInversePredicate(Predicate);
+      }
+
+      ARMCC::CondCodes ARMPred = getComparePred(Predicate);
 
       // We may not handle every CC for now.
       if (ARMPred == ARMCC::AL) return false;
