@@ -37,6 +37,10 @@
 #include <map>
 using namespace llvm;
 
+static cl::opt<unsigned>
+PHINodeFoldingThreshold("phi-node-folding-threshold", cl::Hidden, cl::init(1),
+   cl::desc("Control the amount of phi node folding to perform (default = 1)"));
+
 static cl::opt<bool>
 DupRet("simplifycfg-dup-ret", cl::Hidden, cl::init(false),
        cl::desc("Duplicate return instructions into unconditional branches"));
@@ -1246,7 +1250,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // instructions.  While we are at it, keep track of the instructions
   // that need to be moved to the dominating block.
   SmallPtrSet<Instruction*, 4> AggressiveInsts;
-  unsigned MaxCostVal0 = 1, MaxCostVal1 = 1;
+  unsigned MaxCostVal0 = PHINodeFoldingThreshold,
+           MaxCostVal1 = PHINodeFoldingThreshold;
   
   for (BasicBlock::iterator II = BB->begin(); isa<PHINode>(II);) {
     PHINode *PN = cast<PHINode>(II++);
