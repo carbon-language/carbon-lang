@@ -688,11 +688,13 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   PtrTy = PtrToInt8Ty;
 
   // Object type
-  ASTIdTy = CGM.getContext().getCanonicalType(CGM.getContext().getObjCIdType());
-  if (QualType() == ASTIdTy) {
-    IdTy = PtrToInt8Ty;
-  } else {
+  QualType UnqualIdTy = CGM.getContext().getObjCIdType();
+  ASTIdTy = CanQualType();
+  if (UnqualIdTy != QualType()) {
+    ASTIdTy = CGM.getContext().getCanonicalType(UnqualIdTy);
     IdTy = cast<llvm::PointerType>(CGM.getTypes().ConvertType(ASTIdTy));
+  } else {
+    IdTy = PtrToInt8Ty;
   }
   PtrToIdTy = llvm::PointerType::getUnqual(IdTy);
 
