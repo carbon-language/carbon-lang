@@ -2005,6 +2005,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);
+  Args.AddAllArgs(CmdArgs, options::OPT_mllvm);
 
   assert(Output.isFilename() && "Unexpected lipo output.");
   CmdArgs.push_back("-o");
