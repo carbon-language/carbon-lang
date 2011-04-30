@@ -434,7 +434,7 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   SlotIndex Idx = LIS.getInstructionIndex(CopyMI);
   VNInfo *VNI = SpillLI.getVNInfoAt(Idx.getDefIndex());
   assert(VNI && VNI->def == Idx.getDefIndex() && "Not defined by copy");
-  SibValueMap::const_iterator I = SibValues.find(VNI);
+  SibValueMap::iterator I = SibValues.find(VNI);
   if (I == SibValues.end())
     return false;
 
@@ -443,6 +443,20 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
   // Let the normal folding code deal with the boring case.
   if (!SVI.AllDefsAreReloads && SVI.SpillVNI == VNI)
     return false;
+
+  // SpillReg may have been deleted by remat and DCE.
+  if (!LIS.hasInterval(SVI.SpillReg)) {
+    DEBUG(dbgs() << "Stale interval: " << PrintReg(SVI.SpillReg) << '\n');
+    SibValues.erase(I);
+    return false;
+  }
+
+  LiveInterval &SibLI = LIS.getInterval(SVI.SpillReg);
+  if (!SibLI.containsValue(SVI.SpillVNI)) {
+    DEBUG(dbgs() << "Stale value: " << PrintReg(SVI.SpillReg) << '\n');
+    SibValues.erase(I);
+    return false;
+  }
 
   // Conservatively extend the stack slot range to the range of the original
   // value. We may be able to do better with stack slot coloring by being more
@@ -460,14 +474,16 @@ bool InlineSpiller::hoistSpill(LiveInterval &SpillLI, MachineInstr *CopyMI) {
 
   // We are going to spill SVI.SpillVNI immediately after its def, so clear out
   // any later spills of the same value.
-  eliminateRedundantSpills(LIS.getInterval(SVI.SpillReg), SVI.SpillVNI);
+  eliminateRedundantSpills(SibLI, SVI.SpillVNI);
 
   MachineBasicBlock *MBB = LIS.getMBBFromIndex(SVI.SpillVNI->def);
   MachineBasicBlock::iterator MII;
   if (SVI.SpillVNI->isPHIDef())
     MII = MBB->SkipPHIsAndLabels(MBB->begin());
   else {
-    MII = LIS.getInstructionFromIndex(SVI.SpillVNI->def);
+    MachineInstr *DefMI = LIS.getInstructionFromIndex(SVI.SpillVNI->def);
+    assert(DefMI && "Defining instruction disappeared");
+    MII = DefMI;
     ++MII;
   }
   // Insert spill without kill flag immediately after def.
@@ -492,8 +508,8 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
     LiveInterval *LI;
     tie(LI, VNI) = WorkList.pop_back_val();
     unsigned Reg = LI->reg;
-    DEBUG(dbgs() << "Checking redundant spills for " << PrintReg(Reg) << ':'
-                 << VNI->id << '@' << VNI->def << '\n');
+    DEBUG(dbgs() << "Checking redundant spills for "
+                 << VNI->id << '@' << VNI->def << " in " << *LI << '\n');
 
     // Regs to spill are taken care of.
     if (isRegToSpill(Reg))
