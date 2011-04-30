@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=armv6-apple-darwin -regalloc=linearscan | FileCheck %s -check-prefix=V6
-; RUN: llc < %s -mtriple=armv5-apple-darwin | FileCheck %s -check-prefix=V5
-; RUN: llc < %s -mtriple=armv6-eabi | FileCheck %s -check-prefix=EABI
+; RUN: llc < %s -mtriple=armv5-apple-darwin -regalloc=linearscan | FileCheck %s -check-prefix=V5
+; RUN: llc < %s -mtriple=armv6-eabi -regalloc=linearscan | FileCheck %s -check-prefix=EABI
 ; rdar://r6949835
 
 ; Magic ARM pair hints works best with linearscan.

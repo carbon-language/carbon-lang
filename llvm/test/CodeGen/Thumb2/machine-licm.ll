@@ -14,19 +14,19 @@ entry:
 
 bb.nph:                                           ; preds = %entry
 ; CHECK: BB#1
-; CHECK: movw r2, :lower16:L_GV$non_lazy_ptr
-; CHECK: movt r2, :upper16:L_GV$non_lazy_ptr
-; CHECK: ldr r2, [r2]
-; CHECK: ldr r3, [r2]
+; CHECK: movw r[[R2:[0-9]+]], :lower16:L_GV$non_lazy_ptr
+; CHECK: movt r[[R2]], :upper16:L_GV$non_lazy_ptr
+; CHECK: ldr{{(.w)?}} r[[R2b:[0-9]+]], [r[[R2]]
+; CHECK: ldr{{.*}}, [r[[R2b]]
 ; CHECK: LBB0_2
 ; CHECK-NOT: LCPI0_0:
 
 ; PIC: BB#1
-; PIC: movw r2, :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
-; PIC: movt r2, :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
-; PIC: add r2, pc
-; PIC: ldr r2, [r2]
-; PIC: ldr r3, [r2]
+; PIC: movw r[[R2:[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; PIC: movt r[[R2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
+; PIC: add r[[R2]], pc
+; PIC: ldr{{(.w)?}} r[[R2b:[0-9]+]], [r[[R2]]
+; PIC: ldr{{.*}}, [r[[R2b]]
 ; PIC: LBB0_2
 ; PIC-NOT: LCPI0_0:
 ; PIC: .section
@@ -89,7 +89,7 @@ bb.nph:
 ; CHECK: bb.nph
 ; CHECK: movw {{(r[0-9])|(lr)}}, #32768
 ; CHECK: movs {{(r[0-9]+)|(lr)}}, #0
-; CHECK: movw [[REGISTER:(r[0-9])|(lr)]], #16386
+; CHECK: movw [[REGISTER:(r[0-9]+)|(lr)]], #16386
 ; CHECK: movw {{(r[0-9]+)|(lr)}}, #65534
 ; CHECK: movt {{(r[0-9]+)|(lr)}}, #65535
   br label %bb

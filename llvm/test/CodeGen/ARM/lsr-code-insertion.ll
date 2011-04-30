@@ -1,5 +1,4 @@
-; RUN: llc < %s -stats |& grep {39.*Number of machine instrs printed}
-; RUN: llc < %s -stats |& not grep {.*Number of re-materialization}
+; RUN: llc < %s | FileCheck %s
 ; This test really wants to check that the resultant "cond_true" block only 
 ; has a single store in it, and that cond_true55 only has code to materialize 
 ; the constant and do a store.  We do *not* want something like this:
@@ -8,6 +7,11 @@
 ;        add r8, r0, r6
 ;        str r10, [r8, #+4]
 ;
+; CHECK: ldr [[R6:r[0-9*]+]], LCP
+; CHECK: cmp {{.*}}, [[R6]]
+; CHECK: ldrle
+; CHECK-NEXT: strle
+
 target triple = "arm-apple-darwin8"
 
 define void @foo(i32* %mc, i32* %mpp, i32* %ip, i32* %dpp, i32* %tpmm, i32 %M, i32* %tpim, i32* %tpdm, i32* %bp, i32* %ms, i32 %xmb) {

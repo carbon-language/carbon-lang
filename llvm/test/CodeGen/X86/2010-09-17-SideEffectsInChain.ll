@@ -18,7 +18,7 @@ entry:
   ret i32 0
 }
 
-; CHECK: movq	___stack_chk_guard@GOTPCREL(%rip), %rax
+; CHECK: movq	___stack_chk_guard@GOTPCREL(%rip)
 ; CHECK: movb   38(%rsp), [[R0:%.+]]
 ; CHECK: movb   8(%rsp), [[R1:%.+]]
 ; CHECK: movb   [[R1]], 8(%rsp)

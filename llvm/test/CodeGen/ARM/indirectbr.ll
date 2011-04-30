@@ -42,20 +42,23 @@ L3:                                               ; preds = %L4, %bb2
   br label %L2
 
 L2:                                               ; preds = %L3, %bb2
+; THUMB: muls
   %res.2 = phi i32 [ %res.1, %L3 ], [ 1, %bb2 ]   ; <i32> [#uses=1]
   %phitmp = mul i32 %res.2, 6                     ; <i32> [#uses=1]
   br label %L1
 
 L1:                                               ; preds = %L2, %bb2
   %res.3 = phi i32 [ %phitmp, %L2 ], [ 2, %bb2 ]  ; <i32> [#uses=1]
-; ARM: ldr r1, LCPI
-; ARM: add r1, pc, r1
-; ARM: str r1
-; THUMB: ldr.n r2, LCPI
-; THUMB: add r2, pc
-; THUMB: str r2
-; THUMB2: ldr.n r2, LCPI
-; THUMB2-NEXT: str r2
+; ARM: ldr [[R1:r[0-9]+]], LCPI
+; ARM: add [[R1b:r[0-9]+]], pc, [[R1]]
+; ARM: str [[R1b]]
+; THUMB: ldr.n
+; THUMB: add
+; THUMB: ldr.n [[R2:r[0-9]+]], LCPI
+; THUMB: add [[R2]], pc
+; THUMB: str [[R2]]
+; THUMB2: ldr.n [[R2:r[0-9]+]], LCPI
+; THUMB2-NEXT: str{{(.w)?}} [[R2]]
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3
 }
