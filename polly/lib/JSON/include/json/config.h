@@ -21,7 +21,7 @@
 
 /// If defined, indicates that Json use exception to report invalid type manipulation
 /// instead of C assert macro.
-# define JSON_USE_EXCEPTION 1
+# define JSON_USE_EXCEPTION 0
 
 # ifdef JSON_IN_CPPTL
 #  include <cpptl/config.h>
