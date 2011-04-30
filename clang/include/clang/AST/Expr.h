@@ -2243,6 +2243,12 @@ private:
   }
   CXXBaseSpecifier **path_buffer();
 
+  void setBasePathSize(unsigned basePathSize) {
+    CastExprBits.BasePathSize = basePathSize;
+    assert(CastExprBits.BasePathSize == basePathSize &&
+           "basePathSize doesn't fit in bits of CastExprBits.BasePathSize!");
+  }
+
 protected:
   CastExpr(StmtClass SC, QualType ty, ExprValueKind VK,
            const CastKind kind, Expr *op, unsigned BasePathSize) :
@@ -2258,14 +2264,14 @@ protected:
     Op(op) {
     assert(kind != CK_Invalid && "creating cast with invalid cast kind");
     CastExprBits.Kind = kind;
-    CastExprBits.BasePathSize = BasePathSize;
+    setBasePathSize(BasePathSize);
     CheckCastConsistency();
   }
 
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty, unsigned BasePathSize)
     : Expr(SC, Empty) {
-    CastExprBits.BasePathSize = BasePathSize;
+    setBasePathSize(BasePathSize);
   }
 
 public:
