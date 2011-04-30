@@ -25,7 +25,7 @@ UniversalArchs.10.4 := i386 x86_64
 # in the same linkage unit, and for a couple of other functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := armv6 armv7
+UniversalArchs.ios := i386 x86_64 armv6 armv7
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
@@ -55,7 +55,10 @@ endif
 
 CFLAGS.eprintf		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
-CFLAGS.ios		:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.ios.i386		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.ios.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.ios.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
@@ -64,12 +67,11 @@ CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
-IOS_COMMON_FUNCTIONS := divmodsi4 udivmodsi4
-FUNCTIONS.ios.armv6 := $(IOS_COMMON_FUNCTIONS) \
+FUNCTIONS.ios	    := divmodsi4 udivmodsi4
+FUNCTIONS.ios.armv6 := $(FUNCTIONS.ios) \
                        sync_synchronize \
                        switch16 switch32 switch8 switchu8 \
                        save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
-FUNCTIONS.ios.armv7 := $(IOS_COMMON_FUNCTIONS)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
