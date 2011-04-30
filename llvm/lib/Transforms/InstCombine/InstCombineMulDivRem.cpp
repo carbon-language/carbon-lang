@@ -336,6 +336,19 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   return 0;
 }
 
+/// dyn_castZExtVal - Checks if V is a zext or constant that can
+/// be truncated to Ty without losing bits.
+static Value *dyn_castZExtVal(Value *V, const Type *Ty) {
+  if (ZExtInst *Z = dyn_cast<ZExtInst>(V)) {
+    if (Z->getSrcTy() == Ty)
+      return Z->getOperand(0);
+  } else if (ConstantInt *C = dyn_cast<ConstantInt>(V)) {
+    if (C->getValue().getActiveBits() <= cast<IntegerType>(Ty)->getBitWidth())
+      return ConstantExpr::getTrunc(C, Ty);
+  }
+  return 0;
+}
+
 Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -394,6 +407,14 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
       return SelectInst::Create(Cond, TSI, FSI);
     }
   }
+
+  // (zext A) udiv (zext B) --> zext (A udiv B)
+  if (ZExtInst *ZOp0 = dyn_cast<ZExtInst>(Op0))
+    if (Value *ZOp1 = dyn_castZExtVal(Op1, ZOp0->getSrcTy()))
+      return new ZExtInst(Builder->CreateUDiv(ZOp0->getOperand(0), ZOp1, "div",
+                                              I.isExact()),
+                          I.getType());
+
   return 0;
 }
 
@@ -568,7 +589,13 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
       return SelectInst::Create(Cond, TrueAnd, FalseAnd);
     }
   }
-  
+
+  // (zext A) urem (zext B) --> zext (A urem B)
+  if (ZExtInst *ZOp0 = dyn_cast<ZExtInst>(Op0))
+    if (Value *ZOp1 = dyn_castZExtVal(Op1, ZOp0->getSrcTy()))
+      return new ZExtInst(Builder->CreateURem(ZOp0->getOperand(0), ZOp1),
+                          I.getType());
+
   return 0;
 }
 
