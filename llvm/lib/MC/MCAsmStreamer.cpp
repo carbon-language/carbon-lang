@@ -47,6 +47,11 @@ class MCAsmStreamer : public MCStreamer {
   unsigned UseLoc : 1;
   unsigned UseCFI : 1;
 
+  enum EHSymbolFlags { EHGlobal         = 1,
+                       EHWeakDefinition = 1 << 1,
+                       EHPrivateExtern  = 1 << 2 };
+  DenseMap<const MCSymbol*, unsigned> FlagMap;
+
   bool needsSet(const MCExpr *Value);
 
 public:
@@ -118,7 +123,8 @@ public:
   }
 
   virtual void EmitLabel(MCSymbol *Symbol);
-
+  virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
+                                   MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
 
@@ -278,6 +284,21 @@ void MCAsmStreamer::ChangeSection(const MCSection *Section) {
   Section->PrintSwitchToSection(MAI, OS);
 }
 
+void MCAsmStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
+                                        MCSymbol *EHSymbol) {
+  if (UseCFI)
+    return;
+
+  unsigned Flags = FlagMap.lookup(Symbol);
+
+  if (Flags & EHGlobal)
+    EmitSymbolAttribute(EHSymbol, MCSA_Global);
+  if (Flags & EHWeakDefinition)
+    EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
+  if (Flags & EHPrivateExtern)
+    EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
+}
+
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
   MCStreamer::EmitLabel(Symbol);
@@ -363,6 +384,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     return;
   case MCSA_Global: // .globl/.global
     OS << MAI.getGlobalDirective();
+    FlagMap[Symbol] |= EHGlobal;
     break;
   case MCSA_Hidden:         OS << "\t.hidden\t";          break;
   case MCSA_IndirectSymbol: OS << "\t.indirect_symbol\t"; break;
@@ -371,11 +393,17 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Local:          OS << "\t.local\t";           break;
   case MCSA_NoDeadStrip:    OS << "\t.no_dead_strip\t";   break;
   case MCSA_SymbolResolver: OS << "\t.symbol_resolver\t"; break;
-  case MCSA_PrivateExtern:  OS << "\t.private_extern\t";  break;
+  case MCSA_PrivateExtern:
+    OS << "\t.private_extern\t";
+    FlagMap[Symbol] |= EHPrivateExtern;
+    break;
   case MCSA_Protected:      OS << "\t.protected\t";       break;
   case MCSA_Reference:      OS << "\t.reference\t";       break;
   case MCSA_Weak:           OS << "\t.weak\t";            break;
-  case MCSA_WeakDefinition: OS << "\t.weak_definition\t"; break;
+  case MCSA_WeakDefinition:
+    OS << "\t.weak_definition\t";
+    FlagMap[Symbol] |= EHWeakDefinition;
+    break;
       // .weak_reference
   case MCSA_WeakReference:  OS << MAI.getWeakRefDirective(); break;
   case MCSA_WeakDefAutoPrivate: OS << "\t.weak_def_can_be_hidden\t"; break;
