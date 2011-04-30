@@ -278,10 +278,6 @@ def OSAtomicChecker : Checker<"AtomicCAS">,
 
 let ParentPackage = Cocoa in {
 
-def ObjCSelfInitChecker : Checker<"SelfInit">,
-  HelpText<"Check that 'self' is properly initialized inside an initializer method">,
-  DescFile<"ObjCSelfInitChecker.cpp">;
-
 def ObjCAtSyncChecker : Checker<"AtSync">,
   HelpText<"Check for null pointers used as mutexes for @synchronized">,
   DescFile<"ObjCAtSyncChecker.cpp">;
@@ -318,6 +314,10 @@ def NSErrorChecker : Checker<"NSError">,
 } // end "cocoa"
 
 let ParentPackage = CocoaExperimental in {
+
+def ObjCSelfInitChecker : Checker<"SelfInit">,
+  HelpText<"Check that 'self' is properly initialized inside an initializer method">,
+  DescFile<"ObjCSelfInitChecker.cpp">;
 
 def ObjCDeallocChecker : Checker<"Dealloc">,
   HelpText<"Warn about Objective-C classes that lack a correct implementation of -dealloc">,
