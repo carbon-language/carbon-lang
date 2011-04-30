@@ -477,7 +477,17 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
         << Version->getAsString(Args);
   }
 
-  setTarget(/*isIPhoneOS=*/ !OSXVersion, Major, Minor, Micro);
+  bool IsIOSSim = bool(iOSSimVersion);
+
+  // In GCC, the simulator historically was treated as being OS X in some
+  // contexts, like determining the link logic, despite generally being called
+  // with an iOS deployment target. For compatibility, we detect the
+  // simulator as iOS + x86, and treat it differently in a few contexts.
+  if (iOSVersion && (getTriple().getArch() == llvm::Triple::x86 ||
+                     getTriple().getArch() == llvm::Triple::x86_64))
+    IsIOSSim = true;
+
+  setTarget(/*IsIPhoneOS=*/ !OSXVersion, Major, Minor, Micro, IsIOSSim);
 }
 
 void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,

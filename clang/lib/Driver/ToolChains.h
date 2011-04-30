@@ -60,6 +60,9 @@ private:
   /// Whether we are targeting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
 
+  /// Whether we are targeting the iPhoneOS simulator target.
+  mutable bool TargetIsIPhoneOSSimulator;
+
   /// The OS version we are targeting.
   mutable unsigned TargetVersion[3];
 
@@ -81,18 +84,22 @@ public:
 
   // FIXME: Eliminate these ...Target functions and derive separate tool chains
   // for these targets and put version in constructor.
-  void setTarget(bool isIPhoneOS, unsigned Major, unsigned Minor,
-                 unsigned Micro) const {
+  void setTarget(bool IsIPhoneOS, unsigned Major, unsigned Minor,
+                 unsigned Micro, bool IsIOSSim) const {
+    assert((!IsIOSSim || IsIPhoneOS) && "Unexpected deployment target!");
+
     // FIXME: For now, allow reinitialization as long as values don't
     // change. This will go away when we move away from argument translation.
-    if (TargetInitialized && TargetIsIPhoneOS == isIPhoneOS &&
+    if (TargetInitialized && TargetIsIPhoneOS == IsIPhoneOS &&
+        TargetIsIPhoneOSSimulator == IsIOSSim &&
         TargetVersion[0] == Major && TargetVersion[1] == Minor &&
         TargetVersion[2] == Micro)
       return;
 
     assert(!TargetInitialized && "Target already initialized!");
     TargetInitialized = true;
-    TargetIsIPhoneOS = isIPhoneOS;
+    TargetIsIPhoneOS = IsIPhoneOS;
+    TargetIsIPhoneOSSimulator = IsIOSSim;
     TargetVersion[0] = Major;
     TargetVersion[1] = Minor;
     TargetVersion[2] = Micro;
@@ -104,13 +111,8 @@ public:
   }
 
   bool isTargetIOSSimulator() const {
-    // In GCC, the simulator historically was treated as being OS X in some
-    // contexts, like determining the link logic, despite generally being called
-    // with an iOS deployment target. For compatibility, we detect the
-    // simulator is iOS + x86, and treat it differently in a few contexts.
-    return isTargetIPhoneOS() && 
-      (getTriple().getArch() == llvm::Triple::x86 ||
-       getTriple().getArch() == llvm::Triple::x86_64);
+    assert(TargetInitialized && "Target not initialized!");
+    return TargetIsIPhoneOSSimulator;
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }
