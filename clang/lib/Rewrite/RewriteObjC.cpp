@@ -5057,7 +5057,7 @@ std::string RewriteObjC::SynthesizeByrefCopyDestroyHelper(VarDecl *VD,
   unsigned VoidPtrSize = 
   static_cast<unsigned>(Context->getTypeSize(Context->VoidPtrTy));
   
-  unsigned offset = (VoidPtrSize*4 + IntSize + IntSize)/8;
+  unsigned offset = (VoidPtrSize*4 + IntSize + IntSize)/Context->getCharWidth();
   S += " _Block_object_assign((char*)dst + ";
   S += utostr(offset);
   S += ", *(void * *) ((char*)src + ";
