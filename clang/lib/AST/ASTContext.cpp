@@ -375,7 +375,7 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(UnsignedInt128Ty,    BuiltinType::UInt128);
 
   if (LangOpts.CPlusPlus) { // C++ 3.9.1p5
-    if (!LangOpts.ShortWChar)
+    if (TargetInfo::isTypeSigned(Target.getWCharType()))
       InitBuiltinType(WCharTy,           BuiltinType::WChar_S);
     else  // -fshort-wchar makes wchar_t be unsigned.
       InitBuiltinType(WCharTy,           BuiltinType::WChar_U);
