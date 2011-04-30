@@ -8,6 +8,10 @@ static_assert(__is_literal(E), "fail");
 static_assert(__is_literal(decltype(E1)), "fail");
 typedef int IAR[10];
 static_assert(__is_literal(IAR), "fail");
+typedef int Vector __attribute__((vector_size(16)));
+typedef int VectorExt __attribute__((ext_vector_type(4)));
+static_assert(__is_literal(Vector), "fail");
+static_assert(__is_literal(VectorExt), "fail");
 
 // C++0x [basic.types]p10:
 //   A type is a literal type if it is:

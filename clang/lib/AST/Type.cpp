@@ -891,7 +891,8 @@ bool Type::isLiteralType() const {
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or
-  if (BaseTy->isScalarType()) return true;
+  // As an extension, Clang treats vector types as Scalar types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
   //    -- a reference type; or
   if (BaseTy->isReferenceType()) return true;
   //    -- a class type that has all of the following properties:
@@ -936,7 +937,8 @@ bool Type::isTrivialType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
-  if (BaseTy->isScalarType()) return true;
+  // As an extension, Clang treats vector types as Scalar types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl())) {
@@ -970,7 +972,8 @@ bool Type::isStandardLayoutType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
-  if (BaseTy->isScalarType()) return true;
+  // As an extension, Clang treats vector types as Scalar types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl()))
@@ -1005,7 +1008,8 @@ bool Type::isCXX11PODType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
-  if (BaseTy->isScalarType()) return true;
+  // As an extension, Clang treats vector types as Scalar types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl())) {
