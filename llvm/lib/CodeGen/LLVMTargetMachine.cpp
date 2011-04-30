@@ -149,6 +149,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
                                                   getVerboseAsm(),
                                                   hasMCUseLoc(),
+                                                  hasMCUseCFI(),
                                                   InstPrinter,
                                                   MCE, TAB,
                                                   ShowMCInst);

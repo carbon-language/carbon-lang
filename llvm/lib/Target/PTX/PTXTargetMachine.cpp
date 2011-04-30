@@ -23,6 +23,7 @@ using namespace llvm;
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                    bool isVerboseAsm, bool useLoc,
+                                   bool useCFI,
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
                                    TargetAsmBackend *TAB,

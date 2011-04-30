@@ -356,7 +356,8 @@ static int AssembleInput(const char *ProgName) {
       TAB = TheTarget->createAsmBackend(TripleName);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
-                                           /*useLoc*/ true, IP, CE, TAB,
+                                           /*useLoc*/ true,
+                                           /*useCFI*/ true, IP, CE, TAB,
                                            ShowInst));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));

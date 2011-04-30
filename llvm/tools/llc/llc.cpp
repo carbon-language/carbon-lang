@@ -99,6 +99,9 @@ cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
 cl::opt<bool> DisableDotLoc("disable-dot-loc", cl::Hidden,
                             cl::desc("Do not use .loc entries"));
 
+cl::opt<bool> DisableCFI("disable-cfi", cl::Hidden,
+                         cl::desc("Do not use .cfi_* directives"));
+
 static cl::opt<bool>
 DisableRedZone("disable-red-zone",
   cl::desc("Do not emit code that uses the red zone."),
@@ -278,6 +281,9 @@ int main(int argc, char **argv) {
 
   if (DisableDotLoc)
     Target.setMCUseLoc(false);
+
+  if (DisableCFI)
+    Target.setMCUseCFI(false);
 
   // Disable .loc support for older OS X versions.
   if (TheTriple.isMacOSX() &&

@@ -43,7 +43,7 @@ namespace llvm {
 
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool isVerboseAsm,
-                                bool useLoc,
+                                bool useLoc, bool useCFI,
                                 MCInstPrinter *InstPrint,
                                 MCCodeEmitter *CE,
                                 TargetAsmBackend *TAB,
@@ -96,6 +96,7 @@ namespace llvm {
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
                                              bool useLoc,
+                                             bool useCFI,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
                                              TargetAsmBackend *TAB,
@@ -329,12 +330,13 @@ namespace llvm {
                                   formatted_raw_ostream &OS,
                                   bool isVerboseAsm,
                                   bool useLoc,
+                                  bool useCFI,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
                                   TargetAsmBackend *TAB,
                                   bool ShowInst) const {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
-      return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc,
+      return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
                                InstPrint, CE, TAB, ShowInst);
     }
 

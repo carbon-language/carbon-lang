@@ -531,7 +531,7 @@ void PTXMCAsmStreamer::Finish() {}
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Context,
                                    formatted_raw_ostream &OS,
-                                   bool isVerboseAsm, bool useLoc,
+                                   bool isVerboseAsm, bool useLoc, bool useCFI,
                                    MCInstPrinter *IP,
                                    MCCodeEmitter *CE, TargetAsmBackend *TAB,
                                    bool ShowInst) {

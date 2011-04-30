@@ -45,20 +45,20 @@ class MCAsmStreamer : public MCStreamer {
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
   unsigned UseLoc : 1;
+  unsigned UseCFI : 1;
 
   bool needsSet(const MCExpr *Value);
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
-                bool isVerboseAsm,
-                bool useLoc,
+                bool isVerboseAsm, bool useLoc, bool useCFI,
                 MCInstPrinter *printer, MCCodeEmitter *emitter,
                 TargetAsmBackend *asmbackend,
                 bool showInst)
     : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
       InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
       CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-      ShowInst(showInst), UseLoc(useLoc) {
+      ShowInst(showInst), UseLoc(useLoc), UseCFI(useCFI) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
@@ -740,12 +740,18 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
 void MCAsmStreamer::EmitCFIStartProc() {
   MCStreamer::EmitCFIStartProc();
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_startproc";
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIEndProc() {
   MCStreamer::EmitCFIEndProc();
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_endproc";
   EmitEOL();
@@ -754,12 +760,18 @@ void MCAsmStreamer::EmitCFIEndProc() {
 void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
   MCStreamer::EmitCFIDefCfa(Register, Offset);
 
+  if (!UseCFI)
+    return;
+
   OS << ".cfi_def_cfa " << Register << ", " << Offset;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   MCStreamer::EmitCFIDefCfaOffset(Offset);
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_def_cfa_offset " << Offset;
   EmitEOL();
@@ -768,12 +780,18 @@ void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
 void MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
   MCStreamer::EmitCFIDefCfaRegister(Register);
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_def_cfa_register " << Register;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   this->MCStreamer::EmitCFIOffset(Register, Offset);
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_offset " << Register << ", " << Offset;
   EmitEOL();
@@ -783,12 +801,18 @@ void MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym,
                                        unsigned Encoding) {
   MCStreamer::EmitCFIPersonality(Sym, Encoding);
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_personality " << Encoding << ", " << *Sym;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
   MCStreamer::EmitCFILsda(Sym, Encoding);
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_lsda " << Encoding << ", " << *Sym;
   EmitEOL();
@@ -797,12 +821,18 @@ void MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
 void MCAsmStreamer::EmitCFIRememberState() {
   MCStreamer::EmitCFIRememberState();
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_remember_state";
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIRestoreState() {
   MCStreamer::EmitCFIRestoreState();
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_restore_state";
   EmitEOL();
@@ -811,6 +841,9 @@ void MCAsmStreamer::EmitCFIRestoreState() {
 void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
   MCStreamer::EmitCFISameValue(Register);
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_same_value " << Register;
   EmitEOL();
 }
@@ -818,12 +851,18 @@ void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
 void MCAsmStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
   MCStreamer::EmitCFIRelOffset(Register, Offset);
 
+  if (!UseCFI)
+    return;
+
   OS << "\t.cfi_rel_offset " << Register << ", " << Offset;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
   MCStreamer::EmitCFIAdjustCfaOffset(Adjustment);
+
+  if (!UseCFI)
+    return;
 
   OS << "\t.cfi_adjust_cfa_offset " << Adjustment;
   EmitEOL();
@@ -1008,8 +1047,9 @@ void MCAsmStreamer::Finish() {
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
                                     bool isVerboseAsm, bool useLoc,
+                                    bool useCFI,
                                     MCInstPrinter *IP, MCCodeEmitter *CE,
                                     TargetAsmBackend *TAB, bool ShowInst) {
-  return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
+  return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
                            IP, CE, TAB, ShowInst);
 }
