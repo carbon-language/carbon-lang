@@ -957,7 +957,7 @@ bool Type::isStandardLayoutType() const {
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl()))
-      if (!ClassDecl->hasStandardLayout())
+      if (!ClassDecl->isStandardLayout())
         return false;
 
     // Default to 'true' for non-C++ class types.
@@ -997,7 +997,7 @@ bool Type::isCXX11PODType() const {
       // C++11 [class]p10:
       //   A POD struct is a non-union class that is both a trivial class and
       //   a standard-layout class [...]
-      if (!ClassDecl->hasStandardLayout()) return false;
+      if (!ClassDecl->isStandardLayout()) return false;
 
       // C++11 [class]p10:
       //   A POD struct is a non-union class that is both a trivial class and

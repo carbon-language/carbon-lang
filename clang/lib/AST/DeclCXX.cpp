@@ -31,7 +31,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
-    Abstract(false), HasStandardLayout(true), HasNoNonEmptyBases(true),
+    Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
     HasTrivialConstructor(true), HasConstExprNonCopyMoveConstructor(false),
     HasTrivialCopyConstructor(true), HasTrivialMoveConstructor(true),
@@ -122,7 +122,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
         //       or has no base classes with non-static data members, and
         // If this is the second non-empty base, then neither of these two
         // clauses can be true.
-        data().HasStandardLayout = false;
+        data().IsStandardLayout = false;
       }
 
       data().Empty = false;
@@ -138,8 +138,8 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     // C++0x [class]p7:
     //   A standard-layout class is a class that: [...]
     //    -- has no non-standard-layout base classes
-    if (!BaseClassDecl->hasStandardLayout())
-      data().HasStandardLayout = false;
+    if (!BaseClassDecl->isStandardLayout())
+      data().IsStandardLayout = false;
 
     // Record if this base is the first non-literal field or base.
     if (!hasNonLiteralTypeFieldsOrBases() && !BaseType->isLiteralType())
@@ -185,7 +185,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       // C++0x [class]p7:
       //   A standard-layout class is a class that: [...]
       //    -- has [...] no virtual base classes
-      data().HasStandardLayout = false;
+      data().IsStandardLayout = false;
     } else {
       // C++ [class.ctor]p5:
       //   A constructor is trivial if all the direct base classes of its
@@ -440,7 +440,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++0x [class]p7:
       //   A standard-layout class is a class that: [...]
       //    -- has no virtual functions
-      data().HasStandardLayout = false;
+      data().IsStandardLayout = false;
     }
   }
   
@@ -665,7 +665,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
     };
     if ((data().HasPrivateFields + data().HasProtectedFields +
          data().HasPublicFields) > 1)
-      data().HasStandardLayout = false;
+      data().IsStandardLayout = false;
 
     // C++0x [class]p9:
     //   A POD struct is a class that is both a trivial class and a 
@@ -681,7 +681,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++0x [class]p7:
       //   A standard-layout class is a class that:
       //    -- has no non-static data members of type [...] reference,
-      data().HasStandardLayout = false;
+      data().IsStandardLayout = false;
     }
 
     // Record if this field is the first non-literal field or base.
@@ -725,8 +725,8 @@ void CXXRecordDecl::addedMember(Decl *D) {
         //   A standard-layout class is a class that:
         //    -- has no non-static data members of type non-standard-layout
         //       class (or array of such types) [...]
-        if (!FieldRec->hasStandardLayout())
-          data().HasStandardLayout = false;
+        if (!FieldRec->isStandardLayout())
+          data().IsStandardLayout = false;
 
         // C++0x [class]p7:
         //   A standard-layout class is a class that:
@@ -740,15 +740,15 @@ void CXXRecordDecl::addedMember(Decl *D) {
         // also make it non-standard-layout so we needn't check here.
         // A non-empty base class may leave the class standard-layout, but not
         // if we have arrived here, and have at least on non-static data
-        // member. If HasStandardLayout remains true, then the first non-static
+        // member. If IsStandardLayout remains true, then the first non-static
         // data member must come through here with Empty still true, and Empty
         // will subsequently be set to false below.
-        if (data().HasStandardLayout && data().Empty) {
+        if (data().IsStandardLayout && data().Empty) {
           for (CXXRecordDecl::base_class_const_iterator BI = bases_begin(),
                                                         BE = bases_end();
                BI != BE; ++BI) {
             if (Context.hasSameUnqualifiedType(BI->getType(), T)) {
-              data().HasStandardLayout = false;
+              data().IsStandardLayout = false;
               break;
             }
           }
@@ -765,7 +765,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
     // At this point we know that we have a non-static data member, so the last
     // clause holds.
     if (!data().HasNoNonEmptyBases)
-      data().HasStandardLayout = false;
+      data().IsStandardLayout = false;
 
     // If this is not a zero-length bit-field, then the class is not empty.
     if (data().Empty) {

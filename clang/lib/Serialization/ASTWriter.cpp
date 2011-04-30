@@ -3782,7 +3782,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.Empty);
   Record.push_back(Data.Polymorphic);
   Record.push_back(Data.Abstract);
-  Record.push_back(Data.HasStandardLayout);
+  Record.push_back(Data.IsStandardLayout);
   Record.push_back(Data.HasNoNonEmptyBases);
   Record.push_back(Data.HasPrivateFields);
   Record.push_back(Data.HasProtectedFields);
