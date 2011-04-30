@@ -1195,8 +1195,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     DashX = llvm::StringSwitch<InputKind>(A->getValue(Args))
       .Case("c", IK_C)
       .Case("cl", IK_OpenCL)
-      .Case("c", IK_C)
-      .Case("cl", IK_OpenCL)
       .Case("cuda", IK_CUDA)
       .Case("c++", IK_CXX)
       .Case("objective-c", IK_ObjC)
