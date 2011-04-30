@@ -176,10 +176,10 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args) const {
 }
 
 std::string ToolChain::ComputeEffectiveClangTriple(const ArgList &Args) const {
-  // Diagnose use of -mmacosx-version-min and -miphoneos-version-min on
-  // non-Darwin.
+  // Diagnose use of Darwin OS deployment target arguments on non-Darwin.
   if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ,
-                               options::OPT_miphoneos_version_min_EQ))
+                               options::OPT_miphoneos_version_min_EQ,
+                               options::OPT_mios_simulator_version_min_EQ))
     getDriver().Diag(clang::diag::err_drv_clang_unsupported)
       << A->getAsString(Args);
 

@@ -386,46 +386,69 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   const OptTable &Opts = getDriver().getOpts();
 
   Arg *OSXVersion = Args.getLastArg(options::OPT_mmacosx_version_min_EQ);
-  Arg *iPhoneVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
-  if (OSXVersion && iPhoneVersion) {
+  Arg *iOSVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
+  Arg *iOSSimVersion = Args.getLastArg(
+    options::OPT_mios_simulator_version_min_EQ);
+  if (OSXVersion && (iOSVersion || iOSSimVersion)) {
     getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
-          << iPhoneVersion->getAsString(Args);
-    iPhoneVersion = 0;
-  } else if (!OSXVersion && !iPhoneVersion) {
-    // If neither OS X nor iPhoneOS targets were specified, check for
+          << (iOSVersion ? iOSVersion : iOSSimVersion)->getAsString(Args);
+    iOSVersion = iOSSimVersion = 0;
+  } else if (iOSVersion && iOSSimVersion) {
+    getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
+          << iOSVersion->getAsString(Args)
+          << iOSSimVersion->getAsString(Args);
+    iOSSimVersion = 0;
+  } else if (!OSXVersion && !iOSVersion && !iOSSimVersion) {
+    // If not deployment target was specified on the command line, check for
     // environment defines.
     const char *OSXTarget = ::getenv("MACOSX_DEPLOYMENT_TARGET");
-    const char *iPhoneOSTarget = ::getenv("IPHONEOS_DEPLOYMENT_TARGET");
+    const char *iOSTarget = ::getenv("IPHONEOS_DEPLOYMENT_TARGET");
+    const char *iOSSimTarget = ::getenv("IOS_SIMULATOR_DEPLOYMENT_TARGET");
 
     // Ignore empty strings.
     if (OSXTarget && OSXTarget[0] == '\0')
       OSXTarget = 0;
-    if (iPhoneOSTarget && iPhoneOSTarget[0] == '\0')
-      iPhoneOSTarget = 0;
+    if (iOSTarget && iOSTarget[0] == '\0')
+      iOSTarget = 0;
+    if (iOSSimTarget && iOSSimTarget[0] == '\0')
+      iOSSimTarget = 0;
 
-    // Diagnose conflicting deployment targets, and choose default platform
-    // based on the tool chain.
+    // Handle conflicting deployment targets
     //
     // FIXME: Don't hardcode default here.
-    if (OSXTarget && iPhoneOSTarget) {
-      // FIXME: We should see if we can get away with warning or erroring on
-      // this. Perhaps put under -pedantic?
+
+    // Do not allow conflicts with the iOS simulator target.
+    if (iOSSimTarget && (OSXTarget || iOSTarget)) {
+      getDriver().Diag(clang::diag::err_drv_conflicting_deployment_targets)
+        << "IOS_SIMULATOR_DEPLOYMENT_TARGET"
+        << (OSXTarget ? "MACOSX_DEPLOYMENT_TARGET" :
+            "IPHONEOS_DEPLOYMENT_TARGET");
+    }
+
+    // Allow conflicts among OSX and iOS for historical reasons, but choose the
+    // default platform.
+    if (OSXTarget && iOSTarget) {
       if (getTriple().getArch() == llvm::Triple::arm ||
           getTriple().getArch() == llvm::Triple::thumb)
         OSXTarget = 0;
       else
-        iPhoneOSTarget = 0;
+        iOSTarget = 0;
     }
 
     if (OSXTarget) {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = Args.MakeJoinedArg(0, O, OSXTarget);
       Args.append(OSXVersion);
-    } else if (iPhoneOSTarget) {
+    } else if (iOSTarget) {
       const Option *O = Opts.getOption(options::OPT_miphoneos_version_min_EQ);
-      iPhoneVersion = Args.MakeJoinedArg(0, O, iPhoneOSTarget);
-      Args.append(iPhoneVersion);
+      iOSVersion = Args.MakeJoinedArg(0, O, iOSTarget);
+      Args.append(iOSVersion);
+    } else if (iOSSimTarget) {
+      const Option *O = Opts.getOption(
+        options::OPT_mios_simulator_version_min_EQ);
+      iOSSimVersion = Args.MakeJoinedArg(0, O, iOSSimTarget);
+      Args.append(iOSSimVersion);
     } else {
       // Otherwise, assume we are targeting OS X.
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
@@ -438,21 +461,23 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   unsigned Major, Minor, Micro;
   bool HadExtra;
   if (OSXVersion) {
-    assert(!iPhoneVersion && "Unknown target platform!");
+    assert((!iOSVersion && !iOSSimVersion) && "Unknown target platform!");
     if (!Driver::GetReleaseVersion(OSXVersion->getValue(Args), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major != 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(clang::diag::err_drv_invalid_version_number)
         << OSXVersion->getAsString(Args);
   } else {
-    assert(iPhoneVersion && "Unknown target platform!");
-    if (!Driver::GetReleaseVersion(iPhoneVersion->getValue(Args), Major, Minor,
+    const Arg *Version = iOSVersion ? iOSVersion : iOSSimVersion;
+    assert(Version && "Unknown target platform!");
+    if (!Driver::GetReleaseVersion(Version->getValue(Args), Major, Minor,
                                    Micro, HadExtra) || HadExtra ||
         Major >= 10 || Minor >= 100 || Micro >= 100)
       getDriver().Diag(clang::diag::err_drv_invalid_version_number)
-        << iPhoneVersion->getAsString(Args);
+        << Version->getAsString(Args);
   }
-  setTarget(iPhoneVersion, Major, Minor, Micro);
+
+  setTarget(/*isIPhoneOS=*/ !OSXVersion, Major, Minor, Micro);
 }
 
 void DarwinClang::AddCXXStdlibLibArgs(const ArgList &Args,
