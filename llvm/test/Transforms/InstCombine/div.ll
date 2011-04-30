@@ -111,3 +111,10 @@ define i32 @test13(i32 %x) nounwind  {
 ; CHECK-NEXT: ret i32 1
 }
 
+define i32 @test14(i8 %x) nounwind {
+	%zext = zext i8 %x to i32
+	%div = udiv i32 %zext, 257	; 0
+	ret i32 %div
+; CHECK: @test14
+; CHECK-NEXT: ret i32 0
+}

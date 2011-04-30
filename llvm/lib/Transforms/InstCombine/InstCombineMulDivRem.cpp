@@ -320,6 +320,10 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
     }
   }
 
+  // See if we can fold away this div instruction.
+  if (SimplifyDemandedInstructionBits(I))
+    return &I;
+
   // (X - (X rem Y)) / Y -> X / Y; usually originates as ((X / Y) * Y) / Y
   Value *X = 0, *Z = 0;
   if (match(Op0, m_Sub(m_Value(X), m_Value(Z)))) { // (X - Z) / Y; Y = Op1
