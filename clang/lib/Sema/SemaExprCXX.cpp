@@ -2438,22 +2438,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   case UTT_IsSigned:
     return T->isSignedIntegerType();
   case UTT_IsStandardLayout:
-    // Error if T is an incomplete type.
-    if (Self.RequireCompleteType(KeyLoc, T, diag::err_incomplete_typeid))
-      return false;
-
-    // A standard layout type is:
-    // - a scalar type
-    // - an array of standard layout types
-    // - a standard layout class type:
-    if (EvaluateUnaryTypeTrait(Self, UTT_IsScalar, T, KeyLoc))
-      return true;
-    if (EvaluateUnaryTypeTrait(Self, UTT_IsScalar, C.getBaseElementType(T),
-                               KeyLoc))
-      return true;
-    if (const RecordType *RT = C.getBaseElementType(T)->getAs<RecordType>())
-      return RT->hasStandardLayout();
-    return false;
+    return T->isStandardLayoutType();
   case UTT_IsUnsigned:
     return T->isUnsignedIntegerType();
   case UTT_IsVoid:

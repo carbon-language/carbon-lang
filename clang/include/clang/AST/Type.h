@@ -1179,6 +1179,10 @@ public:
   /// (C++0x [basic.types]p9)
   bool isTrivialType() const;
 
+  /// \brief Test if this type is a standard-layout type.
+  /// (C++0x [basic.type]p9)
+  bool isStandardLayoutType() const;
+
   /// isCXX11PODType() - Return true if this is a POD type according to the
   /// more relaxed rules of the C++11 standard, regardless of the current
   /// compilation's language.
@@ -2841,9 +2845,6 @@ public:
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false.
   bool hasConstFields() const { return false; }
-
-  /// \brief Whether this class has standard layout
-  bool hasStandardLayout() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }

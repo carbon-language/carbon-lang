@@ -943,9 +943,36 @@ bool Type::isTrivialType() const {
   return false;
 }
 
-// This is effectively the intersection of isTrivialType and hasStandardLayout.
-// We implement it dircetly to avoid redundant conversions from a type to
-// a CXXRecordDecl.
+bool Type::isStandardLayoutType() const {
+  if (isIncompleteType())
+    return false;
+
+  // C++0x [basic.types]p9:
+  //   Scalar types, standard-layout class types, arrays of such types, and
+  //   cv-qualified versions of these types are collectively called
+  //   standard-layout types.
+  const Type *BaseTy = getBaseElementTypeUnsafe();
+  assert(BaseTy && "NULL element type");
+  if (BaseTy->isScalarType()) return true;
+  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl()))
+      if (!ClassDecl->hasStandardLayout())
+        return false;
+
+    // Default to 'true' for non-C++ class types.
+    // FIXME: This is a bit dubious, but plain C structs should trivially meet
+    // all the requirements of standard layout classes.
+    return true;
+  }
+
+  // No other types can match.
+  return false;
+}
+
+// This is effectively the intersection of isTrivialType and
+// isStandardLayoutType. We implement it dircetly to avoid redundant
+// conversions from a type to a CXXRecordDecl.
 bool Type::isCXX11PODType() const {
   if (isIncompleteType())
     return false;
@@ -1446,17 +1473,6 @@ static uint64_t countBasesWithFields(QualType BaseType) {
       BasesWithFields += countBasesWithFields(B->getType());
   }
   return BasesWithFields;
-}
-
-bool RecordType::hasStandardLayout() const {
-  CXXRecordDecl *RD = cast<CXXRecordDecl>(getDecl());
-  if (! RD) {
-    assert(cast<RecordDecl>(getDecl()) &&
-           "RecordType does not have a corresponding RecordDecl");
-    return true;
-  }
-
-  return RD->hasStandardLayout();
 }
 
 bool EnumType::classof(const TagType *TT) {
