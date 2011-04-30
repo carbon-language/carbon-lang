@@ -111,6 +111,8 @@ void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
     EmitSymbolAttribute(EHSymbol, MCSA_Global);
   if (SD.getFlags() & SF_WeakDefinition)
     EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
+  if (SD.isPrivateExtern())
+    EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
 }
 
 void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
