@@ -28,8 +28,8 @@
 //
 //  For example, to use clang-check on all files in a subtree of the source
 //  tree, use:
-//  /path/to/cmake/sources $ find . -name '*.cpp' \
-//      |xargs clang-check /path/to/cmake/build
+//
+//    /path/in/subtree $ find . -name '*.cpp'| xargs clang-check /path/to/source
 //
 //===----------------------------------------------------------------------===//
 
