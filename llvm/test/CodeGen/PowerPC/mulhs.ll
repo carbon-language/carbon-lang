@@ -5,7 +5,7 @@
 ; RUN: not grep add %t 
 ; RUN: grep mulhw %t | count 1
 
-define i32 @mulhs(i32 %a, i32 %b) {
+define i32 @mulhs(i32 %a, i32 %b) nounwind {
 entry:
         %tmp.1 = sext i32 %a to i64             ; <i64> [#uses=1]
         %tmp.3 = sext i32 %b to i64             ; <i64> [#uses=1]
