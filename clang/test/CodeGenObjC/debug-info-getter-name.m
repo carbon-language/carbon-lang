@@ -2,10 +2,9 @@
 
 //CHECK: "-[InstanceVariablesEverywhereButTheInterface someString]":
 //CHECK: .quad	"-[InstanceVariablesEverywhereButTheInterface someString]"
-//CHECK: "-[InstanceVariablesEverywhereButTheInterface someString].eh" = 0
-//CHECK: .no_dead_strip	"-[InstanceVariablesEverywhereButTheInterface someString].eh"
 //CHECK: .ascii	 "-[InstanceVariablesEverywhereButTheInterface someString]"
 //CHECK: .asciz	 "-[InstanceVariablesEverywhereButTheInterface someString]"
+//CHECK:  "-[InstanceVariablesEverywhereButTheInterface someString].eh":
 
 //rdar: //8498026
 
