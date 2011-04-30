@@ -7,7 +7,7 @@ clang - the Clang C, C++, and Objective-C compiler
 =head1 SYNOPSIS
 
 B<clang> [B<-c>|B<-S>|B<-E>] B<-std=>I<standard> B<-g>
-  [B<-O0>|B<-O1>|B<-O2>|B<-Os>|B<-O3>|B<-O4>]
+  [B<-O0>|B<-O1>|B<-O2>|B<-Os>|B<-Oz>|B<-O3>|B<-O4>]
   B<-W>I<warnings...> B<-pedantic>
   B<-I>I<dir...> B<-L>I<dir...>
   B<-D>I<macro[=defn]>
@@ -263,7 +263,7 @@ may not exist on earlier ones.
 
 =over
 
-=item B<-O0> B<-O1> B<-O2> B<-Os> B<-O3> B<-O4>
+=item B<-O0> B<-O1> B<-O2> B<-Os> B<-Oz> B<-O3> B<-O4>
 
 Specify which optimization level to use.  B<-O0> means "no optimization": this
 level compiles the fastest and generates the most debuggable code.  B<-O2> is a
