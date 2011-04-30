@@ -1061,8 +1061,14 @@
 //
 // RUN: %clang_cc1 -E -ffreestanding -triple=x86_64-pc-linux-gnu %s | FileCheck -check-prefix X86_64_LINUX %s
 //
-// X86_64_LINUX:WINT_MIN_ 0
+// X86_64_LINUX:WINT_MIN_ 0U
 // X86_64_LINUX:WINT_MAX_ 4294967295U
+//
+//
+// RUN: %clang_cc1 -E -ffreestanding -triple=i386-mingw32 %s | FileCheck -check-prefix I386_MINGW32 %s
+//
+// I386_MINGW32:WCHAR_MAX_ 65535U
+// I386_MINGW32:WCHAR_MIN_ 0U
 //
 //
 // stdint.h forms several macro definitions by pasting together identifiers
