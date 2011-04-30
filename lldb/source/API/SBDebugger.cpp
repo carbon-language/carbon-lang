@@ -15,6 +15,7 @@
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBError.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBFrame.h"
 #include "lldb/API/SBInputReader.h"
@@ -811,3 +812,22 @@ SBDebugger::GetID()
         return m_opaque_sp->GetID();
     return LLDB_INVALID_UID;
 }
+
+
+SBError
+SBDebugger::SetCurrentPlatform (const char *platform_name)
+{
+    SBError sb_error;
+    if (m_opaque_sp)
+    {
+        PlatformSP platform_sp (Platform::Create (platform_name, sb_error.ref()));
+        
+        if (platform_sp)
+        {
+            bool make_selected = true;
+            m_opaque_sp->GetPlatformList().Append (platform_sp, make_selected);
+        }
+    }
+    return sb_error;
+}
+

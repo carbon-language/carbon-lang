@@ -97,6 +97,46 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
         {
             return SocketConnect (s + strlen("connect://"), error_ptr);
         }
+        else if (strstr(s, "fd://"))
+        {
+            // Just passing a native file descriptor within this current process
+            // that is already opened (possibly from a service or other source).
+            s += strlen ("fd://");
+            bool success = false;
+            m_fd = Args::StringToSInt32 (s, -1, 0, &success);
+            if (success)
+            {
+                // We have what looks to be a valid file descriptor, but we 
+                // should make it is. We currently are doing this by trying to
+                // get the flags from the file descriptor and making sure it 
+                // isn't a bad fd. We also need to enable non blocking mode for
+                // the fd if it already isn't.
+                errno = 0;
+                int flags = ::fcntl (m_fd, F_GETFL, 0);
+                if (flags == -1 || errno == EBADF)
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorStringWithFormat ("stale file descriptor: %s", s);
+                    m_fd = -1;
+                    return eConnectionStatusError;
+                }
+                else
+                {
+                    if ((flags & O_NONBLOCK) == 0)
+                    {
+                        flags |= O_NONBLOCK;
+                        ::fcntl (m_fd, F_SETFL, flags);
+                    }
+                    m_should_close_fd = true;
+                    return eConnectionStatusSuccess;
+                }
+            }
+            
+            if (error_ptr)
+                error_ptr->SetErrorStringWithFormat ("invalid file descriptor: \"fd://%s\"", s);
+            m_fd = -1;
+            return eConnectionStatusError;
+        }
         else if (strstr(s, "file://"))
         {
             // file:///PATH

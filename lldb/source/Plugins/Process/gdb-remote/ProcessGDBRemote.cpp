@@ -352,14 +352,7 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
     if (error.Fail())
         return error;
 
-    if (strncmp (remote_url, "connect://", strlen ("connect://")) == 0)
-    {
-        error = ConnectToDebugserver (remote_url);
-    }
-    else
-    {
-        error.SetErrorStringWithFormat ("unsupported remote url: %s", remote_url);
-    }
+    error = ConnectToDebugserver (remote_url);
 
     if (error.Fail())
         return error;

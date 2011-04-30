@@ -2065,8 +2065,10 @@ Process::Launch
     Module *exe_module = m_target.GetExecutableModule().get();
     if (exe_module)
     {
-        char exec_file_path[PATH_MAX];
-        exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
+        char local_exec_file_path[PATH_MAX];
+        char platform_exec_file_path[PATH_MAX];
+        exe_module->GetFileSpec().GetPath(local_exec_file_path, sizeof(local_exec_file_path));
+        exe_module->GetPlatformFileSpec().GetPath(platform_exec_file_path, sizeof(platform_exec_file_path));
         if (exe_module->GetFileSpec().Exists())
         {
             if (PrivateStateThreadIsValid ())
@@ -2089,7 +2091,7 @@ Process::Launch
                 // Make a new argument vector
                 std::vector<const char *> exec_path_plus_argv;
                 // Append the resolved executable path
-                exec_path_plus_argv.push_back (exec_file_path);
+                exec_path_plus_argv.push_back (platform_exec_file_path);
 
                 // Push all args if there are any
                 if (argv)
@@ -2156,7 +2158,7 @@ Process::Launch
         }
         else
         {
-            error.SetErrorStringWithFormat("File doesn't exist: '%s'.\n", exec_file_path);
+            error.SetErrorStringWithFormat("File doesn't exist: '%s'.\n", local_exec_file_path);
         }
     }
     return error;

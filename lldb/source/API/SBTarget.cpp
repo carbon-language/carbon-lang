@@ -183,126 +183,74 @@ SBTarget::Launch
         if (getenv("LLDB_LAUNCH_FLAG_DISABLE_ASLR"))
             launch_flags |= eLaunchFlagDisableASLR;
 
-        static const char *g_launch_tty = NULL;
-        static bool g_got_launch_tty = false;
-        if (!g_got_launch_tty)
+        StateType state = eStateInvalid;
+        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+        if (sb_process.IsValid())
         {
-            // Get the LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY only once
-            g_got_launch_tty = true;
-            g_launch_tty = ::getenv ("LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY");
-            if (g_launch_tty)
-            {
-                // LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY is a path to a terminal to reuse
-                // if the first character is '/', else it is a boolean value.
-                if (g_launch_tty[0] != '/')
-                {
-                    if (Args::StringToBoolean(g_launch_tty, false, NULL))
-                        g_launch_tty = "";
-                    else
-                        g_launch_tty = NULL;
-                }
-            }
+            state = sb_process->GetState();
+            
+            if (sb_process->IsAlive() && state != eStateConnected)
+            {       
+                if (state == eStateAttaching)
+                    error.SetErrorString ("process attach is in progress");
+                else
+                    error.SetErrorString ("a process is already being debugged");
+                sb_process.Clear();
+                return sb_process;
+            }            
         }
         
-//        if ((launch_flags & eLaunchFlagLaunchInTTY) || g_launch_tty)
-//        {
-//            ArchSpec arch (m_opaque_sp->GetArchitecture ());
-//            
-//            Module *exe_module = m_opaque_sp->GetExecutableModule().get();
-//            if (exe_module)
-//            {
-//                char exec_file_path[PATH_MAX];
-//                exe_module->GetFileSpec().GetPath(exec_file_path, sizeof(exec_file_path));
-//                if (exe_module->GetFileSpec().Exists())
-//                {
-//                    // Make a new argument vector
-//                    std::vector<const char *> exec_path_plus_argv;
-//                    // Append the resolved executable path
-//                    exec_path_plus_argv.push_back (exec_file_path);
-//                        
-//                    // Push all args if there are any
-//                    if (argv)
-//                    {
-//                        for (int i = 0; argv[i]; ++i)
-//                            exec_path_plus_argv.push_back(argv[i]);
-//                    }
-//                        
-//                    // Push a NULL to terminate the args.
-//                    exec_path_plus_argv.push_back(NULL);
-//                        
-//
-//                    const char *tty_name = NULL;
-//                    if (g_launch_tty && g_launch_tty[0] == '/')
-//                        tty_name = g_launch_tty;
-//                    
-//                    lldb::pid_t pid = Host::LaunchInNewTerminal (tty_name,
-//                                                                 &exec_path_plus_argv[0],
-//                                                                 envp,
-//                                                                 working_directory,
-//                                                                 &arch,
-//                                                                 true,
-//                                                                 launch_flags & eLaunchFlagDisableASLR);
-//
-//                    if (pid != LLDB_INVALID_PROCESS_ID)
-//                    {
-//                        sb_process = AttachToProcessWithID(listener, pid, error);
-//                    }
-//                    else
-//                    {
-//                        error.SetErrorStringWithFormat("failed to launch process in terminal");
-//                    }
-//                }
-//                else
-//                {
-//                    error.SetErrorStringWithFormat("executable doesn't exist: \"%s\"", exec_file_path);
-//                }
-//            }            
-//            else
-//            {
-//                error.SetErrorStringWithFormat("invalid executable");
-//            }
-//        }
-//        else
+        if (state == eStateConnected)
+        {
+            // If we are already connected, then we have already specified the
+            // listener, so if a valid listener is supplied, we need to error out
+            // to let the client know.
+            if (listener.IsValid())
+            {
+                error.SetErrorString ("process is connected and already has a listener, pass empty listener");
+                sb_process.Clear();
+                return sb_process;
+            }
+        }
+        else
         {
             if (listener.IsValid())
                 sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
             else
                 sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
 
-            if (sb_process.IsValid())
+        if (sb_process.IsValid())
+        {
+            if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
+                launch_flags |= eLaunchFlagDisableSTDIO;
+
+            error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
+            if (error.Success())
             {
-
-                if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
-                    launch_flags |= eLaunchFlagDisableSTDIO;
+                // We we are stopping at the entry point, we can return now!
+                if (stop_at_entry)
+                    return sb_process;
                 
-
-                error.SetError (sb_process->Launch (argv, envp, launch_flags, stdin_path, stdout_path, stderr_path, working_directory));
-                if (error.Success())
+                // Make sure we are stopped at the entry
+                StateType state = sb_process->WaitForProcessToStop (NULL);
+                if (state == eStateStopped)
                 {
-                    // We we are stopping at the entry point, we can return now!
-                    if (stop_at_entry)
-                        return sb_process;
-                    
-                    // Make sure we are stopped at the entry
-                    StateType state = sb_process->WaitForProcessToStop (NULL);
-                    if (state == eStateStopped)
+                    // resume the process to skip the entry point
+                    error.SetError (sb_process->Resume());
+                    if (error.Success())
                     {
-                        // resume the process to skip the entry point
-                        error.SetError (sb_process->Resume());
-                        if (error.Success())
-                        {
-                            // If we are doing synchronous mode, then wait for the
-                            // process to stop yet again!
-                            if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
-                                sb_process->WaitForProcessToStop (NULL);
-                        }
+                        // If we are doing synchronous mode, then wait for the
+                        // process to stop yet again!
+                        if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
+                            sb_process->WaitForProcessToStop (NULL);
                     }
                 }
             }
-            else
-            {
-                error.SetErrorString ("unable to create lldb_private::Process");
-            }
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
         }
     }
     else

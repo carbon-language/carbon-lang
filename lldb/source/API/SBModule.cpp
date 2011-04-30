@@ -71,6 +71,52 @@ SBModule::GetFileSpec () const
     return file_spec;
 }
 
+lldb::SBFileSpec
+SBModule::GetPlatformFileSpec () const
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    SBFileSpec file_spec;
+    if (m_opaque_sp)
+        file_spec.SetFileSpec(m_opaque_sp->GetPlatformFileSpec());
+    
+    if (log)
+    {
+        log->Printf ("SBModule(%p)::GetPlatformFileSpec () => SBFileSpec(%p)", 
+                     m_opaque_sp.get(), file_spec.get());
+    }
+    
+    return file_spec;
+    
+}
+
+bool
+SBModule::SetPlatformFileSpec (const lldb::SBFileSpec &platform_file)
+{
+    bool result = false;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    if (m_opaque_sp)
+    {
+        m_opaque_sp->SetPlatformFileSpec(*platform_file);
+        result = true;
+    }
+    
+    if (log)
+    {
+        log->Printf ("SBModule(%p)::SetPlatformFileSpec (SBFileSpec(%p (%s%s%s)) => %i", 
+                     m_opaque_sp.get(), 
+                     platform_file.get(),
+                     platform_file->GetDirectory().GetCString(),
+                     platform_file->GetDirectory() ? "/" : "",
+                     platform_file->GetFilename().GetCString(),
+                     result);
+    }
+    return result;
+}
+
+
+
 const uint8_t *
 SBModule::GetUUIDBytes () const
 {

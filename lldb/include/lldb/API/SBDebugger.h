@@ -116,6 +116,11 @@ public:
 
     lldb::SBSourceManager &
     GetSourceManager ();
+
+    // REMOVE: just for a quick fix, need to expose platforms through
+    // SBPlatform from this class.
+    lldb::SBError
+    SetCurrentPlatform (const char *platform_name);
     
     // FIXME: Once we get the set show stuff in place, the driver won't need
     // an interface to the Set/Get UseExternalEditor.

@@ -36,6 +36,12 @@ public:
     lldb::SBFileSpec
     GetFileSpec () const;
 
+    lldb::SBFileSpec
+    GetPlatformFileSpec () const;
+
+    bool
+    SetPlatformFileSpec (const lldb::SBFileSpec &platform_file);
+
     const uint8_t *
     GetUUIDBytes () const;
 
