@@ -31,7 +31,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
-    Abstract(false), HasTrivialConstructor(true),
+    Abstract(false), HasStandardLayout(true), HasTrivialConstructor(true),
     HasConstExprNonCopyMoveConstructor(false),
     HasTrivialCopyConstructor(true), HasTrivialMoveConstructor(true),
     HasTrivialCopyAssignment(true), HasTrivialMoveAssignment(true),
