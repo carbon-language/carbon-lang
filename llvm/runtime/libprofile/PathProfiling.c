@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Must use __inline in Microsoft C
+/* Must use __inline in Microsoft C */
 #if defined(_MSC_VER)
 #define inline __inline
 #endif
