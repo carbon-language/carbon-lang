@@ -68,6 +68,7 @@ public:
                                   /// generated.
   unsigned MergeAllConstants : 1; /// Merge identical constants.
   unsigned NoCommon          : 1; /// Set when -fno-common or C++ is enabled.
+  unsigned NoDwarf2CFIAsm    : 1; /// Set when -fno-dwarf2-cfi-asm is enabled.
   unsigned NoImplicitFloat   : 1; /// Set when -mno-implicit-float is enabled.
   unsigned NoInfsFPMath      : 1; /// Assume FP arguments, results not +-Inf.
   unsigned NoNaNsFPMath      : 1; /// Assume FP arguments, results not NaN.
@@ -148,6 +149,7 @@ public:
     LessPreciseFPMAD = 0;
     MergeAllConstants = 1;
     NoCommon = 0;
+    NoDwarf2CFIAsm = 0;
     NoImplicitFloat = 0;
     NoInfsFPMath = 0;
     NoNaNsFPMath = 0;

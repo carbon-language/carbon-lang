@@ -113,6 +113,7 @@ def dwarf_debug_flags : Separate<"-dwarf-debug-flags">,
 def fforbid_guard_variables : Flag<"-fforbid-guard-variables">,
   HelpText<"Emit an error if a C++ static local initializer would need a guard variable">;
 def g : Flag<"-g">, HelpText<"Generate source level debug information">;
+def fno_dwarf2_cfi_asm : Flag<"-fno-dwarf2-cfi-asm">, HelpText<"Don't use the cfi directives">;
 def fcatch_undefined_behavior : Flag<"-fcatch-undefined-behavior">,
     HelpText<"Generate runtime checks for undefined behavior.">;
 def flimit_debug_info : Flag<"-flimit-debug-info">,

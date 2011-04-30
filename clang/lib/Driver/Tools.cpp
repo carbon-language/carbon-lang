@@ -1375,6 +1375,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fno-gnu-keywords");
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_fdwarf2_cfi_asm,
+                               options::OPT_fno_dwarf2_cfi_asm)) {
+    if (A->getOption().matches(options::OPT_fno_dwarf2_cfi_asm))
+      CmdArgs.push_back("-fno-dwarf2-cfi-asm");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
     CmdArgs.push_back(A->getValue(Args));

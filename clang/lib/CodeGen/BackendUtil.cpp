@@ -280,6 +280,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     TM->setMCRelaxAll(true);
   if (CodeGenOpts.SaveTempLabels)
     TM->setMCSaveTempLabels(true);
+  if (CodeGenOpts.NoDwarf2CFIAsm)
+    TM->setMCUseCFI(false);
 
   // Create the code generator passes.
   PassManager *PM = getCodeGenPasses();
