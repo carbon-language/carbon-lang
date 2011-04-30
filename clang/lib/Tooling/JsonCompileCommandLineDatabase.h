@@ -40,7 +40,7 @@ std::vector<std::string> UnescapeJsonCommandLine(
 /// \brief Interface for users of the JsonCompileCommandLineParser.
 class CompileCommandHandler {
  public:
-  virtual ~CompileCommandHandler() {};
+  virtual ~CompileCommandHandler() {}
 
   /// \brief Called after all translation units are parsed.
   virtual void EndTranslationUnits() {}

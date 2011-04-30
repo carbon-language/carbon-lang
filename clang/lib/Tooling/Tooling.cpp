@@ -268,7 +268,7 @@ namespace {
 class FindHandler : public clang::tooling::CompileCommandHandler {
  public:
   explicit FindHandler(llvm::StringRef File)
-      : FileToMatch(File), FoundMatchingCommand(false) {};
+      : FileToMatch(File), FoundMatchingCommand(false) {}
 
   virtual void EndTranslationUnits() {
     if (!FoundMatchingCommand && ErrorMessage.empty()) {
