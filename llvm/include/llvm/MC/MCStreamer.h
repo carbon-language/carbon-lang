@@ -67,6 +67,12 @@ namespace llvm {
   protected:
     MCStreamer(MCContext &Ctx);
 
+    const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
+                                  const MCSymbol *B);
+
+    const MCExpr *ForceExpAbs(MCStreamer *Streamer, MCContext &Context,
+                              const MCExpr* Expr);
+
   public:
     virtual ~MCStreamer();
 

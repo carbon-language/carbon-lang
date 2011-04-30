@@ -127,6 +127,8 @@ public:
   virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                         const MCSymbol *LastLabel,
                                         const MCSymbol *Label);
+  virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
+                                         const MCSymbol *Label);
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
@@ -323,6 +325,15 @@ void MCAsmStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
   EmitDwarfSetLineAddr(LineDelta, Label,
                        getContext().getTargetAsmInfo().getPointerSize());
 }
+
+void MCAsmStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
+                                              const MCSymbol *Label) {
+  EmitIntValue(dwarf::DW_CFA_advance_loc4, 1);
+  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
+  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
+  EmitValue(AddrDelta, 4);
+}
+
 
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         MCSymbolAttr Attribute) {
