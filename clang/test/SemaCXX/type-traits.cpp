@@ -1429,12 +1429,14 @@ void is_trivial()
   { int arr[T(__is_trivial(POD))]; }
   { int arr[T(__is_trivial(Int))]; }
   { int arr[T(__is_trivial(IntAr))]; }
+  { int arr[T(__is_trivial(IntArNB))]; }
   { int arr[T(__is_trivial(Statics))]; }
   { int arr[T(__is_trivial(Empty))]; }
   { int arr[T(__is_trivial(EmptyUnion))]; }
   { int arr[T(__is_trivial(Union))]; }
   { int arr[T(__is_trivial(Derives))]; }
   { int arr[T(__is_trivial(DerivesAr))]; }
+  { int arr[T(__is_trivial(DerivesArNB))]; }
   { int arr[T(__is_trivial(DerivesEmpty))]; }
   { int arr[T(__is_trivial(HasFunc))]; }
   { int arr[T(__is_trivial(HasOp))]; }
@@ -1459,8 +1461,6 @@ void is_trivial()
   { int arr[F(__is_trivial(DerivesHasDest))]; }
   { int arr[F(__is_trivial(DerivesHasRef))]; }
   { int arr[F(__is_trivial(DerivesHasVirt))]; }
-  { int arr[F(__is_trivial(IntArNB))]; }
-  { int arr[F(__is_trivial(DerivesArNB))]; }
   { int arr[F(__is_trivial(void))]; }
   { int arr[F(__is_trivial(cvoid))]; }
 }

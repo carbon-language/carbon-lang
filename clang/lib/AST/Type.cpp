@@ -869,7 +869,7 @@ bool Type::isPODType() const {
 }
 
 bool Type::isLiteralType() const {
-  if (isIncompleteType())
+  if (isDependentType())
     return false;
 
   // C++0x [basic.types]p10:
@@ -878,10 +878,15 @@ bool Type::isLiteralType() const {
   //   -- an array of literal type
   // Extension: variable arrays cannot be literal types, since they're
   // runtime-sized.
-  if (isArrayType() && !isConstantArrayType())
+  if (isVariableArrayType())
     return false;
   const Type *BaseTy = getBaseElementTypeUnsafe();
   assert(BaseTy && "NULL element type");
+
+  // Return false for incomplete types after skipping any incomplete array
+  // types; those are expressly allowed by the standard and thus our API.
+  if (BaseTy->isIncompleteType())
+    return false;
 
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
@@ -916,7 +921,7 @@ bool Type::isLiteralType() const {
 }
 
 bool Type::isTrivialType() const {
-  if (isIncompleteType())
+  if (isDependentType())
     return false;
 
   // C++0x [basic.types]p9:
@@ -925,6 +930,12 @@ bool Type::isTrivialType() const {
   //   types.
   const Type *BaseTy = getBaseElementTypeUnsafe();
   assert(BaseTy && "NULL element type");
+
+  // Return false for incomplete types after skipping any incomplete array
+  // types which are expressly allowed by the standard and thus our API.
+  if (BaseTy->isIncompleteType())
+    return false;
+
   if (BaseTy->isScalarType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
@@ -944,7 +955,7 @@ bool Type::isTrivialType() const {
 }
 
 bool Type::isStandardLayoutType() const {
-  if (isIncompleteType())
+  if (isDependentType())
     return false;
 
   // C++0x [basic.types]p9:
@@ -953,6 +964,12 @@ bool Type::isStandardLayoutType() const {
   //   standard-layout types.
   const Type *BaseTy = getBaseElementTypeUnsafe();
   assert(BaseTy && "NULL element type");
+
+  // Return false for incomplete types after skipping any incomplete array
+  // types which are expressly allowed by the standard and thus our API.
+  if (BaseTy->isIncompleteType())
+    return false;
+
   if (BaseTy->isScalarType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
@@ -974,7 +991,7 @@ bool Type::isStandardLayoutType() const {
 // isStandardLayoutType. We implement it dircetly to avoid redundant
 // conversions from a type to a CXXRecordDecl.
 bool Type::isCXX11PODType() const {
-  if (isIncompleteType())
+  if (isDependentType())
     return false;
 
   // C++11 [basic.types]p9:
@@ -982,6 +999,12 @@ bool Type::isCXX11PODType() const {
   //   versions of these types are collectively called trivial types.
   const Type *BaseTy = getBaseElementTypeUnsafe();
   assert(BaseTy && "NULL element type");
+
+  // Return false for incomplete types after skipping any incomplete array
+  // types which are expressly allowed by the standard and thus our API.
+  if (BaseTy->isIncompleteType())
+    return false;
+
   if (BaseTy->isScalarType()) return true;
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
