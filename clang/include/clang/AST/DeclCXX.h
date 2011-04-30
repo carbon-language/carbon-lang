@@ -321,6 +321,22 @@ class CXXRecordDecl : public RecordDecl {
     ///   member.
     bool HasStandardLayout : 1;
 
+    /// HasNoNonEmptyBases - True when there are no non-empty base classes.
+    ///
+    /// This is a helper bit of state used to implement HasStandardLayout more
+    /// efficiently.
+    bool HasNoNonEmptyBases : 1;
+
+    /// HasPrivateFields - True when there are private non-static data members.
+    bool HasPrivateFields : 1;
+
+    /// HasProtectedFields - True when there are protected non-static data
+    /// members.
+    bool HasProtectedFields : 1;
+
+    /// HasPublicFields - True when there are private non-static data members.
+    bool HasPublicFields : 1;
+
     /// HasTrivialConstructor - True when this class has a trivial constructor.
     ///
     /// C++ [class.ctor]p5.  A constructor is trivial if it is an
@@ -780,8 +796,8 @@ public:
   /// which means that the class contains or inherits a pure virtual function.
   bool isAbstract() const { return data().Abstract; }
 
-   // hasStandardLayout - Whether this class has standard layout
-   // (C++ [class]p7)
+  /// hasStandardLayout - Whether this class has standard layout
+  /// (C++ [class]p7)
   bool hasStandardLayout() const { return data().HasStandardLayout; }
 
   // hasTrivialConstructor - Whether this class has a trivial constructor

@@ -2452,7 +2452,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
                                KeyLoc))
       return true;
     if (const RecordType *RT = C.getBaseElementType(T)->getAs<RecordType>())
-      return RT->hasStandardLayout(C);
+      return RT->hasStandardLayout();
     return false;
   case UTT_IsUnsigned:
     return T->isUnsignedIntegerType();

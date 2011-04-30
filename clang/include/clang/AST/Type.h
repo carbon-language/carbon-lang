@@ -2843,7 +2843,7 @@ public:
   bool hasConstFields() const { return false; }
 
   /// \brief Whether this class has standard layout
-  bool hasStandardLayout(ASTContext& Ctx) const;
+  bool hasStandardLayout() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
