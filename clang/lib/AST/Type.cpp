@@ -1500,20 +1500,6 @@ bool RecordType::classof(const TagType *TT) {
   return isa<RecordDecl>(TT->getDecl());
 }
 
-static uint64_t countBasesWithFields(QualType BaseType) {
-  uint64_t BasesWithFields = 0;
-  if (const RecordType *T = BaseType->getAs<RecordType>()) {
-    CXXRecordDecl *RD = cast<CXXRecordDecl>(T->getDecl());
-    for (CXXRecordDecl::field_iterator Field = RD->field_begin(),
-           E = RD->field_end(); Field != E; ++Field)
-      BasesWithFields = 1;
-    for (CXXRecordDecl::base_class_const_iterator B = RD->bases_begin(),
-           BE = RD->bases_end(); B != BE; ++B)
-      BasesWithFields += countBasesWithFields(B->getType());
-  }
-  return BasesWithFields;
-}
-
 bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
