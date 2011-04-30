@@ -901,9 +901,12 @@ DeduceTemplateArguments(Sema &S,
       Comparison.ParamIsRvalueRef = ParamRef->getAs<RValueReferenceType>();
       Comparison.ArgIsRvalueRef = ArgRef->getAs<RValueReferenceType>();
       Comparison.Qualifiers = NeitherMoreQualified;
-      if (Param.isMoreQualifiedThan(Arg))
+      
+      Qualifiers ParamQuals = Param.getQualifiers();
+      Qualifiers ArgQuals = Arg.getQualifiers();
+      if (ParamQuals.isStrictSupersetOf(ArgQuals))
         Comparison.Qualifiers = ParamMoreQualified;
-      else if (Arg.isMoreQualifiedThan(Param))
+      else if (ArgQuals.isStrictSupersetOf(ParamQuals))
         Comparison.Qualifiers = ArgMoreQualified;
       RefParamComparisons->push_back(Comparison);
     }

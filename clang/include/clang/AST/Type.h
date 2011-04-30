@@ -299,6 +299,10 @@ public:
            (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
   }
 
+  /// \brief Determine whether this set of qualifiers is a strict superset of
+  /// another set of qualifiers, not considering qualifier compatibility.
+  bool isStrictSupersetOf(Qualifiers Other) const;
+  
   bool operator==(Qualifiers Other) const { return Mask == Other.Mask; }
   bool operator!=(Qualifiers Other) const { return Mask != Other.Mask; }
 

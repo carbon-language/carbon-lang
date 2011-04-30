@@ -27,6 +27,18 @@
 #include <algorithm>
 using namespace clang;
 
+bool Qualifiers::isStrictSupersetOf(Qualifiers Other) const {
+  return (*this != Other) &&
+    // CVR qualifiers superset
+    (((Mask & CVRMask) | (Other.Mask & CVRMask)) == (Mask & CVRMask)) &&
+    // ObjC GC qualifiers superset
+    ((getObjCGCAttr() == Other.getObjCGCAttr()) ||
+     (hasObjCGCAttr() && !Other.hasObjCGCAttr())) &&
+    // Address space superset.
+    ((getAddressSpace() == Other.getAddressSpace()) ||
+     (hasAddressSpace()&& !Other.hasAddressSpace()));
+}
+
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
   if (T.isConstQualified())
     return true;

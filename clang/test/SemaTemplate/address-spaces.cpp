@@ -73,3 +73,14 @@ void test_arg_in_address_space_1() {
   identity<int> ii = accept_arg_in_address_space_1(int_1);
   identity<int __attribute__((address_space(1)))> ii2 = accept_any_arg(int_1);
 }
+
+// Partial ordering
+template<typename T> int &order1(__attribute__((address_space(1))) T&);
+template<typename T> float &order1(T&);
+
+void test_order1() {
+  static __attribute__((address_space(1))) int i1;
+  int i;
+  int &ir = order1(i1);
+  float &fr = order1(i);
+}
