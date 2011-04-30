@@ -2240,6 +2240,12 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   bool isTwoAddr = NumOps > 1 &&
     MI->getDesc().getOperandConstraint(1, TOI::TIED_TO) != -1;
 
+  // FIXME: AsmPrinter doesn't know how to handle
+  // X86II::MO_GOT_ABSOLUTE_ADDRESS after folding.
+  if (MI->getOpcode() == X86::ADD32ri &&
+      MI->getOperand(2).getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS)
+    return NULL;
+
   MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
@@ -2534,6 +2540,12 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     case X86::TEST32rr:
     case X86::TEST64rr:
       return true;
+    case X86::ADD32ri:
+      // FIXME: AsmPrinter doesn't know how to handle
+      // X86II::MO_GOT_ABSOLUTE_ADDRESS after folding.
+      if (MI->getOperand(2).getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS)
+        return false;
+      break;
     }
   }
 
