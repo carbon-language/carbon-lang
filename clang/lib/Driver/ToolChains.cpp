@@ -339,7 +339,10 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   // Select the dynamic runtime library and the target specific static library.
   const char *DarwinStaticLib = 0;
   if (isTargetIPhoneOS()) {
-    CmdArgs.push_back("-lgcc_s.1");
+    // If we are compiling as iOS / simulator, don't attempt to link libgcc_s.1,
+    // it never went into the SDK.
+    if (!isTargetIOSSimulator())
+        CmdArgs.push_back("-lgcc_s.1");
 
     // We currently always need a static runtime library for iOS.
     DarwinStaticLib = "libclang_rt.ios.a";
