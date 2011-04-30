@@ -638,7 +638,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       end = MIIdx.getStoreIndex();
     } else {
       DEBUG(dbgs() << " live through");
-      end = baseIndex;
+      end = getMBBEndIdx(MBB);
     }
   }
 
