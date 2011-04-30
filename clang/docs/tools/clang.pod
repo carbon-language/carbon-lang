@@ -268,7 +268,8 @@ may not exist on earlier ones.
 Specify which optimization level to use.  B<-O0> means "no optimization": this
 level compiles the fastest and generates the most debuggable code.  B<-O2> is a
 moderate level of optimization which enables most optimizations.  B<-Os> is like
-B<-O2> with extra optimizations to reduce code size.  B<-O3> is like B<-O2>,
+B<-O2> with extra optimizations to reduce code size.  B<-Oz> is like B<-Os> 
+(and thus B<-O2>), but reduces code size further.  B<-O3> is like B<-O2>,
 except that it enables optimizations that take longer to perform or that may
 generate larger code (in an attempt to make the program run faster).  On
 supported platforms, B<-O4> enables link-time optimization; object files are
