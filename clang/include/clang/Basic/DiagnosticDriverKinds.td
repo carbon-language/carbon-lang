@@ -80,6 +80,8 @@ def err_drv_preamble_format : Error<
     "incorrect format for -preamble-bytes=N,END">;
 def err_drv_conflicting_deployment_targets : Error<
   "conflicting deployment targets, both '%0' and '%1' are present in environment">;
+def err_drv_invalid_arch_for_deployment_target : Error<
+  "invalid architecture '%0' for deployment target '%1'">;
 
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;

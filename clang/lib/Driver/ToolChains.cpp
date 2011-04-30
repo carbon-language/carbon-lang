@@ -457,6 +457,13 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     }
   }
 
+  // Reject invalid architecture combinations.
+  if (iOSSimVersion && (getTriple().getArch() != llvm::Triple::x86 &&
+                        getTriple().getArch() != llvm::Triple::x86_64)) {
+    getDriver().Diag(clang::diag::err_drv_invalid_arch_for_deployment_target)
+      << getTriple().getArchName() << iOSSimVersion->getAsString(Args);
+  }
+
   // Set the tool chain target information.
   unsigned Major, Minor, Micro;
   bool HadExtra;
