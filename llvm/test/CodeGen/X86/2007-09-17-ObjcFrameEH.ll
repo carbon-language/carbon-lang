@@ -1,6 +1,4 @@
-; RUN: llc < %s -disable-cfi -march=x86 -mtriple=i686-apple-darwin | grep {isNullOrNil].eh"} | FileCheck %s
-
-; CHECK: "_-[NSString(local) isNullOrNil].eh":
+; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin | grep {isNullOrNil].eh"} | count 2
 
 	%struct.NSString = type {  }
 	%struct._objc__method_prototype_list = type opaque
