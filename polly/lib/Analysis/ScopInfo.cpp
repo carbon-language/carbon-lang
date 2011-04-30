@@ -525,7 +525,7 @@ void ScopStmt::buildIterationDomainFromLoops(TempScop &tempScop) {
     Domain = isl_set_intersect(Domain, isl_set_from_basic_set(bset));
 
     // Upper bound: IV <= NumberOfIterations.
-    const Loop *L = getSCEVForDimension(i)->getLoop();
+    const Loop *L = getLoopForDimension(i);
     const SCEVAffFunc &UpperBound = tempScop.getLoopBound(L);
     isl_set *UpperBoundSet = toUpperLoopBound(UpperBound, isl_dim_copy(dim), i);
     Domain = isl_set_intersect(Domain, UpperBoundSet);
@@ -575,7 +575,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   for (unsigned i = 0, e = NestLoops.size(); i < e; ++i) {
     PHINode *PN = NestLoops[i]->getCanonicalInductionVariable();
     assert(PN && "Non canonical IV in Scop!");
-    IVS[i] = PN;
+    IVS[i] = std::make_pair(PN, NestLoops[i]);
   }
 
   raw_string_ostream OS(BaseName);
@@ -677,12 +677,17 @@ const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
 
 const PHINode *ScopStmt::getInductionVariableForDimension(unsigned Dimension)
   const {
-  return IVS[Dimension];
+  return IVS[Dimension].first;
+}
+
+const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
+  return IVS[Dimension].second;
 }
 
 const SCEVAddRecExpr *ScopStmt::getSCEVForDimension(unsigned Dimension)
   const {
-  PHINode *PN = IVS[Dimension];
+  PHINode *PN =
+    const_cast<PHINode*>(getInductionVariableForDimension(Dimension));
   return cast<SCEVAddRecExpr>(getParent()->getSE()->getSCEV(PN));
 }
 

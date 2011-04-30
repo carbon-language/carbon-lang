@@ -243,7 +243,7 @@ class ScopStmt {
   /// @brief The loop induction variables surrounding the statement.
   ///
   /// This information is only needed for final code generation.
-  std::vector<PHINode*> IVS;
+  std::vector<std::pair<PHINode*, Loop*> > IVS;
 
   std::string BaseName;
 
@@ -320,6 +320,12 @@ public:
   /// @param Dimension The dimension of the induction variable
   /// @return The induction variable at a certain dimension.
   const PHINode *getInductionVariableForDimension(unsigned Dimension) const;
+
+  /// @brief Get the loop for a dimension.
+  ///
+  /// @param Dimension The dimension of the induction variable
+  /// @return The loop at a certain dimension.
+  const Loop *getLoopForDimension(unsigned Dimension) const;
 
   /// @brief Return the SCEV for a loop dimension.
   const SCEVAddRecExpr *getSCEVForDimension(unsigned Dimension) const;
