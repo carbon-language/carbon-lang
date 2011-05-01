@@ -2507,12 +2507,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     // !__is_reference(T) && !__is_function(T) && !__is_void(T).
     return ! (T->isReferenceType() || T->isFunctionType() || T->isVoidType());
   case UTT_IsScalar:
-    // Scalar type is defined in Section 3.9 p10 of the Working Draft.
-    // Essentially:
-    // __is_arithmetic( T ) || __is_enumeration(T) ||
-    // __is_pointer(T) || __is_member_pointer(T)
-    return (T->isArithmeticType() || T->isEnumeralType() ||
-            T->isPointerType() || T->isMemberPointerType());
+    return T->isScalarType();
   case UTT_IsCompound:
     return ! (T->isVoidType() || T->isArithmeticType()) || T->isEnumeralType();
   case UTT_IsMemberPointer:
