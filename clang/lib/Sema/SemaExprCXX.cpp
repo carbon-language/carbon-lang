@@ -28,6 +28,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 using namespace sema;
 
@@ -2451,6 +2452,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
     return !S.RequireCompleteType(
       Loc, ElTy, diag::err_incomplete_type_used_in_type_trait_expr);
   }
+  llvm_unreachable("Type trait not handled by switch");
 }
 
 static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
