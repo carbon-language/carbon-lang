@@ -421,7 +421,7 @@
     endif()
     <b># We incorporate the CMake features provided by LLVM:</b>
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${LLVM_ROOT}/share/llvm/cmake")
-    include(LLVM)
+    include(LLVMConfig)
     <b># Now set the header and library paths:</b>
     include_directories( ${LLVM_ROOT}/include )
     link_directories( ${LLVM_ROOT}/lib )
