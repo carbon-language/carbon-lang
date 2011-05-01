@@ -1293,7 +1293,6 @@ void StmtPrinter::VisitUnresolvedMemberExpr(UnresolvedMemberExpr *Node) {
 
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   switch (UTT) {
-  default: assert(false && "Unknown type trait");
   case UTT_HasNothrowAssign:      return "__has_nothrow_assign";
   case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
   case UTT_HasNothrowCopy:          return "__has_nothrow_copy";
@@ -1315,6 +1314,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsFunction:              return "__is_function";
   case UTT_IsFundamental:           return "__is_fundamental";
   case UTT_IsIntegral:              return "__is_integral";
+  case UTT_IsLiteral:               return "__is_literal";
   case UTT_IsLvalueReference:       return "__is_lvalue_reference";
   case UTT_IsMemberFunctionPointer: return "__is_member_function_pointer";
   case UTT_IsMemberObjectPointer:   return "__is_member_object_pointer";
@@ -1334,7 +1334,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsVoid:                  return "__is_void";
   case UTT_IsVolatile:              return "__is_volatile";
   }
-  return "";
+  llvm_unreachable("Type trait not covered by switch statement");
 }
 
 static const char *getTypeTraitName(BinaryTypeTrait BTT) {
