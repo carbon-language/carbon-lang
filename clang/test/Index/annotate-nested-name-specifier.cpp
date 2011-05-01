@@ -177,7 +177,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: "::" [31:18 - 31:20] CXXMethod=foo:31:33 (Definition)
 // CHECK: Identifier: "array" [31:20 - 31:25] TemplateRef=array:23:12
 // CHECK: Punctuation: "<" [31:25 - 31:26] CXXMethod=foo:31:33 (Definition)
-// CHECK: Identifier: "T" [31:26 - 31:27] CXXMethod=foo:31:33 (Definition)
+// CHECK: Identifier: "T" [31:26 - 31:27] TypeRef=T:30:19
 // CHECK: Punctuation: "," [31:27 - 31:28] CXXMethod=foo:31:33 (Definition)
 // CHECK: Identifier: "N" [31:29 - 31:30] DeclRefExpr=N:30:31
 // CHECK: Punctuation: ">" [31:30 - 31:31] CXXMethod=foo:31:33 (Definition)
@@ -193,7 +193,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: "::" [35:17 - 35:19] VarDecl=max_size:35:32 (Definition)
 // CHECK: Identifier: "array" [35:19 - 35:24] TemplateRef=array:23:12
 // CHECK: Punctuation: "<" [35:24 - 35:25] VarDecl=max_size:35:32 (Definition)
-// CHECK: Identifier: "T" [35:25 - 35:26] VarDecl=max_size:35:32 (Definition)
+// CHECK: Identifier: "T" [35:25 - 35:26] TypeRef=T:34:19
 // CHECK: Punctuation: "," [35:26 - 35:27] VarDecl=max_size:35:32 (Definition)
 // CHECK: Identifier: "N" [35:28 - 35:29] DeclRefExpr=N:34:31
 // CHECK: Punctuation: ">" [35:29 - 35:30] VarDecl=max_size:35:32 (Definition)
@@ -259,13 +259,13 @@ struct X9 : X8 {
 // CHECK: Keyword: "template" [57:30 - 57:38] UnexposedExpr=
 // CHECK: Identifier: "vector" [57:39 - 57:45] TemplateRef=vector:4:12
 // CHECK: Punctuation: "<" [57:45 - 57:46] UnexposedExpr=
-// CHECK: Identifier: "T" [57:46 - 57:47] UnexposedExpr=
+// CHECK: Identifier: "T" [57:46 - 57:47] TypeRef=T:54:19
 // CHECK: Punctuation: ">" [57:47 - 57:48] UnexposedExpr=
 // CHECK: Punctuation: "::" [57:48 - 57:50] UnexposedExpr=
 // CHECK: Punctuation: "~" [57:50 - 57:51] UnexposedExpr=
 // CHECK: Identifier: "vector" [57:51 - 57:57] TemplateRef=vector:4:12
-// CHECK: Punctuation: "<" [57:57 - 57:58] CallExpr=
-// CHECK: Identifier: "T" [57:58 - 57:59] CallExpr=
+// CHECK: Punctuation: "<" [57:57 - 57:58] UnexposedExpr=
+// CHECK: Identifier: "T" [57:58 - 57:59] TypeRef=T:54:19
 // CHECK: Punctuation: ">" [57:59 - 57:60] CallExpr=
 // CHECK: Punctuation: "(" [57:60 - 57:61] CallExpr=
 // CHECK: Punctuation: ")" [57:61 - 57:62] CallExpr=

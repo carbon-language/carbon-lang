@@ -210,7 +210,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "struct" [4:37 - 4:43] ClassTemplate=pair:4:44 (Definition)
 // CHECK-tokens: Identifier: "pair" [4:44 - 4:48] ClassTemplate=pair:4:44 (Definition)
 // CHECK-tokens: Punctuation: "{" [4:49 - 4:50] ClassTemplate=pair:4:44 (Definition)
-// CHECK-tokens: Identifier: "_T2" [4:51 - 4:54] FieldDecl=second:4:55 (Definition)
+// CHECK-tokens: Identifier: "_T2" [4:51 - 4:54] TypeRef=_T2:4:31
 // CHECK-tokens: Identifier: "second" [4:55 - 4:61] FieldDecl=second:4:55 (Definition)
 // CHECK-tokens: Punctuation: ";" [4:61 - 4:62] ClassTemplate=pair:4:44 (Definition)
 // CHECK-tokens: Punctuation: "}" [4:63 - 4:64] ClassTemplate=pair:4:44 (Definition)
@@ -808,7 +808,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "typename" [83:24 - 83:32] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Identifier: "R" [83:33 - 83:34] TemplateTypeParameter=R:83:33 (Definition)
 // CHECK-tokens: Punctuation: "=" [83:35 - 83:36] TemplateTypeParameter=R:83:33 (Definition)
-// CHECK-tokens: Identifier: "T" [83:37 - 83:38] TemplateTypeParameter=R:83:33 (Definition)
+// CHECK-tokens: Identifier: "T" [83:37 - 83:38] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: ">" [83:39 - 83:40] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Keyword: "class" [83:41 - 83:46] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Identifier: "StringSwitch" [83:47 - 83:59] ClassTemplate=StringSwitch:83:47 (Definition)
@@ -817,7 +817,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "Str" [84:13 - 84:16] FieldDecl=Str:84:13 (Definition)
 // CHECK-tokens: Punctuation: ";" [84:16 - 84:17] ClassTemplate=StringSwitch:83:47 (Definition)
 // CHECK-tokens: Keyword: "const" [85:3 - 85:8] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Identifier: "T" [85:9 - 85:10] FieldDecl=Result:85:12 (Definition)
+// CHECK-tokens: Identifier: "T" [85:9 - 85:10] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "*" [85:11 - 85:12] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Identifier: "Result" [85:12 - 85:18] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Punctuation: ";" [85:18 - 85:19] ClassTemplate=StringSwitch:83:47 (Definition)
@@ -861,7 +861,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "]" [88:64 - 88:65] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "," [88:65 - 88:66] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Keyword: "const" [89:47 - 89:52] FunctionTemplate=Case:88:42 (Definition)
-// CHECK-tokens: Identifier: "T" [89:53 - 89:54] ParmDecl=Value:89:57 (Definition)
+// CHECK-tokens: Identifier: "T" [89:53 - 89:54] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "&" [89:55 - 89:56] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Identifier: "Value" [89:57 - 89:62] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Punctuation: ")" [89:62 - 89:63] FunctionTemplate=Case:88:42 (Definition)
@@ -871,11 +871,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "this" [90:13 - 90:17] UnexposedExpr=
 // CHECK-tokens: Punctuation: ";" [90:17 - 90:18] UnexposedStmt=
 // CHECK-tokens: Punctuation: "}" [91:3 - 91:4] UnexposedStmt=
-// CHECK-tokens: Identifier: "R" [92:3 - 92:4] CXXMethod=Default:92:5 (Definition)
+// CHECK-tokens: Identifier: "R" [92:3 - 92:4] TypeRef=R:83:33
 // CHECK-tokens: Identifier: "Default" [92:5 - 92:12] CXXMethod=Default:92:5 (Definition)
 // CHECK-tokens: Punctuation: "(" [92:12 - 92:13] CXXMethod=Default:92:5 (Definition)
 // CHECK-tokens: Keyword: "const" [92:13 - 92:18] CXXMethod=Default:92:5 (Definition)
-// CHECK-tokens: Identifier: "T" [92:19 - 92:20] ParmDecl=Value:92:23 (Definition)
+// CHECK-tokens: Identifier: "T" [92:19 - 92:20] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "&" [92:21 - 92:22] ParmDecl=Value:92:23 (Definition)
 // CHECK-tokens: Identifier: "Value" [92:23 - 92:28] ParmDecl=Value:92:23 (Definition)
 // CHECK-tokens: Punctuation: ")" [92:28 - 92:29] CXXMethod=Default:92:5 (Definition)
