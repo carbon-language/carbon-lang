@@ -40,7 +40,7 @@ namespace llvm {
       :TM(tm) { }
     virtual unsigned getPersonalityEncoding() const;
     virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding() const;
+    virtual unsigned getFDEEncoding(bool CFI) const;
     virtual unsigned getTTypeEncoding() const;
   };
 
@@ -51,7 +51,7 @@ namespace llvm {
       :TM(tm) { }
     virtual unsigned getPersonalityEncoding() const;
     virtual unsigned getLSDAEncoding() const;
-    virtual unsigned getFDEEncoding() const;
+    virtual unsigned getFDEEncoding(bool CFI) const;
     virtual unsigned getTTypeEncoding() const;
   };
 

@@ -1069,6 +1069,9 @@ void MCAsmStreamer::Finish() {
   // Dump out the dwarf file & directory tables and line tables.
   if (getContext().hasDwarfFiles() && !UseLoc)
     MCDwarfFileTable::Emit(this);
+
+  if (getNumFrameInfos() && !UseCFI)
+    MCDwarfFrameEmitter::Emit(*this, false);
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,

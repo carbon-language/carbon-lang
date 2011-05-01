@@ -58,8 +58,8 @@ public:
     return TLOF->getEHFrameSection();
   }
 
-  unsigned getFDEEncoding() const {
-    return TLOF->getFDEEncoding();
+  unsigned getFDEEncoding(bool CFI) const {
+    return TLOF->getFDEEncoding(CFI);
   }
 
   bool isFunctionEHFrameSymbolPrivate() const {

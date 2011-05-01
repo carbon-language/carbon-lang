@@ -879,7 +879,7 @@ unsigned TargetLoweringObjectFileMachO::getLSDAEncoding() const {
   return DW_EH_PE_pcrel;
 }
 
-unsigned TargetLoweringObjectFileMachO::getFDEEncoding() const {
+unsigned TargetLoweringObjectFileMachO::getFDEEncoding(bool CFI) const {
   return DW_EH_PE_pcrel;
 }
 

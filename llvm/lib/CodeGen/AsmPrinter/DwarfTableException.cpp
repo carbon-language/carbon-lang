@@ -92,7 +92,7 @@ void DwarfTableException::EmitCIE(const Function *PersonalityFn, unsigned Index)
   // personality function reference:
 
   unsigned LSDAEncoding = TLOF.getLSDAEncoding();
-  unsigned FDEEncoding = TLOF.getFDEEncoding();
+  unsigned FDEEncoding = TLOF.getFDEEncoding(false);
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
 
   char Augmentation[6] = { 0 };
@@ -168,7 +168,7 @@ void DwarfTableException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   unsigned LSDAEncoding = TLOF.getLSDAEncoding();
-  unsigned FDEEncoding = TLOF.getFDEEncoding();
+  unsigned FDEEncoding = TLOF.getFDEEncoding(false);
 
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 

@@ -58,7 +58,7 @@ unsigned X8632_ELFTargetObjectFile::getLSDAEncoding() const {
     return DW_EH_PE_absptr;
 }
 
-unsigned X8632_ELFTargetObjectFile::getFDEEncoding() const {
+unsigned X8632_ELFTargetObjectFile::getFDEEncoding(bool FDE) const {
   if (TM.getRelocationModel() == Reloc::PIC_)
     return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
   else
@@ -97,8 +97,15 @@ unsigned X8664_ELFTargetObjectFile::getLSDAEncoding() const {
   return DW_EH_PE_absptr;
 }
 
-unsigned X8664_ELFTargetObjectFile::getFDEEncoding() const {
-  return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+unsigned X8664_ELFTargetObjectFile::getFDEEncoding(bool CFI) const {
+  if (CFI)
+    return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+
+  CodeModel::Model Model = TM.getCodeModel();
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+
+  return DW_EH_PE_udata4;
 }
 
 unsigned X8664_ELFTargetObjectFile::getTTypeEncoding() const {
