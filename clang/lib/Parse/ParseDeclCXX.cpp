@@ -202,6 +202,11 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
   MaybeParseMicrosoftAttributes(attrs);
 
   if (Tok.isNot(tok::l_brace)) {
+    // Reset the source range in DS, as the leading "extern"
+    // does not really belong to the inner declaration ...
+    DS.SetRangeStart(SourceLocation());
+    DS.SetRangeEnd(SourceLocation());
+    // ... but anyway remember that such an "extern" was seen.
     DS.setExternInLinkageSpec(true);
     ParseExternalDeclaration(attrs, &DS);
     return Actions.ActOnFinishLinkageSpecification(getCurScope(), LinkageSpec,
