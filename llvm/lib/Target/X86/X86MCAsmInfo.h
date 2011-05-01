@@ -29,6 +29,7 @@ namespace llvm {
     explicit X86_64MCAsmInfoDarwin(const Triple &Triple);
     virtual const MCExpr *
     getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                unsigned Encoding,
                                 MCStreamer &Streamer) const;
   };
 

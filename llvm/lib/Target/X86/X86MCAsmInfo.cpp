@@ -76,6 +76,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
 
 const MCExpr *
 X86_64MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                                   unsigned Encoding,
                                                    MCStreamer &Streamer) const {
   MCContext &Context = Streamer.getContext();
   const MCExpr *Res =
