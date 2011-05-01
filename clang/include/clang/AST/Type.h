@@ -1240,6 +1240,8 @@ public:
   bool isDerivedType() const;      // C99 6.2.5p20
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
   bool isAggregateType() const;
+  bool isFundamentalType() const;
+  bool isCompoundType() const;
 
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
@@ -4224,6 +4226,40 @@ inline QualType QualType::getNonReferenceType() const {
     return RefType->getPointeeType();
   else
     return *this;
+}
+
+/// \brief Tests whether the type is categorized as a fundamental type.
+///
+/// \returns True for types specified in C++0x [basic.fundamental].
+inline bool Type::isFundamentalType() const {
+  return isVoidType() ||
+         // FIXME: It's really annoying that we don't have an
+         // 'isArithmeticType()' which agrees with the standard definition.
+         (isArithmeticType() && !isEnumeralType());
+}
+
+/// \brief Tests whether the type is categorized as a compound type.
+///
+/// \returns True for types specified in C++0x [basic.compound].
+inline bool Type::isCompoundType() const {
+  // C++0x [basic.compound]p1:
+  //   Compound types can be constructed in the following ways:
+  //    -- arrays of objects of a given type [...];
+  return isArrayType() ||
+  //    -- functions, which have parameters of given types [...];
+         isFunctionType() ||
+  //    -- pointers to void or objects or functions [...];
+         isPointerType() ||
+  //    -- references to objects or functions of a given type. [...]
+         isReferenceType() ||
+  //    -- classes containing a sequence of objects of various types, [...];
+         isRecordType() ||
+  //    -- unions, which ar classes capable of containing objects of different types at different times;
+         isUnionType() ||
+  //    -- enumerations, which comprise a set of named constant values. [...];
+         isEnumeralType() ||
+  //    -- pointers to non-static class members, [...].
+         isMemberPointerType();
 }
 
 inline bool Type::isFunctionType() const {

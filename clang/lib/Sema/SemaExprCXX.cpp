@@ -2484,13 +2484,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsEnum:
     return T->isEnumeralType();
   case UTT_IsUnion:
-    if (const RecordType *Record = T->getAs<RecordType>())
-      return Record->getDecl()->isUnion();
-    return false;
+    return T->isUnionType();
   case UTT_IsClass:
-    if (const RecordType *Record = T->getAs<RecordType>())
-      return !Record->getDecl()->isUnion();
-    return false;
+    return T->isClassType() || T->isStructureType();
   case UTT_IsFunction:
     return T->isFunctionType();
 
@@ -2499,17 +2495,15 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsReference:
     return T->isReferenceType();
   case UTT_IsArithmetic:
-    return T->isArithmeticType() && ! T->isEnumeralType();
+    return T->isArithmeticType() && !T->isEnumeralType();
   case UTT_IsFundamental:
-    return T->isVoidType() || (T->isArithmeticType() && ! T->isEnumeralType());
+    return T->isFundamentalType();
   case UTT_IsObject:
-    // Defined in Section 3.9 p8 of the Working Draft, essentially:
-    // !__is_reference(T) && !__is_function(T) && !__is_void(T).
-    return ! (T->isReferenceType() || T->isFunctionType() || T->isVoidType());
+    return T->isObjectType();
   case UTT_IsScalar:
     return T->isScalarType();
   case UTT_IsCompound:
-    return ! (T->isVoidType() || T->isArithmeticType()) || T->isEnumeralType();
+    return T->isCompoundType();
   case UTT_IsMemberPointer:
     return T->isMemberPointerType();
 
