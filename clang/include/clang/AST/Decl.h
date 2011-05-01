@@ -1137,14 +1137,27 @@ public:
   static bool classofKind(Kind K) { return K == ImplicitParam; }
 };
 
-/// ParmVarDecl - Represent a parameter to a function.
+/// ParmVarDecl - Represents a parameter to a function.
 class ParmVarDecl : public VarDecl {
+  // FIXME: I'm convinced that there's some reasonable way to encode
+  // these that doesn't require extra storage, but I don't know what
+  // it is right now.
+
+  /// The number of function parameter scopes enclosing the function
+  /// parameter scope in which this parameter was declared.
+  unsigned FunctionScopeDepth : 16;
+
+  /// The number of parameters preceding this parameter in the
+  /// function parameter scope in which it was declared.
+  unsigned FunctionScopeIndex : 16;
+
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
               SourceLocation IdLoc, IdentifierInfo *Id,
               QualType T, TypeSourceInfo *TInfo,
               StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
-    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten) {
+    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten),
+      FunctionScopeDepth(0), FunctionScopeIndex(0) {
     assert(ParmVarDeclBits.ObjCDeclQualifier == OBJC_TQ_None);
     assert(ParmVarDeclBits.HasInheritedDefaultArg == false);
     assert(ParmVarDeclBits.IsKNRPromoted == false);
@@ -1158,6 +1171,22 @@ public:
                              QualType T, TypeSourceInfo *TInfo,
                              StorageClass S, StorageClass SCAsWritten,
                              Expr *DefArg);
+
+  void setScopeInfo(unsigned scopeDepth, unsigned parameterIndex) {
+    FunctionScopeDepth = scopeDepth;
+    assert(FunctionScopeDepth == scopeDepth && "truncation!");
+
+    FunctionScopeIndex = parameterIndex;
+    assert(FunctionScopeIndex == parameterIndex && "truncation!");
+  }
+
+  unsigned getFunctionScopeDepth() const {
+    return FunctionScopeDepth;
+  }
+
+  unsigned getFunctionScopeIndex() const {
+    return FunctionScopeIndex;
+  }
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(ParmVarDeclBits.ObjCDeclQualifier);

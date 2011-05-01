@@ -21,6 +21,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/Basic/ABI.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -50,18 +51,16 @@ static const CXXRecordDecl *GetLocalClassDecl(const NamedDecl *ND) {
   return 0;
 }
 
-static const CXXMethodDecl *getStructor(const CXXMethodDecl *MD) {
-  assert((isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD)) &&
-         "Passed in decl is not a ctor or dtor!");
+static const FunctionDecl *getStructor(const FunctionDecl *fn) {
+  if (const FunctionTemplateDecl *ftd = fn->getPrimaryTemplate())
+    return ftd->getTemplatedDecl();
 
-  if (const TemplateDecl *TD = MD->getPrimaryTemplate()) {
-    MD = cast<CXXMethodDecl>(TD->getTemplatedDecl());
+  return fn;
+}
 
-    assert((isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD)) &&
-           "Templated decl is not a ctor or dtor!");
-  }
-
-  return MD;
+static const NamedDecl *getStructor(const NamedDecl *decl) {
+  const FunctionDecl *fn = dyn_cast_or_null<FunctionDecl>(decl);
+  return (fn ? getStructor(fn) : decl);
 }
 
 static const unsigned UnknownArity = ~0U;
@@ -138,27 +137,75 @@ class CXXNameMangler {
   ItaniumMangleContext &Context;
   llvm::raw_ostream &Out;
 
-  const CXXMethodDecl *Structor;
+  /// The "structor" is the top-level declaration being mangled, if
+  /// that's not a template specialization; otherwise it's the pattern
+  /// for that specialization.
+  const NamedDecl *Structor;
   unsigned StructorType;
 
   /// SeqID - The next subsitution sequence number.
   unsigned SeqID;
+
+  class FunctionTypeDepthState {
+    unsigned Bits;
+
+    enum { InResultTypeMask = 1 };
+
+  public:
+    FunctionTypeDepthState() : Bits(0) {}
+
+    /// The number of function types we're inside.
+    unsigned getDepth() const {
+      return Bits >> 1;
+    }
+
+    /// True if we're in the return type of the innermost function type.
+    bool isInResultType() const {
+      return Bits & InResultTypeMask;
+    }
+
+    FunctionTypeDepthState push() {
+      FunctionTypeDepthState tmp = *this;
+      Bits = (Bits & ~InResultTypeMask) + 2;
+      return tmp;
+    }
+
+    void enterResultType() {
+      Bits |= InResultTypeMask;
+    }
+
+    void leaveResultType() {
+      Bits &= ~InResultTypeMask;
+    }
+
+    void pop(FunctionTypeDepthState saved) {
+      assert(getDepth() == saved.getDepth() + 1);
+      Bits = saved.Bits;
+    }
+
+  } FunctionTypeDepth;
 
   llvm::DenseMap<uintptr_t, unsigned> Substitutions;
 
   ASTContext &getASTContext() const { return Context.getASTContext(); }
 
 public:
-  CXXNameMangler(ItaniumMangleContext &C, llvm::raw_ostream &Out_)
-    : Context(C), Out(Out_), Structor(0), StructorType(0), SeqID(0) { }
+  CXXNameMangler(ItaniumMangleContext &C, llvm::raw_ostream &Out_,
+                 const NamedDecl *D = 0)
+    : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(0),
+      SeqID(0) {
+    // These can't be mangled without a ctor type or dtor type.
+    assert(!D || (!isa<CXXDestructorDecl>(D) &&
+                  !isa<CXXConstructorDecl>(D)));
+  }
   CXXNameMangler(ItaniumMangleContext &C, llvm::raw_ostream &Out_,
                  const CXXConstructorDecl *D, CXXCtorType Type)
     : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
-    SeqID(0) { }
+      SeqID(0) { }
   CXXNameMangler(ItaniumMangleContext &C, llvm::raw_ostream &Out_,
                  const CXXDestructorDecl *D, CXXDtorType Type)
     : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(Type),
-    SeqID(0) { }
+      SeqID(0) { }
 
 #if MANGLE_CHECKER
   ~CXXNameMangler() {
@@ -272,6 +319,8 @@ private:
   void mangleTemplateArg(const NamedDecl *P, const TemplateArgument &A);
 
   void mangleTemplateParameter(unsigned Index);
+
+  void mangleFunctionParam(const ParmVarDecl *parm);
 };
 
 }
@@ -1473,8 +1522,7 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Dependent:
   case BuiltinType::BoundMember:
   case BuiltinType::UnknownAny:
-    assert(false &&
-           "Overloaded and dependent types shouldn't get to name mangling");
+    llvm_unreachable("mangling a placeholder type");
     break;
   case BuiltinType::ObjCId: Out << "11objc_object"; break;
   case BuiltinType::ObjCClass: Out << "10objc_class"; break;
@@ -1499,13 +1547,22 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
   // We should never be mangling something without a prototype.
   const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
 
+  // Record that we're in a function type.  See mangleFunctionParam
+  // for details on what we're trying to achieve here.
+  FunctionTypeDepthState saved = FunctionTypeDepth.push();
+
   // <bare-function-type> ::= <signature type>+
-  if (MangleReturnType)
+  if (MangleReturnType) {
+    FunctionTypeDepth.enterResultType();
     mangleType(Proto->getResultType());
+    FunctionTypeDepth.leaveResultType();
+  }
 
   if (Proto->getNumArgs() == 0 && !Proto->isVariadic()) {
     //   <builtin-type> ::= v   # void
     Out << 'v';
+
+    FunctionTypeDepth.pop(saved);
     return;
   }
 
@@ -1513,6 +1570,8 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
                                          ArgEnd = Proto->arg_type_end();
        Arg != ArgEnd; ++Arg)
     mangleType(*Arg);
+
+  FunctionTypeDepth.pop(saved);
 
   // <builtin-type>      ::= z  # ellipsis
   if (Proto->isVariadic())
@@ -2227,6 +2286,10 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
       Out << 'E';
       break;
 
+    case Decl::ParmVar:
+      mangleFunctionParam(cast<ParmVarDecl>(D));
+      break;
+
     case Decl::EnumConstant: {
       const EnumConstantDecl *ED = cast<EnumConstantDecl>(D);
       mangleIntegerLiteral(ED->getType(), ED->getInitVal());
@@ -2386,6 +2449,67 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     break;
   }
   }
+}
+
+/// Mangle an expression which refers to a parameter variable.
+///
+/// <expression>     ::= <function-param>
+/// <function-param> ::= fp <top-level CV-qualifiers> _      # L == 0, I == 0
+/// <function-param> ::= fp <top-level CV-qualifiers>
+///                      <parameter-2 non-negative number> _ # L == 0, I > 0
+/// <function-param> ::= fL <L-1 non-negative number>
+///                      p <top-level CV-qualifiers> _       # L > 0, I == 0
+/// <function-param> ::= fL <L-1 non-negative number>
+///                      p <top-level CV-qualifiers>
+///                      <I-1 non-negative number> _         # L > 0, I > 0
+///
+/// L is the nesting depth of the parameter, defined as 1 if the
+/// parameter comes from the innermost function prototype scope
+/// enclosing the current context, 2 if from the next enclosing
+/// function prototype scope, and so on, with one special case: if
+/// we've processed the full parameter clause for the innermost
+/// function type, then L is one less.  This definition conveniently
+/// makes it irrelevant whether a function's result type was written
+/// trailing or leading, but is otherwise overly complicated; the
+/// numbering was first designed without considering references to
+/// parameter in locations other than return types, and then the
+/// mangling had to be generalized without changing the existing
+/// manglings.
+///
+/// I is the zero-based index of the parameter within its parameter
+/// declaration clause.  Note that the original ABI document describes
+/// this using 1-based ordinals.
+void CXXNameMangler::mangleFunctionParam(const ParmVarDecl *parm) {
+  unsigned parmDepth = parm->getFunctionScopeDepth();
+  unsigned parmIndex = parm->getFunctionScopeIndex();
+
+  // Compute 'L'.
+  // parmDepth does not include the declaring function prototype.
+  // FunctionTypeDepth does account for that.
+  assert(parmDepth < FunctionTypeDepth.getDepth());
+  unsigned nestingDepth = FunctionTypeDepth.getDepth() - parmDepth;
+  if (FunctionTypeDepth.isInResultType())
+    nestingDepth--;
+
+  if (nestingDepth == 0) {
+    Out << "fp";
+  } else {
+    Out << "fL" << (nestingDepth - 1) << 'p';
+  }
+
+  // Top-level qualifiers.  We don't have to worry about arrays here,
+  // because parameters declared as arrays should already have been
+  // tranformed to have pointer type. FIXME: apparently these don't
+  // get mangled if used as an rvalue of a known non-class type?
+  assert(!parm->getType()->isArrayType()
+         && "parameter's type is still an array type?");
+  mangleQualifiers(parm->getType().getQualifiers());
+
+  // Parameter index.
+  if (parmIndex != 0) {
+    Out << (parmIndex - 1);
+  }
+  Out << '_';
 }
 
 void CXXNameMangler::mangleCXXCtorType(CXXCtorType T) {
@@ -2794,7 +2918,7 @@ void ItaniumMangleContext::mangleName(const NamedDecl *D,
                                  getASTContext().getSourceManager(),
                                  "Mangling declaration");
 
-  CXXNameMangler Mangler(*this, Out);
+  CXXNameMangler Mangler(*this, Out, D);
   return Mangler.mangle(D);
 }
 

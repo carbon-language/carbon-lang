@@ -961,12 +961,16 @@ void StmtProfiler::VisitDecl(Decl *D) {
     }
 
     if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
-      // The Itanium C++ ABI uses the type of a parameter when mangling
-      // expressions that involve function parameters, so we will use the
-      // parameter's type for establishing function parameter identity. That
-      // way, our definition of "equivalent" (per C++ [temp.over.link])
-      // matches the definition of "equivalent" used for name mangling.
+      // The Itanium C++ ABI uses the type, scope depth, and scope
+      // index of a parameter when mangling expressions that involve
+      // function parameters, so we will use the parameter's type for
+      // establishing function parameter identity. That way, our
+      // definition of "equivalent" (per C++ [temp.over.link]) is at
+      // least as strong as the definition of "equivalent" used for
+      // name mangling.
       VisitType(Parm->getType());
+      ID.AddInteger(Parm->getFunctionScopeDepth());
+      ID.AddInteger(Parm->getFunctionScopeIndex());
       return;
     }
 

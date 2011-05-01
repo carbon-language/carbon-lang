@@ -524,7 +524,11 @@ public:
 
   /// \brief Transforms a single function-type parameter.  Return null
   /// on error.
+  ///
+  /// \param indexAdjustment - A number to add to the parameter's
+  ///   scope index;  can be negative
   ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
+                                          int indexAdjustment,
                                         llvm::Optional<unsigned> NumExpansions);
 
   QualType TransformReferenceType(TypeLocBuilder &TLB, ReferenceTypeLoc TL);
@@ -3682,6 +3686,7 @@ QualType TreeTransform<Derived>::TransformExtVectorType(TypeLocBuilder &TLB,
 template<typename Derived>
 ParmVarDecl *
 TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm,
+                                                   int indexAdjustment,
                                        llvm::Optional<unsigned> NumExpansions) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
@@ -3716,19 +3721,22 @@ TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm,
   if (!NewDI)
     return 0;
 
-  if (NewDI == OldDI)
+  if (NewDI == OldDI && indexAdjustment == 0)
     return OldParm;
-  else
-    return ParmVarDecl::Create(SemaRef.Context,
-                               OldParm->getDeclContext(),
-                               OldParm->getInnerLocStart(),
-                               OldParm->getLocation(),
-                               OldParm->getIdentifier(),
-                               NewDI->getType(),
-                               NewDI,
-                               OldParm->getStorageClass(),
-                               OldParm->getStorageClassAsWritten(),
-                               /* DefArg */ NULL);
+
+  ParmVarDecl *newParm = ParmVarDecl::Create(SemaRef.Context,
+                                             OldParm->getDeclContext(),
+                                             OldParm->getInnerLocStart(),
+                                             OldParm->getLocation(),
+                                             OldParm->getIdentifier(),
+                                             NewDI->getType(),
+                                             NewDI,
+                                             OldParm->getStorageClass(),
+                                             OldParm->getStorageClassAsWritten(),
+                                             /* DefArg */ NULL);
+  newParm->setScopeInfo(OldParm->getFunctionScopeDepth(),
+                        OldParm->getFunctionScopeIndex() + indexAdjustment);
+  return newParm;
 }
 
 template<typename Derived>
@@ -3738,8 +3746,12 @@ bool TreeTransform<Derived>::
                               const QualType *ParamTypes,
                               llvm::SmallVectorImpl<QualType> &OutParamTypes,
                               llvm::SmallVectorImpl<ParmVarDecl*> *PVars) {
+  int indexAdjustment = 0;
+
   for (unsigned i = 0; i != NumParams; ++i) {
     if (ParmVarDecl *OldParm = Params[i]) {
+      assert(OldParm->getFunctionScopeIndex() == i);
+
       llvm::Optional<unsigned> NumExpansions;
       ParmVarDecl *NewParm = 0;
       if (OldParm->isParameterPack()) {
@@ -3777,6 +3789,7 @@ bool TreeTransform<Derived>::
             Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
             ParmVarDecl *NewParm 
               = getDerived().TransformFunctionTypeParam(OldParm,
+                                                        indexAdjustment++,
                                                         OrigNumExpansions);
             if (!NewParm)
               return true;
@@ -3792,6 +3805,7 @@ bool TreeTransform<Derived>::
             ForgetPartiallySubstitutedPackRAII Forget(getDerived());
             ParmVarDecl *NewParm 
               = getDerived().TransformFunctionTypeParam(OldParm,
+                                                        indexAdjustment++,
                                                         OrigNumExpansions);
             if (!NewParm)
               return true;
@@ -3801,6 +3815,12 @@ bool TreeTransform<Derived>::
               PVars->push_back(NewParm);
           }
 
+          // The next parameter should have the same adjustment as the
+          // last thing we pushed, but we post-incremented indexAdjustment
+          // on every push.  Also, if we push nothing, the adjustment should
+          // go down by one.
+          indexAdjustment--;
+
           // We're done with the pack expansion.
           continue;
         }
@@ -3809,9 +3829,11 @@ bool TreeTransform<Derived>::
         // expansion.
         Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
         NewParm = getDerived().TransformFunctionTypeParam(OldParm,
+                                                          indexAdjustment,
                                                           NumExpansions);
       } else {
         NewParm = getDerived().TransformFunctionTypeParam(OldParm,
+                                                          indexAdjustment,
                                                   llvm::Optional<unsigned>());
       }
 
@@ -3902,8 +3924,16 @@ bool TreeTransform<Derived>::
       PVars->push_back(0);
   }
 
-  return false;
+#ifndef NDEBUG
+  if (PVars) {
+    for (unsigned i = 0, e = PVars->size(); i != e; ++i)
+      if (ParmVarDecl *parm = (*PVars)[i])
+        assert(parm->getFunctionScopeIndex() == i);
   }
+#endif
+
+  return false;
+}
 
 template<typename Derived>
 QualType

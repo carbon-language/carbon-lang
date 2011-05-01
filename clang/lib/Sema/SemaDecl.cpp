@@ -1247,11 +1247,15 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   // FunctionDecl.
   if (const FunctionProtoType *FT = dyn_cast<FunctionProtoType>(R)) {
     llvm::SmallVector<ParmVarDecl*, 16> Params;
-    for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
-      Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(),
-                                           SourceLocation(), 0,
-                                           FT->getArgType(i), /*TInfo=*/0,
-                                           SC_None, SC_None, 0));
+    for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+      ParmVarDecl *parm =
+        ParmVarDecl::Create(Context, New, SourceLocation(),
+                            SourceLocation(), 0,
+                            FT->getArgType(i), /*TInfo=*/0,
+                            SC_None, SC_None, 0);
+      parm->setScopeInfo(0, i);
+      Params.push_back(parm);
+    }
     New->setParams(Params.data(), Params.size());
   }
 
@@ -1780,6 +1784,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
                                                  *ParamType, /*TInfo=*/0,
                                                  SC_None, SC_None,
                                                  0);
+        Param->setScopeInfo(0, Params.size());
         Param->setImplicit();
         Params.push_back(Param);
       }
@@ -4431,6 +4436,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
          AE = FT->arg_type_end(); AI != AE; ++AI) {
       ParmVarDecl *Param =
         BuildParmVarDeclForTypedef(NewFD, D.getIdentifierLoc(), *AI);
+      Param->setScopeInfo(0, Params.size());
       Params.push_back(Param);
     }
   } else {
@@ -5838,7 +5844,12 @@ Decl *Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
                                     StorageClass, StorageClassAsWritten);
 
   if (D.isInvalidType())
-    New->setInvalidDecl();  
+    New->setInvalidDecl();
+
+  assert(S->isFunctionPrototypeScope());
+  assert(S->getFunctionPrototypeDepth() >= 1);
+  New->setScopeInfo(S->getFunctionPrototypeDepth() - 1,
+                    S->getNextFunctionPrototypeIndex());
   
   // Add the parameter declaration into this scope.
   S->AddDecl(New);

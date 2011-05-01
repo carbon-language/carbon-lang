@@ -65,3 +65,47 @@ namespace test1 {
     b(s);
   }
 }
+
+namespace test2 {
+  template <class T> void a(T x, decltype(x()) y) {}
+  template <class T> auto b(T x) -> decltype(x()) { return x(); }
+  template <class T> void c(T x, void (*p)(decltype(x()))) {}
+  template <class T> void d(T x, auto (*p)() -> decltype(x())) {}
+  template <class T> void e(auto (*p)(T y) -> decltype(y())) {}
+  template <class T> void f(void (*p)(T x, decltype(x()) y)) {}
+  template <class T> void g(T x, decltype(x()) y) {
+    static decltype(x()) variable;
+    variable = 0;
+  }
+  template <class T> void h(T x, decltype((decltype(x())(*)()) 0) y) {}
+  template <class T> void i(decltype((auto (*)(T x) -> decltype(x())) 0) y) {}
+
+  float foo();
+  void bar(float);
+  float baz(float(*)());
+  void fred(float(*)(), float);
+
+  // CHECK: define void @_ZN5test211instantiateEv
+  void instantiate() {
+    // CHECK: call void @_ZN5test21aIPFfvEEEvT_DTclfL0p_EE(
+    a(foo, 0.0f);
+    // CHECK: call float @_ZN5test21bIPFfvEEEDTclfp_EET_(
+    (void) b(foo);
+    // CHECK: call void @_ZN5test21cIPFfvEEEvT_PFvDTclfL1p_EEE(
+    c(foo, bar);
+    // CHECK: call void @_ZN5test21dIPFfvEEEvT_PFDTclfL0p_EEvE(
+    d(foo, foo);
+    // CHECK: call void @_ZN5test21eIPFfvEEEvPFDTclfp_EET_E(
+    e(baz);
+    // CHECK: call void @_ZN5test21fIPFfvEEEvPFvT_DTclfL0p_EEE(
+    f(fred);
+    // CHECK: call void @_ZN5test21gIPFfvEEEvT_DTclfL0p_EE(
+    g(foo, 0.0f);
+    // CHECK: call void @_ZN5test21hIPFfvEEEvT_DTcvPFDTclfL0p_EEvELi0EE(
+    h(foo, foo);
+    // CHECK: call void @_ZN5test21iIPFfvEEEvDTcvPFDTclfp_EET_ELi0EE(
+    i<float(*)()>(baz);
+  }
+
+  // CHECK: store float {{.*}}, float* @_ZZN5test21gIPFfvEEEvT_DTclfL0p_EEE8variable,
+}

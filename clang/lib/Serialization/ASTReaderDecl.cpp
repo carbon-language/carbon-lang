@@ -710,6 +710,8 @@ void ASTDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 
 void ASTDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
+  unsigned scopeDepth = Record[Idx++], scopeIndex = Record[Idx++];
+  PD->setScopeInfo(scopeDepth, scopeIndex);
   PD->ParmVarDeclBits.ObjCDeclQualifier = (Decl::ObjCDeclQualifier)Record[Idx++];
   PD->ParmVarDeclBits.IsKNRPromoted = Record[Idx++];
   PD->ParmVarDeclBits.HasInheritedDefaultArg = Record[Idx++];

@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace clang {
 
@@ -92,6 +93,14 @@ private:
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
   unsigned short Flags;
+
+  /// PrototypeDepth - This is the number of function prototype scopes
+  /// enclosing this scope, including this scope.
+  unsigned short PrototypeDepth;
+
+  /// PrototypeIndex - This is the number of parameters currently
+  /// declared in this scope.
+  unsigned short PrototypeIndex;
 
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
@@ -195,6 +204,19 @@ public:
 
   Scope *getTemplateParamParent() { return TemplateParamParent; }
   const Scope *getTemplateParamParent() const { return TemplateParamParent; }
+
+  /// Returns the number of function prototype scopes in this scope
+  /// chain.
+  unsigned getFunctionPrototypeDepth() const {
+    return PrototypeDepth;
+  }
+
+  /// Return the number of parameters declared in this function
+  /// prototype, increasing it by one for the next call.
+  unsigned getNextFunctionPrototypeIndex() {
+    assert(isFunctionPrototypeScope());
+    return PrototypeIndex++;
+  }
 
   typedef DeclSetTy::iterator decl_iterator;
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
@@ -302,36 +324,7 @@ public:
 
   /// Init - This is used by the parser to implement scope caching.
   ///
-  void Init(Scope *Parent, unsigned ScopeFlags) {
-    AnyParent = Parent;
-    Depth = AnyParent ? AnyParent->Depth+1 : 0;
-    Flags = ScopeFlags;
-    
-    if (AnyParent) {
-      FnParent       = AnyParent->FnParent;
-      BreakParent    = AnyParent->BreakParent;
-      ContinueParent = AnyParent->ContinueParent;
-      ControlParent = AnyParent->ControlParent;
-      BlockParent  = AnyParent->BlockParent;
-      TemplateParamParent = AnyParent->TemplateParamParent;
-    } else {
-      FnParent = BreakParent = ContinueParent = BlockParent = 0;
-      ControlParent = 0;
-      TemplateParamParent = 0;
-    }
-
-    // If this scope is a function or contains breaks/continues, remember it.
-    if (Flags & FnScope)            FnParent = this;
-    if (Flags & BreakScope)         BreakParent = this;
-    if (Flags & ContinueScope)      ContinueParent = this;
-    if (Flags & ControlScope)       ControlParent = this;
-    if (Flags & BlockScope)         BlockParent = this;
-    if (Flags & TemplateParamScope) TemplateParamParent = this;
-    DeclsInScope.clear();
-    UsingDirectives.clear();
-    Entity = 0;
-    ErrorTrap.reset();
-  }
+  void Init(Scope *parent, unsigned flags);
 };
 
 }  // end namespace clang
