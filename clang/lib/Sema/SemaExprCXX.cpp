@@ -2364,22 +2364,82 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   ASTContext &C = Self.Context;
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
-  case UTT_IsPOD:
-    return T->isPODType();
-  case UTT_IsLiteral:
-    return T->isLiteralType();
-  case UTT_IsTrivial:
-    return T->isTrivialType();
-  case UTT_IsClass:
-    if (const RecordType *Record = T->getAs<RecordType>())
-      return !Record->getDecl()->isUnion();
-    return false;
+
+    // Type trait expressions corresponding to the primary type category
+    // predicates in C++0x [meta.unary.cat].
+  case UTT_IsVoid:
+    return T->isVoidType();
+  case UTT_IsIntegral:
+    return T->isIntegralType(C);
+  case UTT_IsFloatingPoint:
+    return T->isFloatingType();
+  case UTT_IsArray:
+    return T->isArrayType();
+  case UTT_IsPointer:
+    return T->isPointerType();
+  case UTT_IsLvalueReference:
+    return T->isLValueReferenceType();
+  case UTT_IsRvalueReference:
+    return T->isRValueReferenceType();
+  case UTT_IsMemberFunctionPointer:
+    return T->isMemberFunctionPointerType();
+  case UTT_IsMemberObjectPointer:
+    return T->isMemberDataPointerType();
+  case UTT_IsEnum:
+    return T->isEnumeralType();
   case UTT_IsUnion:
     if (const RecordType *Record = T->getAs<RecordType>())
       return Record->getDecl()->isUnion();
     return false;
-  case UTT_IsEnum:
-    return T->isEnumeralType();
+  case UTT_IsClass:
+    if (const RecordType *Record = T->getAs<RecordType>())
+      return !Record->getDecl()->isUnion();
+    return false;
+  case UTT_IsFunction:
+    return T->isFunctionType();
+
+    // Type trait expressions which correspond to the convenient composition
+    // predicates in C++0x [meta.unary.comp].
+  case UTT_IsReference:
+    return T->isReferenceType();
+  case UTT_IsArithmetic:
+    return T->isArithmeticType() && ! T->isEnumeralType();
+  case UTT_IsFundamental:
+    return T->isVoidType() || (T->isArithmeticType() && ! T->isEnumeralType());
+  case UTT_IsObject:
+    // Defined in Section 3.9 p8 of the Working Draft, essentially:
+    // !__is_reference(T) && !__is_function(T) && !__is_void(T).
+    return ! (T->isReferenceType() || T->isFunctionType() || T->isVoidType());
+  case UTT_IsScalar:
+    // Scalar type is defined in Section 3.9 p10 of the Working Draft.
+    // Essentially:
+    // __is_arithmetic( T ) || __is_enumeration(T) ||
+    // __is_pointer(T) || __is_member_pointer(T)
+    return (T->isArithmeticType() || T->isEnumeralType() ||
+            T->isPointerType() || T->isMemberPointerType());
+  case UTT_IsCompound:
+    return ! (T->isVoidType() || T->isArithmeticType()) || T->isEnumeralType();
+  case UTT_IsMemberPointer:
+    return T->isMemberPointerType();
+
+    // Type trait expressions which correspond to the type property predicates
+    // in C++0x [meta.unary.prop].
+  case UTT_IsConst:
+    return T.isConstQualified();
+  case UTT_IsVolatile:
+    return T.isVolatileQualified();
+  case UTT_IsTrivial:
+    return T->isTrivialType();
+  case UTT_IsStandardLayout:
+    return T->isStandardLayoutType();
+  case UTT_IsPOD:
+    return T->isPODType();
+  case UTT_IsLiteral:
+    return T->isLiteralType();
+  case UTT_IsEmpty:
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return !RD->isUnion() && RD->isEmpty();
+    return false;
   case UTT_IsPolymorphic:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return RD->isPolymorphic();
@@ -2388,63 +2448,19 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return RD->isAbstract();
     return false;
-  case UTT_IsEmpty:
-    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
-      return !RD->isUnion() && RD->isEmpty();
-    return false;
-  case UTT_IsIntegral:
-    return T->isIntegralType(C);
-  case UTT_IsFloatingPoint:
-    return T->isFloatingType();
-  case UTT_IsArithmetic:
-    return T->isArithmeticType() && ! T->isEnumeralType();
-  case UTT_IsArray:
-    return T->isArrayType();
-  case UTT_IsCompleteType:
-    return !T->isIncompleteType();
-  case UTT_IsCompound:
-    return ! (T->isVoidType() || T->isArithmeticType()) || T->isEnumeralType();
-  case UTT_IsConst:
-    return T.isConstQualified();
-  case UTT_IsFunction:
-    return T->isFunctionType();
-  case UTT_IsFundamental:
-    return T->isVoidType() || (T->isArithmeticType() && ! T->isEnumeralType());
-  case UTT_IsLvalueReference:
-    return T->isLValueReferenceType();
-  case UTT_IsMemberFunctionPointer:
-    return T->isMemberFunctionPointerType();
-  case UTT_IsMemberObjectPointer:
-    return T->isMemberDataPointerType();
-  case UTT_IsMemberPointer:
-    return T->isMemberPointerType();
-  case UTT_IsObject:
-    // Defined in Section 3.9 p8 of the Working Draft, essentially:
-    // !__is_reference(T) && !__is_function(T) && !__is_void(T).
-    return ! (T->isReferenceType() || T->isFunctionType() || T->isVoidType());
-  case UTT_IsPointer:
-    return T->isPointerType();
-  case UTT_IsReference:
-    return T->isReferenceType();
-  case UTT_IsRvalueReference:
-    return T->isRValueReferenceType();
-  case UTT_IsScalar:
-    // Scalar type is defined in Section 3.9 p10 of the Working Draft.
-    // Essentially:
-    // __is_arithmetic( T ) || __is_enumeration(T) ||
-    // __is_pointer(T) || __is_member_pointer(T)
-    return (T->isArithmeticType() || T->isEnumeralType() ||
-            T->isPointerType() || T->isMemberPointerType());
   case UTT_IsSigned:
     return T->isSignedIntegerType();
-  case UTT_IsStandardLayout:
-    return T->isStandardLayoutType();
   case UTT_IsUnsigned:
     return T->isUnsignedIntegerType();
-  case UTT_IsVoid:
-    return T->isVoidType();
-  case UTT_IsVolatile:
-    return T.isVolatileQualified();
+
+    // Type trait expressions which query classes regarding their construction,
+    // destruction, and copying. Rather than being based directly on the
+    // related type predicates in the standard, they are specified by both
+    // GCC[1] and the Embarcadero C++ compiler[2], and Clang implements those
+    // specifications.
+    //
+    //   1: http://gcc.gnu/.org/onlinedocs/gcc/Type-Traits.html
+    //   2: http://docwiki.embarcadero.com/RADStudio/XE/en/Type_Trait_Functions_(C%2B%2B0x)_Index
   case UTT_HasTrivialConstructor:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
     //   If __is_pod (type) is true then the trait is true, else if type is
@@ -2625,6 +2641,15 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
         return Destructor->isVirtual();
     }
     return false;
+
+    // These type trait expressions are modeled on the specifications for the
+    // Embarcadero C++0x type trait functions:
+    //   http://docwiki.embarcadero.com/RADStudio/XE/en/Type_Trait_Functions_(C%2B%2B0x)_Index
+  case UTT_IsCompleteType:
+    // http://docwiki.embarcadero.com/RADStudio/XE/en/Is_complete_type_(typename_T_):
+    //   Returns True if and only if T is a complete type at the point of the
+    //   function call.
+    return !T->isIncompleteType();
   }
 }
 
