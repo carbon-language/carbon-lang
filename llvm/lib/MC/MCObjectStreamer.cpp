@@ -90,7 +90,7 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
 }
 
 void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                     bool isPCRel, unsigned AddrSpace) {
+                                     unsigned AddrSpace) {
   assert(AddrSpace == 0 && "Address space must be 0!");
   MCDataFragment *DF = getOrCreateDataFragment();
 
@@ -102,7 +102,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   }
   DF->addFixup(MCFixup::Create(DF->getContents().size(),
                                Value,
-                               MCFixup::getKindForSize(Size, isPCRel)));
+                               MCFixup::getKindForSize(Size, false)));
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 

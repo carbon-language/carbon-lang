@@ -468,26 +468,21 @@ static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
   MCContext &context = streamer.getContext();
   const MCAsmInfo &asmInfo = context.getAsmInfo();
   const MCExpr *v = asmInfo.getExprForFDESymbol(&symbol,
+                                                symbolEncoding,
                                                 streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
-  unsigned application = symbolEncoding & 0x70;
-  if (isa<MCSymbolRefExpr>(v) && application == dwarf::DW_EH_PE_pcrel)
-    streamer.EmitPCRelValue(v, size);
-  else
-    streamer.EmitAbsValue(v, size);
+  streamer.EmitAbsValue(v, size);
 }
 
 static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
                             unsigned symbolEncoding) {
   MCContext &context = streamer.getContext();
   const MCAsmInfo &asmInfo = context.getAsmInfo();
-  const MCExpr *v = asmInfo.getExprForPersonalitySymbol(&symbol, streamer);
+  const MCExpr *v = asmInfo.getExprForPersonalitySymbol(&symbol,
+                                                        symbolEncoding,
+                                                        streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
-  unsigned application = symbolEncoding & 0x70;
-  if (isa<MCSymbolRefExpr>(v) && application == dwarf::DW_EH_PE_pcrel)
-    streamer.EmitPCRelValue(v, size);
-  else
-    streamer.EmitValue(v, size);
+  streamer.EmitValue(v, size);
 }
 
 static const MachineLocation TranslateMachineLocation(

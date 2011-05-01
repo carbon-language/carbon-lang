@@ -1476,13 +1476,17 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
     if (IsPCRel) {
       switch ((unsigned)Fixup.getKind()) {
       default: llvm_unreachable("invalid fixup kind!");
+
+      case FK_Data_8: Type = ELF::R_X86_64_PC64; break;
+      case FK_Data_4: Type = ELF::R_X86_64_PC32; break;
+      case FK_Data_2: Type = ELF::R_X86_64_PC16; break;
+
       case FK_PCRel_8:
         assert(Modifier == MCSymbolRefExpr::VK_None);
         Type = ELF::R_X86_64_PC64;
         break;
       case X86::reloc_signed_4byte:
       case X86::reloc_riprel_4byte_movq_load:
-      case FK_Data_4: // FIXME?
       case X86::reloc_riprel_4byte:
       case FK_PCRel_4:
         switch (Modifier) {

@@ -154,9 +154,9 @@ public:
   }
 
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             bool isPCRel, unsigned AddrSpace){
+                             unsigned AddrSpace){
     LogCall("EmitValue");
-    return Child->EmitValueImpl(Value, Size, isPCRel, AddrSpace);
+    return Child->EmitValueImpl(Value, Size, AddrSpace);
   }
 
   virtual void EmitULEB128Value(const MCExpr *Value) {

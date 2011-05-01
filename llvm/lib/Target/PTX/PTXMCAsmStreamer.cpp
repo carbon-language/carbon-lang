@@ -143,7 +143,7 @@ public:
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             bool isPCRel, unsigned AddrSpace);
+                             unsigned AddrSpace);
   virtual void EmitULEB128Value(const MCExpr *Value);
   virtual void EmitSLEB128Value(const MCExpr *Value);
   virtual void EmitGPRel32Value(const MCExpr *Value);
@@ -352,9 +352,8 @@ void PTXMCAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
 }
 
 void PTXMCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                     bool isPCRel, unsigned AddrSpace) {
+                                     unsigned AddrSpace) {
   assert(getCurrentSection() && "Cannot emit contents before setting section!");
-  assert(!isPCRel && "Cannot emit pc relative relocations!");
   const char *Directive = 0;
   switch (Size) {
   default: break;

@@ -25,8 +25,6 @@ namespace llvm {
 
   struct MCAsmInfoDarwin : public MCAsmInfo {
     explicit MCAsmInfoDarwin();
-    virtual const MCExpr *
-    getExprForFDESymbol(const MCSymbol *Sym, MCStreamer &Streamer) const;
   };
 }
 

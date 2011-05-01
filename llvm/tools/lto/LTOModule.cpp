@@ -582,7 +582,7 @@ namespace {
                                 uint64_t Size, unsigned ByteAlignment) {}
     virtual void EmitBytes(StringRef Data, unsigned AddrSpace) {}
     virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               bool isPCRel, unsigned AddrSpace) {}
+                               unsigned AddrSpace) {}
     virtual void EmitULEB128Value(const MCExpr *Value) {}
     virtual void EmitSLEB128Value(const MCExpr *Value) {}
     virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

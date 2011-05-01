@@ -59,14 +59,3 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   DwarfUsesAbsoluteLabelForStmtList = false;
   DwarfUsesLabelOffsetForRanges = false;
 }
-
-const MCExpr *
-MCAsmInfoDarwin::getExprForFDESymbol(const MCSymbol *Sym,
-                                     MCStreamer &Streamer) const {
-  MCContext &Context = Streamer.getContext();
-  const MCExpr *Res = MCSymbolRefExpr::Create(Sym, Context);
-  MCSymbol *PCSym = Context.CreateTempSymbol();
-  Streamer.EmitLabel(PCSym);
-  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, Context);
-  return MCBinaryExpr::CreateSub(Res, PC, Context);
-}

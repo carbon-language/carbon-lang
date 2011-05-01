@@ -162,7 +162,7 @@ public:
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
 
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             bool isPCRel, unsigned AddrSpace);
+                             unsigned AddrSpace);
   virtual void EmitIntValue(uint64_t Value, unsigned Size,
                             unsigned AddrSpace = 0);
 
@@ -566,9 +566,8 @@ void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
 }
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
-                                  bool isPCRel, unsigned AddrSpace) {
+                                  unsigned AddrSpace) {
   assert(getCurrentSection() && "Cannot emit contents before setting section!");
-  assert(!isPCRel && "Cannot emit pc relative relocations!");
   const char *Directive = 0;
   switch (Size) {
   default: break;

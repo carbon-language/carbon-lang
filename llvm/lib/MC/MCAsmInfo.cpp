@@ -13,9 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Dwarf.h"
 #include <cctype>
 #include <cstring>
 using namespace llvm;
@@ -111,12 +113,22 @@ unsigned MCAsmInfo::getSLEB128Size(int Value) {
 
 const MCExpr *
 MCAsmInfo::getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                       unsigned Encoding,
                                        MCStreamer &Streamer) const {
-  return getExprForFDESymbol(Sym, Streamer);
+  return getExprForFDESymbol(Sym, Encoding, Streamer);
 }
 
 const MCExpr *
 MCAsmInfo::getExprForFDESymbol(const MCSymbol *Sym,
+                               unsigned Encoding,
                                MCStreamer &Streamer) const {
-  return MCSymbolRefExpr::Create(Sym, Streamer.getContext());
+  if (!(Encoding & dwarf::DW_EH_PE_pcrel))
+    return MCSymbolRefExpr::Create(Sym, Streamer.getContext());
+
+  MCContext &Context = Streamer.getContext();
+  const MCExpr *Res = MCSymbolRefExpr::Create(Sym, Context);
+  MCSymbol *PCSym = Context.CreateTempSymbol();
+  Streamer.EmitLabel(PCSym);
+  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, Context);
+  return MCBinaryExpr::CreateSub(Res, PC, Context);
 }

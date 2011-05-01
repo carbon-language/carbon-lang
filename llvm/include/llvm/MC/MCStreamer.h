@@ -50,9 +50,6 @@ namespace llvm {
     MCStreamer(const MCStreamer&); // DO NOT IMPLEMENT
     MCStreamer &operator=(const MCStreamer&); // DO NOT IMPLEMENT
 
-    void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                         bool isPCRel, unsigned AddrSpace);
-
     std::vector<MCDwarfFrameInfo> FrameInfos;
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
@@ -311,12 +308,9 @@ namespace llvm {
     /// @param Size - The size of the integer (in bytes) to emit. This must
     /// match a native machine width.
     virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                               bool isPCRel, unsigned AddrSpace) = 0;
+                               unsigned AddrSpace) = 0;
 
     void EmitValue(const MCExpr *Value, unsigned Size, unsigned AddrSpace = 0);
-
-    void EmitPCRelValue(const MCExpr *Value, unsigned Size,
-                        unsigned AddrSpace = 0);
 
     /// EmitIntValue - Special case of EmitValue that avoids the client having
     /// to pass in a MCExpr for constant integers.
@@ -346,9 +340,6 @@ namespace llvm {
     /// having to pass in a MCExpr for MCSymbols.
     void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
                          unsigned AddrSpace = 0);
-
-    void EmitPCRelSymbolValue(const MCSymbol *Sym, unsigned Size,
-                              unsigned AddrSpace = 0);
 
     /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.

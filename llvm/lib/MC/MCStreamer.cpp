@@ -114,28 +114,13 @@ void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size,
 
 void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                            unsigned AddrSpace) {
-  EmitValueImpl(Value, Size, false, AddrSpace);
-}
-
-void MCStreamer::EmitPCRelValue(const MCExpr *Value, unsigned Size,
-                                unsigned AddrSpace) {
-  EmitValueImpl(Value, Size, true, AddrSpace);
+  EmitValueImpl(Value, Size, AddrSpace);
 }
 
 void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                                 bool isPCRel, unsigned AddrSpace) {
-  EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size, isPCRel,
+                                  unsigned AddrSpace) {
+  EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size,
                 AddrSpace);
-}
-
-void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
-                                 unsigned AddrSpace) {
-  EmitSymbolValue(Sym, Size, false, AddrSpace);
-}
-
-void MCStreamer::EmitPCRelSymbolValue(const MCSymbol *Sym, unsigned Size,
-                                      unsigned AddrSpace) {
-  EmitSymbolValue(Sym, Size, true, AddrSpace);
 }
 
 void MCStreamer::EmitGPRel32Value(const MCExpr *Value) {

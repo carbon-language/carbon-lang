@@ -326,10 +326,13 @@ namespace llvm {
 
     virtual const MCExpr *
     getExprForPersonalitySymbol(const MCSymbol *Sym,
+                                unsigned Encoding,
                                 MCStreamer &Streamer) const;
 
-    virtual const MCExpr *
-    getExprForFDESymbol(const MCSymbol *Sym, MCStreamer &Streamer) const;
+    const MCExpr *
+    getExprForFDESymbol(const MCSymbol *Sym,
+                        unsigned Encoding,
+                        MCStreamer &Streamer) const;
 
     bool usesSunStyleELFSectionSwitchSyntax() const {
       return SunStyleELFSectionSwitchSyntax;
