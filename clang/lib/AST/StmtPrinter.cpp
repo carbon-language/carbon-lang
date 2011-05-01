@@ -1345,7 +1345,7 @@ static const char *getTypeTraitName(BinaryTypeTrait BTT) {
   case BTT_TypeCompatible:   return "__builtin_types_compatible_p";
   case BTT_IsConvertibleTo:  return "__is_convertible_to";
   }
-  return "";
+  llvm_unreachable("Binary type trait not covered by switch");
 }
 
 static const char *getTypeTraitName(ArrayTypeTrait ATT) {
@@ -1353,16 +1353,15 @@ static const char *getTypeTraitName(ArrayTypeTrait ATT) {
   case ATT_ArrayRank:        return "__array_rank";
   case ATT_ArrayExtent:      return "__array_extent";
   }
-  return "";
+  llvm_unreachable("Array type trait not covered by switch");
 }
 
 static const char *getExpressionTraitName(ExpressionTrait ET) {
   switch (ET) {
-  default: llvm_unreachable("Unknown expression trait");
   case ET_IsLValueExpr:      return "__is_lvalue_expr";
   case ET_IsRValueExpr:      return "__is_rvalue_expr";
   }
-  return "";
+  llvm_unreachable("Expression type trait not covered by switch");
 }
 
 void StmtPrinter::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
