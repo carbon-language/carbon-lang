@@ -2987,13 +2987,20 @@ ExprResult Sema::BuildArrayTypeTrait(ArrayTypeTrait ATT,
                                      SourceLocation RParen) {
   QualType T = TSInfo->getType();
 
+  // FIXME: This should likely be tracked as an APInt to remove any host
+  // assumptions about the width of size_t on the target.
   uint64_t Value = 0;
   if (!T->isDependentType())
     Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
 
+  // While the specification for these traits from the Embarcadero C++
+  // compiler's documentation says the return type is 'unsigned int', Clang
+  // returns 'size_t'. On Windows, the primary platform for the Embarcadero
+  // compiler, there is no difference. On several other platforms this is an
+  // important distinction.
   return Owned(new (Context) ArrayTypeTraitExpr(KWLoc, ATT, TSInfo, Value,
                                                 DimExpr, RParen,
-                                                Context.IntTy));
+                                                Context.getSizeType()));
 }
 
 ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
