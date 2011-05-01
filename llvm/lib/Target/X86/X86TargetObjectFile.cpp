@@ -101,7 +101,6 @@ unsigned X8664_ELFTargetObjectFile::getFDEEncoding(bool CFI) const {
   if (CFI)
     return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 
-  CodeModel::Model Model = TM.getCodeModel();
   if (TM.getRelocationModel() == Reloc::PIC_)
     return DW_EH_PE_pcrel | DW_EH_PE_sdata4;
 
