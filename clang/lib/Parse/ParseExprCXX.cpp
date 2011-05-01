@@ -1938,7 +1938,6 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_function:                return UTT_IsFunction;
   case tok::kw___is_fundamental:             return UTT_IsFundamental;
   case tok::kw___is_integral:                return UTT_IsIntegral;
-  case tok::kw___is_lvalue_expr:             return UTT_IsLvalueExpr;
   case tok::kw___is_lvalue_reference:        return UTT_IsLvalueReference;
   case tok::kw___is_member_function_pointer: return UTT_IsMemberFunctionPointer;
   case tok::kw___is_member_object_pointer:   return UTT_IsMemberObjectPointer;
@@ -1950,7 +1949,6 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_pointer:                 return UTT_IsPointer;
   case tok::kw___is_polymorphic:          return UTT_IsPolymorphic;
   case tok::kw___is_reference:               return UTT_IsReference;
-  case tok::kw___is_rvalue_expr:             return UTT_IsRvalueExpr;
   case tok::kw___is_rvalue_reference:        return UTT_IsRvalueReference;
   case tok::kw___is_scalar:                  return UTT_IsScalar;
   case tok::kw___is_signed:                  return UTT_IsSigned;

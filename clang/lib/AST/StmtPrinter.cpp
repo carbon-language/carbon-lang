@@ -1315,7 +1315,6 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsFunction:              return "__is_function";
   case UTT_IsFundamental:           return "__is_fundamental";
   case UTT_IsIntegral:              return "__is_integral";
-  case UTT_IsLvalueExpr:            return "__is_lvalue_expr";
   case UTT_IsLvalueReference:       return "__is_lvalue_reference";
   case UTT_IsMemberFunctionPointer: return "__is_member_function_pointer";
   case UTT_IsMemberObjectPointer:   return "__is_member_object_pointer";
@@ -1325,7 +1324,6 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsPointer:               return "__is_pointer";
   case UTT_IsPolymorphic:         return "__is_polymorphic";
   case UTT_IsReference:             return "__is_reference";
-  case UTT_IsRvalueExpr:            return "__is_rvalue_expr";
   case UTT_IsRvalueReference:       return "__is_rvalue_reference";
   case UTT_IsScalar:                return "__is_scalar";
   case UTT_IsSigned:                return "__is_signed";

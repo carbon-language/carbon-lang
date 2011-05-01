@@ -2371,11 +2371,6 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   // these class templates. We also try to follow any GCC documented behavior
   // in these expressions to ensure portability of standard libraries.
   switch (UTT) {
-    // FIXME: These shouldn't be UnaryTypeTraits as they aren't traits on types.
-  case UTT_IsLvalueExpr:
-  case UTT_IsRvalueExpr:
-    assert(0 && "Expression traits found in type trait handling code.");
-
     // is_complete_type somewhat obviously cannot require a complete type.
   case UTT_IsCompleteType:
     // Fallthrough
