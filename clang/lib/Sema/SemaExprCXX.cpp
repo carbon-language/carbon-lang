@@ -2364,33 +2364,33 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   ASTContext &C = Self.Context;
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
-  case UTT_IsPOD: return T->isPODType();
-  case UTT_IsLiteral: return T->isLiteralType();
-  case UTT_IsTrivial: return T->isTrivialType();
-  case UTT_IsClass: // Fallthrough
-  case UTT_IsUnion:
-    if (const RecordType *Record = T->getAs<RecordType>()) {
-      bool Union = Record->getDecl()->isUnion();
-      return UTT == UTT_IsUnion ? Union : !Union;
-    }
+  case UTT_IsPOD:
+    return T->isPODType();
+  case UTT_IsLiteral:
+    return T->isLiteralType();
+  case UTT_IsTrivial:
+    return T->isTrivialType();
+  case UTT_IsClass:
+    if (const RecordType *Record = T->getAs<RecordType>())
+      return !Record->getDecl()->isUnion();
     return false;
-  case UTT_IsEnum: return T->isEnumeralType();
+  case UTT_IsUnion:
+    if (const RecordType *Record = T->getAs<RecordType>())
+      return Record->getDecl()->isUnion();
+    return false;
+  case UTT_IsEnum:
+    return T->isEnumeralType();
   case UTT_IsPolymorphic:
-    if (const RecordType *Record = T->getAs<RecordType>()) {
-      // Type traits are only parsed in C++, so we've got CXXRecords.
-      return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
-    }
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->isPolymorphic();
     return false;
   case UTT_IsAbstract:
-    if (const RecordType *RT = T->getAs<RecordType>())
-      if (!Self.RequireCompleteType(KeyLoc, T, diag::err_incomplete_typeid))
-      return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->isAbstract();
     return false;
   case UTT_IsEmpty:
-    if (const RecordType *Record = T->getAs<RecordType>()) {
-      return !Record->getDecl()->isUnion()
-          && cast<CXXRecordDecl>(Record->getDecl())->isEmpty();
-    }
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return !RD->isUnion() && RD->isEmpty();
     return false;
   case UTT_IsIntegral:
     return T->isIntegralType(C);
@@ -2401,7 +2401,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   case UTT_IsArray:
     return T->isArrayType();
   case UTT_IsCompleteType:
-    return ! T->isIncompleteType();
+    return !T->isIncompleteType();
   case UTT_IsCompound:
     return ! (T->isVoidType() || T->isArithmeticType()) || T->isEnumeralType();
   case UTT_IsConst:
