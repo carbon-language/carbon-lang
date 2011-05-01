@@ -1698,21 +1698,7 @@ void Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
 /// objective-c's type qualifier from the parser version of the same info.
 static Decl::ObjCDeclQualifier
 CvtQTToAstBitMask(ObjCDeclSpec::ObjCDeclQualifier PQTVal) {
-  Decl::ObjCDeclQualifier ret = Decl::OBJC_TQ_None;
-  if (PQTVal & ObjCDeclSpec::DQ_In)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_In);
-  if (PQTVal & ObjCDeclSpec::DQ_Inout)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_Inout);
-  if (PQTVal & ObjCDeclSpec::DQ_Out)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_Out);
-  if (PQTVal & ObjCDeclSpec::DQ_Bycopy)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_Bycopy);
-  if (PQTVal & ObjCDeclSpec::DQ_Byref)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_Byref);
-  if (PQTVal & ObjCDeclSpec::DQ_Oneway)
-    ret = (Decl::ObjCDeclQualifier)(ret | Decl::OBJC_TQ_Oneway);
-
-  return ret;
+  return (Decl::ObjCDeclQualifier) (unsigned) PQTVal;
 }
 
 static inline

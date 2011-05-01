@@ -652,7 +652,12 @@ public:
 /// "declaration specifiers" specific to objective-c
 class ObjCDeclSpec {
 public:
-  /// ObjCDeclQualifier - Qualifier used on types in method declarations
+  /// ObjCDeclQualifier - Qualifier used on types in method
+  /// declarations.  Not all combinations are sensible.  Parameters
+  /// can be one of { in, out, inout } with one of { bycopy, byref }.
+  /// Returns can either be { oneway } or not.
+  ///
+  /// This should be kept in sync with Decl::ObjCDeclQualifier.
   enum ObjCDeclQualifier {
     DQ_None = 0x0,
     DQ_In = 0x1,
@@ -664,7 +669,8 @@ public:
   };
 
   /// PropertyAttributeKind - list of property attributes.
-  enum ObjCPropertyAttributeKind { DQ_PR_noattr = 0x0,
+  enum ObjCPropertyAttributeKind {
+    DQ_PR_noattr = 0x0,
     DQ_PR_readonly = 0x01,
     DQ_PR_getter = 0x02,
     DQ_PR_assign = 0x04,

@@ -156,9 +156,20 @@ public:
     IDNS_NonMemberOperator   = 0x0400
   };
 
-  /// ObjCDeclQualifier - Qualifier used on types in method declarations
-  /// for remote messaging. They are meant for the arguments though and
-  /// applied to the Decls (ObjCMethodDecl and ParmVarDecl).
+  /// ObjCDeclQualifier - 'Qualifiers' written next to the return and
+  /// parameter types in method declarations.  Other than remembering
+  /// them and mangling them into the method's signature string, these
+  /// are ignored by the compiler; they are consumed by certain
+  /// remote-messaging frameworks.
+  ///
+  /// in, inout, and out are mutually exclusive and apply only to
+  /// method parameters.  bycopy and byref are mutually exclusive and
+  /// apply only to method parameters (?).  oneway applies only to
+  /// results.  All of these expect their corresponding parameter to
+  /// have a particular type.  None of this is currently enforced by
+  /// clang.
+  ///
+  /// This should be kept in sync with ObjCDeclSpec::ObjCDeclQualifier.
   enum ObjCDeclQualifier {
     OBJC_TQ_None = 0x0,
     OBJC_TQ_In = 0x1,
