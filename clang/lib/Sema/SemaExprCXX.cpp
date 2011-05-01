@@ -2457,8 +2457,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
 
 static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
                                    SourceLocation KeyLoc, QualType T) {
-  assert(!T->isDependentType() &&
-         "Cannot evaluate type trait on dependent type");
+  assert(!T->isDependentType() && "Cannot evaluate traits of dependent type");
 
   ASTContext &C = Self.Context;
   switch(UTT) {
@@ -2788,14 +2787,8 @@ ExprResult Sema::ActOnBinaryTypeTrait(BinaryTypeTrait BTT,
 static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
                                     QualType LhsT, QualType RhsT,
                                     SourceLocation KeyLoc) {
-  if (LhsT->isDependentType()) {
-    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << LhsT;
-    return false;
-  }
-  else if (RhsT->isDependentType()) {
-    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << RhsT;
-    return false;
-  }
+  assert(!LhsT->isDependentType() && !RhsT->isDependentType() &&
+         "Cannot evaluate traits of dependent types");
 
   switch(BTT) {
   case BTT_IsBaseOf: {
@@ -2934,10 +2927,7 @@ ExprResult Sema::ActOnArrayTypeTrait(ArrayTypeTrait ATT,
 static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
                                            QualType T, Expr *DimExpr,
                                            SourceLocation KeyLoc) {
-  if (T->isDependentType()) {
-    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << T;
-    return false;
-  }
+  assert(!T->isDependentType() && "Cannot evaluate traits of dependent type");
 
   switch(ATT) {
   case ATT_ArrayRank:
@@ -2996,10 +2986,11 @@ ExprResult Sema::BuildArrayTypeTrait(ArrayTypeTrait ATT,
                                      Expr* DimExpr,
                                      SourceLocation RParen) {
   QualType T = TSInfo->getType();
-  if (T->isDependentType())
-    return ExprError();
 
-  uint64_t Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
+  uint64_t Value = 0;
+  if (!T->isDependentType())
+    Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
+
   return Owned(new (Context) ArrayTypeTraitExpr(KWLoc, ATT, TSInfo, Value,
                                                 DimExpr, RParen,
                                                 Context.IntTy));
