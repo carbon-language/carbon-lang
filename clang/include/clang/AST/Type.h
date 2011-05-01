@@ -3015,7 +3015,7 @@ public:
     return isCanonicalUnqualified() ? 0 : TTPDecl;
   }
 
-  IdentifierInfo *getName() const;
+  IdentifierInfo *getIdentifier() const;
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
@@ -3119,7 +3119,7 @@ class SubstTemplateTypeParmPackType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;
   
 public:
-  IdentifierInfo *getName() const { return Replaced->getName(); }
+  IdentifierInfo *getIdentifier() const { return Replaced->getIdentifier(); }
   
   /// Gets the template parameter that was substituted for.
   const TemplateTypeParmType *getReplacedParameter() const {

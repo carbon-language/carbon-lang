@@ -167,7 +167,7 @@ DiagnoseUnexpandedParameterPacks(Sema &S, SourceLocation Loc,
     IdentifierInfo *Name = 0;
     if (const TemplateTypeParmType *TTP
           = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>())
-      Name = TTP->getName();
+      Name = TTP->getIdentifier();
     else
       Name = Unexpanded[I].first.get<NamedDecl *>()->getIdentifier();
 
@@ -483,7 +483,7 @@ bool Sema::CheckParameterPacksForExpansion(SourceLocation EllipsisLoc,
         = Unexpanded[I].first.dyn_cast<const TemplateTypeParmType *>()) {
       Depth = TTP->getDepth();
       Index = TTP->getIndex();
-      Name = TTP->getName();
+      Name = TTP->getIdentifier();
     } else {
       NamedDecl *ND = Unexpanded[I].first.get<NamedDecl *>();
       if (isa<ParmVarDecl>(ND))

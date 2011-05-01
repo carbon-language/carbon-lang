@@ -653,7 +653,7 @@ void TypePrinter::printTemplateTypeParm(const TemplateTypeParmType *T,
   if (!S.empty())    // Prefix the basic type, e.g. 'parmname X'.
     S = ' ' + S;
 
-  if (IdentifierInfo *Id = T->getDecl() ? T->getDecl()->getIdentifier() : 0)
+  if (IdentifierInfo *Id = T->getIdentifier())
     S = Id->getName().str() + S;
   else
     S = "type-parameter-" + llvm::utostr_32(T->getDepth()) + '-' +
