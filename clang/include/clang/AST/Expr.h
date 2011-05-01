@@ -669,41 +669,43 @@ struct ExplicitTemplateArgumentList {
   static std::size_t sizeFor(unsigned NumTemplateArgs);
   static std::size_t sizeFor(const TemplateArgumentListInfo &List);
 };
-  
-/// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
-/// enum, etc.
-class DeclRefExpr : public Expr {
-  enum {
-    // Flag on DecoratedD that specifies when this declaration reference 
-    // expression has a C++ nested-name-specifier.
-    HasQualifierFlag = 0x01,
-    // Flag on DecoratedD that specifies when this declaration reference 
-    // expression has an explicit C++ template argument list.
-    HasExplicitTemplateArgumentListFlag = 0x02
-  };
-  
-  // DecoratedD - The declaration that we are referencing, plus two bits to 
-  // indicate whether (1) the declaration's name was explicitly qualified and
-  // (2) the declaration's name was followed by an explicit template 
-  // argument list.
-  llvm::PointerIntPair<ValueDecl *, 2> DecoratedD;
 
-  // Loc - The location of the declaration name itself.
+/// \brief A reference to a declared variable, function, enum, etc.
+/// [C99 6.5.1p2]
+///
+/// This encodes all the information about how a declaration is referenced
+/// within an expression.
+///
+/// There are several optional constructs attached to DeclRefExprs only when
+/// they apply in order to conserve memory. These are laid out past the end of
+/// the object, and flags in the DeclRefExprBitfield track whether they exist:
+///
+///   DeclRefExprBits.HasQualifier:
+///       Specifies when this declaration reference expression has a C++
+///       nested-name-specifier.
+///   DeclRefExprBits.HasExplicitTemplateArgs:
+///       Specifies when this declaration reference expression has an explicit
+///       C++ template argument list.
+class DeclRefExpr : public Expr {
+  /// \brief The declaration that we are referencing.
+  ValueDecl *D;
+
+  /// \brief The location of the declaration name itself.
   SourceLocation Loc;
 
-  /// DNLoc - Provides source/type location info for the
-  /// declaration name embedded in DecoratedD.
+  /// \brief Provides source/type location info for the declaration name
+  /// embedded in D.
   DeclarationNameLoc DNLoc;
 
   /// \brief Retrieve the qualifier that preceded the declaration name, if any.
   NameQualifier *getNameQualifier() {
-    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
+    if (!hasQualifier())
       return 0;
-    
+
     return reinterpret_cast<NameQualifier *> (this + 1);
   }
-  
-  /// \brief Retrieve the qualifier that preceded the member name, if any.
+
+  /// \brief Retrieve the qualifier that preceded the declaration name, if any.
   const NameQualifier *getNameQualifier() const {
     return const_cast<DeclRefExpr *>(this)->getNameQualifier();
   }
@@ -727,9 +729,11 @@ class DeclRefExpr : public Expr {
   void computeDependence();
 
 public:
-  DeclRefExpr(ValueDecl *d, QualType t, ExprValueKind VK, SourceLocation l) :
-    Expr(DeclRefExprClass, t, VK, OK_Ordinary, false, false, false),
-    DecoratedD(d, 0), Loc(l) {
+  DeclRefExpr(ValueDecl *D, QualType T, ExprValueKind VK, SourceLocation L)
+    : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
+      D(D), Loc(L) {
+    DeclRefExprBits.HasQualifier = 0;
+    DeclRefExprBits.HasExplicitTemplateArgs = 0;
     computeDependence();
   }
 
@@ -753,9 +757,9 @@ public:
                                   bool HasExplicitTemplateArgs,
                                   unsigned NumTemplateArgs);
   
-  ValueDecl *getDecl() { return DecoratedD.getPointer(); }
-  const ValueDecl *getDecl() const { return DecoratedD.getPointer(); }
-  void setDecl(ValueDecl *NewD) { DecoratedD.setPointer(NewD); }
+  ValueDecl *getDecl() { return D; }
+  const ValueDecl *getDecl() const { return D; }
+  void setDecl(ValueDecl *NewD) { D = NewD; }
 
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDecl()->getDeclName(), Loc, DNLoc);
@@ -767,7 +771,7 @@ public:
 
   /// \brief Determine whether this declaration reference was preceded by a
   /// C++ nested-name-specifier, e.g., \c N::foo.
-  bool hasQualifier() const { return DecoratedD.getInt() & HasQualifierFlag; }
+  bool hasQualifier() const { return DeclRefExprBits.HasQualifier; }
   
   /// \brief If the name was qualified, retrieves the nested-name-specifier 
   /// that precedes the name. Otherwise, returns NULL.
@@ -788,7 +792,7 @@ public:
   }
 
   bool hasExplicitTemplateArgs() const {
-    return (DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag);
+    return DeclRefExprBits.HasExplicitTemplateArgs;
   }
   
   /// \brief Retrieve the explicit template argument list that followed the
@@ -796,7 +800,7 @@ public:
   ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
 
-    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
+    if (!hasQualifier())
       return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
     
     return *reinterpret_cast<ExplicitTemplateArgumentList *>(

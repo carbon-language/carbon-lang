@@ -425,21 +425,17 @@ void ASTStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
 void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
 
-  bool HasQualifier = Record[Idx++];
-  bool HasExplicitTemplateArgs = Record[Idx++];
+  E->DeclRefExprBits.HasQualifier = Record[Idx++];
+  E->DeclRefExprBits.HasExplicitTemplateArgs = Record[Idx++];
   unsigned NumTemplateArgs = 0;
-  if (HasExplicitTemplateArgs)
+  if (E->hasExplicitTemplateArgs())
     NumTemplateArgs = Record[Idx++];
 
-  E->DecoratedD.setInt((HasQualifier? DeclRefExpr::HasQualifierFlag : 0) |
-      (HasExplicitTemplateArgs 
-         ? DeclRefExpr::HasExplicitTemplateArgumentListFlag : 0));
-  
-  if (HasQualifier)
+  if (E->hasQualifier())
     E->getNameQualifier()->QualifierLoc
       = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
 
-  if (HasExplicitTemplateArgs)
+  if (E->hasExplicitTemplateArgs())
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
                                      NumTemplateArgs);
 

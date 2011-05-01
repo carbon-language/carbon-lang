@@ -279,17 +279,18 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
-    DecoratedD(D,
-               (QualifierLoc? HasQualifierFlag : 0) |
-               (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
-    Loc(NameLoc) {
+    D(D), Loc(NameLoc) {
+  DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc) {
+    DeclRefExprBits.HasQualifier = 1;
     NameQualifier *NQ = getNameQualifier();
     NQ->QualifierLoc = QualifierLoc;
   }
-      
-  if (TemplateArgs)
+
+  DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
+  if (TemplateArgs) {
     getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
+  }
 
   computeDependence();
 }
@@ -299,15 +300,14 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
-    DecoratedD(D,
-               (QualifierLoc? HasQualifierFlag : 0) |
-               (TemplateArgs ? HasExplicitTemplateArgumentListFlag : 0)),
-    Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
+    D(D), Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
+  DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc) {
     NameQualifier *NQ = getNameQualifier();
     NQ->QualifierLoc = QualifierLoc;
   }
 
+  DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs)
     getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
 
