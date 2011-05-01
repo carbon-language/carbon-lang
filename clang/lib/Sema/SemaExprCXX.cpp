@@ -2351,15 +2351,117 @@ ExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait UTT,
   return BuildUnaryTypeTrait(UTT, KWLoc, TSInfo, RParen);
 }
 
-static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
-                                   SourceLocation KeyLoc) {
-  // FIXME: For many of these traits, we need a complete type before we can 
-  // check these properties.
+/// \brief Check the completeness of a type in a unary type trait.
+///
+/// If the particular type trait requires a complete type, tries to complete
+/// it. If completing the type fails, a diagnostic is emitted and false
+/// returned. If completing the type succeeds or no completion was required,
+/// returns true.
+static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
+                                                UnaryTypeTrait UTT,
+                                                SourceLocation Loc,
+                                                QualType ArgTy) {
+  // C++0x [meta.unary.prop]p3:
+  //   For all of the class templates X declared in this Clause, instantiating
+  //   that template with a template argument that is a class template
+  //   specialization may result in the implicit instantiation of the template
+  //   argument if and only if the semantics of X require that the argument
+  //   must be a complete type.
+  // We apply this rule to all the type trait expressions used to implement
+  // these class templates. We also try to follow any GCC documented behavior
+  // in these expressions to ensure portability of standard libraries.
+  switch (UTT) {
+    // FIXME: These shouldn't be UnaryTypeTraits as they aren't traits on types.
+  case UTT_IsLvalueExpr:
+  case UTT_IsRvalueExpr:
+    assert(0 && "Expression traits found in type trait handling code.");
 
-  if (T->isDependentType()) {
-    Self.Diag(KeyLoc, diag::err_dependent_type_used_in_type_trait_expr) << T;
-    return false;
+    // is_complete_type somewhat obviously cannot require a complete type.
+  case UTT_IsCompleteType:
+    // Fallthrough
+
+    // These traits are modeled on the type predicates in C++0x
+    // [meta.unary.cat] and [meta.unary.comp]. They are not specified as
+    // requiring a complete type, as whether or not they return true cannot be
+    // impacted by the completeness of the type.
+  case UTT_IsVoid:
+  case UTT_IsIntegral:
+  case UTT_IsFloatingPoint:
+  case UTT_IsArray:
+  case UTT_IsPointer:
+  case UTT_IsLvalueReference:
+  case UTT_IsRvalueReference:
+  case UTT_IsMemberFunctionPointer:
+  case UTT_IsMemberObjectPointer:
+  case UTT_IsEnum:
+  case UTT_IsUnion:
+  case UTT_IsClass:
+  case UTT_IsFunction:
+  case UTT_IsReference:
+  case UTT_IsArithmetic:
+  case UTT_IsFundamental:
+  case UTT_IsObject:
+  case UTT_IsScalar:
+  case UTT_IsCompound:
+  case UTT_IsMemberPointer:
+    // Fallthrough
+
+    // These traits are modeled on type predicates in C++0x [meta.unary.prop]
+    // which requires some of its traits to have the complete type. However,
+    // the completeness of the type cannot impact these traits' semantics, and
+    // so they don't require it. This matches the comments on these traits in
+    // Table 49.
+  case UTT_IsConst:
+  case UTT_IsVolatile:
+  case UTT_IsSigned:
+  case UTT_IsUnsigned:
+    return true;
+
+    // C++0x [meta.unary.prop] Table 49 requires the following traits to be
+    // applied to a complete type, so we enumerate theme here even though the
+    // default for non-Borland compilers is to require completeness for any
+    // other traits than the ones specifically allowed to work on incomplete
+    // types.
+  case UTT_IsTrivial:
+  case UTT_IsStandardLayout:
+  case UTT_IsPOD:
+  case UTT_IsLiteral:
+  case UTT_IsEmpty:
+  case UTT_IsPolymorphic:
+  case UTT_IsAbstract:
+    // Fallthrough
+
+    // These trait expressions are designed to help implement predicats in
+    // [meta.unary.prop] despite not being named the same. They are specified
+    // by both GCC and the Embarcadero C++ compiler, and require the complete
+    // type due to the overarching C++0x type predicates being implemented
+    // requiring the complete type.
+  case UTT_HasNothrowAssign:
+  case UTT_HasNothrowConstructor:
+  case UTT_HasNothrowCopy:
+  case UTT_HasTrivialAssign:
+  case UTT_HasTrivialConstructor:
+  case UTT_HasTrivialCopy:
+  case UTT_HasTrivialDestructor:
+  case UTT_HasVirtualDestructor:
+    // Arrays of unknown bound are expressly allowed.
+    QualType ElTy = ArgTy;
+    if (ArgTy->isIncompleteArrayType())
+      ElTy = S.Context.getAsArrayType(ArgTy)->getElementType();
+
+    // The void type is expressly allowed.
+    if (ElTy->isVoidType())
+      return true;
+
+    return !S.RequireCompleteType(
+      Loc, ElTy, diag::err_incomplete_type_used_in_type_trait_expr);
   }
+}
+
+static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
+                                   SourceLocation KeyLoc, QualType T) {
+  assert(!T->isDependentType() &&
+         "Cannot evaluate type trait on dependent type");
 
   ASTContext &C = Self.Context;
   switch(UTT) {
@@ -2653,79 +2755,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT, QualType T,
   }
 }
 
-/// \brief Check the completeness of a type in a unary type trait.
-///
-/// If the particular type trait requires a complete type, tries to complete
-/// it. If completing the type fails, a diagnostic is emitted and false
-/// returned. If completing the type succeeds or no completion was required,
-/// returns true.
-static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
-                                                UnaryTypeTrait UTT,
-                                                SourceLocation Loc,
-                                                QualType ArgTy) {
-  // C++0x [meta.unary.prop]p3:
-  //   For all of the class templates X declared in this Clause, instantiating
-  //   that template with a template argument that is a class template
-  //   specialization may result in the implicit instantiation of the template
-  //   argument if and only if the semantics of X require that the argument
-  //   must be a complete type.
-  // We apply this rule to all the type trait expressions used to implement
-  // these class templates. We also try to follow any GCC documented behavior
-  // in these expressions to ensure portability of standard libraries.
-  switch (UTT) {
-    // is_complete_type somewhat obviously cannot require a complete type.
-  case UTT_IsCompleteType:
-    return true;
-
-    // According to http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
-    // all traits except __is_class, __is_enum and __is_union require a the type
-    // to be complete, an array of unknown bound, or void.
-  case UTT_IsClass:
-  case UTT_IsEnum:
-  case UTT_IsUnion:
-    return true;
-
-  default:
-    // Apprantely Borland only wants the explicitly listed traits to complete
-    // the type.
-    if (S.LangOpts.Borland) return true;
-
-    // C++0x [meta.unary.prop] Table 49 requires the following traits to be
-    // applied to a complete type, so we enumerate theme here even though the
-    // default for non-Borland compilers is to require completeness for any
-    // other traits than the ones specifically allowed to work on incomplete
-    // types.
-    // FIXME: C++0x: This list is incomplete, and the names don't always
-    // correspond clearly to entries in the standard's table.
-  case UTT_HasNothrowAssign:
-  case UTT_HasNothrowConstructor:
-  case UTT_HasNothrowCopy:
-  case UTT_HasTrivialAssign:
-  case UTT_HasTrivialConstructor:
-  case UTT_HasTrivialCopy:
-  case UTT_HasTrivialDestructor:
-  case UTT_HasVirtualDestructor:
-  case UTT_IsAbstract:
-  case UTT_IsEmpty:
-  case UTT_IsLiteral:
-  case UTT_IsPOD:
-  case UTT_IsPolymorphic:
-  case UTT_IsStandardLayout:
-  case UTT_IsTrivial:
-    // Arrays of unknown bound are expressly allowed.
-    QualType ElTy = ArgTy;
-    if (ArgTy->isIncompleteArrayType())
-      ElTy = S.Context.getAsArrayType(ArgTy)->getElementType();
-
-    // The void type is expressly allowed.
-    if (ElTy->isVoidType())
-      return true;
-
-    return !S.RequireCompleteType(
-      Loc, ElTy, diag::err_incomplete_type_used_in_type_trait_expr);
-  }
-}
-
 
 ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
                                      SourceLocation KWLoc,
@@ -2737,7 +2766,7 @@ ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
 
   bool Value = false;
   if (!T->isDependentType())
-    Value = EvaluateUnaryTypeTrait(*this, UTT, T, KWLoc);
+    Value = EvaluateUnaryTypeTrait(*this, UTT, KWLoc, T);
 
   return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, UTT, TSInfo, Value,
                                                 RParen, Context.BoolTy));
