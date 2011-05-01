@@ -2989,7 +2989,7 @@ class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   TemplateTypeParmType(TemplateTypeParmDecl *TTPDecl, QualType Canon)
     : Type(TemplateTypeParm, Canon, /*Dependent=*/true,
            /*VariablyModified=*/false,
-           Canon->getAs<TemplateTypeParmType>()->CanTTPTInfo.ParameterPack),
+           Canon->containsUnexpandedParameterPack()),
       TTPDecl(TTPDecl) { }
 
   /// Build the canonical type.
@@ -3005,7 +3005,7 @@ class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
 
   const CanonicalTTPTInfo& getCanTTPTInfo() const {
     QualType Can = getCanonicalTypeInternal();
-    return Can->getAs<TemplateTypeParmType>()->CanTTPTInfo;
+    return Can->castAs<TemplateTypeParmType>()->CanTTPTInfo;
   }
 
 public:
