@@ -2068,6 +2068,30 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
 
   return false;
 }
+
+bool
+Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
+                               CXXCtorInitializer *Initializer) {
+  Constructor->setNumCtorInitializers(1);
+  CXXCtorInitializer **initializer =
+    new (Context) CXXCtorInitializer*[1];
+  memcpy(initializer, &Initializer, sizeof (CXXCtorInitializer*));
+  Constructor->setCtorInitializers(initializer);
+
+  // FIXME: This doesn't catch indirect loops yet
+  CXXConstructorDecl *Target = Initializer->getTargetConstructor();
+  while (Target) {
+    if (Target == Constructor) {
+      Diag(Initializer->getSourceLocation(), diag::err_delegating_ctor_loop)
+        << Constructor;
+      return true;
+    }
+    Target = Target->getTargetConstructor();
+  }
+
+  return false;
+}
+
                                
 bool
 Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
@@ -2442,7 +2466,11 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
              diag::err_delegating_initializer_alone)
           << MemInits[0]->getSourceRange();
         HadError = true;
+        // We will treat this as being the only initializer.
       }
+      SetDelegatingInitializer(Constructor, *MemInits);
+      // Return immediately as the initializer is set.
+      return;
     }
   }
 

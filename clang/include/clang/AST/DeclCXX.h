@@ -1608,6 +1608,23 @@ public:
   void setCtorInitializers(CXXCtorInitializer ** initializers) {
     CtorInitializers = initializers;
   }
+
+  /// isDelegatingConstructor - Whether this constructor is a
+  /// delegating constructor
+  bool isDelegatingConstructor() const {
+    return (getNumCtorInitializers() == 1) &&
+      CtorInitializers[0]->isDelegatingInitializer();
+  }
+
+  /// getTargetConstructor - When this constructor delegates to
+  /// another, retrieve the target
+  CXXConstructorDecl *getTargetConstructor() const {
+    if (isDelegatingConstructor())
+      return CtorInitializers[0]->getTargetConstructor();
+    else
+      return 0;
+  }
+
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to
   /// default-initialize a class of this type.

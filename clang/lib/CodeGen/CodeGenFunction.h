@@ -1496,6 +1496,12 @@ public:
   void EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
                                       CXXCtorType CtorType,
                                       const FunctionArgList &Args);
+  // It's important not to confuse this and the previous function. Delegating
+  // constructors are the C++0x feature. The constructor delegate optimization
+  // is used to reduce duplication in the base and complete consturctors where
+  // they are substantially the same.
+  void EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
+                                        const FunctionArgList &Args);
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
                               bool ForVirtualBase, llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,

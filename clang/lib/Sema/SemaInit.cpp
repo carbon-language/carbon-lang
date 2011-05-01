@@ -2045,7 +2045,7 @@ DeclarationName InitializedEntity::getName() const {
   case EK_New:
   case EK_Temporary:
   case EK_Base:
-  case EK_Delegation:
+  case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
   case EK_BlockElement:
@@ -2068,7 +2068,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_New:
   case EK_Temporary:
   case EK_Base:
-  case EK_Delegation:
+  case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
   case EK_BlockElement:
@@ -2091,7 +2091,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_New:
   case EK_Temporary:
   case EK_Base:
-  case EK_Delegation:
+  case EK_Delegating:
   case EK_ArrayElement:
   case EK_VectorElement:
   case EK_BlockElement:
@@ -3346,7 +3346,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Delegation:
+  case InitializedEntity::EK_Delegating:
     return Sema::AA_Initializing;
 
   case InitializedEntity::EK_Parameter:
@@ -3383,7 +3383,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Delegation:
+  case InitializedEntity::EK_Delegating:
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_BlockElement:
@@ -3405,7 +3405,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_Result:
     case InitializedEntity::EK_New:
     case InitializedEntity::EK_Base:
-    case InitializedEntity::EK_Delegation:
+    case InitializedEntity::EK_Delegating:
     case InitializedEntity::EK_VectorElement:
     case InitializedEntity::EK_BlockElement:
       return false;
@@ -3490,7 +3490,7 @@ static ExprResult CopyObject(Sema &S,
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Base:
-  case InitializedEntity::EK_Delegation:
+  case InitializedEntity::EK_Delegating:
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_BlockElement:
     Loc = CurInitExpr->getLocStart();
@@ -4060,6 +4060,9 @@ InitializationSequence::Perform(Sema &S,
           ConstructKind = Entity.getBaseSpecifier()->isVirtual() ?
             CXXConstructExpr::CK_VirtualBase :
             CXXConstructExpr::CK_NonVirtualBase;
+        }
+        if (Entity.getKind() == InitializedEntity::EK_Delegating) {
+          ConstructKind = CXXConstructExpr::CK_Delegating;
         }
 
         // Only get the parenthesis range if it is a direct construction.

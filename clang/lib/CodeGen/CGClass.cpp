@@ -658,6 +658,10 @@ static bool IsConstructorDelegationValid(const CXXConstructorDecl *Ctor) {
   if (Ctor->getType()->getAs<FunctionProtoType>()->isVariadic())
     return false;
 
+  // FIXME: Decide if we can do a delegation of a delegating constructor.
+  if (Ctor->isDelegatingConstructor())
+    return false;
+
   return true;
 }
 
@@ -710,6 +714,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
                                        CXXCtorType CtorType,
                                        FunctionArgList &Args) {
+  if (CD->isDelegatingConstructor())
+    return EmitDelegatingCXXConstructorCall(CD, Args);
+
   const CXXRecordDecl *ClassDecl = CD->getParent();
 
   llvm::SmallVector<CXXCtorInitializer *, 8> MemberInitializers;
@@ -721,8 +728,10 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     
     if (Member->isBaseInitializer())
       EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
-    else
+    else if (Member->isAnyMemberInitializer())
       MemberInitializers.push_back(Member);
+    else
+      llvm_unreachable("Delegating initializer on non-delegating constructor");
   }
 
   InitializeVTablePointers(ClassDecl);
@@ -1261,6 +1270,19 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
            CGM.GetAddrOfCXXConstructor(Ctor, CtorType), 
            ReturnValueSlot(), DelegateArgs, Ctor);
 }
+
+void
+CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
+                                                  const FunctionArgList &Args) {
+  assert(Ctor->isDelegatingConstructor());
+
+  llvm::Value *ThisPtr = LoadCXXThis();
+
+  AggValueSlot AggSlot = AggValueSlot::forAddr(ThisPtr, false, /*Lifetime*/ true);
+
+  EmitAggExpr(Ctor->init_begin()[0]->getInit(), AggSlot);
+}
+
 
 void CodeGenFunction::EmitCXXDestructorCall(const CXXDestructorDecl *DD,
                                             CXXDtorType Type,

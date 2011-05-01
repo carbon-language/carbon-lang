@@ -3072,6 +3072,9 @@ public:
                                            SourceLocation LParenLoc,
                                            CXXRecordDecl *ClassDecl);
 
+  bool SetDelegatingInitializer(CXXConstructorDecl *Constructor,
+                                CXXCtorInitializer *Initializer);
+
   bool SetCtorInitializers(CXXConstructorDecl *Constructor,
                            CXXCtorInitializer **Initializers,
                            unsigned NumInitializers, bool AnyErrors);

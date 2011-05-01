@@ -780,7 +780,8 @@ public:
   enum ConstructionKind {
     CK_Complete,
     CK_NonVirtualBase,
-    CK_VirtualBase
+    CK_VirtualBase,
+    CK_Delegating
   };
     
 private:
