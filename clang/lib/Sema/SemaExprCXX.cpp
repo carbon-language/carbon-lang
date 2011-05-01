@@ -2751,7 +2751,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   llvm_unreachable("Type trait not covered by switch");
 }
 
-
 ExprResult Sema::BuildUnaryTypeTrait(UnaryTypeTrait UTT,
                                      SourceLocation KWLoc,
                                      TypeSourceInfo *TSInfo,
@@ -3016,23 +3015,30 @@ ExprResult Sema::BuildArrayTypeTrait(ArrayTypeTrait ATT,
 }
 
 ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
-                                     SourceLocation KWLoc,
-                                     Expr* Queried,
-                                     SourceLocation RParen) {
+                                      SourceLocation KWLoc,
+                                      Expr *Queried,
+                                      SourceLocation RParen) {
   // If error parsing the expression, ignore.
   if (!Queried)
-      return ExprError();
+    return ExprError();
 
-  ExprResult Result
-    = BuildExpressionTrait(ET, KWLoc, Queried, RParen);
+  ExprResult Result = BuildExpressionTrait(ET, KWLoc, Queried, RParen);
 
   return move(Result);
 }
 
+static bool EvaluateExpressionTrait(ExpressionTrait ET, Expr *E) {
+  switch (ET) {
+  case ET_IsLValueExpr: return E->isLValue();
+  case ET_IsRValueExpr: return E->isRValue();
+  }
+  llvm_unreachable("Expression trait not covered by switch");
+}
+
 ExprResult Sema::BuildExpressionTrait(ExpressionTrait ET,
-                                     SourceLocation KWLoc,
-                                     Expr* Queried,
-                                     SourceLocation RParen) {
+                                      SourceLocation KWLoc,
+                                      Expr *Queried,
+                                      SourceLocation RParen) {
   if (Queried->isTypeDependent()) {
     // Delay type-checking for type-dependent expressions.
   } else if (Queried->getType()->isPlaceholderType()) {
@@ -3041,17 +3047,10 @@ ExprResult Sema::BuildExpressionTrait(ExpressionTrait ET,
     return BuildExpressionTrait(ET, KWLoc, PE.take(), RParen);
   }
 
-  bool Value = false;
-  switch (ET) {
-  default: llvm_unreachable("Unknown or unimplemented expression trait");
-  case ET_IsLValueExpr:       Value = Queried->isLValue(); break;
-  case ET_IsRValueExpr:       Value = Queried->isRValue(); break;
-  }
-  
+  bool Value = EvaluateExpressionTrait(ET, Queried);
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(
-      new (Context) ExpressionTraitExpr(
-          KWLoc, ET, Queried, Value, RParen, Context.BoolTy));
+  return Owned(new (Context) ExpressionTraitExpr(KWLoc, ET, Queried, Value,
+                                                 RParen, Context.BoolTy));
 }
 
 QualType Sema::CheckPointerToMemberOperands(ExprResult &lex, ExprResult &rex,
