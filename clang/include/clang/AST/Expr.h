@@ -697,20 +697,18 @@ class DeclRefExpr : public Expr {
   /// embedded in D.
   DeclarationNameLoc DNLoc;
 
-  /// \brief Retrieve the qualifier that preceded the declaration name, if any.
-  NameQualifier *getNameQualifier() {
-    if (!hasQualifier())
-      return 0;
-
-    return reinterpret_cast<NameQualifier *> (this + 1);
+  /// \brief Helper to retrieve the optional NameQualifier.
+  NameQualifier &getNameQualifier() {
+    assert(hasQualifier());
+    return *reinterpret_cast<NameQualifier *>(this + 1);
   }
 
-  /// \brief Retrieve the qualifier that preceded the declaration name, if any.
-  const NameQualifier *getNameQualifier() const {
+  /// \brief Helper to retrieve the optional NameQualifier.
+  const NameQualifier &getNameQualifier() const {
     return const_cast<DeclRefExpr *>(this)->getNameQualifier();
   }
 
-  DeclRefExpr(NestedNameSpecifierLoc QualifierLoc, 
+  DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
               ValueDecl *D, SourceLocation NameLoc,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T, ExprValueKind VK);
@@ -723,7 +721,7 @@ class DeclRefExpr : public Expr {
   /// \brief Construct an empty declaration reference expression.
   explicit DeclRefExpr(EmptyShell Empty)
     : Expr(DeclRefExprClass, Empty) { }
-  
+
   /// \brief Computes the type- and value-dependence flags for this
   /// declaration reference expression.
   void computeDependence();
@@ -756,7 +754,7 @@ public:
                                   bool HasQualifier, 
                                   bool HasExplicitTemplateArgs,
                                   unsigned NumTemplateArgs);
-  
+
   ValueDecl *getDecl() { return D; }
   const ValueDecl *getDecl() const { return D; }
   void setDecl(ValueDecl *NewD) { D = NewD; }
@@ -772,41 +770,42 @@ public:
   /// \brief Determine whether this declaration reference was preceded by a
   /// C++ nested-name-specifier, e.g., \c N::foo.
   bool hasQualifier() const { return DeclRefExprBits.HasQualifier; }
-  
-  /// \brief If the name was qualified, retrieves the nested-name-specifier 
+
+  /// \brief If the name was qualified, retrieves the nested-name-specifier
   /// that precedes the name. Otherwise, returns NULL.
   NestedNameSpecifier *getQualifier() const {
     if (!hasQualifier())
       return 0;
-    
-    return getNameQualifier()->QualifierLoc.getNestedNameSpecifier();
+
+    return getNameQualifier().QualifierLoc.getNestedNameSpecifier();
   }
 
-  /// \brief If the name was qualified, retrieves the nested-name-specifier 
+  /// \brief If the name was qualified, retrieves the nested-name-specifier
   /// that precedes the name, with source-location information.
   NestedNameSpecifierLoc getQualifierLoc() const {
     if (!hasQualifier())
       return NestedNameSpecifierLoc();
-    
-    return getNameQualifier()->QualifierLoc;
+
+    return getNameQualifier().QualifierLoc;
   }
 
+  /// \brief Determines whether this declaration reference was followed by an
+  /// explict template argument list.
   bool hasExplicitTemplateArgs() const {
     return DeclRefExprBits.HasExplicitTemplateArgs;
   }
-  
+
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
   ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-
     if (!hasQualifier())
       return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
-    
+
     return *reinterpret_cast<ExplicitTemplateArgumentList *>(
-                                                      getNameQualifier() + 1);
+      &getNameQualifier() + 1);
   }
-  
+
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
   const ExplicitTemplateArgumentList &getExplicitTemplateArgs() const {
@@ -820,50 +819,50 @@ public:
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
-  
+
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     if (hasExplicitTemplateArgs())
       getExplicitTemplateArgs().copyInto(List);
   }
-  
+
   /// \brief Retrieve the location of the left angle bracket following the
   /// member name ('<'), if any.
   SourceLocation getLAngleLoc() const {
     if (!hasExplicitTemplateArgs())
       return SourceLocation();
-    
+
     return getExplicitTemplateArgs().LAngleLoc;
   }
-  
+
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
     if (!hasExplicitTemplateArgs())
       return 0;
-    
+
     return getExplicitTemplateArgs().getTemplateArgs();
   }
-  
+
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
     if (!hasExplicitTemplateArgs())
       return 0;
-    
+
     return getExplicitTemplateArgs().NumTemplateArgs;
   }
-  
+
   /// \brief Retrieve the location of the right angle bracket following the
   /// template arguments ('>').
   SourceLocation getRAngleLoc() const {
     if (!hasExplicitTemplateArgs())
       return SourceLocation();
-    
+
     return getExplicitTemplateArgs().RAngleLoc;
   }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DeclRefExprClass;
   }
@@ -871,7 +870,7 @@ public:
 
   // Iterators
   child_range children() { return child_range(); }
-  
+
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 };

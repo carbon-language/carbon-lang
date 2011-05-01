@@ -281,11 +281,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
     D(D), Loc(NameLoc) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
-  if (QualifierLoc) {
-    DeclRefExprBits.HasQualifier = 1;
-    NameQualifier *NQ = getNameQualifier();
-    NQ->QualifierLoc = QualifierLoc;
-  }
+  if (QualifierLoc)
+    getNameQualifier().QualifierLoc =  QualifierLoc;
 
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs) {
@@ -302,10 +299,8 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
     D(D), Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
-  if (QualifierLoc) {
-    NameQualifier *NQ = getNameQualifier();
-    NQ->QualifierLoc = QualifierLoc;
-  }
+  if (QualifierLoc)
+    getNameQualifier().QualifierLoc =  QualifierLoc;
 
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs)

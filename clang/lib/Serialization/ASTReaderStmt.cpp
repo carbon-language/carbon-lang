@@ -432,7 +432,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
     NumTemplateArgs = Record[Idx++];
 
   if (E->hasQualifier())
-    E->getNameQualifier()->QualifierLoc
+    E->getNameQualifier().QualifierLoc
       = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
 
   if (E->hasExplicitTemplateArgs())
