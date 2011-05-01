@@ -71,7 +71,7 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   DwarfUsesInlineInfoSection = true;
 
   // Exceptions handling
-  ExceptionsType = ExceptionHandling::DwarfTable;
+  ExceptionsType = ExceptionHandling::DwarfCFI;
 }
 
 const MCExpr *

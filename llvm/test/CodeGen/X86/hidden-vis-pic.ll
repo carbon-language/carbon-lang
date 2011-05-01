@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
+; RUN: llc < %s -disable-cfi -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
 
 
 
