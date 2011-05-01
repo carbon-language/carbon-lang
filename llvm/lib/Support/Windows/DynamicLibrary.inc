@@ -41,41 +41,12 @@ using namespace sys;
 
 static std::vector<HMODULE> OpenedHandles;
 
-#ifdef _WIN64
-  typedef DWORD64 ModuleBaseType;
-#else
-  typedef ULONG ModuleBaseType;
-#endif
-
 extern "C" {
-// Use old callback if:
-//  - Not using Visual Studio
-//  - Visual Studio 2005 or earlier but only if we are not using the Windows SDK
-//    or Windows SDK version is older than 6.0
-// Use new callback if:
-//  - Newer Visual Studio (comes with newer SDK).
-//  - Visual Studio 2005 with Windows SDK 6.0+
-#if defined(_MSC_VER)
-  #if _MSC_VER < 1500 && (!defined(VER_PRODUCTBUILD) || VER_PRODUCTBUILD < 6000)
-    #define OLD_ELM_CALLBACK_DECL 1
-  #endif
-#elif defined(__MINGW64__)
-  // Use new callback.
-#elif defined(__MINGW32__)
-  #define OLD_ELM_CALLBACK_DECL 1
-#endif
 
-#ifdef OLD_ELM_CALLBACK_DECL
-  static BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
-                                    ModuleBaseType ModuleBase,
+  static BOOL CALLBACK ELM_Callback(WIN32_ELMCB_PCSTR ModuleName,
+                                    ULONG_PTR ModuleBase,
                                     ULONG ModuleSize,
                                     PVOID UserContext)
-#else
-  static BOOL CALLBACK ELM_Callback(PCSTR  ModuleName,
-                                    ModuleBaseType ModuleBase,
-                                    ULONG ModuleSize,
-                                    PVOID UserContext)
-#endif
   {
     // Ignore VC++ runtimes prior to 7.1.  Somehow some of them get loaded
     // into the process.

@@ -20660,6 +20660,73 @@ fi
 
 fi
 
+if test "$llvm_cv_os_type" = "MingW" ; then
+  { echo "$as_me:$LINENO: checking whether EnumerateLoadedModules() accepts new decl" >&5
+echo $ECHO_N "checking whether EnumerateLoadedModules() accepts new decl... $ECHO_C" >&6; }
+  cat >conftest.$ac_ext <<_ACEOF
+#include <windows.h>
+#include <imagehlp.h>
+extern void foo(PENUMLOADED_MODULES_CALLBACK);
+extern void foo(BOOL(CALLBACK*)(PCSTR,ULONG_PTR,ULONG,PVOID));
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+  { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+  llvm_cv_win32_elmcb_pcstr="PCSTR"
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+  llvm_cv_win32_elmcb_pcstr="PSTR"
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+cat >>confdefs.h <<_ACEOF
+#define WIN32_ELMCB_PCSTR $llvm_cv_win32_elmcb_pcstr
+_ACEOF
+
+fi
+
 
 { echo "$as_me:$LINENO: checking for isnan in <math.h>" >&5
 echo $ECHO_N "checking for isnan in <math.h>... $ECHO_C" >&6; }

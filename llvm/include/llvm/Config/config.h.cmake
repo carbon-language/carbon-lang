@@ -196,6 +196,9 @@
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86
 
+/* Type of 1st arg on ELM Callback */
+#cmakedefine WIN32_ELMCB_PCSTR ${WIN32_ELMCB_PCSTR}
+
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
 

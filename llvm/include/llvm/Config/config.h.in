@@ -675,6 +675,9 @@
 /* Define if use udis86 library */
 #undef USE_UDIS86
 
+/* Type of 1st arg on ELM Callback */
+#undef WIN32_ELMCB_PCSTR
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 

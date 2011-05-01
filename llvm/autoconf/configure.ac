@@ -1429,6 +1429,24 @@ if test "$llvm_cv_os_type" = "MingW" ; then
   AC_CHECK_LIB(gcc,__cmpdi2,AC_DEFINE([HAVE___CMPDI2],[1],[Have host's __cmpdi2]))
 fi
 
+dnl Check Win32 API EnumerateLoadedModules.
+if test "$llvm_cv_os_type" = "MingW" ; then
+  AC_MSG_CHECKING([whether EnumerateLoadedModules() accepts new decl])
+  AC_COMPILE_IFELSE([[#include <windows.h>
+#include <imagehlp.h>
+extern void foo(PENUMLOADED_MODULES_CALLBACK);
+extern void foo(BOOL(CALLBACK*)(PCSTR,ULONG_PTR,ULONG,PVOID));]],
+[
+  AC_MSG_RESULT([yes])
+  llvm_cv_win32_elmcb_pcstr="PCSTR"
+],
+[
+  AC_MSG_RESULT([no])
+  llvm_cv_win32_elmcb_pcstr="PSTR"
+])
+  AC_DEFINE_UNQUOTED([WIN32_ELMCB_PCSTR],$llvm_cv_win32_elmcb_pcstr,[Type of 1st arg on ELM Callback])
+fi
+
 dnl Check for variations in the Standard C++ library and STL. These macros are
 dnl provided by LLVM in the autoconf/m4 directory.
 AC_FUNC_ISNAN
