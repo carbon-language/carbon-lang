@@ -1116,7 +1116,7 @@ void VarDecl::setStorageClass(StorageClass SC) {
   if (getStorageClass() != SC)
     ClearLinkageCache();
   
-  SClass = SC;
+  VarDeclBits.SClass = SC;
 }
 
 SourceRange VarDecl::getSourceRange() const {

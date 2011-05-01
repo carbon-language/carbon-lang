@@ -682,37 +682,67 @@ protected:
   mutable InitType Init;
 
 private:
-  // FIXME: This can be packed into the bitfields in Decl.
-  unsigned SClass : 3;
-  unsigned SClassAsWritten : 3;
-  bool ThreadSpecified : 1;
-  bool HasCXXDirectInit : 1;
+  class VarDeclBitfields {
+    friend class VarDecl;
+    friend class ASTDeclReader;
 
-  /// \brief Whether this variable is the exception variable in a C++ catch
-  /// or an Objective-C @catch statement.
-  bool ExceptionVar : 1;
+    unsigned SClass : 3;
+    unsigned SClassAsWritten : 3;
+    unsigned ThreadSpecified : 1;
+    unsigned HasCXXDirectInit : 1;
+
+    /// \brief Whether this variable is the exception variable in a C++ catch
+    /// or an Objective-C @catch statement.
+    unsigned ExceptionVar : 1;
   
-  /// \brief Whether this local variable could be allocated in the return
-  /// slot of its function, enabling the named return value optimization (NRVO).
-  bool NRVOVariable : 1;
+    /// \brief Whether this local variable could be allocated in the return
+    /// slot of its function, enabling the named return value optimization (NRVO).
+    unsigned NRVOVariable : 1;
 
-  /// \brief Whether this variable is the for-range-declaration in a C++0x
-  /// for-range statement.
-  bool CXXForRangeDecl : 1;
+    /// \brief Whether this variable is the for-range-declaration in a C++0x
+    /// for-range statement.
+    unsigned CXXForRangeDecl : 1;
+  };
+  enum { NumVarDeclBits = 11 };
 
-  friend class StmtIteratorBase;
   friend class ASTDeclReader;
+  friend class StmtIteratorBase;
   
 protected:
+  class ParmVarDeclBitfields {
+    friend class ParmVarDecl;
+    friend class ASTDeclReader;
+
+    unsigned : NumVarDeclBits;
+    
+    /// in, inout, etc.  Only meaningful on Objective-C method parameters.
+    unsigned ObjCDeclQualifier : 6;
+
+    /// Whether this parameter inherits a default argument from a
+    /// prior declaration.
+    unsigned HasInheritedDefaultArg : 1;
+
+    /// Whether this parameter undergoes K&R argument promotion.
+    unsigned IsKNRPromoted : 1;
+  };
+
+  union {
+    unsigned AllBits;
+    VarDeclBitfields VarDeclBits;
+    ParmVarDeclBitfields ParmVarDeclBits;
+  };
+
   VarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
           SourceLocation IdLoc, IdentifierInfo *Id,
           QualType T, TypeSourceInfo *TInfo, StorageClass SC,
           StorageClass SCAsWritten)
-    : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init(),
-      ThreadSpecified(false), HasCXXDirectInit(false),
-      ExceptionVar(false), NRVOVariable(false), CXXForRangeDecl(false) {
-    SClass = SC;
-    SClassAsWritten = SCAsWritten;
+    : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init() {
+    assert(sizeof(VarDeclBitfields) <= sizeof(unsigned));
+    assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned));
+    AllBits = 0;
+    VarDeclBits.SClass = SC;
+    VarDeclBits.SClassAsWritten = SCAsWritten;
+    // Everything else is implicitly initialized to false.
   }
 
   typedef Redeclarable<VarDecl> redeclarable_base;
@@ -734,19 +764,21 @@ public:
 
   virtual SourceRange getSourceRange() const;
 
-  StorageClass getStorageClass() const { return (StorageClass)SClass; }
+  StorageClass getStorageClass() const {
+    return (StorageClass) VarDeclBits.SClass;
+  }
   StorageClass getStorageClassAsWritten() const {
-    return (StorageClass) SClassAsWritten;
+    return (StorageClass) VarDeclBits.SClassAsWritten;
   }
   void setStorageClass(StorageClass SC);
   void setStorageClassAsWritten(StorageClass SC) {
     assert(isLegalForVariable(SC));
-    SClassAsWritten = SC;
+    VarDeclBits.SClassAsWritten = SC;
   }
 
-  void setThreadSpecified(bool T) { ThreadSpecified = T; }
+  void setThreadSpecified(bool T) { VarDeclBits.ThreadSpecified = T; }
   bool isThreadSpecified() const {
-    return ThreadSpecified;
+    return VarDeclBits.ThreadSpecified;
   }
 
   /// hasLocalStorage - Returns true if a variable with function scope
@@ -1024,7 +1056,7 @@ public:
     Eval->IsICE = IsICE;
   }
 
-  void setCXXDirectInitializer(bool T) { HasCXXDirectInit = T; }
+  void setCXXDirectInitializer(bool T) { VarDeclBits.HasCXXDirectInit = T; }
 
   /// hasCXXDirectInitializer - If true, the initializer was a direct
   /// initializer, e.g: "int x(1);". The Init expression will be the expression
@@ -1033,15 +1065,15 @@ public:
   /// by checking hasCXXDirectInitializer.
   ///
   bool hasCXXDirectInitializer() const {
-    return HasCXXDirectInit;
+    return VarDeclBits.HasCXXDirectInit;
   }
 
   /// \brief Determine whether this variable is the exception variable in a
   /// C++ catch statememt or an Objective-C @catch statement.
   bool isExceptionVariable() const {
-    return ExceptionVar;
+    return VarDeclBits.ExceptionVar;
   }
-  void setExceptionVariable(bool EV) { ExceptionVar = EV; }
+  void setExceptionVariable(bool EV) { VarDeclBits.ExceptionVar = EV; }
   
   /// \brief Determine whether this local variable can be used with the named
   /// return value optimization (NRVO).
@@ -1053,13 +1085,13 @@ public:
   /// return slot when returning from the function. Within the function body,
   /// each return that returns the NRVO object will have this variable as its
   /// NRVO candidate.
-  bool isNRVOVariable() const { return NRVOVariable; }
-  void setNRVOVariable(bool NRVO) { NRVOVariable = NRVO; }
+  bool isNRVOVariable() const { return VarDeclBits.NRVOVariable; }
+  void setNRVOVariable(bool NRVO) { VarDeclBits.NRVOVariable = NRVO; }
 
   /// \brief Determine whether this variable is the for-range-declaration in
   /// a C++0x for-range statement.
-  bool isCXXForRangeDecl() const { return CXXForRangeDecl; }
-  void setCXXForRangeDecl(bool FRD) { CXXForRangeDecl = FRD; }
+  bool isCXXForRangeDecl() const { return VarDeclBits.CXXForRangeDecl; }
+  void setCXXForRangeDecl(bool FRD) { VarDeclBits.CXXForRangeDecl = FRD; }
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
@@ -1107,26 +1139,15 @@ public:
 
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
-  // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum
-  /// FIXME: Also can be paced into the bitfields in Decl.
-  /// in, inout, etc.
-  unsigned objcDeclQualifier : 6;
-
-  /// Whether this parameter inherits a default argument from a prior
-  /// declaration.
-  unsigned HasInheritedDefaultArg : 1;
-
-  /// Whether this parameter undergoes K&R argument promotion.
-  unsigned IsKNRPromoted : 1;
-
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
               SourceLocation IdLoc, IdentifierInfo *Id,
               QualType T, TypeSourceInfo *TInfo,
               StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
-    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten),
-      objcDeclQualifier(OBJC_TQ_None), HasInheritedDefaultArg(false),
-      IsKNRPromoted(false) {
+    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten) {
+    assert(ParmVarDeclBits.ObjCDeclQualifier == OBJC_TQ_None);
+    assert(ParmVarDeclBits.HasInheritedDefaultArg == false);
+    assert(ParmVarDeclBits.IsKNRPromoted == false);
     setDefaultArg(DefArg);
   }
 
@@ -1139,10 +1160,10 @@ public:
                              Expr *DefArg);
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
-    return ObjCDeclQualifier(objcDeclQualifier);
+    return ObjCDeclQualifier(ParmVarDeclBits.ObjCDeclQualifier);
   }
   void setObjCDeclQualifier(ObjCDeclQualifier QTVal) {
-    objcDeclQualifier = QTVal;
+    ParmVarDeclBits.ObjCDeclQualifier = QTVal;
   }
 
   /// True if the value passed to this parameter must undergo
@@ -1153,8 +1174,12 @@ public:
   ///   that does not include a prototype, the integer promotions are
   ///   performed on each argument, and arguments that have type float
   ///   are promoted to double.
-  bool isKNRPromoted() const { return IsKNRPromoted; }
-  void setKNRPromoted(bool promoted) { IsKNRPromoted = promoted; }
+  bool isKNRPromoted() const {
+    return ParmVarDeclBits.IsKNRPromoted;
+  }
+  void setKNRPromoted(bool promoted) {
+    ParmVarDeclBits.IsKNRPromoted = promoted;
+  }
 
   Expr *getDefaultArg();
   const Expr *getDefaultArg() const {
@@ -1219,11 +1244,11 @@ public:
   }
 
   bool hasInheritedDefaultArg() const {
-    return HasInheritedDefaultArg;
+    return ParmVarDeclBits.HasInheritedDefaultArg;
   }
 
   void setHasInheritedDefaultArg(bool I = true) {
-    HasInheritedDefaultArg = I;
+    ParmVarDeclBits.HasInheritedDefaultArg = I;
   }
 
   QualType getOriginalType() const {

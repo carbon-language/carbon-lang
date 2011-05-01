@@ -686,13 +686,13 @@ void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VisitDeclaratorDecl(VD);
   VisitRedeclarable(VD);
-  VD->SClass = (StorageClass)Record[Idx++];
-  VD->setStorageClassAsWritten((StorageClass)Record[Idx++]);
-  VD->setThreadSpecified(Record[Idx++]);
-  VD->setCXXDirectInitializer(Record[Idx++]);
-  VD->setExceptionVariable(Record[Idx++]);
-  VD->setNRVOVariable(Record[Idx++]);
-  VD->setCXXForRangeDecl(Record[Idx++]);
+  VD->VarDeclBits.SClass = (StorageClass)Record[Idx++];
+  VD->VarDeclBits.SClassAsWritten = (StorageClass)Record[Idx++];
+  VD->VarDeclBits.ThreadSpecified = Record[Idx++];
+  VD->VarDeclBits.HasCXXDirectInit = Record[Idx++];
+  VD->VarDeclBits.ExceptionVar = Record[Idx++];
+  VD->VarDeclBits.NRVOVariable = Record[Idx++];
+  VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr(F));
 
@@ -710,9 +710,9 @@ void ASTDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 
 void ASTDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
-  PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
-  PD->setKNRPromoted(Record[Idx++]);
-  PD->setHasInheritedDefaultArg(Record[Idx++]);
+  PD->ParmVarDeclBits.ObjCDeclQualifier = (Decl::ObjCDeclQualifier)Record[Idx++];
+  PD->ParmVarDeclBits.IsKNRPromoted = Record[Idx++];
+  PD->ParmVarDeclBits.HasInheritedDefaultArg = Record[Idx++];
   if (Record[Idx++]) // hasUninstantiatedDefaultArg.
     PD->setUninstantiatedDefaultArg(Reader.ReadExpr(F));
 }
