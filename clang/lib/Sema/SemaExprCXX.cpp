@@ -2462,8 +2462,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
 
   ASTContext &C = Self.Context;
   switch(UTT) {
-  default: assert(false && "Unknown type trait or not implemented");
-
     // Type trait expressions corresponding to the primary type category
     // predicates in C++0x [meta.unary.cat].
   case UTT_IsVoid:
@@ -2750,6 +2748,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   function call.
     return !T->isIncompleteType();
   }
+  llvm_unreachable("Type trait not covered by switch");
 }
 
 
