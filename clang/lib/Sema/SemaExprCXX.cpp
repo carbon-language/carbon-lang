@@ -3030,7 +3030,7 @@ ExprResult Sema::BuildExpressionTrait(ExpressionTrait ET,
   }
 
   bool Value = EvaluateExpressionTrait(ET, Queried);
-  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+
   return Owned(new (Context) ExpressionTraitExpr(KWLoc, ET, Queried, Value,
                                                  RParen, Context.BoolTy));
 }
