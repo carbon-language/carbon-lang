@@ -3059,10 +3059,11 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *Init,
   LocalInstantiationScope InstScope(*this);
 
   // Build template<class TemplParam> void Func(FuncParam);
-  QualType TemplArg = Context.getTemplateTypeParmType(0, 0, false);
-  TemplateTypeParmDecl TemplParam(0, SourceLocation(), Loc, 0, false,
-                                  TemplArg, false);
-  NamedDecl *TemplParamPtr = &TemplParam;
+  TemplateTypeParmDecl *TemplParam =
+    TemplateTypeParmDecl::Create(Context, 0, SourceLocation(), Loc, 0, 0, 0,
+                                 false, false);
+  QualType TemplArg = QualType(TemplParam->getTypeForDecl(), 0);
+  NamedDecl *TemplParamPtr = TemplParam;
   FixedSizeTemplateParameterList<1> TemplateParams(Loc, Loc, &TemplParamPtr,
                                                    Loc);
 

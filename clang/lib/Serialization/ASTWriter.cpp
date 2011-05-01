@@ -303,7 +303,7 @@ ASTTypeWriter::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
   Record.push_back(T->getDepth());
   Record.push_back(T->getIndex());
   Record.push_back(T->isParameterPack());
-  Writer.AddIdentifierRef(T->getName(), Record);
+  Writer.AddDeclRef(T->getDecl(), Record);
   Code = TYPE_TEMPLATE_TYPE_PARM;
 }
 

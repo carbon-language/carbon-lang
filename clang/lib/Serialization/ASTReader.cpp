@@ -3303,8 +3303,9 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     unsigned Depth = Record[Idx++];
     unsigned Index = Record[Idx++];
     bool Pack = Record[Idx++];
-    IdentifierInfo *Name = GetIdentifierInfo(Record, Idx);
-    return Context->getTemplateTypeParmType(Depth, Index, Pack, Name);
+    TemplateTypeParmDecl *D =
+      cast_or_null<TemplateTypeParmDecl>(GetDecl(Record[Idx++]));
+    return Context->getTemplateTypeParmType(Depth, Index, Pack, D);
   }
 
   case TYPE_DEPENDENT_NAME: {

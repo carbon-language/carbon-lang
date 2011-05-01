@@ -1238,12 +1238,17 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
   // the template parameter list of a member template inside the
   // template we are instantiating). Create a new template type
   // parameter with the template "level" reduced by one.
+  TemplateTypeParmDecl *NewTTPDecl = 0;
+  if (TemplateTypeParmDecl *OldTTPDecl = T->getDecl())
+    NewTTPDecl = cast_or_null<TemplateTypeParmDecl>(
+                                  TransformDecl(TL.getNameLoc(), OldTTPDecl));
+
   QualType Result
     = getSema().Context.getTemplateTypeParmType(T->getDepth()
                                                  - TemplateArgs.getNumLevels(),
                                                 T->getIndex(),
                                                 T->isParameterPack(),
-                                                T->getName());
+                                                NewTTPDecl);
   TemplateTypeParmTypeLoc NewTL = TLB.push<TemplateTypeParmTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
   return Result;

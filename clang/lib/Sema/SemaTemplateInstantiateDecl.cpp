@@ -495,10 +495,18 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
   // Handle friend type expressions by simply substituting template
   // parameters into the pattern type and checking the result.
   if (TypeSourceInfo *Ty = D->getFriendType()) {
-    TypeSourceInfo *InstTy = 
-      SemaRef.SubstType(Ty, TemplateArgs,
-                        D->getLocation(), DeclarationName());
-    if (!InstTy) 
+    TypeSourceInfo *InstTy;
+    // If this is an unsupported friend, don't bother substituting template
+    // arguments into it. The actual type referred to won't be used by any
+    // parts of Clang, and may not be valid for instantiating. Just use the
+    // same info for the instantiated friend.
+    if (D->isUnsupportedFriend()) {
+      InstTy = Ty;
+    } else {
+      InstTy = SemaRef.SubstType(Ty, TemplateArgs,
+                                 D->getLocation(), DeclarationName());
+    }
+    if (!InstTy)
       return 0;
 
     FriendDecl *FD = SemaRef.CheckFriendTypeDecl(D->getFriendLoc(), InstTy);
@@ -1466,15 +1474,13 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
 Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                                     TemplateTypeParmDecl *D) {
   // TODO: don't always clone when decls are refcounted.
-  const Type* T = D->getTypeForDecl();
-  assert(T->isTemplateTypeParmType());
-  const TemplateTypeParmType *TTPT = T->getAs<TemplateTypeParmType>();
+  assert(D->getTypeForDecl()->isTemplateTypeParmType());
 
   TemplateTypeParmDecl *Inst =
     TemplateTypeParmDecl::Create(SemaRef.Context, Owner,
                                  D->getLocStart(), D->getLocation(),
-                                 TTPT->getDepth() - TemplateArgs.getNumLevels(),
-                                 TTPT->getIndex(), D->getIdentifier(),
+                                 D->getDepth() - TemplateArgs.getNumLevels(),
+                                 D->getIndex(), D->getIdentifier(),
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
   Inst->setAccess(AS_public);

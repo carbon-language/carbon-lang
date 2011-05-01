@@ -1029,7 +1029,6 @@ void ASTDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   VisitTypeDecl(D);
 
   Record.push_back(D->wasDeclaredWithTypename());
-  Record.push_back(D->isParameterPack());
   Record.push_back(D->defaultArgumentWasInherited());
   Writer.AddTypeSourceInfo(D->getDefaultArgumentInfo(), Record);
 

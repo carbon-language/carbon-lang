@@ -1216,7 +1216,6 @@ void ASTDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   VisitTypeDecl(D);
 
   D->setDeclaredWithTypename(Record[Idx++]);
-  D->setParameterPack(Record[Idx++]);
 
   bool Inherited = Record[Idx++];
   TypeSourceInfo *DefArg = GetTypeSourceInfo(Record, Idx);

@@ -1504,6 +1504,10 @@ bool EnumType::classof(const TagType *TT) {
   return isa<EnumDecl>(TT->getDecl());
 }
 
+IdentifierInfo *TemplateTypeParmType::getName() const {
+  return isCanonicalUnqualified() ? 0 : getDecl()->getIdentifier();
+}
+
 SubstTemplateTypeParmPackType::
 SubstTemplateTypeParmPackType(const TemplateTypeParmType *Param, 
                               QualType Canon,

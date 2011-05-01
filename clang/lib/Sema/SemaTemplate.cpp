@@ -503,7 +503,7 @@ void Sema::translateTemplateArguments(const ASTTemplateArgsPtr &TemplateArgsIn,
 /// (otherwise, "class" was used), and KeyLoc is the location of the
 /// "class" or "typename" keyword. ParamName is the name of the
 /// parameter (NULL indicates an unnamed template parameter) and
-/// ParamName is the location of the parameter name (if any).
+/// ParamNameLoc is the location of the parameter name (if any).
 /// If the type parameter has a default argument, it will be added
 /// later via ActOnTypeParameterDefault.
 Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,

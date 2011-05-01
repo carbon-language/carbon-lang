@@ -945,19 +945,14 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// default argument.
   bool InheritedDefault : 1;
 
-  /// \brief Whether this is a parameter pack.
-  bool ParameterPack : 1;
-
   /// \brief The default template argument, if any.
   TypeSourceInfo *DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation KeyLoc,
                        SourceLocation IdLoc, IdentifierInfo *Id,
-                       bool Typename, QualType Type, bool ParameterPack)
+                       bool Typename)
     : TypeDecl(TemplateTypeParm, DC, IdLoc, Id, KeyLoc), Typename(Typename),
-      InheritedDefault(false), ParameterPack(ParameterPack), DefaultArgument() {
-    TypeForDecl = Type.getTypePtrOrNull();
-  }
+      InheritedDefault(false), DefaultArgument() { }
 
   /// Sema creates these on the stack during auto type deduction.
   friend class Sema;
@@ -1011,9 +1006,6 @@ public:
   /// the 'typename' or 'class' keyword.
   void setDeclaredWithTypename(bool withTypename) { Typename = withTypename; }
 
-  /// \brief Set whether this is a parameter pack.
-  void setParameterPack(bool isParamPack) { ParameterPack = isParamPack; }
-
   /// \brief Retrieve the depth of the template parameter.
   unsigned getDepth() const;
   
@@ -1021,7 +1013,7 @@ public:
   unsigned getIndex() const;
 
   /// \brief Returns whether this is a parameter pack.
-  bool isParameterPack() const { return ParameterPack; }
+  bool isParameterPack() const;
 
   SourceRange getSourceRange() const;
 
