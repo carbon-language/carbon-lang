@@ -2374,7 +2374,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   switch (UTT) {
     // is_complete_type somewhat obviously cannot require a complete type.
   case UTT_IsCompleteType:
-    // Fallthrough
+    // Fall-through
 
     // These traits are modeled on the type predicates in C++0x
     // [meta.unary.cat] and [meta.unary.comp]. They are not specified as
@@ -2400,7 +2400,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   case UTT_IsScalar:
   case UTT_IsCompound:
   case UTT_IsMemberPointer:
-    // Fallthrough
+    // Fall-through
 
     // These traits are modeled on type predicates in C++0x [meta.unary.prop]
     // which requires some of its traits to have the complete type. However,
@@ -2414,10 +2414,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
     return true;
 
     // C++0x [meta.unary.prop] Table 49 requires the following traits to be
-    // applied to a complete type, so we enumerate theme here even though the
-    // default for non-Borland compilers is to require completeness for any
-    // other traits than the ones specifically allowed to work on incomplete
-    // types.
+    // applied to a complete type.
   case UTT_IsTrivial:
   case UTT_IsStandardLayout:
   case UTT_IsPOD:
@@ -2425,9 +2422,9 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   case UTT_IsEmpty:
   case UTT_IsPolymorphic:
   case UTT_IsAbstract:
-    // Fallthrough
+    // Fall-through
 
-    // These trait expressions are designed to help implement predicats in
+    // These trait expressions are designed to help implement predicates in
     // [meta.unary.prop] despite not being named the same. They are specified
     // by both GCC and the Embarcadero C++ compiler, and require the complete
     // type due to the overarching C++0x type predicates being implemented
