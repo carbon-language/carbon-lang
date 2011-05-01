@@ -675,6 +675,10 @@ struct ExplicitTemplateArgumentList {
 ///   DeclRefExprBits.HasQualifier:
 ///       Specifies when this declaration reference expression has a C++
 ///       nested-name-specifier.
+///   DeclRefExprBits.HasFoundDecl:
+///       Specifies when this declaration reference expression has a record of
+///       a NamedDecl (different from the referenced ValueDecl) which was found
+///       during name lookup and/or overload resolution.
 ///   DeclRefExprBits.HasExplicitTemplateArgs:
 ///       Specifies when this declaration reference expression has an explicit
 ///       C++ template argument list.
@@ -700,13 +704,34 @@ class DeclRefExpr : public Expr {
     return const_cast<DeclRefExpr *>(this)->getInternalQualifierLoc();
   }
 
+  /// \brief Test whether there is a distinct FoundDecl attached to the end of
+  /// this DRE.
+  bool hasFoundDecl() const { return DeclRefExprBits.HasFoundDecl; }
+
+  /// \brief Helper to retrieve the optional NamedDecl through which this
+  /// reference occured.
+  NamedDecl *&getInternalFoundDecl() {
+    assert(hasFoundDecl());
+    if (hasQualifier())
+      return *reinterpret_cast<NamedDecl **>(&getInternalQualifierLoc() + 1);
+    return *reinterpret_cast<NamedDecl **>(this + 1);
+  }
+
+  /// \brief Helper to retrieve the optional NamedDecl through which this
+  /// reference occured.
+  NamedDecl *getInternalFoundDecl() const {
+    return const_cast<DeclRefExpr *>(this)->getInternalFoundDecl();
+  }
+
   DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
               ValueDecl *D, SourceLocation NameLoc,
+              NamedDecl *FoundD,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T, ExprValueKind VK);
 
   DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
               ValueDecl *D, const DeclarationNameInfo &NameInfo,
+              NamedDecl *FoundD,
               const TemplateArgumentListInfo *TemplateArgs,
               QualType T, ExprValueKind VK);
 
@@ -724,6 +749,7 @@ public:
       D(D), Loc(L) {
     DeclRefExprBits.HasQualifier = 0;
     DeclRefExprBits.HasExplicitTemplateArgs = 0;
+    DeclRefExprBits.HasFoundDecl = 0;
     computeDependence();
   }
 
@@ -732,6 +758,7 @@ public:
                              ValueDecl *D,
                              SourceLocation NameLoc,
                              QualType T, ExprValueKind VK,
+                             NamedDecl *FoundD = 0,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
   static DeclRefExpr *Create(ASTContext &Context,
@@ -739,11 +766,13 @@ public:
                              ValueDecl *D,
                              const DeclarationNameInfo &NameInfo,
                              QualType T, ExprValueKind VK,
+                             NamedDecl *FoundD = 0,
                              const TemplateArgumentListInfo *TemplateArgs = 0);
 
   /// \brief Construct an empty declaration reference expression.
   static DeclRefExpr *CreateEmpty(ASTContext &Context,
-                                  bool HasQualifier, 
+                                  bool HasQualifier,
+                                  bool HasFoundDecl,
                                   bool HasExplicitTemplateArgs,
                                   unsigned NumTemplateArgs);
 
@@ -781,6 +810,21 @@ public:
     return getInternalQualifierLoc();
   }
 
+  /// \brief Get the NamedDecl through which this reference occured.
+  ///
+  /// This Decl may be different from the ValueDecl actually referred to in the
+  /// presence of using declarations, etc. It always returns non-NULL, and may
+  /// simple return the ValueDecl when appropriate.
+  NamedDecl *getFoundDecl() {
+    return hasFoundDecl() ? getInternalFoundDecl() : D;
+  }
+
+  /// \brief Get the NamedDecl through which this reference occurred.
+  /// See non-const variant.
+  const NamedDecl *getFoundDecl() const {
+    return hasFoundDecl() ? getInternalFoundDecl() : D;
+  }
+
   /// \brief Determines whether this declaration reference was followed by an
   /// explict template argument list.
   bool hasExplicitTemplateArgs() const {
@@ -791,11 +835,15 @@ public:
   /// member template name.
   ExplicitTemplateArgumentList &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-    if (!hasQualifier())
-      return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    if (hasFoundDecl())
+      return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+        &getInternalFoundDecl() + 1);
 
-    return *reinterpret_cast<ExplicitTemplateArgumentList *>(
-      &getInternalQualifierLoc() + 1);
+    if (hasQualifier())
+      return *reinterpret_cast<ExplicitTemplateArgumentList *>(
+        &getInternalQualifierLoc() + 1);
+
+    return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the

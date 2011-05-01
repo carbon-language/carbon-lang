@@ -369,6 +369,11 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
 
   OS << " ";
   DumpDeclRef(Node->getDecl());
+  if (Node->getDecl() != Node->getFoundDecl()) {
+    OS << " (";
+    DumpDeclRef(Node->getFoundDecl());
+    OS << ")";
+  }
 }
 
 void StmtDumper::DumpDeclRef(Decl *d) {

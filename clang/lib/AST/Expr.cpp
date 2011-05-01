@@ -274,8 +274,9 @@ void DeclRefExpr::computeDependence() {
     ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
-DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc, 
+DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                          ValueDecl *D, SourceLocation NameLoc,
+                         NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
@@ -283,17 +284,19 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc)
     getInternalQualifierLoc() =  QualifierLoc;
-
+  DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
+  if (FoundD)
+    getInternalFoundDecl() = FoundD;
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
-  if (TemplateArgs) {
+  if (TemplateArgs)
     getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
-  }
 
   computeDependence();
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
+                         NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
   : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
@@ -301,7 +304,9 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc)
     getInternalQualifierLoc() = QualifierLoc;
-
+  DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
+  if (FoundD)
+    getInternalFoundDecl() = FoundD;
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs)
     getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
@@ -315,10 +320,11 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  SourceLocation NameLoc,
                                  QualType T,
                                  ExprValueKind VK,
+                                 NamedDecl *FoundD,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   return Create(Context, QualifierLoc, D,
                 DeclarationNameInfo(D->getDeclName(), NameLoc),
-                T, VK, TemplateArgs);
+                T, VK, FoundD, TemplateArgs);
 }
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
@@ -327,29 +333,38 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  const DeclarationNameInfo &NameInfo,
                                  QualType T,
                                  ExprValueKind VK,
+                                 NamedDecl *FoundD,
                                  const TemplateArgumentListInfo *TemplateArgs) {
+  // Filter out cases where the found Decl is the same as the value refenenced.
+  if (D == FoundD)
+    FoundD = 0;
+
   std::size_t Size = sizeof(DeclRefExpr);
   if (QualifierLoc != 0)
     Size += sizeof(NestedNameSpecifierLoc);
-  
+  if (FoundD)
+    Size += sizeof(NamedDecl *);
   if (TemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
-  
+
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
-  return new (Mem) DeclRefExpr(QualifierLoc, D, NameInfo, TemplateArgs, T, VK);
+  return new (Mem) DeclRefExpr(QualifierLoc, D, NameInfo, FoundD, TemplateArgs,
+                               T, VK);
 }
 
-DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context, 
+DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
                                       bool HasQualifier,
+                                      bool HasFoundDecl,
                                       bool HasExplicitTemplateArgs,
                                       unsigned NumTemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (HasQualifier)
     Size += sizeof(NestedNameSpecifierLoc);
-  
+  if (HasFoundDecl)
+    Size += sizeof(NamedDecl *);
   if (HasExplicitTemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);
-  
+
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(EmptyShell());
 }

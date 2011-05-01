@@ -426,6 +426,7 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
 
   E->DeclRefExprBits.HasQualifier = Record[Idx++];
+  E->DeclRefExprBits.HasFoundDecl = Record[Idx++];
   E->DeclRefExprBits.HasExplicitTemplateArgs = Record[Idx++];
   unsigned NumTemplateArgs = 0;
   if (E->hasExplicitTemplateArgs())
@@ -434,6 +435,9 @@ void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
   if (E->hasQualifier())
     E->getInternalQualifierLoc()
       = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
+
+  if (E->hasFoundDecl())
+    E->getInternalFoundDecl() = cast<NamedDecl>(Reader.GetDecl(Record[Idx++]));
 
   if (E->hasExplicitTemplateArgs())
     ReadExplicitTemplateArgumentList(E->getExplicitTemplateArgs(),
@@ -1566,12 +1570,13 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
       break;
 
     case EXPR_DECL_REF:
-      S = DeclRefExpr::CreateEmpty(*Context,
-                         /*HasQualifier=*/Record[ASTStmtReader::NumExprFields],
-          /*HasExplicitTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 1],
-                  /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 1]
-                                   ? Record[ASTStmtReader::NumExprFields + 2] 
-                                   : 0);
+      S = DeclRefExpr::CreateEmpty(
+        *Context,
+        /*HasQualifier=*/Record[ASTStmtReader::NumExprFields],
+        /*HasFoundDecl=*/Record[ASTStmtReader::NumExprFields + 1],
+        /*HasExplicitTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 2],
+        /*NumTemplateArgs=*/Record[ASTStmtReader::NumExprFields + 2] ?
+          Record[ASTStmtReader::NumExprFields + 3] : 0);
       break;
 
     case EXPR_INTEGER_LITERAL:

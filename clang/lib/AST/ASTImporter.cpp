@@ -3765,6 +3765,13 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
   ValueDecl *ToD = cast_or_null<ValueDecl>(Importer.Import(E->getDecl()));
   if (!ToD)
     return 0;
+
+  NamedDecl *FoundD = 0;
+  if (E->getDecl() != E->getFoundDecl()) {
+    FoundD = cast_or_null<NamedDecl>(Importer.Import(E->getFoundDecl()));
+    if (!FoundD)
+      return 0;
+  }
   
   QualType T = Importer.Import(E->getType());
   if (T.isNull())
@@ -3775,6 +3782,7 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
                              ToD,
                              Importer.Import(E->getLocation()),
                              T, E->getValueKind(),
+                             FoundD,
                              /*FIXME:TemplateArgs=*/0);
 }
 

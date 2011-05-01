@@ -9244,6 +9244,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                ULE->getNameLoc(),
                                Fn->getType(),
                                VK_LValue,
+                               Found.getDecl(),
                                TemplateArgs);
   }
 
@@ -9267,6 +9268,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
                                    MemExpr->getMemberLoc(),
                                    Fn->getType(),
                                    VK_LValue,
+                                   Found.getDecl(),
                                    TemplateArgs);
       } else {
         SourceLocation Loc = MemExpr->getMemberLoc();
