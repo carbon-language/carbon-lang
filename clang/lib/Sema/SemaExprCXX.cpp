@@ -2996,22 +2996,13 @@ ExprResult Sema::BuildArrayTypeTrait(ArrayTypeTrait ATT,
                                      Expr* DimExpr,
                                      SourceLocation RParen) {
   QualType T = TSInfo->getType();
-
-  uint64_t Value;
-  if (!T->isDependentType())
-    Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
-  else
+  if (T->isDependentType())
     return ExprError();
 
-  // Select trait result type.
-  QualType ResultType;
-  switch (ATT) {
-  case ATT_ArrayRank:    ResultType = Context.IntTy; break;
-  case ATT_ArrayExtent:  ResultType = Context.IntTy; break;
-  }
-
+  uint64_t Value = EvaluateArrayTypeTrait(*this, ATT, T, DimExpr, KWLoc);
   return Owned(new (Context) ArrayTypeTraitExpr(KWLoc, ATT, TSInfo, Value,
-                                                DimExpr, RParen, ResultType));
+                                                DimExpr, RParen,
+                                                Context.IntTy));
 }
 
 ExprResult Sema::ActOnExpressionTrait(ExpressionTrait ET,
