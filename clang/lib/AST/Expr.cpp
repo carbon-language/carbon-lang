@@ -282,7 +282,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
     D(D), Loc(NameLoc) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc)
-    getNameQualifier().QualifierLoc =  QualifierLoc;
+    getInternalQualifierLoc() =  QualifierLoc;
 
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs) {
@@ -300,7 +300,7 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
     D(D), Loc(NameInfo.getLoc()), DNLoc(NameInfo.getInfo()) {
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc)
-    getNameQualifier().QualifierLoc =  QualifierLoc;
+    getInternalQualifierLoc() = QualifierLoc;
 
   DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
   if (TemplateArgs)
@@ -330,7 +330,7 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (QualifierLoc != 0)
-    Size += sizeof(NameQualifier);
+    Size += sizeof(NestedNameSpecifierLoc);
   
   if (TemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(*TemplateArgs);
@@ -345,7 +345,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
                                       unsigned NumTemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (HasQualifier)
-    Size += sizeof(NameQualifier);
+    Size += sizeof(NestedNameSpecifierLoc);
   
   if (HasExplicitTemplateArgs)
     Size += ExplicitTemplateArgumentList::sizeFor(NumTemplateArgs);

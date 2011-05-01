@@ -630,14 +630,6 @@ public:
   static bool classof(const OpaqueValueExpr *) { return true; }
 };
 
-/// \brief Represents the qualifier that may precede a C++ name, e.g., the
-/// "std::" in "std::sort".
-struct NameQualifier {
-  /// \brief The nested-name-specifier that qualifies the name, including
-  /// source-location information.
-  NestedNameSpecifierLoc QualifierLoc;
-};
-
 /// \brief Represents an explicit template argument list in C++, e.g.,
 /// the "<int>" in "sort<int>".
 struct ExplicitTemplateArgumentList {
@@ -697,15 +689,15 @@ class DeclRefExpr : public Expr {
   /// embedded in D.
   DeclarationNameLoc DNLoc;
 
-  /// \brief Helper to retrieve the optional NameQualifier.
-  NameQualifier &getNameQualifier() {
+  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
+  NestedNameSpecifierLoc &getInternalQualifierLoc() {
     assert(hasQualifier());
-    return *reinterpret_cast<NameQualifier *>(this + 1);
+    return *reinterpret_cast<NestedNameSpecifierLoc *>(this + 1);
   }
 
-  /// \brief Helper to retrieve the optional NameQualifier.
-  const NameQualifier &getNameQualifier() const {
-    return const_cast<DeclRefExpr *>(this)->getNameQualifier();
+  /// \brief Helper to retrieve the optional NestedNameSpecifierLoc.
+  const NestedNameSpecifierLoc &getInternalQualifierLoc() const {
+    return const_cast<DeclRefExpr *>(this)->getInternalQualifierLoc();
   }
 
   DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
@@ -777,7 +769,7 @@ public:
     if (!hasQualifier())
       return 0;
 
-    return getNameQualifier().QualifierLoc.getNestedNameSpecifier();
+    return getInternalQualifierLoc().getNestedNameSpecifier();
   }
 
   /// \brief If the name was qualified, retrieves the nested-name-specifier
@@ -786,7 +778,7 @@ public:
     if (!hasQualifier())
       return NestedNameSpecifierLoc();
 
-    return getNameQualifier().QualifierLoc;
+    return getInternalQualifierLoc();
   }
 
   /// \brief Determines whether this declaration reference was followed by an
@@ -803,7 +795,7 @@ public:
       return *reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
 
     return *reinterpret_cast<ExplicitTemplateArgumentList *>(
-      &getNameQualifier() + 1);
+      &getInternalQualifierLoc() + 1);
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
@@ -1879,7 +1871,13 @@ public:
 ///
 class MemberExpr : public Expr {
   /// Extra data stored in some member expressions.
-  struct MemberNameQualifier : public NameQualifier {
+  struct MemberNameQualifier {
+    /// \brief The nested-name-specifier that qualifies the name, including
+    /// source-location information.
+    NestedNameSpecifierLoc QualifierLoc;
+
+    /// \brief The DeclAccessPair through which the MemberDecl was found due to
+    /// name qualifiers.
     DeclAccessPair FoundDecl;
   };
 
