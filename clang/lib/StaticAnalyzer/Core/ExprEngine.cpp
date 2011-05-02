@@ -179,9 +179,11 @@ bool ExprEngine::wantsRegionChangeUpdate(const GRState* state) {
 
 const GRState *
 ExprEngine::processRegionChanges(const GRState *state,
-                                   const MemRegion * const *Begin,
-                                   const MemRegion * const *End) {
-  return getCheckerManager().runCheckersForRegionChanges(state, Begin, End);
+                            const StoreManager::InvalidatedSymbols *invalidated,
+                                 const MemRegion * const *Begin,
+                                 const MemRegion * const *End) {
+  return getCheckerManager().runCheckersForRegionChanges(state, invalidated,
+                                                         Begin, End);
 }
 
 void ExprEngine::processEndWorklist(bool hasWorkRemaining) {

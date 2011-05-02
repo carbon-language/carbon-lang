@@ -59,7 +59,7 @@ public:
   
   StoreRef invalidateRegions(Store store, const MemRegion * const *I,
                              const MemRegion * const *E, const Expr *Ex,
-                             unsigned Count, InvalidatedSymbols *IS,
+                             unsigned Count, InvalidatedSymbols &IS,
                              bool invalidateGlobals,
                              InvalidatedRegions *Regions);
 
@@ -175,7 +175,7 @@ StoreRef FlatStoreManager::invalidateRegions(Store store,
                                              const MemRegion * const *I,
                                              const MemRegion * const *E,
                                              const Expr *Ex, unsigned Count,
-                                             InvalidatedSymbols *IS,
+                                             InvalidatedSymbols &IS,
                                              bool invalidateGlobals,
                                              InvalidatedRegions *Regions) {
   assert(false && "Not implemented");

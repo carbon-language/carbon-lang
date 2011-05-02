@@ -280,7 +280,7 @@ CFAbsoluteTime f1() {
   CFRelease(date);
   CFDateGetAbsoluteTime(date); // no-warning
   CFRelease(date);
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
+  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
   return t;
 }
 
@@ -291,7 +291,7 @@ CFAbsoluteTime f2() {
   CFRelease(date);
   CFDateGetAbsoluteTime(date); // no-warning
   [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
+  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
   return t;
 }
 

@@ -240,9 +240,11 @@ public:
 class RegionChanges {
   template <typename CHECKER>
   static const GRState *_checkRegionChanges(void *checker, const GRState *state,
+                            const StoreManager::InvalidatedSymbols *invalidated,
                                             const MemRegion * const *Begin,
                                             const MemRegion * const *End) {
-    return ((const CHECKER *)checker)->checkRegionChanges(state, Begin, End);
+    return ((const CHECKER *)checker)->checkRegionChanges(state, invalidated,
+                                                          Begin, End);
   }
   template <typename CHECKER>
   static bool _wantsRegionChangeUpdate(void *checker, const GRState *state) {

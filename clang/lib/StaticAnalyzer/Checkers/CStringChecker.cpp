@@ -42,6 +42,7 @@ public:
   bool wantsRegionChangeUpdate(const GRState *state) const;
 
   const GRState *checkRegionChanges(const GRState *state,
+                                    const StoreManager::InvalidatedSymbols *,
                                     const MemRegion * const *Begin,
                                     const MemRegion * const *End) const;
 
@@ -1305,6 +1306,7 @@ bool CStringChecker::wantsRegionChangeUpdate(const GRState *state) const {
 
 const GRState *
 CStringChecker::checkRegionChanges(const GRState *state,
+                                   const StoreManager::InvalidatedSymbols *,
                                    const MemRegion * const *Begin,
                                    const MemRegion * const *End) const {
   CStringLength::EntryMap Entries = state->get<CStringLength>();

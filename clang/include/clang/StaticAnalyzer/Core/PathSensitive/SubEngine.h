@@ -15,6 +15,7 @@
 
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 
 namespace clang {
 
@@ -95,13 +96,17 @@ public:
 
   /// processRegionChanges - Called by GRStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
-  virtual const GRState* processRegionChanges(const GRState* state,
-                                              const MemRegion* const *Begin,
-                                              const MemRegion* const *End) = 0;
+  virtual const GRState *
+  processRegionChanges(const GRState *state,
+                       const StoreManager::InvalidatedSymbols *invalidated,
+                       const MemRegion* const *Begin,
+                       const MemRegion* const *End) = 0;
 
-  inline const GRState* processRegionChange(const GRState* state,
-                                            const MemRegion* MR) {
-    return processRegionChanges(state, &MR, &MR+1);
+
+  inline const GRState *
+  processRegionChange(const GRState* state,
+                      const MemRegion* MR) {
+    return processRegionChanges(state, 0, &MR, &MR+1);
   }
 
   /// Called by CoreEngine when the analysis worklist is either empty or the

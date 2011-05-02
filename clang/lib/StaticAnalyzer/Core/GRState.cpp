@@ -141,6 +141,20 @@ const GRState *GRState::invalidateRegions(const MemRegion * const *Begin,
                                           const Expr *E, unsigned Count,
                                           StoreManager::InvalidatedSymbols *IS,
                                           bool invalidateGlobals) const {
+  if (!IS) {
+    StoreManager::InvalidatedSymbols invalidated;
+    return invalidateRegionsImpl(Begin, End, E, Count,
+                             invalidated, invalidateGlobals);
+  }
+  return invalidateRegionsImpl(Begin, End, E, Count, *IS, invalidateGlobals);
+}
+
+const GRState *
+GRState::invalidateRegionsImpl(const MemRegion * const *Begin,
+                               const MemRegion * const *End,
+                               const Expr *E, unsigned Count,
+                               StoreManager::InvalidatedSymbols &IS,
+                               bool invalidateGlobals) const {
   GRStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
@@ -150,7 +164,7 @@ const GRState *GRState::invalidateRegions(const MemRegion * const *Begin,
       = Mgr.StoreMgr->invalidateRegions(getStore(), Begin, End, E, Count, IS,
                                         invalidateGlobals, &Regions);
     const GRState *newState = makeWithStore(newStore);
-    return Eng->processRegionChanges(newState,
+    return Eng->processRegionChanges(newState, &IS,
                                      &Regions.front(),
                                      &Regions.back()+1);
   }

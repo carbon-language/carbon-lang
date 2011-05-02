@@ -188,9 +188,11 @@ public:
 
   /// processRegionChanges - Called by GRStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
-  const GRState* processRegionChanges(const GRState *state,
-                                      const MemRegion * const *Begin,
-                                      const MemRegion * const *End);
+  const GRState *
+  processRegionChanges(const GRState *state,
+                       const StoreManager::InvalidatedSymbols *invalidated,
+                       const MemRegion * const *Begin,
+                       const MemRegion * const *End);
 
   virtual GRStateManager& getStateManager() { return StateMgr; }
 

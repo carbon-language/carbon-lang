@@ -240,7 +240,7 @@ public:
                              const MemRegion * const *Begin,
                              const MemRegion * const *End,
                              const Expr *E, unsigned Count,
-                             InvalidatedSymbols *IS,
+                             InvalidatedSymbols &IS,
                              bool invalidateGlobals,
                              InvalidatedRegions *Regions);
 
@@ -586,14 +586,14 @@ class invalidateRegionsWorker : public ClusterAnalysis<invalidateRegionsWorker>
 {
   const Expr *Ex;
   unsigned Count;
-  StoreManager::InvalidatedSymbols *IS;
+  StoreManager::InvalidatedSymbols &IS;
   StoreManager::InvalidatedRegions *Regions;
 public:
   invalidateRegionsWorker(RegionStoreManager &rm,
                           GRStateManager &stateMgr,
                           RegionBindings b,
                           const Expr *ex, unsigned count,
-                          StoreManager::InvalidatedSymbols *is,
+                          StoreManager::InvalidatedSymbols &is,
                           StoreManager::InvalidatedRegions *r,
                           bool includeGlobals)
     : ClusterAnalysis<invalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),
@@ -609,9 +609,8 @@ private:
 
 void invalidateRegionsWorker::VisitBinding(SVal V) {
   // A symbol?  Mark it touched by the invalidation.
-  if (IS)
-    if (SymbolRef Sym = V.getAsSymbol())
-      IS->insert(Sym);
+  if (SymbolRef Sym = V.getAsSymbol())
+    IS.insert(Sym);
 
   if (const MemRegion *R = V.getAsRegion()) {
     AddToWorkList(R);
@@ -648,11 +647,9 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
 }
 
 void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
-  if (IS) {
-    // Symbolic region?  Mark that symbol touched by the invalidation.
-    if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
-      IS->insert(SR->getSymbol());
-  }
+  // Symbolic region?  Mark that symbol touched by the invalidation.
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(baseR))
+    IS.insert(SR->getSymbol());
 
   // BlockDataRegion?  If so, invalidate captured variables that are passed
   // by reference.
@@ -724,7 +721,7 @@ StoreRef RegionStoreManager::invalidateRegions(Store store,
                                                const MemRegion * const *I,
                                                const MemRegion * const *E,
                                                const Expr *Ex, unsigned Count,
-                                               InvalidatedSymbols *IS,
+                                               InvalidatedSymbols &IS,
                                                bool invalidateGlobals,
                                                InvalidatedRegions *Regions) {
   invalidateRegionsWorker W(*this, StateMgr,

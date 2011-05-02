@@ -188,7 +188,7 @@ public:
                                      const MemRegion * const *Begin,
                                      const MemRegion * const *End,
                                      const Expr *E, unsigned Count,
-                                     InvalidatedSymbols *IS,
+                                     InvalidatedSymbols &IS,
                                      bool invalidateGlobals,
                                      InvalidatedRegions *Regions) = 0;
 

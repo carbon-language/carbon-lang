@@ -368,6 +368,12 @@ private:
     assert(refCount > 0);
     --refCount;
   }
+  
+  const GRState *invalidateRegionsImpl(const MemRegion * const *Begin,
+                                       const MemRegion * const *End,
+                                       const Expr *E, unsigned BlockCount,
+                                       StoreManager::InvalidatedSymbols &IS,
+                                       bool invalidateGlobals) const;
 };
 
 class GRStateSet {

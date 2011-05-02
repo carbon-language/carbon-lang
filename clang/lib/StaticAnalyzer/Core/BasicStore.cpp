@@ -49,11 +49,11 @@ public:
   SVal Retrieve(Store store, Loc loc, QualType T = QualType());
 
   StoreRef invalidateRegion(Store store, const MemRegion *R, const Expr *E,
-                            unsigned Count, InvalidatedSymbols *IS);
+                            unsigned Count, InvalidatedSymbols &IS);
 
   StoreRef invalidateRegions(Store store, const MemRegion * const *Begin,
                              const MemRegion * const *End, const Expr *E,
-                             unsigned Count, InvalidatedSymbols *IS,
+                             unsigned Count, InvalidatedSymbols &IS,
                              bool invalidateGlobals,
                              InvalidatedRegions *Regions);
 
@@ -538,7 +538,7 @@ StoreRef BasicStoreManager::invalidateRegions(Store store,
                                               const MemRegion * const *I,
                                               const MemRegion * const *End,
                                               const Expr *E, unsigned Count,
-                                              InvalidatedSymbols *IS,
+                                              InvalidatedSymbols &IS,
                                               bool invalidateGlobals,
                                               InvalidatedRegions *Regions) {
   StoreRef newStore(store, *this);
@@ -587,18 +587,16 @@ StoreRef BasicStoreManager::invalidateRegion(Store store,
                                              const MemRegion *R,
                                              const Expr *E,
                                              unsigned Count,
-                                             InvalidatedSymbols *IS) {
+                                             InvalidatedSymbols &IS) {
   R = R->StripCasts();
 
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
       return StoreRef(store, *this);
 
-  if (IS) {
-    BindingsTy B = GetBindings(store);
-    if (BindingsTy::data_type *Val = B.lookup(R)) {
-      if (SymbolRef Sym = Val->getAsSymbol())
-        IS->insert(Sym);
-    }
+  BindingsTy B = GetBindings(store);
+  if (BindingsTy::data_type *Val = B.lookup(R)) {
+    if (SymbolRef Sym = Val->getAsSymbol())
+      IS.insert(Sym);
   }
 
   QualType T = cast<TypedRegion>(R)->getValueType();
