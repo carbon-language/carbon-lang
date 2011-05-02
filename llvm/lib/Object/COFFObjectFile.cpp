@@ -186,11 +186,8 @@ char COFFObjectFile::getSymbolNMTypeChar(DataRefImpl Symb) const {
     return ret;
 
   uint32_t Characteristics = 0;
-  uint32_t PointerToRawData = 0;
-  const coff_section *Section = getSection(symb->SectionNumber);
-  if (Section) {
+  if (const coff_section *Section = getSection(symb->SectionNumber)) {
     Characteristics = Section->Characteristics;
-    PointerToRawData = Section->PointerToRawData;
   }
 
   switch (symb->SectionNumber) {
