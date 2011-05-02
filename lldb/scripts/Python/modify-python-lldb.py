@@ -42,7 +42,7 @@ module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
 breakpoint_iter = "    def breakpoint_iter(self): return lldb_iter(self, '%s', '%s')"
 #
 # This supports the rich comparison methods of __eq__ and __ne__.
-eq_def = "    def __eq__(self, other): return isinstance(other, %s) and self.%s() == other.%s()"
+eq_def = "    def __eq__(self, other): return isinstance(other, %s) and %s"
 ne_def = "    def __ne__(self, other): return not self.__eq__(other)"
 
 #
@@ -69,9 +69,28 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       }
 
 #
-# This dictionary defines a mapping from classname to equality method name.
+# This dictionary defines a mapping from classname to equality method name(s).
 #
-e = { 'SBBreakpoint': 'GetID' }
+e = { 'SBBreakpoint': ['GetID'],
+      'SBFileSpec':   ['GetFilename', 'GetDirectory'],
+      'SBModule':     ['GetFileSpec', 'GetUUIDString']
+      }
+
+def list_to_frag(list):
+    """Transform a list to equality program fragment.
+
+    For example, ['GetID'] is transformed to 'self.GetID() == other.GetID()',
+    and ['GetFilename', 'GetDirectory'] to 'self.GetFilename() == other.GetFilename()
+    and self.GetDirectory() == other.GetDirectory()'.
+    """
+    if not list:
+        raise Exception("list should be non-empty")
+    frag = StringIO.StringIO()
+    for i in range(len(list)):
+        if i > 0:
+            frag.write(" and ")
+        frag.write("self.{0}() == other.{0}()".format(list[i]))
+    return frag.getvalue()
 
 # The new content will have the iteration protocol defined for our lldb objects.
 new_content = StringIO.StringIO()
@@ -122,7 +141,7 @@ for line in content.splitlines():
                 if (state & DEFINING_ITERATOR):
                     print >> new_content, iter_def % d[cls]
                 if (state & DEFINING_EQUALITY):
-                    print >> new_content, eq_def % (cls, e[cls], e[cls])
+                    print >> new_content, eq_def % (cls, list_to_frag(e[cls]))
                     print >> new_content, ne_def
 
             # Next state will be NORMAL.

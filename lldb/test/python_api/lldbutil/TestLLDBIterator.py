@@ -63,8 +63,8 @@ class LLDBIteratorTestCase(TestBase):
             if self.TraceOn():
                 print "yours[%d]='%s'" % (i, get_description(yours[i]))
                 print "mine[%d]='%s'" % (i, get_description(mine[i]))
-            self.assertTrue(yours[i].GetUUIDString() == mine[i].GetUUIDString(),
-                            "UUID of yours[{0}] and mine[{0}] matches".format(i))
+            self.assertTrue(yours[i] == mine[i],
+                            "UUID+FileSpec of yours[{0}] and mine[{0}] matches".format(i))
 
     def lldb_iter_2(self):
         exe = os.path.join(os.getcwd(), "a.out")
