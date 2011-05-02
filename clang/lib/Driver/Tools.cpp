@@ -1546,6 +1546,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(llvm::Twine(StackProtectorLevel)));
   }
 
+  // Translate -mstackrealign
+  if (Args.hasArg(options::OPT_mstackrealign)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-force-align-stack");
+  }
+  
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
 

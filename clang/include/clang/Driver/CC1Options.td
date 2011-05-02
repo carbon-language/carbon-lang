@@ -178,6 +178,8 @@ def mconstructor_aliases : Flag<"-mconstructor-aliases">,
   HelpText<"Emit complete constructors and destructors as aliases when possible">;
 def mms_bitfields : Flag<"-mms-bitfields">,
   HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard.">;
+def mstackrealign : Flag<"-mstackrealign">,
+  HelpText<"Force realign the stack at entry to every function.">;
 def O : Joined<"-O">, HelpText<"Optimization level">;
 def Os : Flag<"-Os">, HelpText<"Optimize for size">;
 def Oz : Flag<"-Oz">, HelpText<"Optimize for size, regardless of performance">;
