@@ -37,14 +37,19 @@ using namespace lldb_private;
 // Static Helper functions
 //----------------------------------------------------------------------
 static void
-DumpModuleArchitecture (Stream &strm, Module *module, uint32_t width)
+DumpModuleArchitecture (Stream &strm, Module *module, bool full_triple, uint32_t width)
 {
     if (module)
     {
-        if (width)
-            strm.Printf("%-*s", width, module->GetArchitecture().GetArchitectureName());
+        const char *arch_cstr;
+        if (full_triple)
+            arch_cstr = module->GetArchitecture().GetTriple().str().c_str();
         else
-            strm.PutCString(module->GetArchitecture().GetArchitectureName());
+            arch_cstr = module->GetArchitecture().GetArchitectureName();
+        if (width)
+            strm.Printf("%-*s", width, arch_cstr);
+        else
+            strm.PutCString(arch_cstr);
     }
 }
 
@@ -1278,9 +1283,13 @@ public:
                             switch (format_char)
                             {
                             case 'a':
-                                DumpModuleArchitecture (strm, module, width);
+                                DumpModuleArchitecture (strm, module, false, width);
                                 break;
 
+                            case 't':
+                                DumpModuleArchitecture (strm, module, true, width);
+                                break;
+                                    
                             case 'f':
                                 DumpFullpath (strm, &module->GetFileSpec(), width);
                                 dump_object_name = true;
@@ -1354,6 +1363,7 @@ OptionDefinition
 CommandObjectImageList::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "arch",       'a', optional_argument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
+{ LLDB_OPT_SET_1, false, "triple",     't', optional_argument, NULL, 0, eArgTypeWidth,   "Display the triple when listing images."},
 { LLDB_OPT_SET_1, false, "uuid",       'u', no_argument,       NULL, 0, eArgTypeNone,    "Display the UUID when listing images."},
 { LLDB_OPT_SET_1, false, "fullpath",   'f', optional_argument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image object file."},
 { LLDB_OPT_SET_1, false, "directory",  'd', optional_argument, NULL, 0, eArgTypeWidth,   "Display the directory with optional width for the image object file."},
