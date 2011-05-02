@@ -2005,12 +2005,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   const llvm::StructType *SelStructTy = dyn_cast<llvm::StructType>(
           SelectorTy->getElementType());
   const llvm::Type *SelStructPtrTy = SelectorTy;
-  bool isSelOpaque = false;
   if (SelStructTy == 0) {
     SelStructTy = llvm::StructType::get(VMContext, PtrToInt8Ty,
                                         PtrToInt8Ty, NULL);
     SelStructPtrTy = llvm::PointerType::getUnqual(SelStructTy);
-    isSelOpaque = true;
   }
 
   // Name the ObjC types to make the IR a bit easier to read
