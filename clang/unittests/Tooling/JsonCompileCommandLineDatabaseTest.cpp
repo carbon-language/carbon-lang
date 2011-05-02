@@ -92,6 +92,20 @@ TEST(UnescapeJsonCommandLine, ParsesStringsWithoutSpacesIntoSingleArgument) {
   EXPECT_EQ("abcdefg", MixedNoSpaces[0]);
 }
 
+TEST(UnescapeJsonCommandLine, ParsesQuotedStringWithoutClosingQuote) {
+  std::vector<std::string> Unclosed = UnescapeJsonCommandLine("\"abc");
+  ASSERT_EQ(1ul, Unclosed.size());
+  EXPECT_EQ("abc", Unclosed[0]);
+
+  std::vector<std::string> EndsInBackslash = UnescapeJsonCommandLine("\"a\\");
+  ASSERT_EQ(1ul, EndsInBackslash.size());
+  EXPECT_EQ("a", EndsInBackslash[0]);
+
+  std::vector<std::string> Empty = UnescapeJsonCommandLine("\"");
+  ASSERT_EQ(1ul, Empty.size());
+  EXPECT_EQ("", Empty[0]);
+}
+
 TEST(JsonCompileCommandLineParser, FailsOnEmptyString) {
   JsonCompileCommandLineParser Parser("", NULL);
   EXPECT_FALSE(Parser.Parse()) << Parser.GetErrorMessage();
