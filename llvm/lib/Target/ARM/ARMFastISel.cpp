@@ -1839,9 +1839,9 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
   // Can't handle inline asm or worry about intrinsics yet.
   if (isa<InlineAsm>(Callee) || isa<IntrinsicInst>(CI)) return false;
 
-  // Only handle global variable Callees that are direct calls.
+  // Only handle global variable Callees.
   const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
-  if (!GV || Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel()))
+  if (!GV)
     return false;
 
   // Check the calling convention.
