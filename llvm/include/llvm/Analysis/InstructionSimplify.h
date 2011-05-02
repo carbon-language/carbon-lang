@@ -55,6 +55,21 @@ namespace llvm {
   Value *SimplifyFDivInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
                           const DominatorTree *DT = 0);
 
+  /// SimplifySRemInst - Given operands for an SRem, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifySRemInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                          const DominatorTree *DT = 0);
+
+  /// SimplifyURemInst - Given operands for a URem, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyURemInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                          const DominatorTree *DT = 0);
+
+  /// SimplifyFRemInst - Given operands for an FRem, see if we can
+  /// fold the result.  If not, this returns null.
+  Value *SimplifyFRemInst(Value *LHS, Value *RHS, const TargetData *TD = 0,
+                          const DominatorTree *DT = 0);
+
   /// SimplifyShlInst - Given operands for a Shl, see if we can
   /// fold the result.  If not, this returns null.
   Value *SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
