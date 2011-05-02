@@ -931,7 +931,7 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
                                                  E->getOperatorDelete(),
                                                  NewPtr, AllocSize);
     for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
-      Cleanup->setPlacementArg(I, NewArgs[I+1].first);
+      Cleanup->setPlacementArg(I, NewArgs[I+1].RV);
 
     return;
   }
@@ -950,7 +950,7 @@ static void EnterNewDeleteCleanup(CodeGenFunction &CGF,
                                                  SavedAllocSize);
   for (unsigned I = 0, N = E->getNumPlacementArgs(); I != N; ++I)
     Cleanup->setPlacementArg(I,
-                     DominatingValue<RValue>::save(CGF, NewArgs[I+1].first));
+                     DominatingValue<RValue>::save(CGF, NewArgs[I+1].RV));
 
   CGF.ActivateCleanupBlock(CGF.EHStack.stable_begin());
 }

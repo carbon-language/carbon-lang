@@ -44,13 +44,21 @@ namespace clang {
 namespace CodeGen {
   typedef llvm::SmallVector<llvm::AttributeWithIndex, 8> AttributeListType;
 
+  struct CallArg {
+    RValue RV;
+    QualType Ty;
+    CallArg(RValue rv, QualType ty)
+    : RV(rv), Ty(ty)
+    { }
+  };
+
   /// CallArgList - Type for representing both the value and type of
   /// arguments in a call.
   class CallArgList :
-    public llvm::SmallVector<std::pair<RValue, QualType>, 16> {
+    public llvm::SmallVector<CallArg, 16> {
   public:
     void add(RValue rvalue, QualType type) {
-      push_back(std::pair<RValue,QualType>(rvalue,type));
+      push_back(CallArg(rvalue, type));
     }
   };
 

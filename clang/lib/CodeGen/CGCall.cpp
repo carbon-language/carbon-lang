@@ -218,7 +218,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   llvm::SmallVector<CanQualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
-    ArgTys.push_back(Context.getCanonicalParamType(i->second));
+    ArgTys.push_back(Context.getCanonicalParamType(i->Ty));
   return getFunctionInfo(GetReturnType(ResTy), ArgTys, Info);
 }
 
@@ -1217,18 +1217,18 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   for (CallArgList::const_iterator I = CallArgs.begin(), E = CallArgs.end();
        I != E; ++I, ++info_it) {
     const ABIArgInfo &ArgInfo = info_it->info;
-    RValue RV = I->first;
+    RValue RV = I->RV;
 
     unsigned Alignment =
-      getContext().getTypeAlignInChars(I->second).getQuantity();
+      getContext().getTypeAlignInChars(I->Ty).getQuantity();
     switch (ArgInfo.getKind()) {
     case ABIArgInfo::Indirect: {
       if (RV.isScalar() || RV.isComplex()) {
         // Make a temporary alloca to pass the argument.
-        Args.push_back(CreateMemTemp(I->second));
+        Args.push_back(CreateMemTemp(I->Ty));
         if (RV.isScalar())
           EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false,
-                            Alignment, I->second);
+                            Alignment, I->Ty);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
       } else {
@@ -1255,11 +1255,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       // FIXME: Avoid the conversion through memory if possible.
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
-        SrcPtr = CreateMemTemp(I->second, "coerce");
-        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, Alignment,
-                          I->second);
+        SrcPtr = CreateMemTemp(I->Ty, "coerce");
+        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, Alignment, I->Ty);
       } else if (RV.isComplex()) {
-        SrcPtr = CreateMemTemp(I->second, "coerce");
+        SrcPtr = CreateMemTemp(I->Ty, "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
       } else
         SrcPtr = RV.getAggregateAddr();
@@ -1297,7 +1296,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     }
 
     case ABIArgInfo::Expand:
-      ExpandTypeToArgs(I->second, RV, Args);
+      ExpandTypeToArgs(I->Ty, RV, Args);
       break;
     }
   }
