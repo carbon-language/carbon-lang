@@ -1605,7 +1605,6 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
       return 0;
     
     // Check that this type is acceptable for a non-type template parameter.
-    bool Invalid = false;
     T = SemaRef.CheckNonTypeTemplateParameterType(DI->getType(), 
                                                   D->getLocation());
     if (T.isNull()) {
