@@ -275,10 +275,32 @@ class SmartPointer {
 public:
   SmartPointer(id x) : x(x) {}
   ~SmartPointer() { [x release]; }
+
+  void adopt(id x);
+  void noAdopt(id x);
 };
+
+void test_positive() {
+  id x = [[NSObject alloc] init]; // expected-warning {{leak}}
+}
 
 void test_smartpointer_1() {
   id x = [[NSObject alloc] init];  // no-warning
   SmartPointer foo(x);
 }
+
+void test_smartpointer_2() {
+  id x = [[NSObject alloc] init];  // no-warning
+  SmartPointer foo(0);
+  foo.adopt(x);
+}
+
+// FIXME: Eventually we want annotations to say whether or not
+// a C++ method claims ownership of an Objective-C object.
+void test_smartpointer_3() {
+  id x = [[NSObject alloc] init];  // no-warning
+  SmartPointer foo(0);
+  foo.noAdopt(x);
+}
+
 

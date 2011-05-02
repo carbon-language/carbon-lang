@@ -930,6 +930,13 @@ RetainSummary* RetainSummaryManager::getSummary(const FunctionDecl* FD) {
       S = getPersistentStopSummary();
       break;
     }
+    // For C++ methods, generate an implicit "stop" summary as well.  We
+    // can relax this once we have a clear policy for C++ methods and
+    // ownership attributes.
+    if (isa<CXXMethodDecl>(FD)) {
+      S = getPersistentStopSummary();
+      break;
+    }
 
     // [PR 3337] Use 'getAs<FunctionType>' to strip away any typedefs on the
     // function's type.
