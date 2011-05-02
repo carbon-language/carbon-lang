@@ -186,12 +186,14 @@ static Option *LookupOption(StringRef &Arg, StringRef &Value,
 /// have already been stripped.
 static Option *LookupNearestOption(StringRef Arg,
                                    const StringMap<Option*> &OptionsMap,
-                                   const char *&NearestString) {
+                                   std::string &NearestString) {
   // Reject all dashes.
   if (Arg.empty()) return 0;
 
   // Split on any equal sign.
-  StringRef LHS = Arg.split('=').first;
+  std::pair<StringRef, StringRef> SplitArg = Arg.split('=');
+  StringRef &LHS = SplitArg.first;  // LHS == Arg when no '=' is present.
+  StringRef &RHS = SplitArg.second;
 
   // Find the closest match.
   Option *Best = 0;
@@ -204,14 +206,19 @@ static Option *LookupNearestOption(StringRef Arg,
     if (O->ArgStr[0])
       OptionNames.push_back(O->ArgStr);
 
+    bool PermitValue = O->getValueExpectedFlag() != cl::ValueDisallowed;
+    StringRef Flag = PermitValue ? LHS : Arg;
     for (size_t i = 0, e = OptionNames.size(); i != e; ++i) {
       StringRef Name = OptionNames[i];
       unsigned Distance = StringRef(Name).edit_distance(
-        Arg, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
+        Flag, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
       if (!Best || Distance < BestDistance) {
         Best = O;
-        NearestString = OptionNames[i];
         BestDistance = Distance;
+	if (RHS.empty() || !PermitValue)
+	  NearestString = OptionNames[i];
+	else
+	  NearestString = std::string(OptionNames[i]) + "=" + RHS.str();
       }
     }
   }
@@ -611,7 +618,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
     Option *NearestHandler = 0;
-    const char *NearestHandlerString = 0;
+    std::string NearestHandlerString;
     StringRef Value;
     StringRef ArgName = "";
 
