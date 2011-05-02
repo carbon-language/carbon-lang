@@ -901,6 +901,111 @@ Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, const TargetData *TD,
   return ::SimplifyFDivInst(Op0, Op1, TD, DT, RecursionLimit);
 }
 
+/// SimplifyRem - Given operands for an SRem or URem, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyRem(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
+                          const TargetData *TD, const DominatorTree *DT,
+                          unsigned MaxRecurse) {
+  if (Constant *C0 = dyn_cast<Constant>(Op0)) {
+    if (Constant *C1 = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { C0, C1 };
+      return ConstantFoldInstOperands(Opcode, C0->getType(), Ops, 2, TD);
+    }
+  }
+
+  bool isSigned = Opcode == Instruction::SRem;
+
+  // X % undef -> undef
+  if (match(Op1, m_Undef()))
+    return Op1;
+
+  // undef % X -> 0
+  if (match(Op0, m_Undef()))
+    return Constant::getNullValue(Op0->getType());
+
+  // 0 % X -> 0, we don't need to preserve faults!
+  if (match(Op0, m_Zero()))
+    return Op0;
+
+  // X % 0 -> undef, we don't need to preserve faults!
+  if (match(Op1, m_Zero()))
+    return UndefValue::get(Op0->getType());
+
+  // X % 1 -> 0
+  if (match(Op1, m_One()))
+    return Constant::getNullValue(Op0->getType());
+
+  if (Op0->getType()->isIntegerTy(1))
+    // It can't be remainder by zero, hence it must be remainder by one.
+    return Constant::getNullValue(Op0->getType());
+
+  // X % X -> 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
+
+  // If the operation is with the result of a select instruction, check whether
+  // operating on either branch of the select always yields the same value.
+  if (isa<SelectInst>(Op0) || isa<SelectInst>(Op1))
+    if (Value *V = ThreadBinOpOverSelect(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
+
+  // If the operation is with the result of a phi instruction, check whether
+  // operating on all incoming values of the phi always yields the same value.
+  if (isa<PHINode>(Op0) || isa<PHINode>(Op1))
+    if (Value *V = ThreadBinOpOverPHI(Opcode, Op0, Op1, TD, DT, MaxRecurse))
+      return V;
+
+  return 0;
+}
+
+/// SimplifySRemInst - Given operands for an SRem, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifySRemInst(Value *Op0, Value *Op1, const TargetData *TD,
+                               const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Value *V = SimplifyRem(Instruction::SRem, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
+
+  return 0;
+}
+
+Value *llvm::SimplifySRemInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT) {
+  return ::SimplifySRemInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
+/// SimplifyURemInst - Given operands for a URem, see if we can
+/// fold the result.  If not, this returns null.
+static Value *SimplifyURemInst(Value *Op0, Value *Op1, const TargetData *TD,
+                               const DominatorTree *DT, unsigned MaxRecurse) {
+  if (Value *V = SimplifyRem(Instruction::URem, Op0, Op1, TD, DT, MaxRecurse))
+    return V;
+
+  return 0;
+}
+
+Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT) {
+  return ::SimplifyURemInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
+static Value *SimplifyFRemInst(Value *Op0, Value *Op1, const TargetData *,
+                               const DominatorTree *, unsigned) {
+  // undef % X -> undef    (the undef could be a snan).
+  if (match(Op0, m_Undef()))
+    return Op0;
+
+  // X % undef -> undef
+  if (match(Op1, m_Undef()))
+    return Op1;
+
+  return 0;
+}
+
+Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, const TargetData *TD,
+                              const DominatorTree *DT) {
+  return ::SimplifyFRemInst(Op0, Op1, TD, DT, RecursionLimit);
+}
+
 /// SimplifyShift - Given operands for an Shl, LShr or AShr, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyShift(unsigned Opcode, Value *Op0, Value *Op1,
@@ -1994,6 +2099,9 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::FDiv: return SimplifyFDivInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::SRem: return SimplifySRemInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::URem: return SimplifyURemInst(LHS, RHS, TD, DT, MaxRecurse);
+  case Instruction::FRem: return SimplifyFRemInst(LHS, RHS, TD, DT, MaxRecurse);
   case Instruction::Shl:
     return SimplifyShlInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
                            TD, DT, MaxRecurse);
@@ -2087,6 +2195,15 @@ Value *llvm::SimplifyInstruction(Instruction *I, const TargetData *TD,
     break;
   case Instruction::FDiv:
     Result = SimplifyFDivInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::SRem:
+    Result = SimplifySRemInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::URem:
+    Result = SimplifyURemInst(I->getOperand(0), I->getOperand(1), TD, DT);
+    break;
+  case Instruction::FRem:
+    Result = SimplifyFRemInst(I->getOperand(0), I->getOperand(1), TD, DT);
     break;
   case Instruction::Shl:
     Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1),
