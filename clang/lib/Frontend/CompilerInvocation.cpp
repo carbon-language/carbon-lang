@@ -1397,6 +1397,40 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     if (LangStd == LangStandard::lang_unspecified)
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << A->getValue(Args);
+    else {
+      // Valid standard, check to make sure language and standard are compatable.    
+      const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
+      switch (IK) {
+      case IK_C:
+      case IK_ObjC:
+      case IK_PreprocessedC:
+      case IK_PreprocessedObjC:
+        if (!(Std.isC89() || Std.isC99()))
+          Diags.Report(diag::err_drv_argument_not_allowed_with)
+            << A->getAsString(Args) << "C/ObjC";
+        break;
+      case IK_CXX:
+      case IK_ObjCXX:
+      case IK_PreprocessedCXX:
+      case IK_PreprocessedObjCXX:
+        if (!Std.isCPlusPlus())
+          Diags.Report(diag::err_drv_argument_not_allowed_with)
+            << A->getAsString(Args) << "C++/ObjC++";
+        break;
+      case IK_OpenCL:
+        if (!Std.isC99())
+          Diags.Report(diag::err_drv_argument_not_allowed_with)
+            << A->getAsString(Args) << "OpenCL";
+        break;
+      case IK_CUDA:
+        if (!Std.isCPlusPlus())
+          Diags.Report(diag::err_drv_argument_not_allowed_with)
+            << A->getAsString(Args) << "CUDA";
+        break;
+      default:
+        break;
+      }
+    }
   }
 
   if (const Arg *A = Args.getLastArg(OPT_cl_std_EQ)) {

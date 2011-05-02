@@ -18,14 +18,15 @@ namespace frontend {
 
 enum LangFeatures {
   BCPLComment = (1 << 0),
-  C99 = (1 << 1),
-  C1X = (1 << 2),
-  CPlusPlus = (1 << 3),
-  CPlusPlus0x = (1 << 4),
-  Digraphs = (1 << 5),
-  GNUMode = (1 << 6),
-  HexFloat = (1 << 7),
-  ImplicitInt = (1 << 8)
+  C89 = (1 << 1),
+  C99 = (1 << 2),
+  C1X = (1 << 3),
+  CPlusPlus = (1 << 4),
+  CPlusPlus0x = (1 << 5),
+  Digraphs = (1 << 6),
+  GNUMode = (1 << 7),
+  HexFloat = (1 << 8),
+  ImplicitInt = (1 << 9)
 };
 
 }
@@ -53,6 +54,9 @@ public:
 
   /// hasBCPLComments - Language supports '//' comments.
   bool hasBCPLComments() const { return Flags & frontend::BCPLComment; }
+
+  /// isC89 - Language is a superset of C89.
+  bool isC89() const { return Flags & frontend::C89; }
 
   /// isC99 - Language is a superset of C99.
   bool isC99() const { return Flags & frontend::C99; }

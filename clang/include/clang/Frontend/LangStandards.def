@@ -22,21 +22,21 @@
 // C89-ish modes.
 LANGSTANDARD(c89, "c89",
              "ISO C 1990",
-             ImplicitInt)
+             C89 | ImplicitInt)
 LANGSTANDARD(c90, "c90",
              "ISO C 1990",
-             ImplicitInt)
+             C89 | ImplicitInt)
 LANGSTANDARD(iso9899_1990, "iso9899:1990",
              "ISO C 1990",
-             ImplicitInt)
+             C89 | ImplicitInt)
 
 LANGSTANDARD(c94, "iso9899:199409",
              "ISO C 1990 with amendment 1",
-             Digraphs | ImplicitInt)
+             C89 | Digraphs | ImplicitInt)
 
 LANGSTANDARD(gnu89, "gnu89",
              "ISO C 1990 with GNU extensions",
-             BCPLComment | Digraphs | GNUMode | ImplicitInt)
+             BCPLComment | C89 | Digraphs | GNUMode | ImplicitInt)
 
 // C99-ish modes
 LANGSTANDARD(c99, "c99",
@@ -87,7 +87,6 @@ LANGSTANDARD(gnucxx0x, "gnu++0x",
              BCPLComment | CPlusPlus | CPlusPlus0x | Digraphs | GNUMode)
 
 // OpenCL
-
 LANGSTANDARD(opencl, "cl",
              "OpenCL 1.0",
              BCPLComment | C99 | Digraphs | HexFloat)
