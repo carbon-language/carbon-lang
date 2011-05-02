@@ -181,12 +181,14 @@ void RegScavenger::forward() {
   // Verify uses and defs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.isUndef())
+    if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
     if (!Reg || isReserved(Reg))
       continue;
     if (MO.isUse()) {
+      if (MO.isUndef())
+        continue;
       if (!isUsed(Reg)) {
         // Check if it's partial live: e.g.
         // D0 = insert_subreg D0<undef>, S0
