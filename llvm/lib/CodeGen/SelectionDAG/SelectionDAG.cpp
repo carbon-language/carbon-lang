@@ -6304,7 +6304,7 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
         Operands[j] = getNode(ISD::EXTRACT_VECTOR_ELT, dl,
                               OperandEltVT,
                               Operand,
-                              getConstant(i, MVT::i32));
+                              getConstant(i, TLI.getPointerTy()));
       } else {
         // A scalar operand; just use it as is.
         Operands[j] = Operand;
