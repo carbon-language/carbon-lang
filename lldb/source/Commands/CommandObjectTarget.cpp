@@ -854,7 +854,9 @@ public:
             m_line_end (UINT_MAX),
             m_func_name_type_mask (eFunctionNameTypeAuto),
             m_sym_ctx_specified (false),
-            m_thread_specified (false)
+            m_thread_specified (false),
+            m_use_one_liner (false),
+            m_one_liner()
         {
         }
         
@@ -938,6 +940,10 @@ public:
                     m_thread_specified = true;
                 }
                 break;
+                case 'o':
+                    m_use_one_liner = true;
+                    m_one_liner = option_arg;
+                break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option %c.");
                 break;
@@ -962,6 +968,9 @@ public:
 
             m_sym_ctx_specified = false;
             m_thread_specified = false;
+
+            m_use_one_liner = false;
+            m_one_liner.clear();
         }
 
         
@@ -980,7 +989,9 @@ public:
         std::string m_queue_name;
         bool        m_sym_ctx_specified;
         bool        m_thread_specified;
-    
+        // Instance variables to hold the values for one_liner options.
+        bool m_use_one_liner;
+        std::string m_one_liner;
     };
 
     Options *
@@ -1146,33 +1157,39 @@ public:
                 new_hook_sp->SetThreadSpecifier (thread_spec);
             
             }
-            // Next gather up the command list, we'll push an input reader and suck the data from that directly into
-            // the new stop hook's command string.
-            
-            InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
-            if (!reader_sp)
+            if (m_options.m_use_one_liner)
             {
-                result.AppendError("out of memory\n");
-                result.SetStatus (eReturnStatusFailed);
-                target->RemoveStopHookByID (new_hook_sp->GetID());
-                return false;
+                // Use one-liner.
+                new_hook_sp->GetCommandPointer()->AppendString (m_options.m_one_liner.c_str());
             }
-            
-            Error err (reader_sp->Initialize (CommandObjectTargetStopHookAdd::ReadCommandsCallbackFunction,
-                                              new_hook_sp.get(), // baton
-                                              eInputReaderGranularityLine,  // token size, to pass to callback function
-                                              "DONE",                       // end token
-                                              "> ",                         // prompt
-                                              true));                       // echo input
-            if (!err.Success())
+            else
             {
-                result.AppendError (err.AsCString());
-                result.SetStatus (eReturnStatusFailed);
-                target->RemoveStopHookByID (new_hook_sp->GetID());
-                return false;
+                // Otherwise gather up the command list, we'll push an input reader and suck the data from that directly into
+                // the new stop hook's command string.
+                InputReaderSP reader_sp (new InputReader(m_interpreter.GetDebugger()));
+                if (!reader_sp)
+                {
+                    result.AppendError("out of memory\n");
+                    result.SetStatus (eReturnStatusFailed);
+                    target->RemoveStopHookByID (new_hook_sp->GetID());
+                    return false;
+                }
+                
+                Error err (reader_sp->Initialize (CommandObjectTargetStopHookAdd::ReadCommandsCallbackFunction,
+                                                  new_hook_sp.get(), // baton
+                                                  eInputReaderGranularityLine,  // token size, to pass to callback function
+                                                  "DONE",                       // end token
+                                                  "> ",                         // prompt
+                                                  true));                       // echo input
+                if (!err.Success())
+                {
+                    result.AppendError (err.AsCString());
+                    result.SetStatus (eReturnStatusFailed);
+                    target->RemoveStopHookByID (new_hook_sp->GetID());
+                    return false;
+                }
+                m_interpreter.GetDebugger().PushInputReader (reader_sp);
             }
-            m_interpreter.GetDebugger().PushInputReader (reader_sp);
-
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -1190,6 +1207,8 @@ private:
 OptionDefinition
 CommandObjectTargetStopHookAdd::CommandOptions::g_option_table[] =
 {
+    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, NULL, eArgTypeOneLiner,
+        "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
     { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
         "Set the module within which the stop-hook is to be run."},
     { LLDB_OPT_SET_ALL, false, "thread-index", 'x', required_argument, NULL, NULL, eArgTypeThreadIndex,
