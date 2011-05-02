@@ -1141,15 +1141,15 @@ void DwarfDebug::beginModule(Module *M) {
          E = DbgFinder.compile_unit_end(); I != E; ++I)
     constructCompileUnit(*I);
 
-  // Create DIEs for each subprogram.
-  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
-         E = DbgFinder.subprogram_end(); I != E; ++I)
-    constructSubprogramDIE(*I);
-
   // Create DIEs for each global variable.
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I)
     constructGlobalVariableDIE(*I);
+
+  // Create DIEs for each subprogram.
+  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
+         E = DbgFinder.subprogram_end(); I != E; ++I)
+    constructSubprogramDIE(*I);
 
   //getOrCreateTypeDIE
   if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.enum"))
