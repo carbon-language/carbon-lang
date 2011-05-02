@@ -235,8 +235,6 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
     // We have to load the lvalue.
     RV = CGF.EmitLoadOfLValue(LV, E->getType());
   } else {
-    QualType ResultTy = E->getType();
-
     llvm::SmallVector<SubobjectAdjustment, 2> Adjustments;
     while (true) {
       E = E->IgnoreParens();
