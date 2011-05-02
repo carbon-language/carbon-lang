@@ -275,26 +275,6 @@ void DeclRefExpr::computeDependence() {
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
-                         ValueDecl *D, SourceLocation NameLoc,
-                         NamedDecl *FoundD,
-                         const TemplateArgumentListInfo *TemplateArgs,
-                         QualType T, ExprValueKind VK)
-  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false),
-    D(D), Loc(NameLoc) {
-  DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
-  if (QualifierLoc)
-    getInternalQualifierLoc() =  QualifierLoc;
-  DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
-  if (FoundD)
-    getInternalFoundDecl() = FoundD;
-  DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
-  if (TemplateArgs)
-    getExplicitTemplateArgs().initializeFrom(*TemplateArgs);
-
-  computeDependence();
-}
-
-DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
                          NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,

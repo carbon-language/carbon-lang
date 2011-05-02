@@ -724,12 +724,6 @@ class DeclRefExpr : public Expr {
   }
 
   DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
-              ValueDecl *D, SourceLocation NameLoc,
-              NamedDecl *FoundD,
-              const TemplateArgumentListInfo *TemplateArgs,
-              QualType T, ExprValueKind VK);
-
-  DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
               ValueDecl *D, const DeclarationNameInfo &NameInfo,
               NamedDecl *FoundD,
               const TemplateArgumentListInfo *TemplateArgs,
