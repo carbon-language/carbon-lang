@@ -913,8 +913,6 @@ static Value *SimplifyRem(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
     }
   }
 
-  bool isSigned = Opcode == Instruction::SRem;
-
   // X % undef -> undef
   if (match(Op1, m_Undef()))
     return Op1;
@@ -1460,46 +1458,48 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     default:
       assert(false && "Unknown ICmp predicate!");
     case ICmpInst::ICMP_ULT:
-      return ConstantInt::getFalse(LHS->getContext());
+      // getNullValue also works for vectors, unlike getFalse.
+      return Constant::getNullValue(ITy);
     case ICmpInst::ICMP_UGE:
-      return ConstantInt::getTrue(LHS->getContext());
+      // getAllOnesValue also works for vectors, unlike getTrue.
+      return ConstantInt::getAllOnesValue(ITy);
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_ULE:
       if (isKnownNonZero(LHS, TD))
-        return ConstantInt::getFalse(LHS->getContext());
+        return Constant::getNullValue(ITy);
       break;
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_UGT:
       if (isKnownNonZero(LHS, TD))
-        return ConstantInt::getTrue(LHS->getContext());
+        return ConstantInt::getAllOnesValue(ITy);
       break;
     case ICmpInst::ICMP_SLT:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getTrue(LHS->getContext());
+        return ConstantInt::getAllOnesValue(ITy);
       if (LHSKnownNonNegative)
-        return ConstantInt::getFalse(LHS->getContext());
+        return Constant::getNullValue(ITy);
       break;
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getTrue(LHS->getContext());
+        return ConstantInt::getAllOnesValue(ITy);
       if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
-        return ConstantInt::getFalse(LHS->getContext());
+        return Constant::getNullValue(ITy);
       break;
     case ICmpInst::ICMP_SGE:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getFalse(LHS->getContext());
+        return Constant::getNullValue(ITy);
       if (LHSKnownNonNegative)
-        return ConstantInt::getTrue(LHS->getContext());
+        return ConstantInt::getAllOnesValue(ITy);
       break;
     case ICmpInst::ICMP_SGT:
       ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, TD);
       if (LHSKnownNegative)
-        return ConstantInt::getFalse(LHS->getContext());
+        return Constant::getNullValue(ITy);
       if (LHSKnownNonNegative && isKnownNonZero(LHS, TD))
-        return ConstantInt::getTrue(LHS->getContext());
+        return ConstantInt::getAllOnesValue(ITy);
       break;
     }
   }
@@ -1791,7 +1791,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
-      return ConstantInt::getFalse(RHS->getContext());
+      // getNullValue also works for vectors, unlike getFalse.
+      return Constant::getNullValue(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(LHS, KnownNonNegative, KnownNegative, TD);
@@ -1801,7 +1802,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
-      return ConstantInt::getTrue(RHS->getContext());
+      // getAllOnesValue also works for vectors, unlike getTrue.
+      return Constant::getAllOnesValue(ITy);
     }
   }
   if (RBO && match(RBO, m_URem(m_Value(), m_Specific(LHS)))) {
@@ -1818,7 +1820,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_NE:
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
-      return ConstantInt::getTrue(RHS->getContext());
+      // getAllOnesValue also works for vectors, unlike getTrue.
+      return Constant::getAllOnesValue(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
       ComputeSignBit(RHS, KnownNonNegative, KnownNegative, TD);
@@ -1828,7 +1831,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     case ICmpInst::ICMP_EQ:
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_ULE:
-      return ConstantInt::getFalse(RHS->getContext());
+      // getNullValue also works for vectors, unlike getFalse.
+      return Constant::getNullValue(ITy);
     }
   }
 
