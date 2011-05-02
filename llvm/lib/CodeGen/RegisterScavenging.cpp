@@ -154,13 +154,16 @@ void RegScavenger::forward() {
   BitVector DeadRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || MO.isUndef())
+    if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
     if (!Reg || isReserved(Reg))
       continue;
 
     if (MO.isUse()) {
+      // Ignore undef uses.
+      if (MO.isUndef())
+        continue;
       // Two-address operands implicitly kill.
       if (!isPred && (MO.isKill() || MI->isRegTiedToDefOperand(i)))
         addRegWithSubRegs(KillRegs, Reg);
