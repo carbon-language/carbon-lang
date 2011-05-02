@@ -511,6 +511,40 @@ namespace llvm {
       return nextNonNull;
     }
 
+    /// getIndexBefore - Returns the index of the last indexed instruction
+    /// before MI, or the the start index of its basic block.
+    /// MI is not required to have an index.
+    SlotIndex getIndexBefore(const MachineInstr *MI) const {
+      const MachineBasicBlock *MBB = MI->getParent();
+      assert(MBB && "MI must be inserted inna basic block");
+      MachineBasicBlock::const_iterator I = MI, B = MBB->begin();
+      for (;;) {
+        if (I == B)
+          return getMBBStartIdx(MBB);
+        --I;
+        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(I);
+        if (MapItr != mi2iMap.end())
+          return MapItr->second;
+      }
+    }
+
+    /// getIndexAfter - Returns the index of the first indexed instruction
+    /// after MI, or the end index of its basic block.
+    /// MI is not required to have an index.
+    SlotIndex getIndexAfter(const MachineInstr *MI) const {
+      const MachineBasicBlock *MBB = MI->getParent();
+      assert(MBB && "MI must be inserted inna basic block");
+      MachineBasicBlock::const_iterator I = MI, E = MBB->end();
+      for (;;) {
+        ++I;
+        if (I == E)
+          return getMBBEndIdx(MBB);
+        Mi2IndexMap::const_iterator MapItr = mi2iMap.find(I);
+        if (MapItr != mi2iMap.end())
+          return MapItr->second;
+      }
+    }
+
     /// Return the (start,end) range of the given basic block number.
     const std::pair<SlotIndex, SlotIndex> &
     getMBBRange(unsigned Num) const {
@@ -604,7 +638,10 @@ namespace llvm {
 
     /// Insert the given machine instruction into the mapping. Returns the
     /// assigned index.
-    SlotIndex insertMachineInstrInMaps(MachineInstr *mi) {
+    /// If Late is set and there are null indexes between mi's neighboring
+    /// instructions, create the new index after the null indexes instead of
+    /// before them.
+    SlotIndex insertMachineInstrInMaps(MachineInstr *mi, bool Late = false) {
       assert(mi2iMap.find(mi) == mi2iMap.end() && "Instr already indexed.");
       // Numbering DBG_VALUE instructions could cause code generation to be
       // affected by debug information.
@@ -614,26 +651,17 @@ namespace llvm {
 
       assert(mbb != 0 && "Instr must be added to function.");
 
-      MachineBasicBlock::iterator miItr(mi);
-      IndexListEntry *newEntry;
-      // Get previous index, considering that not all instructions are indexed.
-      IndexListEntry *prevEntry;
-      for (;;) {
-        // If mi is at the mbb beginning, get the prev index from the mbb.
-        if (miItr == mbb->begin()) {
-          prevEntry = &getMBBStartIdx(mbb).entry();
-          break;
-        }
-        // Otherwise rewind until we find a mapped instruction.
-        Mi2IndexMap::const_iterator itr = mi2iMap.find(--miItr);
-        if (itr != mi2iMap.end()) {
-          prevEntry = &itr->second.entry();
-          break;
-        }
+      // Get the entries where mi should be inserted.
+      IndexListEntry *prevEntry, *nextEntry;
+      if (Late) {
+        // Insert mi's index immediately before the following instruction.
+        nextEntry = &getIndexAfter(mi).entry();
+        prevEntry = nextEntry->getPrev();
+      } else {
+        // Insert mi's index immediately after the preceeding instruction.
+        prevEntry = &getIndexBefore(mi).entry();
+        nextEntry = prevEntry->getNext();
       }
-
-      // Get next entry from previous entry.
-      IndexListEntry *nextEntry = prevEntry->getNext();
 
       // Get a number for the new instr, or 0 if there's no room currently.
       // In the latter case we'll force a renumber later.
@@ -641,7 +669,7 @@ namespace llvm {
       unsigned newNumber = prevEntry->getIndex() + dist;
 
       // Insert a new list entry for mi.
-      newEntry = createEntry(mi, newNumber);
+      IndexListEntry *newEntry = createEntry(mi, newNumber);
       insert(nextEntry, newEntry);
 
       // Renumber locally if we need to.
