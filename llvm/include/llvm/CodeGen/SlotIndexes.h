@@ -647,9 +647,7 @@ namespace llvm {
       // affected by debug information.
       assert(!mi->isDebugValue() && "Cannot number DBG_VALUE instructions.");
 
-      MachineBasicBlock *mbb = mi->getParent();
-
-      assert(mbb != 0 && "Instr must be added to function.");
+      assert(mi->getParent() != 0 && "Instr must be added to function.");
 
       // Get the entries where mi should be inserted.
       IndexListEntry *prevEntry, *nextEntry;
