@@ -722,7 +722,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   // Add the block literal.
   QualType VoidPtrTy = getContext().getPointerType(getContext().VoidTy);
   CallArgList Args;
-  Args.push_back(std::make_pair(RValue::get(BlockLiteral), VoidPtrTy));
+  Args.add(RValue::get(BlockLiteral), VoidPtrTy);
 
   QualType FnType = BPT->getPointeeType();
 

@@ -153,27 +153,24 @@ void CodeGenFunction::GenerateObjCGetterBody(ObjCIvarDecl *Ivar,
   CallArgList Args;
   RValue RV = RValue::get(Builder.CreateBitCast(ReturnValue,
                                                 Types.ConvertType(getContext().VoidPtrTy)));
-  Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+  Args.add(RV, getContext().VoidPtrTy);
   RV = RValue::get(Builder.CreateBitCast(LV.getAddress(),
                                          Types.ConvertType(getContext().VoidPtrTy)));
-  Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+  Args.add(RV, getContext().VoidPtrTy);
   // sizeof (Type of Ivar)
   CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
   llvm::Value *SizeVal =
   llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
                          Size.getQuantity());
-  Args.push_back(std::make_pair(RValue::get(SizeVal),
-                                getContext().LongTy));
+  Args.add(RValue::get(SizeVal), getContext().LongTy);
   llvm::Value *isAtomic =
   llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
                          IsAtomic ? 1 : 0);
-  Args.push_back(std::make_pair(RValue::get(isAtomic), 
-                                getContext().BoolTy));
+  Args.add(RValue::get(isAtomic), getContext().BoolTy);
   llvm::Value *hasStrong =
   llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 
                          IsStrong ? 1 : 0);
-  Args.push_back(std::make_pair(RValue::get(hasStrong), 
-                                getContext().BoolTy));
+  Args.add(RValue::get(hasStrong), getContext().BoolTy);
   EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
                                  FunctionType::ExtInfo()),
            GetCopyStructFn, ReturnValueSlot(), Args);
@@ -234,11 +231,10 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     llvm::Value *True =
       llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
     CallArgList Args;
-    Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
-    Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
-    Args.push_back(std::make_pair(RValue::get(Offset),
-                getContext().getPointerDiffType()));
-    Args.push_back(std::make_pair(RValue::get(True), getContext().BoolTy));
+    Args.add(RValue::get(SelfAsId), IdTy);
+    Args.add(RValue::get(CmdVal), Cmd->getType());
+    Args.add(RValue::get(Offset), getContext().getPointerDiffType());
+    Args.add(RValue::get(True), getContext().BoolTy);
     // FIXME: We shouldn't need to get the function info here, the
     // runtime already should have computed it to build the function.
     RValue RV = EmitCall(Types.getFunctionInfo(PD->getType(), Args,
@@ -357,26 +353,25 @@ void CodeGenFunction::GenerateObjCAtomicSetterBody(ObjCMethodDecl *OMD,
   RValue RV =
     RValue::get(Builder.CreateBitCast(LV.getAddress(),
                 Types.ConvertType(getContext().VoidPtrTy)));
-  Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+  Args.add(RV, getContext().VoidPtrTy);
   llvm::Value *Arg = LocalDeclMap[*OMD->param_begin()];
   llvm::Value *ArgAsPtrTy =
   Builder.CreateBitCast(Arg,
                       Types.ConvertType(getContext().VoidPtrTy));
   RV = RValue::get(ArgAsPtrTy);
-  Args.push_back(std::make_pair(RV, getContext().VoidPtrTy));
+  Args.add(RV, getContext().VoidPtrTy);
   // sizeof (Type of Ivar)
   CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
   llvm::Value *SizeVal =
   llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
                          Size.getQuantity());
-  Args.push_back(std::make_pair(RValue::get(SizeVal),
-                                getContext().LongTy));
+  Args.add(RValue::get(SizeVal), getContext().LongTy);
   llvm::Value *True =
   llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
-  Args.push_back(std::make_pair(RValue::get(True), getContext().BoolTy));
+  Args.add(RValue::get(True), getContext().BoolTy);
   llvm::Value *False =
   llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
-  Args.push_back(std::make_pair(RValue::get(False), getContext().BoolTy));
+  Args.add(RValue::get(False), getContext().BoolTy);
   EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
                                  FunctionType::ExtInfo()),
            GetCopyStructFn, ReturnValueSlot(), Args);
@@ -446,15 +441,12 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     llvm::Value *False =
       llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
     CallArgList Args;
-    Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
-    Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
-    Args.push_back(std::make_pair(RValue::get(Offset),
-                getContext().getPointerDiffType()));
-    Args.push_back(std::make_pair(RValue::get(ArgAsId), IdTy));
-    Args.push_back(std::make_pair(RValue::get(IsAtomic ? True : False),
-                                  getContext().BoolTy));
-    Args.push_back(std::make_pair(RValue::get(IsCopy ? True : False),
-                                  getContext().BoolTy));
+    Args.add(RValue::get(SelfAsId), IdTy);
+    Args.add(RValue::get(CmdVal), Cmd->getType());
+    Args.add(RValue::get(Offset), getContext().getPointerDiffType());
+    Args.add(RValue::get(ArgAsId), IdTy);
+    Args.add(RValue::get(IsAtomic ? True : False),  getContext().BoolTy);
+    Args.add(RValue::get(IsCopy ? True : False), getContext().BoolTy);
     // FIXME: We shouldn't need to get the function info here, the runtime
     // already should have computed it to build the function.
     EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args,
@@ -760,7 +752,7 @@ void CodeGenFunction::EmitStoreThroughPropertyRefLValue(RValue Src,
   }
   
   CallArgList Args;
-  Args.push_back(std::make_pair(Src, ArgType));
+  Args.add(Src, ArgType);
 
   llvm::Value *Receiver = Dst.getPropertyRefBaseAddr();
   QualType ResultType = getContext().VoidTy;
@@ -832,22 +824,19 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   CallArgList Args;
 
   // The first argument is a temporary of the enumeration-state type.
-  Args.push_back(std::make_pair(RValue::get(StatePtr),
-                                getContext().getPointerType(StateTy)));
+  Args.add(RValue::get(StatePtr), getContext().getPointerType(StateTy));
 
   // The second argument is a temporary array with space for NumItems
   // pointers.  We'll actually be loading elements from the array
   // pointer written into the control state; this buffer is so that
   // collections that *aren't* backed by arrays can still queue up
   // batches of elements.
-  Args.push_back(std::make_pair(RValue::get(ItemsPtr),
-                                getContext().getPointerType(ItemsTy)));
+  Args.add(RValue::get(ItemsPtr), getContext().getPointerType(ItemsTy));
 
   // The third argument is the capacity of that temporary array.
   const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
   llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
-  Args.push_back(std::make_pair(RValue::get(Count),
-                                getContext().UnsignedLongTy));
+  Args.add(RValue::get(Count), getContext().UnsignedLongTy);
 
   // Start the enumeration.
   RValue CountRV =
@@ -916,8 +905,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                           ConvertType(getContext().getObjCIdType()),
                           "tmp");
   CallArgList Args2;
-  Args2.push_back(std::make_pair(RValue::get(V),
-                                getContext().getObjCIdType()));
+  Args2.add(RValue::get(V), getContext().getObjCIdType());
   // FIXME: We shouldn't need to get the function info here, the runtime already
   // should have computed it to build the function.
   EmitCall(CGM.getTypes().getFunctionInfo(getContext().VoidTy, Args2,

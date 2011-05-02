@@ -2675,7 +2675,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   CallArgList CallArgs;
   
   // Add our adjusted 'this' pointer.
-  CallArgs.push_back(std::make_pair(RValue::get(AdjustedThisPtr), ThisType));
+  CallArgs.add(RValue::get(AdjustedThisPtr), ThisType);
 
   // Add the rest of the parameters.
   for (FunctionDecl::param_const_iterator I = MD->param_begin(),

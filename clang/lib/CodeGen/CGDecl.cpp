@@ -392,8 +392,8 @@ namespace {
         CGF.Builder.CreateBitCast(Addr, CGF.ConvertType(ArgTy));
 
       CallArgList Args;
-      Args.push_back(std::make_pair(RValue::get(Arg),
-                            CGF.getContext().getPointerType(Var.getType())));
+      Args.add(RValue::get(Arg),
+               CGF.getContext().getPointerType(Var.getType()));
       CGF.EmitCall(FnInfo, CleanupFn, ReturnValueSlot(), Args);
     }
   };

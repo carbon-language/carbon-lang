@@ -1199,15 +1199,14 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
   CallArgList Args;
   
   // Push the this ptr.
-  Args.push_back(std::make_pair(RValue::get(This),
-                                D->getThisType(getContext())));
+  Args.add(RValue::get(This), D->getThisType(getContext()));
   
   
   // Push the src ptr.
   QualType QT = *(FPT->arg_type_begin());
   const llvm::Type *t = CGM.getTypes().ConvertType(QT);
   Src = Builder.CreateBitCast(Src, t);
-  Args.push_back(std::make_pair(RValue::get(Src), QT));
+  Args.add(RValue::get(Src), QT);
   
   // Skip over first argument (Src).
   ++ArgBeg;
@@ -1243,15 +1242,14 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
   assert(I != E && "no parameters to constructor");
 
   // this
-  DelegateArgs.push_back(std::make_pair(RValue::get(LoadCXXThis()),
-                                        (*I)->getType()));
+  DelegateArgs.add(RValue::get(LoadCXXThis()), (*I)->getType());
   ++I;
 
   // vtt
   if (llvm::Value *VTT = GetVTTParameter(*this, GlobalDecl(Ctor, CtorType),
                                          /*ForVirtualBase=*/false)) {
     QualType VoidPP = getContext().getPointerType(getContext().VoidPtrTy);
-    DelegateArgs.push_back(std::make_pair(RValue::get(VTT), VoidPP));
+    DelegateArgs.add(RValue::get(VTT), VoidPP);
 
     if (CodeGenVTables::needsVTTParameter(CurGD)) {
       assert(I != E && "cannot skip vtt parameter, already done with args");

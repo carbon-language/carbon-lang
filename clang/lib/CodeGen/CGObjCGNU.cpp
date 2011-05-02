@@ -960,11 +960,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
 
   CallArgList ActualArgs;
 
-  ActualArgs.push_back(
-      std::make_pair(RValue::get(EnforceType(Builder, Receiver, IdTy)),
-      ASTIdTy));
-  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
-                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.add(RValue::get(EnforceType(Builder, Receiver, IdTy)), ASTIdTy);
+  ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();
@@ -1116,10 +1113,8 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   llvm::Value *imp = LookupIMP(CGF, Receiver, cmd, node);
 
   CallArgList ActualArgs;
-  ActualArgs.push_back(
-    std::make_pair(RValue::get(Receiver), ASTIdTy));
-  ActualArgs.push_back(std::make_pair(RValue::get(cmd),
-                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.add(RValue::get(Receiver), ASTIdTy);
+  ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();

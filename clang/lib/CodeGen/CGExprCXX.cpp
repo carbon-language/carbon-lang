@@ -37,13 +37,12 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   CallArgList Args;
 
   // Push the this ptr.
-  Args.push_back(std::make_pair(RValue::get(This),
-                                MD->getThisType(getContext())));
+  Args.add(RValue::get(This), MD->getThisType(getContext()));
 
   // If there is a VTT parameter, emit it.
   if (VTT) {
     QualType T = getContext().getPointerType(getContext().VoidPtrTy);
-    Args.push_back(std::make_pair(RValue::get(VTT), T));
+    Args.add(RValue::get(VTT), T);
   }
   
   // And the rest of the call args
@@ -317,7 +316,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E,
     getContext().getPointerType(getContext().getTagDeclType(RD));
 
   // Push the this ptr.
-  Args.push_back(std::make_pair(RValue::get(This), ThisType));
+  Args.add(RValue::get(This), ThisType);
   
   // And the rest of the call args
   EmitCallArgs(Args, FPT, E->arg_begin(), E->arg_end());
@@ -837,15 +836,15 @@ namespace {
 
       // The first argument is always a void*.
       FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
-      DeleteArgs.push_back(std::make_pair(RValue::get(Ptr), *AI++));
+      DeleteArgs.add(RValue::get(Ptr), *AI++);
 
       // A member 'operator delete' can take an extra 'size_t' argument.
       if (FPT->getNumArgs() == NumPlacementArgs + 2)
-        DeleteArgs.push_back(std::make_pair(RValue::get(AllocSize), *AI++));
+        DeleteArgs.add(RValue::get(AllocSize), *AI++);
 
       // Pass the rest of the arguments, which must match exactly.
       for (unsigned I = 0; I != NumPlacementArgs; ++I)
-        DeleteArgs.push_back(std::make_pair(getPlacementArgs()[I], *AI++));
+        DeleteArgs.add(getPlacementArgs()[I], *AI++);
 
       // Call 'operator delete'.
       CGF.EmitCall(CGF.CGM.getTypes().getFunctionInfo(DeleteArgs, FPT),
@@ -894,18 +893,18 @@ namespace {
 
       // The first argument is always a void*.
       FunctionProtoType::arg_type_iterator AI = FPT->arg_type_begin();
-      DeleteArgs.push_back(std::make_pair(Ptr.restore(CGF), *AI++));
+      DeleteArgs.add(Ptr.restore(CGF), *AI++);
 
       // A member 'operator delete' can take an extra 'size_t' argument.
       if (FPT->getNumArgs() == NumPlacementArgs + 2) {
         RValue RV = AllocSize.restore(CGF);
-        DeleteArgs.push_back(std::make_pair(RV, *AI++));
+        DeleteArgs.add(RV, *AI++);
       }
 
       // Pass the rest of the arguments, which must match exactly.
       for (unsigned I = 0; I != NumPlacementArgs; ++I) {
         RValue RV = getPlacementArgs()[I].restore(CGF);
-        DeleteArgs.push_back(std::make_pair(RV, *AI++));
+        DeleteArgs.add(RV, *AI++);
       }
 
       // Call 'operator delete'.
@@ -976,7 +975,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     EmitCXXNewAllocSize(getContext(), *this, E, numElements,
                         allocSizeWithoutCookie);
   
-  allocatorArgs.push_back(std::make_pair(RValue::get(allocSize), sizeType));
+  allocatorArgs.add(RValue::get(allocSize), sizeType);
 
   // Emit the rest of the arguments.
   // FIXME: Ideally, this should just use EmitCallArgs.
@@ -1123,10 +1122,10 @@ void CodeGenFunction::EmitDeleteCall(const FunctionDecl *DeleteFD,
   
   QualType ArgTy = DeleteFTy->getArgType(0);
   llvm::Value *DeletePtr = Builder.CreateBitCast(Ptr, ConvertType(ArgTy));
-  DeleteArgs.push_back(std::make_pair(RValue::get(DeletePtr), ArgTy));
+  DeleteArgs.add(RValue::get(DeletePtr), ArgTy);
 
   if (Size)
-    DeleteArgs.push_back(std::make_pair(RValue::get(Size), SizeTy));
+    DeleteArgs.add(RValue::get(Size), SizeTy);
 
   // Emit the call to delete.
   EmitCall(CGM.getTypes().getFunctionInfo(DeleteArgs, DeleteFTy),
@@ -1223,7 +1222,7 @@ namespace {
       QualType VoidPtrTy = DeleteFTy->getArgType(0);
       llvm::Value *DeletePtr
         = CGF.Builder.CreateBitCast(Ptr, CGF.ConvertType(VoidPtrTy));
-      Args.push_back(std::make_pair(RValue::get(DeletePtr), VoidPtrTy));
+      Args.add(RValue::get(DeletePtr), VoidPtrTy);
 
       // Pass the original requested size as the second argument.
       if (DeleteFTy->getNumArgs() == 2) {
@@ -1246,7 +1245,7 @@ namespace {
           Size = CGF.Builder.CreateAdd(Size, CookieSizeV);
         }
 
-        Args.push_back(std::make_pair(RValue::get(Size), size_t));
+        Args.add(RValue::get(Size), size_t);
       }
 
       // Emit the call to delete.

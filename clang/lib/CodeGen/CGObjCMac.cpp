@@ -1522,9 +1522,8 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
   CallArgList ActualArgs;
   if (!IsSuper)
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
-  ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
-  ActualArgs.push_back(std::make_pair(RValue::get(Sel),
-                                      CGF.getContext().getObjCSelType()));
+  ActualArgs.add(RValue::get(Arg0), Arg0Ty);
+  ActualArgs.add(RValue::get(Sel), CGF.getContext().getObjCSelType());
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
 
   CodeGenTypes &Types = CGM.getTypes();
@@ -5596,9 +5595,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   llvm::Value *Arg1 = CGF.Builder.CreateBitCast(GV, ObjCTypes.MessageRefPtrTy);
 
   CallArgList ActualArgs;
-  ActualArgs.push_back(std::make_pair(RValue::get(Arg0), Arg0Ty));
-  ActualArgs.push_back(std::make_pair(RValue::get(Arg1),
-                                      ObjCTypes.MessageRefCPtrTy));
+  ActualArgs.add(RValue::get(Arg0), Arg0Ty);
+  ActualArgs.add(RValue::get(Arg1), ObjCTypes.MessageRefCPtrTy);
   ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
   const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs,
                                                       FunctionType::ExtInfo());
