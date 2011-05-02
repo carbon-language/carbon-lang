@@ -1252,7 +1252,8 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
       ExprResult BoundExpr;
       if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(UnqAT))
         BoundExpr = Owned(IntegerLiteral::Create(Context, CAT->getSize(),
-                                                 Context.IntTy, RangeLoc));
+                                                 Context.getPointerDiffType(),
+                                                 RangeLoc));
       else if (const VariableArrayType *VAT =
                dyn_cast<VariableArrayType>(UnqAT))
         BoundExpr = VAT->getSizeExpr();

@@ -1018,13 +1018,18 @@ public:
            false),
       Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
+    assert(V.getBitWidth() == C.getIntWidth(type) &&
+           "Integer type is not the correct size for constant.");
     setValue(C, V);
   }
 
-  // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy,
-  // or UnsignedLongLongTy
+  /// \brief Returns a new integer literal with value 'V' and type 'type'.
+  /// \param type - either IntTy, LongTy, LongLongTy, UnsignedIntTy,
+  /// UnsignedLongTy, or UnsignedLongLongTy which should match the size of V
+  /// \param V - the value that the returned integer literal contains.
   static IntegerLiteral *Create(ASTContext &C, const llvm::APInt &V,
                                 QualType type, SourceLocation l);
+  /// \brief Returns a new empty integer literal.
   static IntegerLiteral *Create(ASTContext &C, EmptyShell Empty);
 
   llvm::APInt getValue() const { return Num.getValue(); }
