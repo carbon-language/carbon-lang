@@ -128,7 +128,7 @@ for line in content.splitlines():
             # Next state will be NORMAL.
             state = NORMAL
 
-    # Pass the original line of content to the ew_content.
+    # Pass the original line of content to new_content.
     print >> new_content, line
     
 with open(output_name, 'w') as f_out:
