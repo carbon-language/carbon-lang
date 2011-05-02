@@ -4713,7 +4713,7 @@ Decl *Sema::ActOnAliasDeclaration(Scope *S,
   bool Invalid = false;
   DeclarationNameInfo NameInfo = GetNameFromUnqualifiedId(Name);
   TypeSourceInfo *TInfo = 0;
-  QualType T = GetTypeFromParser(Type.get(), &TInfo);
+  GetTypeFromParser(Type.get(), &TInfo);
 
   if (DiagnoseClassNameShadow(CurContext, NameInfo))
     return 0;
