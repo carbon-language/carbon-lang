@@ -587,6 +587,7 @@ void ASTDeclWriter::VisitImplicitParamDecl(ImplicitParamDecl *D) {
 
 void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
+  Record.push_back(D->isObjCMethodParameter());
   Record.push_back(D->getFunctionScopeDepth());
   Record.push_back(D->getFunctionScopeIndex());
   Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
@@ -608,6 +609,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       D->getPCHLevel() == 0 &&
       D->getStorageClass() == 0 &&
       !D->hasCXXDirectInitializer() && // Can params have this ever?
+      D->getFunctionScopeDepth() == 0 &&
       D->getObjCDeclQualifier() == 0 &&
       !D->isKNRPromoted() &&
       !D->hasInheritedDefaultArg() &&
@@ -1176,6 +1178,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // HasInit
   Abv->Add(BitCodeAbbrevOp(0));                   // HasMemberSpecializationInfo
   // ParmVarDecl
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // IsObjCMethodParameter
   Abv->Add(BitCodeAbbrevOp(0));                       // ScopeDepth
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // ScopeIndex
   Abv->Add(BitCodeAbbrevOp(0));                       // ObjCDeclQualifier

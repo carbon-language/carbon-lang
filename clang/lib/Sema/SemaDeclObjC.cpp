@@ -1793,6 +1793,8 @@ Decl *Sema::ActOnMethodDeclaration(
                                         ArgInfo[i].NameLoc, ArgInfo[i].Name,
                                         ArgType, DI, SC_None, SC_None);
 
+    Param->setObjCMethodScopeInfo(i);
+
     Param->setObjCDeclQualifier(
       CvtQTToAstBitMask(ArgInfo[i].DeclSpec.getObjCDeclQualifier()));
 

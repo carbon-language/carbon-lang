@@ -703,7 +703,7 @@ private:
     /// for-range statement.
     unsigned CXXForRangeDecl : 1;
   };
-  enum { NumVarDeclBits = 11 };
+  enum { NumVarDeclBits = 13 }; // two reserved bits for now
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -714,9 +714,6 @@ protected:
     friend class ASTDeclReader;
 
     unsigned : NumVarDeclBits;
-    
-    /// in, inout, etc.  Only meaningful on Objective-C method parameters.
-    unsigned ObjCDeclQualifier : 6;
 
     /// Whether this parameter inherits a default argument from a
     /// prior declaration.
@@ -724,6 +721,19 @@ protected:
 
     /// Whether this parameter undergoes K&R argument promotion.
     unsigned IsKNRPromoted : 1;
+
+    /// Whether this parameter is an ObjC method parameter or not.
+    unsigned IsObjCMethodParam : 1;
+
+    /// If IsObjCMethodParam, a Decl::ObjCDeclQualifier.
+    /// Otherwise, the number of function parameter scopes enclosing
+    /// the function parameter scope in which this parameter was
+    /// declared.
+    unsigned ScopeDepthOrObjCQuals : 8;
+
+    /// The number of parameters preceding this parameter in the
+    /// function parameter scope in which it was declared.
+    unsigned ParameterIndex : 8;
   };
 
   union {
@@ -1139,28 +1149,19 @@ public:
 
 /// ParmVarDecl - Represents a parameter to a function.
 class ParmVarDecl : public VarDecl {
-  // FIXME: I'm convinced that there's some reasonable way to encode
-  // these that doesn't require extra storage, but I don't know what
-  // it is right now.
-
-  /// The number of function parameter scopes enclosing the function
-  /// parameter scope in which this parameter was declared.
-  unsigned FunctionScopeDepth : 16;
-
-  /// The number of parameters preceding this parameter in the
-  /// function parameter scope in which it was declared.
-  unsigned FunctionScopeIndex : 16;
+public:
+  enum { MaxFunctionScopeDepth = 255 };
+  enum { MaxFunctionScopeIndex = 255 };
 
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
               SourceLocation IdLoc, IdentifierInfo *Id,
               QualType T, TypeSourceInfo *TInfo,
               StorageClass S, StorageClass SCAsWritten, Expr *DefArg)
-    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten),
-      FunctionScopeDepth(0), FunctionScopeIndex(0) {
-    assert(ParmVarDeclBits.ObjCDeclQualifier == OBJC_TQ_None);
+    : VarDecl(DK, DC, StartLoc, IdLoc, Id, T, TInfo, S, SCAsWritten) {
     assert(ParmVarDeclBits.HasInheritedDefaultArg == false);
     assert(ParmVarDeclBits.IsKNRPromoted == false);
+    assert(ParmVarDeclBits.IsObjCMethodParam == false);
     setDefaultArg(DefArg);
   }
 
@@ -1172,27 +1173,44 @@ public:
                              StorageClass S, StorageClass SCAsWritten,
                              Expr *DefArg);
 
-  void setScopeInfo(unsigned scopeDepth, unsigned parameterIndex) {
-    FunctionScopeDepth = scopeDepth;
-    assert(FunctionScopeDepth == scopeDepth && "truncation!");
+  void setObjCMethodScopeInfo(unsigned parameterIndex) {
+    ParmVarDeclBits.IsObjCMethodParam = true;
 
-    FunctionScopeIndex = parameterIndex;
-    assert(FunctionScopeIndex == parameterIndex && "truncation!");
+    ParmVarDeclBits.ParameterIndex = parameterIndex;
+    assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
+  }
+
+  void setScopeInfo(unsigned scopeDepth, unsigned parameterIndex) {
+    assert(!ParmVarDeclBits.IsObjCMethodParam);
+
+    ParmVarDeclBits.ScopeDepthOrObjCQuals = scopeDepth;
+    assert(ParmVarDeclBits.ScopeDepthOrObjCQuals == scopeDepth && "truncation!");
+
+    ParmVarDeclBits.ParameterIndex = parameterIndex;
+    assert(ParmVarDeclBits.ParameterIndex == parameterIndex && "truncation!");
+  }
+
+  bool isObjCMethodParameter() const {
+    return ParmVarDeclBits.IsObjCMethodParam;
   }
 
   unsigned getFunctionScopeDepth() const {
-    return FunctionScopeDepth;
+    if (ParmVarDeclBits.IsObjCMethodParam) return 0;
+    return ParmVarDeclBits.ScopeDepthOrObjCQuals;
   }
 
+  /// Returns the index of this parameter in its prototype or method scope.
   unsigned getFunctionScopeIndex() const {
-    return FunctionScopeIndex;
+    return ParmVarDeclBits.ParameterIndex;
   }
 
   ObjCDeclQualifier getObjCDeclQualifier() const {
-    return ObjCDeclQualifier(ParmVarDeclBits.ObjCDeclQualifier);
+    if (!ParmVarDeclBits.IsObjCMethodParam) return OBJC_TQ_None;
+    return ObjCDeclQualifier(ParmVarDeclBits.ScopeDepthOrObjCQuals);
   }
   void setObjCDeclQualifier(ObjCDeclQualifier QTVal) {
-    ParmVarDeclBits.ObjCDeclQualifier = QTVal;
+    assert(ParmVarDeclBits.IsObjCMethodParam);
+    ParmVarDeclBits.ScopeDepthOrObjCQuals = QTVal;
   }
 
   /// True if the value passed to this parameter must undergo
