@@ -872,3 +872,109 @@ void strcasecmp_diff_length_3() {
   if (strcasecmp(x, y) != -1)
     (void)*(char*)0; // no-warning
 }
+
+//===----------------------------------------------------------------------===
+// strncasecmp()
+//===----------------------------------------------------------------------===
+
+#define strncasecmp BUILTIN(strncasecmp)
+int strncasecmp(const char *restrict s1, const char *restrict s2, size_t n);
+
+void strncasecmp_constant0() {
+  if (strncasecmp("abc", "Abc", 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_constant_and_var_0() {
+  char *x = "abc";
+  if (strncasecmp(x, "Abc", 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_constant_and_var_1() {
+  char *x = "abc";
+  if (strncasecmp("Abc", x, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_0() {
+  char *x = "abc";
+  char *y = "Abc";
+  if (strncasecmp(x, y, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_1() {
+  char *x = "Bcd";
+  char *y = "abc";
+  if (strncasecmp(x, y, 3) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_2() {
+  char *x = "abc";
+  char *y = "Bcd";
+  if (strncasecmp(x, y, 3) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_null_0() {
+  char *x = NULL;
+  char *y = "123";
+  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strncasecmp_null_1() {
+  char *x = "123";
+  char *y = NULL;
+  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+}
+
+void strncasecmp_diff_length_0() {
+  char *x = "abcde";
+  char *y = "aBd";
+  if (strncasecmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_1() {
+  char *x = "abc";
+  char *y = "aBdef";
+  if (strncasecmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_2() {
+  char *x = "aBcDe";
+  char *y = "abc";
+  if (strncasecmp(x, y, 5) != 1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_3() {
+  char *x = "aBc";
+  char *y = "abcde";
+  if (strncasecmp(x, y, 5) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_4() {
+  char *x = "abcde";
+  char *y = "aBc";
+  if (strncasecmp(x, y, 3) != 0)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_5() {
+  char *x = "abcde";
+  char *y = "aBd";
+  if (strncasecmp(x, y, 3) != -1)
+    (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_diff_length_6() {
+  char *x = "aBDe";
+  char *y = "abc";
+  if (strncasecmp(x, y, 3) != 1)
+    (void)*(char*)0; // no-warning
+}

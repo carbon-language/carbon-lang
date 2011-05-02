@@ -77,6 +77,7 @@ public:
   void evalStrcmp(CheckerContext &C, const CallExpr *CE) const;
   void evalStrncmp(CheckerContext &C, const CallExpr *CE) const;
   void evalStrcasecmp(CheckerContext &C, const CallExpr *CE) const;
+  void evalStrncasecmp(CheckerContext &C, const CallExpr *CE) const;
   void evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
                         bool isBounded = false, bool ignoreCase = false) const;
 
@@ -1128,6 +1129,12 @@ void CStringChecker::evalStrcasecmp(CheckerContext &C,
   evalStrcmpCommon(C, CE, /* isBounded = */ false, /* ignoreCase = */ true);
 }
 
+void CStringChecker::evalStrncasecmp(CheckerContext &C, 
+                                     const CallExpr *CE) const {
+  //int strncasecmp(const char *restrict s1, const char *restrict s2, size_t n);
+  evalStrcmpCommon(C, CE, /* isBounded = */ true, /* ignoreCase = */ true);
+}
+
 void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
                                       bool isBounded, bool ignoreCase) const {
   const GRState *state = C.getState();
@@ -1181,31 +1188,17 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
       return;
     llvm::APSInt lenInt(CI->getValue());
 
-    // Compare using the bounds provided like strncmp() does.
-    if (ignoreCase) {
-      // TODO Implement compare_lower(RHS, n) in LLVM StringRef.
-      // result = s1StrRef.compare_lower(s2StrRef, 
-      //                                 (size_t)lenInt.getLimitedValue());
+    // Create substrings of each to compare the prefix.
+    s1StrRef = s1StrRef.substr(0, (size_t)lenInt.getLimitedValue());
+    s2StrRef = s2StrRef.substr(0, (size_t)lenInt.getLimitedValue());
+  }
 
-      // For now, give up.
-      return;
-    } else {
-      // Create substrings of each to compare the prefix.
-      llvm::StringRef s1SubStr = 
-        s1StrRef.substr(0, (size_t)lenInt.getLimitedValue());
-      llvm::StringRef s2SubStr = 
-        s2StrRef.substr(0, (size_t)lenInt.getLimitedValue());
-
-      // Compare the substrings.
-      result = s1SubStr.compare(s2SubStr);
-    }
+  if (ignoreCase) {
+    // Compare string 1 to string 2 the same way strcasecmp() does.
+    result = s1StrRef.compare_lower(s2StrRef);
   } else {
     // Compare string 1 to string 2 the same way strcmp() does.
-    if (ignoreCase) {
-      result = s1StrRef.compare_lower(s2StrRef);
-    } else {
-      result = s1StrRef.compare(s2StrRef);
-    }
+    result = s1StrRef.compare(s2StrRef);
   }
   
   // Build the SVal of the comparison to bind the return value.
@@ -1256,6 +1249,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     .Case("strcmp", &CStringChecker::evalStrcmp)
     .Case("strncmp", &CStringChecker::evalStrncmp)
     .Case("strcasecmp", &CStringChecker::evalStrcasecmp)
+    .Case("strncasecmp", &CStringChecker::evalStrncasecmp)
     .Case("bcopy", &CStringChecker::evalBcopy)
     .Default(NULL);
 
