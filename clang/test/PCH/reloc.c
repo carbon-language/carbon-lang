@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-pch -o %t -relocatable-pch -isysroot %S/libroot %S/libroot/usr/include/reloc.h
 // RUN: %clang_cc1 -include-pch %t -isysroot %S/libroot %s -verify
 // RUN: not %clang_cc1 -include-pch %t %s
-// XFAIL: mingw,win32
+
 #include <reloc.h>
 
 int x = 2; // expected-error{{redefinition}}

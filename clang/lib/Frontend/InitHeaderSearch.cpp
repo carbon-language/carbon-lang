@@ -118,7 +118,12 @@ void InitHeaderSearch::AddPath(const llvm::Twine &Path,
 
   // Handle isysroot.
   if ((Group == System || Group == CXXSystem) && !IgnoreSysRoot &&
+#if defined(_WIN32)
+      !MappedPathStr.empty() &&
+      llvm::sys::path::is_separator(MappedPathStr[0]) &&
+#else
       llvm::sys::path::is_absolute(MappedPathStr) &&
+#endif
       IsNotEmptyOrRoot) {
     MappedPathStorage.clear();
     MappedPathStr =
