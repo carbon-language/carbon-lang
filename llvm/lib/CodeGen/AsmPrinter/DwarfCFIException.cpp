@@ -54,25 +54,27 @@ void DwarfCFIException::EndModule() {
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
-  if (!TLOF.isFunctionEHFrameSymbolPrivate()) {
-    // This is a temporary hack to keep sections in the same order they
-    // were before. This lets us produce bit identical outputs while
-    // transitioning to CFI.
-    Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
-  }
-
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
 
   if ((PerEncoding & 0x70) != dwarf::DW_EH_PE_pcrel)
     return;
 
   // Emit references to all used personality functions
+  bool AtLeastOne = false;
   const std::vector<const Function*> &Personalities = MMI->getPersonalities();
   for (size_t i = 0, e = Personalities.size(); i != e; ++i) {
     if (!Personalities[i])
       continue;
     MCSymbol *Sym = Asm->Mang->getSymbol(Personalities[i]);
     TLOF.emitPersonalityValue(Asm->OutStreamer, Asm->TM, Sym);
+    AtLeastOne = true;
+  }
+
+  if (AtLeastOne && !TLOF.isFunctionEHFrameSymbolPrivate()) {
+    // This is a temporary hack to keep sections in the same order they
+    // were before. This lets us produce bit identical outputs while
+    // transitioning to CFI.
+    Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
   }
 }
 
