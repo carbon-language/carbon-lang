@@ -628,7 +628,8 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
     FieldDecl *field = *I;
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are ignored
-      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD)) {
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD) ||
+          CGM.getContext().ZeroBitfieldFollowsBitfield((field), LastFD)) {
         --fieldNo;
         continue;
       }

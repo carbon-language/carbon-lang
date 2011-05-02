@@ -352,7 +352,8 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((*Field), LastFD)) {
+      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((*Field), LastFD) ||
+          CGM.getContext().ZeroBitfieldFollowsBitfield((*Field), LastFD)) {
         --FieldNo;
         continue;
       }

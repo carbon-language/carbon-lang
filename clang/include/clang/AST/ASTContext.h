@@ -402,6 +402,11 @@ public:
   bool ZeroBitfieldFollowsNonBitfield(const FieldDecl *FD, 
                                       const FieldDecl *LastFD) const;
 
+  /// ZeroBitfieldFollowsBitfield - return 'true" if 'FD' is a zero-length
+  /// bitfield which follows the bitfield 'LastFD'.
+  bool ZeroBitfieldFollowsBitfield(const FieldDecl *FD,
+                                   const FieldDecl *LastFD) const;
+
   // Access to the set of methods overridden by the given C++ method.
   typedef CXXMethodVector::iterator overridden_cxx_method_iterator;
   overridden_cxx_method_iterator

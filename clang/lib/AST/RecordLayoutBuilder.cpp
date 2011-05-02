@@ -582,6 +582,8 @@ protected:
   CharUnits NonVirtualSize;
   CharUnits NonVirtualAlignment;
 
+  CharUnits ZeroLengthBitfieldAlignment;
+
   /// PrimaryBase - the primary base class (if one exists) of the class
   /// we're laying out.
   const CXXRecordDecl *PrimaryBase;
@@ -618,7 +620,8 @@ protected:
       IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
-      NonVirtualAlignment(CharUnits::One()), PrimaryBase(0), 
+      NonVirtualAlignment(CharUnits::One()), 
+      ZeroLengthBitfieldAlignment(CharUnits::Zero()), PrimaryBase(0), 
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
@@ -1258,9 +1261,18 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
     if (IsMsStruct) {
+      const FieldDecl *FD =  (*Field);
+      if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD)) {
+        // FIXME. Multiple zero bitfields may follow a bitfield.
+        // set ZeroLengthBitfieldAlignment to max. of its
+        // currrent and alignment of 'FD'.
+        std::pair<CharUnits, CharUnits> FieldInfo = 
+          Context.getTypeInfoInChars(FD->getType());
+        ZeroLengthBitfieldAlignment = FieldInfo.second;
+        continue;
+      }
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      const FieldDecl *FD =  (*Field);
       if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
         continue;
       LastFD = FD;
@@ -1443,6 +1455,9 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       Context.getTypeInfoInChars(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
+    if (ZeroLengthBitfieldAlignment > FieldAlign)
+      FieldAlign = ZeroLengthBitfieldAlignment;
+    ZeroLengthBitfieldAlignment = CharUnits::Zero();
 
     if (Context.getLangOptions().MSBitfields) {
       // If MS bitfield layout is required, figure out what type is being

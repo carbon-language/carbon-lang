@@ -2059,7 +2059,8 @@ unsigned FieldDecl::getFieldIndex() const {
 
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are ignored.
-      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*i), LastFD)) {
+      if (getASTContext().ZeroBitfieldFollowsNonBitfield((*i), LastFD) ||
+          getASTContext().ZeroBitfieldFollowsBitfield((*i), LastFD)) {
         ++i;
         continue;
       }
