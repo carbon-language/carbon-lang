@@ -29,7 +29,7 @@
 // RUN: grep "define available_externally i32 @test5" %t
 
 // RUN: echo "\nC++ tests:"
-// RUN: %clang %s -O1 -emit-llvm -S -o %t -std=c++98
+// RUN: %clang -x c++ %s -O1 -emit-llvm -S -o %t -std=c++98
 // RUN: grep "define linkonce_odr i32 @_Z2eiv()" %t
 // RUN: grep "define linkonce_odr i32 @_Z3foov()" %t
 // RUN: grep "define i32 @_Z3barv()" %t
