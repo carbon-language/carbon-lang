@@ -23,6 +23,8 @@
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBInputReader.h"
 
+#define ASYNC true
+#define NO_ASYNC false
 
 class IOChannel;
 

@@ -975,7 +975,10 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
             
         case eInputReaderDeactivate:
             break;
-            
+        
+        case eInputReaderAsynchronousOutputWritten:
+            break;
+                    
         case eInputReaderGotToken:
             while (bytes_len > 0 && (bytes[bytes_len-1] == '\r' || bytes[bytes_len-1] == '\n'))
                 --bytes_len;

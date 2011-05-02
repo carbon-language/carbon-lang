@@ -433,6 +433,8 @@
 		9A357673116E7B6400E8ED2F /* SBStringList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A357672116E7B6400E8ED2F /* SBStringList.cpp */; };
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
+		9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */; };
+		9A4F35121368A54100823F52 /* StreamAsynchronousIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A4F35111368A54100823F52 /* StreamAsynchronousIO.h */; };
 		9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
 		9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AA69DAE118A023300D753A0 /* SBInputReader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AA69DB0118A024600D753A0 /* SBInputReader.cpp */; };
@@ -1192,6 +1194,8 @@
 		9A4633DA11F65D8600955CE1 /* UserSettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UserSettingsController.h; path = include/lldb/Core/UserSettingsController.h; sourceTree = "<group>"; };
 		9A4633DC11F65D9A00955CE1 /* UserSettingsController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UserSettingsController.cpp; path = source/Core/UserSettingsController.cpp; sourceTree = "<group>"; };
 		9A48A3A7124AAA5A00922451 /* python-extensions.swig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "python-extensions.swig"; sourceTree = "<group>"; };
+		9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamAsynchronousIO.cpp; path = source/Core/StreamAsynchronousIO.cpp; sourceTree = "<group>"; };
+		9A4F35111368A54100823F52 /* StreamAsynchronousIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamAsynchronousIO.h; path = include/lldb/Core/StreamAsynchronousIO.h; sourceTree = "<group>"; };
 		9A633FE7112DCE3C001A7E43 /* SBFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBFrame.cpp; path = source/API/SBFrame.cpp; sourceTree = "<group>"; };
 		9A633FE8112DCE3C001A7E43 /* SBFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBFrame.h; path = include/lldb/API/SBFrame.h; sourceTree = "<group>"; };
 		9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptInterpreter.cpp; path = source/Interpreter/ScriptInterpreter.cpp; sourceTree = "<group>"; };
@@ -1327,7 +1331,6 @@
 				26BC7E7510F1B85900F91463 /* lldb-log.cpp */,
 				26BC7C2A10F1B3BC00F91463 /* lldb-private.h */,
 				26217932133BCB850083B112 /* lldb-private-enumerations.h */,
-				26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */,
 				26BC7D5D10F1B77400F91463 /* lldb-private-log.h */,
 				26217930133BC8640083B112 /* lldb-private-types.h */,
 				262D3190111B4341004E6F88 /* API */,
@@ -1977,6 +1980,8 @@
 				26BC7D7810F1B77400F91463 /* STLUtils.h */,
 				26BC7D7910F1B77400F91463 /* Stream.h */,
 				26BC7E9110F1B85900F91463 /* Stream.cpp */,
+				9A4F35111368A54100823F52 /* StreamAsynchronousIO.h */,
+				9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */,
 				26BC7D7A10F1B77400F91463 /* StreamFile.h */,
 				26BC7E9210F1B85900F91463 /* StreamFile.cpp */,
 				26BC7D7B10F1B77400F91463 /* StreamString.h */,
@@ -2176,6 +2181,7 @@
 		26BC7DBE10F1B78200F91463 /* Expression */ = {
 			isa = PBXGroup;
 			children = (
+				26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */,
 				49D7072611B5AD03001AD875 /* ClangASTSource.h */,
 				49D7072811B5AD11001AD875 /* ClangASTSource.cpp */,
 				26BC7DC010F1B79500F91463 /* ClangExpression.h */,
@@ -2677,6 +2683,7 @@
 				2671A0CE134825F6003A87BB /* ConnectionMachPort.h in Headers */,
 				4CABA9DD134A8BA800539BDD /* ValueObjectMemory.h in Headers */,
 				4CD0BD0D134BFAB600CB44D4 /* ValueObjectDynamicValue.h in Headers */,
+				9A4F35121368A54100823F52 /* StreamAsynchronousIO.h in Headers */,
 				4C2FAE2F135E3A70001EDE44 /* SharedCluster.h in Headers */,
 				2692BA16136610C100F9E14D /* UnwindAssemblyInstEmulation.h in Headers */,
 			);
@@ -3246,6 +3253,7 @@
 				26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
+				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
 				2630BFAF1365F3220070C534 /* ArchDefaultUnwindPlan.cpp in Sources */,
 				2630BFB01365F3220070C534 /* ArchVolatileRegs.cpp in Sources */,
 				2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */,
@@ -3336,7 +3344,7 @@
 					__STDC_LIMIT_MACROS,
 					LLDB_CONFIGURATION_DEBUG,
 				);
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_VERSION = 4.2;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;

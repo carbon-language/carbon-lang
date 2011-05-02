@@ -1226,7 +1226,10 @@ CommandInterpreter::GetConfirmationInputReaderCallback
             out_file.Flush ();
         }
         break;
-
+        
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderGotToken:
         if (bytes_len == 0)
         {
@@ -1641,6 +1644,12 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                                                 tmp_result.GetErrorData());
             }
         }
+        
+        if (result.GetImmediateOutputStream())
+            result.GetImmediateOutputStream()->Flush();
+        
+        if (result.GetImmediateErrorStream())
+            result.GetImmediateErrorStream()->Flush();
         
         // N.B. Can't depend on DidChangeProcessState, because the state coming into the command execution
         // could be running (for instance in Breakpoint Commands.

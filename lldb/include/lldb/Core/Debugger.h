@@ -388,6 +388,9 @@ public:
     bool
     PopInputReader (const lldb::InputReaderSP& reader_sp);
 
+    void
+    NotifyTopInputReader (lldb::InputReaderAction notification);
+
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
     

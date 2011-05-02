@@ -163,6 +163,9 @@ public:
     void
     PushInputReader (lldb::SBInputReader &reader);
 
+    void
+    NotifyTopInputReader (lldb::InputReaderAction notification);
+
     const char *
     GetInstanceName  ();
 

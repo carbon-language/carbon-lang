@@ -20,6 +20,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -1104,8 +1105,12 @@ Target::RunStopHooks ()
     if (num_exe_ctx == 0)
         return;
     
-    result.SetImmediateOutputFile (m_debugger.GetOutputFile().GetStream());
-    result.SetImmediateErrorFile (m_debugger.GetErrorFile().GetStream());
+    StreamSP output_stream (new StreamAsynchronousIO (m_debugger.GetCommandInterpreter(),
+                                                      CommandInterpreter::eBroadcastBitAsynchronousOutputData));
+    StreamSP error_stream (new StreamAsynchronousIO (m_debugger.GetCommandInterpreter(),
+                                                     CommandInterpreter::eBroadcastBitAsynchronousErrorData));
+    result.SetImmediateOutputStream (output_stream);
+    result.SetImmediateErrorStream (error_stream);
     
     bool keep_going = true;
     bool hooks_ran = false;
@@ -1176,6 +1181,9 @@ Target::RunStopHooks ()
     }
     if (hooks_ran)
         result.AppendMessage ("\n** End Stop Hooks **\n");
+        
+    result.GetImmediateOutputStream()->Flush();
+    result.GetImmediateErrorStream()->Flush();
 }
 
 //--------------------------------------------------------------

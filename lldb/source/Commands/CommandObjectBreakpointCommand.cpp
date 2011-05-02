@@ -466,6 +466,9 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
         }
         break;
 
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderGotToken:
         if (bytes && bytes_len && baton)
         {

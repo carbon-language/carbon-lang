@@ -29,10 +29,6 @@ typedef std::map<EditLine *, std::string> PromptMap;
 const char *g_default_prompt = "(lldb) ";
 PromptMap g_prompt_map;
 
-#define NSEC_PER_USEC   1000ull
-#define USEC_PER_SEC    1000000ull
-#define NSEC_PER_SEC    1000000000ull
-
 static const char*
 el_prompt(EditLine *el)
 {
@@ -100,16 +96,16 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
         const char *comment = "\nAvailable completions:";
 
         int num_elements = num_completions + 1;
-        OutWrite(comment,  strlen (comment));
+        OutWrite(comment,  strlen (comment), NO_ASYNC);
         if (num_completions < page_size)
         {
             for (int i = 1; i < num_elements; i++)
             {
                 completion_str = completions.GetStringAtIndex(i);
-                OutWrite("\n\t", 2);
-                OutWrite(completion_str, strlen (completion_str));
+                OutWrite("\n\t", 2, NO_ASYNC);
+                OutWrite(completion_str, strlen (completion_str), NO_ASYNC);
             }
-            OutWrite ("\n", 1);
+            OutWrite ("\n", 1, NO_ASYNC);
         }
         else
         {
@@ -124,17 +120,17 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
                 for (; cur_pos < endpoint; cur_pos++)
                 {
                     completion_str = completions.GetStringAtIndex(cur_pos);
-                    OutWrite("\n\t", 2);
-                    OutWrite(completion_str, strlen (completion_str));
+                    OutWrite("\n\t", 2, NO_ASYNC);
+                    OutWrite(completion_str, strlen (completion_str), NO_ASYNC);
                 }
 
                 if (cur_pos >= num_elements)
                 {
-                    OutWrite("\n", 1);
+                    OutWrite("\n", 1, NO_ASYNC);
                     break;
                 }
 
-                OutWrite("\nMore (Y/n/a): ", strlen ("\nMore (Y/n/a): "));
+                OutWrite("\nMore (Y/n/a): ", strlen ("\nMore (Y/n/a): "), NO_ASYNC);
                 reply = 'n';
                 got_char = el_getc(m_edit_line, &reply);
                 if (got_char == -1 || reply == 'n')
@@ -154,8 +150,9 @@ IOChannel::HandleCompletion (EditLine *e, int ch)
 
 IOChannel::IOChannel
 (
-    FILE *in,
-    FILE *out,
+    FILE *editline_in,
+    FILE *editline_out,
+    FILE *out,  
     FILE *err,
     Driver *driver
 ) :
@@ -169,10 +166,12 @@ IOChannel::IOChannel
     m_err_file (err),
     m_command_queue (),
     m_completion_key ("\t"),
-    m_edit_line (::el_init (SBHostOS::GetProgramFileSpec().GetFilename(), in, out, err)),
+    m_edit_line (::el_init (SBHostOS::GetProgramFileSpec().GetFilename(), editline_in, editline_out,  editline_out)),
     m_history (history_init()),
     m_history_event(),
-    m_getting_command (false)
+    m_getting_command (false),
+    m_expecting_prompt (false),
+	m_prompt_str ()
 {
     assert (m_edit_line);
     ::el_set (m_edit_line, EL_PROMPT, el_prompt);
@@ -252,6 +251,36 @@ IOChannel::HistorySaveLoad (bool save)
     }
 }
 
+void
+IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_len)
+{
+	// Make this a member variable.
+    // static std::string prompt_str;
+    IOChannel *io_channel = (IOChannel *) baton;
+    const char *bytes = (const char *) src;
+
+    if (io_channel->IsGettingCommand() && io_channel->m_expecting_prompt)
+    {
+        io_channel->m_prompt_str.append (bytes, src_len);
+		// Log this to make sure the prompt is really what you think it is.
+        if (io_channel->m_prompt_str.find (el_prompt(io_channel->m_edit_line)) == 0)
+        {
+            io_channel->m_expecting_prompt = false;
+            io_channel->OutWrite (io_channel->m_prompt_str.c_str(), 
+                                  io_channel->m_prompt_str.size(), NO_ASYNC);
+            io_channel->m_prompt_str.clear();
+        }
+		else 
+			assert (io_channel->m_prompt_str.find (el_prompt(io_channel->m_edit_line)) == std::string::npos);
+    }
+    else
+    {
+        if (io_channel->m_prompt_str.size() > 0)
+            io_channel->m_prompt_str.clear();
+        io_channel->OutWrite (bytes, src_len, NO_ASYNC);
+    }
+}
+
 bool
 IOChannel::LibeditGetInput (std::string &new_line)
 {
@@ -262,12 +291,7 @@ IOChannel::LibeditGetInput (std::string &new_line)
         // Set boolean indicating whether or not el_gets is trying to get input (i.e. whether or not to attempt
         // to refresh the prompt after writing data).
         SetGettingCommand (true);
-        
-        // Get the current time just before calling el_gets; this is used by OutWrite, ErrWrite, and RefreshPrompt
-        // to make sure they have given el_gets enough time to write the prompt before they attempt to write
-        // anything.
-
-        ::gettimeofday (&m_enter_elgets_time, NULL);
+        m_expecting_prompt = true;
 
         // Call el_gets to prompt the user and read the user's input.
         const char *line = ::el_gets (m_edit_line, &line_len);
@@ -318,7 +342,9 @@ IOChannel::Run ()
     listener.StartListeningForEvents (interpreter_broadcaster,
                                       SBCommandInterpreter::eBroadcastBitResetPrompt |
                                       SBCommandInterpreter::eBroadcastBitThreadShouldExit |
-                                      SBCommandInterpreter::eBroadcastBitQuitCommandReceived);
+                                      SBCommandInterpreter::eBroadcastBitQuitCommandReceived |
+                                      SBCommandInterpreter::eBroadcastBitAsynchronousOutputData |
+                                      SBCommandInterpreter::eBroadcastBitAsynchronousErrorData);
 
     listener.StartListeningForEvents (*this,
                                       IOChannel::eBroadcastBitThreadShouldExit);
@@ -392,6 +418,18 @@ IOChannel::Run ()
                 case SBCommandInterpreter::eBroadcastBitQuitCommandReceived:
                     done = true;
                     break;
+                case SBCommandInterpreter::eBroadcastBitAsynchronousErrorData:
+                    {
+                        const char *data = SBEvent::GetCStringFromEvent (event);
+                        ErrWrite (data, strlen(data), ASYNC);
+                    }
+                    break;
+                case SBCommandInterpreter::eBroadcastBitAsynchronousOutputData:
+                    {
+                        const char *data = SBEvent::GetCStringFromEvent (event);
+                        OutWrite (data, strlen(data), ASYNC);
+                    }
+                    break;
                 }
             }
             else if (event.BroadcasterMatchesPtr (this))
@@ -448,60 +486,41 @@ IOChannel::RefreshPrompt ()
     if (! IsGettingCommand())
         return;
 
-    // Compare the current time versus the last time el_gets was called.  If less than 40 milliseconds
-    // (40,0000 microseconds or 40,000,0000 nanoseconds) have elapsed, wait 40,0000 microseconds, to ensure el_gets had
-    // time to finish writing the prompt before we start writing here.
+	// If we haven't finished writing the prompt, there's no need to refresh it.
+    if (m_expecting_prompt)
+        return;
 
-    if (ElapsedNanoSecondsSinceEnteringElGets() < (40 * 1000 * 1000))
-        usleep (40 * 1000);
-
-    // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
-    // each other's output.
-
-    IOLocker locker (m_output_mutex);
     ::el_set (m_edit_line, EL_REFRESH);
 }
 
 void
-IOChannel::OutWrite (const char *buffer, size_t len)
+IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
 {
     if (len == 0)
         return;
 
-    // Compare the current time versus the last time el_gets was called.  If less than
-    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
-    // to finish writing the prompt before we start writing here.
-
-    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
-        usleep (10000);
-
-    {
-        // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
-        // each other's output.
-        IOLocker locker (m_output_mutex);
-        ::fwrite (buffer, 1, len, m_out_file);
-    }
+    // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
+    IOLocker locker (m_output_mutex);
+    if (asynchronous)
+        ::fwrite ("\n", 1, 1, m_out_file);
+    ::fwrite (buffer, 1, len, m_out_file);
+    if (asynchronous)
+        m_driver->GetDebugger().NotifyTopInputReader (eInputReaderAsynchronousOutputWritten);
 }
 
 void
-IOChannel::ErrWrite (const char *buffer, size_t len)
+IOChannel::ErrWrite (const char *buffer, size_t len, bool asynchronous)
 {
     if (len == 0)
         return;
 
-    // Compare the current time versus the last time el_gets was called.  If less than
-    // 10000 microseconds (10000000 nanoseconds) have elapsed, wait 10000 microseconds, to ensure el_gets had time
-    // to finish writing the prompt before we start writing here.
-
-    if (ElapsedNanoSecondsSinceEnteringElGets() < 10000000)
-        usleep (10000);
-
-    {
-        // Use the mutex to make sure OutWrite, ErrWrite and Refresh prompt do not interfere with
-        // each other's output.
-        IOLocker locker (m_output_mutex);
-        ::fwrite (buffer, 1, len, m_err_file);
-    }
+    // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
+    IOLocker locker (m_output_mutex);
+    if (asynchronous)
+        ::fwrite ("\n", 1, 1, m_err_file);
+    ::fwrite (buffer, 1, len, m_err_file);
+    if (asynchronous)
+        m_driver->GetDebugger().NotifyTopInputReader (eInputReaderAsynchronousOutputWritten);
 }
 
 void
@@ -549,25 +568,6 @@ void
 IOChannel::SetGettingCommand (bool new_value)
 {
     m_getting_command = new_value;
-}
-
-uint64_t
-IOChannel::Nanoseconds (const struct timeval &time_val) const
-{
-    uint64_t nanoseconds = time_val.tv_sec * NSEC_PER_SEC + time_val.tv_usec * NSEC_PER_USEC;
-
-    return nanoseconds;
-}
-
-uint64_t
-IOChannel::ElapsedNanoSecondsSinceEnteringElGets ()
-{
-    if (! IsGettingCommand())
-        return 0;
-
-    struct timeval current_time;
-    ::gettimeofday (&current_time, NULL);
-    return (Nanoseconds (current_time) - Nanoseconds (m_enter_elgets_time));
 }
 
 IOLocker::IOLocker (pthread_mutex_t &mutex) :

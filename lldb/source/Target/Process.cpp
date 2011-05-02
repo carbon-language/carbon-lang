@@ -3183,6 +3183,9 @@ Process::ProcessInputReaderCallback (void *baton,
     case eInputReaderReactivate:
         break;
         
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderGotToken:
         {
             Error error;

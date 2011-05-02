@@ -658,7 +658,7 @@ Driver::GetProcessSTDOUT ()
     size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDOUT (stdio_buffer, sizeof (stdio_buffer))) > 0)
     {
-        m_io_channel_ap->OutWrite (stdio_buffer, len);
+        m_io_channel_ap->OutWrite (stdio_buffer, len, ASYNC);
         total_bytes += len;
     }
     return total_bytes;
@@ -673,7 +673,7 @@ Driver::GetProcessSTDERR ()
     size_t total_bytes = 0;
     while ((len = m_debugger.GetSelectedTarget().GetProcess().GetSTDERR (stdio_buffer, sizeof (stdio_buffer))) > 0)
     {
-        m_io_channel_ap->ErrWrite (stdio_buffer, len);
+        m_io_channel_ap->ErrWrite (stdio_buffer, len, ASYNC);
         total_bytes += len;
     }
     return total_bytes;
@@ -755,24 +755,20 @@ Driver::HandleProcessEvent (const SBEvent &event)
     {
         // The process has stdout available, get it and write it out to the
         // appropriate place.
-        if (GetProcessSTDOUT ())
-            m_io_channel_ap->RefreshPrompt();
+        GetProcessSTDOUT ();
     }
     else if (event_type & SBProcess::eBroadcastBitSTDERR)
     {
         // The process has stderr available, get it and write it out to the
         // appropriate place.
-        if (GetProcessSTDERR ())
-            m_io_channel_ap->RefreshPrompt();
+        GetProcessSTDERR ();
     }
     else if (event_type & SBProcess::eBroadcastBitStateChanged)
     {
         // Drain all stout and stderr so we don't see any output come after
         // we print our prompts
-        if (GetProcessSTDOUT ()
-            || GetProcessSTDERR ())
-            m_io_channel_ap->RefreshPrompt();
-
+        GetProcessSTDOUT ();
+        GetProcessSTDERR ();
         // Something changed in the process;  get the event and report the process's current status and location to
         // the user.
         StateType event_state = SBProcess::GetStateFromEvent (event);
@@ -795,7 +791,7 @@ Driver::HandleProcessEvent (const SBEvent &event)
                 char message[1024];
                 int message_len = ::snprintf (message, sizeof(message), "Process %d %s\n", process.GetProcessID(),
                                               m_debugger.StateAsCString (event_state));
-                m_io_channel_ap->OutWrite(message, message_len);
+                m_io_channel_ap->OutWrite(message, message_len, ASYNC);
             }
             break;
 
@@ -807,9 +803,8 @@ Driver::HandleProcessEvent (const SBEvent &event)
             {
                 SBCommandReturnObject result;
                 m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
-                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
-                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
-                m_io_channel_ap->RefreshPrompt();
+                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
+                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
             }
             break;
 
@@ -823,17 +818,15 @@ Driver::HandleProcessEvent (const SBEvent &event)
                 char message[1024];
                 int message_len = ::snprintf (message, sizeof(message), "Process %d stopped and was programmatically restarted.\n",
                                               process.GetProcessID());
-                m_io_channel_ap->OutWrite(message, message_len);
-                m_io_channel_ap->RefreshPrompt ();
+                m_io_channel_ap->OutWrite(message, message_len, ASYNC);
             }
             else
             {
                 SBCommandReturnObject result;
                 UpdateSelectedThread ();
                 m_debugger.GetCommandInterpreter().HandleCommand("process status", result, false);
-                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize());
-                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize());
-                m_io_channel_ap->RefreshPrompt ();
+                m_io_channel_ap->ErrWrite (result.GetError(), result.GetErrorSize(), ASYNC);
+                m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), ASYNC);
             }
             break;
         }
@@ -935,11 +928,16 @@ Driver::EditLineInputReaderCallback
 
     case eInputReaderDeactivate:
         break;
+        
+    case eInputReaderAsynchronousOutputWritten:
+        if (driver->m_io_channel_ap.get() != NULL)
+            driver->m_io_channel_ap->RefreshPrompt();
+        break;
 
     case eInputReaderInterrupt:
         if (driver->m_io_channel_ap.get() != NULL)
         {
-            driver->m_io_channel_ap->OutWrite ("^C\n", 3);
+            driver->m_io_channel_ap->OutWrite ("^C\n", 3, NO_ASYNC);
             driver->m_io_channel_ap->RefreshPrompt();
         }
         break;
@@ -947,7 +945,7 @@ Driver::EditLineInputReaderCallback
     case eInputReaderEndOfFile:
         if (driver->m_io_channel_ap.get() != NULL)
         {
-            driver->m_io_channel_ap->OutWrite ("^D\n", 3);
+            driver->m_io_channel_ap->OutWrite ("^D\n", 3, NO_ASYNC);
             driver->m_io_channel_ap->RefreshPrompt ();
         }
         write (driver->m_editline_pty.GetMasterFileDescriptor(), "quit\n", 5);
@@ -996,6 +994,36 @@ Driver::MainLoop ()
         }
     }
 
+    lldb_utility::PseudoTerminal editline_output_pty;
+    FILE *editline_output_slave_fh = NULL;
+    
+    if (editline_output_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, error_str, sizeof (error_str)) == false)
+    {
+        ::fprintf (stderr, "error: failed to open output pseudo terminal : %s", error_str);
+        exit(1);
+    }
+    else
+    {
+        const char *output_slave_name = editline_output_pty.GetSlaveName (error_str, sizeof(error_str));
+        if (output_slave_name == NULL)
+        {
+            ::fprintf (stderr, "error: failed to get slave name for output pseudo terminal : %s", error_str);
+            exit(2);
+        }
+        else
+        {
+            editline_output_slave_fh = ::fopen (output_slave_name, "r+");
+            if (editline_output_slave_fh == NULL)
+            {
+                SBError error;
+                error.SetErrorToErrno();
+                ::fprintf (stderr, "error: failed to get open slave for output pseudo terminal : %s",
+                           error.GetCString());
+                exit(3);
+            }
+            ::setbuf (editline_output_slave_fh, NULL);
+        }
+    }
 
    // struct termios stdin_termios;
 
@@ -1038,7 +1066,19 @@ Driver::MainLoop ()
 //
     SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
 
-    m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, stdout, stderr, this));
+    m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, editline_output_slave_fh, stdout, stderr, this));
+
+    SBCommunication out_comm_2("driver.editline_output");
+    out_comm_2.SetCloseOnEOF (false);
+    out_comm_2.AdoptFileDesriptor (editline_output_pty.GetMasterFileDescriptor(), false);
+    out_comm_2.SetReadThreadBytesReceivedCallback (IOChannel::LibeditOutputBytesReceived, m_io_channel_ap.get());
+
+    if (out_comm_2.ReadThreadStart () == false)
+    {
+        ::fprintf (stderr, "error: failed to start libedit output read thread");
+        exit (5);
+    }
+
 
     struct winsize window_size;
     if (isatty (STDIN_FILENO)

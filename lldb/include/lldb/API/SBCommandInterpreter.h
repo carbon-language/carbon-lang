@@ -21,7 +21,9 @@ public:
     {
         eBroadcastBitThreadShouldExit       = (1 << 0),
         eBroadcastBitResetPrompt            = (1 << 1),
-        eBroadcastBitQuitCommandReceived    = (1 << 2)   // User entered quit
+        eBroadcastBitQuitCommandReceived    = (1 << 2),           // User entered quit 
+        eBroadcastBitAsynchronousOutputData = (1 << 3),
+        eBroadcastBitAsynchronousErrorData  = (1 << 4)
     };
 
     SBCommandInterpreter (const lldb::SBCommandInterpreter &rhs);

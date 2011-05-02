@@ -265,6 +265,7 @@ namespace lldb {
     typedef enum InputReaderAction
     {
         eInputReaderActivate,   // reader is newly pushed onto the reader stack 
+        eInputReaderAsynchronousOutputWritten, // an async output event occurred; the reader may want to do something
         eInputReaderReactivate, // reader is on top of the stack again after another reader was popped off 
         eInputReaderDeactivate, // another reader was pushed on the stack 
         eInputReaderGotToken,   // reader got one of its tokens (granularity)

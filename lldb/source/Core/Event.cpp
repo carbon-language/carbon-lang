@@ -198,3 +198,10 @@ EventDataBytes::GetEventDataFromEvent (const Event *event_ptr)
     return NULL;
 }
 
+void
+EventDataBytes::SwapBytes (std::string &new_bytes)
+{
+    m_bytes.swap (new_bytes);
+}
+
+

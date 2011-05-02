@@ -423,6 +423,20 @@ Debugger::CleanUpInputReaders ()
 }
 
 void
+Debugger::NotifyTopInputReader (InputReaderAction notification)
+{
+    InputReaderSP reader_sp (GetCurrentInputReader());
+    if (reader_sp)
+	{
+        reader_sp->Notify (notification);
+
+        // Flush out any input readers that are done.
+        while (CheckIfTopInputReaderIsDone ())
+            /* Do nothing. */;
+    }
+}
+
+void
 Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
 {
     if (bytes && bytes_len)

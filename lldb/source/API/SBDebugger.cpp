@@ -640,6 +640,18 @@ SBDebugger::PushInputReader (SBInputReader &reader)
 }
 
 void
+SBDebugger::NotifyTopInputReader (InputReaderAction notification)
+{
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBDebugger(%p)::NotifyTopInputReader (%d)", m_opaque_sp.get(), notification);
+        
+    if (m_opaque_sp)
+        m_opaque_sp->NotifyTopInputReader (notification);
+}
+
+void
 SBDebugger::reset (const DebuggerSP &debugger_sp)
 {
     m_opaque_sp = debugger_sp;

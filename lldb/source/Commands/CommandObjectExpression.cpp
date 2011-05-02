@@ -205,6 +205,9 @@ CommandObjectExpression::MultiLineExpressionCallback
     case eInputReaderDeactivate:
         break;
 
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderGotToken:
         ++cmd_object_expr->m_expr_line_count;
         if (bytes && bytes_len)

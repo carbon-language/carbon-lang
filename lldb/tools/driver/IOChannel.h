@@ -35,7 +35,8 @@ public:
         eAllEventBits                 = 0xffffffff
     };
 
-    IOChannel (FILE *in,
+    IOChannel (FILE *editline_in,
+               FILE *editline_out,
                FILE *out,
                FILE *err,
                Driver *driver = NULL);
@@ -56,13 +57,16 @@ public:
     Run ();
 
     void
-    OutWrite (const char *buffer, size_t len);
+    OutWrite (const char *buffer, size_t len, bool asynchronous);
 
     void
-    ErrWrite (const char *buffer, size_t len);
+    ErrWrite (const char *buffer, size_t len, bool asynchronous);
 
     bool
     LibeditGetInput (std::string &);
+    
+    static void
+    LibeditOutputBytesReceived (void *baton, const void *src,size_t src_len);
 
     void
     SetPrompt ();
@@ -99,12 +103,6 @@ protected:
     void
     SetGettingCommand (bool new_value);
 
-    uint64_t
-    Nanoseconds (const struct timeval &time_val) const;
-
-    uint64_t
-    ElapsedNanoSecondsSinceEnteringElGets ();
-    
 private:
 
     pthread_mutex_t m_output_mutex;
@@ -122,6 +120,8 @@ private:
     History *m_history;
     HistEvent m_history_event;
     bool m_getting_command;
+    bool m_expecting_prompt;
+	std::string m_prompt_str;  // for accumlating the prompt as it gets written out by editline
 
     void
     HistorySaveLoad (bool save);

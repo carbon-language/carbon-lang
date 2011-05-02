@@ -639,6 +639,9 @@ ScriptInterpreterPython::InputReaderCallback
             script_interpreter->EnterSession ();
         break;
         
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderInterrupt:
         ::write (script_interpreter->m_embedded_python_pty.GetMasterFileDescriptor(), "raise KeyboardInterrupt\n", 24);
         break;
@@ -1047,6 +1050,9 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         }
         break;
 
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderGotToken:
         {
             std::string temp_string (bytes, bytes_len);

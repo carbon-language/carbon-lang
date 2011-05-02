@@ -87,6 +87,9 @@ public:
 
     void
     SetBytes (const void *src, size_t src_len);
+    
+    void
+    SwapBytes (std::string &new_bytes);
 
     void
     SetBytesFromCString (const char *cstr);

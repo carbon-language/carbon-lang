@@ -327,6 +327,9 @@ InputReader::Notify (InputReaderAction notification)
         m_active = false;
         break;
     
+    case eInputReaderAsynchronousOutputWritten:
+        break;
+        
     case eInputReaderInterrupt:
     case eInputReaderEndOfFile:
         break;
