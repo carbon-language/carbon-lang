@@ -537,7 +537,6 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
       MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
     }
   } else {
-    QualType fnType = MD->getType();
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
     const llvm::Type *Ty;
     // Check whether the function has a computable LLVM signature.
