@@ -55,6 +55,15 @@ public:
     void
     AddToMethodCache (lldb::addr_t class_addr, lldb::addr_t sel, lldb::addr_t impl_addr);
     
+    TypeAndOrName
+    LookupInClassNameCache (lldb::addr_t class_addr);
+    
+    void
+    AddToClassNameCache (lldb::addr_t class_addr, const char *name, lldb::TypeSP type_sp);
+    
+    void
+    AddToClassNameCache (lldb::addr_t class_addr, const TypeAndOrName &class_or_type_name);
+    
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *) = 0;
     
@@ -117,7 +126,10 @@ private:
     };
 
     typedef std::map<ClassAndSel,lldb::addr_t> MsgImplMap;
-    MsgImplMap m_impl_cache;        
+    MsgImplMap m_impl_cache;
+    
+    typedef std::map<lldb::addr_t,TypeAndOrName> ClassNameMap;
+    ClassNameMap m_class_name_cache;
 
     DISALLOW_COPY_AND_ASSIGN (ObjCLanguageRuntime);
 };

@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Symbol/Declaration.h"
 #include <set>
@@ -248,6 +249,48 @@ protected:
     
     bool 
     ResolveClangType (ResolveState clang_type_resolve_state);
+};
+
+
+///
+/// Sometimes you can find the name of the type corresponding to an object, but we don't have debug
+/// information for it.  If that is the case, you can return one of these objects, and then if it
+/// has a full type, you can use that, but if not at least you can print the name for informational
+/// purposes.
+///
+
+class TypeAndOrName
+{
+public:
+    TypeAndOrName ();
+    TypeAndOrName (lldb::TypeSP &type_sp);
+    TypeAndOrName (const char *type_str);
+    TypeAndOrName (const TypeAndOrName &rhs);
+    TypeAndOrName (ConstString &type_const_string);
+    
+    TypeAndOrName &
+    operator= (const TypeAndOrName &rhs);
+    
+    ConstString GetName () const;
+    lldb::TypeSP      GetTypeSP () const {
+        return m_type_sp;
+    };
+    
+    void
+    SetName (ConstString &type_name_const_str);
+    
+    void 
+    SetName (const char *type_name_str);
+    
+    void
+    SetTypeSP (lldb::TypeSP type_sp);
+    
+    bool
+    IsEmpty ();
+    
+private:
+    lldb::TypeSP m_type_sp;
+    ConstString m_type_name;
 };
 
 } // namespace lldb_private

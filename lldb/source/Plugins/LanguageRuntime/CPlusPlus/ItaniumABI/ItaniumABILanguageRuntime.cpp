@@ -41,7 +41,7 @@ ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 }
 
 bool
-ItaniumABILanguageRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP &dynamic_type_sp, Address &dynamic_address)
+ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &dynamic_address)
 {
     // For Itanium, if the type has a vtable pointer in the object, it will be at offset 0
     // in the object.  That will point to the "address point" within the vtable (not the beginning of the
@@ -104,6 +104,7 @@ ItaniumABILanguageRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP 
                     {
                          // We are a C++ class, that's good.  Get the class name and look it up:
                         const char *class_name = name + strlen(vtable_demangled_prefix);
+                        class_type_or_name.SetName (class_name);
                         TypeList class_types;
                         uint32_t num_matches = target->GetImages().FindTypes (sc, 
                                                                               ConstString(class_name),
@@ -112,14 +113,40 @@ ItaniumABILanguageRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP 
                                                                               class_types);
                         if (num_matches == 1)
                         {
-                            dynamic_type_sp = class_types.GetTypeAtIndex(0);
+                            class_type_or_name.SetTypeSP(class_types.GetTypeAtIndex(0));
                         }
                         else if (num_matches > 1)
                         {
-                            // How to sort out which of the type matches to pick?
+                            for (size_t i = 0; i < num_matches; i++)
+                            {
+                                lldb::TypeSP this_type(class_types.GetTypeAtIndex(i));
+                                if (this_type)
+                                {
+                                    if (ClangASTContext::IsCXXClassType(this_type->GetClangFullType()))
+                                    {
+                                        // There can only be one type with a given name,
+                                        // so we've just found duplicate definitions, and this
+                                        // one will do as well as any other.
+                                        // We don't consider something to have a dynamic type if
+                                        // it is the same as the static type.  So compare against
+                                        // the value we were handed:
+                                        
+                                        clang::ASTContext *in_ast_ctx = in_value.GetClangAST ();
+                                        clang::ASTContext *this_ast_ctx = this_type->GetClangAST ();
+                                        if (in_ast_ctx != this_ast_ctx
+                                            || !ClangASTContext::AreTypesSame (in_ast_ctx, 
+                                                                               in_value.GetClangType(),
+                                                                               this_type->GetClangFullType()))
+                                        {
+                                            class_type_or_name.SetTypeSP (this_type);
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                }
+                            }
                         }
-                        
-                        if (!dynamic_type_sp)
+                        else
                             return false;
                             
                         // The offset_to_top is two pointers above the address.

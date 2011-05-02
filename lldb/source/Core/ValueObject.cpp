@@ -1644,6 +1644,16 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
     return true;
 }
 
+void
+ValueObject::EvaluationPoint::SetUpdated ()
+{
+    m_first_update = false;
+    m_needs_update = false;
+    if (m_process_sp)
+        m_stop_id = m_process_sp->GetStopID();
+}
+        
+
 bool
 ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
 {

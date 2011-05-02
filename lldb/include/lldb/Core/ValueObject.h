@@ -138,11 +138,7 @@ public:
         }
         
         void
-        SetUpdated ()
-        {
-            m_first_update = false;
-            m_needs_update = false;
-        }
+        SetUpdated ();
         
         bool
         NeedsUpdating()

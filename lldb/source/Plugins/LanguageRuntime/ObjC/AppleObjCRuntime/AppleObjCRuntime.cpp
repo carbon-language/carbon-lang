@@ -198,7 +198,7 @@ AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 }
 
 bool
-AppleObjCRuntime::GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address)
+AppleObjCRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address)
 {
     return false;
 }

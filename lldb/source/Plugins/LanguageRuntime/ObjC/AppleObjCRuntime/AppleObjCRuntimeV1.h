@@ -32,7 +32,7 @@ public:
     
     // These are generic runtime functions:
     virtual bool
-    GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address);
+    GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address);
 
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *);

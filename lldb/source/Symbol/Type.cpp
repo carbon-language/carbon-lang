@@ -662,3 +662,75 @@ Type::CreateClangRValueReferenceType (Type *type)
 }
 
 
+TypeAndOrName::TypeAndOrName () : m_type_sp(), m_type_name()
+{
+
+}
+
+TypeAndOrName::TypeAndOrName (TypeSP &in_type_sp) : m_type_sp(in_type_sp)
+{
+    if (in_type_sp)
+        m_type_name = in_type_sp->GetName();
+}
+
+TypeAndOrName::TypeAndOrName (const char *in_type_str) : m_type_name(in_type_str)
+{
+}
+
+TypeAndOrName::TypeAndOrName (const TypeAndOrName &rhs) : m_type_sp (rhs.m_type_sp), m_type_name (rhs.m_type_name)
+{
+
+}
+
+TypeAndOrName::TypeAndOrName (ConstString &in_type_const_string) : m_type_name (in_type_const_string)
+{
+}
+
+TypeAndOrName &
+TypeAndOrName::operator= (const TypeAndOrName &rhs)
+{
+    if (this != &rhs)
+    {
+        m_type_name = rhs.m_type_name;
+        m_type_sp = rhs.m_type_sp;
+    }
+    return *this;
+}
+
+ConstString
+TypeAndOrName::GetName () const
+{    
+    if (m_type_sp)
+        return m_type_sp->GetName();
+    else
+        return m_type_name;
+}
+
+void
+TypeAndOrName::SetName (ConstString &type_name_const_str)
+{
+    m_type_name = type_name_const_str;
+}
+
+void
+TypeAndOrName::SetName (const char *type_name_str)
+{
+    m_type_name.SetCString (type_name_str);
+}
+
+void
+TypeAndOrName::SetTypeSP (lldb::TypeSP type_sp)
+{
+    m_type_sp = type_sp;
+    if (type_sp)
+        m_type_name = type_sp->GetName();
+}
+
+bool
+TypeAndOrName::IsEmpty()
+{
+    if (m_type_name || m_type_sp)
+        return false;
+    else
+        return true;
+}

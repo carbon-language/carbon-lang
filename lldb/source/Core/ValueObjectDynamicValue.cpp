@@ -135,7 +135,7 @@ ValueObjectDynamicValue::UpdateValue ()
     if (!process)
         return false;
     
-    lldb::TypeSP dynamic_type_sp;
+    TypeAndOrName class_type_or_name;
     Address dynamic_address;
     bool found_dynamic_type = false;
     
@@ -144,21 +144,28 @@ ValueObjectDynamicValue::UpdateValue ()
     {
         LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
         if (runtime)
-            found_dynamic_type = runtime->GetDynamicValue(*m_parent, dynamic_type_sp, dynamic_address);
+            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
     }
     else
     {
         LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
         if (cpp_runtime)
-            found_dynamic_type = cpp_runtime->GetDynamicValue(*m_parent, dynamic_type_sp, dynamic_address);
+            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
         
         if (!found_dynamic_type)
         {
             LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
             if (objc_runtime)
-                found_dynamic_type = cpp_runtime->GetDynamicValue(*m_parent, dynamic_type_sp, dynamic_address);
+                found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
         }
     }
+    
+    lldb::TypeSP dynamic_type_sp = class_type_or_name.GetTypeSP();
+    
+    // Getting the dynamic value may have run the program a bit, and so marked us as needing updating, but we really
+    // don't...
+    
+    m_update_point.SetUpdated();
     
     // If we don't have a dynamic type, then make ourselves just a echo of our parent.
     // Or we could return false, and make ourselves an echo of our parent?

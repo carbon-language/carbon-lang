@@ -155,6 +155,7 @@ class   ThreadPlanTracer;
 class   ThreadSpec;
 class   TimeValue;
 class   Type;
+class   TypeAndOrName;
 class   TypeList;
 class   UUID;
 class   Unwind;

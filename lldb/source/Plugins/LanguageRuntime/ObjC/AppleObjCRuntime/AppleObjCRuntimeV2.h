@@ -23,7 +23,7 @@
 #include "AppleThreadPlanStepThroughObjCTrampoline.h"
 
 namespace lldb_private {
-    
+
 class AppleObjCRuntimeV2 :
         public AppleObjCRuntime
 {
@@ -32,7 +32,7 @@ public:
     
     // These are generic runtime functions:
     virtual bool
-    GetDynamicValue (ValueObject &in_value, lldb::TypeSP &type_sp, Address &address);
+    GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address);
     
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *);
@@ -76,7 +76,18 @@ protected:
 private:
     AppleObjCRuntimeV2(Process *process, ModuleSP &objc_module_sp);
     
-    bool m_has_object_getClass;
+    bool RunFunctionToFindClassName (lldb::addr_t class_addr, Thread *thread, char *name_dst, size_t max_name_len);
+    
+    bool                                m_has_object_getClass;
+    std::auto_ptr<ClangFunction>        m_get_class_name_function;
+    std::auto_ptr<ClangUtilityFunction> m_get_class_name_code;
+    lldb::addr_t                        m_get_class_name_args;
+    Mutex                               m_get_class_name_args_mutex;
+    
+    static const char *g_find_class_name_function_name;
+    static const char *g_find_class_name_function_body;
+    static const char *g_objc_class_symbol_prefix;
+    static const char *g_objc_class_data_section_name;
 };
     
 } // namespace lldb_private
