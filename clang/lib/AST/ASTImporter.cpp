@@ -3755,13 +3755,6 @@ Expr *ASTNodeImporter::VisitExpr(Expr *E) {
 }
 
 Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
-  NestedNameSpecifier *Qualifier = 0;
-  if (E->getQualifier()) {
-    Qualifier = Importer.Import(E->getQualifier());
-    if (!E->getQualifier())
-      return 0;
-  }
-  
   ValueDecl *ToD = cast_or_null<ValueDecl>(Importer.Import(E->getDecl()));
   if (!ToD)
     return 0;
