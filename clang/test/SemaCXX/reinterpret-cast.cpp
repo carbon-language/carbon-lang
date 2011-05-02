@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -ffreestanding %s
+// RUN: %clang_cc1 -fsyntax-only -verify -ffreestanding -Wundefined-reinterpret-cast %s
 
 #include <stdint.h>
 
@@ -115,4 +115,156 @@ namespace PR9564 {
 
   __attribute((ext_vector_type(4))) typedef float v4;
   float& w(v4 &a) { return reinterpret_cast<float&>(a[1]); } // expected-error {{not allowed}}
+}
+
+void dereference_reinterpret_cast() {
+  struct A {};
+  class B {};
+  A a;
+  B b;
+  long l;
+  double d;
+  float f;
+  char c;
+  unsigned char uc;
+  void* v_ptr;
+  (void)reinterpret_cast<double&>(l);  // expected-warning {{reinterpret_cast from 'long' to 'double &' has undefined behavior}}
+  (void)*reinterpret_cast<double*>(&l);  // expected-warning {{dereference of type 'double *' that was reinterpret_cast from type 'long *' has undefined behavior}}
+  (void)reinterpret_cast<double&>(f);  // expected-warning {{reinterpret_cast from 'float' to 'double &' has undefined behavior}}
+  (void)*reinterpret_cast<double*>(&f);  // expected-warning {{dereference of type 'double *' that was reinterpret_cast from type 'float *' has undefined behavior}}
+  (void)reinterpret_cast<float&>(l);  // expected-warning {{reinterpret_cast from 'long' to 'float &' has undefined behavior}}
+  (void)*reinterpret_cast<float*>(&l);  // expected-warning {{dereference of type 'float *' that was reinterpret_cast from type 'long *' has undefined behavior}}
+  (void)reinterpret_cast<float&>(d);  // expected-warning {{reinterpret_cast from 'double' to 'float &' has undefined behavior}}
+  (void)*reinterpret_cast<float*>(&d);  // expected-warning {{dereference of type 'float *' that was reinterpret_cast from type 'double *' has undefined behavior}}
+
+  // TODO: add warning for tag types
+  (void)reinterpret_cast<A&>(b);
+  (void)*reinterpret_cast<A*>(&b);
+  (void)reinterpret_cast<B&>(a);
+  (void)*reinterpret_cast<B*>(&a);
+
+  // Casting to itself is allowed
+  (void)reinterpret_cast<A&>(a);
+  (void)*reinterpret_cast<A*>(&a);
+  (void)reinterpret_cast<B&>(b);
+  (void)*reinterpret_cast<B*>(&b);
+  (void)reinterpret_cast<long&>(l);
+  (void)*reinterpret_cast<long*>(&l);
+  (void)reinterpret_cast<double&>(d);
+  (void)*reinterpret_cast<double*>(&d);
+  (void)reinterpret_cast<char&>(c);
+  (void)*reinterpret_cast<char*>(&c);
+
+  // Casting to and from chars are allowable
+  (void)reinterpret_cast<A&>(c);
+  (void)*reinterpret_cast<A*>(&c);
+  (void)reinterpret_cast<B&>(c);
+  (void)*reinterpret_cast<B*>(&c);
+  (void)reinterpret_cast<long&>(c);
+  (void)*reinterpret_cast<long*>(&c);
+  (void)reinterpret_cast<double&>(c);
+  (void)*reinterpret_cast<double*>(&c);
+  (void)reinterpret_cast<char&>(l);
+  (void)*reinterpret_cast<char*>(&l);
+  (void)reinterpret_cast<char&>(d);
+  (void)*reinterpret_cast<char*>(&d);
+  (void)reinterpret_cast<char&>(f);
+  (void)*reinterpret_cast<char*>(&f);
+
+  // Casting from void pointer.
+  (void)*reinterpret_cast<A*>(v_ptr);
+  (void)*reinterpret_cast<B*>(v_ptr);
+  (void)*reinterpret_cast<long*>(v_ptr);
+  (void)*reinterpret_cast<double*>(v_ptr);
+  (void)*reinterpret_cast<float*>(v_ptr);
+
+  // Casting to void pointer
+  (void)*reinterpret_cast<void*>(&a);
+  (void)*reinterpret_cast<void*>(&b);
+  (void)*reinterpret_cast<void*>(&l);
+  (void)*reinterpret_cast<void*>(&d);
+  (void)*reinterpret_cast<void*>(&f);
+}
+
+void reinterpret_cast_whitelist () {
+  // the dynamic type of the object
+  int a;
+  float b;
+  (void)reinterpret_cast<int&>(a);
+  (void)*reinterpret_cast<int*>(&a);
+  (void)reinterpret_cast<float&>(b);
+  (void)*reinterpret_cast<float*>(&b);
+
+  // a cv-qualified version of the dynamic object
+  (void)reinterpret_cast<const int&>(a);
+  (void)*reinterpret_cast<const int*>(&a);
+  (void)reinterpret_cast<volatile int&>(a);
+  (void)*reinterpret_cast<volatile int*>(&a);
+  (void)reinterpret_cast<const volatile int&>(a);
+  (void)*reinterpret_cast<const volatile int*>(&a);
+  (void)reinterpret_cast<const float&>(b);
+  (void)*reinterpret_cast<const float*>(&b);
+  (void)reinterpret_cast<volatile float&>(b);
+  (void)*reinterpret_cast<volatile float*>(&b);
+  (void)reinterpret_cast<const volatile float&>(b);
+  (void)*reinterpret_cast<const volatile float*>(&b);
+
+  // a type that is the signed or unsigned type corresponding to the dynamic
+  // type of the object
+  signed d;
+  unsigned e;
+  (void)reinterpret_cast<signed&>(d);
+  (void)*reinterpret_cast<signed*>(&d);
+  (void)reinterpret_cast<signed&>(e);
+  (void)*reinterpret_cast<signed*>(&e);
+  (void)reinterpret_cast<unsigned&>(d);
+  (void)*reinterpret_cast<unsigned*>(&d);
+  (void)reinterpret_cast<unsigned&>(e);
+  (void)*reinterpret_cast<unsigned*>(&e);
+
+  // a type that is the signed or unsigned type corresponding a cv-qualified
+  // version of the dynamic type the object
+  (void)reinterpret_cast<const signed&>(d);
+  (void)*reinterpret_cast<const signed*>(&d);
+  (void)reinterpret_cast<const signed&>(e);
+  (void)*reinterpret_cast<const signed*>(&e);
+  (void)reinterpret_cast<const unsigned&>(d);
+  (void)*reinterpret_cast<const unsigned*>(&d);
+  (void)reinterpret_cast<const unsigned&>(e);
+  (void)*reinterpret_cast<const unsigned*>(&e);
+  (void)reinterpret_cast<volatile signed&>(d);
+  (void)*reinterpret_cast<volatile signed*>(&d);
+  (void)reinterpret_cast<volatile signed&>(e);
+  (void)*reinterpret_cast<volatile signed*>(&e);
+  (void)reinterpret_cast<volatile unsigned&>(d);
+  (void)*reinterpret_cast<volatile unsigned*>(&d);
+  (void)reinterpret_cast<volatile unsigned&>(e);
+  (void)*reinterpret_cast<volatile unsigned*>(&e);
+  (void)reinterpret_cast<const volatile signed&>(d);
+  (void)*reinterpret_cast<const volatile signed*>(&d);
+  (void)reinterpret_cast<const volatile signed&>(e);
+  (void)*reinterpret_cast<const volatile signed*>(&e);
+  (void)reinterpret_cast<const volatile unsigned&>(d);
+  (void)*reinterpret_cast<const volatile unsigned*>(&d);
+  (void)reinterpret_cast<const volatile unsigned&>(e);
+  (void)*reinterpret_cast<const volatile unsigned*>(&e);
+
+  // an aggregate or union type that includes one of the aforementioned types
+  // among its members (including, recursively, a member of a subaggregate or
+  // contained union)
+  // TODO: checking is not implemented for tag types
+
+  // a type that is a (possible cv-qualified) base class type of the dynamic
+  // type of the object
+  // TODO: checking is not implemented for tag types
+
+  // a char or unsigned char type
+  (void)reinterpret_cast<char&>(a);
+  (void)*reinterpret_cast<char*>(&a);
+  (void)reinterpret_cast<unsigned char&>(a);
+  (void)*reinterpret_cast<unsigned char*>(&a);
+  (void)reinterpret_cast<char&>(b);
+  (void)*reinterpret_cast<char*>(&b);
+  (void)reinterpret_cast<unsigned char&>(b);
+  (void)*reinterpret_cast<unsigned char*>(&b);
 }

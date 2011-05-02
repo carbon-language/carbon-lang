@@ -1288,6 +1288,61 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   return TC_Success;
 }
 
+// Checks for undefined behavior in reinterpret_cast.
+// The cases that is checked for is:
+// *reinterpret_cast<T*>(&a)
+// reinterpret_cast<T&>(a)
+// where accessing 'a' as type 'T' will result in undefined behavior.
+void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
+                                          bool IsDereference,
+                                          SourceRange Range) {
+  unsigned DiagID = IsDereference ?
+                        diag::warn_pointer_indirection_from_incompatible_type :
+                        diag::warn_undefined_reinterpret_cast;
+
+  if (Diags.getDiagnosticLevel(DiagID, Range.getBegin()) ==
+          Diagnostic::Ignored) {
+    return;
+  }
+
+  QualType SrcTy, DestTy;
+  if (IsDereference) {
+    if (!SrcType->getAs<PointerType>() || !DestType->getAs<PointerType>()) {
+      return;
+    }
+    SrcTy = SrcType->getPointeeType();
+    DestTy = DestType->getPointeeType();
+  } else {
+    if (!DestType->getAs<ReferenceType>()) {
+      return;
+    }
+    SrcTy = SrcType;
+    DestTy = DestType->getPointeeType();
+  }
+
+  // Cast is compatible if the types are the same.
+  if (Context.hasSameUnqualifiedType(DestTy, SrcTy)) {
+    return;
+  }
+  // or one of the types is a char or void type
+  if (DestTy->isAnyCharacterType() || DestTy->isVoidType() ||
+      SrcTy->isAnyCharacterType() || SrcTy->isVoidType()) {
+    return;
+  }
+  // or one of the types is a tag type.
+  if (isa<TagType>(SrcTy) || isa<TagType>(DestTy)) {
+    return;
+  }
+
+  if ((SrcTy->isUnsignedIntegerType() && DestTy->isSignedIntegerType()) ||
+      (SrcTy->isSignedIntegerType() && DestTy->isUnsignedIntegerType())) {
+    if (Context.getTypeSize(DestTy) == Context.getTypeSize(SrcTy)) {
+      return;
+    }
+  }
+
+  Diag(Range.getBegin(), DiagID) << SrcType << DestType << Range;
+}
 
 static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
                                         QualType DestType, bool CStyle,
@@ -1322,6 +1377,11 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
       // comment in const_cast.
       msg = diag::err_bad_cxx_cast_rvalue;
       return TC_NotApplicable;
+    }
+
+    if (!CStyle) {
+      Self.CheckCompatibleReinterpretCast(SrcType, DestType,
+                                          /*isDereference=*/false, OpRange);
     }
 
     // C++ 5.2.10p10: [...] a reference cast reinterpret_cast<T&>(x) has the

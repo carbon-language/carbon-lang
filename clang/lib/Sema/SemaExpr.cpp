@@ -8404,7 +8404,13 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
   Op = ConvResult.take();
   QualType OpTy = Op->getType();
   QualType Result;
-  
+
+  if (isa<CXXReinterpretCastExpr>(Op)) {
+    QualType OpOrigType = Op->IgnoreParenCasts()->getType();
+    S.CheckCompatibleReinterpretCast(OpOrigType, OpTy, /*IsDereference*/true,
+                                     Op->getSourceRange());
+  }
+
   // Note that per both C89 and C99, indirection is always legal, even if OpTy
   // is an incomplete type or void.  It would be possible to warn about
   // dereferencing a void pointer, but it's completely well-defined, and such a

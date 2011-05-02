@@ -2587,6 +2587,10 @@ public:
                                ParsedType ObjectType,
                                bool EnteringContext);
 
+  // Checks that reinterpret casts don't have undefined behavior.
+  void CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
+                                      bool IsDereference, SourceRange Range);
+
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   ExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                tok::TokenKind Kind,

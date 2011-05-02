@@ -2641,6 +2641,10 @@ def warn_indirection_through_null : Warning<
   "indirection of non-volatile null pointer will be deleted, not trap">, InGroup<NullDereference>;
 def note_indirection_through_null : Note<
   "consider using __builtin_trap() or qualifying pointer with 'volatile'">;
+def warn_pointer_indirection_from_incompatible_type : Warning<
+  "dereference of type %1 that was reinterpret_cast from type %0 has undefined "
+  "behavior.">,
+  InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
 
 def err_assignment_requires_nonfragile_object : Error<
   "cannot assign to class object in non-fragile ABI (%0 invalid)">;
@@ -2904,6 +2908,9 @@ def err_bad_cxx_cast_member_pointer_size : Error<
 def err_bad_static_cast_incomplete : Error<"%0 is an incomplete type">;
 def err_bad_reinterpret_cast_reference : Error<
   "reinterpret_cast of a %0 to %1 needs its address which is not allowed">;
+def warn_undefined_reinterpret_cast : Warning<
+  "reinterpret_cast from %0 to %1 has undefined behavior.">,
+  InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
 
 // These messages don't adhere to the pattern.
 // FIXME: Display the path somehow better.
