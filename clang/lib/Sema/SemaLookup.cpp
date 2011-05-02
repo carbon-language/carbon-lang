@@ -2410,8 +2410,8 @@ VisibleDeclsRecord::ShadowMapEntry::end() {
   if (DeclOrVector.isNull())
     return 0;
 
-  if (DeclOrVector.dyn_cast<NamedDecl *>())
-    return &reinterpret_cast<NamedDecl*&>(DeclOrVector) + 1;
+  if (DeclOrVector.is<NamedDecl *>())
+    return DeclOrVector.getAddrOf<NamedDecl *>() + 1;
 
   return DeclOrVector.get<DeclVector *>()->end();
 }
