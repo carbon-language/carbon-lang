@@ -905,6 +905,25 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     CmdArgs.push_back("-fexceptions");
 }
 
+static bool ShouldDisableCFI(const ArgList &Args,
+                             const ToolChain &TC) {
+
+  // FIXME: Duplicated code with ToolChains.cpp
+  // FIXME: This doesn't belong here, but ideally we will support static soon
+  // anyway.
+  bool HasStatic = (Args.hasArg(options::OPT_mkernel) ||
+                    Args.hasArg(options::OPT_static) ||
+                    Args.hasArg(options::OPT_fapple_kext));
+  bool IsIADefault = TC.IsIntegratedAssemblerDefault() && !HasStatic;
+  bool UseIntegratedAs = Args.hasFlag(options::OPT_integrated_as,
+                                      options::OPT_no_integrated_as,
+                                      IsIADefault);
+  bool UseCFI = Args.hasFlag(options::OPT_fdwarf2_cfi_asm,
+                             options::OPT_fno_dwarf2_cfi_asm,
+                             UseIntegratedAs);
+  return !UseCFI;
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -1375,11 +1394,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fno-gnu-keywords");
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_fdwarf2_cfi_asm,
-                               options::OPT_fno_dwarf2_cfi_asm)) {
-    if (A->getOption().matches(options::OPT_fno_dwarf2_cfi_asm))
-      CmdArgs.push_back("-fno-dwarf2-cfi-asm");
-  }
+  if (ShouldDisableCFI(Args, getToolChain()))
+    CmdArgs.push_back("-fno-dwarf2-cfi-asm");
 
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_)) {
     CmdArgs.push_back("-ftemplate-depth");
