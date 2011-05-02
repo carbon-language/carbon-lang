@@ -165,7 +165,8 @@ public:
                             const Remat &RM,
                             LiveIntervals&,
                             const TargetInstrInfo&,
-                            const TargetRegisterInfo&);
+                            const TargetRegisterInfo&,
+                            bool Late = false);
 
   /// markRematerialized - explicitly mark a value as rematerialized after doing
   /// it manually.

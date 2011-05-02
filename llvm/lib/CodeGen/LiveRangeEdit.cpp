@@ -140,11 +140,13 @@ SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
                                          const Remat &RM,
                                          LiveIntervals &lis,
                                          const TargetInstrInfo &tii,
-                                         const TargetRegisterInfo &tri) {
+                                         const TargetRegisterInfo &tri,
+                                         bool Late) {
   assert(RM.OrigMI && "Invalid remat");
   tii.reMaterialize(MBB, MI, DestReg, 0, RM.OrigMI, tri);
   rematted_.insert(RM.ParentVNI);
-  return lis.InsertMachineInstrInMaps(--MI).getDefIndex();
+  return lis.getSlotIndexes()->insertMachineInstrInMaps(--MI, Late)
+           .getDefIndex();
 }
 
 void LiveRangeEdit::eraseVirtReg(unsigned Reg, LiveIntervals &LIS) {
