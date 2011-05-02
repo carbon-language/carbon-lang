@@ -17,7 +17,7 @@ using namespace llvm;
 PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   PCSymbol = ".";
   CommentString = ";";
-  ExceptionsType = ExceptionHandling::DwarfTable;
+  ExceptionsType = ExceptionHandling::DwarfCFI;
 
   if (!is64Bit)
     Data64bitsDirective = 0;      // We can't emit a 64-bit unit in PPC32 mode.
