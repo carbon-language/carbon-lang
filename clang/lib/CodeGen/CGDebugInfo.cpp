@@ -2082,8 +2082,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   unsigned column = getColumnNumber(loc);
   
   // Build the debug-info type for the block literal.
-  llvm::DIDescriptor enclosingContext =  
-    getContextDescriptor(cast<Decl>(blockDecl->getDeclContext()));
+  getContextDescriptor(cast<Decl>(blockDecl->getDeclContext()));
 
   const llvm::StructLayout *blockLayout =
     CGM.getTargetData().getStructLayout(block.StructureType);
