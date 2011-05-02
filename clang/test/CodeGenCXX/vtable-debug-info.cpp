@@ -1,9 +1,10 @@
 // RUN: %clang -c -g %s -o /dev/null
 // Radar 8730409
-// XFAIL: win32,mingw
+// XFAIL: win32
 
-// FIXME: This test crashes on Windows.
-#ifdef _WIN32
+// FIXME: This test crashes on *-pc-win32
+// for lack of debugging support on -integrated-as (MCCOFF).
+#ifdef _MSC_VER
 
 #error this test must xfail
 
