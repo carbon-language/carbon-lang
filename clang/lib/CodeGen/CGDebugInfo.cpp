@@ -1644,7 +1644,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     }
     Name = getFunctionName(FD);
     // Use mangled name as linkage name for c/c++ functions.
-    LinkageName = CGM.getMangledName(GD);
+    // FIXME : Why do we need check for block helpers ?
+    if (Name != "__copy_helper_block_" && Name != "__destroy_helper_block_")
+      LinkageName = CGM.getMangledName(GD);
     if (LinkageName == Name)
       LinkageName = llvm::StringRef();
     if (FD->hasPrototype())
