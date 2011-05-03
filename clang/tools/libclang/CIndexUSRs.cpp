@@ -477,6 +477,9 @@ bool USRGenerator::GenLoc(const Decl *D) {
     return true;
   }
 
+  // Use the location of canonical decl.
+  D = D->getCanonicalDecl();
+
   const SourceManager &SM = AU->getSourceManager();
   SourceLocation L = D->getLocStart();
   if (L.isInvalid()) {

@@ -65,6 +65,20 @@ using foo::ClsB;
 
 namespace foo_alias3 = foo;
 
+namespace {
+class RDar9371763_Foo {
+public:
+  void bar();
+};
+}
+
+void RDar9371763_Foo::bar() {}
+
+void rdar9371763() {
+  RDar9371763_Foo foo;
+  foo.bar();
+}
+
 // RUN: c-index-test -test-load-source-usrs all %s | FileCheck %s
 // CHECK: usrs.cpp c:@N@foo Extent=[1:1 - 4:2]
 // CHECK: usrs.cpp c:@N@foo@x Extent=[2:3 - 2:8]
@@ -122,3 +136,11 @@ namespace foo_alias3 = foo;
 // CHECK: usrs.cpp c:@NA@foo_alias2
 // CHECK-NOT: ClsB
 // CHECK: usrs.cpp c:@NA@foo_alias3
+// CHECK: usrs.cpp c:@aN Extent=[68:1 - 73:2]
+// CHECK: usrs.cpp c:@aN@C@RDar9371763_Foo Extent=[69:1 - 72:2]
+// CHECK: usrs.cpp c: Extent=[70:1 - 70:8]
+// CHECK: usrs.cpp c:usrs.cpp@1131@aN@C@RDar9371763_Foo@F@bar# Extent=[71:3 - 71:13]
+// CHECK: usrs.cpp c:usrs.cpp@1131@aN@C@RDar9371763_Foo@F@bar# Extent=[75:1 - 75:31]
+// CHECK: usrs.cpp c:@F@rdar9371763# Extent=[77:1 - 80:2]
+// CHECK: usrs.cpp c:usrs.cpp@1204@F@rdar9371763#@foo Extent=[78:3 - 78:22]
+
