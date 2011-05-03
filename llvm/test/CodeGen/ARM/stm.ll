@@ -9,7 +9,7 @@ define i32 @main() nounwind {
 entry:
 ; CHECK: main
 ; CHECK: push
-; CHECK: stmib
+; CHECK: stm
 	%0 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([26 x i8]* @"\01LC1", i32 0, i32 0), i32 -2, i32 -3, i32 2, i32 -6) nounwind		; <i32> [#uses=0]
 	%1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr ([32 x i8]* @"\01LC", i32 0, i32 0), i32 0, i32 1, i32 0, i32 1, i32 0, i32 1) nounwind		; <i32> [#uses=0]
 	ret i32 0

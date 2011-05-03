@@ -10,7 +10,7 @@ entry:
 
 ; HARD: test1:
 ; HARD: vmov.i32 [[REG1:(d[0-9]+)]], #0x80000000
-; HARD: vbsl [[REG1]], d2, d0
+; HARD: vbsl [[REG1]], d
   %0 = tail call float @copysignf(float %x, float %y) nounwind
   ret float %0
 }

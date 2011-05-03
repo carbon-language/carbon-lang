@@ -13,6 +13,7 @@ entry:
 ; Make sure the scheduler schedules all uses of the preincrement
 ; induction variable before defining the postincrement value.
 ; CHECK: t:
+; CHECK: %bb
 ; CHECK-NOT: mov
 bb:                                               ; preds = %entry, %bb
   %j.05 = phi i32 [ %2, %bb ], [ 0, %entry ]

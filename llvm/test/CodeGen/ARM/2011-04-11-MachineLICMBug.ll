@@ -14,15 +14,15 @@ for.cond:
   br i1 %cmp, label %for.body, label %return
 
 for.body:
-; CHECK: %for.body
-; CHECK: movs r{{[0-9]+}}, #1
+; CHECK: %for.
+; CHECK: movs r{{[0-9]+}}, #{{[01]}}
   %arrayidx = getelementptr i32* %A, i32 %0
   %tmp4 = load i32* %arrayidx, align 4
   %cmp6 = icmp eq i32 %tmp4, %value
   br i1 %cmp6, label %return, label %for.inc
 
-; CHECK: %for.cond
-; CHECK: movs r{{[0-9]+}}, #0
+; CHECK: %for.
+; CHECK: movs r{{[0-9]+}}, #{{[01]}}
 
 for.inc:
   %inc = add i32 %0, 1

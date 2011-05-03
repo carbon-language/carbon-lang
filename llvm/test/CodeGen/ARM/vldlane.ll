@@ -125,7 +125,7 @@ define <2 x i32> @vld2lanei32(i32* %A, <2 x i32>* %B) nounwind {
 ;Check for a post-increment updating load.
 define <2 x i32> @vld2lanei32_update(i32** %ptr, <2 x i32>* %B) nounwind {
 ;CHECK: vld2lanei32_update:
-;CHECK: vld2.32 {d16[1], d17[1]}, [r1]!
+;CHECK: vld2.32 {d16[1], d17[1]}, [{{r[0-9]+}}]!
 	%A = load i32** %ptr
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
@@ -153,7 +153,7 @@ define <2 x float> @vld2lanef(float* %A, <2 x float>* %B) nounwind {
 define <8 x i16> @vld2laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vld2laneQi16:
 ;Check the (default) alignment.
-;CHECK: vld2.16 {d17[1], d19[1]}, [r0]
+;CHECK: vld2.16 {d17[1], d19[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x8x2_t @llvm.arm.neon.vld2lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 5, i32 1)
@@ -166,7 +166,7 @@ define <8 x i16> @vld2laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @vld2laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vld2laneQi32:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld2.32 {d17[0], d19[0]}, [r0, :64]
+;CHECK: vld2.32 {d17[0], d19[0]}, [{{r[0-9]+}}, :64]
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <4 x i32>* %B
 	%tmp2 = call %struct.__neon_int32x4x2_t @llvm.arm.neon.vld2lane.v4i32(i8* %tmp0, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 2, i32 16)
@@ -222,7 +222,7 @@ define <8 x i8> @vld3lanei8(i8* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @vld3lanei16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vld3lanei16:
 ;Check the (default) alignment value.  VLD3 does not support alignment.
-;CHECK: vld3.16 {d16[1], d17[1], d18[1]}, [r0]
+;CHECK: vld3.16 {d16[1], d17[1], d18[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 1, i32 8)
@@ -265,7 +265,7 @@ define <2 x float> @vld3lanef(float* %A, <2 x float>* %B) nounwind {
 define <8 x i16> @vld3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vld3laneQi16:
 ;Check the (default) alignment value.  VLD3 does not support alignment.
-;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [r0]
+;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1, i32 8)
@@ -344,7 +344,7 @@ declare %struct.__neon_float32x4x3_t @llvm.arm.neon.vld3lane.v4f32(i8*, <4 x flo
 define <8 x i8> @vld4lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vld4lanei8:
 ;Check the alignment value.  Max for this instruction is 32 bits:
-;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [r0, :32]
+;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [{{r[0-9]+}}, :32]
 	%tmp1 = load <8 x i8>* %B
 	%tmp2 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 8)
         %tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 0
@@ -360,7 +360,7 @@ define <8 x i8> @vld4lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;Check for a post-increment updating load.
 define <8 x i8> @vld4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 ;CHECK: vld4lanei8_update:
-;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [r1, :32]!
+;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [{{r[0-9]+}}, :32]!
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
 	%tmp2 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 8)
@@ -380,7 +380,7 @@ define <4 x i16> @vld4lanei16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vld4lanei16:
 ;Check that a power-of-two alignment smaller than the total size of the memory
 ;being loaded is ignored.
-;CHECK: vld4.16 {d16[1], d17[1], d18[1], d19[1]}, [r0]
+;CHECK: vld4.16 {d16[1], d17[1], d18[1], d19[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 1, i32 4)
@@ -398,7 +398,7 @@ define <2 x i32> @vld4lanei32(i32* %A, <2 x i32>* %B) nounwind {
 ;CHECK: vld4lanei32:
 ;Check the alignment value.  An 8-byte alignment is allowed here even though
 ;it is smaller than the total size of the memory being loaded.
-;CHECK: vld4.32 {d16[1], d17[1], d18[1], d19[1]}, [r0, :64]
+;CHECK: vld4.32 {d16[1], d17[1], d18[1], d19[1]}, [{{r[0-9]+}}, :64]
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
 	%tmp2 = call %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i8* %tmp0, <2 x i32> %tmp1, <2 x i32> %tmp1, <2 x i32> %tmp1, <2 x i32> %tmp1, i32 1, i32 8)
@@ -431,7 +431,7 @@ define <2 x float> @vld4lanef(float* %A, <2 x float>* %B) nounwind {
 define <8 x i16> @vld4laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vld4laneQi16:
 ;Check the alignment value.  Max for this instruction is 64 bits:
-;CHECK: vld4.16 {d16[1], d18[1], d20[1], d22[1]}, [r0, :64]
+;CHECK: vld4.16 {d16[1], d18[1], d20[1], d22[1]}, [{{r[0-9]+}}, :64]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1, i32 16)
@@ -448,7 +448,7 @@ define <8 x i16> @vld4laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @vld4laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vld4laneQi32:
 ;Check the (default) alignment.
-;CHECK: vld4.32 {d17[0], d19[0], d21[0], d23[0]}, [r0]
+;CHECK: vld4.32 {d17[0], d19[0], d21[0], d23[0]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <4 x i32>* %B
 	%tmp2 = call %struct.__neon_int32x4x4_t @llvm.arm.neon.vld4lane.v4i32(i8* %tmp0, <4 x i32> %tmp1, <4 x i32> %tmp1, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 2, i32 1)

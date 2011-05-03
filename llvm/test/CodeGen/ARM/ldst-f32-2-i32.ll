@@ -10,8 +10,8 @@ entry:
   br i1 %0, label %return, label %bb
 
 bb:
-; CHECK: ldr [[REGISTER:(r[0-9]+)]], [r1], r3
-; CHECK: str [[REGISTER]], [r2], #4
+; CHECK: ldr [[REGISTER:(r[0-9]+)]], [{{r[0-9]+}}], {{r[0-9]+}}
+; CHECK: str [[REGISTER]], [{{r[0-9]+}}], #4
   %j.05 = phi i32 [ %2, %bb ], [ 0, %entry ]
   %tmp = mul i32 %j.05, %index
   %uglygep = getelementptr i8* %src6, i32 %tmp
