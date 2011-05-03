@@ -826,25 +826,6 @@ public:
     Builder.SetInsertPoint(AfterBB);
   }
 
-  /// @brief Check if a loop is parallel
-  ///
-  /// Detect if a clast_for loop can be executed in parallel.
-  ///
-  /// @param f The clast for loop to check.
-  bool isParallelFor(const clast_for *f) {
-    isl_set *loopDomain = isl_set_from_cloog_domain(f->domain);
-    assert(loopDomain && "Cannot access domain of loop");
-
-    bool isParallel = DP->isParallelDimension(loopDomain,
-                                              isl_set_n_dim(loopDomain));
-
-    if (isParallel)
-      DEBUG(dbgs() << "Parallel loop with induction variable '" << f->iterator
-            << "' found\n";);
-
-    return isParallel;
-  }
-
   /// @brief Add a new definition of an openmp subfunction.
   Function* addOpenMPSubfunction(Module *M) {
     Function *F = Builder.GetInsertBlock()->getParent();
@@ -1157,11 +1138,11 @@ public:
   }
 
   void codegen(const clast_for *f) {
-    if (Vector && isInnermostLoop(f) && isParallelFor(f)
+    if (Vector && isInnermostLoop(f) && DP->isParallelFor(f)
         && (-1 != getNumberOfIterations(f))
         && (getNumberOfIterations(f) <= 16)) {
       codegenForVector(f);
-    } else if (OpenMP && !parallelCodeGeneration && isParallelFor(f)) {
+    } else if (OpenMP && !parallelCodeGeneration && DP->isParallelFor(f)) {
       parallelCodeGeneration = true;
       parallelLoops.push_back(f->iterator);
       codegenForOpenMP(f);

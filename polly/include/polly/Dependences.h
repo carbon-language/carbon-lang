@@ -31,6 +31,7 @@ struct isl_union_map;
 struct isl_union_set;
 struct isl_map;
 struct isl_set;
+struct clast_for;
 
 using namespace llvm;
 
@@ -68,6 +69,16 @@ namespace polly {
     /// @return bool Returns true, if executing parallelDimension in parallel is
     ///              valid for the scattering domain subset given.
     bool isParallelDimension(isl_set *loopDomain, unsigned parallelDimension);
+
+    /// @brief Check if a loop is parallel
+    ///
+    /// Detect if a clast_for loop can be executed in parallel.
+    ///
+    /// @param f The clast for loop to check.
+    ///
+    /// @return bool Returns true if the incoming clast_for statement can
+    ///              execute in parallel.
+    bool isParallelFor(const clast_for *f);
 
     bool runOnScop(Scop &S);
     void printScop(raw_ostream &OS) const;

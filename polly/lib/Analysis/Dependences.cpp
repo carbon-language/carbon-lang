@@ -31,8 +31,9 @@
 #include "llvm/Support/CommandLine.h"
 
 #include <isl/flow.h>
-#include <isl/map.h>
-#include <isl/constraint.h>
+#define CLOOG_INT_GMP 1
+#include <cloog/cloog.h>
+#include <cloog/isl/cloog.h>
 
 using namespace polly;
 using namespace llvm;
@@ -349,6 +350,13 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   return isl_union_set_is_empty(nonValid)
     && isl_union_set_is_empty(nonValid_war)
     && isl_union_set_is_empty(nonValid_waw);
+}
+
+bool Dependences::isParallelFor(const clast_for *f) {
+  isl_set *loopDomain = isl_set_from_cloog_domain(f->domain);
+  assert(loopDomain && "Cannot access domain of loop");
+
+  return isParallelDimension(loopDomain, isl_set_n_dim(loopDomain));
 }
 
 void Dependences::printScop(raw_ostream &OS) const {
