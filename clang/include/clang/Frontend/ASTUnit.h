@@ -51,6 +51,7 @@ class HeaderSearch;
 class Preprocessor;
 class SourceManager;
 class TargetInfo;
+class ASTFrontendAction;
 
 using namespace idx;
   
@@ -574,6 +575,21 @@ private:
   
 public:
   
+  /// \brief Create an ASTUnit from a source file, via a CompilerInvocation
+  /// object, by invoking the optionally provided ASTFrontendAction. 
+  ///
+  /// \param CI - The compiler invocation to use; it must have exactly one input
+  /// source file. The ASTUnit takes ownership of the CompilerInvocation object.
+  ///
+  /// \param Diags - The diagnostics engine to use for reporting errors; its
+  /// lifetime is expected to extend past that of the returned ASTUnit.
+  ///
+  /// \param Action - The ASTFrontendAction to invoke. Its ownership is not
+  /// transfered.
+  static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
+                                     llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                             ASTFrontendAction *Action = 0);
+
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
   ///

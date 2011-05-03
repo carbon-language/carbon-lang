@@ -1554,6 +1554,119 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
   return AST.take();
 }
 
+ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
+                                   llvm::IntrusiveRefCntPtr<Diagnostic> Diags,
+                                             ASTFrontendAction *Action) {
+  assert(CI && "A CompilerInvocation is required");
+
+  // Create the AST unit.
+  llvm::OwningPtr<ASTUnit> AST;
+  AST.reset(new ASTUnit(false));
+  ConfigureDiags(Diags, 0, 0, *AST, /*CaptureDiagnostics*/false);
+  AST->Diagnostics = Diags;
+  AST->OnlyLocalDecls = false;
+  AST->CaptureDiagnostics = false;
+  AST->CompleteTranslationUnit = Action ? Action->usesCompleteTranslationUnit()
+                                        : true;
+  AST->ShouldCacheCodeCompletionResults = false;
+  AST->Invocation = CI;
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
+    ASTUnitCleanup(AST.get());
+  llvm::CrashRecoveryContextCleanupRegistrar<Diagnostic,
+    llvm::CrashRecoveryContextReleaseRefCleanup<Diagnostic> >
+    DiagCleanup(Diags.getPtr());
+
+  // We'll manage file buffers ourselves.
+  CI->getPreprocessorOpts().RetainRemappedFileBuffers = true;
+  CI->getFrontendOpts().DisableFree = false;
+  ProcessWarningOptions(AST->getDiagnostics(), CI->getDiagnosticOpts());
+
+  // Save the target features.
+  AST->TargetFeatures = CI->getTargetOpts().Features;
+
+  // Create the compiler instance to use for building the AST.
+  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
+    CICleanup(Clang.get());
+
+  Clang->setInvocation(CI);
+  AST->OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
+    
+  // Set up diagnostics, capturing any diagnostics that would
+  // otherwise be dropped.
+  Clang->setDiagnostics(&AST->getDiagnostics());
+  
+  // Create the target instance.
+  Clang->getTargetOpts().Features = AST->TargetFeatures;
+  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
+                   Clang->getTargetOpts()));
+  if (!Clang->hasTarget())
+    return 0;
+
+  // Inform the target of the language options.
+  //
+  // FIXME: We shouldn't need to do this, the target should be immutable once
+  // created. This complexity should be lifted elsewhere.
+  Clang->getTarget().setForcedLangOptions(Clang->getLangOpts());
+  
+  assert(Clang->getFrontendOpts().Inputs.size() == 1 &&
+         "Invocation must have exactly one source file!");
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_AST &&
+         "FIXME: AST inputs not yet supported here!");
+  assert(Clang->getFrontendOpts().Inputs[0].first != IK_LLVM_IR &&
+         "IR inputs not supported here!");
+
+  // Configure the various subsystems.
+  AST->FileSystemOpts = Clang->getFileSystemOpts();
+  AST->FileMgr = new FileManager(AST->FileSystemOpts);
+  AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr);
+  AST->TheSema.reset();
+  AST->Ctx = 0;
+  AST->PP = 0;
+  
+  // Create a file manager object to provide access to and cache the filesystem.
+  Clang->setFileManager(&AST->getFileManager());
+  
+  // Create the source manager.
+  Clang->setSourceManager(&AST->getSourceManager());
+
+  ASTFrontendAction *Act = Action;
+
+  llvm::OwningPtr<TopLevelDeclTrackerAction> TrackerAct;
+  if (!Act) {
+    TrackerAct.reset(new TopLevelDeclTrackerAction(*AST));
+    Act = TrackerAct.get();
+  }
+
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<TopLevelDeclTrackerAction>
+    ActCleanup(TrackerAct.get());
+
+  if (!Act->BeginSourceFile(*Clang.get(),
+                            Clang->getFrontendOpts().Inputs[0].second,
+                            Clang->getFrontendOpts().Inputs[0].first))
+    return 0;
+  
+  Act->Execute();
+  
+  // Steal the created target, context, and preprocessor.
+  AST->TheSema.reset(Clang->takeSema());
+  AST->Consumer.reset(Clang->takeASTConsumer());
+  AST->Ctx = &Clang->getASTContext();
+  AST->PP = &Clang->getPreprocessor();
+  Clang->setSourceManager(0);
+  Clang->setFileManager(0);
+  AST->Target = &Clang->getTarget();
+  
+  Act->EndSourceFile();
+
+  return AST.take();
+}
+
 bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   if (!Invocation)
     return true;
