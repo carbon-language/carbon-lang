@@ -49,7 +49,7 @@ class LoadUnloadTestCase(TestBase):
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
-        print "Architecture to test for:", self.getArchitecture()
+
         self.expect("image list",
             substrs = [old_dylib])
         self.expect("image list -t 3",
