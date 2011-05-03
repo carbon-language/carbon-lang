@@ -1799,6 +1799,17 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
 
 //===--- CHECK: Standard memory functions ---------------------------------===//
 
+/// \brief Determine whether the given type is a dynamic class type (e.g.,
+/// whether it has a vtable).
+static bool isDynamicClassType(QualType T) {
+  if (CXXRecordDecl *Record = T->getAsCXXRecordDecl())
+    if (CXXRecordDecl *Definition = Record->getDefinition())
+      if (Definition->isDynamicClass())
+        return true;
+  
+  return false;
+}
+
 /// \brief Check for dangerous or invalid arguments to memset().
 ///
 /// This issues warnings on known problematic or dangerous or unspecified
@@ -1814,27 +1825,26 @@ void Sema::CheckMemsetArguments(const CallExpr *Call) {
 
   const Expr *Dest = Call->getArg(0)->IgnoreParenImpCasts();
 
-  // The type checking for this warning is moderately expensive, only do it
-  // when enabled.
-  if (getDiagnostics().getDiagnosticLevel(diag::warn_non_pod_memset,
-                                          Dest->getExprLoc()) ==
-      Diagnostic::Ignored)
-    return;
-
   QualType DestTy = Dest->getType();
   if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
     QualType PointeeTy = DestPtrTy->getPointeeType();
     if (PointeeTy->isVoidType())
       return;
 
+    unsigned DiagID = 0;
+    // Always complain about dynamic classes.
+    if (isDynamicClassType(PointeeTy))
+      DiagID = diag::warn_dyn_class_memset;
     // Check the C++11 POD definition regardless of language mode; it is more
-    // relaxed than earlier definitions and we don't want spurrious warnings.
-    if (PointeeTy->isCXX11PODType())
+    // relaxed than earlier definitions and we don't want spurious warnings.
+    else if (!PointeeTy->isCXX11PODType())
+      DiagID = diag::warn_non_pod_memset;
+    else
       return;
 
     DiagRuntimeBehavior(
       Dest->getExprLoc(), Dest,
-      PDiag(diag::warn_non_pod_memset)
+      PDiag(DiagID)
         << PointeeTy << Call->getCallee()->getSourceRange());
 
     SourceRange ArgRange = Call->getArg(0)->getSourceRange();

@@ -30,13 +30,13 @@ void test_warn() {
       // expected-warning {{destination for this memset call is a pointer to a non-POD type}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memset(&x3, 0, sizeof x3); // \
-      // expected-warning {{destination for this memset call is a pointer to a non-POD type}} \
+      // expected-warning {{destination for this memset call is a pointer to a dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memset(&x4, 0, sizeof x4); // \
       // expected-warning {{destination for this memset call is a pointer to a non-POD type}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memset(&x5, 0, sizeof x5); // \
-      // expected-warning {{destination for this memset call is a pointer to a non-POD type}} \
+      // expected-warning {{destination for this memset call is a pointer to a dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
 }
 
