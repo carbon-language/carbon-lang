@@ -305,7 +305,7 @@ EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
                                        void *dst,
                                        size_t length)
 {
-    fprintf (stdout, "    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, (uint32_t) length);
+    fprintf (stdout, "    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, length);
     context.Dump (stdout, instruction);    
     *((uint64_t *) dst) = 0xdeadbeef;
     return length;
@@ -319,7 +319,7 @@ EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
                                         const void *dst,
                                         size_t length)
 {
-    fprintf (stdout, "    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, (uint32_t) length);
+    fprintf (stdout, "    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, length);
     context.Dump (stdout, instruction);    
     return length;
 }
