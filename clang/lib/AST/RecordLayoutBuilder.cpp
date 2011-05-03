@@ -582,7 +582,7 @@ protected:
   CharUnits NonVirtualSize;
   CharUnits NonVirtualAlignment;
 
-  CharUnits ZeroLengthBitfieldAlignment;
+  FieldDecl *ZeroLengthBitfield;
 
   /// PrimaryBase - the primary base class (if one exists) of the class
   /// we're laying out.
@@ -621,7 +621,7 @@ protected:
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), 
-      ZeroLengthBitfieldAlignment(CharUnits::Zero()), PrimaryBase(0), 
+      ZeroLengthBitfield(0), PrimaryBase(0), 
       PrimaryBaseIsVirtual(false), FirstNearlyEmptyVBase(0) { }
 
   void Layout(const RecordDecl *D);
@@ -1258,22 +1258,16 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
   const FieldDecl *LastFD = 0;
+  ZeroLengthBitfield = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
     if (IsMsStruct) {
-      const FieldDecl *FD =  (*Field);
-      if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD)) {
-        // FIXME. Multiple zero bitfields may follow a bitfield.
-        // set ZeroLengthBitfieldAlignment to max. of its
-        // currrent and alignment of 'FD'.
-        std::pair<CharUnits, CharUnits> FieldInfo = 
-          Context.getTypeInfoInChars(FD->getType());
-        ZeroLengthBitfieldAlignment = FieldInfo.second;
-        continue;
-      }
+      FieldDecl *FD =  (*Field);
+      if (Context.ZeroBitfieldFollowsBitfield(FD, LastFD))
+        ZeroLengthBitfield = FD;
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
+      else if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
         continue;
       LastFD = FD;
     }
@@ -1355,6 +1349,21 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
+  
+  if (ZeroLengthBitfield) {
+    // If a zero-length bitfield is inserted after a bitfield,
+    // and the alignment of the zero-length bitfield is
+    // greater than the member that follows it, `bar', `bar' 
+    // will be aligned as the type of the zero-length bitfield.
+    if (ZeroLengthBitfield != D) {
+      std::pair<uint64_t, unsigned> FieldInfo = 
+        Context.getTypeInfo(ZeroLengthBitfield->getType());
+      unsigned ZeroLengthBitfieldAlignment = FieldInfo.second;
+      if (ZeroLengthBitfieldAlignment > FieldAlign)
+        FieldAlign = ZeroLengthBitfieldAlignment;
+      ZeroLengthBitfield = 0;
+    }
+  }
 
   if (FieldSize > TypeSize) {
     LayoutWideBitField(FieldSize, TypeSize, FieldPacked, D);
@@ -1455,9 +1464,19 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       Context.getTypeInfoInChars(D->getType());
     FieldSize = FieldInfo.first;
     FieldAlign = FieldInfo.second;
-    if (ZeroLengthBitfieldAlignment > FieldAlign)
-      FieldAlign = ZeroLengthBitfieldAlignment;
-    ZeroLengthBitfieldAlignment = CharUnits::Zero();
+    
+    if (ZeroLengthBitfield) {
+      // If a zero-length bitfield is inserted after a bitfield,
+      // and the alignment of the zero-length bitfield is
+      // greater than the member that follows it, `bar', `bar' 
+      // will be aligned as the type of the zero-length bitfield.
+      std::pair<CharUnits, CharUnits> FieldInfo = 
+        Context.getTypeInfoInChars(ZeroLengthBitfield->getType());
+      CharUnits ZeroLengthBitfieldAlignment = FieldInfo.second;
+      if (ZeroLengthBitfieldAlignment > FieldAlign)
+        FieldAlign = ZeroLengthBitfieldAlignment;
+      ZeroLengthBitfield = 0;
+    }
 
     if (Context.getLangOptions().MSBitfields) {
       // If MS bitfield layout is required, figure out what type is being
