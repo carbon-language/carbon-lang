@@ -182,8 +182,6 @@ SparcTargetLowering::LowerFormalArguments(SDValue Chain,
     }
 
     if (VA.isRegLoc()) {
-      EVT RegVT = VA.getLocVT();
-
       if (VA.needsCustom()) {
         assert(VA.getLocVT() == MVT::f64);
         unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);

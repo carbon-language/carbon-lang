@@ -3003,7 +3003,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_sub:
   case lltok::kw_mul:
   case lltok::kw_shl: {
-    LocTy ModifierLoc = Lex.getLoc();
     bool NUW = EatIfPresent(lltok::kw_nuw);
     bool NSW = EatIfPresent(lltok::kw_nsw);
     if (!NUW) NUW = EatIfPresent(lltok::kw_nuw);

@@ -1351,8 +1351,6 @@ bool PathProfiler::runOnModule(Module &M) {
     return false;
   }
 
-  BasicBlock::iterator insertPoint = Main->getEntryBlock().getFirstNonPHI();
-
   llvmIncrementHashFunction = M.getOrInsertFunction(
     "llvm_increment_path_count",
     Type::getVoidTy(*Context), // return type
