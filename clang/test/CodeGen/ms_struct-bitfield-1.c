@@ -43,3 +43,49 @@ struct
 } ATTR t5;
 static int a5[(sizeof(t5) == 4) -1];
 
+struct
+{
+                   char foo : 4;
+                   short : 0;
+                   long  :0;
+                   char bar;
+} ATTR t6;
+static int a6[(sizeof(t6) == 4) -1];
+
+struct
+{
+                   char foo : 4;
+                   long  :0;
+                   short : 0;
+                   char bar;
+} ATTR t7;
+static int a7[(sizeof(t7) == 16) -1];
+
+struct
+{
+                   char foo : 4;
+                   short : 0;
+                   long  :0;
+                   char bar:7;
+} ATTR t8;
+static int a8[(sizeof(t8) == 4) -1];
+
+struct
+{
+                   char foo : 4;
+                   long  :0;
+                   short : 0;
+                   char bar: 8;
+} ATTR t9;
+static int a9[(sizeof(t9) == 16) -1];
+
+struct
+{
+                   char foo : 4;
+                   char : 0;
+                   short : 0;
+                   int : 0;
+                   long  :0;
+                   char bar;
+} ATTR t10;
+static int a10[(sizeof(t10) == 2) -1];

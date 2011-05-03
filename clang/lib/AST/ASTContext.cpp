@@ -546,7 +546,8 @@ bool ASTContext::ZeroBitfieldFollowsNonBitfield(const FieldDecl *FD,
 bool ASTContext::ZeroBitfieldFollowsBitfield(const FieldDecl *FD,
                                              const FieldDecl *LastFD) const {
   return (FD->isBitField() && LastFD && LastFD->isBitField() &&
-          FD->getBitWidth()-> EvaluateAsInt(*this).getZExtValue() == 0);
+          FD->getBitWidth()-> EvaluateAsInt(*this).getZExtValue() == 0 &&
+          LastFD->getBitWidth()-> EvaluateAsInt(*this).getZExtValue() != 0);
 
 }
 

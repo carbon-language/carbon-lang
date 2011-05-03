@@ -1359,9 +1359,11 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
       std::pair<uint64_t, unsigned> FieldInfo = 
         Context.getTypeInfo(ZeroLengthBitfield->getType());
       unsigned ZeroLengthBitfieldAlignment = FieldInfo.second;
-      if (ZeroLengthBitfieldAlignment > FieldAlign)
+      // Ignore alignment of subsequent zero-length bitfields.
+      if ((ZeroLengthBitfieldAlignment > FieldAlign) || (FieldSize == 0))
         FieldAlign = ZeroLengthBitfieldAlignment;
-      ZeroLengthBitfield = 0;
+      if (FieldSize)
+        ZeroLengthBitfield = 0;
     }
   }
 
