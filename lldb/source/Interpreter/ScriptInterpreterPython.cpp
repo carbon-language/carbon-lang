@@ -377,8 +377,49 @@ ScriptInterpreterPython::EnterSession ()
     run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %d')", m_dictionary_name.c_str(),
                        GetCommandInterpreter().GetDebugger().GetID());
     PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
     
 
+    run_string.Printf ("run_one_line (%s, 'lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%d)')", 
+                       m_dictionary_name.c_str(),
+                       GetCommandInterpreter().GetDebugger().GetID());
+    PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
+    
+
+    ExecutionContext exe_ctx = m_interpreter.GetDebugger().GetSelectedExecutionContext();
+
+    if (exe_ctx.target)
+        run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.debugger.GetSelectedTarget()')", 
+                           m_dictionary_name.c_str());
+    else
+        run_string.Printf ("run_one_line (%s, 'lldb.target = None')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
+
+    if (exe_ctx.process)
+        run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.target.GetProcess()')", m_dictionary_name.c_str());
+    else
+        run_string.Printf ("run_one_line (%s, 'lldb.process = None')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
+
+    if (exe_ctx.thread)
+        run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.process.GetSelectedThread ()')", 
+                           m_dictionary_name.c_str());
+    else
+        run_string.Printf ("run_one_line (%s, 'lldb.thread = None')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
+    
+    if (exe_ctx.frame)
+        run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.thread.GetSelectedFrame ()')", 
+                           m_dictionary_name.c_str());
+    else
+        run_string.Printf ("run_one_line (%s, 'lldb.frame = None')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    run_string.Clear();
+    
     PyObject *sysmod = PyImport_AddModule ("sys");
     PyObject *sysdict = PyModule_GetDict (sysmod);
     
