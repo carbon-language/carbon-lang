@@ -280,8 +280,11 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                       : TemplateId->TemplateNameLoc;
         SS.SetInvalid(SourceRange(StartLoc, CCLoc));
       }
-      
-      TemplateId->Destroy();
+
+      // If we are caching tokens we will process the TemplateId again,
+      // otherwise destroy it.
+      if (!PP.isBacktrackEnabled())
+        TemplateId->Destroy();
       continue;
     }
 
