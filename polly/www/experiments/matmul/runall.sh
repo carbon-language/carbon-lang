@@ -1,11 +1,10 @@
 #!/bin/sh -a
 
-
 echo "--> 1. Create LLVM-IR from C"
 clang -S -emit-llvm matmul.c -o matmul.s
 
 echo "--> 2. Load Polly automatically when calling the 'opt' tool"
-export PATH_TO_POLLY_LIB="~/Projekte/polly/build_clang/lib/"
+export PATH_TO_POLLY_LIB="~/polly/build/lib/"
 alias opt="opt -load ${PATH_TO_POLLY_LIB}/LLVMPolly.so"
 
 echo "--> 3. Prepare the LLVM-IR for Polly"
@@ -40,10 +39,13 @@ echo "--> 8. Export jscop files"
 opt -basicaa -polly-export-jscop matmul.preopt.ll
 
 echo "--> 9. Import the updated jscop files and print the new SCoPs. (optional)"
+opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll
 opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
     -polly-import-jscop-postfix=interchanged
 opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
     -polly-import-jscop-postfix=interchanged+tiled
+opt -basicaa -polly-import-jscop -polly-cloog -analyze matmul.preopt.ll \
+    -polly-import-jscop-postfix=interchanged+tiled+vector
 
 echo "--> 10. Codegenerate the SCoPs"
 opt -basicaa -polly-import-jscop -polly-import-jscop-postfix=interchanged \

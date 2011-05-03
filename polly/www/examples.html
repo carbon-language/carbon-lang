@@ -20,14 +20,15 @@
 
 <p>Polly does not yet focus on end user, but on research and the development of
 new optimizations. Hence for the users of Polly it is often necessary to
-understand how Polly works internally. To get an overview of the different steps
+understand how Polly works internally. To get an to know the different steps
 taken during polyhedral compilation, we give a step by step example on how to
 use the different Polly passes. For this we optimize a simple matrix
 multiplication kernel. In case you look for a more automated way of executing
 Polly, check out the pollycc tool in utils/pollycc.</p>
 
 The files used and created in this example are available <a
-href="experiments/matmul">here</a>.
+href="experiments/matmul">here</a>. They can be created automatically by running
+the <a href="experiments/matmul/runall.sh">runall.sh</a> script.
 
 <ol>
 <li><h4>Create LLVM-IR from the C code</h4>
@@ -57,14 +58,14 @@ alias opt="opt -load ${PATH_TO_POLLY_LIB}/LLVMPolly.so"</pre>
 
 Polly is only able to work with code that matches a canonical form. To translate
 the LLVM-IR into this form we use a set of canonicalication passes. For this
-example only three passes are necessary. To get good coverage on a larger set
-of input files a larger set is needed. pollycc contains a set of passes that has
-shown to be beneficial.
+example only three passes are necessary. To get good coverage on more
+complicated input files often more canonicalization passes are needed. pollycc
+contains a list of passes that have shown to be beneficial.
 <pre class="code">opt -S -mem2reg -loop-simplify -indvars matmul.s &gt; matmul.preopt.ll</pre></li>
 
 <li><h4>Show the SCoPs detected by Polly (optional)</h4>
 
-To understand if Polly was able to detect some SCoPs, we print the
+To understand if Polly was able to detect SCoPs, we print the
 structure of the detected SCoPs. In our example two SCoPs were detected. One in
 'init_array' the other in 'main'.
 
@@ -112,7 +113,8 @@ view-scops-only:
 <pre class="code">opt -basicaa -polly-scops -analyze matmul.preopt.ll</pre>
 <pre>
 [...]
-Printing analysis 'Polly - Create polyhedral description of Scops' for region: '%1 =&gt;&nbsp;%17' in function 'init_array':
+Printing analysis 'Polly - Create polyhedral description of Scops' for region:
+'%1 =&gt;&nbsp;%17' in function 'init_array':
    Context:
    { [] }
    Statements {
@@ -135,9 +137,9 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region: '
            ReadAccess&nbsp;:= 
                { FinalRead[i0] -&gt; MemRef_B[o0] };
    }
-Printing analysis 'Polly - Create polyhedral description of Scops' for region: '%0 =&gt; &lt;Function  Return&gt;' in function 'init_array':
 [...]
-Printing analysis 'Polly - Create polyhedral description of Scops' for region: '%1 =&gt;&nbsp;%17' in function 'main':
+Printing analysis 'Polly - Create polyhedral description of Scops' for region:
+'%1 =&gt;&nbsp;%17' in function 'main':
    Context:
    { [] }
    Statements {
@@ -173,14 +175,14 @@ Printing analysis 'Polly - Create polyhedral description of Scops' for region: '
            ReadAccess&nbsp;:= 
                { FinalRead[i0] -&gt; MemRef_B[o0] };
    }
-Printing analysis 'Polly - Create polyhedral description of Scops' for region: '%0 =&gt; &lt;Function  Return&gt;' in function 'main':
-Invalid Scop!
+[...]
 </pre>
 </li>
 
 <li><h4>Show the dependences for the SCoPs</h4>
 <pre class="code">opt -basicaa -polly-dependences -analyze matmul.preopt.ll</pre>
-<pre>Printing analysis 'Polly - Calculate dependences for SCoP' for region: 'for.cond =&gt; for.end28' in function 'init_array':
+<pre>Printing analysis 'Polly - Calculate dependences for SCoP' for region:
+'for.cond =&gt; for.end28' in function 'init_array':
    Must dependences:
        {  }
    May dependences:
@@ -189,7 +191,8 @@ Invalid Scop!
        {  }
    May no source:
        {  }
-Printing analysis 'Polly - Calculate dependences for SCoP' for region: 'for.cond =&gt; for.end48' in function 'main':
+Printing analysis 'Polly - Calculate dependences for SCoP' for region:
+'for.cond =&gt; for.end48' in function 'main':
    Must dependences:
        {  Stmt_4[i0, i1] -&gt; Stmt_6[i0, i1, 0]&nbsp;:
               i0 &gt;= 0 and i0 &lt;= 1023 and i1 &gt;= 0 and i1 &lt;= 1023;
@@ -228,51 +231,191 @@ Writing SCoP 'for.cond =&gt; for.end48' in function 'main' to './main___%for.con
 
 <li><h4>Import the changed jscop files and print the updated SCoP structure
 (optional)</h4>
-<p>Polly can import jscop files, where the schedules of the statements were
-changed. With the help of these updated files we can import transformations into
-Polly. It is possible to import different jscop files by providing the postfix
+<p>Polly can reimport jscop files, in which the schedules of the statements are
+changed. These changed schedules are used to descripe transformations.
+It is possible to import different jscop files by providing the postfix
 of the jscop file that is imported.</p>
-<p> The optimized jscop files for this example are hand written. The schedule
-used was inspired by looking at the optimizations PoCC performs. If PoCC is
-installed Polly can often calculate such schedules fully automatically.</p>
+<p> We apply three different transformations on the SCoP in the main function.
+The jscop files describing these transformations are hand written. If PoCC is
+installed Polly can sometimes calculate such schedules fully automatically.
+Hwever, this is still an area we are actively working on.</p>
 
+<h5>No Polly</h5>
 
-<pre class="code">opt -basicaa -polly-import-jscop -polly-print -disable-output matmul.preopt.ll -polly-import-jscop-postfix=.opt</pre>
-<pre>Cannot open file: ./init_array___%for.cond---%for.end28.jscop.opt
-Skipping import.
-In function: 'init_array' SCoP: for.cond =&gt; for.end28:
-for (c2=0;c2&lt;=1023;c2++) {
-  for (c4=0;c4&lt;=1023;c4++) {
-   &nbsp;%for.body4(c2,c4);
-  }
-}
-Reading SCoP 'for.cond =&gt; for.end48' in function 'main' from './main___%for.cond---%for.end48.scop.opt.opt'.
-In function: 'main' SCoP: for.cond =&gt; for.end48:
-for (c2=0;c2&lt;=1023;c2++) {
-  for (c4=0;c4&lt;=1023;c4++) {
-   &nbsp;%for.body4(c2,c4);
-  }
-}
-for (c2=0;c2&lt;=1023;c2++) {
-  for (c3=0;c3&lt;=1023;c3++) {
-    for (c4=0;c4&lt;=1023;c4++) {
-     &nbsp;%for.body12(c2,c4,c3);
+<p>As a baseline we do not call any Polly code generation, but only apply the
+normal -O3 optimizations.</p>
+
+<pre class="code">
+opt matmul.preopt.ll -basicaa \
+    -polly-import-jscop \
+    -polly-cloog -analyze
+</pre>
+<pre>
+[...]
+main():
+for (c2=0;c2&ltg;=1535;c2++) {
+  for (c4=0;c4&ltg;=1535;c4++) {
+    Stmt_4(c2,c4);
+    for (c6=0;c6&ltg;=1535;c6++) {
+      Stmt_6(c2,c4,c6);
     }
   }
 }
-</pre></li>
+[...]
+</pre>
+<h5>Interchange (and Fission to allow the interchange)</h5>
+<p>We split the loops and can now apply an interchange of the loop dimensions that
+enumerate Stmt_6.</p>
+<pre class="code">
+opt matmul.preopt.ll -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged \
+    -polly-cloog -analyze
+</pre>
+<pre>
+[...]
+Reading JScop '%1 =&gt; %17' in function 'main' from './main___%1---%17.jscop.interchanged'.
+[...]
+main():
+for (c2=0;c2&lt;=1535;c2++) {
+  for (c4=0;c4&lt;=1535;c4++) {
+    Stmt_4(c2,c4);
+  }
+}
+for (c2=0;c2&lt;=1535;c2++) {
+  for (c4=0;c4&lt;=1535;c4++) {
+    for (c6=0;c6&lt;=1535;c6++) {
+      Stmt_6(c2,c6,c4);
+    }
+  }
+}
+[...]
+</pre>
+<h5>Interchange + Tiling</h5>
+<p>In addition to the interchange we tile now the second loop nest.</p>
+
+<pre class="code">
+opt matmul.preopt.ll -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled \
+    -polly-cloog -analyze
+</pre>
+<pre>
+[...]
+Reading JScop '%1 =&gt; %17' in function 'main' from './main___%1---%17.jscop.interchanged+tiled'.
+[...]
+main():
+for (c2=0;c2&lt;=1535;c2++) {
+  for (c4=0;c4&lt;=1535;c4++) {
+    Stmt_4(c2,c4);
+  }
+}
+for (c2=0;c2&lt;=1535;c2+=64) {
+  for (c3=0;c3&lt;=1535;c3+=64) {
+    for (c4=0;c4&lt;=1535;c4+=64) {
+      for (c5=c2;c5&lt;=c2+63;c5++) {
+        for (c6=c4;c6&lt;=c4+63;c6++) {
+          for (c7=c3;c7&lt;=c3+63;c7++) {
+            Stmt_6(c5,c7,c6);
+          }
+        }
+      }
+    }
+  }
+}
+[...]
+</pre>
+<h5>Interchange + Tiling + Strip-mining to prepare vectorization</h5>
+To later allow vectorization we create a so called trivially parallelizable
+loop. It is innermost, parallel and has only four iterations. It can be
+replaced by 4-element SIMD instructions.
+<pre class="code">
+opt matmul.preopt.ll -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
+    -polly-cloog -analyze </pre>
+
+<pre>
+[...]
+Reading JScop '%1 =&gt; %17' in function 'main' from './main___%1---%17.jscop.interchanged+tiled+vector'.
+[...]
+main():
+for (c2=0;c2&lt;=1535;c2++) {
+  for (c4=0;c4&lt;=1535;c4++) {
+    Stmt_4(c2,c4);
+  }
+}
+for (c2=0;c2&lt;=1535;c2+=64) {
+  for (c3=0;c3&lt;=1535;c3+=64) {
+    for (c4=0;c4&lt;=1535;c4+=64) {
+      for (c5=c2;c5&lt;=c2+63;c5++) {
+        for (c6=c4;c6&lt;=c4+63;c6++) {
+          for (c7=c3;c7&lt;=c3+63;c7+=4) {
+            for (c8=c7;c8&lt;=c7+3;c8++) {
+              Stmt_6(c5,c8,c6);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+[...]
+</pre>
+
+</li>
 
 <li><h4>Codegenerate the SCoPs</h4>
+<p>
 This generates new code for the SCoPs detected by polly.
 If -polly-import is present, transformations specified in the imported openscop
-files will be applied.
-<pre class="code">opt -basicaa -polly-import -polly-import-postfix=.opt -polly-codegen matmul.preopt.ll | opt -O3 &gt; matmul.pollyopt.ll</pre>
+files will be applied.</p>
+<pre class="code">opt matmul.preopt.ll | opt -O3 &gt; matmul.normalopt.ll</pre>
+<pre class="code">
+opt -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged \
+    -polly-codegen matmul.preopt.ll \
+   | opt -O3 &gt; matmul.polly.interchanged.ll</pre>
 <pre>
-Cannot open file: ./init_array___%for.cond---%for.end28.scop.opt
-Skipping import.
-Reading SCoP 'for.cond =&gt; for.end48' in function 'main' from './main___%for.cond---%for.end48.scop.opt'.</pre>
-
-<pre class="code">opt matmul.preopt.ll | opt -O3 &gt; matmul.normalopt.ll</pre></li>
+Reading JScop '%1 =&gt; %19' in function 'init_array' from
+    './init_array___%1---%19.jscop.interchanged'.
+File could not be read: No such file or directory
+Reading JScop '%1 =&gt; %17' in function 'main' from
+    './main___%1---%17.jscop.interchanged'.
+</pre>
+<pre class="code">
+opt -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled \
+    -polly-codegen matmul.preopt.ll \
+   | opt -O3 &gt; matmul.polly.interchanged+tiled.ll</pre>
+<pre>
+Reading JScop '%1 =&gt; %19' in function 'init_array' from
+    './init_array___%1---%19.jscop.interchanged+tiled'.
+File could not be read: No such file or directory
+Reading JScop '%1 =&gt; %17' in function 'main' from
+    './main___%1---%17.jscop.interchanged+tiled'.
+</pre>
+<pre class="code">
+opt -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
+    -polly-codegen -enable-polly-vector matmul.preopt.ll \
+   | opt -O3 &gt; matmul.polly.interchanged+tiled+vector.ll</pre>
+<pre>
+Reading JScop '%1 =&gt; %19' in function 'init_array' from
+    './init_array___%1---%19.jscop.interchanged+tiled+vector'.
+File could not be read: No such file or directory
+Reading JScop '%1 =&gt; %17' in function 'main' from
+    './main___%1---%17.jscop.interchanged+tiled+vector'.
+</pre>
+<pre class="code">
+opt -basicaa \
+    -polly-import-jscop -polly-import-jscop-postfix=interchanged+tiled+vector \
+    -polly-codegen -enable-polly-vector -enable-polly-openmp matmul.preopt.ll \
+  | opt -O3 &gt; matmul.polly.interchanged+tiled+openmp.ll</pre>
+<pre>
+Reading JScop '%1 =&gt; %19' in function 'init_array' from
+    './init_array___%1---%19.jscop.interchanged+tiled+vector'.
+File could not be read: No such file or directory
+Reading JScop '%1 =&gt; %17' in function 'main' from
+    './main___%1---%17.jscop.interchanged+tiled+vector'.
+</pre>
 
 <li><h4>Create the executables</h4>
 
@@ -290,8 +433,7 @@ llc matmul.polly.interchanged+tiled.ll -o matmul.polly.interchanged+tiled.s &amp
 llc matmul.polly.interchanged+tiled+vector.ll -o matmul.polly.interchanged+tiled+vector.s &amp;&amp; \
     gcc matmul.polly.interchanged+tiled+vector.s -o matmul.polly.interchanged+tiled+vector.exe
 llc matmul.polly.interchanged+tiled+vector+openmp.ll -o matmul.polly.interchanged+tiled+vector+openmp.s &amp;&amp; \
-    gcc -lgomp matmul.polly.interchanged+tiled+vector+openmp.s -o matmul.polly.interchanged+tiled+vector+openmp.exe
-    </pre>
+    gcc -lgomp matmul.polly.interchanged+tiled+vector+openmp.s -o matmul.polly.interchanged+tiled+vector+openmp.exe </pre>
 
 <li><h4>Compare the runtime of the executables</h4>
 

@@ -11,6 +11,7 @@
 	position:absolute;
   left:29ex;
 	padding-right:4ex;
+        max-width: 50em;
 }
 
 /**************/
