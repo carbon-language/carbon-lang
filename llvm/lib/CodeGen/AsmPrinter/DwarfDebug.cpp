@@ -332,6 +332,11 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   SPCU->addTemplateParams(*SPDie, SP.getTemplateParams());
 
+  StringRef LinkageName = SP.getLinkageName();
+  if (!LinkageName.empty())
+    SPCU->addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
+                    getRealLinkageName(LinkageName));
+
   // If this DIE is going to refer declaration info using AT_specification
   // then there is no need to add other attributes.
   if (SP.getFunctionDeclaration().isSubprogram())
@@ -341,11 +346,6 @@ DIE *DwarfDebug::createSubprogramDIE(DISubprogram SP) {
   if (!SP.getName().empty())
     SPCU->addString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
                     SP.getName());
-
-  StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
-    SPCU->addString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-                    getRealLinkageName(LinkageName));
 
   SPCU->addSourceLine(SPDie, SP);
 
