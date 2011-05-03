@@ -1,7 +1,7 @@
 // This regression test checks byval arguments' debug info.
 // Radar 8367011
 // RUN: %llvmgcc -S -O0 -g %s -o - | \
-// RUN:    llc --disable-fp-elim -o %t.s -O0 -relocation-model=pic
+// RUN:    llc --disable-cfi --disable-fp-elim -o %t.s -O0 -relocation-model=pic
 // RUN: %compile_c %t.s -o %t.o
 // RUN: %link %t.o -o %t.exe
 // RUN: echo {break get\nrun\np missing_arg.b} > %t.in 
