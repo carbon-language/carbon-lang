@@ -1,5 +1,5 @@
 """
-Test lldb target stop-hook command.
+Test lldb target stop-hook mechanism to see whether it fires off correctly .
 """
 
 import os
@@ -8,20 +8,20 @@ import lldb
 import pexpect
 from lldbtest import *
 
-class StopHookTestCase(TestBase):
+class StopHookMechanismTestCase(TestBase):
 
     mydir = "stop-hook"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
-        """Test a sequence of target add-hook commands."""
+        """Test the stop-hook mechanism."""
         self.buildDsym()
-        self.stop_hook_command_sequence()
+        self.stop_hook_firing()
 
     def test_with_dwarf(self):
-        """Test a sequence of target add-hook commands."""
+        """Test the stop-hook mechanism."""
         self.buildDwarf()
-        self.stop_hook_command_sequence()
+        self.stop_hook_firing()
 
     def setUp(self):
         # Call super's setUp().
@@ -31,8 +31,8 @@ class StopHookTestCase(TestBase):
         self.endl = line_number('main.cpp', '// End of the line range for which stop-hook is to be run.')
         self.line = line_number('main.cpp', '// Another breakpoint which is outside of the stop-hook range.')
 
-    def stop_hook_command_sequence(self):
-        """Test a sequence of target stop-hook commands."""
+    def stop_hook_firing(self):
+        """Test the stop-hook mechanism."""
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "
         add_prompt = "Enter your stop hook command(s).  Type 'DONE' to end.\r\n> "
