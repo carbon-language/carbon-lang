@@ -1,3 +1,7 @@
+# Build output for (null)
+# Generated at (null)
+# Using (null) configuration, (null) architecture for (null) target of (null) project
+
 // RUN: llvm-mc -triple i386-unknown-unknown %s --show-encoding  | FileCheck %s
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
@@ -19570,3 +19574,8 @@
 
 // CHECK: 	aeskeygenassist	$125, (%edx,%eax,4), %xmm2
                 aeskeygenassist $125, (%edx,%eax,4), %xmm2
+
+// CHECK:   blendvps	(%rax), %xmm1   # encoding: [0x66,0x0f,0x38,0x14,0x08]
+            blendvps (%rax), %xmm1
+// CHECK:   blendvps	%xmm2, %xmm1    # encoding: [0x66,0x0f,0x38,0x14,0xca]
+            blendvps %xmm2, %xmm1

@@ -4733,14 +4733,14 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
     def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2),
                     !strconcat(OpcodeStr,
-                     "\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}"),
+                     "\t{$src2, $dst|$dst, $src2}"),
                     [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))]>,
                     OpSize;
 
     def rm0 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins VR128:$src1, i128mem:$src2),
                     !strconcat(OpcodeStr,
-                     "\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}"),
+                     "\t{$src2, $dst|$dst, $src2}"),
                     [(set VR128:$dst,
                       (IntId VR128:$src1,
                        (bitconvert (memopv16i8 addr:$src2)), XMM0))]>, OpSize;
