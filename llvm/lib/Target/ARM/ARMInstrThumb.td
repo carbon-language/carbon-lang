@@ -423,10 +423,7 @@ def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
 // potentially appearing dead.
 let isCall = 1,
   // On non-Darwin platforms R9 is callee-saved.
-  Defs = [R0,  R1,  R2,  R3,  R12, LR,
-          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-          D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Defs = [R0,  R1,  R2,  R3,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
   Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
@@ -476,10 +473,7 @@ let isCall = 1,
   // On Darwin R9 is call-clobbered.
   // R7 is marked as a use to prevent frame-pointer assignments from being
   // moved above / below calls.
-  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
-          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-          D16, D17, D18, D19, D20, D21, D22, D23,
-          D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR],
+  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
   Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : TIx2<0b11110, 0b11, 1,
