@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -Wnon-pod-memset -verify %s
 
-extern void *memset(void *, int, unsigned);
+extern "C" void *memset(void *, int, unsigned);
 
 // Several POD types that should not warn.
 struct S1 {} s1;
@@ -60,4 +60,11 @@ void test_nowarn(void *void_ptr) {
 
   // Dead code shouldn't warn.
   if (false) memset(&x1, 0, sizeof x1);
+}
+
+namespace N {
+  void *memset(void *, int, unsigned);
+  void test_nowarn() {
+    N::memset(&x1, 0, sizeof x1);
+  }
 }

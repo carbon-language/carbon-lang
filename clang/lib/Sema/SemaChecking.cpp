@@ -319,7 +319,9 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   }
 
   // Memset handling
-  if (FnInfo->isStr("memset"))
+  if (FnInfo->isStr("memset") && 
+      FDecl->getLinkage() == ExternalLinkage &&
+      (!getLangOptions().CPlusPlus || FDecl->isExternC()))
     CheckMemsetArguments(TheCall);
 
   return false;
