@@ -295,7 +295,6 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
     PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen) << "unused";
     return;
   }
-  SourceLocation LParenLoc = Tok.getLocation();
 
   // Lex the declaration reference(s).
   llvm::SmallVector<Token, 5> Identifiers;
