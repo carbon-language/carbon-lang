@@ -97,6 +97,9 @@ private:
   /// NumThroughBlocks - Number of live-through blocks.
   unsigned NumThroughBlocks;
 
+  /// DidRepairRange - analyze was forced to shrinkToUses().
+  bool DidRepairRange;
+
   SlotIndex computeLastSplitPoint(unsigned Num);
 
   // Sumarize statistics by counting instructions using CurLI.
@@ -112,6 +115,11 @@ public:
   /// analyze - set CurLI to the specified interval, and analyze how it may be
   /// split.
   void analyze(const LiveInterval *li);
+
+  /// didRepairRange() - Returns true if CurLI was invalid and has been repaired
+  /// by analyze(). This really shouldn't happen, but sometimes the coalescer
+  /// can create live ranges that end in mid-air.
+  bool didRepairRange() const { return DidRepairRange; }
 
   /// clear - clear all data structures so SplitAnalysis is ready to analyze a
   /// new interval.

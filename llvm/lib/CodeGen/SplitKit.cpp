@@ -51,6 +51,7 @@ void SplitAnalysis::clear() {
   UseBlocks.clear();
   ThroughBlocks.clear();
   CurLI = 0;
+  DidRepairRange = false;
 }
 
 SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
@@ -119,6 +120,7 @@ void SplitAnalysis::analyzeUses() {
   if (!calcLiveBlockInfo()) {
     // FIXME: calcLiveBlockInfo found inconsistencies in the live range.
     // I am looking at you, SimpleRegisterCoalescing!
+    DidRepairRange = true;
     DEBUG(dbgs() << "*** Fixing inconsistent live interval! ***\n");
     const_cast<LiveIntervals&>(LIS)
       .shrinkToUses(const_cast<LiveInterval*>(CurLI));
