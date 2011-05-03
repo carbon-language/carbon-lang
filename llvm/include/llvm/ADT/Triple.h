@@ -225,7 +225,7 @@ public:
   /// if the environment component is present).
   StringRef getOSAndEnvironmentName() const;
 
-  /// getOSNumber - Parse the version number from the OS name component of the
+  /// getOSVersion - Parse the version number from the OS name component of the
   /// triple, if present.
   ///
   /// For example, "fooos1.2.3" would return (1, 2, 3).
