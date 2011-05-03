@@ -5552,7 +5552,8 @@ private:
                                  unsigned format_idx, unsigned firstDataArg,
                                  bool isPrintf);
 
-  void CheckMemsetArguments(const CallExpr *Call);
+  void CheckMemsetcpymoveArguments(const CallExpr *Call,
+                                   const IdentifierInfo *FnName);
 
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);

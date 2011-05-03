@@ -318,11 +318,13 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
-  // Memset handling
-  if (FnInfo->isStr("memset") && 
-      FDecl->getLinkage() == ExternalLinkage &&
-      (!getLangOptions().CPlusPlus || FDecl->isExternC()))
-    CheckMemsetArguments(TheCall);
+  // Memset/memcpy/memmove handling
+  if (FDecl->getLinkage() == ExternalLinkage &&
+      (!getLangOptions().CPlusPlus || FDecl->isExternC())) {
+    if (FnInfo->isStr("memset") || FnInfo->isStr("memcpy") || 
+        FnInfo->isStr("memmove"))
+      CheckMemsetcpymoveArguments(TheCall, FnInfo);
+  }
 
   return false;
 }
@@ -1813,45 +1815,51 @@ static bool isDynamicClassType(QualType T) {
 /// \brief Check for dangerous or invalid arguments to memset().
 ///
 /// This issues warnings on known problematic or dangerous or unspecified
-/// arguments to the standard 'memset' function call.
+/// arguments to the standard 'memset', 'memcpy', and 'memmove' function calls.
 ///
 /// \param Call The call expression to diagnose.
-void Sema::CheckMemsetArguments(const CallExpr *Call) {
+void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
+                                       const IdentifierInfo *FnName) {
   // It is possible to have a non-standard definition of memset.  Validate
   // we have the proper number of arguments, and if not, abort further
   // checking.
   if (Call->getNumArgs() != 3)
     return;
 
-  const Expr *Dest = Call->getArg(0)->IgnoreParenImpCasts();
+  unsigned LastArg = FnName->isStr("memset")? 1 : 2;
+  for (unsigned ArgIdx = 0; ArgIdx != LastArg; ++ArgIdx) {
+    const Expr *Dest = Call->getArg(ArgIdx)->IgnoreParenImpCasts();
 
-  QualType DestTy = Dest->getType();
-  if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
-    QualType PointeeTy = DestPtrTy->getPointeeType();
-    if (PointeeTy->isVoidType())
-      return;
+    QualType DestTy = Dest->getType();
+    if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
+      QualType PointeeTy = DestPtrTy->getPointeeType();
+      if (PointeeTy->isVoidType())
+        continue;
 
-    unsigned DiagID = 0;
-    // Always complain about dynamic classes.
-    if (isDynamicClassType(PointeeTy))
-      DiagID = diag::warn_dyn_class_memset;
-    // Check the C++11 POD definition regardless of language mode; it is more
-    // relaxed than earlier definitions and we don't want spurious warnings.
-    else if (!PointeeTy->isCXX11PODType())
-      DiagID = diag::warn_non_pod_memset;
-    else
-      return;
+      unsigned DiagID = 0;
+      // Always complain about dynamic classes.
+      if (isDynamicClassType(PointeeTy))
+        DiagID = diag::warn_dyn_class_memaccess;
+      // Check the C++11 POD definition regardless of language mode; it is more
+      // relaxed than earlier definitions and we don't want spurious warnings.
+      else if (!PointeeTy->isCXX11PODType())
+        DiagID = diag::warn_non_pod_memaccess;
+      else
+        continue;
 
-    DiagRuntimeBehavior(
-      Dest->getExprLoc(), Dest,
-      PDiag(DiagID)
-        << PointeeTy << Call->getCallee()->getSourceRange());
+      DiagRuntimeBehavior(
+        Dest->getExprLoc(), Dest,
+        PDiag(DiagID)
+          << ArgIdx << FnName << PointeeTy 
+          << Call->getCallee()->getSourceRange());
 
-    SourceRange ArgRange = Call->getArg(0)->getSourceRange();
-    DiagRuntimeBehavior(
-      Dest->getExprLoc(), Dest,
-      PDiag(diag::note_non_pod_memset_silence)
-        << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
+      SourceRange ArgRange = Call->getArg(0)->getSourceRange();
+      DiagRuntimeBehavior(
+        Dest->getExprLoc(), Dest,
+        PDiag(diag::note_non_pod_memaccess_silence)
+          << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
+      break;
+    }
   }
 }
 
