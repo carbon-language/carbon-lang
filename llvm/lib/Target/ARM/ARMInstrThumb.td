@@ -1381,6 +1381,14 @@ def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
            (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
                                 c_imm:$CRm, i32imm:$opc2)>;
 
+def : Pat<(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                          imm:$CRm, imm:$opc2),
+          (tMCR imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                imm:$CRm, imm:$opc2)>, Requires<[IsThumb, HasV6T2]>;
+def : Pat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
+          (tMRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>,
+          Requires<[IsThumb, HasV6T2]>;
+
 class tMovRRCopro<string opc, bit direction>
   : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
           !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
@@ -1404,6 +1412,10 @@ class tMovRRCopro<string opc, bit direction>
 
 def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */>;
 def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
+
+def : Pat<(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm),
+          (tMCRR imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm)>,
+          Requires<[IsThumb, HasV6T2]>;
 
 //===----------------------------------------------------------------------===//
 // Other Coprocessor Instructions.  For disassembly only.
@@ -1429,6 +1441,11 @@ def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
 }
+
+def : Pat<(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                          imm:$CRm, imm:$opc2),
+          (tCDP imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                imm:$CRm, imm:$opc2)>, Requires<[IsThumb, HasV6T2]>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions

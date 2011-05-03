@@ -860,6 +860,9 @@ class APKHI<bits<8> opcod, bit tb, dag oops, dag iops, InstrItinClass itin,
 class ARMPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM];
 }
+class ARMV5TPat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsARM, HasV5T];
+}
 class ARMV5TEPat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsARM, HasV5TE];
 }
@@ -1206,6 +1209,11 @@ class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
 // T1Pat - Same as Pat<>, but requires that the compiler be in Thumb1 mode.
 class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb, IsThumb1Only];
+}
+
+// T2v6Pat - Same as Pat<>, but requires V6T2 Thumb2 mode.
+class T2v6Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb2, HasV6T2];
 }
 
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.

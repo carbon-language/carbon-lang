@@ -3376,6 +3376,14 @@ def t2MRC2 : t2MovRCopro<"mrc2", 1 /* from coprocessor to ARM core register */,
              (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
                                   c_imm:$CRm, i32imm:$opc2)>;
 
+def : T2v6Pat<(int_arm_mcr2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                            imm:$CRm, imm:$opc2),
+              (t2MCR2 imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                      imm:$CRm, imm:$opc2)>;
+def : T2v6Pat<(int_arm_mrc2 imm:$cop, imm:$opc1, imm:$CRn,
+                            imm:$CRm, imm:$opc2),
+              (t2MRC2 imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>;
+
 class t2MovRRCopro<string opc, bit direction>
   : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
           !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
@@ -3402,6 +3410,9 @@ def t2MCRR2 : t2MovRRCopro<"mcrr2",
 def t2MRRC2 : t2MovRRCopro<"mrrc2",
                            1 /* from coprocessor to ARM core register */>;
 
+def : T2v6Pat<(int_arm_mcrr2 imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm),
+              (t2MCRR2 imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm)>;
+
 //===----------------------------------------------------------------------===//
 // Other Coprocessor Instructions.  For disassembly only.
 //
@@ -3427,3 +3438,8 @@ def t2CDP2 : T2Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
 }
+
+def : T2v6Pat<(int_arm_cdp2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                            imm:$CRm, imm:$opc2),
+              (t2CDP2 imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                      imm:$CRm, imm:$opc2)>;
