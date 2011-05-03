@@ -533,6 +533,13 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       // Calls to these instructions are transformed into unaligned loads.
       NewFn = 0;
       return true;
+    } else if (Name.compare(5, 16, "x86.sse.movnt.ps", 16) == 0 ||
+               Name.compare(5, 17, "x86.sse2.movnt.dq", 17) == 0 ||
+               Name.compare(5, 17, "x86.sse2.movnt.pd", 17) == 0 ||
+               Name.compare(5, 17, "x86.sse2.movnt.i", 16) == 0) {
+      // Calls to these instructions are transformed into nontemporal stores.
+      NewFn = 0;
+      return true;
     } else if (Name.compare(5, 17, "x86.ssse3.pshuf.w", 17) == 0) {
       // This is an SSE/MMX instruction.
       const Type *X86_MMXTy = VectorType::getX86_MMXTy(FTy->getContext());
@@ -972,6 +979,31 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       // Fix up all the uses with our new load.
       if (!CI->use_empty())
         CI->replaceAllUsesWith(BC);
+
+      // Remove intrinsic.
+      CI->eraseFromParent();
+    } else if (F->getName() == "llvm.x86.sse.movnt.ps" ||
+               F->getName() == "llvm.x86.sse2.movnt.dq" ||
+               F->getName() == "llvm.x86.sse2.movnt.pd" ||
+               F->getName() == "llvm.x86.sse2.movnt.i") {
+      IRBuilder<> Builder(C);
+      Builder.SetInsertPoint(CI->getParent(), CI);
+
+      Module *M = F->getParent();
+      SmallVector<Value *, 1> Elts;
+      Elts.push_back(ConstantInt::get(Type::getInt32Ty(C), 1));
+      MDNode *Node = MDNode::get(C, Elts);
+
+      Value *Arg0 = CI->getArgOperand(0);
+      Value *Arg1 = CI->getArgOperand(1);
+
+      // Convert the type of the pointer to a pointer to the stored type.
+      Value *BC = Builder.CreateBitCast(Arg0,
+                                        PointerType::getUnqual(Arg1->getType()),
+                                        "cast");
+      StoreInst *SI = Builder.CreateStore(Arg1, BC);
+      SI->setMetadata(M->getMDKindID("nontemporal"), Node);
+      SI->setAlignment(16);
 
       // Remove intrinsic.
       CI->eraseFromParent();

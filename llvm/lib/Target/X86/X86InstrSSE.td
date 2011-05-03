@@ -1875,21 +1875,6 @@ defm RCP   : sse1_fp_unop_s<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss>,
 // SSE 1 & 2 - Non-temporal stores
 //===----------------------------------------------------------------------===//
 
-def VMOVNTPSmr_Int : VPSI<0x2B, MRMDestMem, (outs),
-                       (ins i128mem:$dst, VR128:$src),
-                       "movntps\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>, VEX;
-def VMOVNTPDmr_Int : VPDI<0x2B, MRMDestMem, (outs),
-                       (ins i128mem:$dst, VR128:$src),
-                       "movntpd\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>, VEX;
-
-let ExeDomain = SSEPackedInt in
-  def VMOVNTDQmr_Int : VPDI<0xE7, MRMDestMem, (outs),
-                     (ins f128mem:$dst, VR128:$src),
-                     "movntdq\t{$src, $dst|$dst, $src}",
-                     [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>, VEX;
-
 let AddedComplexity = 400 in { // Prefer non-temporal versions
   def VMOVNTPSmr : VPSI<0x2B, MRMDestMem, (outs),
                        (ins f128mem:$dst, VR128:$src),
@@ -1906,12 +1891,16 @@ let AddedComplexity = 400 in { // Prefer non-temporal versions
                         "movntdq\t{$src, $dst|$dst, $src}",
                         [(alignednontemporalstore (v2f64 VR128:$src),
                                                   addr:$dst)]>, VEX;
+
   let ExeDomain = SSEPackedInt in
-  def VMOVNTDQmr : VPDI<0xE7, MRMDestMem, (outs),
-                      (ins f128mem:$dst, VR128:$src),
-                      "movntdq\t{$src, $dst|$dst, $src}",
-                      [(alignednontemporalstore (v4f32 VR128:$src),
-                                                addr:$dst)]>, VEX;
+  def VMOVNTDQmr    : VPDI<0xE7, MRMDestMem, (outs),
+                           (ins f128mem:$dst, VR128:$src),
+                           "movntdq\t{$src, $dst|$dst, $src}",
+                           [(alignednontemporalstore (v4f32 VR128:$src),
+                                                     addr:$dst)]>, VEX;
+
+  def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
+            (VMOVNTDQmr addr:$dst, VR128:$src)>;
 
   def VMOVNTPSYmr : VPSI<0x2B, MRMDestMem, (outs),
                        (ins f256mem:$dst, VR256:$src),
@@ -1943,18 +1932,6 @@ def : Pat<(int_x86_avx_movnt_pd_256 addr:$dst, VR256:$src),
 def : Pat<(int_x86_avx_movnt_ps_256 addr:$dst, VR256:$src),
           (VMOVNTPSYmr addr:$dst, VR256:$src)>;
 
-def MOVNTPSmr_Int : PSI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                    "movntps\t{$src, $dst|$dst, $src}",
-                    [(int_x86_sse_movnt_ps addr:$dst, VR128:$src)]>;
-def MOVNTPDmr_Int : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                        "movntpd\t{$src, $dst|$dst, $src}",
-                        [(int_x86_sse2_movnt_pd addr:$dst, VR128:$src)]>;
-
-let ExeDomain = SSEPackedInt in
-def MOVNTDQmr_Int : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                        "movntdq\t{$src, $dst|$dst, $src}",
-                        [(int_x86_sse2_movnt_dq addr:$dst, VR128:$src)]>;
-
 let AddedComplexity = 400 in { // Prefer non-temporal versions
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",
@@ -1972,22 +1949,19 @@ def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
 
+def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
+          (MOVNTDQmr addr:$dst, VR128:$src)>;
+
 // There is no AVX form for instructions below this point
 def MOVNTImr : I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
                  "movnti\t{$src, $dst|$dst, $src}",
                  [(nontemporalstore (i32 GR32:$src), addr:$dst)]>,
                TB, Requires<[HasSSE2]>;
-
 def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
                      "movnti\t{$src, $dst|$dst, $src}",
                      [(nontemporalstore (i64 GR64:$src), addr:$dst)]>,
                   TB, Requires<[HasSSE2]>;
-
 }
-def MOVNTImr_Int  :   I<0xC3, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
-                    "movnti\t{$src, $dst|$dst, $src}",
-                    [(int_x86_sse2_movnt_i addr:$dst, GR32:$src)]>,
-                  TB, Requires<[HasSSE2]>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Misc Instructions (No AVX form)
