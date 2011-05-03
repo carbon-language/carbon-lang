@@ -740,8 +740,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
 
   if (!asmInfo.isFunctionEHFrameSymbolPrivate()) {
-    Twine EHName = frame.Function->getName() + Twine(".eh");
-    MCSymbol *EHSym = context.GetOrCreateSymbol(EHName);
+    MCSymbol *EHSym = context.GetOrCreateSymbol(
+      frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
     streamer.EmitLabel(EHSym);
   }
