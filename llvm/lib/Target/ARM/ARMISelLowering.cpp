@@ -398,12 +398,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::ARM_AAPCS);
   }
 
-  // Use divmod iOS compiler-rt calls.
-  if (Subtarget->getTargetTriple().getOS() == Triple::IOS) {
-    setLibcallName(RTLIB::SDIVREM_I32, "__divmodsi4");
-    setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");
-  }
-
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else
