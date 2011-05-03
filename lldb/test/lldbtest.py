@@ -678,12 +678,15 @@ class TestBase(unittest2.TestCase):
 
         # This is for the case of directly spawning 'lldb' and interacting with it
         # using pexpect.
+        import pexpect
         if self.child and self.child.isalive():
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "tearing down the child process...."
             self.child.sendline('quit')
-            time.sleep(2)
-            self.child.close()
+            try:
+                self.child.expect(pexpect.EOF)
+            except:
+                pass
 
         # Terminate the current process being debugged, if any.
         if self.runStarted:

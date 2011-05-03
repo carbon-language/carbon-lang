@@ -14,7 +14,7 @@ class CommandRegexTestCase(TestBase):
 
     def test_command_regex(self):
         """Test a simple scenario of 'command regexp' invocation and subsequent use."""
-        prompt = "\(lldb\) "
+        prompt = "(lldb) "
         regex_prompt = "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:\r\n"
         regex_prompt1 = "\r\n"
 
@@ -25,12 +25,12 @@ class CommandRegexTestCase(TestBase):
         # So that the spawned lldb session gets shutdown durng teardown.
         self.child = child
 
-        # Substitute 'Help!' with 'help' using the 'commands regex' mechanism.
-        child.expect(prompt)
+        # Substitute 'Help!' for 'help' using the 'commands regex' mechanism.
+        child.expect_exact(prompt)
         child.sendline("command regex 'Help!'")
-        child.expect(regex_prompt)
+        child.expect_exact(regex_prompt)
         child.sendline('s/^$/help/')
-        child.expect(regex_prompt1)
+        child.expect_exact(regex_prompt1)
         child.sendline('')
         # Help!
         child.sendline('Help!')

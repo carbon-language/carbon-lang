@@ -29,7 +29,7 @@ class ConnectRemoteTestCase(TestBase):
         self.addTearDownHook(shutdown_fakeserver)
 
         # Wait until we receive the server ready message before continuing.
-        fakeserver.expect('Listening on localhost:12345')
+        fakeserver.expect_exact('Listening on localhost:12345')
 
         # Connect to the fake server....
         self.runCmd("process connect connect://localhost:12345")
