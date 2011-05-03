@@ -69,6 +69,7 @@ class HelpCommandTestCase(TestBase):
 
     def test_help_image_dump_symtab_should_not_crash(self):
         """Command 'help image dump symtab' should not crash lldb."""
+        # 'image' is an alias for 'target modules'.
         self.expect("help image dump symtab",
             substrs = ['dump symtab',
                        'sort-order'])
@@ -83,6 +84,7 @@ class HelpCommandTestCase(TestBase):
 
     def test_help_image_du_line_should_work(self):
         """Command 'help image du line' is not ambiguous and should work."""
+        # 'image' is an alias for 'target modules'.
         self.expect("help image du line",
             substrs = ['Dump the debug symbol file for one or more target modules'])
 
