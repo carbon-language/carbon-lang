@@ -6,6 +6,18 @@ standard headers.
 
 This patch is offered under the same modified GPLv3 as libstdc++-4.4.
 
+diff -ur a/bits/forward_list.h b/bits/forward_list.h
+--- a/bits/forward_list.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/forward_list.h	2011-05-02 23:51:33.000000000 -0700
+@@ -983,7 +983,7 @@
+        *  function.
+        */
+       void
+-      swap(forward_list&& __list)
++      swap(forward_list& __list)
+       { _Node_base::swap(this->_M_impl._M_head, __list._M_impl._M_head); }
+ 
+       /**
 diff -ur a/bits/move.h b/bits/move.h
 --- a/bits/move.h	2011-03-15 14:49:05.000000000 -0700
 +++ b/bits/move.h	2011-03-29 10:33:39.000000000 -0700
@@ -46,6 +58,67 @@ diff -ur a/bits/move.h b/bits/move.h
  
  _GLIBCXX_END_NAMESPACE
  
+diff -ur a/bits/shared_ptr.h b/bits/shared_ptr.h
+--- a/bits/shared_ptr.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/shared_ptr.h	2011-03-31 16:40:45.000000000 -0700
+@@ -833,7 +833,7 @@
+       { return _M_refcount._M_get_use_count(); }
+ 
+       void
+-      swap(__shared_ptr<_Tp, _Lp>&& __other) // never throws
++      swap(__shared_ptr<_Tp, _Lp>& __other) // never throws
+       {
+ 	std::swap(_M_ptr, __other._M_ptr);
+ 	_M_refcount._M_swap(__other._M_refcount);
+@@ -943,16 +943,6 @@
+     swap(__shared_ptr<_Tp, _Lp>& __a, __shared_ptr<_Tp, _Lp>& __b)
+     { __a.swap(__b); }
+ 
+-  template<typename _Tp, _Lock_policy _Lp>
+-    inline void
+-    swap(__shared_ptr<_Tp, _Lp>&& __a, __shared_ptr<_Tp, _Lp>& __b)
+-    { __a.swap(__b); }
+-
+-  template<typename _Tp, _Lock_policy _Lp>
+-    inline void
+-    swap(__shared_ptr<_Tp, _Lp>& __a, __shared_ptr<_Tp, _Lp>&& __b)
+-    { __a.swap(__b); }
+-
+   // 2.2.3.9 shared_ptr casts
+   /** @warning The seemingly equivalent
+    *           <code>shared_ptr<_Tp, _Lp>(static_cast<_Tp*>(__r.get()))</code>
+@@ -1372,16 +1362,6 @@
+     swap(shared_ptr<_Tp>& __a, shared_ptr<_Tp>& __b)
+     { __a.swap(__b); }
+ 
+-  template<typename _Tp>
+-    inline void
+-    swap(shared_ptr<_Tp>&& __a, shared_ptr<_Tp>& __b)
+-    { __a.swap(__b); }
+-
+-  template<typename _Tp>
+-    inline void
+-    swap(shared_ptr<_Tp>& __a, shared_ptr<_Tp>&& __b)
+-    { __a.swap(__b); }
+-
+   // 20.8.13.2.10 shared_ptr casts.
+   template<typename _Tp, typename _Tp1>
+     inline shared_ptr<_Tp>
+diff -ur a/bits/stl_bvector.h b/bits/stl_bvector.h
+--- a/bits/stl_bvector.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/stl_bvector.h	2011-05-02 23:34:46.000000000 -0700
+@@ -743,11 +743,7 @@
+     }
+ 
+     void
+-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+-    swap(vector&& __x)
+-#else
+     swap(vector& __x)
+-#endif
+     {
+       std::swap(this->_M_impl._M_start, __x._M_impl._M_start);
+       std::swap(this->_M_impl._M_finish, __x._M_impl._M_finish);
 diff -ur a/bits/stl_deque.h b/bits/stl_deque.h
 --- a/bits/stl_deque.h	2011-03-15 14:49:05.000000000 -0700
 +++ b/bits/stl_deque.h	2011-03-29 10:33:39.000000000 -0700
@@ -253,6 +326,27 @@ diff -ur a/bits/stl_pair.h b/bits/stl_pair.h
        {
  	using std::swap;
  	swap(first, __p.first);
+diff -ur a/bits/stl_queue.h b/bits/stl_queue.h
+--- a/bits/stl_queue.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/stl_queue.h	2011-05-02 23:36:15.000000000 -0700
+@@ -249,7 +249,7 @@
+ 
+ #ifdef __GXX_EXPERIMENTAL_CXX0X__
+       void
+-      swap(queue&& __q)
++      swap(queue& __q)
+       { c.swap(__q.c); }
+ #endif
+     };
+@@ -550,7 +550,7 @@
+ 
+ #ifdef __GXX_EXPERIMENTAL_CXX0X__
+       void
+-      swap(priority_queue&& __pq)
++      swap(priority_queue& __pq)
+       {
+ 	using std::swap;
+ 	c.swap(__pq.c);
 diff -ur a/bits/stl_set.h b/bits/stl_set.h
 --- a/bits/stl_set.h	2011-03-15 14:49:05.000000000 -0700
 +++ b/bits/stl_set.h	2011-03-29 10:33:39.000000000 -0700
@@ -268,6 +362,18 @@ diff -ur a/bits/stl_set.h b/bits/stl_set.h
        { _M_t.swap(__x._M_t); }
  
        // insert/erase
+diff -ur a/bits/stl_stack.h b/bits/stl_stack.h
+--- a/bits/stl_stack.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/stl_stack.h	2011-05-02 23:36:36.000000000 -0700
+@@ -213,7 +213,7 @@
+ 
+ #ifdef __GXX_EXPERIMENTAL_CXX0X__
+       void
+-      swap(stack&& __s)
++      swap(stack& __s)
+       { c.swap(__s.c); }
+ #endif
+     };
 diff -ur a/bits/stl_tree.h b/bits/stl_tree.h
 --- a/bits/stl_tree.h	2011-03-15 14:49:05.000000000 -0700
 +++ b/bits/stl_tree.h	2011-03-29 10:33:39.000000000 -0700
@@ -310,6 +416,46 @@ diff -ur a/bits/stl_vector.h b/bits/stl_vector.h
        {
  	std::swap(this->_M_impl._M_start, __x._M_impl._M_start);
  	std::swap(this->_M_impl._M_finish, __x._M_impl._M_finish);
+diff -ur a/bits/unique_ptr.h b/bits/unique_ptr.h
+--- a/bits/unique_ptr.h	2011-03-15 14:49:05.000000000 -0700
++++ b/bits/unique_ptr.h	2011-03-31 16:40:45.000000000 -0700
+@@ -204,7 +204,7 @@
+       }
+ 
+       void
+-      swap(unique_ptr&& __u)
++      swap(unique_ptr& __u)
+       {
+ 	using std::swap;
+ 	swap(_M_t, __u._M_t);
+@@ -350,7 +350,7 @@
+         void reset(_Up) = delete;
+ 
+       void
+-      swap(unique_ptr&& __u)
++      swap(unique_ptr& __u)
+       {
+ 	using std::swap;
+ 	swap(_M_t, __u._M_t);
+@@ -389,18 +389,6 @@
+ 	 unique_ptr<_Tp, _Tp_Deleter>& __y)
+     { __x.swap(__y); }
+ 
+-  template<typename _Tp, typename _Tp_Deleter> 
+-    inline void
+-    swap(unique_ptr<_Tp, _Tp_Deleter>&& __x,
+-	 unique_ptr<_Tp, _Tp_Deleter>& __y)
+-    { __x.swap(__y); }
+-
+-  template<typename _Tp, typename _Tp_Deleter> 
+-    inline void
+-    swap(unique_ptr<_Tp, _Tp_Deleter>& __x,
+-	 unique_ptr<_Tp, _Tp_Deleter>&& __y)
+-    { __x.swap(__y); }
+-  
+   template<typename _Tp, typename _Tp_Deleter,
+ 	   typename _Up, typename _Up_Deleter>
+     inline bool
 diff -ur a/exception_ptr.h b/exception_ptr.h
 --- a/exception_ptr.h	2011-03-15 14:49:08.000000000 -0700
 +++ b/exception_ptr.h	2011-03-29 10:33:39.000000000 -0700
@@ -367,3 +513,96 @@ diff -ur a/ext/vstring.h b/ext/vstring.h
        { this->_M_swap(__s); }
  
        // String operations:
+diff -ur a/tr1_impl/hashtable b/tr1_impl/hashtable
+--- a/tr1_impl/hashtable	2011-03-15 14:49:07.000000000 -0700
++++ b/tr1_impl/hashtable	2011-05-02 23:41:55.000000000 -0700
+@@ -225,11 +225,7 @@
+ 
+       ~_Hashtable();
+ 
+-#ifdef _GLIBCXX_INCLUDE_AS_CXX0X
+-      void swap(_Hashtable&&);
+-#else
+       void swap(_Hashtable&);
+-#endif
+ 
+       // Basic container operations
+       iterator
+@@ -732,11 +728,7 @@
+     void
+     _Hashtable<_Key, _Value, _Allocator, _ExtractKey, _Equal,
+ 	       _H1, _H2, _Hash, _RehashPolicy, __chc, __cit, __uk>::
+-#ifdef _GLIBCXX_INCLUDE_AS_CXX0X
+-    swap(_Hashtable&& __x)
+-#else
+     swap(_Hashtable& __x)
+-#endif
+     {
+       // The only base class with member variables is hash_code_base.  We
+       // define _Hash_code_base::_M_swap because different specializations
+diff -ur a/tuple b/tuple
+--- a/tuple	2011-03-15 14:49:07.000000000 -0700
++++ b/tuple	2011-05-02 23:33:23.000000000 -0700
+@@ -77,7 +77,7 @@
+       _Head&       _M_head()       { return *this; }
+       const _Head& _M_head() const { return *this; }
+     
+-      void _M_swap_impl(_Head&&) { /* no-op */ }
++      void _M_swap_impl(_Head&) { /* no-op */ }
+     };
+ 
+   template<std::size_t _Idx, typename _Head>
+@@ -97,7 +97,7 @@
+       const _Head& _M_head() const { return _M_head_impl; }        
+ 
+       void
+-      _M_swap_impl(_Head&& __h)
++      _M_swap_impl(_Head& __h)
+       { 
+ 	using std::swap;
+ 	swap(__h, _M_head_impl);
+@@ -125,7 +125,7 @@
+     struct _Tuple_impl<_Idx>
+     { 
+     protected:
+-      void _M_swap_impl(_Tuple_impl&&) { /* no-op */ }
++      void _M_swap_impl(_Tuple_impl&) { /* no-op */ }
+     };
+ 
+   /**
+@@ -214,7 +214,7 @@
+ 
+     protected:
+       void
+-      _M_swap_impl(_Tuple_impl&& __in)
++      _M_swap_impl(_Tuple_impl& __in)
+       {
+ 	_Base::_M_swap_impl(__in._M_head());
+ 	_Inherited::_M_swap_impl(__in._M_tail());
+@@ -292,7 +292,7 @@
+ 	}
+ 
+       void
+-      swap(tuple&& __in)
++      swap(tuple& __in)
+       { _Inherited::_M_swap_impl(__in); }
+     };
+ 
+@@ -301,7 +301,7 @@
+     class tuple<>
+     {
+     public:
+-      void swap(tuple&&) { /* no-op */ }
++      void swap(tuple&) { /* no-op */ }
+     };
+ 
+   /// tuple (2-element), with construction and assignment from a pair.
+@@ -394,7 +394,7 @@
+ 	}
+ 
+       void
+-      swap(tuple&& __in)
++      swap(tuple& __in)
+       { 
+ 	using std::swap;
+ 	swap(this->_M_head(), __in._M_head());
