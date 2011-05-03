@@ -1124,7 +1124,9 @@ Driver::MainLoop ()
             bool iochannel_thread_exited = false;
 
             listener.StartListeningForEvents (sb_interpreter.GetBroadcaster(),
-                                              SBCommandInterpreter::eBroadcastBitQuitCommandReceived);
+                                              SBCommandInterpreter::eBroadcastBitQuitCommandReceived |
+                                              SBCommandInterpreter::eBroadcastBitAsynchronousOutputData |
+                                              SBCommandInterpreter::eBroadcastBitAsynchronousErrorData);
 
             // Before we handle any options from the command line, we parse the
             // .lldbinit file in the user's home directory.
@@ -1234,6 +1236,16 @@ Driver::MainLoop ()
                         {
                             if (event_type & SBCommandInterpreter::eBroadcastBitQuitCommandReceived)
                                 done = true;
+                            else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousErrorData)
+                            {
+                                const char *data = SBEvent::GetCStringFromEvent (event);
+                                m_io_channel_ap->ErrWrite (data, strlen(data), ASYNC);
+                            }
+                            else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousOutputData)
+                            {
+                                const char *data = SBEvent::GetCStringFromEvent (event);
+                                m_io_channel_ap->OutWrite (data, strlen(data), ASYNC);
+                            }
                         }
                     }
                 }

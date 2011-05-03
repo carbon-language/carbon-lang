@@ -171,7 +171,8 @@ IOChannel::IOChannel
     m_history_event(),
     m_getting_command (false),
     m_expecting_prompt (false),
-	m_prompt_str ()
+	m_prompt_str (),
+    m_refresh_request_pending (false)
 {
     assert (m_edit_line);
     ::el_set (m_edit_line, EL_PROMPT, el_prompt);
@@ -257,6 +258,7 @@ IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_
 	// Make this a member variable.
     // static std::string prompt_str;
     IOChannel *io_channel = (IOChannel *) baton;
+    IOLocker locker (io_channel->m_output_mutex);
     const char *bytes = (const char *) src;
 
     if (io_channel->IsGettingCommand() && io_channel->m_expecting_prompt)
@@ -266,17 +268,19 @@ IOChannel::LibeditOutputBytesReceived (void *baton, const void *src, size_t src_
         if (io_channel->m_prompt_str.find (el_prompt(io_channel->m_edit_line)) == 0)
         {
             io_channel->m_expecting_prompt = false;
+            io_channel->m_refresh_request_pending = false;
             io_channel->OutWrite (io_channel->m_prompt_str.c_str(), 
                                   io_channel->m_prompt_str.size(), NO_ASYNC);
             io_channel->m_prompt_str.clear();
         }
-		else 
-			assert (io_channel->m_prompt_str.find (el_prompt(io_channel->m_edit_line)) == std::string::npos);
     }
     else
     {
         if (io_channel->m_prompt_str.size() > 0)
             io_channel->m_prompt_str.clear();
+        std::string tmp_str (bytes, src_len);
+        if (tmp_str.find (el_prompt (io_channel->m_edit_line)) == 0)
+            io_channel->m_refresh_request_pending = false;
         io_channel->OutWrite (bytes, src_len, NO_ASYNC);
     }
 }
@@ -342,9 +346,7 @@ IOChannel::Run ()
     listener.StartListeningForEvents (interpreter_broadcaster,
                                       SBCommandInterpreter::eBroadcastBitResetPrompt |
                                       SBCommandInterpreter::eBroadcastBitThreadShouldExit |
-                                      SBCommandInterpreter::eBroadcastBitQuitCommandReceived |
-                                      SBCommandInterpreter::eBroadcastBitAsynchronousOutputData |
-                                      SBCommandInterpreter::eBroadcastBitAsynchronousErrorData);
+                                      SBCommandInterpreter::eBroadcastBitQuitCommandReceived);
 
     listener.StartListeningForEvents (*this,
                                       IOChannel::eBroadcastBitThreadShouldExit);
@@ -418,18 +420,6 @@ IOChannel::Run ()
                 case SBCommandInterpreter::eBroadcastBitQuitCommandReceived:
                     done = true;
                     break;
-                case SBCommandInterpreter::eBroadcastBitAsynchronousErrorData:
-                    {
-                        const char *data = SBEvent::GetCStringFromEvent (event);
-                        ErrWrite (data, strlen(data), ASYNC);
-                    }
-                    break;
-                case SBCommandInterpreter::eBroadcastBitAsynchronousOutputData:
-                    {
-                        const char *data = SBEvent::GetCStringFromEvent (event);
-                        OutWrite (data, strlen(data), ASYNC);
-                    }
-                    break;
                 }
             }
             else if (event.BroadcasterMatchesPtr (this))
@@ -482,7 +472,7 @@ IOChannel::RefreshPrompt ()
 {
     // If we are not in the middle of getting input from the user, there is no need to 
     // refresh the prompt.
-
+    IOLocker locker (m_output_mutex);
     if (! IsGettingCommand())
         return;
 
@@ -490,7 +480,11 @@ IOChannel::RefreshPrompt ()
     if (m_expecting_prompt)
         return;
 
+    if (m_refresh_request_pending)
+        return;
+
     ::el_set (m_edit_line, EL_REFRESH);
+    m_refresh_request_pending = true;    
 }
 
 void

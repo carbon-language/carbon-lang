@@ -122,6 +122,7 @@ private:
     bool m_getting_command;
     bool m_expecting_prompt;
 	std::string m_prompt_str;  // for accumlating the prompt as it gets written out by editline
+    bool m_refresh_request_pending;
 
     void
     HistorySaveLoad (bool save);
