@@ -2095,6 +2095,11 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
   memcpy(initializer, &Initializer, sizeof (CXXCtorInitializer*));
   Constructor->setCtorInitializers(initializer);
 
+  if (CXXDestructorDecl *Dtor = LookupDestructor(Constructor->getParent())) {
+    MarkDeclarationReferenced(Initializer->getSourceLocation(), Dtor);
+    DiagnoseUseOfDecl(Dtor, Initializer->getSourceLocation());
+  }
+
   return false;
 }
 

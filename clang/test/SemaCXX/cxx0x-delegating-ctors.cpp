@@ -7,8 +7,9 @@ struct foo {
   foo(int, int);
   foo(bool);
   foo(char);
-  foo(float*);
-  foo(float&);
+  foo(const float*);
+  foo(const float&);
+  foo(void*);
 };
 
 // Good
@@ -25,12 +26,23 @@ foo::foo (bool) : foo(true) { // expected-error{{delegates to itself}}
 }
 
 // Good
-foo::foo (float* f) : foo(*f) {
+foo::foo (const float* f) : foo(*f) {
 }
 
 // FIXME: This should error
-foo::foo (float &f) : foo(&f) {
+foo::foo (const float &f) : foo(&f) {
 }
 
 foo::foo (char) : i(3), foo(3) { // expected-error{{must appear alone}}
 }
+
+// This should not cause an infinite loop
+foo::foo (void*) : foo(4.0f) {
+}
+
+struct deleted_dtor {
+  ~deleted_dtor() = delete; // expected-note{{function has been explicitly marked deleted here}}
+  deleted_dtor();
+  deleted_dtor(int) : deleted_dtor() // expected-error{{attempt to use a deleted function}}
+  {}
+};
