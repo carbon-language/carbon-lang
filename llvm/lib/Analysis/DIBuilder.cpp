@@ -51,6 +51,10 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     ConstantInt::get(Type::getInt32Ty(VMContext), RunTimeVer)
   };
   TheCU = DICompileUnit(MDNode::get(VMContext, Elts));
+
+  // Create a named metadata so that it is easier to find cu in a module.
+  NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.cu");
+  NMD->addOperand(TheCU);
 }
 
 /// createFile - Create a file descriptor to hold debugging information
