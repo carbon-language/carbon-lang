@@ -4,8 +4,8 @@ Test lldb target stop-hook command.
 
 import os
 import unittest2
+import StringIO
 import lldb
-import pexpect
 from lldbtest import *
 
 class StopHookCmdTestCase(TestBase):
@@ -14,12 +14,12 @@ class StopHookCmdTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
-        """Test a sequence of target add-hook commands."""
+        """Test a sequence of target stop-hook commands."""
         self.buildDsym()
         self.stop_hook_cmd_sequence()
 
     def test_with_dwarf(self):
-        """Test a sequence of target add-hook commands."""
+        """Test a sequence of target stop-hook commands."""
         self.buildDwarf()
         self.stop_hook_cmd_sequence()
 
@@ -47,22 +47,30 @@ class StopHookCmdTestCase(TestBase):
 
         self.runCmd("target stop-hook add -f main.cpp -l %d -e %d -o 'expr ptr'" % (self.begl, self.endl))
 
-        self.runCmd('target stop-hook list')
+        self.expect('target stop-hook list', 'Stop Hook added successfully',
+            substrs = ['State: enabled',
+                       'expr ptr'])
 
-        # Now run the program, expect to stop at the the first breakpoint which is within the stop-hook range.
-        #self.expect('run', 'Stop hook fired',
-        #    substrs = '** Stop Hooks **')
-        self.runCmd('run')
-        self.runCmd('thread step-over')
-        self.expect('thread step-over', 'Stop hook fired again',
-            substrs = '** Stop Hooks **')
+        self.runCmd('target stop-hook disable')
 
-        # Now continue the inferior, we'll stop at another breakpoint which is outside the stop-hook range.
-        self.runCmd('process continue')
-        # Verify that the 'Stop Hooks' mechanism is NOT BEING fired off.
-        self.expect('thread step-over', 'Stop hook should not be fired', matching=False,
-            substrs = '** Stop Hooks **')
-        
+        self.expect('target stop-hook list', 'Stop Hook disabled successfully',
+            substrs = ['State: disabled',
+                       'expr ptr'])
+
+        self.runCmd('target stop-hook enable')
+
+        self.expect('target stop-hook list', 'Stop Hook enabled successfully',
+            substrs = ['State: enabled',
+                       'expr ptr'])
+
+        self.runCmd("settings set auto-confirm true")
+        self.addTearDownHook(lambda: self.runCmd("settings set -r auto-confirm"))
+
+        self.runCmd('target stop-hook delete')
+
+        self.expect('target stop-hook list', 'Stop Hook deleted successfully',
+            substrs = ['No stop hooks.'])
+
 
 if __name__ == '__main__':
     import atexit
