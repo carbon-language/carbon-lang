@@ -155,7 +155,7 @@ public:
 
         if (target == NULL)
         {
-            result.AppendError ("invalid target, set executable file using 'file' command");
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -166,7 +166,7 @@ public:
 
         if (exe_module == NULL)
         {
-            result.AppendError ("no file in target, set executable file using 'file' command");
+            result.AppendError ("no file in target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

@@ -188,6 +188,8 @@ RNBContext::ThreadFunctionProcessStatus(void *arg)
                 case eStateDetached:
                     done = true;
                     break;
+                default:
+                    break;
                 }
             }
 

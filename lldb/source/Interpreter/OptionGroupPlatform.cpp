@@ -83,7 +83,7 @@ OptionGroupPlatform::SetOptionValue (CommandInterpreter &interpreter,
 {
     Error error;
     if (!m_include_platform_option)
-        --option_idx;
+        ++option_idx;
     
     char short_option = (char) g_option_table[option_idx].short_option;
     

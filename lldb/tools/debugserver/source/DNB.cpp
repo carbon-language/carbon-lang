@@ -705,6 +705,7 @@ DNBStateAsString(nub_state_t state)
 {
     switch (state)
     {
+    case eStateInvalid:     return "Invalid";
     case eStateUnloaded:    return "Unloaded";
     case eStateAttaching:   return "Attaching";
     case eStateLaunching:   return "Launching";

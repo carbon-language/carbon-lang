@@ -96,6 +96,16 @@ OptionValue::GetAsFormat ()
     return NULL;
 }
 
+OptionValueUUID *
+OptionValue::GetAsUUID ()
+{
+    if (GetType () == OptionValue::eTypeUUID)
+        return static_cast<OptionValueUUID *>(this);
+    return NULL;
+    
+}
+
+
 OptionValueArray *
 OptionValue::GetAsArray ()
 {
@@ -304,6 +314,24 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr)
     return Error();
 }
 
+
+//-------------------------------------------------------------------------
+// OptionValueUUID
+//-------------------------------------------------------------------------
+void
+OptionValueUUID::DumpValue (Stream &strm)
+{
+    m_uuid.Dump (&strm);
+}
+
+Error
+OptionValueUUID::SetValueFromCString (const char *value_cstr)
+{
+    Error error;
+    if (m_uuid.SetfromCString(value_cstr) == 0)
+        error.SetErrorStringWithFormat ("invalid uuid string value '%s'", value_cstr);
+    return error;
+}
 
 //-------------------------------------------------------------------------
 // OptionValueFormat

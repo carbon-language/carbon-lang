@@ -236,6 +236,8 @@ protected:
             case set_logging_mode:
             case query_host_info:
                 return true;
+            default:
+                    break;
             }
             return false;
         }

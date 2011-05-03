@@ -2068,6 +2068,7 @@ RNBRemote::HandlePacket_last_signal (const char *unused)
         case eStateLaunching:
         case eStateRunning:
         case eStateStepping:
+        case eStateDetached:
             return rnb_success;  // Ignore
 
         case eStateSuspended:

@@ -454,7 +454,7 @@ DNBArchImplX86_64::ThreadWillResume()
     if (m_thread->IsStepping())
     {
         // This is the primary thread, let the arch do anything it needs
-        EnableHardwareSingleStep(true) == KERN_SUCCESS;
+        EnableHardwareSingleStep(true);
     }
 }
 

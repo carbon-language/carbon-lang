@@ -629,7 +629,7 @@ public:
 
         if (!m_interpreter.GetDebugger().GetSelectedTarget().get())
         {
-            result.AppendError ("invalid target, set executable file using 'file' command");
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -893,7 +893,7 @@ public:
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         if (target == NULL)
         {
-            result.AppendError ("invalid target, set executable file using 'file' command");
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

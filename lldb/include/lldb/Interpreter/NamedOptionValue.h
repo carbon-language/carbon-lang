@@ -18,6 +18,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
 
 namespace lldb_private {
@@ -28,6 +29,7 @@ namespace lldb_private {
     class OptionValueString;
     class OptionValueFileSpec;
     class OptionValueFormat;
+    class OptionValueUUID;
     class OptionValueArray;
     class OptionValueDictionary;
 
@@ -47,6 +49,7 @@ namespace lldb_private {
             eTypeFormat,
             eTypeSInt64,
             eTypeUInt64,
+            eTypeUUID,
             eTypeString
         } Type;
         
@@ -107,6 +110,9 @@ namespace lldb_private {
         
         OptionValueFormat *
         GetAsFormat ();
+        
+        OptionValueUUID *
+        GetAsUUID ();
         
         OptionValueArray *
         GetAsArray ();
@@ -741,6 +747,79 @@ namespace lldb_private {
         bool m_byte_size_prefix_ok;
     };
     
+    
+    
+    //---------------------------------------------------------------------
+    // OptionValueUUID
+    //---------------------------------------------------------------------
+    class OptionValueUUID : public OptionValue
+    {
+    public:
+        OptionValueUUID () :
+            m_uuid ()
+        {
+        }
+        
+        OptionValueUUID (const UUID &uuid) :
+            m_uuid (uuid)
+        {
+        }
+        
+        virtual 
+        ~OptionValueUUID()
+        {
+        }
+        
+        //---------------------------------------------------------------------
+        // Virtual subclass pure virtual overrides
+        //---------------------------------------------------------------------
+        
+        virtual OptionValue::Type
+        GetType ()
+        {
+            return eTypeFileSpec;
+        }
+        
+        virtual void
+        DumpValue (Stream &strm);
+        
+        virtual Error
+        SetValueFromCString (const char *value);
+        
+        virtual bool
+        Clear ()
+        {
+            m_uuid.Clear();
+            m_value_was_set = false;
+            return true;
+        }
+        
+        //---------------------------------------------------------------------
+        // Subclass specific functions
+        //---------------------------------------------------------------------
+        
+        UUID &
+        GetCurrentValue()
+        {
+            return m_uuid;
+        }
+        
+        const UUID &
+        GetCurrentValue() const
+        {
+            return m_uuid;
+        }
+        
+        void
+        SetCurrentValue (const UUID &value)
+        {
+            m_uuid = value;
+        }
+        
+    protected:
+        UUID m_uuid;
+    };
+
     //---------------------------------------------------------------------
     // OptionValueArray
     //---------------------------------------------------------------------

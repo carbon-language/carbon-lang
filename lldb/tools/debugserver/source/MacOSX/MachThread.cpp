@@ -334,6 +334,8 @@ MachThread::ThreadWillResume(const DNBThreadResumeAction *thread_action)
     case eStateStepping:
         Resume();
         break;
+    default: 
+        break;
     }
     m_arch_ap->ThreadWillResume();
     m_stop_exception.Clear();

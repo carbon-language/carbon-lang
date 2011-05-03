@@ -22,7 +22,6 @@
 //#include "../Commands/CommandObjectFile.h"
 #include "../Commands/CommandObjectFrame.h"
 #include "../Commands/CommandObjectHelp.h"
-#include "../Commands/CommandObjectImage.h"
 #include "../Commands/CommandObjectLog.h"
 #include "../Commands/CommandObjectMemory.h"
 #include "../Commands/CommandObjectPlatform.h"
@@ -118,6 +117,7 @@ CommandInterpreter::Initialize ()
     HandleCommand ("command alias up       _regexp-up", false, result);
     HandleCommand ("command alias down     _regexp-down", false, result);
     HandleCommand ("command alias file     target create", false, result);
+    HandleCommand ("command alias image    target modules", false, result);
     
 }
 
@@ -169,7 +169,7 @@ CommandInterpreter::LoadCommandDictionary ()
 //    m_command_dict["file"]      = CommandObjectSP (new CommandObjectFile (*this));
     m_command_dict["frame"]     = CommandObjectSP (new CommandObjectMultiwordFrame (*this));
     m_command_dict["help"]      = CommandObjectSP (new CommandObjectHelp (*this));
-    m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
+    ///    m_command_dict["image"]     = CommandObjectSP (new CommandObjectImage (*this));
     m_command_dict["log"]       = CommandObjectSP (new CommandObjectLog (*this));
     m_command_dict["memory"]    = CommandObjectSP (new CommandObjectMemory (*this));
     m_command_dict["platform"]  = CommandObjectSP (new CommandObjectPlatform (*this));

@@ -284,7 +284,7 @@ CommandObjectBreakpointSet::Execute
     Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
     if (target == NULL)
     {
-        result.AppendError ("Invalid target.  Must set target before setting breakpoints (see 'file' command).");
+        result.AppendError ("Invalid target.  Must set target before setting breakpoints (see 'target create' command).");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
