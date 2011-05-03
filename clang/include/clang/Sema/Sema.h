@@ -1026,10 +1026,11 @@ public:
   void ActOnPopScope(SourceLocation Loc, Scope *S);
   void ActOnTranslationUnitScope(Scope *S);
 
-  /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
-  /// no declarator (e.g. "struct foo;") is parsed.
   Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
                                    DeclSpec &DS);
+  Decl *ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
+                                   DeclSpec &DS,
+                                   MultiTemplateParamsArg TemplateParams);
   
   StmtResult ActOnVlaStmt(const DeclSpec &DS);
 

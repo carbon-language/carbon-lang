@@ -216,3 +216,11 @@ namespace PR8649 {
 
   X<int, float, 7> x;
 }
+
+// Don't crash, and error on invalid friend type template.
+namespace friend_type_template_no_tag {
+  template <typename T> struct S {
+    template <typename U> friend S<U>; // expected-error{{friend type templates must use an elaborated type}}
+  };
+  template struct S<int>;
+}
