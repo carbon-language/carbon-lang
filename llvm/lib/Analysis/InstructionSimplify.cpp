@@ -1868,6 +1868,124 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
+  // Simplify comparisons involving max/min.
+  Value *A, *B;
+  CmpInst::Predicate P = CmpInst::BAD_ICMP_PREDICATE;
+  CmpInst::Predicate EqP; // Chosen so that "A == max/min(A,B)" iff "A EqP B".
+
+  // Signed max/min.
+  if (match(LHS, m_SMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
+    if (A != RHS) std::swap(A, B); // smax(A, B) pred A.
+    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" iff "A sge B".
+    // We analyze this as smax(A, B) pred A.
+    P = Pred;
+  } else if (match(RHS, m_SMax(m_Value(A), m_Value(B))) &&
+             (A == LHS || B == LHS)) {
+    if (A != LHS) std::swap(A, B); // A pred smax(A, B).
+    EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" iff "A sge B".
+    // We analyze this as smax(A, B) swapped-pred A.
+    P = CmpInst::getSwappedPredicate(Pred);
+  } else if (match(LHS, m_SMin(m_Value(A), m_Value(B))) &&
+             (A == RHS || B == RHS)) {
+    if (A != RHS) std::swap(A, B); // smin(A, B) pred A.
+    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" iff "A sle B".
+    // We analyze this as smax(-A, -B) swapped-pred -A.
+    // Note that we do not need to actually form -A or -B thanks to EqP.
+    P = CmpInst::getSwappedPredicate(Pred);
+  } else if (match(RHS, m_SMin(m_Value(A), m_Value(B))) &&
+             (A == LHS || B == LHS)) {
+    if (A != LHS) std::swap(A, B); // A pred smin(A, B).
+    EqP = CmpInst::ICMP_SLE; // "A == smin(A, B)" iff "A sle B".
+    // We analyze this as smax(-A, -B) pred -A.
+    // Note that we do not need to actually form -A or -B thanks to EqP.
+    P = Pred;
+  }
+  if (P != CmpInst::BAD_ICMP_PREDICATE) {
+    // Cases correspond to "max(A, B) p A".
+    switch (P) {
+    default:
+      break;
+    case CmpInst::ICMP_EQ:
+    case CmpInst::ICMP_SLE:
+      // Equivalent to "A EqP B".
+      if (MaxRecurse)
+        if (Value *V = SimplifyICmpInst(EqP, A, B, TD, DT, MaxRecurse-1))
+          return V;
+      break;
+    case CmpInst::ICMP_NE:
+    case CmpInst::ICMP_SGT:
+      // Equivalent to "A inverse-EqP B".
+      if (MaxRecurse)
+        if (Value *V = SimplifyICmpInst(CmpInst::getInversePredicate(EqP), A, B,
+                                        TD, DT, MaxRecurse-1))
+          return V;
+      break;
+    case CmpInst::ICMP_SGE:
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    case CmpInst::ICMP_SLT:
+      // Always false.
+      return Constant::getNullValue(ITy);
+    }
+  }
+
+  // Unsigned max/min.
+  P = CmpInst::BAD_ICMP_PREDICATE;
+  if (match(LHS, m_UMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
+    if (A != RHS) std::swap(A, B); // umax(A, B) pred A.
+    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" iff "A uge B".
+    // We analyze this as umax(A, B) pred A.
+    P = Pred;
+  } else if (match(RHS, m_UMax(m_Value(A), m_Value(B))) &&
+             (A == LHS || B == LHS)) {
+    if (A != LHS) std::swap(A, B); // A pred umax(A, B).
+    EqP = CmpInst::ICMP_UGE; // "A == umax(A, B)" iff "A uge B".
+    // We analyze this as umax(A, B) swapped-pred A.
+    P = CmpInst::getSwappedPredicate(Pred);
+  } else if (match(LHS, m_UMin(m_Value(A), m_Value(B))) &&
+             (A == RHS || B == RHS)) {
+    if (A != RHS) std::swap(A, B); // umin(A, B) pred A.
+    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" iff "A ule B".
+    // We analyze this as umax(-A, -B) swapped-pred -A.
+    // Note that we do not need to actually form -A or -B thanks to EqP.
+    P = CmpInst::getSwappedPredicate(Pred);
+  } else if (match(RHS, m_UMin(m_Value(A), m_Value(B))) &&
+             (A == LHS || B == LHS)) {
+    if (A != LHS) std::swap(A, B); // A pred umin(A, B).
+    EqP = CmpInst::ICMP_ULE; // "A == umin(A, B)" iff "A ule B".
+    // We analyze this as umax(-A, -B) pred -A.
+    // Note that we do not need to actually form -A or -B thanks to EqP.
+    P = Pred;
+  }
+  if (P != CmpInst::BAD_ICMP_PREDICATE) {
+    // Cases correspond to "max(A, B) p A".
+    switch (P) {
+    default:
+      break;
+    case CmpInst::ICMP_EQ:
+    case CmpInst::ICMP_ULE:
+      // Equivalent to "A EqP B".
+      if (MaxRecurse)
+        if (Value *V = SimplifyICmpInst(EqP, A, B, TD, DT, MaxRecurse-1))
+          return V;
+      break;
+    case CmpInst::ICMP_NE:
+    case CmpInst::ICMP_UGT:
+      // Equivalent to "A inverse-EqP B".
+      if (MaxRecurse)
+        if (Value *V = SimplifyICmpInst(CmpInst::getInversePredicate(EqP), A, B,
+                                        TD, DT, MaxRecurse-1))
+          return V;
+      break;
+    case CmpInst::ICMP_UGE:
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    case CmpInst::ICMP_ULT:
+      // Always false.
+      return Constant::getNullValue(ITy);
+    }
+  }
+
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
   if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
