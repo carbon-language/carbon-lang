@@ -2072,12 +2072,6 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
 bool
 Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
                                CXXCtorInitializer *Initializer) {
-  Constructor->setNumCtorInitializers(1);
-  CXXCtorInitializer **initializer =
-    new (Context) CXXCtorInitializer*[1];
-  memcpy(initializer, &Initializer, sizeof (CXXCtorInitializer*));
-  Constructor->setCtorInitializers(initializer);
-
   // FIXME: This doesn't catch indirect loops yet
   CXXConstructorDecl *Target = Initializer->getTargetConstructor();
   while (Target) {
@@ -2088,6 +2082,18 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
     }
     Target = Target->getTargetConstructor();
   }
+
+  // We do the cycle detection first so that we know that we're not
+  // going to create a cycle by inserting this link. This ensures that
+  // the AST is cycle-free and we don't get a scenario where we have
+  // a B -> C -> B cycle and then add an A -> B link and get stuck in
+  // an infinite loop as we check for cycles with A and never get there
+  // because we get stuck in a cycle not including A.
+  Constructor->setNumCtorInitializers(1);
+  CXXCtorInitializer **initializer =
+    new (Context) CXXCtorInitializer*[1];
+  memcpy(initializer, &Initializer, sizeof (CXXCtorInitializer*));
+  Constructor->setCtorInitializers(initializer);
 
   return false;
 }
