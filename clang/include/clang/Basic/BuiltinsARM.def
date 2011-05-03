@@ -30,6 +30,16 @@ BUILTIN(__builtin_arm_set_fpscr, "vUi", "nc")
 BUILTIN(__builtin_arm_vcvtr_f, "ffi", "nc")
 BUILTIN(__builtin_arm_vcvtr_d, "fdi", "nc")
 
+// Coprocessor
+BUILTIN(__builtin_arm_mcr, "vUiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mcr2, "vUiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mrc, "UiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mrc2, "UiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_cdp, "vUiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_cdp2, "vUiUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mcrr, "vUiUiUiUiUi", "")
+BUILTIN(__builtin_arm_mcrr2, "vUiUiUiUiUi", "")
+
 // NEON
 #define GET_NEON_BUILTINS
 #include "clang/Basic/arm_neon.inc"
