@@ -1352,9 +1352,10 @@ def tLEApcrelJT : tPseudoInst<(outs tGPR:$Rd),
 // Move between coprocessor and ARM core register -- for disassembly only
 //
 
-class tMovRCopro<string opc, bit direction, dag oops, dag iops>
+class tMovRCopro<string opc, bit direction, dag oops, dag iops,
+                 list<dag> pattern>
   : T1Cop<oops, iops, !strconcat(opc, "\t$cop, $opc1, $Rt, $CRn, $CRm, $opc2"),
-          [/* For disassembly only; pattern left blank */]> {
+          pattern> {
   let Inst{27-24} = 0b1110;
   let Inst{20} = direction;
   let Inst{4} = 1;
@@ -1375,24 +1376,24 @@ class tMovRCopro<string opc, bit direction, dag oops, dag iops>
 }
 
 def tMCR : tMovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
-           (outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
-                        c_imm:$CRm, i32imm:$opc2)>;
+           (outs),
+           (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, c_imm:$CRn,
+                c_imm:$CRm, i32imm:$opc2),
+           [(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
+                         imm:$CRm, imm:$opc2)]>;
 def tMRC : tMovRCopro<"mrc", 1 /* from coprocessor to ARM core register */,
-           (outs GPR:$Rt), (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn,
-                                c_imm:$CRm, i32imm:$opc2)>;
+           (outs GPR:$Rt),
+           (ins p_imm:$cop, i32imm:$opc1, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
+           []>;
 
-def : Pat<(int_arm_mcr imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
-                          imm:$CRm, imm:$opc2),
-          (tMCR imm:$cop, imm:$opc1, GPR:$Rt, imm:$CRn,
-                imm:$CRm, imm:$opc2)>, Requires<[IsThumb, HasV6T2]>;
 def : Pat<(int_arm_mrc imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2),
           (tMRC imm:$cop, imm:$opc1, imm:$CRn, imm:$CRm, imm:$opc2)>,
           Requires<[IsThumb, HasV6T2]>;
 
-class tMovRRCopro<string opc, bit direction>
+class tMovRRCopro<string opc, bit direction,
+                  list<dag> pattern = [/* For disassembly only */]>
   : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1, GPR:$Rt, GPR:$Rt2, c_imm:$CRm),
-          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"),
-          [/* For disassembly only; pattern left blank */]> {
+          !strconcat(opc, "\t$cop, $opc1, $Rt, $Rt2, $CRm"), pattern> {
   let Inst{27-24} = 0b1100;
   let Inst{23-21} = 0b010;
   let Inst{20} = direction;
@@ -1410,12 +1411,10 @@ class tMovRRCopro<string opc, bit direction>
   let Inst{3-0}   = CRm;
 }
 
-def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */>;
+def tMCRR : tMovRRCopro<"mcrr", 0 /* from ARM core register to coprocessor */,
+                        [(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2,
+                                       imm:$CRm)]>;
 def tMRRC : tMovRRCopro<"mrrc", 1 /* from coprocessor to ARM core register */>;
-
-def : Pat<(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm),
-          (tMCRR imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm)>,
-          Requires<[IsThumb, HasV6T2]>;
 
 //===----------------------------------------------------------------------===//
 // Other Coprocessor Instructions.  For disassembly only.
@@ -1423,7 +1422,8 @@ def : Pat<(int_arm_mcrr imm:$cop, imm:$opc1, GPR:$Rt, GPR:$Rt2, imm:$CRm),
 def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
                  c_imm:$CRd, c_imm:$CRn, c_imm:$CRm, i32imm:$opc2),
                  "cdp\t$cop, $opc1, $CRd, $CRn, $CRm, $opc2",
-                 [/* For disassembly only; pattern left blank */]> {
+                 [(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
+                               imm:$CRm, imm:$opc2)]> {
   let Inst{27-24} = 0b1110;
 
   bits<4> opc1;
@@ -1441,11 +1441,6 @@ def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
 }
-
-def : Pat<(int_arm_cdp imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
-                          imm:$CRm, imm:$opc2),
-          (tCDP imm:$cop, imm:$opc1, imm:$CRd, imm:$CRn,
-                imm:$CRm, imm:$opc2)>, Requires<[IsThumb, HasV6T2]>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
