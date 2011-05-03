@@ -43,6 +43,8 @@
 @end
 
 @implementation AutomaticSynthesis
+@synthesize someString;
+@synthesize someNumber;
 - init
 {
   return self;
