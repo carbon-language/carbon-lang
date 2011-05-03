@@ -1164,31 +1164,23 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     ;
   else if (CPU == "pentium-mmx" || CPU == "pentium2")
     setFeatureEnabled(Features, "mmx", true);
-  else if (CPU == "pentium3" || CPU == "pentium3m") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "pentium3")
     setFeatureEnabled(Features, "sse", true);
-  } else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "pentium4m" ||
-             CPU == "x86-64") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "x86-64")
     setFeatureEnabled(Features, "sse2", true);
-  } else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona")
     setFeatureEnabled(Features, "sse3", true);
-  } else if (CPU == "core2") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "core2")
     setFeatureEnabled(Features, "ssse3", true);
-  } else if (CPU == "penryn") {
-    setFeatureEnabled(Features, "mmx", true);
-    setFeatureEnabled(Features, "sse4.1", true);
-  } else if (CPU == "atom") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "penryn") {
+    setFeatureEnabled(Features, "sse4", true);
+    Features["sse42"] = false;
+  } else if (CPU == "atom")
     setFeatureEnabled(Features, "sse3", true);
-  } else if (CPU == "corei7") {
-    setFeatureEnabled(Features, "mmx", true);
+  else if (CPU == "corei7") {
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
   } else if (CPU == "sandybridge") {
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
 //    setFeatureEnabled(Features, "avx", true);
@@ -1199,20 +1191,16 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "3dnow", true);
   } else if (CPU == "athlon-4" || CPU == "athlon-xp" || CPU == "athlon-mp") {
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
     setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "k8" || CPU == "opteron" || CPU == "athlon64" ||
            CPU == "athlon-fx") {
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse2", true);
     setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "k8-sse3") {
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse3", true);
     setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "c3-2")
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
 }
 
@@ -1229,53 +1217,49 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     if (Name == "mmx")
       Features["mmx"] = true;
     else if (Name == "sse")
-      Features["sse"] = true;
+      Features["mmx"] = Features["sse"] = true;
     else if (Name == "sse2")
-      Features["sse"] = Features["sse2"] = true;
+      Features["mmx"] = Features["sse"] = Features["sse2"] = true;
     else if (Name == "sse3")
-      Features["sse"] = Features["sse2"] = Features["sse3"] = true;
+      Features["mmx"] = Features["sse"] = Features["sse2"] =
+        Features["sse3"] = true;
     else if (Name == "ssse3")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = true;
     else if (Name == "sse4" || Name == "sse4.2")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
     else if (Name == "sse4.1")
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = true;
     else if (Name == "3dnow")
-      Features["mmx"] = Features["3dnow"] = true;
+      Features["3dnowa"] = true;
     else if (Name == "3dnowa")
-      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = true;
-    // FIXME: AES requires SSE2's xmm registers
+      Features["3dnow"] = Features["3dnowa"] = true;
     else if (Name == "aes")
-      Features["sse"] = Features["sse2"] = Features["aes"] = true;
+      Features["aes"] = true;
     else if (Name == "avx")
-      // FIXME: AVX requires a or some SSE4.2 feature(s)
-      Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["avx"] = true;
+      Features["avx"] = true;
   } else {
     if (Name == "mmx")
-      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
+      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] =
+        Features["sse"] = Features["sse2"] = Features["sse3"] =
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse")
       Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["aes"] = Features["avx"] = false;
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse2")
       Features["sse2"] = Features["sse3"] = Features["ssse3"] =
-        Features["sse41"] = Features["sse42"] = Features["aes"] =
-        Features["avx"] = false;
+        Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse3")
       Features["sse3"] = Features["ssse3"] = Features["sse41"] =
-        Features["sse42"] = Features["avx"] = false;
+        Features["sse42"] = false;
     else if (Name == "ssse3")
-      Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["avx"] = false;
+      Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse4" || Name == "sse4.1")
-      Features["sse41"] = Features["sse42"] = Features["avx"] = false;
+      Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse4.2")
-      Features["sse42"] = Features["avx"] = false;
+      Features["sse42"] = false;
     else if (Name == "3dnow")
       Features["3dnow"] = Features["3dnowa"] = false;
     else if (Name == "3dnowa")
