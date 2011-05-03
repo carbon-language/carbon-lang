@@ -105,11 +105,12 @@ namespace {
     void EliminateIVRemainders();
     void RewriteNonIntegerIVs(Loop *L);
 
+    bool canExpandBackedgeTakenCount(Loop *L,
+                                     const SCEV *BackedgeTakenCount);
+
     ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
-                                   PHINode *IndVar,
-                                   BasicBlock *ExitingBlock,
-                                   BranchInst *BI,
-                                   SCEVExpander &Rewriter);
+                                        PHINode *IndVar,
+                                        SCEVExpander &Rewriter);
     void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
     void RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter);
@@ -183,17 +184,24 @@ bool IndVarSimplify::isValidRewrite(Value *FromVal, Value *ToVal) {
   return true;
 }
 
-/// LinearFunctionTestReplace - This method rewrites the exit condition of the
-/// loop to be a canonical != comparison against the incremented loop induction
-/// variable.  This pass is able to rewrite the exit tests of any loop where the
-/// SCEV analysis can determine a loop-invariant trip count of the loop, which
-/// is actually a much broader range than just linear tests.
-ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
-                                   const SCEV *BackedgeTakenCount,
-                                   PHINode *IndVar,
-                                   BasicBlock *ExitingBlock,
-                                   BranchInst *BI,
-                                   SCEVExpander &Rewriter) {
+/// canExpandBackedgeTakenCount - Return true if this loop's backedge taken
+/// count expression can be safely and cheaply expanded into an instruction
+/// sequence that can be used by LinearFunctionTestReplace.
+bool IndVarSimplify::
+canExpandBackedgeTakenCount(Loop *L,
+                            const SCEV *BackedgeTakenCount) {
+  if (isa<SCEVCouldNotCompute>(BackedgeTakenCount) ||
+      BackedgeTakenCount->isZero())
+    return false;
+
+  if (!L->getExitingBlock())
+    return false;
+
+  // Can't rewrite non-branch yet.
+  BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
+  if (!BI)
+    return false;
+
   // Special case: If the backedge-taken count is a UDiv, it's very likely a
   // UDiv that ScalarEvolution produced in order to compute a precise
   // expression, rather than a UDiv from the user's code. If we can't find a
@@ -208,16 +216,31 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
       const SCEV *L = SE->getSCEV(OrigCond->getOperand(0));
       L = SE->getMinusSCEV(L, SE->getConstant(L->getType(), 1));
       if (L != BackedgeTakenCount)
-        return 0;
+        return false;
     }
   }
+  return true;
+}
+
+/// LinearFunctionTestReplace - This method rewrites the exit condition of the
+/// loop to be a canonical != comparison against the incremented loop induction
+/// variable.  This pass is able to rewrite the exit tests of any loop where the
+/// SCEV analysis can determine a loop-invariant trip count of the loop, which
+/// is actually a much broader range than just linear tests.
+ICmpInst *IndVarSimplify::
+LinearFunctionTestReplace(Loop *L,
+                          const SCEV *BackedgeTakenCount,
+                          PHINode *IndVar,
+                          SCEVExpander &Rewriter) {
+  assert(canExpandBackedgeTakenCount(L, BackedgeTakenCount) && "precondition");
+  BranchInst *BI = cast<BranchInst>(L->getExitingBlock()->getTerminator());
 
   // If the exiting block is not the same as the backedge block, we must compare
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
   Value *CmpIndVar;
   const SCEV *RHS = BackedgeTakenCount;
-  if (ExitingBlock == L->getLoopLatch()) {
+  if (L->getExitingBlock() == L->getLoopLatch()) {
     // Add one to the "backedge-taken" count to get the trip count.
     // If this addition may overflow, we have to be more pessimistic and
     // cast the induction variable before doing the add.
@@ -240,7 +263,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     // The BackedgeTaken expression contains the number of times that the
     // backedge branches to the loop header.  This is one less than the
     // number of times the loop executes, so use the incremented indvar.
-    CmpIndVar = IndVar->getIncomingValueForBlock(ExitingBlock);
+    CmpIndVar = IndVar->getIncomingValueForBlock(L->getExitingBlock());
   } else {
     // We have to use the preincremented value...
     RHS = SE->getTruncateOrZeroExtend(BackedgeTakenCount,
@@ -533,7 +556,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // transform them to use integer recurrences.
   RewriteNonIntegerIVs(L);
 
-  BasicBlock *ExitingBlock = L->getExitingBlock(); // may be null
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
 
   // Create a rewriter object which we'll use to transform the code with.
@@ -558,23 +580,26 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // a canonical induction variable should be inserted.
   const Type *LargestType = 0;
   bool NeedCannIV = false;
-  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount)) {
-    LargestType = BackedgeTakenCount->getType();
-    LargestType = SE->getEffectiveSCEVType(LargestType);
+  bool ExpandBECount = canExpandBackedgeTakenCount(L, BackedgeTakenCount);
+  if (ExpandBECount) {
     // If we have a known trip count and a single exit block, we'll be
     // rewriting the loop exit test condition below, which requires a
     // canonical induction variable.
-    if (ExitingBlock)
-      NeedCannIV = true;
+    NeedCannIV = true;
+    const Type *Ty = BackedgeTakenCount->getType();
+    if (!LargestType ||
+        SE->getTypeSizeInBits(Ty) >
+        SE->getTypeSizeInBits(LargestType))
+      LargestType = SE->getEffectiveSCEVType(Ty);
   }
   for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
+    NeedCannIV = true;
     const Type *Ty =
       SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
     if (!LargestType ||
         SE->getTypeSizeInBits(Ty) >
           SE->getTypeSizeInBits(LargestType))
       LargestType = Ty;
-    NeedCannIV = true;
   }
 
   // Now that we know the largest of the induction variable expressions
@@ -614,15 +639,13 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // If we have a trip count expression, rewrite the loop's exit condition
   // using it.  We can currently only handle loops with a single exit.
   ICmpInst *NewICmp = 0;
-  if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount) &&
-      !BackedgeTakenCount->isZero() &&
-      ExitingBlock) {
+  if (ExpandBECount) {
+    assert(canExpandBackedgeTakenCount(L, BackedgeTakenCount) &&
+           "canonical IV disrupted BackedgeTaken expansion");
     assert(NeedCannIV &&
            "LinearFunctionTestReplace requires a canonical induction variable");
-    // Can't rewrite non-branch yet.
-    if (BranchInst *BI = dyn_cast<BranchInst>(ExitingBlock->getTerminator()))
-      NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
-                                          ExitingBlock, BI, Rewriter);
+    NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
+                                        Rewriter);
   }
 
   // Rewrite IV-derived expressions.
