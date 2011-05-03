@@ -4060,8 +4060,7 @@ InitializationSequence::Perform(Sema &S,
           ConstructKind = Entity.getBaseSpecifier()->isVirtual() ?
             CXXConstructExpr::CK_VirtualBase :
             CXXConstructExpr::CK_NonVirtualBase;
-        }
-        if (Entity.getKind() == InitializedEntity::EK_Delegating) {
+        } else if (Entity.getKind() == InitializedEntity::EK_Delegating) {
           ConstructKind = CXXConstructExpr::CK_Delegating;
         }
 

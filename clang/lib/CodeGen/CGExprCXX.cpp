@@ -404,17 +404,25 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
   }
   else {
     CXXCtorType Type;
-    CXXConstructExpr::ConstructionKind K = E->getConstructionKind();
-    if (K == CXXConstructExpr::CK_Delegating) {
+    bool ForVirtualBase = false;
+
+    switch (E->getConstructionKind()) {
+     case CXXConstructExpr::CK_Delegating:
       // We should be emitting a constructor; GlobalDecl will assert this
       Type = CurGD.getCtorType();
-    } else {
-      Type = (E->getConstructionKind() == CXXConstructExpr::CK_Complete)
-             ? Ctor_Complete : Ctor_Base;
-    }
+      break;
 
-    bool ForVirtualBase = 
-      E->getConstructionKind() == CXXConstructExpr::CK_VirtualBase;
+     case CXXConstructExpr::CK_Complete:
+      Type = Ctor_Complete;
+      break;
+
+     case CXXConstructExpr::CK_VirtualBase:
+      ForVirtualBase = true;
+      // fall-through
+
+     case CXXConstructExpr::CK_NonVirtualBase:
+      Type = Ctor_Base;
+    }
     
     // Call the constructor.
     EmitCXXConstructorCall(CD, Type, ForVirtualBase, Dest.getAddr(),

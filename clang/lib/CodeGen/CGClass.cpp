@@ -726,12 +726,13 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
        B != E; ++B) {
     CXXCtorInitializer *Member = (*B);
     
-    if (Member->isBaseInitializer())
+    if (Member->isBaseInitializer()) {
       EmitBaseInitializer(*this, ClassDecl, Member, CtorType);
-    else if (Member->isAnyMemberInitializer())
+    } else {
+      assert(Member->isAnyMemberInitializer() &&
+            "Delegating initializer on non-delegating constructor");
       MemberInitializers.push_back(Member);
-    else
-      llvm_unreachable("Delegating initializer on non-delegating constructor");
+    }
   }
 
   InitializeVTablePointers(ClassDecl);
