@@ -6984,6 +6984,14 @@ bool ARMTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
   return Imm >= 0 && Imm <= 255;
 }
 
+/// isLegalAddImmediate - Return true if the specified immediate is legal
+/// add immediate, that is the target has add instructions which can add
+/// a register with the immediate without having to materialize the
+/// immediate into a register.
+bool ARMTargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return ARM_AM::getSOImmVal(Imm) != -1;
+}
+
 static bool getARMIndexedAddressParts(SDNode *Ptr, EVT VT,
                                       bool isSEXTLoad, SDValue &Base,
                                       SDValue &Offset, bool &isInc,

@@ -1583,6 +1583,14 @@ public:
     return true;
   }
 
+  /// isLegalAddImmediate - Return true if the specified immediate is legal
+  /// add immediate, that is the target has add instructions which can add
+  /// a register with the immediate without having to materialize the
+  /// immediate into a register.
+  virtual bool isLegalAddImmediate(int64_t Imm) const {
+    return true;
+  }
+
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //
