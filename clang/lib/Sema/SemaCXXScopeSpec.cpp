@@ -546,25 +546,33 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       InjectedClassNameTypeLoc InjectedTL
         = TLB.push<InjectedClassNameTypeLoc>(T);
       InjectedTL.setNameLoc(IdentifierLoc);
-    } else if (isa<RecordDecl>(SD)) {
+    } else if (isa<RecordType>(T)) {
       RecordTypeLoc RecordTL = TLB.push<RecordTypeLoc>(T);
       RecordTL.setNameLoc(IdentifierLoc);
-    } else if (isa<TypedefNameDecl>(SD)) {
+    } else if (isa<TypedefType>(T)) {
       TypedefTypeLoc TypedefTL = TLB.push<TypedefTypeLoc>(T);
       TypedefTL.setNameLoc(IdentifierLoc);
-    } else if (isa<EnumDecl>(SD)) {
+    } else if (isa<EnumType>(T)) {
       EnumTypeLoc EnumTL = TLB.push<EnumTypeLoc>(T);
       EnumTL.setNameLoc(IdentifierLoc);
-    } else if (isa<TemplateTypeParmDecl>(SD)) {
+    } else if (isa<TemplateTypeParmType>(T)) {
       TemplateTypeParmTypeLoc TemplateTypeTL
         = TLB.push<TemplateTypeParmTypeLoc>(T);
       TemplateTypeTL.setNameLoc(IdentifierLoc);
-    } else {
-      assert(isa<UnresolvedUsingTypenameDecl>(SD) && 
-             "Unhandled TypeDecl node in nested-name-specifier");
+    } else if (isa<UnresolvedUsingType>(T)) {
       UnresolvedUsingTypeLoc UnresolvedTL
         = TLB.push<UnresolvedUsingTypeLoc>(T);
       UnresolvedTL.setNameLoc(IdentifierLoc);
+    } else if (isa<SubstTemplateTypeParmType>(T)) {
+      SubstTemplateTypeParmTypeLoc TL 
+        = TLB.push<SubstTemplateTypeParmTypeLoc>(T);
+      TL.setNameLoc(IdentifierLoc);
+    } else if (isa<SubstTemplateTypeParmPackType>(T)) {
+      SubstTemplateTypeParmPackTypeLoc TL
+        = TLB.push<SubstTemplateTypeParmPackTypeLoc>(T);
+      TL.setNameLoc(IdentifierLoc);
+    } else {
+      llvm_unreachable("Unhandled TypeDecl node in nested-name-specifier");
     }
 
     SS.Extend(Context, SourceLocation(), TLB.getTypeLocInContext(Context, T),
