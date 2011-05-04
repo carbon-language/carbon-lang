@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2 -join-physregs | FileCheck %s
 
+; These tests implicitly depend on 'movs r0, #0' being rematerialized below the
+; test as 'mov.w r0, #0'. So far, that requires physreg joining.
 
 ; 0x000000bb = 187
 define i1 @f1(i32 %a) {
