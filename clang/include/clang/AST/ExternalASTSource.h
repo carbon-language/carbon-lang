@@ -211,7 +211,7 @@ public:
     return sizes;
   }
 
-  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const = 0;
+  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const;
 
 protected:
   static DeclContextLookupResult

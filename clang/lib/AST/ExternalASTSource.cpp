@@ -57,3 +57,5 @@ ExternalASTSource::FindExternalLexicalDecls(const DeclContext *DC,
                                          llvm::SmallVectorImpl<Decl*> &Result) {
   return true;
 }
+
+void ExternalASTSource::getMemoryBufferSizes(MemoryBufferSizes &sizes) const { }
