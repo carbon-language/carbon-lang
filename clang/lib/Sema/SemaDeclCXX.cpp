@@ -7945,52 +7945,85 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
   }
 }
 
+static
+void DelegatingCycleHelper(CXXConstructorDecl* Ctor,
+                           llvm::SmallSet<CXXConstructorDecl*, 4> &Valid,
+                           llvm::SmallSet<CXXConstructorDecl*, 4> &Invalid,
+                           llvm::SmallSet<CXXConstructorDecl*, 4> &Current,
+                           Sema &S) {
+  llvm::SmallSet<CXXConstructorDecl*, 4>::iterator CI = Current.begin(),
+                                                   CE = Current.end();
+  if (Ctor->isInvalidDecl())
+    return;
+
+  const FunctionDecl *FNTarget = 0;
+  CXXConstructorDecl *Target;
+  
+  // We ignore the result here since if we don't have a body, Target will be
+  // null below.
+  (void)Ctor->getTargetConstructor()->hasBody(FNTarget);
+  Target
+= const_cast<CXXConstructorDecl*>(cast_or_null<CXXConstructorDecl>(FNTarget));
+
+  CXXConstructorDecl *Canonical = Ctor->getCanonicalDecl(),
+                     // Avoid dereferencing a null pointer here.
+                     *TCanonical = Target ? Target->getCanonicalDecl() : 0;
+
+  if (!Current.insert(Canonical))
+    return;
+
+  // We know that beyond here, we aren't chaining into a cycle.
+  if (!Target || !Target->isDelegatingConstructor() ||
+      Target->isInvalidDecl() || Valid.count(TCanonical)) {
+    for (CI = Current.begin(), CE = Current.end(); CI != CE; ++CI)
+      Valid.insert(*CI);
+    Current.clear();
+  // We've hit a cycle.
+  } else if (TCanonical == Canonical || Invalid.count(TCanonical) ||
+             Current.count(TCanonical)) {
+    // If we haven't diagnosed this cycle yet, do so now.
+    if (!Invalid.count(TCanonical)) {
+      S.Diag((*Ctor->init_begin())->getSourceLocation(),
+             diag::err_delegating_ctor_cycle)
+        << Ctor;
+
+      // Don't add a note for a function delegating directo to itself.
+      if (TCanonical != Canonical)
+        S.Diag(Target->getLocation(), diag::note_it_delegates_to);
+
+      CXXConstructorDecl *C = Target;
+      while (C->getCanonicalDecl() != Canonical) {
+        (void)C->getTargetConstructor()->hasBody(FNTarget);
+        assert(FNTarget && "Ctor cycle through bodiless function");
+
+        C
+       = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
+        S.Diag(C->getLocation(), diag::note_which_delegates_to);
+      }
+    }
+
+    for (CI = Current.begin(), CE = Current.end(); CI != CE; ++CI)
+      Invalid.insert(*CI);
+    Current.clear();
+  } else {
+    DelegatingCycleHelper(Target, Valid, Invalid, Current, S);
+  }
+}
+   
+
 void Sema::CheckDelegatingCtorCycles() {
   llvm::SmallSet<CXXConstructorDecl*, 4> Valid, Invalid, Current;
 
-  llvm::SmallSet<CXXConstructorDecl*, 4>::iterator ci = Current.begin(),
-                                                   ce = Current.end();
+  llvm::SmallSet<CXXConstructorDecl*, 4>::iterator CI = Current.begin(),
+                                                   CE = Current.end();
 
   for (llvm::SmallVector<CXXConstructorDecl*, 4>::iterator
-         i = DelegatingCtorDecls.begin(),
-         e = DelegatingCtorDecls.end();
-       i != e; ++i) {
-    const FunctionDecl *FNTarget;
-    CXXConstructorDecl *Target;
-    (*i)->getTargetConstructor()->hasBody(FNTarget);
-    Target
-      = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
-
-    if (!Target || !Target->isDelegatingConstructor() || Valid.count(Target)) {
-      Valid.insert(*i);
-      for (ci = Current.begin(), ce = Current.end(); ci != ce; ++ci)
-        Valid.insert(*ci);
-      Current.clear();
-    } else if (Target == *i || Invalid.count(Target) || Current.count(Target)) {
-      if (!Invalid.count(Target)) {
-        Diag((*(*i)->init_begin())->getSourceLocation(),
-             diag::err_delegating_ctor_cycle)
-          << *i;
-        if (Target != *i)
-          Diag(Target->getLocation(), diag::note_it_delegates_to);
-        CXXConstructorDecl *Current = Target;
-        while (Current != *i) {
-          Current->getTargetConstructor()->hasBody(FNTarget);
-          Current
-         = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
-          Diag(Current->getLocation(), diag::note_which_delegates_to);
-        }
-      }
-
-      (*i)->setInvalidDecl();
-      Invalid.insert(*i);
-      for (ci = Current.begin(), ce = Current.end(); ci != ce; ++ci) {
-        (*ci)->setInvalidDecl();
-        Invalid.insert(*i);
-      }
-      Current.clear();
-    } else {
-      Current.insert(*i);
-    }
+         I = DelegatingCtorDecls.begin(),
+         E = DelegatingCtorDecls.end();
+       I != E; ++I) {
+   DelegatingCycleHelper(*I, Valid, Invalid, Current, *this);
   }
+
+  for (CI = Invalid.begin(), CE = Invalid.end(); CI != CE; ++CI)
+    (*CI)->setInvalidDecl();
 }

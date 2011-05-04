@@ -764,6 +764,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(HEADER_SEARCH_TABLE);
   RECORD(FP_PRAGMA_OPTIONS);
   RECORD(OPENCL_EXTENSIONS);
+  RECORD(DELEGATING_CTORS);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -2723,6 +2724,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i)
     AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
 
+  RecordData DelegatingCtorDecls;
+  for (unsigned i=0, e = SemaRef.DelegatingCtorDecls.size(); i != e; ++i)
+    AddDeclRef(SemaRef.DelegatingCtorDecls[i], DelegatingCtorDecls);
+
   RecordData WeakUndeclaredIdentifiers;
   if (!SemaRef.WeakUndeclaredIdentifiers.empty()) {
     WeakUndeclaredIdentifiers.push_back(
@@ -2897,6 +2902,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing CUDA-specific declaration references.
   if (!CUDASpecialDeclRefs.empty())
     Stream.EmitRecord(CUDA_SPECIAL_DECL_REFS, CUDASpecialDeclRefs);
+  
+  // Write the delegating constructors.
+  if (!DelegatingCtorDecls.empty())
+    Stream.EmitRecord(DELEGATING_CTORS, DelegatingCtorDecls);
 
   // Some simple statistics
   Record.clear();
@@ -2969,6 +2978,14 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned i=0, e = SemaRef.UnusedFileScopedDecls.size(); i !=e; ++i) {
     if (SemaRef.UnusedFileScopedDecls[i]->getPCHLevel() == 0)
       AddDeclRef(SemaRef.UnusedFileScopedDecls[i], UnusedFileScopedDecls);
+  }
+
+  // Build a record containing all of the delegating constructor decls in this
+  // file.
+  RecordData DelegatingCtorDecls;
+  for (unsigned i=0, e = SemaRef.DelegatingCtorDecls.size(); i != e; ++i) {
+    if (SemaRef.DelegatingCtorDecls[i]->getPCHLevel() == 0)
+      AddDeclRef(SemaRef.DelegatingCtorDecls[i], DelegatingCtorDecls);
   }
 
   // We write the entire table, overwriting the tables from the chain.
@@ -3128,6 +3145,10 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing declaration references of Sema.
   if (!SemaDeclRefs.empty())
     Stream.EmitRecord(SEMA_DECL_REFS, SemaDeclRefs);
+  
+  // Write the delegating constructors.
+  if (!DelegatingCtorDecls.empty())
+    Stream.EmitRecord(DELEGATING_CTORS, DelegatingCtorDecls);
 
   // Write the updates to DeclContexts.
   for (llvm::SmallPtrSet<const DeclContext *, 16>::iterator

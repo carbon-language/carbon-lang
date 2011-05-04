@@ -2114,15 +2114,6 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       TotalVisibleDeclContexts += Record[3];
       break;
 
-    case TENTATIVE_DEFINITIONS:
-      // Optimization for the first block.
-      if (TentativeDefinitions.empty())
-        TentativeDefinitions.swap(Record);
-      else
-        TentativeDefinitions.insert(TentativeDefinitions.end(),
-                                    Record.begin(), Record.end());
-      break;
-
     case UNUSED_FILESCOPED_DECLS:
       // Optimization for the first block.
       if (UnusedFileScopedDecls.empty())
@@ -2130,6 +2121,15 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       else
         UnusedFileScopedDecls.insert(UnusedFileScopedDecls.end(),
                                      Record.begin(), Record.end());
+      break;
+
+    case DELEGATING_CTORS:
+      // Optimization for the first block.
+      if (DelegatingCtorDecls.empty())
+        DelegatingCtorDecls.swap(Record);
+      else
+        DelegatingCtorDecls.insert(DelegatingCtorDecls.end(),
+                                   Record.begin(), Record.end());
       break;
 
     case WEAK_UNDECLARED_IDENTIFIERS:
@@ -2330,6 +2330,15 @@ ASTReader::ReadASTBlock(PerFileData &F) {
     case OPENCL_EXTENSIONS:
       // Later tables overwrite earlier ones.
       OpenCLExtensions.swap(Record);
+      break;
+
+    case TENTATIVE_DEFINITIONS:
+      // Optimization for the first block.
+      if (TentativeDefinitions.empty())
+        TentativeDefinitions.swap(Record);
+      else
+        TentativeDefinitions.insert(TentativeDefinitions.end(),
+                                    Record.begin(), Record.end());
       break;
     }
     First = false;
@@ -4098,6 +4107,13 @@ void ASTReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = UnusedFileScopedDecls.size(); I != N; ++I) {
     DeclaratorDecl *D = cast<DeclaratorDecl>(GetDecl(UnusedFileScopedDecls[I]));
     SemaObj->UnusedFileScopedDecls.push_back(D);
+  }
+
+  // If there were any delegating constructors, add them to Sema's list
+  for (unsigned I = 0, N = DelegatingCtorDecls.size(); I != N; ++I) {
+    CXXConstructorDecl *D
+     = cast<CXXConstructorDecl>(GetDecl(DelegatingCtorDecls[I]));
+    SemaObj->DelegatingCtorDecls.push_back(D);
   }
 
   // If there were any locally-scoped external declarations,

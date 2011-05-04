@@ -54,6 +54,7 @@ class Decl;
 class DeclContext;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
+class CXXConstructorDecl;
 class CXXCtorInitializer;
 class GotoStmt;
 class MacroDefinition;
@@ -563,6 +564,10 @@ private:
   /// \brief A snapshot of Sema's unused file-scoped variable tracking, for
   /// generating warnings.
   llvm::SmallVector<uint64_t, 16> UnusedFileScopedDecls;
+
+  /// \brief A list of all the delegating constructors we've seen, to diagnose
+  /// cycles.
+  llvm::SmallVector<uint64_t, 4> DelegatingCtorDecls;
 
   /// \brief A snapshot of Sema's weak undeclared identifier tracking, for
   /// generating warnings.

@@ -362,7 +362,10 @@ namespace clang {
       FP_PRAGMA_OPTIONS = 42,
 
       /// \brief Record code for enabled OpenCL extensions.
-      OPENCL_EXTENSIONS = 43
+      OPENCL_EXTENSIONS = 43,
+
+      /// \brief The list of delegating constructor declarations.
+      DELEGATING_CTORS = 44
     };
 
     /// \brief Record types used within a source manager block.
