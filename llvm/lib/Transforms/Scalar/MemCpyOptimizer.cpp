@@ -459,7 +459,10 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
           for (unsigned i = 0, e = Range.TheStores.size(); i != e; ++i)
             dbgs() << *Range.TheStores[i] << '\n';
           dbgs() << "With: " << *AMemSet << '\n');
-    
+
+    if (!Range.TheStores.empty())
+      AMemSet->setDebugLoc(Range.TheStores[0]->getDebugLoc());
+
     // Zap all the stores.
     for (SmallVector<Instruction*, 16>::const_iterator
          SI = Range.TheStores.begin(),
