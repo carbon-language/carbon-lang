@@ -643,9 +643,8 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
 
-  std::string MArch;
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    MArch = A->getValue(Args);
+    llvm::StringRef MArch = A->getValue(Args);
     CmdArgs.push_back("-target-cpu");
 
     if ((MArch == "r2000") || (MArch == "r3000"))
@@ -653,7 +652,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     else if (MArch == "r6000")
       CmdArgs.push_back("mips2");
     else
-      CmdArgs.push_back(MArch.c_str());
+      CmdArgs.push_back(Args.MakeArgString(MArch));
   }
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
