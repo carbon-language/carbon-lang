@@ -2019,6 +2019,11 @@ def : InstAlias&lt;"fcomi $reg", (COM_FIr RST:$reg)&gt;;
 <p>Instruction aliases can also have a Requires clause to make them
 subtarget specific.</p>
 
+<p>If the back-end supports it, the instruction printer can automatically emit
+   the alias rather than what's being aliased. It typically leads to better,
+   more readable code. If it's better to print out what's being aliased, then
+   pass a '0' as the third parameter to the InstAlias definition.</p>
+
 </div>
 
 </div>
