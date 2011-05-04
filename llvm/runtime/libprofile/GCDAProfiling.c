@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /* #define DEBUG_GCDAPROFILING */
 
@@ -64,6 +66,21 @@ static char *mangle_filename(const char *orig_filename) {
   return filename;
 }
 
+static void recursive_mkdir(const char *filename) {
+  char *pathname;
+  int i, e;
+
+  for (i = 1, e = strlen(filename); i != e; ++i) {
+    if (filename[i] == '/') {
+      pathname = malloc(i + 1);
+      strncpy(pathname, filename, i);
+      pathname[i] = '\0';
+      mkdir(pathname, 0750);  /* some of these will fail, ignore it. */
+      free(pathname);
+    }
+  }
+}
+
 /*
  * --- LLVM line counter API ---
  */
@@ -75,6 +92,7 @@ static char *mangle_filename(const char *orig_filename) {
 void llvm_gcda_start_file(const char *orig_filename) {
   char *filename;
   filename = mangle_filename(orig_filename);
+  recursive_mkdir(filename);
   output_file = fopen(filename, "wb");
 
   /* gcda file, version 404*, stamp LLVM. */
