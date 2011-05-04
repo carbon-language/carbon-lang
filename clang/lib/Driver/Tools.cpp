@@ -1303,6 +1303,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_coverage))
     CmdArgs.push_back("-femit-coverage-data");
 
+  if (C.getArgs().hasArg(options::OPT_c) ||
+      C.getArgs().hasArg(options::OPT_S)) {
+    if (Output.isFilename()) {
+      llvm::StringRef CoverageDir =
+          llvm::sys::path::parent_path(Output.getFilename());
+      if (!CoverageDir.empty()) {
+        CmdArgs.push_back("-coverage-dir");
+        CmdArgs.push_back(Args.MakeArgString(CoverageDir));
+      }
+    }
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
   Args.AddLastArg(CmdArgs, options::OPT_nostdincxx);
   Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);

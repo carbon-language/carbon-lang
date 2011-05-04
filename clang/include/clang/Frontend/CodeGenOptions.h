@@ -95,6 +95,9 @@ public:
   /// The code model to use (-mcmodel).
   std::string CodeModel;
 
+  /// The directory in which to place coverage data files.
+  std::string CoverageDir;
+
   /// Enable additional debugging information.
   std::string DebugPass;
 

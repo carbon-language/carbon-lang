@@ -132,6 +132,9 @@ void CodeGenModule::Release() {
 
   if (getCodeGenOpts().EmitDeclMetadata)
     EmitDeclMetadata();
+
+  if (getCodeGenOpts().EmitGcovArcs || getCodeGenOpts().EmitGcovNotes)
+    EmitCoverageDir();
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
@@ -2212,6 +2215,23 @@ void CodeGenFunction::EmitDeclMetadata() {
     } else if (llvm::GlobalValue *GV = dyn_cast<llvm::GlobalValue>(Addr)) {
       GlobalDecl GD = GlobalDecl(cast<VarDecl>(D));
       EmitGlobalDeclMetadata(CGM, GlobalMetadata, GD, GV);
+    }
+  }
+}
+
+void CodeGenModule::EmitCoverageDir() {
+  if (!getCodeGenOpts().CoverageDir.empty()) {
+    if (llvm::NamedMDNode *CUNode = TheModule.getNamedMetadata("llvm.dbg.cu")) {
+      llvm::NamedMDNode *GCov = TheModule.getOrInsertNamedMetadata("llvm.gcov");
+      llvm::LLVMContext &Ctx = TheModule.getContext();
+      llvm::MDString *CoverageDir =
+          llvm::MDString::get(Ctx, getCodeGenOpts().CoverageDir);
+      for (int i = 0, e = CUNode->getNumOperands(); i != e; ++i) {
+        llvm::MDNode *CU = CUNode->getOperand(i);
+        llvm::Value *node[] = { CoverageDir, CU };
+        llvm::MDNode *N = llvm::MDNode::get(Ctx, node);
+        GCov->addOperand(N);
+      }
     }
   }
 }
