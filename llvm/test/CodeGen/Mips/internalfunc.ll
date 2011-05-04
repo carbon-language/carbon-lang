@@ -1,4 +1,4 @@
-; RUN: llc  < %s -march=mips | FileCheck %s
+; RUN: llc  < %s -march=mipsel -mcpu=4ke  | FileCheck %s
 
 @caller.sf1 = internal unnamed_addr global void (...)* null, align 4
 @gf1 = external global void (...)*

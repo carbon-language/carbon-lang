@@ -77,6 +77,12 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 }
 
 bool MipsTargetMachine::
+addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
+  PM.add(createMipsEmitGPRestorePass(*this));
+  return true;
+}
+
+bool MipsTargetMachine::
 addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel) {
   PM.add(createMipsExpandPseudoPass(*this));
   return true;
