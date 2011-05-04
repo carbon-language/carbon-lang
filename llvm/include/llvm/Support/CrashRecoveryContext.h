@@ -186,8 +186,13 @@ public:
   }
 
   ~CrashRecoveryContextCleanupRegistrar() {
+    unregister();
+  }
+  
+  void unregister() {
     if (cleanup && !cleanup->cleanupFired)
-        cleanup->getContext()->unregisterCleanup(cleanup);
+      cleanup->getContext()->unregisterCleanup(cleanup);
+    cleanup = 0;
   }
 };
 }
