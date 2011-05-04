@@ -39,3 +39,10 @@
    fun:malloc
    obj:/usr/bin/python*
 }
+
+{
+   We don't care about anything ld.so does.
+   Memcheck:Cond
+   obj:/lib/ld*.so
+}
+
