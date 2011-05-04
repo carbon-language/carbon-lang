@@ -7,8 +7,8 @@ entry:
 ; CHECK: Callee:
 ; CHECK: push
 ; CHECK: mov r4, sp
-; CHECK: sub.w r12, r4, #1000
-; CHECK: mov sp, r12
+; CHECK: sub.w [[R12:r[0-9]+]], r4, #1000
+; CHECK: mov sp, [[R12]]
   %0 = icmp eq i32 %i, 0                          ; <i1> [#uses=1]
   br i1 %0, label %bb2, label %bb
 
