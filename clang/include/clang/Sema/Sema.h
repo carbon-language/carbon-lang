@@ -2074,7 +2074,14 @@ public:
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
-  
+
+  /// \brief Figure out if an expression could be turned into a call.
+  bool isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
+                      UnresolvedSetImpl &NonTemplateOverloads);
+  /// \brief Give notes for a set of overloads.
+  void NoteOverloads(const UnresolvedSetImpl &Overloads,
+                     const SourceLocation FinalNoteLoc);
+
   /// \brief Conditionally issue a diagnostic based on the current
   /// evaluation context.
   ///

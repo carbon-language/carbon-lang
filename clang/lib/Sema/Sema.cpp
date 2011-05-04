@@ -31,6 +31,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/PartialDiagnostic.h"
@@ -765,4 +766,103 @@ void PrettyDeclStackTraceEntry::print(llvm::raw_ostream &OS) const {
   }
 
   OS << '\n';
+}
+
+/// \brief Figure out if an expression could be turned into a call.
+///
+/// Use this when trying to recover from an error where the programmer may have
+/// written just the name of a function instead of actually calling it.
+///
+/// \param E - The expression to examine.
+/// \param ZeroArgCallReturnTy - If the expression can be turned into a call
+///  with no arguments, this parameter is set to the type returned by such a
+///  call; otherwise, it is set to an empty QualType.
+/// \param NonTemplateOverloads - If the expression is an overloaded function
+///  name, this parameter is populated with the decls of the various overloads.
+bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
+                          UnresolvedSetImpl &NonTemplateOverloads) {
+  ZeroArgCallReturnTy = QualType();
+  NonTemplateOverloads.clear();
+  if (const OverloadExpr *Overloads = dyn_cast<OverloadExpr>(&E)) {
+    for (OverloadExpr::decls_iterator it = Overloads->decls_begin(),
+         DeclsEnd = Overloads->decls_end(); it != DeclsEnd; ++it) {
+      // Our overload set may include TemplateDecls, which we'll ignore for our
+      // present purpose.
+      if (const FunctionDecl *OverloadDecl = dyn_cast<FunctionDecl>(*it)) {
+        NonTemplateOverloads.addDecl(*it);
+        if (OverloadDecl->getMinRequiredArguments() == 0)
+          ZeroArgCallReturnTy = OverloadDecl->getResultType();
+      }
+    }
+    return true;
+  }
+
+  if (const DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(&E)) {
+    if (const FunctionDecl *Fun = dyn_cast<FunctionDecl>(DeclRef->getDecl())) {
+      if (Fun->getMinRequiredArguments() == 0)
+        ZeroArgCallReturnTy = Fun->getResultType();
+      return true;
+    }
+  }
+
+  // We don't have an expression that's convenient to get a FunctionDecl from,
+  // but we can at least check if the type is "function of 0 arguments".
+  QualType ExprTy = E.getType();
+  const FunctionType *FunTy = NULL;
+  if (const PointerType *Ptr = ExprTy->getAs<PointerType>())
+    FunTy = Ptr->getPointeeType()->getAs<FunctionType>();
+  else if (const ReferenceType *Ref = ExprTy->getAs<ReferenceType>())
+    FunTy = Ref->getPointeeType()->getAs<FunctionType>();
+  if (!FunTy)
+    FunTy = ExprTy->getAs<FunctionType>();
+  if (!FunTy && ExprTy == Context.BoundMemberTy) {
+    // Look for the bound-member type.  If it's still overloaded, give up,
+    // although we probably should have fallen into the OverloadExpr case above
+    // if we actually have an overloaded bound member.
+    QualType BoundMemberTy = Expr::findBoundMemberType(&E);
+    if (!BoundMemberTy.isNull())
+      FunTy = BoundMemberTy->castAs<FunctionType>();
+  }
+
+  if (const FunctionProtoType *FPT =
+      dyn_cast_or_null<FunctionProtoType>(FunTy)) {
+    if (FPT->getNumArgs() == 0)
+      ZeroArgCallReturnTy = FunTy->getResultType();
+    return true;
+  }
+  return false;
+}
+
+/// \brief Give notes for a set of overloads.
+///
+/// A companion to isExprCallable. In cases when the name that the programmer
+/// wrote was an overloaded function, we may be able to make some guesses about
+/// plausible overloads based on their return types; such guesses can be handed
+/// off to this method to be emitted as notes.
+///
+/// \param Overloads - The overloads to note.
+/// \param FinalNoteLoc - If we've suppressed printing some overloads due to
+///  -fshow-overloads=best, this is the location to attach to the note about too
+///  many candidates. Typically this will be the location of the original
+///  ill-formed expression.
+void Sema::NoteOverloads(const UnresolvedSetImpl &Overloads,
+                         const SourceLocation FinalNoteLoc) {
+  int ShownOverloads = 0;
+  int SuppressedOverloads = 0;
+  for (UnresolvedSetImpl::iterator It = Overloads.begin(),
+       DeclsEnd = Overloads.end(); It != DeclsEnd; ++It) {
+    // FIXME: Magic number for max shown overloads stolen from
+    // OverloadCandidateSet::NoteCandidates.
+    if (ShownOverloads >= 4 &&
+        Diags.getShowOverloads() == Diagnostic::Ovl_Best) {
+      ++SuppressedOverloads;
+      continue;
+    }
+    Diag(cast<FunctionDecl>(*It)->getSourceRange().getBegin(),
+         diag::note_member_ref_possible_intended_overload);
+    ++ShownOverloads;
+  }
+  if (SuppressedOverloads)
+    Diag(FinalNoteLoc, diag::note_ovl_too_many_candidates)
+        << SuppressedOverloads;
 }
