@@ -56,6 +56,6 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   HasNoDeadStrip = true;
   HasSymbolResolver = true;
 
-  DwarfUsesAbsoluteLabelForStmtList = false;
+  DwarfRequiresRelocationForStmtList = false;
   DwarfUsesLabelOffsetForRanges = false;
 }
