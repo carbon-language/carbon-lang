@@ -229,19 +229,14 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     }
     break;
   case X86::sub_8bit_hi:
-    if (B == &X86::GR8_ABCD_HRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass ||
-          A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass || A == &X86::GR32_NOSPRegClass)
-        return &X86::GR32_ABCDRegClass;
-      else if (A == &X86::GR16RegClass || A == &X86::GR16_ABCDRegClass ||
-               A == &X86::GR16_NOREXRegClass)
-        return &X86::GR16_ABCDRegClass;
-    }
+    if (B == &X86::GR8_ABCD_HRegClass ||
+        B->hasSubClass(&X86::GR8_ABCD_HRegClass))
+      switch (A->getSize()) {
+        case 2: return getCommonSubClass(A, &X86::GR16_ABCDRegClass);
+        case 4: return getCommonSubClass(A, &X86::GR32_ABCDRegClass);
+        case 8: return getCommonSubClass(A, &X86::GR64_ABCDRegClass);
+        default: return 0;
+      }
     break;
   case X86::sub_16bit:
     if (B == &X86::GR16RegClass) {
