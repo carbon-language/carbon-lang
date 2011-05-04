@@ -1873,7 +1873,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   CmpInst::Predicate P = CmpInst::BAD_ICMP_PREDICATE;
   CmpInst::Predicate EqP; // Chosen so that "A == max/min(A,B)" iff "A EqP B".
 
-  // Signed max/min.
+  // Signed variants on "max(a,b)>=a -> true".
   if (match(LHS, m_SMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // smax(A, B) pred A.
     EqP = CmpInst::ICMP_SGE; // "A == smax(A, B)" iff "A sge B".
@@ -1929,7 +1929,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // Unsigned max/min.
+  // Unsigned variants on "max(a,b)>=a -> true".
   P = CmpInst::BAD_ICMP_PREDICATE;
   if (match(LHS, m_UMax(m_Value(A), m_Value(B))) && (A == RHS || B == RHS)) {
     if (A != RHS) std::swap(A, B); // umax(A, B) pred A.
@@ -1984,6 +1984,50 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // Always false.
       return Constant::getNullValue(ITy);
     }
+  }
+
+  // Variants on "max(x,y) >= min(x,z)".
+  Value *C, *D;
+  if (match(LHS, m_SMax(m_Value(A), m_Value(B))) &&
+      match(RHS, m_SMin(m_Value(C), m_Value(D))) &&
+      (A == C || A == D || B == C || B == D)) {
+    // max(x, ?) pred min(x, ?).
+    if (Pred == CmpInst::ICMP_SGE)
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    if (Pred == CmpInst::ICMP_SLT)
+      // Always false.
+      return Constant::getNullValue(ITy);
+  } else if (match(LHS, m_SMin(m_Value(A), m_Value(B))) &&
+             match(RHS, m_SMax(m_Value(C), m_Value(D))) &&
+             (A == C || A == D || B == C || B == D)) {
+    // min(x, ?) pred max(x, ?).
+    if (Pred == CmpInst::ICMP_SLE)
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    if (Pred == CmpInst::ICMP_SGT)
+      // Always false.
+      return Constant::getNullValue(ITy);
+  } else if (match(LHS, m_UMax(m_Value(A), m_Value(B))) &&
+             match(RHS, m_UMin(m_Value(C), m_Value(D))) &&
+             (A == C || A == D || B == C || B == D)) {
+    // max(x, ?) pred min(x, ?).
+    if (Pred == CmpInst::ICMP_UGE)
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    if (Pred == CmpInst::ICMP_ULT)
+      // Always false.
+      return Constant::getNullValue(ITy);
+  } else if (match(LHS, m_UMin(m_Value(A), m_Value(B))) &&
+             match(RHS, m_UMax(m_Value(C), m_Value(D))) &&
+             (A == C || A == D || B == C || B == D)) {
+    // min(x, ?) pred max(x, ?).
+    if (Pred == CmpInst::ICMP_ULE)
+      // Always true.
+      return Constant::getAllOnesValue(ITy);
+    if (Pred == CmpInst::ICMP_UGT)
+      // Always false.
+      return Constant::getNullValue(ITy);
   }
 
   // If the comparison is with the result of a select instruction, check whether

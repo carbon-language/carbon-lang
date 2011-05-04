@@ -143,3 +143,91 @@ define i1 @min8(i32 %x, i32 %y) {
   ret i1 %r
 ; CHECK: ret i1 true
 }
+
+define i1 @maxmin1(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin1
+  %c1 = icmp sge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp sge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp sge i32 %max, %min
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
+define i1 @maxmin2(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin2
+  %c1 = icmp sge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp sge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp sgt i32 %min, %max
+  ret i1 %c
+; CHECK: ret i1 false
+}
+
+define i1 @maxmin3(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin3
+  %c1 = icmp sge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp sge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp sle i32 %min, %max
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
+define i1 @maxmin4(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin4
+  %c1 = icmp sge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp sge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp slt i32 %max, %min
+  ret i1 %c
+; CHECK: ret i1 false
+}
+
+define i1 @maxmin5(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin5
+  %c1 = icmp uge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp uge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp uge i32 %max, %min
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
+define i1 @maxmin6(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin6
+  %c1 = icmp uge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp uge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp ugt i32 %min, %max
+  ret i1 %c
+; CHECK: ret i1 false
+}
+
+define i1 @maxmin7(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin7
+  %c1 = icmp uge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp uge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp ule i32 %min, %max
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
+define i1 @maxmin8(i32 %x, i32 %y, i32 %z) {
+; CHECK: @maxmin8
+  %c1 = icmp uge i32 %x, %y
+  %max = select i1 %c1, i32 %x, i32 %y
+  %c2 = icmp uge i32 %x, %z
+  %min = select i1 %c2, i32 %z, i32 %x
+  %c = icmp ult i32 %max, %min
+  ret i1 %c
+; CHECK: ret i1 false
+}
