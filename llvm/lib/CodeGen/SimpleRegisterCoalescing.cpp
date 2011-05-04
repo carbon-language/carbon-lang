@@ -61,9 +61,9 @@ DisableCrossClassJoin("disable-cross-class-join",
                cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
-DisablePhysicalJoin("disable-physical-join",
-               cl::desc("Avoid coalescing physical register copies"),
-               cl::init(false), cl::Hidden);
+EnablePhysicalJoin("join-physregs",
+                   cl::desc("Join physical register copies"),
+                   cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
@@ -927,7 +927,7 @@ bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
   if (!Allocatable && CP.isFlipped() && JoinVInt.containsOneValue())
     return true;
 
-  if (DisablePhysicalJoin) {
+  if (!EnablePhysicalJoin) {
     DEBUG(dbgs() << "\tPhysreg joins disabled.\n");
     return false;
   }
