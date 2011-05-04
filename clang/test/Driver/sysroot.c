@@ -1,5 +1,5 @@
 // Check that --sysroot= also applies to header search paths.
-// RUN: %clang -ccc-host-triple unknown --sysroot=/FOO -### -E %s 2> %t1
+// RUN: %clang -ccc-host-triple i386-unk-unk --sysroot=/FOO -### -E %s 2> %t1
 // RUN: FileCheck --check-prefix=CHECK-SYSROOTEQ < %t1 %s
 // CHECK-SYSROOTEQ: "-cc1"{{.*}} "-isysroot" "/FOO"
 
