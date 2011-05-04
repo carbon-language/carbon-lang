@@ -40,7 +40,6 @@ using namespace llvm;
 
 namespace {
   class GCOVProfiler : public ModulePass {
-    bool runOnModule(Module &M);
   public:
     static char ID;
     GCOVProfiler()
@@ -57,6 +56,8 @@ namespace {
     }
 
   private:
+    bool runOnModule(Module &M);
+
     // Create the GCNO files for the Module based on DebugInfo.
     void emitGCNO(DebugInfoFinder &DIF);
 
@@ -87,6 +88,8 @@ namespace {
     void insertCounterWriteout(DebugInfoFinder &,
                                SmallVector<std::pair<GlobalVariable *,
                                                      uint32_t>, 8> &);
+
+    std::string mangleName(DICompileUnit CU, std::string NewStem);
 
     bool EmitNotes;
     bool EmitData;
@@ -323,6 +326,22 @@ static std::string replaceStem(std::string OrigFilename, std::string NewStem) {
   return (sys::path::stem(OrigFilename) + "." + NewStem).str();
 }
 
+std::string GCOVProfiler::mangleName(DICompileUnit CU, std::string NewStem) {
+  if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
+    for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
+      MDNode *N = GCov->getOperand(i);
+      if (N->getNumOperands() != 2) continue;
+      MDString *Path = dyn_cast<MDString>(N->getOperand(0));
+      MDNode *CompileUnit = dyn_cast<MDNode>(N->getOperand(1));
+      if (!Path || !CompileUnit) continue;
+      if (CompileUnit == CU)
+        return (Path->getString() + "/" +
+                replaceStem(CU.getFilename(), NewStem)).str();
+    }
+  }
+  return replaceStem(CU.getFilename(), NewStem);
+}
+
 bool GCOVProfiler::runOnModule(Module &M) {
   this->M = &M;
   Ctx = &M.getContext();
@@ -346,8 +365,8 @@ void GCOVProfiler::emitGCNO(DebugInfoFinder &DIF) {
     DICompileUnit CU(*I);
     raw_fd_ostream *&out = GcnoFiles[CU];
     std::string ErrorInfo;
-    out = new raw_fd_ostream(replaceStem(CU.getFilename(), "gcno").c_str(),
-                             ErrorInfo, raw_fd_ostream::F_Binary);
+    out = new raw_fd_ostream(mangleName(CU, "gcno").c_str(), ErrorInfo,
+                             raw_fd_ostream::F_Binary);
     out->write("oncg*404MVLL", 12);
   }
 
@@ -615,7 +634,7 @@ void GCOVProfiler::insertCounterWriteout(
   for (DebugInfoFinder::iterator CUI = DIF.compile_unit_begin(),
            CUE = DIF.compile_unit_end(); CUI != CUE; ++CUI) {
     DICompileUnit compile_unit(*CUI);
-    std::string FilenameGcda = replaceStem(compile_unit.getFilename(), "gcda");
+    std::string FilenameGcda = mangleName(compile_unit, "gcda");
     Builder.CreateCall(StartFile,
                        Builder.CreateGlobalStringPtr(FilenameGcda));
     for (SmallVector<std::pair<GlobalVariable *, uint32_t>, 8>::iterator
