@@ -651,6 +651,16 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     // Debian based distros.
     // Note: these distros symlink /usr/include/c++/X.Y.Z -> X.Y
     //===------------------------------------------------------------------===//
+    // Ubuntu 11.04 "Natty Narwhal" -- gcc-4.5.2
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "x86_64-linux-gnu", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "i686-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "i486-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
+                                "arm-linux-gnueabi", "", "", triple);
+
     // Ubuntu 10.10 "Maverick Meerkat" -- gcc-4.4.5
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
                                 "i686-linux-gnu", "", "64", triple);
