@@ -6715,6 +6715,19 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // shouldn't be diagnosing.
     LookupName(Previous, S);
 
+    if (Previous.isAmbiguous() && TUK == TUK_Definition) {
+      LookupResult::Filter F = Previous.makeFilter();
+      while (F.hasNext()) {
+        NamedDecl *ND = F.next();
+        if (ND->getDeclContext()->getRedeclContext() != SearchDC)
+          F.erase();
+      }
+      F.done();
+      
+      if (Previous.isAmbiguous())
+        return 0;
+    }
+    
     // Note:  there used to be some attempt at recovery here.
     if (Previous.isAmbiguous())
       return 0;
