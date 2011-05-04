@@ -34,6 +34,10 @@ struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  const TargetRegisterClass*
+  getMatchingSuperRegClass(const TargetRegisterClass *A,
+                           const TargetRegisterClass *B, unsigned Idx) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
