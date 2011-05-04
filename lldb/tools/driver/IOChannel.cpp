@@ -185,10 +185,11 @@ IOChannel::IOChannel
     // Source $PWD/.editrc then $HOME/.editrc
     ::el_source (m_edit_line, NULL);
 
-    el_set(m_edit_line, EL_ADDFN, "lldb_complete",
+    el_set (m_edit_line, EL_ADDFN, "lldb_complete",
             "LLDB completion function",
             IOChannel::ElCompletionFn);
-    el_set(m_edit_line, EL_BIND, m_completion_key, "lldb_complete", NULL);
+    el_set (m_edit_line, EL_BIND, m_completion_key, "lldb_complete", NULL);
+    el_set (m_edit_line, EL_BIND, "^r", "em-inc-search-prev", NULL);  // Cycle through backwards search, entering string
     el_set (m_edit_line, EL_CLIENTDATA, this);
 
     assert (m_history);
