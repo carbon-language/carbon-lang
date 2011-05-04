@@ -23,6 +23,7 @@
 // the verifier errors.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
@@ -32,6 +33,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -394,7 +396,13 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
     if ((*I)->isLandingPad())
       LandingPadSuccs.insert(*I);
   }
-  if (LandingPadSuccs.size() > 1)
+
+  const MCAsmInfo *AsmInfo = TM->getMCAsmInfo();
+  const BasicBlock *BB = MBB->getBasicBlock();
+  if (LandingPadSuccs.size() > 1 &&
+      !(AsmInfo &&
+        AsmInfo->getExceptionHandlingType() == ExceptionHandling::SjLj &&
+        BB && isa<SwitchInst>(BB->getTerminator())))
     report("MBB has more than one landing pad successor", MBB);
 
   // Call AnalyzeBranch. If it succeeds, there several more conditions to check.
