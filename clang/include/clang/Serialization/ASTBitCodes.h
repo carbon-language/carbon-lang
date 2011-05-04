@@ -1003,6 +1003,15 @@ namespace clang {
       DESIG_ARRAY_RANGE = 3
     };
 
+    /// \brief The different kinds of data that can occur in a
+    /// CtorInitializer.
+    enum CtorInitializerType {
+      CTOR_INITIALIZER_BASE,
+      CTOR_INITIALIZER_DELEGATING,
+      CTOR_INITIALIZER_MEMBER,
+      CTOR_INITIALIZER_INDIRECT_MEMBER
+    };
+
     /// @}
   }
 } // end namespace clang

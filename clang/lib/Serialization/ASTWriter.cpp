@@ -3744,16 +3744,19 @@ void ASTWriter::AddCXXCtorInitializers(
   for (unsigned i=0; i != NumCtorInitializers; ++i) {
     const CXXCtorInitializer *Init = CtorInitializers[i];
 
-    Record.push_back(Init->isBaseInitializer());
     if (Init->isBaseInitializer()) {
+      Record.push_back(CTOR_INITIALIZER_BASE);
       AddTypeSourceInfo(Init->getBaseClassInfo(), Record);
       Record.push_back(Init->isBaseVirtual());
+    } else if (Init->isDelegatingInitializer()) {
+      Record.push_back(CTOR_INITIALIZER_DELEGATING);
+      AddDeclRef(Init->getTargetConstructor(), Record);
+    } else if (Init->isMemberInitializer()){
+      Record.push_back(CTOR_INITIALIZER_MEMBER);
+      AddDeclRef(Init->getMember(), Record);
     } else {
-      Record.push_back(Init->isIndirectMemberInitializer());
-      if (Init->isIndirectMemberInitializer())
-        AddDeclRef(Init->getIndirectMember(), Record);
-      else
-        AddDeclRef(Init->getMember(), Record);
+      Record.push_back(CTOR_INITIALIZER_INDIRECT_MEMBER);
+      AddDeclRef(Init->getIndirectMember(), Record);
     }
 
     AddSourceLocation(Init->getMemberLocation(), Record);
