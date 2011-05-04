@@ -38,3 +38,13 @@ namespace WonkyAccess {
     return y.m + y2.m;
   }
 }
+
+// <rdar://problem/9169404>
+namespace rdar9169404 {
+  template<typename T, T N> struct X { };
+  template<bool C> struct X<bool, C> {
+    typedef int type;
+  };
+
+  X<bool, -1>::type value;
+}

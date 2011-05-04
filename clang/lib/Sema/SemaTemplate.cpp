@@ -3501,29 +3501,46 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return ExprError();
     }
 
+    // Add the value of this argument to the list of converted
+    // arguments. We use the bitwidth and signedness of the template
+    // parameter.
+    if (Arg->isValueDependent()) {
+      // The argument is value-dependent. Create a new
+      // TemplateArgument with the converted expression.
+      Converted = TemplateArgument(Arg);
+      return Owned(Arg);
+    }
+
     QualType IntegerType = Context.getCanonicalType(ParamType);
     if (const EnumType *Enum = IntegerType->getAs<EnumType>())
       IntegerType = Context.getCanonicalType(Enum->getDecl()->getIntegerType());
 
-    if (!Arg->isValueDependent()) {
+    if (ParamType->isBooleanType()) {
+      // Value must be zero or one.
+      Value = Value != 0;
+      unsigned AllowedBits = Context.getTypeSize(IntegerType);
+      if (Value.getBitWidth() != AllowedBits)
+        Value = Value.extOrTrunc(AllowedBits);
+      Value.setIsSigned(IntegerType->isSignedIntegerType());
+    } else {
       llvm::APSInt OldValue = Value;
-
+      
       // Coerce the template argument's value to the value it will have
       // based on the template parameter's type.
       unsigned AllowedBits = Context.getTypeSize(IntegerType);
       if (Value.getBitWidth() != AllowedBits)
         Value = Value.extOrTrunc(AllowedBits);
       Value.setIsSigned(IntegerType->isSignedIntegerType());
-
+      
       // Complain if an unsigned parameter received a negative value.
       if (IntegerType->isUnsignedIntegerType()
-          && (OldValue.isSigned() && OldValue.isNegative())) {
+               && (OldValue.isSigned() && OldValue.isNegative())) {
         Diag(Arg->getSourceRange().getBegin(), diag::warn_template_arg_negative)
           << OldValue.toString(10) << Value.toString(10) << Param->getType()
           << Arg->getSourceRange();
         Diag(Param->getLocation(), diag::note_template_param_here);
       }
-
+      
       // Complain if we overflowed the template parameter's type.
       unsigned RequiredBits;
       if (IntegerType->isUnsignedIntegerType())
@@ -3539,16 +3556,6 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
           << Arg->getSourceRange();
         Diag(Param->getLocation(), diag::note_template_param_here);
       }
-    }
-
-    // Add the value of this argument to the list of converted
-    // arguments. We use the bitwidth and signedness of the template
-    // parameter.
-    if (Arg->isValueDependent()) {
-      // The argument is value-dependent. Create a new
-      // TemplateArgument with the converted expression.
-      Converted = TemplateArgument(Arg);
-      return Owned(Arg);
     }
 
     Converted = TemplateArgument(Value,
