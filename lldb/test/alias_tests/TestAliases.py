@@ -112,7 +112,7 @@ class AliasTestCase(TestBase):
                      substrs = [ "(int) $",
                                  "= 0x000004d2" ])
 
-        self.expect ('exprf2 s "Hi there!"',
+        self.expect ('exprf2 c "Hi there!"',
                      substrs = [ "(const char) [0] = 'H'",
                                  "(const char) [1] = 'i'",
                                  "(const char) [2] = ' '",
