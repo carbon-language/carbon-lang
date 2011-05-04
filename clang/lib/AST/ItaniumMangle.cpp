@@ -255,7 +255,8 @@ private:
                             DeclarationName name,
                             unsigned KnownArity = UnknownArity);
 
-  void mangleUnresolvedType(QualType type);
+  static bool isUnresolvedType(const Type *type);
+  void mangleUnresolvedType(const Type *type);
 
   void mangleName(const TemplateDecl *TD,
                   const TemplateArgument *TemplateArgs,
@@ -277,6 +278,7 @@ private:
                         unsigned NumTemplateArgs);
   void manglePrefix(NestedNameSpecifier *qualifier);
   void manglePrefix(const DeclContext *DC, bool NoFunction=false);
+  void manglePrefix(QualType type);
   void mangleTemplatePrefix(const TemplateDecl *ND);
   void mangleTemplatePrefix(TemplateName Template);
   void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
@@ -317,6 +319,8 @@ private:
   void mangleTemplateArgs(const TemplateParameterList &PL,
                           const TemplateArgumentList &AL);
   void mangleTemplateArg(const NamedDecl *P, const TemplateArgument &A);
+  void mangleUnresolvedTemplateArgs(const TemplateArgument *args,
+                                    unsigned numArgs);
 
   void mangleTemplateParameter(unsigned Index);
 
@@ -667,7 +671,7 @@ void CXXNameMangler::mangleCallOffset(int64_t NonVirtual, int64_t Virtual) {
   Out << '_';
 }
 
-void CXXNameMangler::mangleUnresolvedType(QualType type) {
+void CXXNameMangler::manglePrefix(QualType type) {
   if (const TemplateSpecializationType *TST =
         type->getAs<TemplateSpecializationType>()) {
     if (!mangleSubstitution(QualType(TST, 0))) {
@@ -696,6 +700,31 @@ void CXXNameMangler::mangleUnresolvedType(QualType type) {
     // substitutions.
     mangleType(type);
   }
+}
+
+/// Returns true if the given type, appearing within an
+/// unresolved-name, should be mangled as an unresolved-type.
+bool CXXNameMangler::isUnresolvedType(const Type *type) {
+  // <unresolved-type> ::= <template-param>
+  //                   ::= <decltype>
+  //                   ::= <template-template-param> <template-args>
+  // (this last is not official yet)
+
+  if (isa<TemplateTypeParmType>(type)) return true;
+  if (isa<DecltypeType>(type)) return true;
+  // typeof?
+  if (const TemplateSpecializationType *tst =
+        dyn_cast<TemplateSpecializationType>(type)) {
+    TemplateDecl *temp = tst->getTemplateName().getAsTemplateDecl();
+    if (temp && isa<TemplateTemplateParmDecl>(temp))
+      return true;
+  }
+  return false;
+}
+
+void CXXNameMangler::mangleUnresolvedType(const Type *type) {
+  // This seems to be do everything we want.
+  mangleType(QualType(type, 0));
 }
 
 /// Mangle everything prior to the base-unresolved-name in an unresolved-name.
@@ -752,17 +781,60 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
-    // Both cases want this.
-    Out << "sr";
+    const Type *type = qualifier->getAsType();
 
-    // We only get here recursively if we're followed by identifiers.
-    if (recursive) Out << 'N';
+    // We only want to use an unresolved-type encoding if this is one of:
+    //   - a decltype
+    //   - a template type parameter
+    //   - a template template parameter with arguments
+    // In all of these cases, we should have no prefix.
+    if (qualifier->getPrefix()) {
+      mangleUnresolvedPrefix(qualifier->getPrefix(), firstQualifierLookup,
+                             /*recursive*/ true);
+    } else {
+      // Otherwise, all the cases want this.
+      Out << "sr";
 
-    mangleUnresolvedType(QualType(qualifier->getAsType(), 0));
+      if (isUnresolvedType(type)) {
+        // We only get here recursively if we're followed by identifiers.
+        if (recursive) Out << 'N';
+        mangleUnresolvedType(type);
 
-    // We never want to print 'E' directly after an unresolved-type,
-    // so we return directly.
-    return;
+        // We never want to print 'E' directly after an unresolved-type,
+        // so we return directly.
+        return;
+      }
+    }
+
+    assert(!isUnresolvedType(type));
+
+    // Only certain other types are valid as prefixes;  enumerate them.
+    // FIXME: can we get ElaboratedTypes here?
+    // FIXME: SubstTemplateTypeParmType?
+    if (const TagType *t = dyn_cast<TagType>(type)) {
+      mangleSourceName(t->getDecl()->getIdentifier());
+    } else if (const TypedefType *t = dyn_cast<TypedefType>(type)) {
+      mangleSourceName(t->getDecl()->getIdentifier());
+    } else if (const UnresolvedUsingType *t
+                 = dyn_cast<UnresolvedUsingType>(type)) {
+      mangleSourceName(t->getDecl()->getIdentifier());
+    } else if (const DependentNameType *t
+                 = dyn_cast<DependentNameType>(type)) {
+      mangleSourceName(t->getIdentifier());
+    } else if (const TemplateSpecializationType *tst
+                 = dyn_cast<TemplateSpecializationType>(type)) {
+      TemplateDecl *temp = tst->getTemplateName().getAsTemplateDecl();
+      assert(temp && "no template for template specialization type");
+      mangleSourceName(temp->getIdentifier());
+      mangleUnresolvedTemplateArgs(tst->getArgs(), tst->getNumArgs());
+    } else if (const DependentTemplateSpecializationType *tst
+                 = dyn_cast<DependentTemplateSpecializationType>(type)) {
+      mangleSourceName(tst->getIdentifier());
+      mangleUnresolvedTemplateArgs(tst->getArgs(), tst->getNumArgs());
+    } else {
+      llvm_unreachable("unexpected type in nested name specifier!");
+    }
+    break;
   }
 
   case NestedNameSpecifier::Identifier:
@@ -1097,7 +1169,7 @@ void CXXNameMangler::manglePrefix(NestedNameSpecifier *qualifier) {
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate:
-    mangleUnresolvedType(QualType(qualifier->getAsType(), 0));
+    manglePrefix(QualType(qualifier->getAsType(), 0));
     return;
 
   case NestedNameSpecifier::Identifier:
@@ -2552,8 +2624,8 @@ void CXXNameMangler::mangleTemplateArgs(
                           const ExplicitTemplateArgumentList &TemplateArgs) {
   // <template-args> ::= I <template-arg>+ E
   Out << 'I';
-  for (unsigned I = 0, E = TemplateArgs.NumTemplateArgs; I != E; ++I)
-    mangleTemplateArg(0, TemplateArgs.getTemplateArgs()[I].getArgument());
+  for (unsigned i = 0, e = TemplateArgs.NumTemplateArgs; i != e; ++i)
+    mangleTemplateArg(0, TemplateArgs.getTemplateArgs()[i].getArgument());
   Out << 'E';
 }
 
@@ -2564,10 +2636,15 @@ void CXXNameMangler::mangleTemplateArgs(TemplateName Template,
     return mangleTemplateArgs(*TD->getTemplateParameters(), TemplateArgs,
                               NumTemplateArgs);
   
+  mangleUnresolvedTemplateArgs(TemplateArgs, NumTemplateArgs);
+}
+
+void CXXNameMangler::mangleUnresolvedTemplateArgs(const TemplateArgument *args,
+                                                  unsigned numArgs) {
   // <template-args> ::= I <template-arg>+ E
   Out << 'I';
-  for (unsigned i = 0; i != NumTemplateArgs; ++i)
-    mangleTemplateArg(0, TemplateArgs[i]);
+  for (unsigned i = 0; i != numArgs; ++i)
+    mangleTemplateArg(0, args[i]);
   Out << 'E';
 }
 

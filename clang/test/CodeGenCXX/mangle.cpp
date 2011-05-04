@@ -397,16 +397,16 @@ namespace test3 {
   struct Path2 : AmbiguousBase { double p; };
   struct Derived : Path1, Path2 { };
 
-  // CHECK: define linkonce_odr i32 @_ZN5test38get_ab_1INS_7DerivedEEEDtptcvPT_Li0EsrNS_5Path1E2abERS2_(
+  // CHECK: define linkonce_odr i32 @_ZN5test38get_ab_1INS_7DerivedEEEDtptcvPT_Li0Esr5Path1E2abERS2_(
   template <class T> decltype(((T*) 0)->Path1::ab) get_ab_1(T &ref) { return ref.Path1::ab; }
 
-  // CHECK: define linkonce_odr i32 @_ZN5test38get_ab_2INS_7DerivedEEEDtptcvPT_Li0EsrNS_5Path2E2abERS2_(
+  // CHECK: define linkonce_odr i32 @_ZN5test38get_ab_2INS_7DerivedEEEDtptcvPT_Li0Esr5Path2E2abERS2_(
   template <class T> decltype(((T*) 0)->Path2::ab) get_ab_2(T &ref) { return ref.Path2::ab; }
 
-  // CHECK: define linkonce_odr float @_ZN5test37get_p_1INS_7DerivedEEEDtptcvPT_Li0EsrNS_5Path1E1pERS2_(
+  // CHECK: define linkonce_odr float @_ZN5test37get_p_1INS_7DerivedEEEDtptcvPT_Li0Esr5Path1E1pERS2_(
   template <class T> decltype(((T*) 0)->Path1::p) get_p_1(T &ref) { return ref.Path1::p; }
 
-  // CHECK: define linkonce_odr double @_ZN5test37get_p_2INS_7DerivedEEEDtptcvPT_Li0EsrNS_5Path2E1pERS2_(
+  // CHECK: define linkonce_odr double @_ZN5test37get_p_2INS_7DerivedEEEDtptcvPT_Li0Esr5Path2E1pERS2_(
   template <class T> decltype(((T*) 0)->Path2::p) get_p_2(T &ref) { return ref.Path2::p; }
 
   Derived obj;
@@ -674,5 +674,40 @@ namespace test25 {
   void test() {
     // CHECK: call void @_ZN6test251AIXadL_ZNS_3fooEvEEE4callEv()
     A<foo>::call();
+  }
+}
+
+namespace test26 {
+  template <template <class> class T> void foo(decltype(T<float>::object) &object) {}
+
+  template <class T> struct holder { static T object; };
+
+  void test() {
+    float f;
+
+    // CHECK: call void @_ZN6test263fooINS_6holderEEEvRDtsrT_IfE6objectE(
+    foo<holder>(f);
+  }
+}
+
+namespace test27 {
+  struct A {
+    struct inner {
+      float object;
+    };
+
+    float meth();
+  };
+  typedef A Alias;
+
+  template <class T> void a(decltype(T::inner::object) &object) {}
+  template <class T> void b(decltype(T().Alias::meth()) &object) {}
+
+  void test() {
+    float f;
+    // CHECK: call void @_ZN6test271aINS_1AEEEvRDtsrNT_5innerE6objectE(
+    a<A>(f);
+    // CHECK: call void @_ZN6test271bINS_1AEEEvRDTcldtcvT__Esr5AliasE4methEE(
+    b<A>(f);
   }
 }
