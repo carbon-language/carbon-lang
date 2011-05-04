@@ -3,7 +3,7 @@
 
 // RUN: grep '@"OBJC_CLASS_$_A" = global' %t
 // RUN: grep '@"OBJC_CLASS_$_B" = external global' %t
-// RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_A._ivar" = global .* section "__DATA, __objc_ivar", align 8' %t
 // RUN: grep '@"OBJC_METACLASS_$_A" = global .* section "__DATA, __objc_data", align 8' %t
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_[0-9]*" = internal global .* section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t
 // RUN: grep '@"\\01L_OBJC_CLASSLIST_SUP_REFS_$_[0-9]*" = internal global .* section "__DATA, __objc_superrefs, regular, no_dead_strip", align 8' %t | count 2

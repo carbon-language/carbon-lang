@@ -1,17 +1,17 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -emit-llvm -o %t %s
 // RUNX: llvm-gcc -m64 -emit-llvm -S -o %t %s &&
 
-// RUN: grep '@"OBJC_IVAR_$_I3._iv2" = global i64 8, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I3._iv3" = global i64 12, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I4._iv4" = global i64 13, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I5._iv5" = global i64 14, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I5._iv6_synth" = hidden global i64 16, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I5._iv7_synth" = hidden global i64 20, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I6.iv0" = global i64 0, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I8.b" = global i64 8, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I9.iv0" = global i64 0, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I10.iv1" = global i64 4, section "__DATA, __objc_const", align 8' %t
-// RUN: grep '@"OBJC_IVAR_$_I12.iv2" = global i64 8, section "__DATA, __objc_const", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I3._iv2" = global i64 8, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I3._iv3" = global i64 12, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I4._iv4" = global i64 13, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I5._iv5" = global i64 14, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I5._iv6_synth" = hidden global i64 16, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I5._iv7_synth" = hidden global i64 20, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I6.iv0" = global i64 0, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I8.b" = global i64 8, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I9.iv0" = global i64 0, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I10.iv1" = global i64 4, section "__DATA, __objc_ivar", align 8' %t
+// RUN: grep '@"OBJC_IVAR_$_I12.iv2" = global i64 8, section "__DATA, __objc_ivar", align 8' %t
 // RUN: grep '_OBJC_CLASS_RO_$_I3" = internal global .* { i32 0, i32 8, i32 13, .*' %t
 // RUN: grep '_OBJC_CLASS_RO_$_I4" = internal global .* { i32 0, i32 13, i32 14, .*' %t
 // RUN: grep '_OBJC_CLASS_RO_$_I5" = internal global .* { i32 0, i32 14, i32 24, .*' %t

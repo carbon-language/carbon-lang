@@ -5209,7 +5209,7 @@ CGObjCNonFragileABIMac::EmitIvarOffsetVar(const ObjCInterfaceDecl *ID,
     IvarOffsetGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   else
     IvarOffsetGV->setVisibility(llvm::GlobalValue::DefaultVisibility);
-  IvarOffsetGV->setSection("__DATA, __objc_const");
+  IvarOffsetGV->setSection("__DATA, __objc_ivar");
   return IvarOffsetGV;
 }
 
