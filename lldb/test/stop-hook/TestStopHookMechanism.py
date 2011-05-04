@@ -73,10 +73,10 @@ class StopHookMechanismTestCase(TestBase):
 
         # Now continue the inferior, we'll stop at another breakpoint which is outside the stop-hook range.
         child.sendline('process continue')
-        child.expect_exact(prompt)
+        child.expect_exact('// Another breakpoint which is outside of the stop-hook range.')
         #self.DebugPExpect(child)
         child.sendline('thread step-over')
-        child.expect_exact(prompt)
+        child.expect_exact('// Another breakpoint which is outside of the stop-hook range.')
         #self.DebugPExpect(child)
         # Verify that the 'Stop Hooks' mechanism is NOT BEING fired off.
         self.expect(child.before, exe=False, matching=False,
