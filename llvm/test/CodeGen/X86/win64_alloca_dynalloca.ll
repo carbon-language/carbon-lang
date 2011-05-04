@@ -1,8 +1,11 @@
-; RUN: llc < %s -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
-; RUN: llc < %s -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
-; RUN: llc < %s -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
+; RUN: llc < %s -join-physregs -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
+; RUN: llc < %s -join-physregs -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
+; RUN: llc < %s -join-physregs -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
 ; PR8777
 ; PR8778
+
+; Passing the same value in two registers creates a false interference that
+; only -join-physregs resolves. It could also be handled by a parallel copy.
 
 define i64 @foo(i64 %n, i64 %x) nounwind {
 entry:

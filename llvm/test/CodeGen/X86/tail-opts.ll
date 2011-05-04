@@ -412,9 +412,9 @@ return:
 ; can fall-through into the ret and the other side has to branch anyway.
 
 ; CHECK: TESTE:
-; CHECK: imulq
-; CHECK-NEXT: LBB8_2:
-; CHECK-NEXT: ret
+; CHECK: ret
+; CHECK-NOT: ret
+; CHECK: size TESTE
 
 define i64 @TESTE(i64 %parami, i64 %paraml) nounwind readnone {
 entry:

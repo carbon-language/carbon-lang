@@ -12,7 +12,7 @@ define i32 @crc32_8(i32 %a, i8 %b) nounwind {
 ; X32:     crc32b   8(%esp), %eax
 
 ; X64: _crc32_8:
-; X64:     crc32b   %sil, %eax
+; X64:     crc32b   %sil,
 }
 
 
@@ -23,7 +23,7 @@ define i32 @crc32_16(i32 %a, i16 %b) nounwind {
 ; X32:     crc32w   8(%esp), %eax
 
 ; X64: _crc32_16:
-; X64:     crc32w   %si, %eax
+; X64:     crc32w   %si,
 }
 
 
@@ -34,5 +34,5 @@ define i32 @crc32_32(i32 %a, i32 %b) nounwind {
 ; X32:     crc32l   8(%esp), %eax
 
 ; X64: _crc32_32:
-; X64:     crc32l   %esi, %eax
+; X64:     crc32l   %esi,
 }

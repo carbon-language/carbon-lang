@@ -7,10 +7,10 @@
 ; Use the flags on the add.
 
 ; CHECK: test1:
-;      CHECK: addl    (%r[[A0:di|cx]]), {{%esi|%edx}}
-; CHECK-NEXT: movl    {{%edx|%r8d}}, %eax
-; CHECK-NEXT: cmovnsl {{%ecx|%r9d}}, %eax
-; CHECK-NEXT: ret
+;     CHECK: addl
+; CHECK-NOT: test
+;     CHECK: cmovnsl
+;     CHECK: ret
 
 define i32 @test1(i32* %x, i32 %y, i32 %a, i32 %b) nounwind {
 	%tmp2 = load i32* %x, align 4		; <i32> [#uses=1]
@@ -42,7 +42,7 @@ false:
 ; Do use the flags result of the and here, since the and has another use.
 
 ; CHECK: test3:
-;      CHECK: andl    $16, %e[[A0]]
+;      CHECK: andl    $16, %e
 ; CHECK-NEXT: jne
 
 define void @test3(i32 %x) nounwind {

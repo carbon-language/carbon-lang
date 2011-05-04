@@ -62,11 +62,10 @@ define <8 x i16> @t4(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %B, <8 x i32> < i32 0, i32 7, i32 2, i32 3, i32 1, i32 5, i32 6, i32 5 >
 	ret <8 x i16> %tmp
 ; X64: t4:
-; X64: 	pextrw	$7, %xmm0, %eax
-; X64: 	pshufhw	$100, %xmm0, %xmm1
-; X64: 	pinsrw	$1, %eax, %xmm1
-; X64: 	pextrw	$1, %xmm0, %eax
-; X64: 	movdqa	%xmm1, %xmm0
+; X64: 	pextrw	$7, [[XMM0:%xmm[0-9]+]], %eax
+; X64: 	pshufhw	$100, [[XMM0]], [[XMM1:%xmm[0-9]+]]
+; X64: 	pinsrw	$1, %eax, [[XMM1]]
+; X64: 	pextrw	$1, [[XMM0]], %eax
 ; X64: 	pinsrw	$4, %eax, %xmm0
 ; X64: 	ret
 }
@@ -251,13 +250,13 @@ entry:
         %tmp9 = shufflevector <16 x i8> %tmp8, <16 x i8> %T0,  <16 x i32> < i32 0, i32 1, i32 2, i32 17,  i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef , i32 undef >
         ret <16 x i8> %tmp9
 ; X64: 	t16:
-; X64: 		pinsrw	$0, %eax, %xmm1
-; X64: 		pextrw	$8, %xmm0, %eax
-; X64: 		pinsrw	$1, %eax, %xmm1
-; X64: 		pextrw	$1, %xmm1, %ecx
-; X64: 		movd	%xmm1, %edx
-; X64: 		pinsrw	$0, %edx, %xmm1
-; X64: 		pinsrw	$1, %eax, %xmm0
+; X64: 		pinsrw	$0, %eax, [[X1:%xmm[0-9]+]]
+; X64: 		pextrw	$8, [[X0:%xmm[0-9]+]], %eax
+; X64: 		pinsrw	$1, %eax, [[X1]]
+; X64: 		pextrw	$1, [[X1]], %ecx
+; X64: 		movd	[[X1]], %edx
+; X64: 		pinsrw	$0, %edx, %xmm
+; X64: 		pinsrw	$1, %eax, %xmm
 ; X64: 		ret
 }
 

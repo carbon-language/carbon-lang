@@ -1,8 +1,9 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse,-sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse
 ; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse2
 
+; sse:  t1:
+; sse2: t1:
 define <4 x float> @t1(<4 x float> %a, <4 x float> %b) nounwind  {
-; sse: movaps
 ; sse: shufps
 ; sse2: pshufd
 ; sse2-NEXT: ret
@@ -10,6 +11,8 @@ define <4 x float> @t1(<4 x float> %a, <4 x float> %b) nounwind  {
         ret <4 x float> %tmp1
 }
 
+; sse:  t2:
+; sse2: t2:
 define <4 x float> @t2(<4 x float> %A, <4 x float> %B) nounwind {
 ; sse: shufps
 ; sse2: pshufd
@@ -18,8 +21,9 @@ define <4 x float> @t2(<4 x float> %A, <4 x float> %B) nounwind {
 	ret <4 x float> %tmp
 }
 
+; sse:  t3:
+; sse2: t3:
 define <4 x float> @t3(<4 x float> %A, <4 x float> %B) nounwind {
-; sse: movaps
 ; sse: shufps
 ; sse2: pshufd
 ; sse2-NEXT: ret
@@ -27,7 +31,10 @@ define <4 x float> @t3(<4 x float> %A, <4 x float> %B) nounwind {
 	ret <4 x float> %tmp
 }
 
+; sse:  t4:
+; sse2: t4:
 define <4 x float> @t4(<4 x float> %A, <4 x float> %B) nounwind {
+
 ; sse: shufps
 ; sse2: pshufd
 ; sse2-NEXT: ret

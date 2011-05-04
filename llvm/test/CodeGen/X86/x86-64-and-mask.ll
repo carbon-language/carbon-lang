@@ -39,7 +39,7 @@ define void @ccc(i64 %x) nounwind {
 
 ; This requires a mov and a 64-bit and.
 ; CHECK: ddd:
-; CHECK: movabsq $4294967296, %rax
+; CHECK: movabsq $4294967296, %r
 ; CHECK: andq %rax, %rdi
 
 define void @ddd(i64 %x) nounwind {
