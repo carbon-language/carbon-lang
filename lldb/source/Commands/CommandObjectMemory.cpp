@@ -643,7 +643,6 @@ public:
                     if (format != eFormatDefault)
                         valobj_sp->SetFormat (format);
 
-                    bool use_dynamic = false;
                     bool scope_already_checked = true;
                     
                     ValueObject::DumpValueObject (*output_stream,
@@ -655,7 +654,7 @@ public:
                                                   m_varobj_options.show_types,
                                                   m_varobj_options.show_location,
                                                   m_varobj_options.use_objc,
-                                                  use_dynamic,
+                                                  m_varobj_options.use_dynamic,
                                                   scope_already_checked,
                                                   m_varobj_options.flat_output);
                 }

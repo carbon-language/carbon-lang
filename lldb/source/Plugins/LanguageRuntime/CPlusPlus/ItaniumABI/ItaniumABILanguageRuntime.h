@@ -31,7 +31,10 @@ namespace lldb_private {
         IsVTableName (const char *name);
         
         virtual bool
-        GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address);
+        GetDynamicTypeAndAddress (ValueObject &in_value, 
+                                  lldb::DynamicValueType use_dynamic, 
+                                  TypeAndOrName &class_type_or_name, 
+                                  Address &address);
         
         virtual bool
         CouldHaveDynamicValue (ValueObject &in_value);

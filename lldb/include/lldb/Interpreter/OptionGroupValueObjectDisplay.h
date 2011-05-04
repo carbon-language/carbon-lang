@@ -53,6 +53,7 @@ public:
     bool use_objc;
     uint32_t max_depth;
     uint32_t ptr_depth;
+    lldb::DynamicValueType use_dynamic;
 };
 
 } // namespace lldb_private

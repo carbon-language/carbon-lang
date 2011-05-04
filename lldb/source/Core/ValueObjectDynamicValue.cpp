@@ -34,10 +34,11 @@
 
 using namespace lldb_private;
 
-ValueObjectDynamicValue::ValueObjectDynamicValue (ValueObject &parent) :
+ValueObjectDynamicValue::ValueObjectDynamicValue (ValueObject &parent, lldb::DynamicValueType use_dynamic) :
     ValueObject(parent),
     m_address (),
-    m_type_sp()
+    m_type_sp(),
+    m_use_dynamic (use_dynamic)
 {
     SetName (parent.GetName().AsCString());
 }
@@ -122,6 +123,14 @@ ValueObjectDynamicValue::UpdateValue ()
         return false;
     }
     
+    // Setting our type_sp to NULL will route everything back through our
+    // parent which is equivalent to not using dynamic values.
+    if (m_use_dynamic == lldb::eNoDynamicValues)
+    {
+        m_type_sp.reset();
+        return true;
+    }
+    
     ExecutionContext exe_ctx (GetExecutionContextScope());
     
     if (exe_ctx.target)
@@ -144,19 +153,19 @@ ValueObjectDynamicValue::UpdateValue ()
     {
         LanguageRuntime *runtime = process->GetLanguageRuntime (known_type);
         if (runtime)
-            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
+            found_dynamic_type = runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
     }
     else
     {
         LanguageRuntime *cpp_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeC_plus_plus);
         if (cpp_runtime)
-            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
+            found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
         
         if (!found_dynamic_type)
         {
             LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
             if (objc_runtime)
-                found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, class_type_or_name, dynamic_address);
+                found_dynamic_type = cpp_runtime->GetDynamicTypeAndAddress (*m_parent, m_use_dynamic, class_type_or_name, dynamic_address);
         }
     }
     

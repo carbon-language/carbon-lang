@@ -40,6 +40,7 @@ namespace lldb_private {
 class TargetInstanceSettings : public InstanceSettings
 {
 public:
+    static OptionEnumValueElement g_dynamic_value_types[];
 
     TargetInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
 
@@ -67,10 +68,10 @@ public:
                               StringList &value,
                               Error *err);
 
-    bool
+    lldb::DynamicValueType
     GetPreferDynamicValue()
     {
-        return m_prefer_dynamic_value;
+        return (lldb::DynamicValueType) g_dynamic_value_types[m_prefer_dynamic_value].value;
     }
 
     bool
@@ -96,9 +97,10 @@ protected:
     
     OptionValueFileSpec m_expr_prefix_file;
     lldb::DataBufferSP m_expr_prefix_contents_sp;
-    OptionValueBoolean m_prefer_dynamic_value;
+    int                m_prefer_dynamic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
+    
 
 };
 
@@ -483,7 +485,7 @@ public:
                         StackFrame *frame,
                         bool unwind_on_error,
                         bool keep_in_memory,
-                        bool fetch_dynamic_value,
+                        lldb::DynamicValueType use_dynamic,
                         lldb::ValueObjectSP &result_valobj_sp);
 
     ClangPersistentVariables &

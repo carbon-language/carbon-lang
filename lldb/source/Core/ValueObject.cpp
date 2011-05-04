@@ -986,8 +986,11 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
 }
 
 void
-ValueObject::CalculateDynamicValue ()
+ValueObject::CalculateDynamicValue (lldb::DynamicValueType use_dynamic)
 {
+    if (use_dynamic == lldb::eNoDynamicValues)
+        return;
+        
     if (!m_dynamic_value && !IsDynamic())
     {
         Process *process = m_update_point.GetProcess();
@@ -1013,12 +1016,12 @@ ValueObject::CalculateDynamicValue ()
             {
                 LanguageRuntime *objc_runtime = process->GetLanguageRuntime (lldb::eLanguageTypeObjC);
                 if (objc_runtime)
-                    worth_having_dynamic_value = cpp_runtime->CouldHaveDynamicValue(*this);
+                    worth_having_dynamic_value = objc_runtime->CouldHaveDynamicValue(*this);
             }
         }
         
         if (worth_having_dynamic_value)
-            m_dynamic_value = new ValueObjectDynamicValue (*this);
+            m_dynamic_value = new ValueObjectDynamicValue (*this, use_dynamic);
             
 //        if (worth_having_dynamic_value)
 //            printf ("Adding dynamic value %s (%p) to (%p) - manager %p.\n", m_name.GetCString(), m_dynamic_value, this, m_manager);
@@ -1027,11 +1030,14 @@ ValueObject::CalculateDynamicValue ()
 }
 
 ValueObjectSP
-ValueObject::GetDynamicValue (bool can_create)
+ValueObject::GetDynamicValue (DynamicValueType use_dynamic)
 {
-    if (!IsDynamic() && m_dynamic_value == NULL && can_create)
+    if (use_dynamic == lldb::eNoDynamicValues)
+        return ValueObjectSP();
+        
+    if (!IsDynamic() && m_dynamic_value == NULL)
     {
-        CalculateDynamicValue();
+        CalculateDynamicValue(use_dynamic);
     }
     if (m_dynamic_value)
         return m_dynamic_value->GetSP();
@@ -1137,16 +1143,16 @@ ValueObject::DumpValueObject
     bool show_types,
     bool show_location,
     bool use_objc,
-    bool use_dynamic,
+    lldb::DynamicValueType use_dynamic,
     bool scope_already_checked,
     bool flat_output
 )
 {
     if (valobj  && valobj->UpdateValueIfNeeded ())
     {
-        if (use_dynamic)
+        if (use_dynamic != lldb::eNoDynamicValues)
         {
-            ValueObject *dynamic_value = valobj->GetDynamicValue(true).get();
+            ValueObject *dynamic_value = valobj->GetDynamicValue(use_dynamic).get();
             if (dynamic_value)
                 valobj = dynamic_value;
         }

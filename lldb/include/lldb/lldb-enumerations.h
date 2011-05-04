@@ -316,7 +316,13 @@ namespace lldb {
         eLanguageTypePython          = 0x0014    ///< Python.
     } LanguageType;
 
-
+    typedef enum DynamicValueType
+    {
+        eNoDynamicValues = 0,
+        eDynamicCanRunTarget    = 1,
+        eDynamicDontRunTarget   = 2
+    } DynamicValueType;
+    
     typedef enum AccessType
     {
         eAccessNone,

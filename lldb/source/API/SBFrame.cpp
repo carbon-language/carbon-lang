@@ -343,12 +343,12 @@ SBFrame::Clear()
 SBValue
 SBFrame::FindVariable (const char *name)
 {
-    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    lldb::DynamicValueType  use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
     return FindVariable (name, use_dynamic);
 }
 
 SBValue
-SBFrame::FindVariable (const char *name, bool use_dynamic)
+SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 {
     VariableSP var_sp;
     SBValue sb_value;
@@ -389,12 +389,12 @@ SBFrame::FindVariable (const char *name, bool use_dynamic)
 SBValue
 SBFrame::FindValue (const char *name, ValueType value_type)
 {
-    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
     return FindValue (name, value_type, use_dynamic);
 }
 
 SBValue
-SBFrame::FindValue (const char *name, ValueType value_type, bool use_dynamic)
+SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic)
 {
     SBValue sb_value;
     if (m_opaque_sp && name && name[0])
@@ -579,7 +579,7 @@ SBFrame::GetVariables (bool arguments,
                        bool statics,
                        bool in_scope_only)
 {
-    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
     return GetVariables (arguments, locals, statics, in_scope_only, use_dynamic);
 }
 
@@ -588,7 +588,7 @@ SBFrame::GetVariables (bool arguments,
                        bool locals,
                        bool statics,
                        bool in_scope_only,
-                       bool use_dynamic)
+                       lldb::DynamicValueType  use_dynamic)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
@@ -706,12 +706,12 @@ SBFrame::GetDescription (SBStream &description)
 SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
-    bool use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
     return EvaluateExpression (expr, use_dynamic);
 }
 
 SBValue
-SBFrame::EvaluateExpression (const char *expr, bool fetch_dynamic_value)
+SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value)
 {
     Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
 
@@ -732,8 +732,8 @@ SBFrame::EvaluateExpression (const char *expr, bool fetch_dynamic_value)
         exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, 
                                                                                            m_opaque_sp.get(), 
                                                                                            unwind_on_error, 
-                                                                                           fetch_dynamic_value, 
                                                                                            keep_in_memory, 
+                                                                                           fetch_dynamic_value, 
                                                                                            *expr_result);
     }
     

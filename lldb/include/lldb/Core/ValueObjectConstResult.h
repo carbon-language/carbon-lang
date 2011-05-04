@@ -96,12 +96,13 @@ protected:
     virtual bool
     UpdateValue ();
 
+    // CalculateDynamicValue doesn't change the dynamic value, since this can get
+    // called at any time and you can't reliably fetch the dynamic value at any time.
+    // If we want to have dynamic values for ConstResults, then we'll need to make them
+    // up when we make the const result & stuff them in by hand.
     virtual void
-    CalculateDynamicValue () {} // CalculateDynamicValue doesn't change the dynamic value, since this can get
-                                // called at any time and you can't reliably fetch the dynamic value at any time.
-                                // If we want to have dynamic values for ConstResults, then we'll need to make them
-                                // up when we make the const result & stuff them in by hand.
-                                    
+    CalculateDynamicValue (lldb::DynamicValueType use_dynamic) {} 
+                                        
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
     uint32_t m_byte_size;

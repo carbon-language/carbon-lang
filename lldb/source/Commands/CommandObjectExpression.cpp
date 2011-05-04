@@ -260,27 +260,22 @@ CommandObjectExpression::EvaluateExpression
         ExecutionResults exe_results;
         
         bool keep_in_memory = true;
-        bool use_dynamic;
+        lldb::DynamicValueType use_dynamic;
         // If use dynamic is not set, get it from the target:
         switch (m_options.use_dynamic)
         {
         case eLazyBoolCalculate:
-            {   
-                if (m_exe_ctx.target->GetPreferDynamicValue())
-                    use_dynamic = true;
-                else
-                    use_dynamic = false;
-            }
+            use_dynamic = m_exe_ctx.target->GetPreferDynamicValue();
             break;
         case eLazyBoolYes:
-            use_dynamic = true;
+            use_dynamic = lldb::eDynamicCanRunTarget;
             break;
         case eLazyBoolNo:
-            use_dynamic = false;
+            use_dynamic = lldb::eNoDynamicValues;
             break;
         }
         
-        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, use_dynamic, keep_in_memory, result_valobj_sp);
+        exe_results = m_exe_ctx.target->EvaluateExpression(expr, m_exe_ctx.frame, m_options.unwind_on_error, keep_in_memory, use_dynamic, result_valobj_sp);
         
         if (exe_results == eExecutionInterrupted && !m_options.unwind_on_error)
         {

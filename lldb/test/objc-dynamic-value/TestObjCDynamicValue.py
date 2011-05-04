@@ -81,9 +81,9 @@ class ObjCDynamicValueTestCase(TestBase):
         #  make sure we can get that properly:
 
         frame = thread.GetFrameAtIndex(0)
-        myObserver = frame.FindVariable('myObserver')
+        myObserver = frame.FindVariable('myObserver', lldb.eDynamicCanRunTarget)
         self.assertTrue (myObserver.IsValid())
-        myObserver_source = myObserver.GetChildMemberWithName ('_source')
+        myObserver_source = myObserver.GetChildMemberWithName ('_source', lldb.eDynamicCanRunTarget)
         self.examine_SourceDerived_ptr (myObserver_source)
 
         # The "frame var" code uses another path to get into children, so let's
@@ -91,7 +91,7 @@ class ObjCDynamicValueTestCase(TestBase):
 
         result = lldb.SBCommandReturnObject()
 
-        self.expect('frame var -d 1 myObserver->_source', 'frame var finds its way into a child member',
+        self.expect('frame var -d run-target myObserver->_source', 'frame var finds its way into a child member',
             patterns = ['\(SourceDerived \*\)'])
 
         # This test is not entirely related to the main thrust of this test case, but since we're here,
@@ -115,8 +115,8 @@ class ObjCDynamicValueTestCase(TestBase):
 
         # Get "object" using FindVariable:
 
-        noDynamic = False
-        useDynamic = True
+        noDynamic = lldb.eNoDynamicValues
+        useDynamic = lldb.eDynamicCanRunTarget
 
         object_static = frame.FindVariable ('object', noDynamic)
         object_dynamic = frame.FindVariable ('object', useDynamic)
@@ -134,8 +134,8 @@ class ObjCDynamicValueTestCase(TestBase):
 
         # Get "this" using the EvaluateExpression:
         # These tests fail for now because EvaluateExpression doesn't currently support dynamic typing...
-        #object_static = frame.EvaluateExpression ('object', False)
-        #object_dynamic = frame.EvaluateExpression ('object', True)
+        #object_static = frame.EvaluateExpression ('object', noDynamic)
+        #object_dynamic = frame.EvaluateExpression ('object', useDynamic)
         #self.examine_value_object_of_object_ptr (object_static, object_dynamic, myB_loc)
         
         # Continue again to the handle_SourceBase and make sure we get the correct dynamic value.

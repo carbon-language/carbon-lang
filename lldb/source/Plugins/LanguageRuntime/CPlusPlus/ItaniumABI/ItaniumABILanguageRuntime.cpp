@@ -41,7 +41,10 @@ ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 }
 
 bool
-ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &dynamic_address)
+ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, 
+                                                     lldb::DynamicValueType use_dynamic, 
+                                                     TypeAndOrName &class_type_or_name, 
+                                                     Address &dynamic_address)
 {
     // For Itanium, if the type has a vtable pointer in the object, it will be at offset 0
     // in the object.  That will point to the "address point" within the vtable (not the beginning of the

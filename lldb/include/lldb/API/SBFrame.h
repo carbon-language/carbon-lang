@@ -76,7 +76,7 @@ public:
     EvaluateExpression (const char *expr);    
 
     lldb::SBValue
-    EvaluateExpression (const char *expr, bool fetch_dynamic_value);
+    EvaluateExpression (const char *expr, lldb::DynamicValueType use_dynamic);
 
     // Gets the lexical block that defines the stack frame. Another way to think
     // of this is it will return the block that contains all of the variables
@@ -126,7 +126,7 @@ public:
                   bool locals,
                   bool statics,
                   bool in_scope_only,
-                  bool use_dynamic);
+                  lldb::DynamicValueType  use_dynamic);
 
     lldb::SBValueList
     GetRegisters ();
@@ -136,7 +136,7 @@ public:
     FindVariable (const char *var_name);
 
     lldb::SBValue
-    FindVariable (const char *var_name, bool use_dynamic);
+    FindVariable (const char *var_name, lldb::DynamicValueType use_dynamic);
 
     // Find variables, register sets, registers, or persistent variables using
     // the frame as the scope
@@ -144,7 +144,7 @@ public:
     FindValue (const char *name, ValueType value_type);
 
     lldb::SBValue
-    FindValue (const char *name, ValueType value_type, bool use_dynamic);
+    FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic);
 
     bool
     GetDescription (lldb::SBStream &description);

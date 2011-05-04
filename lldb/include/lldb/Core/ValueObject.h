@@ -366,7 +366,7 @@ public:
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
     
     lldb::ValueObjectSP
-    GetDynamicValue (bool can_create);
+    GetDynamicValue (lldb::DynamicValueType valueType);
     
     virtual lldb::ValueObjectSP
     CreateConstantValue (const ConstString &name);
@@ -403,7 +403,7 @@ public:
                      bool show_types,
                      bool show_location,
                      bool use_objc,
-                     bool use_dynamic,
+                     lldb::DynamicValueType use_dynamic,
                      bool scope_already_checked,
                      bool flat_output);
 
@@ -533,7 +533,7 @@ protected:
     UpdateValue () = 0;
 
     virtual void
-    CalculateDynamicValue ();
+    CalculateDynamicValue (lldb::DynamicValueType use_dynamic);
     
     // Should only be called by ValueObject::GetChildAtIndex()
     // Returns a ValueObject managed by this ValueObject's manager.

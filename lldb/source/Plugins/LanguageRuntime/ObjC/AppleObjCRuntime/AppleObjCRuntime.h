@@ -41,7 +41,10 @@ public:
     CouldHaveDynamicValue (ValueObject &in_value);
     
     virtual bool
-    GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address);
+    GetDynamicTypeAndAddress (ValueObject &in_value, 
+                              lldb::DynamicValueType use_dynamic, 
+                              TypeAndOrName &class_type_or_name, 
+                              Address &address);
 
     // These are the ObjC specific functions.
     

@@ -90,10 +90,11 @@ protected:
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;
     lldb::ValueObjectSP m_owning_valobj_sp;
+    lldb::DynamicValueType m_use_dynamic;
 
 private:
     friend class ValueObject;
-    ValueObjectDynamicValue (ValueObject &parent);
+    ValueObjectDynamicValue (ValueObject &parent, lldb::DynamicValueType use_dynamic);
 
     //------------------------------------------------------------------
     // For ValueObject only

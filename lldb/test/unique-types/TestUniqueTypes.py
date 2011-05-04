@@ -59,8 +59,8 @@ class UniqueTypesTestCase(TestBase):
                     if clang_version < 3:
                         self.skipTest("rdar://problem/9173060 lldb hangs while running unique-types for clang version < 3")
 
-        # Do a "frame variable -t longs" and verify "long" is in each line of output.
-        self.runCmd("frame variable -t longs")
+        # Do a "frame variable -T longs" and verify "long" is in each line of output.
+        self.runCmd("frame variable -T longs")
         output = self.res.GetOutput()
         for x in [line.strip() for line in output.split(os.linesep)]:
             # Skip empty line or closing brace.
@@ -69,8 +69,8 @@ class UniqueTypesTestCase(TestBase):
             self.expect(x, "Expect type 'long'", exe=False,
                 substrs = ['long'])
 
-        # Do a "frame variable -t shorts" and verify "short" is in each line of output.
-        self.runCmd("frame variable -t shorts")
+        # Do a "frame variable -T shorts" and verify "short" is in each line of output.
+        self.runCmd("frame variable -T shorts")
         output = self.res.GetOutput()
         for x in [line.strip() for line in output.split(os.linesep)]:
             # Skip empty line or closing brace.

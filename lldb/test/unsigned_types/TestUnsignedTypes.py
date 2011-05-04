@@ -51,7 +51,7 @@ class UnsignedTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # Test that unsigned types display correctly.
-        self.expect("frame variable -t -a", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable -T -a", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(unsigned char) the_unsigned_char = 'c'",
             patterns = ["\((short unsigned int|unsigned short)\) the_unsigned_short = 99"],
             substrs = ["(unsigned int) the_unsigned_int = 99",

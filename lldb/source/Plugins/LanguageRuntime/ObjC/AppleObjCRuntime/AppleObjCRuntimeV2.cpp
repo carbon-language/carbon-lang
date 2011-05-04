@@ -219,7 +219,10 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(lldb::addr_t object_addr, Thread 
 }
 
 bool
-AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address)
+AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value, 
+                                             lldb::DynamicValueType use_dynamic, 
+                                             TypeAndOrName &class_type_or_name, 
+                                             Address &address)
 {
     // The Runtime is attached to a particular process, you shouldn't pass in a value from another process.
     assert (in_value.GetUpdatePoint().GetProcess() == m_process);
@@ -316,7 +319,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrNa
         }
         
         char class_buffer[1024];
-        if (class_name == NULL)
+        if (class_name == NULL && use_dynamic != lldb::eDynamicDontRunTarget)
         {
             // If the class address didn't point into the binary, or
             // it points into the right section but there wasn't a symbol

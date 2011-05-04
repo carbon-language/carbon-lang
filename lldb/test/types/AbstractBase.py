@@ -9,7 +9,7 @@ from lldbtest import *
 
 def Msg(var, val, using_frame_variable):
     return "'%s %s' matches the output (from compiled code): %s" % (
-        'frame variable -t' if using_frame_variable else 'expression' ,var, val)
+        'frame variable -T' if using_frame_variable else 'expression' ,var, val)
 
 class GenericTester(TestBase):
 
@@ -42,25 +42,25 @@ class GenericTester(TestBase):
         #print "golden list:", gl
 
         # Bring the program to the point where we can issue a series of
-        # 'frame variable -t' command.
+        # 'frame variable -T' command.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
         self.runCmd("breakpoint set --name Puts")
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
-        #self.runCmd("frame variable -t")
+        #self.runCmd("frame variable -T")
 
         # Now iterate through the golden list, comparing against the output from
-        # 'frame variable -t var'.
+        # 'frame variable -T var'.
         for var, val in gl:
-            self.runCmd("frame variable -t %s" % var)
+            self.runCmd("frame variable -T %s" % var)
             output = self.res.GetOutput()
             
             # The input type is in a canonical form as a set of named atoms.
             # The display type string must conatin each and every element.
             #
             # Example:
-            #     runCmd: frame variable -t a_array_bounded[0]
+            #     runCmd: frame variable -T a_array_bounded[0]
             #     output: (char) a_array_bounded[0] = 'a'
             #
             try:
@@ -108,7 +108,7 @@ class GenericTester(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
-        #self.runCmd("frame variable -t")
+        #self.runCmd("frame variable -T")
 
         # Now iterate through the golden list, comparing against the output from
         # 'expr var'.

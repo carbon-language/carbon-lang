@@ -807,7 +807,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
             dispatch_values.PushValue (*(argument_values.GetValueAtIndex(sel_index)));
             
             Value flag_value;
-            lldb::clang_type_t clang_int_type = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(lldb::eEncodingSint, 32);
+            lldb::clang_type_t clang_int_type 
+                    = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(lldb::eEncodingSint, 32);
             flag_value.SetValueType (Value::eValueTypeScalar);
             flag_value.SetContext (Value::eContextTypeClangType, clang_int_type);
             

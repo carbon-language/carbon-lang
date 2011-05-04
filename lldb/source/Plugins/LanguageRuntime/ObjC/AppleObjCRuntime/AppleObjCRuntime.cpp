@@ -194,11 +194,18 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 bool
 AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    return in_value.IsPointerType();
+    lldb::LanguageType known_type = in_value.GetObjectRuntimeLanguage();
+    if (known_type == lldb::eLanguageTypeObjC)
+        return true;
+    else
+        return in_value.IsPointerType();
 }
 
 bool
-AppleObjCRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address)
+AppleObjCRuntime::GetDynamicTypeAndAddress (ValueObject &in_value, 
+                                            lldb::DynamicValueType use_dynamic, 
+                                            TypeAndOrName &class_type_or_name, 
+                                            Address &address)
 {
     return false;
 }

@@ -43,7 +43,10 @@ public:
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) = 0;
     
     virtual bool
-    GetDynamicTypeAndAddress (ValueObject &in_value, TypeAndOrName &class_type_or_name, Address &address) = 0;
+    GetDynamicTypeAndAddress (ValueObject &in_value, 
+                              lldb::DynamicValueType use_dynamic, 
+                              TypeAndOrName &class_type_or_name, 
+                              Address &address) = 0;
     
     // This should be a fast test to determine whether it is likely that this value would
     // have a dynamic type.

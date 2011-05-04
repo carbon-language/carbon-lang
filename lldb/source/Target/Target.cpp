@@ -890,7 +890,7 @@ Target::EvaluateExpression
     StackFrame *frame,
     bool unwind_on_error,
     bool keep_in_memory,
-    bool fetch_dynamic_value,
+    lldb::DynamicValueType use_dynamic,
     lldb::ValueObjectSP &result_valobj_sp
 )
 {
@@ -905,7 +905,12 @@ Target::EvaluateExpression
         Error error;
         const uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
                                            StackFrame::eExpressionPathOptionsNoFragileObjcIvar;
-        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, expr_path_options, error);
+        lldb::VariableSP var_sp;
+        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
+                                                                     use_dynamic, 
+                                                                     expr_path_options, 
+                                                                     var_sp, 
+                                                                     error);
     }
     else if (m_process_sp)
     {
@@ -932,9 +937,9 @@ Target::EvaluateExpression
         }
         else
         {
-            if (fetch_dynamic_value)
+            if (use_dynamic != lldb::eNoDynamicValues)
             {
-                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(true);
+                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(use_dynamic);
                 if (dynamic_sp)
                     result_valobj_sp = dynamic_sp;
             }
@@ -1390,7 +1395,7 @@ TargetInstanceSettings::TargetInstanceSettings
     InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_expr_prefix_file (),
     m_expr_prefix_contents_sp (),
-    m_prefer_dynamic_value (true, true),
+    m_prefer_dynamic_value (2),
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL)
 {
@@ -1486,7 +1491,10 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
     }
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
-        err = UserSettingsController::UpdateBooleanOptionValue (value, op, m_prefer_dynamic_value);
+        int new_value;
+        UserSettingsController::UpdateEnumVariable (g_dynamic_value_types, &new_value, value, err);
+        if (err.Success())
+            m_prefer_dynamic_value = new_value;
     }
     else if (var_name == GetSettingNameForSkipPrologue())
     {
@@ -1579,10 +1587,7 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else if (var_name == GetSettingNameForPreferDynamicValue())
     {
-        if (m_prefer_dynamic_value)
-            value.AppendString ("true");
-        else
-            value.AppendString ("false");
+        value.AppendString (g_dynamic_value_types[m_prefer_dynamic_value].string_value);
     }
     else if (var_name == GetSettingNameForSkipPrologue())
     {
@@ -1620,6 +1625,14 @@ TargetInstanceSettings::CreateInstanceName ()
 //--------------------------------------------------
 // Target::SettingsController Variable Tables
 //--------------------------------------------------
+OptionEnumValueElement
+TargetInstanceSettings::g_dynamic_value_types[] =
+{
+{ eNoDynamicValues,     "no-dynamic-values",  "Don't calculate the dynamic type of values"},
+{ eDynamicCanRunTarget,        "run-target",        "Calculate the dynamic type of values even if you have to run the target."},
+{ eDynamicDontRunTarget,       "no-run-target",    "Calculate the dynamic type of values, but don't run the target."},
+{ 0, NULL, NULL }
+};
 
 SettingEntry
 Target::SettingsController::global_settings_table[] =
@@ -1633,11 +1646,11 @@ Target::SettingsController::global_settings_table[] =
 SettingEntry
 Target::SettingsController::instance_settings_table[] =
 {
-    // var-name           var-type           default      enum  init'd hidden help-text
-    // =================  ================== ===========  ====  ====== ====== =========================================================================
-    { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL      , NULL, false, false, "Path to a file containing expressions to be prepended to all expressions." },
-    { TSC_PREFER_DYNAMIC, eSetVarTypeBoolean ,"true"    , NULL, false, false, "Should printed values be shown as their dynamic value." },
-    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean ,"true"    , NULL, false, false, "Skip function prologues when setting breakpoints by name." },
-    { TSC_SOURCE_MAP    , eSetVarTypeArray   ,NULL      , NULL, false, false, "Source path remappings to use when locating source files from debug information." },
-    { NULL              , eSetVarTypeNone   , NULL      , NULL, false, false, NULL }
+    // var-name           var-type           default         enum                    init'd hidden help-text
+    // =================  ================== =============== ======================= ====== ====== =========================================================================
+    { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
+    { TSC_PREFER_DYNAMIC, eSetVarTypeEnum ,  "no-run-target", g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
+    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean ,"true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
+    { TSC_SOURCE_MAP    , eSetVarTypeArray   ,NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
+    { NULL              , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };

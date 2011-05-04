@@ -486,14 +486,17 @@ StackFrame::GetVariableList (bool get_file_globals)
 }
 
 ValueObjectSP
-StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32_t options, Error &error)
+StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, 
+                                               lldb::DynamicValueType use_dynamic,
+                                               uint32_t options, 
+                                               lldb::VariableSP &var_sp,
+                                               Error &error)
 {
 
     if (var_expr_cstr && var_expr_cstr[0])
     {
         const bool check_ptr_vs_member = (options & eExpressionPathOptionCheckPtrVsMember) != 0;
         const bool no_fragile_ivar = (options & eExpressionPathOptionsNoFragileObjcIvar) != 0;
-        const bool dynamic_value = (options & eExpressionPathOptionsDynamicValue) != 0;
         error.Clear();
         bool deref = false;
         bool address_of = false;
@@ -526,10 +529,10 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
             else
                 name_const_string.SetCStringWithLength (var_path.c_str(), separator_idx);
 
-            VariableSP var_sp (variable_list->FindVariable(name_const_string));
+            var_sp = variable_list->FindVariable(name_const_string);
             if (var_sp)
             {
-                valobj_sp = GetValueObjectForFrameVariable (var_sp, dynamic_value);
+                valobj_sp = GetValueObjectForFrameVariable (var_sp, use_dynamic);
                 if (!valobj_sp)
                     return valobj_sp;
                     
@@ -626,9 +629,9 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
                             }
                             // Remove the child name from the path
                             var_path.erase(0, child_name.GetLength());
-                            if (dynamic_value)
+                            if (use_dynamic != lldb::eNoDynamicValues)
                             {
-                                ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true));
+                                ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
                                 if (dynamic_value_sp)
                                     child_valobj_sp = dynamic_value_sp;
                             }
@@ -688,9 +691,9 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
                                 // %i is the array index
                                 var_path.erase(0, (end - var_path.c_str()) + 1);
                                 separator_idx = var_path.find_first_of(".-[");
-                                if (dynamic_value)
+                                if (use_dynamic != lldb::eNoDynamicValues)
                                 {
-                                    ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(true));
+                                    ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
                                     if (dynamic_value_sp)
                                         child_valobj_sp = dynamic_value_sp;
                                 }
@@ -738,7 +741,8 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr, uint32
             }
             else
             {
-                error.SetErrorStringWithFormat("no variable named '%s' found in this frame", name_const_string.GetCString());
+                error.SetErrorStringWithFormat("no variable named '%s' found in this frame", 
+                                               name_const_string.GetCString());
             }
         }
     }
@@ -809,7 +813,7 @@ StackFrame::HasDebugInformation ()
 
 
 ValueObjectSP
-StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, bool use_dynamic)
+StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, lldb::DynamicValueType use_dynamic)
 {
     ValueObjectSP valobj_sp;
     VariableList *var_list = GetVariableList (true);
@@ -830,9 +834,9 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, bool 
             }
         }
     }
-    if (use_dynamic && valobj_sp)
+    if (use_dynamic != lldb::eNoDynamicValues && valobj_sp)
     {
-        ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue (true);
+        ValueObjectSP dynamic_sp = valobj_sp->GetDynamicValue (use_dynamic);
         if (dynamic_sp)
             return dynamic_sp;
     }
@@ -840,7 +844,7 @@ StackFrame::GetValueObjectForFrameVariable (const VariableSP &variable_sp, bool 
 }
 
 ValueObjectSP
-StackFrame::TrackGlobalVariable (const VariableSP &variable_sp, bool use_dynamic)
+StackFrame::TrackGlobalVariable (const VariableSP &variable_sp, lldb::DynamicValueType use_dynamic)
 {
     // Check to make sure we aren't already tracking this variable?
     ValueObjectSP valobj_sp (GetValueObjectForFrameVariable (variable_sp, use_dynamic));

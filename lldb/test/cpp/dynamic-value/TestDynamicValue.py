@@ -61,7 +61,10 @@ class DynamicValueTestCase(TestBase):
         
         # Now read m_b_value which is only in the dynamic value:
 
-        this_dynamic_m_b_value = this_dynamic.GetChildMemberWithName('m_b_value', True)
+        use_dynamic = lldb.eDynamicCanRunTarget
+        no_dynamic  = lldb.eNoDynamicValues
+
+        this_dynamic_m_b_value = this_dynamic.GetChildMemberWithName('m_b_value', use_dynamic)
         self.assertTrue (this_dynamic_m_b_value.IsValid())
         
         m_b_value = int (this_dynamic_m_b_value.GetValue(), 0)
@@ -69,17 +72,17 @@ class DynamicValueTestCase(TestBase):
         
         # Make sure it is not in the static version
 
-        this_static_m_b_value = this_static.GetChildMemberWithName('m_b_value', False)
+        this_static_m_b_value = this_static.GetChildMemberWithName('m_b_value', no_dynamic)
         self.assertTrue (this_static_m_b_value.IsValid() == False)
 
         # Okay, now let's make sure that we can get the dynamic type of a child element:
 
-        contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', True)
+        contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', use_dynamic)
         self.assertTrue (contained_auto_ptr.IsValid())
-        contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', True)
+        contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', use_dynamic)
         self.assertTrue (contained_b.IsValid())
         
-        contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', False)
+        contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', no_dynamic)
         self.assertTrue (contained_b_static.IsValid())
         
         contained_b_addr = int (contained_b.GetValue(), 16)
@@ -128,14 +131,14 @@ class DynamicValueTestCase(TestBase):
         # Now find the dynamic addresses of myB and otherB so we can compare them
         # with the dynamic values we get in doSomething:
 
-        noDynamic = False
-        useDynamic = True
+        use_dynamic = lldb.eDynamicCanRunTarget
+        no_dynamic  = lldb.eNoDynamicValues
 
-        myB = frame.FindVariable ('myB', noDynamic);
+        myB = frame.FindVariable ('myB', no_dynamic);
         self.assertTrue (myB.IsValid())
         myB_loc = int (myB.GetLocation(), 16)
 
-        otherB = frame.FindVariable('otherB', noDynamic)
+        otherB = frame.FindVariable('otherB', no_dynamic)
         self.assertTrue (otherB.IsValid())
         otherB_loc = int (otherB.GetLocation(), 16)
 
@@ -149,13 +152,13 @@ class DynamicValueTestCase(TestBase):
 
         # Get "this" using FindVariable:
 
-        this_static = frame.FindVariable ('this', noDynamic)
-        this_dynamic = frame.FindVariable ('this', useDynamic)
+        this_static = frame.FindVariable ('this', no_dynamic)
+        this_dynamic = frame.FindVariable ('this', use_dynamic)
         self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
         
         # Get "this" using FindValue, make sure that works too:
-        this_static = frame.FindValue ('this', lldb.eValueTypeVariableArgument, noDynamic)
-        this_dynamic = frame.FindValue ('this', lldb.eValueTypeVariableArgument, useDynamic)
+        this_static = frame.FindValue ('this', lldb.eValueTypeVariableArgument, no_dynamic)
+        this_dynamic = frame.FindValue ('this', lldb.eValueTypeVariableArgument, use_dynamic)
         self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
 
         # Get "this" using the EvaluateExpression:
@@ -167,7 +170,7 @@ class DynamicValueTestCase(TestBase):
         # The "frame var" code uses another path to get into children, so let's
         # make sure that works as well:
 
-        self.expect('frame var -d 1 anotherA.m_client_A._M_ptr', 'frame var finds its way into a child member',
+        self.expect('frame var -d run-target anotherA.m_client_A._M_ptr', 'frame var finds its way into a child member',
             patterns = ['\(.* B \*\)'])
 
         # Now make sure we also get it right for a reference as well:
