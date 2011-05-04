@@ -551,6 +551,13 @@ bool ASTContext::ZeroBitfieldFollowsBitfield(const FieldDecl *FD,
 
 }
 
+bool ASTContext::BitfieldFollowsBitfield(const FieldDecl *FD,
+                                         const FieldDecl *LastFD) const {
+  return (FD->isBitField() && LastFD && LastFD->isBitField() &&
+          FD->getBitWidth()-> EvaluateAsInt(*this).getZExtValue() &&
+          LastFD->getBitWidth()-> EvaluateAsInt(*this).getZExtValue());  
+}
+
 ASTContext::overridden_cxx_method_iterator
 ASTContext::overridden_methods_begin(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos

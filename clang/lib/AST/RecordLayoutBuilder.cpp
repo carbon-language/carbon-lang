@@ -1269,6 +1269,31 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       // ignored:
       else if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
         continue;
+      else if (Context.BitfieldFollowsBitfield(FD, LastFD)) {
+        // Adjacent bit fields are packed into the same 1-, 2-, or
+        // 4-byte allocation unit if the integral types are the same
+        // size and if the next bit field fits into the current
+        // allocation unit without crossing the boundary imposed by the
+        // common alignment requirements of the bit fields.
+        std::pair<uint64_t, unsigned> FieldInfo = 
+          Context.getTypeInfo(FD->getType());
+        uint64_t TypeSize = FieldInfo.first;
+        unsigned FieldAlign = FieldInfo.second;
+        FieldInfo = Context.getTypeInfo(LastFD->getType());
+        uint64_t TypeSizeLastFD = FieldInfo.first;
+        unsigned FieldAlignLastFD = FieldInfo.second;
+        if (TypeSizeLastFD != TypeSize) {
+          uint64_t UnpaddedFieldOffset = 
+            getDataSizeInBits() - UnfilledBitsInLastByte;
+          FieldAlign = std::max(FieldAlign, FieldAlignLastFD);
+          uint64_t NewSizeInBits = 
+            llvm::RoundUpToAlignment(UnpaddedFieldOffset, FieldAlign);
+          setDataSize(llvm::RoundUpToAlignment(NewSizeInBits,
+                                               Context.Target.getCharAlign()));
+          UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
+          setSize(std::max(getSizeInBits(), getDataSizeInBits()));
+        }
+      }
       LastFD = FD;
     }
     LayoutField(*Field);
@@ -1480,7 +1505,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       ZeroLengthBitfield = 0;
     }
 
-    if (Context.getLangOptions().MSBitfields) {
+    if (Context.getLangOptions().MSBitfields || IsMsStruct) {
       // If MS bitfield layout is required, figure out what type is being
       // laid out and align the field to the width of that type.
       
