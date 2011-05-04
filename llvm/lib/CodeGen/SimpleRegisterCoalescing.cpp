@@ -63,7 +63,7 @@ DisableCrossClassJoin("disable-cross-class-join",
 static cl::opt<bool>
 EnablePhysicalJoin("join-physregs",
                    cl::desc("Join physical register copies"),
-                   cl::init(true), cl::Hidden);
+                   cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
 VerifyCoalescing("verify-coalescing",
