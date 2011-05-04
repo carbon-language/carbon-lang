@@ -28,5 +28,5 @@ lpad:		; preds = %cont, %entry
 }
 
 ; CHECK: call{{.*}}f
-; CHECK-NEXT: Ltmp0:
-; CHECK-NEXT: movl %eax, %esi
+; CHECK: movl %eax, %esi
+; CHECK: call{{.*}}g

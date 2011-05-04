@@ -9,7 +9,6 @@ entry:
 ; CHECK: main:
 ; CHECK: movl $1, (%esp)
 ; CHECK: leal 16(%esp), %edi
-; CHECK: movl $36, %ecx
 ; CHECK: leal 160(%esp), %esi
 ; CHECK: rep;movsl
 	%s = alloca %struct.S		; <%struct.S*> [#uses=2]

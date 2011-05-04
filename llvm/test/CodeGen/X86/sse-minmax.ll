@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86-64 -asm-verbose=false | FileCheck %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=UNSAFE %s
-; RUN: llc < %s -march=x86-64 -asm-verbose=false -enable-no-nans-fp-math | FileCheck -check-prefix=FINITE %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs | FileCheck %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=UNSAFE %s
+; RUN: llc < %s -march=x86-64 -asm-verbose=false -join-physregs -enable-no-nans-fp-math | FileCheck -check-prefix=FINITE %s
 
 ; Some of these patterns can be matched as SSE min or max. Some of
 ; then can be matched provided that the operands are swapped.
@@ -11,6 +11,9 @@
 ; x_ : use 0.0 instead of %y
 ; y_ : use -0.0 instead of %y
 ; _inverse : swap the arms of the select.
+
+; Some of these tests depend on -join-physregs commuting instructions to
+; eliminate copies.
 
 ; CHECK:      ogt:
 ; CHECK-NEXT: maxsd %xmm1, %xmm0

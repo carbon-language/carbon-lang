@@ -229,7 +229,7 @@ entry:
 ; 64: t14:
 ; 64: movq 32(%rdi)
 ; 64-NOT: movq 16(%rdi)
-; 64: jmpq *16(%rdi)
+; 64: jmpq *16({{%rdi|%rax}})
   %0 = getelementptr inbounds %struct.__block_literal_2* %.block_descriptor, i64 0, i32 5 ; <void ()**> [#uses=1]
   %1 = load void ()** %0, align 8                 ; <void ()*> [#uses=2]
   %2 = bitcast void ()* %1 to %struct.__block_literal_1* ; <%struct.__block_literal_1*> [#uses=1]

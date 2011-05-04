@@ -4,7 +4,7 @@
 
 ; CHECK:         ## InlineAsm End
 ; CHECK-NEXT: BB0_2:
-; CHECK-NEXT:    movl	%esi, %eax
+; CHECK-NEXT:    {{movl	%esi, %eax|addl	%edi, %esi}}
 
 
 @"\01LC" = internal constant [7 x i8] c"n0=%d\0A\00"		; <[7 x i8]*> [#uses=1]

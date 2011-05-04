@@ -41,14 +41,13 @@ for.end:                                          ; preds = %for.body, %entry
 
 ;      CHECK:         jle
 ;  CHECK-NOT:         cmov
-;      CHECK:         xorl    {{%edi, %edi|%ecx, %ecx}}
+;      CHECK:         xorl    {{%edi, %edi|%ecx, %ecx|%eax, %eax}}
 ; CHECK-NEXT:         align
 ; CHECK-NEXT: BB1_2:
-; CHECK-NEXT:         callq
+; CHECK:              callq
 ; CHECK-NEXT:         incl    [[BX:%[a-z0-9]+]]
 ; CHECK-NEXT:         cmpl    [[R14:%[a-z0-9]+]], [[BX]]
-; CHECK-NEXT:         movq    %rax, %r{{di|cx}}
-; CHECK-NEXT:         jl
+; CHECK:              jl
 
 define void @_Z18GenerateStatusPagei(i32 %jobs_to_display) nounwind {
 entry:
