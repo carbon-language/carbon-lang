@@ -44,8 +44,8 @@ int main (int argc, char const *argv[])
     int A1 = a(1);
     printf("a(1) returns %d\n", A1);
     
-    int B2 = b(2); // Another breakpoint which is outside of the stop-hook range.
-    printf("b(2) returns %d\n", B2);
+    int C2 = c(2); // Another breakpoint which is outside of the stop-hook range.
+    printf("c(2) returns %d\n", C2);
     
     int A3 = a(3);
     printf("a(3) returns %d\n", A3);
