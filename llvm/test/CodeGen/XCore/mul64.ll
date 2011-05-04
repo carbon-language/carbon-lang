@@ -9,7 +9,7 @@ entry:
 }
 ; CHECK: umul_lohi:
 ; CHECK: ldc [[REG:r[0-9]+]], 0
-; CHECK-NEXT: lmul r1, r0, r1, r0, [[REG]], [[REG]]
+; CHECK-NEXT: lmul {{.*}}, [[REG]], [[REG]]
 ; CHECK-NEXT: retsp 0
 
 define i64 @smul_lohi(i32 %a, i32 %b) {
@@ -23,9 +23,7 @@ entry:
 ; CHECK: ldc
 ; CHECK-NEXT: mov
 ; CHECK-NEXT: maccs
-; CHECK-NEXT: mov r0,
-; CHECK-NEXT: mov r1,
-; CHECK-NEXT: retsp 0
+; CHECK: retsp 0
 
 define i64 @mul64(i64 %a, i64 %b) {
 entry:
@@ -37,7 +35,6 @@ entry:
 ; CHECK-NEXT: lmul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: lmul
-; CHECK-NEXT: mov r0,
 
 define i64 @mul64_2(i64 %a, i32 %b) {
 entry:
@@ -50,4 +47,4 @@ entry:
 ; CHECK-NEXT: lmul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: add r1,
-; CHECK-NEXT: retsp 0
+; CHECK: retsp 0
