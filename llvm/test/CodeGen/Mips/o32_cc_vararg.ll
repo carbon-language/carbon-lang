@@ -1,5 +1,4 @@
 ; RUN: llc -march=mipsel -mcpu=mips2 -pre-RA-sched=source < %s | FileCheck %s
-; RUN: llc -march=mipsel -mcpu=mips2 -pre-RA-sched=source < %s -regalloc=basic | FileCheck %s
 
 
 ; All test functions do the same thing - they return the first variable
