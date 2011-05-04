@@ -54,7 +54,7 @@ static char *mangle_filename(const char *orig_filename) {
   prefix = getenv("GCOV_PREFIX");
 
   if (!prefix)
-    return strdup(filename);
+    return strdup(orig_filename);
 
   filename = malloc(strlen(prefix) + 1 + strlen(orig_filename) + 1);
   strcpy(filename, prefix);
