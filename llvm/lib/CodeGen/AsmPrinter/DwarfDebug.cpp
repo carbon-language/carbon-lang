@@ -1113,32 +1113,35 @@ void DwarfDebug::beginModule(Module *M) {
   if (DisableDebugInfoPrinting)
     return;
 
-  bool HasDebugInfo = false;
-
   // If module has named metadata anchors then use them, otherwise scan the module
   // using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (CU_Nodes) {
-    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
-      HasDebugInfo = true;
-      constructCompileUnit(CU_Nodes->getOperand(i));
-    }
-    if (!HasDebugInfo)
+
+    NamedMDNode *GV_Nodes = M->getNamedMetadata("llvm.dbg.gv");
+    NamedMDNode *SP_Nodes = M->getNamedMetadata("llvm.dbg.sp");
+    if (!GV_Nodes && !SP_Nodes)
+      // If there are not any global variables or any functions then
+      // there is not any debug info in this module.
       return;
 
-    if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.gv"))
-      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-        constructGlobalVariableDIE(NMD->getOperand(i));
+    for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i)
+      constructCompileUnit(CU_Nodes->getOperand(i));
 
-    if (NamedMDNode *NMD = M->getNamedMetadata("llvm.dbg.sp"))
-      for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-        constructSubprogramDIE(NMD->getOperand(i));
+    if (GV_Nodes)
+      for (unsigned i = 0, e = GV_Nodes->getNumOperands(); i != e; ++i)
+        constructGlobalVariableDIE(GV_Nodes->getOperand(i));
+
+    if (SP_Nodes)
+      for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i)
+        constructSubprogramDIE(SP_Nodes->getOperand(i));
     
   } else {
 
     DebugInfoFinder DbgFinder;
     DbgFinder.processModule(*M);
     
+    bool HasDebugInfo = false;
     // Scan all the compile-units to see if there are any marked as the main unit.
     // if not, we do not generate debug info.
     for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
@@ -1148,6 +1151,7 @@ void DwarfDebug::beginModule(Module *M) {
         break;
       }
     }
+    if (!HasDebugInfo) return;
     
     // Create all the compile unit DIEs.
     for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
@@ -1164,8 +1168,6 @@ void DwarfDebug::beginModule(Module *M) {
            E = DbgFinder.subprogram_end(); I != E; ++I)
       constructSubprogramDIE(*I);
   }
-  
-  if (!HasDebugInfo) return;
   
   // Tell MMI that we have debug info.
   MMI->setDebugInfoAvailability(true);
