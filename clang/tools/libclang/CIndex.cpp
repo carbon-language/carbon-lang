@@ -5246,6 +5246,12 @@ const char *clang_getTUResourceUsageName(CXTUResourceUsageKind kind) {
     case CXTUResourceUsage_ExternalASTSource_Membuffer_MMap:
       str = "ExternalASTSource: mmap'ed memory buffers";
       break;
+    case CXTUResourceUsage_Preprocessor:
+      str = "Preprocessor: malloc'ed memory";
+      break;
+    case CXTUResourceUsage_PreprocessingRecord:
+      str = "Preprocessor: PreprocessingRecord";
+      break;
   }
   return str;
 }
@@ -5280,7 +5286,7 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   unsigned long completionBytes = 0;
   if (GlobalCodeCompletionAllocator *completionAllocator =
       astUnit->getCachedCompletionAllocator().getPtr()) {
-    completionBytes = completionAllocator-> getTotalMemory();
+    completionBytes = completionAllocator->getTotalMemory();
   }
   createCXTUResourceUsageEntry(*entries,
                                CXTUResourceUsage_GlobalCompletionResults,
@@ -5314,7 +5320,21 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
       CXTUResourceUsage_ExternalASTSource_Membuffer_MMap,
                                  (unsigned long) sizes.mmap_bytes);
   }
-
+  
+  // How much memory is being used by the Preprocessor?
+  Preprocessor &pp = astUnit->getPreprocessor();
+  const llvm::BumpPtrAllocator &ppAlloc = pp.getPreprocessorAllocator();
+  createCXTUResourceUsageEntry(*entries,
+                               CXTUResourceUsage_Preprocessor,
+                               ppAlloc.getTotalMemory());
+  
+  if (PreprocessingRecord *pRec = pp.getPreprocessingRecord()) {
+    createCXTUResourceUsageEntry(*entries,
+                                 CXTUResourceUsage_PreprocessingRecord,
+                                 pRec->getTotalMemory());    
+  }
+  
+  
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
                             entries->size() ? &(*entries)[0] : 0 };

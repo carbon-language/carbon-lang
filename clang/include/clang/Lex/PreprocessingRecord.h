@@ -291,6 +291,10 @@ namespace clang {
     /// \brief Deallocate memory in the preprocessing record.
     void Deallocate(void *Ptr) { }
     
+    size_t getTotalMemory() const {
+      return BumpAlloc.getTotalMemory();
+    }
+    
     // Iteration over the preprocessed entities.
     typedef std::vector<PreprocessedEntity *>::iterator iterator;
     typedef std::vector<PreprocessedEntity *>::const_iterator const_iterator;
