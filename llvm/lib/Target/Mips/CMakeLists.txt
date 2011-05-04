@@ -13,6 +13,7 @@ tablegen(MipsGenSubtarget.inc -gen-subtarget)
 add_llvm_target(MipsCodeGen
   MipsAsmPrinter.cpp
   MipsDelaySlotFiller.cpp
+  MipsEmitGPRestore.cpp
   MipsExpandPseudo.cpp
   MipsInstrInfo.cpp
   MipsISelDAGToDAG.cpp
