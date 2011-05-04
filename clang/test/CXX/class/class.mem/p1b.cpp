@@ -16,7 +16,7 @@ public:
 
   void a3(int a = 42);
 
-  // CHEKC: error: use of undeclared identifier 'first'
+  // CHECK: error: use of undeclared identifier 'first'
   void a4(int a = first); // expected-error{{use of undeclared identifier 'first'}}
 
   class B {
