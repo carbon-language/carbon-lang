@@ -2072,10 +2072,10 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
 bool
 Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
                                CXXCtorInitializer *Initializer) {
-  // FIXME: This doesn't catch indirect loops yet
   CXXConstructorDecl *Target = Initializer->getTargetConstructor();
+  CXXConstructorDecl *Canonical = Constructor->getCanonicalDecl();
   while (Target) {
-    if (Target == Constructor) {
+    if (Target->getCanonicalDecl() == Canonical) {
       Diag(Initializer->getSourceLocation(), diag::err_delegating_ctor_loop)
         << Constructor;
       return true;

@@ -29,8 +29,7 @@ foo::foo (bool) : foo(true) { // expected-error{{delegates to itself}}
 foo::foo (const float* f) : foo(*f) {
 }
 
-// FIXME: This should error
-foo::foo (const float &f) : foo(&f) {
+foo::foo (const float &f) : foo(&f) { //expected-error{{delegates to itself}}
 }
 
 foo::foo (char) : i(3), foo(3) { // expected-error{{must appear alone}}

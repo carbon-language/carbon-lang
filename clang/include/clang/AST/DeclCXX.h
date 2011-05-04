@@ -1693,6 +1693,13 @@ public:
 
   /// \brief Set the constructor that this inheriting constructor is based on.
   void setInheritedConstructor(const CXXConstructorDecl *BaseCtor);
+
+  const CXXConstructorDecl *getCanonicalDecl() const {
+    return cast<CXXConstructorDecl>(FunctionDecl::getCanonicalDecl());
+  }
+  CXXConstructorDecl *getCanonicalDecl() {
+    return cast<CXXConstructorDecl>(FunctionDecl::getCanonicalDecl());
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
