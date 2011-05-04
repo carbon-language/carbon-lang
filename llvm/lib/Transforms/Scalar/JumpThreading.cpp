@@ -929,9 +929,10 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   if (UnavailablePred) {
     assert(UnavailablePred->getTerminator()->getNumSuccessors() == 1 &&
            "Can't handle critical edge here!");
-    Value *NewVal = new LoadInst(LoadedPtr, LI->getName()+".pr", false,
+    LoadInst *NewVal = new LoadInst(LoadedPtr, LI->getName()+".pr", false,
                                  LI->getAlignment(),
                                  UnavailablePred->getTerminator());
+    NewVal->setDebugLoc(LI->getDebugLoc());
     AvailablePreds.push_back(std::make_pair(UnavailablePred, NewVal));
   }
 
@@ -944,6 +945,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
   PHINode *PN = PHINode::Create(LI->getType(), std::distance(PB, PE), "",
                                 LoadBB->begin());
   PN->takeName(LI);
+  PN->setDebugLoc(LI->getDebugLoc());
 
   // Insert new entries into the PHI for each predecessor.  A single block may
   // have multiple entries here.
@@ -1375,7 +1377,8 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
 
   // We didn't copy the terminator from BB over to NewBB, because there is now
   // an unconditional jump to SuccBB.  Insert the unconditional jump.
-  BranchInst::Create(SuccBB, NewBB);
+  BranchInst *NewBI =BranchInst::Create(SuccBB, NewBB);
+  NewBI->setDebugLoc(BB->getTerminator()->getDebugLoc());
 
   // Check to see if SuccBB has PHI nodes. If so, we need to add entries to the
   // PHI nodes for NewBB now.
