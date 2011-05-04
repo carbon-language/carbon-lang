@@ -21,8 +21,8 @@ bb7:                                              ; preds = %bb3
 
 bb9:                                              ; preds = %bb7
 ; CHECK:      cmp r0, #0
-; CHECK-NOT: cmp
-; CHECK: cbnz
+; CHECK:      cmp r0, #0
+; CHECK-NEXT: cbnz
   %0 = tail call  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
   br label %bb11
 
