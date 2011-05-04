@@ -29,6 +29,9 @@ typedef std::map<EditLine *, std::string> PromptMap;
 const char *g_default_prompt = "(lldb) ";
 PromptMap g_prompt_map;
 
+// Printing the following string causes libedit to back up to the beginning of the line & blank it out.
+const char undo_prompt_string[4] = { (char) 13, (char) 27, (char) 91, (char) 75};
+
 static const char*
 el_prompt(EditLine *el)
 {
@@ -496,7 +499,7 @@ IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
     IOLocker locker (m_output_mutex);
     if (asynchronous)
-        ::fwrite ("\n", 1, 1, m_out_file);
+        ::fwrite (undo_prompt_string, 1, 4, m_out_file);
     ::fwrite (buffer, 1, len, m_out_file);
     if (asynchronous)
         m_driver->GetDebugger().NotifyTopInputReader (eInputReaderAsynchronousOutputWritten);
@@ -511,7 +514,7 @@ IOChannel::ErrWrite (const char *buffer, size_t len, bool asynchronous)
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
     IOLocker locker (m_output_mutex);
     if (asynchronous)
-        ::fwrite ("\n", 1, 1, m_err_file);
+        ::fwrite (undo_prompt_string, 1, 4, m_err_file);
     ::fwrite (buffer, 1, len, m_err_file);
     if (asynchronous)
         m_driver->GetDebugger().NotifyTopInputReader (eInputReaderAsynchronousOutputWritten);
