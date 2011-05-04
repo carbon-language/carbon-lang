@@ -1,4 +1,4 @@
-;RUN: llc -mtriple=armv7-apple-darwin -show-mc-encoding -disable-cgp-branch-opts < %s | FileCheck %s
+;RUN: llc -mtriple=armv7-apple-darwin -show-mc-encoding -disable-cgp-branch-opts -join-physregs < %s | FileCheck %s
 
 
 ;FIXME: Once the ARM integrated assembler is up and going, these sorts of tests
