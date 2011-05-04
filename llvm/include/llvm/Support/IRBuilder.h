@@ -324,6 +324,7 @@ public:
   explicit IRBuilder(Instruction *IP)
     : IRBuilderBase(IP->getContext()), Folder() {
     SetInsertPoint(IP);
+    SetCurrentDebugLocation(IP->getDebugLoc());
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
