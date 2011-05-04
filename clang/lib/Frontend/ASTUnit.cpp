@@ -579,6 +579,11 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   Reader.reset(new ASTReader(AST->getSourceManager(), AST->getFileManager(),
                              AST->getDiagnostics()));
+  
+  // Recover resources if we crash before exiting this method.
+  llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
+    ReaderCleanup(Reader.get());
+
   Reader->setListener(new ASTInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
@@ -633,6 +638,11 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // AST file as needed.
   ASTReader *ReaderPtr = Reader.get();
   llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+
+  // Unregister the cleanup for ASTReader.  It will get cleaned up
+  // by the ASTUnit cleanup.
+  ReaderCleanup.unregister();
+
   Context.setExternalSource(Source);
 
   // Create an AST consumer, even though it isn't used.
