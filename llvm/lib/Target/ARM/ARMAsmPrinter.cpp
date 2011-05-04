@@ -188,7 +188,6 @@ unsigned ARMAsmPrinter::getDwarfRegOpSize(const MachineLocation &MLoc) const {
       
       unsigned SReg = Reg - ARM::S0;
       unsigned Rx = 256 + (SReg >> 1);
-      OutStreamer.AddComment("Loc expr size");
       // DW_OP_regx + ULEB + DW_OP_bit_piece + ULEB + ULEB
       //   1 + ULEB(Rx) + 1 + 1 + 1
       return 4 + MCAsmInfo::getULEB128Size(Rx);
@@ -203,7 +202,6 @@ unsigned ARMAsmPrinter::getDwarfRegOpSize(const MachineLocation &MLoc) const {
       unsigned D1 = 256 + 2 * QReg;
       unsigned D2 = D1 + 1;
       
-      OutStreamer.AddComment("Loc expr size");
       // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8) +
       // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8);
       //   6 + ULEB(D1) + ULEB(D2)
@@ -229,10 +227,6 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
       unsigned SReg = Reg - ARM::S0;
       bool odd = SReg & 0x1;
       unsigned Rx = 256 + (SReg >> 1);
-      OutStreamer.AddComment("Loc expr size");
-      // DW_OP_regx + ULEB + DW_OP_bit_piece + ULEB + ULEB
-      //   1 + ULEB(Rx) + 1 + 1 + 1
-      EmitInt16(4 + MCAsmInfo::getULEB128Size(Rx));
 
       OutStreamer.AddComment("DW_OP_regx for S register");
       EmitInt8(dwarf::DW_OP_regx);
@@ -260,12 +254,6 @@ void ARMAsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
       unsigned D1 = 256 + 2 * QReg;
       unsigned D2 = D1 + 1;
       
-      OutStreamer.AddComment("Loc expr size");
-      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8) +
-      // DW_OP_regx + ULEB + DW_OP_piece + ULEB(8);
-      //   6 + ULEB(D1) + ULEB(D2)
-      EmitInt16(6 + MCAsmInfo::getULEB128Size(D1) + MCAsmInfo::getULEB128Size(D2));
-
       OutStreamer.AddComment("DW_OP_regx for Q register: D1");
       EmitInt8(dwarf::DW_OP_regx);
       EmitULEB128(D1);
