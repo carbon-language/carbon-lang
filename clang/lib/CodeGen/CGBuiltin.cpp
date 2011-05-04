@@ -2154,6 +2154,23 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     LI->setAlignment(1); // Unaligned load.
     return Builder.CreateBitCast(LI, VecTy, "loadu.cast");
   }
+  case X86::BI__builtin_ia32_movntps:
+  case X86::BI__builtin_ia32_movntpd:
+  case X86::BI__builtin_ia32_movntdq:
+  case X86::BI__builtin_ia32_movnti: {
+    llvm::SmallVector<Value *, 1> Elts;
+    Elts.push_back(llvm::ConstantInt::get(Int32Ty, 1));
+    llvm::MDNode *Node = llvm::MDNode::get(getLLVMContext(), Elts);
+
+    // Convert the type of the pointer to a pointer to the stored type.
+    Value *BC = Builder.CreateBitCast(Ops[0],
+                                llvm::PointerType::getUnqual(Ops[1]->getType()),
+                                      "cast");
+    StoreInst *SI = Builder.CreateStore(Ops[1], BC);
+    SI->setMetadata(CGM.getModule().getMDKindID("nontemporal"), Node);
+    SI->setAlignment(16);
+    return SI;
+  }
   // 3DNow!
   case X86::BI__builtin_ia32_pavgusb:
   case X86::BI__builtin_ia32_pf2id:
