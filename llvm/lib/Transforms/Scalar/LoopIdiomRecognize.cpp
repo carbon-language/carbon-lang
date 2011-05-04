@@ -589,14 +589,15 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   Value *NumBytes =
     Expander.expandCodeFor(NumBytesS, IntPtr, Preheader->getTerminator());
 
-  Value *NewCall =
+  CallInst *NewCall =
     Builder.CreateMemCpy(StoreBasePtr, LoadBasePtr, NumBytes,
                          std::min(SI->getAlignment(), LI->getAlignment()));
+  NewCall->setDebugLoc(SI->getDebugLoc());
 
   DEBUG(dbgs() << "  Formed memcpy: " << *NewCall << "\n"
                << "    from load ptr=" << *LoadEv << " at: " << *LI << "\n"
                << "    from store ptr=" << *StoreEv << " at: " << *SI << "\n");
-  (void)NewCall;
+  
 
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
