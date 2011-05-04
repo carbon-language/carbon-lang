@@ -408,7 +408,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
     if (options::generate_bc_file == options::BC_ONLY)
       exit(0);
   }
-  size_t bufsize = 0;
   const char *objPath;
   if (lto_codegen_compile_to_file(code_gen, &objPath)) {
     (*message)(LDPL_ERROR, "Could not produce a combined object file\n");
