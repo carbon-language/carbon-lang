@@ -17,6 +17,11 @@ then
 	CXX=clang++
 fi
 
+if [ -z "$CC" ]
+then
+    CC=clang
+fi
+
 if [ -z $MACOSX_DEPLOYMENT_TARGET ]
 then
   MACOSX_DEPLOYMENT_TARGET=10.6
@@ -45,16 +50,24 @@ case $TRIPLE in
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
 	else
-	    EXTRA_FLAGS="-std=c++0x"
-		LDSHARED_FLAGS="-o libc++.1.dylib \
+		EXTRA_FLAGS="-std=c++0x "
+		RE_EXPORT_FILE="libc++abi.exp"
+		if [ -n "$SDKROOT" ]
+		then
+			EXTRA_FLAGS+="-isysroot ${SDKROOT}"
+			RE_EXPORT_FILE="libc++sjlj-abi.exp"
+			CXX=`xcrun -sdk "${SDKROOT}"  -find clang++`
+			CC=`xcrun -sdk "${SDKROOT}"  -find clang`
+		fi
+	    LDSHARED_FLAGS="-o libc++.1.dylib \
 			-dynamiclib -nodefaultlibs  \
 			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
 			-install_name /usr/lib/libc++.1.dylib \
 			${SDKROOT}/usr/lib/libc++abi.dylib \
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
-			-Wl,-reexported_symbols_list,libc++abi.exp \
-			-Wl,-force_symbols_not_weak_list,notweak.exp"
+                        -Wl,-reexported_symbols_list,${RE_EXPORT_FILE}  \
+			-Wl,-force_symbols_not_weak_list,notweak.exp "
 	fi
     ;;
   *)
@@ -78,7 +91,7 @@ for FILE in ../src/*.cpp; do
 done
 
 
-cc *.o $RC_CFLAGS $LDSHARED_FLAGS
+$CC *.o $RC_CFLAGS $LDSHARED_FLAGS $EXTRA_FLAGS
 
 #libtool -static -o libc++.a *.o
 
