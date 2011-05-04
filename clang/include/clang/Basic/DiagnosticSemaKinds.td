@@ -1013,8 +1013,12 @@ def err_delegation_unimplemented : Error<
   "delegating constructors are not fully implemented">;
 def err_delegating_initializer_alone : Error<
   "an initializer for a delegating constructor must appear alone">;
-def err_delegating_ctor_loop : Error<
-  "constructor %0 delegates to itself (possibly indirectly)">;
+def err_delegating_ctor_cycle : Error<
+  "constructor for %0 creates a delegation cycle">;
+def note_it_delegates_to : Note<
+  "it delegates to">;
+def note_which_delegates_to : Note<
+  "which delegates to">;
 def err_delegating_codegen_not_implemented : Error<
   "code generation for delegating constructors not implemented">;
 

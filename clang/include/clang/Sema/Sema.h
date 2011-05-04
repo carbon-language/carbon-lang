@@ -312,6 +312,10 @@ public:
   /// and must warn if not used. Only contains the first declaration.
   llvm::SmallVector<const DeclaratorDecl*, 4> UnusedFileScopedDecls;
 
+  /// \brief All the delegating constructors seen so far in the file, used for
+  /// cycle detection at the end of the TU.
+  llvm::SmallVector<CXXConstructorDecl*, 4> DelegatingCtorDecls;
+
   /// \brief Callback to the parser to parse templated functions when needed.
   typedef void LateTemplateParserCB(void *P, const FunctionDecl *FD);
   LateTemplateParserCB *LateTemplateParser;
@@ -703,6 +707,8 @@ public:
   StmtResult Owned(Stmt* S) { return S; }
 
   void ActOnEndOfTranslationUnit();
+
+  void CheckDelegatingCtorCycles();
 
   Scope *getScopeForContext(DeclContext *Ctx);
 

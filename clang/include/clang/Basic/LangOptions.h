@@ -134,6 +134,9 @@ public:
   unsigned MRTD : 1;            // -mrtd calling convention
   unsigned DelayedTemplateParsing : 1;  // Delayed template parsing
 
+  // Do we try to detect cycles in delegating constructors?
+  unsigned CheckDelegatingCtorCycles : 1; 
+
 private:
   // We declare multibit enums as unsigned because MSVC insists on making enums
   // signed.  Set/Query these values using accessors.
@@ -232,6 +235,8 @@ public:
     MRTD = 0;
     DelayedTemplateParsing = 0;
     ParseUnknownAnytype = 0;
+
+    CheckDelegatingCtorCycles = 1;
   }
 
   GCMode getGCMode() const { return (GCMode) GC; }

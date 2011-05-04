@@ -22,14 +22,15 @@ foo::foo () : foo(-1) {
 foo::foo (int, int) : foo() {
 }
 
-foo::foo (bool) : foo(true) { // expected-error{{delegates to itself}}
+foo::foo (bool) : foo(true) { // expected-error{{creates a delegation cycle}}
 }
 
 // Good
-foo::foo (const float* f) : foo(*f) {
+foo::foo (const float* f) : foo(*f) { // expected-note{{it delegates to}}
 }
 
-foo::foo (const float &f) : foo(&f) { //expected-error{{delegates to itself}}
+foo::foo (const float &f) : foo(&f) { //expected-error{{creates a delegation cycle}} \
+                                      //expected-note{{which delegates to}}
 }
 
 foo::foo (char) : i(3), foo(3) { // expected-error{{must appear alone}}

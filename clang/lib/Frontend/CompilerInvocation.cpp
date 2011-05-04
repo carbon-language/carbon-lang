@@ -698,6 +698,9 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fdelayed-template-parsing");
   if (Opts.Deprecated)
     Res.push_back("-fdeprecated-macro");
+
+  if (Opts.CheckDelegatingCtorCycles)
+    Res.push_back("-fcheck-delegating-ctor-cycles");
 }
 
 static void PreprocessorOptsToArgs(const PreprocessorOptions &Opts,
@@ -1565,6 +1568,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MRTD = Args.hasArg(OPT_mrtd);
   Opts.FakeAddressSpaceMap = Args.hasArg(OPT_ffake_address_space_map);
   Opts.ParseUnknownAnytype = Args.hasArg(OPT_funknown_anytype);
+  Opts.CheckDelegatingCtorCycles
+    = !Args.hasArg(OPT_fno_check_delegating_ctor_cycles);
 
   // Record whether the __DEPRECATED define was requested.
   Opts.Deprecated = Args.hasFlag(OPT_fdeprecated_macro,

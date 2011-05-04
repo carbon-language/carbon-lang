@@ -1547,7 +1547,8 @@ Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
     return true;
 
   CXXConstructExpr *ConExpr = cast<CXXConstructExpr>(DelegationInit.get());
-  CXXConstructorDecl *Constructor = ConExpr->getConstructor();
+  CXXConstructorDecl *Constructor
+    = ConExpr->getConstructor();
   assert(Constructor && "Delegating constructor with no target?");
 
   CheckImplicitConversions(DelegationInit.get(), LParenLoc);
@@ -2072,23 +2073,7 @@ static bool CollectFieldInitializer(BaseAndFieldInfo &Info,
 bool
 Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
                                CXXCtorInitializer *Initializer) {
-  CXXConstructorDecl *Target = Initializer->getTargetConstructor();
-  CXXConstructorDecl *Canonical = Constructor->getCanonicalDecl();
-  while (Target) {
-    if (Target->getCanonicalDecl() == Canonical) {
-      Diag(Initializer->getSourceLocation(), diag::err_delegating_ctor_loop)
-        << Constructor;
-      return true;
-    }
-    Target = Target->getTargetConstructor();
-  }
-
-  // We do the cycle detection first so that we know that we're not
-  // going to create a cycle by inserting this link. This ensures that
-  // the AST is cycle-free and we don't get a scenario where we have
-  // a B -> C -> B cycle and then add an A -> B link and get stuck in
-  // an infinite loop as we check for cycles with A and never get there
-  // because we get stuck in a cycle not including A.
+  assert(Initializer->isDelegatingInitializer());
   Constructor->setNumCtorInitializers(1);
   CXXCtorInitializer **initializer =
     new (Context) CXXCtorInitializer*[1];
@@ -2100,9 +2085,11 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
     DiagnoseUseOfDecl(Dtor, Initializer->getSourceLocation());
   }
 
+  if (LangOpts.CheckDelegatingCtorCycles)
+    DelegatingCtorDecls.push_back(Constructor);
+
   return false;
 }
-
                                
 bool
 Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
@@ -2479,7 +2466,7 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
         HadError = true;
         // We will treat this as being the only initializer.
       }
-      SetDelegatingInitializer(Constructor, *MemInits);
+      SetDelegatingInitializer(Constructor, MemInits[i]);
       // Return immediately as the initializer is set.
       return;
     }
@@ -7955,5 +7942,55 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
     }
     ObjCImplementation->setIvarInitializers(Context, 
                                             AllToInit.data(), AllToInit.size());
+  }
+}
+
+void Sema::CheckDelegatingCtorCycles() {
+  llvm::SmallSet<CXXConstructorDecl*, 4> Valid, Invalid, Current;
+
+  llvm::SmallSet<CXXConstructorDecl*, 4>::iterator ci = Current.begin(),
+                                                   ce = Current.end();
+
+  for (llvm::SmallVector<CXXConstructorDecl*, 4>::iterator
+         i = DelegatingCtorDecls.begin(),
+         e = DelegatingCtorDecls.end();
+       i != e; ++i) {
+    const FunctionDecl *FNTarget;
+    CXXConstructorDecl *Target;
+    (*i)->getTargetConstructor()->hasBody(FNTarget);
+    Target
+      = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
+
+    if (!Target || !Target->isDelegatingConstructor() || Valid.count(Target)) {
+      Valid.insert(*i);
+      for (ci = Current.begin(), ce = Current.end(); ci != ce; ++ci)
+        Valid.insert(*ci);
+      Current.clear();
+    } else if (Target == *i || Invalid.count(Target) || Current.count(Target)) {
+      if (!Invalid.count(Target)) {
+        Diag((*(*i)->init_begin())->getSourceLocation(),
+             diag::err_delegating_ctor_cycle)
+          << *i;
+        if (Target != *i)
+          Diag(Target->getLocation(), diag::note_it_delegates_to);
+        CXXConstructorDecl *Current = Target;
+        while (Current != *i) {
+          Current->getTargetConstructor()->hasBody(FNTarget);
+          Current
+         = const_cast<CXXConstructorDecl*>(cast<CXXConstructorDecl>(FNTarget));
+          Diag(Current->getLocation(), diag::note_which_delegates_to);
+        }
+      }
+
+      (*i)->setInvalidDecl();
+      Invalid.insert(*i);
+      for (ci = Current.begin(), ce = Current.end(); ci != ce; ++ci) {
+        (*ci)->setInvalidDecl();
+        Invalid.insert(*i);
+      }
+      Current.clear();
+    } else {
+      Current.insert(*i);
+    }
   }
 }

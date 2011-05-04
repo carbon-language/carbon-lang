@@ -473,6 +473,9 @@ void Sema::ActOnEndOfTranslationUnit() {
 
   }
 
+  if (LangOpts.CPlusPlus0x && LangOpts.CheckDelegatingCtorCycles)
+    CheckDelegatingCtorCycles();
+
   // If there were errors, disable 'unused' warnings since they will mostly be
   // noise.
   if (!Diags.hasErrorOccurred()) {

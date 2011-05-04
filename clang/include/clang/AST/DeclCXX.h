@@ -1619,10 +1619,9 @@ public:
   /// getTargetConstructor - When this constructor delegates to
   /// another, retrieve the target
   CXXConstructorDecl *getTargetConstructor() const {
-    if (isDelegatingConstructor())
-      return CtorInitializers[0]->getTargetConstructor();
-    else
-      return 0;
+    assert(isDelegatingConstructor() &&
+           "A non-delegating constructor has no target");
+    return CtorInitializers[0]->getTargetConstructor();
   }
 
   /// isDefaultConstructor - Whether this constructor is a default

@@ -547,6 +547,8 @@ def fdeprecated_macro : Flag<"-fdeprecated-macro">,
   HelpText<"Defines the __DEPRECATED macro">;
 def fno_deprecated_macro : Flag<"-fno-deprecated-macro">,
   HelpText<"Undefines the __DEPRECATED macro">;
+def fno_check_delegating_ctor_cycles : Flag<"-fno-check-delegating-ctor-cycles">,
+  HelpText<"Turns off delegating constructor cycle detection">;
 
 //===----------------------------------------------------------------------===//
 // Header Search Options
