@@ -1,7 +1,3 @@
-# Build output for (null)
-# Generated at (null)
-# Using (null) configuration, (null) architecture for (null) target of (null) project
-
 // RUN: llvm-mc -triple i386-unknown-unknown %s --show-encoding  | FileCheck %s
 
 // CHECK: 	movb	$127, 3735928559(%ebx,%ecx,8)
