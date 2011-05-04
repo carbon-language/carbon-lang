@@ -29,9 +29,8 @@ entry:
         ret i32 %tmp4
         
 ; X64: test3:
-; X64:	notl	[[A1:%esi|%edx]]
-; X64:	andl	[[A0:%edi|%ecx]], [[A1]]
-; X64:	movl	[[A1]], %eax
+; X64:	notl
+; X64:	andl
 ; X64:	shrl	%eax
 ; X64:	ret
 
@@ -139,7 +138,7 @@ entry:
   %t2 = add i32 %t1, -1
   ret i32 %t2
 ; X64: test8:
-; X64:   notl %eax
+; X64:   notl {{%eax|%edi|%ecx}}
 ; X32: test8:
 ; X32:   notl %eax
 }
