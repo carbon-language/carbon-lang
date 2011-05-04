@@ -30,6 +30,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
@@ -2888,6 +2889,16 @@ CXFile clang_getFile(CXTranslationUnit tu, const char *file_name) {
 
   FileManager &FMgr = CXXUnit->getFileManager();
   return const_cast<FileEntry *>(FMgr.getFile(file_name));
+}
+
+unsigned clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file) {
+  if (!tu || !file)
+    return 0;
+
+  ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
+  FileEntry *FEnt = static_cast<FileEntry *>(file);
+  return CXXUnit->getPreprocessor().getHeaderSearchInfo()
+                                          .isFileMultipleIncludeGuarded(FEnt);
 }
 
 } // end: extern "C"

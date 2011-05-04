@@ -1280,7 +1280,8 @@ namespace {
       using namespace clang::io;
       uint64_t Start = Out.tell(); (void)Start;
       
-      unsigned char Flags = (Data.isImport << 3)
+      unsigned char Flags = (Data.isImport << 4)
+                          | (Data.isPragmaOnce << 3)
                           | (Data.DirInfo << 1)
                           | Data.Resolved;
       Emit8(Out, (uint8_t)Flags);

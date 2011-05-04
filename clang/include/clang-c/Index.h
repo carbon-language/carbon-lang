@@ -222,6 +222,14 @@ CINDEX_LINKAGE CXString clang_getFileName(CXFile SFile);
 CINDEX_LINKAGE time_t clang_getFileTime(CXFile SFile);
 
 /**
+ * \brief Determine whether the given header is guarded against
+ * multiple inclusions, either with the conventional
+ * #ifndef/#define/#endif macro guards or with #pragma once.
+ */
+CINDEX_LINKAGE unsigned 
+clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file);
+
+/**
  * \brief Retrieve a file handle within the given translation unit.
  *
  * \param tu the translation unit

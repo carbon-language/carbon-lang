@@ -115,6 +115,7 @@ _clang_isConstQualifiedType
 _clang_isCursorDefinition
 _clang_isDeclaration
 _clang_isExpression
+_clang_isFileMultipleIncludeGuarded
 _clang_isInvalid
 _clang_isPODType
 _clang_isPreprocessing

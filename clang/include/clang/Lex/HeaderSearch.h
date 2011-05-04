@@ -31,6 +31,9 @@ struct HeaderFileInfo {
   /// isImport - True if this is a #import'd or #pragma once file.
   unsigned isImport : 1;
 
+  /// isPragmaOnce - True if this is  #pragma once file.
+  unsigned isPragmaOnce : 1;
+
   /// DirInfo - Keep track of whether this is a system header, and if so,
   /// whether it is C++ clean or not.  This can be set by the include paths or
   /// by #pragma gcc system_header.  This is an instance of
@@ -66,8 +69,8 @@ struct HeaderFileInfo {
   const IdentifierInfo *ControllingMacro;
 
   HeaderFileInfo()
-    : isImport(false), DirInfo(SrcMgr::C_User), External(false), 
-      Resolved(false), NumIncludes(0), ControllingMacroID(0), 
+    : isImport(false), isPragmaOnce(false), DirInfo(SrcMgr::C_User), 
+      External(false), Resolved(false), NumIncludes(0), ControllingMacroID(0), 
       ControllingMacro(0)  {}
 
   /// \brief Retrieve the controlling macro for this header file, if
@@ -77,7 +80,8 @@ struct HeaderFileInfo {
   /// \brief Determine whether this is a non-default header file info, e.g.,
   /// it corresponds to an actual header we've included or tried to include.
   bool isNonDefault() const {
-    return isImport || NumIncludes || ControllingMacro || ControllingMacroID;
+    return isImport || isPragmaOnce || NumIncludes || ControllingMacro || 
+      ControllingMacroID;
   }
 };
 
@@ -242,7 +246,9 @@ public:
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
   /// due to #pragma once.
   void MarkFileIncludeOnce(const FileEntry *File) {
-    getFileInfo(File).isImport = true;
+    HeaderFileInfo &FI = getFileInfo(File);
+    FI.isImport = true;
+    FI.isPragmaOnce = true;
   }
 
   /// MarkFileSystemHeader - Mark the specified file as a system header, e.g.
@@ -264,6 +270,13 @@ public:
                                const IdentifierInfo *ControllingMacro) {
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
+
+  /// \brief Determine whether this file is intended to be safe from
+  /// multiple inclusions, e.g., it has #pragma once or a controlling
+  /// macro.
+  ///
+  /// This routine does not consider the effect of #import 
+  bool isFileMultipleIncludeGuarded(const FileEntry *File);
 
   /// CreateHeaderMap - This method returns a HeaderMap for the specified
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.

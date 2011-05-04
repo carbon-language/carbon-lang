@@ -158,7 +158,7 @@ int parse_remapped_files(int argc, const char **argv, int start_arg,
 
 int want_display_name = 0;
 
-static void PrintCursor(CXCursor Cursor) {
+static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind)) {
     CXString ks = clang_getCursorKindSpelling(Cursor.kind);
     printf("Invalid Cursor => %s", clang_getCString(ks));
@@ -277,6 +277,9 @@ static void PrintCursor(CXCursor Cursor) {
       CXString Included = clang_getFileName(File);
       printf(" (%s)", clang_getCString(Included));
       clang_disposeString(Included);
+      
+      if (clang_isFileMultipleIncludeGuarded(TU, File))
+        printf("  [multi-include guarded]");
     }
   }
 }
@@ -426,7 +429,7 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
     clang_getSpellingLocation(Loc, 0, &line, &column, 0);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), line, column);
-    PrintCursor(Cursor);
+    PrintCursor(Data->TU, Cursor);
     PrintCursorExtent(Cursor);
     printf("\n");
     return CXChildVisit_Recurse;
@@ -479,7 +482,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
       } else if (Ref.kind != CXCursor_FunctionDecl) {
         printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
                curLine, curColumn);
-        PrintCursor(Ref);
+        PrintCursor(Data->TU, Ref);
         printf("\n");
       }
     }
@@ -554,6 +557,8 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
                                             CXClientData d) {
   const char *linkage = 0;
 
+  VisitorData *Data = (VisitorData *)d;
+
   if (clang_isInvalid(clang_getCursorKind(cursor)))
     return CXChildVisit_Recurse;
 
@@ -566,7 +571,7 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
   }
 
   if (linkage) {
-    PrintCursor(cursor);
+    PrintCursor(Data->TU, cursor);
     printf("linkage=%s\n", linkage);
   }
 
@@ -579,11 +584,12 @@ static enum CXChildVisitResult PrintLinkage(CXCursor cursor, CXCursor p,
 
 static enum CXChildVisitResult PrintTypeKind(CXCursor cursor, CXCursor p,
                                              CXClientData d) {
+  VisitorData *Data = (VisitorData *)d;
 
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
     CXString S = clang_getTypeKindSpelling(T.kind);
-    PrintCursor(cursor);
+    PrintCursor(Data->TU, cursor);
     printf(" typekind=%s", clang_getCString(S));
     if (clang_isConstQualifiedType(T))
       printf(" const");
@@ -778,7 +784,7 @@ int perform_test_reparse_source(int argc, const char **argv, int trials,
 /* Logic for testing clang_getCursor().                                       */
 /******************************************************************************/
 
-static void print_cursor_file_scan(CXCursor cursor,
+static void print_cursor_file_scan(CXTranslationUnit TU, CXCursor cursor,
                                    unsigned start_line, unsigned start_col,
                                    unsigned end_line, unsigned end_col,
                                    const char *prefix) {
@@ -787,7 +793,7 @@ static void print_cursor_file_scan(CXCursor cursor,
     printf("-%s", prefix);
   PrintExtent(stdout, start_line, start_col, end_line, end_col);
   printf(" ");
-  PrintCursor(cursor);
+  PrintCursor(TU, cursor);
   printf("\n");
 }
 
@@ -832,7 +838,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
     cursor = clang_getCursor(TU, clang_getLocation(TU, file, line, col));
     if ((c == EOF || !clang_equalCursors(cursor, prevCursor)) &&
         prevCursor.kind != CXCursor_InvalidFile) {
-      print_cursor_file_scan(prevCursor, start_line, start_col,
+      print_cursor_file_scan(TU, prevCursor, start_line, start_col,
                              line, col, prefix);
       start_line = line;
       start_col = col;
@@ -1183,7 +1189,7 @@ int inspect_cursor_at(int argc, const char **argv) {
                                clang_getLocation(TU, file, Locations[Loc].line,
                                                  Locations[Loc].column));
       if (I + 1 == Repeats) {
-        PrintCursor(Cursor);
+        PrintCursor(TU, Cursor);
         printf("\n");
         free(Locations[Loc].filename);
       }
@@ -1287,7 +1293,7 @@ int perform_token_annotation(int argc, const char **argv) {
     PrintExtent(stdout, start_line, start_column, end_line, end_column);
     if (!clang_isInvalid(cursors[i].kind)) {
       printf(" ");
-      PrintCursor(cursors[i]);
+      PrintCursor(TU, cursors[i]);
     }
     printf("\n");
   }

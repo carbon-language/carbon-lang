@@ -25,7 +25,10 @@ void test() {
   fun_with_macro_bodies(x, { int z = x; ++z; });
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:2:1:26:1 -I%S/Inputs %s | FileCheck %s
+#include "pragma-once.h"
+#include "guarded.h"
+
+// RUN: c-index-test -test-annotate-tokens=%s:2:1:30:1 -I%S/Inputs %s | FileCheck %s
 // CHECK: Punctuation: "#" [2:1 - 2:2] preprocessing directive=
 // CHECK: Identifier: "define" [2:2 - 2:8] preprocessing directive=
 // CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] macro definition=STILL_NOTHING
@@ -184,4 +187,5 @@ void test() {
 // CHECK: Punctuation: ")" [25:47 - 25:48] UnexposedStmt=
 // CHECK: Punctuation: ";" [25:48 - 25:49] UnexposedStmt=
 // CHECK: Punctuation: "}" [26:1 - 26:2] UnexposedStmt=
-
+// CHECK: {{28:1.*inclusion directive=pragma-once.h.*multi-include guarded}}
+// CHECK: {{29:1.*inclusion directive=guarded.h.*multi-include guarded}}

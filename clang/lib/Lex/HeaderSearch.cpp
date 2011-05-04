@@ -482,6 +482,21 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   return HFI;
 }
 
+bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
+  // Check if we've ever seen this file as a header.
+  if (File->getUID() >= FileInfo.size())
+    return false;
+
+  // Resolve header file info from the external source, if needed.
+  HeaderFileInfo &HFI = FileInfo[File->getUID()];
+  if (ExternalSource && !HFI.Resolved) {
+    HFI = ExternalSource->GetHeaderFileInfo(File);
+    HFI.Resolved = true;
+  }
+
+  return HFI.isPragmaOnce || HFI.ControllingMacro || HFI.ControllingMacroID;
+}
+
 void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
   if (UID >= FileInfo.size())
     FileInfo.resize(UID+1);
