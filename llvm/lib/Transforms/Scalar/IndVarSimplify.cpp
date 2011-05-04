@@ -52,20 +52,27 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 STATISTIC(NumRemoved , "Number of aux indvars removed");
+STATISTIC(NumWidened , "Number of indvars widened");
 STATISTIC(NumInserted, "Number of canonical indvars added");
 STATISTIC(NumReplaced, "Number of exit values replaced");
 STATISTIC(NumLFTR    , "Number of loop exit tests replaced");
+
+// DisableIVRewrite mode currently affects IVUsers, so is defined in libAnalysis
+// and referenced here.
+namespace llvm {
+  extern bool DisableIVRewrite;
+}
 
 namespace {
   class IndVarSimplify : public LoopPass {
@@ -73,12 +80,13 @@ namespace {
     LoopInfo        *LI;
     ScalarEvolution *SE;
     DominatorTree   *DT;
+    TargetData      *TD;
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
   public:
 
     static char ID; // Pass identification, replacement for typeid
-    IndVarSimplify() : LoopPass(ID) {
+    IndVarSimplify() : LoopPass(ID), IU(0), LI(0), SE(0), DT(0), TD(0) {
       initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
@@ -104,6 +112,7 @@ namespace {
     void EliminateIVComparisons();
     void EliminateIVRemainders();
     void RewriteNonIntegerIVs(Loop *L);
+    const Type *WidenIVs(Loop *L, SCEVExpander &Rewriter);
 
     bool canExpandBackedgeTakenCount(Loop *L,
                                      const SCEV *BackedgeTakenCount);
@@ -111,6 +120,7 @@ namespace {
     ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
                                         PHINode *IndVar,
                                         SCEVExpander &Rewriter);
+
     void RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
 
     void RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter);
@@ -123,7 +133,7 @@ namespace {
 
 char IndVarSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(IndVarSimplify, "indvars",
-                "Canonicalize Induction Variables", false, false)
+                "Induction Variable Simplification", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
@@ -131,7 +141,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(IVUsers)
 INITIALIZE_PASS_END(IndVarSimplify, "indvars",
-                "Canonicalize Induction Variables", false, false)
+                "Induction Variable Simplification", false, false)
 
 Pass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();
@@ -209,7 +219,7 @@ canExpandBackedgeTakenCount(Loop *L,
   // rewriting the loop.
   if (isa<SCEVUDivExpr>(BackedgeTakenCount)) {
     ICmpInst *OrigCond = dyn_cast<ICmpInst>(BI->getCondition());
-    if (!OrigCond) return 0;
+    if (!OrigCond) return false;
     const SCEV *R = SE->getSCEV(OrigCond->getOperand(1));
     R = SE->getMinusSCEV(R, SE->getConstant(R->getType(), 1));
     if (R != BackedgeTakenCount) {
@@ -549,6 +559,8 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
+  TD = getAnalysisIfAvailable<TargetData>();
+
   DeadInsts.clear();
   Changed = false;
 
@@ -560,6 +572,13 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Create a rewriter object which we'll use to transform the code with.
   SCEVExpander Rewriter(*SE);
+  if (DisableIVRewrite)
+    Rewriter.disableCanonicalMode();
+
+  const Type *LargestType = 0;
+  if (DisableIVRewrite) {
+    LargestType = WidenIVs(L, Rewriter);
+  }
 
   // Check to see if this loop has a computable loop-invariant execution count.
   // If so, this means that we can compute the final value of any expressions
@@ -578,7 +597,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
-  const Type *LargestType = 0;
   bool NeedCannIV = false;
   bool ExpandBECount = canExpandBackedgeTakenCount(L, BackedgeTakenCount);
   if (ExpandBECount) {
@@ -598,8 +616,19 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
     if (!LargestType ||
         SE->getTypeSizeInBits(Ty) >
+        SE->getTypeSizeInBits(LargestType))
+      LargestType = SE->getEffectiveSCEVType(Ty);
+  }
+  if (!DisableIVRewrite) {
+    for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
+      NeedCannIV = true;
+      const Type *Ty =
+        SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
+      if (!LargestType ||
+          SE->getTypeSizeInBits(Ty) >
           SE->getTypeSizeInBits(LargestType))
-      LargestType = Ty;
+        LargestType = Ty;
+    }
   }
 
   // Now that we know the largest of the induction variable expressions
@@ -647,9 +676,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     NewICmp = LinearFunctionTestReplace(L, BackedgeTakenCount, IndVar,
                                         Rewriter);
   }
-
   // Rewrite IV-derived expressions.
-  RewriteIVExpressions(L, Rewriter);
+  if (!DisableIVRewrite)
+    RewriteIVExpressions(L, Rewriter);
 
   // Clear the rewriter cache, because values that are in the rewriter's cache
   // can be deleted in the loop below, causing the AssertingVH in the cache to
@@ -719,6 +748,83 @@ static bool isSafe(const SCEV *S, const Loop *L, ScalarEvolution *SE) {
 
   // Nothing else is safe.
   return false;
+}
+
+/// Widen the type of any induction variables that are sign/zero extended and
+/// remove the [sz]ext uses.
+///
+/// FIXME: This may currently create extra IVs which could increase regpressure
+/// (without LSR to cleanup).
+///
+/// FIXME: may factor this with RewriteIVExpressions once it stabilizes.
+const Type *IndVarSimplify::WidenIVs(Loop *L, SCEVExpander &Rewriter) {
+  const Type *LargestType = 0;
+  for (IVUsers::iterator UI = IU->begin(), E = IU->end(); UI != E; ++UI) {
+    Instruction *ExtInst = UI->getUser();
+    if (!isa<SExtInst>(ExtInst) && !isa<ZExtInst>(ExtInst))
+      continue;
+    const SCEV *AR = SE->getSCEV(ExtInst);
+    // Only widen this IV is SCEV tells us it's safe.
+    if (!isa<SCEVAddRecExpr>(AR) && !isa<SCEVAddExpr>(AR))
+      continue;
+
+    if (!L->contains(UI->getUser())) {
+      const SCEV *ExitVal = SE->getSCEVAtScope(AR, L->getParentLoop());
+      if (SE->isLoopInvariant(ExitVal, L))
+        AR = ExitVal;
+    }
+
+    // Only expand affine recurences.
+    if (!isSafe(AR, L, SE))
+      continue;
+
+    const Type *Ty =
+      SE->getEffectiveSCEVType(ExtInst->getType());
+
+    // Only remove [sz]ext if the wide IV is still a native type.
+    //
+    // FIXME: We may be able to remove the copy of this logic in
+    // IVUsers::AddUsersIfInteresting.
+    uint64_t Width = SE->getTypeSizeInBits(Ty);
+    if (Width > 64 || (TD && !TD->isLegalInteger(Width)))
+      continue;
+
+    // Now expand it into actual Instructions and patch it into place.
+    //
+    // FIXME: avoid creating a new IV.
+    Value *NewVal = Rewriter.expandCodeFor(AR, Ty, ExtInst);
+
+    DEBUG(dbgs() << "INDVARS: Widened IV '" << *AR << "' " << *ExtInst << '\n'
+                 << "   into = " << *NewVal << "\n");
+
+    if (!isValidRewrite(ExtInst, NewVal)) {
+      DeadInsts.push_back(NewVal);
+      continue;
+    }
+
+    ++NumWidened;
+    Changed = true;
+
+    if (!LargestType ||
+        SE->getTypeSizeInBits(Ty) >
+        SE->getTypeSizeInBits(LargestType))
+      LargestType = Ty;
+
+    SE->forgetValue(ExtInst);
+
+    // Patch the new value into place.
+    if (ExtInst->hasName())
+      NewVal->takeName(ExtInst);
+    ExtInst->replaceAllUsesWith(NewVal);
+
+    // The old value may be dead now.
+    DeadInsts.push_back(ExtInst);
+
+    // UI is a linked list iterator, so AddUsersIfInteresting effectively pushes
+    // nodes on the worklist.
+    IU->AddUsersIfInteresting(ExtInst);
+  }
+  return LargestType;
 }
 
 void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
