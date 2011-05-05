@@ -324,7 +324,11 @@ public:
     // id objc_assign_ivar(id, id *, ptrdiff_t)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
-    Args.push_back(LongTy);
+    const llvm::Type *PtrDiffTy =
+      CGM.getTypes().ConvertType(
+        CGM.getContext().getPointerDiffType()->getCanonicalTypeUnqualified());
+
+    Args.push_back(PtrDiffTy);
     llvm::FunctionType *FTy =
       llvm::FunctionType::get(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
