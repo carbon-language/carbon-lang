@@ -48,6 +48,17 @@ static void write_int64(uint64_t i) {
   write_int32(hi);
 }
 
+static uint32_t length_of_string(const char *s) {
+  return (strlen(s) + 5) / 4;
+}
+
+static void write_string(const char *s) {
+  uint32_t len = length_of_string(s);
+  write_int32(len);
+  fwrite(s, strlen(s), 1, output_file);
+  fwrite("\0\0\0\0", 4 - (strlen(s) % 4), 1, output_file);
+}
+
 static char *mangle_filename(const char *orig_filename) {
   /* TODO: handle GCOV_PREFIX_STRIP */
   const char *prefix;
@@ -129,16 +140,18 @@ void llvm_gcda_increment_indirect_counter(uint32_t *predecessor,
 #endif
 }
 
-void llvm_gcda_emit_function(uint32_t ident) {
+void llvm_gcda_emit_function(uint32_t ident, const char *function_name) {
 #ifdef DEBUG_GCDAPROFILING
   printf("llvmgcda: function id=%x\n", ident);
 #endif
 
   /* function tag */  
   fwrite("\0\0\0\1", 4, 1, output_file);
-  write_int32(2);
+  write_int32(3 + 1 + length_of_string(function_name));
   write_int32(ident);
   write_int32(0);
+  write_int32(0);
+  write_string(function_name);
 }
 
 void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {

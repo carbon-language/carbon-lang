@@ -87,7 +87,7 @@ namespace {
     // list.
     void insertCounterWriteout(DebugInfoFinder &,
                                SmallVector<std::pair<GlobalVariable *,
-                                                     uint32_t>, 8> &);
+                                                     MDNode *>, 8> &);
 
     std::string mangleName(DICompileUnit CU, std::string NewStem);
 
@@ -261,12 +261,13 @@ namespace {
       ReturnBlock = new GCOVBlock(i++, os);
 
       writeBytes(FunctionTag, 4);
-      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
+      uint32_t BlockLen = 1 + 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
           1 + lengthOfGCOVString(SP.getFilename()) + 1;
       write(BlockLen);
       uint32_t Ident = reinterpret_cast<intptr_t>((MDNode*)SP);
       write(Ident);
-      write(0);  // checksum
+      write(0);  // checksum #1
+      write(0);  // checksum #2
       writeGCOVString(SP.getName());
       writeGCOVString(SP.getFilename());
       write(SP.getLineNumber());
@@ -418,7 +419,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
   if (DIF.subprogram_begin() == DIF.subprogram_end())
     return false;
 
-  SmallVector<std::pair<GlobalVariable *, uint32_t>, 8> CountersByIdent;
+  SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> CountersBySP;
   for (DebugInfoFinder::iterator SPI = DIF.subprogram_begin(),
            SPE = DIF.subprogram_end(); SPI != SPE; ++SPI) {
     DISubprogram SP(*SPI);
@@ -441,8 +442,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
                            GlobalValue::InternalLinkage,
                            Constant::getNullValue(CounterTy),
                            "__llvm_gcov_ctr", 0, false, 0);
-    CountersByIdent.push_back(
-        std::make_pair(Counters, reinterpret_cast<intptr_t>((MDNode*)SP)));
+    CountersBySP.push_back(std::make_pair(Counters, (MDNode*)SP));
 
     UniqueVector<BasicBlock *> ComplexEdgePreds;
     UniqueVector<BasicBlock *> ComplexEdgeSuccs;
@@ -509,7 +509,7 @@ bool GCOVProfiler::emitProfileArcs(DebugInfoFinder &DIF) {
     }
   }
 
-  insertCounterWriteout(DIF, CountersByIdent);
+  insertCounterWriteout(DIF, CountersBySP);
 
   return true;
 }
@@ -580,7 +580,10 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
-  const Type *Args[] = { Type::getInt32Ty(*Ctx) };
+  const Type *Args[2] = {
+    Type::getInt32Ty(*Ctx),    // uint32_t ident
+    Type::getInt8PtrTy(*Ctx),  // const char *function_name
+  };
   const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                               Args, false);
   return M->getOrInsertFunction("llvm_gcda_emit_function", FTy);
@@ -616,7 +619,7 @@ GlobalVariable *GCOVProfiler::getEdgeStateValue() {
 
 void GCOVProfiler::insertCounterWriteout(
     DebugInfoFinder &DIF,
-    SmallVector<std::pair<GlobalVariable *, uint32_t>, 8> &CountersByIdent) {
+    SmallVector<std::pair<GlobalVariable *, MDNode *>, 8> &CountersBySP) {
   const FunctionType *WriteoutFTy =
       FunctionType::get(Type::getVoidTy(*Ctx), false);
   Function *WriteoutF = Function::Create(WriteoutFTy,
@@ -637,11 +640,15 @@ void GCOVProfiler::insertCounterWriteout(
     std::string FilenameGcda = mangleName(compile_unit, "gcda");
     Builder.CreateCall(StartFile,
                        Builder.CreateGlobalStringPtr(FilenameGcda));
-    for (SmallVector<std::pair<GlobalVariable *, uint32_t>, 8>::iterator
-             I = CountersByIdent.begin(), E = CountersByIdent.end();
+    for (SmallVector<std::pair<GlobalVariable *, MDNode *>, 8>::iterator
+             I = CountersBySP.begin(), E = CountersBySP.end();
          I != E; ++I) {
-      Builder.CreateCall(EmitFunction, ConstantInt::get(Type::getInt32Ty(*Ctx),
-                                                        I->second));
+      DISubprogram SP(I->second);
+      intptr_t ident = reinterpret_cast<intptr_t>(I->second);
+      Builder.CreateCall2(EmitFunction,
+                          ConstantInt::get(Type::getInt32Ty(*Ctx), ident),
+                          Builder.CreateGlobalStringPtr(SP.getName()));
+                                                        
       GlobalVariable *GV = I->first;
       unsigned Arcs =
           cast<ArrayType>(GV->getType()->getElementType())->getNumElements();
