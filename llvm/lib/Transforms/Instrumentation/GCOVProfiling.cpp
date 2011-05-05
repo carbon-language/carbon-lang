@@ -321,11 +321,6 @@ namespace {
   };
 }
 
-// Replace the stem of a file, or add one if missing.
-static std::string replaceStem(std::string OrigFilename, std::string NewStem) {
-  return (sys::path::stem(OrigFilename) + "." + NewStem).str();
-}
-
 std::string GCOVProfiler::mangleName(DICompileUnit CU, std::string NewStem) {
   if (NamedMDNode *GCov = M->getNamedMetadata("llvm.gcov")) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
