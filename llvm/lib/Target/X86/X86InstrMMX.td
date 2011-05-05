@@ -285,7 +285,7 @@ let Constraints = "$src1 = $dst" in
 defm MMX_PAND : MMXI_binop_rm_int<0xDB, "pand", int_x86_mmx_pand, 1>;
 defm MMX_POR  : MMXI_binop_rm_int<0xEB, "por" , int_x86_mmx_por,  1>;
 defm MMX_PXOR : MMXI_binop_rm_int<0xEF, "pxor", int_x86_mmx_pxor, 1>;
-defm MMX_PANDN : MMXI_binop_rm_int<0xDF, "pandn", int_x86_mmx_pandn, 1>;
+defm MMX_PANDN : MMXI_binop_rm_int<0xDF, "pandn", int_x86_mmx_pandn>;
 
 // Shift Instructions
 defm MMX_PSRLW : MMXI_binop_rmi_int<0xD1, 0x71, MRM2r, "psrlw",
