@@ -74,7 +74,7 @@ MCAsmInfo::MCAsmInfo() {
   HasLEB128 = false;
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
-  DwarfRequiresFrameSection = true;
+  DwarfRequiresFrameSection = false;
   DwarfUsesInlineInfoSection = false;
   DwarfRequiresRelocationForStmtList = true;
   DwarfSectionOffsetDirective = 0;
