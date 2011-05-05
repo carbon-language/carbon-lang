@@ -172,11 +172,6 @@ void DwarfTableException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
 
   Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
-  // Externally visible entry into the functions eh frame info. If the
-  // corresponding function is static, this should not be externally visible.
-  if (!TheFunc->hasLocalLinkage() && TLOF.isFunctionEHSymbolGlobal())
-    Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,MCSA_Global);
-
   // If corresponding function is weak definition, this should be too.
   if (TheFunc->isWeakForLinker() && Asm->MAI->getWeakDefDirective())
     Asm->OutStreamer.EmitSymbolAttribute(EHFrameInfo.FunctionEHSym,
