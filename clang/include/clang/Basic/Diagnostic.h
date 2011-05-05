@@ -32,6 +32,7 @@ namespace clang {
   class LangOptions;
   class Preprocessor;
   class DiagnosticErrorTrap;
+  class StoredDiagnostic;
 
 /// \brief Annotates a diagnostic with some code that should be
 /// inserted, removed, or replaced to fix the problem.
@@ -487,6 +488,8 @@ public:
   inline DiagnosticBuilder Report(SourceLocation Pos, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
 
+  void Report(const StoredDiagnostic &storedDiag);
+
   /// \brief Determine whethere there is already a diagnostic in flight.
   bool isDiagnosticInFlight() const { return CurDiagID != ~0U; }
 
@@ -839,8 +842,11 @@ inline DiagnosticBuilder Diagnostic::Report(unsigned DiagID) {
 /// about the currently in-flight diagnostic.
 class DiagnosticInfo {
   const Diagnostic *DiagObj;
+  llvm::StringRef StoredDiagMessage;
 public:
   explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
+  DiagnosticInfo(const Diagnostic *DO, llvm::StringRef storedDiagMessage)
+    : DiagObj(DO), StoredDiagMessage(storedDiagMessage) {}
 
   const Diagnostic *getDiags() const { return DiagObj; }
   unsigned getID() const { return DiagObj->CurDiagID; }

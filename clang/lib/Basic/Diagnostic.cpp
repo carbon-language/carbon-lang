@@ -212,6 +212,42 @@ void Diagnostic::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
                                                FullSourceLoc(Loc, *SourceMgr)));
 }
 
+void Diagnostic::Report(const StoredDiagnostic &storedDiag) {
+  assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
+
+  CurDiagLoc = storedDiag.getLocation();
+  CurDiagID = storedDiag.getID();
+  NumDiagArgs = 0;
+
+  NumDiagRanges = storedDiag.range_size();
+  assert(NumDiagRanges < sizeof(DiagRanges)/sizeof(DiagRanges[0]) &&
+         "Too many arguments to diagnostic!");
+  unsigned i = 0;
+  for (StoredDiagnostic::range_iterator
+         RI = storedDiag.range_begin(),
+         RE = storedDiag.range_end(); RI != RE; ++RI)
+    DiagRanges[i++] = *RI;
+
+  NumFixItHints = storedDiag.fixit_size();
+  assert(NumFixItHints < Diagnostic::MaxFixItHints && "Too many fix-it hints!");
+  i = 0;
+  for (StoredDiagnostic::fixit_iterator
+         FI = storedDiag.fixit_begin(),
+         FE = storedDiag.fixit_end(); FI != FE; ++FI)
+    FixItHints[i++] = *FI;
+
+  assert(Client && "DiagnosticClient not set!");
+  Level DiagLevel = storedDiag.getLevel();
+  DiagnosticInfo Info(this, storedDiag.getMessage());
+  Client->HandleDiagnostic(DiagLevel, Info);
+  if (Client->IncludeInDiagnosticCounts()) {
+    if (DiagLevel == Diagnostic::Warning)
+      ++NumWarnings;
+  }
+
+  CurDiagID = ~0U;
+}
+
 void DiagnosticBuilder::FlushCounts() {
   DiagObj->NumDiagArgs = NumArgs;
   DiagObj->NumDiagRanges = NumRanges;
@@ -486,6 +522,11 @@ static void HandlePluralModifier(const DiagnosticInfo &DInfo, unsigned ValNo,
 /// array.
 void DiagnosticInfo::
 FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
+  if (!StoredDiagMessage.empty()) {
+    OutStr.append(StoredDiagMessage.begin(), StoredDiagMessage.end());
+    return;
+  }
+
   const char *DiagStr = getDiags()->getDiagnosticIDs()->getDescription(getID());
   const char *DiagEnd = DiagStr+strlen(DiagStr);
 
