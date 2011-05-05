@@ -331,15 +331,20 @@ std::string GCOVProfiler::mangleName(DICompileUnit CU, std::string NewStem) {
     for (int i = 0, e = GCov->getNumOperands(); i != e; ++i) {
       MDNode *N = GCov->getOperand(i);
       if (N->getNumOperands() != 2) continue;
-      MDString *Path = dyn_cast<MDString>(N->getOperand(0));
+      MDString *GCovFile = dyn_cast<MDString>(N->getOperand(0));
       MDNode *CompileUnit = dyn_cast<MDNode>(N->getOperand(1));
-      if (!Path || !CompileUnit) continue;
-      if (CompileUnit == CU)
-        return (Path->getString() + "/" +
-                replaceStem(CU.getFilename(), NewStem)).str();
+      if (!GCovFile || !CompileUnit) continue;
+      if (CompileUnit == CU) {
+        SmallString<128> Filename = GCovFile->getString();
+        sys::path::replace_extension(Filename, NewStem);
+        return Filename.str();
+      }
     }
   }
-  return replaceStem(CU.getFilename(), NewStem);
+
+  SmallString<128> Filename = CU.getFilename();
+  sys::path::replace_extension(Filename, NewStem);
+  return sys::path::filename(Filename.str());
 }
 
 bool GCOVProfiler::runOnModule(Module &M) {
