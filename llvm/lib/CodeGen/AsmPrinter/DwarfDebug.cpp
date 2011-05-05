@@ -588,12 +588,14 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   if (!Scope->getScopeNode())
     return NULL;
   DIScope DS(Scope->getScopeNode());
-  DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
-
   DISubprogram InlinedSP = getDISubprogram(DS);
   CompileUnit *TheCU = getCompileUnit(InlinedSP);
   DIE *OriginDIE = TheCU->getDIE(InlinedSP);
-  assert(OriginDIE && "Unable to find Origin DIE!");
+  if (!OriginDIE) {
+    DEBUG(dbgs() << "Unable to find original DIE for inlined subprogram.");
+    return NULL;
+  }
+  DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
                      dwarf::DW_FORM_ref4, OriginDIE);
 
