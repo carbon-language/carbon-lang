@@ -61,7 +61,7 @@ namespace llvm {
   /// \arg SimplifyLibCalls - Allow library calls to be simplified.
   /// \arg HaveExceptions - Whether the module may have code using exceptions.
   /// \arg InliningPass - The inlining pass to use, if any, or null. This will
-  /// always be added, even at -O0.a
+  /// always be added, even at -O0.
   static inline void createStandardModulePasses(PassManagerBase *PM,
                                                 unsigned OptimizationLevel,
                                                 bool OptimizeSize,
