@@ -6676,6 +6676,15 @@ void DiagnoseArityMismatch(Sema &S, OverloadCandidate *Cand,
 
   unsigned MinParams = Fn->getMinRequiredArguments();
 
+  // With invalid overloaded operators, it's possible that we think we
+  // have an arity mismatch when it fact it looks like we have the
+  // right number of arguments, because only overloaded operators have
+  // the weird behavior of overloading member and non-member functions.
+  // Just don't report anything.
+  if (Fn->isInvalidDecl() && 
+      Fn->getDeclName().getNameKind() == DeclarationName::CXXOperatorName)
+    return;
+
   // at least / at most / exactly
   unsigned mode, modeCount;
   if (NumFormalArgs < MinParams) {
