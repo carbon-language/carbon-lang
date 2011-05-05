@@ -530,8 +530,9 @@ class TestBase(unittest2.TestCase):
         # it using pexpect.
         self.child = None
         # If the child is interacting with the embedded script interpreter,
-        # there are two exits required, first one to quit the embedded script
-        # interpreter and second one to quit the lldb command interpreter.
+        # there are two exits required during tear down, first to quit the
+        # embedded script interpreter and second to quit the lldb command
+        # interpreter.
         self.child_in_script_interpreter = False
 
         # There is no process associated with the debugger as yet.
