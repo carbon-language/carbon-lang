@@ -195,9 +195,6 @@ bool AsmPrinter::doInitialization(Module &M) {
   case ExceptionHandling::SjLj:
     DE = new DwarfSjLjException(this);
     return false;
-  case ExceptionHandling::DwarfTable:
-    DE = new DwarfTableException(this);
-    return false;
   case ExceptionHandling::DwarfCFI:
     DE = new DwarfCFIException(this);
     return false;

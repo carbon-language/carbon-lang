@@ -29,7 +29,7 @@ namespace llvm {
   /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   namespace ExceptionHandling {
-    enum ExceptionsType { None, DwarfTable, DwarfCFI, SjLj, ARM };
+    enum ExceptionsType { None, DwarfCFI, SjLj, ARM };
   }
 
   class MCAsmInfo {
@@ -462,8 +462,7 @@ namespace llvm {
     }
     bool isExceptionHandlingDwarf() const {
       return
-        (ExceptionsType == ExceptionHandling::DwarfTable ||
-         ExceptionsType == ExceptionHandling::DwarfCFI ||
+        (ExceptionsType == ExceptionHandling::DwarfCFI ||
          ExceptionsType == ExceptionHandling::ARM);
     }
 
