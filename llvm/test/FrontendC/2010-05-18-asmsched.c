@@ -3,8 +3,9 @@
 
 void foo(int x, int y) {
 // CHECK: bar
-// CHECK: movq  %r9, %r10
-// CHECK: movq  %rdi, %r9
+// CHECK-NOT: {{, %r9$}}
+// CHECK: movq  %r9,
+// CHECK: movq  {{.*}}, %r9
 // CHECK: bar
   register int lr9 asm("r9") = x;
   register int lr10 asm("r10") = y;
