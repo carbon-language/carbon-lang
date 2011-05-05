@@ -875,7 +875,7 @@ class TestBase(unittest2.TestCase):
             with recording(self, trace) as sbuf:
                 print >> sbuf, "StopReason =", stop_reason_to_str(SR)
 
-            if SR == StopReasonEnum("Breakpoint"):
+            if SR == lldb.eStopReasonBreakpoint:
                 frame = thread.GetFrameAtIndex(0)
                 name = frame.GetFunction().GetName()
                 with recording(self, trace) as sbuf:
