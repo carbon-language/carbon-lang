@@ -1,4 +1,4 @@
-//===-- CodeGen/AsmPrinter/DwarfTableException.cpp - Dwarf Exception Impl --==//
+//===-- CodeGen/AsmPrinter/DwarfSjLjException.cpp - Dwarf Exception Impl --==//
 //
 //                     The LLVM Compiler Infrastructure
 //
