@@ -50,6 +50,7 @@ def Named : Decl<1>;
     def RedeclarableTemplate : DDecl<Template, 1>;
       def FunctionTemplate : DDecl<RedeclarableTemplate>;
       def ClassTemplate : DDecl<RedeclarableTemplate>;
+      def TypeAliasTemplate : DDecl<RedeclarableTemplate>;
     def TemplateTemplateParm : DDecl<Template>;
   def Using : DDecl<Named>;
   def UsingShadow : DDecl<Named>;

@@ -1559,13 +1559,13 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned N) {
 
 TemplateSpecializationType::
 TemplateSpecializationType(TemplateName T,
-                           const TemplateArgument *Args,
-                           unsigned NumArgs, QualType Canon)
+                           const TemplateArgument *Args, unsigned NumArgs,
+                           QualType Canon, QualType AliasedType)
   : Type(TemplateSpecialization,
          Canon.isNull()? QualType(this, 0) : Canon,
-         T.isDependent(), false, T.containsUnexpandedParameterPack()),
-    Template(T), NumArgs(NumArgs) 
-{
+         Canon.isNull()? T.isDependent() : Canon->isDependentType(),
+         false, T.containsUnexpandedParameterPack()),
+    Template(T), NumArgs(NumArgs) {
   assert(!T.getAsDependentTemplateName() && 
          "Use DependentTemplateSpecializationType for dependent template-name");
   assert((!Canon.isNull() ||
@@ -1576,7 +1576,12 @@ TemplateSpecializationType(TemplateName T,
     = reinterpret_cast<TemplateArgument *>(this + 1);
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
     // Update dependent and variably-modified bits.
-    if (Args[Arg].isDependent())
+    // If the canonical type exists and is non-dependent, the template
+    // specialization type can be non-dependent even if one of the type
+    // arguments is. Given:
+    //   template<typename T> using U = int;
+    // U<T> is always non-dependent, irrespective of the type T.
+    if (Canon.isNull() && Args[Arg].isDependent())
       setDependent();
     if (Args[Arg].getKind() == TemplateArgument::Type &&
         Args[Arg].getAsType()->isVariablyModifiedType())
@@ -1585,6 +1590,15 @@ TemplateSpecializationType(TemplateName T,
       setContainsUnexpandedParameterPack();
 
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);
+  }
+
+  // Store the aliased type if this is a type alias template specialization.
+  bool IsTypeAlias = !AliasedType.isNull();
+  assert(IsTypeAlias == isTypeAlias() &&
+         "allocated wrong size for type alias");
+  if (IsTypeAlias) {
+    TemplateArgument *Begin = reinterpret_cast<TemplateArgument *>(this + 1);
+    *reinterpret_cast<QualType*>(Begin + getNumArgs()) = AliasedType;
   }
 }
 
@@ -1597,6 +1611,11 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
   T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
     Args[Idx].Profile(ID, Context);
+}
+
+bool TemplateSpecializationType::isTypeAlias() const {
+  TemplateDecl *D = Template.getAsTemplateDecl();
+  return D && isa<TypeAliasTemplateDecl>(D);
 }
 
 QualType

@@ -21,6 +21,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -855,7 +856,7 @@ public:
         case LookupResult::Found:
         case LookupResult::FoundOverloaded:
         case LookupResult::FoundUnresolvedValue: {
-	  NamedDecl *SomeDecl = Result.getRepresentativeDecl();
+          NamedDecl *SomeDecl = Result.getRepresentativeDecl();
           unsigned Kind = 0;
           if (isa<TypedefDecl>(SomeDecl)) Kind = 1;
           else if (isa<TypeAliasDecl>(SomeDecl)) Kind = 2;
@@ -863,7 +864,7 @@ public:
           SemaRef.Diag(IdLoc, diag::err_tag_reference_non_tag) << Kind;
           SemaRef.Diag(SomeDecl->getLocation(), diag::note_declared_at);
           break;
-	}
+        }
         default:
           // FIXME: Would be nice to highlight just the source range.
           SemaRef.Diag(IdLoc, diag::err_not_tag_in_scope)
@@ -4389,6 +4390,23 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                                    NewTemplateArgs);
 
   if (!Result.isNull()) {
+    // Specializations of template template parameters are represented as
+    // TemplateSpecializationTypes, and substitution of type alias templates
+    // within a dependent context can transform them into
+    // DependentTemplateSpecializationTypes.
+    if (isa<DependentTemplateSpecializationType>(Result)) {
+      DependentTemplateSpecializationTypeLoc NewTL
+        = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
+      NewTL.setKeywordLoc(TL.getTemplateNameLoc());
+      NewTL.setQualifierLoc(NestedNameSpecifierLoc());
+      NewTL.setNameLoc(TL.getTemplateNameLoc());
+      NewTL.setLAngleLoc(TL.getLAngleLoc());
+      NewTL.setRAngleLoc(TL.getRAngleLoc());
+      for (unsigned i = 0, e = NewTemplateArgs.size(); i != e; ++i)
+        NewTL.setArgLocInfo(i, NewTemplateArgs[i].getLocInfo());
+      return Result;
+    }
+
     TemplateSpecializationTypeLoc NewTL
       = TLB.push<TemplateSpecializationTypeLoc>(Result);
     NewTL.setTemplateNameLoc(TL.getTemplateNameLoc());
@@ -4477,6 +4495,21 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   QualType NamedT = getDerived().TransformType(TLB, TL.getNamedTypeLoc());
   if (NamedT.isNull())
     return QualType();
+
+  // C++0x [dcl.type.elab]p2:
+  //   If the identifier resolves to a typedef-name or the simple-template-id
+  //   resolves to an alias template specialization, the
+  //   elaborated-type-specifier is ill-formed.
+  if (const TemplateSpecializationType *TST =
+        NamedT->getAs<TemplateSpecializationType>()) {
+    TemplateName Template = TST->getTemplateName();
+    if (TypeAliasTemplateDecl *TAT =
+        dyn_cast_or_null<TypeAliasTemplateDecl>(Template.getAsTemplateDecl())) {
+      SemaRef.Diag(TL.getNamedTypeLoc().getBeginLoc(),
+                   diag::err_tag_reference_non_tag) << 4;
+      SemaRef.Diag(TAT->getLocation(), diag::note_declared_at);
+    }
+  }
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||

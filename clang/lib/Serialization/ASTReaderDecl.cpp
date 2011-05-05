@@ -125,6 +125,7 @@ namespace clang {
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    void VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
@@ -1266,6 +1267,10 @@ void ASTDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   D->ParameterPack = Record[Idx++];
 }
 
+void ASTDeclReader::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
+  VisitRedeclarableTemplateDecl(D);
+}
+
 void ASTDeclReader::VisitStaticAssertDecl(StaticAssertDecl *D) {
   VisitDecl(D);
   D->AssertExpr = Reader.ReadExpr(F);
@@ -1571,6 +1576,9 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
   case DECL_TEMPLATE_TEMPLATE_PARM:
     D = TemplateTemplateParmDecl::Create(*Context, 0, SourceLocation(), 0, 0,
                                          false, 0, 0);
+    break;
+  case DECL_TYPE_ALIAS_TEMPLATE:
+    D = TypeAliasTemplateDecl::Create(*Context, Decl::EmptyShell());
     break;
   case DECL_STATIC_ASSERT:
     D = StaticAssertDecl::Create(*Context, 0, SourceLocation(), 0, 0,

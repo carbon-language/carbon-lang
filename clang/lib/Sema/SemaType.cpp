@@ -1601,6 +1601,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       Error = 7; // Template type argument
       break;
     case Declarator::AliasDeclContext:
+    case Declarator::AliasTemplateContext:
       Error = 9; // Type alias
       break;
     case Declarator::TypeNameContext:
@@ -1659,7 +1660,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Does this declaration declare a typedef-name?
   bool IsTypedefName =
     D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef ||
-    D.getContext() == Declarator::AliasDeclContext;
+    D.getContext() == Declarator::AliasDeclContext ||
+    D.getContext() == Declarator::AliasTemplateContext;
 
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
@@ -1839,7 +1841,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       // anyway.
       if (IsTypedefName && FTI.getExceptionSpecType())
         Diag(FTI.getExceptionSpecLoc(), diag::err_exception_spec_in_typedef)
-          << (D.getContext() == Declarator::AliasDeclContext);
+          << (D.getContext() == Declarator::AliasDeclContext ||
+              D.getContext() == Declarator::AliasTemplateContext);
 
       if (!FTI.NumArgs && !FTI.isVariadic && !getLangOptions().CPlusPlus) {
         // Simple void foo(), where the incoming T is the result type.
@@ -2204,6 +2207,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::ObjCPrototypeContext: // FIXME: special diagnostic here?
     case Declarator::TypeNameContext:
     case Declarator::AliasDeclContext:
+    case Declarator::AliasTemplateContext:
     case Declarator::MemberContext:
     case Declarator::BlockContext:
     case Declarator::ForContext:
@@ -2640,13 +2644,17 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
     CheckExtraCXXDefaultArguments(D);
 
     // C++0x [dcl.type]p3:
-    //   A type-specifier-seq shall not define a class or enumeration
-    //   unless it appears in the type-id of an alias-declaration
-    //   (7.1.3).
-    if (OwnedTag && OwnedTag->isDefinition() &&
-        D.getContext() != Declarator::AliasDeclContext)
-      Diag(OwnedTag->getLocation(), diag::err_type_defined_in_type_specifier)
-        << Context.getTypeDeclType(OwnedTag);
+    //   A type-specifier-seq shall not define a class or enumeration unless
+    //   it appears in the type-id of an alias-declaration (7.1.3) that is not
+    //   the declaration of a template-declaration.
+    if (OwnedTag && OwnedTag->isDefinition()) {
+      if (D.getContext() == Declarator::AliasTemplateContext)
+        Diag(OwnedTag->getLocation(), diag::err_type_defined_in_alias_template)
+          << Context.getTypeDeclType(OwnedTag);
+      else if (D.getContext() != Declarator::AliasDeclContext)
+        Diag(OwnedTag->getLocation(), diag::err_type_defined_in_type_specifier)
+          << Context.getTypeDeclType(OwnedTag);
+    }
   }
 
   return CreateParsedType(T, TInfo);

@@ -443,6 +443,8 @@ def ext_alias_declaration : ExtWarn<
   "alias declarations accepted as a C++0x extension">, InGroup<CXX0x>;
 def err_alias_declaration_not_identifier : Error<
   "name defined in alias declaration must be an identifier">;
+def err_alias_declaration_specialization : Error<
+  "%select{partial specialization|explicit specialization|explicit instantiation}0 of alias templates is not permitted">;
     
 // C++0x override control
 def ext_override_control_keyword : Extension<

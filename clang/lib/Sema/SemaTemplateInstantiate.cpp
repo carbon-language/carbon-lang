@@ -446,10 +446,15 @@ void Sema::PrintInstantiationStack() {
         Diags.Report(Active->PointOfInstantiation, DiagID)
           << Function
           << Active->InstantiationRange;
-      } else {
+      } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_template_static_data_member_def_here)
-          << cast<VarDecl>(D)
+          << VD
+          << Active->InstantiationRange;
+      } else {
+        Diags.Report(Active->PointOfInstantiation,
+                     diag::note_template_type_alias_instantiation_here)
+          << cast<TypeAliasTemplateDecl>(D)
           << Active->InstantiationRange;
       }
       break;
@@ -968,8 +973,7 @@ TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
       }
       
       TemplateName Template = Arg.getAsTemplate();
-      assert(!Template.isNull() && Template.getAsTemplateDecl() &&
-             "Wrong kind of template template argument");
+      assert(!Template.isNull() && "Null template template argument");
       
       // We don't ever want to substitute for a qualified template name, since
       // the qualifier is handled separately. So, look through the qualified

@@ -1,10 +1,9 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
-// FIXME: when clang supports alias-declarations.
-#if 0
 using X = struct { // ok
 };
-#endif
+template<typename T> using Y = struct { // expected-error {{can not be defined in a type alias template}}
+};
 
 class K {
   virtual ~K();

@@ -735,3 +735,34 @@ FriendTemplateDecl *FriendTemplateDecl::Create(ASTContext &Context,
                                                EmptyShell Empty) {
   return new (Context) FriendTemplateDecl(Empty);
 }
+
+//===----------------------------------------------------------------------===//
+// TypeAliasTemplateDecl Implementation
+//===----------------------------------------------------------------------===//
+
+TypeAliasTemplateDecl *TypeAliasTemplateDecl::Create(ASTContext &C,
+                                                     DeclContext *DC,
+                                                     SourceLocation L,
+                                                     DeclarationName Name,
+                                                  TemplateParameterList *Params,
+                                                     NamedDecl *Decl) {
+  AdoptTemplateParameterList(Params, DC);
+  return new (C) TypeAliasTemplateDecl(DC, L, Name, Params, Decl);
+}
+
+TypeAliasTemplateDecl *TypeAliasTemplateDecl::Create(ASTContext &C,
+                                                     EmptyShell) {
+  return new (C) TypeAliasTemplateDecl(0, SourceLocation(), DeclarationName(),
+                                       0, 0);
+}
+
+void TypeAliasTemplateDecl::DeallocateCommon(void *Ptr) {
+  static_cast<Common *>(Ptr)->~Common();
+}
+RedeclarableTemplateDecl::CommonBase *
+TypeAliasTemplateDecl::newCommon(ASTContext &C) {
+  Common *CommonPtr = new (C) Common;
+  C.AddDeallocation(DeallocateCommon, CommonPtr);
+  return CommonPtr;
+}
+

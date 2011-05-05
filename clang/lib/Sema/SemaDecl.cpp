@@ -891,19 +891,19 @@ static bool isOutOfScopePreviousDeclaration(NamedDecl *,
 
 /// Filters out lookup results that don't fall within the given scope
 /// as determined by isDeclInScope.
-static void FilterLookupForScope(Sema &SemaRef, LookupResult &R,
-                                 DeclContext *Ctx, Scope *S,
-                                 bool ConsiderLinkage,
-                                 bool ExplicitInstantiationOrSpecialization) {
+void Sema::FilterLookupForScope(LookupResult &R,
+                                DeclContext *Ctx, Scope *S,
+                                bool ConsiderLinkage,
+                                bool ExplicitInstantiationOrSpecialization) {
   LookupResult::Filter F = R.makeFilter();
   while (F.hasNext()) {
     NamedDecl *D = F.next();
 
-    if (SemaRef.isDeclInScope(D, Ctx, S, ExplicitInstantiationOrSpecialization))
+    if (isDeclInScope(D, Ctx, S, ExplicitInstantiationOrSpecialization))
       continue;
 
     if (ConsiderLinkage &&
-        isOutOfScopePreviousDeclaration(D, Ctx, SemaRef.Context))
+        isOutOfScopePreviousDeclaration(D, Ctx, Context))
       continue;
     
     F.erase();
@@ -3304,15 +3304,13 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewTD, D);
 
+  CheckTypedefForVariablyModifiedType(S, NewTD);
+
   return ActOnTypedefNameDecl(S, DC, NewTD, Previous, Redeclaration);
 }
 
-/// ActOnTypedefNameDecl - Perform semantic checking for a declaration which
-/// declares a typedef-name, either using the 'typedef' type specifier or via
-/// a C++0x [dcl.typedef]p2 alias-declaration: 'using T = A;'.
-NamedDecl*
-Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
-                           LookupResult &Previous, bool &Redeclaration) {
+void
+Sema::CheckTypedefForVariablyModifiedType(Scope *S, TypedefNameDecl *NewTD) {
   // C99 6.7.7p2: If a typedef name specifies a variably modified type
   // then it shall have block scope.
   // Note that variably modified types must be fixed before merging the decl so
@@ -3343,10 +3341,18 @@ Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
       }
     }
   }
+}
 
+
+/// ActOnTypedefNameDecl - Perform semantic checking for a declaration which
+/// declares a typedef-name, either using the 'typedef' type specifier or via
+/// a C++0x [dcl.typedef]p2 alias-declaration: 'using T = A;'.
+NamedDecl*
+Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
+                           LookupResult &Previous, bool &Redeclaration) {
   // Merge the decl with the existing one if appropriate. If the decl is
   // in an outer scope, it isn't the same thing.
-  FilterLookupForScope(*this, Previous, DC, S, /*ConsiderLinkage*/ false,
+  FilterLookupForScope(Previous, DC, S, /*ConsiderLinkage*/ false,
                        /*ExplicitInstantiationOrSpecialization=*/false);
   if (!Previous.empty()) {
     Redeclaration = true;
@@ -3625,7 +3631,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // Don't consider existing declarations that are in a different
   // scope and are out-of-semantic-context declarations (if the new
   // declaration has linkage).
-  FilterLookupForScope(*this, Previous, DC, S, NewVD->hasLinkage(),
+  FilterLookupForScope(Previous, DC, S, NewVD->hasLinkage(),
                        isExplicitSpecialization);
   
   if (!getLangOptions().CPlusPlus)
@@ -4072,7 +4078,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // Set the lexical context.
     NewFD->setLexicalDeclContext(CurContext);
     // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage(),
+    FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
                          /*ExplicitInstantiationOrSpecialization=*/false);
   } else {
     isFriend = D.getDeclSpec().isFriendSpecified();
@@ -4350,7 +4356,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
 
     // Filter out previous declarations that don't match the scope.
-    FilterLookupForScope(*this, Previous, DC, S, NewFD->hasLinkage(),
+    FilterLookupForScope(Previous, DC, S, NewFD->hasLinkage(),
                          isExplicitSpecialization || 
                          isFunctionTemplateSpecialization);
 
@@ -4417,6 +4423,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         bool IsTypeAlias = false;
         if (const TypedefType *TT = Param->getType()->getAs<TypedefType>())
           IsTypeAlias = isa<TypeAliasDecl>(TT->getDecl());
+        else if (const TemplateSpecializationType *TST =
+                   Param->getType()->getAs<TemplateSpecializationType>())
+          IsTypeAlias = TST->isTypeAlias();
         Diag(Param->getLocation(), diag::err_param_typedef_of_void)
           << IsTypeAlias;
       }

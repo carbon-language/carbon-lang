@@ -9,8 +9,13 @@ struct align_member {
   int member [[align(8)]];
 };
 
+typedef char align_typedef [[align(8)]];
+template<typename T> using align_alias_template = align_typedef;
+
 static_assert(alignof(align_big) == alignof(int), "k's alignment is wrong");
 static_assert(alignof(align_small) == 1, "j's alignment is wrong");
 static_assert(alignof(align_multiple) == 8, "l's alignment is wrong");
 static_assert(alignof(align_member) == 8, "quuux's alignment is wrong");
 static_assert(sizeof(align_member) == 8, "quuux's size is wrong");
+static_assert(alignof(align_typedef) == 8, "typedef's alignment is wrong");
+static_assert(alignof(align_alias_template<int>) == 8, "alias template's alignment is wrong");

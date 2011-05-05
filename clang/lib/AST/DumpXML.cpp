@@ -619,7 +619,8 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   // TemplateDecl
   void visitTemplateDeclChildren(TemplateDecl *D) {
     visitTemplateParameters(D->getTemplateParameters());
-    dispatch(D->getTemplatedDecl());
+    if (D->getTemplatedDecl())
+      dispatch(D->getTemplatedDecl());
   }
 
   // FunctionTemplateDecl

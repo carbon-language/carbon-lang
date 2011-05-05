@@ -3201,6 +3201,10 @@ public:
 /// Other template specialization types, for which the template name
 /// is dependent, may be canonical types. These types are always
 /// dependent.
+///
+/// An instance of this type is followed by an array of TemplateArgument*s,
+/// then, if the template specialization type is for a type alias template,
+/// a QualType representing the non-canonical aliased type.
 class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
   /// \brief The name of the template being specialized.
@@ -3212,7 +3216,8 @@ class TemplateSpecializationType
 
   TemplateSpecializationType(TemplateName T,
                              const TemplateArgument *Args,
-                             unsigned NumArgs, QualType Canon);
+                             unsigned NumArgs, QualType Canon,
+                             QualType Aliased);
 
   friend class ASTContext;  // ASTContext creates these
 
@@ -3247,6 +3252,16 @@ public:
     return isa<InjectedClassNameType>(getCanonicalTypeInternal());
   }
 
+  /// True if this template specialization type is for a type alias
+  /// template.
+  bool isTypeAlias() const;
+  /// Get the aliased type, if this is a specialization of a type alias
+  /// template.
+  QualType getAliasedType() const {
+    assert(isTypeAlias() && "not a type alias template specialization");
+    return *reinterpret_cast<const QualType*>(end());
+  }
+
   typedef const TemplateArgument * iterator;
 
   iterator begin() const { return getArgs(); }
@@ -3268,12 +3283,14 @@ public:
   const TemplateArgument &getArg(unsigned Idx) const; // in TemplateBase.h
 
   bool isSugared() const {
-    return !isDependentType() || isCurrentInstantiation();
+    return !isDependentType() || isCurrentInstantiation() || isTypeAlias();
   }
   QualType desugar() const { return getCanonicalTypeInternal(); }
 
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Ctx) {
     Profile(ID, Template, getArgs(), NumArgs, Ctx);
+    if (isTypeAlias())
+      getAliasedType().Profile(ID);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,

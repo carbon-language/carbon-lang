@@ -969,13 +969,18 @@ ASTContext::getTypeInfo(const Type *T) const {
     return getTypeInfo(
                   cast<AttributedType>(T)->getEquivalentType().getTypePtr());
 
-  case Type::TemplateSpecialization:
+  case Type::TemplateSpecialization: {
     assert(getCanonicalType(T) != T &&
            "Cannot request the size of a dependent type");
-    // FIXME: this is likely to be wrong once we support template
-    // aliases, since a template alias could refer to a typedef that
-    // has an __aligned__ attribute on it.
-    return getTypeInfo(getCanonicalType(T));
+    const TemplateSpecializationType *TST = cast<TemplateSpecializationType>(T);
+    // A type alias template specialization may refer to a typedef with the
+    // aligned attribute on it.
+    if (TST->isTypeAlias())
+      return getTypeInfo(TST->getAliasedType().getTypePtr());
+    else
+      return getTypeInfo(getCanonicalType(T));
+  }
+
   }
 
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
@@ -2247,10 +2252,10 @@ TypeSourceInfo *
 ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
                                               SourceLocation NameLoc,
                                         const TemplateArgumentListInfo &Args,
-                                              QualType CanonType) const {
+                                              QualType Underlying) const {
   assert(!Name.getAsDependentTemplateName() && 
          "No dependent template names here!");
-  QualType TST = getTemplateSpecializationType(Name, Args, CanonType);
+  QualType TST = getTemplateSpecializationType(Name, Args, Underlying);
 
   TypeSourceInfo *DI = CreateTypeSourceInfo(TST);
   TemplateSpecializationTypeLoc TL
@@ -2266,7 +2271,7 @@ ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgumentListInfo &Args,
-                                          QualType Canon) const {
+                                          QualType Underlying) const {
   assert(!Template.getAsDependentTemplateName() && 
          "No dependent template names here!");
   
@@ -2278,35 +2283,46 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
     ArgVec.push_back(Args[i].getArgument());
 
   return getTemplateSpecializationType(Template, ArgVec.data(), NumArgs,
-                                       Canon);
+                                       Underlying);
 }
 
 QualType
 ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
-                                          QualType Canon) const {
+                                          QualType Underlying) const {
   assert(!Template.getAsDependentTemplateName() && 
          "No dependent template names here!");
   // Look through qualified template names.
   if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
     Template = TemplateName(QTN->getTemplateDecl());
   
-  if (!Canon.isNull())
-    Canon = getCanonicalType(Canon);
-  else
-    Canon = getCanonicalTemplateSpecializationType(Template, Args, NumArgs);
+  bool isTypeAlias = 
+    Template.getAsTemplateDecl() &&
+    isa<TypeAliasTemplateDecl>(Template.getAsTemplateDecl());
+
+  QualType CanonType;
+  if (!Underlying.isNull())
+    CanonType = getCanonicalType(Underlying);
+  else {
+    assert(!isTypeAlias &&
+           "Underlying type for template alias must be computed by caller");
+    CanonType = getCanonicalTemplateSpecializationType(Template, Args,
+                                                       NumArgs);
+  }
 
   // Allocate the (non-canonical) template specialization type, but don't
   // try to unique it: these types typically have location information that
   // we don't unique and don't want to lose.
-  void *Mem = Allocate((sizeof(TemplateSpecializationType) +
-                        sizeof(TemplateArgument) * NumArgs),
+  void *Mem = Allocate(sizeof(TemplateSpecializationType) +
+                       sizeof(TemplateArgument) * NumArgs +
+                       (isTypeAlias ? sizeof(QualType) : 0),
                        TypeAlignment);
   TemplateSpecializationType *Spec
     = new (Mem) TemplateSpecializationType(Template,
                                            Args, NumArgs,
-                                           Canon);
+                                           CanonType,
+                                         isTypeAlias ? Underlying : QualType());
 
   Types.push_back(Spec);
   return QualType(Spec, 0);
@@ -2318,6 +2334,10 @@ ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
                                                    unsigned NumArgs) const {
   assert(!Template.getAsDependentTemplateName() && 
          "No dependent template names here!");
+  assert((!Template.getAsTemplateDecl() ||
+          !isa<TypeAliasTemplateDecl>(Template.getAsTemplateDecl())) &&
+         "Underlying type for template alias must be computed by caller");
+
   // Look through qualified template names.
   if (QualifiedTemplateName *QTN = Template.getAsQualifiedTemplateName())
     Template = TemplateName(QTN->getTemplateDecl());
@@ -2346,7 +2366,7 @@ ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
                          TypeAlignment);
     Spec = new (Mem) TemplateSpecializationType(CanonTemplate,
                                                 CanonArgs.data(), NumArgs,
-                                                QualType());
+                                                QualType(), QualType());
     Types.push_back(Spec);
     TemplateSpecializationTypes.InsertNode(Spec, InsertPos);
   }

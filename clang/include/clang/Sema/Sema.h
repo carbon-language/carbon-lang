@@ -944,6 +944,7 @@ public:
   void CheckShadow(Scope *S, VarDecl *D, const LookupResult& R);
   void CheckShadow(Scope *S, VarDecl *D);
   void CheckCastAlign(Expr *Op, QualType T, SourceRange TRange);
+  void CheckTypedefForVariablyModifiedType(Scope *S, TypedefNameDecl *D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, TypeSourceInfo *TInfo,
                                     LookupResult &Previous, bool &Redeclaration);
@@ -1651,6 +1652,10 @@ public:
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,
                                    AssociatedClassSet &AssociatedClasses);
+
+  void FilterLookupForScope(LookupResult &R, DeclContext *Ctx, Scope *S,
+                            bool ConsiderLinkage,
+                            bool ExplicitInstantiationOrSpecialization);
 
   bool DiagnoseAmbiguousLookup(LookupResult &Result);
   //@}
@@ -2468,6 +2473,7 @@ public:
                               SourceLocation TypenameLoc);
   Decl *ActOnAliasDeclaration(Scope *CurScope,
                               AccessSpecifier AS,
+                              MultiTemplateParamsArg TemplateParams,
                               SourceLocation UsingLoc,
                               UnqualifiedId &Name,
                               TypeResult Type);
@@ -3412,7 +3418,8 @@ public:
     TPC_FunctionTemplate,
     TPC_ClassTemplateMember,
     TPC_FriendFunctionTemplate,
-    TPC_FriendFunctionTemplateDefinition
+    TPC_FriendFunctionTemplateDefinition,
+    TPC_TypeAliasTemplate
   };
 
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,

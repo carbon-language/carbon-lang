@@ -92,11 +92,9 @@ void Sema::FilterAcceptableTemplateNames(LookupResult &R) {
       //   ambiguity in certain cases (for example, if it is found in more than
       //   one base class). If all of the injected-class-names that are found
       //   refer to specializations of the same class template, and if the name
-      //   is followed by a template-argument-list, the reference refers to the
-      //   class template itself and not a specialization thereof, and is not
+      //   is used as a template-name, the reference refers to the class
+      //   template itself and not a specialization thereof, and is not
       //   ambiguous.
-      //
-      // FIXME: Will we eventually have to do the same for alias templates?
       if (ClassTemplateDecl *ClassTmpl = dyn_cast<ClassTemplateDecl>(Repl))
         if (!ClassTemplates.insert(ClassTmpl)) {
           filter.erase();
@@ -199,7 +197,8 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       // We'll do this lookup again later.
       R.suppressDiagnostics();
     } else {
-      assert(isa<ClassTemplateDecl>(TD) || isa<TemplateTemplateParmDecl>(TD));
+      assert(isa<ClassTemplateDecl>(TD) || isa<TemplateTemplateParmDecl>(TD) ||
+             isa<TypeAliasTemplateDecl>(TD));
       TemplateKind = TNK_Type_template;
     }
   }
@@ -1062,6 +1061,7 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
                                             SourceRange DefArgRange) {
   switch (TPC) {
   case Sema::TPC_ClassTemplate:
+  case Sema::TPC_TypeAliasTemplate:
     return false;
 
   case Sema::TPC_FunctionTemplate:
@@ -1187,9 +1187,10 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
     bool MissingDefaultArg = false;
 
     // C++0x [temp.param]p11:
-    //   If a template parameter of a primary class template is a template
-    //   parameter pack, it shall be the last template parameter.
-    if (SawParameterPack && TPC == TPC_ClassTemplate) {
+    //   If a template parameter of a primary class template or alias template
+    //   is a template parameter pack, it shall be the last template parameter.
+    if (SawParameterPack &&
+        (TPC == TPC_ClassTemplate || TPC == TPC_TypeAliasTemplate)) {
       Diag(ParameterPackLoc,
            diag::err_template_param_pack_must_be_last_template_parameter);
       Invalid = true;
@@ -1655,7 +1656,8 @@ void Sema::NoteAllFoundTemplates(TemplateName Name) {
     Diag(Template->getLocation(), diag::note_template_declared_here)
       << (isa<FunctionTemplateDecl>(Template)? 0
           : isa<ClassTemplateDecl>(Template)? 1
-          : 2)
+          : isa<TypeAliasTemplateDecl>(Template)? 2
+          : 3)
       << Template->getDeclName();
     return;
   }
@@ -1675,13 +1677,24 @@ void Sema::NoteAllFoundTemplates(TemplateName Name) {
 QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    SourceLocation TemplateLoc,
                                    TemplateArgumentListInfo &TemplateArgs) {
+  DependentTemplateName *DTN = Name.getAsDependentTemplateName();
+  if (DTN && DTN->isIdentifier())
+    // When building a template-id where the template-name is dependent,
+    // assume the template is a type template. Either our assumption is
+    // correct, or the code is ill-formed and will be diagnosed when the
+    // dependent name is substituted.
+    return Context.getDependentTemplateSpecializationType(ETK_None,
+                                                          DTN->getQualifier(),
+                                                          DTN->getIdentifier(),
+                                                          TemplateArgs);
+
   TemplateDecl *Template = Name.getAsTemplateDecl();
   if (!Template || isa<FunctionTemplateDecl>(Template)) {
     // We might have a substituted template template parameter pack. If so,
     // build a template specialization type for it.
     if (Name.getAsSubstTemplateTemplateParmPack())
       return Context.getTemplateSpecializationType(Name, TemplateArgs);
-    
+
     Diag(TemplateLoc, diag::err_template_id_not_a_type)
       << Name;
     NoteAllFoundTemplates(Name);
@@ -1700,9 +1713,29 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   QualType CanonType;
 
-  if (Name.isDependent() ||
-      TemplateSpecializationType::anyDependentTemplateArguments(
-                                                      TemplateArgs)) {
+  if (TypeAliasTemplateDecl *AliasTemplate
+        = dyn_cast<TypeAliasTemplateDecl>(Template)) {
+    // Find the canonical type for this type alias template specialization.
+    TypeAliasDecl *Pattern = AliasTemplate->getTemplatedDecl();
+    if (Pattern->isInvalidDecl())
+      return QualType();
+
+    TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack,
+                                      Converted.data(), Converted.size());
+
+    // Only substitute for the innermost template argument list.
+    MultiLevelTemplateArgumentList TemplateArgLists;
+    TemplateArgLists.addOuterTemplateArguments(&TemplateArgs);
+
+    InstantiatingTemplate Inst(*this, TemplateLoc, Template);
+    CanonType = SubstType(Pattern->getUnderlyingType(),
+                          TemplateArgLists, AliasTemplate->getLocation(),
+                          AliasTemplate->getDeclName());
+    if (CanonType.isNull())
+      return QualType();
+  } else if (Name.isDependent() ||
+             TemplateSpecializationType::anyDependentTemplateArguments(
+               TemplateArgs)) {
     // This class template specialization is a dependent
     // type. Therefore, its canonical type is another class template
     // specialization type that contains all of the converted
@@ -1893,6 +1926,16 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
     for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
+  }
+
+  if (TypeAliasTemplateDecl *TAT =
+        dyn_cast_or_null<TypeAliasTemplateDecl>(Template.getAsTemplateDecl())) {
+    // C++0x [dcl.type.elab]p2:
+    //   If the identifier resolves to a typedef-name or the simple-template-id
+    //   resolves to an alias template specialization, the
+    //   elaborated-type-specifier is ill-formed.
+    Diag(TemplateLoc, diag::err_tag_reference_non_tag) << 4;
+    Diag(TAT->getLocation(), diag::note_declared_at);
   }
   
   QualType Result = CheckTemplateIdType(Template, TemplateLoc, TemplateArgs);
@@ -2485,7 +2528,7 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
       }
 
       // We have a template argument that actually does refer to a class
-      // template, template alias, or template template parameter, and
+      // template, alias template, or template template parameter, and
       // therefore cannot be a non-type template argument.
       Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr)
         << Arg.getSourceRange();
@@ -2562,7 +2605,8 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
   case TemplateArgument::Type:
     // We have a template template parameter but the template
     // argument does not refer to a template.
-    Diag(Arg.getLocation(), diag::err_template_arg_must_be_template);
+    Diag(Arg.getLocation(), diag::err_template_arg_must_be_template)
+      << getLangOptions().CPlusPlus0x;
     return true;
 
   case TemplateArgument::Declaration:
@@ -3722,9 +3766,10 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
     return false;
   }
 
-  // C++ [temp.arg.template]p1:
+  // C++0x [temp.arg.template]p1:
   //   A template-argument for a template template-parameter shall be
-  //   the name of a class template, expressed as id-expression. Only
+  //   the name of a class template or an alias template, expressed as an
+  //   id-expression. When the template-argument names a class template, only
   //   primary class templates are considered when matching the
   //   template template argument with the corresponding parameter;
   //   partial specializations are not considered even if their
@@ -3734,7 +3779,8 @@ bool Sema::CheckTemplateArgument(TemplateTemplateParmDecl *Param,
   // will happen when we are dealing with, e.g., class template
   // partial specializations.
   if (!isa<ClassTemplateDecl>(Template) &&
-      !isa<TemplateTemplateParmDecl>(Template)) {
+      !isa<TemplateTemplateParmDecl>(Template) &&
+      !isa<TypeAliasTemplateDecl>(Template)) {
     assert(isa<FunctionTemplateDecl>(Template) &&
            "Only function templates are possible here");
     Diag(Arg.getLocation(), diag::err_template_arg_not_class_template);
@@ -4051,7 +4097,7 @@ Sema::TemplateParameterListsAreEqual(TemplateParameterList *New,
   // C++0x [temp.arg.template]p3:
   //   A template-argument matches a template template-parameter (call it P)
   //   when each of the template parameters in the template-parameter-list of
-  //   the template-argument's corresponding class template or template alias
+  //   the template-argument's corresponding class template or alias template
   //   (call it A) matches the corresponding template parameter in the
   //   template-parameter-list of P. [...]
   TemplateParameterList::iterator NewParm = New->begin();

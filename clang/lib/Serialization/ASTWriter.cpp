@@ -277,7 +277,8 @@ ASTTypeWriter::VisitTemplateSpecializationType(
   for (TemplateSpecializationType::iterator ArgI = T->begin(), ArgE = T->end();
          ArgI != ArgE; ++ArgI)
     Writer.AddTemplateArgument(*ArgI, Record);
-  Writer.AddTypeRef(T->isCanonicalUnqualified() ? QualType()
+  Writer.AddTypeRef(T->isTypeAlias() ? T->getAliasedType() :
+                    T->isCanonicalUnqualified() ? QualType()
                                                 : T->getCanonicalTypeInternal(),
                     Record);
   Code = TYPE_TEMPLATE_SPECIALIZATION;

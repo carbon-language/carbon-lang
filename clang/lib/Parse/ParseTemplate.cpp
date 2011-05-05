@@ -905,10 +905,10 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
 
   // C++0x [temp.arg.template]p1:
   //   A template-argument for a template template-parameter shall be the name
-  //   of a class template or a template alias, expressed as id-expression.
+  //   of a class template or an alias template, expressed as id-expression.
   //   
-  // We parse an id-expression that refers to a class template or template
-  // alias. The grammar we parse is:
+  // We parse an id-expression that refers to a class template or alias
+  // template. The grammar we parse is:
   //
   //   nested-name-specifier[opt] template[opt] identifier ...[opt]
   //
@@ -969,7 +969,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
                                                 MemberOfUnknownSpecialization);
       if (TNK == TNK_Dependent_template_name || TNK == TNK_Type_template) {
         // We have an id-expression that refers to a class template or
-        // (C++0x) template alias. 
+        // (C++0x) alias template. 
         Result = ParsedTemplateArgument(SS, Template, Name.StartLocation);
       }
     }

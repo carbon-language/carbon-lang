@@ -51,6 +51,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::ImplicitParam:
   case Decl::ClassTemplate:
   case Decl::FunctionTemplate:
+  case Decl::TypeAliasTemplate:
   case Decl::TemplateTemplateParm:
   case Decl::ObjCMethod:
   case Decl::ObjCCategory:

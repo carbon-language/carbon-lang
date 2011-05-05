@@ -544,6 +544,8 @@ def err_type_defined_in_result_type : Error<
   "%0 can not be defined in the result type of a function">;
 def err_type_defined_in_param_type : Error<
   "%0 can not be defined in a parameter type">;
+def err_type_defined_in_alias_template : Error<
+  "%0 can not be defined in a type alias template">;
 
 def note_pure_virtual_function : Note<
   "unimplemented pure virtual method %0 in %1">;
@@ -1674,7 +1676,7 @@ def err_template_arg_must_be_expr : Error<
 def err_template_arg_nontype_ambig : Error<
   "template argument for non-type template parameter is treated as type %0">;
 def err_template_arg_must_be_template : Error<
-  "template argument for template template parameter must be a class template">;
+  "template argument for template template parameter must be a class template%select{| or type alias template}0">;
 def ext_template_arg_local_type : ExtWarn<
   "template argument uses local type %0">, InGroup<LocalTypeTemplateArgs>;
 def ext_template_arg_unnamed_type : ExtWarn<
@@ -1820,6 +1822,8 @@ def err_template_spec_needs_template_parameters : Error<
 def err_template_param_list_matches_nontemplate : Error<
   "template parameter list matching the non-templated nested type %0 should "
   "be empty ('template<>')">;
+def err_alias_template_extra_headers : Error<
+  "extraneous template parameter list in alias template declaration">;
 def err_template_spec_extra_headers : Error<
   "extraneous template parameter list in template specialization or "
   "out-of-line template definition">;
@@ -1897,6 +1901,8 @@ def note_function_template_spec_here : Note<
   "in instantiation of function template specialization %q0 requested here">;
 def note_template_static_data_member_def_here : Note<
   "in instantiation of static data member %q0 requested here">;
+def note_template_type_alias_instantiation_here : Note<
+  "in instantiation of template type alias %0 requested here">;
   
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
@@ -2034,7 +2040,7 @@ def err_non_type_template_in_nested_name_specifier : Error<
 def err_template_id_not_a_type : Error<
   "template name refers to non-type template '%0'">;
 def note_template_declared_here : Note<
-  "%select{function template|class template|template template parameter}0 "
+  "%select{function template|class template|type alias template|template template parameter}0 "
   "%1 declared here">;
 
 // C++0x Variadic Templates
@@ -2172,9 +2178,9 @@ def err_redefinition_different_type : Error<
 def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
 def err_redefinition_different_typedef : Error<
-  "%select{typedef|type alias}0 redefinition with different types (%1 vs %2)">;
+  "%select{typedef|type alias|type alias template}0 redefinition with different types (%1 vs %2)">;
 def err_tag_reference_non_tag : Error<
-  "elaborated type refers to %select{a non-tag type|a typedef|a type alias|a template}0">;
+  "elaborated type refers to %select{a non-tag type|a typedef|a type alias|a template|a type alias template}0">;
 def err_tag_reference_conflict : Error<
   "implicit declaration introduced by elaborated type conflicts with "
   "%select{a declaration|a typedef|a type alias|a template}0 of the same name">;

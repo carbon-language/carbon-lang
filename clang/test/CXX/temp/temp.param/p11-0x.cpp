@@ -1,29 +1,48 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
-// If a template-parameter of a class template has a default
-// template-argument, each subsequent template-parameter shall either
-// have a default template-argument supplied or be a template
-// parameter pack.
+// If a template-parameter of a class template or alias template has a default
+// template-argument, each subsequent template-parameter shall either have a
+// default template-argument supplied or be a template parameter pack.
 template<typename> struct vector;
 
+template<typename T = int, typename> struct X3t; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+template<typename T = int, typename> using A3t = int; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+template<int V = 0, int> struct X3nt; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+template<int V = 0, int> using A3nt = int; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+template<template<class> class M = vector, template<class> class> struct X3tt; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+template<template<class> class M = vector, template<class> class> using A3tt = int; // expected-error{{template parameter missing a default argument}} expected-note{{previous default template argument defined here}}
+
 template<typename T = int, typename ...Types> struct X2t;
+template<typename T = int, typename ...Types> using A2t = X2t<T, Types...>;
 template<int V = 0, int ...Values> struct X2nt;
+template<int V = 0, int ...Values> using A2nt = X2nt<V, Values...>;
 template<template<class> class M = vector, template<class> class... Metas>
   struct X2tt;
+template<template<class> class M = vector, template<class> class... Metas>
+  using A2tt = X2tt<M, Metas...>;
 
-// If a template-parameter of a primary class template is a template
-// parameter pack, it shall be the last template-parameter .
+// If a template-parameter of a primary class template or alias template is a
+// template parameter pack, it shall be the last template-parameter.
 template<typename ...Types, // expected-error{{template parameter pack must be the last template parameter}}
          int After>
 struct X0t;
+template<typename ...Types, // expected-error{{template parameter pack must be the last template parameter}}
+         int After>
+using A0t = int;
 
 template<int ...Values, // expected-error{{template parameter pack must be the last template parameter}}
          int After>
 struct X0nt;
+template<int ...Values, // expected-error{{template parameter pack must be the last template parameter}}
+         int After>
+using A0nt = int;
 
 template<template<typename> class ...Templates, // expected-error{{template parameter pack must be the last template parameter}}
          int After>
 struct X0tt;
+template<template<typename> class ...Templates, // expected-error{{template parameter pack must be the last template parameter}}
+         int After>
+using A0tt = int;
 
 // [ Note: These are not requirements for function templates or class
 // template partial specializations because template arguments can be

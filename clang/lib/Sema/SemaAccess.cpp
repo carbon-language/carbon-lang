@@ -445,8 +445,8 @@ static AccessResult MatchesFriend(Sema &S,
       continue;
 
     // If the template names don't match, it can't be a dependent
-    // match.  This isn't true in C++0x because of template aliases.
-    if (!S.LangOpts.CPlusPlus0x && CTD->getDeclName() != Friend->getDeclName())
+    // match.
+    if (CTD->getDeclName() != Friend->getDeclName())
       continue;
 
     // If the class's context can't instantiate to the friend's

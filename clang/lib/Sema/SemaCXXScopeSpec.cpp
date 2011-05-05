@@ -94,9 +94,13 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
     if (EnteringContext) {
       const Type *NNSType = NNS->getAsType();
       if (!NNSType) {
-        // do nothing, fall out
-      } else if (const TemplateSpecializationType *SpecType
-                   = NNSType->getAs<TemplateSpecializationType>()) {
+        return 0;
+      }
+
+      // Look through type alias templates, per C++0x [temp.dep.type]p1.
+      NNSType = Context.getCanonicalType(NNSType);
+      if (const TemplateSpecializationType *SpecType
+            = NNSType->getAs<TemplateSpecializationType>()) {
         // We are entering the context of the nested name specifier, so try to
         // match the nested name specifier to either a primary class template
         // or a class template partial specialization.
@@ -382,7 +386,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     isDependent = ObjectType->isDependentType();
   } else if (SS.isSet()) {
     // This nested-name-specifier occurs after another nested-name-specifier,
-    // so long into the context associated with the prior nested-name-specifier.
+    // so look into the context associated with the prior nested-name-specifier.
     LookupCtx = computeDeclContext(SS, EnteringContext);
     isDependent = isDependentScopeSpecifier(SS);
     Found.setContextRange(SS.getRange());
@@ -712,8 +716,13 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
   if (T.isNull())
     return true;
 
-  // FIXME: Template aliases will need to check the resulting type to make
-  // sure that it's either dependent or a tag type.
+  // Alias template specializations can produce types which are not valid
+  // nested name specifiers.
+  if (!T->isDependentType() && !T->getAs<TagType>()) {
+    Diag(TemplateNameLoc, diag::err_nested_name_spec_non_tag) << T;
+    NoteAllFoundTemplates(Template.get());
+    return true;
+  }
 
   // Provide source-location information for the template specialization 
   // type.

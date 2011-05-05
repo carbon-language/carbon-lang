@@ -30,6 +30,7 @@ class ClassTemplatePartialSpecializationDecl;
 class TemplateTypeParmDecl;
 class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
+class TypeAliasTemplateDecl;
 
 /// \brief Stores a template parameter of any kind.
 typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
@@ -230,6 +231,7 @@ public:
   static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classof(const ClassTemplateDecl *D) { return true; }
   static bool classof(const TemplateTemplateParmDecl *D) { return true; }
+  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstTemplate && K <= lastTemplate;
   }
@@ -672,6 +674,7 @@ public:
   static bool classof(const RedeclarableTemplateDecl *D) { return true; }
   static bool classof(const FunctionTemplateDecl *D) { return true; }
   static bool classof(const ClassTemplateDecl *D) { return true; }
+  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
   static bool classofKind(Kind K) {
     return K >= firstRedeclarableTemplate && K <= lastRedeclarableTemplate;
   }
@@ -2012,6 +2015,78 @@ public:
   static bool classof(const FriendTemplateDecl *D) { return true; }
 
   friend class ASTDeclReader;
+};
+
+/// Declaration of an alias template.  For example:
+///
+/// template <typename T> using V = std::map<T*, int, MyCompare<T>>;
+class TypeAliasTemplateDecl : public RedeclarableTemplateDecl,
+                            public RedeclarableTemplate<TypeAliasTemplateDecl> {
+  static void DeallocateCommon(void *Ptr);
+
+protected:
+  typedef RedeclarableTemplate<TypeAliasTemplateDecl> redeclarable_base;
+
+  typedef CommonBase Common;
+
+  TypeAliasTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
+                        TemplateParameterList *Params, NamedDecl *Decl)
+    : RedeclarableTemplateDecl(TypeAliasTemplate, DC, L, Name, Params, Decl) { }
+
+  CommonBase *newCommon(ASTContext &C);
+
+  Common *getCommonPtr() {
+    return static_cast<Common *>(RedeclarableTemplateDecl::getCommonPtr());
+  }
+
+public:
+  /// Get the underlying function declaration of the template.
+  TypeAliasDecl *getTemplatedDecl() const {
+    return static_cast<TypeAliasDecl*>(TemplatedDecl);
+  }
+
+
+  TypeAliasTemplateDecl *getCanonicalDecl() {
+    return redeclarable_base::getCanonicalDecl();
+  }
+  const TypeAliasTemplateDecl *getCanonicalDecl() const {
+    return redeclarable_base::getCanonicalDecl();
+  }
+
+  /// \brief Retrieve the previous declaration of this function template, or
+  /// NULL if no such declaration exists.
+  TypeAliasTemplateDecl *getPreviousDeclaration() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+
+  /// \brief Retrieve the previous declaration of this function template, or
+  /// NULL if no such declaration exists.
+  const TypeAliasTemplateDecl *getPreviousDeclaration() const {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+
+  TypeAliasTemplateDecl *getInstantiatedFromMemberTemplate() {
+    return redeclarable_base::getInstantiatedFromMemberTemplate();
+  }
+
+                               
+  /// \brief Create a function template node.
+  static TypeAliasTemplateDecl *Create(ASTContext &C, DeclContext *DC,
+                                       SourceLocation L,
+                                       DeclarationName Name,
+                                       TemplateParameterList *Params,
+                                       NamedDecl *Decl);
+
+  /// \brief Create an empty alias template node.
+  static TypeAliasTemplateDecl *Create(ASTContext &C, EmptyShell);
+
+  // Implement isa/cast/dyncast support
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const TypeAliasTemplateDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == TypeAliasTemplate; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 /// Implementation of inline functions that require the template declarations

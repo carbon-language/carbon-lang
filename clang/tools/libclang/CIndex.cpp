@@ -3915,6 +3915,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::Namespace:
   case Decl::Typedef:
   case Decl::TypeAlias:
+  case Decl::TypeAliasTemplate:
   case Decl::TemplateTypeParm:
   case Decl::EnumConstant:
   case Decl::Field:

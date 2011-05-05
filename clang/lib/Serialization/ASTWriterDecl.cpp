@@ -86,6 +86,7 @@ namespace clang {
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
+    void VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
     void VisitUsingDecl(UsingDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
@@ -1079,6 +1080,11 @@ void ASTDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   Record.push_back(D->defaultArgumentWasInherited());
   Record.push_back(D->isParameterPack());
   Code = serialization::DECL_TEMPLATE_TEMPLATE_PARM;
+}
+
+void ASTDeclWriter::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
+  VisitRedeclarableTemplateDecl(D);
+  Code = serialization::DECL_TYPE_ALIAS_TEMPLATE;
 }
 
 void ASTDeclWriter::VisitStaticAssertDecl(StaticAssertDecl *D) {

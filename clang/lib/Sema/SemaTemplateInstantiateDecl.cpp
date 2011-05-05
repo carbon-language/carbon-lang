@@ -128,8 +128,8 @@ TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   return Inst;
 }
 
-Decl *TemplateDeclInstantiator::VisitTypedefNameDecl(TypedefNameDecl *D,
-                                                     bool IsTypeAlias) {
+Decl *TemplateDeclInstantiator::InstantiateTypedefNameDecl(TypedefNameDecl *D,
+                                                           bool IsTypeAlias) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
   if (DI->getType()->isDependentType() ||
@@ -178,17 +178,62 @@ Decl *TemplateDeclInstantiator::VisitTypedefNameDecl(TypedefNameDecl *D,
   SemaRef.InstantiateAttrs(TemplateArgs, D, Typedef);
 
   Typedef->setAccess(D->getAccess());
-  Owner->addDecl(Typedef);
 
   return Typedef;
 }
 
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
-  return VisitTypedefNameDecl(D, /*IsTypeAlias=*/false);
+  Decl *Typedef = InstantiateTypedefNameDecl(D, /*IsTypeAlias=*/false);
+  Owner->addDecl(Typedef);
+  return Typedef;
 }
 
 Decl *TemplateDeclInstantiator::VisitTypeAliasDecl(TypeAliasDecl *D) {
-  return VisitTypedefNameDecl(D, /*IsTypeAlias=*/true);
+  Decl *Typedef = InstantiateTypedefNameDecl(D, /*IsTypeAlias=*/true);
+  Owner->addDecl(Typedef);
+  return Typedef;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
+  // Create a local instantiation scope for this type alias template, which
+  // will contain the instantiations of the template parameters.
+  LocalInstantiationScope Scope(SemaRef);
+
+  TemplateParameterList *TempParams = D->getTemplateParameters();
+  TemplateParameterList *InstParams = SubstTemplateParams(TempParams);
+  if (!InstParams)
+    return 0;
+
+  TypeAliasDecl *Pattern = D->getTemplatedDecl();
+
+  TypeAliasTemplateDecl *PrevAliasTemplate = 0;
+  if (Pattern->getPreviousDeclaration()) {
+    DeclContext::lookup_result Found = Owner->lookup(Pattern->getDeclName());
+    if (Found.first != Found.second) {
+      PrevAliasTemplate = dyn_cast<TypeAliasTemplateDecl>(*Found.first);
+    }
+  }
+
+  TypeAliasDecl *AliasInst = cast_or_null<TypeAliasDecl>(
+    InstantiateTypedefNameDecl(Pattern, /*IsTypeAlias=*/true));
+  if (!AliasInst)
+    return 0;
+
+  TypeAliasTemplateDecl *Inst
+    = TypeAliasTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                    D->getDeclName(), InstParams, AliasInst);
+  if (PrevAliasTemplate)
+    Inst->setPreviousDeclaration(PrevAliasTemplate);
+
+  Inst->setAccess(D->getAccess());
+
+  if (!PrevAliasTemplate)
+    Inst->setInstantiatedFromMemberTemplate(D);
+  
+  Owner->addDecl(Inst);
+
+  return Inst;
 }
 
 /// \brief Instantiate an initializer, breaking it into separate

@@ -1368,6 +1368,11 @@ DEF_TRAVERSE_DECL(TypeAliasDecl, {
     // source.
   })
 
+DEF_TRAVERSE_DECL(TypeAliasTemplateDecl, {
+    TRY_TO(TraverseDecl(D->getTemplatedDecl()));
+    TRY_TO(TraverseTemplateParameterListHelper(D->getTemplateParameters()));
+  })
+
 DEF_TRAVERSE_DECL(UnresolvedUsingTypenameDecl, {
     // A dependent using declaration which was marked with 'typename'.
     //   template<class T> class A : public B<T> { using typename B<T>::foo; };

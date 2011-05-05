@@ -761,6 +761,8 @@ namespace clang {
       DECL_NON_TYPE_TEMPLATE_PARM,
       /// \brief A TemplateTemplateParmDecl record.
       DECL_TEMPLATE_TEMPLATE_PARM,
+      /// \brief A TypeAliasTemplateDecl record.
+      DECL_TYPE_ALIAS_TEMPLATE,
       /// \brief A StaticAssertDecl record.
       DECL_STATIC_ASSERT,
       /// \brief A record containing CXXBaseSpecifiers.

@@ -387,12 +387,33 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   bool IsAliasDecl = Tok.is(tok::equal);
   TypeResult TypeAlias;
   if (IsAliasDecl) {
-    // TODO: Do we want to support attributes somewhere in an alias declaration?
-    // Can't follow GCC since it doesn't support them yet!
+    // TODO: Attribute support. C++0x attributes may appear before the equals.
+    // Where can GNU attributes appear?
     ConsumeToken();
 
     if (!getLang().CPlusPlus0x)
       Diag(Tok.getLocation(), diag::ext_alias_declaration);
+
+    // Type alias templates cannot be specialized.
+    int SpecKind = -1;
+    if (Name.getKind() == UnqualifiedId::IK_TemplateId)
+      SpecKind = 0;
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization)
+      SpecKind = 1;
+    if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation)
+      SpecKind = 2;
+    if (SpecKind != -1) {
+      SourceRange Range;
+      if (SpecKind == 0)
+        Range = SourceRange(Name.TemplateId->LAngleLoc,
+                            Name.TemplateId->RAngleLoc);
+      else
+        Range = TemplateInfo.getSourceRange();
+      Diag(Range.getBegin(), diag::err_alias_declaration_specialization)
+        << SpecKind << Range;
+      SkipUntil(tok::semi);
+      return 0;
+    }
 
     // Name must be an identifier.
     if (Name.getKind() != UnqualifiedId::IK_Identifier) {
@@ -408,7 +429,9 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
       Diag(SS.getBeginLoc(), diag::err_alias_declaration_not_identifier)
         << FixItHint::CreateRemoval(SS.getRange());
 
-    TypeAlias = ParseTypeName(0, Declarator::AliasDeclContext);
+    TypeAlias = ParseTypeName(0, TemplateInfo.Kind ?
+                              Declarator::AliasTemplateContext :
+                              Declarator::AliasDeclContext);
   } else
     // Parse (optional) attributes (most likely GNU strong-using extension).
     MaybeParseGNUAttributes(attrs);
@@ -421,9 +444,9 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                    tok::semi);
 
   // Diagnose an attempt to declare a templated using-declaration.
-  // TODO: in C++0x, alias-declarations can be templates:
+  // In C++0x, alias-declarations can be templates:
   //   template <...> using id = type;
-  if (TemplateInfo.Kind) {
+  if (TemplateInfo.Kind && !IsAliasDecl) {
     SourceRange R = TemplateInfo.getSourceRange();
     Diag(UsingLoc, diag::err_templated_using_declaration)
       << R << FixItHint::CreateRemoval(R);
@@ -434,9 +457,14 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     return 0;
   }
 
-  if (IsAliasDecl)
-    return Actions.ActOnAliasDeclaration(getCurScope(), AS, UsingLoc, Name,
-                                         TypeAlias);
+  if (IsAliasDecl) {
+    TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
+    MultiTemplateParamsArg TemplateParamsArg(Actions,
+      TemplateParams ? TemplateParams->data() : 0,
+      TemplateParams ? TemplateParams->size() : 0);
+    return Actions.ActOnAliasDeclaration(getCurScope(), AS, TemplateParamsArg,
+                                         UsingLoc, Name, TypeAlias);
+  }
 
   return Actions.ActOnUsingDeclaration(getCurScope(), AS, true, UsingLoc, SS,
                                        Name, attrs.getList(),
@@ -1515,8 +1543,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   MaybeParseMicrosoftAttributes(attrs);
 
   if (Tok.is(tok::kw_using)) {
-    // FIXME: Check for template aliases
-
     ProhibitAttributes(attrs);
 
     // Eat 'using'.
@@ -1527,7 +1553,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       SkipUntil(tok::semi, true, true);
     } else {
       SourceLocation DeclEnd;
-      // Otherwise, it must be using-declaration.
+      // Otherwise, it must be a using-declaration or an alias-declaration.
       ParseUsingDeclaration(Declarator::MemberContext, TemplateInfo,
                             UsingLoc, DeclEnd, AS);
     }

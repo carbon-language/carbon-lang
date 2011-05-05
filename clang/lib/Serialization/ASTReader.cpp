@@ -3366,14 +3366,14 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     TemplateName Name = ReadTemplateName(*Loc.F, Record, Idx);
     llvm::SmallVector<TemplateArgument, 8> Args;
     ReadTemplateArgumentList(Args, *Loc.F, Record, Idx);
-    QualType Canon = GetType(Record[Idx++]);
+    QualType Underlying = GetType(Record[Idx++]);
     QualType T;
-    if (Canon.isNull())
+    if (Underlying.isNull())
       T = Context->getCanonicalTemplateSpecializationType(Name, Args.data(),
                                                           Args.size());
     else
       T = Context->getTemplateSpecializationType(Name, Args.data(),
-                                                 Args.size(), Canon);
+                                                 Args.size(), Underlying);
     const_cast<Type*>(T.getTypePtr())->setDependent(IsDependent);
     return T;
   }

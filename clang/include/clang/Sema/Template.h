@@ -335,9 +335,9 @@ namespace clang {
     Decl *VisitLabelDecl(LabelDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
     Decl *VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
-    Decl *VisitTypedefNameDecl(TypedefNameDecl *D, bool IsTypeAlias);
     Decl *VisitTypedefDecl(TypedefDecl *D);
     Decl *VisitTypeAliasDecl(TypeAliasDecl *D);
+    Decl *VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
     Decl *VisitVarDecl(VarDecl *D);
     Decl *VisitAccessSpecDecl(AccessSpecDecl *D);
     Decl *VisitFieldDecl(FieldDecl *D);
@@ -415,6 +415,7 @@ namespace clang {
     bool SubstQualifier(const TagDecl *OldDecl,
                         TagDecl *NewDecl);
       
+    Decl *InstantiateTypedefNameDecl(TypedefNameDecl *D, bool IsTypeAlias);
     ClassTemplatePartialSpecializationDecl *
     InstantiateClassTemplatePartialSpecialization(
                                               ClassTemplateDecl *ClassTemplate,

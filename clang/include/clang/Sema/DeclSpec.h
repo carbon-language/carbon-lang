@@ -1332,7 +1332,8 @@ public:
     CXXCatchContext,     // C++ catch exception-declaration
     BlockLiteralContext,  // Block literal declarator.
     TemplateTypeArgContext, // Template type argument.
-    AliasDeclContext     // C++0x alias-declaration.
+    AliasDeclContext,    // C++0x alias-declaration.
+    AliasTemplateContext // C++0x alias-declaration template.
   };
 
 private:
@@ -1474,6 +1475,7 @@ public:
 
     case TypeNameContext:
     case AliasDeclContext:
+    case AliasTemplateContext:
     case PrototypeContext:
     case ObjCPrototypeContext:
     case TemplateParamContext:
@@ -1503,6 +1505,7 @@ public:
 
     case TypeNameContext:
     case AliasDeclContext:
+    case AliasTemplateContext:
     case ObjCPrototypeContext:
     case BlockLiteralContext:
     case TemplateTypeArgContext:
@@ -1531,6 +1534,7 @@ public:
     case CXXCatchContext:
     case TypeNameContext:
     case AliasDeclContext:
+    case AliasTemplateContext:
     case BlockLiteralContext:
     case TemplateTypeArgContext:
       return false;
