@@ -99,7 +99,7 @@ void LogDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   DiagnosticClient::HandleDiagnostic(Level, Info);
 
   // Initialize the main file name, if we haven't already fetched it.
-  if (MainFilename.empty()) {
+  if (MainFilename.empty() && Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
     FileID FID = SM.getMainFileID();
     if (!FID.isInvalid()) {
@@ -122,7 +122,7 @@ void LogDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // Set the location information.
   DE.Filename = "";
   DE.Line = DE.Column = 0;
-  if (Info.getLocation().isValid()) {
+  if (Info.getLocation().isValid() && Info.hasSourceManager()) {
     const SourceManager &SM = Info.getSourceManager();
     PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
 
