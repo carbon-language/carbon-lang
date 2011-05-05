@@ -241,6 +241,15 @@ protected:
                            unsigned Op0, bool Op0IsKill,
                            unsigned Op1, bool Op1IsKill);
 
+  /// FastEmitInst_rrr - Emit a MachineInstr with three register operands
+  /// and a result register in the given register class.
+  ///
+  unsigned FastEmitInst_rrr(unsigned MachineInstOpcode,
+                           const TargetRegisterClass *RC,
+                           unsigned Op0, bool Op0IsKill,
+                           unsigned Op1, bool Op1IsKill,
+                           unsigned Op2, bool Op2IsKill);
+
   /// FastEmitInst_ri - Emit a MachineInstr with a register operand,
   /// an immediate, and a result register in the given register class.
   ///

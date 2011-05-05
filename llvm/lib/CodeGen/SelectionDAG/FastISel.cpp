@@ -1097,6 +1097,30 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   return ResultReg;
 }
 
+unsigned FastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
+                                   const TargetRegisterClass *RC,
+                                   unsigned Op0, bool Op0IsKill,
+                                   unsigned Op1, bool Op1IsKill,
+                                   unsigned Op2, bool Op2IsKill) {
+  unsigned ResultReg = createResultReg(RC);
+  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+
+  if (II.getNumDefs() >= 1)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
+      .addReg(Op0, Op0IsKill * RegState::Kill)
+      .addReg(Op1, Op1IsKill * RegState::Kill)
+      .addReg(Op2, Op2IsKill * RegState::Kill);
+  else {
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+      .addReg(Op0, Op0IsKill * RegState::Kill)
+      .addReg(Op1, Op1IsKill * RegState::Kill)
+      .addReg(Op2, Op2IsKill * RegState::Kill);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            ResultReg).addReg(II.ImplicitDefs[0]);
+  }
+  return ResultReg;
+}
+
 unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
                                    const TargetRegisterClass *RC,
                                    unsigned Op0, bool Op0IsKill,
