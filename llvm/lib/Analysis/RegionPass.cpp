@@ -249,7 +249,7 @@ void RegionPass::assignPassManager(PMStack &PMS,
     assert (!PMS.empty() && "Unable to create Region Pass Manager");
     PMDataManager *PMD = PMS.top();
 
-    // [1] Create new Call Graph Pass Manager
+    // [1] Create new Region Pass Manager
     RGPM = new RGPassManager(PMD->getDepth() + 1);
     RGPM->populateInheritedAnalysis(PMS);
 

@@ -109,7 +109,7 @@ public:
   /// @brief Print passes managed by this manager.
   void dumpPassStructure(unsigned Offset);
 
-  /// @brief Print passes contained by this manager.
+  /// @brief Get passes contained by this manager.
   Pass *getContainedPass(unsigned N) {
     assert(N < PassVector.size() && "Pass number out of range!");
     Pass *FP = static_cast<Pass *>(PassVector[N]);
