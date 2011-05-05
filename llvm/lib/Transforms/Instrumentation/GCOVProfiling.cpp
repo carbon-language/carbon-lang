@@ -140,7 +140,7 @@ namespace {
       // A GCOV string is a length, followed by a NUL, then between 0 and 3 NULs
       // padding out to the next 4-byte word. The length is measured in 4-byte
       // words including padding, not bytes of actual string.
-      return (s.size() + 5) / 4;
+      return (s.size() / 4) + 1;
     }
 
     void writeGCOVString(StringRef s) {

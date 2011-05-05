@@ -49,7 +49,7 @@ static void write_int64(uint64_t i) {
 }
 
 static uint32_t length_of_string(const char *s) {
-  return (strlen(s) + 5) / 4;
+  return (strlen(s) / 4) + 1;
 }
 
 static void write_string(const char *s) {
