@@ -88,7 +88,10 @@ enum {
   
   /// \brief Adjustment for KVC code pattern priorities when it doesn't look
   /// like the
-  CCD_ProbablyNotObjCCollection = 15
+  CCD_ProbablyNotObjCCollection = 15,
+  
+  /// \brief An Objective-C method being used as a property.
+  CCD_MethodAsProperty = 2
 };
 
 /// \brief Priority value factors by which we will divide or multiply the
