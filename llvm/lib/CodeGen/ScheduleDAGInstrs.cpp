@@ -393,6 +393,18 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         UseList.clear();
         if (!MO.isDead())
           DefList.clear();
+
+        // Calls will not be reordered because of chain dependencies (see
+        // below). Since call operands are dead, calls may continue to be added
+        // to the DefList making dependence checking quadratic in the size of
+        // the block. Instead, we leave only one call at the back of the
+        // DefList.
+        //
+        // NOTE: This assumes that the DefList is ordered!
+        if (SU->isCall) {
+          while (!DefList.empty() && DefList.back()->isCall)
+            DefList.pop_back();
+        }
         DefList.push_back(SU);
       } else {
         UseList.push_back(SU);
