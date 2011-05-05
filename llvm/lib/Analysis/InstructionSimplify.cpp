@@ -1847,7 +1847,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       // fall-through
     case Instruction::SDiv:
     case Instruction::AShr:
-      if (!LBO->isExact() && !RBO->isExact())
+      if (!LBO->isExact() || !RBO->isExact())
         break;
       if (Value *V = SimplifyICmpInst(Pred, LBO->getOperand(0),
                                       RBO->getOperand(0), TD, DT, MaxRecurse-1))

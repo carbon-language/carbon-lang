@@ -2400,7 +2400,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // fall-through
       case Instruction::SDiv:
       case Instruction::AShr:
-        if (!BO0->isExact() && !BO1->isExact())
+        if (!BO0->isExact() || !BO1->isExact())
           break;
         return new ICmpInst(I.getPredicate(), BO0->getOperand(0),
                             BO1->getOperand(0));

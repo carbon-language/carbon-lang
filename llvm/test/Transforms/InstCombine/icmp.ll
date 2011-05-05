@@ -510,3 +510,14 @@ define i1 @test52(i32 %x1) nounwind {
   ret i1 %A
 }
 
+; PR9838
+; CHECK: @test53
+; CHECK-NEXT: ashr exact
+; CHECK-NEXT: ashr
+; CHECK-NEXT: icmp
+define i1 @test53(i32 %a, i32 %b) nounwind {
+ %x = ashr exact i32 %a, 30
+ %y = ashr i32 %b, 30
+ %z = icmp eq i32 %x, %y
+ ret i1 %z
+}
