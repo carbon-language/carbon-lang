@@ -47,3 +47,10 @@ struct foo2 foo2;
 typedef int barfoo;
 barfoo foo() {
 }
+
+// CHECK: __uint128_t
+__uint128_t foo128 ()
+{
+  __uint128_t int128 = 44;
+  return int128;
+}
