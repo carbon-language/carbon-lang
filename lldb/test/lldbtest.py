@@ -529,6 +529,7 @@ class TestBase(unittest2.TestCase):
         # This is for the case of directly spawning 'lldb' and interacting with it
         # using pexpect.
         self.child = None
+        self.child_in_script_interpreter = False
 
         # There is no process associated with the debugger as yet.
         # See also self.tearDown() where it checks whether self.process has a
@@ -682,6 +683,9 @@ class TestBase(unittest2.TestCase):
         if self.child and self.child.isalive():
             with recording(self, traceAlways) as sbuf:
                 print >> sbuf, "tearing down the child process...."
+            if self.child_in_script_interpreter:
+                self.child.sendline('quit()')
+                self.child.expect_exact('(lldb) ')
             self.child.sendline('quit')
             try:
                 self.child.expect(pexpect.EOF)
