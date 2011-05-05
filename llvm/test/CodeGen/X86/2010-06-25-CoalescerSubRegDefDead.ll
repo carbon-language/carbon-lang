@@ -22,7 +22,7 @@ bb:
 ; it is.
 ;
 ; CHECK: # %bb
-; CHECK: addq $64036, %rdi
+; CHECK: leaq	64036(%rdx), %rdi
 ; CHECK: rep;stosl
 
   %tmp5 = bitcast i32* %tmp4 to i8*

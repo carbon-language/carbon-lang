@@ -54,25 +54,6 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
   return false;
 }
 
-/// isOnlyUsedInEntryBlock - If the specified argument is only used in the
-/// entry block, return true.  This includes arguments used by switches, since
-/// the switch may expand into multiple basic blocks.
-static bool isOnlyUsedInEntryBlock(const Argument *A, bool EnableFastISel) {
-  // With FastISel active, we may be splitting blocks, so force creation
-  // of virtual registers for all non-dead arguments.
-  if (EnableFastISel)
-    return A->use_empty();
-
-  const BasicBlock *Entry = A->getParent()->begin();
-  for (Value::const_use_iterator UI = A->use_begin(), E = A->use_end();
-       UI != E; ++UI) {
-    const User *U = *UI;
-    if (cast<Instruction>(U)->getParent() != Entry || isa<SwitchInst>(U))
-      return false;  // Use not in entry block.
-  }
-  return true;
-}
-
 FunctionLoweringInfo::FunctionLoweringInfo(const TargetLowering &tli)
   : TLI(tli) {
 }
@@ -88,13 +69,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
                 Fn->getAttributes().getRetAttributes(), Outs, TLI);
   CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), Fn->isVarArg(),
                                       Outs, Fn->getContext());
-
-  // Create a vreg for each argument register that is not dead and is used
-  // outside of the entry block for the function.
-  for (Function::const_arg_iterator AI = Fn->arg_begin(), E = Fn->arg_end();
-       AI != E; ++AI)
-    if (!isOnlyUsedInEntryBlock(AI, EnableFastISel))
-      InitializeRegForValue(AI);
 
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines

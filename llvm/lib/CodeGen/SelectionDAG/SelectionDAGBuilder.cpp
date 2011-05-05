@@ -6232,6 +6232,25 @@ SelectionDAGBuilder::CopyValueToVirtualRegister(const Value *V, unsigned Reg) {
 
 #include "llvm/CodeGen/SelectionDAGISel.h"
 
+/// isOnlyUsedInEntryBlock - If the specified argument is only used in the
+/// entry block, return true.  This includes arguments used by switches, since
+/// the switch may expand into multiple basic blocks.
+static bool isOnlyUsedInEntryBlock(const Argument *A) {
+  // With FastISel active, we may be splitting blocks, so force creation
+  // of virtual registers for all non-dead arguments.
+  if (EnableFastISel)
+    return A->use_empty();
+
+  const BasicBlock *Entry = A->getParent()->begin();
+  for (Value::const_use_iterator UI = A->use_begin(), E = A->use_end();
+       UI != E; ++UI) {
+    const User *U = *UI;
+    if (cast<Instruction>(U)->getParent() != Entry || isa<SwitchInst>(U))
+      return false;  // Use not in entry block.
+  }
+  return true;
+}
+
 void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
   // If this is the entry block, emit arguments.
   const Function &F = *LLVMBB->getParent();
@@ -6375,8 +6394,8 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     if (I->use_empty() && NumValues)
       SDB->setUnusedArgValue(I, InVals[i]);
 
-    for (unsigned Value = 0; Value != NumValues; ++Value) {
-      EVT VT = ValueVTs[Value];
+    for (unsigned Val = 0; Val != NumValues; ++Val) {
+      EVT VT = ValueVTs[Val];
       EVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumParts = TLI.getNumRegisters(*CurDAG->getContext(), VT);
 
@@ -6395,21 +6414,34 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
       i += NumParts;
     }
 
+    // We don't need to do anything else for unused arguments.
+    if (ArgValues.empty())
+      continue;
+
     // Note down frame index for byval arguments.
-    if (I->hasByValAttr() && !ArgValues.empty())
+    if (I->hasByValAttr())
       if (FrameIndexSDNode *FI =
           dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
         FuncInfo->setByValArgumentFrameIndex(I, FI->getIndex());
 
-    if (!I->use_empty()) {
-      SDValue Res;
-      if (!ArgValues.empty())
-        Res = DAG.getMergeValues(&ArgValues[0], NumValues,
-                                 SDB->getCurDebugLoc());
-      SDB->setValue(I, Res);
+    SDValue Res = DAG.getMergeValues(&ArgValues[0], NumValues,
+                                     SDB->getCurDebugLoc());
+    SDB->setValue(I, Res);
 
-      // If this argument is live outside of the entry block, insert a copy from
-      // wherever we got it to the vreg that other BB's will reference it as.
+    // If this argument is live outside of the entry block, insert a copy from
+    // wherever we got it to the vreg that other BB's will reference it as.
+    if (Res.getOpcode() == ISD::CopyFromReg) {
+      // If we can, though, try to skip creating an unnecessary vreg.
+      // FIXME: This isn't very clean... it would be nice to make this more
+      // general.
+      unsigned Reg = cast<RegisterSDNode>(Res.getOperand(1))->getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        FuncInfo->ValueMap[I] = Reg;
+        continue;
+      }
+    }
+    if (!isOnlyUsedInEntryBlock(I)) {
+      FuncInfo->InitializeRegForValue(I);
       SDB->CopyToExportRegsIfNeeded(I);
     }
   }
