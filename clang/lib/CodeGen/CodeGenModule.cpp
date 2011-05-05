@@ -134,7 +134,7 @@ void CodeGenModule::Release() {
     EmitDeclMetadata();
 
   if (getCodeGenOpts().EmitGcovArcs || getCodeGenOpts().EmitGcovNotes)
-    EmitCoverageDir();
+    EmitCoverageFile();
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
@@ -2219,16 +2219,16 @@ void CodeGenFunction::EmitDeclMetadata() {
   }
 }
 
-void CodeGenModule::EmitCoverageDir() {
-  if (!getCodeGenOpts().CoverageDir.empty()) {
+void CodeGenModule::EmitCoverageFile() {
+  if (!getCodeGenOpts().CoverageFile.empty()) {
     if (llvm::NamedMDNode *CUNode = TheModule.getNamedMetadata("llvm.dbg.cu")) {
       llvm::NamedMDNode *GCov = TheModule.getOrInsertNamedMetadata("llvm.gcov");
       llvm::LLVMContext &Ctx = TheModule.getContext();
-      llvm::MDString *CoverageDir =
-          llvm::MDString::get(Ctx, getCodeGenOpts().CoverageDir);
+      llvm::MDString *CoverageFile =
+          llvm::MDString::get(Ctx, getCodeGenOpts().CoverageFile);
       for (int i = 0, e = CUNode->getNumOperands(); i != e; ++i) {
         llvm::MDNode *CU = CUNode->getOperand(i);
-        llvm::Value *node[] = { CoverageDir, CU };
+        llvm::Value *node[] = { CoverageFile, CU };
         llvm::MDNode *N = llvm::MDNode::get(Ctx, node);
         GCov->addOperand(N);
       }

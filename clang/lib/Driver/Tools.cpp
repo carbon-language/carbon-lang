@@ -1306,12 +1306,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (C.getArgs().hasArg(options::OPT_c) ||
       C.getArgs().hasArg(options::OPT_S)) {
     if (Output.isFilename()) {
-      llvm::StringRef CoverageDir =
-          llvm::sys::path::parent_path(Output.getFilename());
-      if (!CoverageDir.empty()) {
-        CmdArgs.push_back("-coverage-dir");
-        CmdArgs.push_back(Args.MakeArgString(CoverageDir));
-      }
+      CmdArgs.push_back("-coverage-file");
+      CmdArgs.push_back(Args.MakeArgString(Output.getFilename()));
     }
   }
 

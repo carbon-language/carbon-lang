@@ -140,9 +140,9 @@ def femit_coverage_notes : Flag<"-femit-coverage-notes">,
   HelpText<"Emit a gcov coverage notes file when compiling.">;
 def femit_coverage_data: Flag<"-femit-coverage-data">,
   HelpText<"Instrument the program to emit gcov coverage data when run.">;
-def coverage_dir : Separate<"-coverage-dir">,
-  HelpText<"Emit coverage data to this directory.">;
-def coverage_dir_EQ : Joined<"-coverage-dir=">, Alias<coverage_dir>;
+def coverage_file : Separate<"-coverage-file">,
+  HelpText<"Emit coverage data to this filename. The extension will be replaced.">;
+def coverage_file_EQ : Joined<"-coverage-file=">, Alias<coverage_file>;
 def relaxed_aliasing : Flag<"-relaxed-aliasing">,
   HelpText<"Turn off Type Based Alias Analysis">;
 def masm_verbose : Flag<"-masm-verbose">,

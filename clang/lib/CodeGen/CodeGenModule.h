@@ -735,9 +735,9 @@ private:
 
   void EmitDeclMetadata();
 
-  /// EmitCoverageDir - Emit the llvm.gcov metadata used to tell LLVM where
+  /// EmitCoverageFile - Emit the llvm.gcov metadata used to tell LLVM where
   /// to emit the .gcno and .gcda files in a way that persists in .bc files.
-  void EmitCoverageDir();
+  void EmitCoverageFile();
 
   /// MayDeferGeneration - Determine if the given decl can be emitted
   /// lazily; this is only relevant for definitions. The given decl
