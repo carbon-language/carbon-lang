@@ -468,7 +468,8 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
         SmallVector<unsigned,8>::iterator PI = DirectPhysRefs.begin(),
                                           PE = DirectPhysRefs.end();
         for (; PI != PE; ++PI)
-          MBB->addLiveIn(*PI);
+          if (!MBB->isLiveIn(*PI))
+            MBB->addLiveIn(*PI);
       }
       ++NumCSEs;
       if (!PhysRefs.empty())
