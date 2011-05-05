@@ -7700,6 +7700,11 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   BlockScopeInfo *blockScope = SemaRef.getCurBlock();
 
   blockScope->TheDecl->setIsVariadic(oldBlock->isVariadic());
+  // We built a new blockScopeInfo in call to ActOnBlockStart
+  // in above, CapturesCXXThis need be set here from the block
+  // expression.
+  blockScope->CapturesCXXThis = oldBlock->capturesCXXThis();
+  
   llvm::SmallVector<ParmVarDecl*, 4> params;
   llvm::SmallVector<QualType, 4> paramTypes;
   
@@ -7759,8 +7764,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 #ifndef NDEBUG
   // In builds with assertions, make sure that we captured everything we
   // captured before.
-
-  if (oldBlock->capturesCXXThis()) assert(blockScope->CapturesCXXThis);
 
   for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
          e = oldBlock->capture_end(); i != e; ++i) {
