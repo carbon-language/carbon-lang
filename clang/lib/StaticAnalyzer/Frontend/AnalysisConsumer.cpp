@@ -232,6 +232,9 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   checkerMgr->runCheckersOnASTDecl(TU, *Mgr, BR);
   HandleDeclContext(C, TU);
 
+  // After all decls handled, run checkers on the entire TranslationUnit.
+  checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
+
   // Explicitly destroy the PathDiagnosticClient.  This will flush its output.
   // FIXME: This should be replaced with something that doesn't rely on
   // side-effects in PathDiagnosticClient's destructor. This is required when

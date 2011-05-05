@@ -252,6 +252,11 @@ public:
                               const ExplodedNodeSet &Src,
                               const CallExpr *CE, ExprEngine &Eng,
                               GraphExpander *defaultEval = 0);
+  
+  /// \brief Run checkers for the entire Translation Unit.
+  void runCheckersOnEndOfTranslationUnit(const TranslationUnitDecl* TU,
+                                         AnalysisManager &mgr,
+                                         BugReporter &BR);
 
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
@@ -312,6 +317,10 @@ public:
   typedef CheckerFn<bool (const CallExpr *, CheckerContext &)>
       EvalCallFunc;
 
+  typedef CheckerFn<void (const TranslationUnitDecl *,
+                          AnalysisManager&, BugReporter &)>
+      CheckEndOfTranslationUnit;
+
   typedef bool (*HandlesStmtFunc)(const Stmt *D);
   void _registerForPreStmt(CheckStmtFunc checkfn,
                            HandlesStmtFunc isForStmtFn);
@@ -341,6 +350,8 @@ public:
   void _registerForEvalAssume(EvalAssumeFunc checkfn);
 
   void _registerForEvalCall(EvalCallFunc checkfn);
+
+  void _registerForEndOfTranslationUnit(CheckEndOfTranslationUnit checkfn);
 
 //===----------------------------------------------------------------------===//
 // Internal registration functions for events.
@@ -461,6 +472,8 @@ private:
   std::vector<EvalAssumeFunc> EvalAssumeCheckers;
 
   std::vector<EvalCallFunc> EvalCallCheckers;
+
+  std::vector<CheckEndOfTranslationUnit> EndOfTranslationUnitCheckers;
 
   struct EventInfo {
     llvm::SmallVector<CheckEventFunc, 4> Checkers;

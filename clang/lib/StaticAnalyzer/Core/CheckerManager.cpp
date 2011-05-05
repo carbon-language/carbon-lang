@@ -416,6 +416,15 @@ void CheckerManager::runCheckersForEvalCall(ExplodedNodeSet &Dst,
   }
 }
 
+/// \brief Run checkers for the entire Translation Unit.
+void CheckerManager::runCheckersOnEndOfTranslationUnit(
+                                                  const TranslationUnitDecl *TU,
+                                                  AnalysisManager &mgr,
+                                                  BugReporter &BR) {
+  for (unsigned i = 0, e = EndOfTranslationUnitCheckers.size(); i != e; ++i)
+    EndOfTranslationUnitCheckers[i](TU, mgr, BR);
+}
+
 //===----------------------------------------------------------------------===//
 // Internal registration functions for AST traversing.
 //===----------------------------------------------------------------------===//
@@ -493,6 +502,11 @@ void CheckerManager::_registerForEvalAssume(EvalAssumeFunc checkfn) {
 
 void CheckerManager::_registerForEvalCall(EvalCallFunc checkfn) {
   EvalCallCheckers.push_back(checkfn);
+}
+
+void CheckerManager::_registerForEndOfTranslationUnit(
+                                            CheckEndOfTranslationUnit checkfn) {
+  EndOfTranslationUnitCheckers.push_back(checkfn);
 }
 
 //===----------------------------------------------------------------------===//

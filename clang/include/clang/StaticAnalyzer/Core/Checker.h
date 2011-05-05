@@ -63,6 +63,24 @@ public:
   }
 };
 
+class EndOfTranslationUnit {
+  template <typename CHECKER>
+  static void _checkEndOfTranslationUnit(void *checker,
+                                         const TranslationUnitDecl *TU, 
+                                         AnalysisManager& mgr,
+                                         BugReporter &BR) {
+    ((const CHECKER *)checker)->checkEndOfTranslationUnit(TU, mgr, BR);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr){
+    mgr._registerForEndOfTranslationUnit(
+                              CheckerManager::CheckEndOfTranslationUnit(checker,
+                                          _checkEndOfTranslationUnit<CHECKER>));
+  }
+};
+
 template <typename STMT>
 class PreStmt {
   template <typename CHECKER>
