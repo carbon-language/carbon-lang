@@ -3077,6 +3077,7 @@ public:
     {
         File &out_file = reader.GetDebugger().GetOutputFile();
         Target::StopHook *new_stop_hook = ((Target::StopHook *) baton);
+        static bool got_interrupted;
 
         switch (notification)
         {
@@ -3085,6 +3086,7 @@ public:
             if (reader.GetPrompt())
                 out_file.Printf ("%s", reader.GetPrompt());
             out_file.Flush();
+            got_interrupted = false;
             break;
 
         case eInputReaderDeactivate:
@@ -3096,6 +3098,7 @@ public:
                 out_file.Printf ("%s", reader.GetPrompt());
                 out_file.Flush();
             }
+            got_interrupted = false;
             break;
 
         case eInputReaderAsynchronousOutputWritten:
@@ -3125,6 +3128,7 @@ public:
 
                 reader.SetIsDone (true);
             }
+            got_interrupted = true;
             break;
             
         case eInputReaderEndOfFile:
@@ -3132,7 +3136,8 @@ public:
             break;
             
         case eInputReaderDone:
-            out_file.Printf ("Stop hook #%d added.\n", new_stop_hook->GetID());
+            if (!got_interrupted)
+                out_file.Printf ("Stop hook #%d added.\n", new_stop_hook->GetID());
             break;
         }
 
