@@ -526,9 +526,12 @@ class TestBase(unittest2.TestCase):
         # We want our debugger to be synchronous.
         self.dbg.SetAsync(False)
 
-        # This is for the case of directly spawning 'lldb' and interacting with it
-        # using pexpect.
+        # This is for the case of directly spawning 'lldb' and interacting with
+        # it using pexpect.
         self.child = None
+        # If the child is interacting with the embedded script interpreter,
+        # there are two exits required, first one to quit the embedded script
+        # interpreter and second one to quit the lldb command interpreter.
         self.child_in_script_interpreter = False
 
         # There is no process associated with the debugger as yet.
