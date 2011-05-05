@@ -109,3 +109,13 @@ void PR9333() {
   scoped_enum e = scoped_enum::yes;
   if (e == scoped_enum::no) { }
 }
+
+// <rdar://problem/9366066>
+namespace rdar9366066 {
+  enum class X : unsigned { value };
+
+  void f(X x) {
+    x % X::value; // expected-error{{invalid operands to binary expression ('rdar9366066::X' and 'rdar9366066::X')}}
+    x % 8; // expected-error{{invalid operands to binary expression ('rdar9366066::X' and 'int')}}
+  }
+}

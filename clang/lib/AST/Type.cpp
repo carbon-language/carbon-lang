@@ -517,7 +517,7 @@ bool Type::isIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
-    return ET->getDecl()->isComplete();
+    return ET->getDecl()->isComplete() && !ET->getDecl()->isScoped();
   return false;
 }
 
@@ -641,7 +641,7 @@ bool Type::isSignedIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
-    if (ET->getDecl()->isComplete())
+    if (ET->getDecl()->isComplete() && !ET->getDecl()->isScoped())
       return ET->getDecl()->getIntegerType()->isSignedIntegerType();
   }
 
@@ -667,7 +667,7 @@ bool Type::isUnsignedIntegerType() const {
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
-    if (ET->getDecl()->isComplete())
+    if (ET->getDecl()->isComplete() && !ET->getDecl()->isScoped())
       return ET->getDecl()->getIntegerType()->isUnsignedIntegerType();
   }
 
