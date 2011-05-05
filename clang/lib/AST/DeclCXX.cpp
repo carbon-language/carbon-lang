@@ -1301,7 +1301,7 @@ SourceRange CXXCtorInitializer::getSourceRange() const {
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXConstructorDecl(0, SourceLocation(), DeclarationNameInfo(),
-                                    QualType(), 0, false, false, false);
+                                    QualType(), 0, false, false, false, false);
 }
 
 CXXConstructorDecl *
@@ -1311,12 +1311,14 @@ CXXConstructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                            QualType T, TypeSourceInfo *TInfo,
                            bool isExplicit,
                            bool isInline,
-                           bool isImplicitlyDeclared) {
+                           bool isImplicitlyDeclared,
+                           bool isExplicitlyDefaulted) {
   assert(NameInfo.getName().getNameKind()
          == DeclarationName::CXXConstructorName &&
          "Name must refer to a constructor");
   return new (C) CXXConstructorDecl(RD, StartLoc, NameInfo, T, TInfo,
-                                    isExplicit, isInline, isImplicitlyDeclared);
+                                    isExplicit, isInline, isImplicitlyDeclared,
+                                    isExplicitlyDefaulted);
 }
 
 bool CXXConstructorDecl::isDefaultConstructor() const {

@@ -1501,6 +1501,9 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
 
+  /// IsDefaulted - Whether this constructor was explicitly defaulted
+  bool ExplicitlyDefaulted : 1;
+
   /// Support for base and member initializers.
   /// CtorInitializers - The arguments used to initialize the base
   /// or member.
@@ -1511,11 +1514,13 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      const DeclarationNameInfo &NameInfo,
                      QualType T, TypeSourceInfo *TInfo,
                      bool isExplicitSpecified, bool isInline, 
-                     bool isImplicitlyDeclared)
+                     bool isImplicitlyDeclared, bool isExplicitlyDefaulted)
     : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo, false,
                     SC_None, isInline, SourceLocation()),
       IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
-      CtorInitializers(0), NumCtorInitializers(0) {
+      ExplicitlyDefaulted(isExplicitlyDefaulted),
+      CtorInitializers(0), NumCtorInitializers(0)
+  {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -1526,7 +1531,8 @@ public:
                                     const DeclarationNameInfo &NameInfo,
                                     QualType T, TypeSourceInfo *TInfo,
                                     bool isExplicit,
-                                    bool isInline, bool isImplicitlyDeclared);
+                                    bool isInline, bool isImplicitlyDeclared,
+                                    bool isExplicitlyDefaulted);
 
   /// isExplicitSpecified - Whether this constructor declaration has the
   /// 'explicit' keyword specified.
@@ -1556,6 +1562,28 @@ public:
            "Can only set the implicit-definition flag once the constructor "
            "has been defined");
     ImplicitlyDefined = ID;
+  }
+
+  /// isExplicitlyDefaulted - Whether this constructor was explicitly defaulted.
+  bool isExplicitlyDefaulted() const {
+    return ExplicitlyDefaulted;
+  }
+  /// setExplicitlyDefaulted - Set whether this contructor was explicitly
+  /// defaulted or not.
+  void setExplicitlyDefaulted(bool B) {
+    ExplicitlyDefaulted = B;
+  }
+
+  /// isDefaulted - True if this was either explicitly defaulted or is implicit
+  bool isDefaulted() const {
+    return ExplicitlyDefaulted || isImplicit();
+  }
+
+  /// isUserProvided - True if this function was neither defaulted nor deleted
+  /// on its first declaration.
+  bool isUserProvided() const {
+    const CXXConstructorDecl *Canonical = getCanonicalDecl();
+    return !Canonical->isDefaulted() && !Canonical->isDeleted();
   }
 
   /// init_iterator - Iterates through the member/base initializer list.

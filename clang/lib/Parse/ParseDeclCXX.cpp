@@ -1621,6 +1621,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   ExprResult BitfieldSize;
   ExprResult Init;
   bool Deleted = false;
+  bool Defaulted = false;
+  SourceLocation DefLoc;
 
   while (1) {
     // member-declarator:
@@ -1652,6 +1654,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
           Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
         ConsumeToken();
         Deleted = true;
+      } else if (Tok.is(tok::kw_delete)) {
+        if (!getLang().CPlusPlus0x)
+          Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+        DefLoc = ConsumeToken();
+        Defaulted = true;
       } else {
         Init = ParseInitializer();
         if (Init.isInvalid())
@@ -1683,6 +1690,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
                                                  /*IsDefinition*/ false,
                                                  move(TemplateParams));
+      if (Defaulted) {
+        Diag(DefLoc, diag::err_friends_define_only_namespace_scope);
+        ThisDecl->setInvalidDecl();
+      }
     } else {
       ThisDecl = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS,
                                                   DeclaratorInfo,
@@ -1690,7 +1701,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   BitfieldSize.release(),
                                                   VS, Init.release(),
                                                   /*IsDefinition*/Deleted,
-                                                  Deleted);
+                                                  Deleted, Defaulted);
     }
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
@@ -1717,6 +1728,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     BitfieldSize = 0;
     Init = 0;
     Deleted = false;
+    Defaulted = false;
 
     // Attributes are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);

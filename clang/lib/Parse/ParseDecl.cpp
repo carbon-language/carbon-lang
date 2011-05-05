@@ -966,6 +966,11 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
         Diag(DelLoc, diag::warn_deleted_function_accepted_as_extension);
 
       Actions.SetDeclDeleted(ThisDecl, DelLoc);
+    } else if (Tok.is(tok::kw_default)) {
+      SourceLocation DefLoc = ConsumeToken();
+      Diag(DefLoc, diag::err_default_special_members);
+
+      ThisDecl->setInvalidDecl();
     } else {
       if (getLang().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         EnterScope(0);
