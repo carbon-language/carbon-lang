@@ -2560,8 +2560,10 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
     fprintf(stderr, "}\n");
     
     return 0;
+  } else if (getenv("LIBCLANG_RESOURCE_USAGE")) {
+    PrintLibclangResourceUsage(PTUI.result);
   }
-
+  
   return PTUI.result;
 }
 
@@ -2574,7 +2576,10 @@ int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
   if (!TU)
     return 1;
   
-  return static_cast<ASTUnit *>(TU->TUData)->Save(FileName);
+  int result = static_cast<ASTUnit *>(TU->TUData)->Save(FileName);
+  if (getenv("LIBCLANG_RESOURCE_USAGE"))
+    PrintLibclangResourceUsage(TU);
+  return result;
 }
 
 void clang_disposeTranslationUnit(CXTranslationUnit CTUnit) {
@@ -2650,8 +2655,8 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
     fprintf(stderr, "libclang: crash detected during reparsing\n");
     static_cast<ASTUnit *>(TU->TUData)->setUnsafeToFree(true);
     return 1;
-  }
-
+  } else if (getenv("LIBCLANG_RESOURCE_USAGE"))
+    PrintLibclangResourceUsage(TU);
 
   return RTUI.result;
 }
@@ -5348,6 +5353,16 @@ void clang_disposeCXTUResourceUsage(CXTUResourceUsage usage) {
 }
 
 } // end extern "C"
+
+void clang::PrintLibclangResourceUsage(CXTranslationUnit TU) {
+  CXTUResourceUsage Usage = clang_getCXTUResourceUsage(TU);
+  for (unsigned I = 0; I != Usage.numEntries; ++I)
+    fprintf(stderr, "  %s: %lu\n", 
+            clang_getTUResourceUsageName(Usage.entries[I].kind),
+            Usage.entries[I].amount);
+  
+  clang_disposeCXTUResourceUsage(Usage);
+}
 
 //===----------------------------------------------------------------------===//
 // Misc. utility functions.

@@ -77,6 +77,9 @@ namespace clang {
   /// \return False if a crash was detected.
   bool RunSafely(llvm::CrashRecoveryContext &CRC,
                  void (*Fn)(void*), void *UserData, unsigned Size = 0);
+
+  /// \brief Print libclang's resource usage to standard error.
+  void PrintLibclangResourceUsage(CXTranslationUnit TU);
 }
 
 #endif

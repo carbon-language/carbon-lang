@@ -498,7 +498,8 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
     fprintf(stderr, "libclang: crash detected in code completion\n");
     static_cast<ASTUnit *>(TU->TUData)->setUnsafeToFree(true);
     return 0;
-  }
+  } else if (getenv("LIBCLANG_RESOURCE_USAGE"))
+    PrintLibclangResourceUsage(TU);
 
   return CCAI.result;
 }
