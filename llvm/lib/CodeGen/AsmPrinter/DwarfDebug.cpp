@@ -56,10 +56,6 @@ static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
      cl::desc("Make an absence of debug location information explicit."),
      cl::init(false));
 
-#ifndef NDEBUG
-STATISTIC(BlocksWithoutLineNo, "Number of blocks without any line number");
-#endif
-
 namespace {
   const char *DWARFGroupName = "DWARF Emission";
   const char *DbgTimerName = "DWARF Debug Writer";
@@ -1861,36 +1857,11 @@ static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
   return DebugLoc();
 }
 
-#ifndef NDEBUG
-/// CheckLineNumbers - Count basicblocks whose instructions do not have any
-/// line number information.
-static void CheckLineNumbers(const MachineFunction *MF) {
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-       I != E; ++I) {
-    bool FoundLineNo = false;
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      const MachineInstr *MI = II;
-      if (!MI->getDebugLoc().isUnknown()) {
-        FoundLineNo = true;
-        break;
-      }
-    }
-    if (!FoundLineNo && I->size())
-      ++BlocksWithoutLineNo;      
-  }
-}
-#endif
-
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo()) return;
   if (!extractScopeInformation()) return;
-
-#ifndef NDEBUG
-  CheckLineNumbers(MF);
-#endif
 
   FunctionBeginSym = Asm->GetTempSymbol("func_begin",
                                         Asm->getFunctionNumber());
