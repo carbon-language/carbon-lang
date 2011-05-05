@@ -189,21 +189,22 @@ bool AsmPrinter::doInitialization(Module &M) {
   if (MAI->doesSupportDebugInformation())
     DD = new DwarfDebug(this, &M);
 
-  if (MAI->doesSupportExceptionHandling())
-    switch (MAI->getExceptionHandlingType()) {
-    default:
-    case ExceptionHandling::DwarfTable:
-      DE = new DwarfTableException(this);
-      break;
-    case ExceptionHandling::DwarfCFI:
-      DE = new DwarfCFIException(this);
-      break;
-    case ExceptionHandling::ARM:
-      DE = new ARMException(this);
-      break;
-    }
+  switch (MAI->getExceptionHandlingType()) {
+  case ExceptionHandling::None:
+    return false;
+  case ExceptionHandling::SjLj:
+  case ExceptionHandling::DwarfTable:
+    DE = new DwarfTableException(this);
+    return false;
+  case ExceptionHandling::DwarfCFI:
+    DE = new DwarfCFIException(this);
+    return false;
+  case ExceptionHandling::ARM:
+    DE = new ARMException(this);
+    return false;
+  }
 
-  return false;
+  llvm_unreachable("Unknown exception type.");
 }
 
 void AsmPrinter::EmitLinkage(unsigned Linkage, MCSymbol *GVSym) const {
