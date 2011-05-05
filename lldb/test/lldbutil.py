@@ -399,8 +399,8 @@ def print_stacktraces(process, string_buffer = False):
 
     print >> output, "Stack traces for " + repr(process)
 
-    for i in range(process.GetNumThreads()):
-        print >> output, print_stacktrace(process.GetThreadAtIndex(i), string_buffer=True)
+    for thread in process:
+        print >> output, print_stacktrace(thread, string_buffer=True)
 
     if string_buffer:
         return output.getvalue()
