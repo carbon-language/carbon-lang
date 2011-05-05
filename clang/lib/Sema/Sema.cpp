@@ -812,10 +812,9 @@ bool Sema::isExprCallable(const Expr &E, QualType &ZeroArgCallReturnTy,
   // but we can at least check if the type is "function of 0 arguments".
   QualType ExprTy = E.getType();
   const FunctionType *FunTy = NULL;
-  if (const PointerType *Ptr = ExprTy->getAs<PointerType>())
-    FunTy = Ptr->getPointeeType()->getAs<FunctionType>();
-  else if (const ReferenceType *Ref = ExprTy->getAs<ReferenceType>())
-    FunTy = Ref->getPointeeType()->getAs<FunctionType>();
+  QualType PointeeTy = ExprTy->getPointeeType();
+  if (!PointeeTy.isNull())
+    FunTy = PointeeTy->getAs<FunctionType>();
   if (!FunTy)
     FunTy = ExprTy->getAs<FunctionType>();
   if (!FunTy && ExprTy == Context.BoundMemberTy) {
