@@ -2085,8 +2085,7 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
     DiagnoseUseOfDecl(Dtor, Initializer->getSourceLocation());
   }
 
-  if (LangOpts.CheckDelegatingCtorCycles)
-    DelegatingCtorDecls.push_back(Constructor);
+  DelegatingCtorDecls.push_back(Constructor);
 
   return false;
 }
@@ -7984,7 +7983,7 @@ void DelegatingCycleHelper(CXXConstructorDecl* Ctor,
     // If we haven't diagnosed this cycle yet, do so now.
     if (!Invalid.count(TCanonical)) {
       S.Diag((*Ctor->init_begin())->getSourceLocation(),
-             diag::err_delegating_ctor_cycle)
+             diag::warn_delegating_ctor_cycle)
         << Ctor;
 
       // Don't add a note for a function delegating directo to itself.

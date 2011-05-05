@@ -1009,16 +1009,15 @@ def err_enum_redeclare_scoped_mismatch : Error<
 // C++0x delegating constructors
 def err_delegation_0x_only : Error<
   "delegating constructors are permitted only in C++0x">;
-def err_delegation_unimplemented : Error<
-  "delegating constructors are not fully implemented">;
 def err_delegating_initializer_alone : Error<
   "an initializer for a delegating constructor must appear alone">;
-def err_delegating_ctor_cycle : Error<
-  "constructor for %0 creates a delegation cycle">;
+def warn_delegating_ctor_cycle : Warning<
+  "constructor for %0 creates a delegation cycle">, DefaultError,
+  InGroup<DelegatingCtorCycles>;
 def note_it_delegates_to : Note<
-  "it delegates to">;
+  "it delegates to">, InGroup<DelegatingCtorCycles>;
 def note_which_delegates_to : Note<
-  "which delegates to">;
+  "which delegates to">, InGroup<DelegatingCtorCycles>;
 def err_delegating_codegen_not_implemented : Error<
   "code generation for delegating constructors not implemented">;
 

@@ -271,6 +271,8 @@ def NonGCC : DiagGroup<"non-gcc",
 def CXX0xStaticNonIntegralInitializer :
   DiagGroup<"c++0x-static-nonintegral-init">;
 def CXX0x : DiagGroup<"c++0x-extensions", [CXX0xStaticNonIntegralInitializer]>;
+def DelegatingCtorCycles :
+  DiagGroup<"delegating-ctor-cycles">;
 
 // A warning group for warnings about GCC extensions.
 def GNU : DiagGroup<"gnu", [GNUDesignator, VLA]>;

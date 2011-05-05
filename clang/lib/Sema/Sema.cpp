@@ -474,7 +474,10 @@ void Sema::ActOnEndOfTranslationUnit() {
 
   }
 
-  if (LangOpts.CPlusPlus0x && LangOpts.CheckDelegatingCtorCycles)
+  if (LangOpts.CPlusPlus0x &&
+      Diags.getDiagnosticLevel(diag::warn_delegating_ctor_cycle,
+                               SourceLocation())
+        != Diagnostic::Ignored)
     CheckDelegatingCtorCycles();
 
   // If there were errors, disable 'unused' warnings since they will mostly be
