@@ -56,8 +56,11 @@ def forward_not_split;
 def case;
 
 // Boolean constants.
-def true;
-def false;
+class Bool<bit val> {
+      bit Value = val;
+}
+def true : Bool<1>;
+def false : Bool<0>;
 
 // Boolean operators.
 def and;
