@@ -74,6 +74,25 @@ int InitPtrToInt(const Init* ptr) {
   return val.getValue();
 }
 
+bool InitPtrToBool(const Init* ptr) {
+  bool ret = false;
+  const DefInit& val = dynamic_cast<const DefInit&>(*ptr);
+  const std::string& str = val.getAsString();
+
+  if (str == "true") {
+    ret = true;
+  }
+  else if (str == "false") {
+    ret = false;
+  }
+  else {
+    throw "Incorrect boolean value: '" + str +
+      "': must be either 'true' or 'false'";
+  }
+
+  return ret;
+}
+
 const std::string& InitPtrToString(const Init* ptr) {
   const StringInit& val = dynamic_cast<const StringInit&>(*ptr);
   return val.getValue();
@@ -95,13 +114,7 @@ const std::string GetOperatorName(const DagInit& D) {
 
 /// CheckBooleanConstant - Check that the provided value is a boolean constant.
 void CheckBooleanConstant(const Init* I) {
-  const DefInit& val = dynamic_cast<const DefInit&>(*I);
-  const std::string& str = val.getAsString();
-
-  if (str != "true" && str != "false") {
-    throw "Incorrect boolean value: '" + str +
-      "': must be either 'true' or 'false'";
-  }
+  InitPtrToBool(I);
 }
 
 // CheckNumberOfArguments - Ensure that the number of args in d is
@@ -935,8 +948,22 @@ private:
   }
 
   void onJoin (const DagInit& d) {
-    CheckNumberOfArguments(d, 0);
-    toolDesc_.setJoin();
+    bool isReallyJoin = false;
+
+    if (d.getNumArgs() == 0) {
+      isReallyJoin = true;
+    }
+    else {
+      Init* I = d.getArg(0);
+      isReallyJoin = InitPtrToBool(I);
+    }
+
+    // Is this *really* a join tool? We allow (join false) for generating two
+    // tool descriptions from a single generic one.
+    // TOFIX: come up with a cleaner solution.
+    if (isReallyJoin) {
+      toolDesc_.setJoin();
+    }
   }
 
   void onOutLanguage (const DagInit& d) {
