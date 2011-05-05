@@ -10,8 +10,7 @@ struct s0 {
 
 // CHECK-GLOBAL: @s0_align_x = global i32 4
 
-// FIXME: This should be 1 to match gcc. PR7951.
-// CHECK-GLOBAL: @s0_align_y = global i32 4
+// CHECK-GLOBAL: @s0_align_y = global i32 1
 
 // CHECK-GLOBAL: @s0_align = global i32 4
 int s0_align_x = __alignof(((struct s0*)0)->x);
@@ -27,7 +26,7 @@ int s0_load_x(struct s0 *a) { return a->x; }
 // with align 1 (in 2363.1 at least).
 //
 // CHECK-FUNCTIONS: define i32 @s0_load_y
-// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32* {{.*}}, align 4
+// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32* {{.*}}, align 1
 // CHECK-FUNCTIONS: ret i32 [[s0_load_y]]
 int s0_load_y(struct s0 *a) { return a->y; }
 // CHECK-FUNCTIONS: define void @s0_copy
@@ -92,11 +91,11 @@ struct __attribute__((packed, aligned)) s3 {
   short aShort;
   int anInt;
 };
-// CHECK-GLOBAL: @s3_1 = global i32 2
+// CHECK-GLOBAL: @s3_1 = global i32 1
 int s3_1 = __alignof(((struct s3*) 0)->anInt);
 // CHECK-FUNCTIONS: define i32 @test3(
 int test3(struct s3 *ptr) {
   // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}* {{%.*}}, i32 0, i32 1
-  // CHECK-FUNCTIONS-NEXT: load i32* [[PTR]], align 2
+  // CHECK-FUNCTIONS-NEXT: load i32* [[PTR]], align 1
   return ptr->anInt;
 }

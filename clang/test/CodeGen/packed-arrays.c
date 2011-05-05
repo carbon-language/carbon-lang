@@ -34,10 +34,8 @@ int align3 = __alignof(struct s3);
 
 // CHECK: @align0_x = global i32 1
 int align0_x = __alignof(((struct s0*) 0)->x);
-// We are currently incompatible with GCC here. <rdar://problem/9217290>
 //
-// CHECK-XFAIL: @align1_x = global i32 1
-// CHECK: @align1_x = global i32 4
+// CHECK: @align1_x = global i32 1
 int align1_x = __alignof(((struct s1*) 0)->x);
 // CHECK: @align2_x = global i32 1
 int align2_x = __alignof(((struct s2*) 0)->x);
@@ -66,22 +64,22 @@ int f0_b(struct s0 *a) {
   return *(a->x + 1);
 }
 
+// Note that we are incompatible with GCC on this example.
+// 
 // CHECK: define i32 @f1_a
-// CHECK:   load i32* %{{.*}}, align 4
+// CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
 // CHECK: define i32 @f1_b
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
 
-// Note that we are incompatible with GCC on these two examples.
+// Note that we are incompatible with GCC on this example.
 //
 // CHECK: define i32 @f1_c
-// CHECK-XFAIL:   load i32* %{{.*}}, align 1
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
 // CHECK: define i32 @f1_d
-// CHECK-XFAIL:   load i32* %{{.*}}, align 1
-// CHECK:   load i32* %{{.*}}, align 4
+// CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
 int f1_a(struct s1 *a) {
   return a->x[1];

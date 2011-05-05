@@ -635,6 +635,10 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
       UseAlignAttrOnly = true;
     }
   }
+  else if (isa<FieldDecl>(D))
+      UseAlignAttrOnly = 
+        D->hasAttr<PackedAttr>() ||
+        cast<FieldDecl>(D)->getParent()->hasAttr<PackedAttr>();
 
   // If we're using the align attribute only, just ignore everything
   // else about the declaration and its type.
