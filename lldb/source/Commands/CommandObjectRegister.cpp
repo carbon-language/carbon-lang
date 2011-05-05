@@ -22,7 +22,9 @@
 #include "lldb/Interpreter/NamedOptionValue.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -90,7 +92,8 @@ public:
                     format = m_options.format;
 
                 reg_data.Dump(&strm, 0, format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
-                if (m_options.lookup_addresses && ((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)))
+                if (((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)) && 
+                    (reg_info->byte_size == reg_ctx->GetThread().GetProcess().GetAddressByteSize()))
                 {
                     addr_t reg_addr = reg_ctx->ReadRegisterAsUnsigned (reg, 0);
                     if (reg_addr)
@@ -100,9 +103,6 @@ public:
                         {
                             strm.PutCString ("  ");
                             so_reg_addr.Dump(&strm, exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
-                        }
-                        else
-                        {
                         }
                     }
                 }
@@ -246,8 +246,7 @@ protected:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter),
             set_indexes (OptionValue::ConvertTypeToMask (OptionValue::eTypeUInt64)),
-            dump_all_sets (false, false), // Initial and default values are false
-            lookup_addresses (false, false)         // Initial and default values are false
+            dump_all_sets (false, false) // Initial and default values are false
         {
             OptionParsingStarting();
         }
@@ -280,10 +279,6 @@ protected:
                     dump_all_sets.SetCurrentValue(true);
                     break;
 
-                case 'l':
-                    lookup_addresses.SetCurrentValue(true);
-                    break;
-
                 default:
                     error.SetErrorStringWithFormat("Unrecognized short option '%c'\n", short_option);
                     break;
@@ -297,7 +292,6 @@ protected:
             format = eFormatDefault;
             set_indexes.Clear();
             dump_all_sets.Clear();
-            lookup_addresses.Clear();
         }
         
         const OptionDefinition*
@@ -314,7 +308,6 @@ protected:
         lldb::Format format;
         OptionValueArray set_indexes;
         OptionValueBoolean dump_all_sets;
-        OptionValueBoolean lookup_addresses;
     };
 
     CommandOptions m_options;
@@ -324,7 +317,6 @@ OptionDefinition
 CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format to use when dumping register values."},
-    { LLDB_OPT_SET_ALL, false, "lookup", 'l', no_argument      , NULL, 0, eArgTypeNone      , "Lookup the register values as addresses and show that each value maps to in the address space."},
     { LLDB_OPT_SET_1  , false, "set"   , 's', required_argument, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
     { LLDB_OPT_SET_2  , false, "all"   , 'a', no_argument      , NULL, 0, eArgTypeNone      , "Show all register sets."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
