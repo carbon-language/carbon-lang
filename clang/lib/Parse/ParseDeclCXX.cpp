@@ -396,7 +396,8 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
     // Type alias templates cannot be specialized.
     int SpecKind = -1;
-    if (Name.getKind() == UnqualifiedId::IK_TemplateId)
+    if (TemplateInfo.Kind == ParsedTemplateInfo::Template &&
+        Name.getKind() == UnqualifiedId::IK_TemplateId)
       SpecKind = 0;
     if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitSpecialization)
       SpecKind = 1;
