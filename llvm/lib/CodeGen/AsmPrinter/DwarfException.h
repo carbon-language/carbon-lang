@@ -238,6 +238,25 @@ public:
   virtual void EndFunction();
 };
 
+class DwarfSjLjException : public DwarfException {
+public:
+  //===--------------------------------------------------------------------===//
+  // Main entry points.
+  //
+  DwarfSjLjException(AsmPrinter *A);
+  virtual ~DwarfSjLjException();
+
+  /// EndModule - Emit all exception information that should come after the
+  /// content.
+  virtual void EndModule();
+
+  /// BeginFunction - Gather pre-function exception information.  Assumes being
+  /// emitted immediately after the function entry point.
+  virtual void BeginFunction(const MachineFunction *MF);
+
+  /// EndFunction - Gather and emit post-function exception information.
+  virtual void EndFunction();
+};
 
 class ARMException : public DwarfException {
   /// shouldEmitTable - Per-function flag to indicate if EH tables should
