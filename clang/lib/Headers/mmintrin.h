@@ -421,20 +421,20 @@ _mm_set1_pi8(char __b)
 }
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
-_mm_setr_pi32(int __i1, int __i0)
+_mm_setr_pi32(int __i0, int __i1)
 {
     return _mm_set_pi32(__i1, __i0);
 }
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
-_mm_setr_pi16(short __w3, short __w2, short __w1, short __w0)
+_mm_setr_pi16(short __w0, short __w1, short __w2, short __w3)
 {
     return _mm_set_pi16(__w3, __w2, __w1, __w0);
 }
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
-_mm_setr_pi8(char __b7, char __b6, char __b5, char __b4, char __b3, char __b2,
-             char __b1, char __b0)
+_mm_setr_pi8(char __b0, char __b1, char __b2, char __b3, char __b4, char __b5,
+             char __b6, char __b7)
 {
     return _mm_set_pi8(__b7, __b6, __b5, __b4, __b3, __b2, __b1, __b0);
 }
