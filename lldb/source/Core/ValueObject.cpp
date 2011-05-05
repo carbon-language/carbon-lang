@@ -24,6 +24,7 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectDynamicValue.h"
 #include "lldb/Core/ValueObjectList.h"
+#include "lldb/Core/ValueObjectMemory.h"
 
 #include "lldb/Host/Endian.h"
 
@@ -1497,6 +1498,48 @@ ValueObject::AddressOf (Error &error)
     }
     return m_addr_of_valobj_sp;
 }
+
+
+lldb::ValueObjectSP
+ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)
+{
+    lldb::ValueObjectSP valobj_sp;
+    AddressType address_type;
+    const bool scalar_is_load_address = true;
+    lldb::addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
+    
+    if (ptr_value != LLDB_INVALID_ADDRESS)
+    {
+        Address ptr_addr (NULL, ptr_value);
+        
+        valobj_sp = ValueObjectMemory::Create (GetExecutionContextScope(),
+                                               name, 
+                                               ptr_addr, 
+                                               clang_ast_type);
+    }
+    return valobj_sp;    
+}
+
+lldb::ValueObjectSP
+ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
+{
+    lldb::ValueObjectSP valobj_sp;
+    AddressType address_type;
+    const bool scalar_is_load_address = true;
+    lldb::addr_t ptr_value = GetPointerValue (address_type, scalar_is_load_address);
+    
+    if (ptr_value != LLDB_INVALID_ADDRESS)
+    {
+        Address ptr_addr (NULL, ptr_value);
+        
+        valobj_sp = ValueObjectMemory::Create (GetExecutionContextScope(),
+                                               name, 
+                                               ptr_addr, 
+                                               type_sp);
+    }
+    return valobj_sp;
+}
+
 
 ValueObject::EvaluationPoint::EvaluationPoint () :
     m_thread_id (LLDB_INVALID_UID),

@@ -377,6 +377,14 @@ public:
     virtual lldb::ValueObjectSP
     AddressOf (Error &error);
 
+    virtual lldb::ValueObjectSP
+    CastPointerType (const char *name,
+                     ClangASTType &ast_type);
+
+    virtual lldb::ValueObjectSP
+    CastPointerType (const char *name,
+                     lldb::TypeSP &type_sp);
+
     // The backing bits of this value object were updated, clear any value
     // values, summaries or descriptions so we refetch them.
     virtual void
