@@ -30,6 +30,8 @@ using namespace llvm;
 
 STATISTIC(NumFinished, "Number of splits finished");
 STATISTIC(NumSimple,   "Number of splits that were simple");
+STATISTIC(NumCopies,   "Number of copies inserted for splitting");
+STATISTIC(NumRemats,   "Number of rematerialized defs for splitting");
 
 //===----------------------------------------------------------------------===//
 //                                 Split Analysis
@@ -589,12 +591,14 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
   LiveRangeEdit::Remat RM(ParentVNI);
   if (Edit->canRematerializeAt(RM, UseIdx, true, LIS)) {
     Def = Edit->rematerializeAt(MBB, I, LI->reg, RM, LIS, TII, TRI, Late);
+    ++NumRemats;
   } else {
     // Can't remat, just insert a copy from parent.
     CopyMI = BuildMI(MBB, I, DebugLoc(), TII.get(TargetOpcode::COPY), LI->reg)
                .addReg(Edit->getReg());
     Def = LIS.getSlotIndexes()->insertMachineInstrInMaps(CopyMI, Late)
             .getDefIndex();
+    ++NumCopies;
   }
 
   // Define the value in Reg.
