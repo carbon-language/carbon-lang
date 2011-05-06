@@ -396,9 +396,12 @@ namespace llvm {
     // Dwarf Lowering Routines
     //===------------------------------------------------------------------===//
 
-    /// EmitFrameMoves - Emit frame instructions to describe the layout of the
+    /// EmitCFIFrameMove - Emit frame instruction to describe the layout of the
     /// frame.
     void EmitCFIFrameMove(const MachineMove &Move) const;
+
+    /// EmitCFIFrameMoves - Emit frame instructions to describe the layout of
+    /// the frame.
     void EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const;
 
     //===------------------------------------------------------------------===//

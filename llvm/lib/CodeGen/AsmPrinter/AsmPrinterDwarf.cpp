@@ -206,7 +206,7 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
 // Dwarf Lowering Routines
 //===----------------------------------------------------------------------===//
 
-/// EmitFrameMoves - Emit a frame instruction.
+/// EmitCFIFrameMove - Emit a frame instruction.
 void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
 
@@ -233,7 +233,7 @@ void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
   }
 }
 
-/// EmitFrameMoves - Emit frame instructions to describe the layout of the
+/// EmitCFIFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
 void AsmPrinter::EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const {
   for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
