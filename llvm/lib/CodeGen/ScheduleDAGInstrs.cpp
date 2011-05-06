@@ -220,6 +220,10 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   // ExitSU.
   AddSchedBarrierDeps();
 
+  for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
+    assert(Defs[i].empty() && "Only BuildGraph should push/pop Defs");
+  }
+
   // Walk the list of instructions, from bottom moving up.
   for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
        MII != MIE; --MII) {
@@ -264,6 +268,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       }
 
       std::vector<SUnit *> &UseList = Uses[Reg];
+      // Defs are push in the order they are visited and never reordered.
       std::vector<SUnit *> &DefList = Defs[Reg];
       // Optionally add output and anti dependencies. For anti
       // dependencies we use a latency of 0 because for a multi-issue
@@ -283,9 +288,9 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/Reg));
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        std::vector<SUnit *> &DefList = Defs[*Alias];
-        for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
-          SUnit *DefSU = DefList[i];
+        std::vector<SUnit *> &MemDefList = Defs[*Alias];
+        for (unsigned i = 0, e = MemDefList.size(); i != e; ++i) {
+          SUnit *DefSU = MemDefList[i];
           if (DefSU == &ExitSU)
             continue;
           if (DefSU != SU &&
@@ -399,8 +404,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         // to the DefList making dependence checking quadratic in the size of
         // the block. Instead, we leave only one call at the back of the
         // DefList.
-        //
-        // NOTE: This assumes that the DefList is ordered!
         if (SU->isCall) {
           while (!DefList.empty() && DefList.back()->isCall)
             DefList.pop_back();
