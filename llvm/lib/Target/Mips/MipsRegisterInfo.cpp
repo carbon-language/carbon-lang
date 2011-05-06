@@ -186,7 +186,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   unsigned OrigReg = getFrameRegister(MF);
   int OrigImm = Offset;
 
-// OrigImm fits in the 16-bit field
+  // OrigImm fits in the 16-bit field
   if (OrigImm < 0x8000 && OrigImm >= -0x8000) {
     NewReg = OrigReg;
     NewImm = OrigImm;
