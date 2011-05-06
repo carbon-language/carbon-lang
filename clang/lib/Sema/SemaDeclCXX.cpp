@@ -963,7 +963,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                ExprTy *BW, const VirtSpecifiers &VS,
                                ExprTy *InitExpr, bool IsDefinition,
-                               bool Deleted, SourceLocation DefLoc) {
+                               bool Deleted, SourceLocation DefaultLoc) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -1028,8 +1028,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
     
-    if (DefLoc.isValid())
-      Diag(DefLoc, diag::err_default_special_members);
+    if (DefaultLoc.isValid())
+      Diag(DefaultLoc, diag::err_default_special_members);
     
     if (SS.isSet() && !SS.isInvalid()) {
       // The user provided a superfluous scope specifier inside a class
@@ -1056,7 +1056,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     assert(Member && "HandleField never returns null");
   } else {
     Member = HandleDeclarator(S, D, move(TemplateParameterLists), IsDefinition,
-                              DefLoc);
+                              DefaultLoc);
     if (!Member) {
       return 0;
     }

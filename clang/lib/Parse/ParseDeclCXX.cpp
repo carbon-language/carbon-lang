@@ -1648,7 +1648,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   ExprResult BitfieldSize;
   ExprResult Init;
   bool Deleted = false;
-  SourceLocation DefLoc;
+  SourceLocation DefaultLoc;
 
   while (1) {
     // member-declarator:
@@ -1683,7 +1683,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       } else if (Tok.is(tok::kw_default)) {
         if (!getLang().CPlusPlus0x)
           Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
-        DefLoc = ConsumeToken();
+        DefaultLoc = ConsumeToken();
       } else {
         Init = ParseInitializer();
         if (Init.isInvalid())
@@ -1711,8 +1711,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     Decl *ThisDecl = 0;
     if (DS.isFriendSpecified()) {
-      if (DefLoc.isValid())
-        Diag(DefLoc, diag::err_default_special_members);
+      if (DefaultLoc.isValid())
+        Diag(DefaultLoc, diag::err_default_special_members);
 
       // TODO: handle initializers, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
@@ -1725,7 +1725,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   BitfieldSize.release(),
                                                   VS, Init.release(),
                                                   /*IsDefinition*/Deleted,
-                                                  Deleted, DefLoc);
+                                                  Deleted, DefaultLoc);
     }
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
@@ -1752,7 +1752,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     BitfieldSize = 0;
     Init = 0;
     Deleted = false;
-    DefLoc = SourceLocation();
+    DefaultLoc = SourceLocation();
 
     // Attributes are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);

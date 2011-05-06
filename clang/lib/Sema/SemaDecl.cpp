@@ -2915,7 +2915,7 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParamLists,
                              bool IsFunctionDefinition,
-                             SourceLocation DefLoc) {
+                             SourceLocation DefaultLoc) {
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -3116,8 +3116,8 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    if (DefLoc.isValid())
-      Diag(DefLoc, diag::err_default_special_members);
+    if (DefaultLoc.isValid())
+      Diag(DefaultLoc, diag::err_default_special_members);
 
     if (TemplateParamLists.size()) {
       Diag(D.getIdentifierLoc(), diag::err_template_typedef);
@@ -3128,9 +3128,10 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
-                                  IsFunctionDefinition, Redeclaration, DefLoc);
+                                  IsFunctionDefinition, Redeclaration,
+                                  DefaultLoc);
   } else {
-    assert(!DefLoc.isValid() && "We should have caught this in a caller");
+    assert(!DefaultLoc.isValid() && "We should have caught this in a caller");
     New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
                                   Redeclaration);
@@ -4003,7 +4004,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
                               bool IsFunctionDefinition, bool &Redeclaration,
-                              SourceLocation DefLoc) {
+                              SourceLocation DefaultLoc) {
   assert(R.getTypePtr()->isFunctionType());
 
   // TODO: consider using NameInfo for diagnostic.
@@ -4060,7 +4061,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isFunctionTemplateSpecialization = false;
 
   if (!getLangOptions().CPlusPlus) {
-    assert(!DefLoc.isValid() && "Defaulted functions are a C++ feature");
+    assert(!DefaultLoc.isValid() && "Defaulted functions are a C++ feature");
 
     // Determine whether the function was written with a
     // prototype. This true when:
@@ -4116,13 +4117,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       NewFD = NewCD;
 
-      if (DefLoc.isValid()) {
+      if (DefaultLoc.isValid()) {
         if (NewCD->isDefaultConstructor() ||
             NewCD->isCopyOrMoveConstructor()) {
           NewFD->setDefaulted();
           NewFD->setExplicitlyDefaulted();
         } else {
-          Diag(DefLoc, diag::err_default_special_members);
+          Diag(DefaultLoc, diag::err_default_special_members);
         }
       }
     } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
@@ -4138,7 +4139,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                           /*isImplicitlyDeclared=*/false);
         isVirtualOkay = true;
 
-        if (DefLoc.isValid()) {
+        if (DefaultLoc.isValid()) {
           NewFD->setDefaulted();
           NewFD->setExplicitlyDefaulted();
         }
@@ -4160,8 +4161,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         return 0;
       }
 
-      if (DefLoc.isValid())
-        Diag(DefLoc, diag::err_default_special_members);
+      if (DefaultLoc.isValid())
+        Diag(DefaultLoc, diag::err_default_special_members);
 
       CheckConversionDeclarator(D, R, SC);
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
@@ -4211,18 +4212,18 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       isVirtualOkay = !isStatic;
 
-      if (DefLoc.isValid()) {
+      if (DefaultLoc.isValid()) {
         if (NewMD->isCopyAssignmentOperator() /* ||
             NewMD->isMoveAssignmentOperator() */) {
           NewFD->setDefaulted();
           NewFD->setExplicitlyDefaulted();
         } else {
-          Diag(DefLoc, diag::err_default_special_members);
+          Diag(DefaultLoc, diag::err_default_special_members);
         }
       }
     } else {
-      if (DefLoc.isValid())
-        Diag(DefLoc, diag::err_default_special_members);
+      if (DefaultLoc.isValid())
+        Diag(DefaultLoc, diag::err_default_special_members);
 
       // Determine whether the function was written with a
       // prototype. This true when:
