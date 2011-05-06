@@ -3063,7 +3063,7 @@ public:
                                  MultiTemplateParamsArg TemplateParameterLists,
                                  Expr *BitfieldWidth, const VirtSpecifiers &VS,
                                  Expr *Init, bool IsDefinition,
-                                 bool Deleted = false, bool Defaulted = false);
+                                 bool Deleted = false);
 
   MemInitResult ActOnMemInitializer(Decl *ConstructorD,
                                     Scope *S,

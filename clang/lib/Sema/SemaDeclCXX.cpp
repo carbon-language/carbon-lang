@@ -963,10 +963,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                ExprTy *BW, const VirtSpecifiers &VS,
                                ExprTy *InitExpr, bool IsDefinition,
-                               bool Deleted, bool Defaulted) {
-  // FIXME: Do something with this
-  (void) Defaulted;
-
+                               bool Deleted) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -5051,8 +5048,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
-                                 /*isImplicitlyDeclared=*/true,
-                                 /*isExplicitlyDefaulted=*/false);
+                                 /*isImplicitlyDeclared=*/true);
   DefaultCon->setAccess(AS_public);
   DefaultCon->setImplicit();
   DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
@@ -5248,8 +5244,7 @@ void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
         CXXConstructorDecl *NewCtor = CXXConstructorDecl::Create(
             Context, ClassDecl, UsingLoc, DNI, QualType(NewCtorType, 0),
             /*TInfo=*/0, BaseCtor->isExplicit(), /*Inline=*/true,
-            /*ImplicitlyDeclared=*/true,
-            /*isExplicitlyDefaulted*/false);
+            /*ImplicitlyDeclared=*/true);
         NewCtor->setAccess(BaseCtor->getAccess());
 
         // Build up the parameter decls and add them.
@@ -6198,8 +6193,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                  /*TInfo=*/0,
                                  /*isExplicit=*/false,
                                  /*isInline=*/true,
-                                 /*isImplicitlyDeclared=*/true,
-                                 /*isExplicitlyDefaulted=*/false);
+                                 /*isImplicitlyDeclared=*/true);
   CopyConstructor->setAccess(AS_public);
   CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
   

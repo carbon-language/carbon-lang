@@ -52,10 +52,6 @@ def err_invalid_storage_class_in_func_decl : Error<
 def err_expected_namespace_name : Error<"expected namespace name">;
 def ext_variadic_templates : ExtWarn<
   "variadic templates are a C++0x extension">, InGroup<CXX0x>;
-def err_default_special_members : Error<
-  "Only special member functions may be defaulted">;
-def err_friends_define_only_namespace_scope : Error<
-  "Cannot define a function with non-namespace scope in a friend declaration">;
 
 // Sema && Lex
 def ext_longlong : Extension<

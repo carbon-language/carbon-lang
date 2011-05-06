@@ -1375,8 +1375,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
-                                        false,
-                                        Constructor->isExplicitlyDefaulted());
+                                        false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,

@@ -2397,8 +2397,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
                                             NameInfo, T, TInfo, 
                                             FromConstructor->isExplicit(),
                                             D->isInlineSpecified(), 
-                                            D->isImplicit(),
-                                      FromConstructor->isExplicitlyDefaulted());
+                                            D->isImplicit());
   } else if (isa<CXXDestructorDecl>(D)) {
     ToFunction = CXXDestructorDecl::Create(Importer.getToContext(),
                                            cast<CXXRecordDecl>(DC),

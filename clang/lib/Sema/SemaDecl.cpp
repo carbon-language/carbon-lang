@@ -4109,8 +4109,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                          D.getSourceRange().getBegin(),
                                          NameInfo, R, TInfo,
                                          isExplicit, isInline,
-                                         /*isImplicitlyDeclared=*/false,
-                                         /*isExplicitlyDefaulted=*/false);
+                                         /*isImplicitlyDeclared=*/false);
     } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
       // This is a C++ destructor declaration.
       if (DC->isRecord()) {
