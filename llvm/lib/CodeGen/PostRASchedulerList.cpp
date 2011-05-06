@@ -540,10 +540,16 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
 #endif
   --SuccSU->NumPredsLeft;
 
-  // Compute how many cycles it will be before this actually becomes
-  // available.  This is the max of the start time of all predecessors plus
-  // their latencies.
-  SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
+  // Standard scheduler algorithms will recomute the depth of the successor
+  // here as such:
+  //   SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
+  //
+  // However, we lazily compute node depth instead. Note that
+  // ScheduleNodeTopDown has already updated the depth of this node which causes
+  // all descendents to be marked dirty. Setting the successor depth explicitly
+  // here would cause depth to be recomputed for all its ancestors. If the
+  // successor is not yet ready (because of a transitively redundant edge) then
+  // this causes depth computation to be quadratic in the size of the DAG.
 
   // If all the node's predecessors are scheduled, this node is ready
   // to be scheduled. Ignore the special ExitSU node.
