@@ -569,14 +569,14 @@ void Driver::PrintActions(const Compilation &C) const {
     PrintActions1(C, *it, Ids);
 }
 
-/// \brief Check whether the given input tree contains any compilation (or
-/// assembly) actions.
-static bool ContainsCompileAction(const Action *A) {
+/// \brief Check whether the given input tree contains any compilation or
+/// assembly actions.
+static bool ContainsCompileOrAssembleAction(const Action *A) {
   if (isa<CompileJobAction>(A) || isa<AssembleJobAction>(A))
     return true;
 
   for (Action::const_iterator it = A->begin(), ie = A->end(); it != ie; ++it)
-    if (ContainsCompileAction(*it))
+    if (ContainsCompileOrAssembleAction(*it))
       return true;
 
   return false;
@@ -667,7 +667,7 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
       Arg *A = Args.getLastArg(options::OPT_g_Group);
       if (A && !A->getOption().matches(options::OPT_g0) &&
           !A->getOption().matches(options::OPT_gstabs) &&
-          ContainsCompileAction(Actions.back())) {
+          ContainsCompileOrAssembleAction(Actions.back())) {
         ActionList Inputs;
         Inputs.push_back(Actions.back());
         Actions.pop_back();
