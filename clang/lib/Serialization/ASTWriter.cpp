@@ -727,6 +727,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   // AST Top-Level Block.
   BLOCK(AST_BLOCK);
   RECORD(ORIGINAL_FILE_NAME);
+  RECORD(ORIGINAL_FILE_ID);
   RECORD(TYPE_OFFSET);
   RECORD(DECL_OFFSET);
   RECORD(LANGUAGE_OPTIONS);
@@ -953,7 +954,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot,
   const std::string &BlobStr = Chain ? Chain->getFileName() : Target.getTriple().getTriple();
   Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, BlobStr);
 
-  // Original file name
+  // Original file name and file ID
   SourceManager &SM = Context.getSourceManager();
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
     BitCodeAbbrev *FileAbbrev = new BitCodeAbbrev();
@@ -971,6 +972,10 @@ void ASTWriter::WriteMetadata(ASTContext &Context, const char *isysroot,
     RecordData Record;
     Record.push_back(ORIGINAL_FILE_NAME);
     Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr);
+    
+    Record.clear();
+    Record.push_back(SM.getMainFileID().getOpaqueValue());
+    Stream.EmitRecord(ORIGINAL_FILE_ID, Record);
   }
 
   // Original PCH directory

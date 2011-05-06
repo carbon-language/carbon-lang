@@ -279,7 +279,9 @@ namespace clang {
       /// generate the AST file.
       ORIGINAL_FILE_NAME = 19,
 
-      /// Record #20 intentionally left blank.
+      /// \brief Record code for the file ID of the original file used to 
+      /// generate the AST file.
+      ORIGINAL_FILE_ID = 20,
       
       /// \brief Record code for the version control branch and revision
       /// information of the compiler used to build this AST file.

@@ -54,6 +54,9 @@ public:
 
 private:
   friend class SourceManager;
+  friend class ASTWriter;
+  friend class ASTReader;
+  
   static FileID get(unsigned V) {
     FileID F;
     F.ID = V;

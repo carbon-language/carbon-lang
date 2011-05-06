@@ -2237,6 +2237,10 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       MaybeAddSystemRootToFilename(OriginalFileName);
       break;
 
+    case ORIGINAL_FILE_ID:
+      OriginalFileID = FileID::get(Record[0]);
+      break;
+        
     case ORIGINAL_PCH_DIR:
       // The primary AST will be the last to get here, so it will be the one
       // that's used.
@@ -2451,12 +2455,15 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // the source manager to the file source file from which the preamble was
   // built. This is the only valid way to use a precompiled preamble.
   if (Type == Preamble) {
-    SourceLocation Loc
-      = SourceMgr.getLocation(FileMgr.getFile(getOriginalSourceFile()), 1, 1);
-    if (Loc.isValid()) {
-      std::pair<FileID, unsigned> Decomposed = SourceMgr.getDecomposedLoc(Loc);
-      SourceMgr.SetPreambleFileID(Decomposed.first);
+    if (OriginalFileID.isInvalid()) {
+      SourceLocation Loc
+        = SourceMgr.getLocation(FileMgr.getFile(getOriginalSourceFile()), 1, 1);
+      if (Loc.isValid())
+        OriginalFileID = SourceMgr.getDecomposedLoc(Loc).first;
     }
+    
+    if (!OriginalFileID.isInvalid())
+      SourceMgr.SetPreambleFileID(OriginalFileID);
   }
   
   return Success;

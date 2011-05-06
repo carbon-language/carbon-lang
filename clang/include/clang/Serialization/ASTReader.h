@@ -631,6 +631,10 @@ private:
   /// AST file.
   std::string ActualOriginalFileName;
 
+  /// \brief The file ID for the original file that was used to build the
+  /// primary AST file.
+  FileID OriginalFileID;
+  
   /// \brief The directory that the PCH was originally created in. Used to
   /// allow resolving headers even after headers+PCH was moved to a new path.
   std::string OriginalDir;
