@@ -411,6 +411,16 @@ public:
   /// bitfield which follows the bitfield 'LastFD'.
   bool BitfieldFollowsBitfield(const FieldDecl *FD,
                                    const FieldDecl *LastFD) const;
+  
+  /// NoneBitfieldFollowsBitfield - return 'true" if 'FD' is not a
+  /// bitfield which follows the bitfield 'LastFD'.
+  bool NoneBitfieldFollowsBitfield(const FieldDecl *FD,
+                                   const FieldDecl *LastFD) const;
+  
+  /// BitfieldFollowsNoneBitfield - return 'true" if 'FD' is a
+  /// bitfield which follows the none bitfield 'LastFD'.
+  bool BitfieldFollowsNoneBitfield(const FieldDecl *FD,
+                                   const FieldDecl *LastFD) const;
 
   // Access to the set of methods overridden by the given C++ method.
   typedef CXXMethodVector::iterator overridden_cxx_method_iterator;
