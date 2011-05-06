@@ -398,8 +398,6 @@ namespace llvm {
 
     /// EmitFrameMoves - Emit frame instructions to describe the layout of the
     /// frame.
-    void EmitFrameMoves(const std::vector<MachineMove> &Moves,
-                        MCSymbol *BaseLabel, bool isEH) const;
     void EmitCFIFrameMove(const MachineMove &Move) const;
     void EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const;
 
