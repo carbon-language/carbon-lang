@@ -678,8 +678,8 @@ class ClastStmtCodeGen {
   // The Scop we code generate.
   Scop *S;
   ScalarEvolution &SE;
-
   DominatorTree *DT;
+  ScopDetection *SD;
   Dependences *DP;
   TargetData *TD;
 
@@ -834,6 +834,8 @@ public:
     std::vector<const Type*> Arguments(1, Builder.getInt8PtrTy());
     FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
     Function *FN = Function::Create(FT, Function::InternalLinkage, Name, M);
+    // Do not run any polly pass on the new function.
+    SD->markFunctionAsInvalid(FN);
 
     Function::arg_iterator AI = FN->arg_begin();
     AI->setName("omp.userContext");
@@ -1251,8 +1253,10 @@ public:
   }
 
   ClastStmtCodeGen(Scop *scop, ScalarEvolution &se, DominatorTree *dt,
-                   Dependences *dp, TargetData *td, IRBuilder<> &B) :
-    S(scop), SE(se), DT(dt), DP(dp), TD(td), Builder(B), ExpGen(Builder, NULL) {}
+                   ScopDetection *sd, Dependences *dp, TargetData *td,
+                   IRBuilder<> &B) :
+    S(scop), SE(se), DT(dt), SD(sd), DP(dp), TD(td), Builder(B),
+    ExpGen(Builder, NULL) {}
 
 };
 }
@@ -1369,7 +1373,7 @@ class CodeGeneration : public ScopPass {
 
     const clast_root *clast = (const clast_root *) C->getClast();
 
-    ClastStmtCodeGen CodeGen(S, *SE, DT, DP, TD, Builder);
+    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, Builder);
 
     if (OpenMP)
       addOpenMPDefinitions(Builder);

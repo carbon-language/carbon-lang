@@ -102,6 +102,10 @@ class ScopDetection : public FunctionPass {
   typedef std::set<const Region*> RegionSet;
   RegionSet ValidRegions;
 
+  // Remember the invalid functions producted by backends;
+  typedef std::set<const Function*> FunctionSet;
+  FunctionSet InvalidFunctions;
+
   // Try to expand the region R. If R can be expanded return the expanded
   // region, NULL otherwise.
   Region *expandRegion(Region &R);
@@ -246,6 +250,14 @@ public:
   void forgetScop(const Region &R) {
     assert(isMaxRegionInScop(R) && "R is not a Scop!");
     ValidRegions.erase(&R);
+  }
+
+  /// @brief Mark the function as invalid so we will not extract any scop from
+  ///        the function.
+  ///
+  /// @param F The function to mark as invalid.
+  void markFunctionAsInvalid(const Function *F) {
+    InvalidFunctions.insert(F);
   }
 
   /// @brief Verify if all valid Regions in this Function are still valid

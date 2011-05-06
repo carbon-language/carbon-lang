@@ -594,12 +594,7 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 }
 
 bool ScopDetection::isValidFunction(llvm::Function &F) {
-  const std::string &Name = F.getNameStr();
-  size_t found = Name.find(".omp_subfn");
-  if (found != std::string::npos)
-    return false;
-  else
-    return true;
+  return !InvalidFunctions.count(&F);
 }
 
 bool ScopDetection::runOnFunction(llvm::Function &F) {
@@ -650,6 +645,7 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 
 void ScopDetection::releaseMemory() {
   ValidRegions.clear();
+  // Do not clear the invalid function set.
 }
 
 char ScopDetection::ID = 0;
