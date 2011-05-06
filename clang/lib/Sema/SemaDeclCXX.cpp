@@ -3730,10 +3730,21 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     //   treated as an original-namespace-name.
     //
     // Since namespace names are unique in their scope, and we don't
-    // look through using directives, just
-    DeclContext::lookup_result R = CurContext->getRedeclContext()->lookup(II);
-    NamedDecl *PrevDecl = R.first == R.second? 0 : *R.first;
-
+    // look through using directives, just look for any ordinary names.
+    
+    const unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Member | 
+      Decl::IDNS_Type | Decl::IDNS_Using | Decl::IDNS_Tag | 
+      Decl::IDNS_Namespace;
+    NamedDecl *PrevDecl = 0;
+    for (DeclContext::lookup_result R 
+            = CurContext->getRedeclContext()->lookup(II);
+         R.first != R.second; ++R.first) {
+      if ((*R.first)->getIdentifierNamespace() & IDNS) {
+        PrevDecl = *R.first;
+        break;
+      }
+    }
+    
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
       if (Namespc->isInline() != OrigNS->isInline()) {
