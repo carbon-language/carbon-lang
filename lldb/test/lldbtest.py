@@ -563,9 +563,11 @@ class TestBase(unittest2.TestCase):
         # initially.  If the test errored/failed, the session info
         # (self.session) is then dumped into a session specific file for
         # diagnosis.
-        self.__errored__ = False
-        self.__failed__ = False
-        self.__expected__ = False
+        self.__errored__    = False
+        self.__failed__     = False
+        self.__expected__   = False
+        # We are also interested in unexpected success.
+        self.__unexpected__ = False
 
         # See addTearDownHook(self, hook) which allows the client to add a hook
         # function to be run during tearDown() time.
@@ -599,6 +601,15 @@ class TestBase(unittest2.TestCase):
             # Once by the Python unittest framework, and a second time by us.
             print >> sbuf, "expected failure"
 
+    def markUnexpectedSuccess(self):
+        """Callback invoked when an unexpected success occurred."""
+        self.__unexpected__ = True
+        with recording(self, False) as sbuf:
+            # False because there's no need to write "unexpected success" to the
+            # stderr twice.
+            # Once by the Python unittest framework, and a second time by us.
+            print >> sbuf, "unexpected success"
+
     def dumpSessionInfo(self):
         """
         Dump the debugger interactions leading to a test error/failure.  This
@@ -628,13 +639,16 @@ class TestBase(unittest2.TestCase):
         elif self.__expected__:
             pairs = lldb.test_result.expectedFailures
             prefix = 'ExpectedFailure'
+        elif self.__unexpected__:
+            prefix = "UnexpectedSuccess"
         else:
             # Simply return, there's no session info to dump!
             return
 
-        for test, traceback in pairs:
-            if test is self:
-                print >> self.session, traceback
+        if not self.__unexpected__:
+            for test, traceback in pairs:
+                if test is self:
+                    print >> self.session, traceback
 
         dname = os.path.join(os.environ["LLDB_TEST"],
                              os.environ["LLDB_SESSION_DIRNAME"])

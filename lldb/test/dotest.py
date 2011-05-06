@@ -812,7 +812,8 @@ if not sdir_name:
     sdir_name = timestamp
 os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
 
-sys.stderr.write("\nSession logs for test failures/errors will go into directory '%s'\n" % sdir_name)
+sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
+                 " will go into directory '%s'\n" % sdir_name)
 sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
 
 #
@@ -979,6 +980,14 @@ for ia in range(len(archs) if iterArchs else 1):
                 if method:
                     method()
 
+            def addUnexpectedSuccess(self, test):
+                global sdir_has_content
+                sdir_has_content = True
+                super(LLDBTestResult, self).addUnexpectedSuccess(test)
+                method = getattr(test, "markUnexpectedSuccess", None)
+                if method:
+                    method()
+
         # Invoke the test runner.
         if count == 1:
             result = unittest2.TextTestRunner(stream=sys.stderr,
@@ -998,7 +1007,8 @@ for ia in range(len(archs) if iterArchs else 1):
         
 
 if sdir_has_content:
-    sys.stderr.write("Session logs for test failures/errors can be found in directory '%s'\n" % sdir_name)
+    sys.stderr.write("Session logs for test failures/errors/unexpected successes"
+                     " can be found in directory '%s'\n" % sdir_name)
 
 # Terminate the test suite if ${LLDB_TESTSUITE_FORCE_FINISH} is defined.
 # This should not be necessary now.
