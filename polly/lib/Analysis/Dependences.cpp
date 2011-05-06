@@ -408,6 +408,25 @@ void Dependences::releaseMemory() {
   sink = must_source = may_source = NULL;
 }
 
+isl_union_map *Dependences::getDependences(int type) {
+  isl_dim *dim = isl_union_map_get_dim(must_dep);
+  isl_union_map *dependences = isl_union_map_empty(dim);
+
+  if (type & TYPE_RAW)
+    dependences = isl_union_map_union(dependences,
+                                      isl_union_map_copy(must_dep));
+
+  if (type & TYPE_WAR)
+    dependences = isl_union_map_union(dependences,
+                                      isl_union_map_copy(war_dep));
+
+  if (type & TYPE_WAW)
+    dependences = isl_union_map_union(dependences,
+                                      isl_union_map_copy(waw_dep));
+
+  return dependences;
+}
+
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
 }

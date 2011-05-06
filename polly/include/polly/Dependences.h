@@ -54,6 +54,19 @@ namespace polly {
 
   public:
     static char ID;
+
+    /// @brief The type of the dependences.
+    enum Type {
+      // Write after read
+      TYPE_WAR = 0x1,
+
+      // Read after write
+      TYPE_RAW = 0x2,
+
+      // Write after write
+      TYPE_WAW = 0x4
+    };
+
     typedef std::map<ScopStmt*, isl_map*> StatementToIslMapTy;
 
     Dependences();
@@ -79,6 +92,14 @@ namespace polly {
     /// @return bool Returns true if the incoming clast_for statement can
     ///              execute in parallel.
     bool isParallelFor(const clast_for *f);
+
+    /// @brief Get the dependences in this Scop.
+    ///
+    /// @param dependenceKinds This integer defines the different kinds of
+    ///                        dependences that will be returned. To return
+    ///                        more than one kind, the different kinds are
+    ///                        'ored' together.
+    isl_union_map *getDependences(int dependenceKinds);
 
     bool runOnScop(Scop &S);
     void printScop(raw_ostream &OS) const;
