@@ -232,16 +232,3 @@ void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
                               Dst.getOffset());
   }
 }
-
-/// EmitCFIFrameMoves - Emit frame instructions to describe the layout of the
-/// frame.
-void AsmPrinter::EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const {
-  for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-    const MachineMove &Move = Moves[i];
-    MCSymbol *Label = Move.getLabel();
-    // Throw out move if the label is invalid.
-    if (Label && !Label->isDefined()) continue; // Not emitted, in dead code.
-
-    EmitCFIFrameMove(Move);
-  }
-}

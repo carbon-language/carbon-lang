@@ -400,10 +400,6 @@ namespace llvm {
     /// frame.
     void EmitCFIFrameMove(const MachineMove &Move) const;
 
-    /// EmitCFIFrameMoves - Emit frame instructions to describe the layout of
-    /// the frame.
-    void EmitCFIFrameMoves(const std::vector<MachineMove> &Moves) const;
-
     //===------------------------------------------------------------------===//
     // Inline Asm Support
     //===------------------------------------------------------------------===//
