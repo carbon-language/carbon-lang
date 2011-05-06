@@ -1380,7 +1380,10 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
     return 0;
   }
 
-  assert(Stage < RS_Spill && "Cannot allocate after spilling");
+  // If we couldn't allocate a register from spilling, there is probably some
+  // invalid inline assembly. The base class wil report it.
+  if (Stage >= RS_Spill)
+    return ~0u;
 
   // Try splitting VirtReg or interferences.
   unsigned PhysReg = trySplit(VirtReg, Order, NewVRegs);

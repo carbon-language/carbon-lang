@@ -321,6 +321,23 @@ void RegAllocBase::allocatePhysRegs() {
     VirtRegVec SplitVRegs;
     unsigned AvailablePhysReg = selectOrSplit(*VirtReg, SplitVRegs);
 
+    if (AvailablePhysReg == ~0u) {
+      // selectOrSplit failed to find a register!
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "Ran out of registers during register allocation!"
+             "\nCannot allocate: " << *VirtReg;
+      for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(VirtReg->reg);
+      MachineInstr *MI = I.skipInstruction();) {
+        if (!MI->isInlineAsm())
+          continue;
+        Msg << "\nPlease check your inline asm statement for "
+          "invalid constraints:\n";
+        MI->print(Msg, &VRM->getMachineFunction().getTarget());
+      }
+      report_fatal_error(Msg.str());
+    }
+
     if (AvailablePhysReg)
       assign(*VirtReg, AvailablePhysReg);
 
@@ -498,8 +515,11 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
     // Tell the caller to allocate to this newly freed physical register.
     return *PhysRegI;
   }
+
   // No other spill candidates were found, so spill the current VirtReg.
   DEBUG(dbgs() << "spilling: " << VirtReg << '\n');
+  if (!VirtReg.isSpillable())
+    return ~0u;
   LiveRangeEdit LRE(VirtReg, SplitVRegs);
   spiller().spill(LRE);
 
