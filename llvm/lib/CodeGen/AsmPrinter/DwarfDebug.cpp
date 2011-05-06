@@ -748,26 +748,6 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
 
 }
 
-void CompileUnit::addPubTypes(DISubprogram SP) {
-  DICompositeType SPTy = SP.getType();
-  unsigned SPTag = SPTy.getTag();
-  if (SPTag != dwarf::DW_TAG_subroutine_type)
-    return;
-
-  DIArray Args = SPTy.getTypeArray();
-  for (unsigned i = 0, e = Args.getNumElements(); i != e; ++i) {
-    DIType ATy(Args.getElement(i));
-    if (!ATy.Verify())
-      continue;
-    DICompositeType CATy = getDICompositeType(ATy);
-    if (DIDescriptor(CATy).Verify() && !CATy.getName().empty()
-        && !CATy.isForwardDecl()) {
-      if (DIEEntry *Entry = getDIEEntry(CATy))
-        addGlobalType(CATy.getName(), Entry->getEntry());
-    }
-  }
-}
-
 /// constructScopeDIE - Construct a DIE for this scope.
 DIE *DwarfDebug::constructScopeDIE(DbgScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
@@ -858,20 +838,6 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
   Asm->OutStreamer.EmitDwarfFileDirective(SrcId, Entry.getKey());
 
   return SrcId;
-}
-
-/// getOrCreateNameSpace - Create a DIE for DINameSpace.
-DIE *CompileUnit::getOrCreateNameSpace(DINameSpace NS) {
-  DIE *NDie = getDIE(NS);
-  if (NDie)
-    return NDie;
-  NDie = new DIE(dwarf::DW_TAG_namespace);
-  insertDIE(NS, NDie);
-  if (!NS.getName().empty())
-    addString(NDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, NS.getName());
-  addSourceLine(NDie, NS);
-  addToContextOwner(NDie, NS.getContext());
-  return NDie;
 }
 
 /// constructCompileUnit - Create new CompileUnit for the given
