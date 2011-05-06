@@ -414,6 +414,35 @@ ExecutionEngine *ExecutionEngine::create(Module *M,
       .create();
 }
 
+/// createJIT - This is the factory method for creating a JIT for the current
+/// machine, it does not fall back to the interpreter.  This takes ownership
+/// of the module.
+ExecutionEngine *ExecutionEngine::createJIT(Module *M,
+                                            std::string *ErrorStr,
+                                            JITMemoryManager *JMM,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool GVsWithCode,
+                                            CodeModel::Model CMM) {
+  if (ExecutionEngine::JITCtor == 0) {
+    if (ErrorStr)
+      *ErrorStr = "JIT has not been linked in.";
+    return 0;
+  }
+
+  // Use the defaults for extra parameters.  Users can use EngineBuilder to
+  // set them.
+  StringRef MArch = "";
+  StringRef MCPU = "";
+  SmallVector<std::string, 1> MAttrs;
+
+  TargetMachine *TM =
+          ExecutionEngine::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+  if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
+  TM->setCodeModel(CMM);
+
+  return ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel, GVsWithCode, TM);
+}
+
 ExecutionEngine *EngineBuilder::create() {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
