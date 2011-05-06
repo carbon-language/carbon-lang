@@ -18,8 +18,9 @@
 #ifndef LLVM_CODEGEN_LIVERANGEEDIT_H
 #define LLVM_CODEGEN_LIVERANGEEDIT_H
 
-#include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/CodeGen/LiveInterval.h"
 
 namespace llvm {
 
@@ -112,6 +113,10 @@ public:
   unsigned size() const { return newRegs_.size()-firstNew_; }
   bool empty() const { return size() == 0; }
   LiveInterval *get(unsigned idx) const { return newRegs_[idx+firstNew_]; }
+
+  ArrayRef<LiveInterval*> regs() const {
+    return ArrayRef<LiveInterval*>(newRegs_).slice(firstNew_);
+  }
 
   /// FIXME: Temporary accessors until we can get rid of
   /// LiveIntervals::AddIntervalsForSpills

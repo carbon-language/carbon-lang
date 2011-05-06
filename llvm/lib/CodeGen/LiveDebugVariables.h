@@ -21,10 +21,12 @@
 #ifndef LLVM_CODEGEN_LIVEDEBUGVARIABLES_H
 #define LLVM_CODEGEN_LIVEDEBUGVARIABLES_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 namespace llvm {
 
+class LiveInterval;
 class VirtRegMap;
 
 class LiveDebugVariables : public MachineFunctionPass {
@@ -41,6 +43,11 @@ public:
   /// @param SubIdx If NewReg is a virtual register, SubIdx may indicate a sub-
   ///               register.
   void renameRegister(unsigned OldReg, unsigned NewReg, unsigned SubIdx);
+
+  /// splitRegister - Move any user variables in OldReg to the live ranges in
+  /// NewRegs where they are live. Mark the values as unavailable where no new
+  /// register is live.
+  void splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs);
 
   /// emitDebugValues - Emit new DBG_VALUE instructions reflecting the changes
   /// that happened during register allocation.

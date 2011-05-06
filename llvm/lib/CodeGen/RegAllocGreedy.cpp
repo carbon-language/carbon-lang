@@ -72,6 +72,7 @@ class RAGreedy : public MachineFunctionPass,
   MachineLoopRanges *LoopRanges;
   EdgeBundles *Bundles;
   SpillPlacement *SpillPlacer;
+  LiveDebugVariables *DebugVars;
 
   // state
   std::auto_ptr<Spiller> SpillerInstance;
@@ -920,6 +921,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
 
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
+  DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
+
   LRStage.resize(MRI->getNumVirtRegs());
   unsigned OrigBlocks = SA->getNumThroughBlocks() + SA->getUseBlocks().size();
 
@@ -1284,6 +1287,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SlotIndex SegStop  = SE->leaveIntvAfter(Uses[BestAfter]);
   SE->useIntv(SegStart, SegStop);
   SE->finish();
+  DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
   setStage(NewVRegs.begin(), NewVRegs.end(), RS_Local);
   ++NumLocalSplits;
 
@@ -1415,6 +1419,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   LoopRanges = &getAnalysis<MachineLoopRanges>();
   Bundles = &getAnalysis<EdgeBundles>();
   SpillPlacer = &getAnalysis<SpillPlacement>();
+  DebugVars = &getAnalysis<LiveDebugVariables>();
 
   SA.reset(new SplitAnalysis(*VRM, *LIS, *Loops));
   SE.reset(new SplitEditor(*SA, *LIS, *VRM, *DomTree));
@@ -1433,7 +1438,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Write out new DBG_VALUE instructions.
-  getAnalysis<LiveDebugVariables>().emitDebugValues(VRM);
+  DebugVars->emitDebugValues(VRM);
 
   // The pass output is in VirtRegMap. Release all the transient data.
   releaseMemory();
