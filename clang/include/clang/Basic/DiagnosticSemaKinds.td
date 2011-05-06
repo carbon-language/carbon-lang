@@ -728,6 +728,10 @@ def err_implicit_object_parameter_init : Error<
 def err_qualified_member_of_unrelated : Error<
   "%q0 is not a member of class %1">;
 
+def warn_call_to_pure_virtual_member_function_from_ctor_dtor : Warning<
+  "call to pure virtual member function %0; overrides of %0 in subclasses are "
+  "not available in the %select{constructor|destructor}1 of %2">;
+
 def note_field_decl : Note<"member is declared here">;
 def note_ivar_decl : Note<"ivar is declared here">;
 def note_bitfield_decl : Note<"bit-field is declared here">;

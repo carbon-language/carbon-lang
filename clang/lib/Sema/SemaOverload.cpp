@@ -8781,6 +8781,19 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   if (CheckFunctionCall(Method, TheCall))
     return ExprError();
 
+  if ((isa<CXXConstructorDecl>(CurContext) || 
+       isa<CXXDestructorDecl>(CurContext)) && 
+      TheCall->getMethodDecl()->isPure()) {
+    const CXXMethodDecl *MD = TheCall->getMethodDecl();
+
+    if (isa<CXXThisExpr>(MemExpr->getBase()->IgnoreParenCasts()))
+      Diag(MemExpr->getLocStart(), 
+           diag::warn_call_to_pure_virtual_member_function_from_ctor_dtor)
+        << MD->getDeclName() << isa<CXXDestructorDecl>(CurContext)
+        << MD->getParent()->getDeclName();
+
+      Diag(MD->getLocStart(), diag::note_previous_decl) << MD->getDeclName();
+  }
   return MaybeBindToTemporary(TheCall);
 }
 
