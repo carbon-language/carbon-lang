@@ -68,6 +68,11 @@ FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
 FUNCTIONS.ios	    := divmodsi4 udivmodsi4
+# On x86, the divmod functions reference divsi.
+FUNCTIONS.ios.i386   := $(FUNCTIONS.ios) \
+                        divsi3 udivsi3
+FUNCTIONS.ios.x86_64 := $(FUNCTIONS.ios) \
+                        divsi3 udivsi3
 FUNCTIONS.ios.armv6 := $(FUNCTIONS.ios) \
                        sync_synchronize \
                        switch16 switch32 switch8 switchu8 \
