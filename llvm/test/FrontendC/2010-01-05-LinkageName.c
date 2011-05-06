@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -O2 -S -g %s -o - | llc -o 2010-01-05-LinkageName.s -O0 
+// RUN: %llvmgcc -O2 -S -g %s -o - | llc -disable-cfi -o 2010-01-05-LinkageName.s -O0 
 // RUN: %compile_c 2010-01-05-LinkageName.s -o 2010-01-05-LinkageName.s
 
 struct tm {};
