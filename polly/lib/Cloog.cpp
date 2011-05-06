@@ -161,7 +161,7 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
     CloogScattering *Scattering=
       cloog_scattering_from_isl_map(isl_map_copy(Stmt->getScattering()));
     CloogDomain *Domain =
-      cloog_domain_from_isl_set(isl_set_copy(Stmt->getDomain()));
+      cloog_domain_from_isl_set(Stmt->getDomain());
 
     std::string entryName = Stmt->getBaseName();
     char *Name = (char*)malloc(sizeof(char) * (entryName.size() + 1));

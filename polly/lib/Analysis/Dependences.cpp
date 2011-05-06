@@ -96,7 +96,7 @@ bool Dependences::runOnScop(Scop &S) {
 
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
           ME = Stmt->memacc_end(); MI != ME; ++MI) {
-      isl_set *domcp = isl_set_copy(Stmt->getDomain());
+      isl_set *domcp = Stmt->getDomain();
       isl_map *accdom = isl_map_copy((*MI)->getAccessFunction());
 
       accdom = isl_map_intersect_domain(accdom, domcp);

@@ -278,7 +278,7 @@ public:
   /// @brief Get the iteration domain of this ScopStmt.
   ///
   /// @return The iteration domain of this ScopStmt.
-  isl_set *getDomain() const { return Domain; }
+  isl_set *getDomain() const;
 
   /// @brief Get an isl string representing this domain.
   std::string getDomainStr() const;

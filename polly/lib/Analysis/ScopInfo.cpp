@@ -650,7 +650,10 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
 }
 
 std::string ScopStmt::getDomainStr() const {
-  return stringFromIslObj(getDomain());
+  isl_set *domain = getDomain();
+  std::string string = stringFromIslObj(domain);
+  isl_set_free(domain);
+  return string;
 }
 
 std::string ScopStmt::getScatteringStr() const {
@@ -693,6 +696,10 @@ const SCEVAddRecExpr *ScopStmt::getSCEVForDimension(unsigned Dimension)
 
 isl_ctx *ScopStmt::getIslContext() {
   return Parent.getCtx();
+}
+
+isl_set *ScopStmt::getDomain() const {
+  return isl_set_copy(Domain);
 }
 
 ScopStmt::~ScopStmt() {

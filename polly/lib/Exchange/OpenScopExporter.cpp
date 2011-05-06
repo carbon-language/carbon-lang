@@ -143,8 +143,10 @@ openscop_statement_p OpenScop::initializeStatement(ScopStmt *stmt) {
   openscop_statement_p Stmt = openscop_statement_malloc();
 
   // Domain & Schedule
-  Stmt->domain = domainToMatrix(stmt->getDomain());
+  isl_set *domain = stmt->getDomain();
+  Stmt->domain = domainToMatrix(domain);
   Stmt->schedule = scatteringToMatrix(stmt->getScattering());
+  isl_set_free(domain);
 
   // Statement name
   const char* entryName = stmt->getBaseName();

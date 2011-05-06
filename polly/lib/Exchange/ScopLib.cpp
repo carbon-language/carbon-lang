@@ -88,10 +88,12 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   scoplib_statement_p Stmt = scoplib_statement_malloc();
 
   // Domain & Schedule
+  isl_set *domain = stmt->getDomain();
   Stmt->domain = scoplib_matrix_list_malloc();
-  Stmt->domain->elt = domainToMatrix(stmt->getDomain());
+  Stmt->domain->elt = domainToMatrix(domain);
   Stmt->domain->next = NULL;
   Stmt->schedule = scatteringToMatrix(stmt->getScattering());
+  isl_set_free(domain);
 
   // Statement name
   std::string entryName;
