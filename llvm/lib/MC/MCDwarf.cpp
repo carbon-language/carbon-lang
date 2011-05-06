@@ -835,74 +835,10 @@ namespace llvm {
   };
 }
 
-// This is an implementation of CIE and FDE emission that is bug by bug
-// compatible with the one in CodeGen. It is useful during the transition
-// to make it easy to compare the outputs, but should probably be removed
-// afterwards.
-void MCDwarfFrameEmitter::EmitDarwin(MCStreamer &streamer,
-                                     bool usingCFI) {
-  FrameEmitterImpl Emitter(usingCFI);
-  DenseMap<const MCSymbol*, const MCSymbol*> Personalities;
-  const MCSymbol *aCIE = NULL;
-  const MCDwarfFrameInfo *aFrame = NULL;
-
-  for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
-    const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
-    if (!frame.Personality)
-      continue;
-    if (Personalities.count(frame.Personality))
-      continue;
-
-    const MCSymbol *cieStart = &Emitter.EmitCIE(streamer, frame.Personality,
-                                                frame.PersonalityEncoding,
-                                                frame.Lsda,
-                                                frame.LsdaEncoding);
-    aCIE = cieStart;
-    aFrame = &frame;
-    Personalities[frame.Personality] = cieStart;
-  }
-
-  if (Personalities.empty()) {
-    const MCDwarfFrameInfo &frame = streamer.getFrameInfo(0);
-    aCIE = &Emitter.EmitCIE(streamer, frame.Personality,
-                            frame.PersonalityEncoding, frame.Lsda,
-                            frame.LsdaEncoding);
-    aFrame = &frame;
-  }
-
-  MCSymbol *fdeEnd = NULL;
-  for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
-    const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
-    const MCSymbol *cieStart = Personalities[frame.Personality];
-    bool hasLSDA;
-    if (!cieStart) {
-      cieStart = aCIE;
-      hasLSDA = aFrame->Lsda;
-    } else {
-      hasLSDA = true;
-    }
-
-    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame,
-                             hasLSDA);
-    if (i != n - 1)
-      streamer.EmitLabel(fdeEnd);
-  }
-
-  const MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  streamer.EmitValueToAlignment(asmInfo.getPointerSize());
-  if (fdeEnd)
-    streamer.EmitLabel(fdeEnd);
-}
-
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
                                bool usingCFI) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  if (!asmInfo.isFunctionEHFrameSymbolPrivate()) {
-    EmitDarwin(streamer, usingCFI);
-    return;
-  }
 
   MCSymbol *fdeEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
