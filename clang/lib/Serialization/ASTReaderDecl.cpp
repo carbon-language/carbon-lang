@@ -1385,7 +1385,7 @@ static bool isConsumerInterestedIn(Decl *D) {
     return Var->isFileVarDecl() &&
            Var->isThisDeclarationADefinition() == VarDecl::Definition;
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
-    return Func->isThisDeclarationADefinition();
+    return Func->doesThisDeclarationHaveABody();
   return isa<ObjCProtocolDecl>(D) || isa<ObjCImplementationDecl>(D);
 }
 

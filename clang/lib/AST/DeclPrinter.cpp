@@ -400,7 +400,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         if (D->getNumParams()) POut << ", ";
         POut << "...";
       }
-    } else if (D->isThisDeclarationADefinition() && !D->hasPrototype()) {
+    } else if (D->doesThisDeclarationHaveABody() && !D->hasPrototype()) {
       for (unsigned i = 0, e = D->getNumParams(); i != e; ++i) {
         if (i)
           Proto += ", ";
@@ -518,9 +518,9 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
   if (D->isPure())
     Out << " = 0";
-  else if (D->isDeleted())
+  else if (D->isDeletedAsWritten())
     Out << " = delete";
-  else if (D->isThisDeclarationADefinition()) {
+  else if (D->doesThisDeclarationHaveABody()) {
     if (!D->hasPrototype() && D->getNumParams()) {
       // This is a K&R function definition, so we need to print the
       // parameters.

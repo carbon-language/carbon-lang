@@ -1216,7 +1216,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
         D->isThisDeclarationADefinition()) {
       // Check for a function body.
       const FunctionDecl *Definition = 0;
-      if (Function->hasBody(Definition) &&
+      if (Function->isDefined(Definition) &&
           Definition->getTemplateSpecializationKind() == TSK_Undeclared) {
         SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
           << Function->getDeclName();
@@ -1248,7 +1248,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
         default:
           if (const FunctionDecl *RPattern
               = R->getTemplateInstantiationPattern())
-            if (RPattern->hasBody(RPattern)) {
+            if (RPattern->isDefined(RPattern)) {
               SemaRef.Diag(Function->getLocation(), diag::err_redefinition) 
                 << Function->getDeclName();
               SemaRef.Diag(R->getLocation(), diag::note_previous_definition);
@@ -2124,8 +2124,8 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
 bool
 TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                     FunctionDecl *Tmpl) {
-  if (Tmpl->isDeleted())
-    New->setDeleted();
+  if (Tmpl->isDeletedAsWritten())
+    New->setDeletedAsWritten();
 
   // If we are performing substituting explicitly-specified template arguments
   // or deduced template arguments into a function template and we reach this
@@ -2300,7 +2300,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          FunctionDecl *Function,
                                          bool Recursive,
                                          bool DefinitionRequired) {
-  if (Function->isInvalidDecl() || Function->hasBody())
+  if (Function->isInvalidDecl() || Function->isDefined())
     return;
 
   // Never instantiate an explicit specialization.

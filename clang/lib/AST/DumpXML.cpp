@@ -482,7 +482,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     setFlag("trivial", D->isTrivial());
     setFlag("returnzero", D->hasImplicitReturnZero());
     setFlag("prototype", D->hasWrittenPrototype());
-    setFlag("deleted", D->isDeleted());
+    setFlag("deleted", D->isDeletedAsWritten());
     if (D->getStorageClass() != SC_None)
       set("storage",
           VarDecl::getStorageClassSpecifierString(D->getStorageClass()));
@@ -493,7 +493,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     for (FunctionDecl::param_iterator
            I = D->param_begin(), E = D->param_end(); I != E; ++I)
       dispatch(*I);
-    if (D->isThisDeclarationADefinition())
+    if (D->doesThisDeclarationHaveABody())
       dispatch(D->getBody());
   }
 

@@ -1193,7 +1193,7 @@ public:
   /// isUserProvided - True if it is either an implicit constructor or
   /// if it was defaulted or deleted on first declaration.
   bool isUserProvided() const {
-    return getCanonicalDecl()->isDeleted() || getCanonicalDecl()->isDefaulted();
+    return !(isDeleted() || getCanonicalDecl()->isDefaulted());
   }
   
   ///

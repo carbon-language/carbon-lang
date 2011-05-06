@@ -1514,6 +1514,16 @@ public:
     return hasBody(Definition);
   }
 
+  /// isDefined - Returns true if the function is defined at all, including
+  /// a deleted definition. Except for the behavior when the function is
+  /// deleted, behaves like hasBody.
+  bool isDefined(const FunctionDecl *&Definition) const;
+
+  virtual bool isDefined() const {
+    const FunctionDecl* Definition;
+    return isDefined(Definition);
+  }
+
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
   /// function. The variant that accepts a FunctionDecl pointer will
@@ -1531,10 +1541,17 @@ public:
   /// isThisDeclarationADefinition - Returns whether this specific
   /// declaration of the function is also a definition. This does not
   /// determine whether the function has been defined (e.g., in a
-  /// previous definition); for that information, use getBody.
-  /// FIXME: Should return true if function is deleted or defaulted. However,
-  /// CodeGenModule.cpp uses it, and I don't know if this would break it.
+  /// previous definition); for that information, use isDefined. Note
+  /// that this returns false for a defaulted function unless that function
+  /// has been implicitly defined (possibly as deleted).
   bool isThisDeclarationADefinition() const {
+    return IsDeleted || Body || IsLateTemplateParsed;
+  }
+
+  /// doesThisDeclarationHaveABody - Returns whether this specific
+  /// declaration of the function has a body - that is, if it is a non-
+  /// deleted definition.
+  bool doesThisDeclarationHaveABody() const {
     return Body || IsLateTemplateParsed;
   }
 
@@ -1617,8 +1634,10 @@ public:
   ///   Integer(long double) = delete; // no construction from long double
   /// };
   /// @endcode
-  bool isDeleted() const { return IsDeleted; }
-  void setDeleted(bool D = true) { IsDeleted = D; }
+  // If a function is deleted, its first declaration must be.
+  bool isDeleted() const { return getCanonicalDecl()->IsDeleted; }
+  bool isDeletedAsWritten() const { return IsDeleted && !IsDefaulted; }
+  void setDeletedAsWritten(bool D = true) { IsDeleted = D; }
 
   /// \brief Determines whether this is a function "main", which is
   /// the entry point into an executable program.

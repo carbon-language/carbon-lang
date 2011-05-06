@@ -1422,6 +1422,17 @@ bool FunctionDecl::hasBody(const FunctionDecl *&Definition) const {
   return false;
 }
 
+bool FunctionDecl::isDefined(const FunctionDecl *&Definition) const {
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->IsDeleted || I->Body || I->IsLateTemplateParsed) {
+      Definition = I->IsDeleted ? I->getCanonicalDecl() : *I;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
     if (I->Body) {
@@ -1690,7 +1701,7 @@ bool FunctionDecl::isInlined() const {
 /// an externally visible symbol, but "extern inline" will not create an 
 /// externally visible symbol.
 bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
-  assert(isThisDeclarationADefinition() && "Must have the function definition");
+  assert(doesThisDeclarationHaveABody() && "Must have the function definition");
   assert(isInlined() && "Function must be inline");
   ASTContext &Context = getASTContext();
   

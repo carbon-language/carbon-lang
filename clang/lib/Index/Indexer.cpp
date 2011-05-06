@@ -39,7 +39,7 @@ public:
 
     Decl *D = Ent.getDecl(TU->getASTContext());
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-      if (FD->isThisDeclarationADefinition())
+      if (FD->doesThisDeclarationHaveABody())
         DefMap[Ent] = std::make_pair(FD, TU);
   }
 };

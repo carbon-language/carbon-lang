@@ -2805,7 +2805,7 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
                                     CXXMethodDecl *MD) {
   // No need to do the check on definitions, which require that
   // the return/param types be complete.
-  if (MD->isThisDeclarationADefinition())
+  if (MD->doesThisDeclarationHaveABody())
     return;
 
   // For safety's sake, just ignore it if we don't have type source
@@ -7646,7 +7646,7 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     // If the declaration wasn't the first, we delete the function anyway for
     // recovery.
   }
-  Fn->setDeleted();
+  Fn->setDeletedAsWritten();
 }
 
 static void SearchForReturnInStmt(Sema &Self, Stmt *S) {

@@ -74,7 +74,7 @@ void CallGraph::addTU(ASTContext& Ctx) {
        I != E; ++I) {
 
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
-      if (FD->isThisDeclarationADefinition()) {
+      if (FD->doesThisDeclarationHaveABody()) {
         // Set caller's ASTContext.
         Entity Ent = Entity::get(FD, Prog);
         CallGraphNode *Node = getOrInsertFunction(Ent);

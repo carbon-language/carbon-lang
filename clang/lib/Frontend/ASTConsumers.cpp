@@ -173,7 +173,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     break;
   case Decl::Function: {
     const FunctionDecl* FD = cast<FunctionDecl>(DC);
-    if (FD->isThisDeclarationADefinition())
+    if (FD->doesThisDeclarationHaveABody())
       Out << "[function] ";
     else
       Out << "<function> ";

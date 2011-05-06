@@ -727,7 +727,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     }
 
     // Forward declarations are emitted lazily on first use.
-    if (!FD->isThisDeclarationADefinition())
+    if (!FD->doesThisDeclarationHaveABody())
       return;
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
@@ -897,7 +897,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
           assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
           DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
           break;
-        } else if (FD->isThisDeclarationADefinition()) {
+        } else if (FD->doesThisDeclarationHaveABody()) {
           DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
           break;
         }

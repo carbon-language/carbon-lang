@@ -128,8 +128,8 @@ void ASTDeclWriter::Visit(Decl *D) {
   // have been written. We want it last because we will not read it back when
   // retrieving it from the AST, we'll just lazily set the offset. 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    Record.push_back(FD->isThisDeclarationADefinition());
-    if (FD->isThisDeclarationADefinition())
+    Record.push_back(FD->doesThisDeclarationHaveABody());
+    if (FD->doesThisDeclarationHaveABody())
       Writer.AddStmt(FD->getBody());
   }
 }
@@ -322,7 +322,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isPure());
   Record.push_back(D->hasInheritedPrototype());
   Record.push_back(D->hasWrittenPrototype());
-  Record.push_back(D->isDeleted());
+  Record.push_back(D->isDeletedAsWritten());
   Record.push_back(D->isTrivial());
   Record.push_back(D->hasImplicitReturnZero());
   Writer.AddSourceLocation(D->getLocEnd(), Record);

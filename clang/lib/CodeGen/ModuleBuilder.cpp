@@ -79,7 +79,7 @@ namespace {
                                      MEnd = D->decls_end();
              M != MEnd; ++M)
           if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*M))
-            if (Method->isThisDeclarationADefinition() &&
+            if (Method->doesThisDeclarationHaveABody() &&
                 (Method->hasAttr<UsedAttr>() || 
                  Method->hasAttr<ConstructorAttr>()))
               Builder->EmitTopLevelDecl(Method);

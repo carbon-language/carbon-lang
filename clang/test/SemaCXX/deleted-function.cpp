@@ -7,9 +7,8 @@ void fn() = delete; // expected-note {{candidate function has been explicitly de
 void fn2(); // expected-note {{previous declaration is here}}
 void fn2() = delete; // expected-error {{deleted definition must be first declaration}}
 
-void fn3() = delete;
-void fn3() {
-  // FIXME: This definition should be invalid.
+void fn3() = delete; // expected-note {{previous definition is here}}
+void fn3() { // expected-error {{redefinition}}
 }
 
 void ov(int) {} // expected-note {{candidate function}}

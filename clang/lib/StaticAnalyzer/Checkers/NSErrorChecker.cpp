@@ -97,7 +97,7 @@ public:
 void CFErrorFunctionChecker::checkASTDecl(const FunctionDecl *D,
                                         AnalysisManager &mgr,
                                         BugReporter &BR) const {
-  if (!D->isThisDeclarationADefinition())
+  if (!D->doesThisDeclarationHaveABody())
     return;
   if (!D->getResultType()->isVoidType())
     return;

@@ -132,7 +132,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
   assert(CD);
   
 #if 0
-  if (!(CD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
+  if (!(CD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
     // FIXME: invalidate the object.
     return;
 #endif
@@ -246,7 +246,7 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
                                       const Stmt *S,
                                       ExplodedNode *Pred, 
                                       ExplodedNodeSet &Dst) {
-  if (!(DD->isThisDeclarationADefinition() && AMgr.shouldInlineCall()))
+  if (!(DD->doesThisDeclarationHaveABody() && AMgr.shouldInlineCall()))
     return;
   // Create the context for 'this' region.
   const StackFrameContext *SFC = AMgr.getStackFrame(DD,
