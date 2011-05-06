@@ -1189,6 +1189,12 @@ public:
   CXXMethodDecl *getCanonicalDecl() {
     return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
   }
+
+  /// isUserProvided - True if it is either an implicit constructor or
+  /// if it was defaulted or deleted on first declaration.
+  bool isUserProvided() const {
+    return getCanonicalDecl()->isDeleted() || getCanonicalDecl()->isDefaulted();
+  }
   
   ///
   void addOverriddenMethod(const CXXMethodDecl *MD);

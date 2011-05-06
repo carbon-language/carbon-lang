@@ -935,7 +935,8 @@ public:
 
   Decl *HandleDeclarator(Scope *S, Declarator &D,
                          MultiTemplateParamsArg TemplateParameterLists,
-                         bool IsFunctionDefinition);
+                         bool IsFunctionDefinition,
+                         SourceLocation DefLoc = SourceLocation());
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND,
                                         const LookupResult &Previous,
                                         Scope *S);
@@ -963,7 +964,8 @@ public:
                                      LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
-                                     bool &Redeclaration);
+                                     bool &Redeclaration,
+                                     SourceLocation DefLoc = SourceLocation());
   bool AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void CheckFunctionDeclaration(Scope *S,
@@ -3063,7 +3065,8 @@ public:
                                  MultiTemplateParamsArg TemplateParameterLists,
                                  Expr *BitfieldWidth, const VirtSpecifiers &VS,
                                  Expr *Init, bool IsDefinition,
-                                 bool Deleted = false);
+                                 bool Deleted = false,
+                                 SourceLocation DefLoc = SourceLocation());
 
   MemInitResult ActOnMemInitializer(Decl *ConstructorD,
                                     Scope *S,

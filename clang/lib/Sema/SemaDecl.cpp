@@ -2919,7 +2919,8 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
   
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParamLists,
-                             bool IsFunctionDefinition) {
+                             bool IsFunctionDefinition,
+                             SourceLocation DefLoc) {
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -2962,7 +2963,6 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
         << D.getCXXScopeSpec().getRange();
       return 0;
     }
-
     bool IsDependentContext = DC->isDependentContext();
 
     if (!IsDependentContext && 
@@ -3121,6 +3121,9 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    if (DefLoc.isValid())
+      Diag(DefLoc, diag::err_default_special_members);
+
     if (TemplateParamLists.size()) {
       Diag(D.getIdentifierLoc(), diag::err_template_typedef);
       return 0;
@@ -3130,8 +3133,9 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
-                                  IsFunctionDefinition, Redeclaration);
+                                  IsFunctionDefinition, Redeclaration, DefLoc);
   } else {
+    assert(!DefLoc.isValid() && "We should have caught this in a caller");
     New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
                                   Redeclaration);
@@ -4003,7 +4007,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
-                              bool IsFunctionDefinition, bool &Redeclaration) {
+                              bool IsFunctionDefinition, bool &Redeclaration,
+                              SourceLocation DefLoc) {
   assert(R.getTypePtr()->isFunctionType());
 
   // TODO: consider using NameInfo for diagnostic.
@@ -4060,6 +4065,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isFunctionTemplateSpecialization = false;
 
   if (!getLangOptions().CPlusPlus) {
+    assert(!DefLoc.isValid() && "Defaulted functions are a C++ feature");
+
     // Determine whether the function was written with a
     // prototype. This true when:
     //   - there is a prototype in the declarator, or
@@ -4104,12 +4111,25 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       R = CheckConstructorDeclarator(D, R, SC);
 
       // Create the new declaration
-      NewFD = CXXConstructorDecl::Create(Context,
+      CXXConstructorDecl *NewCD = CXXConstructorDecl::Create(
+                                         Context,
                                          cast<CXXRecordDecl>(DC),
                                          D.getSourceRange().getBegin(),
                                          NameInfo, R, TInfo,
                                          isExplicit, isInline,
                                          /*isImplicitlyDeclared=*/false);
+
+      NewFD = NewCD;
+
+      if (DefLoc.isValid()) {
+        if (NewCD->isDefaultConstructor() ||
+            NewCD->isCopyOrMoveConstructor()) {
+          NewFD->setDefaulted();
+          NewFD->setExplicitlyDefaulted();
+        } else {
+          Diag(DefLoc, diag::err_default_special_members);
+        }
+      }
     } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
       // This is a C++ destructor declaration.
       if (DC->isRecord()) {
@@ -4122,6 +4142,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
         isVirtualOkay = true;
+
+        if (DefLoc.isValid()) {
+          NewFD->setDefaulted();
+          NewFD->setExplicitlyDefaulted();
+        }
       } else {
         Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
 
@@ -4139,6 +4164,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
              diag::err_conv_function_not_member);
         return 0;
       }
+
+      if (DefLoc.isValid())
+        Diag(DefLoc, diag::err_default_special_members);
 
       CheckConversionDeclarator(D, R, SC);
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
@@ -4178,14 +4206,29 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isStatic = true;
 
       // This is a C++ method declaration.
-      NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(DC),
-                                    D.getSourceRange().getBegin(),
-                                    NameInfo, R, TInfo,
-                                    isStatic, SCAsWritten, isInline,
-                                    SourceLocation());
+      CXXMethodDecl *NewMD = CXXMethodDecl::Create(
+                                               Context, cast<CXXRecordDecl>(DC),
+                                               D.getSourceRange().getBegin(),
+                                               NameInfo, R, TInfo,
+                                               isStatic, SCAsWritten, isInline,
+                                               SourceLocation());
+      NewFD = NewMD;
 
       isVirtualOkay = !isStatic;
+
+      if (DefLoc.isValid()) {
+        if (NewMD->isCopyAssignmentOperator() /* ||
+            NewMD->isMoveAssignmentOperator() */) {
+          NewFD->setDefaulted();
+          NewFD->setExplicitlyDefaulted();
+        } else {
+          Diag(DefLoc, diag::err_default_special_members);
+        }
+      }
     } else {
+      if (DefLoc.isValid())
+        Diag(DefLoc, diag::err_default_special_members);
+
       // Determine whether the function was written with a
       // prototype. This true when:
       //   - we're in C++ (where every function has a prototype),

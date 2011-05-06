@@ -1365,6 +1365,8 @@ private:
   bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
+  bool IsDefaulted : 1; // sunk from CXXMethoDecl
+  bool IsExplicitlyDefaulted : 1; //sunk from CXXMethodDecl
   bool HasImplicitReturnZero : 1;
   bool IsLateTemplateParsed : 1;
 
@@ -1565,6 +1567,16 @@ public:
   /// the class has been fully built by Sema.
   bool isTrivial() const { return IsTrivial; }
   void setTrivial(bool IT) { IsTrivial = IT; }
+
+  /// Whether this function is defaulted per C++0x. Only valid for
+  /// special member functions. 
+  bool isDefaulted() const { return IsDefaulted; }
+  void setDefaulted(bool D = true) { IsDefaulted = D; }
+
+  /// Whether this function is explicitly defaulted per C++0x. Only valid
+  /// for special member functions.
+  bool isExplicitlyDefaulted() const { return IsExplicitlyDefaulted; }
+  void setExplicitlyDefaulted(bool ED = true) { IsExplicitlyDefaulted = ED; }
 
   /// Whether falling off this function implicitly returns null/zero.
   /// If a more specific implicit return value is required, front-ends
