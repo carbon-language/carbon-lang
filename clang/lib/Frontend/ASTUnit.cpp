@@ -102,6 +102,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     ConcurrencyCheckValue(CheckUnlocked), 
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     ShouldCacheCodeCompletionResults(false),
+    NestedMacroInstantiations(true),
     CompletionCacheTopLevelHashValue(0),
     PreambleTopLevelHashValue(0),
     CurrentTopLevelHashValue(0),
@@ -927,6 +928,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
   PreprocessorOptions &PreprocessorOpts = Clang->getPreprocessorOpts();
+  PreprocessorOpts.DetailedRecordIncludesNestedMacroInstantiations
+    = NestedMacroInstantiations;
   std::string PriorImplicitPCHInclude;
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
@@ -1712,7 +1715,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
                                              bool CompleteTranslationUnit,
-                                             bool CacheCodeCompletionResults) {  
+                                             bool CacheCodeCompletionResults,
+                                             bool NestedMacroInstantiations) {  
   // Create the AST unit.
   llvm::OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
@@ -1723,6 +1727,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->CompleteTranslationUnit = CompleteTranslationUnit;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation = CI;
+  AST->NestedMacroInstantiations = NestedMacroInstantiations;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1747,7 +1752,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool CompleteTranslationUnit,
                                       bool CacheCodeCompletionResults,
                                       bool CXXPrecompilePreamble,
-                                      bool CXXChainedPCH) {
+                                      bool CXXChainedPCH,
+                                      bool NestedMacroInstantiations) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1814,6 +1820,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->NumStoredDiagnosticsInPreamble = StoredDiagnostics.size();
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
+  AST->NestedMacroInstantiations = NestedMacroInstantiations;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -2265,6 +2272,9 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   }
 
+  // Disable the preprocessing record
+  PreprocessorOpts.DetailedRecord = false;
+  
   llvm::OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0].second,

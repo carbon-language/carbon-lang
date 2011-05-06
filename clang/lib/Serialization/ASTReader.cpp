@@ -2382,7 +2382,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
       PP->getHeaderSearchInfo().SetExternalLookup(this);
     if (TotalNumPreallocatedPreprocessingEntities > 0) {
       if (!PP->getPreprocessingRecord())
-        PP->createPreprocessingRecord();
+        PP->createPreprocessingRecord(true);
       PP->getPreprocessingRecord()->SetExternalSource(*this,
                                      TotalNumPreallocatedPreprocessingEntities);
     }
@@ -2581,7 +2581,7 @@ void ASTReader::setPreprocessor(Preprocessor &pp) {
     TotalNum += Chain[I]->NumPreallocatedPreprocessingEntities;
   if (TotalNum) {
     if (!PP->getPreprocessingRecord())
-      PP->createPreprocessingRecord();
+      PP->createPreprocessingRecord(true);
     PP->getPreprocessingRecord()->SetExternalSource(*this, TotalNum);
   }
 }

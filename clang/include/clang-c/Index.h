@@ -829,7 +829,18 @@ enum CXTranslationUnit_Flags {
    * Note: this is a *temporary* option that is available only while
    * we are testing C++ precompiled preamble support.
    */
-  CXTranslationUnit_CXXChainedPCH = 0x20
+  CXTranslationUnit_CXXChainedPCH = 0x20,
+  
+  /**
+   * \brief Used to indicate that the "detailed" preprocessing record,
+   * if requested, should also contain nested macro instantiations.
+   *
+   * Nested macro instantiations (i.e., macro instantiations that occur
+   * inside another macro instantiation) can, in some code bases, require
+   * a large amount of storage to due preprocessor metaprogramming. Moreover,
+   * its fairly rare that this information is useful for libclang clients.
+   */
+  CXTranslationUnit_NestedMacroInstantiations = 0x40
 };
 
 /**

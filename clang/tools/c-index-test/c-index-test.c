@@ -37,6 +37,8 @@ static unsigned getDefaultParsingOptions() {
     options |= clang_defaultEditingTranslationUnitOptions();
   if (getenv("CINDEXTEST_COMPLETION_CACHING"))
     options |= CXTranslationUnit_CacheCompletionResults;
+  if (getenv("CINDEXTEST_NESTED_MACROS"))
+    options |= CXTranslationUnit_NestedMacroInstantiations;
   
   return options;
 }
@@ -713,11 +715,11 @@ int perform_test_load_source(int argc, const char **argv,
     return -1;
   }
 
-  TU = clang_createTranslationUnitFromSourceFile(Idx, 0,
-                                                 argc - num_unsaved_files,
-                                                 argv + num_unsaved_files,
-                                                 num_unsaved_files,
-                                                 unsaved_files);
+  TU = clang_parseTranslationUnit(Idx, 0,
+                                  argv + num_unsaved_files,
+                                  argc - num_unsaved_files,
+                                  unsaved_files, num_unsaved_files, 
+                                  getDefaultParsingOptions());
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
     free_remapped_files(unsaved_files, num_unsaved_files);
@@ -1231,11 +1233,12 @@ int perform_token_annotation(int argc, const char **argv) {
     return -1;
 
   CIdx = clang_createIndex(0, 1);
-  TU = clang_createTranslationUnitFromSourceFile(CIdx, argv[argc - 1],
-                                                 argc - num_unsaved_files - 3,
-                                                 argv + num_unsaved_files + 2,
-                                                 num_unsaved_files,
-                                                 unsaved_files);
+  TU = clang_parseTranslationUnit(CIdx, argv[argc - 1],
+                                  argv + num_unsaved_files + 2,
+                                  argc - num_unsaved_files - 3,
+                                  unsaved_files,
+                                  num_unsaved_files,
+                                  getDefaultParsingOptions());
   if (!TU) {
     fprintf(stderr, "unable to parse input\n");
     clang_disposeIndex(CIdx);

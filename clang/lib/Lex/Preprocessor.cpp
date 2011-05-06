@@ -527,10 +527,11 @@ CommentHandler::~CommentHandler() { }
 
 CodeCompletionHandler::~CodeCompletionHandler() { }
 
-void Preprocessor::createPreprocessingRecord() {
+void Preprocessor::createPreprocessingRecord(
+                                      bool IncludeNestedMacroInstantiations) {
   if (Record)
     return;
   
-  Record = new PreprocessingRecord;
+  Record = new PreprocessingRecord(IncludeNestedMacroInstantiations);
   addPPCallbacks(Record);
 }

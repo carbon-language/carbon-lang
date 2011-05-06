@@ -227,7 +227,8 @@ CompilerInstance::createPreprocessor(Diagnostic &Diags,
   }
 
   if (PPOpts.DetailedRecord)
-    PP->createPreprocessingRecord();
+    PP->createPreprocessingRecord(
+                       PPOpts.DetailedRecordIncludesNestedMacroInstantiations);
   
   InitializePreprocessor(*PP, PPOpts, HSOpts, FEOpts);
 
