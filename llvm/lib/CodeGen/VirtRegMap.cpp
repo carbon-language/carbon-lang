@@ -42,6 +42,7 @@
 using namespace llvm;
 
 STATISTIC(NumSpills  , "Number of register spills");
+STATISTIC(NumIdCopies, "Number of identity moves eliminated after rewriting");
 
 //===----------------------------------------------------------------------===//
 //  VirtRegMap implementation
@@ -318,6 +319,7 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
 
       // Finally, remove any identity copies.
       if (MI->isIdentityCopy()) {
+        ++NumIdCopies;
         if (MI->getNumOperands() == 2) {
           DEBUG(dbgs() << "Deleting identity copy.\n");
           RemoveMachineInstrFromMaps(MI);
