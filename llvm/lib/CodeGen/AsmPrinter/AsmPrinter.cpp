@@ -609,9 +609,6 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 
   if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
-    OutStreamer.EmitLabel(Label);
-
-  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     return;
 
   if (!needsCFIMoves())
