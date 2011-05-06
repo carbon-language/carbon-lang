@@ -795,7 +795,10 @@ UserValue::splitLocation(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs) {
 bool
 UserValue::splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
   bool DidChange = false;
-  for (unsigned LocNo = 0, E = locations.size(); LocNo != E; ++LocNo) {
+  // Split locations referring to OldReg. Iterate backwards so splitLocation can
+  // safely erase unuused locations.
+  for (unsigned i = locations.size(); i ; --i) {
+    unsigned LocNo = i-1;
     const MachineOperand *Loc = &locations[LocNo];
     if (!Loc->isReg() || Loc->getReg() != OldReg)
       continue;
