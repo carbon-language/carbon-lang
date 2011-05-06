@@ -1415,7 +1415,7 @@ def err_ovl_ambiguous_call : Error<
 def err_ovl_deleted_call : Error<
   "call to %select{unavailable|deleted}0 function %1%2">;
 def err_ovl_ambiguous_member_call : Error<
-  "call to member function %0 is ambiguous">;
+  "call member function %0 is ambiguous">;
 def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1%2">;
 def note_ovl_too_many_candidates : Note<
