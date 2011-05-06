@@ -44,13 +44,13 @@ int res_f;
 void test1() {
 
   /* vec_abs */
-  vsc = vec_abs(vsc);                           // CHECK: sub nsw <16 x i8> zeroinitializer
+  vsc = vec_abs(vsc);                           // CHECK: sub <16 x i8> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsb
 
-  vs = vec_abs(vs);                             // CHECK: sub nsw <8 x i16> zeroinitializer
+  vs = vec_abs(vs);                             // CHECK: sub <8 x i16> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsh
 
-  vi = vec_abs(vi);                             // CHECK: sub nsw <4 x i32> zeroinitializer
+  vi = vec_abs(vi);                             // CHECK: sub <4 x i32> zeroinitializer
                                                 // CHECK: @llvm.ppc.altivec.vmaxsw
 
   vf = vec_abs(vf);                             // CHECK: and <4 x i32>
@@ -66,40 +66,40 @@ void test1() {
                                                 // CHECK: @llvm.ppc.altivec.vmaxsw
 
   /*  vec_add */
-  res_vsc = vec_add(vsc, vsc);                  // CHECK: add nsw <16 x i8>
-  res_vsc = vec_add(vbc, vsc);                  // CHECK: add nsw <16 x i8>
-  res_vsc = vec_add(vsc, vbc);                  // CHECK: add nsw <16 x i8>
+  res_vsc = vec_add(vsc, vsc);                  // CHECK: add <16 x i8>
+  res_vsc = vec_add(vbc, vsc);                  // CHECK: add <16 x i8>
+  res_vsc = vec_add(vsc, vbc);                  // CHECK: add <16 x i8>
   res_vuc = vec_add(vuc, vuc);                  // CHECK: add <16 x i8>
   res_vuc = vec_add(vbc, vuc);                  // CHECK: add <16 x i8>
   res_vuc = vec_add(vuc, vbc);                  // CHECK: add <16 x i8>
-  res_vs  = vec_add(vs, vs);                    // CHECK: add nsw <8 x i16>
-  res_vs  = vec_add(vbs, vs);                   // CHECK: add nsw <8 x i16>
-  res_vs  = vec_add(vs, vbs);                   // CHECK: add nsw <8 x i16>
+  res_vs  = vec_add(vs, vs);                    // CHECK: add <8 x i16>
+  res_vs  = vec_add(vbs, vs);                   // CHECK: add <8 x i16>
+  res_vs  = vec_add(vs, vbs);                   // CHECK: add <8 x i16>
   res_vus = vec_add(vus, vus);                  // CHECK: add <8 x i16>
   res_vus = vec_add(vbs, vus);                  // CHECK: add <8 x i16>
   res_vus = vec_add(vus, vbs);                  // CHECK: add <8 x i16>
-  res_vi  = vec_add(vi, vi);                    // CHECK: add nsw <4 x i32>
-  res_vi  = vec_add(vbi, vi);                   // CHECK: add nsw <4 x i32>
-  res_vi  = vec_add(vi, vbi);                   // CHECK: add nsw <4 x i32>
+  res_vi  = vec_add(vi, vi);                    // CHECK: add <4 x i32>
+  res_vi  = vec_add(vbi, vi);                   // CHECK: add <4 x i32>
+  res_vi  = vec_add(vi, vbi);                   // CHECK: add <4 x i32>
   res_vui = vec_add(vui, vui);                  // CHECK: add <4 x i32>
   res_vui = vec_add(vbi, vui);                  // CHECK: add <4 x i32>
   res_vui = vec_add(vui, vbi);                  // CHECK: add <4 x i32>
   res_vf  = vec_add(vf, vf);                    // CHECK: fadd <4 x float>
-  res_vsc = vec_vaddubm(vsc, vsc);              // CHECK: add nsw <16 x i8>
-  res_vsc = vec_vaddubm(vbc, vsc);              // CHECK: add nsw <16 x i8>
-  res_vsc = vec_vaddubm(vsc, vbc);              // CHECK: add nsw <16 x i8>
+  res_vsc = vec_vaddubm(vsc, vsc);              // CHECK: add <16 x i8>
+  res_vsc = vec_vaddubm(vbc, vsc);              // CHECK: add <16 x i8>
+  res_vsc = vec_vaddubm(vsc, vbc);              // CHECK: add <16 x i8>
   res_vuc = vec_vaddubm(vuc, vuc);              // CHECK: add <16 x i8>
   res_vuc = vec_vaddubm(vbc, vuc);              // CHECK: add <16 x i8>
   res_vuc = vec_vaddubm(vuc, vbc);              // CHECK: add <16 x i8>
-  res_vs  = vec_vadduhm(vs, vs);                // CHECK: add nsw <8 x i16>
-  res_vs  = vec_vadduhm(vbs, vs);               // CHECK: add nsw <8 x i16>
-  res_vs  = vec_vadduhm(vs, vbs);               // CHECK: add nsw <8 x i16>
+  res_vs  = vec_vadduhm(vs, vs);                // CHECK: add <8 x i16>
+  res_vs  = vec_vadduhm(vbs, vs);               // CHECK: add <8 x i16>
+  res_vs  = vec_vadduhm(vs, vbs);               // CHECK: add <8 x i16>
   res_vus = vec_vadduhm(vus, vus);              // CHECK: add <8 x i16>
   res_vus = vec_vadduhm(vbs, vus);              // CHECK: add <8 x i16>
   res_vus = vec_vadduhm(vus, vbs);              // CHECK: add <8 x i16>
-  res_vi  = vec_vadduwm(vi, vi);                // CHECK: add nsw <4 x i32>
-  res_vi  = vec_vadduwm(vbi, vi);               // CHECK: add nsw <4 x i32>
-  res_vi  = vec_vadduwm(vi, vbi);               // CHECK: add nsw <4 x i32>
+  res_vi  = vec_vadduwm(vi, vi);                // CHECK: add <4 x i32>
+  res_vi  = vec_vadduwm(vbi, vi);               // CHECK: add <4 x i32>
+  res_vi  = vec_vadduwm(vi, vbi);               // CHECK: add <4 x i32>
   res_vui = vec_vadduwm(vui, vui);              // CHECK: add <4 x i32>
   res_vui = vec_vadduwm(vbi, vui);              // CHECK: add <4 x i32>
   res_vui = vec_vadduwm(vui, vbi);              // CHECK: add <4 x i32>
@@ -689,14 +689,14 @@ void test6() {
   res_vus = vec_mladd(vus, vus, vus);           // CHECK: mul <8 x i16>
                                                 // CHECK: add <8 x i16>
 
-  res_vs = vec_mladd(vus, vs, vs);              // CHECK: mul nsw <8 x i16>
-                                                // CHECK: add nsw <8 x i16>
+  res_vs = vec_mladd(vus, vs, vs);              // CHECK: mul <8 x i16>
+                                                // CHECK: add <8 x i16>
 
-  res_vs = vec_mladd(vs, vus, vus);             // CHECK: mul nsw <8 x i16>
-                                                // CHECK: add nsw <8 x i16>
+  res_vs = vec_mladd(vs, vus, vus);             // CHECK: mul <8 x i16>
+                                                // CHECK: add <8 x i16>
 
-  res_vs = vec_mladd(vs, vs, vs);               // CHECK: mul nsw <8 x i16>
-                                                // CHECK: add nsw <8 x i16>
+  res_vs = vec_mladd(vs, vs, vs);               // CHECK: mul <8 x i16>
+                                                // CHECK: add <8 x i16>
 
   /* vec_mradds */
   res_vs = vec_mradds(vs, vs, vs);              // CHECK: @llvm.ppc.altivec.vmhraddshs
@@ -1592,40 +1592,40 @@ void test6() {
   vec_stvxl(vf, 0, &param_f);                   // CHECK: @llvm.ppc.altivec.stvxl
 
   /* vec_sub */
-  res_vsc = vec_sub(vsc, vsc);                  // CHECK: sub nsw <16 x i8>
-  res_vsc = vec_sub(vbc, vsc);                  // CHECK: sub nsw <16 x i8>
-  res_vsc = vec_sub(vsc, vbc);                  // CHECK: sub nsw <16 x i8>
+  res_vsc = vec_sub(vsc, vsc);                  // CHECK: sub <16 x i8>
+  res_vsc = vec_sub(vbc, vsc);                  // CHECK: sub <16 x i8>
+  res_vsc = vec_sub(vsc, vbc);                  // CHECK: sub <16 x i8>
   res_vuc = vec_sub(vuc, vuc);                  // CHECK: sub <16 x i8>
   res_vuc = vec_sub(vbc, vuc);                  // CHECK: sub <16 x i8>
   res_vuc = vec_sub(vuc, vbc);                  // CHECK: sub <16 x i8>
-  res_vs  = vec_sub(vs, vs);                    // CHECK: sub nsw <8 x i16>
-  res_vs  = vec_sub(vbs, vs);                   // CHECK: sub nsw <8 x i16>
-  res_vs  = vec_sub(vs, vbs);                   // CHECK: sub nsw <8 x i16>
+  res_vs  = vec_sub(vs, vs);                    // CHECK: sub <8 x i16>
+  res_vs  = vec_sub(vbs, vs);                   // CHECK: sub <8 x i16>
+  res_vs  = vec_sub(vs, vbs);                   // CHECK: sub <8 x i16>
   res_vus = vec_sub(vus, vus);                  // CHECK: sub <8 x i16>
   res_vus = vec_sub(vbs, vus);                  // CHECK: sub <8 x i16>
   res_vus = vec_sub(vus, vbs);                  // CHECK: sub <8 x i16>
-  res_vi  = vec_sub(vi, vi);                    // CHECK: sub nsw <4 x i32>
-  res_vi  = vec_sub(vbi, vi);                   // CHECK: sub nsw <4 x i32>
-  res_vi  = vec_sub(vi, vbi);                   // CHECK: sub nsw <4 x i32>
+  res_vi  = vec_sub(vi, vi);                    // CHECK: sub <4 x i32>
+  res_vi  = vec_sub(vbi, vi);                   // CHECK: sub <4 x i32>
+  res_vi  = vec_sub(vi, vbi);                   // CHECK: sub <4 x i32>
   res_vui = vec_sub(vui, vui);                  // CHECK: sub <4 x i32>
   res_vui = vec_sub(vbi, vui);                  // CHECK: sub <4 x i32>
   res_vui = vec_sub(vui, vbi);                  // CHECK: sub <4 x i32>
   res_vf  = vec_sub(vf, vf);                    // CHECK: fsub <4 x float>
-  res_vsc = vec_vsububm(vsc, vsc);              // CHECK: sub nsw <16 x i8>
-  res_vsc = vec_vsububm(vbc, vsc);              // CHECK: sub nsw <16 x i8>
-  res_vsc = vec_vsububm(vsc, vbc);              // CHECK: sub nsw <16 x i8>
+  res_vsc = vec_vsububm(vsc, vsc);              // CHECK: sub <16 x i8>
+  res_vsc = vec_vsububm(vbc, vsc);              // CHECK: sub <16 x i8>
+  res_vsc = vec_vsububm(vsc, vbc);              // CHECK: sub <16 x i8>
   res_vuc = vec_vsububm(vuc, vuc);              // CHECK: sub <16 x i8>
   res_vuc = vec_vsububm(vbc, vuc);              // CHECK: sub <16 x i8>
   res_vuc = vec_vsububm(vuc, vbc);              // CHECK: sub <16 x i8>
-  res_vs  = vec_vsubuhm(vs, vs);                // CHECK: sub nsw <8 x i16>
+  res_vs  = vec_vsubuhm(vs, vs);                // CHECK: sub <8 x i16>
   res_vs  = vec_vsubuhm(vbs, vus);              // CHECK: sub <8 x i16>
   res_vs  = vec_vsubuhm(vus, vbs);              // CHECK: sub <8 x i16>
   res_vus = vec_vsubuhm(vus, vus);              // CHECK: sub <8 x i16>
   res_vus = vec_vsubuhm(vbs, vus);              // CHECK: sub <8 x i16>
   res_vus = vec_vsubuhm(vus, vbs);              // CHECK: sub <8 x i16>
-  res_vi  = vec_vsubuwm(vi, vi);                // CHECK: sub nsw <4 x i32>
-  res_vi  = vec_vsubuwm(vbi, vi);               // CHECK: sub nsw <4 x i32>
-  res_vi  = vec_vsubuwm(vi, vbi);               // CHECK: sub nsw <4 x i32>
+  res_vi  = vec_vsubuwm(vi, vi);                // CHECK: sub <4 x i32>
+  res_vi  = vec_vsubuwm(vbi, vi);               // CHECK: sub <4 x i32>
+  res_vi  = vec_vsubuwm(vi, vbi);               // CHECK: sub <4 x i32>
   res_vui = vec_vsubuwm(vui, vui);              // CHECK: sub <4 x i32>
   res_vui = vec_vsubuwm(vbi, vui);              // CHECK: sub <4 x i32>
   res_vui = vec_vsubuwm(vui, vbi);              // CHECK: sub <4 x i32>

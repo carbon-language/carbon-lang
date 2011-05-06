@@ -400,7 +400,7 @@ public:
 
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
-    if (Ops.Ty->hasSignedIntegerRepresentation()) {
+    if (Ops.Ty->isSignedIntegerType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWMul(Ops.LHS, Ops.RHS, "mul");
@@ -1333,10 +1333,7 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     if (type->hasIntegerRepresentation()) {
       llvm::Value *amt = llvm::ConstantInt::get(value->getType(), amount);
 
-      if (type->hasSignedIntegerRepresentation())
-        value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
-      else
-        value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
+      value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
     } else {
       value = Builder.CreateFAdd(
                   value,
@@ -1829,7 +1826,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isAnyPointerType()) {
-    if (Ops.Ty->hasSignedIntegerRepresentation()) {
+    if (Ops.Ty->isSignedIntegerType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
@@ -1914,7 +1911,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (Ops.Ty->hasSignedIntegerRepresentation()) {
+    if (Ops.Ty->isSignedIntegerType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");

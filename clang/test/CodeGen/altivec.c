@@ -23,7 +23,7 @@ void test2()
 // Check pre/post increment/decrement
 void test3() {
   vector int vi;
-  vi++;                                    // CHECK: add nsw <4 x i32> {{.*}} <i32 1, i32 1, i32 1, i32 1>
+  vi++;                                    // CHECK: add <4 x i32> {{.*}} <i32 1, i32 1, i32 1, i32 1>
   vector unsigned int vui;
   --vui;                                   // CHECK: add <4 x i32> {{.*}} <i32 -1, i32 -1, i32 -1, i32 -1>
   vector float vf;

@@ -131,9 +131,9 @@ void test7(int4 *ap, int4 *bp, int c) {
   int4 a = *ap;
   int4 b = *bp;
 
-  // CHECK: add nsw <4 x i32>
-  // CHECK: sub nsw <4 x i32>
-  // CHECK: mul nsw <4 x i32>
+  // CHECK: add <4 x i32>
+  // CHECK: sub <4 x i32>
+  // CHECK: mul <4 x i32>
   // CHECK: sdiv <4 x i32>
   // CHECK: srem <4 x i32>
   a = a + b;
@@ -142,9 +142,9 @@ void test7(int4 *ap, int4 *bp, int c) {
   a = a / b;
   a = a % b;
 
-  // CHECK: add nsw <4 x i32>
-  // CHECK: sub nsw <4 x i32>
-  // CHECK: mul nsw <4 x i32>
+  // CHECK: add <4 x i32>
+  // CHECK: sub <4 x i32>
+  // CHECK: mul <4 x i32>
   // CHECK: sdiv <4 x i32>
   // CHECK: srem <4 x i32>
   a = a + c;
@@ -153,9 +153,9 @@ void test7(int4 *ap, int4 *bp, int c) {
   a = a / c;
   a = a % c;
 
-  // CHECK: add nsw <4 x i32>
-  // CHECK: sub nsw <4 x i32>
-  // CHECK: mul nsw <4 x i32>
+  // CHECK: add <4 x i32>
+  // CHECK: sub <4 x i32>
+  // CHECK: mul <4 x i32>
   // CHECK: sdiv <4 x i32>
   // CHECK: srem <4 x i32>
   a += b;
@@ -164,9 +164,9 @@ void test7(int4 *ap, int4 *bp, int c) {
   a /= b;
   a %= b;
 
-  // CHECK: add nsw <4 x i32>
-  // CHECK: sub nsw <4 x i32>
-  // CHECK: mul nsw <4 x i32>
+  // CHECK: add <4 x i32>
+  // CHECK: sub <4 x i32>
+  // CHECK: mul <4 x i32>
   // CHECK: sdiv <4 x i32>
   // CHECK: srem <4 x i32>
   a += c;
@@ -220,7 +220,7 @@ int test9(int4 V) {
 }
 
 // CHECK: @test10
-// CHECK: add nsw <4 x i32>
+// CHECK: add <4 x i32>
 // CHECK: extractelement <4 x i32>
 int test10(int4 V) {
   return (V+V).x;
