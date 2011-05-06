@@ -1166,10 +1166,10 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D) {
   if (!D->getDeclName())
     return;
 
-  // FIXME: This feels like a hack. Should DeclarationName support
-  // template-ids, or is there a better way to keep specializations
-  // from being visible?
-  if (isa<ClassTemplateSpecializationDecl>(D) || D->isTemplateParameter())
+  // Skip entities that can't be found by name lookup into a particular
+  // context.
+  if ((D->getIdentifierNamespace() == 0 && !isa<UsingDirectiveDecl>(D)) ||
+      D->isTemplateParameter())
     return;
 
   ASTContext *C = 0;
