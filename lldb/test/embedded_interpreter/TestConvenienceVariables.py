@@ -16,8 +16,7 @@ class ConvenienceVariablesCase(TestBase):
         self.buildDsym()
         self.convenience_variables()
 
-    @python_api_test
-    def test_with_dwarf_and_process_launch_api(self):
+    def test_with_dwarf_and_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDwarf()
         self.convenience_variables()
